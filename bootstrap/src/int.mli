@@ -1,10 +1,7 @@
 type t = int [@@deriving sexp, compare]
 
-val of_float: float -> t
-val to_float: t -> float
-
-val of_string: string -> t
-val to_string: t -> string
+include Floatable_intf.S with type t := t
+include Stringable_intf.S with type t := t
 
 val num_bits: t
 val min_value: t
@@ -49,13 +46,8 @@ val ( // ): t -> t -> float
 val abs: t -> t
 val neg: t -> t
 
-val cmp: t -> t -> Cmp.t
-val ( >= ): t -> t -> bool
-val ( <= ): t -> t -> bool
-val ( = ): t -> t -> bool
-val ( > ): t -> t -> bool
-val ( < ): t -> t -> bool
-val ( <> ): t -> t -> bool
+include Cmpable_intf.I with type t := t
+include Cmpable_intf.S_rel with type t := t
 
 val min: t -> t -> t
 val max: t -> t -> t

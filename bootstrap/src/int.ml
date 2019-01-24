@@ -1,4 +1,17 @@
-type t = int
+module T = struct
+  type t = int
+
+  let cmp t0 t1 =
+    let rel = compare t0 t1 in
+    if rel < 0 then
+      Cmp.Lt
+    else if rel = 0 then
+      Cmp.Eq
+    else
+      Cmp.Gt
+end
+include T
+include Cmpable.Make_rel(T)
 
 let of_float f =
   int_of_float f
@@ -158,51 +171,6 @@ let abs t =
 
 let neg t =
   -t
-
-let cmp t0 t1 =
-  let rel = compare t0 t1 in
-  if rel < 0 then
-    Cmp.Lt
-  else if rel = 0 then
-    Cmp.Eq
-  else
-    Cmp.Gt
-
-let ( >= ) t0 t1 =
-  match cmp t0 t1 with
-  | Lt -> false
-  | Eq
-  | Gt -> true
-
-let ( <= ) t0 t1 =
-  match cmp t0 t1 with
-  | Lt
-  | Eq -> true
-  | Gt -> false
-
-let ( = ) t0 t1 =
-  match cmp t0 t1 with
-  | Lt -> false
-  | Eq -> true
-  | Gt -> false
-
-let ( > ) t0 t1 =
-  match cmp t0 t1 with
-  | Lt
-  | Eq -> false
-  | Gt -> true
-
-let ( < ) t0 t1 =
-  match cmp t0 t1 with
-  | Lt -> true
-  | Eq
-  | Gt -> false
-
-let ( <> ) t0 t1 =
-  match cmp t0 t1 with
-  | Lt -> true
-  | Eq -> false
-  | Gt -> true
 
 let min t0 t1 =
   match cmp t0 t1 with
