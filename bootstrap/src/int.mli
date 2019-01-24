@@ -1,7 +1,8 @@
-type t = int [@@deriving sexp, compare]
+type t = int [@@deriving compare]
 
 include Floatable_intf.S with type t := t
 include Stringable_intf.S with type t := t
+include Sexpable_intf.S with type t := t
 
 val num_bits: t
 val min_value: t
