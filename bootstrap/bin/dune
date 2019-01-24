@@ -1,0 +1,7 @@
+(executables
+ (names sawml)
+ (libraries core SawML))
+
+(install
+ (section bin)
+  (files (sawml.exe as sawml)))

@@ -1,0 +1,61 @@
+type t = int [@@deriving sexp, compare]
+
+val of_float: float -> t
+val to_float: t -> float
+
+val of_string: string -> t
+val to_string: t -> string
+
+val num_bits: t
+val min_value: t
+val max_value: t
+
+val zero: t
+val one: t
+val minus_one: t
+
+val is_positive: t -> bool
+val is_non_negative: t -> bool
+val is_negative: t -> bool
+val is_non_positive: t -> bool
+
+val succ: t -> t
+val pred: t -> t
+
+val bit_and: t -> t -> t
+val bit_or: t -> t -> t
+val bit_xor: t -> t -> t
+val bit_not: t -> t
+val bit_sl: t -> t -> t
+val bit_usr: t -> t -> t
+val bit_ssr: t -> t -> t
+val bit_pop: t -> t
+val bit_clz: t -> t
+val bit_ctz: t -> t
+
+val is_pow2: t -> bool
+val floor_pow2: t -> t
+val ceil_pow2: t -> t
+val floor_lg: t -> t
+val ceil_lg: t -> t
+
+val ( + ): t -> t -> t
+val ( - ): t -> t -> t
+val ( * ): t -> t -> t
+val ( / ): t -> t -> t
+val ( % ): t -> t -> t
+val ( ** ): t -> t -> t
+val ( // ): t -> t -> float
+val abs: t -> t
+val neg: t -> t
+
+val cmp: t -> t -> Cmp.t
+val ( >= ): t -> t -> bool
+val ( <= ): t -> t -> bool
+val ( = ): t -> t -> bool
+val ( > ): t -> t -> bool
+val ( < ): t -> t -> bool
+val ( <> ): t -> t -> bool
+
+val min: t -> t -> t
+val max: t -> t -> t
