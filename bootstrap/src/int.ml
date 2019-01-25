@@ -433,26 +433,35 @@ let%expect_test "ops" =
     4 // 3 -> 1.33
     |}]
 
-let%expect_test "cmp" =
+let%expect_test "rel" =
   let open Printf in
   let lambda x y = begin
-    printf "cmp %d %d -> %s\n" x y (match cmp x y with
-      | Lt -> "Lt"
-      | Eq -> "Eq"
-      | Gt -> "Gt"
-    );
+    printf "cmp %d %d -> %s\n" x y (Cmp.to_string (cmp x y));
     printf "%d >= %d -> %b\n" x y (x >= y);
     printf "%d <= %d -> %b\n" x y (x <= y);
     printf "%d = %d -> %b\n" x y (x = y);
     printf "%d > %d -> %b\n" x y (x > y);
     printf "%d < %d -> %b\n" x y (x < y);
-    printf "%d <> %d -> %b\n" x y (x <> y)
+    printf "%d <> %d -> %b\n" x y (x <> y);
+    printf "ascending %d %d -> %s\n" x y (Cmp.to_string (ascending x y));
+    printf "descending %d %d -> %s\n" x y (Cmp.to_string (descending x y));
   end in
   lambda ~-1 0;
   printf "\n";
   lambda 0 0;
   printf "\n";
   lambda 1 0;
+  let lambda2 t min max = begin
+    printf "\n";
+    printf "clamp %d ~min:%d ~max:%d -> %d\n" t min max (clamp t ~min ~max);
+    printf "between %d ~low:%d ~high:%d -> %b\n" t min max (between t ~low:min
+        ~high:max);
+  end in
+  lambda2 ~-2 ~-1 1;
+  lambda2 ~-1 ~-1 1;
+  lambda2 0 ~-1 1;
+  lambda2 1 ~-1 1;
+  lambda2 2 ~-1 1;
 
   [%expect{|
     cmp -1 0 -> Lt
@@ -462,6 +471,8 @@ let%expect_test "cmp" =
     -1 > 0 -> false
     -1 < 0 -> true
     -1 <> 0 -> true
+    ascending -1 0 -> Lt
+    descending -1 0 -> Gt
 
     cmp 0 0 -> Eq
     0 >= 0 -> true
@@ -470,6 +481,8 @@ let%expect_test "cmp" =
     0 > 0 -> false
     0 < 0 -> false
     0 <> 0 -> false
+    ascending 0 0 -> Eq
+    descending 0 0 -> Eq
 
     cmp 1 0 -> Gt
     1 >= 0 -> true
@@ -478,6 +491,23 @@ let%expect_test "cmp" =
     1 > 0 -> true
     1 < 0 -> false
     1 <> 0 -> true
+    ascending 1 0 -> Gt
+    descending 1 0 -> Lt
+
+    clamp -2 ~min:-1 ~max:1 -> -1
+    between -2 ~low:-1 ~high:1 -> false
+
+    clamp -1 ~min:-1 ~max:1 -> -1
+    between -1 ~low:-1 ~high:1 -> true
+
+    clamp 0 ~min:-1 ~max:1 -> 0
+    between 0 ~low:-1 ~high:1 -> true
+
+    clamp 1 ~min:-1 ~max:1 -> 1
+    between 1 ~low:-1 ~high:1 -> true
+
+    clamp 2 ~min:-1 ~max:1 -> 1
+    between 2 ~low:-1 ~high:1 -> false
     |}]
 
 let%expect_test "min_max" =

@@ -17,4 +17,8 @@ module type S_rel = sig
   val ( > ): t -> t -> bool
   val ( < ): t -> t -> bool
   val ( <> ): t -> t -> bool
+  val ascending: t -> t -> Cmp.t
+  val descending: t -> t -> Cmp.t
+  val clamp: t -> min:t -> max:t -> t
+  val between: t -> low:t -> high:t -> bool
 end
