@@ -9,9 +9,12 @@ module T = struct
       Cmp.Eq
     else
       Cmp.Gt
+
+  let zero = 0
 end
 include T
 include Cmpable.Make_rel(T)
+include Cmpable.Make_zero(T)
 
 let of_float f =
   int_of_float f
@@ -31,23 +34,9 @@ let min_value = min_int
 
 let max_value = max_int
 
-let zero = 0
-
 let one = 1
 
-let minus_one = (-1)
-
-let is_positive t =
-  t > 0
-
-let is_non_negative t =
-  t >= 0
-
-let is_negative t =
-  t < 0
-
-let is_non_positive t =
-  t <= 0
+let neg_one = (-1)
 
 let succ t =
   t + 1
@@ -239,12 +228,12 @@ let%expect_test "constants" =
   let open Printf in
   printf "zero=%d\n" zero;
   printf "one=%d\n" one;
-  printf "minus_one=%d\n" minus_one;
+  printf "neg_one=%d\n" neg_one;
 
   [%expect{|
     zero=0
     one=1
-    minus_one=-1
+    neg_one=-1
     |}]
 
 let%expect_test "is_" =

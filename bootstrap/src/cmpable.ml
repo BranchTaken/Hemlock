@@ -72,3 +72,35 @@ module Make_rel (T : I) : S_rel with type t := T.t = struct
   let between t ~low ~high =
     t = (clamp t ~min:low ~max:high)
 end
+
+module Make_zero (T : I_zero) : S_zero with type t := T.t = struct
+  let is_positive t =
+    match T.cmp t T.zero with
+    | Lt
+    | Eq -> false
+    | Gt -> true
+
+  let is_non_negative t =
+    match T.cmp t T.zero with
+    | Lt -> false
+    | Eq
+    | Gt -> true
+
+  let is_negative t =
+    match T.cmp t T.zero with
+    | Lt -> true
+    | Eq
+    | Gt -> false
+
+  let is_non_positive t =
+    match T.cmp t T.zero with
+    | Lt
+    | Eq -> true
+    | Gt -> false
+
+  let sign t =
+    match T.cmp t T.zero with
+    | Lt -> Sign.Neg
+    | Eq -> Sign.Zero
+    | Gt -> Sign.Pos
+end

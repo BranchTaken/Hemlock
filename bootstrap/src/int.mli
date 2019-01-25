@@ -1,5 +1,9 @@
 type t = int [@@deriving compare]
 
+include Cmpable_intf.I_zero with type t := t
+include Cmpable_intf.S_rel with type t := t
+include Cmpable_intf.S_zero with type t := t
+
 include Floatable_intf.S with type t := t
 include Stringable_intf.S with type t := t
 include Sexpable_intf.S with type t := t
@@ -8,14 +12,8 @@ val num_bits: t
 val min_value: t
 val max_value: t
 
-val zero: t
 val one: t
-val minus_one: t
-
-val is_positive: t -> bool
-val is_non_negative: t -> bool
-val is_negative: t -> bool
-val is_non_positive: t -> bool
+val neg_one: t
 
 val succ: t -> t
 val pred: t -> t
@@ -46,9 +44,6 @@ val ( ** ): t -> t -> t
 val ( // ): t -> t -> float
 val abs: t -> t
 val neg: t -> t
-
-include Cmpable_intf.I with type t := t
-include Cmpable_intf.S_rel with type t := t
 
 val min: t -> t -> t
 val max: t -> t -> t
