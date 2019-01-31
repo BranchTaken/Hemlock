@@ -3,7 +3,7 @@ type t =
 | Zero
 | Pos
 
-include Stringable_intf.S with type t := t
+include Sexpable_intf.S with type t := t
 
 val of_int: int -> t
 val to_int: t -> int

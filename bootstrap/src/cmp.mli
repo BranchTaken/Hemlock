@@ -3,4 +3,4 @@ type t =
 | Eq
 | Gt
 
-include Stringable_intf.S with type t := t
+include Sexpable_intf.S with type t := t

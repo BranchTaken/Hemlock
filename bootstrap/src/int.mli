@@ -42,8 +42,10 @@ val ( / ): t -> t -> t
 val ( % ): t -> t -> t
 val ( ** ): t -> t -> t
 val ( // ): t -> t -> float
-val abs: t -> t
+val ( ~- ): t -> t
+val ( ~+ ): t -> t
 val neg: t -> t
+val abs: t -> t
 
 val min: t -> t -> t
 val max: t -> t -> t

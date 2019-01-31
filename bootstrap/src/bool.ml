@@ -44,8 +44,90 @@ let sexp_of_t t =
 let t_of_sexp sexp =
   Sexplib.Std.bool_of_sexp sexp
 
+let not t =
+  match t with
+  | false -> true
+  | true -> false
+
 (*******************************************************************************
  * Begin tests.
  *)
+
+let%expect_test "not" =
+  let open Printf in
+  let rec lambda bs = begin
+    match bs with
+    | [] -> ()
+    | b :: bs' -> begin
+        printf "not %b -> %b\n" b (not b);
+        lambda bs'
+      end
+  end in
+  lambda [false; true];
+
+  [%expect{|
+    not false -> true
+    not true -> false
+    |}]
+
+let%expect_test "and" =
+  let open Printf in
+  let side_effect b s = begin
+    printf "side effect %s\n" s;
+    b
+  end in
+  let rec lambda pairs = begin
+    match pairs with
+    | [] -> ()
+    | (a, b) :: pairs' -> begin
+        printf "(%b && %b) -> %b\n"
+          a b ((side_effect a "a") && (side_effect b "b"));
+        lambda pairs'
+      end
+  end in
+  lambda [(false, false); (false, true); (true, false); (true, true)];
+
+  [%expect{|
+    side effect a
+    (false && false) -> false
+    side effect a
+    (false && true) -> false
+    side effect a
+    side effect b
+    (true && false) -> false
+    side effect a
+    side effect b
+    (true && true) -> true
+    |}]
+
+let%expect_test "or" =
+  let open Printf in
+  let side_effect b s = begin
+    printf "side effect %s\n" s;
+    b
+  end in
+  let rec lambda pairs = begin
+    match pairs with
+    | [] -> ()
+    | (a, b) :: pairs' -> begin
+        printf "(%b || %b) -> %b\n"
+          a b ((side_effect a "a") || (side_effect b "b"));
+        lambda pairs'
+      end
+  end in
+  lambda [(false, false); (false, true); (true, false); (true, true)];
+
+  [%expect{|
+    side effect a
+    side effect b
+    (false || false) -> false
+    side effect a
+    side effect b
+    (false || true) -> true
+    side effect a
+    (true || false) -> true
+    side effect a
+    (true || true) -> true
+    |}]
 
 (* XXX Add tests. *)

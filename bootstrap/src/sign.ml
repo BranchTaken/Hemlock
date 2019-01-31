@@ -2,19 +2,7 @@ type t =
 | Neg
 | Zero
 | Pos
-
-let of_string s =
-  match s with
-  | "Neg" -> Neg
-  | "Zero" -> Zero
-  | "Pos" -> Pos
-  | _ -> assert false
-
-let to_string t =
-  match t with
-  | Neg -> "Neg"
-  | Zero -> "Zero"
-  | Pos -> "Pos"
+[@@deriving sexp]
 
 let of_int x =
   match x with

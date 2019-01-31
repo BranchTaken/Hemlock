@@ -28,6 +28,18 @@ let of_string s =
 let to_string t =
   string_of_int t
 
+let compare t0 t1 =
+  match cmp t0 t1 with
+  | Cmp.Lt -> -1
+  | Cmp.Eq -> 0
+  | Cmp.Gt -> 1
+
+let sexp_of_t t =
+  Sexplib.Std.sexp_of_int t
+
+let t_of_sexp sexp =
+  Sexplib.Std.int_of_sexp sexp
+
 let num_bits = Sys.int_size
 
 let min_value = min_int
@@ -155,11 +167,17 @@ let ( ** ) t0 t1 =
 let ( // ) t0 t1 =
   (to_float t0) /. (to_float t1)
 
-let abs t =
-  abs t
+let ( ~- ) t =
+  -1 * t
+
+let ( ~+) t =
+  t
 
 let neg t =
   -t
+
+let abs t =
+  abs t
 
 let min t0 t1 =
   match cmp t0 t1 with
@@ -170,18 +188,6 @@ let max t0 t1 =
   match cmp t0 t1 with
   | Lt | Eq -> t1
   | Gt -> t0
-
-let compare t0 t1 =
-  match cmp t0 t1 with
-  | Cmp.Lt -> -1
-  | Cmp.Eq -> 0
-  | Cmp.Gt -> 1
-
-let sexp_of_t t =
-  Sexplib.Std.sexp_of_int t
-
-let t_of_sexp sexp =
-  Sexplib.Std.int_of_sexp sexp
 
 (*******************************************************************************
  * Begin tests.
@@ -425,15 +431,18 @@ let%expect_test "ops" =
 let%expect_test "rel" =
   let open Printf in
   let lambda x y = begin
-    printf "cmp %d %d -> %s\n" x y (Cmp.to_string (cmp x y));
+    printf "cmp %d %d -> %s\n"
+      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
     printf "%d >= %d -> %b\n" x y (x >= y);
     printf "%d <= %d -> %b\n" x y (x <= y);
     printf "%d = %d -> %b\n" x y (x = y);
     printf "%d > %d -> %b\n" x y (x > y);
     printf "%d < %d -> %b\n" x y (x < y);
     printf "%d <> %d -> %b\n" x y (x <> y);
-    printf "ascending %d %d -> %s\n" x y (Cmp.to_string (ascending x y));
-    printf "descending %d %d -> %s\n" x y (Cmp.to_string (descending x y));
+    printf "ascending %d %d -> %s\n"
+      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
+    printf "descending %d %d -> %s\n"
+      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
   lambda ~-1 0;
   printf "\n";
