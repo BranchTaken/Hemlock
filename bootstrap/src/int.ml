@@ -217,6 +217,18 @@ let%expect_test "string" =
     1
     |}]
 
+let%expect_test "sexp" =
+  let open Printf in
+  let t = 42 in
+  let sexp = sexp_of_t 42 in
+  printf "sexp_of_t %d -> %s\n" t (Sexplib.Sexp.to_string sexp);
+  printf "t_of_sexp -> %d\n" (t_of_sexp sexp);
+
+  [%expect{|
+    sexp_of_t 42 -> 42
+    t_of_sexp -> 42
+    |}]
+
 let%expect_test "limits" =
   let open Printf in
 
@@ -417,6 +429,15 @@ let%expect_test "ops" =
   printf "%d %% %d -> %d\n" x y (x % y);
   printf "%d ** %d -> %d\n" x y (x ** y);
   printf "%d // %d -> %.2f\n" x y (x // y);
+  let z = -2 in
+  printf "-(%d) -> %d\n" x (-x);
+  printf "~-(%d) -> %d\n" x ~-x;
+  printf "+(%d) -> %d\n" z (+z);
+  printf "~+(%d) -> %d\n" z ~+z;
+  printf "neg %d -> %d\n" x (neg x);
+  printf "neg %d -> %d\n" z (neg z);
+  printf "abs %d -> %d\n" x (abs x);
+  printf "abs %d -> %d\n" z (abs z);
 
   [%expect{|
     4 + 3 -> 7
@@ -426,6 +447,14 @@ let%expect_test "ops" =
     4 % 3 -> 1
     4 ** 3 -> 64
     4 // 3 -> 1.33
+    -(4) -> -4
+    ~-(4) -> -4
+    +(-2) -> -2
+    ~+(-2) -> -2
+    neg 4 -> -4
+    neg -2 -> 2
+    abs 4 -> 4
+    abs -2 -> 2
     |}]
 
 let%expect_test "rel" =
