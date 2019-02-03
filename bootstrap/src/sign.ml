@@ -1,3 +1,5 @@
+open Rudiments_functions
+
 type t =
 | Neg
 | Zero
@@ -9,7 +11,7 @@ let of_int x =
   | -1 -> Neg
   | 0 -> Zero
   | 1 -> Pos
-  | _ -> assert false
+  | _ -> not_reached ()
 
 let to_int t =
   match t with

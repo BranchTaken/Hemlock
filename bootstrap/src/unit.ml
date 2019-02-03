@@ -1,3 +1,5 @@
+open Rudiments
+
 type t = unit
 
 let cmp _ _ =
@@ -7,7 +9,7 @@ let of_string s =
   match s with
   | "unit"
   | "()" -> ()
-  | _ -> assert false
+  | _ -> not_reached ()
 
 let to_string _ =
   "()"

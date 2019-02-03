@@ -1,3 +1,5 @@
+open Rudiments
+
 module T = struct
   type t = bool
 
@@ -25,7 +27,7 @@ let of_string s =
   match s with
   | "false" -> false
   | "true" -> true
-  | _ -> assert false
+  | _ -> not_reached ()
 
 let to_string t =
   match t with

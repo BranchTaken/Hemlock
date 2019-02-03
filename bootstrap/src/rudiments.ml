@@ -1,11 +1,15 @@
-let not_reached () =
-  let () = prerr_string "Unreachable code reached\n" in
-  assert false
+type 'a array = 'a Array.t
 
-let not_implemented s =
-  let () = prerr_string ("Not implemented: " ^ s ^ "\n") in
-  assert false
+type i63 = I63.t
+module Int = I63
+type int = Int.t
 
-let halt s =
-  let () = prerr_string ("Halt: " ^ s ^ "\n") in
-  exit 1
+type u63 = U63.t
+module Uint = U63
+type uint = Uint.t
+
+type u8 = U8.t
+module Byte = U8
+type byte = Byte.t
+
+include Rudiments_functions
