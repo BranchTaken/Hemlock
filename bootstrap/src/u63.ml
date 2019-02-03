@@ -1,9 +1,15 @@
 module T = struct
-  type t = int
+  type t = I63.t
   let num_bits = Sys.int_size
 end
 include T
 include Intnb.Make_u(T)
+
+let of_int x =
+  x
+
+let to_int t =
+  t
 
 (*******************************************************************************
  * Begin tests.

@@ -38,6 +38,14 @@ module Make_common (T : I_common) : S_common with type t := int = struct
           | true -> (t asr (Sys.int_size - 1) lsl T.num_bits) lor t
         end
 
+    let narrow_of_signed = narrow
+
+    let narrow_of_unsigned t =
+      let nlb = Sys.int_size - T.num_bits in
+      match nlb with
+      | 0 ->  t
+      | _ -> ((1 lsl T.num_bits) - 1) land t
+
     let lbfill t =
       let nlb = Sys.int_size - T.num_bits in
       match nlb with

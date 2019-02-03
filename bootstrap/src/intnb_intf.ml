@@ -4,7 +4,7 @@ module type I = sig
 end
 
 module type S = sig
-  type t = int
+  type t [@@deriving compare]
 
   include Cmpable_intf.I_zero with type t := t
   include Cmpable_intf.S_rel with type t := t
@@ -14,7 +14,8 @@ module type S = sig
   include Stringable_intf.S with type t := t
   include Sexpable_intf.S with type t := t
 
-  val compare: t -> t -> int
+  val narrow_of_signed: t -> t
+  val narrow_of_unsigned: t -> t
 
   val min_value: t
   val max_value: t
