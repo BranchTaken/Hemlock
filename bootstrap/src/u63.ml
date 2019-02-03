@@ -5,11 +5,11 @@ end
 include T
 include Intnb.Make_u(T)
 
-let of_int x =
-  x
-
 let to_int t =
   t
+
+let of_int x =
+  x
 
 (*******************************************************************************
  * Begin tests.

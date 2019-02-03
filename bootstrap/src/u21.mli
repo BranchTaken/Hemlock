@@ -8,7 +8,3 @@ val of_int_hlt: I63.t -> t
 val to_uint: t -> U63.t
 val of_uint: U63.t -> t
 val of_uint_hlt: U63.t -> t
-
-val to_codepoint: t -> U21.t
-val of_codepoint: U21.t -> t
-val of_codepoint_hlt: U21.t -> t

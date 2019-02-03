@@ -8,6 +8,10 @@ type u63 = U63.t
 module Uint = U63
 type uint = Uint.t
 
+type u21 = U21.t
+module Codepoint = U21
+type codepoint = Codepoint.t
+
 type u8 = U8.t
 module Byte = U8
 type byte = Byte.t

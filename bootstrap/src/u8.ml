@@ -1,3 +1,5 @@
+open Rudiments_functions
+
 module T = struct
   type t = I63.t
   let num_bits = 8
@@ -5,17 +7,41 @@ end
 include T
 include Intnb.Make_u(T)
 
+let to_int t =
+  t
+
 let of_int x =
   narrow_of_signed x
 
-let to_int t =
+let of_int_hlt x =
+  let t = of_int x in
+  match (to_int t) = t with
+  | false -> halt "Lossy conversion"
+  | true -> t
+
+let to_uint t =
   t
 
 let of_uint x =
   narrow_of_unsigned x
 
-let to_uint t =
+let of_uint_hlt x =
+  let t = of_uint x in
+  match (to_uint t) = t with
+  | false -> halt "Lossy conversion"
+  | true -> t
+
+let to_codepoint t =
   t
+
+let of_codepoint x =
+  narrow_of_unsigned x
+
+let of_codepoint_hlt x =
+  let t = of_codepoint x in
+  match (to_codepoint t) = t with
+  | false -> halt "Lossy conversion"
+  | true -> t
 
 (*******************************************************************************
  * Begin tests.
@@ -141,6 +167,14 @@ let%expect_test "conversion" =
         let t' = of_uint u in
         printf "of_uint 0x%x -> to_uint 0x%x -> of_uint 0x%x -> 0x%x\n"
           x t u t';
+
+        let c = U21.of_uint x in
+        let t = of_codepoint c in
+        let c' = to_codepoint t in
+        let t' = of_codepoint c' in
+        printf ("Codepoint.of_uint 0x%x -> of_codepoint 0x%x -> " ^^
+          "to_codepoint 0x%x -> of_codepoint 0x%x -> 0x%x\n") x c t c' t';
+
         lambda xs'
       end
   in
@@ -149,20 +183,29 @@ let%expect_test "conversion" =
   [%expect{|
     of_int 0x7fffffffffffffff -> to_int 0xff -> of_int 0xff -> 0xff
     of_uint 0x7fffffffffffffff -> to_uint 0xff -> of_uint 0xff -> 0xff
+    Codepoint.of_uint 0x7fffffffffffffff -> of_codepoint 0x1fffff -> to_codepoint 0xff -> of_codepoint 0xff -> 0xff
     of_int 0x0 -> to_int 0x0 -> of_int 0x0 -> 0x0
     of_uint 0x0 -> to_uint 0x0 -> of_uint 0x0 -> 0x0
+    Codepoint.of_uint 0x0 -> of_codepoint 0x0 -> to_codepoint 0x0 -> of_codepoint 0x0 -> 0x0
     of_int 0x2a -> to_int 0x2a -> of_int 0x2a -> 0x2a
     of_uint 0x2a -> to_uint 0x2a -> of_uint 0x2a -> 0x2a
+    Codepoint.of_uint 0x2a -> of_codepoint 0x2a -> to_codepoint 0x2a -> of_codepoint 0x2a -> 0x2a
     of_int 0x7f -> to_int 0x7f -> of_int 0x7f -> 0x7f
     of_uint 0x7f -> to_uint 0x7f -> of_uint 0x7f -> 0x7f
+    Codepoint.of_uint 0x7f -> of_codepoint 0x7f -> to_codepoint 0x7f -> of_codepoint 0x7f -> 0x7f
     of_int 0x80 -> to_int 0x80 -> of_int 0x80 -> 0x80
     of_uint 0x80 -> to_uint 0x80 -> of_uint 0x80 -> 0x80
+    Codepoint.of_uint 0x80 -> of_codepoint 0x80 -> to_codepoint 0x80 -> of_codepoint 0x80 -> 0x80
     of_int 0xff -> to_int 0xff -> of_int 0xff -> 0xff
     of_uint 0xff -> to_uint 0xff -> of_uint 0xff -> 0xff
+    Codepoint.of_uint 0xff -> of_codepoint 0xff -> to_codepoint 0xff -> of_codepoint 0xff -> 0xff
     of_int 0x100 -> to_int 0x0 -> of_int 0x0 -> 0x0
     of_uint 0x100 -> to_uint 0x0 -> of_uint 0x0 -> 0x0
+    Codepoint.of_uint 0x100 -> of_codepoint 0x100 -> to_codepoint 0x0 -> of_codepoint 0x0 -> 0x0
     of_int 0x101 -> to_int 0x1 -> of_int 0x1 -> 0x1
     of_uint 0x101 -> to_uint 0x1 -> of_uint 0x1 -> 0x1
+    Codepoint.of_uint 0x101 -> of_codepoint 0x101 -> to_codepoint 0x1 -> of_codepoint 0x1 -> 0x1
     of_int 0x3fffffffffffffff -> to_int 0xff -> of_int 0xff -> 0xff
     of_uint 0x3fffffffffffffff -> to_uint 0xff -> of_uint 0xff -> 0xff
+    Codepoint.of_uint 0x3fffffffffffffff -> of_codepoint 0x1fffff -> to_codepoint 0xff -> of_codepoint 0xff -> 0xff
     |}]
