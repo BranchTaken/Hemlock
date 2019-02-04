@@ -1,3 +1,5 @@
+module Int = I63
+module Uint = U63
 open Rudiments_functions
 
 module T = struct
@@ -15,7 +17,8 @@ let of_int x =
 
 let of_int_hlt x =
   let t = of_int x in
-  match (to_int t) = t with
+  let x' = to_int t in
+  match Int.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 
@@ -27,7 +30,8 @@ let of_uint x =
 
 let of_uint_hlt x =
   let t = of_uint x in
-  match (to_uint t) = t with
+  let x' = to_uint t in
+  match Uint.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 

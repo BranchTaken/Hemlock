@@ -16,7 +16,19 @@ module Make_common (T : I_common) : S_common with type t := int = struct
 
     let zero = 0
 
+    let narrow t =
+      let nlb = Sys.int_size - T.num_bits in
+      match nlb with
+      | 0 ->  t
+      | _ -> begin
+          match T.signed with
+          | false -> ((1 lsl T.num_bits) - 1) land t
+          | true -> (t asr (Sys.int_size - 1) lsl T.num_bits) lor t
+        end
+
     let cmp t0 t1 =
+      assert (narrow t0 = t0);
+      assert (narrow t1 = t1);
       let rel = match T.signed || (Sys.int_size > T.num_bits) with
         | true -> compare t0 t1
         | false -> compare (t0 + min_int) (t1 + min_int)
@@ -27,16 +39,6 @@ module Make_common (T : I_common) : S_common with type t := int = struct
         Cmp.Eq
       else
         Cmp.Gt
-
-    let narrow t =
-      let nlb = Sys.int_size - T.num_bits in
-      match nlb with
-      | 0 ->  t
-      | _ -> begin
-          match T.signed with
-          | false -> ((1 lsl T.num_bits) - 1) land t
-          | true -> (t asr (Sys.int_size - 1) lsl T.num_bits) lor t
-        end
 
     let narrow_of_signed = narrow
 
