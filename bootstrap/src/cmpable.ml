@@ -58,19 +58,30 @@ module Make_rel (T : I) : S_rel with type t := T.t = struct
     | Lt -> Cmp.Gt
     | Eq -> Cmp.Eq
     | Gt -> Cmp.Lt
+end
 
+module Make_range (T : I) : S_range with type t := T.t = struct
   let clamp t ~min ~max =
-    assert (min <= max);
-    match min <= t with
-    | false -> min
-    | true -> begin
-        match t <= max with
-        | false -> max
-        | true -> t
+    assert (match T.cmp min max with
+      | Lt
+      | Eq -> true
+      | Gt -> false
+    );
+    match T.cmp t min with
+    | Lt -> min
+    | Eq
+    | Gt -> begin
+        match T.cmp t max with
+        | Lt
+        | Eq -> t
+        | Gt -> max
       end
 
   let between t ~low ~high =
-    t = (clamp t ~min:low ~max:high)
+    match T.cmp t (clamp t ~min:low ~max:high) with
+    | Lt -> false
+    | Eq -> true
+    | Gt -> false
 end
 
 module Make_zero (T : I_zero) : S_zero with type t := T.t = struct

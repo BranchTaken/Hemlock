@@ -24,6 +24,10 @@ module type S_rel = sig
   val ( <> ): t -> t -> bool
   val ascending: t -> t -> Cmp.t
   val descending: t -> t -> Cmp.t
+end
+
+module type S_range = sig
+  type t
   val clamp: t -> min:t -> max:t -> t
   val between: t -> low:t -> high:t -> bool
 end

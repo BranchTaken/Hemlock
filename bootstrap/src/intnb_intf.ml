@@ -8,6 +8,7 @@ module type S = sig
 
   include Cmpable_intf.I_zero with type t := t
   include Cmpable_intf.S_rel with type t := t
+  include Cmpable_intf.S_range with type t := t
   include Cmpable_intf.S_zero with type t := t
 
   include Floatable_intf.S with type t := t

@@ -246,6 +246,7 @@ module Make_common (T : I_common) : S_common with type t := int = struct
   end
   include U
   include Cmpable.Make_rel(U)
+  include Cmpable.Make_range(U)
   include Cmpable.Make_zero(U)
 end
 
