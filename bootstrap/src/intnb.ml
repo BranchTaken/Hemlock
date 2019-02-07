@@ -14,6 +14,8 @@ module Make_common (T : I_common) : S_common with type t := int = struct
   module U = struct
     type t = int
 
+    let hash = Hash.hash
+
     let zero = 0
 
     let narrow t =
@@ -245,8 +247,7 @@ module Make_common (T : I_common) : S_common with type t := int = struct
       | Gt -> t0
   end
   include U
-  include Cmpable.Make_rel(U)
-  include Cmpable.Make_range(U)
+  include Identifiable.Make(U)
   include Cmpable.Make_zero(U)
 end
 

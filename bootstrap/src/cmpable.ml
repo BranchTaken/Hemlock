@@ -1,20 +1,8 @@
 open Cmpable_intf
 
-module Make_eq (T : I) : S_eq with type t := T.t = struct
-  let ( = ) t0 t1 =
-    match T.cmp t0 t1 with
-    | Lt -> false
-    | Eq -> true
-    | Gt -> false
+module Make (T : I) : S with type t := T.t = struct
+  let cmp = T.cmp
 
-  let ( <> ) t0 t1 =
-    match T.cmp t0 t1 with
-    | Lt -> true
-    | Eq -> false
-    | Gt -> true
-end
-
-module Make_rel (T : I) : S_rel with type t := T.t = struct
   let ( >= ) t0 t1 =
     match T.cmp t0 t1 with
     | Lt -> false
@@ -58,9 +46,7 @@ module Make_rel (T : I) : S_rel with type t := T.t = struct
     | Lt -> Cmp.Gt
     | Eq -> Cmp.Eq
     | Gt -> Cmp.Lt
-end
 
-module Make_range (T : I) : S_range with type t := T.t = struct
   let clamp t ~min ~max =
     assert (match T.cmp min max with
       | Lt
@@ -85,6 +71,9 @@ module Make_range (T : I) : S_range with type t := T.t = struct
 end
 
 module Make_zero (T : I_zero) : S_zero with type t := T.t = struct
+  let cmp = T.cmp
+  let zero = T.zero
+
   let is_positive t =
     match T.cmp t T.zero with
     | Lt

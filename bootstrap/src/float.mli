@@ -1,12 +1,7 @@
 type t = float [@@deriving compare]
 
+include Identifiable_intf.S with type t := t
 include Intable_intf.S with type t := t
-include Stringable_intf.S with type t := t
-include Sexpable_intf.S with type t := t
-
-include Cmpable_intf.I_zero with type t := t
-include Cmpable_intf.S_rel with type t := t
-include Cmpable_intf.S_zero with type t := t
 
 module Dir: sig
   type t =

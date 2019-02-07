@@ -6,14 +6,9 @@ end
 module type S = sig
   type t [@@deriving compare]
 
-  include Cmpable_intf.I_zero with type t := t
-  include Cmpable_intf.S_rel with type t := t
-  include Cmpable_intf.S_range with type t := t
+  include Identifiable_intf.S with type t := t
   include Cmpable_intf.S_zero with type t := t
-
   include Floatable_intf.S with type t := t
-  include Stringable_intf.S with type t := t
-  include Sexpable_intf.S with type t := t
 
   val narrow_of_signed: t -> t
   val narrow_of_unsigned: t -> t

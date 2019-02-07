@@ -8,14 +8,8 @@ module type I_zero = sig
   val zero: t
 end
 
-module type S_eq = sig
-  type t
-  val ( = ): t -> t -> bool
-  val ( <> ): t -> t -> bool
-end
-
-module type S_rel = sig
-  type t
+module type S = sig
+  include I
   val ( >= ): t -> t -> bool
   val ( <= ): t -> t -> bool
   val ( = ): t -> t -> bool
@@ -24,16 +18,12 @@ module type S_rel = sig
   val ( <> ): t -> t -> bool
   val ascending: t -> t -> Cmp.t
   val descending: t -> t -> Cmp.t
-end
-
-module type S_range = sig
-  type t
   val clamp: t -> min:t -> max:t -> t
   val between: t -> low:t -> high:t -> bool
 end
 
 module type S_zero = sig
-  type t
+  include I_zero
   val is_positive: t -> bool
   val is_non_negative: t -> bool
   val is_negative: t -> bool

@@ -3,15 +3,34 @@ open Rudiments
 module T = struct
   type t = bool
 
+  let hash = Hash.hash
+
   let cmp t0 t1 =
     match t0, t1 with
     | false, true -> Cmp.Lt
     | false, false
     | true, true -> Cmp.Eq
     | true, false -> Cmp.Gt
+
+  let sexp_of_t t =
+    Sexplib.Std.sexp_of_bool t
+
+  let t_of_sexp sexp =
+    Sexplib.Std.bool_of_sexp sexp
+
+  let of_string s =
+    match s with
+    | "false" -> false
+    | "true" -> true
+    | _ -> not_reached ()
+
+  let to_string t =
+    match t with
+    | false -> "false"
+    | true -> "true"
 end
 include T
-include Cmpable.Make_eq(T)
+include Identifiable.Make(T)
 
 let of_int x =
   match x with
@@ -23,28 +42,11 @@ let to_int t =
   | false -> 0
   | true -> 1
 
-let of_string s =
-  match s with
-  | "false" -> false
-  | "true" -> true
-  | _ -> not_reached ()
-
-let to_string t =
-  match t with
-  | false -> "false"
-  | true -> "true"
-
 let compare t0 t1 =
   match cmp t0 t1 with
   | Cmp.Lt -> -1
   | Cmp.Eq -> 0
   | Cmp.Gt -> 1
-
-let sexp_of_t t =
-  Sexplib.Std.sexp_of_bool t
-
-let t_of_sexp sexp =
-  Sexplib.Std.bool_of_sexp sexp
 
 let not t =
   match t with

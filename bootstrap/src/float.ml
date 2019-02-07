@@ -3,6 +3,8 @@ open Rudiments
 module T = struct
   type t = float
 
+  let hash = Hash.hash
+
   let cmp t0 t1 =
     let rel = compare t0 t1 in
     if rel < 0 then
@@ -12,10 +14,22 @@ module T = struct
     else
       Cmp.Gt
 
+  let sexp_of_t t =
+    Sexplib.Std.sexp_of_float t
+
+  let t_of_sexp sexp =
+    Sexplib.Std.float_of_sexp sexp
+
+  let of_string s =
+    float_of_string s
+
+  let to_string t =
+    string_of_float t
+
   let zero = 0.
 end
 include T
-include Cmpable.Make_rel(T)
+include Identifiable.Make(T)
 include Cmpable.Make_zero(T)
 
 let of_int x =
@@ -24,23 +38,11 @@ let of_int x =
 let to_int t =
   int_of_float t
 
-let of_string s =
-  float_of_string s
-
-let to_string t =
-  string_of_float t
-
 let compare t0 t1 =
   match cmp t0 t1 with
   | Cmp.Lt -> -1
   | Cmp.Eq -> 0
   | Cmp.Gt -> 1
-
-let sexp_of_t t =
-  Sexplib.Std.sexp_of_float t
-
-let t_of_sexp sexp =
-  Sexplib.Std.float_of_sexp sexp
 
 module Dir = struct
   type t =
