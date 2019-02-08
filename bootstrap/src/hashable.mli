@@ -1,9 +1,8 @@
 open Hashable_intf
 
 type 'a t = {
-  hash: 'a -> Hash.t;
+  hash_fold: Hash.state -> 'a -> Hash.state;
   cmp: 'a -> 'a -> Cmp.t;
-  sexp_of_t: 'a -> Sexplib0.Sexp.t;
 }
 
 val of_key: (module Key with type t = 'a) -> 'a t

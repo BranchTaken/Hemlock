@@ -3,7 +3,7 @@ open Rudiments
 module T = struct
   type t = bool
 
-  let hash = Hash.hash
+  let hash_fold = Hash.hash_fold
 
   let cmp t0 t1 =
     match t0, t1 with

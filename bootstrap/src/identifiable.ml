@@ -1,7 +1,7 @@
 open Identifiable_intf
 
 module Make (T : I) : S with type t := T.t = struct
-  let hash = T.hash
+  let hash_fold = T.hash_fold
 
   let t_of_sexp = T.t_of_sexp
   let sexp_of_t = T.sexp_of_t

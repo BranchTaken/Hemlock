@@ -14,7 +14,7 @@ module Make_common (T : I_common) : S_common with type t := int = struct
   module U = struct
     type t = int
 
-    let hash = Hash.hash
+    let hash_fold = Hash.hash_fold
 
     let zero = 0
 

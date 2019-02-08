@@ -1,6 +1,5 @@
 module type Key = sig
   type t
-  val hash: t -> Hash.t
+  val hash_fold: Hash.state -> t -> Hash.state
   val cmp: t -> t -> Cmp.t
-  val sexp_of_t: t -> Sexplib0.Sexp.t
 end

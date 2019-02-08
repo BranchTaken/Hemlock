@@ -1,30 +1,26 @@
 module type Key = sig
   type t
-  val hash: t -> Hash.t
+  val hash_fold: Hash.state -> t -> Hash.state
   val cmp: t -> t -> Cmp.t
-  val sexp_of_t: t -> Sexplib0.Sexp.t
 end
 
 type 'a t = {
-  hash: 'a -> Hash.t;
+  hash_fold: Hash.state -> 'a -> Hash.state;
   cmp: 'a -> 'a -> Cmp.t;
-  sexp_of_t: 'a -> Sexplib0.Sexp.t;
 }
 
 let of_key (type a) (module Key: Key with type t = a) =
   {
-    hash = Key.hash;
+    hash_fold = Key.hash_fold;
     cmp = Key.cmp;
-    sexp_of_t = Key.sexp_of_t;
   }
 
-let to_key (type a) {hash; cmp; sexp_of_t} =
+let to_key (type a) {hash_fold; cmp} =
   (
     module struct
       type t = a
-      let hash = hash
+      let hash_fold = hash_fold
       let cmp = cmp
-      let sexp_of_t = sexp_of_t
     end
     : Key with type t = a
   )

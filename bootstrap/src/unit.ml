@@ -3,7 +3,7 @@ open Rudiments
 module T = struct
   type t = unit
 
-  let hash = Hash.hash
+  let hash_fold = Hash.hash_fold
 
   let cmp _ _ =
     Cmp.Eq
