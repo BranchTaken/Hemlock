@@ -1,10 +1,12 @@
 (* Aliases. *)
+
 module Int = I63
 module Uint = U63
 module Codepoint = U21
 module Byte = U8
 
 (* Types. *)
+
 type 'a array = 'a Array.t
 
 type i63 = I63.t

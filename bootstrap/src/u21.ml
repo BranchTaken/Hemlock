@@ -1,9 +1,12 @@
+(* Partial Rudiments. *)
 module Int = I63
 module Uint = U63
+type int = Int.t
+type uint = Uint.t
 open Rudiments_functions
 
 module T = struct
-  type t = I63.t
+  type t = uint
   let num_bits = 21
 end
 include T

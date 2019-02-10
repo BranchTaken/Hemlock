@@ -1,10 +1,14 @@
+(* Partial Rudiments. *)
 module Int = I63
 module Uint = U63
 module Codepoint = U21
+type int = Int.t
+type uint = Uint.t
+type codepoint = Codepoint.t
 open Rudiments_functions
 
 module T = struct
-  type t = I63.t
+  type t = uint
   let num_bits = 8
 end
 include T

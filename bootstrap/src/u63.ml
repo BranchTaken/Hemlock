@@ -1,5 +1,9 @@
+(* Partial Rudiments. *)
+module Int = I63
+type int = I63.t
+
 module T = struct
-  type t = I63.t
+  type t = int
   let num_bits = Sys.int_size
 end
 include T
