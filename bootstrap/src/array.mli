@@ -1,9 +1,24 @@
 type 'a t [@@deriving sexp, compare]
 
 val empty: 'a t
+
+module Seq : sig
+  type 'a outer = 'a t
+  module type S = sig
+    type t
+    type elm
+    val to_array: t -> elm outer
+  end
+
+  module Make (T : Seq_intf.I_def) : S with type t := T.t and type elm := T.elm
+  module Make_rev (T : Seq_intf.I_def) : S with type t := T.t and type elm := T.elm
+end
+
 val init: int -> f:(int -> 'a) -> 'a t
 val of_list: 'a list -> 'a t
+val of_list_rev: 'a list -> 'a t
 val to_list: 'a t -> 'a list
+val to_list_rev: 'a t -> 'a list
 
 val length: 'a t -> int
 val is_empty: 'a t -> bool
@@ -41,7 +56,6 @@ val foldi_until: 'a t -> init:'accum -> f:(int -> 'accum -> 'a -> 'accum * bool)
  * sum
  * find
  * find_map
- * to_vector, of_vector
  * min_elt, max_elt
  * max_length
  * make_matrix, init_matrix

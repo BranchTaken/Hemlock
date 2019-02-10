@@ -1,119 +1,200 @@
+module Int = I63
 open Rudiments_functions
 
 type 'a t = 'a array
 
 let empty = [||]
 
+module Seq = struct
+  type 'a outer = 'a t
+  module type S = sig
+    type t
+    type elm
+    val to_array: t -> elm outer
+  end
+
+  module Make (T : Seq_intf.I_def) : S with type t := T.t
+                                        and type elm := T.elm = struct
+    let to_array t =
+      let l = T.length t in
+      match l with
+      | 0 -> empty
+      | _ -> begin
+          let rec fn t a i = begin
+            match Int.(i = l) with
+            | true -> a
+            | false -> begin
+                let elm, t' = T.next t in
+                let () = Stdlib.Array.set a i elm in
+                let i' = succ i in
+                fn t' a i'
+              end
+          end in
+          let elm0, t' = T.next t in
+          let a = Stdlib.Array.make l elm0 in
+          fn t' a 1
+        end
+  end
+
+  module Make_rev (T : Seq_intf.I_def) : S with type t := T.t
+                                            and type elm := T.elm = struct
+    let to_array t =
+      let l = T.length t in
+      match l with
+      | 0 -> empty
+      | _ -> begin
+          let rec fn t a i = begin
+            match Int.(i = 0) with
+            | true -> a
+            | false -> begin
+                let elm, t' = T.next t in
+                let i' = pred i in
+                let () = Stdlib.Array.set a i' elm in
+                fn t' a i'
+              end
+          end in
+          let elm, t' = T.next t in
+          let a = Stdlib.Array.make l elm in
+          fn t' a (pred l)
+        end
+  end
+end
+
 let init n ~f =
   Stdlib.Array.init n f
 
 let of_list l =
+  (* XXX Use Seq.Make. *)
   Stdlib.Array.of_list l
 
-let to_list v =
-  Stdlib.Array.to_list v
+let of_list_rev l =
+  (* XXX Use Seq.Make_rev. *)
+  Stdlib.Array.of_list (List.rev l)
 
-let length v =
-  Stdlib.Array.length v
+let to_list a =
+  (* XXX Use fold_right. *)
+  Stdlib.Array.to_list a
 
-let is_empty v =
-  (length v) = 0
+let to_list_rev a =
+  (* XXX Use fold. *)
+  List.rev (Stdlib.Array.to_list a)
 
-let get v i =
-  Stdlib.Array.get v i
+let length a =
+  Stdlib.Array.length a
 
-let mutate v i x =
-  Stdlib.Array.set v i x
+let is_empty a =
+  (length a) = 0
 
-let copy v =
-  Stdlib.Array.copy v
+let get a i =
+  Stdlib.Array.get a i
 
-let slice v start stop =
-  Stdlib.Array.sub v start stop
+let mutate a i x =
+  Stdlib.Array.set a i x
 
-let set v i x =
-  let v' = copy v in
+let copy a =
+  (* XXX Use Seq.Make. *)
+  Stdlib.Array.copy a
+
+let slice a start stop =
+  (* XXX Use Seq.Make. *)
+  Stdlib.Array.sub a start stop
+
+let set a i x =
+  let v' = copy a in
   mutate v' i x;
   v'
 
-let concat vl =
-  Stdlib.Array.concat vl
+let concat al =
+  (* XXX Use Seq.Make. *)
+  Stdlib.Array.concat al
 
-let append v0 v1 =
-  concat [v0; v1]
+let append a0 a1 =
+  concat [a0; a1]
 
-let append_one v x =
-  append v (of_list [x])
+let append_one a x =
+  append a (of_list [x])
 
-let insert v i x =
-  let len = length v in
-  if i = 0 then
-    append (of_list [x]) v
-  else if i < len then
-    concat [(slice v 0 i); (of_list [x]); (slice v i len)]
+let insert a i x =
+  let len = length a in
+  if Int.(i = 0) then
+    append (of_list [x]) a
+  else if Int.(i < len) then
+    concat [(slice a 0 i); (of_list [x]); (slice a i len)]
   else
-    append v (of_list [x])
+    append a (of_list [x])
 
-let remove v i =
-  let len = length v in
+let remove a i =
+  let len = length a in
   match len with
   | 0 ->
     ignore (assert (i = 0));
     empty
   | _ -> begin
-      if i = 0 then
-        slice v 1 len
-      else if i < len then
-        concat [(slice v 0 i); (slice v (i + 1) len)]
+      if Int.(i = 0) then
+        slice a 1 len
+      else if Int.(i < len) then
+        concat [(slice a 0 i); (slice a (i + 1) len)]
       else
-        slice v 0 (len - 1)
+        slice a 0 (len - 1)
     end
 
-let iter v ~f =
-  Stdlib.Array.iter f v
+(* XXX Rewrite without Stdlib dependency. *)
+let iter a ~f =
+  Stdlib.Array.iter f a
 
-let iteri v ~f =
-  Stdlib.Array.iteri f v
+(* XXX Rewrite without Stdlib dependency. *)
+let iteri a ~f =
+  Stdlib.Array.iteri f a
 
-let fold v ~init ~f =
-  Stdlib.Array.fold_left f init v
+(* XXX Rewrite based on fold_until. *)
+let fold a ~init ~f =
+  Stdlib.Array.fold_left f init a
 
-let fold_right v ~init ~f =
-  Stdlib.Array.fold_right f v init
+(* XXX Create fold_right_until, rewrite fold_right to use it. *)
+let fold_right a ~init ~f =
+  Stdlib.Array.fold_right f a init
 
-let foldi v ~init ~f =
-  let accum, _ = fold v ~init:(init, 0) ~f:(fun (accum, i) v ->
+let foldi a ~init ~f =
+  let accum, _ = fold a ~init:(init, 0) ~f:(fun (accum, i) v ->
     let accum' = f i accum v in
     (accum', i + 1)
   ) in
   accum
 
-let foldi_until v ~init ~f =
-  let rec lambda accum i = begin
-    let elm = get v i in
-    let (accum', until) = f i accum elm in
-    match until with
-    | true -> accum'
-    | false -> lambda accum' (i + 1)
+let foldi_until a ~init ~f =
+  let rec fn accum i = begin
+    match Int.( = ) i (length a) with
+    | true -> accum
+    | false -> begin
+        let elm = get a i in
+        let (accum', until) = f i accum elm in
+        match until with
+        | true -> accum'
+        | false -> fn accum' (i + 1)
+      end
   end in
-  lambda init 0
+  fn init 0
 
-let fold_until v ~init ~f =
-  let rec lambda accum i = begin
-    let elm = get v i in
-    let (accum', until) = f accum elm in
-    match until with
-    | true -> accum'
-    | false -> lambda accum' (i + 1)
+let fold_until a ~init ~f =
+  let rec fn accum i = begin
+    match Int.( = ) i (length a) with
+    | true -> accum
+    | false -> begin
+        let elm = get a i in
+        let (accum', until) = f accum elm in
+        match until with
+        | true -> accum'
+        | false -> fn accum' (i + 1)
+      end
   end in
-  lambda init 0
+  fn init 0
 
-let compare cmp v0 v1 =
-  let rel = foldi_until v0 ~init:0 ~f:(fun i _ elm ->
-    match (length v1) <= i with
+let compare cmp a0 a1 =
+  let rel = foldi_until a0 ~init:0 ~f:(fun i _ elm ->
+    match Int.( <= ) (length a1) i with
     | true -> 1, true
     | false -> begin
-        let rel = cmp elm (get v1 i) in
+        let rel = cmp elm (get a1 i) in
         match rel with
         | -1 | 1 -> rel, true
         | 0 -> 0, false
@@ -122,9 +203,7 @@ let compare cmp v0 v1 =
   ) in
   match rel with
   | -1 | 1 -> rel
-  | 0 -> begin
-      compare (length v0) (length v1)
-    end
+  | 0 -> compare (length a0) (length a1)
   | _ -> not_reached ()
 
 let sexp_of_t t =
@@ -132,3 +211,9 @@ let sexp_of_t t =
 
 let t_of_sexp sexp =
   Sexplib.Std.array_of_sexp sexp
+
+(*******************************************************************************
+ * Begin tests.
+ *)
+
+(* XXX Add tests. *)
