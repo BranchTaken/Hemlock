@@ -26,7 +26,7 @@ module type S = sig
   val bit_xor: t -> t -> t
   val bit_not: t -> t
   val bit_sl: t -> t -> t
-  val bit_usr: t -> t -> t
+  val bit_usr: t -> int -> t
   val bit_pop: t -> t
   val bit_clz: t -> t
   val bit_ctz: t -> t
@@ -58,7 +58,7 @@ module type S_i = sig
 
   val neg_one: t
 
-  val bit_ssr: t -> t -> t
+  val bit_ssr: t -> int -> t
 
   val ( ~- ): t -> t
   val ( ~+ ): t -> t
