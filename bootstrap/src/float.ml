@@ -247,7 +247,7 @@ let int_pow t x =
     else
       false, x
   in
-  let rec lambda r p n = begin
+  let rec fn r p n = begin
     match n with
     | 0 -> r
     | _ -> begin
@@ -258,10 +258,10 @@ let int_pow t x =
         in
         let p' = p * p in
         let n' = Int.bit_usr n 1 in
-        lambda r' p' n'
+        fn r' p' n'
       end
   end in
-  let r = lambda 1. t n in
+  let r = fn 1. t n in
   match neg with
     | false -> r
     | true -> 1. / r
@@ -269,12 +269,12 @@ let int_pow t x =
 let lngamma_impl t =
   let f, t' = match t < 7. with
     | true -> begin
-        let rec lambda f z = begin
+        let rec fn f z = begin
           match z < 7. with
           | false -> -ln f, z
-          | true -> lambda (f * z) (z + 1.)
+          | true -> fn (f * z) (z + 1.)
         end in
-        lambda t (t + 1.)
+        fn t (t + 1.)
       end
     | false -> 0., t
   in
@@ -368,16 +368,16 @@ let tanh t =
 
 let%expect_test "create" =
   let open Printf in
-  let rec lambda tups = begin
+  let rec fn tups = begin
     match tups with
     | [] -> ()
     | (n, e, m) :: tups' -> begin
         let f = create ~neg:n ~exponent:e ~mantissa:m in
         printf "n=%b, e=%d, m=0x%x -> %h -> n=%b, e=%d, m=0x%x\n" n e m f n e m;
-        lambda tups'
+        fn tups'
       end
   end in
-  lambda [
+  fn [
     (* Infinite. *)
     (true, 1024, 0);
     (false, 1024, 0);
@@ -434,7 +434,7 @@ let%expect_test "create" =
 
 let%expect_test "m2x_f2x" =
   let open Printf in
-  let rec lambda tups = begin
+  let rec fn tups = begin
     match tups with
     | [] -> ()
     | (n, e, m) :: tups' -> begin
@@ -442,10 +442,10 @@ let%expect_test "m2x_f2x" =
         let m, x = m2x f in
         let f' = f2x m x in
         printf "m2x %h -> f2x %h %d -> %h\n" f m x f';
-        lambda tups'
+        fn tups'
       end
   end in
-  lambda [
+  fn [
     (* Infinite. *)
     (true, 1024, 0);
     (false, 1024, 0);
@@ -568,16 +568,16 @@ let%expect_test "operators" =
 
 let%expect_test "classify" =
   let open Printf in
-  let rec lambda ts = begin
+  let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
         printf "%h -> %s\n"
           t (Sexplib.Sexp.to_string (Class.sexp_of_t (classify t)));
-        lambda ts'
+        fn ts'
       end
   end in
-  lambda [
+  fn [
     inf; -inf;
     nan;
     -1.; 1.;
@@ -599,17 +599,17 @@ let%expect_test "classify" =
 
 let%expect_test "round" =
   let open Printf in
-  let rec lambda ts = begin
+  let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
         printf ("round %h -> (Down: %h) (Up: %h) (Nearest: %h) ([default]: %h)"
         ^^ " (Zero: %h)\n") t (round ~dir:Down t) (round ~dir:Up t)
             (round ~dir:Nearest t) (round t) (round ~dir:Zero t);
-        lambda ts'
+        fn ts'
       end
   end in
-  lambda [
+  fn [
     nan;
     neg_inf;
     -0x1.0_0000_0000_0001;
@@ -677,15 +677,15 @@ let%expect_test "min_max" =
 
 let%expect_test "ex" =
   let open Printf in
-  let rec lambda ts = begin
+  let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
         printf "ex %h -> %h\n" t (ex t);
-        lambda ts'
+        fn ts'
       end
   end in
-  lambda [
+  fn [
     inf; -inf;
     nan;
     -1.; 1.;
@@ -704,15 +704,15 @@ let%expect_test "ex" =
 
 let%expect_test "lg" =
   let open Printf in
-  let rec lambda ts = begin
+  let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
         printf "lg %h -> %h\n" t (lg t);
-        lambda ts'
+        fn ts'
       end
   end in
-  lambda [
+  fn [
     inf; -inf;
     nan;
     -1.; 1.;
@@ -734,15 +734,15 @@ let%expect_test "lg" =
 
 let%expect_test "ln" =
   let open Printf in
-  let rec lambda ts = begin
+  let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
         printf "ln %h -> %h\n" t (ln t);
-        lambda ts'
+        fn ts'
       end
   end in
-  lambda [
+  fn [
     inf; -inf;
     nan;
     -1.; 1.;
@@ -764,15 +764,15 @@ let%expect_test "ln" =
 
 let%expect_test "ln1p" =
   let open Printf in
-  let rec lambda ts = begin
+  let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
         printf "ln,ln1p %h -> %h %h\n" t (ln (1. + t)) (ln1p t);
-        lambda ts'
+        fn ts'
       end
   end in
-  lambda [
+  fn [
     inf; -inf;
     nan;
     -2.; -1.; 1.;
@@ -798,15 +798,15 @@ let%expect_test "ln1p" =
 
 let%expect_test "log" =
   let open Printf in
-  let rec lambda ts = begin
+  let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
         printf "log %h -> %h\n" t (log t);
-        lambda ts'
+        fn ts'
       end
   end in
-  lambda [
+  fn [
     inf; -inf;
     nan;
     -1.; 1.;
@@ -828,17 +828,17 @@ let%expect_test "log" =
 
 let%expect_test "pow" =
   let open Printf in
-  let rec lambda pairs = begin
+  let rec fn pairs = begin
     match pairs with
     | [] -> ()
     | (b, x) :: pairs' -> begin
         let xf = (of_int x) in
         printf "** pow int_pow %h %d -> %h %h %h\n"
           b x (b ** xf) (pow b xf) (int_pow b x);
-        lambda pairs'
+        fn pairs'
       end
   end in
-  lambda [
+  fn [
     (3., -3);
     (-1., 61);
     (1., 61);
@@ -878,15 +878,15 @@ let%expect_test "lngamma" =
     printf "lngamma %.2f -> %.9f\n" x (lngamma x);
   done;
 
-  let rec lambda xs = begin
+  let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
         printf "lngamma %.2f -> %.5e\n" x (lngamma x);
-        lambda xs'
+        fn xs'
       end
   end in
-  lambda [neg_inf; -1.; -0.; 0.; inf; nan];
+  fn [neg_inf; -1.; -0.; 0.; inf; nan];
 
   [%expect{|
     lngamma 0.25 -> 1.288022525
@@ -939,15 +939,15 @@ let%expect_test "lngamma" =
 
 let%expect_test "gamma" =
   let open Printf in
-  let rec lambda xs = begin
+  let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
         printf "gamma %.2f -> %.5e\n" x (gamma x);
-        lambda xs'
+        fn xs'
       end
   end in
-  lambda [-1.; -0.; 0.; 0.5; 10.; 171.6; 171.7; inf; nan];
+  fn [-1.; -0.; 0.; 0.5; 10.; 171.6; 171.7; inf; nan];
 
   [%expect{|
     gamma -1.00 -> nan
@@ -963,15 +963,15 @@ let%expect_test "gamma" =
 
 let%expect_test "rt" =
   let open Printf in
-  let rec lambda xs = begin
+  let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
         printf "%f: sqrt=%f cbrt=%f\n" x (sqrt x) (cbrt x);
-        lambda xs'
+        fn xs'
       end
   end in
-  lambda [-0.125; 0.; inf; 1.; 4.; 27.; 64.; 65.; 729.];
+  fn [-0.125; 0.; inf; 1.; 4.; 27.; 64.; 65.; 729.];
 
   [%expect{|
     -0.125000: sqrt=-nan cbrt=-0.500000
@@ -987,15 +987,15 @@ let%expect_test "rt" =
 
 let%expect_test "hypot" =
   let open Printf in
-  let rec lambda xys = begin
+  let rec fn xys = begin
     match xys with
     | [] -> ()
     | (x, y) :: xys' -> begin
         printf "x=%f y=%f: hypot=%f\n" x y (hypot x y);
-        lambda xys'
+        fn xys'
       end
   end in
-  lambda [(3., 4.); (4., 3.); (-3., -4.);
+  fn [(3., 4.); (4., 3.); (-3., -4.);
           (-0., -3.); (0., -3.);
           (3., inf); (nan, inf); (neg_inf, nan);
          ];
@@ -1013,7 +1013,7 @@ let%expect_test "hypot" =
 
 let%expect_test "trig" =
   let open Printf in
-  let rec lambda = function
+  let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
         let sin_t = sin t in
@@ -1022,10 +1022,10 @@ let%expect_test "trig" =
         printf "sin cos tan %.5f -> %.5f %.5f %.5f\n" t sin_t cos_t tan_t;
         printf "asin acos atan atan2 -> %.5f %.5f %.5f %.5f\n"
           (asin sin_t) (acos cos_t) (atan tan_t) (atan2 sin_t cos_t);
-        lambda ts'
+        fn ts'
       end
   in
-  lambda [
+  fn [
     0.; (pi / 6.); (pi / 4.); (2./3. * pi); pi; (4./3. * pi); (2. * pi);
   ];
 
