@@ -206,7 +206,7 @@ module Make_common (T : I_common) : S_common with type t := int = struct
         else
           false, t1
       in
-      let rec lambda r p n = begin
+      let rec fn r p n = begin
         match n with
         | 0 -> r
         | _ -> begin
@@ -217,10 +217,10 @@ module Make_common (T : I_common) : S_common with type t := int = struct
             in
             let p' = p * p in
             let n' = bit_usr n 1 in
-            lambda r' p' n'
+            fn r' p' n'
           end
       end in
-      let r = lambda 1 t0 n in
+      let r = fn 1 t0 n in
       narrow (
         match neg with
         | false -> r

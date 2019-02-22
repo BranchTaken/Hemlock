@@ -73,7 +73,7 @@ let%expect_test "constants" =
 let%expect_test "is_" =
   let open Printf in
   let ns = [-1; 0; 1] in
-  let rec lambda ns = begin
+  let rec fn ns = begin
     match ns with
     | [] -> ()
     | n :: ns' -> begin
@@ -83,10 +83,10 @@ let%expect_test "is_" =
         printf "  is_negative    =%b\n" (is_negative n);
         printf "  is_non_positive=%b\n" (is_non_positive n);
         printf "\n";
-        lambda ns'
+        fn ns'
       end
   end in
-  lambda ns;
+  fn ns;
 
   [%expect{|
     -1
@@ -140,17 +140,17 @@ let%expect_test "bit_" =
   printf "bit_usr 0x%x %d -> 0x%x\n" x s (bit_usr x s);
   printf "bit_ssr 0x%x %d -> 0x%x\n" x s (bit_ssr x s);
 
-  let rec lambda xs = begin
+  let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
         printf "bit_pop 0x%x -> %d\n" x (bit_pop x);
         printf "bit_clz 0x%x -> %d\n" x (bit_clz x);
         printf "bit_ctz 0x%x -> %d\n" x (bit_ctz x);
-        lambda xs'
+        fn xs'
       end
   end in
-  lambda [-1; 0; 1; min_value; max_value; 0xf73100];
+  fn [-1; 0; 1; min_value; max_value; 0xf73100];
 
   [%expect{|
     bit_and 0x3 0x5 -> 0x1
@@ -182,7 +182,7 @@ let%expect_test "bit_" =
 
 let%expect_test "pow2_lg" =
   let open Printf in
-  let rec lambda xs = begin
+  let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
@@ -193,10 +193,10 @@ let%expect_test "pow2_lg" =
           printf "floor_lg 0x%x -> %d\n" x (floor_lg x);
           printf "ceil_lg 0x%x -> %d\n" x (ceil_lg x)
         end;
-        lambda xs'
+        fn xs'
       end
   end in
-  lambda [0; 1; 2; 3; 4; 0xf0; max_value];
+  fn [0; 1; 2; 3; 4; 0xf0; max_value];
 
   [%expect{|
     is_pow2 0x0 -> true
@@ -275,7 +275,7 @@ let%expect_test "ops" =
 
 let%expect_test "rel" =
   let open Printf in
-  let lambda x y = begin
+  let fn x y = begin
     printf "cmp %d %d -> %s\n"
       x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
     printf "%d >= %d -> %b\n" x y (x >= y);
@@ -289,22 +289,22 @@ let%expect_test "rel" =
     printf "descending %d %d -> %s\n"
       x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
-  lambda ~-1 0;
+  fn ~-1 0;
   printf "\n";
-  lambda 0 0;
+  fn 0 0;
   printf "\n";
-  lambda 1 0;
-  let lambda2 t min max = begin
+  fn 1 0;
+  let fn2 t min max = begin
     printf "\n";
     printf "clamp %d ~min:%d ~max:%d -> %d\n" t min max (clamp t ~min ~max);
     printf "between %d ~low:%d ~high:%d -> %b\n" t min max (between t ~low:min
         ~high:max);
   end in
-  lambda2 ~-2 ~-1 1;
-  lambda2 ~-1 ~-1 1;
-  lambda2 0 ~-1 1;
-  lambda2 1 ~-1 1;
-  lambda2 2 ~-1 1;
+  fn2 ~-2 ~-1 1;
+  fn2 ~-1 ~-1 1;
+  fn2 0 ~-1 1;
+  fn2 1 ~-1 1;
+  fn2 2 ~-1 1;
 
   [%expect{|
     cmp -1 0 -> Lt
@@ -355,15 +355,15 @@ let%expect_test "rel" =
 
 let%expect_test "min_max" =
   let open Printf in
-  let lambda x y = begin
+  let fn x y = begin
     printf "min %d %d -> %d\n" x y (min x y);
     printf "max %d %d -> %d\n" x y (max x y);
   end in
-  lambda ~-1 0;
+  fn ~-1 0;
   printf "\n";
-  lambda 0 0;
+  fn 0 0;
   printf "\n";
-  lambda 1 0;
+  fn 1 0;
 
   [%expect{|
     min -1 0 -> -1

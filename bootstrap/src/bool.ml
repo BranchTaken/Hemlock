@@ -59,16 +59,16 @@ let not t =
 
 let%expect_test "int" =
   let open Printf in
-  let rec lambda = function
+  let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
       let x = to_int t in
       printf "to_int %b -> %d ; " t x;
       printf "of_int %d -> %b\n" x (of_int x);
-      lambda ts'
+      fn ts'
     end
   in
-  lambda [false; true];
+  fn [false; true];
 
   [%expect{|
     to_int false -> 0 ; of_int 0 -> false
@@ -77,16 +77,16 @@ let%expect_test "int" =
 
 let%expect_test "string" =
   let open Printf in
-  let rec lambda = function
+  let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
       let s = to_string t in
       printf "to_string %b -> %s ; " t s;
       printf "of_string %s -> %b\n" s (of_string s);
-      lambda ts'
+      fn ts'
     end
   in
-  lambda [false; true];
+  fn [false; true];
 
   [%expect{|
     to_string false -> false ; of_string false -> false
@@ -95,16 +95,16 @@ let%expect_test "string" =
 
 let%expect_test "sexp" =
   let open Printf in
-  let rec lambda = function
+  let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
         let sexp = sexp_of_t t in
         printf "sexp_of_t %b -> %s ; " t (Sexplib.Sexp.to_string sexp);
         printf "t_of_sexp -> %b\n" (t_of_sexp sexp);
-        lambda ts'
+        fn ts'
       end
   in
-  lambda [false; true];
+  fn [false; true];
 
   [%expect{|
     sexp_of_t false -> false ; t_of_sexp -> false
@@ -113,19 +113,19 @@ let%expect_test "sexp" =
 
 let%expect_test "eq" =
   let open Printf in
-  let lambda t0 t1 = begin
+  let fn t0 t1 = begin
     printf "cmp %b %b -> %s\n"
       t0 t1 (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp t0 t1)));
     printf "%b = %b -> %b\n" t0 t1 (t0 = t1);
     printf "%b <> %b -> %b\n" t0 t1 (t0 <> t1);
   end in
-  lambda false false;
+  fn false false;
   printf "\n";
-  lambda false true;
+  fn false true;
   printf "\n";
-  lambda true false;
+  fn true false;
   printf "\n";
-  lambda true true;
+  fn true true;
 
   [%expect{|
     cmp false false -> Eq
@@ -146,15 +146,15 @@ let%expect_test "eq" =
 
 let%expect_test "not" =
   let open Printf in
-  let rec lambda bs = begin
+  let rec fn bs = begin
     match bs with
     | [] -> ()
     | b :: bs' -> begin
         printf "not %b -> %b\n" b (not b);
-        lambda bs'
+        fn bs'
       end
   end in
-  lambda [false; true];
+  fn [false; true];
 
   [%expect{|
     not false -> true
@@ -167,16 +167,16 @@ let%expect_test "and" =
     printf "side effect %s\n" s;
     b
   end in
-  let rec lambda pairs = begin
+  let rec fn pairs = begin
     match pairs with
     | [] -> ()
     | (a, b) :: pairs' -> begin
         printf "(%b && %b) -> %b\n"
           a b ((side_effect a "a") && (side_effect b "b"));
-        lambda pairs'
+        fn pairs'
       end
   end in
-  lambda [(false, false); (false, true); (true, false); (true, true)];
+  fn [(false, false); (false, true); (true, false); (true, true)];
 
   [%expect{|
     side effect a
@@ -197,16 +197,16 @@ let%expect_test "or" =
     printf "side effect %s\n" s;
     b
   end in
-  let rec lambda pairs = begin
+  let rec fn pairs = begin
     match pairs with
     | [] -> ()
     | (a, b) :: pairs' -> begin
         printf "(%b || %b) -> %b\n"
           a b ((side_effect a "a") || (side_effect b "b"));
-        lambda pairs'
+        fn pairs'
       end
   end in
-  lambda [(false, false); (false, true); (true, false); (true, true)];
+  fn [(false, false); (false, true); (true, false); (true, true)];
 
   [%expect{|
     side effect a

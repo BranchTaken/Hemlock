@@ -54,7 +54,7 @@ let%expect_test "limits" =
 
 let%expect_test "rel" =
   let open Printf in
-  let lambda x y = begin
+  let fn x y = begin
     printf "cmp 0x%x 0x%x -> %s\n"
       x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
     printf "0x%x >= 0x%x -> %b\n" x y (x >= y);
@@ -68,23 +68,23 @@ let%expect_test "rel" =
     printf "descending 0x%x 0x%x -> %s\n"
       x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
-  lambda 0 0x10_0000;
+  fn 0 0x10_0000;
   printf "\n";
-  lambda 0 0x1f_ffff;
+  fn 0 0x1f_ffff;
   printf "\n";
-  lambda 0x10_0000 0x1f_ffff;
-  let lambda2 t min max = begin
+  fn 0x10_0000 0x1f_ffff;
+  let fn2 t min max = begin
     printf "\n";
     printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n" t min max (clamp t ~min
         ~max);
     printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n" t min max (between t
         ~low:min ~high:max);
   end in
-  lambda2 0x0f_fffe 0x0f_ffff 0x10_0001;
-  lambda2 0x0f_ffff 0x0f_ffff 0x10_0001;
-  lambda2 0x10_0000 0x0f_ffff 0x10_0001;
-  lambda2 0x10_0001 0x0f_ffff 0x10_0001;
-  lambda2 0x10_0002 0x0f_ffff 0x10_0001;
+  fn2 0x0f_fffe 0x0f_ffff 0x10_0001;
+  fn2 0x0f_ffff 0x0f_ffff 0x10_0001;
+  fn2 0x10_0000 0x0f_ffff 0x10_0001;
+  fn2 0x10_0001 0x0f_ffff 0x10_0001;
+  fn2 0x10_0002 0x0f_ffff 0x10_0001;
 
   [%expect{|
     cmp 0x0 0x100000 -> Lt
@@ -147,7 +147,7 @@ let%expect_test "wraparound" =
 
 let%expect_test "conversion" =
   let open Printf in
-  let rec lambda = function
+  let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
         let t = of_int x in
@@ -159,10 +159,10 @@ let%expect_test "conversion" =
         let t' = of_uint u in
         printf "of_uint 0x%x -> to_uint 0x%x -> of_uint 0x%x -> 0x%x\n"
           x t u t';
-        lambda xs'
+        fn xs'
       end
   in
-  lambda [-1; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001; max_int];
+  fn [-1; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001; max_int];
 
   [%expect{|
     of_int 0x7fffffffffffffff -> to_int 0x1fffff -> of_int 0x1fffff -> 0x1fffff

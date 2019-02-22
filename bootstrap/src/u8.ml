@@ -68,7 +68,7 @@ let%expect_test "limits" =
 
 let%expect_test "rel" =
   let open Printf in
-  let lambda x y = begin
+  let fn x y = begin
     printf "cmp 0x%x 0x%x -> %s\n"
       x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
     printf "0x%x >= 0x%x -> %b\n" x y (x >= y);
@@ -82,23 +82,23 @@ let%expect_test "rel" =
     printf "descending 0x%x 0x%x -> %s\n"
       x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
-  lambda 0 0x80;
+  fn 0 0x80;
   printf "\n";
-  lambda 0 0xff;
+  fn 0 0xff;
   printf "\n";
-  lambda 0x80 0xff;
-  let lambda2 t min max = begin
+  fn 0x80 0xff;
+  let fn2 t min max = begin
     printf "\n";
     printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n" t min max (clamp t ~min
         ~max);
     printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n" t min max (between t
         ~low:min ~high:max);
   end in
-  lambda2 0x7e 0x7f 0x81;
-  lambda2 0x7f 0x7f 0x81;
-  lambda2 0x80 0x7f 0x81;
-  lambda2 0x81 0x7f 0x81;
-  lambda2 0x82 0x7f 0x81;
+  fn2 0x7e 0x7f 0x81;
+  fn2 0x7f 0x7f 0x81;
+  fn2 0x80 0x7f 0x81;
+  fn2 0x81 0x7f 0x81;
+  fn2 0x82 0x7f 0x81;
 
   [%expect{|
     cmp 0x0 0x80 -> Lt
@@ -161,7 +161,7 @@ let%expect_test "wraparound" =
 
 let%expect_test "conversion" =
   let open Printf in
-  let rec lambda = function
+  let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
         let t = of_int x in
@@ -181,10 +181,10 @@ let%expect_test "conversion" =
         printf ("Codepoint.of_uint 0x%x -> of_codepoint 0x%x -> " ^^
           "to_codepoint 0x%x -> of_codepoint 0x%x -> 0x%x\n") x c t c' t';
 
-        lambda xs'
+        fn xs'
       end
   in
-  lambda [-1; 0; 42; 127; 128; 255; 256; 257; max_int];
+  fn [-1; 0; 42; 127; 128; 255; 256; 257; max_int];
 
   [%expect{|
     of_int 0x7fffffffffffffff -> to_int 0xff -> of_int 0xff -> 0xff
