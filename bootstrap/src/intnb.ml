@@ -155,8 +155,7 @@ module Make_common (T : I_common) : S_common with type t := int = struct
       let x = bit_or x (bit_usr x 8) in
       let x = bit_or x (bit_usr x 16) in
       let x = bit_or x (bit_usr x 32) in
-      let nlb = Sys.int_size - T.num_bits in
-      (bit_pop (bit_not x)) - nlb
+      bit_pop (bit_not x)
 
     let bit_ctz t =
       let t' = lbfill t in
