@@ -38,6 +38,44 @@ let of_uint_hlt x =
   | false -> halt "Lossy conversion"
   | true -> t
 
+let of_char c =
+  Stdlib.Char.code c
+
+let nul = 0x00
+let soh = 0x01
+let stx = 0x02
+let etx = 0x03
+let eot = 0x04
+let enq = 0x05
+let ack = 0x06
+let bel = 0x07
+let bs = of_char '\b'
+let ht = of_char '\t'
+let lf = of_char '\n'
+let nl = of_char '\n'
+let vt = 0x0b
+let ff = 0x0c
+let cr = of_char '\r'
+let so = 0x0e
+let si = 0x0f
+let dle = 0x10
+let dc1 = 0x11
+let dc2 = 0x12
+let dc3 = 0x13
+let dc4 = 0x14
+let nak = 0x15
+let syn = 0x16
+let etb = 0x17
+let can = 0x18
+let em = 0x19
+let sub = 0x1a
+let esc = 0x1b
+let fs = 0x1c
+let gs = 0x1d
+let rs = 0x1e
+let us = 0x1f
+let del = 0x7f
+
 (*******************************************************************************
  * Begin tests.
  *)
