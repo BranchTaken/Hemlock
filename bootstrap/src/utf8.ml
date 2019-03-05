@@ -72,7 +72,7 @@ module Seq = struct
     val to_utf8_hlt: t -> (outer * t) option
   end
 
-  module Make (T : Seq_intf.I_indef with type elm := byte) :
+  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
     S with type t := T.t = struct
     let to_utf8 t =
       let rec fn t bytes nrem = begin
@@ -111,7 +111,7 @@ module Seq = struct
       | None -> None
   end
 
-  module Make_rev (T : Seq_intf.I_indef with type elm := byte) :
+  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
     S with type t := T.t = struct
     let to_utf8 t =
       let rec fn t bytes = begin

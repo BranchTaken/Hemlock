@@ -4,14 +4,22 @@ val empty: 'a t
 
 module Seq : sig
   type 'a outer = 'a t
-  module type S = sig
+  module type S_mono = sig
     type t
     type elm
     val to_array: t -> elm outer
   end
-
-  module Make (T : Seq_intf.I_def) : S with type t := T.t and type elm := T.elm
-  module Make_rev (T : Seq_intf.I_def) : S with type t := T.t and type elm := T.elm
+  module type S_poly = sig
+    type 'a t
+    val to_array: 'a t -> 'a outer
+  end
+  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
+                                                       and type elm := T.elm
+  module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
+                                                           and type elm := T.elm
+  module Make_poly (T : Seq_intf.I_poly_def) : S_poly with type 'a t := 'a T.t
+  module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
+    with type 'a t := 'a T.t
 end
 
 val init: int -> f:(int -> 'a) -> 'a t

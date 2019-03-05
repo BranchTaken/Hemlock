@@ -2,7 +2,9 @@
 module Int = I63
 type int = Int.t
 
-module type S_iter = sig
+(* Monomorphic, e.g. string. *)
+
+module type S_mono_iter = sig
   type container
   type elm
   type t
@@ -15,9 +17,29 @@ module type S_iter = sig
   val rget: t -> elm
 end
 
-module type S = sig
-  include S_iter
+module type S_mono = sig
+  include S_mono_iter
   val container: t -> container
   val index: t -> int
   val seek: t -> int -> t
+end
+
+(* Polymorphic, e.g. ('a array). *)
+module type S_poly_iter = sig
+  type 'a container
+  type 'a t
+  include Cmpable_intf.S_poly with type 'a t := 'a t
+  val hd: 'a container -> 'a t
+  val tl: 'a container -> 'a t
+  val succ: 'a t -> 'a t
+  val pred: 'a t -> 'a t
+  val lget: 'a t -> 'a
+  val rget: 'a t -> 'a
+end
+
+module type S_poly = sig
+  include S_poly_iter
+  val container: 'a t -> 'a container
+  val index: 'a t -> int
+  val seek: 'a t -> int -> 'a t
 end

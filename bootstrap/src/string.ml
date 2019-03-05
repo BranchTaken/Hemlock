@@ -285,7 +285,7 @@ module Seq = struct
   end
 
   module Codepoint = struct
-    module Make (T : Seq_intf.I_def with type elm := codepoint) :
+    module Make (T : Seq_intf.I_mono_def with type elm := codepoint) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -318,7 +318,7 @@ module Seq = struct
           end
     end
 
-    module Make_rev (T : Seq_intf.I_def with type elm := codepoint) :
+    module Make_rev (T : Seq_intf.I_mono_def with type elm := codepoint) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -367,7 +367,7 @@ module Seq = struct
   end
 
   module Slice = struct
-    module Make (T : Seq_intf.I_def with type elm := slice) :
+    module Make (T : Seq_intf.I_mono_def with type elm := slice) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -409,7 +409,7 @@ module Seq = struct
           end
     end
 
-    module Make_rev (T : Seq_intf.I_def with type elm := slice) :
+    module Make_rev (T : Seq_intf.I_mono_def with type elm := slice) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -465,7 +465,7 @@ module Seq = struct
   end
 
   module String = struct
-    module Make (T : Seq_intf.I_def with type elm := string) :
+    module Make (T : Seq_intf.I_mono_def with type elm := string) :
       S with type t := T.t = struct
       module U = struct
         type t = T.t
@@ -481,7 +481,7 @@ module Seq = struct
       include Slice.Make(U)
     end
 
-    module Make_rev (T : Seq_intf.I_def with type elm := string) :
+    module Make_rev (T : Seq_intf.I_mono_def with type elm := string) :
       S with type t := T.t = struct
       module U = struct
         type t = T.t

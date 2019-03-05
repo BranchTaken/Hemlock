@@ -21,9 +21,9 @@ module Seq : sig
     val to_utf8_hlt: t -> (outer * t) option
   end
 
-  module Make (T : Seq_intf.I_indef with type elm := byte) :
+  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
     S with type t := T.t
-  module Make_rev (T : Seq_intf.I_indef with type elm := byte) :
+  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
     S with type t := T.t
 end
 

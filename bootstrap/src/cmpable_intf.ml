@@ -30,3 +30,24 @@ module type S_zero = sig
   val is_non_positive: t -> bool
   val sign: t -> Sign.t
 end
+
+(* Polymorphic. *)
+
+module type I_poly = sig
+  type 'a t
+  val cmp: 'a t -> 'a t -> Cmp.t
+end
+
+module type S_poly = sig
+  include I_poly
+  val ( >= ): 'a t -> 'a t -> bool
+  val ( <= ): 'a t -> 'a t -> bool
+  val ( = ): 'a t -> 'a t -> bool
+  val ( > ): 'a t -> 'a t -> bool
+  val ( < ): 'a t -> 'a t -> bool
+  val ( <> ): 'a t -> 'a t -> bool
+  val ascending: 'a t -> 'a t -> Cmp.t
+  val descending: 'a t -> 'a t -> Cmp.t
+  val clamp: 'a t -> min:'a t -> max:'a t -> 'a t
+  val between: 'a t -> low:'a t -> high:'a t -> bool
+end

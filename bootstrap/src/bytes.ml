@@ -59,7 +59,7 @@ module Array_seq = struct
         end
   end
   include T
-  include Array.Seq.Make(T)
+  include Array.Seq.Make_mono(T)
 end
 
 let of_string s =

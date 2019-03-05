@@ -9,9 +9,9 @@ include Identifiable_intf.S with type t := t
 module Cursor : sig
   type outer = t
   type t
-  include Cursor_intf.S with type container := outer
-                         and type elm := codepoint
-                         and type t := t
+  include Cursor_intf.S_mono with type container := outer
+                              and type elm := codepoint
+                              and type t := t
   val index: t -> int [@@ocaml.deprecated "Use [bc]index instead"]
   val bindex: t -> int
   val cindex: t -> int [@@ocaml.deprecated "Do not use; O(n)"]
@@ -26,9 +26,9 @@ type cursor = Cursor.t
 module Cursori : sig
   type outer = t
   type t
-  include Cursor_intf.S with type container := outer
-                         and type elm := codepoint
-                         and type t := t
+  include Cursor_intf.S_mono with type container := outer
+                              and type elm := codepoint
+                              and type t := t
   val index: t -> int [@@ocaml.deprecated "Use [bc]index instead"]
   val bindex: t -> int
   val cindex: t -> int
@@ -155,9 +155,9 @@ module Seq : sig
    * function returns the next codepoint which is converted to bytes in
    * to_string. *)
   module Codepoint : sig
-    module Make (T : Seq_intf.I_def with type elm := codepoint) :
+    module Make (T : Seq_intf.I_mono_def with type elm := codepoint) :
       S with type t := T.t
-    module Make_rev (T : Seq_intf.I_def with type elm := codepoint) :
+    module Make_rev (T : Seq_intf.I_mono_def with type elm := codepoint) :
       S with type t := T.t
   end
 
@@ -166,9 +166,9 @@ module Seq : sig
    * function returns (base, past) cursors for the next string slice which is
    * copied into to_string. *)
   module Slice : sig
-    module Make (T : Seq_intf.I_def with type elm := slice) :
+    module Make (T : Seq_intf.I_mono_def with type elm := slice) :
       S with type t := T.t
-    module Make_rev (T : Seq_intf.I_def with type elm := slice) :
+    module Make_rev (T : Seq_intf.I_mono_def with type elm := slice) :
       S with type t := T.t
   end
 
@@ -176,9 +176,9 @@ module Seq : sig
    * length function returns blength of the remaining sequence; the next
    * function returns the next string which is copied into to_string. *)
   module String : sig
-    module Make (T : Seq_intf.I_def with type elm := string) :
+    module Make (T : Seq_intf.I_mono_def with type elm := string) :
       S with type t := T.t
-    module Make_rev (T : Seq_intf.I_def with type elm := string) :
+    module Make_rev (T : Seq_intf.I_mono_def with type elm := string) :
       S with type t := T.t
   end
 end

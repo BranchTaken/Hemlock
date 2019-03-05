@@ -7,14 +7,19 @@ let empty = [||]
 
 module Seq = struct
   type 'a outer = 'a t
-  module type S = sig
+  module type S_mono = sig
     type t
     type elm
     val to_array: t -> elm outer
   end
+  module type S_poly = sig
+    type 'a t
+    val to_array: 'a t -> 'a outer
+  end
 
-  module Make (T : Seq_intf.I_def) : S with type t := T.t
-                                        and type elm := T.elm = struct
+  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
+                                                       and type elm := T.elm =
+  struct
     let to_array t =
       let l = T.length t in
       match l with
@@ -36,8 +41,56 @@ module Seq = struct
         end
   end
 
-  module Make_rev (T : Seq_intf.I_def) : S with type t := T.t
-                                            and type elm := T.elm = struct
+  module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
+                                                           and type elm := T.elm
+  = struct
+    let to_array t =
+      let l = T.length t in
+      match l with
+      | 0 -> empty
+      | _ -> begin
+          let rec fn t a i = begin
+            match Int.(i = 0) with
+            | true -> a
+            | false -> begin
+                let elm, t' = T.next t in
+                let i' = pred i in
+                let () = Stdlib.Array.set a i' elm in
+                fn t' a i'
+              end
+          end in
+          let elm, t' = T.next t in
+          let a = Stdlib.Array.make l elm in
+          fn t' a (pred l)
+        end
+  end
+
+  module Make_poly (T : Seq_intf.I_poly_def) : S_poly with type 'a t := 'a T.t =
+  struct
+    let to_array t =
+      let l = T.length t in
+      match l with
+      | 0 -> empty
+      | _ -> begin
+          let rec fn t a i = begin
+            match Int.(i = l) with
+            | true -> a
+            | false -> begin
+                let elm, t' = T.next t in
+                let () = Stdlib.Array.set a i elm in
+                let i' = succ i in
+                fn t' a i'
+              end
+          end in
+          let elm0, t' = T.next t in
+          let a = Stdlib.Array.make l elm0 in
+          fn t' a 1
+        end
+  end
+
+  module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
+    with type 'a t := 'a T.t =
+  struct
     let to_array t =
       let l = T.length t in
       match l with
