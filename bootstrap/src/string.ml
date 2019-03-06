@@ -53,9 +53,9 @@ module Cursor = struct
     }
 
     let cmp t0 t1 =
-      match t0.string = t1.string with
-      | false -> cmp t0.string t1.string
-      | true -> Int.cmp t0.bindex t1.bindex
+      (* == is excessively vague in OCaml. *)
+      assert ((t0.string == t1.string) || (t0.string = t1.string));
+      Int.cmp t0.bindex t1.bindex
   end
   include T
   include Cmpable.Make(T)
@@ -1053,13 +1053,13 @@ module Slice = struct
                   | false -> k
                 in
                 let q' = Cursori.succ q in
-                Array.mutate pi (Cursori.cindex q) k';
+                Array.set_inplace pi (Cursori.cindex q) k';
                 compute_pi ~p ~k:k' ~q:q' ~pi
               end
           end
       end in
       let pi = match Int.(Cursori.cindex m = 0) with
-        | true -> Array.empty
+        | true -> [||]
         | false -> begin
             let k = Cursori.hd s in
             let q = Cursori.succ k in
@@ -2345,7 +2345,7 @@ let%expect_test "array" =
     let s' = of_array a' in
     printf "array: \"%s\" -> ... -> \"%s\"\n" s s';
   end in
-  test_array Array.empty;
+  test_array [||];
   test_array (Array.of_list [
     (Codepoint.of_char 'a');
   ]);
