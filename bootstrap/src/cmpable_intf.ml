@@ -35,6 +35,7 @@ end
 
 module type I_poly = sig
   type 'a t
+  type 'a elm
   val cmp: 'a t -> 'a t -> Cmp.t
 end
 

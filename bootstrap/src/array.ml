@@ -14,7 +14,8 @@ module Seq = struct
   end
   module type S_poly = sig
     type 'a t
-    val to_array: 'a t -> 'a outer
+    type 'a elm
+    val to_array: 'a t -> 'a elm outer
   end
 
   module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
@@ -65,8 +66,9 @@ module Seq = struct
         end
   end
 
-  module Make_poly (T : Seq_intf.I_poly_def) : S_poly with type 'a t := 'a T.t =
-  struct
+  module Make_poly (T : Seq_intf.I_poly_def) : S_poly
+    with type 'a t := 'a T.t
+     and type 'a elm := 'a T.elm = struct
     let to_array t =
       let l = T.length t in
       match l with
@@ -89,8 +91,8 @@ module Seq = struct
   end
 
   module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
-    with type 'a t := 'a T.t =
-  struct
+    with type 'a t := 'a T.t
+     and type 'a elm := 'a T.elm = struct
     let to_array t =
       let l = T.length t in
       match l with
