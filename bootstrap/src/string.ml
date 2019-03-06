@@ -770,9 +770,9 @@ module Slice = struct
 
     let length = clength
   end
-  include Container.Make_mono_fold(U)
-  include Container.Make_mono_mem(U)
-  include Container.Make_mono_array(U)
+  include Container_common.Make_mono_fold(U)
+  include Container_common.Make_mono_mem(U)
+  include Container_array.Make_mono_array(U)
 
   module String_mapi = struct
     module T = struct
@@ -1551,9 +1551,9 @@ module U = struct
 
   let length = clength
 end
-include Container.Make_mono_fold(U)
-include Container.Make_mono_mem(U)
-include Container.Make_mono_array(U)
+include Container_common.Make_mono_fold(U)
+include Container_common.Make_mono_mem(U)
+include Container_array.Make_mono_array(U)
 
 let map t ~f =
   Slice.(to_string (map (of_string t) ~f))

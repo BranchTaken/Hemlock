@@ -1,7 +1,59 @@
 module Int = I63
 open Rudiments_functions
 
-type 'a t = 'a array
+module T = struct
+  type 'a t = 'a array
+  type 'a elm = 'a
+
+  let get a i =
+    Stdlib.Array.get a i
+
+  let length a =
+    Stdlib.Array.length a
+
+  (* XXX We actually need cmp_elm to do comparison.  We can't use a cursor here
+   * due to bootstrapping issues.  Time to figure out how to integrate
+   * comparators. *)
+  let cmp _ _ = Cmp.Eq
+
+  module Cursor = struct
+    module T = struct
+      type 'a container = 'a t
+      type 'a t = {
+        array: 'a container;
+        index: int;
+      }
+
+      let cmp t0 t1 =
+        match t0.array = t1.array with
+        | false -> cmp t0.array t1.array
+        | true -> Int.cmp t0.index t1.index
+
+      let hd array =
+        {array; index=0}
+
+      let tl array =
+        {array; index=(length array)}
+
+      let succ t =
+        {t with index=(succ t.index)}
+
+      let pred t =
+        {t with index=(pred t.index)}
+
+      let lget t =
+        get t.array Int.(pred t.index)
+
+      let rget t =
+        get t.array t.index
+    end
+    include T
+    include Cmpable.Make_poly(T)
+  end
+end
+include T
+include Cmpable.Make_poly(T)
+include Container_common.Make_poly_fold(T)
 
 let empty = [||]
 
@@ -134,14 +186,8 @@ let to_list_rev a =
   (* XXX Use fold. *)
   List.rev (Stdlib.Array.to_list a)
 
-let length a =
-  Stdlib.Array.length a
-
 let is_empty a =
-  (length a) = 0
-
-let get a i =
-  Stdlib.Array.get a i
+  Int.((length a) = 0)
 
 let mutate a i x =
   Stdlib.Array.set a i x
@@ -182,7 +228,7 @@ let remove a i =
   let len = length a in
   match len with
   | 0 ->
-    ignore (assert (i = 0));
+    ignore (assert Int.(i = 0));
     empty
   | _ -> begin
       if Int.(i = 0) then
@@ -192,57 +238,6 @@ let remove a i =
       else
         slice a 0 (len - 1)
     end
-
-(* XXX Rewrite without Stdlib dependency. *)
-let iter a ~f =
-  Stdlib.Array.iter f a
-
-(* XXX Rewrite without Stdlib dependency. *)
-let iteri a ~f =
-  Stdlib.Array.iteri f a
-
-(* XXX Rewrite based on fold_until. *)
-let fold a ~init ~f =
-  Stdlib.Array.fold_left f init a
-
-(* XXX Create fold_right_until, rewrite fold_right to use it. *)
-let fold_right a ~init ~f =
-  Stdlib.Array.fold_right f a init
-
-let foldi a ~init ~f =
-  let accum, _ = fold a ~init:(init, 0) ~f:(fun (accum, i) v ->
-    let accum' = f i accum v in
-    (accum', i + 1)
-  ) in
-  accum
-
-let foldi_until a ~init ~f =
-  let rec fn accum i = begin
-    match Int.( = ) i (length a) with
-    | true -> accum
-    | false -> begin
-        let elm = get a i in
-        let (accum', until) = f i accum elm in
-        match until with
-        | true -> accum'
-        | false -> fn accum' (i + 1)
-      end
-  end in
-  fn init 0
-
-let fold_until a ~init ~f =
-  let rec fn accum i = begin
-    match Int.( = ) i (length a) with
-    | true -> accum
-    | false -> begin
-        let elm = get a i in
-        let (accum', until) = f accum elm in
-        match until with
-        | true -> accum'
-        | false -> fn accum' (i + 1)
-      end
-  end in
-  fn init 0
 
 let compare cmp a0 a1 =
   let rel = foldi_until a0 ~init:0 ~f:(fun i _ elm ->

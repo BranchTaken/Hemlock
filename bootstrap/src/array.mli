@@ -1,4 +1,7 @@
 type 'a t [@@deriving sexp, compare]
+type 'a elm
+include Cmpable_intf.S_poly with type 'a t := 'a t
+include Container_common_intf.S_poly_fold with type 'a t := 'a t
 
 val empty: 'a t
 
@@ -29,8 +32,10 @@ end
 val init: int -> f:(int -> 'a) -> 'a t
 val of_list: 'a list -> 'a t
 val of_list_rev: 'a list -> 'a t
+(* In Container_common_intf.S_poly_fold:
 val to_list: 'a t -> 'a list
 val to_list_rev: 'a t -> 'a list
+*)
 
 val length: 'a t -> int
 val is_empty: 'a t -> bool
@@ -48,27 +53,11 @@ val append_one: 'a t -> 'a -> 'a t
 val insert: 'a t -> int -> 'a -> 'a t
 val remove: 'a t -> int -> 'a t
 
-val iter: 'a t -> f:('a -> unit) -> unit
-val iteri: 'a t -> f:(int -> 'a -> unit) -> unit
-val fold: 'a t -> init:'accum -> f:('accum -> 'a -> 'accum) -> 'accum
-val fold_right: 'a t -> init:'accum -> f:('a -> 'accum -> 'accum) -> 'accum
-val foldi: 'a t -> init:'accum -> f:(int -> 'accum -> 'a -> 'accum) -> 'accum
-val fold_until: 'a t -> init:'accum -> f:('accum -> 'a -> 'accum * bool)
-  -> 'accum
-val foldi_until: 'a t -> init:'accum -> f:(int -> 'accum -> 'a -> 'accum * bool)
-  -> 'accum
-
 (* XXX Missing?
  * create
  * binary_search ?
- * mem
  * exists[i]
- * for_all[i]
- * count[i]
  * sum
- * find
- * find_map
- * min_elt, max_elt
  * max_length
  * make_matrix, init_matrix
  * fill

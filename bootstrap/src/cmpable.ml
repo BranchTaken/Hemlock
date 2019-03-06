@@ -105,8 +105,7 @@ module Make_zero (T : I_zero) : S_zero with type t := T.t = struct
     | Gt -> Sign.Pos
 end
 
-module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t
-                                        and type 'a elm := 'a T.elm = struct
+module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t = struct
   let cmp = T.cmp
 
   let ( >= ) t0 t1 =

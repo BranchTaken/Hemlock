@@ -7,7 +7,7 @@ module type S_poly_iter = sig
   type 'a container
   type 'a t
   type 'a elm
-  include Cmpable_intf.S_poly with type 'a t := 'a t and type 'a elm := 'a elm
+  include Cmpable_intf.S_poly with type 'a t := 'a t
   val hd: 'a container -> 'a t
   val tl: 'a container -> 'a t
   val succ: 'a t -> 'a t

@@ -1,8 +1,8 @@
-open Container_intf
+open Container_common_intf
 
 (* Polymorphic. *)
 
-module Make_poly_length (T : I_poly) : S_poly_length
+module Make_poly_length (T : I_poly) : S_poly_length_gen
   with type 'a t := 'a T.t
    and type 'a elm := 'a T.elm =
 struct
@@ -18,9 +18,9 @@ struct
     Int.((length t) = 0)
 end
 
-module Make_poly_fold (T : I_poly) : S_poly_fold with type 'a t := 'a T.t
-                                                  and type 'a elm := 'a T.elm =
-struct
+module Make_poly_fold (T : I_poly) : S_poly_fold_gen
+  with type 'a t := 'a T.t
+   and type 'a elm := 'a T.elm = struct
   let fold_until t ~init ~f =
     let rec fn accum cursor = begin
       match T.Cursor.(cursor = (tl t)) with
@@ -136,9 +136,9 @@ struct
     fold t ~init:[] ~f:(fun accum elm -> elm :: accum)
 end
 
-module Make_poly_mem (T : I_poly_mem) : S_poly_mem with type 'a t := 'a T.t
-                                                    and type 'a elm := 'a T.elm
-= struct
+module Make_poly_mem (T : I_poly_mem) : S_poly_mem_gen
+  with type 'a t := 'a T.t
+   and type 'a elm := 'a T.elm = struct
   let mem t elm =
     let rec fn cursor = begin
       match T.Cursor.(cursor = (tl t)) with
@@ -154,57 +154,6 @@ module Make_poly_mem (T : I_poly_mem) : S_poly_mem with type 'a t := 'a T.t
     fn (T.Cursor.hd t)
 end
 
-module Make_poly_array (T : I_poly_array) : S_poly_array
-  with type 'a t := 'a T.t
-   and type 'a elm := 'a T.elm = struct
-  module Array_seq = struct
-    module T = struct
-      type 'a t = {
-        cursor: 'a T.Cursor.t;
-        length: int;
-      }
-      type 'a elm = 'a T.elm
-      (*
-        {
-        elm: 'a
-      }
-         *)
-      (*
-      type 'a elm = 'a
-         *)
-      (*
-      type 'a outer_elm = 'a T.elm
-      type 'a elm = 'a outer_elm
-         *)
-        (*
-      type nonrec 'a elm = 'a elm
-           *)
-
-      let init container =
-        {
-          cursor=(T.Cursor.hd container);
-          length=(T.length container);
-        }
-
-      let length t =
-        t.length
-
-      let next t =
-        assert (Int.(length t > 0));
-        let elm = T.Cursor.rget t.cursor in
-        let cursor' = T.Cursor.succ t.cursor in
-        let length' = pred t.length in
-        let t' = {cursor=cursor'; length=length'} in
-        elm, t'
-    end
-    include T
-    include Array.Seq.Make_poly(T)
-  end
-
-  let to_array t =
-    Array_seq.to_array (Array_seq.init t)
-end
-
 (* Monomorphic. *)
 
 module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
@@ -216,7 +165,6 @@ module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
   module Cursor = struct
     module V = struct
       type 'a t = T.Cursor.t
-      type 'a elm = T.elm
 
       let cmp = T.Cursor.cmp
     end
@@ -254,17 +202,4 @@ module Make_mono_mem (T : I_mono_mem) : S_mono_mem with type t := T.t
                                                     and type elm := T.elm =
 struct
   include Make_poly_mem(Make_i_poly_mem(T))
-end
-
-module Make_i_poly_array (T : I_mono_array) : I_poly_array
-  with type 'a t = T.t
-   and type 'a elm = T.elm = struct
-  include Make_i_poly(T)
-  let length = T.length
-end
-
-module Make_mono_array (T : I_mono_array) : S_mono_array
-  with type t := T.t
-   and type elm := T.elm = struct
-  include Make_poly_array(Make_i_poly_array(T))
 end
