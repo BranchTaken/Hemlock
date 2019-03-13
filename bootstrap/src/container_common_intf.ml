@@ -47,6 +47,8 @@ module type S_poly_fold_gen = sig
   val for_all: 'a t -> f:('a elm -> bool) -> bool
   val find: 'a t -> f:('a elm -> bool) -> 'a elm option
   val find_map: 'a t -> f:('a elm -> 'b option) -> 'b option
+  val findi: 'a t -> f:(int -> 'a elm -> bool) -> 'a elm option
+  val findi_map: 'a t -> f:(int -> 'a elm -> 'b option) -> 'b option
   val min_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
   val max_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
   val to_list: 'a t -> 'a elm list
@@ -73,6 +75,8 @@ module type S_poly_fold = sig
   val for_all: 'a t -> f:('a -> bool) -> bool
   val find: 'a t -> f:('a -> bool) -> 'a option
   val find_map: 'a t -> f:('a -> 'b option) -> 'b option
+  val findi: 'a t -> f:(int -> 'a -> bool) -> 'a option
+  val findi_map: 'a t -> f:(int -> 'a -> 'b option) -> 'b option
   val min_elm: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a option
   val max_elm: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a option
   val to_list: 'a t -> 'a list

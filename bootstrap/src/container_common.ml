@@ -92,16 +92,30 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     )
 
   let find t ~f =
-    fold_until t ~init:None ~f:(fun accum elm ->
+    fold_until t ~init:None ~f:(fun _ elm ->
       match f elm with
-      | false -> accum, false
+      | false -> None, false
       | true -> Some elm, true
     )
 
   let find_map t ~f =
-    fold_until t ~init:None ~f:(fun accum elm ->
+    fold_until t ~init:None ~f:(fun _ elm ->
       match f elm with
-      | None -> accum, false
+      | None -> None, false
+      | Some a -> Some a, true
+    )
+
+  let findi t ~f =
+    foldi_until t ~init:None ~f:(fun i _ elm ->
+      match f i elm with
+      | false -> None, false
+      | true -> Some elm, true
+    )
+
+  let findi_map t ~f =
+    foldi_until t ~init:None ~f:(fun i _ elm ->
+      match f i elm with
+      | None -> None, false
       | Some a -> Some a, true
     )
 
