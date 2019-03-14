@@ -29,12 +29,6 @@ end
 include T
 include Identifiable.Make(T)
 
-let compare s0 s1 =
-  match cmp s0 s1 with
-  | Lt -> -1
-  | Eq -> 0
-  | Gt -> 1
-
 let blength t =
   Stdlib.String.length t
 

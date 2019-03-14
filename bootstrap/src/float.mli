@@ -1,4 +1,4 @@
-type t = float [@@deriving compare]
+type t = float
 
 include Identifiable_intf.S with type t := t
 include Intable_intf.S with type t := t

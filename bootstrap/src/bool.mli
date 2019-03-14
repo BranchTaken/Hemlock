@@ -1,4 +1,4 @@
-type t = bool [@@deriving compare]
+type t = bool
 
 include Identifiable_intf.S with type t := t
 include Intable_intf.S with type t := t

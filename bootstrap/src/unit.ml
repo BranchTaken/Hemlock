@@ -26,9 +26,6 @@ end
 include T
 include Identifiable.Make(T)
 
-let compare _ _ =
-  0
-
 (*******************************************************************************
  * Begin tests.
  *)

@@ -42,12 +42,6 @@ let to_int t =
   | false -> 0
   | true -> 1
 
-let compare t0 t1 =
-  match cmp t0 t1 with
-  | Cmp.Lt -> -1
-  | Cmp.Eq -> 0
-  | Cmp.Gt -> 1
-
 let not t =
   match t with
   | false -> true

@@ -4,7 +4,7 @@ module type I = sig
 end
 
 module type S = sig
-  type t [@@deriving compare]
+  type t
 
   include Identifiable_intf.S with type t := t
   include Cmpable_intf.S_zero with type t := t

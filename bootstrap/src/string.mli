@@ -1,6 +1,6 @@
 open Rudiments
 
-type t = string [@@deriving compare]
+type t = string
 
 include Identifiable_intf.S with type t := t
 

@@ -38,12 +38,6 @@ let of_int x =
 let to_int t =
   int_of_float t
 
-let compare t0 t1 =
-  match cmp t0 t1 with
-  | Cmp.Lt -> -1
-  | Cmp.Eq -> 0
-  | Cmp.Gt -> 1
-
 module Dir = struct
   type t =
   | Down

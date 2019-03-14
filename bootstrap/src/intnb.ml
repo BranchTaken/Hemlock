@@ -91,14 +91,6 @@ module Make_common (T : I_common) : S_common with type t := int = struct
       assert (narrow t = t);
       string_of_int t
 
-    let compare t0 t1 =
-      assert (narrow t0 = t0);
-      assert (narrow t1 = t1);
-      match cmp t0 t1 with
-      | Cmp.Lt -> -1
-      | Cmp.Eq -> 0
-      | Cmp.Gt -> 1
-
     let sexp_of_t t =
       assert (narrow t = t);
       Sexplib.Std.sexp_of_int t
