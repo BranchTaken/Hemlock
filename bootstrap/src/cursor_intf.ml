@@ -1,6 +1,8 @@
 (* Partial Rudiments. *)
 module Int = I63
+module Uint = U63
 type int = Int.t
+type uint = Uint.t
 
 (* Polymorphic, e.g. ('a array). *)
 module type S_poly_iter = sig
@@ -19,7 +21,7 @@ end
 module type S_poly = sig
   include S_poly_iter
   val container: 'a t -> 'a container
-  val index: 'a t -> int
+  val index: 'a t -> uint
   val seek: 'a t -> int -> 'a t
 end
 
@@ -41,6 +43,6 @@ end
 module type S_mono = sig
   include S_mono_iter
   val container: t -> container
-  val index: t -> int
+  val index: t -> uint
   val seek: t -> int -> t
 end

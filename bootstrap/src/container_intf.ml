@@ -1,5 +1,5 @@
-include Container_common_intf
-include Container_array_intf
+open Container_common_intf
+open Container_array_intf
 
 (* Polymorphic container, e.g. ('a array). *)
 

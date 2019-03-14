@@ -179,7 +179,7 @@ module Seq = struct
   (* Special-purpose, for fold[i]_map . *)
   module Make_poly2 (T : sig
       type ('a, 'accum, 'b) t
-      val length: ('a,'accum,'b) t -> int
+      val length: ('a,'accum,'b) t -> uint
       val next: ('a,'accum,'b) t -> 'accum  -> 'b  * ('a,'accum,'b) t * 'accum
     end) : sig
       type ('a, 'accum, 'b) t
@@ -209,7 +209,7 @@ module Seq = struct
   (* Special-purpose, for fold[i]2_map . *)
   module Make_poly3 (T : sig
       type ('a, 'b, 'accum, 'c) t
-      val length: ('a,'b,'accum,'c) t -> int
+      val length: ('a,'b,'accum,'c) t -> uint
       val next: ('a,'b,'accum,'c) t -> 'accum
         -> 'c  * ('a,'b,'accum,'c) t * 'accum
     end) : sig
@@ -1039,7 +1039,7 @@ module Array_foldi_map = struct
     type 'a outer = 'a t
     type ('a, 'accum, 'b) t = {
       arr: 'a outer;
-      f: int -> 'accum -> 'a -> 'accum * 'b;
+      f: uint -> 'accum -> 'a -> 'accum * 'b;
       index: uint;
       length: uint;
     }
@@ -1149,7 +1149,7 @@ module Array_foldi2_map = struct
     type ('a, 'b, 'accum, 'c) t = {
       arr0: 'a outer;
       arr1: 'b outer;
-      f: int -> 'accum -> 'a -> 'b -> 'accum * 'c;
+      f: uint -> 'accum -> 'a -> 'b -> 'accum * 'c;
       index: uint;
     }
 

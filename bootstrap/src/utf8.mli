@@ -1,8 +1,8 @@
 (* Partial Rudiments. *)
-module Int = I63
+module Uint = U63
 module Codepoint = U21
 module Byte = U8
-type int = Int.t
+type uint = Uint.t
 type codepoint = Codepoint.t
 type byte = Byte.t
 
@@ -29,4 +29,4 @@ end
 
 val to_bytes: t -> byte list
 
-val length: t -> int
+val length: t -> uint

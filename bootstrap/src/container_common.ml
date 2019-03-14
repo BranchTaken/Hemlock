@@ -15,7 +15,7 @@ struct
     fn 0 (T.Cursor.hd t)
 
   let is_empty t =
-    Int.((length t) = 0)
+    Uint.((length t) = 0)
 end
 
 module Make_poly_fold (T : I_poly) : S_poly_fold_gen

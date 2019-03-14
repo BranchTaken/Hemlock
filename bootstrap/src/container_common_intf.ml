@@ -1,6 +1,6 @@
 (* Partial Rudiments. *)
-module Int = I63
-type int = Int.t
+module Uint = U63
+type uint = Uint.t
 
 (* Polymorphic container, e.g. ('a array). *)
 
@@ -16,13 +16,13 @@ end
 module type S_poly_length_gen = sig
   type 'a t
   type 'a elm
-  val length: 'a t -> int
+  val length: 'a t -> uint
   val is_empty: 'a t -> bool
 end
 
 module type S_poly_length = sig
   type 'a t
-  val length: 'a t -> int
+  val length: 'a t -> uint
   val is_empty: 'a t -> bool
 end
 
@@ -34,21 +34,21 @@ module type S_poly_fold_gen = sig
   val fold_right_until: 'a t -> init:'accum
     -> f:('a elm -> 'accum -> 'accum * bool) -> 'accum
   val foldi_until: 'a t -> init:'accum
-    -> f:(int -> 'accum -> 'a elm -> 'accum * bool) -> 'accum
+    -> f:(uint -> 'accum -> 'a elm -> 'accum * bool) -> 'accum
   val fold: 'a t -> init:'accum -> f:('accum -> 'a elm -> 'accum) -> 'accum
   val fold_right: 'a t -> init:'accum -> f:('a elm -> 'accum -> 'accum)
     -> 'accum
-  val foldi: 'a t -> init:'accum -> f:(int -> 'accum -> 'a elm -> 'accum)
+  val foldi: 'a t -> init:'accum -> f:(uint -> 'accum -> 'a elm -> 'accum)
     -> 'accum
   val iter: 'a t -> f:('a elm -> unit) -> unit
-  val iteri: 'a t -> f:(int -> 'a elm -> unit) -> unit
-  val count: 'a t -> f:('a elm -> bool) -> int
+  val iteri: 'a t -> f:(uint -> 'a elm -> unit) -> unit
+  val count: 'a t -> f:('a elm -> bool) -> uint
   val for_any: 'a t -> f:('a elm -> bool) -> bool
   val for_all: 'a t -> f:('a elm -> bool) -> bool
   val find: 'a t -> f:('a elm -> bool) -> 'a elm option
   val find_map: 'a t -> f:('a elm -> 'b option) -> 'b option
-  val findi: 'a t -> f:(int -> 'a elm -> bool) -> 'a elm option
-  val findi_map: 'a t -> f:(int -> 'a elm -> 'b option) -> 'b option
+  val findi: 'a t -> f:(uint -> 'a elm -> bool) -> 'a elm option
+  val findi_map: 'a t -> f:(uint -> 'a elm -> 'b option) -> 'b option
   val min_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
   val max_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
   val to_list: 'a t -> 'a elm list
@@ -62,21 +62,21 @@ module type S_poly_fold = sig
   val fold_right_until: 'a t -> init:'accum
     -> f:('a -> 'accum -> 'accum * bool) -> 'accum
   val foldi_until: 'a t -> init:'accum
-    -> f:(int -> 'accum -> 'a -> 'accum * bool) -> 'accum
+    -> f:(uint -> 'accum -> 'a -> 'accum * bool) -> 'accum
   val fold: 'a t -> init:'accum -> f:('accum -> 'a -> 'accum) -> 'accum
   val fold_right: 'a t -> init:'accum -> f:('a -> 'accum -> 'accum)
     -> 'accum
-  val foldi: 'a t -> init:'accum -> f:(int -> 'accum -> 'a -> 'accum)
+  val foldi: 'a t -> init:'accum -> f:(uint -> 'accum -> 'a -> 'accum)
     -> 'accum
   val iter: 'a t -> f:('a -> unit) -> unit
-  val iteri: 'a t -> f:(int -> 'a -> unit) -> unit
-  val count: 'a t -> f:('a -> bool) -> int
+  val iteri: 'a t -> f:(uint -> 'a -> unit) -> unit
+  val count: 'a t -> f:('a -> bool) -> uint
   val for_any: 'a t -> f:('a -> bool) -> bool
   val for_all: 'a t -> f:('a -> bool) -> bool
   val find: 'a t -> f:('a -> bool) -> 'a option
   val find_map: 'a t -> f:('a -> 'b option) -> 'b option
-  val findi: 'a t -> f:(int -> 'a -> bool) -> 'a option
-  val findi_map: 'a t -> f:(int -> 'a -> 'b option) -> 'b option
+  val findi: 'a t -> f:(uint -> 'a -> bool) -> 'a option
+  val findi_map: 'a t -> f:(uint -> 'a -> 'b option) -> 'b option
   val min_elm: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a option
   val max_elm: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a option
   val to_list: 'a t -> 'a list
@@ -112,7 +112,7 @@ end
 module type S_mono_length = sig
   type t
   type elm
-  val length: t -> int
+  val length: t -> uint
   val is_empty: t -> bool
 end
 
@@ -123,14 +123,14 @@ module type S_mono_fold = sig
     -> 'accum
   val fold_right_until: t -> init:'accum -> f:(elm -> 'accum -> 'accum * bool)
     -> 'accum
-  val foldi_until: t -> init:'accum -> f:(int -> 'accum -> elm -> 'accum * bool)
-    -> 'accum
+  val foldi_until: t -> init:'accum
+    -> f:(uint -> 'accum -> elm -> 'accum * bool) -> 'accum
   val fold: t -> init:'accum -> f:('accum -> elm -> 'accum) -> 'accum
   val fold_right: t -> init:'accum -> f:(elm -> 'accum -> 'accum) -> 'accum
-  val foldi: t -> init:'accum -> f:(int -> 'accum -> elm -> 'accum) -> 'accum
+  val foldi: t -> init:'accum -> f:(uint -> 'accum -> elm -> 'accum) -> 'accum
   val iter: t -> f:(elm -> unit) -> unit
-  val iteri: t -> f:(int -> elm -> unit) -> unit
-  val count: t -> f:(elm -> bool) -> int
+  val iteri: t -> f:(uint -> elm -> unit) -> unit
+  val count: t -> f:(elm -> bool) -> uint
   val for_any: t -> f:(elm -> bool) -> bool
   val for_all: t -> f:(elm -> bool) -> bool
   val find: t -> f:(elm -> bool) -> elm option

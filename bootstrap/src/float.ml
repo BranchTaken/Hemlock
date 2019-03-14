@@ -1,4 +1,9 @@
-open Rudiments
+(* Partial Rudiments. *)
+module Int = I63
+module Uint = U63
+type int = Int.t
+type uint = Uint.t
+open Rudiments_functions
 
 module T = struct
   type t = float
@@ -75,8 +80,7 @@ end
 let create ~neg ~exponent ~mantissa =
   assert Int.(exponent >= (-1023));
   assert Int.(exponent <= 1024);
-  assert Int.(mantissa >= 0);
-  assert Int.(mantissa <= 0xf_ffff_ffff_ffff);
+  assert Uint.(mantissa <= 0xf_ffff_ffff_ffff);
   let sign = match neg with
     | false -> Int64.zero
     | true -> Int64.one

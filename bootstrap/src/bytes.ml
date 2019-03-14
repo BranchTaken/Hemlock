@@ -1,11 +1,11 @@
 (* Partial Rudiments. *)
-module Int = U63
+module Uint = U63
 module Codepoint = U21
 module Byte = U8
 type 'a array = 'a Array.t
 type string = String.t
 type cursor = String.Cursor.t
-type int = Int.t
+type uint = Uint.t
 type codepoint = Codepoint.t
 type byte = Byte.t
 open Rudiments_functions
@@ -18,7 +18,7 @@ module Array_seq = struct
     type t = {
       string: string;
       cursor: cursor;
-      bindex: int;
+      bindex: uint;
       rem_bytes: byte list;
     }
     type elm = codepoint
@@ -35,7 +35,7 @@ module Array_seq = struct
       (String.blength t.string) - t.bindex
 
     let next t =
-      assert (Int.(length t > 0));
+      assert (Uint.(length t > 0));
       match t.rem_bytes with
       | b :: rem_bytes' -> begin
           let t' = {t with
@@ -69,17 +69,17 @@ module Utf8_seq = struct
   module T = struct
     type t = {
       bytes: byte array;
-      bindex: int;
+      bindex: uint;
     }
 
     let init t =
       {bytes=t; bindex=0}
 
     let length t =
-      Int.((Array.length t.bytes) - t.bindex)
+      Uint.((Array.length t.bytes) - t.bindex)
 
     let next t =
-      match Int.((length t) = 0) with
+      match Uint.((length t) = 0) with
       | true -> None
       | false -> begin
           let b = Array.get t.bytes t.bindex in
@@ -140,7 +140,7 @@ let%expect_test "of_codepoint" =
     printf "'%s' -> [|" (String.of_codepoint cp);
     let bytes = of_codepoint cp in
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Int.(i = 0) then "" else "; ") b);
+      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") b);
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
   ) cps;
 
@@ -161,7 +161,7 @@ let%expect_test "of_string" =
     printf "\"%s\" -> [|" s;
     let bytes = of_string s in
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Int.(i = 0) then "" else "; ") b);
+      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") b);
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
   ) strs;
 
@@ -176,7 +176,7 @@ let%expect_test "to_string" =
     let bytes = Array.of_list bytes_list in
     printf "to_string [|";
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Int.(i = 0) then "" else "; ") b);
+      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") b);
     printf "|] -> %s\n" (match to_string bytes with
       | None -> "None"
       | Some s -> "\"" ^ s ^ "\""

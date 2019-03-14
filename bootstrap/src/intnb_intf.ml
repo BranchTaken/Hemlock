@@ -1,6 +1,6 @@
 module type I = sig
   type t
-  val num_bits: int
+  val num_bits: int (* uint *)
 end
 
 module type S = sig
@@ -26,10 +26,10 @@ module type S = sig
   val bit_xor: t -> t -> t
   val bit_not: t -> t
   val bit_sl: t -> t -> t
-  val bit_usr: t -> int -> t
-  val bit_pop: t -> t
-  val bit_clz: t -> t
-  val bit_ctz: t -> t
+  val bit_usr: t -> int (* uint *) -> t
+  val bit_pop: t -> int (* uint *)
+  val bit_clz: t -> int (* uint *)
+  val bit_ctz: t -> int (* uint *)
 
   val is_pow2: t -> bool
   val floor_pow2: t -> t
@@ -58,7 +58,7 @@ module type S_i = sig
 
   val neg_one: t
 
-  val bit_ssr: t -> int -> t
+  val bit_ssr: t -> int (* uint *) -> t
 
   val ( ~- ): t -> t
   val ( ~+ ): t -> t

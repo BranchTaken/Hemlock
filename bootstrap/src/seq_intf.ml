@@ -1,9 +1,13 @@
+(* Partial Rudiments. *)
+module Uint = U63
+type uint = U63.t
+
 (* Polymorphic, e.g. ('a array). *)
 
 module type I_poly_def = sig
   type 'a t
   type 'a elm
-  val length: 'a t -> int
+  val length: 'a t -> uint
   val next: 'a t -> 'a elm * 'a t
 end
 
@@ -27,7 +31,7 @@ end
 module type I_mono_def = sig
   type t
   type elm
-  val length: t -> int
+  val length: t -> uint
   val next: t -> elm * t
 end
 

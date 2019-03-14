@@ -1,3 +1,9 @@
+(* Partial Rudiments. *)
+module Int = I63
+module Uint = U63
+type int = Int.t
+type uint = Uint.t
+
 type t = float
 
 include Identifiable_intf.S with type t := t
@@ -30,10 +36,10 @@ module Parts: sig
   val integral: t -> outer
 end
 
-val create: neg:bool -> exponent:int -> mantissa:int -> t
+val create: neg:bool -> exponent:int -> mantissa:uint -> t
 val is_neg: t -> bool
 val exponent: t -> int
-val mantissa: t -> int
+val mantissa: t -> uint
 val m2x: t -> t * int
 val f2x: t -> int -> t
 val modf: t -> Parts.t

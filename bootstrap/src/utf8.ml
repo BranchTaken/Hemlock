@@ -1,8 +1,9 @@
 (* Partial Rudiments. *)
 module Int = I63
+module Uint = U63
 module Codepoint = U21
 module Byte = U8
-type int = Int.t
+type uint = Uint.t
 type codepoint = Codepoint.t
 type byte = Byte.t
 open Rudiments_functions
@@ -177,11 +178,11 @@ let%expect_test "utf8" =
     let length = length utf8 in
     printf "codepoint=0x%x, codepoint'=0x%x, bytes=[" codepoint codepoint';
     List.iteri (fun i b ->
-      let space = if Int.(i = 0) then "" else " " in
-      let sep = if Int.(succ i < length) then ";" else "" in
+      let space = if Uint.(i = 0) then "" else " " in
+      let sep = if Uint.(succ i < length) then ";" else "" in
       printf "%s0x%x%s" space b sep
     ) bytes;
-    printf "], length=%d\n" length
+    printf "], length=%u\n" length
   ) codepoints;
 
   [%expect{|

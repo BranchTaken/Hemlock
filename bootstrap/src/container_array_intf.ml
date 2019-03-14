@@ -1,13 +1,14 @@
+open Container_common_intf
 (* Partial Rudiments. *)
 type 'a array = 'a Array.t
-
-open Container_common_intf
+module Uint = U63
+type uint = Uint.t
 
 (* Polymorphic container, e.g. ('a array). *)
 
 module type I_poly_array = sig
   include I_poly
-  val length: 'a t -> int
+  val length: 'a t -> uint
 end
 
 module type S_poly_array_gen = sig
@@ -25,7 +26,7 @@ end
 
 module type I_mono_array = sig
   include I_mono
-  val length: t -> int
+  val length: t -> uint
 end
 
 module type S_mono_array = sig

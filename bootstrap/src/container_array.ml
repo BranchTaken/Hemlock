@@ -1,8 +1,7 @@
-(* Partial Rudiments. *)
-module Int = I63
-type int = Int.t
-
 open Container_array_intf
+(* Partial Rudiments. *)
+module Uint = U63
+type uint = Uint.t
 
 (* Polymorphic. *)
 
@@ -13,7 +12,7 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
     module T = struct
       type 'a t = {
         cursor: 'a T.Cursor.t;
-        length: int;
+        length: uint;
       }
       type 'a elm = 'a T.elm
 
@@ -27,7 +26,7 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
         t.length
 
       let next t =
-        assert (Int.(length t > 0));
+        assert (Uint.(length t > 0));
         let elm = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
         let length' = pred t.length in

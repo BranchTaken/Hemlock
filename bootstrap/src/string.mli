@@ -12,11 +12,11 @@ module Cursor : sig
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
-  val index: t -> int [@@ocaml.deprecated "Use [bc]index instead"]
-  val bindex: t -> int
-  val cindex: t -> int [@@ocaml.deprecated "Do not use; O(n)"]
-  val at: outer -> bindex:int -> t
-  val near: outer -> bindex:int -> t
+  val index: t -> uint [@@ocaml.deprecated "Use [bc]index instead"]
+  val bindex: t -> uint
+  val cindex: t -> uint [@@ocaml.deprecated "Do not use; O(n)"]
+  val at: outer -> bindex:uint -> t
+  val near: outer -> bindex:uint -> t
 end
 type cursor = Cursor.t
 
@@ -29,11 +29,11 @@ module Cursori : sig
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
-  val index: t -> int [@@ocaml.deprecated "Use [bc]index instead"]
-  val bindex: t -> int
-  val cindex: t -> int
+  val index: t -> uint [@@ocaml.deprecated "Use [bc]index instead"]
+  val bindex: t -> uint
+  val cindex: t -> uint
   val cursor: t -> cursor
-  val at: outer -> cindex:int -> t
+  val at: outer -> cindex:uint -> t
 end
 type cursori = Cursori.t
 
@@ -60,16 +60,16 @@ module Slice : sig
   val past_succ: t -> t
   val past_pred: t -> t
 
-  val blength: t -> int
-  val clength: t -> int
-  val get: t -> int -> byte
+  val blength: t -> uint
+  val clength: t -> uint
+  val get: t -> uint -> byte
 
-  val init: ?blength:int -> int -> f:(int -> codepoint) -> t
+  val init: ?blength:uint -> uint -> f:(int -> codepoint) -> t
 
   val of_codepoint: codepoint -> t
 
-  val of_list: ?blength:int -> ?clength:int -> codepoint list -> t
-  val of_list_rev: ?blength:int -> ?clength:int -> codepoint list
+  val of_list: ?blength:uint -> ?clength:uint -> codepoint list -> t
+  val of_list_rev: ?blength:uint -> ?clength:uint -> codepoint list
     -> t
   (* In Container_intf.S_mono: val to_list: t -> codepoint list *)
   (* In Container_intf.S_mono: val to_list_rev: t -> codepoint list *)
@@ -78,7 +78,7 @@ module Slice : sig
   (* In Container_intf.S_mono: val to_array: t -> codepoint array *)
 
   include Container_intf.S_mono with type t := t and type elm := codepoint
-  val length: t -> int [@@ocaml.deprecated "Use blength instead"]
+  val length: t -> uint [@@ocaml.deprecated "Use blength instead"]
 
   val map: t -> f:(codepoint -> codepoint) -> t
   val mapi: t -> f:(int -> codepoint -> codepoint) -> t
@@ -111,8 +111,8 @@ module Slice : sig
   val is_prefix: t -> prefix:t -> bool
   val is_suffix: t -> suffix:t -> bool
 
-  val prefix: t -> int -> t
-  val suffix: t -> int -> t
+  val prefix: t -> uint -> t
+  val suffix: t -> uint -> t
 
   val chop_prefix: t -> prefix:t -> t option
   val chop_prefix_hlt: t -> prefix:t -> t
@@ -184,17 +184,17 @@ module Seq : sig
 end
 
 (* Byte length. *)
-val blength: t -> int
+val blength: t -> uint
 (* Codepoint length. *)
-val clength: t -> int
-val get: t -> int -> byte
+val clength: t -> uint
+val get: t -> uint -> byte
 
-val init: ?blength:int -> int -> f:(int -> codepoint) -> t
+val init: ?blength:uint -> uint -> f:(int -> codepoint) -> t
 
 val of_codepoint: codepoint -> t
 
-val of_list: ?blength:int -> ?clength:int -> codepoint list -> t
-val of_list_rev: ?blength:int -> ?clength:int -> codepoint list
+val of_list: ?blength:uint -> ?clength:uint -> codepoint list -> t
+val of_list_rev: ?blength:uint -> ?clength:uint -> codepoint list
   -> t
 (* In Container_intf.S_mono: val to_list: t -> codepoint list *)
 (* In Container_intf.S_mono: val to_list_rev: t -> codepoint list *)
@@ -203,7 +203,7 @@ val of_array: codepoint array -> t
 (* In Container_intf.S_mono: val to_array: t -> codepoint array *)
 
 include Container_intf.S_mono with type t := t and type elm := codepoint
-val length: t -> int [@@ocaml.deprecated "Use [bc]length instead"]
+val length: t -> uint [@@ocaml.deprecated "Use [bc]length instead"]
 
 val map: t -> f:(codepoint -> codepoint) -> t
 val mapi: t -> f:(int -> codepoint -> codepoint) -> t
@@ -234,8 +234,8 @@ val is_suffix: t -> suffix:t -> bool
 
 val pare: base:cursor -> past:cursor -> t
 
-val prefix: t -> int -> t
-val suffix: t -> int -> t
+val prefix: t -> uint -> t
+val suffix: t -> uint -> t
 
 val chop_prefix: t -> prefix:t -> t option
 val chop_prefix_hlt: t -> prefix:t -> t
