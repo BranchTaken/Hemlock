@@ -517,12 +517,11 @@ type order =
 type run = {
   base: uint;
   past: uint;
-  order: order;
 }
 let sort_impl ?(stable=false) t ~cmp ~inplace =
   (* Merge a pair of adjacent runs.  Input runs may be in increasing or
    * decreasing order; the output is always in increasing order. *)
-  let merge_pair src run0 run1 dst = begin
+  let merge_pair src run0 order0 run1 order1 dst = begin
     assert Uint.(run0.past = run1.base);
     let rblit t0 i0 t1 i1 len = begin
       for i = 0 to (Uint.pred len) do
@@ -576,7 +575,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
           end
         | true, true -> not_reached ()
       end in
-      fn src run0 run1 dst {base=run0.base; past=run0.base; order=Increasing}
+      fn src run0 run1 dst {base=run0.base; past=run0.base}
     end in
     let merge_pair_id src run0 run1 dst = begin
       let rec fn src run0 run1 dst run = begin
@@ -601,7 +600,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
           end
         | true, true -> not_reached ()
       end in
-      fn src run0 run1 dst {base=run0.base; past=run0.base; order=Increasing}
+      fn src run0 run1 dst {base=run0.base; past=run0.base}
     end in
     let merge_pair_di src run0 run1 dst = begin
       let rec fn src run0 run1 dst run = begin
@@ -626,7 +625,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
           end
         | true, true -> not_reached ()
       end in
-      fn src run0 run1 dst {base=run0.base; past=run0.base; order=Increasing}
+      fn src run0 run1 dst {base=run0.base; past=run0.base}
     end in
     let merge_pair_dd src run0 run1 dst = begin
       let rec fn src run0 run1 dst run = begin
@@ -651,9 +650,9 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
           end
         | true, true -> not_reached ()
       end in
-      fn src run0 run1 dst {base=run0.base; past=run0.base; order=Increasing}
+      fn src run0 run1 dst {base=run0.base; past=run0.base}
     end in
-    match run0.order, run1.order with
+    match order0, order1 with
     | Increasing, Increasing
     | Increasing, Either
     | Either, Increasing
@@ -665,19 +664,19 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
     | Either, Decreasing -> merge_pair_dd src run0 run1 dst
   end in
   (* Select monotonic runs and merge run pairs. *)
-  let rec select elm base i order run0_opt src dst runs = begin
+  let rec select elm base i order run0_opt order0 src dst runs = begin
     match Uint.(i = (length t)) with
     | true -> begin
-        let run0, run1 = match run0_opt with
+        let run0, order0, run1, order1 = match run0_opt with
           | None -> begin
               (* Copy odd run. *)
-              let run0 = {base; past=i; order} in
-              let run1 = {base=i; past=i; order=Increasing} in
-              run0, run1
+              let run0 = {base; past=i} in
+              let run1 = {base=i; past=i} in
+              run0, order, run1, Increasing
             end
-          | Some run0 -> run0, {base; past=i; order}
+          | Some run0 -> run0, order0, {base; past=i}, order
         in
-        let run = merge_pair src run0 run1 dst in
+        let run = merge_pair src run0 order0 run1 order1 dst in
         run :: runs
       end
     | false -> begin
@@ -685,34 +684,34 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
         let i' = Uint.succ i in
         match cmp elm elm', order, stable with
         | Cmp.Lt, Either, _ ->
-          select elm' base i' Increasing run0_opt src dst runs
+          select elm' base i' Increasing run0_opt order0 src dst runs
         | Cmp.Gt, Either, _ ->
-          select elm' base i' Decreasing run0_opt src dst runs
+          select elm' base i' Decreasing run0_opt order0 src dst runs
         | Cmp.Lt, Increasing, _
         | Cmp.Eq, Increasing, true
         | Cmp.Eq, Either, true ->
-          select elm' base i' Increasing run0_opt src dst runs
+          select elm' base i' Increasing run0_opt order0 src dst runs
         | Cmp.Eq, _, false
         | Cmp.Gt, Decreasing, _ ->
-          select elm' base i' order run0_opt src dst runs
+          select elm' base i' order run0_opt order0 src dst runs
         | Cmp.Lt, Decreasing, _
         | Cmp.Eq, Decreasing, true
         | Cmp.Gt, Increasing, _ ->
-          let run0_opt', runs' = match run0_opt with
-            | None -> Some {base; past=i; order}, runs
+          let run0_opt', order0', runs' = match run0_opt with
+            | None -> Some {base; past=i}, order, runs
             | Some run0 -> begin
-                let run1 = {base; past=i; order} in
-                let run = merge_pair src run0 run1 dst in
-                None, (run :: runs)
+                let run1 = {base; past=i} in
+                let run = merge_pair src run0 order0 run1 order dst in
+                None, Either, (run :: runs)
               end
           in
-          select elm' i i' Either run0_opt' src dst runs'
+          select elm' i i' Either run0_opt' order0' src dst runs'
       end
   end in
   let aux = copy t in
   let runs = match length t with
-    | 0 -> [{base=0; past=0; order=Increasing}]
-    | _ -> select (get t 0) 0 1 Either None t aux []
+    | 0 -> [{base=0; past=0}]
+    | _ -> select (get t 0) 0 1 Either None Either t aux []
   in
 
   let merge_pair_up src run0 run1 dst = begin
@@ -774,7 +773,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
             end
         end
     end in
-    let run = {base=run0.base; past=run0.base; order=Increasing} in
+    let run = {base=run0.base; past=run0.base} in
     match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
     | false, false -> begin
         let elm0 = get src run0.base in
@@ -868,7 +867,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
             end
         end
     end in
-    let run = {base=run1.past; past=run1.past; order=Increasing} in
+    let run = {base=run1.past; past=run1.past} in
     match Uint.(run0.base = run0.past), Uint.(run1.base = run1.past) with
     | false, false -> begin
         let i0 = Uint.pred run0.past in
