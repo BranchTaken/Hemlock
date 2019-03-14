@@ -806,36 +806,46 @@ module Slice = struct
   end
 
   let blength_of_map t ~f =
-    foldi t ~init:0 ~f:(fun i blength codepoint ->
+    foldi t ~init:(0, false) ~f:(fun i (blength, modified) codepoint ->
       let codepoint' = f i codepoint in
-      Uint.(blength + Utf8.(length (of_codepoint codepoint')))
+      let modified' = modified || Codepoint.(codepoint' <> codepoint) in
+      Uint.(blength + Utf8.(length (of_codepoint codepoint'))), modified'
     )
 
   let map t ~f =
     let f' _ codepoint = begin
       f codepoint
     end in
-    let blength = blength_of_map t ~f:f' in
-    of_string String_mapi.(to_string (init t blength ~f:f'))
+    let blength, modified = blength_of_map t ~f:f' in
+    match modified with
+    | false -> t
+    | true -> of_string String_mapi.(to_string (init t blength ~f:f'))
 
   let mapi t ~f =
-    let blength = blength_of_map t ~f in
-    of_string String_mapi.(to_string (init t blength ~f))
+    let blength, modified = blength_of_map t ~f in
+    match modified with
+    | false -> t
+    | true -> of_string String_mapi.(to_string (init t blength ~f))
 
   let tr ~target ~replacement t =
     let f _ codepoint = begin
       if Codepoint.(codepoint = target) then replacement
       else codepoint
     end in
-    let blength = blength_of_map t ~f in
-    of_string String_mapi.(to_string (init t blength ~f))
+    let blength, modified = blength_of_map t ~f in
+    match modified with
+    | false -> t
+    | true -> of_string String_mapi.(to_string (init t blength ~f))
 
   let filter t ~f =
-    let codepoints = fold_right t ~init:[] ~f:(fun codepoint codepoints ->
-      if f codepoint then codepoint :: codepoints
-      else codepoints
-    ) in
-    of_list codepoints
+    let codepoints, modified = fold_right t ~init:([], false)
+        ~f:(fun codepoint (codepoints, modified) ->
+          if f codepoint then codepoint :: codepoints, modified
+          else codepoints, true
+        ) in
+    match modified with
+    | false -> t
+    | true -> of_list codepoints
 
   module String_concat = struct
     module T = struct
@@ -892,8 +902,11 @@ module Slice = struct
       let len' = sep_len + Uint.(len + (blength slice)) in
       i', len'
     ) (0, 0) slices in
-    of_string (String_concat.to_string
-        (String_concat.init sep slices blength))
+    match Uint.((length sep) = 0), List.length slices with
+    | _, 0 -> of_string ""
+    | true, 1 -> List.hd slices
+    | _ -> of_string (String_concat.to_string
+          (String_concat.init sep slices blength))
 
   let concat_rev ?(sep=(of_string "")) slices_rev =
     let slices, blength = List.fold_left (fun (slices, len) slice ->
@@ -905,8 +918,11 @@ module Slice = struct
       let len' = Uint.(sep_len + len + (blength slice)) in
       slices', len'
     ) ([], 0) slices_rev in
-    of_string (String_concat.to_string
-      (String_concat.init sep slices blength))
+    match Uint.((length sep) = 0), List.length slices with
+    | _, 0 -> of_string ""
+    | true, 1 -> List.hd slices
+    | _ -> of_string (String_concat.to_string
+          (String_concat.init sep slices blength))
 
   let concat_map ?sep t ~f =
     (* Iterate in reverse order to generate a list of slices that can then be
@@ -1673,7 +1689,10 @@ let is_suffix t ~suffix =
   Slice.is_suffix (Slice.of_string t) ~suffix:(Slice.of_string suffix)
 
 let pare ~base ~past =
-  Slice.to_string (Slice.of_cursors ~base ~past)
+  match Cursor.(base = (hd (container base)))
+                && Cursor.(past = (tl (container past))) with
+  | true -> Cursor.container base
+  | false -> Slice.to_string (Slice.of_cursors ~base ~past)
 
 let prefix t n =
   Slice.(to_string (prefix (of_string t) n))
