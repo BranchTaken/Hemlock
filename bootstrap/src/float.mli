@@ -1,7 +1,6 @@
 (* Partial Rudiments. *)
 module Int = I63
 module Uint = U63
-type int = Int.t
 type uint = Uint.t
 
 type t = float

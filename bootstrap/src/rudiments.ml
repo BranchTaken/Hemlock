@@ -7,10 +7,7 @@ module Byte = U8
 
 (* Types. *)
 
-type 'a array = 'a Array.t
-
 type i63 = I63.t
-type int = Int.t
 
 type u63 = U63.t
 type uint = Uint.t
@@ -22,3 +19,4 @@ type u8 = U8.t
 type byte = Byte.t
 
 include Rudiments_functions
+include Rudiments_int

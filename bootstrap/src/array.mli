@@ -1,6 +1,4 @@
-(* Partial Rudiments. *)
-module Uint = U63
-type uint = Uint.t
+open Rudiments
 
 type 'a t = 'a array [@@deriving sexp]
 type 'a elm

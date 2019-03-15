@@ -1,12 +1,4 @@
-(* Partial Rudiments. *)
-module Int = I63
-module Uint = U63
-module Codepoint = U21
-module Byte = U8
-type uint = Uint.t
-type codepoint = Codepoint.t
-type byte = Byte.t
-open Rudiments_functions
+open Rudiments
 
 module T = struct
   type t =

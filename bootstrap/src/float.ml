@@ -1,7 +1,6 @@
 (* Partial Rudiments. *)
 module Int = I63
 module Uint = U63
-type int = Int.t
 type uint = Uint.t
 open Rudiments_functions
 
@@ -145,7 +144,7 @@ let ( % ) t0 t1 =
   mod_float t0 t1
 
 let ( ** ) t0 t1 =
-  t0 ** t1
+  Stdlib.Pervasives.( ** ) t0 t1
 
 let ( ~- ) t =
   -1. * t

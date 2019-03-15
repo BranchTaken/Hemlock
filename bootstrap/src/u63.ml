@@ -1,7 +1,3 @@
-(* Partial Rudiments. *)
-module Int = I63
-type int = I63.t
-
 module T = struct
   type t = int
   let num_bits = Sys.int_size

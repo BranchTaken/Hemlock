@@ -1,10 +1,4 @@
-(* Partial Rudiments. *)
-module Codepoint = U21
-module Byte = U8
-type 'a array = 'a Array.t
-type string = String.t
-type codepoint = Codepoint.t
-type byte = Byte.t
+open Rudiments
 
 val of_codepoint: codepoint -> byte array
 val of_string: string -> byte array

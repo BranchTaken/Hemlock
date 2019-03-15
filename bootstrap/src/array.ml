@@ -1,8 +1,4 @@
-(* Partial Rudiments. *)
-module Int = I63
-module Uint = U63
-type uint = Uint.t
-open Rudiments_functions
+open Rudiments
 
 module T = struct
   type 'a t = 'a array
@@ -24,7 +20,8 @@ module T = struct
 
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
-        assert ((t0.array == t1.array) || (t0.array = t1.array));
+        assert ((t0.array == t1.array)
+                || (Stdlib.Pervasives.( = ) t0.array t1.array));
         Uint.cmp t0.index t1.index
 
       let hd array =

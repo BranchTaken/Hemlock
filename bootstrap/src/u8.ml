@@ -2,7 +2,6 @@
 module Int = I63
 module Uint = U63
 module Codepoint = U21
-type int = Int.t
 type uint = Uint.t
 type codepoint = Codepoint.t
 open Rudiments_functions

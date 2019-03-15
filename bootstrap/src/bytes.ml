@@ -1,14 +1,4 @@
-(* Partial Rudiments. *)
-module Uint = U63
-module Codepoint = U21
-module Byte = U8
-type 'a array = 'a Array.t
-type string = String.t
-type cursor = String.Cursor.t
-type uint = Uint.t
-type codepoint = Codepoint.t
-type byte = Byte.t
-open Rudiments_functions
+open Rudiments
 
 let of_codepoint cp =
   Array.of_list (Utf8.to_bytes (Utf8.of_codepoint cp))
@@ -17,7 +7,7 @@ module Array_seq = struct
   module T = struct
     type t = {
       string: string;
-      cursor: cursor;
+      cursor: String.cursor;
       bindex: uint;
       rem_bytes: byte list;
     }

@@ -1,10 +1,4 @@
-(* Partial Rudiments. *)
-module Uint = U63
-module Codepoint = U21
-module Byte = U8
-type uint = Uint.t
-type codepoint = Codepoint.t
-type byte = Byte.t
+open Rudiments
 
 type t
 

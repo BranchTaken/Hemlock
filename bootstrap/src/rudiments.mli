@@ -7,10 +7,12 @@ module Byte = U8
 
 (* Types. *)
 
-type 'a array = 'a Array.t
+(* Redundant; ('a array) is intrinsic and equivalent to ('a Array.t). *)
+(* type 'a array = 'a Array.t *)
 
 type i63 = I63.t
-type int = Int.t
+(* Redundant; int is intrinsic and equivalent to Int.t . *)
+(* type int = Int.t *)
 
 type u63 = U63.t
 type uint = Uint.t
@@ -26,3 +28,6 @@ type byte = Byte.t
 val not_reached: unit -> 'a
 val not_implemented: string -> 'a
 val halt: string -> 'a
+
+(* (int) is the default numerical type. *)
+include Intnb_intf.S_i with type t := int
