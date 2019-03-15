@@ -8,7 +8,7 @@ type t = float
 include Identifiable_intf.S with type t := t
 include Intable_intf.S with type t := t
 
-module Dir: sig
+module Dir : sig
   type t =
   | Down
   | Up
@@ -17,7 +17,7 @@ module Dir: sig
   [@@deriving sexp]
 end
 
-module Class: sig
+module Class : sig
   type t =
   | Infinite
   | Nan
@@ -27,7 +27,7 @@ module Class: sig
   [@@deriving sexp]
 end
 
-module Parts: sig
+module Parts : sig
   type outer = t
   type t [@@deriving sexp]
 
@@ -109,3 +109,20 @@ val atan2: t -> t -> t
 val sinh: t -> t
 val cosh: t -> t
 val tanh: t -> t
+
+module O : sig
+  type nonrec t = t
+
+  include Cmpable_intf.S_infix with type t := t
+
+  val ( + ): t -> t -> t
+  val ( - ): t -> t -> t
+  val ( * ): t -> t -> t
+  val ( / ): t -> t -> t
+  val ( % ): t -> t -> t
+  val ( ** ): t -> t -> t
+  val ( ~- ): t -> t
+  val ( ~+ ): t -> t
+  val neg: t -> t
+  val abs: t -> t
+end

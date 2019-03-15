@@ -359,6 +359,27 @@ let cosh t =
 let tanh t =
   tanh t
 
+module O = struct
+  module T = struct
+    type nonrec t = t
+
+    let cmp = cmp
+  end
+  include T
+  include Cmpable.Make(T)
+
+  let ( + ) = ( + )
+  let ( - ) = ( - )
+  let ( * ) = ( * )
+  let ( / ) = ( / )
+  let ( % ) = ( % )
+  let ( ** ) = ( ** )
+  let ( ~- ) = ( ~- )
+  let ( ~+ ) = ( ~+ )
+  let neg = neg
+  let abs = abs
+end
+
 (*******************************************************************************
  * Begin tests.
  *)

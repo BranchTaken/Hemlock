@@ -1532,6 +1532,16 @@ module Slice = struct
     match rsplit2 t ~on with
     | None -> halt "No split performed"
     | Some slice -> slice
+
+  module O = struct
+    module T = struct
+      type nonrec t = t
+
+      let cmp = cmp
+    end
+    include T
+    include Cmpable.Make(T)
+  end
 end
 
 let init ?blength clength ~f =
@@ -1768,6 +1778,16 @@ let rsplit2 t ~on =
 let rsplit2_hlt t ~on =
   let slice, slice2 = Slice.rsplit2_hlt (Slice.of_string t) ~on in
   (Slice.to_string slice), (Slice.to_string slice2)
+
+module O = struct
+  module T = struct
+    type nonrec t = t
+
+    let cmp = cmp
+  end
+  include T
+  include Cmpable.Make(T)
+end
 
 (*******************************************************************************
  * Begin tests.

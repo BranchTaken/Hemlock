@@ -141,6 +141,12 @@ module Slice : sig
 
   val rsplit2: t -> on:codepoint -> (t * t) option
   val rsplit2_hlt: t -> on:codepoint -> t * t
+
+  module O : sig
+    type nonrec t = t
+
+    include Cmpable_intf.S_infix with type t := t
+  end
 end
 
 module Seq : sig
@@ -257,3 +263,9 @@ val lsplit2_hlt: t -> on:codepoint -> t * t
 
 val rsplit2: t -> on:codepoint -> (t * t) option
 val rsplit2_hlt: t -> on:codepoint -> t * t
+
+module O : sig
+  type nonrec t = t
+
+  include Cmpable_intf.S_infix with type t := t
+end

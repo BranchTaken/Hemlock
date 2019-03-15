@@ -8,14 +8,19 @@ module type I_zero = sig
   val zero: t
 end
 
-module type S = sig
-  include I
+module type S_infix = sig
+  type t
   val ( >= ): t -> t -> bool
   val ( <= ): t -> t -> bool
   val ( = ): t -> t -> bool
   val ( > ): t -> t -> bool
   val ( < ): t -> t -> bool
   val ( <> ): t -> t -> bool
+end
+
+module type S = sig
+  include I
+  include S_infix with type t := t
   val ascending: t -> t -> Cmp.t
   val descending: t -> t -> Cmp.t
   val clamp: t -> min:t -> max:t -> t
