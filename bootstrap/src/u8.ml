@@ -26,6 +26,9 @@ let of_int_hlt x =
   | false -> halt "Lossy conversion"
   | true -> t
 
+let kv x =
+  of_int x
+
 let to_uint t =
   t
 

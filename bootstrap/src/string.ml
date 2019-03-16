@@ -36,7 +36,7 @@ let is_empty t =
   Uint.((blength t) = 0)
 
 let get t bindex =
-  Stdlib.Char.code (Stdlib.String.get t (Uint.to_int bindex))
+  Byte.of_int_hlt (Stdlib.Char.code (Stdlib.String.get t (Uint.to_int bindex)))
 
 module Cursor = struct
   module T = struct
@@ -79,8 +79,8 @@ module Cursor = struct
     if Uint.(bindex = tl_index) then
       {string; bindex}
     else begin
-      let b = get string bindex in
-      if Byte.((bit_and b 0b11_000000) <> 0b10_000000) then
+      let b:byte = get string bindex in
+      if Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) then
         {string; bindex}
       else
         halt "Not at code point boundary"
@@ -93,7 +93,7 @@ module Cursor = struct
     else begin
       let rec fn bindex = begin
         let b = get string bindex in
-        match Byte.((bit_and b 0b11_000000) <> 0b10_000000) with
+        match Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) with
         | true -> {string; bindex}
         | false -> fn (Uint.pred bindex)
       end in
@@ -116,7 +116,7 @@ module Cursor = struct
       | _ -> begin
           let b = get t.string t.bindex in
           let nbytes =
-            if Byte.(b <= 0b0111_1111) then 1
+            if Byte.(b <= (kv 0b0111_1111)) then 1
             else Byte.(bit_clz (bit_not b))
           in
           let t' = {t with bindex=Uint.(t.bindex + nbytes)} in
@@ -138,11 +138,11 @@ module Cursor = struct
   let lget t =
     let bindex = (Uint.pred t.bindex) in
     let b = get t.string bindex in
-    if Byte.(b <= 0b0111_1111) then Byte.to_codepoint b
+    if Byte.(b <= (kv 0b0111_1111)) then Byte.to_codepoint b
     else begin
       let rec fn bindex cp nbits = begin
         let b = get t.string bindex in
-        match Byte.((bit_and b 0b11_000000) <> 0b10_000000) with
+        match Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) with
         | true -> begin
             let mask = Byte.(bit_usr (of_uint 0x3f) Uint.(nbits / 6)) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
@@ -166,7 +166,7 @@ module Cursor = struct
 
   let rget t =
     let b = get t.string t.bindex in
-    if Byte.(b <= 0b0111_1111) then Byte.to_codepoint b
+    if Byte.(b <= (kv 0b0111_1111)) then Byte.to_codepoint b
     else begin
       let rec fn cp bindex rem_bytes = begin
         match rem_bytes with
@@ -180,8 +180,8 @@ module Cursor = struct
           end
       end in
       let nbytes = Byte.(bit_clz (bit_not b)) in
-      let b0_nbits = Uint.(7 - nbytes) in
-      let b0_mask = Byte.((bit_sl 1 b0_nbits) - 1) in
+      let b0_nbits = Byte.((kv 7) - (of_int nbytes)) in
+      let b0_mask = Byte.((bit_sl one b0_nbits) - one) in
       let cp = Byte.(to_codepoint (bit_and b b0_mask)) in
       fn cp (Uint.succ t.bindex) Uint.(pred nbytes)
     end
@@ -300,11 +300,11 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr b
+                  Stdlib.Char.chr (Byte.to_int b)
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr b
+                  Stdlib.Char.chr (Byte.to_int b)
                 end
             ) in
             assert (Uint.(List.length !rem_bytes = 0));
@@ -347,11 +347,11 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr b
+                  Stdlib.Char.chr (Byte.to_int b)
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr b
+                  Stdlib.Char.chr (Byte.to_int b)
                 end
             ) in
             assert (Uint.(List.length !rem_bytes = 0));
@@ -394,7 +394,7 @@ module Seq = struct
                 | false -> begin
                     let b = get !slice_str Uint.(!slice_base + !slice_ind) in
                     slice_ind := succ !slice_ind;
-                    Stdlib.Char.chr b
+                    Stdlib.Char.chr (Byte.to_int b)
                   end
               end in
               fn ()
@@ -449,7 +449,7 @@ module Seq = struct
                 | false -> begin
                     let b = get !slice_str Uint.(!slice_base + !slice_ind) in
                     slice_ind := succ !slice_ind;
-                    Stdlib.Char.chr b
+                    Stdlib.Char.chr (Byte.to_int b)
                   end
               end in
               fn ()
@@ -611,8 +611,8 @@ module Slice = struct
   let get t bindex =
     if Uint.(bindex >= (blength t)) then halt "Out of bounds"
     else
-      Stdlib.Char.code (Stdlib.String.unsafe_get (string t)
-          Uint.((Cursor.bindex t.base) + bindex))
+      Byte.of_int_hlt ( Stdlib.Char.code (Stdlib.String.unsafe_get (string t)
+            Uint.((Cursor.bindex t.base) + bindex)))
 
   module String_of_indexed = struct
     module T = struct
@@ -982,10 +982,31 @@ module Slice = struct
         | _ -> of_codepoint codepoint
       )
 
+  module String_rev = struct
+    module T = struct
+      type outer = t
+      type t = {
+        slice: outer;
+        cursori: cursori;
+      }
+
+      let init slice =
+        {slice; cursori=Cursori.hd (string slice)}
+
+      let length t =
+        Uint.((clength t.slice) - (Cursori.cindex t.cursori))
+
+      let next t =
+        let codepoint = Cursori.rget t.cursori in
+        let t' = {t with cursori=(Cursori.succ t.cursori)} in
+        codepoint, t'
+    end
+    include T
+    include Seq.Codepoint.Make_rev(T)
+  end
+
   let rev t =
-    let len = clength t in
-    let last = len - 1 in
-    init len ~f:(fun i -> get t (last - i))
+    of_string String_rev.(to_string (init t))
 
   let lfind t codepoint =
     let rec fn cursor = begin
@@ -1904,7 +1925,7 @@ let%expect_test "get" =
       match Uint.(i = (blength s)) with
       | true -> ()
       | false -> begin
-          printf " %#02x" (get s i);
+          printf " %#02x" (Byte.to_int (get s i));
           fn (succ i)
         end
     end in

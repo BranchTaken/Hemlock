@@ -11,7 +11,7 @@ module Array_seq = struct
       bindex: uint;
       rem_bytes: byte list;
     }
-    type elm = codepoint
+    type elm = byte
 
     let init t =
       {
@@ -130,7 +130,7 @@ let%expect_test "of_codepoint" =
     printf "'%s' -> [|" (String.of_codepoint cp);
     let bytes = of_codepoint cp in
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") b);
+      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") (Byte.to_int b));
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
   ) cps;
 
@@ -151,7 +151,7 @@ let%expect_test "of_string" =
     printf "\"%s\" -> [|" s;
     let bytes = of_string s in
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") b);
+      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") (Byte.to_int b));
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
   ) strs;
 
@@ -162,25 +162,26 @@ let%expect_test "of_string" =
 
 let%expect_test "to_string" =
   let open Printf in
-  let test_to_string bytes_list = begin
+  let test_to_string (bytes_list:byte list) = begin
     let bytes = Array.of_list bytes_list in
     printf "to_string [|";
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") b);
+      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") (Byte.to_int b));
     printf "|] -> %s\n" (match to_string bytes with
       | None -> "None"
       | Some s -> "\"" ^ s ^ "\""
     );
   end in
-  test_to_string [0x61];
-  test_to_string [0xf0; 0x80; 0x80];
-  test_to_string [0xe0; 0x80];
-  test_to_string [0xc0];
-  test_to_string [0xf0; 0x80; 0x80; 0xf0];
-  test_to_string [0xe0; 0x80; 0xe0];
-  test_to_string [0xc0; 0xc0];
-  test_to_string [0x80];
-  test_to_string [0x80; 0x80; 0x80; 0x80];
+  let open Byte in
+  test_to_string [kv 0x61];
+  test_to_string [(kv 0xf0); (kv 0x80); (kv 0x80)];
+  test_to_string [(kv 0xe0); (kv 0x80)];
+  test_to_string [(kv 0xc0)];
+  test_to_string [(kv 0xf0); (kv 0x80); (kv 0x80); (kv 0xf0)];
+  test_to_string [(kv 0xe0); (kv 0x80); (kv 0xe0)];
+  test_to_string [(kv 0xc0); (kv 0xc0)];
+  test_to_string [kv 0x80];
+  test_to_string [(kv 0x80); (kv 0x80); (kv 0x80); (kv 0x80)];
 
   [%expect{|
     to_string [|0x61|] -> "a"
