@@ -180,7 +180,7 @@ module Cursor = struct
           end
       end in
       let nbytes = Byte.(bit_clz (bit_not b)) in
-      let b0_nbits = Byte.((kv 7) - (of_int nbytes)) in
+      let b0_nbits = Byte.(to_int ((kv 7) - (of_int nbytes))) in
       let b0_mask = Byte.((bit_sl one b0_nbits) - one) in
       let cp = Byte.(to_codepoint (bit_and b b0_mask)) in
       fn cp (Uint.succ t.bindex) Uint.(pred nbytes)
@@ -2438,11 +2438,12 @@ let%expect_test "array" =
 let%expect_test "map" =
   let open Printf in
   let s = "abcde" in
-  printf "map: \"%s\" -> \"%s\"\n" s (map s ~f:(fun cp -> Codepoint.(cp - 32)));
+  printf "map: \"%s\" -> \"%s\"\n" s (map s ~f:(fun cp ->
+    Codepoint.(cp - (kv 32))));
   printf "mapi: \"%s\" -> \"%s\"\n" s (mapi s ~f:(fun i cp ->
     match Uint.(bit_and i 0x1) with
     | 0 -> cp
-    | 1 -> Codepoint.(cp - 32)
+    | 1 -> Codepoint.(cp - (kv 32))
     | _ -> not_reached ()
   ));
   let s = "a:b:cd:e" in
@@ -2531,8 +2532,8 @@ let%expect_test "concat_map" =
   printf "%s" (concat_map s ~f:(fun cp -> of_codepoint cp));
   printf "%s" (concat_map s ~f:(fun cp ->
     match cp with
-    | 0x61 -> "hello "
-    | 0x64 -> " there "
+    | cp when Codepoint.(cp = (kv 0x61)) -> "hello "
+    | cp when Codepoint.(cp = (kv 0x64)) -> " there "
     | _ -> of_codepoint cp
   ));
 
@@ -3174,7 +3175,7 @@ let%expect_test "strip" =
   end in
   test_strip "  a b c  ";
   test_strip ~drop:(fun codepoint ->
-    Codepoint.(codepoint = 0x5f (* '_' *))
+    Codepoint.(codepoint = (kv 0x5f) (* '_' *))
   ) "_ a_b_c _";
 
   [%expect{|
@@ -3209,14 +3210,16 @@ let%expect_test "split" =
     let s1, s2 = rsplit2_hlt s ~on:cp in
     printf "rsplit2_hlt \"%s\" -> (\"%s\", \"%s\")\n" s s1 s2;
   end in
-  test_split ";a::bc;de;" (fun cp -> Codepoint.(cp = (Char.code ':'))) 0x3a;
-  test_split ":a::bc;de:" (fun cp -> Codepoint.(cp = (Char.code ':'))) 0x3b;
+  test_split ";a::bc;de;" (fun cp -> Codepoint.(cp = (kv (Char.code ':'))))
+    (Codepoint.kv 0x3a);
+  test_split ":a::bc;de:" (fun cp -> Codepoint.(cp = (kv (Char.code ':'))))
+    (Codepoint.kv 0x3b);
   test_split ":a::bc;de;" (fun cp ->
-    match cp with
+    match Codepoint.to_int cp with
     | 0x3a (* : *)
     | 0x3b (* ; *) -> true
     | _ -> false
-  ) 0x3b;
+  ) (Codepoint.kv 0x3b);
 
   [%expect{|
     split ";a::bc;de;" -> [";a"; ""; "bc;de;"]

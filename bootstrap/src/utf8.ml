@@ -8,7 +8,7 @@ module T = struct
   | Four  of byte * byte * byte * byte
 
   let of_codepoint cp =
-    assert (Codepoint.(cp <= 0x10ffff));
+    assert (Codepoint.(cp <= (kv 0x10ffff)));
     let lz = Codepoint.bit_clz cp in
     let sigbits = Int.(21 - lz) in
     if Int.(sigbits < 8) then
@@ -17,32 +17,32 @@ module T = struct
       Two (
         Byte.(bit_or (kv 0b110_00000) (of_codepoint (Codepoint.bit_usr cp 6))),
         Byte.(bit_or (kv 0b10_000000)
-            (of_codepoint (Codepoint.bit_and cp 0x3f)))
+            (of_codepoint (Codepoint.(bit_and cp (kv 0x3f)))))
       )
     else if Int.(sigbits < 17) then
       Three (
         Byte.(bit_or (kv 0b1110_0000) (of_codepoint (Codepoint.bit_usr cp 12))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-              Codepoint.(bit_and (bit_usr cp 6) 0x3f))),
+              Codepoint.(bit_and (bit_usr cp 6) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
-            (of_codepoint (Codepoint.bit_and cp 0x3f)))
+            (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
     else if Int.(sigbits < 22) then
       Four (
         Byte.(bit_or (kv 0b11110_000) (of_codepoint (Codepoint.bit_usr cp 18))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-              Codepoint.(bit_and (bit_usr cp 12) 0x3f))),
+              Codepoint.(bit_and (bit_usr cp 12) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-              Codepoint.(bit_and (bit_usr cp 6) 0x3f))),
+              Codepoint.(bit_and (bit_usr cp 6) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
-            (of_codepoint (Codepoint.bit_and cp 0x3f)))
+            (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
     else not_reached ()
 
   let to_codepoint = function
     | One b0 -> Byte.to_codepoint b0
     | Two (b0, b1) -> Codepoint.(bit_or
-          Byte.(to_codepoint (bit_sl (bit_and b0 (kv 0x1f)) (kv 6)))
+          Byte.(to_codepoint (bit_sl (bit_and b0 (kv 0x1f)) 6))
           Byte.(to_codepoint (bit_and b1 (kv 0x3f))))
     | Three (b0, b1, b2) -> Codepoint.(bit_or (bit_or
             Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0xf))) 12)
@@ -161,18 +161,22 @@ let length = function
 
 let%expect_test "utf8" =
   let open Printf in
-  let codepoints = [
-    0x3c; (* < *)
-    0xab; (* « *)
-    0x2021; (* ‡ *)
-    0x10197; (* 𐆗 *)
-  ] in
+  let codepoints = begin
+    let open Codepoint in
+    [
+      (kv 0x3c); (* < *)
+      (kv 0xab); (* « *)
+      (kv 0x2021); (* ‡ *)
+      (kv 0x10197); (* 𐆗 *)
+    ]
+  end in
   List.iter (fun codepoint ->
     let utf8 = of_codepoint codepoint in
     let codepoint' = to_codepoint utf8 in
     let bytes = to_bytes utf8 in
     let length = length utf8 in
-    printf "codepoint=0x%x, codepoint'=0x%x, bytes=[" codepoint codepoint';
+    printf "codepoint=0x%x, codepoint'=0x%x, bytes=["
+      (Codepoint.to_int codepoint) (Codepoint.to_int codepoint');
     List.iteri (fun i b ->
       let space = if Uint.(i = 0) then "" else " " in
       let sep = if Uint.(succ i < length) then ";" else "" in

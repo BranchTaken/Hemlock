@@ -43,14 +43,14 @@ let of_uint_hlt x =
   | true -> t
 
 let to_codepoint t =
-  t
+  Codepoint.of_uint (to_uint t)
 
 let of_codepoint x =
-  narrow_of_unsigned x
+  narrow_of_unsigned (Codepoint.to_uint x)
 
 let of_codepoint_hlt x =
   let t = of_codepoint x in
-  let x' = to_codepoint t in
+  let x' = to_codepoint (to_uint t) in
   match Codepoint.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
@@ -185,7 +185,8 @@ let%expect_test "conversion" =
         let c' = to_codepoint t in
         let t' = of_codepoint c' in
         printf ("Codepoint.of_uint 0x%x -> of_codepoint 0x%x -> " ^^
-          "to_codepoint 0x%x -> of_codepoint 0x%x -> 0x%x\n") x c t c' t';
+          "to_codepoint 0x%x -> of_codepoint 0x%x -> 0x%x\n") x
+          (Codepoint.to_int c) t (Codepoint.to_int c') t';
 
         fn xs'
       end

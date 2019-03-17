@@ -10,8 +10,8 @@ module type S = sig
   include Cmpable_intf.S_zero with type t := t
   include Floatable_intf.S with type t := t
 
-  val narrow_of_signed: t -> t
-  val narrow_of_unsigned: t -> t
+  val narrow_of_signed: int -> t
+  val narrow_of_unsigned: int (* uint *) -> t
 
   val min_value: t
   val max_value: t
@@ -25,7 +25,7 @@ module type S = sig
   val bit_or: t -> t -> t
   val bit_xor: t -> t -> t
   val bit_not: t -> t
-  val bit_sl: t -> t -> t
+  val bit_sl: t -> int (* uint *) -> t
   val bit_usr: t -> int (* uint *) -> t
   val bit_pop: t -> int (* uint *)
   val bit_clz: t -> int (* uint *)
