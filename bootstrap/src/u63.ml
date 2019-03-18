@@ -1,15 +1,20 @@
+open Rudiments_uint
+
 module T = struct
-  type t = int
-  let num_bits = Sys.int_size
+  type t = uint
+  let num_bits = uint_of_int Sys.int_size
 end
 include T
 include Intnb.Make_u(T)
 
 let to_int t =
-  t
+  int_of_uint t
 
 let of_int x =
-  x
+  uint_of_int x
+
+let kv x =
+  of_int x
 
 (*******************************************************************************
  * Begin tests.
@@ -18,9 +23,9 @@ let of_int x =
 let%expect_test "limits" =
   let open Printf in
 
-  printf "num_bits=%d\n" num_bits;
-  printf "min_value=0x%x\n" min_value;
-  printf "max_value=0x%x\n" max_value;
+  printf "num_bits=%u\n" (to_int num_bits);
+  printf "min_value=0x%x\n" (to_int min_value);
+  printf "max_value=0x%x\n" (to_int max_value);
 
   [%expect{|
     num_bits=63
@@ -32,35 +37,40 @@ let%expect_test "rel" =
   let open Printf in
   let fn x y = begin
     printf "cmp 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
-    printf "0x%x >= 0x%x -> %b\n" x y (x >= y);
-    printf "0x%x <= 0x%x -> %b\n" x y (x <= y);
-    printf "0x%x = 0x%x -> %b\n" x y (x = y);
-    printf "0x%x > 0x%x -> %b\n" x y (x > y);
-    printf "0x%x < 0x%x -> %b\n" x y (x < y);
-    printf "0x%x <> 0x%x -> %b\n" x y (x <> y);
-    printf "ascending 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
-    printf "descending 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
+      (to_int x) (to_int y) (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
+    printf "0x%x >= 0x%x -> %b\n" (to_int x) (to_int y) (x >= y);
+    printf "0x%x <= 0x%x -> %b\n" (to_int x) (to_int y) (x <= y);
+    printf "0x%x = 0x%x -> %b\n" (to_int x) (to_int y) (x = y);
+    printf "0x%x > 0x%x -> %b\n" (to_int x) (to_int y) (x > y);
+    printf "0x%x < 0x%x -> %b\n" (to_int x) (to_int y) (x < y);
+    printf "0x%x <> 0x%x -> %b\n" (to_int x) (to_int y) (x <> y);
+    printf "ascending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
+    printf "descending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
-  fn 0 0x4000_0000_0000_0000;
+  fn (kv 0) (kv 0x4000_0000_0000_0000);
   printf "\n";
-  fn 0 0x7fff_ffff_ffff_ffff;
+  fn (kv 0) (kv 0x7fff_ffff_ffff_ffff);
   printf "\n";
-  fn 0x4000_0000_0000_0000 0x3fff_ffff_ffff_ffff;
+  fn (kv 0x4000_0000_0000_0000) (kv 0x3fff_ffff_ffff_ffff);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n" t min max (clamp t ~min
-        ~max);
-    printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n" t min max (between t
-        ~low:min ~high:max);
+    printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n"
+      (to_int t) (to_int min) (to_int max) (to_int (clamp t ~min ~max));
+    printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n"
+      (to_int t) (to_int min) (to_int max) (between t ~low:min ~high:max);
   end in
-  fn2 0x3fff_ffff_ffff_fffe 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
-  fn2 0x3fff_ffff_ffff_ffff 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
-  fn2 0x4000_0000_0000_0000 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
-  fn2 0x4000_0000_0000_0001 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
-  fn2 0x4000_0000_0000_0002 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
+  fn2 (kv 0x3fff_ffff_ffff_fffe) (kv 0x3fff_ffff_ffff_ffff) (kv
+      0x4000_0000_0000_0001);
+  fn2 (kv 0x3fff_ffff_ffff_ffff) (kv 0x3fff_ffff_ffff_ffff) (kv
+      0x4000_0000_0000_0001);
+  fn2 (kv 0x4000_0000_0000_0000) (kv 0x3fff_ffff_ffff_ffff) (kv
+      0x4000_0000_0000_0001);
+  fn2 (kv 0x4000_0000_0000_0001) (kv 0x3fff_ffff_ffff_ffff) (kv
+      0x4000_0000_0000_0001);
+  fn2 (kv 0x4000_0000_0000_0002) (kv 0x3fff_ffff_ffff_ffff) (kv
+      0x4000_0000_0000_0001);
 
   [%expect{|
     cmp 0x0 0x4000000000000000 -> Lt
@@ -111,9 +121,9 @@ let%expect_test "rel" =
 
 let%expect_test "narrowing" =
   let open Printf in
-  printf "max_value + 1 -> 0x%x\n" (max_value + 1);
-  printf "min_value - 1 -> 0x%x\n" (min_value - 1);
-  printf "max_value * 15 -> 0x%x\n" (max_value * 15);
+  printf "max_value + 1 -> 0x%x\n" (to_int (max_value + (kv 1)));
+  printf "min_value - 1 -> 0x%x\n" (to_int (min_value - (kv 1)));
+  printf "max_value * 15 -> 0x%x\n" (to_int (max_value * (kv 15)));
 
   [%expect{|
     max_value + 1 -> 0x0

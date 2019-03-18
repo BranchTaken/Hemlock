@@ -1,3 +1,5 @@
+open Rudiments_uint
+
 include Rudiments_int
 
 (*******************************************************************************
@@ -43,7 +45,7 @@ let%expect_test "sexp" =
 let%expect_test "limits" =
   let open Printf in
 
-  printf "num_bits=%d\n" num_bits;
+  printf "num_bits=%u\n" (int_of_uint num_bits);
   printf "min_value=0x%x\n" min_value;
   printf "max_value=0x%x\n" max_value;
 
@@ -128,20 +130,20 @@ let%expect_test "bit_" =
 
   let x = 0xff in
   let s = 4 in
-  printf "bit_sl 0x%x %d -> 0x%x\n" x s (bit_sl x s);
+  printf "bit_sl 0x%x %d -> 0x%x\n" x s (bit_sl x (uint_of_int s));
 
   let x = -1 in
   let s = 4 in
-  printf "bit_usr 0x%x %d -> 0x%x\n" x s (bit_usr x s);
-  printf "bit_ssr 0x%x %d -> 0x%x\n" x s (bit_ssr x s);
+  printf "bit_usr 0x%x %d -> 0x%x\n" x s (bit_usr x (uint_of_int s));
+  printf "bit_ssr 0x%x %d -> 0x%x\n" x s (bit_ssr x (uint_of_int s));
 
   let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_pop 0x%x -> %d\n" x (bit_pop x);
-        printf "bit_clz 0x%x -> %d\n" x (bit_clz x);
-        printf "bit_ctz 0x%x -> %d\n" x (bit_ctz x);
+        printf "bit_pop 0x%x -> %d\n" x (int_of_uint (bit_pop x));
+        printf "bit_clz 0x%x -> %d\n" x (int_of_uint (bit_clz x));
+        printf "bit_ctz 0x%x -> %d\n" x (int_of_uint (bit_ctz x));
         fn xs'
       end
   end in

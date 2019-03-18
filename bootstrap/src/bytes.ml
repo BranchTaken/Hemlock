@@ -16,20 +16,20 @@ module Array_seq = struct
     let init t =
       {
           string=t;
-          cursor=(String.Cursor.at t ~bindex:0);
-          bindex=0;
+          cursor=(String.Cursor.at t ~bindex:(Uint.kv 0));
+          bindex=(Uint.kv 0);
           rem_bytes=[];
       }
 
     let length t =
-      (String.blength t.string) - t.bindex
+      Uint.((String.blength t.string) - t.bindex)
 
     let next t =
-      assert (Uint.(length t > 0));
+      assert (Uint.(length t > (kv 0)));
       match t.rem_bytes with
       | b :: rem_bytes' -> begin
           let t' = {t with
-                    bindex=(succ t.bindex);
+                    bindex=(Uint.succ t.bindex);
                     rem_bytes=rem_bytes'
                    } in
           b, t'
@@ -43,7 +43,7 @@ module Array_seq = struct
           in
           let t' = {t with
                     cursor=(String.Cursor.succ t.cursor);
-                    bindex=(succ t.bindex);
+                    bindex=(Uint.succ t.bindex);
                     rem_bytes} in
           b, t'
         end
@@ -63,17 +63,17 @@ module Utf8_seq = struct
     }
 
     let init t =
-      {bytes=t; bindex=0}
+      {bytes=t; bindex=Uint.kv 0}
 
     let length t =
       Uint.((Array.length t.bytes) - t.bindex)
 
     let next t =
-      match Uint.((length t) = 0) with
+      match Uint.((length t) = (kv 0)) with
       | true -> None
       | false -> begin
           let b = Array.get t.bytes t.bindex in
-          let t' = {t with bindex=(succ t.bindex)} in
+          let t' = {t with bindex=(Uint.succ t.bindex)} in
           Some (b, t')
         end
   end
@@ -130,7 +130,8 @@ let%expect_test "of_codepoint" =
     printf "'%s' -> [|" (String.of_codepoint cp);
     let bytes = of_codepoint cp in
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") (Byte.to_int b));
+      printf "%s%#02x"
+        (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
   ) cps;
 
@@ -151,7 +152,8 @@ let%expect_test "of_string" =
     printf "\"%s\" -> [|" s;
     let bytes = of_string s in
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") (Byte.to_int b));
+      printf "%s%#02x"
+        (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
   ) strs;
 
@@ -166,7 +168,8 @@ let%expect_test "to_string" =
     let bytes = Array.of_list bytes_list in
     printf "to_string [|";
     Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x" (if Uint.(i = 0) then "" else "; ") (Byte.to_int b));
+      printf "%s%#02x"
+        (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
     printf "|] -> %s\n" (match to_string bytes with
       | None -> "None"
       | Some s -> "\"" ^ s ^ "\""

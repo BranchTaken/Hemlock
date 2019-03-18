@@ -8,13 +8,13 @@ open Rudiments_functions
 
 module T = struct
   type t = uint
-  let num_bits = 8
+  let num_bits = (Uint.kv 8)
 end
 include T
 include Intnb.Make_u(T)
 
 let to_int t =
-  t
+  Uint.to_int t
 
 let of_int x =
   narrow_of_signed x
@@ -62,9 +62,9 @@ let of_codepoint_hlt x =
 let%expect_test "limits" =
   let open Printf in
 
-  printf "num_bits=%d\n" num_bits;
-  printf "min_value=0x%x\n" min_value;
-  printf "max_value=0x%x\n" max_value;
+  printf "num_bits=%u\n" (Uint.to_int num_bits);
+  printf "min_value=0x%x\n" (to_int min_value);
+  printf "max_value=0x%x\n" (to_int max_value);
 
   [%expect{|
     num_bits=8
@@ -76,35 +76,36 @@ let%expect_test "rel" =
   let open Printf in
   let fn x y = begin
     printf "cmp 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
-    printf "0x%x >= 0x%x -> %b\n" x y (x >= y);
-    printf "0x%x <= 0x%x -> %b\n" x y (x <= y);
-    printf "0x%x = 0x%x -> %b\n" x y (x = y);
-    printf "0x%x > 0x%x -> %b\n" x y (x > y);
-    printf "0x%x < 0x%x -> %b\n" x y (x < y);
-    printf "0x%x <> 0x%x -> %b\n" x y (x <> y);
-    printf "ascending 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
-    printf "descending 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
+      (to_int x) (to_int y) (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
+    printf "0x%x >= 0x%x -> %b\n" (to_int x) (to_int y) (x >= y);
+    printf "0x%x <= 0x%x -> %b\n" (to_int x) (to_int y) (x <= y);
+    printf "0x%x = 0x%x -> %b\n" (to_int x) (to_int y) (x = y);
+    printf "0x%x > 0x%x -> %b\n" (to_int x) (to_int y) (x > y);
+    printf "0x%x < 0x%x -> %b\n" (to_int x) (to_int y) (x < y);
+    printf "0x%x <> 0x%x -> %b\n" (to_int x) (to_int y) (x <> y);
+    printf "ascending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
+    printf "descending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
-  fn 0 0x80;
+  fn (kv 0) (kv 0x80);
   printf "\n";
-  fn 0 0xff;
+  fn (kv 0) (kv 0xff);
   printf "\n";
-  fn 0x80 0xff;
+  fn (kv 0x80) (kv 0xff);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n" t min max (clamp t ~min
-        ~max);
-    printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n" t min max (between t
+    printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n"
+      (to_int t) (to_int min) (to_int max) (to_int (clamp t ~min ~max));
+    printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n"
+      (to_int t) (to_int min) (to_int max) (between t
         ~low:min ~high:max);
   end in
-  fn2 0x7e 0x7f 0x81;
-  fn2 0x7f 0x7f 0x81;
-  fn2 0x80 0x7f 0x81;
-  fn2 0x81 0x7f 0x81;
-  fn2 0x82 0x7f 0x81;
+  fn2 (kv 0x7e) (kv 0x7f) (kv 0x81);
+  fn2 (kv 0x7f) (kv 0x7f) (kv 0x81);
+  fn2 (kv 0x80) (kv 0x7f) (kv 0x81);
+  fn2 (kv 0x81) (kv 0x7f) (kv 0x81);
+  fn2 (kv 0x82) (kv 0x7f) (kv 0x81);
 
   [%expect{|
     cmp 0x0 0x80 -> Lt
@@ -155,9 +156,9 @@ let%expect_test "rel" =
 
 let%expect_test "wraparound" =
   let open Printf in
-  printf "max_value + 1 -> 0x%x\n" (max_value + 1);
-  printf "min_value - 1 -> 0x%x\n" (min_value - 1);
-  printf "max_value * 15 -> 0x%x\n" (max_value * 15);
+  printf "max_value + 1 -> 0x%x\n" (to_int (max_value + (kv 1)));
+  printf "min_value - 1 -> 0x%x\n" (to_int (min_value - (kv 1)));
+  printf "max_value * 15 -> 0x%x\n" (to_int (max_value * (kv 15)));
 
   [%expect{|
     max_value + 1 -> 0x0
@@ -173,20 +174,21 @@ let%expect_test "conversion" =
         let t = of_int x in
         let i = to_int t in
         let t' = of_int i in
-        printf "of_int 0x%x -> to_int 0x%x -> of_int 0x%x -> 0x%x\n" x t i t';
-        let t = of_uint x in
+        printf "of_int 0x%x -> to_int 0x%x -> of_int 0x%x -> 0x%x\n"
+          x (to_int t) i (to_int t');
+        let t = of_uint (Uint.kv x) in
         let u = to_uint t in
         let t' = of_uint u in
         printf "of_uint 0x%x -> to_uint 0x%x -> of_uint 0x%x -> 0x%x\n"
-          x t u t';
+          x (to_int t) (Uint.to_int u) (to_int t');
 
-        let c = U21.of_uint x in
+        let c = U21.of_uint (Uint.of_int x) in
         let t = of_codepoint c in
         let c' = to_codepoint t in
         let t' = of_codepoint c' in
         printf ("Codepoint.of_uint 0x%x -> of_codepoint 0x%x -> " ^^
           "to_codepoint 0x%x -> of_codepoint 0x%x -> 0x%x\n") x
-          (Codepoint.to_int c) t (Codepoint.to_int c') t';
+          (Codepoint.to_int c) (to_int t) (Codepoint.to_int c') (to_int t');
 
         fn xs'
       end

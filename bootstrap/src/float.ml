@@ -79,7 +79,7 @@ end
 let create ~neg ~exponent ~mantissa =
   assert Int.(exponent >= (-1023));
   assert Int.(exponent <= 1024);
-  assert Uint.(mantissa <= 0xf_ffff_ffff_ffff);
+  assert Uint.(mantissa <= (kv 0xf_ffff_ffff_ffff));
   let sign = match neg with
     | false -> Int64.zero
     | true -> Int64.one
@@ -88,7 +88,7 @@ let create ~neg ~exponent ~mantissa =
   let bits =
     Int64.logor (Int64.shift_left sign 63)
       (Int64.logor (Int64.shift_left biased_exponent 52)
-         (Int64.of_int mantissa))
+         (Int64.of_int (Uint.to_int mantissa)))
   in
   Int64.float_of_bits bits
 
@@ -106,7 +106,8 @@ let exponent t =
 
 let mantissa t =
   let bits = Int64.bits_of_float t in
-  Int64.to_int (Int64.logand bits (Int64.of_int 0xf_ffff_ffff_ffff))
+  Uint.of_int (Int64.to_int (Int64.logand bits (Int64.of_int
+          0xf_ffff_ffff_ffff)))
 
 let m2x t =
   frexp t
@@ -254,7 +255,7 @@ let int_pow t x =
           | _ -> not_reached ()
         in
         let p' = p * p in
-        let n' = Int.bit_usr n 1 in
+        let n' = Int.bit_usr n (Uint.kv 1) in
         fn r' p' n'
       end
   end in
@@ -391,40 +392,41 @@ let%expect_test "create" =
     | [] -> ()
     | (n, e, m) :: tups' -> begin
         let f = create ~neg:n ~exponent:e ~mantissa:m in
-        printf "n=%b, e=%d, m=0x%x -> %h -> n=%b, e=%d, m=0x%x\n" n e m f n e m;
+        printf "n=%b, e=%d, m=0x%x -> %h -> n=%b, e=%d, m=0x%x\n"
+          n e (Uint.to_int m) f n e (Uint.to_int m);
         fn tups'
       end
   end in
   fn [
     (* Infinite. *)
-    (true, 1024, 0);
-    (false, 1024, 0);
+    (true, 1024, (Uint.kv 0));
+    (false, 1024, (Uint.kv 0));
 
     (* Nan. *)
-    (false, 1024, 1);
-    (false, 1024, 0x8_0000_0000_0001);
-    (false, 1024, 0xf_ffff_ffff_ffff);
+    (false, 1024, (Uint.kv 1));
+    (false, 1024, (Uint.kv 0x8_0000_0000_0001));
+    (false, 1024, (Uint.kv 0xf_ffff_ffff_ffff));
 
     (* Normal. *)
-    (true, 0, 0);
-    (false, -1022, 0);
-    (false, -52, 1);
-    (false, -51, 1);
-    (false, -1, 0);
-    (false, 0, 0);
-    (false, 1, 0);
-    (false, 1, 0x8_0000_0000_0000);
-    (false, 2, 0);
-    (false, 2, 0x4_0000_0000_0000);
-    (false, 1023, 0xf_ffff_ffff_ffff);
+    (true, 0, (Uint.kv 0));
+    (false, -1022, (Uint.kv 0));
+    (false, -52, (Uint.kv 1));
+    (false, -51, (Uint.kv 1));
+    (false, -1, (Uint.kv 0));
+    (false, 0, (Uint.kv 0));
+    (false, 1, (Uint.kv 0));
+    (false, 1, (Uint.kv 0x8_0000_0000_0000));
+    (false, 2, (Uint.kv 0));
+    (false, 2, (Uint.kv 0x4_0000_0000_0000));
+    (false, 1023, (Uint.kv 0xf_ffff_ffff_ffff));
 
     (* Subnormal. *)
-    (false, -1023, 1);
-    (false, -1023, 0xf_ffff_ffff_ffff);
+    (false, -1023, (Uint.kv 1));
+    (false, -1023, (Uint.kv 0xf_ffff_ffff_ffff));
 
     (* Zero. *)
-    (true, -1023, 0);
-    (false, -1023, 0);
+    (true, -1023, (Uint.kv 0));
+    (false, -1023, (Uint.kv 0));
   ];
 
   [%expect{|
@@ -465,34 +467,34 @@ let%expect_test "m2x_f2x" =
   end in
   fn [
     (* Infinite. *)
-    (true, 1024, 0);
-    (false, 1024, 0);
+    (true, 1024, (Uint.kv 0));
+    (false, 1024, (Uint.kv 0));
 
     (* Nan. *)
-    (false, 1024, 1);
-    (false, 1024, 0x8_0000_0000_0001);
-    (false, 1024, 0xf_ffff_ffff_ffff);
+    (false, 1024, (Uint.kv 1));
+    (false, 1024, (Uint.kv 0x8_0000_0000_0001));
+    (false, 1024, (Uint.kv 0xf_ffff_ffff_ffff));
 
     (* Normal. *)
-    (true, 0, 0);
-    (false, -1022, 0);
-    (false, -52, 1);
-    (false, -51, 1);
-    (false, -1, 0);
-    (false, 0, 0);
-    (false, 1, 0);
-    (false, 1, 0x8_0000_0000_0000);
-    (false, 2, 0);
-    (false, 2, 0x4_0000_0000_0000);
-    (false, 1023, 0xf_ffff_ffff_ffff);
+    (true, 0, (Uint.kv 0));
+    (false, -1022, (Uint.kv 0));
+    (false, -52, (Uint.kv 1));
+    (false, -51, (Uint.kv 1));
+    (false, -1, (Uint.kv 0));
+    (false, 0, (Uint.kv 0));
+    (false, 1, (Uint.kv 0));
+    (false, 1, (Uint.kv 0x8_0000_0000_0000));
+    (false, 2, (Uint.kv 0));
+    (false, 2, (Uint.kv 0x4_0000_0000_0000));
+    (false, 1023, (Uint.kv 0xf_ffff_ffff_ffff));
 
     (* Subnormal. *)
-    (false, -1023, 1);
-    (false, -1023, 0xf_ffff_ffff_ffff);
+    (false, -1023, (Uint.kv 1));
+    (false, -1023, (Uint.kv 0xf_ffff_ffff_ffff));
 
     (* Zero. *)
-    (true, -1023, 0);
-    (false, -1023, 0);
+    (true, -1023, (Uint.kv 0));
+    (false, -1023, (Uint.kv 0));
   ];
 
   [%expect{|

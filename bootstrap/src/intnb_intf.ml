@@ -1,6 +1,8 @@
+open Rudiments_uint
+
 module type I = sig
   type t
-  val num_bits: int (* uint *)
+  val num_bits: uint
 end
 
 module type S = sig
@@ -11,12 +13,12 @@ module type S = sig
   include Floatable_intf.S with type t := t
 
   val narrow_of_signed: int -> t
-  val narrow_of_unsigned: int (* uint *) -> t
+  val narrow_of_unsigned: uint -> t
+
+  val one: t
 
   val min_value: t
   val max_value: t
-
-  val one: t
 
   val succ: t -> t
   val pred: t -> t
@@ -25,11 +27,11 @@ module type S = sig
   val bit_or: t -> t -> t
   val bit_xor: t -> t -> t
   val bit_not: t -> t
-  val bit_sl: t -> int (* uint *) -> t
-  val bit_usr: t -> int (* uint *) -> t
-  val bit_pop: t -> int (* uint *)
-  val bit_clz: t -> int (* uint *)
-  val bit_ctz: t -> int (* uint *)
+  val bit_sl: t -> uint -> t
+  val bit_usr: t -> uint -> t
+  val bit_pop: t -> uint
+  val bit_clz: t -> uint
+  val bit_ctz: t -> uint
 
   val is_pow2: t -> bool
   val floor_pow2: t -> t
@@ -58,7 +60,7 @@ module type S_i = sig
 
   val neg_one: t
 
-  val bit_ssr: t -> int (* uint *) -> t
+  val bit_ssr: t -> uint -> t
 
   val ( ~- ): t -> t
   val ( ~+ ): t -> t

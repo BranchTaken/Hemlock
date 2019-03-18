@@ -9,7 +9,7 @@ struct
 
   let next_opt t =
     match length t with
-    | 0 -> None
+    | len when Uint.(len = (kv 0)) -> None
     | _ -> Some (next t)
 end
 

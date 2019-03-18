@@ -6,13 +6,13 @@ open Rudiments_functions
 
 module T = struct
   type t = uint
-  let num_bits = 21
+  let num_bits = (Uint.kv 21)
 end
 include T
 include Intnb.Make_u(T)
 
 let to_int t =
-  t
+  Uint.to_int t
 
 let of_int x =
   narrow_of_signed x
@@ -41,42 +41,42 @@ let of_uint_hlt x =
   | true -> t
 
 let of_char c =
-  Stdlib.Char.code c
+  of_int (Stdlib.Char.code c)
 
-let nul = 0x00
-let soh = 0x01
-let stx = 0x02
-let etx = 0x03
-let eot = 0x04
-let enq = 0x05
-let ack = 0x06
-let bel = 0x07
+let nul = (kv 0x00)
+let soh = (kv 0x01)
+let stx = (kv 0x02)
+let etx = (kv 0x03)
+let eot = (kv 0x04)
+let enq = (kv 0x05)
+let ack = (kv 0x06)
+let bel = (kv 0x07)
 let bs = of_char '\b'
 let ht = of_char '\t'
 let lf = of_char '\n'
 let nl = of_char '\n'
-let vt = 0x0b
-let ff = 0x0c
+let vt = (kv 0x0b)
+let ff = (kv 0x0c)
 let cr = of_char '\r'
-let so = 0x0e
-let si = 0x0f
-let dle = 0x10
-let dc1 = 0x11
-let dc2 = 0x12
-let dc3 = 0x13
-let dc4 = 0x14
-let nak = 0x15
-let syn = 0x16
-let etb = 0x17
-let can = 0x18
-let em = 0x19
-let sub = 0x1a
-let esc = 0x1b
-let fs = 0x1c
-let gs = 0x1d
-let rs = 0x1e
-let us = 0x1f
-let del = 0x7f
+let so = (kv 0x0e)
+let si = (kv 0x0f)
+let dle = (kv 0x10)
+let dc1 = (kv 0x11)
+let dc2 = (kv 0x12)
+let dc3 = (kv 0x13)
+let dc4 = (kv 0x14)
+let nak = (kv 0x15)
+let syn = (kv 0x16)
+let etb = (kv 0x17)
+let can = (kv 0x18)
+let em = (kv 0x19)
+let sub = (kv 0x1a)
+let esc = (kv 0x1b)
+let fs = (kv 0x1c)
+let gs = (kv 0x1d)
+let rs = (kv 0x1e)
+let us = (kv 0x1f)
+let del = (kv 0x7f)
 
 (*******************************************************************************
  * Begin tests.
@@ -85,9 +85,9 @@ let del = 0x7f
 let%expect_test "limits" =
   let open Printf in
 
-  printf "num_bits=%d\n" num_bits;
-  printf "min_value=0x%x\n" min_value;
-  printf "max_value=0x%x\n" max_value;
+  printf "num_bits=%u\n" (Uint.to_int num_bits);
+  printf "min_value=0x%x\n" (to_int min_value);
+  printf "max_value=0x%x\n" (to_int max_value);
 
   [%expect{|
     num_bits=21
@@ -98,36 +98,36 @@ let%expect_test "limits" =
 let%expect_test "rel" =
   let open Printf in
   let fn x y = begin
-    printf "cmp 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
-    printf "0x%x >= 0x%x -> %b\n" x y (x >= y);
-    printf "0x%x <= 0x%x -> %b\n" x y (x <= y);
-    printf "0x%x = 0x%x -> %b\n" x y (x = y);
-    printf "0x%x > 0x%x -> %b\n" x y (x > y);
-    printf "0x%x < 0x%x -> %b\n" x y (x < y);
-    printf "0x%x <> 0x%x -> %b\n" x y (x <> y);
-    printf "ascending 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
-    printf "descending 0x%x 0x%x -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
+    printf "cmp 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
+    printf "0x%x >= 0x%x -> %b\n" (to_int x) (to_int y) (x >= y);
+    printf "0x%x <= 0x%x -> %b\n" (to_int x) (to_int y) (x <= y);
+    printf "0x%x = 0x%x -> %b\n" (to_int x) (to_int y) (x = y);
+    printf "0x%x > 0x%x -> %b\n" (to_int x) (to_int y) (x > y);
+    printf "0x%x < 0x%x -> %b\n" (to_int x) (to_int y) (x < y);
+    printf "0x%x <> 0x%x -> %b\n" (to_int x) (to_int y) (x <> y);
+    printf "ascending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
+    printf "descending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
-  fn 0 0x10_0000;
+  fn (kv 0) (kv 0x10_0000);
   printf "\n";
-  fn 0 0x1f_ffff;
+  fn (kv 0) (kv 0x1f_ffff);
   printf "\n";
-  fn 0x10_0000 0x1f_ffff;
+  fn (kv 0x10_0000) (kv 0x1f_ffff);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n" t min max (clamp t ~min
-        ~max);
-    printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n" t min max (between t
-        ~low:min ~high:max);
+    printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n"
+      (to_int t) (to_int min) (to_int max) (to_int (clamp t ~min ~max));
+    printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n"
+      (to_int t) (to_int min) (to_int max) (between t ~low:min ~high:max);
   end in
-  fn2 0x0f_fffe 0x0f_ffff 0x10_0001;
-  fn2 0x0f_ffff 0x0f_ffff 0x10_0001;
-  fn2 0x10_0000 0x0f_ffff 0x10_0001;
-  fn2 0x10_0001 0x0f_ffff 0x10_0001;
-  fn2 0x10_0002 0x0f_ffff 0x10_0001;
+  fn2 (kv 0x0f_fffe) (kv 0x0f_ffff) (kv 0x10_0001);
+  fn2 (kv 0x0f_ffff) (kv 0x0f_ffff) (kv 0x10_0001);
+  fn2 (kv 0x10_0000) (kv 0x0f_ffff) (kv 0x10_0001);
+  fn2 (kv 0x10_0001) (kv 0x0f_ffff) (kv 0x10_0001);
+  fn2 (kv 0x10_0002) (kv 0x0f_ffff) (kv 0x10_0001);
 
   [%expect{|
     cmp 0x0 0x100000 -> Lt
@@ -178,9 +178,9 @@ let%expect_test "rel" =
 
 let%expect_test "wraparound" =
   let open Printf in
-  printf "max_value + 1 -> 0x%x\n" (max_value + 1);
-  printf "min_value - 1 -> 0x%x\n" (min_value - 1);
-  printf "max_value * 15 -> 0x%x\n" (max_value * 15);
+  printf "max_value + 1 -> 0x%x\n" (to_int (max_value + (kv 1)));
+  printf "min_value - 1 -> 0x%x\n" (to_int (min_value - (kv 1)));
+  printf "max_value * 15 -> 0x%x\n" (to_int (max_value * (kv 15)));
 
   [%expect{|
     max_value + 1 -> 0x0
@@ -196,12 +196,13 @@ let%expect_test "conversion" =
         let t = of_int x in
         let i = to_int t in
         let t' = of_int i in
-        printf "of_int 0x%x -> to_int 0x%x -> of_int 0x%x -> 0x%x\n" x t i t';
-        let t = of_uint x in
+        printf "of_int 0x%x -> to_int 0x%x -> of_int 0x%x -> 0x%x\n"
+          x (to_int t) i (to_int t');
+        let t = of_uint (Uint.of_int x) in
         let u = to_uint t in
         let t' = of_uint u in
         printf "of_uint 0x%x -> to_uint 0x%x -> of_uint 0x%x -> 0x%x\n"
-          x t u t';
+          x (to_int t) (Uint.to_int u) (to_int t');
         fn xs'
       end
   in

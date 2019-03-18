@@ -64,7 +64,7 @@ module Slice : sig
   val clength: t -> uint
   val get: t -> uint -> byte
 
-  val init: ?blength:uint -> uint -> f:(int -> codepoint) -> t
+  val init: ?blength:uint -> uint -> f:(uint -> codepoint) -> t
 
   val of_codepoint: codepoint -> t
 
@@ -81,7 +81,7 @@ module Slice : sig
   val length: t -> uint [@@ocaml.deprecated "Use blength instead"]
 
   val map: t -> f:(codepoint -> codepoint) -> t
-  val mapi: t -> f:(int -> codepoint -> codepoint) -> t
+  val mapi: t -> f:(uint -> codepoint -> codepoint) -> t
   val tr: target:codepoint -> replacement:codepoint -> t -> t
   val filter: t -> f:(codepoint -> bool) -> t
   val concat: ?sep:t -> t list -> t
@@ -195,7 +195,7 @@ val blength: t -> uint
 val clength: t -> uint
 val get: t -> uint -> byte
 
-val init: ?blength:uint -> uint -> f:(int -> codepoint) -> t
+val init: ?blength:uint -> uint -> f:(uint -> codepoint) -> t
 
 val of_codepoint: codepoint -> t
 
@@ -212,7 +212,7 @@ include Container_intf.S_mono with type t := t and type elm := codepoint
 val length: t -> uint [@@ocaml.deprecated "Use [bc]length instead"]
 
 val map: t -> f:(codepoint -> codepoint) -> t
-val mapi: t -> f:(int -> codepoint -> codepoint) -> t
+val mapi: t -> f:(uint -> codepoint -> codepoint) -> t
 val tr: target:codepoint -> replacement:codepoint -> t -> t
 val filter: t -> f:(codepoint -> bool) -> t
 val concat: ?sep:t -> t list -> t
