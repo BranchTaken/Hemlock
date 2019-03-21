@@ -178,21 +178,20 @@ let%expect_test "utf8" =
       (kv 0x10197); (* 𐆗 *)
     ]
   end in
-  List.iter (fun codepoint ->
+  List.iter codepoints ~f:(fun codepoint ->
     let utf8 = of_codepoint codepoint in
     let codepoint' = to_codepoint utf8 in
     let bytes = to_bytes utf8 in
     let length = length utf8 in
     printf "codepoint=0x%x, codepoint'=0x%x, bytes=["
       (Codepoint.to_int codepoint) (Codepoint.to_int codepoint');
-    List.iteri (fun i b ->
-      let i = uint_of_int i in
+    List.iteri bytes ~f:(fun i b ->
       let space = if Uint.(i = (kv 0)) then "" else " " in
       let sep = if Uint.(succ i < length) then ";" else "" in
       printf "%s0x%x%s" space (Byte.to_int b) sep
-    ) bytes;
+    );
     printf "], length=%u\n" (Uint.to_int length)
-  ) codepoints;
+  );
 
   [%expect{|
     codepoint=0x3c, codepoint'=0x3c, bytes=[0x3c], length=1

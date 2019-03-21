@@ -309,7 +309,7 @@ module Seq = struct
                   Stdlib.Char.chr (Byte.to_int b)
                 end
             ) in
-            assert (Uint.((of_int (List.length !rem_bytes)) = (kv 0)));
+            assert (Uint.((List.length !rem_bytes) = (kv 0)));
             s
           end
     end
@@ -356,7 +356,7 @@ module Seq = struct
                   Stdlib.Char.chr (Byte.to_int b)
                 end
             ) in
-            assert (Uint.((of_int (List.length !rem_bytes)) = (kv 0)));
+            assert (Uint.((List.length !rem_bytes) = (kv 0)));
             s
           end
     end
@@ -709,7 +709,7 @@ module Slice = struct
 
   let of_list ?blength ?clength codepoints =
     let clength = match clength with
-      | None -> Uint.of_int (List.length codepoints)
+      | None -> List.length codepoints
       | Some clength -> clength
     in
     let blength = match blength with
@@ -720,7 +720,7 @@ module Slice = struct
 
   let of_list_rev ?blength ?clength codepoints_rev =
     let clength = match clength with
-      | None -> Uint.of_int (List.length codepoints_rev)
+      | None -> List.length codepoints_rev
       | Some clength -> clength
     in
     let blength = match blength with
@@ -895,32 +895,34 @@ module Slice = struct
   end
 
   let concat ?(sep=(of_string "")) (slices:t list) =
-    let _, blength = List.fold_left (fun (i, len) slice ->
-      let i' = Uint.succ i in
-      let sep_len = match i with
-        | i when Uint.(i = (kv 0)) -> (Uint.kv 0)
-        | _ -> blength sep
-      in
-      let len' = Uint.(sep_len + len + (blength slice)) in
-      i', len'
-    ) ((Uint.kv 0), (Uint.kv 0)) slices in
-    match Uint.((length sep) = (kv 0)), List.length slices with
+    let _, blength = List.fold slices ~init:((Uint.kv 0), (Uint.kv 0))
+        ~f:(fun (i, len) slice ->
+          let i' = Uint.succ i in
+          let sep_len = match i with
+            | i when Uint.(i = (kv 0)) -> (Uint.kv 0)
+            | _ -> blength sep
+          in
+          let len' = Uint.(sep_len + len + (blength slice)) in
+          i', len'
+        ) in
+    match Uint.((length sep) = (kv 0)), Uint.to_int (List.length slices) with
     | _, 0 -> of_string ""
     | true, 1 -> List.hd slices
     | _ -> of_string (String_concat.to_string
           (String_concat.init sep slices blength))
 
   let concat_rev ?(sep=(of_string "")) slices_rev =
-    let slices, blength = List.fold_left (fun (slices, len) slice ->
-      let slices' = slice :: slices in
-      let sep_len = match slices with
-        | [] -> Uint.kv 0
-        | _ -> blength sep
-      in
-      let len' = Uint.(sep_len + len + (blength slice)) in
-      slices', len'
-    ) ([], (Uint.kv 0)) slices_rev in
-    match Uint.((length sep) = (kv 0)), List.length slices with
+    let slices, blength = List.fold slices_rev ~init:([], (Uint.kv 0))
+        ~f:(fun (slices, len) slice ->
+          let slices' = slice :: slices in
+          let sep_len = match slices with
+            | [] -> Uint.kv 0
+            | _ -> blength sep
+          in
+          let len' = Uint.(sep_len + len + (blength slice)) in
+          slices', len'
+        ) in
+    match Uint.((length sep) = (kv 0)), Uint.to_int (List.length slices) with
     | _, 0 -> of_string ""
     | true, 1 -> List.hd slices
     | _ -> of_string (String_concat.to_string
@@ -1221,7 +1223,7 @@ module Slice = struct
                 in_.past, slice, at, In
               end
           in
-          let ncursors = Uint.of_int (List.length at) in
+          let ncursors = List.length at in
           let blength = Uint.((blength in_) +
                 (ncursors * ((blength with_) - (string_blength pattern)))) in
           {in_; pattern; with_; at=at'; in_cursor; slice; source; blength}
@@ -1613,13 +1615,13 @@ let filter t ~f =
   Slice.(to_string (filter (of_string t) ~f))
 
 let concat ?(sep="") strings =
-  let slices_rev = List.fold_left (fun accum s -> (Slice.of_string s) :: accum)
-      [] strings in
+  let slices_rev = List.fold strings ~init:[]
+      ~f:(fun accum s -> (Slice.of_string s) :: accum) in
   Slice.(to_string (concat_rev ~sep:(of_string sep) slices_rev))
 
 let concat_rev ?(sep="") strings_rev =
-  let slices = List.fold_left (fun accum s -> (Slice.of_string s) :: accum)
-      [] strings_rev in
+  let slices = List.fold strings_rev ~init:[]
+      ~f:(fun accum s -> (Slice.of_string s) :: accum) in
   Slice.(to_string (concat ~sep:(of_string sep) slices))
 
 let concat_map ?sep t ~f =
@@ -1843,10 +1845,10 @@ let%expect_test "cmp" =
     match strs with
     | [] -> ()
     | hd :: tl -> begin
-        let () = List.iter (fun s2 ->
+        let () = List.iter strs ~f:(fun s2 ->
           printf "cmp \"%s\" \"%s\" -> %s\n"
             s s2 (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp s s2)))
-        ) strs in
+        ) in
         fn hd tl
       end
   end in
@@ -1914,10 +1916,10 @@ let%expect_test "length" =
     "‡";
     "𐆗";
   ] in
-  List.iter (fun s ->
+  List.iter strs ~f:(fun s ->
     printf "s=\"%s\", blength=%u, clength=%u, is_empty=%B\n"
       s (Uint.to_int (blength s)) (Uint.to_int (clength s)) (is_empty s)
-  ) strs;
+  );
 
   [%expect{|
     s="", blength=0, clength=0, is_empty=true
@@ -1936,7 +1938,7 @@ let%expect_test "get" =
     "‡";
     "𐆗";
   ] in
-  List.iter (fun s ->
+  List.iter strs ~f:(fun s ->
     let rec fn i = begin
       match Uint.(i = (blength s)) with
       | true -> ()
@@ -1948,7 +1950,7 @@ let%expect_test "get" =
     printf "s=\"%s\":" s;
     fn (Uint.kv 0);
     printf "\n";
-  ) strs;
+  );
 
   [%expect{|
     s="":
@@ -2005,10 +2007,10 @@ let%expect_test "cursor" =
     "";
     "<_>«‡𐆗»[_]";
   ] in
-  List.iter (fun s ->
+  List.iter strs ~f:(fun s ->
     test_fwd s Uint.max_value;
     test_rev s Uint.max_value;
-  ) strs;
+  );
 
   [%expect{|
     cursor fwd "":
@@ -2054,10 +2056,10 @@ let%expect_test "cursori" =
     "";
     "<_>«‡𐆗»[_]";
   ] in
-  List.iter (fun s ->
+  List.iter strs ~f:(fun s ->
     test_fwd s;
     test_rev s;
-  ) strs;
+  );
 
   [%expect{|
     cursori fwd "":
@@ -2081,7 +2083,7 @@ let%expect_test "fold_until" =
     "";
     "abcde";
   ] in
-  List.iter test_fold_until strs;
+  List.iter strs ~f:test_fold_until;
 
   [%expect{|
     fold_until "" ->
@@ -2103,7 +2105,7 @@ let%expect_test "fold_right_until" =
     "";
     "abcde";
   ] in
-  List.iter test_fold_right_until strs;
+  List.iter strs ~f:test_fold_right_until;
 
   [%expect{|
     fold_right_until "" ->
@@ -2125,7 +2127,7 @@ let%expect_test "foldi_until" =
     "";
     "abcde";
   ] in
-  List.iter test_foldi_until strs;
+  List.iter strs ~f:test_foldi_until;
 
   [%expect{|
     foldi_until "" ->
@@ -2143,7 +2145,7 @@ let%expect_test "fold" =
     "";
     "abcde";
   ] in
-  List.iter test_fold strs;
+  List.iter strs ~f:test_fold;
 
   [%expect{|
     fold "" ->
@@ -2163,7 +2165,7 @@ let%expect_test "fold_right" =
     "";
     "abcde";
   ] in
-  List.iter test_fold_right strs;
+  List.iter strs ~f:test_fold_right;
 
   [%expect{|
     fold_right "" ->
@@ -2182,7 +2184,7 @@ let%expect_test "foldi" =
     "";
     "abcde";
   ] in
-  List.iter test_foldi strs;
+  List.iter strs ~f:test_foldi;
 
   [%expect{|
     foldi "" ->
@@ -2200,7 +2202,7 @@ let%expect_test "iter" =
     "";
     "abcde";
   ] in
-  List.iter test_iter strs;
+  List.iter strs ~f:test_iter;
 
   [%expect{|
     iter "" ->
@@ -2220,7 +2222,7 @@ let%expect_test "iteri" =
     "";
     "abcde";
   ] in
-  List.iter test_iteri strs;
+  List.iter strs ~f:test_iteri;
 
   [%expect{|
     iteri "" ->
@@ -2766,7 +2768,7 @@ let%expect_test "substr_find" =
                   "abaabaaab";
                  ] in
   let s = concat patterns in
-  List.iter (fun pattern ->
+  List.iter patterns ~f:(fun pattern ->
     let p = Slice.Pattern.create (Slice.of_string pattern) in
     let () = Slice.Pattern.pretty_print p in
 
@@ -2776,7 +2778,7 @@ let%expect_test "substr_find" =
       match matches with
       | [] -> ()
       | matches -> begin
-          let _ = List.fold_left (fun prev cursor ->
+          let _ = List.fold matches ~init:None ~f:(fun prev cursor ->
             assert (match prev with
               | None -> true
               | Some c -> Uint.((Cursor.bindex c) < (Cursor.bindex cursor))
@@ -2787,7 +2789,7 @@ let%expect_test "substr_find" =
             ) in
             printf "%*s" offset "|";
             Some cursor
-          ) None matches in
+          ) in
           ()
         end
     end in
@@ -2809,7 +2811,7 @@ let%expect_test "substr_find" =
     printf "\n";
     printf "\n";
     ()
-  ) patterns;
+  );
 
   ();
 
@@ -2940,13 +2942,13 @@ let%expect_test "substr_replace" =
     ("ab", "AB", "ababa");
     ("ba", "BA", "ababa");
   ] in
-  List.iter (fun (pattern, with_, in_) ->
+  List.iter replacements ~f:(fun (pattern, with_, in_) ->
     printf "s/%s/%s/ \"%s\" -> \"%s\"\n"
       pattern with_ in_ (substr_replace_first in_ ~pattern ~with_);
     printf "s/%s/%s/g \"%s\" -> \"%s\"\n"
       pattern with_ in_ (substr_replace_all in_ ~pattern ~with_);
     printf "\n"
-  ) replacements;
+  );
 
   [%expect{|
     s/// "" -> ""
@@ -3028,7 +3030,7 @@ let%expect_test "slice" =
     "‡";
     "𐆗";
   ] in
-  List.iter (fun s ->
+  List.iter strs ~f:(fun s ->
     printf "\"%s\" |slice| -> \"%s\"\n"
       s (pare ~base:(Cursor.hd s) ~past:(Cursor.tl s));
     let () = match clength s with
@@ -3048,7 +3050,7 @@ let%expect_test "slice" =
           s (pare ~base:Cursor.(succ (hd s)) ~past:Cursor.(pred (tl s)))
     in
     ()
-  ) strs;
+  );
 
   [%expect{|
     "" |slice| -> ""
@@ -3075,13 +3077,13 @@ let%expect_test "xfix" =
     "<_>";
     "«»";
   ] in
-  List.iter (fun s ->
+  List.iter strs ~f:(fun s ->
     for i = 0 to Uint.(to_int ((clength s) + (kv 1))) do
       let i = Uint.of_int i in
       printf "prefix \"%s\" %u -> \"%s\"\n" s (Uint.to_int i) (prefix s i);
       printf "suffix \"%s\" %u -> \"%s\"\n" s (Uint.to_int i) (suffix s i);
     done
-  ) strs;
+  );
 
   [%expect{|
     prefix "" 0 -> ""
@@ -3213,19 +3215,17 @@ let%expect_test "split" =
   let open Printf in
   let test_split s f cp = begin
     printf "split \"%s\" -> [" s;
-    List.iteri (fun i substr ->
-      let i = Uint.of_int i in
+    List.iteri (split s ~f) ~f:(fun i substr ->
       if Uint.(i > (kv 0)) then printf "; ";
       printf "\"%s\"" substr
-    ) (split s ~f);
+    );
     printf "]\n";
 
     printf "split_rev \"%s\" -> [" s;
-    List.iteri (fun i substr ->
-      let i = Uint.of_int i in
+    List.iteri (split_rev s ~f)~f:(fun i substr ->
       if Uint.(i > (kv 0)) then printf "; ";
       printf "\"%s\"" substr
-    ) (split_rev s ~f);
+    );
     printf "]\n";
 
     let s1, s2 = lsplit2_hlt s ~on:cp in
@@ -3264,19 +3264,17 @@ let%expect_test "split_lines" =
   let open Printf in
   let test_split_lines s = begin
     printf "split_lines %S -> [" s;
-    List.iteri (fun i substr ->
-      let i = Uint.of_int i in
+    List.iteri (split_lines s)~f:(fun i substr ->
       if Uint.(i > (kv 0)) then printf "; ";
       printf "%S" substr
-    ) (split_lines s);
+    );
     printf "]\n";
 
     printf "split_lines_rev %S -> [" s;
-    List.iteri (fun i substr ->
-      let i = Uint.of_int i in
+    List.iteri (split_lines_rev s)~f:(fun i substr ->
       if Uint.(i > (kv 0)) then printf "; ";
       printf "%S" substr
-    ) (split_lines_rev s);
+    );
     printf "]\n";
   end in
   test_split_lines "ab";

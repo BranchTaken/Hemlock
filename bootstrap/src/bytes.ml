@@ -123,17 +123,17 @@ let%expect_test "of_codepoint" =
     "‡";
     "𐆗";
   ] in
-  let cps = List.fold_right (fun s cps ->
+  let cps = List.fold_right strs ~init:[] ~f:(fun s cps ->
     String.Cursor.(rget (hd s)) :: cps
-  ) strs [] in
-  List.iter (fun cp ->
+  ) in
+  List.iter cps ~f:(fun cp ->
     printf "'%s' -> [|" (String.of_codepoint cp);
     let bytes = of_codepoint cp in
     Array.iteri bytes ~f:(fun i b ->
       printf "%s%#02x"
         (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
-  ) cps;
+  );
 
   [%expect{|
     '<' -> [|0x3c|] -> "<"
@@ -148,14 +148,14 @@ let%expect_test "of_string" =
     "";
     "<_>«‡𐆗»[_]";
   ] in
-  List.iter (fun s ->
+  List.iter strs ~f:(fun s ->
     printf "\"%s\" -> [|" s;
     let bytes = of_string s in
     Array.iteri bytes ~f:(fun i b ->
       printf "%s%#02x"
         (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
     printf "|] -> \"%s\"\n" (to_string_hlt bytes)
-  ) strs;
+  );
 
   [%expect{|
     "" -> [||] -> ""

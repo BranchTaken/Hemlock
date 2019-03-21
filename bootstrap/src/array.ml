@@ -1,5 +1,7 @@
 open Rudiments
 
+module List = List0
+
 module T = struct
   type 'a t = 'a array
   type 'a elm = 'a
@@ -316,14 +318,14 @@ end
 
 let of_list ?length list =
   let length = match length with
-    | None -> Uint.of_int (List.length list)
+    | None -> List.length list
     | Some length -> length
   in
   Array_of_list.to_array (Array_of_list.init length list)
 
 let of_list_rev ?length list =
   let length = match length with
-    | None -> Uint.of_int (List.length list)
+    | None -> List.length list
     | Some length -> length
   in
   Array_of_list_rev.to_array (Array_of_list_rev.init length list)
@@ -399,15 +401,16 @@ let join ?sep tlist =
     | None -> [||], Uint.kv 0
     | Some sep -> sep, length sep
   in
-  let _, tlist_length = List.fold_left (fun (i, accum) list ->
-    let i' = Uint.succ i in
-    let sep_len' = match i with
-      | i when Uint.(i = (kv 0)) -> Uint.kv 0
-      | _ -> sep_len
-    in
-    let accum' = Uint.(accum + sep_len' + (length list)) in
-    i', accum'
-  ) (Uint.kv 0, Uint.kv 0) tlist in
+  let _, tlist_length = List.fold tlist ~init:(Uint.kv 0, Uint.kv 0)
+      ~f:(fun (i, accum) list ->
+        let i' = Uint.succ i in
+        let sep_len' = match i with
+          | i when Uint.(i = (kv 0)) -> Uint.kv 0
+          | _ -> sep_len
+        in
+        let accum' = Uint.(accum + sep_len' + (length list)) in
+        i', accum'
+      ) in
   Array_join.(to_array (init tlist_length sep tlist))
 
 let concat t0 t1 =
@@ -1279,10 +1282,10 @@ let%expect_test "join" =
       end
     in
     printf " [";
-    List.iteri (fun i arr ->
-      if Int.(i > 0) then printf "; ";
+    List.iteri arrs ~f:(fun i arr ->
+      if Uint.(i > (kv 0)) then printf "; ";
       print_uint_array arr
-    ) arrs;
+    );
     printf "] -> ";
     let arr = join ?sep arrs in
     print_uint_array arr;
