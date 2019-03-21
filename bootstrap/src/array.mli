@@ -85,8 +85,8 @@ val pare: 'a t -> base:uint -> past:uint -> 'a t
 (** Create an array with contents initialized to equal the \[[base]..[past])
     input subarray. *)
 
-val concat_list: 'a t list -> 'a t
-(** Concatenate a list of arrays. *)
+val join: ?sep:'a t -> 'a t list -> 'a t
+(** Concatenate a list of arrays, with optional separator. *)
 
 val concat: 'a t -> 'a t -> 'a t
 (** Concatenate two arrays. *)
@@ -109,10 +109,13 @@ val remove: 'a t -> uint -> 'a t
 
 val reduce: 'a t -> f:('a -> 'a -> 'a) -> 'a option
 (** Reduce the array to a single value, or return [None] if the array is empty.
-*)
+    The reduction function is assumed to be associative; thus reduction order is
+    unspecified. *)
 
 val reduce_hlt: 'a t -> f:('a -> 'a -> 'a) -> 'a
-(** Reduce the array to a single value, or halt if the array is empty. *)
+(** Reduce the array to a single value, or halt if the array is empty.  The
+    reduction function is assumed to be associative; thus reduction order is
+    unspecified. *)
 
 val swap_inplace: 'a t -> uint -> uint -> unit
 (** Swap elements at given indices in place (mutate). *)

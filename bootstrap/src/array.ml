@@ -327,28 +327,38 @@ let set t i elm =
   set_inplace t' i elm;
   t'
 
-module Array_concat = struct
+module Array_join = struct
   module T = struct
     type 'a outer = 'a t
     type 'a t = {
+      sep: 'a outer;
       arrays: 'a outer list;
       length: uint;
+      in_sep: bool;
       array: 'a outer;
       index: uint;
     }
     type 'a elm = 'a
 
-    let init length arrays =
-      {arrays; length; array=[||]; index=Uint.kv 0}
+    let init length sep arrays =
+      {sep; arrays; length; in_sep=true; array=[||]; index=Uint.kv 0}
 
     let next t =
       let rec fn t = begin
-        match Uint.( < ) t.index (length t.array) with
+        match Uint.(t.index < (length t.array)) with
         | false -> begin
             match t.arrays with
             | [] -> not_reached ()
-            | array' :: arrays' ->
-              fn {t with arrays=arrays'; array=array'; index=Uint.kv 0}
+            | array' :: arrays' -> begin
+                match t.in_sep with
+                | true -> fn {t with arrays=arrays';
+                                     in_sep=false;
+                                     array=array';
+                                     index=Uint.kv 0}
+                | false -> fn {t with in_sep=true;
+                                      array=t.sep;
+                                      index=Uint.kv 0}
+              end
           end
         | true -> begin
             let elm = get t.array t.index in
@@ -365,11 +375,21 @@ module Array_concat = struct
   include Seq.Make_poly(T)
 end
 
-let concat_list tlist =
-  let tlist_length = List.fold_left (fun accum list ->
-    Uint.( + ) accum (length list)
-  ) (Uint.kv 0) tlist in
-  Array_concat.(to_array (init tlist_length tlist))
+let join ?sep tlist =
+  let sep, sep_len = match sep with
+    | None -> [||], Uint.kv 0
+    | Some sep -> sep, length sep
+  in
+  let _, tlist_length = List.fold_left (fun (i, accum) list ->
+    let i' = Uint.succ i in
+    let sep_len' = match i with
+      | i when Uint.(i = (kv 0)) -> Uint.kv 0
+      | _ -> sep_len
+    in
+    let accum' = Uint.(accum + sep_len' + (length list)) in
+    i', accum'
+  ) (Uint.kv 0, Uint.kv 0) tlist in
+  Array_join.(to_array (init tlist_length sep tlist))
 
 let concat t0 t1 =
   let length_t0 = length t0 in
@@ -1068,7 +1088,7 @@ let%expect_test "pare" =
     pare [|0; 1; 2|] -> [0,0)=[||] [0,1)=[|0|] [0,2)=[|0; 1|] [0,3)=[|0; 1; 2|] [1,1)=[||] [1,2)=[|1|] [1,3)=[|1; 2|] [2,2)=[||] [2,3)=[|2|] [3,3)=[||]
     |}]
 
-let%expect_test "concat_list" =
+let%expect_test "join" =
   let open Printf in
   let print_uint_array arr = begin
     printf "[|";
@@ -1078,14 +1098,22 @@ let%expect_test "concat_list" =
     );
     printf "|]"
   end in
-  let test arrs = begin
-    printf "concat_list [";
+  let test ?sep arrs = begin
+    printf "join";
+    let () = match sep with
+    | None -> ()
+    | Some sep -> begin
+        printf " ~sep:";
+        print_uint_array sep
+      end
+    in
+    printf " [";
     List.iteri (fun i arr ->
       if Int.(i > 0) then printf "; ";
       print_uint_array arr
     ) arrs;
     printf "] -> ";
-    let arr = concat_list arrs in
+    let arr = join ?sep arrs in
     print_uint_array arr;
     printf "\n"
   end in
@@ -1107,21 +1135,53 @@ let%expect_test "concat_list" =
   test [[|0|]; [||]; [|1|]];
   test [[|0|]; [|1|]; [|2|]];
 
+  test ~sep:[|3|] [];
+  test ~sep:[|3|] [[||]];
+  test ~sep:[|3|] [[||]; [||]];
+  test ~sep:[|3|] [[||]; [||]; [||]];
+
+  test ~sep:[|3|] [[|0|]];
+
+  test ~sep:[|3|] [[|0|]; [||]];
+  test ~sep:[|3|] [[||]; [|0|]];
+  test ~sep:[|3|] [[|0|]; [|1|]];
+
+  test ~sep:[|3|] [[|0|]; [||]; [||]];
+  test ~sep:[|3|] [[||]; [|0|]; [||]];
+  test ~sep:[|3|] [[||]; [||]; [|0|]];
+  test ~sep:[|3|] [[|0|]; [|1|]; [||]];
+  test ~sep:[|3|] [[|0|]; [||]; [|1|]];
+  test ~sep:[|3|] [[|0|]; [|1|]; [|2|]];
+
   [%expect{|
-    concat_list [] -> [||]
-    concat_list [[||]] -> [||]
-    concat_list [[||]; [||]] -> [||]
-    concat_list [[||]; [||]; [||]] -> [||]
-    concat_list [[|0|]] -> [|0|]
-    concat_list [[|0|]; [||]] -> [|0|]
-    concat_list [[||]; [|0|]] -> [|0|]
-    concat_list [[|0|]; [|1|]] -> [|0; 1|]
-    concat_list [[|0|]; [||]; [||]] -> [|0|]
-    concat_list [[||]; [|0|]; [||]] -> [|0|]
-    concat_list [[||]; [||]; [|0|]] -> [|0|]
-    concat_list [[|0|]; [|1|]; [||]] -> [|0; 1|]
-    concat_list [[|0|]; [||]; [|1|]] -> [|0; 1|]
-    concat_list [[|0|]; [|1|]; [|2|]] -> [|0; 1; 2|]
+    join [] -> [||]
+    join [[||]] -> [||]
+    join [[||]; [||]] -> [||]
+    join [[||]; [||]; [||]] -> [||]
+    join [[|0|]] -> [|0|]
+    join [[|0|]; [||]] -> [|0|]
+    join [[||]; [|0|]] -> [|0|]
+    join [[|0|]; [|1|]] -> [|0; 1|]
+    join [[|0|]; [||]; [||]] -> [|0|]
+    join [[||]; [|0|]; [||]] -> [|0|]
+    join [[||]; [||]; [|0|]] -> [|0|]
+    join [[|0|]; [|1|]; [||]] -> [|0; 1|]
+    join [[|0|]; [||]; [|1|]] -> [|0; 1|]
+    join [[|0|]; [|1|]; [|2|]] -> [|0; 1; 2|]
+    join ~sep:[|3|] [] -> [||]
+    join ~sep:[|3|] [[||]] -> [||]
+    join ~sep:[|3|] [[||]; [||]] -> [|3|]
+    join ~sep:[|3|] [[||]; [||]; [||]] -> [|3; 3|]
+    join ~sep:[|3|] [[|0|]] -> [|0|]
+    join ~sep:[|3|] [[|0|]; [||]] -> [|0; 3|]
+    join ~sep:[|3|] [[||]; [|0|]] -> [|3; 0|]
+    join ~sep:[|3|] [[|0|]; [|1|]] -> [|0; 3; 1|]
+    join ~sep:[|3|] [[|0|]; [||]; [||]] -> [|0; 3; 3|]
+    join ~sep:[|3|] [[||]; [|0|]; [||]] -> [|3; 0; 3|]
+    join ~sep:[|3|] [[||]; [||]; [|0|]] -> [|3; 3; 0|]
+    join ~sep:[|3|] [[|0|]; [|1|]; [||]] -> [|0; 3; 1; 3|]
+    join ~sep:[|3|] [[|0|]; [||]; [|1|]] -> [|0; 3; 3; 1|]
+    join ~sep:[|3|] [[|0|]; [|1|]; [|2|]] -> [|0; 3; 1; 3; 2|]
     |}]
 
 let%expect_test "concat" =
