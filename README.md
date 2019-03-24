@@ -1,7 +1,7 @@
 # SawML
 
 SawML (pronounced as "sawmill") is a programming language in the [ML
-family](https://en.wikipedia.org/wiki/ML_(programming_language) that emphasizes
+family](https://en.wikipedia.org/wiki/ML_(programming_language)) that emphasizes
 reliable high performance parallel computation.  SawML synthesizes the
 expressive type and module systems of [OCaml](http://ocaml.org/), the precise
 mutability control of [Skip](http://skiplang.com/), and the shared-nothing
