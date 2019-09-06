@@ -145,7 +145,7 @@ let ( % ) t0 t1 =
   mod_float t0 t1
 
 let ( ** ) t0 t1 =
-  Stdlib.Pervasives.( ** ) t0 t1
+  Stdlib.( ** ) t0 t1
 
 let ( ~- ) t =
   -1. * t

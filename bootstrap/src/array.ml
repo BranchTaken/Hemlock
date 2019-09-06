@@ -21,7 +21,7 @@ module T = struct
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
         assert ((t0.array == t1.array)
-                || (Stdlib.Pervasives.( = ) t0.array t1.array));
+                || (Stdlib.( = ) t0.array t1.array));
         Uint.cmp t0.index t1.index
 
       let hd array =
