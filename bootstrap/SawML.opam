@@ -1,0 +1,37 @@
+opam-version: "2.0"
+name: "SawML"
+version: "0.0.0"
+synopsis: "General-purpose ML-family programming language"
+description: """
+SawML (pronounced as "sawmill") is a programming language in the ML family
+(https://en.wikipedia.org/wiki/ML_(programming_language)) that emphasizes
+reliable high performance parallel computation.  SawML synthesizes the
+expressive type and module systems of OCaml (http://ocaml.org/), the precise
+mutability control of Skip (http://skiplang.com/), and the shared-nothing
+message-passing parallelism of Erlang (https://erlang.org/).  SawML's features
+combine to enhance human reasoning in ways that also enable reliable high
+performance parallel computation via both static compiler analysis and dynamic
+profile-driven just-in-time (JIT) optimization.
+"""
+maintainer: "Jason Evans <je@branchtaken.net>"
+authors: ["Jason Evans"]
+license: "MIT"
+homepage: "https://github.com/BranchTaken/SawML"
+bug-reports: "https://github.com/BranchTaken/SawML/issues"
+dev-repo: "git+https://github.com/BranchTaken/SawML"
+tags: [ "languages" "org:BranchTaken" ]
+depends: [
+  "ocaml" {>= "4.08.1"}
+  "dune" {>= "1.11"}
+  "topkg" {build}
+  "core"
+  "sexplib"
+  "ppx_deriving"
+  "ppx_expect"
+  "ppx_inline_test"
+  "ppx_sexp_conv"
+]
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+]

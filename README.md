@@ -20,15 +20,22 @@ production use.
 ### Prerequisites
 
 The bootstrap compiler depends on [OCaml](http://ocaml.org/) and the
-[Dune](https://dune.build/) build system.  [opam](https://opam.ocaml.org/) is
-the recommended mechanism for installing and maintaining an OCaml development
-environment.
+[Dune](https://dune.build/) build system, as well as several ppx rewriters.
+[opam](https://opam.ocaml.org/) is the recommended mechanism for installing and
+maintaining an OCaml development environment.  To install the necessary
+dependencies into an existing opam repository, run
+
+```sh
+cd bootstrap
+opam install --deps-only .
+```
 
 ### Building
 
 To build the bootstrap `sawml` and invoke the test suite, run
 
 ```sh
+cd bootstrap
 dune runtests
 ```
 

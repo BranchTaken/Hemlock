@@ -2,4 +2,4 @@
  (dev
   (flags (:standard)))
  (release
-  (flags (:standard -O3))))
+  (flags (:standard))))
