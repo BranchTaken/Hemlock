@@ -550,14 +550,15 @@ let%expect_test "constants" =
 
 let%expect_test "operators" =
   let open Printf in
+  let norm_nan t = if (is_nan t) then nan else t in
   for i = -1 to 2 do
     let t0 = of_int i in
     for j = -1 to 2 do
       let t1 = of_int j in
       printf ("+ - * / %% ** copysign %.1f %.1f -> " ^^
           "%.1f %.1f %.1f %.1f %.1f %.1f %.1f\n")
-        t0 t1 (t0 + t1) (t0 - t1) (t0 * t1) (t0 / t1) (t0 % t1) (t0 ** t1)
-        (copysign t0 t1);
+        t0 t1 (t0 + t1) (t0 - t1) (t0 * t1) (norm_nan (t0 / t1))
+        (norm_nan (t0 % t1)) (t0 ** t1) (copysign t0 t1);
     done;
     printf "~- ~+ neg abs %.1f -> %.1f %.1f %.1f %.1f\n"
       t0 (~- t0) (~+ t0) (neg t0) (abs t0);
@@ -565,22 +566,22 @@ let%expect_test "operators" =
 
   [%expect{|
   + - * / % ** copysign -1.0 -1.0 -> -2.0 0.0 1.0 1.0 -0.0 -1.0 -1.0
-  + - * / % ** copysign -1.0 0.0 -> -1.0 -1.0 -0.0 -inf -nan 1.0 1.0
+  + - * / % ** copysign -1.0 0.0 -> -1.0 -1.0 -0.0 -inf nan 1.0 1.0
   + - * / % ** copysign -1.0 1.0 -> 0.0 -2.0 -1.0 -1.0 -0.0 -1.0 1.0
   + - * / % ** copysign -1.0 2.0 -> 1.0 -3.0 -2.0 -0.5 -1.0 1.0 1.0
   ~- ~+ neg abs -1.0 -> 1.0 -1.0 1.0 1.0
   + - * / % ** copysign 0.0 -1.0 -> -1.0 1.0 -0.0 -0.0 0.0 inf -0.0
-  + - * / % ** copysign 0.0 0.0 -> 0.0 0.0 0.0 -nan -nan 1.0 0.0
+  + - * / % ** copysign 0.0 0.0 -> 0.0 0.0 0.0 nan nan 1.0 0.0
   + - * / % ** copysign 0.0 1.0 -> 1.0 -1.0 0.0 0.0 0.0 0.0 0.0
   + - * / % ** copysign 0.0 2.0 -> 2.0 -2.0 0.0 0.0 0.0 0.0 0.0
   ~- ~+ neg abs 0.0 -> -0.0 0.0 -0.0 0.0
   + - * / % ** copysign 1.0 -1.0 -> 0.0 2.0 -1.0 -1.0 0.0 1.0 -1.0
-  + - * / % ** copysign 1.0 0.0 -> 1.0 1.0 0.0 inf -nan 1.0 1.0
+  + - * / % ** copysign 1.0 0.0 -> 1.0 1.0 0.0 inf nan 1.0 1.0
   + - * / % ** copysign 1.0 1.0 -> 2.0 0.0 1.0 1.0 0.0 1.0 1.0
   + - * / % ** copysign 1.0 2.0 -> 3.0 -1.0 2.0 0.5 1.0 1.0 1.0
   ~- ~+ neg abs 1.0 -> -1.0 1.0 -1.0 1.0
   + - * / % ** copysign 2.0 -1.0 -> 1.0 3.0 -2.0 -2.0 0.0 0.5 -2.0
-  + - * / % ** copysign 2.0 0.0 -> 2.0 2.0 0.0 inf -nan 1.0 2.0
+  + - * / % ** copysign 2.0 0.0 -> 2.0 2.0 0.0 inf nan 1.0 2.0
   + - * / % ** copysign 2.0 1.0 -> 3.0 1.0 2.0 2.0 0.0 2.0 2.0
   + - * / % ** copysign 2.0 2.0 -> 4.0 0.0 4.0 1.0 0.0 4.0 2.0
   ~- ~+ neg abs 2.0 -> -2.0 2.0 -2.0 2.0
@@ -724,11 +725,12 @@ let%expect_test "ex" =
 
 let%expect_test "lg" =
   let open Printf in
+  let norm_nan t = if (is_nan t) then nan else t in
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "lg %h -> %h\n" t (lg t);
+        printf "lg %h -> %h\n" t (norm_nan (lg t));
         fn ts'
       end
   end in
@@ -754,11 +756,12 @@ let%expect_test "lg" =
 
 let%expect_test "ln" =
   let open Printf in
+  let norm_nan t = if (is_nan t) then nan else t in
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "ln %h -> %h\n" t (ln t);
+        printf "ln %h -> %h\n" t (norm_nan (ln t));
         fn ts'
       end
   end in
@@ -784,11 +787,13 @@ let%expect_test "ln" =
 
 let%expect_test "ln1p" =
   let open Printf in
+  let norm_nan t = if (is_nan t) then nan else t in
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "ln,ln1p %h -> %h %h\n" t (ln (1. + t)) (ln1p t);
+        printf "ln,ln1p %h -> %h %h\n" t (norm_nan (ln (1. + t)))
+          (norm_nan (ln1p t));
         fn ts'
       end
   end in
@@ -803,9 +808,9 @@ let%expect_test "ln1p" =
 
   [%expect{|
     ln,ln1p infinity -> infinity infinity
-    ln,ln1p -infinity -> nan -nan
+    ln,ln1p -infinity -> nan nan
     ln,ln1p nan -> nan nan
-    ln,ln1p -0x1p+1 -> nan -nan
+    ln,ln1p -0x1p+1 -> nan nan
     ln,ln1p -0x1p+0 -> -infinity -infinity
     ln,ln1p 0x1p+0 -> 0x1.62e42fefa39efp-1 0x1.62e42fefa39efp-1
     ln,ln1p 0x1.5bf0a8b145769p+1 -> 0x1.5031eafefb049p+0 0x1.5031eafefb049p+0
@@ -818,11 +823,12 @@ let%expect_test "ln1p" =
 
 let%expect_test "log" =
   let open Printf in
+  let norm_nan t = if (is_nan t) then nan else t in
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "log %h -> %h\n" t (log t);
+        printf "log %h -> %h\n" t (norm_nan (log t));
         fn ts'
       end
   end in
@@ -983,18 +989,19 @@ let%expect_test "gamma" =
 
 let%expect_test "rt" =
   let open Printf in
+  let norm_nan t = if (is_nan t) then nan else t in
   let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        printf "%f: sqrt=%f cbrt=%f\n" x (sqrt x) (cbrt x);
+        printf "%f: sqrt=%f cbrt=%f\n" x (norm_nan (sqrt x)) (cbrt x);
         fn xs'
       end
   end in
   fn [-0.125; 0.; inf; 1.; 4.; 27.; 64.; 65.; 729.];
 
   [%expect{|
-    -0.125000: sqrt=-nan cbrt=-0.500000
+    -0.125000: sqrt=nan cbrt=-0.500000
     0.000000: sqrt=0.000000 cbrt=0.000000
     inf: sqrt=inf cbrt=inf
     1.000000: sqrt=1.000000 cbrt=1.000000
