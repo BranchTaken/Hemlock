@@ -1,39 +1,83 @@
+(** A {!type:string} is an immutable {!type:byte} sequence that is restricted to
+    contain a well-formed concatenation of UTF-8-encoded {!type:codepoint}
+    values.  Indexed {!type:byte} access is O(1), but indexed {!type:codepoint}
+    access is O(n).  The {!String.Cursor} module provides {!type:codepoint}
+    access without tracking {!type:codepoint} index; for atypical cases that
+    actually require {!type:codepoint} indexing, use the {!String.Cursori}
+    module instead.
+
+    The {!String.Slice} module provides an API similar to that of the {!String}
+    module, but it applies to a narrowed view -- {!type:slice} -- of the
+    containing {!type:string}.  Slices avoid copying, which makes them both
+    convenient and efficient.
+*)
+
 open Rudiments
 
 type t = string
 
 include Identifiable_intf.S with type t := t
 
-(* Cursor that supports arbitrary access to codepoints, given byte index.  The
- * codepoint index is not tracked. *)
+(** Cursor that supports arbitrary access to codepoints, given byte index.  The
+    codepoint index is not tracked. *)
 module Cursor : sig
   type outer = t
+
   type t
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
-  val index: t -> uint [@@ocaml.deprecated "Use [bc]index instead"]
+
+  val index: t -> uint [@@ocaml.deprecated "Use bindex instead"]
+  (** @deprecated Use {!bindex} instead.
+      @raise halt Not implemented. *)
+
   val bindex: t -> uint
+  (** @return Current {!type:byte} index. *)
+
   val cindex: t -> uint [@@ocaml.deprecated "Do not use; O(n)"]
+  (** @deprecated Use {!Cursori.cindex} instead.
+      @raise halt Not implemented. *)
+
   val at: outer -> bindex:uint -> t
+  (** @param bindex {!type:byte} index.
+      @return {!type:cursor} at [bindex].
+      @raise halt Not at {!type:codepoint} boundary.
+  *)
+
   val near: outer -> bindex:uint -> t
+  (** @param bindex {!type:byte} index.
+      @return {!type:cursor} at or before [bindex]. *)
 end
 type cursor = Cursor.t
 
-(* Cursor that tracks codepoint index.  Arbitrary codepoint access via
- * Cursori.at requires linear scanning, unlike Cursor.at .  Prefer Cursor unless
- * codepoint index is needed. *)
+(** Cursor that tracks codepoint index.  Arbitrary codepoint access via
+    Cursori.at requires linear scanning, unlike Cursor.at .  Prefer Cursor
+    unless {!type:codepoint} index is needed. *)
 module Cursori : sig
   type outer = t
+
   type t
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
   val index: t -> uint [@@ocaml.deprecated "Use [bc]index instead"]
+  (** @deprecated Use {!bindex} or {!cindex} instead.
+      @raise halt Not implemented. *)
+
   val bindex: t -> uint
+  (** @return Current {!type:byte} index. *)
+
   val cindex: t -> uint
+  (** @return Current {!type:codepoint} index. *)
+
   val cursor: t -> cursor
+  (** @return Encapsulated {!type:cursor}. *)
+
   val at: outer -> cindex:uint -> t
+  (** @param cindex {!type:codepoint} index.
+      @return {!type:cursori} at [cindex].
+  *)
 end
 type cursori = Cursori.t
 
@@ -156,10 +200,10 @@ module Seq : sig
     val to_string: t -> outer
   end
 
-  (* Efficiently convert a codepoint sequence with known blength to a string.
-   * The length function returns blength of the remaining sequence; the next
-   * function returns the next codepoint which is converted to bytes in
-   * to_string. *)
+  (** Efficiently convert a codepoint sequence with known blength to a string.
+      The length function returns blength of the remaining sequence; the next
+      function returns the next codepoint which is converted to bytes in
+      to_string. *)
   module Codepoint : sig
     module Make (T : Seq_intf.I_mono_def with type elm := codepoint) :
       S with type t := T.t
@@ -167,10 +211,10 @@ module Seq : sig
       S with type t := T.t
   end
 
-  (* Efficiently convert a string slice sequence with known blength to a string.
-   * The length function returns blength of the remaining sequence; the next
-   * function returns (base, past) cursors for the next string slice which is
-   * copied into to_string. *)
+  (** Efficiently convert a string slice sequence with known blength to a
+      string.  The length function returns blength of the remaining sequence;
+      the next function returns (base, past) cursors for the next string slice
+      which is copied into to_string. *)
   module Slice : sig
     module Make (T : Seq_intf.I_mono_def with type elm := slice) :
       S with type t := T.t
@@ -178,9 +222,9 @@ module Seq : sig
       S with type t := T.t
   end
 
-  (* Efficiently convert a string sequence with known blength to a string.  The
-   * length function returns blength of the remaining sequence; the next
-   * function returns the next string which is copied into to_string. *)
+  (** Efficiently convert a string sequence with known blength to a string.  The
+      length function returns blength of the remaining sequence; the next
+      function returns the next string which is copied into to_string. *)
   module String : sig
     module Make (T : Seq_intf.I_mono_def with type elm := string) :
       S with type t := T.t
@@ -189,15 +233,19 @@ module Seq : sig
   end
 end
 
-(* Byte length. *)
 val blength: t -> uint
-(* Codepoint length. *)
+(** Byte length. *)
+
 val clength: t -> uint
+(** Codepoint length. *)
+
 val get: t -> uint -> byte
+(** Get byte at index. *)
 
 val init: ?blength:uint -> uint -> f:(uint -> codepoint) -> t
 
 val of_codepoint: codepoint -> t
+(** Create a string from a codepoint. *)
 
 val of_list: ?blength:uint -> ?clength:uint -> codepoint list -> t
 val of_list_rev: ?blength:uint -> ?clength:uint -> codepoint list
