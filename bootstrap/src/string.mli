@@ -20,8 +20,8 @@ type t = string
 
 include Identifiable_intf.S with type t := t
 
-(** Cursor that supports arbitrary access to codepoints, given byte index.  The
-    codepoint index is not tracked. *)
+(** Cursor that supports O(1) arbitrary access to codepoints, given byte
+    index.  The codepoint index is not tracked. *)
 module Cursor : sig
   type outer = t
 
@@ -49,9 +49,9 @@ module Cursor : sig
   (** Return {!type:Cursor.t} at or before [bindex]. *)
 end
 
-(** Cursor that tracks codepoint index.  Arbitrary codepoint access via
-    Cursori.at requires linear scanning, unlike Cursor.at .  Prefer Cursor
-    unless {!type:codepoint} index is needed. *)
+(** Cursor that tracks codepoint index.  Arbitrary codepoint access via [at] is
+    O(n), unlike [Cursor.at].  Prefer [Cursor] unless {!type:codepoint} index is
+    needed. *)
 module Cursori : sig
   type outer = t
 
