@@ -61,10 +61,10 @@ val to_list_rev: 'a t -> 'a list
 *)
 
 val length: 'a t -> uint
-(** @return Array length. *)
+(** Return array length. *)
 
 val is_empty: 'a t -> bool
-(** @return [true] if array length is 0; [false] otherwise. *)
+(** Return [true] if array length is 0; [false] otherwise. *)
 
 val get: 'a t -> uint -> 'a
 (** Get array element.  [get t i] returns the element at index [i]. *)
