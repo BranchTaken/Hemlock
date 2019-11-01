@@ -3,6 +3,17 @@ open Rudiments
 type 'a t = 'a array [@@deriving sexp]
 include Container_common_intf.S_poly_fold with type 'a t := 'a t
 
+(** Cursor that supports arbitrary array element access.  All operations are
+    O(1). *)
+module Cursor : sig
+  type 'a container = 'a t
+  type 'a t
+
+  include Cursor_intf.S_poly with type 'a container := 'a container
+                              and type 'a elm := 'a
+                              and type 'a t := 'a t
+end
+
 val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
 (** Compare two arrays given the element comparison function.  The array lengths
     may differ. *)

@@ -30,17 +30,36 @@ module T = struct
       let tl array =
         {array; index=(length array)}
 
+      let seek t i =
+        match i < 0 with
+        | true -> begin
+          match Uint.((of_int Int.(neg i)) > t.index) with
+            | true -> halt "Cannot seek before beginning of array"
+            | false -> {t with index=Uint.(t.index - of_int (Int.neg i))}
+        end
+        | false -> begin
+          match Uint.((t.index + (of_int i)) > (length t.array)) with
+          | true -> halt "Cannot seek past end of array"
+          | false -> {t with index=Uint.(t.index + (of_int i))}
+        end
+
       let succ t =
-        {t with index=(Uint.succ t.index)}
+        seek t 1
 
       let pred t =
-        {t with index=(Uint.pred t.index)}
+        seek t (-1)
 
       let lget t =
         get t.array (Uint.pred t.index)
 
       let rget t =
         get t.array t.index
+
+      let container t =
+        t.array
+
+      let index t =
+        t.index
     end
     include T
     include Cmpable.Make_poly(T)
@@ -982,6 +1001,158 @@ let t_of_sexp sexp =
 (*******************************************************************************
  * Begin tests.
  *)
+
+let%expect_test "cursor" =
+  let open Printf in
+  let print_uint_array arr = begin
+    printf "[|";
+    iteri arr ~f:(fun i elm ->
+      if Uint.(i > (kv 0)) then printf "; ";
+      printf "%u" elm
+    );
+    printf "|]"
+  end in
+  let rec fn arr hd cursor tl = begin
+    let index = Cursor.index cursor in
+    printf "index=%u" (Uint.to_int index);
+    printf ", container %s arr"
+      (Sexplib.Sexp.to_string
+          (Cmp.sexp_of_t (cmp Int.cmp (Cursor.container cursor) arr)));
+    let hd_cursor = Cursor.cmp hd cursor in
+    printf ", hd %s cursor" (Sexplib.Sexp.to_string (Cmp.sexp_of_t hd_cursor));
+    let cursor_tl = Cursor.cmp cursor tl in
+    printf ", cursor %s tl" (Sexplib.Sexp.to_string (Cmp.sexp_of_t cursor_tl));
+    let () = match hd_cursor with
+      | Lt -> printf ", lget=%u" (Cursor.lget cursor)
+      | Eq -> printf ", lget=_"
+      | Gt -> not_reached ()
+    in
+    let () = match cursor_tl with
+      | Lt -> printf ", rget=%u" (Cursor.rget cursor)
+      | Eq -> printf ", rget=_"
+      | Gt -> not_reached ()
+    in
+    printf "\n";
+
+    let length = length arr in
+    assert (Cursor.(=)
+        (Cursor.seek hd (Uint.to_int index))
+        cursor);
+    assert (Cursor.(=)
+        hd
+        (Cursor.seek cursor (-(Uint.to_int index)))
+    );
+    assert (Cursor.(=)
+        (Cursor.seek cursor Uint.(to_int (length - index)))
+        tl
+    );
+    assert (Cursor.(=)
+        cursor
+        (Cursor.seek tl (-Uint.(to_int (length - index))))
+    );
+
+    match cursor_tl with
+    | Lt -> begin
+        let cursor' = Cursor.succ cursor in
+        assert Cursor.(cursor = (pred cursor'));
+        fn arr hd cursor' tl
+    end
+    | Eq | Gt -> ()
+  end in
+  let arrs = [
+    [||];
+    [|0|];
+    [|0; 1|];
+    [|0; 1; 2|];
+  ] in
+  List.iter arrs ~f:(fun arr ->
+    printf "--- ";
+    print_uint_array arr;
+    printf " ---\n";
+    let hd = Cursor.hd arr in
+    fn arr hd hd (Cursor.tl arr)
+  );
+
+  [%expect{|
+    --- [||] ---
+    index=0, container Eq arr, hd Eq cursor, cursor Eq tl, lget=_, rget=_
+    --- [|0|] ---
+    index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
+    index=1, container Eq arr, hd Lt cursor, cursor Eq tl, lget=0, rget=_
+    --- [|0; 1|] ---
+    index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
+    index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
+    index=2, container Eq arr, hd Lt cursor, cursor Eq tl, lget=1, rget=_
+    --- [|0; 1; 2|] ---
+    index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
+    index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
+    index=2, container Eq arr, hd Lt cursor, cursor Lt tl, lget=1, rget=2
+    index=3, container Eq arr, hd Lt cursor, cursor Eq tl, lget=2, rget=_
+    |}]
+
+let%expect_test "cmp" =
+  let open Printf in
+  let print_uint_array arr = begin
+    printf "[|";
+    iteri arr ~f:(fun i elm ->
+      if Uint.(i > (kv 0)) then printf "; ";
+      printf "%u" elm
+    );
+    printf "|]"
+  end in
+  let arrs = [
+    [||];
+    [|0|];
+    [|0; 0|];
+    [|0; 1|];
+    [|0; 0|];
+    [|0|];
+    [||];
+  ] in
+  let rec fn arr arrs = begin
+    match arrs with
+    | [] -> ()
+    | hd :: tl -> begin
+        let () = List.iter arrs ~f:(fun arr2 ->
+          printf "cmp ";
+          print_uint_array arr;
+          printf " ";
+          print_uint_array arr2;
+          printf " -> %s\n"
+            (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp Int.cmp arr arr2)))
+        ) in
+        fn hd tl
+      end
+  end in
+  let hd, tl = match arrs with
+    | hd :: tl -> hd, tl
+    | [] -> not_reached ()
+  in
+  fn hd tl;
+
+  [%expect{|
+    cmp [||] [|0|] -> Lt
+    cmp [||] [|0; 0|] -> Lt
+    cmp [||] [|0; 1|] -> Lt
+    cmp [||] [|0; 0|] -> Lt
+    cmp [||] [|0|] -> Lt
+    cmp [||] [||] -> Eq
+    cmp [|0|] [|0; 0|] -> Lt
+    cmp [|0|] [|0; 1|] -> Lt
+    cmp [|0|] [|0; 0|] -> Lt
+    cmp [|0|] [|0|] -> Eq
+    cmp [|0|] [||] -> Gt
+    cmp [|0; 0|] [|0; 1|] -> Lt
+    cmp [|0; 0|] [|0; 0|] -> Eq
+    cmp [|0; 0|] [|0|] -> Gt
+    cmp [|0; 0|] [||] -> Gt
+    cmp [|0; 1|] [|0; 0|] -> Gt
+    cmp [|0; 1|] [|0|] -> Gt
+    cmp [|0; 1|] [||] -> Gt
+    cmp [|0; 0|] [|0|] -> Gt
+    cmp [|0; 0|] [||] -> Gt
+    cmp [|0|] [||] -> Gt
+    |}]
 
 let%expect_test "get,length,is_empty" =
   let open Printf in
