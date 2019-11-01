@@ -9,6 +9,7 @@ module type S_poly_iter = sig
   type 'a t
   type 'a elm
   include Cmpable_intf.S_poly with type 'a t := 'a t
+
   val hd: 'a container -> 'a t
   (** Return head. *)
 
@@ -31,6 +32,7 @@ end
 (** Cursor interface for polymorphic types, e.g. [('a array)]. *)
 module type S_poly = sig
   include S_poly_iter
+
   val container: 'a t -> 'a container
   (** Return container associated with iterator. *)
 
