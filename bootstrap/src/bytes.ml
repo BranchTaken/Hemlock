@@ -7,7 +7,7 @@ module Array_seq = struct
   module T = struct
     type t = {
       string: string;
-      cursor: String.cursor;
+      cursor: String.Cursor.t;
       bindex: uint;
       rem_bytes: byte list;
     }

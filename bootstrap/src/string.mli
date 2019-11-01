@@ -1,4 +1,6 @@
-(** A {!type:string} is an immutable {!type:byte} sequence that is restricted to
+(** UTF-8-encoded immutable {!type:string}.
+
+    A {!type:string} is an immutable {!type:byte} sequence that is restricted to
     contain a well-formed concatenation of UTF-8-encoded {!type:codepoint}
     values.  Indexed {!type:byte} access is O(1), but indexed {!type:codepoint}
     access is O(n).  The {!String.Cursor} module provides {!type:codepoint}
@@ -33,23 +35,19 @@ module Cursor : sig
       @raise halt Not implemented. *)
 
   val bindex: t -> uint
-  (** @return Current {!type:byte} index. *)
+  (** Return current {!type:byte} index. *)
 
   val cindex: t -> uint [@@ocaml.deprecated "Do not use; O(n)"]
   (** @deprecated Use {!Cursori.cindex} instead.
       @raise halt Not implemented. *)
 
   val at: outer -> bindex:uint -> t
-  (** @param bindex {!type:byte} index.
-      @return {!type:cursor} at [bindex].
-      @raise halt Not at {!type:codepoint} boundary.
-  *)
+  (** Return {!type:Cursor.t} at [bindex], or halt if not at {!type:codepoint}
+      boundary. *)
 
   val near: outer -> bindex:uint -> t
-  (** @param bindex {!type:byte} index.
-      @return {!type:cursor} at or before [bindex]. *)
+  (** Return {!type:Cursor.t} at or before [bindex]. *)
 end
-type cursor = Cursor.t
 
 (** Cursor that tracks codepoint index.  Arbitrary codepoint access via
     Cursori.at requires linear scanning, unlike Cursor.at .  Prefer Cursor
@@ -66,20 +64,17 @@ module Cursori : sig
       @raise halt Not implemented. *)
 
   val bindex: t -> uint
-  (** @return Current {!type:byte} index. *)
+  (** Return current {!type:byte} index. *)
 
   val cindex: t -> uint
-  (** @return Current {!type:codepoint} index. *)
+  (** Return Current {!type:codepoint} index. *)
 
-  val cursor: t -> cursor
-  (** @return Encapsulated {!type:cursor}. *)
+  val cursor: t -> Cursor.t
+  (** Return encapsulated {!type:Cursor.t}. *)
 
   val at: outer -> cindex:uint -> t
-  (** @param cindex {!type:codepoint} index.
-      @return {!type:cursori} at [cindex].
-  *)
+  (** Return {!type:Cursori.t} at {!type:codepoint} index [cindex]. *)
 end
-type cursori = Cursori.t
 
 type slice
 module Slice : sig
@@ -87,11 +82,11 @@ module Slice : sig
   type t = slice
   include Cmpable_intf.S with type t := t
 
-  val of_cursors: base:cursor -> past:cursor -> t
-  val to_cursors: t -> cursor * cursor
+  val of_cursors: base:Cursor.t -> past:Cursor.t -> t
+  val to_cursors: t -> Cursor.t * Cursor.t
   val string: t -> outer
-  val base: t -> cursor
-  val past: t -> cursor
+  val base: t -> Cursor.t
+  val past: t -> Cursor.t
 
   val of_string: outer -> t
   val to_string: t -> outer
@@ -134,20 +129,20 @@ module Slice : sig
   val escaped: t -> t
   val rev: t -> t
 
-  val lfind: t -> codepoint -> cursor option
-  val lfind_hlt: t -> codepoint -> cursor
+  val lfind: t -> codepoint -> Cursor.t option
+  val lfind_hlt: t -> codepoint -> Cursor.t
   val contains: t -> codepoint -> bool
 
-  val rfind: t -> codepoint -> cursor option
-  val rfind_hlt: t -> codepoint -> cursor
+  val rfind: t -> codepoint -> Cursor.t option
+  val rfind_hlt: t -> codepoint -> Cursor.t
 
   module Pattern : sig
     type outer = t
     type t
     val create: outer -> t
-    val find: t -> in_:outer -> cursor option
-    val find_hlt: t -> in_:outer -> cursor
-    val find_all: t -> may_overlap:bool -> in_:outer -> cursor list
+    val find: t -> in_:outer -> Cursor.t option
+    val find_hlt: t -> in_:outer -> Cursor.t
+    val find_all: t -> may_overlap:bool -> in_:outer -> Cursor.t list
     val replace_first: t -> in_:outer -> with_:outer -> outer
     val replace_all: t -> in_:outer -> with_:outer -> outer
   end
@@ -270,23 +265,25 @@ val escaped: t -> t
 val rev: t -> t
 val ( ^ ): t -> t -> t
 
-val lfind: ?base:cursor -> ?past:cursor -> t -> codepoint -> cursor option
-val lfind_hlt: ?base:cursor -> ?past:cursor -> t -> codepoint -> cursor
-val contains: ?base:cursor -> ?past:cursor -> t -> codepoint -> bool
+val lfind: ?base:Cursor.t -> ?past:Cursor.t -> t -> codepoint
+  -> Cursor.t option
+val lfind_hlt: ?base:Cursor.t -> ?past:Cursor.t -> t -> codepoint -> Cursor.t
+val contains: ?base:Cursor.t -> ?past:Cursor.t -> t -> codepoint -> bool
 
-val rfind: ?base:cursor -> ?past:cursor -> t -> codepoint -> cursor option
-val rfind_hlt: ?base:cursor -> ?past:cursor -> t -> codepoint -> cursor
+val rfind: ?base:Cursor.t -> ?past:Cursor.t -> t -> codepoint
+  -> Cursor.t option
+val rfind_hlt: ?base:Cursor.t -> ?past:Cursor.t -> t -> codepoint -> Cursor.t
 
-val substr_find: ?base:cursor -> t -> pattern:t -> cursor option
-val substr_find_hlt: ?base:cursor -> t -> pattern:t -> cursor
-val substr_find_all: t -> may_overlap:bool -> pattern:t -> cursor list
-val substr_replace_first: ?base:cursor -> t -> pattern:t -> with_:t -> t
+val substr_find: ?base:Cursor.t -> t -> pattern:t -> Cursor.t option
+val substr_find_hlt: ?base:Cursor.t -> t -> pattern:t -> Cursor.t
+val substr_find_all: t -> may_overlap:bool -> pattern:t -> Cursor.t list
+val substr_replace_first: ?base:Cursor.t -> t -> pattern:t -> with_:t -> t
 val substr_replace_all: t -> pattern:t -> with_:t -> t
 
 val is_prefix: t -> prefix:t -> bool
 val is_suffix: t -> suffix:t -> bool
 
-val pare: base:cursor -> past:cursor -> t
+val pare: base:Cursor.t -> past:Cursor.t -> t
 
 val prefix: t -> uint -> t
 val suffix: t -> uint -> t
