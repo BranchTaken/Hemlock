@@ -1831,11 +1831,13 @@ let%expect_test "hash_fold" =
 let%expect_test "cmp" =
   let open Printf in
   let strs = [
+    "";
     "a";
     "aa";
     "ab";
     "aa";
     "a";
+    "";
   ] in
   let rec fn s strs = begin
     match strs with
@@ -1855,16 +1857,27 @@ let%expect_test "cmp" =
   fn hd tl;
 
   [%expect{|
+    cmp "" "a" -> Lt
+    cmp "" "aa" -> Lt
+    cmp "" "ab" -> Lt
+    cmp "" "aa" -> Lt
+    cmp "" "a" -> Lt
+    cmp "" "" -> Eq
     cmp "a" "aa" -> Lt
     cmp "a" "ab" -> Lt
     cmp "a" "aa" -> Lt
     cmp "a" "a" -> Eq
+    cmp "a" "" -> Gt
     cmp "aa" "ab" -> Lt
     cmp "aa" "aa" -> Eq
     cmp "aa" "a" -> Gt
+    cmp "aa" "" -> Gt
     cmp "ab" "aa" -> Gt
     cmp "ab" "a" -> Gt
+    cmp "ab" "" -> Gt
     cmp "aa" "a" -> Gt
+    cmp "aa" "" -> Gt
+    cmp "a" "" -> Gt
     |}]
 
 let%expect_test "sexp" =
