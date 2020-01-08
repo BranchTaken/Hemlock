@@ -39,6 +39,12 @@ cd bootstrap
 dune runtests
 ```
 
+To build the bootstrap standard library documentation, run
+
+```sh
+dune build @doc-private
+```
+
 See the [Dune documentation](https://dune.readthedocs.io/en/latest/) for more
 details on building and interacting with `hemlock` via the build system.
 
