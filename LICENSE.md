@@ -5,7 +5,7 @@ the following license.  Refer to the [canonical commit
 history](https://github.com/BranchTaken/Hemlock.git) as a primary source for
 determining copyright.
 
-    Copyright (c) 2019 Jason Evans <je@branchtaken.net>
+    Copyright (c) 2019-present Jason Evans <je@branchtaken.net>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
