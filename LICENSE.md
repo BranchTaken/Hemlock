@@ -1,8 +1,8 @@
 Unless otherwise specified, all files in the
 [BranchTaken](http://branchtaken.net/)
-[SawML](https://github.com/BranchTaken/SawML) distribution are subject to the
-following license.  Refer to the [canonical commit
-history](https://github.com/BranchTaken/SawML.git) as a primary source for
+[Hemlock](https://github.com/BranchTaken/Hemlock) distribution are subject to
+the following license.  Refer to the [canonical commit
+history](https://github.com/BranchTaken/Hemlock.git) as a primary source for
 determining copyright.
 
     Copyright (c) 2019 Jason Evans <je@branchtaken.net>

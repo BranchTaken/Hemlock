@@ -2,4 +2,4 @@ bootstrap/_build/
 
 bootstrap/bin/.merlin
 bootstrap/src/.merlin
-bootstrap/SawML.install
+bootstrap/Hemlock.install

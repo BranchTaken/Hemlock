@@ -1,24 +1,24 @@
 opam-version: "2.0"
-name: "SawML"
+name: "Hemlock"
 version: "0.0.0"
 synopsis: "General-purpose ML-family programming language"
 description: """
-SawML (pronounced as "sawmill") is a programming language in the ML family
+Hemlock is a programming language in the ML family
 (https://en.wikipedia.org/wiki/ML_(programming_language)) that emphasizes
-reliable high performance parallel computation.  SawML synthesizes the
+reliable high performance parallel computation.  Hemlock synthesizes the
 expressive type and module systems of OCaml (http://ocaml.org/), the precise
 mutability control of Skip (http://skiplang.com/), and the shared-nothing
-message-passing parallelism of Erlang (https://erlang.org/).  SawML's features
-combine to enhance human reasoning in ways that also enable reliable high
-performance parallel computation via both static compiler analysis and dynamic
-profile-driven just-in-time (JIT) optimization.
+message-passing parallelism of Erlang (https://erlang.org/).  Hemlock's
+features combine to enhance human reasoning in ways that also enable reliable
+high performance parallel computation via both static compiler analysis and
+dynamic profile-driven just-in-time (JIT) optimization.
 """
 maintainer: "Jason Evans <je@branchtaken.net>"
 authors: ["Jason Evans"]
 license: "MIT"
-homepage: "https://github.com/BranchTaken/SawML"
-bug-reports: "https://github.com/BranchTaken/SawML/issues"
-dev-repo: "git+https://github.com/BranchTaken/SawML"
+homepage: "https://github.com/BranchTaken/Hemlock"
+bug-reports: "https://github.com/BranchTaken/Hemlock/issues"
+dev-repo: "git+https://github.com/BranchTaken/Hemlock"
 tags: [ "languages" "org:BranchTaken" ]
 depends: [
   "ocaml" {>= "4.08.1"}

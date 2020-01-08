@@ -1,7 +1,7 @@
 (library
- (name SawML)
+ (name Hemlock)
  (libraries sexplib)
  (inline_tests)
  (preprocess (pps ppx_deriving ppx_expect ppx_inline_test ppx_sexp_conv))
- (synopsis "SawML standard library")
+ (synopsis "Hemlock bootstrap standard library")
  )

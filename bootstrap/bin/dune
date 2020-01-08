@@ -1,7 +1,7 @@
 (executables
- (names sawml)
- (libraries core SawML))
+ (names hemlock)
+ (libraries core Hemlock))
 
 (install
  (section bin)
-  (files (sawml.exe as sawml)))
+  (files (hemlock.exe as hemlock)))
