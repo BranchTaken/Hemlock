@@ -25,6 +25,9 @@ type codepoint = Codepoint.t
 type u8 = U8.t
 type byte = Byte.t
 
+(* Unnecessary, due to aliasing the built-in option type. *)
+(* type 'a option = 'a Option.t *)
+
 (* Functions. *)
 
 val not_reached: unit -> 'a
