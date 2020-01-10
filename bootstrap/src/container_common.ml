@@ -138,8 +138,8 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
       | None -> Some elm
       | Some e -> begin
           match cmp e elm with
-          | Cmp.Lt -> Some elm
-          | Cmp.Eq
+          | Cmp.Lt
+          | Cmp.Eq -> Some elm
           | Cmp.Gt -> Some e
         end
     )
