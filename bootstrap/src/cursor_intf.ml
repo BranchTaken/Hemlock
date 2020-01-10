@@ -3,11 +3,18 @@ module Int = I63
 module Uint = U63
 type uint = Uint.t
 
-(** Cursor iterator interface for polymorphic types, e.g. [('a array)]. *)
+(** Cursor iterator functor output signature for polymorphic types, e.g. [('a
+    array)]. *)
 module type S_poly_iter = sig
   type 'a container
-  type 'a t
+  (** Container type. *)
+
   type 'a elm
+  (** Element type. *)
+
+  type 'a t
+  (** Cursor type. *)
+
   include Cmpable_intf.S_poly with type 'a t := 'a t
 
   val hd: 'a container -> 'a t
@@ -29,7 +36,7 @@ module type S_poly_iter = sig
   (** Return element immediately to right. *)
 end
 
-(** Cursor interface for polymorphic types, e.g. [('a array)]. *)
+(** Cursor functor output signature for polymorphic types, e.g. [('a array)]. *)
 module type S_poly = sig
   include S_poly_iter
 
@@ -43,12 +50,20 @@ module type S_poly = sig
   (** Return iterator at given offset from input iterator. *)
 end
 
-(* Cursor iterator interface for monomorphic types, e.g. [string]. *)
+(** Cursor iterator functor output signature for monomorphic types, e.g.
+    [string]. *)
 module type S_mono_iter = sig
   type container
+  (** Container type. *)
+
   type elm
+  (** Element type. *)
+
   type t
+  (** Cursor type. *)
+
   include Cmpable_intf.S with type t := t
+
   val hd: container -> t
   (** Return head. *)
 
@@ -68,9 +83,10 @@ module type S_mono_iter = sig
   (** Return element immediately to right. *)
 end
 
-(* Cursor iterator interface for monomorphic types, e.g. [string]. *)
+(** Cursor functor output signature for monomorphic types, e.g. [string]. *)
 module type S_mono = sig
   include S_mono_iter
+
   val container: t -> container
   (** Return container associated with iterator. *)
 
