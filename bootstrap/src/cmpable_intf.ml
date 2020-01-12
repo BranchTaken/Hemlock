@@ -1,58 +1,138 @@
-module type I = sig
+(** Functor input interface for comparable monomorphic types. *)
+module type I_mono = sig
   type t
+
   val cmp: t -> t -> Cmp.t
+  (** [cmp a b] returns [Cmp.lt] if [a < b], [Cmp.eq] if [a = b], or [Cmp.gt] if
+      [a > b]. *)
 end
 
-module type I_zero = sig
-  include I
+(** Functor input interface for comparable types with ranges that contain zero.
+    *)
+module type I_mono_zero = sig
+  include I_mono
+
   val zero: t
+  (** Zero constant. *)
 end
 
-module type S_infix = sig
+(** Functor output signature for infix comparisons on comparable monomorphic
+    types. *)
+module type S_mono_infix = sig
   type t
+
   val ( >= ): t -> t -> bool
+  (** Returns true if [t0 >= t1]. *)
+
   val ( <= ): t -> t -> bool
+  (** Returns true if [t0 <= t1]. *)
+
   val ( = ): t -> t -> bool
+  (** Returns true if [t0 = t1]. *)
+
   val ( > ): t -> t -> bool
+  (** Returns true if [t0 > t1]. *)
+
   val ( < ): t -> t -> bool
+  (** Returns true if [t0 < t1]. *)
+
   val ( <> ): t -> t -> bool
+  (** Returns true if [t0 <> t1] (i.e. [t0] not equal to [t1]). *)
 end
 
-module type S = sig
-  include I
-  include S_infix with type t := t
+(** Functor output signature for comparisons on comparable monomorphic types. *)
+module type S_mono = sig
+  include I_mono
+  include S_mono_infix with type t := t
+
   val ascending: t -> t -> Cmp.t
+  (** [ascending t0 t1] compares [t0] and [t1] in ascending order.  Equivalent
+      to [cmp t0 t1]. *)
+
   val descending: t -> t -> Cmp.t
+  (** [descending t0 t1] compares [t0] and [t1] in descending order.  If [cmp]
+      provides total ordering, this is equivalent to [cmp t1 t0], but the
+      implementation does not assume [cmp] is implemented as such. *)
+
   val clamp: t -> min:t -> max:t -> t
+  (** [clamp t ~min ~max] returns [t] unless it is outside the open-open range
+      [min .. max], in which case it returns the nearest end of the range. *)
+
   val between: t -> low:t -> high:t -> bool
+  (** [between t low high] returns [true] iff [t] is inside the open-open range
+      [low .. high]. *)
 end
 
-module type S_zero = sig
-  include I_zero
+(** Functor output signature for comparable types with ranges that contain zero.
+    *)
+module type S_mono_zero = sig
+  include I_mono_zero
+
   val is_positive: t -> bool
+  (** [is_positive t] returns [true] if [t] is positive, [false] otherwise.  NB:
+      Positive does {i not} include zero. *)
+
   val is_non_negative: t -> bool
+  (** [is_non_negative t] returns [false] if [t] is negative, [true] otherwise.
+      *)
+
   val is_negative: t -> bool
+  (** [is_negative t] returns [true] if [t] is negative, [false] otherwise. *)
+
   val is_non_positive: t -> bool
+  (** [is_non_positive t] returns [false] if [t] is positive, [true] otherwise.
+      NB: Positive does {i not} include zero. *)
+
   val sign: t -> Sign.t
+  (** [sign t] returns the sign of [t]. *)
 end
 
-(* Polymorphic. *)
-
+(** Functor input interface for comparable polymorphic types. *)
 module type I_poly = sig
   type 'a t
+
   val cmp: 'a t -> 'a t -> Cmp.t
+  (** [cmp a b] returns [Cmp.lt] if [a < b], [Cmp.eq] if [a = b], or [Cmp.gt] if
+      [a > b]. *)
 end
 
+(** Functor output signature for infix comparisons on comparable polymorphic
+    types. *)
 module type S_poly = sig
   include I_poly
+
   val ( >= ): 'a t -> 'a t -> bool
+  (** Returns true if [t0 >= t1]. *)
+
   val ( <= ): 'a t -> 'a t -> bool
+  (** Returns true if [t0 <= t1]. *)
+
   val ( = ): 'a t -> 'a t -> bool
+  (** Returns true if [t0 = t1]. *)
+
   val ( > ): 'a t -> 'a t -> bool
+  (** Returns true if [t0 > t1]. *)
+
   val ( < ): 'a t -> 'a t -> bool
+  (** Returns true if [t0 < t1]. *)
+
   val ( <> ): 'a t -> 'a t -> bool
+  (** Returns true if [t0 <> t1] (i.e. [t0] not equal to [t1]). *)
+
   val ascending: 'a t -> 'a t -> Cmp.t
+  (** [ascending t0 t1] compares [t0] and [t1] in ascending order.  Equivalent
+      to [cmp t0 t1]. *)
+
   val descending: 'a t -> 'a t -> Cmp.t
+  (** [descending t0 t1] compares [t0] and [t1] in descending order.  If [cmp]
+      provides total ordering, this is equivalent to [cmp t1 t0], but the
+      implementation does not assume [cmp] is implemented as such. *)
+
   val clamp: 'a t -> min:'a t -> max:'a t -> 'a t
+  (** [clamp t ~min ~max] returns [t] unless it is outside the open-open range
+      [min .. max], in which case it returns the nearest end of the range. *)
+
   val between: 'a t -> low:'a t -> high:'a t -> bool
+  (** [between t low high] returns [true] iff [t] is inside the open-open range
+      [low .. high]. *)
 end

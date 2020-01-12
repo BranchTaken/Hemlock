@@ -80,7 +80,7 @@ type slice
 module Slice : sig
   type outer = t
   type t = slice
-  include Cmpable_intf.S with type t := t
+  include Cmpable_intf.S_mono with type t := t
 
   val of_cursors: base:Cursor.t -> past:Cursor.t -> t
   val to_cursors: t -> Cursor.t * Cursor.t
@@ -184,7 +184,7 @@ module Slice : sig
   module O : sig
     type nonrec t = t
 
-    include Cmpable_intf.S_infix with type t := t
+    include Cmpable_intf.S_mono_infix with type t := t
   end
 end
 
@@ -312,5 +312,5 @@ val rsplit2_hlt: t -> on:codepoint -> t * t
 module O : sig
   type nonrec t = t
 
-  include Cmpable_intf.S_infix with type t := t
+  include Cmpable_intf.S_mono_infix with type t := t
 end

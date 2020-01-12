@@ -1,6 +1,6 @@
 open Cmpable_intf
 
-module Make (T : I) : S with type t := T.t = struct
+module Make (T : I_mono) : S_mono with type t := T.t = struct
   let cmp = T.cmp
 
   let ( >= ) t0 t1 =
@@ -70,7 +70,7 @@ module Make (T : I) : S with type t := T.t = struct
     | Gt -> false
 end
 
-module Make_zero (T : I_zero) : S_zero with type t := T.t = struct
+module Make_zero (T : I_mono_zero) : S_mono_zero with type t := T.t = struct
   let cmp = T.cmp
   let zero = T.zero
 

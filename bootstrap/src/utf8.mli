@@ -2,7 +2,7 @@ open Rudiments
 
 type t
 
-include Cmpable_intf.S with type t := t
+include Cmpable_intf.S_mono with type t := t
 
 val of_codepoint: codepoint -> t
 val to_codepoint: t -> codepoint

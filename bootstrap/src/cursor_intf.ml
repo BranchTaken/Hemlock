@@ -62,7 +62,7 @@ module type S_mono_iter = sig
   type t
   (** Cursor type. *)
 
-  include Cmpable_intf.S with type t := t
+  include Cmpable_intf.S_mono with type t := t
 
   val hd: container -> t
   (** Return head. *)

@@ -113,7 +113,7 @@ val tanh: t -> t
 module O : sig
   type nonrec t = t
 
-  include Cmpable_intf.S_infix with type t := t
+  include Cmpable_intf.S_mono_infix with type t := t
 
   val ( + ): t -> t -> t
   val ( - ): t -> t -> t
