@@ -27,12 +27,20 @@ type byte = Byte.t
 (* Functions. *)
 
 val not_reached: unit -> 'a
+(** Hypothetically unreachable code.  [not_reached] halts if called. *)
+
 val not_implemented: string -> 'a
+(** Placeholder for unimplemented code.  [not_implemented] halts if called. *)
+
 val halt: string -> 'a
+(** [halt s] prints [s] to [stderr] and halts the actor. *)
 
 (* (int) is the default numerical type. *)
 include Intnb_intf.S_i with type t := int
 
 (* (uint) is abstract, and therefore incompatible with (int). *)
 val uint_of_int: int -> uint
+(** Convert an unsigned integer to a bitwise identical signed integer. *)
+
 val int_of_uint: uint -> int
+(** Convert a signed integer to a bitwise identical unsigned integer. *)
