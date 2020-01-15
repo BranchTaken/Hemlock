@@ -7,9 +7,9 @@ module T = struct
 
   let cmp t0 t1 =
     let rel = compare t0 t1 in
-    if rel < 0 then
+    if Int.(rel < 0) then
       Cmp.Lt
-    else if rel = 0 then
+    else if Int.(rel = 0) then
       Cmp.Eq
     else
       Cmp.Gt
@@ -2570,14 +2570,14 @@ let%expect_test "escaped" =
 
   let rec fn i = begin
     match i with
-    | 0x80 -> ()
+    | i when Uint.(i = (kv 0x80)) -> ()
     | _ -> begin
         printf "0x%02x -> \"%s\"\n"
-          i (escaped (of_codepoint Codepoint.(of_int i)));
-        fn (succ i)
+          (Uint.to_int i) (escaped (of_codepoint Codepoint.(of_uint i)));
+        fn (Uint.succ i)
       end
   end in
-  fn 0;
+  fn (Uint.kv 0);
 
   [%expect{|
     0x00 -> "\0"

@@ -33,7 +33,7 @@ module T = struct
         {array; index=(length array)}
 
       let seek t i =
-        match i < 0 with
+        match Int.(i < 0) with
         | true -> begin
           match Uint.((of_int Int.(neg i)) > t.index) with
             | true -> halt "Cannot seek before beginning of array"

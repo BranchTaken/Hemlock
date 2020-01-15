@@ -1,7 +1,7 @@
 (* Partial Rudiments. *)
-module Int = I63
 module Uint = U63
-type uint = Uint.t
+module Int = I63
+open Rudiments_uint
 open Rudiments_functions
 
 module T = struct

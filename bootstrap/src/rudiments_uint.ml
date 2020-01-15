@@ -1,7 +1,8 @@
-type uint = int
+include Rudiments_uint0
 
-let uint_of_int t =
-  t
-
-let int_of_uint t =
-  t
+module T = struct
+  type t = uint
+  let num_bits = uint_of_int Sys.int_size
+end
+include T
+include Intnb.Make_u(T)

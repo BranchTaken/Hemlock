@@ -1,4 +1,3 @@
-open Rudiments_uint
 open Intnb_intf
 
 module type I_common = sig

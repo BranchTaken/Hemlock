@@ -1,8 +1,5 @@
+open Rudiments
 open Container_common_intf
-(* Partial Rudiments. *)
-type 'a array = 'a Array.t
-module Uint = U63
-type uint = Uint.t
 
 (* Polymorphic container, e.g. ('a list). *)
 

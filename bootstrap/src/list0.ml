@@ -1,4 +1,5 @@
 open Rudiments
+open Rudiments_uint0
 
 module T = struct
   type 'a t = 'a list
@@ -89,7 +90,7 @@ module T = struct
         end in
         match i with
         | 0 -> t
-        | i when (i < 0) -> seek_rev t i
+        | i when Int.(i < 0) -> seek_rev t i
         | i -> seek_fwd t i
     end
     include T
@@ -865,7 +866,7 @@ let%expect_test "cmp_length_with" =
         printf "cmp_length_with ";
         print_uint_list list;
         for limit = 0 to 3 do
-          printf "%s" (if limit = 0 then ": " else ", ");
+          printf "%s" (if Int.(limit = 0) then ": " else ", ");
           test_cmp_length_with list (Uint.of_int limit);
         done;
         printf "\n";
@@ -1386,7 +1387,7 @@ let%expect_test "[rev_]split_until,[rev_]take_until,drop_until" =
   ] in
   iter lists ~f:(fun l ->
     for i = 0 to Uint.(to_int (length l)) do
-      let f elm = elm >= i in
+      let f elm = Int.(elm >= i) in
       printf "split_until/take_until,drop_until ";
       print_uint_list l;
       printf " ~f:(fun elm -> elm >= %u) -> " i;
@@ -1459,7 +1460,7 @@ let%expect_test "[rev_]partition_tf" =
     [0; 1; 2; 3];
   ] in
   iter lists ~f:(fun l ->
-    let even x = (x % 2) = 0 in
+    let even x = Uint.((of_int x) % (kv 2) = (kv 0)) in
     printf "[rev_]partition_tf ";
     print_uint_list l;
     printf " ~f:even -> ";
@@ -1539,7 +1540,7 @@ let%expect_test "[rev_]group" =
 
     [0; 0; 0; 0];
   ] in
-  let eq x0 x1 = x0 = x1 in
+  let eq x0 x1 = Uint.((of_int x0) = (of_int x1)) in
   iter lists ~f:(fun l ->
     printf "[rev_]group ";
     print_uint_list l;
@@ -1613,7 +1614,7 @@ let%expect_test "[rev_]groupi" =
     [0; 1; 2];
     [9; 1; 2; 9; 4; 5; 9];
   ] in
-  let inds i x0 x1 = ((Uint.to_int i) = x1) && ((Uint.to_int i) = succ x0) in
+  let inds i x0 x1 = Uint.(i = (of_int x1)) && Uint.(i = succ (of_int x0)) in
   iter lists ~f:(fun l ->
     printf "[rev_]groupi ";
     print_uint_list l;
@@ -1666,7 +1667,7 @@ let%expect_test "[rev_]mapi" =
     printf "[rev_]mapi ";
     print_uint_list l;
     printf " -> ";
-    let f i elm = elm + (Uint.to_int i) * 10 in
+    let f i elm = Uint.(to_int ((of_int elm) +  i * (kv 10))) in
     print_uint_list (mapi l ~f);
     printf " / ";
     print_uint_list (rev_mapi l ~f);
@@ -1725,7 +1726,7 @@ let%expect_test "rev_map_concat" =
     printf " ";
     print_uint_list b;
     printf " -> ";
-    let f elm = elm + 10 in
+    let f elm = Int.(elm + 10) in
     print_uint_list (rev_map_concat a b ~f);
     printf "\n"
   );
@@ -1774,7 +1775,7 @@ let%expect_test "[rev_]fold_mapi" =
     [0; 1; 2];
     [0; 1; 2; 3];
   ] in
-  let f i accum elm = (elm :: accum), (elm + (Uint.to_int i) * 10) in
+  let f i accum elm = (elm :: accum), Int.(elm + (Uint.to_int i) * 10) in
   iter lists ~f:(fun l ->
     printf "    fold_mapi ";
     print_uint_list l;
@@ -1892,7 +1893,7 @@ let%expect_test "foldi2" =
     print_uint_list b;
     printf " -> ";
     let f i accum a_elm b_elm = begin
-      (Uint.to_int i + a_elm + b_elm) :: accum
+      Int.(Uint.to_int i + a_elm + b_elm) :: accum
     end in
     print_uint_list (foldi2 a b ~init:[] ~f);
     printf "\n"
@@ -1942,7 +1943,7 @@ let%expect_test "foldi2_until" =
     let f i accum a_elm b_elm = begin
       let len = length a in
       let limit = Uint.(len - (kv 2)) in
-      ((Uint.to_int i + a_elm + b_elm) :: accum), Uint.(i = limit)
+      (Int.((Uint.to_int i + a_elm + b_elm)) :: accum), Uint.(i = limit)
     end in
     print_uint_list (foldi2_until a b ~init:[] ~f);
     printf "\n"
@@ -2029,7 +2030,7 @@ let%expect_test "[rev_]mapi2" =
     ([10; 20], [100; 200]);
     ([10; 20; 30], [100; 200; 300]);
   ] in
-  let f i a b = b + a + (Uint.to_int i) + 1 in
+  let f i a b = Uint.(to_int ((of_int b) + (of_int a) + i + (kv 1))) in
   iter list_pairs ~f:(fun (a, b) ->
     printf "    mapi2 ";
     print_uint_list a;
@@ -2087,8 +2088,8 @@ let%expect_test "[rev_]foldi2_map" =
     ([10; 20; 30], [100; 200; 300]);
   ] in
   let f i accum a b = begin
-    let sum = b + a + (Uint.to_int i) + 1 in
-    accum + sum, sum
+    let sum = Uint.(to_int ((of_int b) + (of_int a) + i + (kv 1))) in
+    Int.(accum + sum), sum
   end in
   iter list_pairs ~f:(fun (a, b) ->
     printf "    foldi2_map ";
@@ -2182,7 +2183,7 @@ let%expect_test "Assoc" =
     printf "\n";
 
     printf "map -> ";
-    print_uint_pair_list (Assoc.map assoc ~f:(fun v -> v * 2));
+    print_uint_pair_list (Assoc.map assoc ~f:(fun v -> Int.(v * 2)));
     printf "\n";
 
     printf "inverse -> ";

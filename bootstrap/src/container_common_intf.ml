@@ -1,6 +1,4 @@
-(* Partial Rudiments. *)
-module Uint = U63
-type uint = Uint.t
+open Rudiments
 
 (* Polymorphic container, e.g. ('a list). *)
 

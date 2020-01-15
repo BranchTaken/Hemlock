@@ -1,8 +1,6 @@
 (** Sequence functor interfaces and signatures. *)
 
-(* Partial Rudiments. *)
-module Uint = U63
-type uint = U63.t
+open Rudiments
 
 (** Definite sequence functor input interface for polymorphic containers, e.g.
     {!type:'a array}. *)

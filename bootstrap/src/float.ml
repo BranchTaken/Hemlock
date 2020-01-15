@@ -1,8 +1,4 @@
-(* Partial Rudiments. *)
-module Int = I63
-module Uint = U63
-type uint = Uint.t
-open Rudiments_functions
+open Rudiments
 
 module T = struct
   type t = float
@@ -11,9 +7,9 @@ module T = struct
 
   let cmp t0 t1 =
     let rel = compare t0 t1 in
-    if rel < 0 then
+    if Int.(rel < 0) then
       Cmp.Lt
-    else if rel = 0 then
+    else if Int.(rel = 0) then
       Cmp.Eq
     else
       Cmp.Gt
@@ -84,7 +80,7 @@ let create ~neg ~exponent ~mantissa =
     | false -> Int64.zero
     | true -> Int64.one
   in
-  let biased_exponent = Int64.of_int (exponent + 1023) in
+  let biased_exponent = Int64.of_int Int.(exponent + 1023) in
   let bits =
     Int64.logor (Int64.shift_left sign 63)
       (Int64.logor (Int64.shift_left biased_exponent 52)
@@ -102,7 +98,7 @@ let exponent t =
   let biased_exponent = Int64.to_int (
     Int64.logand (Int64.shift_right_logical bits 52)
       (Int64.of_int 0x7ff)) in
-  biased_exponent - 1023
+  Int.(biased_exponent - 1023)
 
 let mantissa t =
   let bits = Int64.bits_of_float t in

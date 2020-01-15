@@ -2,8 +2,8 @@
 module Int = I63
 module Uint = U63
 module Codepoint = U21
-type uint = Uint.t
 type codepoint = Codepoint.t
+open Rudiments_uint
 open Rudiments_functions
 
 module T = struct

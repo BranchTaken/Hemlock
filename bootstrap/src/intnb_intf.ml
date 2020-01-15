@@ -1,6 +1,6 @@
 (** Functor interfaces and signatures for integers of specific bitwidth. *)
 
-open Rudiments_uint
+include Rudiments_uint0
 
 (** Functor input interface for an integer type with a specific bitwidth. *)
 module type I = sig

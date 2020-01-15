@@ -1,10 +1,8 @@
 (** 8-bit unsigned integer. *)
 
 (* Partial Rudiments. *)
-module Int = I63
-module Uint = U63
+open Rudiments_uint
 module Codepoint = U21
-type uint = Uint.t
 type codepoint = Codepoint.t
 
 type t

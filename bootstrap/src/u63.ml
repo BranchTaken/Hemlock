@@ -1,11 +1,4 @@
-open Rudiments_uint
-
-module T = struct
-  type t = uint
-  let num_bits = uint_of_int Sys.int_size
-end
-include T
-include Intnb.Make_u(T)
+include Rudiments_uint
 
 let to_int t =
   int_of_uint t

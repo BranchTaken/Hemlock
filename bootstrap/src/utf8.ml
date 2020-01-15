@@ -81,7 +81,7 @@ module Seq = struct
     let to_utf8 t =
       let rec fn t bytes nrem = begin
         match nrem with
-        | 0 -> begin
+        | nrem when Uint.(nrem = (kv 0)) -> begin
             match bytes with
             |                   b0 :: [] -> Some (Ok (One b0), t)
             |             b1 :: b0 :: [] -> Some (Ok (Two (b0, b1)), t)
@@ -95,17 +95,17 @@ module Seq = struct
             | Some (b, t')
               when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
               Some (Error (List.rev (b :: bytes)), t')
-            | Some (b, t') -> fn t' (b :: bytes) (pred nrem)
+            | Some (b, t') -> fn t' (b :: bytes) (Uint.pred nrem)
           end
       end in
       match T.next t with
       | None -> None
       | Some (b, t') -> begin
           match Byte.(bit_clz (bit_not b)) with
-            | lz when Uint.(lz = (kv 0)) -> fn t' [b] 0
-            | lz when Uint.(lz = (kv 2)) -> fn t' [b] 1
-            | lz when Uint.(lz = (kv 3)) -> fn t' [b] 2
-            | lz when Uint.(lz = (kv 4)) -> fn t' [b] 3
+            | lz when Uint.(lz = (kv 0)) -> fn t' [b] (Uint.kv 0)
+            | lz when Uint.(lz = (kv 2)) -> fn t' [b] (Uint.kv 1)
+            | lz when Uint.(lz = (kv 3)) -> fn t' [b] (Uint.kv 2)
+            | lz when Uint.(lz = (kv 4)) -> fn t' [b] (Uint.kv 3)
             | _ -> Some (Error [b], t')
         end
 

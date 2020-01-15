@@ -201,7 +201,7 @@ let%expect_test "reduce[_hlt]" =
   iter lists ~f:(fun l ->
     printf "reduce ";
     print_uint_list l;
-    match (reduce l ~f:(fun a b -> a + b)) with
+    match (reduce l ~f:(fun a b -> Int.(a + b))) with
     | None -> printf "-> None\n"
     | Some result -> printf " -> %u\n" result
   );

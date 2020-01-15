@@ -19,4 +19,3 @@ type byte = Byte.t
 
 include Rudiments_functions
 include Rudiments_uint
-include Rudiments_int

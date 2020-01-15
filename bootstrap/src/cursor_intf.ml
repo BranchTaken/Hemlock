@@ -1,9 +1,6 @@
 (** Cursor interfaces. *)
 
-(* Partial Rudiments. *)
-module Int = I63
-module Uint = U63
-type uint = Uint.t
+open Rudiments
 
 (** Cursor iterator functor output signature for polymorphic types, e.g. [('a
     array)]. *)

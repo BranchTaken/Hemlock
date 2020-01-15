@@ -1,7 +1,4 @@
-(* Partial Rudiments. *)
-module Int = I63
-module Uint = U63
-type uint = Uint.t
+open Rudiments
 
 type t = float
 

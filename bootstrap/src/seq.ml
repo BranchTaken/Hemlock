@@ -1,3 +1,4 @@
+open Rudiments
 open Seq_intf
 
 module Make_def (T : I_mono_def) : S_mono_def with type t := T.t

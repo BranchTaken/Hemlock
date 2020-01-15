@@ -1,7 +1,5 @@
+open Rudiments
 open Container_array_intf
-(* Partial Rudiments. *)
-module Uint = U63
-type uint = Uint.t
 
 (* Polymorphic. *)
 
