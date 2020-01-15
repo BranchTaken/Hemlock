@@ -1459,7 +1459,7 @@ let%expect_test "[rev_]partition_tf" =
     [0; 1; 2; 3];
   ] in
   iter lists ~f:(fun l ->
-    let even x = (x mod 2) = 0 in
+    let even x = (x % 2) = 0 in
     printf "[rev_]partition_tf ";
     print_uint_list l;
     printf " ~f:even -> ";
