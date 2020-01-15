@@ -91,7 +91,8 @@ val lngamma: t -> t
     This implementation is based on:
 
     Pike, M.C., I.D. Hill (1966) Algorithm 291: Logarithm of Gamma
-    function [S14].  Communications of the ACM 9(9):684. *)
+    function \[S14\].  Communications of the ACM 9(9):684. *)
+
 val gamma: t -> t
 
 val sqrt: t -> t

@@ -1,3 +1,5 @@
+(** Sexpable type functor signature. *)
+
 (** Sexp conversion functions. *)
 module type S = sig
   type t

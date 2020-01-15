@@ -1,3 +1,5 @@
+(** Functor interfaces and signatures for integers of specific bitwidth. *)
+
 open Rudiments_uint
 
 (** Functor input interface for an integer type with a specific bitwidth. *)

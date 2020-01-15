@@ -1,3 +1,5 @@
+(** Functor for identifiable types. *)
+
 open Identifiable_intf
 
 (** Functor for identifiable types. *)

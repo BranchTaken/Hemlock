@@ -18,5 +18,5 @@ type u8 = U8.t
 type byte = Byte.t
 
 include Rudiments_functions
-include Rudiments_int
 include Rudiments_uint
+include Rudiments_int

@@ -1,3 +1,5 @@
+(** Functors for container types. *)
+
 open Container_common_intf
 
 (** O(n) [length] functor for polymorphic types, e.g. ['a list]. *)

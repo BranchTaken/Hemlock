@@ -1,3 +1,5 @@
+(** Functors for sequences. *)
+
 open Seq_intf
 
 (** Functor for definite monomorphic sequences. *)

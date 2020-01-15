@@ -1,3 +1,5 @@
+(** Functors for integers of specific bitwidth. *)
+
 open Rudiments_uint
 open Intnb_intf
 
