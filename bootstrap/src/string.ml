@@ -729,8 +729,8 @@ module Slice = struct
     in
     of_string String_of_list_rev.(to_string (init codepoints_rev blength))
 
-  let of_array codepoints =
-    init (Array.length codepoints) ~f:(fun i ->
+  let of_array ?blength codepoints =
+    init ?blength (Array.length codepoints) ~f:(fun i ->
       Array.get codepoints i
     )
 
@@ -1582,8 +1582,8 @@ let of_list ?blength ?clength codepoints =
 let of_list_rev ?blength ?clength codepoints_rev =
   Slice.to_string (Slice.of_list_rev ?blength ?clength codepoints_rev)
 
-let of_array codepoints =
-  Slice.(to_string (of_array codepoints))
+let of_array ?blength codepoints =
+  Slice.to_string (Slice.of_array ?blength codepoints)
 
 module U = struct
   type outer = t
