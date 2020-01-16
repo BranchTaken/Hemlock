@@ -32,12 +32,16 @@ opam install --deps-only .
 
 ### Building
 
-To build the bootstrap `hemlock` and invoke the test suite, run
+To build the bootstrap `hlc` Hemlock compiler and invoke the test suite, run
 
 ```sh
 cd bootstrap
+dune build
 dune runtests
 ```
+
+See the [Dune documentation](https://dune.readthedocs.io/en/latest/) for more
+details on building and interacting with `hlc` via the build system.
 
 To build the bootstrap standard library documentation, run
 
@@ -45,8 +49,9 @@ To build the bootstrap standard library documentation, run
 dune build @doc-private
 ```
 
-See the [Dune documentation](https://dune.readthedocs.io/en/latest/) for more
-details on building and interacting with `hemlock` via the build system.
+Use a web browser to open the documentation in a location that looks similar to
+`_build/default/_doc/_html/Hemlock@<hex>/Hemlock/index.html`, where `<hex>` is
+a generated hex string.
 
 ### License
 

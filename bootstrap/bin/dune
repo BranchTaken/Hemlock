@@ -1,7 +1,7 @@
 (executables
- (names hemlock)
+ (names hlc)
  (libraries core Hemlock))
 
 (install
  (section bin)
-  (files (hemlock.exe as hemlock)))
+  (files (hlc.exe as hlc)))
