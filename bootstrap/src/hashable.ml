@@ -1,8 +1,4 @@
-module type Key = sig
-  type t
-  val hash_fold: Hash.state -> t -> Hash.state
-  val cmp: t -> t -> Cmp.t
-end
+include Hashable_intf
 
 type 'a t = {
   hash_fold: Hash.state -> 'a -> Hash.state;
