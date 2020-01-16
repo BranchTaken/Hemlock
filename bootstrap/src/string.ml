@@ -1109,7 +1109,7 @@ module Slice = struct
       let open Printf in
       printf " p=\"%s\"\npi=[" t.p;
       Array.iter t.pi ~f:(fun elm ->
-        let () = printf "%u" (Uint.to_int (Cursori.cindex elm)) in
+        let () = printf "%a" fmt (Cursori.cindex elm) in
         ()
       );
       let () = printf "]\n" in
@@ -1823,8 +1823,8 @@ let%expect_test "hash_fold" =
   let open Printf in
 
   let s = "hello" in
-  let h = Hash.t_of_state (hash_fold (Hash.state_of_int 0) s) in
-  printf "hash_fold \"%s\"=%#x\n" s h;
+  let h = Hash.(t_of_state (hash_fold (Hash.state_of_uint (Uint.kv 0)) s)) in
+  printf "hash_fold \"%s\"=%a\n" s Hash.fmt_hex h;
 
   [%expect{|
     hash_fold "hello"=0x321f6e00
@@ -1917,8 +1917,11 @@ let%expect_test "length" =
     "𐆗";
   ] in
   List.iter strs ~f:(fun s ->
-    printf "s=\"%s\", blength=%u, clength=%u, is_empty=%B\n"
-      s (Uint.to_int (blength s)) (Uint.to_int (clength s)) (is_empty s)
+    printf "s=\"%s\", blength=%a, clength=%a, is_empty=%B\n"
+      s
+      fmt (blength s)
+      fmt (clength s)
+      (is_empty s)
   );
 
   [%expect{|
@@ -1976,7 +1979,7 @@ let%expect_test "cursor" =
                   = (at s ~bindex:i_prev));
             done
           in
-          printf " %u=%s" (Uint.to_int i) (of_codepoint (Cursor.rget cursor));
+          printf " %a=%s" fmt i (of_codepoint (Cursor.rget cursor));
           fn (Cursor.succ cursor) i
         end
     end in
@@ -1996,7 +1999,7 @@ let%expect_test "cursor" =
               assert Cursor.((near s ~bindex:Uint.(i + j)) = (at s ~bindex:i));
             done
           in
-          printf " %u=%s" (Uint.to_int i) (of_codepoint (Cursor.lget cursor));
+          printf " %a=%s" fmt i (of_codepoint (Cursor.lget cursor));
           fn (Cursor.pred cursor) i
         end
     end in
@@ -2029,7 +2032,7 @@ let%expect_test "cursori" =
       | false -> begin
           let i = Cursori.cindex cursori in
           assert Cursori.((at s ~cindex:i) = cursori);
-          printf " %u=%s" (Uint.to_int i) (of_codepoint (Cursori.rget cursori));
+          printf " %a=%s" fmt i (of_codepoint (Cursori.rget cursori));
           fn (Cursori.succ cursori)
         end
     end in
@@ -2044,7 +2047,7 @@ let%expect_test "cursori" =
       | false -> begin
           let i = Cursori.cindex cursori in
           assert Cursori.((at s ~cindex:i) = cursori);
-          printf " %u=%s" (Uint.to_int i) (of_codepoint (Cursori.lget cursori));
+          printf " %a=%s" fmt i (of_codepoint (Cursori.lget cursori));
           fn (Cursori.pred cursori)
         end
     end in
@@ -2716,13 +2719,13 @@ let%expect_test "find" =
     printf "lfind \"%s\" '%s' -> %s\n" s (of_codepoint cp)
       (match lfind s cp with
        | None -> "<not found>"
-       | Some cursor -> sprintf "%u" (Uint.to_int (Cursor.bindex cursor))
+       | Some cursor -> sprintf "%a" s_fmt (Cursor.bindex cursor)
       );
     printf "contains \"%s\" '%s' -> %B\n" s (of_codepoint cp) (contains s cp);
     printf "rfind \"%s\" '%s' -> %s\n" s (of_codepoint cp)
       (match rfind s cp with
        | None -> "<not found>"
-       | Some cursor -> sprintf "%u" (Uint.to_int (Cursor.bindex cursor))
+       | Some cursor -> sprintf "%a" s_fmt (Cursor.bindex cursor)
       )
   end in
   test_find "" Codepoint.(of_char 'b');
@@ -3080,8 +3083,8 @@ let%expect_test "xfix" =
   List.iter strs ~f:(fun s ->
     for i = 0 to Uint.(to_int ((clength s) + (kv 1))) do
       let i = Uint.of_int i in
-      printf "prefix \"%s\" %u -> \"%s\"\n" s (Uint.to_int i) (prefix s i);
-      printf "suffix \"%s\" %u -> \"%s\"\n" s (Uint.to_int i) (suffix s i);
+      printf "prefix \"%s\" %a -> \"%s\"\n" s fmt i (prefix s i);
+      printf "suffix \"%s\" %a -> \"%s\"\n" s fmt i (suffix s i);
     done
   );
 

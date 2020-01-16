@@ -85,9 +85,9 @@ let del = (kv 0x7f)
 let%expect_test "limits" =
   let open Printf in
 
-  printf "num_bits=%u\n" (Uint.to_int num_bits);
-  printf "min_value=0x%x\n" (to_int min_value);
-  printf "max_value=0x%x\n" (to_int max_value);
+  printf "num_bits=%a\n" Uint.fmt num_bits;
+  printf "min_value=%a\n" fmt_hex min_value;
+  printf "max_value=%a\n" fmt_hex max_value;
 
   [%expect{|
     num_bits=21
@@ -98,17 +98,17 @@ let%expect_test "limits" =
 let%expect_test "rel" =
   let open Printf in
   let fn x y = begin
-    printf "cmp 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+    printf "cmp %a %a -> %s\n" fmt_hex x fmt_hex y
       (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
-    printf "0x%x >= 0x%x -> %b\n" (to_int x) (to_int y) (x >= y);
-    printf "0x%x <= 0x%x -> %b\n" (to_int x) (to_int y) (x <= y);
-    printf "0x%x = 0x%x -> %b\n" (to_int x) (to_int y) (x = y);
-    printf "0x%x > 0x%x -> %b\n" (to_int x) (to_int y) (x > y);
-    printf "0x%x < 0x%x -> %b\n" (to_int x) (to_int y) (x < y);
-    printf "0x%x <> 0x%x -> %b\n" (to_int x) (to_int y) (x <> y);
-    printf "ascending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+    printf "%a >= %a -> %b\n" fmt_hex x fmt_hex y (x >= y);
+    printf "%a <= %a -> %b\n" fmt_hex x fmt_hex y (x <= y);
+    printf "%a = %a -> %b\n" fmt_hex x fmt_hex y (x = y);
+    printf "%a > %a -> %b\n" fmt_hex x fmt_hex y (x > y);
+    printf "%a < %a -> %b\n" fmt_hex x fmt_hex y (x < y);
+    printf "%a <> %a -> %b\n" fmt_hex x fmt_hex y (x <> y);
+    printf "ascending %a %a -> %s\n" fmt_hex x fmt_hex y
       (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
-    printf "descending 0x%x 0x%x -> %s\n" (to_int x) (to_int y)
+    printf "descending %a %a -> %s\n" fmt_hex x fmt_hex y
       (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
   end in
   fn (kv 0) (kv 0x10_0000);
@@ -118,10 +118,10 @@ let%expect_test "rel" =
   fn (kv 0x10_0000) (kv 0x1f_ffff);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp 0x%x ~min:0x%x ~max:0x%x -> 0x%x\n"
-      (to_int t) (to_int min) (to_int max) (to_int (clamp t ~min ~max));
-    printf "between 0x%x ~low:0x%x ~high:0x%x -> %b\n"
-      (to_int t) (to_int min) (to_int max) (between t ~low:min ~high:max);
+    printf "clamp %a ~min:%a ~max:%a -> %a\n"
+      fmt_hex t fmt_hex min fmt_hex max fmt_hex (clamp t ~min ~max);
+    printf "between %a ~low:%a ~high:%a -> %b\n"
+      fmt_hex t fmt_hex min fmt_hex max (between t ~low:min ~high:max);
   end in
   fn2 (kv 0x0f_fffe) (kv 0x0f_ffff) (kv 0x10_0001);
   fn2 (kv 0x0f_ffff) (kv 0x0f_ffff) (kv 0x10_0001);
@@ -178,9 +178,9 @@ let%expect_test "rel" =
 
 let%expect_test "wraparound" =
   let open Printf in
-  printf "max_value + 1 -> 0x%x\n" (to_int (max_value + (kv 1)));
-  printf "min_value - 1 -> 0x%x\n" (to_int (min_value - (kv 1)));
-  printf "max_value * 15 -> 0x%x\n" (to_int (max_value * (kv 15)));
+  printf "max_value + 1 -> %a\n" fmt_hex (max_value + (kv 1));
+  printf "min_value - 1 -> %a\n" fmt_hex (min_value - (kv 1));
+  printf "max_value * 15 -> %a\n" fmt_hex (max_value * (kv 15));
 
   [%expect{|
     max_value + 1 -> 0x0
@@ -196,13 +196,13 @@ let%expect_test "conversion" =
         let t = of_int x in
         let i = to_int t in
         let t' = of_int i in
-        printf "of_int 0x%x -> to_int 0x%x -> of_int 0x%x -> 0x%x\n"
-          x (to_int t) i (to_int t');
+        printf "of_int 0x%x -> to_int %a -> of_int 0x%x -> %a\n"
+          x fmt_hex t i fmt_hex t';
         let t = of_uint (Uint.of_int x) in
         let u = to_uint t in
         let t' = of_uint u in
-        printf "of_uint 0x%x -> to_uint 0x%x -> of_uint 0x%x -> 0x%x\n"
-          x (to_int t) (Uint.to_int u) (to_int t');
+        printf "of_uint 0x%x -> to_uint %a -> of_uint %a -> %a\n"
+          x fmt_hex t Uint.fmt_hex u fmt_hex t';
         fn xs'
       end
   in

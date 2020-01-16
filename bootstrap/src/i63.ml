@@ -1,3 +1,5 @@
+(* Partial Rudiments. *)
+module Uint = U63
 open Rudiments_uint0
 
 module T = struct
@@ -50,9 +52,9 @@ let%expect_test "sexp" =
 let%expect_test "limits" =
   let open Printf in
 
-  printf "num_bits=%u\n" (int_of_uint num_bits);
-  printf "min_value=0x%x\n" min_value;
-  printf "max_value=0x%x\n" max_value;
+  printf "num_bits=%a\n" Uint.fmt num_bits;
+  printf "min_value=%#x\n" min_value;
+  printf "max_value=%#x\n" max_value;
 
   [%expect{|
     num_bits=63
@@ -146,9 +148,9 @@ let%expect_test "bit_" =
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_pop 0x%x -> %d\n" x (int_of_uint (bit_pop x));
-        printf "bit_clz 0x%x -> %d\n" x (int_of_uint (bit_clz x));
-        printf "bit_ctz 0x%x -> %d\n" x (int_of_uint (bit_ctz x));
+        printf "bit_pop 0x%x -> %a\n" x Uint.fmt (bit_pop x);
+        printf "bit_clz 0x%x -> %a\n" x Uint.fmt (bit_clz x);
+        printf "bit_ctz 0x%x -> %a\n" x Uint.fmt (bit_ctz x);
         fn xs'
       end
   end in

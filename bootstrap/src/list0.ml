@@ -852,8 +852,8 @@ let%expect_test "cmp_length_with" =
     printf "]"
   end in
   let test_cmp_length_with lst limit = begin
-    printf " (limit=%u -> %s)"
-      Uint.(to_int limit) (match cmp_length_with lst limit with
+    printf " (limit=%a -> %s)"
+      Uint.fmt limit (match cmp_length_with lst limit with
       | Cmp.Lt -> "Lt"
       | Cmp.Eq -> "Eq"
       | Cmp.Gt -> "Gt"
@@ -1111,8 +1111,7 @@ let%expect_test "nth,length,is_empty" =
       if Uint.(i > (kv 0)) then printf "; ";
       printf "%u" (nth lst i);
     done;
-    printf "]: length=%u, is_empty=%B\n"
-      (Uint.to_int (length lst)) (is_empty lst)
+    printf "]: length=%a, is_empty=%B\n" Uint.fmt (length lst) (is_empty lst)
   end in
   test_length [];
   test_length [0];
@@ -1990,7 +1989,7 @@ let%expect_test "iteri2" =
     print_uint_list b;
     printf " ->";
     let f i a b = begin
-      printf " (i=%u, a=%u, b=%u)" (Uint.to_int i) a b
+      printf " (i=%a, a=%u, b=%u)" Uint.fmt i a b
     end in
     iteri2 a b ~f;
     printf "\n"

@@ -1017,7 +1017,7 @@ let%expect_test "cursor" =
   end in
   let rec fn arr hd cursor tl = begin
     let index = Cursor.index cursor in
-    printf "index=%u" (Uint.to_int index);
+    printf "index=%a" Uint.fmt index;
     printf ", container %s arr"
       (Sexplib.Sexp.to_string
           (Cmp.sexp_of_t (cmp Int.cmp (Cursor.container cursor) arr)));
@@ -1166,8 +1166,8 @@ let%expect_test "get,length,is_empty" =
       if Uint.(i > (kv 0)) then printf "; ";
       printf "%u" (get arr i)
     done;
-    printf "|]: length=%u, is_empty=%B\n"
-      (Uint.to_int (length arr)) (is_empty arr)
+    printf "|]: length=%a, is_empty=%B\n"
+      Uint.fmt (length arr) (is_empty arr)
   end in
   test_length [||];
   test_length [|0|];
@@ -1196,7 +1196,7 @@ let%expect_test "set,set_inplace" =
       let i = Uint.of_int i in
       let arr = init len ~f:(fun _ -> 0) in
       let arr' = set arr i 1 in
-      printf "set %u: " (Uint.to_int i);
+      printf "set %a: " Uint.fmt i;
       print_uint_array arr;
       printf " -> ";
       print_uint_array arr';
@@ -1244,7 +1244,7 @@ let%expect_test "pare" =
         let i = Uint.of_int i in
         let j = Uint.of_int j in
         let arr' = pare arr ~base:i ~past:j in
-        printf " [%u,%u)=" (Uint.to_int i) (Uint.to_int j);
+        printf " [%a,%a)=" Uint.fmt i Uint.fmt j;
         print_uint_array arr'
       done
     done;
@@ -1500,7 +1500,7 @@ let%expect_test "reduce" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -1509,7 +1509,7 @@ let%expect_test "reduce" =
     print_uint_array arr;
     match reduce arr ~f with
     | None -> printf " -> None\n"
-    | Some x -> printf " -> %u\n" (Uint.to_int x)
+    | Some x -> printf " -> %a\n" Uint.fmt x
   end in
   let f a b =
     Uint.(a + b)
@@ -1539,7 +1539,7 @@ let%expect_test "swap,swap_inplace" =
         let i = Uint.of_int i in
         let j = Uint.of_int j in
         let arr' = copy arr in
-        printf "%u %u: swap " (Uint.to_int i) (Uint.to_int j);
+        printf "%a %a: swap " Uint.fmt i Uint.fmt j;
         print_uint_array arr';
         printf " -> ";
         print_uint_array (swap arr' i j);
@@ -1630,9 +1630,9 @@ let%expect_test "blit" =
   let test_blit arr0 i0 arr1 i1 len = begin
     printf "blit ";
     print_uint_array arr0;
-    printf " %u " (Uint.to_int i0);
+    printf " %a " Uint.fmt i0;
     print_uint_array arr1;
-    printf " %u %u -> " (Uint.to_int i1) (Uint.to_int len);
+    printf " %a %a -> " Uint.fmt i1 Uint.fmt len;
     blit arr0 i0 arr1 i1 len;
     print_uint_array arr1;
     printf "\n"
@@ -1661,7 +1661,7 @@ let%expect_test "is_sorted" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -1737,7 +1737,7 @@ let%expect_test "search" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -1746,27 +1746,27 @@ let%expect_test "search" =
     printf "\n";
     for probe = 0 to Uint.to_int key_max do
       let probe = Uint.of_int probe in
-      printf "  %u -> %s, %s, %s\n" (Uint.to_int probe)
+      printf "  %a -> %s, %s, %s\n" Uint.fmt probe
         (match psearch arr probe ~cmp:Uint.cmp with
          | None -> "<"
-         | Some (Cmp.Lt, i) -> sprintf "<[%u]=%u"
-             (Uint.to_int i) (Uint.to_int (get arr i))
-         | Some (Cmp.Eq, i) -> sprintf "=[%u]=%u"
-             (Uint.to_int i) (Uint.to_int (get arr i))
-         | Some (Cmp.Gt, i) -> sprintf ">[%u]=%u"
-             (Uint.to_int i) (Uint.to_int (get arr i))
+         | Some (Cmp.Lt, i) -> sprintf "<[%a]=%a"
+             Uint.s_fmt i Uint.s_fmt (get arr i)
+         | Some (Cmp.Eq, i) -> sprintf "=[%a]=%a"
+             Uint.s_fmt i Uint.s_fmt (get arr i)
+         | Some (Cmp.Gt, i) -> sprintf ">[%a]=%a"
+             Uint.s_fmt i Uint.s_fmt (get arr i)
         )
         (match search arr probe ~cmp:Uint.cmp with
          | None -> "<>"
-         | Some i -> sprintf "=%u" (Uint.to_int (get arr i))
+         | Some i -> sprintf "=%a" Uint.s_fmt (get arr i)
         )
         (match nsearch arr probe ~cmp:Uint.cmp with
-         | Some (Cmp.Lt, i) -> sprintf "<[%u]=%u"
-             (Uint.to_int i) (Uint.to_int (get arr i))
-         | Some (Cmp.Eq, i) -> sprintf "=[%u]=%u"
-             (Uint.to_int i) (Uint.to_int (get arr i))
-         | Some (Cmp.Gt, i) -> sprintf ">[%u]=%u"
-             (Uint.to_int i) (Uint.to_int (get arr i))
+         | Some (Cmp.Lt, i) -> sprintf "<[%a]=%a"
+             Uint.s_fmt i Uint.s_fmt (get arr i)
+         | Some (Cmp.Eq, i) -> sprintf "=[%a]=%a"
+             Uint.s_fmt i Uint.s_fmt (get arr i)
+         | Some (Cmp.Gt, i) -> sprintf ">[%a]=%a"
+             Uint.s_fmt i Uint.s_fmt (get arr i)
          | None -> ">"
         );
     done
@@ -1851,7 +1851,7 @@ let%expect_test "map,mapi" =
     print_string_array sarr;
     printf " -> mapi ";
     let sarr = mapi uarr ~f:(fun i elm ->
-      sprintf "[%u]=%u" (Uint.to_int i) elm
+      sprintf "[%a]=%u" Uint.s_fmt i elm
     ) in
     print_string_array sarr;
     printf "\n"
@@ -1874,7 +1874,7 @@ let%expect_test "fold_map,foldi_map" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -1890,16 +1890,16 @@ let%expect_test "fold_map,foldi_map" =
     print_uint_array uarr;
     printf " -> fold_map";
     let accum, sarr = fold_map uarr ~init:(Uint.kv 0) ~f:(fun accum elm ->
-      Uint.(accum + elm), (sprintf "%u" (Uint.to_int elm))
+      Uint.(accum + elm), (sprintf "%a" Uint.s_fmt elm)
     ) in
-    printf " %u " (Uint.to_int accum);
+    printf " %a " Uint.fmt accum;
     print_string_array sarr;
     printf " -> foldi_map";
     let accum, sarr = foldi_map uarr ~init:(Uint.kv 0) ~f:(fun i accum elm ->
       Uint.(accum + i + elm),
-      (sprintf "[%u]=%u" (Uint.to_int i) (Uint.to_int elm))
+      (sprintf "[%a]=%a" Uint.s_fmt i Uint.s_fmt elm)
     ) in
-    printf " %u " (Uint.to_int accum);
+    printf " %a " Uint.fmt accum;
     print_string_array sarr;
     printf "\n"
   end in
@@ -1920,7 +1920,7 @@ let%expect_test "filter,filteri" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -1956,7 +1956,7 @@ let%expect_test "fold2_until,foldi2_until" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -1968,12 +1968,12 @@ let%expect_test "fold2_until,foldi2_until" =
         ~f:(fun accum elm0 elm1 ->
           Uint.(accum + elm0 + elm1), Uint.(accum > (kv 10))
         ) in
-    printf " -> fold2_until %u" (Uint.to_int accum);
+    printf " -> fold2_until %a" Uint.fmt accum;
     let accum = foldi2_until uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun i accum elm0 elm1 ->
           Uint.(accum + i + elm0 + elm1), Uint.((i + (kv 2)) >= (length uarr0))
         ) in
-    printf " -> foldi2_until %u\n" (Uint.to_int accum)
+    printf " -> foldi2_until %a\n" Uint.fmt accum
   end in
   test_fold2_until [||] [||];
   test_fold2_until [|(Uint.kv 1)|] [|(Uint.kv 0)|];
@@ -1993,7 +1993,7 @@ let%expect_test "fold2,foldi2" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -2004,12 +2004,12 @@ let%expect_test "fold2,foldi2" =
     let accum = fold2 uarr0 uarr1 ~init:(Uint.kv 0) ~f:(fun accum elm0 elm1 ->
       Uint.(accum + elm0 + elm1)
     ) in
-    printf " -> fold2 %u" (Uint.to_int accum);
+    printf " -> fold2 %a" Uint.fmt accum;
     let accum = foldi2 uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun i accum elm0 elm1 ->
           Uint.(accum + i + elm0 + elm1)
         ) in
-    printf " -> foldi2 %u\n" (Uint.to_int accum)
+    printf " -> foldi2 %a\n" Uint.fmt accum
   end in
   test_fold2 [||] [||];
   test_fold2 [|(Uint.kv 1)|] [|(Uint.kv 0)|];
@@ -2077,7 +2077,7 @@ let%expect_test "map2,mapi2" =
     print_string_array sarr;
     printf " -> mapi2 ";
     let sarr = mapi2 uarr0 uarr1 ~f:(fun i elm0 elm1 ->
-      sprintf "[%u]=(%u,%u)" (Uint.to_int i) elm0 elm1
+      sprintf "[%a]=(%u,%u)" Uint.s_fmt i elm0 elm1
     ) in
     print_string_array sarr;
     printf "\n"
@@ -2099,7 +2099,7 @@ let%expect_test "fold2_map,foldi2_map" =
     printf "[|";
     iteri arr ~f:(fun i elm ->
       if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (Uint.to_int elm)
+      printf "%a" Uint.fmt elm
     );
     printf "|]"
   end in
@@ -2119,18 +2119,18 @@ let%expect_test "fold2_map,foldi2_map" =
     let accum, sarr = fold2_map uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun accum elm0 elm1 ->
           Uint.(accum + elm0 + elm1),
-          (sprintf "(%u,%u)" (Uint.to_int elm0) (Uint.to_int elm1))
+          (sprintf "(%a,%a)" Uint.s_fmt elm0 Uint.s_fmt elm1)
         ) in
-    printf " %u " (Uint.to_int accum);
+    printf " %a " Uint.fmt accum;
     print_string_array sarr;
     printf " -> foldi2_map";
     let accum, sarr = foldi2_map uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun i accum elm0 elm1 ->
           Uint.(accum + i + elm0 + elm1),
-          (sprintf "[%u]=(%u,%u)" (Uint.to_int i) (Uint.to_int elm0)
-             (Uint.to_int elm1))
+          (sprintf "[%a]=(%a,%a)" Uint.s_fmt i Uint.s_fmt elm0
+             Uint.s_fmt elm1)
         ) in
-    printf " %u " (Uint.to_int accum);
+    printf " %a " Uint.fmt accum;
     print_string_array sarr;
     printf "\n"
   end in

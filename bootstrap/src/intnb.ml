@@ -255,6 +255,18 @@ module Make_common (T : I_common) : S_common with type t := int = struct
       match cmp t0 t1 with
       | Lt | Eq -> t1
       | Gt -> t0
+
+    let s_fmt () t =
+      Printf.sprintf "%d" t
+
+    let s_fmt_hex () t =
+      Printf.sprintf "0x%x" t
+
+    let fmt oc t =
+      output_string oc (s_fmt () t)
+
+    let fmt_hex oc t =
+      output_string oc (s_fmt_hex () t)
   end
   include U
   include Identifiable.Make(U)
@@ -417,6 +429,18 @@ module Make_u (T : I) : S_u with type t := uint = struct
 
     let max t0 t1 =
       uint_of_int (V.max (int_of_uint t0) (int_of_uint t1))
+
+    let s_fmt () t =
+      Printf.sprintf "%u" (int_of_uint t)
+
+    let s_fmt_hex () t =
+      Printf.sprintf "0x%x" (int_of_uint t)
+
+    let fmt oc t =
+      output_string oc (s_fmt () t)
+
+    let fmt_hex oc t =
+      output_string oc (s_fmt_hex () t)
   end
   include U
   include Identifiable.Make(U)

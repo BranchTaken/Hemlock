@@ -115,6 +115,22 @@ module type S = sig
 
   val max: t -> t -> t
   (** [max a b] returns the maximum of [a] and [b]. *)
+
+  val s_fmt: unit -> t -> string
+  (** [s_fmt () t] returns a string decimal representation of [t], for use with
+      the [%a] format specifier to {!Printf.sprintf}. *)
+
+  val s_fmt_hex: unit -> t -> string
+  (** [s_fmt_hex () t] returns a string hexadecimal representation of [t], for
+      use with the [%a] format specifier to {!Printf.sprintf}. *)
+
+  val fmt: out_channel -> t -> unit
+  (** [fmt oc t] outputs a string decimal representation of [t] to [oc], for use
+      with the [%a] format specifier to {!Printf.printf}. *)
+
+  val fmt_hex: out_channel -> t -> unit
+  (** [fmt oc t] outputs a string hexadecimal representation of [t] to [oc], for
+      use with the [%a] format specifier to {!Printf.printf}. *)
 end
 
 (** Functor output signature for an unsigned integer type with a specific
