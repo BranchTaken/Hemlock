@@ -10,9 +10,6 @@ let t_of_state state =
   state
 
 let pp ppf t =
-  Format.fprintf ppf "%u" (int_of_uint t)
-
-let pp_x ppf t =
   Format.fprintf ppf "0x%x" (int_of_uint t)
 
 let hash_fold state a =

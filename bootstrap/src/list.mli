@@ -11,6 +11,8 @@ open Rudiments
 
 type 'a t = 'a list
 
+include Formattable_intf.S_poly with type 'a t := 'a t
+
 (** {1 Container} *)
 
 include Container_common_intf.S_poly_fold with type 'a t := 'a t
@@ -358,14 +360,6 @@ val rev_foldi2_map: 'a t -> 'b t -> init:'accum
 (** Create a reversed list and accumulated result based on the paired elements
     of two lists, calling the indexed element folding/mapping function in
     increasing index order. *)
-
-(** {1 Utilities} *)
-
-val pp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
-(** [pp pp_elm ppf t] prints a syntactic representation of [t] to the pretty
-    printing formatter, [ppf], using the [pp_elm] printer for the elements.
-    This function is intended for use with the [%a] format specifier to
-    {!Format.printf}. *)
 
 (** {1 Associative maps} *)
 

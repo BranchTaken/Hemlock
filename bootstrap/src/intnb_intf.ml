@@ -27,6 +27,11 @@ module type S = sig
   (** Narrow full-width unsigned integer.  Sign is preserved, but precision may
       be silently lost. *)
 
+  val pp_x: Format.formatter -> t -> unit
+  (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty
+      printing formatter, [ppf].  This function is intended for use with the
+      [%a] format specifier to {!Format.printf}.*)
+
   val one: t
   (** Constant value 1. *)
 
@@ -115,16 +120,6 @@ module type S = sig
 
   val max: t -> t -> t
   (** [max a b] returns the maximum of [a] and [b]. *)
-
-  val pp: Format.formatter -> t -> unit
-  (** [pp ppf t] prints a decimal representation of [t] to the pretty printing
-      formatter, [ppf].  This function is intended for use with the [%a] format
-      specifier to {!Format.printf}. *)
-
-  val pp_x: Format.formatter -> t -> unit
-  (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty
-      printing formatter, [ppf].  This function is intended for use with the
-      [%a] format specifier to {!Format.printf}.*)
 end
 
 (** Functor output signature for an unsigned integer type with a specific

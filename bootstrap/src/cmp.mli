@@ -4,7 +4,4 @@ type t =
 | Eq (** Equal. *)
 | Gt (** Greater than. *)
 
-val pp: Format.formatter -> t -> unit
-(** [pp ppf t] prints a representation of [t] to the pretty printing formatter,
-    [ppf].  This function is intended for use with the [%a] format specifier to
-    {!Format.printf}. *)
+include Formattable_intf.S_mono with type t := t

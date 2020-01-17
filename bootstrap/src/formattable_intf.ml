@@ -1,7 +1,7 @@
 (** Formattable type functor signature. *)
 
-(** Format pretty printing conversion functions. *)
-module type S = sig
+(** Monomorphic Format pretty printing conversion functions. *)
+module type S_mono = sig
   type t
 
   val pp: Format.formatter -> t -> unit
@@ -10,3 +10,13 @@ module type S = sig
       specifier to {!Format.printf}.*)
 end
 
+(** Polymorphic Format pretty printing conversion functions. *)
+module type S_poly = sig
+  type 'a t
+
+  val pp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+  (** [pp pp_a ppf t] prints a syntactic representation of [t] to the pretty
+      printing formatter, [ppf], using the [pp_a] printer for [a] in [Some a].
+      This function is intended for use with the [%a] format specifier to
+      {!Format.printf}. *)
+end

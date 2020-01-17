@@ -15,10 +15,7 @@ module Dir : sig
   | Nearest (** Round to nearest integral. *)
   | Zero    (** Round toward zero. *)
 
-  val pp: Format.formatter -> t -> unit
-  (** [pp ppf t] prints a representation of [t] to the pretty printing
-      formatter, [ppf].  This function is intended for use with the [%a] format
-      specifier to {!Format.printf}. *)
+  include Formattable_intf.S_mono with type t := t
 end
 
 (** Numeric class. *)
@@ -30,10 +27,7 @@ module Class : sig
   | Subnormal (** Subnormal. *)
   | Zero      (** Zero. *)
 
-  val pp: Format.formatter -> t -> unit
-  (** [pp ppf t] prints a representation of [t] to the pretty printing
-      formatter, [ppf].  This function is intended for use with the [%a] format
-      specifier to {!Format.printf}. *)
+  include Formattable_intf.S_mono with type t := t
 end
 
 (** Fractional and integral value results from {!modf}. *)
@@ -47,10 +41,7 @@ module Parts : sig
   val integral: t -> outer
   (** Integral value, i.e. a whole number. *)
 
-  val pp: Format.formatter -> t -> unit
-  (** [pp ppf t] prints a representation of [t] to the pretty printing
-      formatter, [ppf].  This function is intended for use with the [%a] format
-      specifier to {!Format.printf}. *)
+  include Formattable_intf.S_mono with type t := t
 end
 
 val create: neg:bool -> exponent:int -> mantissa:uint -> t

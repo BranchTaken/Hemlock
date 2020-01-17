@@ -1820,7 +1820,7 @@ let%expect_test "hash_fold" =
 
   let s = "hello" in
   let h = Hash.(t_of_state (hash_fold (Hash.state_of_uint (Uint.kv 0)) s)) in
-  printf "hash_fold \"%s\"=%a\n" s Hash.pp_x h;
+  printf "hash_fold \"%s\"=%a\n" s Hash.pp h;
 
   [%expect{|
     hash_fold "hello"=0x321f6e00
