@@ -8,11 +8,8 @@ module T = struct
   let cmp _ _ =
     Cmp.Eq
 
-  let sexp_of_t t =
-    Sexplib.Std.sexp_of_unit t
-
-  let t_of_sexp sexp =
-    Sexplib.Std.unit_of_sexp sexp
+  let pp ppf _t =
+    Format.fprintf ppf "()"
 
   let of_string s =
     match s with
@@ -42,22 +39,23 @@ let%expect_test "string" =
     of_string () -> ()
     |}]
 
-let%expect_test "sexp" =
-  let open Printf in
-  let sexp = sexp_of_t () in
-  printf "sexp_of_t %s -> %s ; " (to_string ()) (Sexplib.Sexp.to_string sexp);
-  printf "t_of_sexp -> %s\n" (to_string (t_of_sexp sexp));
+let%expect_test "pp" =
+  let open Format in
+  printf "@[<h>";
+  printf "pp %s -> %a\n" (to_string ()) pp ();
+  printf "@]";
 
-  [%expect{| sexp_of_t () -> () ; t_of_sexp -> () |}]
+  [%expect{| pp () -> () |}]
 
 let%expect_test "eq" =
-  let open Printf in
+  let open Format in
   let t0 = () in
   let t1 = () in
-  printf "cmp %s %s -> %s\n" (to_string t0) (to_string t1)
-    (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp t0 t1)));
+  printf "@[<h>";
+  printf "cmp %s %s -> %a\n" (to_string t0) (to_string t1) Cmp.pp (cmp t0 t1);
   printf "%s = %s -> %B\n" (to_string t0) (to_string t1) (t0 = t1);
   printf "%s <> %s -> %B\n" (to_string t0) (to_string t1) (t0 <> t1);
+  printf "@]";
 
   [%expect{|
     cmp () () -> Eq

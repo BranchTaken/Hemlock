@@ -4,8 +4,13 @@ type t =
 | Neg
 | Zero
 | Pos
-[@@deriving sexp]
 
+let pp ppf t =
+  Format.fprintf ppf (match t with
+    | Neg -> "Neg"
+    | Zero -> "Zero"
+    | Pos -> "Pos"
+  )
 let of_int x =
   match x with
   | -1 -> Neg

@@ -14,11 +14,8 @@ module T = struct
     else
       Cmp.Gt
 
-  let sexp_of_t t =
-    Sexplib.Std.sexp_of_float t
-
-  let t_of_sexp sexp =
-    Sexplib.Std.float_of_sexp sexp
+  let pp ppf t =
+    Format.fprintf ppf "%h" t
 
   let of_string s =
     float_of_string s
@@ -44,7 +41,14 @@ module Dir = struct
   | Up
   | Nearest
   | Zero
-  [@@deriving sexp]
+
+  let pp ppf t =
+    Format.fprintf ppf (match t with
+      | Down -> "Down"
+      | Up -> "Up"
+      | Nearest -> "Nearest"
+      | Zero -> "Zero"
+    )
 end
 
 module Class = struct
@@ -54,22 +58,33 @@ module Class = struct
   | Normal
   | Subnormal
   | Zero
-  [@@deriving sexp]
+
+  let pp ppf t =
+    Format.fprintf ppf (match t with
+      | Infinite -> "Infinite"
+      | Nan -> "Nan"
+      | Normal -> "Normal"
+      | Subnormal -> "Subnormal"
+      | Zero -> "Zero"
+    )
 end
 
 module Parts = struct
-  type outer = t [@@deriving sexp]
+  type outer = t
   type t = {
     fractional: outer;
     integral: outer;
   }
-  [@@deriving sexp]
 
   let fractional t =
     t.fractional
 
   let integral t =
     t.integral
+
+  let pp ppf t =
+    Format.fprintf ppf "@[<h>{fractional:@ %h,@ integral:@ %h}@]"
+      t.fractional t.integral
 end
 
 let create ~neg ~exponent ~mantissa =
@@ -584,16 +599,16 @@ let%expect_test "operators" =
   |}]
 
 let%expect_test "classify" =
-  let open Printf in
+  let open Format in
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "%h -> %s\n"
-          t (Sexplib.Sexp.to_string (Class.sexp_of_t (classify t)));
+        printf "%h -> %a\n" t Class.pp (classify t);
         fn ts'
       end
   end in
+  printf "@[<h>";
   fn [
     inf; -inf;
     nan;
@@ -601,6 +616,7 @@ let%expect_test "classify" =
     0x0.0000000000001p-1022; 0x0.fffffffffffffp-1022;
     -0.; 0.;
   ];
+  printf "@]";
 
   [%expect{|
   infinity -> Infinite

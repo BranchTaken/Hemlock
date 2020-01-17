@@ -105,12 +105,13 @@ module Make_common (T : I_common) : S_common with type t := int = struct
       assert (narrow t = t);
       string_of_int t
 
-    let sexp_of_t t =
+    let pp ppf t =
       assert (narrow t = t);
-      Sexplib.Std.sexp_of_int t
+      Format.fprintf ppf "%d" t
 
-    let t_of_sexp sexp =
-      narrow (Sexplib.Std.int_of_sexp sexp)
+    let pp_x ppf t =
+      assert (narrow t = t);
+      Format.fprintf ppf "0x%x" t
 
     let zero = 0
 
@@ -255,12 +256,6 @@ module Make_common (T : I_common) : S_common with type t := int = struct
       match cmp t0 t1 with
       | Lt | Eq -> t1
       | Gt -> t0
-
-    let pp ppf t =
-      Format.fprintf ppf "%d" t
-
-    let pp_x ppf t =
-      Format.fprintf ppf "0x%x" t
   end
   include U
   include Identifiable.Make(U)
@@ -335,11 +330,11 @@ module Make_u (T : I) : S_u with type t := uint = struct
     let to_string t =
       V.to_string (int_of_uint t)
 
-    let sexp_of_t t =
-      V.sexp_of_t (int_of_uint t)
+    let pp ppf t =
+      Format.fprintf ppf "%u" (int_of_uint t)
 
-    let t_of_sexp sexp =
-      uint_of_int (V.t_of_sexp sexp)
+    let pp_x ppf t =
+      V.pp_x ppf (int_of_uint t)
 
     let zero = uint_of_int V.zero
 
@@ -423,12 +418,6 @@ module Make_u (T : I) : S_u with type t := uint = struct
 
     let max t0 t1 =
       uint_of_int (V.max (int_of_uint t0) (int_of_uint t1))
-
-    let pp ppf t =
-      Format.fprintf ppf "%u" (int_of_uint t)
-
-    let pp_x ppf t =
-      Format.fprintf ppf "0x%x" (int_of_uint t)
   end
   include U
   include Identifiable.Make(U)

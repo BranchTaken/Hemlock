@@ -14,7 +14,11 @@ module Dir : sig
   | Up      (** Round up (ceiling). *)
   | Nearest (** Round to nearest integral. *)
   | Zero    (** Round toward zero. *)
-  [@@deriving sexp]
+
+  val pp: Format.formatter -> t -> unit
+  (** [pp ppf t] prints a representation of [t] to the pretty printing
+      formatter, [ppf].  This function is intended for use with the [%a] format
+      specifier to {!Format.printf}. *)
 end
 
 (** Numeric class. *)
@@ -25,19 +29,28 @@ module Class : sig
   | Normal    (** Normal. *)
   | Subnormal (** Subnormal. *)
   | Zero      (** Zero. *)
-  [@@deriving sexp]
+
+  val pp: Format.formatter -> t -> unit
+  (** [pp ppf t] prints a representation of [t] to the pretty printing
+      formatter, [ppf].  This function is intended for use with the [%a] format
+      specifier to {!Format.printf}. *)
 end
 
 (** Fractional and integral value results from {!modf}. *)
 module Parts : sig
   type outer = t
-  type t [@@deriving sexp]
+  type t
 
   val fractional: t -> outer
   (** Fractional value, i.e. in [(-1.0 .. 1.0)]. *)
 
   val integral: t -> outer
   (** Integral value, i.e. a whole number. *)
+
+  val pp: Format.formatter -> t -> unit
+  (** [pp ppf t] prints a representation of [t] to the pretty printing
+      formatter, [ppf].  This function is intended for use with the [%a] format
+      specifier to {!Format.printf}. *)
 end
 
 val create: neg:bool -> exponent:int -> mantissa:uint -> t

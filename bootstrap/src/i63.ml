@@ -37,16 +37,15 @@ let%expect_test "string" =
     1
     |}]
 
-let%expect_test "sexp" =
+let%expect_test "pp,pp_h" =
   let open Format in
   let t = 42 in
-  let sexp = sexp_of_t 42 in
-  printf "sexp_of_t %d -> %s\n" t (Sexplib.Sexp.to_string sexp);
-  printf "t_of_sexp -> %d\n" (t_of_sexp sexp);
+  printf "pp %d -> %a\n" t pp t;
+  printf "pp_x %d -> %a\n" t pp_x t;
 
   [%expect{|
-    sexp_of_t 42 -> 42
-    t_of_sexp -> 42
+    pp 42 -> 42
+    pp_x 42 -> 0x2a
     |}]
 
 let%expect_test "limits" =
@@ -280,18 +279,15 @@ let%expect_test "ops" =
 let%expect_test "rel" =
   let open Format in
   let fn x y = begin
-    printf "cmp %d %d -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
+    printf "cmp %d %d -> %a\n" x y Cmp.pp (cmp x y);
     printf "%d >= %d -> %b\n" x y (x >= y);
     printf "%d <= %d -> %b\n" x y (x <= y);
     printf "%d = %d -> %b\n" x y (x = y);
     printf "%d > %d -> %b\n" x y (x > y);
     printf "%d < %d -> %b\n" x y (x < y);
     printf "%d <> %d -> %b\n" x y (x <> y);
-    printf "ascending %d %d -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
-    printf "descending %d %d -> %s\n"
-      x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
+    printf "ascending %d %d -> %a\n" x y Cmp.pp (ascending x y);
+    printf "descending %d %d -> %a\n" x y Cmp.pp (descending x y);
   end in
   fn ~-1 0;
   printf "\n";

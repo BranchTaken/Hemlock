@@ -98,18 +98,15 @@ let%expect_test "limits" =
 let%expect_test "rel" =
   let open Format in
   let fn x y = begin
-    printf "cmp %a %a -> %s\n" pp_x x pp_x y
-      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
+    printf "cmp %a %a -> %a\n" pp_x x pp_x y Cmp.pp (cmp x y);
     printf "%a >= %a -> %b\n" pp_x x pp_x y (x >= y);
     printf "%a <= %a -> %b\n" pp_x x pp_x y (x <= y);
     printf "%a = %a -> %b\n" pp_x x pp_x y (x = y);
     printf "%a > %a -> %b\n" pp_x x pp_x y (x > y);
     printf "%a < %a -> %b\n" pp_x x pp_x y (x < y);
     printf "%a <> %a -> %b\n" pp_x x pp_x y (x <> y);
-    printf "ascending %a %a -> %s\n" pp_x x pp_x y
-      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (ascending x y)));
-    printf "descending %a %a -> %s\n" pp_x x pp_x y
-      (Sexplib.Sexp.to_string (Cmp.sexp_of_t (descending x y)));
+    printf "ascending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (ascending x y);
+    printf "descending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (descending x y);
   end in
   fn (kv 0) (kv 0x10_0000);
   printf "\n";

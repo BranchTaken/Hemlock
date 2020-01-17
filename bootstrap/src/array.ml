@@ -995,12 +995,6 @@ let unzip t =
   let t1 = map t ~f:(fun (_, b) -> b) in
   t0, t1
 
-let sexp_of_t t =
-  Sexplib.Std.sexp_of_array t
-
-let t_of_sexp sexp =
-  Sexplib.Std.array_of_sexp sexp
-
 let pp pp_elm ppf t =
   let open Format in
   fprintf ppf "@[<h>[|";
@@ -1019,13 +1013,12 @@ let%expect_test "cursor" =
   let rec fn arr hd cursor tl = begin
     let index = Cursor.index cursor in
     printf "index=%a" Uint.pp index;
-    printf ", container %s arr"
-      (Sexplib.Sexp.to_string
-          (Cmp.sexp_of_t (cmp Int.cmp (Cursor.container cursor) arr)));
+    printf ", container %a arr"
+      Cmp.pp (cmp Int.cmp (Cursor.container cursor) arr);
     let hd_cursor = Cursor.cmp hd cursor in
-    printf ", hd %s cursor" (Sexplib.Sexp.to_string (Cmp.sexp_of_t hd_cursor));
+    printf ", hd %a cursor" Cmp.pp hd_cursor;
     let cursor_tl = Cursor.cmp cursor tl in
-    printf ", cursor %s tl" (Sexplib.Sexp.to_string (Cmp.sexp_of_t cursor_tl));
+    printf ", cursor %a tl" Cmp.pp cursor_tl;
     let () = match hd_cursor with
       | Lt -> printf ", lget=%u" (Cursor.lget cursor)
       | Eq -> printf ", lget=_"

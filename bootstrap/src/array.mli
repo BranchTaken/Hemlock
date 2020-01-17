@@ -1,6 +1,6 @@
 open Rudiments
 
-type 'a t = 'a array [@@deriving sexp]
+type 'a t = 'a array
 include Container_common_intf.S_poly_fold with type 'a t := 'a t
 
 (** Cursor that supports arbitrary array element access.  All operations are

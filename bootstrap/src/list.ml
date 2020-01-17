@@ -159,12 +159,6 @@ let rev_merge t0 t1 ~cmp =
   | _, [] -> t0
   | (elm0 :: t0'), (elm1 :: t1') -> fn elm0 t0' elm1 t1' []
 
-let sexp_of_t t =
-  Sexplib.Std.sexp_of_list t
-
-let t_of_sexp sexp =
-  Sexplib.Std.list_of_sexp sexp
-
 (*******************************************************************************
  * Begin tests.
  *)

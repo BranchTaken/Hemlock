@@ -9,7 +9,7 @@ open Rudiments
 
 (** {1 Type and derivations} *)
 
-type 'a t = 'a list [@@deriving sexp]
+type 'a t = 'a list
 
 (** {1 Container} *)
 

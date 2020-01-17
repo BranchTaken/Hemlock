@@ -12,11 +12,12 @@ module T = struct
     | true, true -> Cmp.Eq
     | true, false -> Cmp.Gt
 
-  let sexp_of_t t =
-    Sexplib.Std.sexp_of_bool t
-
-  let t_of_sexp sexp =
-    Sexplib.Std.bool_of_sexp sexp
+  let pp ppf t =
+    Format.fprintf ppf (
+      match t with
+      | false -> "false"
+      | true -> "true"
+    )
 
   let of_string s =
     match s with
@@ -87,32 +88,32 @@ let%expect_test "string" =
     to_string true -> true ; of_string true -> true
     |}]
 
-let%expect_test "sexp" =
-  let open Printf in
+let%expect_test "pp" =
+  let open Format in
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-        let sexp = sexp_of_t t in
-        printf "sexp_of_t %b -> %s ; " t (Sexplib.Sexp.to_string sexp);
-        printf "t_of_sexp -> %b\n" (t_of_sexp sexp);
+        printf "pp %b -> %a\n" t pp t;
         fn ts'
       end
   in
+  printf "@[<h>";
   fn [false; true];
+  printf "@]";
 
   [%expect{|
-    sexp_of_t false -> false ; t_of_sexp -> false
-    sexp_of_t true -> true ; t_of_sexp -> true
+    pp false -> false
+    pp true -> true
     |}]
 
 let%expect_test "eq" =
-  let open Printf in
+  let open Format in
   let fn t0 t1 = begin
-    printf "cmp %b %b -> %s\n"
-      t0 t1 (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp t0 t1)));
+    printf "cmp %b %b -> %a\n" t0 t1 Cmp.pp (cmp t0 t1);
     printf "%b = %b -> %b\n" t0 t1 (t0 = t1);
     printf "%b <> %b -> %b\n" t0 t1 (t0 <> t1);
   end in
+  printf "@[<h>";
   fn false false;
   printf "\n";
   fn false true;
@@ -120,6 +121,7 @@ let%expect_test "eq" =
   fn true false;
   printf "\n";
   fn true true;
+  printf "@]";
 
   [%expect{|
     cmp false false -> Eq
