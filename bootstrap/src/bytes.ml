@@ -116,7 +116,7 @@ let to_string_hlt bytes =
  *)
 
 let%expect_test "of_codepoint" =
-  let open Printf in
+  let open Format in
   let strs = [
     "<";
     "«";
@@ -126,14 +126,15 @@ let%expect_test "of_codepoint" =
   let cps = List.fold_right strs ~init:[] ~f:(fun s cps ->
     String.Cursor.(rget (hd s)) :: cps
   ) in
+  printf "@[<h>";
   List.iter cps ~f:(fun cp ->
-    printf "'%s' -> [|" (String.of_codepoint cp);
     let bytes = of_codepoint cp in
-    Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x"
-        (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
-    printf "|] -> \"%s\"\n" (to_string_hlt bytes)
+    printf "'%s' -> %a -> \"%s\"\n"
+      (String.of_codepoint cp)
+      (Array.pp Byte.pp_x) bytes
+      (to_string_hlt bytes)
   );
+  printf "@]";
 
   [%expect{|
     '<' -> [|0x3c|] -> "<"
@@ -143,19 +144,20 @@ let%expect_test "of_codepoint" =
     |}]
 
 let%expect_test "of_string" =
-  let open Printf in
+  let open Format in
   let strs = [
     "";
     "<_>«‡𐆗»[_]";
   ] in
+  printf "@[<h>";
   List.iter strs ~f:(fun s ->
-    printf "\"%s\" -> [|" s;
     let bytes = of_string s in
-    Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x"
-        (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
-    printf "|] -> \"%s\"\n" (to_string_hlt bytes)
+    printf "\"%s\" -> %a -> \"%s\"\n"
+      s
+      (Array.pp Byte.pp_x) bytes
+      (to_string_hlt bytes)
   );
+  printf "@]";
 
   [%expect{|
     "" -> [||] -> ""
@@ -163,19 +165,18 @@ let%expect_test "of_string" =
     |}]
 
 let%expect_test "to_string" =
-  let open Printf in
+  let open Format in
   let test_to_string (bytes_list:byte list) = begin
     let bytes = Array.of_list bytes_list in
-    printf "to_string [|";
-    Array.iteri bytes ~f:(fun i b ->
-      printf "%s%#02x"
-        (if Uint.(i = (kv 0)) then "" else "; ") (Byte.to_int b));
-    printf "|] -> %s\n" (match to_string bytes with
-      | None -> "None"
-      | Some s -> "\"" ^ s ^ "\""
-    );
+    printf "to_string %a -> %s\n"
+      (Array.pp Byte.pp_x) bytes
+      (match to_string bytes with
+        | None -> "None"
+        | Some s -> "\"" ^ s ^ "\""
+      )
   end in
   let open Byte in
+  printf "@[<h>";
   test_to_string [kv 0x61];
   test_to_string [(kv 0xf0); (kv 0x80); (kv 0x80)];
   test_to_string [(kv 0xe0); (kv 0x80)];
@@ -185,6 +186,7 @@ let%expect_test "to_string" =
   test_to_string [(kv 0xc0); (kv 0xc0)];
   test_to_string [kv 0x80];
   test_to_string [(kv 0x80); (kv 0x80); (kv 0x80); (kv 0x80)];
+  printf "@]";
 
   [%expect{|
     to_string [|0x61|] -> "a"

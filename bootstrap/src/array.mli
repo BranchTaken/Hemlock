@@ -274,3 +274,9 @@ val zip: 'a t -> 'b t -> ('a * 'b) t
 
 val unzip: ('a * 'b) t -> 'a t * 'b t
 (** Create two arrays with the unpaired elements of the input pair array. *)
+
+val pp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+(** [pp pp_elm ppf t] prints a syntactic representation of [t] to the pretty
+    printing formatter, [ppf], using the [pp_elm] printer for the elements.
+    This function is intended for use with the [%a] format specifier to
+    {!Format.printf}. *)

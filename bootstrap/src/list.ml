@@ -170,26 +170,7 @@ let t_of_sexp sexp =
  *)
 
 let%expect_test "reduce[_hlt]" =
-  let open Printf in
-  let print_uint_list lst = begin
-    printf "[";
-    let rec fn lst = begin
-      match lst with
-      | [] -> ()
-      | hd :: tl -> begin
-          printf "; %u" hd;
-          fn tl
-        end
-    end in
-    let () = match lst with
-      | [] -> ()
-      | hd :: tl -> begin
-          printf "%u" hd;
-          fn tl
-        end
-    in
-    printf "]"
-  end in
+  let open Format in
   let lists = [
     [];
     [0];
@@ -198,13 +179,14 @@ let%expect_test "reduce[_hlt]" =
     [0; 1; 2; 3];
     [0; 1; 2; 3; 4]
   ] in
+  printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "reduce ";
-    print_uint_list l;
+    printf "reduce %a" (pp Int.pp) l;
     match (reduce l ~f:(fun a b -> Int.(a + b))) with
     | None -> printf "-> None\n"
     | Some result -> printf " -> %u\n" result
   );
+  printf "@]";
 
   [%expect{|
     reduce []-> None
@@ -216,26 +198,7 @@ let%expect_test "reduce[_hlt]" =
   |}]
 
 let%expect_test "is_sorted" =
-  let open Printf in
-  let print_uint_list lst = begin
-    printf "[";
-    let rec fn lst = begin
-      match lst with
-      | [] -> ()
-      | hd :: tl -> begin
-          printf "; %u" hd;
-          fn tl
-        end
-    end in
-    let () = match lst with
-      | [] -> ()
-      | hd :: tl -> begin
-          printf "%u" hd;
-          fn tl
-        end
-    in
-    printf "]"
-  end in
+  let open Format in
   let lists = [
     [];
     [0];
@@ -249,19 +212,21 @@ let%expect_test "is_sorted" =
     [1; 0];
     [0; 2; 1]
   ] in
+  printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "is_sorted               ";
-    print_uint_list l;
-    printf " -> %b\n" (is_sorted l ~cmp:I63.cmp);
-
-    printf "is_sorted ~strict:false ";
-    print_uint_list l;
-    printf " -> %b\n" (is_sorted ~strict:false l ~cmp:I63.cmp);
-
-    printf "is_sorted ~strict:true  ";
-    print_uint_list l;
-    printf " -> %b\n" (is_sorted ~strict:true l ~cmp:I63.cmp)
+    printf "is_sorted               %a -> %b\n"
+      (pp Int.pp) l
+      (is_sorted l ~cmp:Int.cmp)
+    ;
+    printf "is_sorted ~strict:false %a -> %b\n"
+      (pp Int.pp) l
+      (is_sorted ~strict:false l ~cmp:Int.cmp)
+    ;
+    printf "is_sorted ~strict:true  %a -> %b\n"
+      (pp Int.pp) l
+      (is_sorted ~strict:true l ~cmp:Int.cmp)
   );
+  printf "@]";
 
   [%expect{|
     is_sorted               [] -> true
@@ -294,26 +259,8 @@ let%expect_test "is_sorted" =
   |}]
 
 let%expect_test "[rev_]dedup" =
-  let open Printf in
-  let print_uint_pair_list lst = begin
-    printf "[";
-    let rec fn lst = begin
-      match lst with
-      | [] -> ()
-      | (a, b) :: tl -> begin
-          printf "; (%u, %u)" a b;
-          fn tl
-        end
-    end in
-    let () = match lst with
-      | [] -> ()
-      | (a, b) :: tl -> begin
-          printf "(%u, %u)" a b;
-          fn tl
-        end
-    in
-    printf "]"
-  end in
+  let open Format in
+  let pp_pair ppf (a, b) = Format.fprintf ppf "(%u, %u)" a b in
   let pair_lists = [
     [];
     [(0, 0)];
@@ -324,16 +271,15 @@ let%expect_test "[rev_]dedup" =
     [(1, 0); (0, 1); (0, 2)];
     [(0, 0); (1, 1); (1, 2); (2, 3)];
   ] in
+  printf "@[<h>";
   iter pair_lists ~f:(fun pl ->
-    printf "[rev_]dedup ";
-    print_uint_pair_list pl;
-    printf " -> ";
-    let cmp (a, _) (b, _) = I63.cmp a b in
-    print_uint_pair_list (dedup pl ~cmp);
-    printf " / ";
-    print_uint_pair_list (rev_dedup pl ~cmp);
-    printf "\n"
+    let cmp (a, _) (b, _) = Int.cmp a b in
+    printf "[rev_]dedup %a -> %a / %a\n"
+      (pp pp_pair) pl
+      (pp pp_pair) (dedup pl ~cmp)
+      (pp pp_pair) (rev_dedup pl ~cmp)
   );
+  printf "@]";
 
   [%expect{|
     [rev_]dedup [] -> [] / []
@@ -346,26 +292,8 @@ let%expect_test "[rev_]dedup" =
   |}]
 
 let%expect_test "[rev_]dedup_sorted" =
-  let open Printf in
-  let print_uint_pair_list lst = begin
-    printf "[";
-    let rec fn lst = begin
-      match lst with
-      | [] -> ()
-      | (a, b) :: tl -> begin
-          printf "; (%u, %u)" a b;
-          fn tl
-        end
-    end in
-    let () = match lst with
-      | [] -> ()
-      | (a, b) :: tl -> begin
-          printf "(%u, %u)" a b;
-          fn tl
-        end
-    in
-    printf "]"
-  end in
+  let open Format in
+  let pp_pair ppf (a, b) = Format.fprintf ppf "(%u, %u)" a b in
   let pair_lists = [
     [];
     [(0, 0)];
@@ -376,17 +304,17 @@ let%expect_test "[rev_]dedup_sorted" =
 
     [(0, 0); (0, 1); (1, 2); (1, 3); (2, 4); (2, 5)];
   ] in
+  printf "@[<h>";
   iter pair_lists ~f:(fun pl ->
-    printf "[rev_]dedup_sorted ";
-    print_uint_pair_list pl;
-    printf " -> ";
     let cmp (a, _) (b, _) = I63.cmp a b in
     assert (is_sorted pl ~cmp);
-    print_uint_pair_list (dedup_sorted pl ~cmp);
-    printf " / ";
-    print_uint_pair_list (rev_dedup_sorted pl ~cmp);
-    printf "\n"
+    printf "[rev_]dedup_sorted %a -> %a / %a\n"
+      (pp pp_pair) pl
+      (pp pp_pair) (dedup_sorted pl ~cmp)
+      (pp pp_pair) (rev_dedup_sorted pl ~cmp)
+    ;
   );
+  printf "@]";
 
   [%expect{|
     [rev_]dedup_sorted [] -> [] / []
@@ -398,26 +326,8 @@ let%expect_test "[rev_]dedup_sorted" =
   |}]
 
 let%expect_test "[rev_]merge" =
-  let open Printf in
-  let print_uint_pair_list lst = begin
-    printf "[";
-    let rec fn lst = begin
-      match lst with
-      | [] -> ()
-      | (a, b) :: tl -> begin
-          printf "; (%u, %u)" a b;
-          fn tl
-        end
-    end in
-    let () = match lst with
-      | [] -> ()
-      | (a, b) :: tl -> begin
-          printf "(%u, %u)" a b;
-          fn tl
-        end
-    in
-    printf "]"
-  end in
+  let open Format in
+  let pp_pair ppf (a, b) = Format.fprintf ppf "(%u, %u)" a b in
   let pair_list_pairs = [
     ([], []);
     ([(0, 0)], []);
@@ -431,20 +341,18 @@ let%expect_test "[rev_]merge" =
     ([(0, 0); (1, 1); (2, 2); (3, 3)], [(1, 4)]);
     ([(0, 0)], [(0, 1); (1, 2); (2, 3)]);
   ] in
+  printf "@[<h>";
   iter pair_list_pairs ~f:(fun (a, b) ->
-    printf "[rev_]merge ";
-    print_uint_pair_list a;
-    printf " ";
-    print_uint_pair_list b;
-    printf " -> ";
     let cmp (a, _) (b, _) = I63.cmp a b in
     assert (is_sorted a ~cmp);
     assert (is_sorted b ~cmp);
-    print_uint_pair_list (merge a b ~cmp);
-    printf " / ";
-    print_uint_pair_list (rev_merge a b ~cmp);
-    printf "\n"
+    printf "[rev_]merge %a %a -> %a / %a\n"
+      (pp pp_pair) a
+      (pp pp_pair) b
+      (pp pp_pair) (merge a b ~cmp)
+      (pp pp_pair) (rev_merge a b ~cmp)
   );
+  printf "@]";
 
   [%expect{|
     [rev_]merge [] [] -> [] / []

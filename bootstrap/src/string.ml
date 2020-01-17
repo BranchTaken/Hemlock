@@ -1105,11 +1105,12 @@ module Slice = struct
       in
       {p=s; pi}
 
+    (* XXX Refator to use Format. *)
     let pretty_print t =
-      let open Printf in
+      let open Format in
       printf " p=\"%s\"\npi=[" t.p;
       Array.iter t.pi ~f:(fun elm ->
-        let () = printf "%a" fmt (Cursori.cindex elm) in
+        let () = printf "%a" pp (Cursori.cindex elm) in
         ()
       );
       let () = printf "]\n" in
@@ -1820,18 +1821,18 @@ end
  *)
 
 let%expect_test "hash_fold" =
-  let open Printf in
+  let open Format in
 
   let s = "hello" in
   let h = Hash.(t_of_state (hash_fold (Hash.state_of_uint (Uint.kv 0)) s)) in
-  printf "hash_fold \"%s\"=%a\n" s Hash.fmt_hex h;
+  printf "hash_fold \"%s\"=%a\n" s Hash.pp_x h;
 
   [%expect{|
     hash_fold "hello"=0x321f6e00
     |}]
 
 let%expect_test "cmp" =
-  let open Printf in
+  let open Format in
   let strs = [
     "";
     "a";
@@ -1883,7 +1884,7 @@ let%expect_test "cmp" =
     |}]
 
 let%expect_test "sexp" =
-  let open Printf in
+  let open Format in
   let s = "hello" in
   let sexp = sexp_of_t s in
   let t = t_of_sexp sexp in
@@ -1895,7 +1896,7 @@ let%expect_test "sexp" =
     |}]
 
 let%expect_test "string" =
-  let open Printf in
+  let open Format in
 
   let s = "hello" in
   let s2 = of_string s in
@@ -1908,7 +1909,7 @@ let%expect_test "string" =
     |}]
 
 let%expect_test "length" =
-  let open Printf in
+  let open Format in
   let strs = [
     "";
     "<_>";
@@ -1919,8 +1920,8 @@ let%expect_test "length" =
   List.iter strs ~f:(fun s ->
     printf "s=\"%s\", blength=%a, clength=%a, is_empty=%B\n"
       s
-      fmt (blength s)
-      fmt (clength s)
+      pp (blength s)
+      pp (clength s)
       (is_empty s)
   );
 
@@ -1933,7 +1934,7 @@ let%expect_test "length" =
     |}]
 
 let%expect_test "get" =
-  let open Printf in
+  let open Format in
   let strs = [
     "";
     "<_>";
@@ -1964,7 +1965,7 @@ let%expect_test "get" =
     |}]
 
 let%expect_test "cursor" =
-  let open Printf in
+  let open Format in
   let test_fwd s = begin
     let rec fn cursor i_prev = begin
       match Cursor.(cursor = (tl s)) with
@@ -1979,7 +1980,7 @@ let%expect_test "cursor" =
                   = (at s ~bindex:i_prev));
             done
           in
-          printf " %a=%s" fmt i (of_codepoint (Cursor.rget cursor));
+          printf " %a=%s" pp i (of_codepoint (Cursor.rget cursor));
           fn (Cursor.succ cursor) i
         end
     end in
@@ -1999,7 +2000,7 @@ let%expect_test "cursor" =
               assert Cursor.((near s ~bindex:Uint.(i + j)) = (at s ~bindex:i));
             done
           in
-          printf " %a=%s" fmt i (of_codepoint (Cursor.lget cursor));
+          printf " %a=%s" pp i (of_codepoint (Cursor.lget cursor));
           fn (Cursor.pred cursor) i
         end
     end in
@@ -2023,7 +2024,7 @@ let%expect_test "cursor" =
     |}]
 
 let%expect_test "cursori" =
-  let open Printf in
+  let open Format in
 
   let test_fwd s = begin
     let rec fn cursori = begin
@@ -2032,7 +2033,7 @@ let%expect_test "cursori" =
       | false -> begin
           let i = Cursori.cindex cursori in
           assert Cursori.((at s ~cindex:i) = cursori);
-          printf " %a=%s" fmt i (of_codepoint (Cursori.rget cursori));
+          printf " %a=%s" pp i (of_codepoint (Cursori.rget cursori));
           fn (Cursori.succ cursori)
         end
     end in
@@ -2047,7 +2048,7 @@ let%expect_test "cursori" =
       | false -> begin
           let i = Cursori.cindex cursori in
           assert Cursori.((at s ~cindex:i) = cursori);
-          printf " %a=%s" fmt i (of_codepoint (Cursori.lget cursori));
+          printf " %a=%s" pp i (of_codepoint (Cursori.lget cursori));
           fn (Cursori.pred cursori)
         end
     end in
@@ -2072,7 +2073,7 @@ let%expect_test "cursori" =
     |}]
 
 let%expect_test "fold_until" =
-  let open Printf in
+  let open Format in
   let test_fold_until s = begin
     printf "fold_until \"%s\" ->" s;
     let () = fold_until s ~init:() ~f:(fun _ cp ->
@@ -2094,7 +2095,7 @@ let%expect_test "fold_until" =
     |}]
 
 let%expect_test "fold_right_until" =
-  let open Printf in
+  let open Format in
   let test_fold_right_until s = begin
     printf "fold_right_until \"%s\" ->" s;
     let () = fold_right_until s ~init:() ~f:(fun cp _ ->
@@ -2116,7 +2117,7 @@ let%expect_test "fold_right_until" =
     |}]
 
 let%expect_test "foldi_until" =
-  let open Printf in
+  let open Format in
   let test_foldi_until s = begin
     printf "foldi_until \"%s\" ->" s;
     let () = foldi_until s ~init:() ~f:(fun i _ cp ->
@@ -2138,7 +2139,7 @@ let%expect_test "foldi_until" =
     |}]
 
 let%expect_test "fold" =
-  let open Printf in
+  let open Format in
   let test_fold s = begin
     printf "fold \"%s\" ->" s;
     let () = fold s ~init:() ~f:(fun _ cp -> printf " %s" (of_codepoint cp)) in
@@ -2156,7 +2157,7 @@ let%expect_test "fold" =
     |}]
 
 let%expect_test "fold_right" =
-  let open Printf in
+  let open Format in
   let test_fold_right s = begin
     printf "fold_right \"%s\" ->" s;
     let () = fold_right s ~init:() ~f:(fun cp _ ->
@@ -2176,7 +2177,7 @@ let%expect_test "fold_right" =
     |}]
 
 let%expect_test "foldi" =
-  let open Printf in
+  let open Format in
   let test_foldi s = begin
     printf "foldi \"%s\" ->" s;
     let () = foldi s ~init:() ~f:(fun i _ cp ->
@@ -2195,7 +2196,7 @@ let%expect_test "foldi" =
     |}]
 
 let%expect_test "iter" =
-  let open Printf in
+  let open Format in
   let test_iter s = begin
     printf "iter \"%s\" ->" s;
     let () = iter s ~f:(fun cp -> printf " %s" (of_codepoint cp)) in
@@ -2213,7 +2214,7 @@ let%expect_test "iter" =
     |}]
 
 let%expect_test "iteri" =
-  let open Printf in
+  let open Format in
   let test_iteri s = begin
     printf "iteri \"%s\" ->" s;
     let () = iteri s ~f:(fun i cp ->
@@ -2233,7 +2234,7 @@ let%expect_test "iteri" =
     |}]
 
 let%expect_test "for_" =
-  let open Printf in
+  let open Format in
   let test_for s cp = begin
     let f codepoint = Codepoint.(codepoint = cp) in
     printf "for_any \"%s\" '%s' -> %B\n" s (of_codepoint cp) (for_any s ~f);
@@ -2265,7 +2266,7 @@ let%expect_test "for_" =
     |}]
 
 let%expect_test "find" =
-  let open Printf in
+  let open Format in
   let test_find s ~f = begin
     printf "find \"%s\" -> %s\n" s (match find s ~f with
       | None -> "None"
@@ -2287,7 +2288,7 @@ let%expect_test "find" =
     |}]
 
 let%expect_test "find_map" =
-  let open Printf in
+  let open Format in
   let test_find_map s ~f = begin
     printf "find_map \"%s\" -> %s\n" s (match find_map s ~f with
       | None -> "None"
@@ -2309,7 +2310,7 @@ let%expect_test "find_map" =
     |}]
 
 let%expect_test "_elm" =
-  let open Printf in
+  let open Format in
   let test_elm s ~cmp = begin
     printf "min_elm \"%s\" -> %s\n" s (match min_elm s ~cmp with
       | None -> "None"
@@ -2343,7 +2344,7 @@ let%expect_test "_elm" =
     |}]
 
 let%expect_test "init" =
-  let open Printf in
+  let open Format in
   let codepoints = Array.of_list [
     (Codepoint.of_char 'a');
     (Codepoint.of_char 'b');
@@ -2362,7 +2363,7 @@ let%expect_test "init" =
     |}]
 
 let%expect_test "list" =
-  let open Printf in
+  let open Format in
   let test_list l = begin
     let s = of_list l in
     let l' = to_list s in
@@ -2417,7 +2418,7 @@ let%expect_test "list" =
     |}]
 
 let%expect_test "array" =
-  let open Printf in
+  let open Format in
   let test_array a = begin
     let s = of_array a in
     let a' = to_array s in
@@ -2461,7 +2462,7 @@ let%expect_test "array" =
     |}]
 
 let%expect_test "map" =
-  let open Printf in
+  let open Format in
   let s = "abcde" in
   printf "map: \"%s\" -> \"%s\"\n" s (map s ~f:(fun cp ->
     Codepoint.(cp - (kv 32))));
@@ -2486,7 +2487,7 @@ let%expect_test "map" =
     |}]
 
 let%expect_test "rev" =
-  let open Printf in
+  let open Format in
   let test_rev s = begin
     printf "rev \"%s\" -> \"%s\"\n" s (rev s);
   end in
@@ -2504,7 +2505,7 @@ let%expect_test "rev" =
     rev "abcd" -> "dcba" |}]
 
 let%expect_test "concat" =
-  let open Printf in
+  let open Format in
   printf "%s\n" (concat [""]);
   printf "%s\n" (concat [""; ""]);
   printf "%s\n" (concat [""; ""; ""]);
@@ -2551,7 +2552,7 @@ let%expect_test "concat" =
     |}]
 
 let%expect_test "concat_map" =
-  let open Printf in
+  let open Format in
   let s = "abcde\n" in
   printf "%s" s;
   printf "%s" (concat_map s ~f:(fun cp -> of_codepoint cp));
@@ -2569,7 +2570,7 @@ let%expect_test "concat_map" =
     |}]
 
 let%expect_test "escaped" =
-  let open Printf in
+  let open Format in
 
   let rec fn i = begin
     match i with
@@ -2714,18 +2715,18 @@ let%expect_test "escaped" =
     |}]
 
 let%expect_test "find" =
-  let open Printf in
+  let open Format in
   let test_find s cp = begin
     printf "lfind \"%s\" '%s' -> %s\n" s (of_codepoint cp)
       (match lfind s cp with
        | None -> "<not found>"
-       | Some cursor -> sprintf "%a" s_fmt (Cursor.bindex cursor)
+       | Some cursor -> asprintf "%a" pp (Cursor.bindex cursor)
       );
     printf "contains \"%s\" '%s' -> %B\n" s (of_codepoint cp) (contains s cp);
     printf "rfind \"%s\" '%s' -> %s\n" s (of_codepoint cp)
       (match rfind s cp with
        | None -> "<not found>"
-       | Some cursor -> sprintf "%a" s_fmt (Cursor.bindex cursor)
+       | Some cursor -> asprintf "%a" pp (Cursor.bindex cursor)
       )
   end in
   test_find "" Codepoint.(of_char 'b');
@@ -2753,7 +2754,7 @@ let%expect_test "find" =
     |}]
 
 let%expect_test "substr_find" =
-  let open Printf in
+  let open Format in
   let patterns = ["";
                   "a";
                   "aa";
@@ -2912,7 +2913,7 @@ let%expect_test "substr_find" =
     |}]
 
 let%expect_test "substr_replace" =
-  let open Printf in
+  let open Format in
   let replacements = [
     (* pattern, with, in *)
     ("", "", "");
@@ -3025,7 +3026,7 @@ let%expect_test "substr_replace" =
     |}]
 
 let%expect_test "slice" =
-  let open Printf in
+  let open Format in
   let strs = [
     "";
     "<_>";
@@ -3074,7 +3075,7 @@ let%expect_test "slice" =
     |}]
 
 let%expect_test "xfix" =
-  let open Printf in
+  let open Format in
   let strs = [
     "";
     "<_>";
@@ -3083,8 +3084,8 @@ let%expect_test "xfix" =
   List.iter strs ~f:(fun s ->
     for i = 0 to Uint.(to_int ((clength s) + (kv 1))) do
       let i = Uint.of_int i in
-      printf "prefix \"%s\" %a -> \"%s\"\n" s fmt i (prefix s i);
-      printf "suffix \"%s\" %a -> \"%s\"\n" s fmt i (suffix s i);
+      printf "prefix \"%s\" %a -> \"%s\"\n" s pp i (prefix s i);
+      printf "suffix \"%s\" %a -> \"%s\"\n" s pp i (suffix s i);
     done
   );
 
@@ -3114,7 +3115,7 @@ let%expect_test "xfix" =
     |}]
 
 let%expect_test "prefix" =
-  let open Printf in
+  let open Format in
   let test_prefix s ~prefix = begin
     printf "is_prefix \"%s\" ~prefix:\"%s\" -> %B\n" s prefix
       (is_prefix s ~prefix);
@@ -3154,7 +3155,7 @@ let%expect_test "prefix" =
     chop_prefix "abc" ~prefix:"abcd" -> None |}]
 
 let%expect_test "suffix" =
-  let open Printf in
+  let open Format in
   let test_suffix s ~suffix = begin
     printf "is_suffix \"%s\" ~suffix:\"%s\" -> %B\n" s suffix
       (is_suffix s ~suffix);
@@ -3194,7 +3195,7 @@ let%expect_test "suffix" =
     chop_suffix "abc" ~suffix:"dabc" -> None |}]
 
 let%expect_test "strip" =
-  let open Printf in
+  let open Format in
   let test_strip ?drop s = begin
     printf "lstrip \"%s\" -> \"%s\"\n" s (lstrip ?drop s);
     printf "rstrip \"%s\" -> \"%s\"\n" s (rstrip ?drop s);
@@ -3215,7 +3216,7 @@ let%expect_test "strip" =
     |}]
 
 let%expect_test "split" =
-  let open Printf in
+  let open Format in
   let test_split s f cp = begin
     printf "split \"%s\" -> [" s;
     List.iteri (split s ~f) ~f:(fun i substr ->
@@ -3264,7 +3265,7 @@ let%expect_test "split" =
     |}]
 
 let%expect_test "split_lines" =
-  let open Printf in
+  let open Format in
   let test_split_lines s = begin
     printf "split_lines %S -> [" s;
     List.iteri (split_lines s)~f:(fun i substr ->

@@ -359,6 +359,14 @@ val rev_foldi2_map: 'a t -> 'b t -> init:'accum
     of two lists, calling the indexed element folding/mapping function in
     increasing index order. *)
 
+(** {1 Utilities} *)
+
+val pp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+(** [pp pp_elm ppf t] prints a syntactic representation of [t] to the pretty
+    printing formatter, [ppf], using the [pp_elm] printer for the elements.
+    This function is intended for use with the [%a] format specifier to
+    {!Format.printf}. *)
+
 (** {1 Associative maps} *)
 
 (** Treat a list of [(key * value)] pairs as a map, with the caveat that

@@ -1001,23 +1001,24 @@ let sexp_of_t t =
 let t_of_sexp sexp =
   Sexplib.Std.array_of_sexp sexp
 
+let pp pp_elm ppf t =
+  let open Format in
+  fprintf ppf "@[<h>[|";
+  iteri t ~f:(fun i elm ->
+    if Uint.(i > (kv 0)) then fprintf ppf ";@ ";
+    fprintf ppf "%a" pp_elm elm
+  );
+  fprintf ppf "|]@]"
+
 (*******************************************************************************
  * Begin tests.
  *)
 
 let%expect_test "cursor" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let rec fn arr hd cursor tl = begin
     let index = Cursor.index cursor in
-    printf "index=%a" Uint.fmt index;
+    printf "index=%a" Uint.pp index;
     printf ", container %s arr"
       (Sexplib.Sexp.to_string
           (Cmp.sexp_of_t (cmp Int.cmp (Cursor.container cursor) arr)));
@@ -1068,13 +1069,13 @@ let%expect_test "cursor" =
     [|0; 1|];
     [|0; 1; 2|];
   ] in
+  printf "@[<h>";
   List.iter arrs ~f:(fun arr ->
-    printf "--- ";
-    print_uint_array arr;
-    printf " ---\n";
+    printf "--- %a ---\n" (pp Int.pp) arr;
     let hd = Cursor.hd arr in
     fn arr hd hd (Cursor.tl arr)
   );
+  printf "@]";
 
   [%expect{|
     --- [||] ---
@@ -1094,15 +1095,7 @@ let%expect_test "cursor" =
     |}]
 
 let%expect_test "cmp" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let arrs = [
     [||];
     [|0|];
@@ -1117,12 +1110,10 @@ let%expect_test "cmp" =
     | [] -> ()
     | hd :: tl -> begin
         let () = List.iter arrs ~f:(fun arr2 ->
-          printf "cmp ";
-          print_uint_array arr;
-          printf " ";
-          print_uint_array arr2;
-          printf " -> %s\n"
-            (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp Int.cmp arr arr2)))
+          printf "cmp %a %a -> %a\n"
+            (pp Int.pp) arr
+            (pp Int.pp) arr2
+            Cmp.pp (cmp Int.cmp arr arr2)
         ) in
         fn hd tl
       end
@@ -1131,7 +1122,9 @@ let%expect_test "cmp" =
     | hd :: tl -> hd, tl
     | [] -> not_reached ()
   in
+  printf "@[<h>";
   fn hd tl;
+  printf "@]";
 
   [%expect{|
     cmp [||] [|0|] -> Lt
@@ -1158,21 +1151,19 @@ let%expect_test "cmp" =
     |}]
 
 let%expect_test "get,length,is_empty" =
-  let open Printf in
+  let open Format in
   let test_length arr = begin
-    printf "[|";
-    for i = 0 to Uint.(to_int (pred (length arr))) do
-      let i = Uint.of_int i in
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" (get arr i)
-    done;
-    printf "|]: length=%a, is_empty=%B\n"
-      Uint.fmt (length arr) (is_empty arr)
+    printf "%a: length=%a, is_empty=%B\n"
+      (pp Int.pp) arr
+      Uint.pp (length arr)
+      (is_empty arr)
   end in
+  printf "@[<h>";
   test_length [||];
   test_length [|0|];
   test_length [|0; 1|];
   test_length [|0; 1; 2|];
+  printf "@]";
 
   [%expect{|
     [||]: length=0, is_empty=true
@@ -1182,39 +1173,31 @@ let%expect_test "get,length,is_empty" =
     |}]
 
 let%expect_test "set,set_inplace" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_set len = begin
     for i = 0 to Uint.(to_int (pred len)) do
       let i = Uint.of_int i in
       let arr = init len ~f:(fun _ -> 0) in
       let arr' = set arr i 1 in
-      printf "set %a: " Uint.fmt i;
-      print_uint_array arr;
-      printf " -> ";
-      print_uint_array arr';
-      printf " -> set_inplace: ";
+      printf "set %a: %a -> %a"
+        Uint.pp i
+        (pp Int.pp) arr
+        (pp Int.pp) arr'
+      ;
       set_inplace arr i 1;
-      print_uint_array arr;
-      printf " -> copy,set_inplace: ";
+      printf " -> set_inplace: %a" (pp Int.pp) arr;
       let arr'' = copy arr in
+      printf " -> copy,set_inplace: %a" (pp Int.pp) arr'';
       set_inplace arr'' i 2;
-      print_uint_array arr;
-      printf " -> ";
-      print_uint_array arr'';
-      printf "\n";
+      printf " -> %a\n"
+        (pp Int.pp) arr''
     done
   end in
+  printf "@[<h>";
   test_set (Uint.kv 1);
   test_set (Uint.kv 2);
   test_set (Uint.kv 3);
+  printf "@]";
 
   [%expect{|
     set 0: [|0|] -> [|1|] -> set_inplace: [|1|] -> copy,set_inplace: [|1|] -> [|2|]
@@ -1226,34 +1209,28 @@ let%expect_test "set,set_inplace" =
     |}]
 
 let%expect_test "pare" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test arr = begin
-    printf "pare ";
-    print_uint_array arr;
-    printf " ->";
+    printf "pare %a ->" (pp Int.pp) arr;
     for i = 0 to Uint.to_int (length arr) do
       for j = i to Uint.to_int (length arr) do
         let i = Uint.of_int i in
         let j = Uint.of_int j in
         let arr' = pare arr ~base:i ~past:j in
-        printf " [%a,%a)=" Uint.fmt i Uint.fmt j;
-        print_uint_array arr'
+        printf " [%a,%a)=%a"
+          Uint.pp i
+          Uint.pp j
+          (pp Int.pp) arr'
       done
     done;
     printf "\n"
   end in
+  printf "@[<h>";
   test [||];
   test [|0|];
   test [|0; 1|];
   test [|0; 1; 2|];
+  printf "@]";
 
   [%expect{|
     pare [||] -> [0,0)=[||]
@@ -1263,34 +1240,18 @@ let%expect_test "pare" =
     |}]
 
 let%expect_test "join" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test ?sep arrs = begin
     printf "join";
     let () = match sep with
     | None -> ()
-    | Some sep -> begin
-        printf " ~sep:";
-        print_uint_array sep
-      end
+    | Some sep -> printf " ~sep:%a" (pp Int.pp) sep;
     in
-    printf " [";
-    List.iteri arrs ~f:(fun i arr ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      print_uint_array arr
-    );
-    printf "] -> ";
-    let arr = join ?sep arrs in
-    print_uint_array arr;
-    printf "\n"
+    printf " %a -> %a\n"
+      (List.pp (pp Int.pp)) arrs
+      (pp Int.pp) (join ?sep arrs)
   end in
+  printf "@[<h>";
   test [];
   test [[||]];
   test [[||]; [||]];
@@ -1326,6 +1287,7 @@ let%expect_test "join" =
   test ~sep:[|3|] [[|0|]; [|1|]; [||]];
   test ~sep:[|3|] [[|0|]; [||]; [|1|]];
   test ~sep:[|3|] [[|0|]; [|1|]; [|2|]];
+  printf "@]";
 
   [%expect{|
     join [] -> [||]
@@ -1359,25 +1321,15 @@ let%expect_test "join" =
     |}]
 
 let%expect_test "concat" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test arr0 arr1 = begin
-    printf "concat ";
-    print_uint_array arr0;
-    printf " ";
-    print_uint_array arr1;
-    printf " -> ";
-    let arr = concat arr0 arr1 in
-    print_uint_array arr;
-    printf "\n"
+    printf "concat %a %a -> %a\n"
+      (pp Int.pp) arr0
+      (pp Int.pp) arr1
+      (pp Int.pp) (concat arr0 arr1)
+    ;
   end in
+  printf "@[<h>";
   test [||] [||];
   test [|0|] [||];
   test [||] [|0|];
@@ -1385,6 +1337,7 @@ let%expect_test "concat" =
   test [|0; 1|] [|2|];
   test [|0|] [|1; 2|];
   test [|0; 1|] [|2; 3|];
+  printf "@]";
 
   [%expect{|
     concat [||] [||] -> [||]
@@ -1397,29 +1350,22 @@ let%expect_test "concat" =
     |}]
 
 let%expect_test "append,prepend" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test arr x = begin
-    print_uint_array arr;
-    printf " %u: append -> " x;
     let arr_x = append arr x in
-    print_uint_array arr_x;
-    printf ", prepend -> ";
     let x_arr = prepend x arr in
-    print_uint_array x_arr;
-    printf "\n"
+    printf "%a %u: append -> %a, prepend -> %a\n"
+      (pp Int.pp) arr
+      x
+      (pp Int.pp) arr_x
+      (pp Int.pp) x_arr
   end in
+  printf "@[<h>";
   test [||] 0;
   test [|0|] 1;
   test [|0; 1|] 2;
   test [|0; 1; 2|] 3;
+  printf "@]";
 
   [%expect{|
     [||] 0: append -> [|0|], prepend -> [|0|]
@@ -1429,31 +1375,25 @@ let%expect_test "append,prepend" =
     |}]
 
 let%expect_test "insert" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test arr x = begin
-    printf "insert ";
-    print_uint_array arr;
-    printf " %u ->" x;
+    printf "insert %a %u ->"
+      (pp Int.pp) arr
+      x
+    ;
     for i = 0 to Uint.to_int (length arr) do
       let i = Uint.of_int i in
       let arr' = insert arr i x in
-      printf " ";
-      print_uint_array arr'
+      printf " %a" (pp Int.pp) arr'
     done;
     printf "\n"
   end in
+  printf "@[<h>";
   test [||] 0;
   test [|0|] 1;
   test [|0; 1|] 2;
   test [|0; 1; 2|] 3;
+  printf "@]";
 
   [%expect{|
     insert [||] 0 -> [|0|]
@@ -1463,30 +1403,21 @@ let%expect_test "insert" =
     |}]
 
 let%expect_test "remove" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test arr = begin
-    printf "remove ";
-    print_uint_array arr;
-    printf " ->";
+    printf "remove %a ->" (pp Int.pp) arr;
     for i = 0 to Uint.(to_int (pred (length arr))) do
       let i = Uint.of_int i in
       let arr' = remove arr i in
-      printf " ";
-      print_uint_array arr'
+      printf " %a" (pp Int.pp) arr';
     done;
     printf "\n"
   end in
+  printf "@[<h>";
   test [|0|];
   test [|0; 1|];
   test [|0; 1; 2|];
+  printf "@]";
 
   [%expect{|
     remove [|0|] -> [||]
@@ -1495,28 +1426,21 @@ let%expect_test "remove" =
     |}]
 
 let%expect_test "reduce" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_reduce arr ~f = begin
-    printf "reduce ";
-    print_uint_array arr;
+    printf "reduce %a" (pp Uint.pp) arr;
     match reduce arr ~f with
     | None -> printf " -> None\n"
-    | Some x -> printf " -> %a\n" Uint.fmt x
+    | Some x -> printf " -> %a\n" Uint.pp x
   end in
   let f a b =
     Uint.(a + b)
   in
+  printf "@[<h>";
   test_reduce [||] ~f;
   test_reduce [|(Uint.kv 0); (Uint.kv 1); (Uint.kv 2); (Uint.kv 3);
                 (Uint.kv 4)|] ~f;
+  printf "@]";
 
   [%expect{|
     reduce [||] -> None
@@ -1524,39 +1448,31 @@ let%expect_test "reduce" =
     |}]
 
 let%expect_test "swap,swap_inplace" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_swap arr = begin
     for i = 0 to Uint.(to_int (pred (length arr))) do
       for j = i to Uint.(to_int (pred (length arr))) do
         let i = Uint.of_int i in
         let j = Uint.of_int j in
         let arr' = copy arr in
-        printf "%a %a: swap " Uint.fmt i Uint.fmt j;
-        print_uint_array arr';
-        printf " -> ";
-        print_uint_array (swap arr' i j);
-
-        printf " -> swap_inplace ";
-        print_uint_array arr';
+        printf "%a %a: swap %a -> %a -> swap_inplace %a -> "
+          Uint.pp i
+          Uint.pp j
+          (pp Int.pp) arr'
+          (pp Int.pp) (swap arr' i j)
+          (pp Int.pp) arr'
+        ;
         swap_inplace arr' i j;
-        printf " -> ";
-        print_uint_array arr';
-        printf "\n"
+        printf "%a\n" (pp Int.pp) arr'
       done
     done
   end in
+  printf "@[<h>";
   test_swap [|0|];
   test_swap [|0; 1|];
   test_swap [|0; 1; 2|];
   test_swap [|0; 1; 2; 3|];
+  printf "@]";
 
   [%expect{|
     0 0: swap [|0|] -> [|0|] -> swap_inplace [|0|] -> [|0|]
@@ -1582,33 +1498,22 @@ let%expect_test "swap,swap_inplace" =
     |}]
 
 let%expect_test "rev,rev_inplace" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_rev arr = begin
-    printf "rev ";
-    print_uint_array arr;
-    printf " -> ";
-    print_uint_array (rev arr);
-
-    printf " -> rev_inplace ";
-    print_uint_array arr;
-    printf " -> ";
+    printf "rev %a -> %a -> rev_inplace %a -> "
+      (pp Int.pp) arr
+      (pp Int.pp) (rev arr)
+      (pp Int.pp) arr
+    ;
     rev_inplace arr;
-    print_uint_array arr;
-
-    printf "\n"
+    printf "%a\n" (pp Int.pp) arr
   end in
+  printf "@[<h>";
   test_rev [|0|];
   test_rev [|0; 1|];
   test_rev [|0; 1; 2|];
   test_rev [|0; 1; 2; 3|];
+  printf "@]";
 
   [%expect{|
     rev [|0|] -> [|0|] -> rev_inplace [|0|] -> [|0|]
@@ -1618,25 +1523,19 @@ let%expect_test "rev,rev_inplace" =
     |}]
 
 let%expect_test "blit" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_blit arr0 i0 arr1 i1 len = begin
-    printf "blit ";
-    print_uint_array arr0;
-    printf " %a " Uint.fmt i0;
-    print_uint_array arr1;
-    printf " %a %a -> " Uint.fmt i1 Uint.fmt len;
+    printf "blit %a %a %a %a %a -> "
+      (pp Int.pp) arr0
+      Uint.pp i0
+      (pp Int.pp) arr1
+      Uint.pp i1
+      Uint.pp len
+    ;
     blit arr0 i0 arr1 i1 len;
-    print_uint_array arr1;
-    printf "\n"
+    printf "%a\n" (pp Int.pp) arr1
   end in
+  printf "@[<h>";
   test_blit [||] (Uint.kv 0) [||] (Uint.kv 0) (Uint.kv 0);
   test_blit [|0|] (Uint.kv 0) [|1|] (Uint.kv 0) (Uint.kv 1);
   test_blit [|0; 1|] (Uint.kv 1) [|2|] (Uint.kv 0) (Uint.kv 1);
@@ -1644,6 +1543,7 @@ let%expect_test "blit" =
   test_blit [|0; 1|] (Uint.kv 0) [|2; 3|] (Uint.kv 0) (Uint.kv 2);
   test_blit [|0; 1; 2|] (Uint.kv 1) [|3; 4; 5|] (Uint.kv 0) (Uint.kv 2);
   test_blit [|0; 1; 2|] (Uint.kv 0) [|3; 4; 5|] (Uint.kv 0) (Uint.kv 3);
+  printf "@]";
 
   [%expect{|
     blit [||] 0 [||] 0 0 -> [||]
@@ -1656,21 +1556,14 @@ let%expect_test "blit" =
     |}]
 
 let%expect_test "is_sorted" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_is_sorted arr = begin
-    printf "is_sorted ";
-    print_uint_array arr;
-    printf ": not strict -> %B, strict -> %B\n"
-      (is_sorted arr ~cmp:Uint.cmp) (is_sorted ~strict:true arr ~cmp:Uint.cmp)
+    printf "is_sorted %a: not strict -> %B, strict -> %B\n"
+      (pp Uint.pp) arr
+      (is_sorted arr ~cmp:Uint.cmp)
+      (is_sorted ~strict:true arr ~cmp:Uint.cmp)
   end in
+  printf "@[<h>";
   test_is_sorted [||];
   test_is_sorted [|(Uint.kv 0)|];
   test_is_sorted [|(Uint.kv 0); (Uint.kv 0)|];
@@ -1679,6 +1572,7 @@ let%expect_test "is_sorted" =
   test_is_sorted [|(Uint.kv 0); (Uint.kv 1); (Uint.kv 1)|];
   test_is_sorted [|(Uint.kv 0); (Uint.kv 1); (Uint.kv 2)|];
   test_is_sorted [|(Uint.kv 0); (Uint.kv 2); (Uint.kv 1)|];
+  printf "@]";
 
   [%expect{|
     is_sorted [||]: not strict -> true, strict -> true
@@ -1732,45 +1626,37 @@ let%expect_test "sort" =
     |}]
 
 let%expect_test "search" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_search arr key_max = begin
-    print_uint_array arr;
-    printf "\n";
+    printf "%a\n" (pp Uint.pp) arr;
     for probe = 0 to Uint.to_int key_max do
       let probe = Uint.of_int probe in
-      printf "  %a -> %s, %s, %s\n" Uint.fmt probe
+      printf "  %a -> %s, %s, %s\n" Uint.pp probe
         (match psearch arr probe ~cmp:Uint.cmp with
          | None -> "<"
-         | Some (Cmp.Lt, i) -> sprintf "<[%a]=%a"
-             Uint.s_fmt i Uint.s_fmt (get arr i)
-         | Some (Cmp.Eq, i) -> sprintf "=[%a]=%a"
-             Uint.s_fmt i Uint.s_fmt (get arr i)
-         | Some (Cmp.Gt, i) -> sprintf ">[%a]=%a"
-             Uint.s_fmt i Uint.s_fmt (get arr i)
+         | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
+             Uint.pp i Uint.pp (get arr i)
+         | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
+             Uint.pp i Uint.pp (get arr i)
+         | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
+             Uint.pp i Uint.pp (get arr i)
         )
         (match search arr probe ~cmp:Uint.cmp with
          | None -> "<>"
-         | Some i -> sprintf "=%a" Uint.s_fmt (get arr i)
+         | Some i -> asprintf "=%a" Uint.pp (get arr i)
         )
         (match nsearch arr probe ~cmp:Uint.cmp with
-         | Some (Cmp.Lt, i) -> sprintf "<[%a]=%a"
-             Uint.s_fmt i Uint.s_fmt (get arr i)
-         | Some (Cmp.Eq, i) -> sprintf "=[%a]=%a"
-             Uint.s_fmt i Uint.s_fmt (get arr i)
-         | Some (Cmp.Gt, i) -> sprintf ">[%a]=%a"
-             Uint.s_fmt i Uint.s_fmt (get arr i)
+         | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
+             Uint.pp i Uint.pp (get arr i)
+         | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
+             Uint.pp i Uint.pp (get arr i)
+         | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
+             Uint.pp i Uint.pp (get arr i)
          | None -> ">"
         );
     done
   end in
+  printf "@[<h>";
   for len = 0 to 3 do
     let len = Uint.of_int len in
     let arr = init len ~f:(fun i -> Uint.(i * (kv 2) + (kv 1))) in
@@ -1784,6 +1670,7 @@ let%expect_test "search" =
     let key_max = len in
     test_search arr key_max
   done;
+  printf "@]";
 
   [%expect{|
     [||]
@@ -1827,39 +1714,24 @@ let%expect_test "search" =
     |}]
 
 let%expect_test "map,mapi" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
-  let print_string_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "\"%s\"" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
+  let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_map uarr = begin
-    print_uint_array uarr;
-    printf " -> map ";
+    printf "%a -> map " (pp Int.pp) uarr;
     let sarr = map uarr ~f:(fun elm -> sprintf "%u" elm) in
-    print_string_array sarr;
+    printf "%a" (pp pp_str) sarr;
     printf " -> mapi ";
     let sarr = mapi uarr ~f:(fun i elm ->
-      sprintf "[%a]=%u" Uint.s_fmt i elm
+      asprintf "[%a]=%u" Uint.pp i elm
     ) in
-    print_string_array sarr;
-    printf "\n"
+    printf "%a\n" (pp pp_str) sarr
   end in
+  printf "@[<h>";
   test_map [||];
   test_map [|0|];
   test_map [|1; 0|];
   test_map [|2; 1; 0|];
+  printf "@]";
 
   [%expect{|
     [||] -> map [||] -> mapi [||]
@@ -1869,44 +1741,29 @@ let%expect_test "map,mapi" =
     |}]
 
 let%expect_test "fold_map,foldi_map" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
-  let print_string_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "\"%s\"" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
+  let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_fold_map uarr = begin
-    print_uint_array uarr;
-    printf " -> fold_map";
     let accum, sarr = fold_map uarr ~init:(Uint.kv 0) ~f:(fun accum elm ->
-      Uint.(accum + elm), (sprintf "%a" Uint.s_fmt elm)
+      Uint.(accum + elm), (asprintf "%a" Uint.pp elm)
     ) in
-    printf " %a " Uint.fmt accum;
-    print_string_array sarr;
-    printf " -> foldi_map";
-    let accum, sarr = foldi_map uarr ~init:(Uint.kv 0) ~f:(fun i accum elm ->
+    let accum2, sarr2 = foldi_map uarr ~init:(Uint.kv 0) ~f:(fun i accum elm ->
       Uint.(accum + i + elm),
-      (sprintf "[%a]=%a" Uint.s_fmt i Uint.s_fmt elm)
+      (asprintf "[%a]=%a" Uint.pp i Uint.pp elm)
     ) in
-    printf " %a " Uint.fmt accum;
-    print_string_array sarr;
-    printf "\n"
+    printf "%a -> fold_map %a %a -> foldi_map %a %a\n"
+      (pp Uint.pp) uarr
+      Uint.pp accum
+      (pp pp_str) sarr
+      Uint.pp accum2
+      (pp pp_str) sarr2
   end in
+  printf "@[<h>";
   test_fold_map [||];
   test_fold_map [|(Uint.kv 0)|];
   test_fold_map [|(Uint.kv 1); (Uint.kv 0)|];
   test_fold_map [|(Uint.kv 2); (Uint.kv 1); (Uint.kv 0)|];
+  printf "@]";
 
   [%expect{|
     [||] -> fold_map 0 [||] -> foldi_map 0 [||]
@@ -1915,33 +1772,24 @@ let%expect_test "fold_map,foldi_map" =
     [|2; 1; 0|] -> fold_map 3 [|"2"; "1"; "0"|] -> foldi_map 6 [|"[0]=2"; "[1]=1"; "[2]=0"|] |}]
 
 let%expect_test "filter,filteri" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_filter arr = begin
-    print_uint_array arr;
-    printf " -> filter ";
     let farr = filter arr ~f:(fun elm -> Uint.(elm % (kv 2) = (kv 0))) in
-    print_uint_array farr;
-    printf " -> filteri ";
-    let farr = filteri arr ~f:(fun _ elm -> Uint.(elm % (kv 2) = (kv 0))) in
-    print_uint_array farr;
-    printf " ";
-    let farr = filteri arr ~f:(fun i _ -> Uint.(i % (kv 2) = (kv 0))) in
-    print_uint_array farr;
-    printf "\n"
+    let farr2 = filteri arr ~f:(fun _ elm -> Uint.(elm % (kv 2) = (kv 0))) in
+    let farr3 = filteri arr ~f:(fun i _ -> Uint.(i % (kv 2) = (kv 0))) in
+    printf "%a -> filter %a -> filteri %a %a\n"
+      (pp Uint.pp) arr
+      (pp Uint.pp) farr
+      (pp Uint.pp) farr2
+      (pp Uint.pp) farr3
   end in
+  printf "@[<h>";
   test_filter [||];
   test_filter [|(Uint.kv 0)|];
   test_filter [|(Uint.kv 1); (Uint.kv 0)|];
   test_filter [|(Uint.kv 2); (Uint.kv 1); (Uint.kv 0)|];
   test_filter [|(Uint.kv 3); (Uint.kv 2); (Uint.kv 1); (Uint.kv 0)|];
+  printf "@]";
 
   [%expect{|
     [||] -> filter [||] -> filteri [||] [||]
@@ -1951,35 +1799,30 @@ let%expect_test "filter,filteri" =
     [|3; 2; 1; 0|] -> filter [|2; 0|] -> filteri [|2; 0|] [|3; 1|] |}]
 
 let%expect_test "fold2_until,foldi2_until" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_fold2_until uarr0 uarr1 = begin
-    print_uint_array uarr0;
-    printf " ";
-    print_uint_array uarr1;
+    printf "%a %a"
+      (pp Uint.pp) uarr0
+      (pp Uint.pp) uarr1
+    ;
     let accum = fold2_until uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun accum elm0 elm1 ->
           Uint.(accum + elm0 + elm1), Uint.(accum > (kv 10))
         ) in
-    printf " -> fold2_until %a" Uint.fmt accum;
+    printf " -> fold2_until %a" Uint.pp accum;
     let accum = foldi2_until uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun i accum elm0 elm1 ->
           Uint.(accum + i + elm0 + elm1), Uint.((i + (kv 2)) >= (length uarr0))
         ) in
-    printf " -> foldi2_until %a\n" Uint.fmt accum
+    printf " -> foldi2_until %a\n" Uint.pp accum
   end in
+  printf "@[<h>";
   test_fold2_until [||] [||];
   test_fold2_until [|(Uint.kv 1)|] [|(Uint.kv 0)|];
   test_fold2_until [|(Uint.kv 3); (Uint.kv 2)|] [|(Uint.kv 1); (Uint.kv 0)|];
   test_fold2_until [|(Uint.kv 5); (Uint.kv 4); (Uint.kv 3)|]
     [|(Uint.kv 2); (Uint.kv 1); (Uint.kv 0)|];
+  printf "@]";
 
   [%expect{|
     [||] [||] -> fold2_until 0 -> foldi2_until 0
@@ -1988,34 +1831,29 @@ let%expect_test "fold2_until,foldi2_until" =
     [|5; 4; 3|] [|2; 1; 0|] -> fold2_until 15 -> foldi2_until 13 |}]
 
 let%expect_test "fold2,foldi2" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_fold2 uarr0 uarr1 = begin
-    print_uint_array uarr0;
-    printf " ";
-    print_uint_array uarr1;
+    printf "%a %a"
+      (pp Uint.pp) uarr0
+      (pp Uint.pp) uarr1
+    ;
     let accum = fold2 uarr0 uarr1 ~init:(Uint.kv 0) ~f:(fun accum elm0 elm1 ->
       Uint.(accum + elm0 + elm1)
     ) in
-    printf " -> fold2 %a" Uint.fmt accum;
+    printf " -> fold2 %a" Uint.pp accum;
     let accum = foldi2 uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun i accum elm0 elm1 ->
           Uint.(accum + i + elm0 + elm1)
         ) in
-    printf " -> foldi2 %a\n" Uint.fmt accum
+    printf " -> foldi2 %a\n" Uint.pp accum
   end in
+  printf "@[<h>";
   test_fold2 [||] [||];
   test_fold2 [|(Uint.kv 1)|] [|(Uint.kv 0)|];
   test_fold2 [|(Uint.kv 3); (Uint.kv 2)|] [|(Uint.kv 1); (Uint.kv 0)|];
   test_fold2 [|(Uint.kv 5); (Uint.kv 4); (Uint.kv 3)|]
     [|(Uint.kv 2); (Uint.kv 1); (Uint.kv 0)|];
+  printf "@]";
 
   [%expect{|
     [||] [||] -> fold2 0 -> foldi2 0
@@ -2024,7 +1862,7 @@ let%expect_test "fold2,foldi2" =
     [|5; 4; 3|] [|2; 1; 0|] -> fold2 15 -> foldi2 18 |}]
 
 let%expect_test "iteri2" =
-  let open Printf in
+  let open Format in
   let print_uint_arrays arr0 arr1 = begin
     printf "[|";
     iteri2 arr0 arr1 ~f:(fun i elm0 elm1 ->
@@ -2049,43 +1887,27 @@ let%expect_test "iteri2" =
     [|(0, 3); (1, 4); (2, 5)|] |}]
 
 let%expect_test "map2,mapi2" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
-  let print_string_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "\"%s\"" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
+  let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_map2 uarr0 uarr1 = begin
-    print_uint_array uarr0;
-    printf " ";
-    print_uint_array uarr1;
-    printf " -> map2 ";
     let sarr = map2 uarr0 uarr1 ~f:(fun elm0 elm1 ->
       sprintf "(%u,%u)" elm0 elm1
     ) in
-    print_string_array sarr;
-    printf " -> mapi2 ";
-    let sarr = mapi2 uarr0 uarr1 ~f:(fun i elm0 elm1 ->
-      sprintf "[%a]=(%u,%u)" Uint.s_fmt i elm0 elm1
+    let sarr2 = mapi2 uarr0 uarr1 ~f:(fun i elm0 elm1 ->
+      asprintf "[%a]=(%u,%u)" Uint.pp i elm0 elm1
     ) in
-    print_string_array sarr;
-    printf "\n"
+    printf "%a %a -> map2 %a -> mapi2 %a\n"
+      (pp Int.pp) uarr0
+      (pp Int.pp) uarr1
+      (pp pp_str) sarr
+      (pp pp_str) sarr2
   end in
+  printf "@[<h>";
   test_map2 [||] [||];
   test_map2 [|1|] [|0|];
   test_map2 [|3; 2|] [|1; 0|];
   test_map2 [|5; 4; 3|] [|2; 1; 0|];
+  printf "@]";
 
   [%expect{|
     [||] [||] -> map2 [||] -> mapi2 [||]
@@ -2094,51 +1916,35 @@ let%expect_test "map2,mapi2" =
     [|5; 4; 3|] [|2; 1; 0|] -> map2 [|"(5,2)"; "(4,1)"; "(3,0)"|] -> mapi2 [|"[0]=(5,2)"; "[1]=(4,1)"; "[2]=(3,0)"|] |}]
 
 let%expect_test "fold2_map,foldi2_map" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%a" Uint.fmt elm
-    );
-    printf "|]"
-  end in
-  let print_string_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "\"%s\"" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
+  let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_fold2_map uarr0 uarr1 = begin
-    print_uint_array uarr0;
-    printf " ";
-    print_uint_array uarr1;
-    printf " -> fold2_map";
     let accum, sarr = fold2_map uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun accum elm0 elm1 ->
           Uint.(accum + elm0 + elm1),
-          (sprintf "(%a,%a)" Uint.s_fmt elm0 Uint.s_fmt elm1)
+          (asprintf "(%a,%a)" Uint.pp elm0 Uint.pp elm1)
         ) in
-    printf " %a " Uint.fmt accum;
-    print_string_array sarr;
-    printf " -> foldi2_map";
-    let accum, sarr = foldi2_map uarr0 uarr1 ~init:(Uint.kv 0)
+    let accum2, sarr2 = foldi2_map uarr0 uarr1 ~init:(Uint.kv 0)
         ~f:(fun i accum elm0 elm1 ->
           Uint.(accum + i + elm0 + elm1),
-          (sprintf "[%a]=(%a,%a)" Uint.s_fmt i Uint.s_fmt elm0
-             Uint.s_fmt elm1)
+          (asprintf "[%a]=(%a,%a)" Uint.pp i Uint.pp elm0
+             Uint.pp elm1)
         ) in
-    printf " %a " Uint.fmt accum;
-    print_string_array sarr;
-    printf "\n"
+    printf "%a %a -> fold2_map %a %a -> foldi2_map %a %a\n"
+      (pp Uint.pp) uarr0
+      (pp Uint.pp) uarr1
+      Uint.pp accum
+      (pp pp_str) sarr
+      Uint.pp accum2
+      (pp pp_str) sarr2
   end in
+  printf "@[<h>";
   test_fold2_map [||] [||];
   test_fold2_map [|(Uint.kv 1)|] [|(Uint.kv 0)|];
   test_fold2_map [|(Uint.kv 3); (Uint.kv 2)|] [|(Uint.kv 1); (Uint.kv 0)|];
   test_fold2_map [|(Uint.kv 5); (Uint.kv 4); (Uint.kv 3)|]
     [|(Uint.kv 2); (Uint.kv 1); (Uint.kv 0)|];
+  printf "@]";
 
   [%expect{|
     [||] [||] -> fold2_map 0 [||] -> foldi2_map 0 [||]
@@ -2147,26 +1953,19 @@ let%expect_test "fold2_map,foldi2_map" =
     [|5; 4; 3|] [|2; 1; 0|] -> fold2_map 15 [|"(5,2)"; "(4,1)"; "(3,0)"|] -> foldi2_map 18 [|"[0]=(5,2)"; "[1]=(4,1)"; "[2]=(3,0)"|] |}]
 
 let%expect_test "zip,unzip" =
-  let open Printf in
-  let print_uint_array arr = begin
-    printf "[|";
-    iteri arr ~f:(fun i elm ->
-      if Uint.(i > (kv 0)) then printf "; ";
-      printf "%u" elm
-    );
-    printf "|]"
-  end in
+  let open Format in
   let test_zip arr0 arr1 = begin
     let arr0', arr1' = unzip (zip arr0 arr1) in
-    print_uint_array arr0';
-    printf " ";
-    print_uint_array arr1';
-    printf "\n"
+    printf "%a %a\n"
+      (pp Int.pp) arr0'
+      (pp Int.pp) arr1'
   end in
+  printf "@[<h>";
   test_zip [||] [||];
   test_zip [|0|] [|1|];
   test_zip [|0; 1|] [|2; 3|];
   test_zip [|0; 1; 2|] [|3; 4; 5|];
+  printf "@]";
 
   [%expect{|
     [||] [||]

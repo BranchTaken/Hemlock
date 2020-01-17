@@ -14,7 +14,7 @@ include Intnb.Make_i(T)
  *)
 
 let%expect_test "float" =
-  let open Printf in
+  let open Format in
   let x = of_float 0. in
   printf "%d\n" x;
   let f = to_float 1 in
@@ -26,7 +26,7 @@ let%expect_test "float" =
     |}]
 
 let%expect_test "string" =
-  let open Printf in
+  let open Format in
   let x = of_string "0" in
   printf "%d\n" x;
   let s = to_string 1 in
@@ -38,7 +38,7 @@ let%expect_test "string" =
     |}]
 
 let%expect_test "sexp" =
-  let open Printf in
+  let open Format in
   let t = 42 in
   let sexp = sexp_of_t 42 in
   printf "sexp_of_t %d -> %s\n" t (Sexplib.Sexp.to_string sexp);
@@ -50,9 +50,9 @@ let%expect_test "sexp" =
     |}]
 
 let%expect_test "limits" =
-  let open Printf in
+  let open Format in
 
-  printf "num_bits=%a\n" Uint.fmt num_bits;
+  printf "num_bits=%a\n" Uint.pp num_bits;
   printf "min_value=%#x\n" min_value;
   printf "max_value=%#x\n" max_value;
 
@@ -63,7 +63,7 @@ let%expect_test "limits" =
     |}]
 
 let%expect_test "constants" =
-  let open Printf in
+  let open Format in
   printf "zero=%d\n" zero;
   printf "one=%d\n" one;
   printf "neg_one=%d\n" neg_one;
@@ -75,7 +75,7 @@ let%expect_test "constants" =
     |}]
 
 let%expect_test "is_" =
-  let open Printf in
+  let open Format in
   let ns = [-1; 0; 1] in
   let rec fn ns = begin
     match ns with
@@ -113,7 +113,7 @@ let%expect_test "is_" =
     |}]
 
 let%expect_test "seq" =
-  let open Printf in
+  let open Format in
   let x = 1 in
   printf "succ: %d -> %d\n" x (succ x);
   printf "pred: %d -> %d\n" x (pred x);
@@ -124,7 +124,7 @@ let%expect_test "seq" =
     |}]
 
 let%expect_test "bit_" =
-  let open Printf in
+  let open Format in
 
   let x = 0b0011 in
   let y = 0b0101 in
@@ -148,9 +148,9 @@ let%expect_test "bit_" =
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_pop 0x%x -> %a\n" x Uint.fmt (bit_pop x);
-        printf "bit_clz 0x%x -> %a\n" x Uint.fmt (bit_clz x);
-        printf "bit_ctz 0x%x -> %a\n" x Uint.fmt (bit_ctz x);
+        printf "bit_pop 0x%x -> %a\n" x Uint.pp (bit_pop x);
+        printf "bit_clz 0x%x -> %a\n" x Uint.pp (bit_clz x);
+        printf "bit_ctz 0x%x -> %a\n" x Uint.pp (bit_ctz x);
         fn xs'
       end
   end in
@@ -185,7 +185,7 @@ let%expect_test "bit_" =
     |}]
 
 let%expect_test "pow2_lg" =
-  let open Printf in
+  let open Format in
   let rec fn xs = begin
     match xs with
     | [] -> ()
@@ -239,7 +239,7 @@ let%expect_test "pow2_lg" =
     |}]
 
 let%expect_test "ops" =
-  let open Printf in
+  let open Format in
   let x = 4 in
   let y = 3 in
   printf "%d + %d -> %d\n" x y (x + y);
@@ -278,7 +278,7 @@ let%expect_test "ops" =
     |}]
 
 let%expect_test "rel" =
-  let open Printf in
+  let open Format in
   let fn x y = begin
     printf "cmp %d %d -> %s\n"
       x y (Sexplib.Sexp.to_string (Cmp.sexp_of_t (cmp x y)));
@@ -358,7 +358,7 @@ let%expect_test "rel" =
     |}]
 
 let%expect_test "min_max" =
-  let open Printf in
+  let open Format in
   let fn x y = begin
     printf "min %d %d -> %d\n" x y (min x y);
     printf "max %d %d -> %d\n" x y (max x y);

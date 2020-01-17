@@ -168,7 +168,7 @@ let length = function
  *)
 
 let%expect_test "utf8" =
-  let open Printf in
+  let open Format in
   let codepoints = begin
     let open Codepoint in
     [
@@ -184,13 +184,13 @@ let%expect_test "utf8" =
     let bytes = to_bytes utf8 in
     let length = length utf8 in
     printf "codepoint=%a, codepoint'=%a, bytes=["
-      Codepoint.fmt_hex codepoint Codepoint.fmt_hex codepoint';
+      Codepoint.pp_x codepoint Codepoint.pp_x codepoint';
     List.iteri bytes ~f:(fun i b ->
       let space = if Uint.(i = (kv 0)) then "" else " " in
       let sep = if Uint.(succ i < length) then ";" else "" in
-      printf "%s%a%s" space Byte.fmt_hex b sep
+      printf "%s%a%s" space Byte.pp_x b sep
     );
-    printf "], length=%a\n" Uint.fmt length
+    printf "], length=%a\n" Uint.pp length
   );
 
   [%expect{|
