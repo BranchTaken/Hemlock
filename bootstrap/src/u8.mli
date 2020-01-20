@@ -32,6 +32,10 @@ val of_uint_hlt: uint -> t
 (** Initialize from full-width unsigned integer, or halt if conversion would be
     lossy. *)
 
+val of_char: char -> t
+(** Initialize from character literal.  This is a stopgap for the lack of
+    codepoint literals. *)
+
 val to_codepoint: t -> codepoint
 (** Convert to codepoint. *)
 

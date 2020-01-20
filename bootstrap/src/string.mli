@@ -26,6 +26,7 @@ module Cursor : sig
   type outer = t
 
   type t
+  include Formattable_intf.S_mono with type t := t
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
@@ -56,6 +57,7 @@ module Cursori : sig
   type outer = t
 
   type t
+  include Formattable_intf.S_mono with type t := t
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
@@ -80,6 +82,7 @@ type slice
 module Slice : sig
   type outer = t
   type t = slice
+  include Formattable_intf.S_mono with type t := t
   include Cmpable_intf.S_mono with type t := t
 
   val of_cursors: base:Cursor.t -> past:Cursor.t -> t

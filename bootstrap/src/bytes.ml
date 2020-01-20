@@ -129,10 +129,10 @@ let%expect_test "of_codepoint" =
   printf "@[<h>";
   List.iter cps ~f:(fun cp ->
     let bytes = of_codepoint cp in
-    printf "'%s' -> %a -> \"%s\"\n"
+    printf "'%s' -> %a -> %a\n"
       (String.of_codepoint cp)
       (Array.pp Byte.pp_x) bytes
-      (to_string_hlt bytes)
+      String.pp (to_string_hlt bytes)
   );
   printf "@]";
 
@@ -152,10 +152,10 @@ let%expect_test "of_string" =
   printf "@[<h>";
   List.iter strs ~f:(fun s ->
     let bytes = of_string s in
-    printf "\"%s\" -> %a -> \"%s\"\n"
-      s
+    printf "%a -> %a -> %a\n"
+      String.pp s
       (Array.pp Byte.pp_x) bytes
-      (to_string_hlt bytes)
+      String.pp (to_string_hlt bytes)
   );
   printf "@]";
 

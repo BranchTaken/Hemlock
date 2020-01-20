@@ -42,6 +42,9 @@ let of_uint_hlt x =
   | false -> halt "Lossy conversion"
   | true -> t
 
+let of_char c =
+  of_int (Stdlib.Char.code c)
+
 let to_codepoint t =
   Codepoint.of_uint (to_uint t)
 

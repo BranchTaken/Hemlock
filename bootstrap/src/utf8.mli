@@ -8,6 +8,7 @@ open Rudiments
 type t
 
 include Cmpable_intf.S_mono with type t := t
+include Formattable_intf.S_mono with type t := t
 
 val of_codepoint: codepoint -> t
 (** Initialize from [codepoint]. *)
@@ -47,3 +48,10 @@ val to_bytes: t -> byte list
 
 val length: t -> uint
 (** Return the length of the UTF-8 code point in bytes. *)
+
+val to_string: t -> string
+(** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
+
+val escape: t -> string
+(** [escape t] returns a syntactically valid UTF-8-encoded string
+    representation of [t]. *)
