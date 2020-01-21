@@ -6,8 +6,7 @@ let to_int t =
 let of_int x =
   uint_of_int x
 
-let kv x =
-  of_int x
+let kv = kv
 
 (*******************************************************************************
  * Begin tests.
@@ -22,7 +21,7 @@ let%expect_test "limits" =
 
   [%expect{|
     num_bits=63
-    min_value=0x0
+    min_value=0x0000000000000000
     max_value=0x7fffffffffffffff
     |}]
 
@@ -63,25 +62,25 @@ let%expect_test "rel" =
       0x4000_0000_0000_0001);
 
   [%expect{|
-    cmp 0x0 0x4000000000000000 -> Lt
-    0x0 >= 0x4000000000000000 -> false
-    0x0 <= 0x4000000000000000 -> true
-    0x0 = 0x4000000000000000 -> false
-    0x0 > 0x4000000000000000 -> false
-    0x0 < 0x4000000000000000 -> true
-    0x0 <> 0x4000000000000000 -> true
-    ascending 0x0 0x4000000000000000 -> Lt
-    descending 0x0 0x4000000000000000 -> Gt
+    cmp 0x0000000000000000 0x4000000000000000 -> Lt
+    0x0000000000000000 >= 0x4000000000000000 -> false
+    0x0000000000000000 <= 0x4000000000000000 -> true
+    0x0000000000000000 = 0x4000000000000000 -> false
+    0x0000000000000000 > 0x4000000000000000 -> false
+    0x0000000000000000 < 0x4000000000000000 -> true
+    0x0000000000000000 <> 0x4000000000000000 -> true
+    ascending 0x0000000000000000 0x4000000000000000 -> Lt
+    descending 0x0000000000000000 0x4000000000000000 -> Gt
 
-    cmp 0x0 0x7fffffffffffffff -> Lt
-    0x0 >= 0x7fffffffffffffff -> false
-    0x0 <= 0x7fffffffffffffff -> true
-    0x0 = 0x7fffffffffffffff -> false
-    0x0 > 0x7fffffffffffffff -> false
-    0x0 < 0x7fffffffffffffff -> true
-    0x0 <> 0x7fffffffffffffff -> true
-    ascending 0x0 0x7fffffffffffffff -> Lt
-    descending 0x0 0x7fffffffffffffff -> Gt
+    cmp 0x0000000000000000 0x7fffffffffffffff -> Lt
+    0x0000000000000000 >= 0x7fffffffffffffff -> false
+    0x0000000000000000 <= 0x7fffffffffffffff -> true
+    0x0000000000000000 = 0x7fffffffffffffff -> false
+    0x0000000000000000 > 0x7fffffffffffffff -> false
+    0x0000000000000000 < 0x7fffffffffffffff -> true
+    0x0000000000000000 <> 0x7fffffffffffffff -> true
+    ascending 0x0000000000000000 0x7fffffffffffffff -> Lt
+    descending 0x0000000000000000 0x7fffffffffffffff -> Gt
 
     cmp 0x4000000000000000 0x3fffffffffffffff -> Gt
     0x4000000000000000 >= 0x3fffffffffffffff -> true
@@ -116,7 +115,7 @@ let%expect_test "narrowing" =
   printf "max_value * 15 -> %a\n" pp_x (max_value * (kv 15));
 
   [%expect{|
-    max_value + 1 -> 0x0
+    max_value + 1 -> 0x0000000000000000
     min_value - 1 -> 0x7fffffffffffffff
     max_value * 15 -> 0x7ffffffffffffff1
     |}]

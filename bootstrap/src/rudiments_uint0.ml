@@ -5,3 +5,6 @@ let uint_of_int t =
 
 let int_of_uint t =
   t
+
+let kv t =
+  uint_of_int t

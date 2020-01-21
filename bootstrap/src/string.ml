@@ -26,13 +26,13 @@ module T = struct
       }
 
       let init t =
-        {string=t; bindex=Uint.kv 0}
+        {string=t; bindex=kv 0}
 
       let length t =
-        Uint.((blength t.string) - t.bindex)
+        (blength t.string) - t.bindex
 
       let next t =
-        match Uint.((length t) = (kv 0)) with
+        match (length t) = (kv 0) with
         | true -> None
         | false -> begin
             let b = Byte.of_char (
@@ -99,7 +99,7 @@ module Cursor = struct
       Uint.pp t.bindex
 
   let hd string =
-    {string; bindex=(Uint.kv 0)}
+    {string; bindex=kv 0}
 
   let tl string =
     {string; bindex=(blength string)}
@@ -160,10 +160,10 @@ module Cursor = struct
       | _ -> begin
           let b = get t.string t.bindex in
           let nbytes =
-            if Byte.(b <= (kv 0b0111_1111)) then Uint.kv 1
+            if Byte.(b <= (kv 0b0111_1111)) then kv 1
             else Byte.(bit_clz (bit_not b))
           in
-          let t' = {t with bindex=Uint.(t.bindex + nbytes)} in
+          let t' = {t with bindex=t.bindex + nbytes} in
           let coffset' = Int.(pred coffset) in
           right t' coffset'
         end
@@ -197,14 +197,14 @@ module Cursor = struct
             let mask = Byte.(kv 0b00_111111) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
             let cp' = Codepoint.(bit_or cp (bit_sl cp_bits nbits)) in
-            let nbits' = Uint.(nbits + (kv 6)) in
+            let nbits' = nbits + (kv 6) in
             fn bindex' cp' nbits'
           end
       end in
       let bindex' = (Uint.pred bindex) in
       let mask = Byte.(kv 0b00_111111) in
       let cp = Byte.(to_codepoint (bit_and b mask)) in
-      let nbits = (Uint.kv 6) in
+      let nbits = kv 6 in
       fn bindex' cp nbits
     end
 
@@ -239,7 +239,7 @@ let clength t =
     | true -> cindex
     | false -> fn (Cursor.succ cursor) (Uint.succ cindex)
   end in
-  fn (Cursor.hd t) (Uint.kv 0)
+  fn (Cursor.hd t) (kv 0)
 
 let length = clength
 
@@ -263,7 +263,7 @@ module Cursori = struct
       Uint.pp t.cindex
 
   let hd string =
-    {cursor=(Cursor.hd string); cindex=(Uint.kv 0)}
+    {cursor=(Cursor.hd string); cindex=(kv 0)}
 
   let tl string =
     {cursor=(Cursor.tl string); cindex=(clength string)}
@@ -421,9 +421,9 @@ module Seq = struct
         | _ -> begin
             let tmut = ref t in
             let slice_str = ref "" in
-            let slice_base = ref (Uint.kv 0) in
-            let slice_ind = ref (Uint.kv 0) in
-            let slice_len = ref (Uint.kv 0) in
+            let slice_base = ref (kv 0) in
+            let slice_ind = ref (kv 0) in
+            let slice_len = ref (kv 0) in
             let s = Stdlib.String.init (Uint.to_int len) (fun _ ->
               let rec fn () = begin
                 match Uint.(!slice_ind = !slice_len) with
@@ -431,19 +431,19 @@ module Seq = struct
                     let slice, t' = T.next !tmut in
                     let slice_base' = Cursor.bindex slice.base in
                     let slice_len' =
-                      Uint.((Cursor.bindex slice.past) - slice_base') in
+                      (Cursor.bindex slice.past) - slice_base' in
                     assert (Uint.(slice_len' + (T.length t') =
                         (T.length !tmut)));
                     tmut := t';
 
                     slice_str := Cursor.string slice.base;
                     slice_base := slice_base';
-                    slice_ind := (Uint.kv 0);
+                    slice_ind := kv 0;
                     slice_len := slice_len';
                     fn ()
                   end
                 | false -> begin
-                    let b = get !slice_str Uint.(!slice_base + !slice_ind) in
+                    let b = get !slice_str (!slice_base + !slice_ind) in
                     slice_ind := Uint.succ !slice_ind;
                     Stdlib.Char.chr (Byte.to_int b)
                   end
@@ -476,9 +476,9 @@ module Seq = struct
             let slices = ref (fn t []) in
 
             let slice_str = ref "" in
-            let slice_base = ref (Uint.kv 0) in
-            let slice_ind = ref (Uint.kv 0) in
-            let slice_len = ref (Uint.kv 0) in
+            let slice_base = ref (kv 0) in
+            let slice_ind = ref (kv 0) in
+            let slice_len = ref (kv 0) in
             let s = Stdlib.String.init (Uint.to_int len) (fun _ ->
               let rec fn () = begin
                 match Uint.(!slice_ind = !slice_len) with
@@ -488,17 +488,16 @@ module Seq = struct
                       | [] -> not_reached ()
                     in
                     let slice_base' = Cursor.bindex slice.base in
-                    let slice_len' =
-                      Uint.((Cursor.bindex slice.past) - slice_base') in
+                    let slice_len' = (Cursor.bindex slice.past) - slice_base' in
                     slices := slices';
                     slice_str := Cursor.string slice.base;
                     slice_base := slice_base';
-                    slice_ind := (Uint.kv 0);
+                    slice_ind := kv 0;
                     slice_len := slice_len';
                     fn ()
                   end
                 | false -> begin
-                    let b = get !slice_str Uint.(!slice_base + !slice_ind) in
+                    let b = get !slice_str (!slice_base + !slice_ind) in
                     slice_ind := Uint.succ !slice_ind;
                     Stdlib.Char.chr (Byte.to_int b)
                   end
@@ -590,7 +589,7 @@ module Slice = struct
       type t = slice
 
       let length t =
-        Uint.((Cursor.bindex t.past) - (Cursor.bindex t.base))
+        (Cursor.bindex t.past) - (Cursor.bindex t.base)
 
       let next t =
         let t' = of_string "" in
@@ -633,7 +632,7 @@ module Slice = struct
   let string_blength = blength
 
   let blength t =
-    Uint.((Cursor.bindex t.past) - (Cursor.bindex t.base))
+    (Cursor.bindex t.past) - (Cursor.bindex t.base)
 
   let is_empty t =
     Uint.((blength t) = (kv 0))
@@ -653,7 +652,7 @@ module Slice = struct
               | true -> cindex
               | false -> fn (Cursor.succ cursor) (Uint.succ cindex)
             end in
-            fn t.base (Uint.kv 0)
+            fn t.base (kv 0)
           end
       end
 
@@ -674,7 +673,7 @@ module Slice = struct
       }
 
       let init ~f blength =
-        {f; blength; cindex=(Uint.kv 0)}
+        {f; blength; cindex=kv 0}
 
       let length t =
         t.blength
@@ -682,7 +681,7 @@ module Slice = struct
       let next t =
         let codepoint = t.f t.cindex in
         let cp_nbytes = Utf8.(length (of_codepoint codepoint)) in
-        let blength' = Uint.(t.blength - cp_nbytes) in
+        let blength' = t.blength - cp_nbytes in
         let t' = {t with cindex=(Uint.succ t.cindex);
                          blength=blength'} in
         codepoint, t'
@@ -698,15 +697,15 @@ module Slice = struct
       | false -> begin
           let codepoint, seq' = f seq in
           let cp_nbytes = Utf8.(length (of_codepoint codepoint)) in
-          let nbytes' = Uint.(nbytes + cp_nbytes) in
+          let nbytes' = nbytes + cp_nbytes in
           fn ~seq:seq' (Uint.succ cindex) nbytes'
         end
     end in
-    fn ~seq (Uint.kv 0) (Uint.kv 0)
+    fn ~seq (kv 0) (kv 0)
 
   let init ?blength clength ~f =
     let blength = match blength with
-      | None -> blength_of_seq clength ~seq:(Uint.kv 0)
+      | None -> blength_of_seq clength ~seq:(kv 0)
           ~f:(fun seq ->
             (f seq), (Uint.succ seq)
           )
@@ -715,7 +714,7 @@ module Slice = struct
     of_string String_of_indexed.(to_string (init ~f blength))
 
   let of_codepoint codepoint =
-    init (Uint.kv 1) ~f:(fun _ -> codepoint)
+    init (kv 1) ~f:(fun _ -> codepoint)
 
   module String_of_list_common = struct
     type t = {
@@ -735,7 +734,7 @@ module Slice = struct
         | [] -> not_reached ()
       in
       let nbytes = Utf8.(length (of_codepoint codepoint)) in
-      let blength = Uint.(t.blength - nbytes) in
+      let blength = t.blength - nbytes in
       codepoint, {codepoints; blength}
   end
 
@@ -833,7 +832,7 @@ module Slice = struct
         {
           f;
           cursor=slice.base;
-          cindex=Uint.kv 0;
+          cindex=kv 0;
           blength
         }
 
@@ -846,7 +845,7 @@ module Slice = struct
         let utf8_length = Utf8.(length (of_codepoint codepoint')) in
         let cursor' = Cursor.succ t.cursor in
         let cindex' = Uint.succ t.cindex in
-        let blength' = Uint.(t.blength - utf8_length) in
+        let blength' = t.blength - utf8_length in
         let t' = {t with cursor=cursor';
                          cindex=cindex';
                          blength=blength'} in
@@ -857,10 +856,10 @@ module Slice = struct
   end
 
   let blength_of_map t ~f =
-    foldi t ~init:(Uint.kv 0, false) ~f:(fun i (blength, modified) codepoint ->
+    foldi t ~init:(kv 0, false) ~f:(fun i (blength, modified) codepoint ->
       let codepoint' = f i codepoint in
       let modified' = modified || Codepoint.(codepoint' <> codepoint) in
-      Uint.(blength + Utf8.(length (of_codepoint codepoint'))), modified'
+      (blength + Utf8.(length (of_codepoint codepoint'))), modified'
     )
 
   let map t ~f =
@@ -924,7 +923,7 @@ module Slice = struct
               match Uint.((blength t.sep) = (kv 0)) with
               | true -> fn {t with source=Str}
               | false -> begin
-                  let blength' = Uint.(t.blength - (blength t.sep)) in
+                  let blength' = t.blength - (blength t.sep) in
                   t.sep, {t with source=Str; blength=blength'}
                 end
             end
@@ -932,7 +931,7 @@ module Slice = struct
               match t.slices with
               | [] -> not_reached ()
               | slice :: slices' -> begin
-                  let blength' = Uint.(t.blength - (blength slice)) in
+                  let blength' = t.blength - (blength slice) in
                   slice, {t with slices=slices'; source=Sep; blength=blength'}
                 end
             end
@@ -944,14 +943,14 @@ module Slice = struct
   end
 
   let concat ?(sep=(of_string "")) (slices:t list) =
-    let _, blength = List.fold slices ~init:((Uint.kv 0), (Uint.kv 0))
+    let _, blength = List.fold slices ~init:(kv 0, kv 0)
         ~f:(fun (i, len) slice ->
           let i' = Uint.succ i in
           let sep_len = match i with
-            | i when Uint.(i = (kv 0)) -> (Uint.kv 0)
+            | i when Uint.(i = (kv 0)) -> kv 0
             | _ -> blength sep
           in
-          let len' = Uint.(sep_len + len + (blength slice)) in
+          let len' = sep_len + len + (blength slice) in
           i', len'
         ) in
     match Uint.((length sep) = (kv 0)), Uint.to_int (List.length slices) with
@@ -961,14 +960,14 @@ module Slice = struct
           (String_concat.init sep slices blength))
 
   let concat_rev ?(sep=(of_string "")) slices_rev =
-    let slices, blength = List.fold slices_rev ~init:([], (Uint.kv 0))
+    let slices, blength = List.fold slices_rev ~init:([], (kv 0))
         ~f:(fun (slices, len) slice ->
           let slices' = slice :: slices in
           let sep_len = match slices with
-            | [] -> Uint.kv 0
+            | [] -> kv 0
             | _ -> blength sep
           in
-          let len' = Uint.(sep_len + len + (blength slice)) in
+          let len' = sep_len + len + (blength slice) in
           slices', len'
         ) in
     match Uint.((length sep) = (kv 0)), Uint.to_int (List.length slices) with
@@ -1014,7 +1013,7 @@ module Slice = struct
         {slice; cursori=Cursori.hd (string slice)}
 
       let length t =
-        Uint.((clength t.slice) - (Cursori.cindex t.cursori))
+        (clength t.slice) - (Cursori.cindex t.cursori)
 
       let next t =
         let codepoint = Cursori.rget t.cursori in
@@ -1138,7 +1137,7 @@ module Slice = struct
         | Some n, _ when Uint.(nmatches = n) -> List.rev matches
         | _, true -> begin
             let cursor = (Cursor.at (string in_)
-                ~bindex:Uint.((Cursor.bindex in_.base)
+                ~bindex:((Cursor.bindex in_.base)
                     + (Cursor.bindex i) - (Cursori.bindex m))) in
             let matches' = cursor :: matches in
             let nmatches' = Uint.succ nmatches in
@@ -1191,11 +1190,11 @@ module Slice = struct
       end in
       let q = Cursori.hd t.p in
       let i = in_.base in
-      fn ~q ~i [] (Uint.kv 0)
+      fn ~q ~i [] (kv 0)
 
     let find t ~in_ =
       let cursors =
-        find_impl t ~max_matches:(Uint.kv 1) ~may_overlap:false ~in_ in
+        find_impl t ~max_matches:(kv 1) ~may_overlap:false ~in_ in
       match cursors with
       | [] -> None
       | cursor :: [] -> Some cursor
@@ -1229,7 +1228,7 @@ module Slice = struct
           let in_cursor, slice, at', source = match at with
             | [] -> in_.base, in_, at, In
             | cursor :: at' when Cursor.(cursor = in_.base) ->
-              let in_cursor = (Cursor.at cursor.string ~bindex:Uint.(
+              let in_cursor = (Cursor.at cursor.string ~bindex:(
                 cursor.bindex + (string_blength pattern))) in
               let slice = with_ in
               in_cursor, slice, at', With
@@ -1239,7 +1238,7 @@ module Slice = struct
               end
           in
           let ncursors = List.length at in
-          let blength = Uint.((blength in_) +
+          let blength = ((blength in_) +
                 (ncursors * ((blength with_) - (string_blength pattern)))) in
           {in_; pattern; with_; at=at'; in_cursor; slice; source; blength}
 
@@ -1247,7 +1246,7 @@ module Slice = struct
           t.blength
 
         let next t =
-          let blength' = Uint.(t.blength - ((t.slice.past.bindex) -
+          let blength' = (t.blength - ((t.slice.past.bindex) -
                   t.slice.base.bindex)) in
           let t' = match t.source with
             | In -> begin
@@ -1838,7 +1837,7 @@ let%expect_test "hash_fold" =
   let open Format in
 
   let s = "hello" in
-  let h = Hash.(t_of_state (hash_fold (Hash.state_of_uint (Uint.kv 0)) s)) in
+  let h = Hash.(t_of_state (hash_fold (Hash.state_of_uint (kv 0)) s)) in
   printf "hash_fold %a=%a\n" pp s Hash.pp h;
 
   [%expect{|
@@ -1963,7 +1962,7 @@ let%expect_test "get" =
         end
     end in
     printf "s=%a:" pp s;
-    fn (Uint.kv 0);
+    fn (kv 0);
     printf "\n";
   );
 
@@ -1987,7 +1986,7 @@ let%expect_test "cursor" =
           let () = if Uint.(i_prev <> max_value) then
             for j = 0 to Uint.(to_int (i - i_prev - (kv 1))) do
               let j = Uint.of_int j in
-              assert Cursor.((near s ~bindex:Uint.(i_prev + j))
+              assert Cursor.((near s ~bindex:(i_prev + j))
                   = (at s ~bindex:i_prev));
             done
           in
@@ -2009,7 +2008,7 @@ let%expect_test "cursor" =
           let () = if Uint.(i_prev <> max_value) then
             for j = 0 to Uint.(to_int (i_prev - i - (kv 1))) do
               let j = Uint.of_int j in
-              assert Cursor.((near s ~bindex:Uint.(i + j)) = (at s ~bindex:i));
+              assert Cursor.((near s ~bindex:(i + j)) = (at s ~bindex:i));
             done
           in
           printf "            %a=%s\n"
@@ -2532,7 +2531,7 @@ let%expect_test "map" =
   printf "map: %a -> %a\n" pp s pp (map s ~f:(fun cp ->
     Codepoint.(cp - (kv 32))));
   printf "mapi: %a -> %a\n" pp s pp (mapi s ~f:(fun i cp ->
-    match Uint.(bit_and i (kv 0x1)) with
+    match (bit_and i (kv 0x1)) with
     | bit when Uint.(bit = (kv 0)) -> cp
     | bit when Uint.(bit = (kv 1)) -> Codepoint.(cp - (kv 32))
     | _ -> not_reached ()
@@ -2646,7 +2645,7 @@ let%expect_test "escaped" =
         fn (Uint.succ i)
       end
   end in
-  fn (Uint.kv 0);
+  fn (kv 0);
 
   [%expect{|
     0x00 -> "\0"
@@ -2853,8 +2852,8 @@ let%expect_test "substr_find" =
               | Some c -> Uint.((Cursor.bindex c) < (Cursor.bindex cursor))
             );
             let offset = Uint.to_int (match prev with
-              | None -> Uint.((Cursor.bindex cursor) + (kv 2))
-              | Some c -> Uint.((Cursor.bindex cursor) - (Cursor.bindex c))
+              | None -> (Cursor.bindex cursor) + (kv 2)
+              | Some c -> (Cursor.bindex cursor) - (Cursor.bindex c)
             ) in
             printf "%*s" offset "|";
             Some cursor

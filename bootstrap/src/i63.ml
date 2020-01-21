@@ -9,9 +9,36 @@ end
 include T
 include Intnb.Make_i(T)
 
+let pp ppf t =
+  Format.fprintf ppf "%di" t
+
+let pp_x ppf t =
+  Format.fprintf ppf "0x%016xi" t
+
 (*******************************************************************************
  * Begin tests.
  *)
+
+let%expect_test "pp,pp_x" =
+  let open Format in
+  let rec fn = function
+  | [] -> ()
+  | x :: xs' -> begin
+      printf "%a %a\n" pp x pp_x x;
+      fn xs'
+    end
+  in
+  printf "@[<h>";
+  fn [-1; 0; 1; 42; 0x3fff_ffff_ffff_ffff];
+  printf "@]";
+
+  [%expect{|
+    -1i 0x7fffffffffffffffi
+    0i 0x0000000000000000i
+    1i 0x0000000000000001i
+    42i 0x000000000000002ai
+    4611686018427387903i 0x3fffffffffffffffi
+    |}]
 
 let%expect_test "float" =
   let open Format in
@@ -44,8 +71,8 @@ let%expect_test "pp,pp_h" =
   printf "pp_x %d -> %a\n" t pp_x t;
 
   [%expect{|
-    pp 42 -> 42
-    pp_x 42 -> 0x2a
+    pp 42 -> 42i
+    pp_x 42 -> 0x000000000000002ai
     |}]
 
 let%expect_test "limits" =

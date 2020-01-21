@@ -16,16 +16,16 @@ module Array_seq = struct
     let init t =
       {
           string=t;
-          cursor=(String.Cursor.at t ~bindex:(Uint.kv 0));
-          bindex=(Uint.kv 0);
+          cursor=(String.Cursor.at t ~bindex:(kv 0));
+          bindex=(kv 0);
           rem_bytes=[];
       }
 
     let length t =
-      Uint.((String.blength t.string) - t.bindex)
+      (String.blength t.string) - t.bindex
 
     let next t =
-      assert (Uint.(length t > (kv 0)));
+      assert (length t > (kv 0));
       match t.rem_bytes with
       | b :: rem_bytes' -> begin
           let t' = {t with
@@ -63,13 +63,13 @@ module Utf8_seq = struct
     }
 
     let init t =
-      {bytes=t; bindex=Uint.kv 0}
+      {bytes=t; bindex=kv 0}
 
     let length t =
-      Uint.((Array.length t.bytes) - t.bindex)
+      (Array.length t.bytes) - t.bindex
 
     let next t =
-      match Uint.((length t) = (kv 0)) with
+      match (length t) = (kv 0) with
       | true -> None
       | false -> begin
           let b = Array.get t.bytes t.bindex in
@@ -137,10 +137,10 @@ let%expect_test "of_codepoint" =
   printf "@]";
 
   [%expect{|
-    '<' -> [|0x3c|] -> "<"
-    '«' -> [|0xc2; 0xab|] -> "«"
-    '‡' -> [|0xe2; 0x80; 0xa1|] -> "‡"
-    '𐆗' -> [|0xf0; 0x90; 0x86; 0x97|] -> "𐆗"
+    '<' -> [|0x3cu8|] -> "<"
+    '«' -> [|0xc2u8; 0xabu8|] -> "«"
+    '‡' -> [|0xe2u8; 0x80u8; 0xa1u8|] -> "‡"
+    '𐆗' -> [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] -> "𐆗"
     |}]
 
 let%expect_test "of_string" =
@@ -161,7 +161,7 @@ let%expect_test "of_string" =
 
   [%expect{|
     "" -> [||] -> ""
-    "<_>«‡𐆗»[_]" -> [|0x3c; 0x5f; 0x3e; 0xc2; 0xab; 0xe2; 0x80; 0xa1; 0xf0; 0x90; 0x86; 0x97; 0xc2; 0xbb; 0x5b; 0x5f; 0x5d|] -> "<_>«‡𐆗»[_]"
+    "<_>«‡𐆗»[_]" -> [|0x3cu8; 0x5fu8; 0x3eu8; 0xc2u8; 0xabu8; 0xe2u8; 0x80u8; 0xa1u8; 0xf0u8; 0x90u8; 0x86u8; 0x97u8; 0xc2u8; 0xbbu8; 0x5bu8; 0x5fu8; 0x5du8|] -> "<_>«‡𐆗»[_]"
     |}]
 
 let%expect_test "to_string" =
@@ -189,13 +189,13 @@ let%expect_test "to_string" =
   printf "@]";
 
   [%expect{|
-    to_string [|0x61|] -> "a"
-    to_string [|0xf0; 0x80; 0x80|] -> None
-    to_string [|0xe0; 0x80|] -> None
-    to_string [|0xc0|] -> None
-    to_string [|0xf0; 0x80; 0x80; 0xf0|] -> None
-    to_string [|0xe0; 0x80; 0xe0|] -> None
-    to_string [|0xc0; 0xc0|] -> None
-    to_string [|0x80|] -> None
-    to_string [|0x80; 0x80; 0x80; 0x80|] -> None
+    to_string [|0x61u8|] -> "a"
+    to_string [|0xf0u8; 0x80u8; 0x80u8|] -> None
+    to_string [|0xe0u8; 0x80u8|] -> None
+    to_string [|0xc0u8|] -> None
+    to_string [|0xf0u8; 0x80u8; 0x80u8; 0xf0u8|] -> None
+    to_string [|0xe0u8; 0x80u8; 0xe0u8|] -> None
+    to_string [|0xc0u8; 0xc0u8|] -> None
+    to_string [|0x80u8|] -> None
+    to_string [|0x80u8; 0x80u8; 0x80u8; 0x80u8|] -> None
     |}]

@@ -13,10 +13,10 @@ struct
       | true -> index
       | false -> fn (Uint.succ index) (T.Cursor.succ cursor)
     end in
-    fn (Uint.kv 0) (T.Cursor.hd t)
+    fn (kv 0) (T.Cursor.hd t)
 
   let is_empty t =
-    Uint.((length t) = (kv 0))
+    (length t) = (kv 0)
 end
 
 module Make_poly_fold (T : I_poly) : S_poly_fold_gen
@@ -51,7 +51,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     fn t ~f init (T.Cursor.tl t)
 
   let foldi_until t ~init ~f =
-    let _, accum = fold_until t ~init:((Uint.kv 0), init)
+    let _, accum = fold_until t ~init:((kv 0), init)
         ~f:(fun (i, accum) elm ->
           let i' = (Uint.succ i) in
           let accum', until = f i accum elm in
@@ -75,7 +75,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     foldi t ~init:() ~f:(fun i _ elm -> f i elm)
 
   let count t ~f =
-    fold t ~init:(Uint.kv 0) ~f:(fun accum elm ->
+    fold t ~init:(kv 0) ~f:(fun accum elm ->
       match f elm with
         | false -> accum
         | true -> (Uint.succ accum)

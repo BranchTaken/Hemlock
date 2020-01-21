@@ -24,7 +24,7 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
         t.length
 
       let next t =
-        assert (Uint.(length t > (kv 0)));
+        assert (length t > (kv 0));
         let elm = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
         let length' = (Uint.pred t.length) in

@@ -50,7 +50,7 @@ let dedup ?length t ~cmp =
       | Cmp.Eq -> elm, t
       | Cmp.Gt -> not_reached ()
     in
-    if Uint.(i = zero) then member' :: t'
+    if i = zero then member' :: t'
     else fn member' t' arr (Uint.pred i)
   end in
   match t with
@@ -72,7 +72,7 @@ let rev_dedup ?length t ~cmp =
       | Cmp.Gt -> elm, (member :: t)
     in
     let i' = Uint.succ i in
-    if Uint.(i' = (Array.length arr)) then member' :: t'
+    if i' = (Array.length arr) then member' :: t'
     else fn member' t' arr i'
   end in
   match t with
@@ -81,7 +81,7 @@ let rev_dedup ?length t ~cmp =
   | _ :: _ -> begin
       let arr = Array.of_list ?length t in
       Array.sort_inplace ~stable:true arr ~cmp;
-      let i = Uint.(kv 0) in
+      let i = kv 0 in
       fn (Array.get arr i) [] arr (Uint.succ i)
     end
 
@@ -167,18 +167,18 @@ let%expect_test "reduce[_hlt]" =
   let open Format in
   let lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 2; 3];
-    [0; 1; 2; 3; 4]
+    [kv 0];
+    [kv 0; kv 1];
+    [kv 0; kv 1; kv 2];
+    [kv 0; kv 1; kv 2; kv 3];
+    [kv 0; kv 1; kv 2; kv 3; kv 4]
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "reduce %a" (pp Int.pp) l;
-    match (reduce l ~f:(fun a b -> Int.(a + b))) with
+    printf "reduce %a" (pp Uint.pp) l;
+    match (reduce l ~f:(fun a b -> a + b)) with
     | None -> printf "-> None\n"
-    | Some result -> printf " -> %u\n" result
+    | Some result -> printf " -> %a\n" Uint.pp result
   );
   printf "@]";
 
@@ -195,30 +195,30 @@ let%expect_test "is_sorted" =
   let open Format in
   let lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
+    [kv 0];
+    [kv 0; kv 1];
+    [kv 0; kv 1; kv 2];
 
-    [0; 0];
-    [0; 1; 1];
-    [0; 1; 2; 2];
+    [kv 0; kv 0];
+    [kv 0; kv 1; kv 1];
+    [kv 0; kv 1; kv 2; kv 2];
 
-    [1; 0];
-    [0; 2; 1]
+    [kv 1; kv 0];
+    [kv 0; kv 2; kv 1]
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "is_sorted               %a -> %b\n"
-      (pp Int.pp) l
-      (is_sorted l ~cmp:Int.cmp)
+      (pp Uint.pp) l
+      (is_sorted l ~cmp:Uint.cmp)
     ;
     printf "is_sorted ~strict:false %a -> %b\n"
-      (pp Int.pp) l
-      (is_sorted ~strict:false l ~cmp:Int.cmp)
+      (pp Uint.pp) l
+      (is_sorted ~strict:false l ~cmp:Uint.cmp)
     ;
     printf "is_sorted ~strict:true  %a -> %b\n"
-      (pp Int.pp) l
-      (is_sorted ~strict:true l ~cmp:Int.cmp)
+      (pp Uint.pp) l
+      (is_sorted ~strict:true l ~cmp:Uint.cmp)
   );
   printf "@]";
 

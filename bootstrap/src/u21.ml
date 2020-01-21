@@ -24,6 +24,12 @@ let of_int_hlt x =
   | false -> halt "Lossy conversion"
   | true -> t
 
+let pp ppf t =
+  Format.fprintf ppf "%uu21" (to_int t)
+
+let pp_x ppf t =
+  Format.fprintf ppf "0x%06xu21" (to_int t)
+
 let kv x =
   of_int x
 
@@ -82,6 +88,26 @@ let del = (kv 0x7f)
  * Begin tests.
  *)
 
+let%expect_test "pp,pp_x" =
+  let open Format in
+  let rec fn = function
+  | [] -> ()
+  | x :: xs' -> begin
+      printf "%a %a\n" pp x pp_x x;
+      fn xs'
+    end
+  in
+  printf "@[<h>";
+  fn [kv 0; kv 1; kv 42; kv 0x7fffff];
+  printf "@]";
+
+  [%expect{|
+    0u21 0x000000u21
+    1u21 0x000001u21
+    42u21 0x00002au21
+    2097151u21 0x1fffffu21
+    |}]
+
 let%expect_test "limits" =
   let open Format in
 
@@ -91,8 +117,8 @@ let%expect_test "limits" =
 
   [%expect{|
     num_bits=21
-    min_value=0x0
-    max_value=0x1fffff
+    min_value=0x000000u21
+    max_value=0x1fffffu21
     |}]
 
 let%expect_test "rel" =
@@ -127,50 +153,50 @@ let%expect_test "rel" =
   fn2 (kv 0x10_0002) (kv 0x0f_ffff) (kv 0x10_0001);
 
   [%expect{|
-    cmp 0x0 0x100000 -> Lt
-    0x0 >= 0x100000 -> false
-    0x0 <= 0x100000 -> true
-    0x0 = 0x100000 -> false
-    0x0 > 0x100000 -> false
-    0x0 < 0x100000 -> true
-    0x0 <> 0x100000 -> true
-    ascending 0x0 0x100000 -> Lt
-    descending 0x0 0x100000 -> Gt
+    cmp 0x000000u21 0x100000u21 -> Lt
+    0x000000u21 >= 0x100000u21 -> false
+    0x000000u21 <= 0x100000u21 -> true
+    0x000000u21 = 0x100000u21 -> false
+    0x000000u21 > 0x100000u21 -> false
+    0x000000u21 < 0x100000u21 -> true
+    0x000000u21 <> 0x100000u21 -> true
+    ascending 0x000000u21 0x100000u21 -> Lt
+    descending 0x000000u21 0x100000u21 -> Gt
 
-    cmp 0x0 0x1fffff -> Lt
-    0x0 >= 0x1fffff -> false
-    0x0 <= 0x1fffff -> true
-    0x0 = 0x1fffff -> false
-    0x0 > 0x1fffff -> false
-    0x0 < 0x1fffff -> true
-    0x0 <> 0x1fffff -> true
-    ascending 0x0 0x1fffff -> Lt
-    descending 0x0 0x1fffff -> Gt
+    cmp 0x000000u21 0x1fffffu21 -> Lt
+    0x000000u21 >= 0x1fffffu21 -> false
+    0x000000u21 <= 0x1fffffu21 -> true
+    0x000000u21 = 0x1fffffu21 -> false
+    0x000000u21 > 0x1fffffu21 -> false
+    0x000000u21 < 0x1fffffu21 -> true
+    0x000000u21 <> 0x1fffffu21 -> true
+    ascending 0x000000u21 0x1fffffu21 -> Lt
+    descending 0x000000u21 0x1fffffu21 -> Gt
 
-    cmp 0x100000 0x1fffff -> Lt
-    0x100000 >= 0x1fffff -> false
-    0x100000 <= 0x1fffff -> true
-    0x100000 = 0x1fffff -> false
-    0x100000 > 0x1fffff -> false
-    0x100000 < 0x1fffff -> true
-    0x100000 <> 0x1fffff -> true
-    ascending 0x100000 0x1fffff -> Lt
-    descending 0x100000 0x1fffff -> Gt
+    cmp 0x100000u21 0x1fffffu21 -> Lt
+    0x100000u21 >= 0x1fffffu21 -> false
+    0x100000u21 <= 0x1fffffu21 -> true
+    0x100000u21 = 0x1fffffu21 -> false
+    0x100000u21 > 0x1fffffu21 -> false
+    0x100000u21 < 0x1fffffu21 -> true
+    0x100000u21 <> 0x1fffffu21 -> true
+    ascending 0x100000u21 0x1fffffu21 -> Lt
+    descending 0x100000u21 0x1fffffu21 -> Gt
 
-    clamp 0xffffe ~min:0xfffff ~max:0x100001 -> 0xfffff
-    between 0xffffe ~low:0xfffff ~high:0x100001 -> false
+    clamp 0x0ffffeu21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x0fffffu21
+    between 0x0ffffeu21 ~low:0x0fffffu21 ~high:0x100001u21 -> false
 
-    clamp 0xfffff ~min:0xfffff ~max:0x100001 -> 0xfffff
-    between 0xfffff ~low:0xfffff ~high:0x100001 -> true
+    clamp 0x0fffffu21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x0fffffu21
+    between 0x0fffffu21 ~low:0x0fffffu21 ~high:0x100001u21 -> true
 
-    clamp 0x100000 ~min:0xfffff ~max:0x100001 -> 0x100000
-    between 0x100000 ~low:0xfffff ~high:0x100001 -> true
+    clamp 0x100000u21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x100000u21
+    between 0x100000u21 ~low:0x0fffffu21 ~high:0x100001u21 -> true
 
-    clamp 0x100001 ~min:0xfffff ~max:0x100001 -> 0x100001
-    between 0x100001 ~low:0xfffff ~high:0x100001 -> true
+    clamp 0x100001u21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x100001u21
+    between 0x100001u21 ~low:0x0fffffu21 ~high:0x100001u21 -> true
 
-    clamp 0x100002 ~min:0xfffff ~max:0x100001 -> 0x100001
-    between 0x100002 ~low:0xfffff ~high:0x100001 -> false
+    clamp 0x100002u21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x100001u21
+    between 0x100002u21 ~low:0x0fffffu21 ~high:0x100001u21 -> false
     |}]
 
 let%expect_test "wraparound" =
@@ -180,9 +206,9 @@ let%expect_test "wraparound" =
   printf "max_value * 15 -> %a\n" pp_x (max_value * (kv 15));
 
   [%expect{|
-    max_value + 1 -> 0x0
-    min_value - 1 -> 0x1fffff
-    max_value * 15 -> 0x1ffff1
+    max_value + 1 -> 0x000000u21
+    min_value - 1 -> 0x1fffffu21
+    max_value * 15 -> 0x1ffff1u21
     |}]
 
 let%expect_test "conversion" =
@@ -206,18 +232,18 @@ let%expect_test "conversion" =
   fn [-1; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001; max_int];
 
   [%expect{|
-    of_int 0x7fffffffffffffff -> to_int 0x1fffff -> of_int 0x1fffff -> 0x1fffff
-    of_uint 0x7fffffffffffffff -> to_uint 0x1fffff -> of_uint 0x1fffff -> 0x1fffff
-    of_int 0x0 -> to_int 0x0 -> of_int 0x0 -> 0x0
-    of_uint 0x0 -> to_uint 0x0 -> of_uint 0x0 -> 0x0
-    of_int 0x2a -> to_int 0x2a -> of_int 0x2a -> 0x2a
-    of_uint 0x2a -> to_uint 0x2a -> of_uint 0x2a -> 0x2a
-    of_int 0x1fffff -> to_int 0x1fffff -> of_int 0x1fffff -> 0x1fffff
-    of_uint 0x1fffff -> to_uint 0x1fffff -> of_uint 0x1fffff -> 0x1fffff
-    of_int 0x200000 -> to_int 0x0 -> of_int 0x0 -> 0x0
-    of_uint 0x200000 -> to_uint 0x0 -> of_uint 0x0 -> 0x0
-    of_int 0x200001 -> to_int 0x1 -> of_int 0x1 -> 0x1
-    of_uint 0x200001 -> to_uint 0x1 -> of_uint 0x1 -> 0x1
-    of_int 0x3fffffffffffffff -> to_int 0x1fffff -> of_int 0x1fffff -> 0x1fffff
-    of_uint 0x3fffffffffffffff -> to_uint 0x1fffff -> of_uint 0x1fffff -> 0x1fffff
+    of_int 0x7fffffffffffffff -> to_int 0x1fffffu21 -> of_int 0x1fffff -> 0x1fffffu21
+    of_uint 0x7fffffffffffffff -> to_uint 0x1fffffu21 -> of_uint 0x00000000001fffff -> 0x1fffffu21
+    of_int 0x0 -> to_int 0x000000u21 -> of_int 0x0 -> 0x000000u21
+    of_uint 0x0 -> to_uint 0x000000u21 -> of_uint 0x0000000000000000 -> 0x000000u21
+    of_int 0x2a -> to_int 0x00002au21 -> of_int 0x2a -> 0x00002au21
+    of_uint 0x2a -> to_uint 0x00002au21 -> of_uint 0x000000000000002a -> 0x00002au21
+    of_int 0x1fffff -> to_int 0x1fffffu21 -> of_int 0x1fffff -> 0x1fffffu21
+    of_uint 0x1fffff -> to_uint 0x1fffffu21 -> of_uint 0x00000000001fffff -> 0x1fffffu21
+    of_int 0x200000 -> to_int 0x000000u21 -> of_int 0x0 -> 0x000000u21
+    of_uint 0x200000 -> to_uint 0x000000u21 -> of_uint 0x0000000000000000 -> 0x000000u21
+    of_int 0x200001 -> to_int 0x000001u21 -> of_int 0x1 -> 0x000001u21
+    of_uint 0x200001 -> to_uint 0x000001u21 -> of_uint 0x0000000000000001 -> 0x000001u21
+    of_int 0x3fffffffffffffff -> to_int 0x1fffffu21 -> of_int 0x1fffff -> 0x1fffffu21
+    of_uint 0x3fffffffffffffff -> to_uint 0x1fffffu21 -> of_uint 0x00000000001fffff -> 0x1fffffu21
     |}]

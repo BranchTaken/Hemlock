@@ -266,7 +266,7 @@ let int_pow t x =
           | _ -> not_reached ()
         in
         let p' = p * p in
-        let n' = Int.bit_usr n (Uint.kv 1) in
+        let n' = Int.bit_usr n (kv 1) in
         fn r' p' n'
       end
   end in
@@ -410,34 +410,34 @@ let%expect_test "create" =
   end in
   fn [
     (* Infinite. *)
-    (true, 1024, (Uint.kv 0));
-    (false, 1024, (Uint.kv 0));
+    (true, 1024, (kv 0));
+    (false, 1024, (kv 0));
 
     (* Nan. *)
-    (false, 1024, (Uint.kv 1));
-    (false, 1024, (Uint.kv 0x8_0000_0000_0001));
-    (false, 1024, (Uint.kv 0xf_ffff_ffff_ffff));
+    (false, 1024, (kv 1));
+    (false, 1024, (kv 0x8_0000_0000_0001));
+    (false, 1024, (kv 0xf_ffff_ffff_ffff));
 
     (* Normal. *)
-    (true, 0, (Uint.kv 0));
-    (false, -1022, (Uint.kv 0));
-    (false, -52, (Uint.kv 1));
-    (false, -51, (Uint.kv 1));
-    (false, -1, (Uint.kv 0));
-    (false, 0, (Uint.kv 0));
-    (false, 1, (Uint.kv 0));
-    (false, 1, (Uint.kv 0x8_0000_0000_0000));
-    (false, 2, (Uint.kv 0));
-    (false, 2, (Uint.kv 0x4_0000_0000_0000));
-    (false, 1023, (Uint.kv 0xf_ffff_ffff_ffff));
+    (true, 0, (kv 0));
+    (false, -1022, (kv 0));
+    (false, -52, (kv 1));
+    (false, -51, (kv 1));
+    (false, -1, (kv 0));
+    (false, 0, (kv 0));
+    (false, 1, (kv 0));
+    (false, 1, (kv 0x8_0000_0000_0000));
+    (false, 2, (kv 0));
+    (false, 2, (kv 0x4_0000_0000_0000));
+    (false, 1023, (kv 0xf_ffff_ffff_ffff));
 
     (* Subnormal. *)
-    (false, -1023, (Uint.kv 1));
-    (false, -1023, (Uint.kv 0xf_ffff_ffff_ffff));
+    (false, -1023, (kv 1));
+    (false, -1023, (kv 0xf_ffff_ffff_ffff));
 
     (* Zero. *)
-    (true, -1023, (Uint.kv 0));
-    (false, -1023, (Uint.kv 0));
+    (true, -1023, (kv 0));
+    (false, -1023, (kv 0));
   ];
 
   [%expect{|
@@ -478,34 +478,34 @@ let%expect_test "m2x_f2x" =
   end in
   fn [
     (* Infinite. *)
-    (true, 1024, (Uint.kv 0));
-    (false, 1024, (Uint.kv 0));
+    (true, 1024, (kv 0));
+    (false, 1024, (kv 0));
 
     (* Nan. *)
-    (false, 1024, (Uint.kv 1));
-    (false, 1024, (Uint.kv 0x8_0000_0000_0001));
-    (false, 1024, (Uint.kv 0xf_ffff_ffff_ffff));
+    (false, 1024, (kv 1));
+    (false, 1024, (kv 0x8_0000_0000_0001));
+    (false, 1024, (kv 0xf_ffff_ffff_ffff));
 
     (* Normal. *)
-    (true, 0, (Uint.kv 0));
-    (false, -1022, (Uint.kv 0));
-    (false, -52, (Uint.kv 1));
-    (false, -51, (Uint.kv 1));
-    (false, -1, (Uint.kv 0));
-    (false, 0, (Uint.kv 0));
-    (false, 1, (Uint.kv 0));
-    (false, 1, (Uint.kv 0x8_0000_0000_0000));
-    (false, 2, (Uint.kv 0));
-    (false, 2, (Uint.kv 0x4_0000_0000_0000));
-    (false, 1023, (Uint.kv 0xf_ffff_ffff_ffff));
+    (true, 0, (kv 0));
+    (false, -1022, (kv 0));
+    (false, -52, (kv 1));
+    (false, -51, (kv 1));
+    (false, -1, (kv 0));
+    (false, 0, (kv 0));
+    (false, 1, (kv 0));
+    (false, 1, (kv 0x8_0000_0000_0000));
+    (false, 2, (kv 0));
+    (false, 2, (kv 0x4_0000_0000_0000));
+    (false, 1023, (kv 0xf_ffff_ffff_ffff));
 
     (* Subnormal. *)
-    (false, -1023, (Uint.kv 1));
-    (false, -1023, (Uint.kv 0xf_ffff_ffff_ffff));
+    (false, -1023, (kv 1));
+    (false, -1023, (kv 0xf_ffff_ffff_ffff));
 
     (* Zero. *)
-    (true, -1023, (Uint.kv 0));
-    (false, -1023, (Uint.kv 0));
+    (true, -1023, (kv 0));
+    (false, -1023, (kv 0));
   ];
 
   [%expect{|

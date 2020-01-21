@@ -111,7 +111,7 @@ module Make_common (T : I_common) : S_common with type t := int = struct
 
     let pp_x ppf t =
       assert (narrow t = t);
-      Format.fprintf ppf "0x%x" t
+      Format.fprintf ppf "0x%016x" t
 
     let zero = 0
 
