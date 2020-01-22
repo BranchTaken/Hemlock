@@ -131,12 +131,12 @@ module Seq = struct
       | l when l = (kv 0) -> [||]
       | _ -> begin
           let rec fn t a i = begin
+            let elm, t' = T.next t in
+            let () = Stdlib.Array.set a (Uint.to_int i) elm in
             match i = (kv 0) with
             | true -> a
             | false -> begin
-                let elm, t' = T.next t in
                 let i' = Uint.pred i in
-                let () = Stdlib.Array.set a (Uint.to_int i') elm in
                 fn t' a i'
               end
           end in
@@ -179,12 +179,12 @@ module Seq = struct
       | l when l = (kv 0) -> [||]
       | _ -> begin
           let rec fn t a i = begin
+            let elm, t' = T.next t in
+            let () = Stdlib.Array.set a (Uint.to_int i) elm in
             match i = (kv 0) with
             | true -> a
             | false -> begin
-                let elm, t' = T.next t in
                 let i' = Uint.pred i in
-                let () = Stdlib.Array.set a (Uint.to_int i') elm in
                 fn t' a i'
               end
           end in

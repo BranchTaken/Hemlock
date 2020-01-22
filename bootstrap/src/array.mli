@@ -22,16 +22,26 @@ val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
 
 module Seq : sig
   type 'a outer = 'a t
-  module type S_poly = sig
-    type 'a t
-    type 'a elm
-    val to_array: 'a t -> 'a elm outer
-  end
   module type S_mono = sig
     type t
     type elm
     val to_array: t -> elm outer
   end
+  module type S_poly = sig
+    type 'a t
+    type 'a elm
+    val to_array: 'a t -> 'a elm outer
+  end
+
+  (** Efficiently convert a sequence of fixed element type with known length to
+      an array. *)
+  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
+                                                       and type elm := T.elm
+
+  (** Efficiently convert a reversed sequence of fixed element type with known
+      length to an array. *)
+  module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
+                                                           and type elm := T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
   module Make_poly (T : Seq_intf.I_poly_def) : S_poly
@@ -43,16 +53,6 @@ module Seq : sig
   module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
     with type 'a t := 'a T.t
      and type 'a elm := 'a T.elm
-
-  (** Efficiently convert a sequence of fixed element type with known length to
-      an array. *)
-  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                       and type elm := T.elm
-
-  (** Efficiently convert a reversed sequence of fixed element type with known
-      length to an array. *)
-  module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                           and type elm := T.elm
 end
 
 val init: uint -> f:(uint -> 'a) -> 'a t
