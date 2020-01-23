@@ -198,7 +198,7 @@ module Seq = struct
   module Make_poly2 (T : sig
       type ('a, 'accum, 'b) t
       val length: ('a,'accum,'b) t -> uint
-      val next: ('a,'accum,'b) t -> 'accum  -> 'b  * ('a,'accum,'b) t * 'accum
+      val next: ('a,'accum,'b) t -> 'accum -> 'b * ('a,'accum,'b) t * 'accum
     end) : sig
       type ('a, 'accum, 'b) t
       val to_accum_array: ('a,'accum,'b) t -> init:'accum -> 'accum * 'b outer
@@ -229,7 +229,7 @@ module Seq = struct
       type ('a, 'b, 'accum, 'c) t
       val length: ('a,'b,'accum,'c) t -> uint
       val next: ('a,'b,'accum,'c) t -> 'accum
-        -> 'c  * ('a,'b,'accum,'c) t * 'accum
+        -> 'c * ('a,'b,'accum,'c) t * 'accum
     end) : sig
       type ('a, 'b, 'accum, 'c) t
       val to_accum_array: ('a,'b,'accum,'c) t -> init:'accum
