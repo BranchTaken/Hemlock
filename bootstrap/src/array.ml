@@ -511,9 +511,8 @@ let rev_inplace t =
   | _ -> fn (kv 0) (pred len)
 
 let rev t =
-  let t' = copy t in
-  rev_inplace t';
-  t'
+  let l = length t in
+  init l ~f:(fun i -> get t (l - i - (kv 1)))
 
 (* Used directly for non-overlapping blits. *)
 let blit_ascending t0 i0 t1 i1 len =
