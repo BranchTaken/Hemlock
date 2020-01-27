@@ -37,7 +37,7 @@ To build the bootstrap `hlc` Hemlock compiler and invoke the test suite, run
 ```sh
 cd bootstrap
 dune build
-dune runtests
+dune runtest
 ```
 
 See the [Dune documentation](https://dune.readthedocs.io/en/latest/) for more
