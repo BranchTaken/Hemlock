@@ -476,8 +476,8 @@ let reduce t ~f =
     | true -> accum
     | false -> fn (Uint.succ i) (f accum (get t i))
   end in
-  match length t with
-  | len when (len = (kv 0)) -> None
+  match t with
+  | [||] -> None
   | _ -> Some (fn (kv 1) (get t (kv 0)))
 
 let reduce_hlt t ~f =
@@ -705,8 +705,8 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
       end
   end in
   let aux = copy t in
-  let runs = match length t with
-    | len when len = (kv 0) -> [{base=kv 0; past=kv 0}]
+  let runs = match t with
+    | [||] -> [{base=kv 0; past=kv 0}]
     | _ -> select ~stable ~cmp (get t (kv 0)) (kv 0) (kv 1)
         Either None Either t aux []
   in

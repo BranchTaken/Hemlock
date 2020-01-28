@@ -453,8 +453,8 @@ let reduce t ~f =
     | true -> accum
     | false -> fn (succ i) (f accum (get t i))
   end in
-  match length t with
-  | 0 -> None
+  match t with
+  | [||] -> None
   | _ -> Some (fn 1 (get t 0))
 
 let reduce_hlt t ~f =
@@ -679,8 +679,8 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
       end
   end in
   let aux = copy t in
-  let runs = match length t with
-    | 0 -> [{base=0; past=0}]
+  let runs = match t with
+    | [||] -> [{base=0; past=0}]
     | _ -> select ~stable ~cmp (get t 0) 0 1
         Either None Either t aux []
   in
