@@ -46,7 +46,7 @@ end
 val to_bytes: t -> byte list
 (** Convert to a byte list. *)
 
-val length: t -> uint
+val length: t -> usize
 (** Return the length of the UTF-8 code point in bytes. *)
 
 val to_string: t -> string

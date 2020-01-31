@@ -1,5 +1,5 @@
 open Rudiments
-open Rudiments_uint0
+open Rudiments_int0
 
 module T = struct
   type 'a t = 'a list
@@ -9,9 +9,9 @@ module T = struct
     let rec fn l i =
       match l with
       | [] -> i
-      | _ :: tl -> fn tl (Uint.succ i)
+      | _ :: tl -> fn tl (Usize.succ i)
     in
-    fn t (kv 0)
+    fn t 0
 
   let rev t =
     let rec fn l r =
@@ -28,17 +28,17 @@ module T = struct
           list: 'a container;
           left_rev: 'a container;
           right: 'a container;
-          index: uint;
+          index: usize;
       }
 
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
         assert ((t0.list == t1.list)
                 || (Stdlib.( = ) t0.list t1.list));
-        Uint.cmp t0.index t1.index
+        Usize.cmp t0.index t1.index
 
       let hd list =
-        {list; left_rev=[]; right=list; index=kv 0}
+        {list; left_rev=[]; right=list; index=0}
 
       let tl list =
         let rec fn l r len = begin
@@ -46,20 +46,20 @@ module T = struct
           | [] -> l, len
           | hd :: tl -> fn (hd :: l) tl (succ len)
         end in
-        let left_rev, len = fn [] list (kv 0) in
+        let left_rev, len = fn [] list 0 in
         {list; left_rev; right=[]; index=len}
 
       let succ t =
         match t.right with
         | [] -> halt "At end of list"
         | hd :: tl -> {t with left_rev=(hd :: t.left_rev); right=tl;
-             index=(Uint.succ t.index)}
+             index=(Usize.succ t.index)}
 
       let pred t =
         match t.left_rev with
         | [] -> halt "At beginning of list"
         | hd :: tl -> {t with left_rev=tl; right=(hd :: t.right);
-             index=(Uint.pred t.index)}
+             index=(Usize.pred t.index)}
 
       let lget t =
         match t.left_rev with
@@ -79,19 +79,19 @@ module T = struct
 
       let seek t i =
         let rec seek_rev t i = begin
-          match i with
-          | 0 -> t
-          | i -> seek_rev (pred t) Int.(succ i)
+          match Isize.(i = (kv 0)) with
+          | true -> t
+          | false -> seek_rev (pred t) Isize.(succ i)
         end in
         let rec seek_fwd t i = begin
-          match i with
-          | 0 -> t
-          | i -> seek_fwd (succ t) Int.(pred i)
+          match Isize.(i = (kv 0)) with
+          | true -> t
+          | false -> seek_fwd (succ t) Isize.(pred i)
         end in
-        match i with
-        | 0 -> t
-        | i when Int.(i < 0) -> seek_rev t i
-        | i -> seek_fwd t i
+        match Isize.(cmp i (kv 0)) with
+        | Cmp.Lt -> seek_rev t i
+        | Cmp.Eq -> t
+        | Cmp.Gt -> seek_fwd t i
     end
     include T
     include Cmpable.Make_poly(T)
@@ -124,9 +124,9 @@ module T = struct
   let cmp_length_with t limit =
     let rec fn t limit = begin
       match t, limit with
-      | [], z when z = zero -> Cmp.Eq
+      | [], 0 -> Cmp.Eq
       | [], _ -> Cmp.Lt
-      | _ :: _, z when z = zero -> Cmp.Gt
+      | _ :: _, 0 -> Cmp.Gt
       | _ :: t', _ -> fn t' (pred limit)
     end in
     fn t limit
@@ -136,9 +136,9 @@ include Container_common.Make_poly_fold(T)
 
 let init n ~f =
   let rec fn t rem = begin
-    match rem = (kv 0) with
-    | true -> t
-    | false -> begin
+    match rem with
+    | 0 -> t
+    | _ -> begin
         let i = pred rem in
         let t' = (f i) :: t in
         fn t' i
@@ -147,7 +147,7 @@ let init n ~f =
   fn [] n
 
 let is_empty t =
-  (length t) = (kv 0)
+  (length t) = 0
 
 let hd t =
   match t with
@@ -163,7 +163,7 @@ let nth_opt t i =
   let rec fn t i = begin
     match t, i with
     | [], _ -> None
-    | hd :: _, i when i = (kv 0) -> Some hd
+    | hd :: _, 0 -> Some hd
     | _ :: t', _ -> fn t' (pred i)
   end in
   fn t i
@@ -246,7 +246,7 @@ let unzip t =
 
 let split t i =
   let rec fn t i = begin
-    match t, Uint.(to_int i) with
+    match t, i with
     | _, 0 -> [], t
     | [], _ -> halt "Out of bounds"
     | (e :: t'), _ -> begin
@@ -258,7 +258,7 @@ let split t i =
 
 let rev_split t i =
   let rec fn t0 t1 i = begin
-    match t1, Uint.(to_int i) with
+    match t1, i with
     | _, 0 -> t0, t1
     | [], _ -> halt "Out of bounds"
     | (e :: t1'), _ -> fn (e :: t0) t1' (pred i)
@@ -304,7 +304,7 @@ let rev_take_until t ~f =
 
 let drop t i =
   let rec fn t1 i = begin
-    match t1, Uint.(to_int i) with
+    match t1, i with
     | _, 0 -> t1
     | [], _ -> halt "Out of bounds"
     | (_ :: t1'), _ -> fn t1' (pred i)
@@ -352,7 +352,7 @@ let groupi t ~break =
     | elm_right :: t' -> begin
         if break i elm_left elm_right then [elm_left], t, i
         else begin
-          let g, t'', i' = fn_elm elm_right t' (Uint.succ i) break in
+          let g, t'', i' = fn_elm elm_right t' (Usize.succ i) break in
           (elm_left :: g), t'', i'
         end
       end
@@ -360,11 +360,11 @@ let groupi t ~break =
     match t with
     | [] -> []
     | elm :: t' -> begin
-        let g, t'', i' = fn_elm elm t' (Uint.succ i) break in
+        let g, t'', i' = fn_elm elm t' (Usize.succ i) break in
         g :: (fn_group t'' i' break)
       end
   end in
-  fn_group t (kv 0) break
+  fn_group t 0 break
 
 let group t ~break =
   groupi t ~break:(fun _ elm0 elm1 -> break elm0 elm1)
@@ -374,14 +374,14 @@ let rev_groupi t ~break =
     match g, t with
     | [], [] -> gs
     | _ :: _, [] -> g :: gs
-    | [], elm :: t' -> fn gs [elm] t' (Uint.succ i)
+    | [], elm :: t' -> fn gs [elm] t' (Usize.succ i)
     | elm_left :: _, elm_right :: t' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         if break i elm_left elm_right then fn (g :: gs) [elm_right] t' i'
         else fn gs (elm_right :: g) t' i'
       end
   end in
-  fn [] [] t (kv 0)
+  fn [] [] t 0
 
 let rev_group t ~break =
   rev_groupi t ~break:(fun _ elm0 elm1 -> break elm0 elm1)
@@ -390,9 +390,9 @@ let mapi t ~f =
   let rec fn t i f = begin
     match t with
     | [] -> []
-    | elm :: t' -> (f i elm) :: fn t' (Uint.succ i) f
+    | elm :: t' -> (f i elm) :: fn t' (Usize.succ i) f
   end in
-  fn t (kv 0) f
+  fn t 0 f
 
 let map t ~f =
   mapi t ~f:(fun _ elm -> f elm)
@@ -401,9 +401,9 @@ let rev_mapi t ~f =
   let rec fn t i f accum = begin
     match t with
     | [] -> accum
-    | elm :: t' -> fn t' (Uint.succ i) f ((f i elm) :: accum)
+    | elm :: t' -> fn t' (Usize.succ i) f ((f i elm) :: accum)
   end in
-  fn t (kv 0) f []
+  fn t 0 f []
 
 let rev_map t ~f =
   rev_mapi t ~f:(fun _ elm -> f elm)
@@ -421,13 +421,13 @@ let foldi_map t ~init ~f =
     match a_list with
     | [] -> accum, []
     | a_elm :: a_list' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let accum', b_elm = f i accum a_elm in
         let accum'', b_list = fn a_list' i' f accum' in
         accum'', (b_elm :: b_list)
       end
   end in
-  fn t (kv 0) f init
+  fn t 0 f init
 
 let fold_map t ~init ~f =
   foldi_map t ~init ~f:(fun _ accum a -> f accum a)
@@ -437,13 +437,13 @@ let rev_foldi_map t ~init ~f =
     match a_list with
     | [] -> accum, b_list
     | a_elm :: a_list' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let accum', b_elm = f i accum a_elm in
         let b_list' = b_elm :: b_list in
         fn a_list' i' f accum' b_list'
       end
   end in
-  fn t (kv 0) f init []
+  fn t 0 f init []
 
 let rev_fold_map t ~init ~f =
   rev_foldi_map t ~init ~f:(fun _ accum a -> f accum a)
@@ -453,7 +453,7 @@ let filteri t ~f =
     match t with
     | [] -> []
     | elm :: t' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let keep = f i elm in
         let accum = fn t' i' f in
         match keep with
@@ -461,7 +461,7 @@ let filteri t ~f =
         | true -> elm :: accum
       end
   end in
-  fn t (kv 0) f
+  fn t 0 f
 
 let filter t ~f =
   filteri t ~f:(fun _ elm -> f elm)
@@ -471,13 +471,13 @@ let rev_filteri t ~f =
     match t with
     | [] -> accum
     | elm :: t' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         match f i elm with
         | false -> fn t' i' f accum
         | true -> fn t' i' f (elm :: accum)
       end
   end in
-  fn t (kv 0) f []
+  fn t 0 f []
 
 let rev_filter t ~f =
   rev_filteri t ~f:(fun _ elm -> f elm)
@@ -489,14 +489,14 @@ let foldi2_until t0 t1 ~init ~f =
     | _ :: _, []
     | [], _ :: _ -> halt "List lengths differ"
     | elm0 :: t0', elm1 :: t1' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let accum', until = f i accum elm0 elm1 in
         match until with
         | true -> accum'
         | false -> fn t0' t1' i' f accum'
       end
   end in
-  fn t0 t1 (kv 0) f init
+  fn t0 t1 0 f init
 
 let fold2_until t0 t1 ~init ~f =
   foldi2_until t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
@@ -516,10 +516,10 @@ let iteri2 t0 t1 ~f =
     | [], _ :: _ -> halt "List lengths differ"
     | elm0 :: t0', elm1 :: t1' -> begin
         f i elm0 elm1;
-        fn t0' t1' (Uint.succ i) f
+        fn t0' t1' (Usize.succ i) f
       end
   end in
-  fn t0 t1 (kv 0) f
+  fn t0 t1 0 f
 
 let iter2 t0 t1 ~f =
   iteri2 t0 t1 ~f:(fun _ a b -> f a b)
@@ -531,11 +531,11 @@ let mapi2 t0 t1 ~f =
     | _ :: _, []
     | [], _ :: _ -> halt "List lengths differ"
     | elm0 :: t0', elm1 :: t1' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         (f i elm0 elm1) :: (fn t0' t1' i' f)
       end
   end in
-  fn t0 t1 (kv 0) f
+  fn t0 t1 0 f
 
 let map2 t0 t1 ~f =
   mapi2 t0 t1 ~f:(fun _ a b -> f a b)
@@ -547,12 +547,12 @@ let rev_mapi2 t0 t1 ~f =
     | _ :: _, []
     | [], _ :: _ -> halt "List lengths differ"
     | elm0 :: t0', elm1 :: t1' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let accum' = (f i elm0 elm1) :: accum in
         fn t0' t1' i' f accum'
       end
   end in
-  fn t0 t1 (kv 0) f []
+  fn t0 t1 0 f []
 
 let rev_map2 t0 t1 ~f =
   rev_mapi2 t0 t1 ~f:(fun _ a b -> f a b)
@@ -564,13 +564,13 @@ let foldi2_map t0 t1 ~init ~f =
     | _ :: _, []
     | [], _ :: _ -> halt "List lengths differ"
     | elm0 :: t0', elm1 :: t1' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let accum', elm = f i accum elm0 elm1 in
         let accum'', map = fn t0' t1' i' f accum' in
         accum'', (elm :: map)
       end
   end in
-  fn t0 t1 (kv 0) f init
+  fn t0 t1 0 f init
 
 let fold2_map t0 t1 ~init ~f =
   foldi2_map t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
@@ -582,13 +582,13 @@ let rev_foldi2_map t0 t1 ~init ~f =
     | _ :: _, []
     | [], _ :: _ -> halt "List lengths differ"
     | elm0 :: t0', elm1 :: t1' -> begin
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let accum', elm = f i accum elm0 elm1 in
         let map' = elm :: map in
         fn t0' t1' i' f accum' map'
       end
   end in
-  fn t0 t1 (kv 0) f init []
+  fn t0 t1 0 f init []
 
 let rev_fold2_map t0 t1 ~init ~f =
   rev_foldi2_map t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
@@ -686,7 +686,7 @@ end
 let%expect_test "cmp" =
   let open Format in
   let test_cmp lst0 lst1 = begin
-    printf " -> %s\n" (match cmp Uint.cmp lst0 lst1 with
+    printf " -> %s\n" (match cmp Usize.cmp lst0 lst1 with
       | Cmp.Lt -> "Lt"
       | Cmp.Eq -> "Eq"
       | Cmp.Gt -> "Gt"
@@ -697,18 +697,18 @@ let%expect_test "cmp" =
     | [], _ -> ()
     | _ :: lists0', [] -> test_with_lists lists lists0' lists
     | list0 :: _, list1 :: lists1' -> begin
-        printf "cmp %a %a -> " (pp Uint.pp) list0 (pp Uint.pp) list1;
+        printf "cmp %a %a -> " (pp Usize.pp) list0 (pp Usize.pp) list1;
         test_cmp list0 list1;
         test_with_lists lists lists0 lists1'
       end
   end in
   let lists = [
     [];
-    [kv 0];
-    [kv 1];
-    [kv 0; kv 1];
-    [kv 0; kv 2];
-    [kv 1; kv 2]
+    [0];
+    [1];
+    [0; 1];
+    [0; 2];
+    [1; 2]
   ] in
   printf "@[<h>";
   test_with_lists lists lists lists;
@@ -767,16 +767,16 @@ let%expect_test "cmp_length" =
     | [], _ -> ()
     | _ :: lists0', [] -> test_with_lists lists lists0' lists
     | list0 :: _, list1 :: lists1' -> begin
-        printf "cmp_length %a %a" (pp Uint.pp) list0 (pp Uint.pp) list1;
+        printf "cmp_length %a %a" (pp Usize.pp) list0 (pp Usize.pp) list1;
         test_cmp_length list0 list1;
         test_with_lists lists lists0 lists1'
       end
   end in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2]
+    [0];
+    [0; 1];
+    [0; 1; 2]
   ] in
   printf "@[<h>";
   test_with_lists lists lists lists;
@@ -805,7 +805,7 @@ let%expect_test "cmp_length_with" =
   let open Format in
   let test_cmp_length_with lst limit = begin
     printf " (limit=%a -> %s)"
-      Uint.pp limit (match cmp_length_with lst limit with
+      Usize.pp limit (match cmp_length_with lst limit with
       | Cmp.Lt -> "Lt"
       | Cmp.Eq -> "Eq"
       | Cmp.Gt -> "Gt"
@@ -815,10 +815,10 @@ let%expect_test "cmp_length_with" =
     match lists with
     | [] -> ()
     | list :: lists' -> begin
-        printf "cmp_length_with %a" (pp Uint.pp) list;
+        printf "cmp_length_with %a" (pp Usize.pp) list;
         for limit = 0 to 3 do
-          printf "%s" (if Uint.(of_int limit = kv 0) then ": " else ", ");
-          test_cmp_length_with list (Uint.of_int limit);
+          printf "%s" (if limit = 0 then ": " else ", ");
+          test_cmp_length_with list limit;
         done;
         printf "\n";
         test_with_lists lists'
@@ -826,9 +826,9 @@ let%expect_test "cmp_length_with" =
   end in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2]
+    [0];
+    [0; 1];
+    [0; 1; 2]
   ] in
   printf "@[<h>";
   test_with_lists lists;
@@ -844,7 +844,7 @@ let%expect_test "cmp_length_with" =
 let%expect_test "init" =
   let open Format in
   for i = 0 to 3 do
-    printf "%a\n" (pp Uint.pp) (init Uint.(of_int i) ~f:(fun j -> j));
+    printf "%a\n" (pp Usize.pp) (init i ~f:(fun j -> j));
   done;
 
   [%expect{|
@@ -858,9 +858,9 @@ let%expect_test "nth_opt" =
   let open Format in
   let l = [0; 1] in
   for i = 0 to 2 do
-    match nth_opt l Uint.(of_int i) with
-    | None -> printf "%u -> None\n" i
-    | Some x -> printf "%u -> Some %u\n" i x
+    match nth_opt l i with
+    | None -> printf "%a -> None\n" Usize.pp i
+    | Some x -> printf "%a -> Some %a\n" Usize.pp i Usize.pp x
   done;
 
   [%expect{|
@@ -873,29 +873,29 @@ let%expect_test "concat,@,rev_concat" =
   let open Format in
   let list_pairs = [
     ([], []);
-    ([kv 0; kv 1], []);
-    ([kv 0; kv 1], [kv 2; kv 3]);
-    ([], [kv 2; kv 3]);
+    ([0; 1], []);
+    ([0; 1], [2; 3]);
+    ([], [2; 3]);
   ] in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "concat %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (concat a b);
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (concat a b);
     printf "       %a %@ %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (a @ b);
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (a @ b);
     printf "rev_concat %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (rev_concat a b);
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (rev_concat a b);
     (* Brittle test; change in conjunction with implementation. *)
     printf "concat_unordered %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (concat_unordered a b)
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (concat_unordered a b)
   );
   printf "@]";
 
@@ -924,28 +924,28 @@ let%expect_test "join,join_unordered" =
     [];
 
     [[]];
-    [[kv 0; kv 1]];
+    [[0; 1]];
 
     [[]; []];
-    [[kv 0; kv 1]; [kv 2; kv 3]];
+    [[0; 1]; [2; 3]];
 
     [[]; []; []];
-    [[kv 0; kv 1]; [kv 2; kv 3]; [kv 4; kv 5]];
+    [[0; 1]; [2; 3]; [4; 5]];
   ] in
   printf "@[<h>";
   iter list_lists ~f:(fun lists ->
     printf "join";
-    iter lists ~f:(fun l -> printf " %a" (pp Uint.pp) l);
-    printf " -> %a\n" (pp Uint.pp) (join lists);
+    iter lists ~f:(fun l -> printf " %a" (pp Usize.pp) l);
+    printf " -> %a\n" (pp Usize.pp) (join lists);
 
     printf "join ~sep:[6; 7]";
-    iter lists ~f:(fun l -> printf " %a" (pp Uint.pp) l);
-    printf " -> %a\n" (pp Uint.pp) (join ~sep:[kv 6; kv 7] lists);
+    iter lists ~f:(fun l -> printf " %a" (pp Usize.pp) l);
+    printf " -> %a\n" (pp Usize.pp) (join ~sep:[6; 7] lists);
 
     (* Brittle test; change in conjunction with implementation. *)
     printf "join_unordered ~sep:[6; 7]";
-    iter lists ~f:(fun l -> printf " %a" (pp Uint.pp) l);
-    printf " -> %a\n" (pp Uint.pp) (join_unordered ~sep:[kv 6; kv 7] lists);
+    iter lists ~f:(fun l -> printf " %a" (pp Usize.pp) l);
+    printf " -> %a\n" (pp Usize.pp) (join_unordered ~sep:[6; 7] lists);
   );
   printf "@]";
 
@@ -977,13 +977,12 @@ let%expect_test "nth,length,is_empty" =
   let open Format in
   let test_length lst = begin
     printf "[";
-    for i = 0 to Uint.(to_int (pred (length lst))) do
-      let i = Uint.of_int i in
-      if i > (kv 0) then printf "; ";
-      printf "%u" (nth lst i);
+    for i = 0 to pred (length lst) do
+      if i > 0 then printf "; ";
+      printf "%a" Usize.pp (nth lst i);
     done;
     printf "]: length=%a, is_empty=%B\n"
-      Uint.pp (length lst) (is_empty lst)
+      Usize.pp (length lst) (is_empty lst)
   end in
   test_length [];
   test_length [0];
@@ -1000,23 +999,23 @@ let%expect_test "nth,length,is_empty" =
 let%expect_test "push,pop,hd,tl" =
   let open Format in
   let test_pop_push lst = begin
-    printf "%a -> " (pp Uint.pp) lst;
+    printf "%a -> " (pp Usize.pp) lst;
     let hd_, tl_ = pop lst in
     assert (hd_ = (hd lst));
-    let () = match cmp Uint.cmp tl_ (tl lst) with
+    let () = match cmp Usize.cmp tl_ (tl lst) with
       | Cmp.Eq -> ()
       | _ -> assert false
     in
     printf "%a %a -> %a = %a\n"
-      Uint.pp hd_
-      (pp Uint.pp) tl_
-      (pp Uint.pp) (push tl_ hd_)
-      (pp Uint.pp) (hd_ :: tl_)
+      Usize.pp hd_
+      (pp Usize.pp) tl_
+      (pp Usize.pp) (push tl_ hd_)
+      (pp Usize.pp) (hd_ :: tl_)
   end in
   let lists = [
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2];
+    [0];
+    [0; 1];
+    [0; 1; 2];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun lst -> test_pop_push lst);
@@ -1032,15 +1031,15 @@ let%expect_test "rev" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2];
+    [0];
+    [0; 1];
+    [0; 1; 2];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "rev %a -> %a\n"
-      (pp Uint.pp) l
-      (pp Uint.pp) (rev l)
+      (pp Usize.pp) l
+      (pp Usize.pp) (rev l)
   );
   printf "@]";
 
@@ -1055,21 +1054,21 @@ let%expect_test "zip,unzip" =
   let open Format in
   let list_pairs = [
     ([], []);
-    ([kv 0], [kv 1]);
-    ([kv 0; kv 1], [kv 2; kv 3]);
-    ([kv 0; kv 1; kv 2], [kv 3; kv 4; kv 5])
+    ([0], [1]);
+    ([0; 1], [2; 3]);
+    ([0; 1; 2], [3; 4; 5])
   ] in
-  let pp_pair ppf (a, b) = fprintf ppf "(%a,@ %a)" Uint.pp a Uint.pp b in
+  let pp_pair ppf (a, b) = fprintf ppf "(%a,@ %a)" Usize.pp a Usize.pp b in
   printf "@[<h>";
   iter list_pairs ~f:(fun (t0, t1) ->
     let z = zip t0 t1 in
     let t0', t1' = unzip z in
     printf "zip/unzip %a %a -> %a -> %a %a\n"
-      (pp Uint.pp) t0
-      (pp Uint.pp) t1
+      (pp Usize.pp) t0
+      (pp Usize.pp) t1
       (pp pp_pair) z
-      (pp Uint.pp) t0'
-      (pp Uint.pp) t1'
+      (pp Usize.pp) t0'
+      (pp Usize.pp) t1'
   );
   printf "@]";
 
@@ -1084,30 +1083,30 @@ let%expect_test "split,rev_split,take,rev_take,drop" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1]
+    [0];
+    [0; 1]
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    for i = 0 to Uint.(to_int (length l)) do
-      let a, b = split l (Uint.of_int i) in
-      printf "split/take,drop %a %u -> %a, %a / %a, %a\n"
-        (pp Uint.pp) l
-        i
-        (pp Uint.pp) a
-        (pp Uint.pp) b
-        (pp Uint.pp) (take l (Uint.of_int i))
-        (pp Uint.pp) (drop l (Uint.of_int i))
+    for i = 0 to length l do
+      let a, b = split l i in
+      printf "split/take,drop %a %a -> %a, %a / %a, %a\n"
+        (pp Usize.pp) l
+        Usize.pp i
+        (pp Usize.pp) a
+        (pp Usize.pp) b
+        (pp Usize.pp) (take l i)
+        (pp Usize.pp) (drop l i)
       ;
 
-      let a, b = rev_split l (Uint.of_int i) in
-      printf "rev_split/rev_take,drop %a %u -> %a, %a / %a, %a\n"
-        (pp Uint.pp) l
-        i
-        (pp Uint.pp) a
-        (pp Uint.pp) b
-        (pp Uint.pp) (rev_take l (Uint.of_int i))
-        (pp Uint.pp) (drop l (Uint.of_int i))
+      let a, b = rev_split l i in
+      printf "rev_split/rev_take,drop %a %a -> %a, %a / %a, %a\n"
+        (pp Usize.pp) l
+        Usize.pp i
+        (pp Usize.pp) a
+        (pp Usize.pp) b
+        (pp Usize.pp) (rev_take l i)
+        (pp Usize.pp) (drop l i)
     done
   );
   printf "@]";
@@ -1131,33 +1130,33 @@ let%expect_test "[rev_]split_until,[rev_]take_until,drop_until" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
+    [0];
+    [0; 1];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    for i = 0 to Uint.(to_int (length l)) do
-      let f elm = Uint.(elm >= of_int i) in
+    for i = 0 to length l do
+      let f elm = (elm >= i) in
       let l0, l1 = split_until l ~f in
       printf ("split_until/take_until,drop_until %a " ^^
-        "~f:(fun elm -> elm >= %u) -> %a %a / %a %a\n")
-          (pp Uint.pp) l
-          i
-          (pp Uint.pp) l0
-          (pp Uint.pp) l1
-          (pp Uint.pp) (take_until l ~f)
-          (pp Uint.pp) (drop_until l ~f)
+        "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
+          (pp Usize.pp) l
+          Usize.pp i
+          (pp Usize.pp) l0
+          (pp Usize.pp) l1
+          (pp Usize.pp) (take_until l ~f)
+          (pp Usize.pp) (drop_until l ~f)
       ;
 
       let rl0, rl1 = rev_split_until l ~f in
       printf ("rev_split_until/rev_take_until,drop_until %a " ^^
-        "~f:(fun elm -> elm >= %u) -> %a %a / %a %a\n")
-          (pp Uint.pp) l
-          i
-          (pp Uint.pp) rl0
-          (pp Uint.pp) rl1
-          (pp Uint.pp) (rev_take_until l ~f)
-          (pp Uint.pp) (drop_until l ~f)
+        "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
+          (pp Usize.pp) l
+          Usize.pp i
+          (pp Usize.pp) rl0
+          (pp Usize.pp) rl1
+          (pp Usize.pp) (rev_take_until l ~f)
+          (pp Usize.pp) (drop_until l ~f)
     done
   );
   printf "@]";
@@ -1181,22 +1180,22 @@ let%expect_test "[rev_]partition_tf" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2];
-    [kv 0; kv 1; kv 2; kv 3];
+    [0];
+    [0; 1];
+    [0; 1; 2];
+    [0; 1; 2; 3];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    let even x = (x % (kv 2) = (kv 0)) in
+    let even x = (x % 2 = 0) in
     let l_true, l_false = partition_tf l ~f:even in
     let rl_true, rl_false = rev_partition_tf l ~f:even in
     printf "[rev_]partition_tf %a ~f:even -> %a %a / %a %a\n"
-      (pp Uint.pp) l
-      (pp Uint.pp) l_true
-      (pp Uint.pp) l_false
-      (pp Uint.pp) rl_true
-      (pp Uint.pp) rl_false
+      (pp Usize.pp) l
+      (pp Usize.pp) l_true
+      (pp Usize.pp) l_false
+      (pp Usize.pp) rl_true
+      (pp Usize.pp) rl_false
   );
   printf "@]";
 
@@ -1212,25 +1211,25 @@ let%expect_test "[rev_]group" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
+    [0];
+    [0; 1];
 
-    [kv 0; kv 0];
+    [0; 0];
 
-    [kv 0; kv 0; kv 0];
+    [0; 0; 0];
 
-    [kv 0; kv 0; kv 1; kv 1];
-    [kv 0; kv 1; kv 1; kv 2; kv 2; kv 3];
+    [0; 0; 1; 1];
+    [0; 1; 1; 2; 2; 3];
 
-    [kv 0; kv 0; kv 0; kv 0];
+    [0; 0; 0; 0];
   ] in
   let eq x0 x1 = (x0 = x1) in
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "[rev_]group %a ~break:eq -> %a / %a\n"
-      (pp Uint.pp) l
-      (pp (pp Uint.pp)) (group l ~break:eq)
-      (pp (pp Uint.pp)) (rev_group l ~break:eq)
+      (pp Usize.pp) l
+      (pp (pp Usize.pp)) (group l ~break:eq)
+      (pp (pp Usize.pp)) (rev_group l ~break:eq)
   );
   printf "@]";
 
@@ -1249,22 +1248,22 @@ let%expect_test "[rev_]groupi" =
   let open Format in
   let lists = [
     [];
-    [kv 9];
-    [kv 9; kv 9];
+    [9];
+    [9; 9];
 
-    [kv 0; kv 1];
-    [kv 9; kv 1; kv 2; kv 9];
+    [0; 1];
+    [9; 1; 2; 9];
 
-    [kv 0; kv 1; kv 2];
-    [kv 9; kv 1; kv 2; kv 9; kv 4; kv 5; kv 9];
+    [0; 1; 2];
+    [9; 1; 2; 9; 4; 5; 9];
   ] in
   let inds i x0 x1 = (i = x1) && (i = succ x0) in
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "[rev_]groupi %a ~break:inds -> %a / %a\n"
-      (pp Uint.pp) l
-      (pp (pp Uint.pp)) (groupi l ~break:inds)
-      (pp (pp Uint.pp)) (rev_groupi l ~break:inds)
+      (pp Usize.pp) l
+      (pp (pp Usize.pp)) (groupi l ~break:inds)
+      (pp (pp Usize.pp)) (rev_groupi l ~break:inds)
   );
   printf "@]";
 
@@ -1282,18 +1281,18 @@ let%expect_test "[rev_]mapi" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2];
-    [kv 0; kv 1; kv 2; kv 3];
+    [0];
+    [0; 1];
+    [0; 1; 2];
+    [0; 1; 2; 3];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    let f i elm = elm + i * kv 10 in
+    let f i elm = elm + i * 10 in
     printf "[rev_]mapi %a -> %a / %a\n"
-      (pp Uint.pp) l
-      (pp Uint.pp) (mapi l ~f)
-      (pp Uint.pp) (rev_mapi l ~f)
+      (pp Usize.pp) l
+      (pp Usize.pp) (mapi l ~f)
+      (pp Usize.pp) (rev_mapi l ~f)
   );
   printf "@]";
 
@@ -1309,27 +1308,27 @@ let%expect_test "rev_map_concat" =
   let open Format in
   let list_pairs = [
     ([], []);
-    ([kv 0; kv 1], []);
-    ([kv 0], [kv 1]);
-    ([], [kv 0; kv 1]);
+    ([0; 1], []);
+    ([0], [1]);
+    ([], [0; 1]);
 
-    ([kv 0; kv 1; kv 2], []);
-    ([kv 0; kv 1], [kv 2]);
-    ([kv 0], [kv 1; kv 2]);
-    ([], [kv 1; kv 2; kv 3]);
+    ([0; 1; 2], []);
+    ([0; 1], [2]);
+    ([0], [1; 2]);
+    ([], [1; 2; 3]);
 
-    ([kv 0; kv 1; kv 2; kv 3], []);
-    ([kv 0; kv 1; kv 2], [kv 3]);
-    ([kv 0; kv 1], [kv 2; kv 3]);
-    ([kv 0], [kv 1; kv 2; kv 3]);
-    ([], [kv 0; kv 1; kv 2; kv 3])
+    ([0; 1; 2; 3], []);
+    ([0; 1; 2], [3]);
+    ([0; 1], [2; 3]);
+    ([0], [1; 2; 3]);
+    ([], [0; 1; 2; 3])
   ] in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "rev_map_concat %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (rev_map_concat a b ~f:(fun elm -> elm + kv 10))
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (rev_map_concat a b ~f:(fun elm -> elm + 10))
   );
   printf "@]";
 
@@ -1353,26 +1352,26 @@ let%expect_test "[rev_]fold_mapi" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2];
-    [kv 0; kv 1; kv 2; kv 3];
+    [0];
+    [0; 1];
+    [0; 1; 2];
+    [0; 1; 2; 3];
   ] in
   printf "@[<h>";
-  let f i accum elm = (elm :: accum), (elm + i * kv 10) in
+  let f i accum elm = (elm :: accum), (elm + i * 10) in
   iter lists ~f:(fun l ->
     let accum, b_list = foldi_map l ~init:[] ~f in
     printf "    fold_mapi %a -> accum=%a, b_list=%a\n"
-      (pp Uint.pp) l
-      (pp Uint.pp) accum
-      (pp Uint.pp) b_list
+      (pp Usize.pp) l
+      (pp Usize.pp) accum
+      (pp Usize.pp) b_list
     ;
 
     let accum, b_list = rev_foldi_map l ~init:[] ~f in
     printf "rev_fold_mapi %a -> accum=%a, b_list=%a\n"
-      (pp Uint.pp) l
-      (pp Uint.pp) accum
-      (pp Uint.pp) b_list
+      (pp Usize.pp) l
+      (pp Usize.pp) accum
+      (pp Usize.pp) b_list
   );
   printf "@]";
 
@@ -1393,19 +1392,19 @@ let%expect_test "[rev_]filteri" =
   let open Format in
   let lists = [
     [];
-    [kv 0];
-    [kv 0; kv 1];
-    [kv 0; kv 1; kv 2];
-    [kv 0; kv 1; kv 2; kv 3];
-    [kv 0; kv 1; kv 2; kv 3; kv 4];
+    [0];
+    [0; 1];
+    [0; 1; 2];
+    [0; 1; 2; 3];
+    [0; 1; 2; 3; 4];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    let f i _ = (i % (kv 2) = (kv 0)) in
+    let f i _ = (i % 2 = 0) in
     printf "[rev_]filteri %a -> %a / %a\n"
-      (pp Uint.pp) l
-      (pp Uint.pp) (filteri l ~f)
-      (pp Uint.pp) (rev_filteri l ~f)
+      (pp Usize.pp) l
+      (pp Usize.pp) (filteri l ~f)
+      (pp Usize.pp) (rev_filteri l ~f)
   );
   printf "@]";
 
@@ -1423,9 +1422,9 @@ let%expect_test "foldi2" =
   let list_pairs = [
     ([], []);
 
-    ([kv 100], [kv 200]);
-    ([kv 100; kv 110], [kv 200; kv 210]);
-    ([kv 100; kv 110; kv 120], [kv 200; kv 210; kv 220]);
+    ([100], [200]);
+    ([100; 110], [200; 210]);
+    ([100; 110; 120], [200; 210; 220]);
   ] in
   let f i accum a_elm b_elm = begin
     (i + a_elm + b_elm) :: accum
@@ -1433,9 +1432,9 @@ let%expect_test "foldi2" =
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "foldi2 %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (foldi2 a b ~init:[] ~f)
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (foldi2 a b ~init:[] ~f)
     ;
   );
   printf "@]";
@@ -1452,21 +1451,21 @@ let%expect_test "foldi2_until" =
   let list_pairs = [
     ([], []);
 
-    ([kv 100], [kv 200]);
-    ([kv 100; kv 110], [kv 200; kv 210]);
-    ([kv 100; kv 110; kv 120], [kv 200; kv 210; kv 220]);
+    ([100], [200]);
+    ([100; 110], [200; 210]);
+    ([100; 110; 120], [200; 210; 220]);
   ] in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     let f i accum a_elm b_elm = begin
       let len = length a in
-      let limit = len - (kv 2) in
+      let limit = len - 2 in
       ((i + a_elm + b_elm) :: accum), (i = limit)
     end in
     printf "foldi2 %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (foldi2_until a b ~init:[] ~f)
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (foldi2_until a b ~init:[] ~f)
   );
   printf "@]";
 
@@ -1481,18 +1480,18 @@ let%expect_test "iteri2" =
   let open Format in
   let list_pairs = [
     ([], []);
-    ([kv 0], [kv 1]);
-    ([kv 0; kv 1], [kv 2; kv 3]);
-    ([kv 0; kv 1; kv 2], [kv 3; kv 4; kv 5]);
+    ([0], [1]);
+    ([0; 1], [2; 3]);
+    ([0; 1; 2], [3; 4; 5]);
   ] in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "iter2 %a %a ->"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
+      (pp Usize.pp) a
+      (pp Usize.pp) b
     ;
     let f i a b = begin
-      printf " (i=%a, a=%a, b=%a)" Uint.pp i Uint.pp a Uint.pp b
+      printf " (i=%a, a=%a, b=%a)" Usize.pp i Usize.pp a Usize.pp b
     end in
     iteri2 a b ~f;
     printf "\n"
@@ -1510,23 +1509,23 @@ let%expect_test "[rev_]mapi2" =
   let open Format in
   let list_pairs = [
     ([], []);
-    ([kv 10], [kv 100]);
-    ([kv 10; kv 20], [kv 100; kv 200]);
-    ([kv 10; kv 20; kv 30], [kv 100; kv 200; kv 300]);
+    ([10], [100]);
+    ([10; 20], [100; 200]);
+    ([10; 20; 30], [100; 200; 300]);
   ] in
-  let f i a b = (b + a + i + (kv 1)) in
+  let f i a b = (b + a + i + 1) in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "    mapi2 %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (mapi2 a b ~f)
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (mapi2 a b ~f)
     ;
 
     printf "rev_mapi2 %a %a -> %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      (pp Uint.pp) (rev_mapi2 a b ~f)
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      (pp Usize.pp) (rev_mapi2 a b ~f)
   );
   printf "@]";
 
@@ -1545,30 +1544,30 @@ let%expect_test "[rev_]foldi2_map" =
   let open Format in
   let list_pairs = [
     ([], []);
-    ([kv 10], [kv 100]);
-    ([kv 10; kv 20], [kv 100; kv 200]);
-    ([kv 10; kv 20; kv 30], [kv 100; kv 200; kv 300]);
+    ([10], [100]);
+    ([10; 20], [100; 200]);
+    ([10; 20; 30], [100; 200; 300]);
   ] in
   let f i accum a b = begin
-    let sum = (b + a + i + (kv 1)) in
+    let sum = (b + a + i + 1) in
     (accum + sum), sum
   end in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
-    let accum, c = foldi2_map a b ~init:(kv 0) ~f in
+    let accum, c = foldi2_map a b ~init:0 ~f in
     printf "    foldi2_map %a %a -> %a, %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      Uint.pp accum
-      (pp Uint.pp) c
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      Usize.pp accum
+      (pp Usize.pp) c
     ;
 
-    let accum, c = rev_foldi2_map a b ~init:(kv 0) ~f in
+    let accum, c = rev_foldi2_map a b ~init:0 ~f in
     printf "rev_foldi2_map %a %a -> %a, %a\n"
-      (pp Uint.pp) a
-      (pp Uint.pp) b
-      Uint.pp accum
-      (pp Uint.pp) c
+      (pp Usize.pp) a
+      (pp Usize.pp) b
+      Usize.pp accum
+      (pp Usize.pp) c
   );
   printf "@]";
 
@@ -1587,17 +1586,17 @@ let%expect_test "Assoc" =
   let open Format in
   let assocs = [
     [];
-    [(kv 0, kv 10)];
-    [(kv 0, kv 10); (kv 1, kv 11)];
+    [(0, 10)];
+    [(0, 10); (1, 11)];
 
-    [(kv 0, kv 10); (kv 0, kv 11); (kv 1, kv 12)];
-    [(kv 0, kv 10); (kv 1, kv 11); (kv 0, kv 12)];
-    [(kv 1, kv 10); (kv 0, kv 11); (kv 0, kv 12)];
-    [(kv 0, kv 10); (kv 1, kv 11); (kv 1, kv 12); (kv 2, kv 13)];
+    [(0, 10); (0, 11); (1, 12)];
+    [(0, 10); (1, 11); (0, 12)];
+    [(1, 10); (0, 11); (0, 12)];
+    [(0, 10); (1, 11); (1, 12); (2, 13)];
   ] in
-  let pp_assoc ppf (a, b) = fprintf ppf "(%a,@ %a)" Uint.pp a Uint.pp b in
-  let missing = kv 3 in
-  let cmp = Uint.cmp in
+  let pp_assoc ppf (a, b) = fprintf ppf "(%a,@ %a)" Usize.pp a Usize.pp b in
+  let missing = 3 in
+  let cmp = Usize.cmp in
   printf "@[<h>";
   iter assocs ~f:(fun assoc ->
     printf "%a\n"
@@ -1605,30 +1604,30 @@ let%expect_test "Assoc" =
     ;
     iter assoc ~f:(fun (k, _) ->
       printf "find_hlt/mem %a -> %a / %b\n"
-        Uint.pp k
-        Uint.pp (Assoc.find_hlt assoc k ~cmp)
+        Usize.pp k
+        Usize.pp (Assoc.find_hlt assoc k ~cmp)
         (Assoc.mem assoc k ~cmp)
     );
 
-    printf "find/mem %a -> " Uint.pp missing;
+    printf "find/mem %a -> " Usize.pp missing;
     (match (Assoc.find assoc missing ~cmp),
           (Assoc.mem assoc missing ~cmp); with
       | None, b -> printf "None / %b" b
-      | Some v, b -> printf "%a / %b" Uint.pp v b
+      | Some v, b -> printf "%a / %b" Usize.pp v b
     );
     printf "\n";
 
     iter assoc ~f:(fun (k, _) ->
       printf "remove_hlt %a -> %a\n"
-        Uint.pp k
+        Usize.pp k
         (pp pp_assoc) (Assoc.remove_hlt assoc k ~cmp)
     );
     printf "remove %a -> %a\n"
-      Uint.pp missing
+      Usize.pp missing
       (pp pp_assoc) (Assoc.remove assoc missing ~cmp)
     ;
     printf "map -> %a\n"
-      (pp pp_assoc) (Assoc.map assoc ~f:(fun v -> v * kv 2))
+      (pp pp_assoc) (Assoc.map assoc ~f:(fun v -> v * 2))
     ;
 
     printf "inverse -> %a\n"

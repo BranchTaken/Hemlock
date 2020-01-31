@@ -5,7 +5,6 @@ open Rudiments
 type t = float
 
 include Identifiable_intf.S with type t := t
-include Intable_intf.S with type t := t
 
 (** Rounding direction. *)
 module Dir : sig
@@ -44,26 +43,32 @@ module Parts : sig
   include Formattable_intf.S_mono with type t := t
 end
 
-val create: neg:bool -> exponent:int -> mantissa:uint -> t
+val of_isize: isize -> t
+(** Initialize from signed integer. *)
+
+val to_isize: t -> isize
+(** Convert to signed integer. *)
+
+val create: neg:bool -> exponent:isize -> mantissa:usize -> t
 (** [create ~neg ~exponent ~mantissa] creates a float, where [-1023 <= exponent
     <= 1024] and [mantissa <= 0xf_ffff_ffff_ffff]. *)
 
 val is_neg: t -> bool
 (** [is_neg t] returns [true] if [t] is negative. *)
 
-val exponent: t -> int
+val exponent: t -> isize
 (** [exponent t] returns the exponent of [t], which is in [\[-1023 .. 1024\]].
     *)
 
-val mantissa: t -> uint
+val mantissa: t -> usize
 (** [mantissa t] returns the mantissa of [t], which is in [\[0 ..
     0xf_ffff_ffff_ffff\]]. *)
 
-val m2x: t -> t * int
+val m2x: t -> t * isize
 (** [m2x t] splits [t] into a normalized fraction [f] and exponent [x], where
     [t = f*2^x]. *)
 
-val f2x: t -> int -> t
+val f2x: t -> isize -> t
 (** [f2x t x] computes [t*2^x]. *)
 
 val modf: t -> Parts.t
@@ -171,8 +176,8 @@ val log: t -> t
 val pow: t -> t -> t
 (** [pow x y] returns [x] raised to the [y] power.  Equivalent to [x ** y]. *)
 
-val int_pow: t -> int -> t
-(** [x ** y] returns [x] raised to the [y] power, where [y] is an {!type:int}.
+val int_pow: t -> isize -> t
+(** [x ** y] returns [x] raised to the [y] power, where [y] is an {!type:isize}.
     [int_pow] is typically faster than the equivalent call to {!pow}. *)
 
 val lngamma: t -> t

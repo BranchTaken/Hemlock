@@ -10,7 +10,7 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
     module T = struct
       type 'a t = {
         cursor: 'a T.Cursor.t;
-        length: uint;
+        length: usize;
       }
       type 'a elm = 'a T.elm
 
@@ -24,10 +24,10 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
         t.length
 
       let next t =
-        assert (length t > (kv 0));
+        assert (length t > 0);
         let elm = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
-        let length' = (Uint.pred t.length) in
+        let length' = (Usize.pred t.length) in
         let t' = {cursor=cursor'; length=length'} in
         elm, t'
     end

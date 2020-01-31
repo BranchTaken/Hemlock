@@ -1,12 +1,12 @@
 (** Functor interfaces and signatures for integers of specific bitwidth. *)
 
-include Rudiments_uint0
+include Rudiments_int0
 
 (** Functor input interface for an integer type with a specific bitwidth. *)
 module type I = sig
   type t
 
-  val num_bits: uint
+  val num_bits: usize
   (** Number of bits in integer representation. *)
 end
 
@@ -19,11 +19,11 @@ module type S = sig
   include Cmpable_intf.S_mono_zero with type t := t
   include Floatable_intf.S with type t := t
 
-  val narrow_of_signed: int -> t
+  val narrow_of_signed: isize -> t
   (** Narrow full-width signed integer.  Sign is preserved, but precision may
       be silently lost. *)
 
-  val narrow_of_unsigned: uint -> t
+  val narrow_of_unsigned: usize -> t
   (** Narrow full-width unsigned integer.  Sign is preserved, but precision may
       be silently lost. *)
 
@@ -59,19 +59,19 @@ module type S = sig
   val bit_not: t -> t
   (** Bitwise not. *)
 
-  val bit_sl: t -> uint -> t
+  val bit_sl: t -> usize -> t
   (** Bit shift left. *)
 
-  val bit_usr: t -> uint -> t
+  val bit_usr: t -> usize -> t
   (** Unsigned bit shift right (no sign extension). *)
 
-  val bit_pop: t -> uint
+  val bit_pop: t -> usize
   (** Population count, i.e. number of bits set to 1. *)
 
-  val bit_clz: t -> uint
+  val bit_clz: t -> usize
   (** Count leading zeros. *)
 
-  val bit_ctz: t -> uint
+  val bit_ctz: t -> usize
   (** Count trailing zeros. *)
 
   val is_pow2: t -> bool
@@ -136,7 +136,7 @@ module type S_i = sig
   val neg_one: t
   (** Constant value -1. *)
 
-  val bit_ssr: t -> uint -> t
+  val bit_ssr: t -> usize -> t
   (** Signed bit shift right (sign extension). *)
 
   val ( ~- ): t -> t

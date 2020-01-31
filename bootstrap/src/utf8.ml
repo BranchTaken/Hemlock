@@ -10,33 +10,30 @@ module T = struct
   let of_codepoint cp =
     assert (Codepoint.(cp <= (kv 0x10ffff)));
     let lz = Codepoint.bit_clz cp in
-    let sigbits = Int.(21 - (Uint.to_int lz)) in
-    if Int.(sigbits < 8) then
+    let sigbits = 21 - lz in
+    if sigbits < 8 then
       One (Byte.of_codepoint cp)
-    else if Int.(sigbits < 12) then
+    else if sigbits < 12 then
       Two (
-        Byte.(bit_or (kv 0b110_00000) (of_codepoint (Codepoint.bit_usr cp
-                (Uint.kv 6)))),
+        Byte.(bit_or (kv 0b110_00000) (of_codepoint (Codepoint.bit_usr cp 6))),
         Byte.(bit_or (kv 0b10_000000)
             (of_codepoint (Codepoint.(bit_and cp (kv 0x3f)))))
       )
-    else if Int.(sigbits < 17) then
+    else if sigbits < 17 then
       Three (
-        Byte.(bit_or (kv 0b1110_0000) (of_codepoint (Codepoint.bit_usr cp
-                (Uint.kv 12)))),
+        Byte.(bit_or (kv 0b1110_0000) (of_codepoint (Codepoint.bit_usr cp 12))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-              Codepoint.(bit_and (bit_usr cp (Uint.kv 6)) (kv 0x3f)))),
+            Codepoint.(bit_and (bit_usr cp 6) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
             (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
-    else if Int.(sigbits < 22) then
+    else if sigbits < 22 then
       Four (
-        Byte.(bit_or (kv 0b11110_000) (of_codepoint (Codepoint.bit_usr cp
-                (Uint.kv 18)))),
+        Byte.(bit_or (kv 0b11110_000) (of_codepoint (Codepoint.bit_usr cp 18))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-              Codepoint.(bit_and (bit_usr cp (Uint.kv 12)) (kv 0x3f)))),
+            Codepoint.(bit_and (bit_usr cp 12) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-              Codepoint.(bit_and (bit_usr cp (Uint.kv 6)) (kv 0x3f)))),
+            Codepoint.(bit_and (bit_usr cp 6) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
             (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
@@ -45,21 +42,16 @@ module T = struct
   let to_codepoint = function
     | One b0 -> Byte.to_codepoint b0
     | Two (b0, b1) -> Codepoint.(bit_or
-          Byte.(to_codepoint (bit_sl (bit_and b0 (kv 0x1f)) (Uint.kv 6)))
+          Byte.(to_codepoint (bit_sl (bit_and b0 (kv 0x1f)) 6))
           Byte.(to_codepoint (bit_and b1 (kv 0x3f))))
     | Three (b0, b1, b2) -> Codepoint.(bit_or (bit_or
-            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0xf)))
-                (Uint.kv 12))
-            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f)))
-                (Uint.kv 6)))
+            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0xf))) 12)
+            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f))) 6))
           Byte.(to_codepoint (bit_and b2 (kv 0x3f))))
     | Four (b0, b1, b2, b3) -> Codepoint.(bit_or (bit_or (bit_or
-              Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0x7)))
-                  (Uint.kv 18))
-              Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f)))
-                  (Uint.kv 12)))
-            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b2 (kv 0x3f)))
-                (Uint.kv 6)))
+              Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0x7))) 18)
+              Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f))) 12))
+            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b2 (kv 0x3f))) 6))
           Byte.(to_codepoint (bit_and b3 (kv 0x3f))))
 
   let cmp t0 t1 =
@@ -81,7 +73,7 @@ module Seq = struct
     let to_utf8 t =
       let rec fn t bytes nrem = begin
         match nrem with
-        | nrem when Uint.(nrem = (kv 0)) -> begin
+        | 0 -> begin
             match bytes with
             |                   b0 :: [] -> Some (Ok (One b0), t)
             |             b1 :: b0 :: [] -> Some (Ok (Two (b0, b1)), t)
@@ -95,17 +87,17 @@ module Seq = struct
             | Some (b, t')
               when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
               Some (Error (List.rev (b :: bytes)), t')
-            | Some (b, t') -> fn t' (b :: bytes) (Uint.pred nrem)
+            | Some (b, t') -> fn t' (b :: bytes) (Usize.pred nrem)
           end
       end in
       match T.next t with
       | None -> None
       | Some (b, t') -> begin
           match Byte.(bit_clz (bit_not b)) with
-            | lz when Uint.(lz = (kv 0)) -> fn t' [b] (kv 0)
-            | lz when Uint.(lz = (kv 2)) -> fn t' [b] (kv 1)
-            | lz when Uint.(lz = (kv 3)) -> fn t' [b] (kv 2)
-            | lz when Uint.(lz = (kv 4)) -> fn t' [b] (kv 3)
+            | 0 -> fn t' [b] 0
+            | 2 -> fn t' [b] 1
+            | 3 -> fn t' [b] 2
+            | 4 -> fn t' [b] 3
             | _ -> Some (Error [b], t')
         end
 
@@ -125,7 +117,7 @@ module Seq = struct
         | None, _ :: _ -> Some (Error bytes, t)
         | Some (b, t'), _ -> begin
             let bytes' = b :: bytes in
-            match Uint.to_int Byte.(bit_clz (bit_not b)), bytes' with
+            match Byte.(bit_clz (bit_not b)), bytes' with
             | 0, b0 :: [] -> Some (Ok (One b0), t')
             | 2, b0 :: b1 :: [] ->
               Some (Ok (Two (b0, b1)), t')
@@ -158,37 +150,39 @@ let to_bytes = function
   | Four (b0, b1, b2, b3) -> [b0; b1; b2; b3]
 
 let length = function
-  | One _ -> kv 1
-  | Two _ -> kv 2
-  | Three _ -> kv 3
-  | Four _ -> kv 4
+  | One _ -> 1
+  | Two _ -> 2
+  | Three _ -> 3
+  | Four _ -> 4
 
 let to_string = function
-  | One b0 -> Stdlib.String.init 1 (fun _ -> Stdlib.Char.chr (Byte.to_int b0))
+  | One b0 -> Stdlib.String.init 1 (fun _ ->
+      Stdlib.Char.chr (int_of_isize (Byte.to_isize b0))
+    )
   | Two (b0, b1) -> Stdlib.String.init 2 (fun i ->
-      Stdlib.Char.chr (Byte.to_int (
+      Stdlib.Char.chr (int_of_isize (Byte.to_isize (
         match i with
         | 0 -> b0
         | 1 -> b1
         | _ -> not_reached ()
-    )))
+    ))))
   | Three (b0, b1, b2) -> Stdlib.String.init 3 (fun i ->
-      Stdlib.Char.chr (Byte.to_int (
+      Stdlib.Char.chr (int_of_isize (Byte.to_isize (
         match i with
         | 0 -> b0
         | 1 -> b1
         | 2 -> b2
         | _ -> not_reached ()
-    )))
+    ))))
   | Four (b0, b1, b2, b3) -> Stdlib.String.init 4 (fun i ->
-      Stdlib.Char.chr (Byte.to_int (
+      Stdlib.Char.chr (int_of_isize (Byte.to_isize (
         match i with
         | 0 -> b0
         | 1 -> b1
         | 2 -> b2
         | 3 -> b3
         | _ -> not_reached ()
-    )))
+    ))))
 
 let escape t =
   match t with
@@ -261,11 +255,11 @@ let%expect_test "utf8" =
     printf "codepoint=%a, codepoint'=%a, bytes=["
       Codepoint.pp_x codepoint Codepoint.pp_x codepoint';
     List.iteri bytes ~f:(fun i b ->
-      let space = if Uint.(i = (kv 0)) then "" else " " in
-      let sep = if Uint.(succ i < length) then ";" else "" in
+      let space = if Usize.(i = 0) then "" else " " in
+      let sep = if Usize.(succ i < length) then ";" else "" in
       printf "%s%a%s" space Byte.pp_x b sep
     );
-    printf "], length=%a\n" Uint.pp length
+    printf "], length=%a\n" Usize.pp length
   );
 
   [%expect{|
@@ -280,142 +274,142 @@ let%expect_test "pp,escape" =
 
   let rec fn i = begin
     match i with
-    | i when Uint.(i = (kv 0x80)) -> ()
+    | 0x80 -> ()
     | _ -> begin
-        let utf8 = of_codepoint Codepoint.(of_uint i) in
-        printf "0x%02x -> %a\n" (Uint.to_int i) pp utf8;
-        fn (Uint.succ i)
+        let utf8 = of_codepoint Codepoint.(of_usize i) in
+        printf "%a -> %a\n" Usize.pp_x i pp utf8;
+        fn (Usize.succ i)
       end
   end in
-  fn (kv 0);
+  fn 0;
 
   [%expect{|
-    0x00 -> '\0'
-    0x01 -> '\x01'
-    0x02 -> '\x02'
-    0x03 -> '\x03'
-    0x04 -> '\x04'
-    0x05 -> '\x05'
-    0x06 -> '\x06'
-    0x07 -> '\a'
-    0x08 -> '\b'
-    0x09 -> '\t'
-    0x0a -> '\n'
-    0x0b -> '\v'
-    0x0c -> '\f'
-    0x0d -> '\r'
-    0x0e -> '\x0e'
-    0x0f -> '\x0f'
-    0x10 -> '\x10'
-    0x11 -> '\x11'
-    0x12 -> '\x12'
-    0x13 -> '\x13'
-    0x14 -> '\x14'
-    0x15 -> '\x15'
-    0x16 -> '\x16'
-    0x17 -> '\x17'
-    0x18 -> '\x18'
-    0x19 -> '\x19'
-    0x1a -> '\x1a'
-    0x1b -> '\x1b'
-    0x1c -> '\x1c'
-    0x1d -> '\x1d'
-    0x1e -> '\x1e'
-    0x1f -> '\x1f'
-    0x20 -> ' '
-    0x21 -> '!'
-    0x22 -> '\"'
-    0x23 -> '#'
-    0x24 -> '$'
-    0x25 -> '%'
-    0x26 -> '&'
-    0x27 -> '''
-    0x28 -> '('
-    0x29 -> ')'
-    0x2a -> '*'
-    0x2b -> '+'
-    0x2c -> ','
-    0x2d -> '-'
-    0x2e -> '.'
-    0x2f -> '/'
-    0x30 -> '0'
-    0x31 -> '1'
-    0x32 -> '2'
-    0x33 -> '3'
-    0x34 -> '4'
-    0x35 -> '5'
-    0x36 -> '6'
-    0x37 -> '7'
-    0x38 -> '8'
-    0x39 -> '9'
-    0x3a -> ':'
-    0x3b -> ';'
-    0x3c -> '<'
-    0x3d -> '='
-    0x3e -> '>'
-    0x3f -> '?'
-    0x40 -> '@'
-    0x41 -> 'A'
-    0x42 -> 'B'
-    0x43 -> 'C'
-    0x44 -> 'D'
-    0x45 -> 'E'
-    0x46 -> 'F'
-    0x47 -> 'G'
-    0x48 -> 'H'
-    0x49 -> 'I'
-    0x4a -> 'J'
-    0x4b -> 'K'
-    0x4c -> 'L'
-    0x4d -> 'M'
-    0x4e -> 'N'
-    0x4f -> 'O'
-    0x50 -> 'P'
-    0x51 -> 'Q'
-    0x52 -> 'R'
-    0x53 -> 'S'
-    0x54 -> 'T'
-    0x55 -> 'U'
-    0x56 -> 'V'
-    0x57 -> 'W'
-    0x58 -> 'X'
-    0x59 -> 'Y'
-    0x5a -> 'Z'
-    0x5b -> '['
-    0x5c -> '\\'
-    0x5d -> ']'
-    0x5e -> '^'
-    0x5f -> '_'
-    0x60 -> '`'
-    0x61 -> 'a'
-    0x62 -> 'b'
-    0x63 -> 'c'
-    0x64 -> 'd'
-    0x65 -> 'e'
-    0x66 -> 'f'
-    0x67 -> 'g'
-    0x68 -> 'h'
-    0x69 -> 'i'
-    0x6a -> 'j'
-    0x6b -> 'k'
-    0x6c -> 'l'
-    0x6d -> 'm'
-    0x6e -> 'n'
-    0x6f -> 'o'
-    0x70 -> 'p'
-    0x71 -> 'q'
-    0x72 -> 'r'
-    0x73 -> 's'
-    0x74 -> 't'
-    0x75 -> 'u'
-    0x76 -> 'v'
-    0x77 -> 'w'
-    0x78 -> 'x'
-    0x79 -> 'y'
-    0x7a -> 'z'
-    0x7b -> '{'
-    0x7c -> '|'
-    0x7d -> '}'
-    0x7e -> '~'
-    0x7f -> '\x7f'
+    0x0000000000000000 -> '\0'
+    0x0000000000000001 -> '\x01'
+    0x0000000000000002 -> '\x02'
+    0x0000000000000003 -> '\x03'
+    0x0000000000000004 -> '\x04'
+    0x0000000000000005 -> '\x05'
+    0x0000000000000006 -> '\x06'
+    0x0000000000000007 -> '\a'
+    0x0000000000000008 -> '\b'
+    0x0000000000000009 -> '\t'
+    0x000000000000000a -> '\n'
+    0x000000000000000b -> '\v'
+    0x000000000000000c -> '\f'
+    0x000000000000000d -> '\r'
+    0x000000000000000e -> '\x0e'
+    0x000000000000000f -> '\x0f'
+    0x0000000000000010 -> '\x10'
+    0x0000000000000011 -> '\x11'
+    0x0000000000000012 -> '\x12'
+    0x0000000000000013 -> '\x13'
+    0x0000000000000014 -> '\x14'
+    0x0000000000000015 -> '\x15'
+    0x0000000000000016 -> '\x16'
+    0x0000000000000017 -> '\x17'
+    0x0000000000000018 -> '\x18'
+    0x0000000000000019 -> '\x19'
+    0x000000000000001a -> '\x1a'
+    0x000000000000001b -> '\x1b'
+    0x000000000000001c -> '\x1c'
+    0x000000000000001d -> '\x1d'
+    0x000000000000001e -> '\x1e'
+    0x000000000000001f -> '\x1f'
+    0x0000000000000020 -> ' '
+    0x0000000000000021 -> '!'
+    0x0000000000000022 -> '\"'
+    0x0000000000000023 -> '#'
+    0x0000000000000024 -> '$'
+    0x0000000000000025 -> '%'
+    0x0000000000000026 -> '&'
+    0x0000000000000027 -> '''
+    0x0000000000000028 -> '('
+    0x0000000000000029 -> ')'
+    0x000000000000002a -> '*'
+    0x000000000000002b -> '+'
+    0x000000000000002c -> ','
+    0x000000000000002d -> '-'
+    0x000000000000002e -> '.'
+    0x000000000000002f -> '/'
+    0x0000000000000030 -> '0'
+    0x0000000000000031 -> '1'
+    0x0000000000000032 -> '2'
+    0x0000000000000033 -> '3'
+    0x0000000000000034 -> '4'
+    0x0000000000000035 -> '5'
+    0x0000000000000036 -> '6'
+    0x0000000000000037 -> '7'
+    0x0000000000000038 -> '8'
+    0x0000000000000039 -> '9'
+    0x000000000000003a -> ':'
+    0x000000000000003b -> ';'
+    0x000000000000003c -> '<'
+    0x000000000000003d -> '='
+    0x000000000000003e -> '>'
+    0x000000000000003f -> '?'
+    0x0000000000000040 -> '@'
+    0x0000000000000041 -> 'A'
+    0x0000000000000042 -> 'B'
+    0x0000000000000043 -> 'C'
+    0x0000000000000044 -> 'D'
+    0x0000000000000045 -> 'E'
+    0x0000000000000046 -> 'F'
+    0x0000000000000047 -> 'G'
+    0x0000000000000048 -> 'H'
+    0x0000000000000049 -> 'I'
+    0x000000000000004a -> 'J'
+    0x000000000000004b -> 'K'
+    0x000000000000004c -> 'L'
+    0x000000000000004d -> 'M'
+    0x000000000000004e -> 'N'
+    0x000000000000004f -> 'O'
+    0x0000000000000050 -> 'P'
+    0x0000000000000051 -> 'Q'
+    0x0000000000000052 -> 'R'
+    0x0000000000000053 -> 'S'
+    0x0000000000000054 -> 'T'
+    0x0000000000000055 -> 'U'
+    0x0000000000000056 -> 'V'
+    0x0000000000000057 -> 'W'
+    0x0000000000000058 -> 'X'
+    0x0000000000000059 -> 'Y'
+    0x000000000000005a -> 'Z'
+    0x000000000000005b -> '['
+    0x000000000000005c -> '\\'
+    0x000000000000005d -> ']'
+    0x000000000000005e -> '^'
+    0x000000000000005f -> '_'
+    0x0000000000000060 -> '`'
+    0x0000000000000061 -> 'a'
+    0x0000000000000062 -> 'b'
+    0x0000000000000063 -> 'c'
+    0x0000000000000064 -> 'd'
+    0x0000000000000065 -> 'e'
+    0x0000000000000066 -> 'f'
+    0x0000000000000067 -> 'g'
+    0x0000000000000068 -> 'h'
+    0x0000000000000069 -> 'i'
+    0x000000000000006a -> 'j'
+    0x000000000000006b -> 'k'
+    0x000000000000006c -> 'l'
+    0x000000000000006d -> 'm'
+    0x000000000000006e -> 'n'
+    0x000000000000006f -> 'o'
+    0x0000000000000070 -> 'p'
+    0x0000000000000071 -> 'q'
+    0x0000000000000072 -> 'r'
+    0x0000000000000073 -> 's'
+    0x0000000000000074 -> 't'
+    0x0000000000000075 -> 'u'
+    0x0000000000000076 -> 'v'
+    0x0000000000000077 -> 'w'
+    0x0000000000000078 -> 'x'
+    0x0000000000000079 -> 'y'
+    0x000000000000007a -> 'z'
+    0x000000000000007b -> '{'
+    0x000000000000007c -> '|'
+    0x000000000000007d -> '}'
+    0x000000000000007e -> '~'
+    0x000000000000007f -> '\x7f'
     |}]

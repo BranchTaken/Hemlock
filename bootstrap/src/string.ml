@@ -6,38 +6,37 @@ module T = struct
   let hash_fold = Hash.hash_fold
 
   let cmp t0 t1 =
-    let rel = compare t0 t1 in
-    if Int.(rel < 0) then
+    let rel = Isize.of_int (compare t0 t1) in
+    if Isize.(rel < (kv 0)) then
       Cmp.Lt
-    else if Int.(rel = 0) then
+    else if Isize.(rel = (kv 0)) then
       Cmp.Eq
     else
       Cmp.Gt
 
   let blength t =
-    Uint.of_int (Stdlib.String.length t)
+    Stdlib.String.length t
 
   module Utf8_seq = struct
     module T = struct
       type outer = t
       type t = {
         string: outer;
-        bindex: uint;
+        bindex: usize;
       }
 
       let init t =
-        {string=t; bindex=kv 0}
+        {string=t; bindex=0}
 
       let length t =
         (blength t.string) - t.bindex
 
       let next t =
-        match (length t) = (kv 0) with
-        | true -> None
-        | false -> begin
-            let b = Byte.of_char (
-              Stdlib.String.get t.string (Uint.to_int t.bindex)) in
-            let t' = {t with bindex=(Uint.succ t.bindex)} in
+        match length t with
+        | 0 -> None
+        | _ -> begin
+            let b = Byte.of_char (Stdlib.String.get t.string t.bindex) in
+            let t' = {t with bindex=(Usize.succ t.bindex)} in
             Some (b, t')
           end
     end
@@ -72,23 +71,24 @@ include T
 include Identifiable.Make(T)
 
 let is_empty t =
-  Uint.((blength t) = (kv 0))
+  Usize.((blength t) = 0)
 
 let get t bindex =
-  Byte.of_int_hlt (Stdlib.Char.code (Stdlib.String.get t (Uint.to_int bindex)))
+  Byte.of_isize_hlt
+      (isize_of_int (Stdlib.Char.code (Stdlib.String.get t bindex)))
 
 module Cursor = struct
   module T = struct
     type outer = t
     type t = {
       string: outer;
-      bindex: uint;
+      bindex: usize;
     }
 
     let cmp t0 t1 =
       (* == is excessively vague in OCaml. *)
       assert ((t0.string == t1.string) || (t0.string = t1.string));
-      Uint.cmp t0.bindex t1.bindex
+      Usize.cmp t0.bindex t1.bindex
   end
   include T
   include Cmpable.Make(T)
@@ -96,10 +96,10 @@ module Cursor = struct
   let pp ppf t =
     Format.fprintf ppf "@[<h>{string=%a,@ bindex=%a}@]"
       pp t.string
-      Uint.pp t.bindex
+      Usize.pp t.bindex
 
   let hd string =
-    {string; bindex=kv 0}
+    {string; bindex=0}
 
   let tl string =
     {string; bindex=(blength string)}
@@ -120,7 +120,7 @@ module Cursor = struct
 
   let at string ~bindex =
     let tl_index = blength string in
-    if Uint.(bindex = tl_index) then
+    if Usize.(bindex = tl_index) then
       {string; bindex}
     else begin
       let b:byte = get string bindex in
@@ -132,55 +132,55 @@ module Cursor = struct
 
   let near string ~bindex =
     let tl_index = blength string in
-    if Uint.(bindex = tl_index) then
+    if Usize.(bindex = tl_index) then
       {string; bindex}
     else begin
       let rec fn bindex = begin
         let b = get string bindex in
         match Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) with
         | true -> {string; bindex}
-        | false -> fn (Uint.pred bindex)
+        | false -> fn (Usize.pred bindex)
       end in
       fn bindex
     end
 
   let seek t coffset =
     let rec left t coffset = begin
-      match coffset with
-      | 0 -> t
-      | _ -> begin
-          let t' = near t.string ~bindex:(Uint.pred t.bindex) in
-          let coffset' = Int.(pred coffset) in
+      match Isize.(coffset = (kv 0)) with
+      | true -> t
+      | false -> begin
+          let t' = near t.string ~bindex:(Usize.pred t.bindex) in
+          let coffset' = Isize.(pred coffset) in
           left t' coffset'
         end
     end in
     let rec right t coffset = begin
-      match coffset with
-      | 0 -> t
-      | _ -> begin
+      match Isize.(coffset = (kv 0)) with
+      | true -> t
+      | false -> begin
           let b = get t.string t.bindex in
           let nbytes =
-            if Byte.(b <= (kv 0b0111_1111)) then kv 1
+            if Byte.(b <= (kv 0b0111_1111)) then 1
             else Byte.(bit_clz (bit_not b))
           in
           let t' = {t with bindex=t.bindex + nbytes} in
-          let coffset' = Int.(pred coffset) in
+          let coffset' = Isize.(pred coffset) in
           right t' coffset'
         end
     end in
-    if Int.(coffset < 0) then
-      left t Int.(neg coffset)
+    if Isize.(coffset < (kv 0)) then
+      left t Isize.(neg coffset)
     else
       right t coffset
 
   let succ t =
-    seek t 1
+    seek t (Isize.kv 1)
 
   let pred t =
-    seek t (-1)
+    seek t (Isize.kv (-1))
 
   let lget t =
-    let bindex = (Uint.pred t.bindex) in
+    let bindex = (Usize.pred t.bindex) in
     let b = get t.string bindex in
     if Byte.(b <= (kv 0b0111_1111)) then Byte.to_codepoint b
     else begin
@@ -188,23 +188,23 @@ module Cursor = struct
         let b = get t.string bindex in
         match Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) with
         | true -> begin
-            let mask = Byte.(bit_usr (kv 0x3f) Uint.(nbits / (kv 6))) in
+            let mask = Byte.(bit_usr (kv 0x3f) Usize.(nbits / 6)) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
             Codepoint.(bit_or cp (bit_sl cp_bits nbits))
           end
         | false -> begin
-            let bindex' = (Uint.pred bindex) in
+            let bindex' = (Usize.pred bindex) in
             let mask = Byte.(kv 0b00_111111) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
             let cp' = Codepoint.(bit_or cp (bit_sl cp_bits nbits)) in
-            let nbits' = nbits + (kv 6) in
+            let nbits' = nbits + 6 in
             fn bindex' cp' nbits'
           end
       end in
-      let bindex' = (Uint.pred bindex) in
+      let bindex' = (Usize.pred bindex) in
       let mask = Byte.(kv 0b00_111111) in
       let cp = Byte.(to_codepoint (bit_and b mask)) in
-      let nbits = kv 6 in
+      let nbits = 6 in
       fn bindex' cp nbits
     end
 
@@ -214,20 +214,20 @@ module Cursor = struct
     else begin
       let rec fn cp bindex rem_bytes = begin
         match rem_bytes with
-        | rem_bytes when Uint.(rem_bytes = (kv 0)) -> cp
+        | 0 -> cp
         | _ -> begin
             let b = get t.string bindex in
             let mask = Byte.(kv 0b00_111111) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
-            let cp' = Codepoint.(bit_or (bit_sl cp (Uint.kv 6)) cp_bits) in
-            fn cp' (Uint.succ bindex) Uint.(pred rem_bytes)
+            let cp' = Codepoint.(bit_or (bit_sl cp 6) cp_bits) in
+            fn cp' (Usize.succ bindex) Usize.(pred rem_bytes)
           end
       end in
       let nbytes = Byte.(bit_clz (bit_not b)) in
-      let b0_nbits = Byte.(to_uint ((kv 7) - (of_uint nbytes))) in
+      let b0_nbits = Byte.(to_usize ((kv 7) - (of_usize nbytes))) in
       let b0_mask = Byte.((bit_sl one b0_nbits) - one) in
       let cp = Byte.(to_codepoint (bit_and b b0_mask)) in
-      fn cp (Uint.succ t.bindex) Uint.(pred nbytes)
+      fn cp (Usize.succ t.bindex) Usize.(pred nbytes)
     end
 end
 type cursor = Cursor.t
@@ -237,9 +237,9 @@ let clength t =
   let rec fn cursor cindex = begin
     match Cursor.(cursor = past) with
     | true -> cindex
-    | false -> fn (Cursor.succ cursor) (Uint.succ cindex)
+    | false -> fn (Cursor.succ cursor) (Usize.succ cindex)
   end in
-  fn (Cursor.hd t) (kv 0)
+  fn (Cursor.hd t) 0
 
 let length = clength
 
@@ -248,7 +248,7 @@ module Cursori = struct
     type outer = t
     type t = {
       cursor: cursor;
-      cindex: uint;
+      cindex: usize;
     }
 
     let cmp t0 t1 =
@@ -260,10 +260,10 @@ module Cursori = struct
   let pp ppf t =
     Format.fprintf ppf "@[<h>{cursor=%a,@ cindex=%a}@]"
       Cursor.pp t.cursor
-      Uint.pp t.cindex
+      Usize.pp t.cindex
 
   let hd string =
-    {cursor=(Cursor.hd string); cindex=(kv 0)}
+    {cursor=(Cursor.hd string); cindex=0}
 
   let tl string =
     {cursor=(Cursor.tl string); cindex=(clength string)}
@@ -280,16 +280,16 @@ module Cursori = struct
     Cursor.bindex t.cursor
 
   let seek t coffset =
-    (* coffset may be negative, but it's okay to convert blindly to uint because
-     * 2s complement addition does the right thing. *)
+    (* coffset may be negative, but it's okay to convert blindly to usize
+     * because 2s complement addition does the right thing. *)
     {cursor=(Cursor.seek t.cursor coffset);
-     cindex=Uint.(t.cindex + (of_int coffset))}
+     cindex=Usize.(t.cindex + (of_isize coffset))}
 
   let succ t =
-    {cursor=(Cursor.succ t.cursor); cindex=(Uint.succ t.cindex)}
+    {cursor=(Cursor.succ t.cursor); cindex=(Usize.succ t.cindex)}
 
   let pred t =
-    {cursor=(Cursor.pred t.cursor); cindex=(Uint.pred t.cindex)}
+    {cursor=(Cursor.pred t.cursor); cindex=(Usize.pred t.cindex)}
 
   let lget t =
     Cursor.lget t.cursor
@@ -304,7 +304,7 @@ module Cursori = struct
     t.cindex
 
   let at s ~cindex =
-    {cursor=(Cursor.seek (Cursor.hd s) (Uint.to_int cindex));
+    {cursor=(Cursor.seek (Cursor.hd s) (Usize.to_isize cindex));
      cindex}
 end
 type cursori = Cursori.t
@@ -316,7 +316,7 @@ type slice = {
 
 let slice_of_cursors ~base ~past =
   assert ((Cursor.string base) = (Cursor.string past));
-  assert Uint.((Cursor.bindex base) <= (Cursor.bindex past));
+  assert Usize.((Cursor.bindex base) <= (Cursor.bindex past));
   {base; past}
 
 let slice_of_string t =
@@ -335,15 +335,15 @@ module Seq = struct
       let to_string t =
         let len = T.length t in
         match len with
-        | len when Uint.(len = (kv 0)) -> ""
+        | 0 -> ""
         | _ -> begin
             let tmut = ref t in
             let rem_bytes = ref [] in
-            let s = Stdlib.String.init (Uint.to_int len) (fun _ ->
+            let s = Stdlib.String.init len (fun _ ->
               match !rem_bytes with
               | [] -> begin
                   let cp, t' = T.next !tmut in
-                  assert (Uint.(Utf8.(length (of_codepoint cp)) + (T.length t')
+                  assert (Usize.(Utf8.(length (of_codepoint cp)) + (T.length t')
                       = (T.length !tmut)));
                   tmut := t';
                   let b, tl = match Utf8.(to_bytes (of_codepoint cp)) with
@@ -351,14 +351,14 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr (Byte.to_int b)
+                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr (Byte.to_int b)
+                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
                 end
             ) in
-            assert (Uint.((List.length !rem_bytes) = (kv 0)));
+            assert (Usize.((List.length !rem_bytes) = 0));
             s
           end
     end
@@ -368,16 +368,16 @@ module Seq = struct
       let to_string t =
         let len = T.length t in
         match len with
-        | len when Uint.(len = (kv 0)) -> ""
+        | 0 -> ""
         | _ -> begin
             (* Stdlib.String.init_rev doesn't exist, so accumulate the
              * codepoints in order to manually reverse them. *)
             let rec fn t cps = begin
               match T.length t with
-              | len when Uint.(len = (kv 0)) -> cps
+              | 0 -> cps
               | _ -> begin
                   let cp, t' = T.next t in
-                  assert (Uint.(Utf8.(length (of_codepoint cp)) + (T.length t')
+                  assert (Usize.(Utf8.(length (of_codepoint cp)) + (T.length t')
                       = (T.length t)));
                   let cps' = cp :: cps in
                   fn t' cps'
@@ -385,7 +385,7 @@ module Seq = struct
             end in
             let cps = ref (fn t []) in
             let rem_bytes = ref [] in
-            let s = Stdlib.String.init (Uint.to_int len) (fun _ ->
+            let s = Stdlib.String.init len (fun _ ->
               match !rem_bytes with
               | [] -> begin
                   let cp, cps' = match !cps with
@@ -398,14 +398,14 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr (Byte.to_int b)
+                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr (Byte.to_int b)
+                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
                 end
             ) in
-            assert (Uint.((List.length !rem_bytes) = (kv 0)));
+            assert (Usize.((List.length !rem_bytes) = 0));
             s
           end
     end
@@ -417,40 +417,40 @@ module Seq = struct
       let to_string t =
         let len = T.length t in
         match len with
-        | len when Uint.(len = (kv 0)) -> ""
+        | 0 -> ""
         | _ -> begin
             let tmut = ref t in
             let slice_str = ref "" in
-            let slice_base = ref (kv 0) in
-            let slice_ind = ref (kv 0) in
-            let slice_len = ref (kv 0) in
-            let s = Stdlib.String.init (Uint.to_int len) (fun _ ->
+            let slice_base = ref 0 in
+            let slice_ind = ref 0 in
+            let slice_len = ref 0 in
+            let s = Stdlib.String.init len (fun _ ->
               let rec fn () = begin
-                match Uint.(!slice_ind = !slice_len) with
+                match Usize.(!slice_ind = !slice_len) with
                 | true -> begin
                     let slice, t' = T.next !tmut in
                     let slice_base' = Cursor.bindex slice.base in
                     let slice_len' =
                       (Cursor.bindex slice.past) - slice_base' in
-                    assert (Uint.(slice_len' + (T.length t') =
+                    assert (Usize.(slice_len' + (T.length t') =
                         (T.length !tmut)));
                     tmut := t';
 
                     slice_str := Cursor.string slice.base;
                     slice_base := slice_base';
-                    slice_ind := kv 0;
+                    slice_ind := 0;
                     slice_len := slice_len';
                     fn ()
                   end
                 | false -> begin
                     let b = get !slice_str (!slice_base + !slice_ind) in
-                    slice_ind := Uint.succ !slice_ind;
-                    Stdlib.Char.chr (Byte.to_int b)
+                    slice_ind := Usize.succ !slice_ind;
+                    Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
                   end
               end in
               fn ()
             ) in
-            assert Uint.(!slice_ind = !slice_len);
+            assert Usize.(!slice_ind = !slice_len);
             s
           end
     end
@@ -460,13 +460,13 @@ module Seq = struct
       let to_string t =
         let len = T.length t in
         match len with
-        | len when Uint.(len = (kv 0)) -> ""
+        | 0 -> ""
         | _ -> begin
             (* Stdlib.String.init_rev doesn't exist, so accumulate the strings
              * in order to manually reverse them. *)
             let rec fn t slices = begin
               match T.length t with
-              | len when Uint.(len = (kv 0)) -> slices
+              | 0 -> slices
               | _ -> begin
                   let slice, t' = T.next t in
                   let slices' = slice :: slices in
@@ -476,12 +476,12 @@ module Seq = struct
             let slices = ref (fn t []) in
 
             let slice_str = ref "" in
-            let slice_base = ref (kv 0) in
-            let slice_ind = ref (kv 0) in
-            let slice_len = ref (kv 0) in
-            let s = Stdlib.String.init (Uint.to_int len) (fun _ ->
+            let slice_base = ref 0 in
+            let slice_ind = ref 0 in
+            let slice_len = ref 0 in
+            let s = Stdlib.String.init len (fun _ ->
               let rec fn () = begin
-                match Uint.(!slice_ind = !slice_len) with
+                match Usize.(!slice_ind = !slice_len) with
                 | true -> begin
                     let slice, slices' = match !slices with
                       | slice :: slices' -> slice, slices'
@@ -492,19 +492,19 @@ module Seq = struct
                     slices := slices';
                     slice_str := Cursor.string slice.base;
                     slice_base := slice_base';
-                    slice_ind := kv 0;
+                    slice_ind := 0;
                     slice_len := slice_len';
                     fn ()
                   end
                 | false -> begin
                     let b = get !slice_str (!slice_base + !slice_ind) in
-                    slice_ind := Uint.succ !slice_ind;
-                    Stdlib.Char.chr (Byte.to_int b)
+                    slice_ind := Usize.succ !slice_ind;
+                    Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
                   end
               end in
               fn ()
             ) in
-            assert Uint.(!slice_ind = !slice_len);
+            assert Usize.(!slice_ind = !slice_len);
             s
           end
     end
@@ -635,7 +635,7 @@ module Slice = struct
     (Cursor.bindex t.past) - (Cursor.bindex t.base)
 
   let is_empty t =
-    Uint.((blength t) = (kv 0))
+    Usize.((blength t) = 0)
 
   let string_clength = clength
 
@@ -644,36 +644,36 @@ module Slice = struct
     match Cursor.(t.base = (hd s)) && Cursor.(t.past = (tl s)) with
     | true -> clength s
     | false -> begin
-        match Uint.((clength s) = (string_blength s)) with
+        match Usize.((clength s) = (string_blength s)) with
         | true -> blength t
         | false -> begin
             let rec fn cursor cindex = begin
               match Cursor.(cursor = t.past) with
               | true -> cindex
-              | false -> fn (Cursor.succ cursor) (Uint.succ cindex)
+              | false -> fn (Cursor.succ cursor) (Usize.succ cindex)
             end in
-            fn t.base (kv 0)
+            fn t.base 0
           end
       end
 
   let length = clength
 
   let get t bindex =
-    if Uint.(bindex >= (blength t)) then halt "Out of bounds"
+    if Usize.(bindex >= (blength t)) then halt "Out of bounds"
     else
-      Byte.of_int_hlt (Stdlib.Char.code (Stdlib.String.unsafe_get (string t)
-            Uint.(to_int ((Cursor.bindex t.base) + bindex))))
+      Byte.of_usize_hlt (Stdlib.Char.code (Stdlib.String.unsafe_get (string t)
+            ((Cursor.bindex t.base) + bindex)))
 
   module String_of_indexed = struct
     module T = struct
       type t = {
-        f: uint -> codepoint;
-        blength: uint;
-        cindex: uint;
+        f: usize -> codepoint;
+        blength: usize;
+        cindex: usize;
       }
 
       let init ~f blength =
-        {f; blength; cindex=kv 0}
+        {f; blength; cindex=0}
 
       let length t =
         t.blength
@@ -682,7 +682,7 @@ module Slice = struct
         let codepoint = t.f t.cindex in
         let cp_nbytes = Utf8.(length (of_codepoint codepoint)) in
         let blength' = t.blength - cp_nbytes in
-        let t' = {t with cindex=(Uint.succ t.cindex);
+        let t' = {t with cindex=(Usize.succ t.cindex);
                          blength=blength'} in
         codepoint, t'
     end
@@ -692,34 +692,34 @@ module Slice = struct
 
   let blength_of_seq clength ~seq ~f =
     let rec fn ~seq cindex nbytes = begin
-      match Uint.(cindex = clength) with
+      match Usize.(cindex = clength) with
       | true -> nbytes
       | false -> begin
           let codepoint, seq' = f seq in
           let cp_nbytes = Utf8.(length (of_codepoint codepoint)) in
           let nbytes' = nbytes + cp_nbytes in
-          fn ~seq:seq' (Uint.succ cindex) nbytes'
+          fn ~seq:seq' (Usize.succ cindex) nbytes'
         end
     end in
-    fn ~seq (kv 0) (kv 0)
+    fn ~seq 0 0
 
   let init ?blength clength ~f =
     let blength = match blength with
-      | None -> blength_of_seq clength ~seq:(kv 0)
+      | None -> blength_of_seq clength ~seq:0
           ~f:(fun seq ->
-            (f seq), (Uint.succ seq)
+            (f seq), (Usize.succ seq)
           )
       | Some blength -> blength
     in
     of_string String_of_indexed.(to_string (init ~f blength))
 
   let of_codepoint codepoint =
-    init (kv 1) ~f:(fun _ -> codepoint)
+    init 1 ~f:(fun _ -> codepoint)
 
   module String_of_list_common = struct
     type t = {
       codepoints: codepoint list;
-      blength: uint;
+      blength: usize;
     }
 
     let init codepoints blength =
@@ -822,17 +822,17 @@ module Slice = struct
   module String_mapi = struct
     module T = struct
       type t = {
-        f: uint -> codepoint -> codepoint;
+        f: usize -> codepoint -> codepoint;
         cursor: cursor;
-        cindex: uint;
-        blength: uint;
+        cindex: usize;
+        blength: usize;
       }
 
       let init slice ~f blength =
         {
           f;
           cursor=slice.base;
-          cindex=kv 0;
+          cindex=0;
           blength
         }
 
@@ -844,7 +844,7 @@ module Slice = struct
         let codepoint' = t.f t.cindex codepoint in
         let utf8_length = Utf8.(length (of_codepoint codepoint')) in
         let cursor' = Cursor.succ t.cursor in
-        let cindex' = Uint.succ t.cindex in
+        let cindex' = Usize.succ t.cindex in
         let blength' = t.blength - utf8_length in
         let t' = {t with cursor=cursor';
                          cindex=cindex';
@@ -856,7 +856,7 @@ module Slice = struct
   end
 
   let blength_of_map t ~f =
-    foldi t ~init:(kv 0, false) ~f:(fun i (blength, modified) codepoint ->
+    foldi t ~init:(0, false) ~f:(fun i (blength, modified) codepoint ->
       let codepoint' = f i codepoint in
       let modified' = modified || Codepoint.(codepoint' <> codepoint) in
       (blength + Utf8.(length (of_codepoint codepoint'))), modified'
@@ -907,7 +907,7 @@ module Slice = struct
         sep: outer;
         slices: outer list;
         source: source;
-        blength: uint;
+        blength: usize;
       }
 
       let init sep slices blength =
@@ -920,9 +920,9 @@ module Slice = struct
         let rec fn t = begin
           match t.source with
           | Sep -> begin
-              match Uint.((blength t.sep) = (kv 0)) with
-              | true -> fn {t with source=Str}
-              | false -> begin
+              match blength t.sep with
+              | 0 -> fn {t with source=Str}
+              | _ -> begin
                   let blength' = t.blength - (blength t.sep) in
                   t.sep, {t with source=Str; blength=blength'}
                 end
@@ -943,36 +943,36 @@ module Slice = struct
   end
 
   let concat ?(sep=(of_string "")) (slices:t list) =
-    let _, blength = List.fold slices ~init:(kv 0, kv 0)
+    let _, blength = List.fold slices ~init:(0, 0)
         ~f:(fun (i, len) slice ->
-          let i' = Uint.succ i in
+          let i' = Usize.succ i in
           let sep_len = match i with
-            | i when Uint.(i = (kv 0)) -> kv 0
+            | 0 -> 0
             | _ -> blength sep
           in
           let len' = sep_len + len + (blength slice) in
           i', len'
         ) in
-    match Uint.((length sep) = (kv 0)), Uint.to_int (List.length slices) with
+    match (length sep), (List.length slices) with
     | _, 0 -> of_string ""
-    | true, 1 -> List.hd slices
+    | 0, 1 -> List.hd slices
     | _ -> of_string (String_concat.to_string
           (String_concat.init sep slices blength))
 
   let concat_rev ?(sep=(of_string "")) slices_rev =
-    let slices, blength = List.fold slices_rev ~init:([], (kv 0))
+    let slices, blength = List.fold slices_rev ~init:([], 0)
         ~f:(fun (slices, len) slice ->
           let slices' = slice :: slices in
           let sep_len = match slices with
-            | [] -> kv 0
+            | [] -> 0
             | _ -> blength sep
           in
           let len' = sep_len + len + (blength slice) in
           slices', len'
         ) in
-    match Uint.((length sep) = (kv 0)), Uint.to_int (List.length slices) with
+    match (length sep), (List.length slices) with
     | _, 0 -> of_string ""
-    | true, 1 -> List.hd slices
+    | 0, 1 -> List.hd slices
     | _ -> of_string (String_concat.to_string
           (String_concat.init sep slices blength))
 
@@ -983,7 +983,7 @@ module Slice = struct
         ~f:(fun cp (modified, slices) ->
           let slice = f cp in
           let modified' = modified
-                          || Uint.((blength slice)
+                          || Usize.((blength slice)
                             <> Utf8.(length (of_codepoint cp)))
                           || Codepoint.(Cursor.(rget slice.base) <> cp) in
           let slices' = slice :: slices in
@@ -1094,9 +1094,9 @@ module Slice = struct
               Codepoint.((Cursori.rget k) = (Cursori.rget q))
             in
             match ((not (k_eq_q ~k ~q)) &&
-                   Uint.is_positive (Cursori.cindex k)) with
+                   Usize.is_positive (Cursori.cindex k)) with
             | true ->
-              let k' = Array.get pi (Uint.pred (Cursori.cindex k)) in
+              let k' = Array.get pi (Usize.pred (Cursori.cindex k)) in
               compute_pi ~p ~k:k' ~q ~pi
             | false -> begin
                 let k' = match (k_eq_q ~k ~q) with
@@ -1109,9 +1109,9 @@ module Slice = struct
               end
           end
       end in
-      let pi = match Uint.(Cursori.cindex m = (kv 0)) with
-        | true -> [||]
-        | false -> begin
+      let pi = match Cursori.cindex m with
+        | 0 -> [||]
+        | _ -> begin
             let k = Cursori.hd s in
             let q = Cursori.succ k in
             let pi = Array.init (Cursori.cindex m) ~f:(fun _ -> k) in
@@ -1125,7 +1125,7 @@ module Slice = struct
       pp_set_max_indent ppf 2; (* Cause line break between p and pi. *)
       fprintf ppf "@[<v> p=%a@,pi=[" pp_string t.p;
       Array.iter t.pi ~f:(fun elm ->
-        fprintf ppf "%a" Uint.pp (Cursori.cindex elm)
+        fprintf ppf "%a" Usize.pp (Cursori.cindex elm)
       );
       Format.fprintf ppf "]@]"
 
@@ -1134,14 +1134,14 @@ module Slice = struct
       let m = Cursori.tl t.p in
       let rec fn ~q ~i matches nmatches = begin
         match max_matches, Cursori.(q = m) with
-        | Some n, _ when Uint.(nmatches = n) -> List.rev matches
+        | Some n, _ when Usize.(nmatches = n) -> List.rev matches
         | _, true -> begin
             let cursor = (Cursor.at (string in_)
                 ~bindex:((Cursor.bindex in_.base)
                     + (Cursor.bindex i) - (Cursori.bindex m))) in
             let matches' = cursor :: matches in
-            let nmatches' = Uint.succ nmatches in
-            match may_overlap, Uint.((Cursori.bindex m) = (kv 0)),
+            let nmatches' = Usize.succ nmatches in
+            match may_overlap, Usize.((Cursori.bindex m) = 0),
               Cursor.(i = past) with
             (* Empty pattern; terminate scanning or advance i to avoid multiple
              * matches at the same position. *)
@@ -1154,7 +1154,7 @@ module Slice = struct
             (* Attempt overlapping match. *)
             | true, false, _ -> begin
                 let q' =
-                  Array.get t.pi (Uint.pred (Cursori.cindex q)) in
+                  Array.get t.pi (Usize.pred (Cursori.cindex q)) in
                 fn ~q:q' ~i matches' nmatches'
               end
             (* Discard lookbehind to avoid overlapping matches. *)
@@ -1171,10 +1171,10 @@ module Slice = struct
                   Codepoint.((Cursori.rget q) = (Cursor.rget i))
                 in
                 match (not (q_eq_i ~q ~i)) &&
-                      (Uint.is_positive (Cursori.cindex q)) with
+                      (Usize.is_positive (Cursori.cindex q)) with
                 | true -> begin
                     let q' =
-                      Array.get t.pi (Uint.pred (Cursori.cindex q)) in
+                      Array.get t.pi (Usize.pred (Cursori.cindex q)) in
                     fn ~q:q' ~i matches nmatches
                   end
                 | false -> begin
@@ -1190,11 +1190,11 @@ module Slice = struct
       end in
       let q = Cursori.hd t.p in
       let i = in_.base in
-      fn ~q ~i [] (kv 0)
+      fn ~q ~i [] 0
 
     let find t ~in_ =
       let cursors =
-        find_impl t ~max_matches:(kv 1) ~may_overlap:false ~in_ in
+        find_impl t ~max_matches:1 ~may_overlap:false ~in_ in
       match cursors with
       | [] -> None
       | cursor :: [] -> Some cursor
@@ -1221,7 +1221,7 @@ module Slice = struct
           in_cursor: cursor;
           slice: slice;
           source: source;
-          blength: uint;
+          blength: usize;
         }
 
         let init ~pattern ~in_ ~with_ ~at =
@@ -1258,7 +1258,7 @@ module Slice = struct
                     end
                   | cursor :: at' -> begin
                       let in_cursor' = Cursor.seek cursor
-                          (Uint.to_int (string_clength t.pattern)) in
+                          (Usize.to_isize (string_clength t.pattern)) in
                       let slice' = t.with_ in
                       in_cursor', slice', at'
                     end
@@ -1343,17 +1343,17 @@ module Slice = struct
 
   let prefix t n =
     let base = t.base in
-    let past = match Uint.((clength t) < n) with
+    let past = match Usize.((clength t) < n) with
       | true -> t.past
-      | false -> Cursor.(seek base (Uint.to_int n))
+      | false -> Cursor.(seek base (Usize.to_isize n))
     in
     of_cursors ~base ~past
 
   let suffix t n =
     let past = t.past in
-    let base = match Uint.((clength t) < n) with
+    let base = match Usize.((clength t) < n) with
       | true -> t.base
-      | false -> Cursor.(seek past (-(Uint.to_int n)))
+      | false -> Cursor.(seek past Isize.(neg (Usize.to_isize n)))
     in
     of_cursors ~base ~past
 
@@ -1837,11 +1837,11 @@ let%expect_test "hash_fold" =
   let open Format in
 
   let s = "hello" in
-  let h = Hash.(t_of_state (hash_fold (Hash.state_of_uint (kv 0)) s)) in
+  let h = Hash.(t_of_state (hash_fold (Hash.state_of_usize 0) s)) in
   printf "hash_fold %a=%a\n" pp s Hash.pp h;
 
   [%expect{|
-    hash_fold "hello"=0x321f6e00
+    hash_fold "hello"=0x00000000321f6e00
     |}]
 
 let%expect_test "cmp" =
@@ -1930,8 +1930,8 @@ let%expect_test "length" =
   List.iter strs ~f:(fun s ->
     printf "s=%a, blength=%a, clength=%a, is_empty=%B\n"
       pp s
-      Uint.pp (blength s)
-      Uint.pp (clength s)
+      Usize.pp (blength s)
+      Usize.pp (clength s)
       (is_empty s)
   );
 
@@ -1954,24 +1954,24 @@ let%expect_test "get" =
   ] in
   List.iter strs ~f:(fun s ->
     let rec fn i = begin
-      match Uint.(i = (blength s)) with
+      match Usize.(i = (blength s)) with
       | true -> ()
       | false -> begin
-          printf " %#02x" (Byte.to_int (get s i));
-          fn (Uint.succ i)
+          printf " %a" Byte.pp_x (get s i);
+          fn (Usize.succ i)
         end
     end in
     printf "s=%a:" pp s;
-    fn (kv 0);
+    fn 0;
     printf "\n";
   );
 
   [%expect{|
     s="":
-    s="<_>": 0x3c 0x5f 0x3e
-    s="«»": 0xc2 0xab 0xc2 0xbb
-    s="‡": 0xe2 0x80 0xa1
-    s="𐆗": 0xf0 0x90 0x86 0x97
+    s="<_>": 0x3cu8 0x5fu8 0x3eu8
+    s="«»": 0xc2u8 0xabu8 0xc2u8 0xbbu8
+    s="‡": 0xe2u8 0x80u8 0xa1u8
+    s="𐆗": 0xf0u8 0x90u8 0x86u8 0x97u8
     |}]
 
 let%expect_test "cursor" =
@@ -1983,9 +1983,8 @@ let%expect_test "cursor" =
       | false -> begin
           let i = Cursor.bindex cursor in
           assert Cursor.((at s ~bindex:i) = cursor);
-          let () = if Uint.(i_prev <> max_value) then
-            for j = 0 to Uint.(to_int (i - i_prev - (kv 1))) do
-              let j = Uint.of_int j in
+          let () = if Usize.(i_prev <> max_value) then
+            for j = 0 to i - i_prev - 1 do
               assert Cursor.((near s ~bindex:(i_prev + j))
                   = (at s ~bindex:i_prev));
             done
@@ -2005,9 +2004,8 @@ let%expect_test "cursor" =
       | false -> begin
           let i = Cursor.bindex cursor in
           assert Cursor.((at s ~bindex:i) = cursor);
-          let () = if Uint.(i_prev <> max_value) then
-            for j = 0 to Uint.(to_int (i_prev - i - (kv 1))) do
-              let j = Uint.of_int j in
+          let () = if Usize.(i_prev <> max_value) then
+            for j = 0 to i_prev - i - 1 do
               assert Cursor.((near s ~bindex:(i + j)) = (at s ~bindex:i));
             done
           in
@@ -2025,8 +2023,8 @@ let%expect_test "cursor" =
   ] in
   printf "@[<h>";
   List.iter strs ~f:(fun s ->
-    test_fwd s Uint.max_value;
-    test_rev s Uint.max_value;
+    test_fwd s Usize.max_value;
+    test_rev s Usize.max_value;
   );
   printf "@]";
 
@@ -2186,7 +2184,7 @@ let%expect_test "foldi_until" =
     printf "foldi_until %a ->" pp s;
     let () = foldi_until s ~init:() ~f:(fun i _ cp ->
       let until = Codepoint.(cp = (of_char 'c')) in
-      printf " %d:%s" (Uint.to_int i) (of_codepoint cp);
+      printf " %a:%s" Usize.pp i (of_codepoint cp);
       (), until
     ) in
     printf "\n"
@@ -2245,7 +2243,7 @@ let%expect_test "foldi" =
   let test_foldi s = begin
     printf "foldi %a ->" pp s;
     let () = foldi s ~init:() ~f:(fun i _ cp ->
-      printf " %d:%s" (Uint.to_int i) (of_codepoint cp)) in
+      printf " %a:%s" Usize.pp i (of_codepoint cp)) in
     printf "\n"
   end in
   let strs = [
@@ -2282,7 +2280,7 @@ let%expect_test "iteri" =
   let test_iteri s = begin
     printf "iteri %a ->" pp s;
     let () = iteri s ~f:(fun i cp ->
-      printf " %d:%s" (Uint.to_int i) (of_codepoint cp)
+      printf " %a:%s" Usize.pp i (of_codepoint cp)
     ) in
     printf "\n"
   end in
@@ -2531,9 +2529,9 @@ let%expect_test "map" =
   printf "map: %a -> %a\n" pp s pp (map s ~f:(fun cp ->
     Codepoint.(cp - (kv 32))));
   printf "mapi: %a -> %a\n" pp s pp (mapi s ~f:(fun i cp ->
-    match (bit_and i (kv 0x1)) with
-    | bit when Uint.(bit = (kv 0)) -> cp
-    | bit when Uint.(bit = (kv 1)) -> Codepoint.(cp - (kv 32))
+    match (bit_and i 0x1) with
+    | 0 -> cp
+    | 1 -> Codepoint.(cp - (kv 32))
     | _ -> not_reached ()
   ));
   let s = "a:b:cd:e" in
@@ -2638,144 +2636,144 @@ let%expect_test "escaped" =
 
   let rec fn i = begin
     match i with
-    | i when Uint.(i = (kv 0x80)) -> ()
+    | 0x80 -> ()
     | _ -> begin
-        printf "0x%02x -> \"%s\"\n"
-          (Uint.to_int i) (escaped (of_codepoint Codepoint.(of_uint i)));
-        fn (Uint.succ i)
+        printf "%a -> \"%s\"\n"
+          Usize.pp_x i (escaped (of_codepoint Codepoint.(of_usize i)));
+        fn (Usize.succ i)
       end
   end in
-  fn (kv 0);
+  fn 0;
 
   [%expect{|
-    0x00 -> "\0"
-    0x01 -> "\x01"
-    0x02 -> "\x02"
-    0x03 -> "\x03"
-    0x04 -> "\x04"
-    0x05 -> "\x05"
-    0x06 -> "\x06"
-    0x07 -> "\a"
-    0x08 -> "\b"
-    0x09 -> "\t"
-    0x0a -> "\n"
-    0x0b -> "\v"
-    0x0c -> "\f"
-    0x0d -> "\r"
-    0x0e -> "\x0e"
-    0x0f -> "\x0f"
-    0x10 -> "\x10"
-    0x11 -> "\x11"
-    0x12 -> "\x12"
-    0x13 -> "\x13"
-    0x14 -> "\x14"
-    0x15 -> "\x15"
-    0x16 -> "\x16"
-    0x17 -> "\x17"
-    0x18 -> "\x18"
-    0x19 -> "\x19"
-    0x1a -> "\x1a"
-    0x1b -> "\x1b"
-    0x1c -> "\x1c"
-    0x1d -> "\x1d"
-    0x1e -> "\x1e"
-    0x1f -> "\x1f"
-    0x20 -> " "
-    0x21 -> "!"
-    0x22 -> "\""
-    0x23 -> "#"
-    0x24 -> "$"
-    0x25 -> "%"
-    0x26 -> "&"
-    0x27 -> "'"
-    0x28 -> "("
-    0x29 -> ")"
-    0x2a -> "*"
-    0x2b -> "+"
-    0x2c -> ","
-    0x2d -> "-"
-    0x2e -> "."
-    0x2f -> "/"
-    0x30 -> "0"
-    0x31 -> "1"
-    0x32 -> "2"
-    0x33 -> "3"
-    0x34 -> "4"
-    0x35 -> "5"
-    0x36 -> "6"
-    0x37 -> "7"
-    0x38 -> "8"
-    0x39 -> "9"
-    0x3a -> ":"
-    0x3b -> ";"
-    0x3c -> "<"
-    0x3d -> "="
-    0x3e -> ">"
-    0x3f -> "?"
-    0x40 -> "@"
-    0x41 -> "A"
-    0x42 -> "B"
-    0x43 -> "C"
-    0x44 -> "D"
-    0x45 -> "E"
-    0x46 -> "F"
-    0x47 -> "G"
-    0x48 -> "H"
-    0x49 -> "I"
-    0x4a -> "J"
-    0x4b -> "K"
-    0x4c -> "L"
-    0x4d -> "M"
-    0x4e -> "N"
-    0x4f -> "O"
-    0x50 -> "P"
-    0x51 -> "Q"
-    0x52 -> "R"
-    0x53 -> "S"
-    0x54 -> "T"
-    0x55 -> "U"
-    0x56 -> "V"
-    0x57 -> "W"
-    0x58 -> "X"
-    0x59 -> "Y"
-    0x5a -> "Z"
-    0x5b -> "["
-    0x5c -> "\\"
-    0x5d -> "]"
-    0x5e -> "^"
-    0x5f -> "_"
-    0x60 -> "`"
-    0x61 -> "a"
-    0x62 -> "b"
-    0x63 -> "c"
-    0x64 -> "d"
-    0x65 -> "e"
-    0x66 -> "f"
-    0x67 -> "g"
-    0x68 -> "h"
-    0x69 -> "i"
-    0x6a -> "j"
-    0x6b -> "k"
-    0x6c -> "l"
-    0x6d -> "m"
-    0x6e -> "n"
-    0x6f -> "o"
-    0x70 -> "p"
-    0x71 -> "q"
-    0x72 -> "r"
-    0x73 -> "s"
-    0x74 -> "t"
-    0x75 -> "u"
-    0x76 -> "v"
-    0x77 -> "w"
-    0x78 -> "x"
-    0x79 -> "y"
-    0x7a -> "z"
-    0x7b -> "{"
-    0x7c -> "|"
-    0x7d -> "}"
-    0x7e -> "~"
-    0x7f -> "\x7f"
+    0x0000000000000000 -> "\0"
+    0x0000000000000001 -> "\x01"
+    0x0000000000000002 -> "\x02"
+    0x0000000000000003 -> "\x03"
+    0x0000000000000004 -> "\x04"
+    0x0000000000000005 -> "\x05"
+    0x0000000000000006 -> "\x06"
+    0x0000000000000007 -> "\a"
+    0x0000000000000008 -> "\b"
+    0x0000000000000009 -> "\t"
+    0x000000000000000a -> "\n"
+    0x000000000000000b -> "\v"
+    0x000000000000000c -> "\f"
+    0x000000000000000d -> "\r"
+    0x000000000000000e -> "\x0e"
+    0x000000000000000f -> "\x0f"
+    0x0000000000000010 -> "\x10"
+    0x0000000000000011 -> "\x11"
+    0x0000000000000012 -> "\x12"
+    0x0000000000000013 -> "\x13"
+    0x0000000000000014 -> "\x14"
+    0x0000000000000015 -> "\x15"
+    0x0000000000000016 -> "\x16"
+    0x0000000000000017 -> "\x17"
+    0x0000000000000018 -> "\x18"
+    0x0000000000000019 -> "\x19"
+    0x000000000000001a -> "\x1a"
+    0x000000000000001b -> "\x1b"
+    0x000000000000001c -> "\x1c"
+    0x000000000000001d -> "\x1d"
+    0x000000000000001e -> "\x1e"
+    0x000000000000001f -> "\x1f"
+    0x0000000000000020 -> " "
+    0x0000000000000021 -> "!"
+    0x0000000000000022 -> "\""
+    0x0000000000000023 -> "#"
+    0x0000000000000024 -> "$"
+    0x0000000000000025 -> "%"
+    0x0000000000000026 -> "&"
+    0x0000000000000027 -> "'"
+    0x0000000000000028 -> "("
+    0x0000000000000029 -> ")"
+    0x000000000000002a -> "*"
+    0x000000000000002b -> "+"
+    0x000000000000002c -> ","
+    0x000000000000002d -> "-"
+    0x000000000000002e -> "."
+    0x000000000000002f -> "/"
+    0x0000000000000030 -> "0"
+    0x0000000000000031 -> "1"
+    0x0000000000000032 -> "2"
+    0x0000000000000033 -> "3"
+    0x0000000000000034 -> "4"
+    0x0000000000000035 -> "5"
+    0x0000000000000036 -> "6"
+    0x0000000000000037 -> "7"
+    0x0000000000000038 -> "8"
+    0x0000000000000039 -> "9"
+    0x000000000000003a -> ":"
+    0x000000000000003b -> ";"
+    0x000000000000003c -> "<"
+    0x000000000000003d -> "="
+    0x000000000000003e -> ">"
+    0x000000000000003f -> "?"
+    0x0000000000000040 -> "@"
+    0x0000000000000041 -> "A"
+    0x0000000000000042 -> "B"
+    0x0000000000000043 -> "C"
+    0x0000000000000044 -> "D"
+    0x0000000000000045 -> "E"
+    0x0000000000000046 -> "F"
+    0x0000000000000047 -> "G"
+    0x0000000000000048 -> "H"
+    0x0000000000000049 -> "I"
+    0x000000000000004a -> "J"
+    0x000000000000004b -> "K"
+    0x000000000000004c -> "L"
+    0x000000000000004d -> "M"
+    0x000000000000004e -> "N"
+    0x000000000000004f -> "O"
+    0x0000000000000050 -> "P"
+    0x0000000000000051 -> "Q"
+    0x0000000000000052 -> "R"
+    0x0000000000000053 -> "S"
+    0x0000000000000054 -> "T"
+    0x0000000000000055 -> "U"
+    0x0000000000000056 -> "V"
+    0x0000000000000057 -> "W"
+    0x0000000000000058 -> "X"
+    0x0000000000000059 -> "Y"
+    0x000000000000005a -> "Z"
+    0x000000000000005b -> "["
+    0x000000000000005c -> "\\"
+    0x000000000000005d -> "]"
+    0x000000000000005e -> "^"
+    0x000000000000005f -> "_"
+    0x0000000000000060 -> "`"
+    0x0000000000000061 -> "a"
+    0x0000000000000062 -> "b"
+    0x0000000000000063 -> "c"
+    0x0000000000000064 -> "d"
+    0x0000000000000065 -> "e"
+    0x0000000000000066 -> "f"
+    0x0000000000000067 -> "g"
+    0x0000000000000068 -> "h"
+    0x0000000000000069 -> "i"
+    0x000000000000006a -> "j"
+    0x000000000000006b -> "k"
+    0x000000000000006c -> "l"
+    0x000000000000006d -> "m"
+    0x000000000000006e -> "n"
+    0x000000000000006f -> "o"
+    0x0000000000000070 -> "p"
+    0x0000000000000071 -> "q"
+    0x0000000000000072 -> "r"
+    0x0000000000000073 -> "s"
+    0x0000000000000074 -> "t"
+    0x0000000000000075 -> "u"
+    0x0000000000000076 -> "v"
+    0x0000000000000077 -> "w"
+    0x0000000000000078 -> "x"
+    0x0000000000000079 -> "y"
+    0x000000000000007a -> "z"
+    0x000000000000007b -> "{"
+    0x000000000000007c -> "|"
+    0x000000000000007d -> "}"
+    0x000000000000007e -> "~"
+    0x000000000000007f -> "\x7f"
     |}]
 
 let%expect_test "find" =
@@ -2784,13 +2782,13 @@ let%expect_test "find" =
     printf "lfind %a '%s' -> %s\n" pp s (of_codepoint cp)
       (match lfind s cp with
        | None -> "<not found>"
-       | Some cursor -> asprintf "%a" Uint.pp (Cursor.bindex cursor)
+       | Some cursor -> asprintf "%a" Usize.pp (Cursor.bindex cursor)
       );
     printf "contains %a '%s' -> %B\n" pp s (of_codepoint cp) (contains s cp);
     printf "rfind %a '%s' -> %s\n" pp s (of_codepoint cp)
       (match rfind s cp with
        | None -> "<not found>"
-       | Some cursor -> asprintf "%a" Uint.pp (Cursor.bindex cursor)
+       | Some cursor -> asprintf "%a" Usize.pp (Cursor.bindex cursor)
       )
   end in
   test_find "" Codepoint.(of_char 'b');
@@ -2849,12 +2847,12 @@ let%expect_test "substr_find" =
           let _ = List.fold matches ~init:None ~f:(fun prev cursor ->
             assert (match prev with
               | None -> true
-              | Some c -> Uint.((Cursor.bindex c) < (Cursor.bindex cursor))
+              | Some c -> Usize.((Cursor.bindex c) < (Cursor.bindex cursor))
             );
-            let offset = Uint.to_int (match prev with
-              | None -> (Cursor.bindex cursor) + (kv 2)
+            let offset = match prev with
+              | None -> (Cursor.bindex cursor) + 2
               | Some c -> (Cursor.bindex cursor) - (Cursor.bindex c)
-            ) in
+            in
             printf "%*s" offset "|";
             Some cursor
           ) in
@@ -2874,7 +2872,7 @@ let%expect_test "substr_find" =
     let () = match substr_find s ~pattern with
       | None -> ()
       | Some cursor ->
-        printf " %*s" Uint.(to_int (succ (Cursor.bindex cursor))) "|";
+        printf " %*s" (succ (Cursor.bindex cursor)) "|";
     in
     printf "\n";
     printf "\n";
@@ -3103,7 +3101,7 @@ let%expect_test "slice" =
     printf "%a |slice| -> %a\n"
       pp s pp (pare ~base:(Cursor.hd s) ~past:(Cursor.tl s));
     let () = match clength s with
-      | clen when Uint.(clen = (kv 0)) -> ()
+      | 0 -> ()
       | _ -> begin
           printf "%a .|slice| -> %a\n"
             pp s pp (pare ~base:Cursor.(succ (hd s)) ~past:Cursor.(tl s));
@@ -3112,8 +3110,8 @@ let%expect_test "slice" =
         end
     in
     let () = match clength s with
-      | clen when Uint.(clen = (kv 0)) -> ()
-      | clen when Uint.(clen = (kv 1)) -> ()
+      | 0 -> ()
+      | 1 -> ()
       | _ ->
         printf "%a .|slice|. -> %a\n"
           pp s pp (pare ~base:Cursor.(succ (hd s)) ~past:Cursor.(pred (tl s)))
@@ -3147,10 +3145,9 @@ let%expect_test "xfix" =
     "«»";
   ] in
   List.iter strs ~f:(fun s ->
-    for i = 0 to Uint.(to_int ((clength s) + (kv 1))) do
-      let i = Uint.of_int i in
-      printf "prefix %a %a -> %a\n" pp s Uint.pp i pp (prefix s i);
-      printf "suffix %a %a -> %a\n" pp s Uint.pp i pp (suffix s i);
+    for i = 0 to (clength s) + 1 do
+      printf "prefix %a %a -> %a\n" pp s Usize.pp i pp (prefix s i);
+      printf "suffix %a %a -> %a\n" pp s Usize.pp i pp (suffix s i);
     done
   );
 
@@ -3285,14 +3282,14 @@ let%expect_test "split" =
   let test_split s f cp = begin
     printf "split %a -> [" pp s;
     List.iteri (split s ~f) ~f:(fun i substr ->
-      if Uint.(i > (kv 0)) then printf "; ";
+      if Usize.(i > 0) then printf "; ";
       printf "%a" pp substr
     );
     printf "]\n";
 
     printf "split_rev %a -> [" pp s;
     List.iteri (split_rev s ~f)~f:(fun i substr ->
-      if Uint.(i > (kv 0)) then printf "; ";
+      if Usize.(i > 0) then printf "; ";
       printf "%a" pp substr
     );
     printf "]\n";
@@ -3308,7 +3305,7 @@ let%expect_test "split" =
   test_split ":a::bc;de:" (fun cp -> Codepoint.(cp = (kv (Char.code ':'))))
     (Codepoint.kv 0x3b);
   test_split ":a::bc;de;" (fun cp ->
-    match Codepoint.to_int cp with
+    match Codepoint.to_usize cp with
     | 0x3a (* : *)
     | 0x3b (* ; *) -> true
     | _ -> false
@@ -3334,14 +3331,14 @@ let%expect_test "split_lines" =
   let test_split_lines s = begin
     printf "split_lines %S -> [" s;
     List.iteri (split_lines s)~f:(fun i substr ->
-      if Uint.(i > (kv 0)) then printf "; ";
+      if Usize.(i > 0) then printf "; ";
       printf "%S" substr
     );
     printf "]\n";
 
     printf "split_lines_rev %S -> [" s;
     List.iteri (split_lines_rev s)~f:(fun i substr ->
-      if Uint.(i > (kv 0)) then printf "; ";
+      if Usize.(i > 0) then printf "; ";
       printf "%S" substr
     );
     printf "]\n";

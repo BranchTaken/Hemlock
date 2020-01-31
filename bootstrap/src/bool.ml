@@ -33,12 +33,12 @@ end
 include T
 include Identifiable.Make(T)
 
-let of_int x =
+let of_usize x =
   match x with
   | 0 -> false
   | _ -> true
 
-let to_int t =
+let to_usize t =
   match t with
   | false -> 0
   | true -> 1
@@ -53,21 +53,21 @@ let not t =
  *)
 
 let%expect_test "int" =
-  let open Printf in
+  let open Format in
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-      let x = to_int t in
-      printf "to_int %b -> %d ; " t x;
-      printf "of_int %d -> %b\n" x (of_int x);
+      let x = to_usize t in
+      printf "to_usize %b -> %a ; " t Usize.pp x;
+      printf "of_usize %a -> %b\n" Usize.pp x (of_usize x);
       fn ts'
     end
   in
   fn [false; true];
 
   [%expect{|
-    to_int false -> 0 ; of_int 0 -> false
-    to_int true -> 1 ; of_int 1 -> true
+    to_usize false -> 0 ; of_usize 0 -> false
+    to_usize true -> 1 ; of_usize 1 -> true
     |}]
 
 let%expect_test "string" =

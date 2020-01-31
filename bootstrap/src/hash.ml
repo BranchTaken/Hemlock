@@ -1,19 +1,19 @@
-open Rudiments_uint0
+open Rudiments_int0
 
-type t = uint
-type state = uint
+type t = usize
+type state = usize
 
-let state_of_uint x =
+let state_of_usize x =
   x
 
 let t_of_state state =
   state
 
 let pp ppf t =
-  Format.fprintf ppf "0x%x" (int_of_uint t)
+  Format.fprintf ppf "0x%016x" t
 
 let hash_fold state a =
-  uint_of_int (Hashtbl.seeded_hash (int_of_uint state) a)
+  Hashtbl.seeded_hash state a
 
 let hash a =
-  uint_of_int (Hashtbl.hash a)
+  Hashtbl.hash a

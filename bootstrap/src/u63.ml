@@ -1,12 +1,10 @@
-include Rudiments_uint
+include Rudiments_int
 
-let to_int t =
-  int_of_uint t
+let to_isize t =
+  isize_of_usize t
 
-let of_int x =
-  uint_of_int x
-
-let kv = kv
+let of_isize x =
+  usize_of_isize x
 
 (*******************************************************************************
  * Begin tests.
@@ -38,11 +36,11 @@ let%expect_test "rel" =
     printf "ascending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (ascending x y);
     printf "descending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (descending x y);
   end in
-  fn (kv 0) (kv 0x4000_0000_0000_0000);
+  fn 0 0x4000_0000_0000_0000;
   printf "\n";
-  fn (kv 0) (kv 0x7fff_ffff_ffff_ffff);
+  fn 0 0x7fff_ffff_ffff_ffff;
   printf "\n";
-  fn (kv 0x4000_0000_0000_0000) (kv 0x3fff_ffff_ffff_ffff);
+  fn 0x4000_0000_0000_0000 0x3fff_ffff_ffff_ffff;
   let fn2 t min max = begin
     printf "\n";
     printf "clamp %a ~min:%a ~max:%a -> %a\n"
@@ -50,16 +48,11 @@ let%expect_test "rel" =
     printf "between %a ~low:%a ~high:%a -> %b\n"
       pp_x t pp_x min pp_x max (between t ~low:min ~high:max);
   end in
-  fn2 (kv 0x3fff_ffff_ffff_fffe) (kv 0x3fff_ffff_ffff_ffff) (kv
-      0x4000_0000_0000_0001);
-  fn2 (kv 0x3fff_ffff_ffff_ffff) (kv 0x3fff_ffff_ffff_ffff) (kv
-      0x4000_0000_0000_0001);
-  fn2 (kv 0x4000_0000_0000_0000) (kv 0x3fff_ffff_ffff_ffff) (kv
-      0x4000_0000_0000_0001);
-  fn2 (kv 0x4000_0000_0000_0001) (kv 0x3fff_ffff_ffff_ffff) (kv
-      0x4000_0000_0000_0001);
-  fn2 (kv 0x4000_0000_0000_0002) (kv 0x3fff_ffff_ffff_ffff) (kv
-      0x4000_0000_0000_0001);
+  fn2 0x3fff_ffff_ffff_fffe 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
+  fn2 0x3fff_ffff_ffff_ffff 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
+  fn2 0x4000_0000_0000_0000 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
+  fn2 0x4000_0000_0000_0001 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
+  fn2 0x4000_0000_0000_0002 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
 
   [%expect{|
     cmp 0x0000000000000000 0x4000000000000000 -> Lt
@@ -110,9 +103,9 @@ let%expect_test "rel" =
 
 let%expect_test "narrowing" =
   let open Format in
-  printf "max_value + 1 -> %a\n" pp_x (max_value + (kv 1));
-  printf "min_value - 1 -> %a\n" pp_x (min_value - (kv 1));
-  printf "max_value * 15 -> %a\n" pp_x (max_value * (kv 15));
+  printf "max_value + 1 -> %a\n" pp_x (max_value + 1);
+  printf "min_value - 1 -> %a\n" pp_x (min_value - 1);
+  printf "max_value * 15 -> %a\n" pp_x (max_value * 15);
 
   [%expect{|
     max_value + 1 -> 0x0000000000000000

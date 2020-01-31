@@ -1,7 +1,7 @@
 (* Module aliases. *)
 
-module Int = I63
-module Uint = U63
+module Isize = I63
+module Usize = U63
 module Codepoint = U21
 module Byte = U8
 
@@ -10,12 +10,12 @@ module Byte = U8
 (* Redundant; ('a array) is intrinsic and equivalent to ('a Array.t). *)
 (* type 'a array = 'a Array.t *)
 
-type uint = Rudiments_uint0.uint
-(** {!type:uint} is the default numerical type. *)
+type isize = Rudiments_int0.isize
+
+type usize = Rudiments_int0.usize
+(** {!type:usize} is the default numerical type. *)
 
 type i63 = I63.t
-(* Redundant; int is intrinsic and equivalent to Int.t . *)
-(* type int = Int.t *)
 
 type u63 = U63.t
 
@@ -39,13 +39,16 @@ val not_implemented: string -> 'a
 val halt: string -> 'a
 (** [halt s] prints [s] to [stderr] and halts the actor. *)
 
-val uint_of_int: int -> uint
+val usize_of_isize: isize -> usize
 (** Convert a signed integer to a bitwise identical unsigned integer. *)
 
-val int_of_uint: uint -> int
-(** Convert an unsigned integer to a bitwise identical unsigned integer. *)
+val isize_of_usize: usize -> isize
+(** Convert an unsigned integer to a bitwise identical signed integer. *)
 
-val kv: int -> uint
-(** Create a constant value. *)
+val int_of_isize: isize -> int
+(** Convert a signed integer to a bitwise identical OCaml integer. *)
 
-include Intnb_intf.S_u with type t := uint
+val isize_of_int: int -> isize
+(** Convert an OCaml integer to a bitwise identical signed integer. *)
+
+include Intnb_intf.S_u with type t := usize

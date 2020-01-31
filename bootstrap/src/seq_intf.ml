@@ -11,7 +11,7 @@ module type I_poly_def = sig
   type 'a elm
   (** Element type. *)
 
-  val length: 'a t -> uint
+  val length: 'a t -> usize
   (** Remaining sequence length. *)
 
   val next: 'a t -> 'a elm * 'a t
@@ -57,7 +57,7 @@ module type I_mono_def = sig
   type elm
   (** Element type. *)
 
-  val length: t -> uint
+  val length: t -> usize
   (** Remaining sequence length. *)
 
   val next: t -> elm * t

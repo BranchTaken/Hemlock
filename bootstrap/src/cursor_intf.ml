@@ -42,10 +42,10 @@ module type S_poly = sig
   val container: 'a t -> 'a container
   (** Return container associated with iterator. *)
 
-  val index: 'a t -> uint
+  val index: 'a t -> usize
   (** Return iterator index. *)
 
-  val seek: 'a t -> int -> 'a t
+  val seek: 'a t -> isize -> 'a t
   (** Return iterator at given offset from input iterator. *)
 end
 
@@ -89,9 +89,9 @@ module type S_mono = sig
   val container: t -> container
   (** Return container associated with iterator. *)
 
-  val index: t -> uint
+  val index: t -> usize
   (** Return iterator index. *)
 
-  val seek: t -> int -> t
+  val seek: t -> isize -> t
   (** Return iterator at given offset from input iterator. *)
 end
