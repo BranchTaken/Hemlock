@@ -111,8 +111,8 @@ let merge t0 t1 ~ok ~error =
 let%expect_test "pp" =
   let open Format in
   printf "@[<h>";
-  printf "Ok 42 -> %a\n" (pp Uint.pp String.pp) (Ok (kv 42));
-  printf "Error \"bang\" -> %a\n" (pp Uint.pp String.pp) (Error "bang");
+  printf "Ok 42 -> %a\n" (pp Usize.pp String.pp) (Ok 42);
+  printf "Error \"bang\" -> %a\n" (pp Usize.pp String.pp) (Error "bang");
   printf "@]";
 
   [%expect{|

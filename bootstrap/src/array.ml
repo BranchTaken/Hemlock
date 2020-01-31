@@ -7,52 +7,52 @@ module T = struct
   type 'a elm = 'a
 
   let get t i =
-    Stdlib.Array.get t (Uint.to_int i)
+    Stdlib.Array.get t i
 
   let length t =
-    Uint.of_int (Stdlib.Array.length t)
+    Stdlib.Array.length t
 
   module Cursor = struct
     module T = struct
       type 'a container = 'a t
       type 'a t = {
         array: 'a container;
-        index: uint;
+        index: usize;
       }
 
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
         assert ((t0.array == t1.array)
                 || (Stdlib.( = ) t0.array t1.array));
-        Uint.cmp t0.index t1.index
+        Usize.cmp t0.index t1.index
 
       let hd array =
-        {array; index=kv 0}
+        {array; index=0}
 
       let tl array =
         {array; index=(length array)}
 
       let seek t i =
-        match Int.(i < 0) with
+        match Isize.(i < (kv 0)) with
         | true -> begin
-          match Uint.((of_int Int.(neg i)) > t.index) with
+          match (Usize.of_isize Isize.(neg i)) > t.index with
             | true -> halt "Cannot seek before beginning of array"
-            | false -> {t with index=Uint.(t.index - of_int (Int.neg i))}
+            | false -> {t with index=(t.index - Usize.of_isize (Isize.neg i))}
         end
         | false -> begin
-          match Uint.((t.index + (of_int i)) > (length t.array)) with
+          match (t.index + (Usize.of_isize i)) > (length t.array) with
           | true -> halt "Cannot seek past end of array"
-          | false -> {t with index=Uint.(t.index + (of_int i))}
+          | false -> {t with index=(t.index + (Usize.of_isize i))}
         end
 
       let succ t =
-        seek t 1
+        seek t (Isize.kv 1)
 
       let pred t =
-        seek t (-1)
+        seek t (Isize.kv (-1))
 
       let lget t =
-        get t.array (Uint.pred t.index)
+        get t.array (Usize.pred t.index)
 
       let rget t =
         get t.array t.index
@@ -104,21 +104,21 @@ module Seq = struct
     let to_array t =
       let l = T.length t in
       match l with
-      | l when l = (kv 0) -> [||]
+      | 0 -> [||]
       | _ -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a (Uint.to_int i) elm in
-                let i' = Uint.succ i in
+                let () = Stdlib.Array.set a i elm in
+                let i' = Usize.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make (Uint.to_int l) elm0 in
-          fn t' a (kv 1)
+          let a = Stdlib.Array.make l elm0 in
+          fn t' a 1
         end
   end
 
@@ -128,21 +128,21 @@ module Seq = struct
     let to_array t =
       let l = T.length t in
       match l with
-      | l when l = (kv 0) -> [||]
+      | 0 -> [||]
       | _ -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
-            let () = Stdlib.Array.set a (Uint.to_int i) elm in
-            match i = (kv 0) with
-            | true -> a
-            | false -> begin
-                let i' = Uint.pred i in
+            let () = Stdlib.Array.set a i elm in
+            match i with
+            | 0 -> a
+            | _ -> begin
+                let i' = Usize.pred i in
                 fn t' a i'
               end
           end in
           let elm, t' = T.next t in
-          let a = Stdlib.Array.make (Uint.to_int l) elm in
-          fn t' a (Uint.pred l)
+          let a = Stdlib.Array.make l elm in
+          fn t' a (Usize.pred l)
         end
   end
 
@@ -152,21 +152,21 @@ module Seq = struct
     let to_array t =
       let l = T.length t in
       match l with
-      | l when l = (kv 0) -> [||]
+      | 0 -> [||]
       | _ -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a (Uint.to_int i) elm in
-                let i' = Uint.succ i in
+                let () = Stdlib.Array.set a i elm in
+                let i' = Usize.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make (Uint.to_int l) elm0 in
-          fn t' a (kv 1)
+          let a = Stdlib.Array.make l elm0 in
+          fn t' a 1
         end
   end
 
@@ -176,28 +176,28 @@ module Seq = struct
     let to_array t =
       let l = T.length t in
       match l with
-      | l when l = (kv 0) -> [||]
+      | 0 -> [||]
       | _ -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
-            let () = Stdlib.Array.set a (Uint.to_int i) elm in
-            match i = (kv 0) with
-            | true -> a
-            | false -> begin
-                let i' = Uint.pred i in
+            let () = Stdlib.Array.set a i elm in
+            match i with
+            | 0 -> a
+            | _ -> begin
+                let i' = Usize.pred i in
                 fn t' a i'
               end
           end in
           let elm, t' = T.next t in
-          let a = Stdlib.Array.make (Uint.to_int l) elm in
-          fn t' a (Uint.pred l)
+          let a = Stdlib.Array.make l elm in
+          fn t' a (Usize.pred l)
         end
   end
 
   (* Special-purpose, for fold[i]_map . *)
   module Make_poly2 (T : sig
       type ('a, 'accum, 'b) t
-      val length: ('a,'accum,'b) t -> uint
+      val length: ('a,'accum,'b) t -> usize
       val next: ('a,'accum,'b) t -> 'accum -> 'b * ('a,'accum,'b) t * 'accum
     end) : sig
       type ('a, 'accum, 'b) t
@@ -206,28 +206,28 @@ module Seq = struct
     let to_accum_array t ~init =
       let l = T.length t in
       match l with
-      | l when l = (kv 0) -> init, [||]
+      | 0 -> init, [||]
       | _ -> begin
           let rec fn t accum a i = begin
             match i = l with
             | true -> accum, a
             | false -> begin
                 let elm, t', accum' = T.next t accum in
-                let () = Stdlib.Array.set a (Uint.to_int i) elm in
-                let i' = Uint.succ i in
+                let () = Stdlib.Array.set a i elm in
+                let i' = Usize.succ i in
                 fn t' accum' a i'
               end
           end in
           let elm0, t', accum = T.next t init in
-          let a = Stdlib.Array.make (Uint.to_int l) elm0 in
-          fn t' accum a (kv 1)
+          let a = Stdlib.Array.make l elm0 in
+          fn t' accum a 1
         end
   end
 
   (* Special-purpose, for fold[i]2_map . *)
   module Make_poly3 (T : sig
       type ('a, 'b, 'accum, 'c) t
-      val length: ('a,'b,'accum,'c) t -> uint
+      val length: ('a,'b,'accum,'c) t -> usize
       val next: ('a,'b,'accum,'c) t -> 'accum
         -> 'c * ('a,'b,'accum,'c) t * 'accum
     end) : sig
@@ -238,21 +238,21 @@ module Seq = struct
     let to_accum_array t ~init =
       let l = T.length t in
       match l with
-      | l when l = (kv 0) -> init, [||]
+      | 0 -> init, [||]
       | _ -> begin
           let rec fn t accum a i = begin
             match i = l with
             | true -> accum, a
             | false -> begin
                 let elm, t', accum' = T.next t accum in
-                let () = Stdlib.Array.set a (Uint.to_int i) elm in
-                let i' = Uint.succ i in
+                let () = Stdlib.Array.set a i elm in
+                let i' = Usize.succ i in
                 fn t' accum' a i'
               end
           end in
           let elm0, t', accum = T.next t init in
-          let a = Stdlib.Array.make (Uint.to_int l) elm0 in
-          fn t' accum a (kv 1)
+          let a = Stdlib.Array.make l elm0 in
+          fn t' accum a 1
         end
   end
 end
@@ -260,14 +260,14 @@ end
 module Array_init = struct
   module T = struct
     type 'a t = {
-      f: uint -> 'a;
-      index: uint;
-      length: uint;
+      f: usize -> 'a;
+      index: usize;
+      length: usize;
     }
     type 'a elm = 'a
 
     let init length ~f =
-      {f; index=kv 0; length}
+      {f; index=0; length}
 
     let length t =
       t.length
@@ -287,7 +287,7 @@ let init n ~f =
 module Array_of_list_common = struct
   type 'a t = {
     list: 'a list;
-    length: uint;
+    length: usize;
   }
   type 'a elm = 'a
 
@@ -331,10 +331,10 @@ let of_list_rev ?length list =
   Array_of_list_rev.to_array (Array_of_list_rev.init length list)
 
 let is_empty t =
-  (length t) = (kv 0)
+  (length t) = 0
 
 let set_inplace t i elm =
-  Stdlib.Array.set t (Uint.to_int i) elm
+  Stdlib.Array.set t i elm
 
 let copy t =
   init (length t) ~f:(fun i -> get t i)
@@ -354,15 +354,15 @@ module Array_join = struct
     type 'a t = {
       sep: 'a outer;
       arrays: 'a outer list;
-      length: uint;
+      length: usize;
       in_sep: bool;
       array: 'a outer;
-      index: uint;
+      index: usize;
     }
     type 'a elm = 'a
 
     let init length sep arrays =
-      {sep; arrays; length; in_sep=true; array=[||]; index=kv 0}
+      {sep; arrays; length; in_sep=true; array=[||]; index=0}
 
     let next t =
       let rec fn t = begin
@@ -375,10 +375,10 @@ module Array_join = struct
                 | true -> fn {t with arrays=arrays';
                                      in_sep=false;
                                      array=array';
-                                     index=kv 0}
+                                     index=0}
                 | false -> fn {t with in_sep=true;
                                       array=t.sep;
-                                      index=kv 0}
+                                      index=0}
               end
           end
         | true -> begin
@@ -398,14 +398,14 @@ end
 
 let join ?sep tlist =
   let sep, sep_len = match sep with
-    | None -> [||], kv 0
+    | None -> [||], 0
     | Some sep -> sep, length sep
   in
-  let _, tlist_length = List.fold tlist ~init:(kv 0, kv 0)
+  let _, tlist_length = List.fold tlist ~init:(0, 0)
       ~f:(fun (i, accum) list ->
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         let sep_len' = match i with
-          | i when i = (kv 0) -> kv 0
+          | 0 -> 0
           | _ -> sep_len
         in
         let accum' = accum + sep_len' + (length list) in
@@ -431,18 +431,18 @@ let append t elm =
 
 let prepend elm t =
   init (succ (length t)) ~f:(fun i ->
-    if i = (kv 0) then elm
+    if i = 0 then elm
     else get t (pred i)
   )
 
 let insert t i elm =
-  if i = (kv 0) then
+  if i = 0 then
     prepend elm t
   else begin
     let len = length t in
     if i < len then
       init (succ len) ~f:(fun index ->
-        match Uint.cmp index i with
+        match Usize.cmp index i with
         | Lt -> get t index
         | Eq -> elm
         | Gt -> get t (pred index)
@@ -453,32 +453,32 @@ let insert t i elm =
 
 let remove t i =
   let len = length t in
-  assert (len > (kv 0));
+  assert (len > 0);
   match len with
-  | len when len = (kv 1) ->
-    assert (i = (kv 0));
+  | 1 ->
+    assert (i = 0);
     [||]
   | _ -> begin
-      if i = (kv 0) then
-        pare t ~base:(kv 1) ~past:len
+      if i = 0 then
+        pare t ~base:1 ~past:len
       else if i < len then
         init (pred len) ~f:(fun index ->
           if index < i then get t index
           else get t (succ index)
         )
       else
-        pare t ~base:(kv 0) ~past:(Uint.pred len)
+        pare t ~base:0 ~past:(Usize.pred len)
     end
 
 let reduce t ~f =
   let rec fn i accum = begin
     match (i = (length t)) with
     | true -> accum
-    | false -> fn (Uint.succ i) (f accum (get t i))
+    | false -> fn (Usize.succ i) (f accum (get t i))
   end in
   match t with
   | [||] -> None
-  | _ -> Some (fn (kv 1) (get t (kv 0)))
+  | _ -> Some (fn 1 (get t 0))
 
 let reduce_hlt t ~f =
   match reduce t ~f with
@@ -502,27 +502,25 @@ let rev_inplace t =
     | true -> ()
     | false -> begin
         swap_inplace t i0 i1;
-        fn (Uint.succ i0) (Uint.pred i1)
+        fn (Usize.succ i0) (Usize.pred i1)
       end
   end in
   let len = length t in
   match len with
-  | len when len = (kv 0) -> ()
-  | _ -> fn (kv 0) (pred len)
+  | 0 -> ()
+  | _ -> fn 0 (pred len)
 
 let rev t =
   let l = length t in
-  init l ~f:(fun i -> get t (l - i - (kv 1)))
+  init l ~f:(fun i -> get t (l - i - 1))
 
 (* Used directly for non-overlapping blits. *)
 let blit_ascending t0 i0 t1 i1 len =
-  for i = 0 to Uint.(to_int (pred len)) do
-    let i = Uint.of_int i in
+  for i = 0 to pred len do
     set_inplace t1 (i1 + i) (get t0 (i0 + i))
   done
 let blit_descending t0 i0 t1 i1 len =
-  for i = Uint.(to_int (pred len)) downto 0 do
-    let i = Uint.of_int i in
+  for i = pred len downto 0 do
     set_inplace t1 (i1 + i) (get t0 (i0 + i))
   done
 
@@ -541,22 +539,22 @@ let is_sorted ?(strict=false) t ~cmp =
         let elm' = get t i in
         match (cmp elm elm'), strict with
         | Cmp.Lt, _
-        | Cmp.Eq, false -> fn elm' (Uint.succ i)
+        | Cmp.Eq, false -> fn elm' (Usize.succ i)
         | Cmp.Eq, true
         | Cmp.Gt, _ -> false
       end
   end in
   match len with
-  | len when len = (kv 0) -> true
-  | _ -> fn (get t (kv 0)) (kv 1)
+  | 0 -> true
+  | _ -> fn (get t 0) 1
 
 type order =
 | Increasing
 | Decreasing
 | Either
 type run = {
-  base: uint;
-  past: uint;
+  base: usize;
+  past: usize;
 }
 let sort_impl ?(stable=false) t ~cmp ~inplace =
   (* Merge a pair of adjacent runs.  Input runs may be in increasing or
@@ -564,9 +562,8 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
   let merge_pair ~cmp src run0 order0 run1 order1 dst = begin
     assert (run0.past = run1.base);
     let rblit t0 i0 t1 i1 len = begin
-      for i = 0 to Uint.(to_int (pred len)) do
-        let i = Uint.of_int i in
-        set_inplace t1 (i1 + i) (get t0 (i0 + len - (i + (kv 1))))
+      for i = 0 to pred len do
+        set_inplace t1 (i1 + i) (get t0 (i0 + len - (i + 1)))
       done
     end in
     let merge_pair_oo ~cmp src run0 order0 run1 order1 dst = begin
@@ -575,12 +572,12 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
         | false, false -> begin
             let elm0 = match order0 with
               | Increasing -> get src run0.base
-              | Decreasing -> get src (Uint.pred run0.past)
+              | Decreasing -> get src (Usize.pred run0.past)
               | Either -> not_reached ()
             in
             let elm1 = match order1 with
               | Increasing -> get src run1.base
-              | Decreasing -> get src (Uint.pred run1.past)
+              | Decreasing -> get src (Usize.pred run1.past)
               | Either -> not_reached ()
             in
             match cmp elm0 elm1 with
@@ -589,14 +586,14 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
                 match order0 with
                 | Increasing -> begin
                     set_inplace dst run.past elm0;
-                    let run0' = {run0 with base=Uint.succ run0.base} in
-                    let run' = {run with past=Uint.succ run.past} in
+                    let run0' = {run0 with base=Usize.succ run0.base} in
+                    let run' = {run with past=Usize.succ run.past} in
                     fn ~cmp src run0' order0 run1 order1 dst run'
                   end
                 | Decreasing -> begin
                     set_inplace dst run.past elm0;
-                    let run0' = {run0 with past=Uint.pred run0.past} in
-                    let run' = {run with past=Uint.succ run.past} in
+                    let run0' = {run0 with past=Usize.pred run0.past} in
+                    let run' = {run with past=Usize.succ run.past} in
                     fn ~cmp src run0' order0 run1 order1 dst run'
                   end
                 | Either -> not_reached ()
@@ -605,14 +602,14 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
                 match order1 with
                 | Increasing -> begin
                     set_inplace dst run.past elm1;
-                    let run1' = {run1 with base=Uint.succ run1.base} in
-                    let run' = {run with past=Uint.succ run.past} in
+                    let run1' = {run1 with base=Usize.succ run1.base} in
+                    let run' = {run with past=Usize.succ run.past} in
                     fn ~cmp src run0 order0 run1' order1 dst run'
                   end
                 | Decreasing -> begin
                     set_inplace dst run.past elm1;
-                    let run1' = {run1 with past=Uint.pred run1.past} in
-                    let run' = {run with past=Uint.succ run.past} in
+                    let run1' = {run1 with past=Usize.pred run1.past} in
+                    let run' = {run with past=Usize.succ run.past} in
                     fn ~cmp src run0 order0 run1' order1 dst run'
                   end
                 | Either -> not_reached ()
@@ -672,7 +669,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
       end
     | false -> begin
         let elm' = get src i in
-        let i' = Uint.succ i in
+        let i' = Usize.succ i in
         match cmp elm elm', order, stable with
         | Cmp.Lt, Either, _ ->
           select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
@@ -706,8 +703,8 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
   end in
   let aux = copy t in
   let runs = match t with
-    | [||] -> [{base=kv 0; past=kv 0}]
-    | _ -> select ~stable ~cmp (get t (kv 0)) (kv 0) (kv 1)
+    | [||] -> [{base=0; past=0}]
+    | _ -> select ~stable ~cmp (get t 0) 0 1
         Either None Either t aux []
   in
 
@@ -740,7 +737,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
         match inplace with
         | true -> begin
             (* Odd number of sweeps performed; copy result back into t. *)
-            blit_ascending dst (kv 0) src (kv 0) (length dst);
+            blit_ascending dst 0 src 0 (length dst);
             src
           end
         | false -> dst
@@ -759,7 +756,7 @@ let sort ?stable t ~cmp =
 
 let search_impl ?base ?past t key ~cmp mode =
   let base = match base with
-    | None -> kv 0
+    | None -> 0
     | Some base -> base
   in
   let past = match past with
@@ -775,32 +772,32 @@ let search_impl ?base ?past t key ~cmp mode =
         (* Empty range. *)
         match mode with
         | Cmp.Lt -> begin
-            match (base = (kv 0)), (base = (length t)) with
+            match (base = 0), (base = (length t)) with
             | true, true -> None (* Empty; key < elms. *)
             | _, false -> begin (* At beginning, or interior. *)
                 match cmp key (get t base) with
                 | Cmp.Lt -> begin (* At successor. *)
-                    match (base = (kv 0)) with
+                    match base = 0 with
                     | true ->
-                      Some (Cmp.Lt, kv 0) (* At beginning; key < elms. *)
+                      Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
                     | false ->
-                      Some (Cmp.Gt, (Uint.pred base)) (* In interior;
+                      Some (Cmp.Gt, (Usize.pred base)) (* In interior;
                                                          key > predecessor. *)
                   end
                 | Cmp.Eq -> Some (Cmp.Eq, base) (* base at leftmost match. *)
                 | Cmp.Gt -> not_reached ()
               end
             | false, true ->
-              Some (Cmp.Gt, (Uint.pred base)) (* Past end; key > elms. *)
+              Some (Cmp.Gt, (Usize.pred base)) (* Past end; key > elms. *)
           end
         | Cmp.Eq -> None (* No match. *)
         | Cmp.Gt -> begin
-            match (base = (kv 0)), (base = (length t)) with
+            match (base = 0), (base = (length t)) with
             | true, true -> None (* Empty; key > elms. *)
             | true, false ->
-              Some (Cmp.Lt, kv 0) (* At beginning; key < elms. *)
+              Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
             | false, _ -> begin (* In interior, or past end. *)
-                let probe = Uint.pred base in
+                let probe = Usize.pred base in
                 match cmp key (get t probe) with
                 | Cmp.Lt -> not_reached ()
                 | Cmp.Eq -> Some (Cmp.Eq, probe) (* probe at rightmost match. *)
@@ -814,13 +811,13 @@ let search_impl ?base ?past t key ~cmp mode =
           end
       end
     | false -> begin
-        let mid = (base + past) / (kv 2) in
+        let mid = (base + past) / 2 in
         match (cmp key (get t mid)), mode with
         | Cmp.Lt, _
         | Cmp.Eq, Cmp.Lt -> fn ~base ~past:mid
         | Cmp.Eq, Cmp.Eq -> Some (Cmp.Eq, mid)
         | Cmp.Eq, Cmp.Gt
-        | Cmp.Gt, _ -> fn ~base:(Uint.succ mid) ~past
+        | Cmp.Gt, _ -> fn ~base:(Usize.succ mid) ~past
       end
   end in
   fn ~base ~past
@@ -847,20 +844,20 @@ module Array_foldi_map = struct
     type 'a outer = 'a t
     type ('a, 'accum, 'b) t = {
       arr: 'a outer;
-      f: uint -> 'accum -> 'a -> 'accum * 'b;
-      index: uint;
-      length: uint;
+      f: usize -> 'accum -> 'a -> 'accum * 'b;
+      index: usize;
+      length: usize;
     }
 
     let init arr ~f length =
-      {arr; f; length; index=kv 0}
+      {arr; f; length; index=0}
 
     let length t =
       t.length
 
     let next t accum =
       let accum', elm' = t.f t.index accum (get t.arr t.index) in
-      let t' = {t with index=Uint.succ t.index} in
+      let t' = {t with index=Usize.succ t.index} in
       elm', t', accum'
   end
   include T
@@ -879,32 +876,32 @@ let filter t ~f =
   let _, t' = Array_foldi_map.to_accum_array
       (Array_foldi_map.init t ~f:(fun _ i _ ->
          let rec fn i elm = begin
-           let i' = Uint.succ i in
+           let i' = Usize.succ i in
            match f elm with
            | true -> i', elm
            | false -> fn i' (get t i')
          end in
          fn i (get t i)
-       ) (count t ~f)) ~init:(kv 0) in
+       ) (count t ~f)) ~init:0 in
   t'
 
 let filteri t ~f =
-  let n = foldi t ~init:(kv 0) ~f:(fun i accum elm ->
+  let n = foldi t ~init:0 ~f:(fun i accum elm ->
     match f i elm with
     | false -> accum
-    | true -> Uint.succ accum
+    | true -> Usize.succ accum
   ) in
   let _, t' = Array_foldi_map.to_accum_array
       (Array_foldi_map.init t ~f:(fun _ i _ ->
          let rec fn i elm = begin
-           let i' = Uint.succ i in
+           let i' = Usize.succ i in
            match f i elm with
            | true -> i', elm
            | false -> fn i' (get t i')
          end in
          fn i (get t i)
        ) n)
-      ~init:(kv 0) in
+      ~init:0 in
   t'
 
 let foldi2_until t0 t1 ~init ~f =
@@ -917,10 +914,10 @@ let foldi2_until t0 t1 ~init ~f =
         let accum', until = f i accum (get t0 i) (get t1 i) in
         match until with
         | true -> accum'
-        | false -> fn (Uint.succ i) accum'
+        | false -> fn (Usize.succ i) accum'
       end
   end in
-  fn (kv 0) init
+  fn 0 init
 
 let fold2_until t0 t1 ~init ~f =
   foldi2_until t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
@@ -933,15 +930,13 @@ let foldi2 t0 t1 ~init ~f =
 
 let iter2 t0 t1 ~f =
   assert ((length t0) = (length t1));
-  for i = 0 to Uint.(to_int (pred (length t0))) do
-    let i = Uint.of_int i in
+  for i = 0 to pred (length t0) do
     f (get t0 i) (get t1 i)
   done
 
 let iteri2 t0 t1 ~f =
   assert ((length t0) = (length t1));
-  for i = 0 to Uint.(to_int (pred (length t0))) do
-    let i = Uint.of_int i in
+  for i = 0 to pred (length t0) do
     f i (get t0 i) (get t1 i)
   done
 
@@ -959,12 +954,12 @@ module Array_foldi2_map = struct
     type ('a, 'b, 'accum, 'c) t = {
       arr0: 'a outer;
       arr1: 'b outer;
-      f: uint -> 'accum -> 'a -> 'b -> 'accum * 'c;
-      index: uint;
+      f: usize -> 'accum -> 'a -> 'b -> 'accum * 'c;
+      index: usize;
     }
 
     let init arr0 arr1 ~f =
-      {arr0; arr1; f; index=kv 0}
+      {arr0; arr1; f; index=0}
 
     let length t =
       length t.arr0
@@ -972,7 +967,7 @@ module Array_foldi2_map = struct
     let next t accum =
       let accum', elm' =
         t.f t.index accum (get t.arr0 t.index) (get t.arr1 t.index) in
-      let t' = {t with index=Uint.succ t.index} in
+      let t' = {t with index=Usize.succ t.index} in
       elm', t', accum'
   end
   include T
@@ -998,7 +993,7 @@ let pp pp_elm ppf t =
   let open Format in
   fprintf ppf "@[<h>[|";
   iteri t ~f:(fun i elm ->
-    if i > (kv 0) then fprintf ppf ";@ ";
+    if i > 0 then fprintf ppf ";@ ";
     fprintf ppf "%a" pp_elm elm
   );
   fprintf ppf "|]@]"
@@ -1011,20 +1006,20 @@ let%expect_test "cursor" =
   let open Format in
   let rec fn arr hd cursor tl = begin
     let index = Cursor.index cursor in
-    printf "index=%a" Uint.pp index;
+    printf "index=%a" Usize.pp index;
     printf ", container %a arr"
-      Cmp.pp (cmp Uint.cmp (Cursor.container cursor) arr);
+      Cmp.pp (cmp Usize.cmp (Cursor.container cursor) arr);
     let hd_cursor = Cursor.cmp hd cursor in
     printf ", hd %a cursor" Cmp.pp hd_cursor;
     let cursor_tl = Cursor.cmp cursor tl in
     printf ", cursor %a tl" Cmp.pp cursor_tl;
     let () = match hd_cursor with
-      | Lt -> printf ", lget=%a" Uint.pp (Cursor.lget cursor)
+      | Lt -> printf ", lget=%a" Usize.pp (Cursor.lget cursor)
       | Eq -> printf ", lget=_"
       | Gt -> not_reached ()
     in
     let () = match cursor_tl with
-      | Lt -> printf ", rget=%a" Uint.pp (Cursor.rget cursor)
+      | Lt -> printf ", rget=%a" Usize.pp (Cursor.rget cursor)
       | Eq -> printf ", rget=_"
       | Gt -> not_reached ()
     in
@@ -1032,19 +1027,19 @@ let%expect_test "cursor" =
 
     let length = length arr in
     assert (Cursor.(=)
-        (Cursor.seek hd (Uint.to_int index))
+        (Cursor.seek hd (Usize.to_isize index))
         cursor);
     assert (Cursor.(=)
         hd
-        (Cursor.seek cursor (-(Uint.to_int index)))
+        (Cursor.seek cursor (Isize.neg (Usize.to_isize index)))
     );
     assert (Cursor.(=)
-        (Cursor.seek cursor Uint.(to_int (length - index)))
+        (Cursor.seek cursor (Usize.to_isize (length - index)))
         tl
     );
     assert (Cursor.(=)
         cursor
-        (Cursor.seek tl (-Uint.(to_int (length - index))))
+        (Cursor.seek tl (Isize.neg (Usize.to_isize (length - index))))
     );
 
     match cursor_tl with
@@ -1057,13 +1052,13 @@ let%expect_test "cursor" =
   end in
   let arrs = [
     [||];
-    [|kv 0|];
-    [|kv 0; kv 1|];
-    [|kv 0; kv 1; kv 2|];
+    [|0|];
+    [|0; 1|];
+    [|0; 1; 2|];
   ] in
   printf "@[<h>";
   List.iter arrs ~f:(fun arr ->
-    printf "--- %a ---\n" (pp Uint.pp) arr;
+    printf "--- %a ---\n" (pp Usize.pp) arr;
     let hd = Cursor.hd arr in
     fn arr hd hd (Cursor.tl arr)
   );
@@ -1090,11 +1085,11 @@ let%expect_test "cmp" =
   let open Format in
   let arrs = [
     [||];
-    [|kv 0|];
-    [|kv 0; kv 0|];
-    [|kv 0; kv 1|];
-    [|kv 0; kv 0|];
-    [|kv 0|];
+    [|0|];
+    [|0; 0|];
+    [|0; 1|];
+    [|0; 0|];
+    [|0|];
     [||];
   ] in
   let rec fn arr arrs = begin
@@ -1103,9 +1098,9 @@ let%expect_test "cmp" =
     | hd :: tl -> begin
         let () = List.iter arrs ~f:(fun arr2 ->
           printf "cmp %a %a -> %a\n"
-            (pp Uint.pp) arr
-            (pp Uint.pp) arr2
-            Cmp.pp (cmp Uint.cmp arr arr2)
+            (pp Usize.pp) arr
+            (pp Usize.pp) arr2
+            Cmp.pp (cmp Usize.cmp arr arr2)
         ) in
         fn hd tl
       end
@@ -1146,15 +1141,15 @@ let%expect_test "get,length,is_empty" =
   let open Format in
   let test_length arr = begin
     printf "%a: length=%a, is_empty=%B\n"
-      (pp Uint.pp) arr
-      Uint.pp (length arr)
+      (pp Usize.pp) arr
+      Usize.pp (length arr)
       (is_empty arr)
   end in
   printf "@[<h>";
   test_length [||];
-  test_length [|kv 0|];
-  test_length [|kv 0; kv 1|];
-  test_length [|kv 0; kv 1; kv 2|];
+  test_length [|0|];
+  test_length [|0; 1|];
+  test_length [|0; 1; 2|];
   printf "@]";
 
   [%expect{|
@@ -1167,28 +1162,27 @@ let%expect_test "get,length,is_empty" =
 let%expect_test "set,set_inplace" =
   let open Format in
   let test_set len = begin
-    for i = 0 to Uint.(to_int (pred len)) do
-      let i = Uint.of_int i in
-      let arr = init len ~f:(fun _ -> kv 0) in
-      let arr' = set arr i (kv 1) in
+    for i = 0 to pred len do
+      let arr = init len ~f:(fun _ -> 0) in
+      let arr' = set arr i 1 in
       printf "set %a: %a -> %a"
-        Uint.pp i
-        (pp Uint.pp) arr
-        (pp Uint.pp) arr'
+        Usize.pp i
+        (pp Usize.pp) arr
+        (pp Usize.pp) arr'
       ;
-      set_inplace arr i (kv 1);
-      printf " -> set_inplace: %a" (pp Uint.pp) arr;
+      set_inplace arr i 1;
+      printf " -> set_inplace: %a" (pp Usize.pp) arr;
       let arr'' = copy arr in
-      printf " -> copy,set_inplace: %a" (pp Uint.pp) arr'';
-      set_inplace arr'' i (kv 2);
+      printf " -> copy,set_inplace: %a" (pp Usize.pp) arr'';
+      set_inplace arr'' i 2;
       printf " -> %a\n"
-        (pp Uint.pp) arr''
+        (pp Usize.pp) arr''
     done
   end in
   printf "@[<h>";
-  test_set (kv 1);
-  test_set (kv 2);
-  test_set (kv 3);
+  test_set 1;
+  test_set 2;
+  test_set 3;
   printf "@]";
 
   [%expect{|
@@ -1203,25 +1197,23 @@ let%expect_test "set,set_inplace" =
 let%expect_test "pare" =
   let open Format in
   let test arr = begin
-    printf "pare %a ->" (pp Uint.pp) arr;
-    for i = 0 to Uint.to_int (length arr) do
-      for j = i to Uint.to_int (length arr) do
-        let i = Uint.of_int i in
-        let j = Uint.of_int j in
+    printf "pare %a ->" (pp Usize.pp) arr;
+    for i = 0 to length arr do
+      for j = i to length arr do
         let arr' = pare arr ~base:i ~past:j in
         printf " [%a,%a)=%a"
-          Uint.pp i
-          Uint.pp j
-          (pp Uint.pp) arr'
+          Usize.pp i
+          Usize.pp j
+          (pp Usize.pp) arr'
       done
     done;
     printf "\n"
   end in
   printf "@[<h>";
   test [||];
-  test [|kv 0|];
-  test [|kv 0; kv 1|];
-  test [|kv 0; kv 1; kv 2|];
+  test [|0|];
+  test [|0; 1|];
+  test [|0; 1; 2|];
   printf "@]";
 
   [%expect{|
@@ -1237,11 +1229,11 @@ let%expect_test "join" =
     printf "join";
     let () = match sep with
     | None -> ()
-    | Some sep -> printf " ~sep:%a" (pp Uint.pp) sep;
+    | Some sep -> printf " ~sep:%a" (pp Usize.pp) sep;
     in
     printf " %a -> %a\n"
-      (List.pp (pp Uint.pp)) arrs
-      (pp Uint.pp) (join ?sep arrs)
+      (List.pp (pp Usize.pp)) arrs
+      (pp Usize.pp) (join ?sep arrs)
   end in
   printf "@[<h>";
   test [];
@@ -1249,36 +1241,36 @@ let%expect_test "join" =
   test [[||]; [||]];
   test [[||]; [||]; [||]];
 
-  test [[|kv 0|]];
+  test [[|0|]];
 
-  test [[|kv 0|]; [||]];
-  test [[||]; [|kv 0|]];
-  test [[|kv 0|]; [|kv 1|]];
+  test [[|0|]; [||]];
+  test [[||]; [|0|]];
+  test [[|0|]; [|1|]];
 
-  test [[|kv 0|]; [||]; [||]];
-  test [[||]; [|kv 0|]; [||]];
-  test [[||]; [||]; [|kv 0|]];
-  test [[|kv 0|]; [|kv 1|]; [||]];
-  test [[|kv 0|]; [||]; [|kv 1|]];
-  test [[|kv 0|]; [|kv 1|]; [|kv 2|]];
+  test [[|0|]; [||]; [||]];
+  test [[||]; [|0|]; [||]];
+  test [[||]; [||]; [|0|]];
+  test [[|0|]; [|1|]; [||]];
+  test [[|0|]; [||]; [|1|]];
+  test [[|0|]; [|1|]; [|2|]];
 
-  test ~sep:[|kv 3|] [];
-  test ~sep:[|kv 3|] [[||]];
-  test ~sep:[|kv 3|] [[||]; [||]];
-  test ~sep:[|kv 3|] [[||]; [||]; [||]];
+  test ~sep:[|3|] [];
+  test ~sep:[|3|] [[||]];
+  test ~sep:[|3|] [[||]; [||]];
+  test ~sep:[|3|] [[||]; [||]; [||]];
 
-  test ~sep:[|kv 3|] [[|kv 0|]];
+  test ~sep:[|3|] [[|0|]];
 
-  test ~sep:[|kv 3|] [[|kv 0|]; [||]];
-  test ~sep:[|kv 3|] [[||]; [|kv 0|]];
-  test ~sep:[|kv 3|] [[|kv 0|]; [|kv 1|]];
+  test ~sep:[|3|] [[|0|]; [||]];
+  test ~sep:[|3|] [[||]; [|0|]];
+  test ~sep:[|3|] [[|0|]; [|1|]];
 
-  test ~sep:[|kv 3|] [[|kv 0|]; [||]; [||]];
-  test ~sep:[|kv 3|] [[||]; [|kv 0|]; [||]];
-  test ~sep:[|kv 3|] [[||]; [||]; [|kv 0|]];
-  test ~sep:[|kv 3|] [[|kv 0|]; [|kv 1|]; [||]];
-  test ~sep:[|kv 3|] [[|kv 0|]; [||]; [|kv 1|]];
-  test ~sep:[|kv 3|] [[|kv 0|]; [|kv 1|]; [|kv 2|]];
+  test ~sep:[|3|] [[|0|]; [||]; [||]];
+  test ~sep:[|3|] [[||]; [|0|]; [||]];
+  test ~sep:[|3|] [[||]; [||]; [|0|]];
+  test ~sep:[|3|] [[|0|]; [|1|]; [||]];
+  test ~sep:[|3|] [[|0|]; [||]; [|1|]];
+  test ~sep:[|3|] [[|0|]; [|1|]; [|2|]];
   printf "@]";
 
   [%expect{|
@@ -1316,19 +1308,19 @@ let%expect_test "concat" =
   let open Format in
   let test arr0 arr1 = begin
     printf "concat %a %a -> %a\n"
-      (pp Uint.pp) arr0
-      (pp Uint.pp) arr1
-      (pp Uint.pp) (concat arr0 arr1)
+      (pp Usize.pp) arr0
+      (pp Usize.pp) arr1
+      (pp Usize.pp) (concat arr0 arr1)
     ;
   end in
   printf "@[<h>";
   test [||] [||];
-  test [|kv 0|] [||];
-  test [||] [|kv 0|];
-  test [|kv 0|] [|kv 1|];
-  test [|kv 0; kv 1|] [|kv 2|];
-  test [|kv 0|] [|kv 1; kv 2|];
-  test [|kv 0; kv 1|] [|kv 2; kv 3|];
+  test [|0|] [||];
+  test [||] [|0|];
+  test [|0|] [|1|];
+  test [|0; 1|] [|2|];
+  test [|0|] [|1; 2|];
+  test [|0; 1|] [|2; 3|];
   printf "@]";
 
   [%expect{|
@@ -1347,16 +1339,16 @@ let%expect_test "append,prepend" =
     let arr_x = append arr x in
     let x_arr = prepend x arr in
     printf "%a %a: append -> %a, prepend -> %a\n"
-      (pp Uint.pp) arr
-      Uint.pp x
-      (pp Uint.pp) arr_x
-      (pp Uint.pp) x_arr
+      (pp Usize.pp) arr
+      Usize.pp x
+      (pp Usize.pp) arr_x
+      (pp Usize.pp) x_arr
   end in
   printf "@[<h>";
-  test [||] (kv 0);
-  test [|kv 0|] (kv 1);
-  test [|kv 0; kv 1|] (kv 2);
-  test [|kv 0; kv 1; kv 2|] (kv 3);
+  test [||] 0;
+  test [|0|] 1;
+  test [|0; 1|] 2;
+  test [|0; 1; 2|] 3;
   printf "@]";
 
   [%expect{|
@@ -1370,21 +1362,20 @@ let%expect_test "insert" =
   let open Format in
   let test arr x = begin
     printf "insert %a %a ->"
-      (pp Uint.pp) arr
-      Uint.pp x
+      (pp Usize.pp) arr
+      Usize.pp x
     ;
-    for i = 0 to Uint.to_int (length arr) do
-      let i = Uint.of_int i in
+    for i = 0 to length arr do
       let arr' = insert arr i x in
-      printf " %a" (pp Uint.pp) arr'
+      printf " %a" (pp Usize.pp) arr'
     done;
     printf "\n"
   end in
   printf "@[<h>";
-  test [||] (kv 0);
-  test [|kv 0|] (kv 1);
-  test [|kv 0; kv 1|] (kv 2);
-  test [|kv 0; kv 1; kv 2|] (kv 3);
+  test [||] 0;
+  test [|0|] 1;
+  test [|0; 1|] 2;
+  test [|0; 1; 2|] 3;
   printf "@]";
 
   [%expect{|
@@ -1397,18 +1388,17 @@ let%expect_test "insert" =
 let%expect_test "remove" =
   let open Format in
   let test arr = begin
-    printf "remove %a ->" (pp Uint.pp) arr;
-    for i = 0 to Uint.(to_int (pred (length arr))) do
-      let i = Uint.of_int i in
+    printf "remove %a ->" (pp Usize.pp) arr;
+    for i = 0 to pred (length arr) do
       let arr' = remove arr i in
-      printf " %a" (pp Uint.pp) arr';
+      printf " %a" (pp Usize.pp) arr';
     done;
     printf "\n"
   end in
   printf "@[<h>";
-  test [|kv 0|];
-  test [|kv 0; kv 1|];
-  test [|kv 0; kv 1; kv 2|];
+  test [|0|];
+  test [|0; 1|];
+  test [|0; 1; 2|];
   printf "@]";
 
   [%expect{|
@@ -1420,15 +1410,15 @@ let%expect_test "remove" =
 let%expect_test "reduce" =
   let open Format in
   let test_reduce arr ~f = begin
-    printf "reduce %a" (pp Uint.pp) arr;
+    printf "reduce %a" (pp Usize.pp) arr;
     match reduce arr ~f with
     | None -> printf " -> None\n"
-    | Some x -> printf " -> %a\n" Uint.pp x
+    | Some x -> printf " -> %a\n" Usize.pp x
   end in
   let f a b = (a + b) in
   printf "@[<h>";
   test_reduce [||] ~f;
-  test_reduce [|kv 0; kv 1; kv 2; kv 3; kv 4|] ~f;
+  test_reduce [|0; 1; 2; 3; 4|] ~f;
   printf "@]";
 
   [%expect{|
@@ -1439,28 +1429,26 @@ let%expect_test "reduce" =
 let%expect_test "swap,swap_inplace" =
   let open Format in
   let test_swap arr = begin
-    for i = 0 to Uint.(to_int (pred (length arr))) do
-      for j = i to Uint.(to_int (pred (length arr))) do
-        let i = Uint.of_int i in
-        let j = Uint.of_int j in
+    for i = 0 to pred (length arr) do
+      for j = i to pred (length arr) do
         let arr' = copy arr in
         printf "%a %a: swap %a -> %a -> swap_inplace %a -> "
-          Uint.pp i
-          Uint.pp j
-          (pp Uint.pp) arr'
-          (pp Uint.pp) (swap arr' i j)
-          (pp Uint.pp) arr'
+          Usize.pp i
+          Usize.pp j
+          (pp Usize.pp) arr'
+          (pp Usize.pp) (swap arr' i j)
+          (pp Usize.pp) arr'
         ;
         swap_inplace arr' i j;
-        printf "%a\n" (pp Uint.pp) arr'
+        printf "%a\n" (pp Usize.pp) arr'
       done
     done
   end in
   printf "@[<h>";
-  test_swap [|kv 0|];
-  test_swap [|kv 0; kv 1|];
-  test_swap [|kv 0; kv 1; kv 2|];
-  test_swap [|kv 0; kv 1; kv 2; kv 3|];
+  test_swap [|0|];
+  test_swap [|0; 1|];
+  test_swap [|0; 1; 2|];
+  test_swap [|0; 1; 2; 3|];
   printf "@]";
 
   [%expect{|
@@ -1490,18 +1478,18 @@ let%expect_test "rev,rev_inplace" =
   let open Format in
   let test_rev arr = begin
     printf "rev %a -> %a -> rev_inplace %a -> "
-      (pp Uint.pp) arr
-      (pp Uint.pp) (rev arr)
-      (pp Uint.pp) arr
+      (pp Usize.pp) arr
+      (pp Usize.pp) (rev arr)
+      (pp Usize.pp) arr
     ;
     rev_inplace arr;
-    printf "%a\n" (pp Uint.pp) arr
+    printf "%a\n" (pp Usize.pp) arr
   end in
   printf "@[<h>";
-  test_rev [|kv 0|];
-  test_rev [|kv 0; kv 1|];
-  test_rev [|kv 0; kv 1; kv 2|];
-  test_rev [|kv 0; kv 1; kv 2; kv 3|];
+  test_rev [|0|];
+  test_rev [|0; 1|];
+  test_rev [|0; 1; 2|];
+  test_rev [|0; 1; 2; 3|];
   printf "@]";
 
   [%expect{|
@@ -1515,23 +1503,23 @@ let%expect_test "blit" =
   let open Format in
   let test_blit arr0 i0 arr1 i1 len = begin
     printf "blit %a %a %a %a %a -> "
-      (pp Uint.pp) arr0
-      Uint.pp i0
-      (pp Uint.pp) arr1
-      Uint.pp i1
-      Uint.pp len
+      (pp Usize.pp) arr0
+      Usize.pp i0
+      (pp Usize.pp) arr1
+      Usize.pp i1
+      Usize.pp len
     ;
     blit arr0 i0 arr1 i1 len;
-    printf "%a\n" (pp Uint.pp) arr1
+    printf "%a\n" (pp Usize.pp) arr1
   end in
   printf "@[<h>";
-  test_blit [||] (kv 0) [||] (kv 0) (kv 0);
-  test_blit [|kv 0|] (kv 0) [|kv 1|] (kv 0) (kv 1);
-  test_blit [|kv 0; kv 1|] (kv 1) [|kv 2|] (kv 0) (kv 1);
-  test_blit [|kv 0|] (kv 0) [|kv 1; kv 2|] (kv 1) (kv 1);
-  test_blit [|kv 0; kv 1|] (kv 0) [|kv 2; kv 3|] (kv 0) (kv 2);
-  test_blit [|kv 0; kv 1; kv 2|] (kv 1) [|kv 3; kv 4; kv 5|] (kv 0) (kv 2);
-  test_blit [|kv 0; kv 1; kv 2|] (kv 0) [|kv 3; kv 4; kv 5|] (kv 0) (kv 3);
+  test_blit [||] 0 [||] 0 0;
+  test_blit [|0|] 0 [|1|] 0 1;
+  test_blit [|0; 1|] 1 [|2|] 0 1;
+  test_blit [|0|] 0 [|1; 2|] 1 1;
+  test_blit [|0; 1|] 0 [|2; 3|] 0 2;
+  test_blit [|0; 1; 2|] 1 [|3; 4; 5|] 0 2;
+  test_blit [|0; 1; 2|] 0 [|3; 4; 5|] 0 3;
   printf "@]";
 
   [%expect{|
@@ -1548,19 +1536,19 @@ let%expect_test "is_sorted" =
   let open Format in
   let test_is_sorted arr = begin
     printf "is_sorted %a: not strict -> %B, strict -> %B\n"
-      (pp Uint.pp) arr
-      (is_sorted arr ~cmp:Uint.cmp)
-      (is_sorted ~strict:true arr ~cmp:Uint.cmp)
+      (pp Usize.pp) arr
+      (is_sorted arr ~cmp:Usize.cmp)
+      (is_sorted ~strict:true arr ~cmp:Usize.cmp)
   end in
   printf "@[<h>";
   test_is_sorted [||];
-  test_is_sorted [|kv 0|];
-  test_is_sorted [|kv 0; kv 0|];
-  test_is_sorted [|kv 0; kv 1|];
-  test_is_sorted [|kv 1; kv 0|];
-  test_is_sorted [|kv 0; kv 1; kv 1|];
-  test_is_sorted [|kv 0; kv 1; kv 2|];
-  test_is_sorted [|kv 0; kv 2; kv 1|];
+  test_is_sorted [|0|];
+  test_is_sorted [|0; 0|];
+  test_is_sorted [|0; 1|];
+  test_is_sorted [|1; 0|];
+  test_is_sorted [|0; 1; 1|];
+  test_is_sorted [|0; 1; 2|];
+  test_is_sorted [|0; 2; 1|];
   printf "@]";
 
   [%expect{|
@@ -1575,21 +1563,19 @@ let%expect_test "is_sorted" =
     |}]
 
 type sort_elm = {
-  key: uint; (* Random, possibly non-unique. *)
-  sn: uint; (* Sequential in initial array. *)
+  key: usize; (* Random, possibly non-unique. *)
+  sn: usize; (* Sequential in initial array. *)
 }
 let%expect_test "sort" =
   let gen_array len = begin
     let key_limit =
-      if len > (kv 0) then len
-      else kv 1
+      if len > 0 then len
+      else 1
     in
-    init len ~f:(fun i ->
-      {key=Uint.of_int (Stdlib.Random.int (Uint.to_int key_limit)); sn=i}
-    )
+    init len ~f:(fun i -> {key=Stdlib.Random.int key_limit; sn=i})
   end in
   let cmp elm0 elm1 =
-    Uint.cmp elm0.key elm1.key
+    Usize.cmp elm0.key elm1.key
   in
   let test_sort arr = begin
     let arr' = sort arr ~cmp in
@@ -1599,13 +1585,12 @@ let%expect_test "sort" =
     assert (is_sorted ~strict:true arr' ~cmp:(fun elm0 elm1 ->
       match cmp elm0 elm1 with
       | Cmp.Lt -> Cmp.Lt
-      | Cmp.Eq -> Uint.cmp elm0.sn elm1.sn
+      | Cmp.Eq -> Usize.cmp elm0.sn elm1.sn
       | Cmp.Gt -> Cmp.Gt
     ));
   end in
   Stdlib.Random.init 0;
   for len = 0 to 257 do
-    let len = Uint.of_int len in
     for _ = 1 to 10 do
       test_sort (gen_array len)
     done
@@ -1617,45 +1602,42 @@ let%expect_test "sort" =
 let%expect_test "search" =
   let open Format in
   let test_search arr key_max = begin
-    printf "%a\n" (pp Uint.pp) arr;
-    for probe = 0 to Uint.to_int key_max do
-      let probe = Uint.of_int probe in
-      printf "  %a -> %s, %s, %s\n" Uint.pp probe
-        (match psearch arr probe ~cmp:Uint.cmp with
+    printf "%a\n" (pp Usize.pp) arr;
+    for probe = 0 to key_max do
+      printf "  %a -> %s, %s, %s\n" Usize.pp probe
+        (match psearch arr probe ~cmp:Usize.cmp with
          | None -> "<"
          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-             Uint.pp i Uint.pp (get arr i)
+             Usize.pp i Usize.pp (get arr i)
          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-             Uint.pp i Uint.pp (get arr i)
+             Usize.pp i Usize.pp (get arr i)
          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-             Uint.pp i Uint.pp (get arr i)
+             Usize.pp i Usize.pp (get arr i)
         )
-        (match search arr probe ~cmp:Uint.cmp with
+        (match search arr probe ~cmp:Usize.cmp with
          | None -> "<>"
-         | Some i -> asprintf "=%a" Uint.pp (get arr i)
+         | Some i -> asprintf "=%a" Usize.pp (get arr i)
         )
-        (match nsearch arr probe ~cmp:Uint.cmp with
+        (match nsearch arr probe ~cmp:Usize.cmp with
          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-             Uint.pp i Uint.pp (get arr i)
+             Usize.pp i Usize.pp (get arr i)
          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-             Uint.pp i Uint.pp (get arr i)
+             Usize.pp i Usize.pp (get arr i)
          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-             Uint.pp i Uint.pp (get arr i)
+             Usize.pp i Usize.pp (get arr i)
          | None -> ">"
         );
     done
   end in
   printf "@[<h>";
   for len = 0 to 3 do
-    let len = Uint.of_int len in
-    let arr = init len ~f:(fun i -> i * (kv 2) + (kv 1)) in
-    let key_max = len * (kv 2) in
+    let arr = init len ~f:(fun i -> i * 2 + 1) in
+    let key_max = len * 2 in
     test_search arr key_max
   done;
   for hlen = 1 to 3 do
-    let hlen = Uint.of_int hlen in
-    let len = hlen * (kv 2) in
-    let arr = init len ~f:(fun i -> i + ((i + (kv 1)) % (kv 2))) in
+    let len = hlen * 2 in
+    let arr = init len ~f:(fun i -> i + ((i + 1) % 2)) in
     let key_max = len in
     test_search arr key_max
   done;
@@ -1706,20 +1688,20 @@ let%expect_test "map,mapi" =
   let open Format in
   let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_map uarr = begin
-    printf "%a -> map " (pp Uint.pp) uarr;
-    let sarr = map uarr ~f:(fun elm -> asprintf "%a" Uint.pp elm) in
+    printf "%a -> map " (pp Usize.pp) uarr;
+    let sarr = map uarr ~f:(fun elm -> asprintf "%a" Usize.pp elm) in
     printf "%a" (pp pp_str) sarr;
     printf " -> mapi ";
     let sarr = mapi uarr ~f:(fun i elm ->
-      asprintf "[%a]=%a" Uint.pp i Uint.pp elm
+      asprintf "[%a]=%a" Usize.pp i Usize.pp elm
     ) in
     printf "%a\n" (pp pp_str) sarr
   end in
   printf "@[<h>";
   test_map [||];
-  test_map [|kv 0|];
-  test_map [|kv 1; kv 0|];
-  test_map [|kv 2; kv 1; kv 0|];
+  test_map [|0|];
+  test_map [|1; 0|];
+  test_map [|2; 1; 0|];
   printf "@]";
 
   [%expect{|
@@ -1733,25 +1715,25 @@ let%expect_test "fold_map,foldi_map" =
   let open Format in
   let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_fold_map uarr = begin
-    let accum, sarr = fold_map uarr ~init:(kv 0) ~f:(fun accum elm ->
-      (accum + elm), (asprintf "%a" Uint.pp elm)
+    let accum, sarr = fold_map uarr ~init:0 ~f:(fun accum elm ->
+      (accum + elm), (asprintf "%a" Usize.pp elm)
     ) in
-    let accum2, sarr2 = foldi_map uarr ~init:(kv 0) ~f:(fun i accum elm ->
+    let accum2, sarr2 = foldi_map uarr ~init:0 ~f:(fun i accum elm ->
       (accum + i + elm),
-      (asprintf "[%a]=%a" Uint.pp i Uint.pp elm)
+      (asprintf "[%a]=%a" Usize.pp i Usize.pp elm)
     ) in
     printf "%a -> fold_map %a %a -> foldi_map %a %a\n"
-      (pp Uint.pp) uarr
-      Uint.pp accum
+      (pp Usize.pp) uarr
+      Usize.pp accum
       (pp pp_str) sarr
-      Uint.pp accum2
+      Usize.pp accum2
       (pp pp_str) sarr2
   end in
   printf "@[<h>";
   test_fold_map [||];
-  test_fold_map [|kv 0|];
-  test_fold_map [|kv 1; kv 0|];
-  test_fold_map [|kv 2; kv 1; kv 0|];
+  test_fold_map [|0|];
+  test_fold_map [|1; 0|];
+  test_fold_map [|2; 1; 0|];
   printf "@]";
 
   [%expect{|
@@ -1763,21 +1745,21 @@ let%expect_test "fold_map,foldi_map" =
 let%expect_test "filter,filteri" =
   let open Format in
   let test_filter arr = begin
-    let farr = filter arr ~f:(fun elm -> elm % (kv 2) = (kv 0)) in
-    let farr2 = filteri arr ~f:(fun _ elm -> elm % (kv 2) = (kv 0)) in
-    let farr3 = filteri arr ~f:(fun i _ -> i % (kv 2) = (kv 0)) in
+    let farr = filter arr ~f:(fun elm -> elm % 2 = 0) in
+    let farr2 = filteri arr ~f:(fun _ elm -> elm % 2 = 0) in
+    let farr3 = filteri arr ~f:(fun i _ -> i % 2 = 0) in
     printf "%a -> filter %a -> filteri %a %a\n"
-      (pp Uint.pp) arr
-      (pp Uint.pp) farr
-      (pp Uint.pp) farr2
-      (pp Uint.pp) farr3
+      (pp Usize.pp) arr
+      (pp Usize.pp) farr
+      (pp Usize.pp) farr2
+      (pp Usize.pp) farr3
   end in
   printf "@[<h>";
   test_filter [||];
-  test_filter [|kv 0|];
-  test_filter [|kv 1; kv 0|];
-  test_filter [|kv 2; kv 1; kv 0|];
-  test_filter [|kv 3; kv 2; kv 1; kv 0|];
+  test_filter [|0|];
+  test_filter [|1; 0|];
+  test_filter [|2; 1; 0|];
+  test_filter [|3; 2; 1; 0|];
   printf "@]";
 
   [%expect{|
@@ -1791,25 +1773,25 @@ let%expect_test "fold2_until,foldi2_until" =
   let open Format in
   let test_fold2_until uarr0 uarr1 = begin
     printf "%a %a"
-      (pp Uint.pp) uarr0
-      (pp Uint.pp) uarr1
+      (pp Usize.pp) uarr0
+      (pp Usize.pp) uarr1
     ;
-    let accum = fold2_until uarr0 uarr1 ~init:(kv 0)
+    let accum = fold2_until uarr0 uarr1 ~init:0
         ~f:(fun accum elm0 elm1 ->
-          (accum + elm0 + elm1), (accum > (kv 10))
+          (accum + elm0 + elm1), (accum > 10)
         ) in
-    printf " -> fold2_until %a" Uint.pp accum;
-    let accum = foldi2_until uarr0 uarr1 ~init:(kv 0)
+    printf " -> fold2_until %a" Usize.pp accum;
+    let accum = foldi2_until uarr0 uarr1 ~init:0
         ~f:(fun i accum elm0 elm1 ->
-          (accum + i + elm0 + elm1), ((i + (kv 2)) >= (length uarr0))
+          (accum + i + elm0 + elm1), ((i + 2) >= (length uarr0))
         ) in
-    printf " -> foldi2_until %a\n" Uint.pp accum
+    printf " -> foldi2_until %a\n" Usize.pp accum
   end in
   printf "@[<h>";
   test_fold2_until [||] [||];
-  test_fold2_until [|kv 1|] [|kv 0|];
-  test_fold2_until [|kv 3; kv 2|] [|kv 1; kv 0|];
-  test_fold2_until [|kv 5; kv 4; kv 3|] [|kv 2; kv 1; kv 0|];
+  test_fold2_until [|1|] [|0|];
+  test_fold2_until [|3; 2|] [|1; 0|];
+  test_fold2_until [|5; 4; 3|] [|2; 1; 0|];
   printf "@]";
 
   [%expect{|
@@ -1822,22 +1804,22 @@ let%expect_test "fold2,foldi2" =
   let open Format in
   let test_fold2 uarr0 uarr1 = begin
     printf "%a %a"
-      (pp Uint.pp) uarr0
-      (pp Uint.pp) uarr1
+      (pp Usize.pp) uarr0
+      (pp Usize.pp) uarr1
     ;
-    let accum = fold2 uarr0 uarr1 ~init:(kv 0) ~f:(fun accum elm0 elm1 ->
+    let accum = fold2 uarr0 uarr1 ~init:0 ~f:(fun accum elm0 elm1 ->
       accum + elm0 + elm1
     ) in
-    printf " -> fold2 %a" Uint.pp accum;
-    let accum = foldi2 uarr0 uarr1 ~init:(kv 0)
+    printf " -> fold2 %a" Usize.pp accum;
+    let accum = foldi2 uarr0 uarr1 ~init:0
         ~f:(fun i accum elm0 elm1 -> accum + i + elm0 + elm1 ) in
-    printf " -> foldi2 %a\n" Uint.pp accum
+    printf " -> foldi2 %a\n" Usize.pp accum
   end in
   printf "@[<h>";
   test_fold2 [||] [||];
-  test_fold2 [|kv 1|] [|kv 0|];
-  test_fold2 [|kv 3; kv 2|] [|kv 1; kv 0|];
-  test_fold2 [|kv 5; kv 4; kv 3|] [|kv 2; kv 1; kv 0|];
+  test_fold2 [|1|] [|0|];
+  test_fold2 [|3; 2|] [|1; 0|];
+  test_fold2 [|5; 4; 3|] [|2; 1; 0|];
   printf "@]";
 
   [%expect{|
@@ -1848,22 +1830,22 @@ let%expect_test "fold2,foldi2" =
 
 let%expect_test "iteri2" =
   let open Format in
-  let print_uint_arrays arr0 arr1 = begin
+  let print_usize_arrays arr0 arr1 = begin
     printf "[|";
     iteri2 arr0 arr1 ~f:(fun i elm0 elm1 ->
-      if i > (kv 0) then printf "; ";
-      printf "(%a, %a)" Uint.pp elm0 Uint.pp elm1
+      if i > 0 then printf "; ";
+      printf "(%a, %a)" Usize.pp elm0 Usize.pp elm1
     );
     printf "|]"
   end in
   let test_iter2 arr0 arr1 = begin
-    print_uint_arrays arr0 arr1;
+    print_usize_arrays arr0 arr1;
     printf "\n"
   end in
   test_iter2 [||] [||];
-  test_iter2 [|kv 0|] [|kv 1|];
-  test_iter2 [|kv 0; kv 1|] [|kv 2; kv 3|];
-  test_iter2 [|kv 0; kv 1; kv 2|] [|kv 3; kv 4; kv 5|];
+  test_iter2 [|0|] [|1|];
+  test_iter2 [|0; 1|] [|2; 3|];
+  test_iter2 [|0; 1; 2|] [|3; 4; 5|];
 
   [%expect{|
     [||]
@@ -1876,22 +1858,22 @@ let%expect_test "map2,mapi2" =
   let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_map2 uarr0 uarr1 = begin
     let sarr = map2 uarr0 uarr1 ~f:(fun elm0 elm1 ->
-      asprintf "(%a,%a)" Uint.pp elm0 Uint.pp elm1
+      asprintf "(%a,%a)" Usize.pp elm0 Usize.pp elm1
     ) in
     let sarr2 = mapi2 uarr0 uarr1 ~f:(fun i elm0 elm1 ->
-      asprintf "[%a]=(%a,%a)" Uint.pp i Uint.pp elm0 Uint.pp elm1
+      asprintf "[%a]=(%a,%a)" Usize.pp i Usize.pp elm0 Usize.pp elm1
     ) in
     printf "%a %a -> map2 %a -> mapi2 %a\n"
-      (pp Uint.pp) uarr0
-      (pp Uint.pp) uarr1
+      (pp Usize.pp) uarr0
+      (pp Usize.pp) uarr1
       (pp pp_str) sarr
       (pp pp_str) sarr2
   end in
   printf "@[<h>";
   test_map2 [||] [||];
-  test_map2 [|kv 1|] [|kv 0|];
-  test_map2 [|kv 3; kv 2|] [|kv 1; kv 0|];
-  test_map2 [|kv 5; kv 4; kv 3|] [|kv 2; kv 1; kv 0|];
+  test_map2 [|1|] [|0|];
+  test_map2 [|3; 2|] [|1; 0|];
+  test_map2 [|5; 4; 3|] [|2; 1; 0|];
   printf "@]";
 
   [%expect{|
@@ -1904,29 +1886,29 @@ let%expect_test "fold2_map,foldi2_map" =
   let open Format in
   let pp_str ppf t = Format.fprintf ppf "%S" t in
   let test_fold2_map uarr0 uarr1 = begin
-    let accum, sarr = fold2_map uarr0 uarr1 ~init:(kv 0)
+    let accum, sarr = fold2_map uarr0 uarr1 ~init:0
         ~f:(fun accum elm0 elm1 ->
           (accum + elm0 + elm1),
-          (asprintf "(%a,%a)" Uint.pp elm0 Uint.pp elm1)
+          (asprintf "(%a,%a)" Usize.pp elm0 Usize.pp elm1)
         ) in
-    let accum2, sarr2 = foldi2_map uarr0 uarr1 ~init:(kv 0)
+    let accum2, sarr2 = foldi2_map uarr0 uarr1 ~init:0
         ~f:(fun i accum elm0 elm1 ->
           (accum + i + elm0 + elm1),
-          (asprintf "[%a]=(%a,%a)" Uint.pp i Uint.pp elm0 Uint.pp elm1)
+          (asprintf "[%a]=(%a,%a)" Usize.pp i Usize.pp elm0 Usize.pp elm1)
         ) in
     printf "%a %a -> fold2_map %a %a -> foldi2_map %a %a\n"
-      (pp Uint.pp) uarr0
-      (pp Uint.pp) uarr1
-      Uint.pp accum
+      (pp Usize.pp) uarr0
+      (pp Usize.pp) uarr1
+      Usize.pp accum
       (pp pp_str) sarr
-      Uint.pp accum2
+      Usize.pp accum2
       (pp pp_str) sarr2
   end in
   printf "@[<h>";
   test_fold2_map [||] [||];
-  test_fold2_map [|kv 1|] [|kv 0|];
-  test_fold2_map [|kv 3; kv 2|] [|kv 1; kv 0|];
-  test_fold2_map [|kv 5; kv 4; kv 3|] [|kv 2; kv 1; kv 0|];
+  test_fold2_map [|1|] [|0|];
+  test_fold2_map [|3; 2|] [|1; 0|];
+  test_fold2_map [|5; 4; 3|] [|2; 1; 0|];
   printf "@]";
 
   [%expect{|
@@ -1940,14 +1922,14 @@ let%expect_test "zip,unzip" =
   let test_zip arr0 arr1 = begin
     let arr0', arr1' = unzip (zip arr0 arr1) in
     printf "%a %a\n"
-      (pp Uint.pp) arr0'
-      (pp Uint.pp) arr1'
+      (pp Usize.pp) arr0'
+      (pp Usize.pp) arr1'
   end in
   printf "@[<h>";
   test_zip [||] [||];
-  test_zip [|kv 0|] [|kv 1|];
-  test_zip [|kv 0; kv 1|] [|kv 2; kv 3|];
-  test_zip [|kv 0; kv 1; kv 2|] [|kv 3; kv 4; kv 5|];
+  test_zip [|0|] [|1|];
+  test_zip [|0; 1|] [|2; 3|];
+  test_zip [|0; 1; 2|] [|3; 4; 5|];
   printf "@]";
 
   [%expect{|

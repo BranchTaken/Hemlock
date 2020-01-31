@@ -23,7 +23,7 @@ module type S_poly_length = sig
   type 'a t
   (** Container type. *)
 
-  val length: 'a t -> uint
+  val length: 'a t -> usize
   (** [length t] returns the number of elements in [t]. *)
 
   val is_empty: 'a t -> bool
@@ -36,7 +36,7 @@ end
 module type S_poly_length_gen = sig
   type 'a t
   type 'a elm
-  val length: 'a t -> uint
+  val length: 'a t -> usize
   val is_empty: 'a t -> bool
 end
 
@@ -61,7 +61,7 @@ module type S_poly_fold = sig
   *)
 
   val foldi_until: 'a t -> init:'accum
-    -> f:(uint -> 'accum -> 'a -> 'accum * bool) -> 'accum
+    -> f:(usize -> 'accum -> 'a -> 'accum * bool) -> 'accum
   (** [foldi_until t ~init ~f] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value, continuing until [f]
       returns [accum, true], or until folding is complete if [f] always returns
@@ -76,7 +76,7 @@ module type S_poly_fold = sig
   (** [fold_right t ~init ~f] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val foldi: 'a t -> init:'accum -> f:(uint -> 'accum -> 'a -> 'accum)
+  val foldi: 'a t -> init:'accum -> f:(usize -> 'accum -> 'a -> 'accum)
     -> 'accum
   (** [foldi t ~init ~f] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value. *)
@@ -84,10 +84,10 @@ module type S_poly_fold = sig
   val iter: 'a t -> f:('a -> unit) -> unit
   (** [iter t ~f] iterates from left to right over [t]. *)
 
-  val iteri: 'a t -> f:(uint -> 'a -> unit) -> unit
+  val iteri: 'a t -> f:(usize -> 'a -> unit) -> unit
   (** [iter t ~f] iterates with index provided from left to right over [t]. *)
 
-  val count: 'a t -> f:('a -> bool) -> uint
+  val count: 'a t -> f:('a -> bool) -> usize
   (** [count t ~f] iterates over [t] and returns the number of times [f] returns
       [true]. *)
 
@@ -108,12 +108,12 @@ module type S_poly_fold = sig
   (** [find_map t ~f] iterates over [t] and returns [Some b] for an element
       which [f] returns [Some b], or [None] if [f] always returns [None]. *)
 
-  val findi: 'a t -> f:(uint -> 'a -> bool) -> 'a option
+  val findi: 'a t -> f:(usize -> 'a -> bool) -> 'a option
   (** [findi t ~f] iterates from left to right over [t] with index provided to
       [f] and returns [Some a] for an element which [f] returns [true], or
       [None] if [f] always returns [false]. *)
 
-  val findi_map: 'a t -> f:(uint -> 'a -> 'b option) -> 'b option
+  val findi_map: 'a t -> f:(usize -> 'a -> 'b option) -> 'b option
   (** [findi_map t ~f] iterates from left to right over [t] with index provided
       to [f] and returns [Some b] for an element which [f] returns [Some b], or
       [None] if [f] always returns [None]. *)
@@ -146,21 +146,21 @@ module type S_poly_fold_gen = sig
   val fold_right_until: 'a t -> init:'accum
     -> f:('a elm -> 'accum -> 'accum * bool) -> 'accum
   val foldi_until: 'a t -> init:'accum
-    -> f:(uint -> 'accum -> 'a elm -> 'accum * bool) -> 'accum
+    -> f:(usize -> 'accum -> 'a elm -> 'accum * bool) -> 'accum
   val fold: 'a t -> init:'accum -> f:('accum -> 'a elm -> 'accum) -> 'accum
   val fold_right: 'a t -> init:'accum -> f:('a elm -> 'accum -> 'accum)
     -> 'accum
-  val foldi: 'a t -> init:'accum -> f:(uint -> 'accum -> 'a elm -> 'accum)
+  val foldi: 'a t -> init:'accum -> f:(usize -> 'accum -> 'a elm -> 'accum)
     -> 'accum
   val iter: 'a t -> f:('a elm -> unit) -> unit
-  val iteri: 'a t -> f:(uint -> 'a elm -> unit) -> unit
-  val count: 'a t -> f:('a elm -> bool) -> uint
+  val iteri: 'a t -> f:(usize -> 'a elm -> unit) -> unit
+  val count: 'a t -> f:('a elm -> bool) -> usize
   val for_any: 'a t -> f:('a elm -> bool) -> bool
   val for_all: 'a t -> f:('a elm -> bool) -> bool
   val find: 'a t -> f:('a elm -> bool) -> 'a elm option
   val find_map: 'a t -> f:('a elm -> 'b option) -> 'b option
-  val findi: 'a t -> f:(uint -> 'a elm -> bool) -> 'a elm option
-  val findi_map: 'a t -> f:(uint -> 'a elm -> 'b option) -> 'b option
+  val findi: 'a t -> f:(usize -> 'a elm -> bool) -> 'a elm option
+  val findi_map: 'a t -> f:(usize -> 'a elm -> 'b option) -> 'b option
   val min_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
   val max_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
   val to_list: 'a t -> 'a elm list
@@ -220,7 +220,7 @@ module type S_mono_length = sig
   type elm
   (** Element type. *)
 
-  val length: t -> uint
+  val length: t -> usize
   (** [length t] returns the number of elements in [t]. *)
 
   val is_empty: t -> bool
@@ -251,7 +251,7 @@ module type S_mono_fold = sig
   *)
 
   val foldi_until: t -> init:'accum
-    -> f:(uint -> 'accum -> elm -> 'accum * bool) -> 'accum
+    -> f:(usize -> 'accum -> elm -> 'accum * bool) -> 'accum
   (** [foldi_until t ~init ~f] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value, continuing until [f]
       returns [accum, true], or until folding is complete if [f] always returns
@@ -265,17 +265,17 @@ module type S_mono_fold = sig
   (** [fold_right t ~init ~f] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val foldi: t -> init:'accum -> f:(uint -> 'accum -> elm -> 'accum) -> 'accum
+  val foldi: t -> init:'accum -> f:(usize -> 'accum -> elm -> 'accum) -> 'accum
   (** [foldi t ~init ~f] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value. *)
 
   val iter: t -> f:(elm -> unit) -> unit
   (** [iter t ~f] iterates from left to right over [t]. *)
 
-  val iteri: t -> f:(uint -> elm -> unit) -> unit
+  val iteri: t -> f:(usize -> elm -> unit) -> unit
   (** [iter t ~f] iterates with index provided from left to right over [t]. *)
 
-  val count: t -> f:(elm -> bool) -> uint
+  val count: t -> f:(elm -> bool) -> usize
   (** [count t ~f] iterates over [t] and returns the number of times [f] returns
       [true]. *)
 
@@ -296,12 +296,12 @@ module type S_mono_fold = sig
   (** [find_map t ~f] iterates over [t] and returns [Some a] for an element
       which [f] returns [Some a], or [None] if [f] always returns [None]. *)
 
-  val findi: t -> f:(uint -> elm -> bool) -> elm option
+  val findi: t -> f:(usize -> elm -> bool) -> elm option
   (** [findi t ~f] iterates from left to right over [t] with index provided to
       [f] and returns [Some a] for an element which [f] returns [true], or
       [None] if [f] always returns [false]. *)
 
-  val findi_map: t -> f:(uint -> elm -> 'a option) -> 'a option
+  val findi_map: t -> f:(usize -> elm -> 'a option) -> 'a option
   (** [findi_map t ~f] iterates from left to right over [t] with index provided
       to [f] and returns [Some a] for an element which [f] returns [Some a], or
       [None] if [f] always returns [None]. *)

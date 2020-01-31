@@ -1,9 +1,16 @@
 (** Boolean type. *)
 
+open Rudiments
+
 type t = bool
 
 include Identifiable_intf.S with type t := t
-include Intable_intf.S with type t := t
+
+val of_usize: usize -> t
+(** Initialize from unsigned integer. *)
+
+val to_usize: t -> usize
+(** Convert to unsigned integer. *)
 
 val not: t -> t
 (** [not t] returns the logical negation of [t]. *)

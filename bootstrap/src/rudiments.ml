@@ -1,7 +1,7 @@
 (* Aliases. *)
 
-module Int = I63
-module Uint = U63
+module Isize = I63
+module Usize = U63
 module Codepoint = U21
 module Byte = U8
 
@@ -18,4 +18,4 @@ type u8 = U8.t
 type byte = Byte.t
 
 include Rudiments_functions
-include Rudiments_uint
+include Rudiments_int

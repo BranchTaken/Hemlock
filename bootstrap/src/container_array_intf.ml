@@ -8,7 +8,7 @@ open Container_common_intf
 module type I_poly_array = sig
   include I_poly
 
-  val length: 'a t -> uint
+  val length: 'a t -> usize
   (** Container length. *)
 end
 
@@ -38,7 +38,7 @@ end
 module type I_mono_array = sig
   include I_mono
 
-  val length: t -> uint
+  val length: t -> usize
   (** Container length. *)
 end
 

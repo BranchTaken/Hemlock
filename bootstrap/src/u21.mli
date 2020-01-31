@@ -1,17 +1,17 @@
 (** 21-bit unsigned integer. *)
 
-open Rudiments_uint
+open Rudiments_int
 
 type t
 include Intnb_intf.S_u with type t := t
 
-val to_int: t -> int
+val to_isize: t -> isize
 (** Convert to full-width signed integer. *)
 
-val of_int: int -> t
+val of_isize: isize -> t
 (** Initialize from full-width signed integer, with possible loss. *)
 
-val of_int_hlt: int -> t
+val of_isize_hlt: isize -> t
 (** Initialize from full-width signed integer, or halt if conversion would be
     lossy. *)
 
@@ -19,13 +19,13 @@ val kv: int -> t
 (** Create constant value.  This is a stopgap solution for the lack of
     bitwidth-specific literals. *)
 
-val to_uint: t -> uint
+val to_usize: t -> usize
 (** Convert to full-width unsigned integer. *)
 
-val of_uint: uint -> t
+val of_usize: usize -> t
 (** Initialize from full-width unsigned integer, with possible loss. *)
 
-val of_uint_hlt: uint -> t
+val of_usize_hlt: usize -> t
 (** Initialize from full-width unsigned integer, or halt if conversion would be
     lossy. *)
 

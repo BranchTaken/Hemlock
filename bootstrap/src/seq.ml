@@ -1,4 +1,3 @@
-open Rudiments
 open Seq_intf
 
 module Make_def (T : I_mono_def) : S_mono_def with type t := T.t
@@ -10,7 +9,7 @@ struct
 
   let next_opt t =
     match length t with
-    | len when len = (kv 0) -> None
+    | 0 -> None
     | _ -> Some (next t)
 end
 

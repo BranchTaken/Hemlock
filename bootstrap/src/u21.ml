@@ -1,88 +1,82 @@
 (* Partial Rudiments. *)
-module Uint = U63
-module Int = I63
-open Rudiments_uint
+module Usize = U63
+module Isize = I63
+open Rudiments_int
 open Rudiments_functions
 
 module T = struct
-  type t = uint
-  let num_bits = (Uint.kv 21)
+  type t = usize
+  let num_bits = 21
 end
 include T
 include Intnb.Make_u(T)
 
-let to_int t =
-  Uint.to_int t
+let to_isize t =
+  Usize.to_isize t
 
-let of_int x =
+let of_isize x =
   narrow_of_signed x
 
-let of_int_hlt x =
-  let t = of_int x in
-  let x' = to_int t in
-  match Int.(x' = x) with
+let of_isize_hlt x =
+  let t = of_isize x in
+  let x' = to_isize t in
+  match Isize.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 
-let pp ppf t =
-  Format.fprintf ppf "%uu21" (to_int t)
-
-let pp_x ppf t =
-  Format.fprintf ppf "0x%06xu21" (to_int t)
-
 let kv x =
-  of_int x
-
-let to_uint t =
-  t
-
-let of_uint x =
   narrow_of_unsigned x
 
-let of_uint_hlt x =
-  let t = of_uint x in
-  let x' = to_uint t in
-  match Uint.(x' = x) with
+let to_usize t =
+  t
+
+let of_usize x =
+  narrow_of_unsigned x
+
+let of_usize_hlt x =
+  let t = of_usize x in
+  let x' = to_usize t in
+  match Usize.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 
 let of_char c =
-  of_int (Stdlib.Char.code c)
+  Stdlib.Char.code c
 
-let nul = (kv 0x00)
-let soh = (kv 0x01)
-let stx = (kv 0x02)
-let etx = (kv 0x03)
-let eot = (kv 0x04)
-let enq = (kv 0x05)
-let ack = (kv 0x06)
-let bel = (kv 0x07)
+let nul = 0x00
+let soh = 0x01
+let stx = 0x02
+let etx = 0x03
+let eot = 0x04
+let enq = 0x05
+let ack = 0x06
+let bel = 0x07
 let bs = of_char '\b'
 let ht = of_char '\t'
 let lf = of_char '\n'
 let nl = of_char '\n'
-let vt = (kv 0x0b)
-let ff = (kv 0x0c)
+let vt = 0x0b
+let ff = 0x0c
 let cr = of_char '\r'
-let so = (kv 0x0e)
-let si = (kv 0x0f)
-let dle = (kv 0x10)
-let dc1 = (kv 0x11)
-let dc2 = (kv 0x12)
-let dc3 = (kv 0x13)
-let dc4 = (kv 0x14)
-let nak = (kv 0x15)
-let syn = (kv 0x16)
-let etb = (kv 0x17)
-let can = (kv 0x18)
-let em = (kv 0x19)
-let sub = (kv 0x1a)
-let esc = (kv 0x1b)
-let fs = (kv 0x1c)
-let gs = (kv 0x1d)
-let rs = (kv 0x1e)
-let us = (kv 0x1f)
-let del = (kv 0x7f)
+let so = 0x0e
+let si = 0x0f
+let dle = 0x10
+let dc1 = 0x11
+let dc2 = 0x12
+let dc3 = 0x13
+let dc4 = 0x14
+let nak = 0x15
+let syn = 0x16
+let etb = 0x17
+let can = 0x18
+let em = 0x19
+let sub = 0x1a
+let esc = 0x1b
+let fs = 0x1c
+let gs = 0x1d
+let rs = 0x1e
+let us = 0x1f
+let del = 0x7f
 
 (*******************************************************************************
  * Begin tests.
@@ -111,7 +105,7 @@ let%expect_test "pp,pp_x" =
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" Uint.pp num_bits;
+  printf "num_bits=%a\n" Usize.pp num_bits;
   printf "min_value=%a\n" pp_x min_value;
   printf "max_value=%a\n" pp_x max_value;
 
@@ -201,14 +195,15 @@ let%expect_test "rel" =
 
 let%expect_test "wraparound" =
   let open Format in
-  printf "max_value + 1 -> %a\n" pp_x (max_value + (kv 1));
-  printf "min_value - 1 -> %a\n" pp_x (min_value - (kv 1));
-  printf "max_value * 15 -> %a\n" pp_x (max_value * (kv 15));
+  let fifteen = (kv 15) in
+  printf "max_value + %a -> %a\n" pp one pp_x (max_value + one);
+  printf "min_value - %a -> %a\n" pp one pp_x (min_value - one);
+  printf "max_value * %a -> %a\n" pp fifteen pp_x (max_value * fifteen);
 
   [%expect{|
-    max_value + 1 -> 0x000000u21
-    min_value - 1 -> 0x1fffffu21
-    max_value * 15 -> 0x1ffff1u21
+    max_value + 1u21 -> 0x000000u21
+    min_value - 1u21 -> 0x1fffffu21
+    max_value * 15u21 -> 0x1ffff1u21
     |}]
 
 let%expect_test "conversion" =
@@ -216,34 +211,36 @@ let%expect_test "conversion" =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        let t = of_int x in
-        let i = to_int t in
-        let t' = of_int i in
-        printf "of_int 0x%x -> to_int %a -> of_int 0x%x -> %a\n"
-          x pp_x t i pp_x t';
-        let t = of_uint (Uint.of_int x) in
-        let u = to_uint t in
-        let t' = of_uint u in
-        printf "of_uint 0x%x -> to_uint %a -> of_uint %a -> %a\n"
-          x pp_x t Uint.pp_x u pp_x t';
+        let i = isize_of_int x in
+        let t = of_isize i in
+        let i' = to_isize t in
+        let t' = of_isize i' in
+        printf "of_isize %a -> to_isize %a -> of_isize %a -> %a\n"
+          Isize.pp_x i pp_x t Isize.pp_x i' pp_x t';
+        let t = of_usize (Usize.of_isize i) in
+        let u = to_usize t in
+        let t' = of_usize u in
+        printf "of_usize %a -> to_usize %a -> of_usize %a -> %a\n"
+          Usize.pp_x x pp_x t Usize.pp_x u pp_x t';
         fn xs'
       end
   in
-  fn [-1; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001; max_int];
+  fn [Usize.max_value; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001;
+      Usize.of_isize Isize.max_value];
 
   [%expect{|
-    of_int 0x7fffffffffffffff -> to_int 0x1fffffu21 -> of_int 0x1fffff -> 0x1fffffu21
-    of_uint 0x7fffffffffffffff -> to_uint 0x1fffffu21 -> of_uint 0x00000000001fffff -> 0x1fffffu21
-    of_int 0x0 -> to_int 0x000000u21 -> of_int 0x0 -> 0x000000u21
-    of_uint 0x0 -> to_uint 0x000000u21 -> of_uint 0x0000000000000000 -> 0x000000u21
-    of_int 0x2a -> to_int 0x00002au21 -> of_int 0x2a -> 0x00002au21
-    of_uint 0x2a -> to_uint 0x00002au21 -> of_uint 0x000000000000002a -> 0x00002au21
-    of_int 0x1fffff -> to_int 0x1fffffu21 -> of_int 0x1fffff -> 0x1fffffu21
-    of_uint 0x1fffff -> to_uint 0x1fffffu21 -> of_uint 0x00000000001fffff -> 0x1fffffu21
-    of_int 0x200000 -> to_int 0x000000u21 -> of_int 0x0 -> 0x000000u21
-    of_uint 0x200000 -> to_uint 0x000000u21 -> of_uint 0x0000000000000000 -> 0x000000u21
-    of_int 0x200001 -> to_int 0x000001u21 -> of_int 0x1 -> 0x000001u21
-    of_uint 0x200001 -> to_uint 0x000001u21 -> of_uint 0x0000000000000001 -> 0x000001u21
-    of_int 0x3fffffffffffffff -> to_int 0x1fffffu21 -> of_int 0x1fffff -> 0x1fffffu21
-    of_uint 0x3fffffffffffffff -> to_uint 0x1fffffu21 -> of_uint 0x00000000001fffff -> 0x1fffffu21
+    of_isize 0x7fffffffffffffffi -> to_isize 0x1fffffu21 -> of_isize 0x00000000001fffffi -> 0x1fffffu21
+    of_usize 0x7fffffffffffffff -> to_usize 0x1fffffu21 -> of_usize 0x00000000001fffff -> 0x1fffffu21
+    of_isize 0x0000000000000000i -> to_isize 0x000000u21 -> of_isize 0x0000000000000000i -> 0x000000u21
+    of_usize 0x0000000000000000 -> to_usize 0x000000u21 -> of_usize 0x0000000000000000 -> 0x000000u21
+    of_isize 0x000000000000002ai -> to_isize 0x00002au21 -> of_isize 0x000000000000002ai -> 0x00002au21
+    of_usize 0x000000000000002a -> to_usize 0x00002au21 -> of_usize 0x000000000000002a -> 0x00002au21
+    of_isize 0x00000000001fffffi -> to_isize 0x1fffffu21 -> of_isize 0x00000000001fffffi -> 0x1fffffu21
+    of_usize 0x00000000001fffff -> to_usize 0x1fffffu21 -> of_usize 0x00000000001fffff -> 0x1fffffu21
+    of_isize 0x0000000000200000i -> to_isize 0x000000u21 -> of_isize 0x0000000000000000i -> 0x000000u21
+    of_usize 0x0000000000200000 -> to_usize 0x000000u21 -> of_usize 0x0000000000000000 -> 0x000000u21
+    of_isize 0x0000000000200001i -> to_isize 0x000001u21 -> of_isize 0x0000000000000001i -> 0x000001u21
+    of_usize 0x0000000000200001 -> to_usize 0x000001u21 -> of_usize 0x0000000000000001 -> 0x000001u21
+    of_isize 0x3fffffffffffffffi -> to_isize 0x1fffffu21 -> of_isize 0x00000000001fffffi -> 0x1fffffu21
+    of_usize 0x3fffffffffffffff -> to_usize 0x1fffffu21 -> of_usize 0x00000000001fffff -> 0x1fffffu21
     |}]

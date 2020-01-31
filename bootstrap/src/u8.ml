@@ -1,65 +1,59 @@
 (* Partial Rudiments. *)
-module Int = I63
-module Uint = U63
+module Isize = I63
+module Usize = U63
 module Codepoint = U21
 type codepoint = Codepoint.t
-open Rudiments_uint
+open Rudiments_int
 open Rudiments_functions
 
 module T = struct
-  type t = uint
-  let num_bits = (Uint.kv 8)
+  type t = usize
+  let num_bits = 8
 end
 include T
 include Intnb.Make_u(T)
 
-let to_int t =
-  Uint.to_int t
+let to_isize t =
+  Usize.to_isize t
 
-let of_int x =
+let of_isize x =
   narrow_of_signed x
 
-let pp ppf t =
-  Format.fprintf ppf "%uu8" (to_int t)
-
-let pp_x ppf t =
-  Format.fprintf ppf "0x%02xu8" (to_int t)
-
-let of_int_hlt x =
-  let t = of_int x in
-  let x' = to_int t in
-  match Int.(x' = x) with
+let of_isize_hlt x =
+  let t = of_isize x in
+  let x' = to_isize t in
+  match Isize.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 
 let kv x =
-  of_int x
-
-let to_uint t =
-  t
-
-let of_uint x =
   narrow_of_unsigned x
 
-let of_uint_hlt x =
-  let t = of_uint x in
-  let x' = to_uint t in
-  match Uint.(x' = x) with
+let to_usize t =
+  t
+
+let of_usize x =
+  narrow_of_unsigned x
+
+let of_usize_hlt x =
+  let t = of_usize x in
+  let x' = to_usize t in
+  match Usize.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 
 let of_char c =
-  of_int (Stdlib.Char.code c)
+  Stdlib.Char.code c
 
 let to_codepoint t =
-  Codepoint.of_uint (to_uint t)
+  Codepoint.of_usize (to_usize t)
 
 let of_codepoint x =
-  narrow_of_unsigned (Codepoint.to_uint x)
+  narrow_of_unsigned (Codepoint.to_usize x)
 
 let of_codepoint_hlt x =
   let t = of_codepoint x in
-  let x' = to_codepoint (to_uint t) in
+  let x' = to_codepoint (to_usize t) in
   match Codepoint.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
@@ -91,7 +85,7 @@ let%expect_test "pp,pp_x" =
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" Uint.pp num_bits;
+  printf "num_bits=%a\n" Usize.pp num_bits;
   printf "min_value=%a\n" pp_x min_value;
   printf "max_value=%a\n" pp_x max_value;
 
@@ -181,14 +175,15 @@ let%expect_test "rel" =
 
 let%expect_test "wraparound" =
   let open Format in
-  printf "max_value + 1 -> %a\n" pp_x (max_value + (kv 1));
-  printf "min_value - 1 -> %a\n" pp_x (min_value - (kv 1));
-  printf "max_value * 15 -> %a\n" pp_x (max_value * (kv 15));
+  let fifteen = (kv 15) in
+  printf "max_value + %a -> %a\n" pp one pp_x (max_value + one);
+  printf "min_value - %a -> %a\n" pp one pp_x (min_value - one);
+  printf "max_value * %a -> %a\n" pp fifteen pp_x (max_value * fifteen);
 
   [%expect{|
-    max_value + 1 -> 0x00u8
-    min_value - 1 -> 0xffu8
-    max_value * 15 -> 0xf1u8
+    max_value + 1u8 -> 0x00u8
+    min_value - 1u8 -> 0xffu8
+    max_value * 15u8 -> 0xf1u8
     |}]
 
 let%expect_test "conversion" =
@@ -196,56 +191,58 @@ let%expect_test "conversion" =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        let t = of_int x in
-        let i = to_int t in
-        let t' = of_int i in
-        printf "of_int 0x%x -> to_int %a -> of_int 0x%x -> %a\n"
-          x pp_x t i pp_x t';
-        let t = of_uint (Uint.kv x) in
-        let u = to_uint t in
-        let t' = of_uint u in
-        printf "of_uint 0x%x -> to_uint %a -> of_uint %a -> %a\n"
-          x pp_x t Uint.pp_x u pp_x t';
+        let i = isize_of_int x in
+        let t = of_isize i in
+        let i' = to_isize t in
+        let t' = of_isize i' in
+        printf "of_isize %a -> to_isize %a -> of_isize %a -> %a\n"
+          Isize.pp_x i pp_x t Isize.pp i pp_x t';
+        let t = of_usize (Usize.of_isize i) in
+        let u = to_usize t in
+        let t' = of_usize u in
+        printf "of_usize %a -> to_usize %a -> of_usize %a -> %a\n"
+          Isize.pp_x i pp_x t Usize.pp_x u pp_x t';
 
-        let c = U21.of_uint (Uint.of_int x) in
+        let c = U21.of_usize (Usize.of_isize i) in
         let t = of_codepoint c in
         let c' = to_codepoint t in
         let t' = of_codepoint c' in
-        printf ("Codepoint.of_uint 0x%x -> of_codepoint %a -> " ^^
-          "to_codepoint %a -> of_codepoint %a -> %a\n") x
+        printf ("Codepoint.of_usize %a -> of_codepoint %a -> " ^^
+          "to_codepoint %a -> of_codepoint %a -> %a\n") Usize.pp_x x
           Codepoint.pp_x c pp_x t Codepoint.pp_x c' pp_x t';
 
         fn xs'
       end
   in
-  fn [-1; 0; 42; 127; 128; 255; 256; 257; max_int];
+  fn [Usize.max_value; 0; 42; 127; 128; 255; 256; 257;
+      Usize.of_isize Isize.max_value];
 
   [%expect{|
-    of_int 0x7fffffffffffffff -> to_int 0xffu8 -> of_int 0xff -> 0xffu8
-    of_uint 0x7fffffffffffffff -> to_uint 0xffu8 -> of_uint 0x00000000000000ff -> 0xffu8
-    Codepoint.of_uint 0x7fffffffffffffff -> of_codepoint 0x1fffffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
-    of_int 0x0 -> to_int 0x00u8 -> of_int 0x0 -> 0x00u8
-    of_uint 0x0 -> to_uint 0x00u8 -> of_uint 0x0000000000000000 -> 0x00u8
-    Codepoint.of_uint 0x0 -> of_codepoint 0x000000u21 -> to_codepoint 0x00u8 -> of_codepoint 0x000000u21 -> 0x00u8
-    of_int 0x2a -> to_int 0x2au8 -> of_int 0x2a -> 0x2au8
-    of_uint 0x2a -> to_uint 0x2au8 -> of_uint 0x000000000000002a -> 0x2au8
-    Codepoint.of_uint 0x2a -> of_codepoint 0x00002au21 -> to_codepoint 0x2au8 -> of_codepoint 0x00002au21 -> 0x2au8
-    of_int 0x7f -> to_int 0x7fu8 -> of_int 0x7f -> 0x7fu8
-    of_uint 0x7f -> to_uint 0x7fu8 -> of_uint 0x000000000000007f -> 0x7fu8
-    Codepoint.of_uint 0x7f -> of_codepoint 0x00007fu21 -> to_codepoint 0x7fu8 -> of_codepoint 0x00007fu21 -> 0x7fu8
-    of_int 0x80 -> to_int 0x80u8 -> of_int 0x80 -> 0x80u8
-    of_uint 0x80 -> to_uint 0x80u8 -> of_uint 0x0000000000000080 -> 0x80u8
-    Codepoint.of_uint 0x80 -> of_codepoint 0x000080u21 -> to_codepoint 0x80u8 -> of_codepoint 0x000080u21 -> 0x80u8
-    of_int 0xff -> to_int 0xffu8 -> of_int 0xff -> 0xffu8
-    of_uint 0xff -> to_uint 0xffu8 -> of_uint 0x00000000000000ff -> 0xffu8
-    Codepoint.of_uint 0xff -> of_codepoint 0x0000ffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
-    of_int 0x100 -> to_int 0x00u8 -> of_int 0x0 -> 0x00u8
-    of_uint 0x100 -> to_uint 0x00u8 -> of_uint 0x0000000000000000 -> 0x00u8
-    Codepoint.of_uint 0x100 -> of_codepoint 0x000100u21 -> to_codepoint 0x00u8 -> of_codepoint 0x000000u21 -> 0x00u8
-    of_int 0x101 -> to_int 0x01u8 -> of_int 0x1 -> 0x01u8
-    of_uint 0x101 -> to_uint 0x01u8 -> of_uint 0x0000000000000001 -> 0x01u8
-    Codepoint.of_uint 0x101 -> of_codepoint 0x000101u21 -> to_codepoint 0x01u8 -> of_codepoint 0x000001u21 -> 0x01u8
-    of_int 0x3fffffffffffffff -> to_int 0xffu8 -> of_int 0xff -> 0xffu8
-    of_uint 0x3fffffffffffffff -> to_uint 0xffu8 -> of_uint 0x00000000000000ff -> 0xffu8
-    Codepoint.of_uint 0x3fffffffffffffff -> of_codepoint 0x1fffffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
+    of_isize 0x7fffffffffffffffi -> to_isize 0xffu8 -> of_isize -1i -> 0xffu8
+    of_usize 0x7fffffffffffffffi -> to_usize 0xffu8 -> of_usize 0x00000000000000ff -> 0xffu8
+    Codepoint.of_usize 0x7fffffffffffffff -> of_codepoint 0x1fffffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
+    of_isize 0x0000000000000000i -> to_isize 0x00u8 -> of_isize 0i -> 0x00u8
+    of_usize 0x0000000000000000i -> to_usize 0x00u8 -> of_usize 0x0000000000000000 -> 0x00u8
+    Codepoint.of_usize 0x0000000000000000 -> of_codepoint 0x000000u21 -> to_codepoint 0x00u8 -> of_codepoint 0x000000u21 -> 0x00u8
+    of_isize 0x000000000000002ai -> to_isize 0x2au8 -> of_isize 42i -> 0x2au8
+    of_usize 0x000000000000002ai -> to_usize 0x2au8 -> of_usize 0x000000000000002a -> 0x2au8
+    Codepoint.of_usize 0x000000000000002a -> of_codepoint 0x00002au21 -> to_codepoint 0x2au8 -> of_codepoint 0x00002au21 -> 0x2au8
+    of_isize 0x000000000000007fi -> to_isize 0x7fu8 -> of_isize 127i -> 0x7fu8
+    of_usize 0x000000000000007fi -> to_usize 0x7fu8 -> of_usize 0x000000000000007f -> 0x7fu8
+    Codepoint.of_usize 0x000000000000007f -> of_codepoint 0x00007fu21 -> to_codepoint 0x7fu8 -> of_codepoint 0x00007fu21 -> 0x7fu8
+    of_isize 0x0000000000000080i -> to_isize 0x80u8 -> of_isize 128i -> 0x80u8
+    of_usize 0x0000000000000080i -> to_usize 0x80u8 -> of_usize 0x0000000000000080 -> 0x80u8
+    Codepoint.of_usize 0x0000000000000080 -> of_codepoint 0x000080u21 -> to_codepoint 0x80u8 -> of_codepoint 0x000080u21 -> 0x80u8
+    of_isize 0x00000000000000ffi -> to_isize 0xffu8 -> of_isize 255i -> 0xffu8
+    of_usize 0x00000000000000ffi -> to_usize 0xffu8 -> of_usize 0x00000000000000ff -> 0xffu8
+    Codepoint.of_usize 0x00000000000000ff -> of_codepoint 0x0000ffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
+    of_isize 0x0000000000000100i -> to_isize 0x00u8 -> of_isize 256i -> 0x00u8
+    of_usize 0x0000000000000100i -> to_usize 0x00u8 -> of_usize 0x0000000000000000 -> 0x00u8
+    Codepoint.of_usize 0x0000000000000100 -> of_codepoint 0x000100u21 -> to_codepoint 0x00u8 -> of_codepoint 0x000000u21 -> 0x00u8
+    of_isize 0x0000000000000101i -> to_isize 0x01u8 -> of_isize 257i -> 0x01u8
+    of_usize 0x0000000000000101i -> to_usize 0x01u8 -> of_usize 0x0000000000000001 -> 0x01u8
+    Codepoint.of_usize 0x0000000000000101 -> of_codepoint 0x000101u21 -> to_codepoint 0x01u8 -> of_codepoint 0x000001u21 -> 0x01u8
+    of_isize 0x3fffffffffffffffi -> to_isize 0xffu8 -> of_isize 4611686018427387903i -> 0xffu8
+    of_usize 0x3fffffffffffffffi -> to_usize 0xffu8 -> of_usize 0x00000000000000ff -> 0xffu8
+    Codepoint.of_usize 0x3fffffffffffffff -> of_codepoint 0x1fffffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
     |}]

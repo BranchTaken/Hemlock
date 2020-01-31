@@ -8,7 +8,7 @@ module Array_seq = struct
     type t = {
       string: string;
       cursor: String.Cursor.t;
-      bindex: uint;
+      bindex: usize;
       rem_bytes: byte list;
     }
     type elm = byte
@@ -16,8 +16,8 @@ module Array_seq = struct
     let init t =
       {
           string=t;
-          cursor=(String.Cursor.at t ~bindex:(kv 0));
-          bindex=(kv 0);
+          cursor=(String.Cursor.at t ~bindex:0);
+          bindex=0;
           rem_bytes=[];
       }
 
@@ -25,11 +25,11 @@ module Array_seq = struct
       (String.blength t.string) - t.bindex
 
     let next t =
-      assert (length t > (kv 0));
+      assert (length t > 0);
       match t.rem_bytes with
       | b :: rem_bytes' -> begin
           let t' = {t with
-                    bindex=(Uint.succ t.bindex);
+                    bindex=(Usize.succ t.bindex);
                     rem_bytes=rem_bytes'
                    } in
           b, t'
@@ -43,7 +43,7 @@ module Array_seq = struct
           in
           let t' = {t with
                     cursor=(String.Cursor.succ t.cursor);
-                    bindex=(Uint.succ t.bindex);
+                    bindex=(Usize.succ t.bindex);
                     rem_bytes} in
           b, t'
         end
@@ -59,21 +59,21 @@ module Utf8_seq = struct
   module T = struct
     type t = {
       bytes: byte array;
-      bindex: uint;
+      bindex: usize;
     }
 
     let init t =
-      {bytes=t; bindex=kv 0}
+      {bytes=t; bindex=0}
 
     let length t =
       (Array.length t.bytes) - t.bindex
 
     let next t =
-      match (length t) = (kv 0) with
+      match (length t) = 0 with
       | true -> None
       | false -> begin
           let b = Array.get t.bytes t.bindex in
-          let t' = {t with bindex=(Uint.succ t.bindex)} in
+          let t' = {t with bindex=(Usize.succ t.bindex)} in
           Some (b, t')
         end
   end
