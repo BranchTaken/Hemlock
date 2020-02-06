@@ -3,7 +3,9 @@ open Rudiments
 module T = struct
   type t = string
 
-  let hash_fold = Hash.hash_fold
+  let hash_fold t state =
+    state
+    |> Hash.State.hash_fold_string t
 
   let cmp t0 t1 =
     let rel = Isize.of_int (compare t0 t1) in
@@ -85,18 +87,23 @@ module Cursor = struct
       bindex: usize;
     }
 
+    let hash_fold t state =
+      state
+      |> hash_fold t.string
+      |> Usize.hash_fold t.bindex
+
     let cmp t0 t1 =
       (* == is excessively vague in OCaml. *)
       assert ((t0.string == t1.string) || (t0.string = t1.string));
       Usize.cmp t0.bindex t1.bindex
+
+    let pp ppf t =
+      Format.fprintf ppf "@[<h>{string=%a,@ bindex=%a}@]"
+        pp t.string
+        Usize.pp t.bindex
   end
   include T
-  include Cmpable.Make(T)
-
-  let pp ppf t =
-    Format.fprintf ppf "@[<h>{string=%a,@ bindex=%a}@]"
-      pp t.string
-      Usize.pp t.bindex
+  include Identifiable.Make(T)
 
   let hd string =
     {string; bindex=0}
@@ -251,16 +258,21 @@ module Cursori = struct
       cindex: usize;
     }
 
+    let hash_fold t state =
+      state
+      |> Cursor.hash_fold t.cursor
+      |> Usize.hash_fold t.cindex
+
     let cmp t0 t1 =
       Cursor.cmp t0.cursor t1.cursor
+
+    let pp ppf t =
+      Format.fprintf ppf "@[<h>{cursor=%a,@ cindex=%a}@]"
+        Cursor.pp t.cursor
+        Usize.pp t.cindex
   end
   include T
-  include Cmpable.Make(T)
-
-  let pp ppf t =
-    Format.fprintf ppf "@[<h>{cursor=%a,@ cindex=%a}@]"
-      Cursor.pp t.cursor
-      Usize.pp t.cindex
+  include Identifiable.Make(T)
 
   let hd string =
     {cursor=(Cursor.hd string); cindex=0}
@@ -550,6 +562,11 @@ module Slice = struct
     type outer = t
     type t = slice
 
+    let hash_fold t state =
+      state
+      |> Cursor.hash_fold t.base
+      |> Cursor.hash_fold t.past
+
     let cmp t0 t1 =
       match Cursor.cmp t0.base t1.base with
       | Lt -> Cmp.Lt
@@ -562,9 +579,14 @@ module Slice = struct
           | Gt -> Cmp.Lt
         end
       | Gt -> Cmp.Gt
+
+    let pp ppf t =
+      Format.fprintf ppf "@[<h>{base=%a,@ past=%a}@]"
+        Cursor.pp t.base
+        Cursor.pp t.past
   end
   include T
-  include Cmpable.Make(T)
+  include Identifiable.Make(T)
 
   let of_cursors ~base ~past =
     slice_of_cursors ~base ~past
@@ -995,11 +1017,6 @@ module Slice = struct
 
   let escaped t =
     concat_map t ~f:(fun cp -> of_string Utf8.(escape (of_codepoint cp)))
-
-  let pp ppf t =
-    Format.fprintf ppf "@[<h>{base=%a,@ past=%a}@]"
-      Cursor.pp t.base
-      Cursor.pp t.past
 
   module String_rev = struct
     module T = struct
@@ -1837,7 +1854,7 @@ let%expect_test "hash_fold" =
   let open Format in
 
   let s = "hello" in
-  let h = Hash.(t_of_state (hash_fold (Hash.state_of_usize 0) s)) in
+  let h = Hash.t_of_state (hash_fold s Hash.State.empty) in
   printf "hash_fold %a=%a\n" pp s Hash.pp h;
 
   [%expect{|

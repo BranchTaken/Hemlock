@@ -14,8 +14,9 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
   module U = struct
     type t = int
 
-    let hash_fold state t =
-      Hash.hash_fold state (Hash.hash t)
+    let hash_fold t state =
+      state
+      |> Hash.State.hash_fold_usize t
 
     let narrow t =
       let nlb = Sys.int_size - T.num_bits in
@@ -282,8 +283,9 @@ module Make_i (T : I) : S_i with type t := isize = struct
     end
     type t = isize
 
-    let hash_fold state t =
-      V.hash_fold state (usize_of_isize t)
+    let hash_fold t state =
+      state
+      |> V.hash_fold (usize_of_isize t)
 
     let cmp t0 t1 =
       V.cmp (usize_of_isize t0) (usize_of_isize t1)

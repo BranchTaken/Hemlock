@@ -3,7 +3,14 @@ open Rudiments
 module T = struct
   type t = bool
 
-  let hash_fold = Hash.hash_fold
+  let to_usize t =
+    match t with
+    | false -> 0
+    | true -> 1
+
+  let hash_fold t state =
+    state
+    |> Hash.State.hash_fold_usize (to_usize t)
 
   let cmp t0 t1 =
     match t0, t1 with
@@ -37,11 +44,6 @@ let of_usize x =
   match x with
   | 0 -> false
   | _ -> true
-
-let to_usize t =
-  match t with
-  | false -> 0
-  | true -> 1
 
 let not t =
   match t with

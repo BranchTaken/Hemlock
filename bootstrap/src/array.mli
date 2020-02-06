@@ -16,6 +16,12 @@ module Cursor : sig
                               and type 'a t := 'a t
 end
 
+val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
+    -> Hash.State.t
+(** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
+    and returns the resulting state.  Array elements are sequentially
+    hash-folded into the resulting state via [hash_fold_a]. *)
+
 val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
 (** Compare two arrays given the element comparison function.  The array lengths
     may differ. *)
