@@ -3,8 +3,8 @@
 open Hashable_intf
 
 type 'a t = {
-  hash_fold: Hash.state -> 'a -> Hash.state;
-  (** [hash_fold state a] incorporates the hash of [a] into [state] and returns
+  hash_fold: 'a -> Hash.State.t -> Hash.State.t;
+  (** [hash_fold a state] incorporates the hash of [a] into [state] and returns
       the resulting state. *)
 
   cmp: 'a -> 'a -> Cmp.t;

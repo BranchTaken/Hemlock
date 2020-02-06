@@ -3,7 +3,10 @@ open Rudiments
 module T = struct
   type t = unit
 
-  let hash_fold = Hash.hash_fold
+  let hash_fold _t state =
+    (* The hash of unit is constant, but it still needs to be folded. *)
+    state
+    |> Hash.State.hash_fold_usize 0
 
   let cmp _ _ =
     Cmp.Eq

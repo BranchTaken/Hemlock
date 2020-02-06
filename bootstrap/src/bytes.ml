@@ -3,6 +3,10 @@ open Rudiments
 let pp ppf bytes =
   Array.pp Byte.pp_x ppf bytes
 
+let hash_fold bytes state =
+  state
+  |> Array.hash_fold Byte.hash_fold bytes
+
 let of_codepoint cp =
   Array.of_list (Utf8.to_bytes (Utf8.of_codepoint cp))
 
@@ -117,6 +121,35 @@ let to_string_hlt bytes =
 (*******************************************************************************
  * Begin tests.
  *)
+
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[<h>";
+  let rec fn strs = begin
+    match strs with
+    | [] -> ()
+    | s :: strs' -> begin
+        let bytes = of_string s in
+        printf "hash_fold %a (%a) -> %a\n"
+          pp bytes
+          String.pp s
+          Hash.pp (Hash.t_of_state
+            (hash_fold bytes Hash.State.empty));
+        fn strs'
+      end
+  end in
+  let strs = [""; "hello"; "<"; "«"; "‡"; "𐆗"] in
+  fn strs;
+  printf "@]";
+
+  [%expect{|
+    hash_fold [||] ("") -> 0x0000000000000000
+    hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0x00000000162388c9
+    hash_fold [|0x3cu8|] ("<") -> 0x000000001488bab4
+    hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0x000000003dab6a53
+    hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0x000000002ca36e99
+    hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x00000000238f8ef8
+    |}]
 
 let%expect_test "of_codepoint" =
   let open Format in

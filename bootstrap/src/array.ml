@@ -85,6 +85,9 @@ end
 include T
 include Container_common.Make_poly_fold(T)
 
+let hash_fold hash_fold_a t state =
+  fold t ~init:state ~f:(fun state elm -> state |> hash_fold_a elm)
+
 module Seq = struct
   type 'a outer = 'a t
   module type S_mono = sig
@@ -1079,6 +1082,36 @@ let%expect_test "cursor" =
     index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
     index=2, container Eq arr, hd Lt cursor, cursor Lt tl, lget=1, rget=2
     index=3, container Eq arr, hd Lt cursor, cursor Eq tl, lget=2, rget=_
+    |}]
+
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[<h>";
+  let rec fn arrs = begin
+    match arrs with
+    | [] -> ()
+    | arr :: arrs' -> begin
+        printf "hash_fold %a -> %a\n"
+          (pp Usize.pp) arr
+          Hash.pp (Hash.t_of_state
+            (hash_fold Usize.hash_fold arr Hash.State.empty));
+        fn arrs'
+      end
+  end in
+  let arrs = [
+    [||];
+    [|0|];
+    [|0; 0|];
+    [|0; 1|]
+  ] in
+  fn arrs;
+  printf "@]";
+
+  [%expect{|
+    hash_fold [||] -> 0x0000000000000000
+    hash_fold [|0|] -> 0x0000000007be548a
+    hash_fold [|0; 0|] -> 0x0000000012cbe18f
+    hash_fold [|0; 1|] -> 0x0000000005e8da31
     |}]
 
 let%expect_test "cmp" =

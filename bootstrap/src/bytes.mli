@@ -7,6 +7,10 @@ open Rudiments
 
 include Formattable_intf.S_mono with type t := byte array
 
+val hash_fold: byte array -> Hash.State.t -> Hash.State.t
+(** [hash_fold bytes] incorporates the hash of [bytes] into [state] and
+    returns the resulting state. *)
+
 val of_codepoint: codepoint -> byte array
 (** [of_codepoint codepoint] creates an array of bytes corresponding to the
     UTF-8 encoding of [codepoint]. *)

@@ -3,7 +3,9 @@ open Rudiments
 module T = struct
   type t = float
 
-  let hash_fold = Hash.hash_fold
+  let hash_fold t state =
+    state
+    |> Hash.State.hash_fold_float t
 
   let cmp t0 t1 =
     let rel = Isize.of_int (compare t0 t1) in

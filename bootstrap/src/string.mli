@@ -27,7 +27,7 @@ module Cursor : sig
   type outer = t
 
   type t
-  include Formattable_intf.S_mono with type t := t
+  include Identifiable_intf.S with type t := t
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
@@ -58,10 +58,11 @@ module Cursori : sig
   type outer = t
 
   type t
-  include Formattable_intf.S_mono with type t := t
+  include Identifiable_intf.S with type t := t
   include Cursor_intf.S_mono with type container := outer
                               and type elm := codepoint
                               and type t := t
+
   val index: t -> usize [@@ocaml.deprecated "Use [bc]index instead"]
   (** @deprecated Use {!bindex} or {!cindex} instead.
       @raise halt Not implemented. *)
@@ -83,8 +84,7 @@ type slice
 module Slice : sig
   type outer = t
   type t = slice
-  include Formattable_intf.S_mono with type t := t
-  include Cmpable_intf.S_mono with type t := t
+  include Identifiable_intf.S with type t := t
 
   val of_cursors: base:Cursor.t -> past:Cursor.t -> t
   (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)].
