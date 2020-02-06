@@ -44,8 +44,8 @@ end
 module Make_i_poly_array (T : I_mono_array) : I_poly_array
   with type 'a t = T.t
    and type 'a elm = T.elm = struct
+  include T
   include Container_common.Make_i_poly(T)
-  let length = T.length
 end
 
 module Make_mono_array (T : I_mono_array) : S_mono_array
