@@ -5,6 +5,7 @@ open Rudiments
 type t = float
 
 include Identifiable_intf.S with type t := t
+include Stringable_intf.S with type t := t
 
 (** Rounding direction. *)
 module Dir : sig

@@ -19,6 +19,7 @@ open Rudiments
 type t = string
 
 include Identifiable_intf.S with type t := t
+include Stringable_intf.S with type t := t
 
 (** Cursor that supports O(1) arbitrary access to codepoints, given byte
     index.  The codepoint index is not tracked. *)
