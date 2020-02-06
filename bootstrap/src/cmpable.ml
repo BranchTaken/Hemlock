@@ -1,7 +1,7 @@
 open Cmpable_intf
 
 module Make (T : I_mono) : S_mono with type t := T.t = struct
-  let cmp = T.cmp
+  include T
 
   let ( >= ) t0 t1 =
     match T.cmp t0 t1 with
