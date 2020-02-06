@@ -245,11 +245,11 @@ val foldi2: ''a $t -> ''b $t -> init:''accum
 (** Create an accumulated result for the paired elements of two arrays, calling
     the indexed element folding function in increasing index order. *)
 
-val iter2: ''a $t -> ''b $t -> f:(''a -> ''b -> unit) -> unit
+val iter2: ''a $t -> ''b $t -> f:(''a -> ''b !-> unit) !-> unit
 (** Iterate over the paired elements of two arrays, calling the element visiting
     function in increasing index order. *)
 
-val iteri2: ''a $t -> ''b $t -> f:(usize -> ''a -> ''b -> unit) -> unit
+val iteri2: ''a $t -> ''b $t -> f:(usize -> ''a -> ''b !-> unit) !-> unit
 (** Iterate over the paired elements of two arrays, calling the indexed element
     visiting function in increasing index order. *)
 
