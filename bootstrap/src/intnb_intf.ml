@@ -16,6 +16,7 @@ module type S = sig
   type t
 
   include Identifiable_intf.S with type t := t
+  include Stringable_intf.S with type t := t
   include Cmpable_intf.S_mono_zero with type t := t
   include Floatable_intf.S with type t := t
 

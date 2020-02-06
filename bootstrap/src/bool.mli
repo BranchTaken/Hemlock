@@ -5,6 +5,7 @@ open Rudiments
 type t = bool
 
 include Identifiable_intf.S with type t := t
+include Stringable_intf.S with type t := t
 
 val of_usize: usize -> t
 (** Initialize from unsigned integer. *)
