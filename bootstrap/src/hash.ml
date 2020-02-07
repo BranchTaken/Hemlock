@@ -25,24 +25,20 @@ module State = struct
   let hash_fold_string s t =
     hash_fold s t
 
+  (* On success this function returns an array of entropy bits, where the total
+     number of bits is rounded up frome the number of bits requested to the
+     nearest multiple of 64. *)
+  external entropy_nbits: usize -> Int64.t array
+    = "hemlock_hash_state_entropy_nbits"
+
   let seed =
-    match Sys.getenv_opt "HEMLOCK_SEED" with
+    match Sys.getenv_opt "HEMLOCK_ENTROPY" with
     | None -> begin
-        try begin
-          let ic = Stdlib.open_in_bin "/dev/random" in
-          let buflen = 8 in (* Enough room for a 64-bit integer. *)
-          let buf = Stdlib.Bytes.create buflen in
-          let _ = Stdlib.really_input ic buf 0 buflen in
-          let () = Stdlib.close_in ic in
-          Stdlib.Int64.to_int (Stdlib.Bytes.get_int64_ne buf 0)
-        end with
-        | Stdlib.Sys_error msg -> begin
-            Printf.fprintf stderr "Hash.State.seed error: %s\n" msg;
-            exit 1
-          end
-        | Stdlib.End_of_file -> begin
+        match entropy_nbits Sys.int_size with
+        | [|entropy|] -> Stdlib.Int64.to_int entropy
+        | _ -> begin
             Printf.fprintf stderr
-              "Hash.State.seed error: Reading /dev/random failed\n";
+              "Hash.State.seed error: Entropy acquisition failure\n";
             exit 1
           end
       end

@@ -1,0 +1,6 @@
+(tests
+ (names seed2)
+ (libraries Hemlock)
+ (action
+  (setenv HEMLOCK_ENTROPY "42"
+   (run %{test} -e))))
