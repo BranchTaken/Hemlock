@@ -1,5 +1,8 @@
 open Rudiments
 
+let pp ppf bytes =
+  Array.pp Byte.pp_x ppf bytes
+
 let of_codepoint cp =
   Array.of_list (Utf8.to_bytes (Utf8.of_codepoint cp))
 
@@ -131,7 +134,7 @@ let%expect_test "of_codepoint" =
     let bytes = of_codepoint cp in
     printf "'%s' -> %a -> %a\n"
       (String.of_codepoint cp)
-      (Array.pp Byte.pp_x) bytes
+      pp bytes
       String.pp (to_string_hlt bytes)
   );
   printf "@]";
@@ -154,7 +157,7 @@ let%expect_test "of_string" =
     let bytes = of_string s in
     printf "%a -> %a -> %a\n"
       String.pp s
-      (Array.pp Byte.pp_x) bytes
+      pp bytes
       String.pp (to_string_hlt bytes)
   );
   printf "@]";
@@ -169,7 +172,7 @@ let%expect_test "to_string" =
   let test_to_string (bytes_list:byte list) = begin
     let bytes = Array.of_list bytes_list in
     printf "to_string %a -> %s\n"
-      (Array.pp Byte.pp_x) bytes
+      pp bytes
       (match to_string bytes with
         | None -> "None"
         | Some s -> "\"" ^ s ^ "\""
