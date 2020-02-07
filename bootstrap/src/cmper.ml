@@ -10,8 +10,7 @@ type ('a, 'witness) t = {
 
 module type I_mono = sig
   type t
-  include Hashable_intf.Key with type t := t
-  include Cmpable_intf.I_mono with type t := t
+  include Cmpable_intf.Key with type t := t
   include Formattable_intf.S_mono with type t := t
 end
 

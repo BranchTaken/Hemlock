@@ -87,6 +87,21 @@ module type S_mono_zero = sig
   (** [sign t] returns the sign of [t]. *)
 end
 
+(** Key interface required when creating a comparator (see {!module:Cmper}) in
+    order to use a type as a key.  Only monomorphic keys are supported by the
+    keyed container types, so there is no need for a polymorphic version of this
+    module. *)
+module type Key = sig
+  type t
+  (** Type being hashed/compared. *)
+
+  val hash_fold: t -> Hash.State.t -> Hash.State.t
+  (** [hash_fold state a] incorporates the hash of [a] into [state] and returns
+      the resulting state. *)
+
+  include I_mono with type t := t
+end
+
 (** Functor input interface for comparable polymorphic types. *)
 module type I_poly = sig
   type 'a t
