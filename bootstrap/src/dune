@@ -1,5 +1,8 @@
 (library
  (name Hemlock)
+ (foreign_stubs
+  (language c)
+  (names hash))
  (inline_tests)
  (preprocess (pps ppx_expect ppx_inline_test))
  (synopsis "Hemlock bootstrap standard library")

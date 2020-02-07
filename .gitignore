@@ -1,5 +1,4 @@
 bootstrap/_build/
 
-bootstrap/bin/.merlin
-bootstrap/src/.merlin
+bootstrap/**/.merlin
 bootstrap/Hemlock.install

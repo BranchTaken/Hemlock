@@ -20,11 +20,12 @@ module State : sig
       Hash.State.empty)]. *)
 
   val seed: t
-  (** Return the initial seed state for this execution of the application.  The
-      initial seed state is typically randomly generated prior to application
-      entry, but it can be deterministically set via the [HEMLOCK_SEED]
-      environment variable.  If [HEMLOCK_SEED] is set, [seed] is set to the
-      equivalent of [hash_fold_string HEMLOCK_SEED empty]. *)
+  (** Return the seed state for this execution of the application.  The seed
+      state is typically initialized using entropy bits provided by the
+      operating system, but it can be explicitly initialized via the
+      [HEMLOCK_ENTROPY] environment variable.  If [HEMLOCK_ENTROPY] is set,
+      [seed] is set to the equivalent of [hash_fold_string HEMLOCK_ENTROPY
+      empty]. *)
 
   val hash_fold_usize: usize -> t -> t
   (** [hash_fold_usize u state] incorporates the hash of [u] into [state] and
