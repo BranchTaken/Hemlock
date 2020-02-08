@@ -114,12 +114,12 @@ val unzip: ('a * 'b) t -> 'a t * 'b t
 
 val split: 'a t -> usize -> 'a t * 'a t
 (** Split the list with elements [\[0..len)] into lists with elements [\[0..n)]
-    and [\[n..len)].  Halt if list contains fewer than [len] elements.  Not
+    and [\[n..len)].  Halt if list contains fewer than [n] elements.  Not
     tail-recursive. *)
 
 val rev_split: 'a t -> usize -> 'a t * 'a t
 (** Split the list with elements [\[0..len)] into lists with elements [(n..0\]]
-    and [\[n..len)].  Halt if list contains fewer than [len] elements. *)
+    and [\[n..len)].  Halt if list contains fewer than [n] elements. *)
 
 val split_until: 'a t -> f:('a -> bool) -> 'a t * 'a t
 (** Split the list such that [~f] returns false for all the elements before the
