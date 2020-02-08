@@ -1,9 +1,11 @@
 open Hemlock
 include Hemlock.Rudiments
 
-type 'a v = 'a array
-
 let _ =
-  let x:(int v) = Array.of_list [1; 2; 3] in
-  Printf.printf "Array.length x -> %d\n" (Usize.to_int (Array.length x));
-  1
+  let open Format in
+  let x = Array.of_list [1; 2; 3] in
+  printf "@[<h>";
+  printf "Array.length %a -> %a\n"
+    (Array.pp Usize.pp) x
+    Usize.pp (Array.length x);
+  printf "@]"
