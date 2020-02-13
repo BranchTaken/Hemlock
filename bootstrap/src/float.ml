@@ -4,8 +4,10 @@ module T = struct
   type t = float
 
   let hash_fold t state =
-    state
-    |> Hash.State.hash_fold_float t
+    Hash.State.Gen.init state
+    |> Hash.State.Gen.fold_u128 1
+      ~f:(fun _ -> {hi=Int64.zero; lo=Int64.bits_of_float t})
+    |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
     let rel = Isize.of_int (compare t0 t1) in
@@ -398,6 +400,29 @@ end
 (*******************************************************************************
  * Begin tests.
  *)
+
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[<h>";
+  let rec test_hash_fold floats = begin
+    match floats with
+    | [] -> ()
+    | x :: floats' -> begin
+        printf "hash_fold %h -> %a\n"
+          x Hash.pp (Hash.t_of_state (hash_fold x Hash.State.empty));
+        test_hash_fold floats'
+      end
+  end in
+  let floats = [0.; 1.; 42.; infinity] in
+  test_hash_fold floats;
+  printf "@]";
+
+  [%expect{|
+    hash_fold 0x0p+0 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold 0x1p+0 -> 0x96b9_b9e8_7688_bee1_f1af_8bd0_2aa3_2f56u128
+    hash_fold 0x1.5p+5 -> 0xcbb6_698f_134f_7e07_fafb_a2c9_4442_61edu128
+    hash_fold infinity -> 0x23c7_6490_6a30_242b_61cc_57d4_7f64_339du128
+    |}]
 
 let%expect_test "create" =
   let open Format in

@@ -10,7 +10,7 @@ module T = struct
 
   let hash_fold t state =
     state
-    |> Hash.State.hash_fold_usize (to_usize t)
+    |> Usize.hash_fold (to_usize t)
 
   let cmp t0 t1 =
     match t0, t1 with
@@ -53,6 +53,27 @@ let not t =
 (*******************************************************************************
  * Begin tests.
  *)
+
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[<h>";
+  let rec test_hash_fold bools = begin
+    match bools with
+    | [] -> ()
+    | b :: bools' -> begin
+        printf "hash_fold %a -> %a\n"
+          pp b Hash.pp (Hash.t_of_state (hash_fold b Hash.State.empty));
+        test_hash_fold bools'
+      end
+  end in
+  let bools = [false; true] in
+  test_hash_fold bools;
+  printf "@]";
+
+  [%expect{|
+    hash_fold false -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold true -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
+    |}]
 
 let%expect_test "int" =
   let open Format in

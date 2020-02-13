@@ -28,10 +28,10 @@ value_of_result(const char *arg) {
 // lot of trouble relative to returning an array.  As a consequence this
 // function returns an empty array to indicate error.
 //
-//                                       nbits -> [|entropy...|]
-// val hemlock_hash_state_entropy_nbits: usize -> Int64.t array
+//                            nbits -> [|entropy...|]
+// val hemlock_entropy_nbits: usize -> Int64.t array
 CAMLprim value
-hemlock_hash_state_entropy_nbits(value a_nbits) {
+hemlock_entropy_nbits(value a_nbits) {
   size_t nbits_in = Unsigned_long_val(a_nbits);
   size_t nbytes_in = (nbits_in + 7) / 8;
   size_t nuint64s = (nbytes_in + 7) / 8;

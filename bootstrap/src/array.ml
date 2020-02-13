@@ -1108,10 +1108,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold [||] -> 0x0000000000000000
-    hash_fold [|0|] -> 0x0000000007be548a
-    hash_fold [|0; 0|] -> 0x0000000012cbe18f
-    hash_fold [|0; 1|] -> 0x0000000005e8da31
+    hash_fold [||] -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
+    hash_fold [|0|] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold [|0; 0|] -> 0x4988_6389_f40a_a2a3_3bac_4d62_a744_138bu128
+    hash_fold [|0; 1|] -> 0xcffe_8f1d_4ece_31b1_0231_7d19_4ec8_ede7u128
     |}]
 
 let%expect_test "cmp" =

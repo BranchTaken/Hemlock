@@ -71,7 +71,8 @@ module Make (T : I_mono) : S_mono with type t := T.t = struct
 end
 
 module Make_zero (T : I_mono_zero) : S_mono_zero with type t := T.t = struct
-  let cmp = T.cmp
+  include Make(T)
+
   let zero = T.zero
 
   let is_positive t =
