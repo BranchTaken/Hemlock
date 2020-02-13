@@ -67,6 +67,7 @@ end
     *)
 module type S_mono_zero = sig
   include I_mono_zero
+  include S_mono_infix with type t := t
 
   val is_positive: t -> bool
   (** [is_positive t] returns [true] if [t] is positive, [false] otherwise.  NB:
@@ -96,7 +97,7 @@ module type Key = sig
   (** Type being hashed/compared. *)
 
   val hash_fold: t -> Hash.State.t -> Hash.State.t
-  (** [hash_fold state a] incorporates the hash of [a] into [state] and returns
+  (** [hash_fold a state] incorporates the hash of [a] into [state] and returns
       the resulting state. *)
 
   include I_mono with type t := t

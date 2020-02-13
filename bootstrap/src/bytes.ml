@@ -4,8 +4,10 @@ let pp ppf bytes =
   Array.pp Byte.pp_x ppf bytes
 
 let hash_fold bytes state =
-  state
-  |> Array.hash_fold Byte.hash_fold bytes
+  Hash.State.Gen.init state
+  |> Hash.State.Gen.fold_u8 (Array.length bytes)
+    ~f:(fun i -> (Byte.to_usize (Array.get bytes i)))
+  |> Hash.State.Gen.fini
 
 let of_codepoint cp =
   Array.of_list (Utf8.to_bytes (Utf8.of_codepoint cp))
@@ -143,12 +145,12 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold [||] ("") -> 0x0000000000000000
-    hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0x00000000162388c9
-    hash_fold [|0x3cu8|] ("<") -> 0x000000001488bab4
-    hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0x000000003dab6a53
-    hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0x000000002ca36e99
-    hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x00000000238f8ef8
+    hash_fold [||] ("") -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
+    hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0x5b1e_906a_48ae_1d19_cbd8_a7b3_41bd_9b02u128
+    hash_fold [|0x3cu8|] ("<") -> 0x7522_120f_1d81_cc74_d1be_013b_ecbc_b776u128
+    hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0x5d74_6d9d_0b34_17b0_8910_3832_f74f_4befu128
+    hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0x3255_cddb_ad4b_72c9_40f8_4445_f929_67e2u128
+    hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x220a_f996_d78e_767b_8ac0_6339_270e_2fefu128
     |}]
 
 let%expect_test "of_codepoint" =

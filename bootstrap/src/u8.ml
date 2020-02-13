@@ -62,6 +62,29 @@ let of_codepoint_hlt x =
  * Begin tests.
  *)
 
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[<h>";
+  let rec test_hash_fold us = begin
+    match us with
+    | [] -> ()
+    | u :: us' -> begin
+        printf "hash_fold %a -> %a\n"
+          pp_x u Hash.pp (Hash.t_of_state (hash_fold u Hash.State.empty));
+        test_hash_fold us'
+      end
+  end in
+  let us = [zero; one; min_value; max_value] in
+  test_hash_fold us;
+  printf "@]";
+
+  [%expect{|
+    hash_fold 0x00u8 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold 0x01u8 -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
+    hash_fold 0x00u8 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold 0xffu8 -> 0xa6f2_bc68_c412_6de2_d5a3_2eb4_2449_e64du128
+    |}]
+
 let%expect_test "pp,pp_x" =
   let open Format in
   let rec fn = function
@@ -245,4 +268,193 @@ let%expect_test "conversion" =
     of_isize 0x3fffffffffffffffi -> to_isize 0xffu8 -> of_isize 4611686018427387903i -> 0xffu8
     of_usize 0x3fffffffffffffffi -> to_usize 0xffu8 -> of_usize 0x00000000000000ff -> 0xffu8
     Codepoint.of_usize 0x3fffffffffffffff -> of_codepoint 0x1fffffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
+    |}]
+
+let%expect_test "of_float,to_float" =
+  let open Format in
+  printf "@[<h>";
+  let rec test_fs fs = begin
+    match fs with
+    | [] -> ()
+    | f :: fs' -> begin
+        let x = of_float f in
+        printf "of_float %h -> %a; to_float -> %h\n"
+          f pp_x x (to_float x);
+        test_fs fs'
+      end
+  end in
+  let fs = [
+    -1.;
+    0.;
+    0x1.1p-1;
+    1.;
+
+    0x1.f_ffff_ffff_ffffp48;
+    0x1.f_ffff_ffff_ffffp52;
+    0x1.f_ffff_ffff_ffffp56;
+
+    0x1.f_ffff_ffff_ffffp61;
+
+    0x1p7;
+    0x1p8;
+  ] in
+  test_fs fs;
+  printf "\n";
+  let rec test_xs xs = begin
+    match xs with
+    | [] -> ()
+    | x :: xs' -> begin
+        let f = to_float x in
+        printf "to_float %a -> %h; of_float -> %a\n"
+          pp_x x f pp_x (of_float f);
+        test_xs xs'
+      end
+  end in
+  let xs = [
+    zero;
+    one;
+    max_value;
+  ] in
+  test_xs xs;
+  printf "@]";
+
+  [%expect{|
+    of_float -0x1p+0 -> 0x00u8; to_float -> 0x0p+0
+    of_float 0x0p+0 -> 0x00u8; to_float -> 0x0p+0
+    of_float 0x1.1p-1 -> 0x00u8; to_float -> 0x0p+0
+    of_float 0x1p+0 -> 0x01u8; to_float -> 0x1p+0
+    of_float 0x1.fffffffffffffp+48 -> 0xffu8; to_float -> 0x1.fep+7
+    of_float 0x1.fffffffffffffp+52 -> 0xffu8; to_float -> 0x1.fep+7
+    of_float 0x1.fffffffffffffp+56 -> 0xf0u8; to_float -> 0x1.ep+7
+    of_float 0x1.fffffffffffffp+61 -> 0x00u8; to_float -> 0x0p+0
+    of_float 0x1p+7 -> 0x80u8; to_float -> 0x1p+7
+    of_float 0x1p+8 -> 0x00u8; to_float -> 0x0p+0
+
+    to_float 0x00u8 -> 0x0p+0; of_float -> 0x00u8
+    to_float 0x01u8 -> 0x1p+0; of_float -> 0x01u8
+    to_float 0xffu8 -> 0x1.fep+7; of_float -> 0xffu8
+    |}]
+
+let%expect_test "bit_and,bit_or,bit_xor" =
+  let open Format in
+  printf "@[<h>";
+  let rec test_pairs = function
+    | [] -> ()
+    | (x, y) :: pairs' -> begin
+        printf "bit_{and,or,xor} %a %a -> %a, %a, %a\n"
+          pp_x x pp_x y
+          pp_x (bit_and x y)
+          pp_x (bit_or x y)
+          pp_x (bit_xor x y);
+        test_pairs pairs'
+      end
+  in
+  let pairs = [
+    (kv 0, kv 0);
+    (kv 0xff, kv 0);
+    (kv 0, kv 0xff);
+    (kv 0xff, kv 0xff);
+  ] in
+  test_pairs pairs;
+  printf "@]";
+
+  [%expect{|
+    bit_{and,or,xor} 0x00u8 0x00u8 -> 0x00u8, 0x00u8, 0x00u8
+    bit_{and,or,xor} 0xffu8 0x00u8 -> 0x00u8, 0xffu8, 0xffu8
+    bit_{and,or,xor} 0x00u8 0xffu8 -> 0x00u8, 0xffu8, 0xffu8
+    bit_{and,or,xor} 0xffu8 0xffu8 -> 0xffu8, 0xffu8, 0x00u8
+    |}]
+
+let%expect_test "bit_not" =
+  let open Format in
+  printf "@[<h>";
+  let rec test = function
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "bit_not %a -> %a\n"
+          pp_x x pp_x (bit_not x);
+        test xs'
+      end
+  in
+  let xs = [
+    kv 0;
+    kv 0xff
+  ] in
+  test xs;
+  printf "@]";
+
+  [%expect{|
+    bit_not 0x00u8 -> 0xffu8
+    bit_not 0xffu8 -> 0x00u8
+    |}]
+
+let%expect_test "bit_pop,bit_clz,bit_ctz" =
+  let open Format in
+  printf "@[<h>";
+  let rec test = function
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "bit_{pop,clz,ctz} %a -> %u, %u, %u\n"
+          pp_x x (bit_pop x) (bit_clz x) (bit_ctz x);
+        test xs'
+      end
+  in
+  let xs = [
+    kv 0;
+    kv 1;
+    kv 0x80;
+    kv 0xff
+  ] in
+  test xs;
+  printf "@]";
+
+  [%expect{|
+    bit_{pop,clz,ctz} 0x00u8 -> 0, 8, 8
+    bit_{pop,clz,ctz} 0x01u8 -> 1, 7, 0
+    bit_{pop,clz,ctz} 0x80u8 -> 1, 0, 7
+    bit_{pop,clz,ctz} 0xffu8 -> 8, 0, 0
+    |}]
+
+let%expect_test "**" =
+  let open Format in
+  printf "@[<h>";
+  let rec test_pairs = function
+    | [] -> ()
+    | (x, y) :: pairs' -> begin
+        printf "%a ** %a -> %a\n" pp_x x pp_x y pp_x (x ** y);
+        test_pairs pairs'
+      end
+  in
+  let pairs = [
+    (0, 0);
+    (0, 1);
+
+    (0xff, 0);
+    (0xff, 1);
+
+    (2, 3);
+    (2, 4);
+    (2, 7);
+    (2, 8);
+
+    (0xf, 0xf);
+    (0xff, 0xff);
+
+    (1, 0xff);
+  ] in
+  test_pairs pairs;
+  printf "@]";
+
+  [%expect{|
+    0x00u8 ** 0x00u8 -> 0x01u8
+    0x00u8 ** 0x01u8 -> 0x00u8
+    0xffu8 ** 0x00u8 -> 0x01u8
+    0xffu8 ** 0x01u8 -> 0xffu8
+    0x02u8 ** 0x03u8 -> 0x08u8
+    0x02u8 ** 0x04u8 -> 0x10u8
+    0x02u8 ** 0x07u8 -> 0x80u8
+    0x02u8 ** 0x08u8 -> 0x00u8
+    0x0fu8 ** 0x0fu8 -> 0xefu8
+    0xffu8 ** 0xffu8 -> 0xffu8
+    0x01u8 ** 0xffu8 -> 0x01u8
     |}]

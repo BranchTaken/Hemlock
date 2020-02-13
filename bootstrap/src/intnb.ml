@@ -1,4 +1,60 @@
+open Rudiments_functions
 open Intnb_intf
+
+module Make_derived (T : I_derived) : S_derived with type t := T.t = struct
+  include Cmpable.Make_zero(T)
+
+  let is_pow2 t =
+    match t > T.zero with
+    | false -> false
+    | true -> (T.bit_and t T.(t - one)) = T.zero
+
+  let floor_pow2 t =
+    match T.cmp t T.one with
+    | Lt -> halt "Invalid input"
+    | Eq -> t
+    | Gt -> begin
+        let nb = T.num_bits in
+        let lz = T.bit_clz t in
+        T.bit_sl T.one (nb - 1 - lz)
+      end
+
+  let ceil_pow2 t =
+    match T.cmp t T.one with
+    | Lt -> halt "Invalid input"
+    | Eq -> t
+    | Gt -> begin
+        let nb = T.num_bits in
+        match T.bit_clz T.(t - one) with
+        | 0 -> T.zero
+        | lz -> T.bit_sl T.one (nb - lz)
+      end
+
+  let floor_lg_opt t =
+    match T.cmp t T.zero with
+    | Lt | Eq -> None
+    | Gt -> begin
+        let nb = T.num_bits in
+        let lz = T.bit_clz t in
+        Some (T.of_usize (nb - 1 - lz))
+      end
+
+  let floor_lg t =
+    match floor_lg_opt t with
+    | None -> halt "Invalid input"
+    | Some x -> x
+
+  let ceil_lg t =
+    match floor_lg_opt t with
+    | None -> halt "Invalid input"
+    | Some x -> T.(x + (if is_pow2 t then zero else one))
+
+  let min t0 t1 =
+    if t0 <= t1 then t0 else t1
+
+  let max t0 t1 =
+    if t0 < t1 then t1 else t0
+end
 
 module type I_common = sig
   include I
@@ -6,7 +62,11 @@ module type I_common = sig
 end
 
 module type S_common = sig
-  include S
+  type t
+
+  include S with type t := t
+  include S_narrow with type t := t
+
   val narrow: t -> int
 end
 
@@ -15,8 +75,10 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
     type t = int
 
     let hash_fold t state =
-      state
-      |> Hash.State.hash_fold_usize t
+      Hash.State.Gen.init state
+      |> Hash.State.Gen.fold_u128 1
+        ~f:(fun _ -> {hi=Int64.zero; lo=Int64.of_int t})
+      |> Hash.State.Gen.fini
 
     let narrow t =
       let nlb = Sys.int_size - T.num_bits in
@@ -91,11 +153,17 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
         end
 
     let of_float f =
-      narrow (int_of_float f)
+      (* OCaml handles overflow poorly, but this deficiency has no anticipated
+         impact on bootstrapping. *)
+      match T.signed || (f >= 0.) with
+      | true -> narrow (int_of_float f)
+      | false -> 0
 
     let to_float t =
       assert (narrow t = t);
-      float_of_int t
+      match T.signed with
+      | true -> float_of_int t
+      | false -> (float_of_int (t lsr 1)) *. 2. +. (float_of_int (t land 1))
 
     let pp ppf t =
       assert (narrow t = t);
@@ -155,6 +223,9 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
     let bit_usr t i =
       narrow (t lsr i)
 
+    let bit_ssr t i =
+      narrow (t asr i)
+
     let bit_pop t =
       let x = lbclear t in
       let x =
@@ -180,28 +251,6 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
     let bit_ctz t =
       let t' = lbfill t in
       bit_pop (bit_and (bit_not t') (t' - 1))
-
-    let is_pow2 t =
-      assert ((not T.signed) || t >= 0);
-      (bit_and t (t - 1)) = 0
-
-    let floor_pow2 t =
-      assert ((not T.signed) || t >= 0);
-      if t <= 1 then t
-      else bit_sl 1 (T.num_bits - 1 - (bit_clz t))
-
-    let ceil_pow2 t =
-      assert ((not T.signed) || t >= 0);
-      if t <= 1 then t
-      else bit_sl 1 (T.num_bits - (bit_clz (t - 1)))
-
-    let floor_lg t =
-      assert (t > 0);
-      T.num_bits - 1 - (bit_clz t)
-
-    let ceil_lg t =
-      assert (t > 0);
-      floor_lg t + (if is_pow2 t then 0 else 1)
 
     let ( + ) t0 t1 =
       narrow (t0 + t1)
@@ -250,24 +299,19 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
       assert (narrow t0 = t0);
       assert (narrow t1 = t1);
       (to_float t0) /. (to_float t1)
-
-    let min t0 t1 =
-      assert (narrow t0 = t0);
-      assert (narrow t1 = t1);
-      match cmp t0 t1 with
-      | Lt | Eq -> t0
-      | Gt -> t1
-
-    let max t0 t1 =
-      assert (narrow t0 = t0);
-      assert (narrow t1 = t1);
-      match cmp t0 t1 with
-      | Lt | Eq -> t1
-      | Gt -> t0
   end
   include U
   include Identifiable.Make(U)
   include Cmpable.Make_zero(U)
+  module V = struct
+    include U
+
+    let num_bits = T.num_bits
+
+    let of_usize t =
+      U.narrow_of_unsigned t
+  end
+  include Make_derived(V)
 end
 
 module Make_i (T : I) : S_i with type t := isize = struct
@@ -346,6 +390,9 @@ module Make_i (T : I) : S_i with type t := isize = struct
     let bit_usr t i =
       isize_of_usize (V.bit_usr (usize_of_isize t) i)
 
+    let bit_ssr t i =
+      isize_of_usize (V.bit_ssr (usize_of_isize t) i)
+
     let bit_pop t =
       V.bit_pop (usize_of_isize t)
 
@@ -398,10 +445,6 @@ module Make_i (T : I) : S_i with type t := isize = struct
       isize_of_usize (V.max (usize_of_isize t0) (usize_of_isize t1))
 
     let neg_one = isize_of_usize (V.narrow (-1))
-
-    let bit_ssr t i =
-      assert (isize_of_int (V.narrow (int_of_isize t)) = t);
-      isize_of_usize ((int_of_isize t) asr i)
 
     let ( ~- ) t =
       assert (isize_of_int (V.narrow (int_of_isize t)) = t);

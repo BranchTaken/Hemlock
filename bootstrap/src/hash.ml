@@ -1,56 +1,168 @@
 open Rudiments_int0
 
-type t = usize
+type t = u128
 
-let pp ppf t =
-  Format.fprintf ppf "0x%016x" t
+let pp = u128_pp_x
 
 module State = struct
-  type t = usize
+  type t = u128
 
-  let pp ppf t =
-    Format.fprintf ppf "0x%016x" t
+  let pp = u128_pp_x
 
-  let empty = 0
+  let empty = u128_zero
 
-  let hash_fold a t =
-    Hashtbl.seeded_hash t a
+  let seed = Entropy.seed
 
-  let hash_fold_usize u t =
-    hash_fold u t
+  module Gen = struct
+    type outer = t
+    type t = {
+      (* Hash state. *)
+      state: outer;
+      (* Number of u128 blocks folded. *)
+      nfolded: usize;
+      (* The bottom nrem bytes of rem are remainder bytes that have yet to be
+         hashed, and the top pad bytes are always zeroed. *)
+      rem: u128;
+      nrem: usize;
+    }
 
-  let hash_fold_float f t =
-    hash_fold f t
+    let init state =
+      {
+        state;
+        nfolded=0;
+        rem=u128_zero;
+        nrem=0;
+      }
 
-  let hash_fold_string s t =
-    hash_fold s t
+    let rotl x r =
+      Int64.logor (Int64.shift_left x r)
+        (Int64.shift_right_logical x (64 - r))
 
-  (* On success this function returns an array of entropy bits, where the total
-     number of bits is rounded up frome the number of bits requested to the
-     nearest multiple of 64. *)
-  external entropy_nbits: usize -> Int64.t array
-    = "hemlock_hash_state_entropy_nbits"
+    let fmix_c1 = Int64.of_string "0xff51afd7ed558ccd"
+    let fmix_c2 = Int64.of_string "0xc4ceb9fe1a85ec53"
 
-  let seed =
-    match Sys.getenv_opt "HEMLOCK_ENTROPY" with
-    | None -> begin
-        match entropy_nbits Sys.int_size with
-        | [|entropy|] -> Stdlib.Int64.to_int entropy
-        | _ -> begin
-            Printf.fprintf stderr
-              "Hash.State.seed error: Entropy acquisition failure\n";
-            exit 1
+    let fmix k =
+      let k = Int64.(logxor k (shift_right_logical k 33)) in
+      let k = Int64.(mul k fmix_c1) in
+      let k = Int64.(logxor k (shift_right_logical k 33)) in
+      let k = Int64.(mul k fmix_c2) in
+      let k = Int64.(logxor k (shift_right_logical k 33)) in
+      k
+
+    let hash_c1 = Int64.of_string "0x87c37b91114253d5"
+    let hash_c2 = Int64.of_string "0x4cf5ad432745937f"
+
+    let hash u t =
+      let h1, h2 = match t.state with {hi; lo} -> lo, hi in
+      let k1, k2 = match u with {hi; lo} -> lo, hi in
+
+      let k1 = Int64.mul k1 hash_c1 in
+      let k1 = rotl k1 31 in
+      let k1 = Int64.mul k1 hash_c2 in
+      let h1 = Int64.logxor h1 k1 in
+
+      let h1 = rotl h1 27 in
+      let h1 = Int64.add h1 h2 in
+      let h1 = Int64.(add (mul h1 (of_int 5)) (of_int 0x52dce729)) in
+
+      let k2 = Int64.mul k2 hash_c2 in
+      let k2 = rotl k2 33 in
+      let k2 = Int64.mul k2 hash_c1 in
+      let h2 = Int64.logxor h2 k2 in
+
+      let h2 = rotl h2 31 in
+      let h2 = Int64.add h2 h1 in
+      let h2 = Int64.(add (mul h2 (of_int 5)) (of_int 0x38495ab5)) in
+
+      let state = {hi=h2; lo=h1} in
+      {t with state; nfolded=succ t.nfolded}
+
+    let fold_u128 n ~f t =
+      let feed u t = begin
+        match t.nrem = 0 with
+        | true -> hash u t
+        | false -> begin
+            let u' = u128_bit_or (u128_bit_sl u t.nrem) t.rem in
+            let rem = u128_bit_usr u (16 - t.nrem) in
+            let t' = {t with rem} in
+            hash u' t'
           end
-      end
-    | Some hemlock_seed -> hash_fold_string hemlock_seed empty
+      end in
+      let rec fn i n ~f t = begin
+        match i = n with
+        | true -> t
+        | false -> fn (succ i) n ~f (feed (f i) t)
+      end in
+      fn 0 n ~f t
+
+    let fold_u8 n ~f t =
+      let feed b t = begin
+        let u = {hi=Int64.zero; lo=Int64.of_int b} in
+        match t.nrem = 15 with
+        | true -> begin
+            let u' = u128_bit_or (u128_bit_sl u 120) t.rem in
+            let t' = {t with rem=u128_zero; nrem=0} in
+            hash u' t'
+          end
+        | false -> begin
+            let rem = u128_bit_or (u128_bit_sl u (t.nrem * 8)) t.rem in
+            {t with rem; nrem=succ t.nrem}
+          end
+      end in
+      let rec fn i n ~f t = begin
+        match i = n with
+        | true -> t
+        | false -> fn (succ i) n ~f (feed (Int.logand (f i) 0xff) t)
+      end in
+      fn 0 n ~f t
+
+    let fini t =
+      let fold_rem t = begin
+        let len = t.nfolded * 16 + t.nrem in
+        match t.nrem > 0 with
+        | false -> t, len
+        | true -> begin
+            let h1, h2 = match t.state with {hi; lo} -> lo, hi in
+            let k1, k2 = match t.rem with {hi; lo} -> lo, hi in
+
+            let k2 = Int64.mul k2 hash_c2 in
+            let k2 = rotl k2 33 in
+            let k2 = Int64.mul k2 hash_c1 in
+            let h2 = Int64.logxor h2 k2 in
+
+            let k1 = Int64.mul k1 hash_c1 in
+            let k1 = rotl k1 31 in
+            let k1 = Int64.mul k1 hash_c2 in
+            let h1 = Int64.logxor h1 k1 in
+
+            let state = {hi=h2; lo=h1} in
+            {t with state; rem=u128_zero; nrem=0}, len
+          end
+      end in
+      let t', len = fold_rem t in
+      let h1, h2 = match t'.state with {hi; lo} -> lo, hi in
+
+      let h1 = Int64.logxor h1 (Int64.of_int len) in
+      let h2 = Int64.logxor h2 (Int64.of_int len) in
+
+      let h1 = Int64.add h1 h2 in
+      let h2 = Int64.add h2 h1 in
+
+      let h1 = fmix h1 in
+      let h2 = fmix h2 in
+
+      let h1 = Int64.add h1 h2 in
+      let h2 = Int64.add h2 h1 in
+
+      {hi=h2; lo=h1}
+  end
 end
 
-let t_of_state state =
+let t_of_state (state:State.t) : t =
   state
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "pp,empty,t_of_state" =
   let open Format in
@@ -60,79 +172,142 @@ let%expect_test "pp,empty,t_of_state" =
   printf "@]";
 
   [%expect{|
-    hash=0x0000000000000000
-    state=0x0000000000000000
+    hash=0x0000_0000_0000_0000_0000_0000_0000_0000u128
+    state=0x0000_0000_0000_0000_0000_0000_0000_0000u128
     |}]
 
-let%expect_test "hash_fold_usize" =
+let%expect_test "hash_fold_u128" =
   let open Format in
+  let hash_fold u128s t = begin
+    State.Gen.init t
+    |> State.Gen.fold_u128 (Caml.Array.length u128s) ~f:(fun i ->
+      Caml.Array.get u128s i
+    )
+    |> State.Gen.fini
+  end in
+  let pp_arr pp_elm ppf arr = begin
+    let rec fn arr i len = begin
+      match i = len with
+      | true -> ()
+      | false -> begin
+          if i > 0 then fprintf ppf ";@ ";
+          fprintf ppf "%a" pp_elm (Caml.Array.get arr i);
+          fn arr (succ i) len
+        end
+    end in
+    fprintf ppf "@[<h>[|";
+    fn arr 0 (Caml.Array.length arr);
+    fprintf ppf "|]@]"
+  end in
   printf "@[<h>";
-  let rec test_hash_fold_usize us = begin
-    match us with
+  let rec test_hash_fold u128s_list = begin
+    match u128s_list with
     | [] -> ()
-    | u :: us' -> begin
-        printf "hash_fold_usize 0x%016x -> %a\n"
-          u pp (t_of_state State.(hash_fold_usize u empty));
-        test_hash_fold_usize us'
+    | u128s :: u128s_list' -> begin
+        printf "hash_fold %a -> %a\n"
+          (pp_arr pp) u128s pp (t_of_state State.(hash_fold u128s empty));
+        test_hash_fold u128s_list'
       end
   end in
-  let us = [0; 1; 42; max_int] in
-  test_hash_fold_usize us;
+  (* These test inputs were manually verified against the reference
+     MurmurHash3 implementation. *)
+  let u128s_list = [
+    [||];
+
+    [|{hi=Int64.of_string "0xfedcba9876543210";
+      lo=Int64.of_string "0x0123456789abcdef"}|];
+
+    [|u128_zero|];
+
+    [|{hi=Int64.of_string "0x0123456789abcdef";
+      lo=Int64.of_string "0xfedcba9876543210"}|];
+
+    [|{hi=Int64.of_string "0xfedcba9876543210";
+      lo=Int64.of_string "0x0123456789abcdef"};
+
+      u128_zero;
+
+      {hi=Int64.of_string "0x0123456789abcdef";
+        lo=Int64.of_string "0xfedcba9876543210"}|]
+  ] in
+  test_hash_fold u128s_list;
   printf "@]";
 
   [%expect{|
-    hash_fold_usize 0x0000000000000000 -> 0x0000000007be548a
-    hash_fold_usize 0x0000000000000001 -> 0x0000000034ac84db
-    hash_fold_usize 0x000000000000002a -> 0x000000001792870b
-    hash_fold_usize 0x3fffffffffffffff -> 0x0000000038c24cfb
+    hash_fold [||] -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
+    hash_fold [|0xfedc_ba98_7654_3210_0123_4567_89ab_cdefu128|] -> 0x6bc0_bad4_001a_c79a_3a7b_e286_a34a_7a71u128
+    hash_fold [|0x0000_0000_0000_0000_0000_0000_0000_0000u128|] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold [|0x0123_4567_89ab_cdef_fedc_ba98_7654_3210u128|] -> 0x0eb8_4470_9565_7807_4f87_4a06_b0db_435eu128
+    hash_fold [|0xfedc_ba98_7654_3210_0123_4567_89ab_cdefu128; 0x0000_0000_0000_0000_0000_0000_0000_0000u128; 0x0123_4567_89ab_cdef_fedc_ba98_7654_3210u128|] -> 0x368d_c0ef_bb0a_0838_afb5_c175_06c0_c15eu128
     |}]
 
-let%expect_test "hash_fold_float" =
+let%expect_test "hash_fold_u8" =
   let open Format in
+  let hash_fold u8s t = begin
+    State.Gen.init t
+    |> State.Gen.fold_u8 (Caml.Array.length u8s) ~f:(fun i ->
+      Caml.Array.get u8s i
+    )
+    |> State.Gen.fini
+  end in
+  let pp_u8 ppf u = Format.fprintf ppf "0x%02x" u in
+  let pp_arr pp_elm ppf arr = begin
+    let rec fn arr i len = begin
+      match i = len with
+      | true -> ()
+      | false -> begin
+          if i > 0 then fprintf ppf ";@ ";
+          fprintf ppf "%a" pp_elm (Caml.Array.get arr i);
+          fn arr (succ i) len
+        end
+    end in
+    fprintf ppf "@[<h>[|";
+    fn arr 0 (Caml.Array.length arr);
+    fprintf ppf "|]@]"
+  end in
   printf "@[<h>";
-  let rec test_hash_fold_float floats = begin
-    match floats with
+  let rec test_hash_fold u8s_list = begin
+    match u8s_list with
     | [] -> ()
-    | x :: floats' -> begin
-        printf "hash_fold_float %h -> %a\n"
-          x pp (t_of_state State.(hash_fold_float x empty));
-        test_hash_fold_float floats'
+    | u8s :: u8s_list' -> begin
+        printf "hash_fold %a -> %a\n"
+          (pp_arr pp_u8) u8s pp (t_of_state State.(hash_fold u8s empty));
+        test_hash_fold u8s_list'
       end
   end in
-  let floats = [0.; 1.; 42.; infinity] in
-  test_hash_fold_float floats;
+  (* These test inputs were manually verified against the reference
+     MurmurHash3 implementation. *)
+  let u8s_list = [
+    [||];
+
+    [|0|];
+
+    [|0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01;
+      0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe|];
+
+    [|0; 0; 0; 0; 0; 0; 0; 0;
+      0; 0; 0; 0; 0; 0; 0; 0|];
+
+    [|0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe;
+      0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01|];
+
+    [|0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01;
+      0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe;
+
+      0; 0; 0; 0; 0; 0; 0; 0;
+      0; 0; 0; 0; 0; 0; 0; 0;
+
+      0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe;
+      0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01|]
+  ] in
+  test_hash_fold u8s_list;
   printf "@]";
 
   [%expect{|
-    hash_fold_float 0x0p+0 -> 0x000000000f478b8c
-    hash_fold_float 0x1p+0 -> 0x00000000036d56a8
-    hash_fold_float 0x1.5p+5 -> 0x00000000346bd9fc
-    hash_fold_float infinity -> 0x0000000023ea56fb
-    |}]
-
-let%expect_test "hash_fold_string" =
-  let open Format in
-  printf "@[<h>";
-  let rec test_hash_fold_string strs = begin
-    match strs with
-    | [] -> ()
-    | s :: strs' -> begin
-        (* OCaml's %S doesn't format UTF-8 strings correctly, so the outputs
-           from this will look a bit nasty until Hemlock has its own printf
-           implementation. *)
-        printf "hash_fold_string %S -> %a\n"
-          s pp (t_of_state State.(hash_fold_string s empty));
-        test_hash_fold_string strs'
-      end
-  end in
-  let strings = [""; "<_>"; "«»"; "‡"; "𐆗"] in
-  test_hash_fold_string strings;
-  printf "@]";
-
-  [%expect{|
-    hash_fold_string "" -> 0x0000000000000000
-    hash_fold_string "<_>" -> 0x000000003f3b807b
-    hash_fold_string "\194\171\194\187" -> 0x000000002779d284
-    hash_fold_string "\226\128\161" -> 0x0000000005b67340
-    hash_fold_string "\240\144\134\151" -> 0x000000002a276c1f
+    hash_fold [||] -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
+    hash_fold [|0x00|] -> 0x5162_2daa_78f8_3583_4610_abe5_6eff_5cb5u128
+    hash_fold [|0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01; 0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe|] -> 0x6bc0_bad4_001a_c79a_3a7b_e286_a34a_7a71u128
+    hash_fold [|0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00|] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold [|0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe; 0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01|] -> 0x0eb8_4470_9565_7807_4f87_4a06_b0db_435eu128
+    hash_fold [|0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01; 0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x00; 0x10; 0x32; 0x54; 0x76; 0x98; 0xba; 0xdc; 0xfe; 0xef; 0xcd; 0xab; 0x89; 0x67; 0x45; 0x23; 0x01|] -> 0x368d_c0ef_bb0a_0838_afb5_c175_06c0_c15eu128
     |}]

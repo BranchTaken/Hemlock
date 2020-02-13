@@ -10,6 +10,12 @@ module Byte = U8
 (* Redundant; ('a array) is intrinsic and equivalent to ('a Array.t). *)
 (* type 'a array = 'a Array.t *)
 
+type u128 = Rudiments_int0.u128
+
+type i64 = Rudiments_int0.i64
+
+type u64 = Rudiments_int0.u64
+
 type isize = Rudiments_int0.isize
 
 type usize = Rudiments_int0.usize
