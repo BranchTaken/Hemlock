@@ -1,6 +1,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <unistd.h>
+#ifdef __APPLE__
+// For getentropy().
+#  include <sys/random.h>
+#endif
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 
@@ -17,7 +21,7 @@ static value
 value_of_result(const char *arg) {
   uint64_t entropy = *((uint64_t *)arg);
 
-  caml_copy_int64(entropy);
+  return caml_copy_int64(entropy);
 }
 
 // The OCaml FFI is quite low-level, such that returning (Int64.t option) is a
