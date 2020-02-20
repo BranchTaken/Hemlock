@@ -30,3 +30,10 @@ jobs:
     - name: test
       working-directory: ./bootstrap
       run: opam exec -- dune runtest
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.8'
+    - name: check-ocp-indent deps
+      run: opam install ocp-indent && git fetch origin master
+    - name: check-ocp-indent
+      run: python ./.github/scripts/check_ocp_indent.py
