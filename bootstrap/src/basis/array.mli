@@ -167,14 +167,13 @@ val sort: ?stable:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 val psearch: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
   -> (Cmp.t * usize) option
 (** Binary search for key in array, selecting the leftmost match, and falling
-    back to the predecessor in the case of no match.
+    back to the nearest present predecessor in the case of no match.
     @return {ul
       {- No predecessor: [Some (Cmp.Lt, 0)]}
       {- Leftmost match: [Some (Cmp.Eq, index)]}
       {- Predecessor: [Some (Cmp.Gt, index)]}
       {- Empty array: [None]}
-    }
-*)
+    } *)
 
 val search: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
   -> usize option
@@ -185,14 +184,13 @@ val search: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
 val nsearch: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
   -> (Cmp.t * usize) option
 (** Binary search for key in array, selecting the rightmost match, and falling
-    back to the successor.
+    back to the nearest present successor in the case of no match.
     @return {ul
       {- Successor: [Some (Cmp.Lt, index)]}
       {- Rightmost match: [Some (Cmp.Eq, index)]}
       {- No successor: [Some (Cmp.Gt, (Usize.pred (length t)))]}
       {- Empty array: [None]}
-    }
-*)
+    } *)
 
 val map: f:('a -> 'b) -> 'a t -> 'b t
 (** Create an array with elements mapped from the input array, according to the
@@ -214,13 +212,13 @@ val foldi_map: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * 'b) -> 'a t
 
 val filter: f:('a -> bool) -> 'a t -> 'a t
 (** Create an array with contents filtered by the given function.  Only elements
-    for which the filter function returns true are incorporated in the result.
-*)
+    for which the filter function returns [true] are incorporated into the
+    result. *)
 
 val filteri: f:(usize -> 'a -> bool) -> 'a t -> 'a t
 (** Create an array with contents filtered by the given function.  Only elements
-    for which the indexed filter function returns true are incorporated in the
-    result. *)
+    for which the indexed filter function returns [true] are incorporated into
+    the result. *)
 
 val fold2_until: init:'accum -> f:('accum -> 'a -> 'b -> 'accum * bool) -> 'a t
   -> 'b t -> 'accum

@@ -131,7 +131,7 @@ module type S_poly_fold = sig
   (** [to_list t] folds [t] from right to left as a {!type:'a list}. *)
 
   val to_list_rev: 'a t -> 'a list
-  (** [to_list t] folds [t] from left to right as a {!type:'a list}. *)
+  (** [to_list_rev t] folds [t] from left to right as a {!type:'a list}. *)
 end
 
 (** {!module:S_poly_fold_gen} is equivalent to {!module:S_poly_fold}, except
@@ -319,7 +319,7 @@ module type S_mono_fold = sig
   (** [to_list t] folds [t] from right to left as a {!type:elm list}. *)
 
   val to_list_rev: t -> elm list
-  (** [to_list t] folds [t] from left to right as a {!type:elm list}. *)
+  (** [to_list_rev t] folds [t] from left to right as a {!type:elm list}. *)
 end
 
 (** Membership-related functor input interface for monomorphic containers, e.g.
