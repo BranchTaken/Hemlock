@@ -66,10 +66,12 @@ val tl: 'a t -> 'a t
 (** Return tail (all elements except head), or halt if list is empty. *)
 
 val nth_opt: usize -> 'a t -> 'a option
-(** Return nth list element (0-indexed), or return [None] if list is empty. *)
+(** [nth i t] returns the nth list element (0-indexed), or [None] if [i] is out
+    of bounds. *)
 
 val nth: usize -> 'a t -> 'a
-(** Return nth list element (0-indexed), or halt if list is empty. *)
+(** [nth i t] returns the nth list element (0-indexed), or halts if [i] is out
+    of bounds. *)
 
 (** {1 Combining, grouping, and partitioning} *)
 
