@@ -56,7 +56,7 @@ class Hunk:
 
     # "git diff -U0" has the following predictable pattern for hunk headers. It shows exactly where
     # a change starts and if any additional lines were changed after that, how many.
-    _header_pattern: Pattern = re.compile(r'^@@.*\+(?P<start>\d+)(,(?P<delta>\d+))? @@.*$')
+    _header_pattern: Pattern = re.compile(r'^@@.*\+(?P<start>\d+)(,(?P<delta>[1-9]\d*))? @@.*$')
 
     @staticmethod
     async def from_path(path: Path, /) -> Tuple[Hunk]:
