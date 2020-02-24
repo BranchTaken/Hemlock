@@ -13,7 +13,7 @@ module type I_poly_array = sig
 end
 
 (** Array-related functor output signature for polymorphic containers, e.g.
- * {!type:'a list}. *)
+    {!type:'a list}. *)
 module type S_poly_array = sig
   type 'a t
   (** Container type. *)
@@ -43,7 +43,7 @@ module type I_mono_array = sig
 end
 
 (** Array-related functor output signature for monomorphic containers, e.g.
- * {!type:string}. *)
+    {!type:string}. *)
 module type S_mono_array = sig
   type t
   (** Container type. *)

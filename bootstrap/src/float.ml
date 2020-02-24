@@ -41,10 +41,10 @@ let to_isize t =
 
 module Dir = struct
   type t =
-  | Down
-  | Up
-  | Nearest
-  | Zero
+    | Down
+    | Up
+    | Nearest
+    | Zero
 
   let pp ppf t =
     Format.fprintf ppf (match t with
@@ -57,11 +57,11 @@ end
 
 module Class = struct
   type t =
-  | Infinite
-  | Nan
-  | Normal
-  | Subnormal
-  | Zero
+    | Infinite
+    | Nan
+    | Normal
+    | Subnormal
+    | Zero
 
   let pp ppf t =
     Format.fprintf ppf (match t with
@@ -104,7 +104,7 @@ let create ~neg ~exponent ~mantissa =
   let bits =
     Int64.logor (Int64.shift_left sign 63)
       (Int64.logor (Int64.shift_left biased_exponent 52)
-         (Int64.of_int mantissa))
+          (Int64.of_int mantissa))
   in
   Int64.float_of_bits bits
 
@@ -277,8 +277,8 @@ let int_pow t x =
   end in
   let r = fn 1. t (Usize.of_isize n) in
   match neg with
-    | false -> r
-    | true -> 1. / r
+  | false -> r
+  | true -> 1. / r
 
 let lngamma_impl t =
   let f, t' = match t < 7. with
@@ -295,7 +295,7 @@ let lngamma_impl t =
   let z = 1. / (t' * t') in
   let g = f + (t' - 0.5) * (ln t') - t' + 0.918938533204673 +
       (((-0.000595238095238 * z + 0.000793650793651) * z -
-          0.002777777777778) * z + 0.083333333333333) / t'
+            0.002777777777778) * z + 0.083333333333333) / t'
   in
   match t <= 1. || t >= 2. with
   | true -> abs g
@@ -397,9 +397,8 @@ module O = struct
   let abs = abs
 end
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "hash_fold" =
   let open Format in
@@ -671,8 +670,8 @@ let%expect_test "round" =
     | [] -> ()
     | t :: ts' -> begin
         printf ("round %h -> (Down: %h) (Up: %h) (Nearest: %h) ([default]: %h)"
-        ^^ " (Zero: %h)\n") t (round ~dir:Down t) (round ~dir:Up t)
-            (round ~dir:Nearest t) (round t) (round ~dir:Zero t);
+          ^^ " (Zero: %h)\n") t (round ~dir:Down t) (round ~dir:Up t)
+          (round ~dir:Nearest t) (round t) (round ~dir:Zero t);
         fn ts'
       end
   end in
@@ -1074,9 +1073,9 @@ let%expect_test "hypot" =
       end
   end in
   fn [(3., 4.); (4., 3.); (-3., -4.);
-          (-0., -3.); (0., -3.);
-          (3., inf); (nan, inf); (neg_inf, nan);
-         ];
+    (-0., -3.); (0., -3.);
+    (3., inf); (nan, inf); (neg_inf, nan);
+  ];
 
   [%expect{|
     x=3.000000 y=4.000000: hypot=5.000000
@@ -1129,11 +1128,11 @@ let%expect_test "trigh" =
   for i = -2 to 2 do
     let i = Isize.of_int i in
     let t = of_isize i in
-      printf ("sinh cosh tanh %.1f -> (%.5f %.5f) (%.5f %.5f) (%.5f %.5f)\n")
-        t
-        (sinh t) (((ex t) - (ex ~-t)) / 2.)
-        (cosh t) (((ex t) + (ex ~-t)) / 2.)
-        (tanh t) ((sinh t) / (cosh t));
+    printf ("sinh cosh tanh %.1f -> (%.5f %.5f) (%.5f %.5f) (%.5f %.5f)\n")
+      t
+      (sinh t) (((ex t) - (ex ~-t)) / 2.)
+      (cosh t) (((ex t) + (ex ~-t)) / 2.)
+      (tanh t) ((sinh t) / (cosh t));
   done;
 
   [%expect{|

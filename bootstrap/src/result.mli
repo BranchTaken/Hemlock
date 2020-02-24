@@ -6,8 +6,8 @@
 (** {1 Type and derivations} *)
 
 type ('a, 'b) t =
-| Ok of 'a    (** Success, with result. *)
-| Error of 'b (** Failure, with error. *)
+  | Ok of 'a    (** Success, with result. *)
+  | Error of 'b (** Failure, with error. *)
 
 include Formattable_intf.S_poly2 with type ('a, 'b) t := ('a, 'b) t
 

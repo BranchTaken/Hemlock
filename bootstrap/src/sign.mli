@@ -1,9 +1,9 @@
 (** Sign type. *)
 
 type t =
-| Neg  (** Negative. *)
-| Zero (** Zero. *)
-| Pos  (** Positive. *)
+  | Neg  (** Negative. *)
+  | Zero (** Zero. *)
+  | Pos  (** Positive. *)
 
 include Formattable_intf.S_mono with type t := t
 

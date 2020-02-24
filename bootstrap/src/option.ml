@@ -2,16 +2,16 @@ open Rudiments
 
 module T = struct
   type 'a t = 'a option =
-  | None
-  | Some of 'a
+    | None
+    | Some of 'a
   type 'a elm = 'a
 
   module Cursor = struct
     module T = struct
       type 'a container = 'a t
       type 'a t = {
-          option: 'a container;
-          index: usize;
+        option: 'a container;
+        index: usize;
       }
 
       let cmp t0 t1 =
@@ -157,9 +157,8 @@ let map2 ta tb ~f =
   | Some a, Some b -> Some (f a b)
   | _, _ -> None
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "pp" =
   let open Format in
@@ -194,7 +193,7 @@ let%expect_test "value" =
   printf "@[<h>";
   List.iter [Some 42; None] ~f:(fun o ->
     printf "value %a -> %a\n"
-        (pp Usize.pp) o Usize.pp (value ~default:13 o)
+      (pp Usize.pp) o Usize.pp (value ~default:13 o)
   );
   printf "@]";
 
@@ -209,9 +208,9 @@ let%expect_test "some_if" =
   List.iter [false; true] ~f:(fun b ->
     let a = 42 in
     printf "some_if %b %a -> %a\n"
-        b
-        Usize.pp a
-        (pp Usize.pp) (some_if b a)
+      b
+      Usize.pp a
+      (pp Usize.pp) (some_if b a)
   );
   printf "@]";
 

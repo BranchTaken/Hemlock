@@ -6,9 +6,8 @@ let to_isize t =
 let of_isize x =
   usize_of_isize x
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "hash_fold" =
   let open Format in

@@ -24,10 +24,10 @@ module Array_seq = struct
 
     let init t =
       {
-          string=t;
-          cursor=(String.Cursor.at t ~bindex:0);
-          bindex=0;
-          rem_bytes=[];
+        string=t;
+        cursor=(String.Cursor.at t ~bindex:0);
+        bindex=0;
+        rem_bytes=[];
       }
 
     let length t =
@@ -38,9 +38,9 @@ module Array_seq = struct
       match t.rem_bytes with
       | b :: rem_bytes' -> begin
           let t' = {t with
-                    bindex=(Usize.succ t.bindex);
-                    rem_bytes=rem_bytes'
-                   } in
+            bindex=(Usize.succ t.bindex);
+            rem_bytes=rem_bytes'
+          } in
           b, t'
         end
       | [] -> begin
@@ -51,9 +51,9 @@ module Array_seq = struct
             | [] -> not_reached ()
           in
           let t' = {t with
-                    cursor=(String.Cursor.succ t.cursor);
-                    bindex=(Usize.succ t.bindex);
-                    rem_bytes} in
+            cursor=(String.Cursor.succ t.cursor);
+            bindex=(Usize.succ t.bindex);
+            rem_bytes} in
           b, t'
         end
   end
@@ -120,9 +120,8 @@ let to_string_hlt bytes =
   | None -> halt "Invalid utf8 sequence"
   | Some s -> s
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "hash_fold" =
   let open Format in

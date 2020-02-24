@@ -22,7 +22,7 @@ val of_string: string -> byte array
 val to_string: byte array -> string option
 (** [to_string bytes] interprets [bytes] as a sequence of UTF-8 code points and
     returns a corresponding {!type:string}, or [None] if [bytes] is malformed.
-    *)
+*)
 
 val to_string_hlt: byte array -> string
 (** [to_string bytes] interprets [bytes] as a sequence of UTF-8 code points and

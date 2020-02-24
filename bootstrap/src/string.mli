@@ -88,7 +88,7 @@ module Slice : sig
 
   val of_cursors: base:Cursor.t -> past:Cursor.t -> t
   (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)].
-      *)
+  *)
 
   val to_cursors: t -> Cursor.t * Cursor.t
   (** Return the cursors comprising the slice. *)
@@ -161,15 +161,10 @@ module Slice : sig
       length and codepoint length containing the reverse-ordered [codepoints].
       [blength]/[clength] must be accurate if specified. *)
 
-  (* In Container_intf.S_mono: val to_list: t -> codepoint list *)
-  (* In Container_intf.S_mono: val to_list_rev: t -> codepoint list *)
-
   val of_array: ?blength:usize -> codepoint array -> t
   (** [of_array ~blength codepoints] creates a slice of given byte length
       containing the ordered [codepoints].  [blength] must be accurate if
       specified. *)
-
-  (* In Container_intf.S_mono: val to_array: t -> codepoint array *)
 
   include Container_intf.S_mono with type t := t and type elm := codepoint
 
@@ -179,7 +174,7 @@ module Slice : sig
 
   val map: t -> f:(codepoint -> codepoint) -> t
   (** [map t ~f] creates a slice with codepoints mapped from [t]'s codepoints.
-      *)
+  *)
 
   val mapi: t -> f:(usize -> codepoint -> codepoint) -> t
   (** [map t ~f] creates a slice with codepoints mapped from [t]'s codepoints.
@@ -193,7 +188,7 @@ module Slice : sig
   val filter: t -> f:(codepoint -> bool) -> t
   (** [filter t ~f] creates a slice from [t]'s codepoints filtered by [f].  Only
       codepoints for which [f] returns [true] are incorporated into the result.
-      *)
+  *)
 
   val concat: ?sep:t -> t list -> t
   (** [concat ~sep slices] creates a slice comprised of the concatenation of the
@@ -237,12 +232,12 @@ module Slice : sig
   (** [rfind_hlt t cp] returns a cursor to the rightmost instance of [cp] in
       [t], or halts if [cp] is absent. *)
 
-(** Simple but efficient pattern matching, based on the {{:
-    https://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm}
-    Knuth-Morris-Pratt algorithm}.  Patterns are uninterpreted codepoint
-    sequences.  Searches require at most a single pass over the input,
-    regardless of whether finding one or more (optionally overlapping) matches.
-    *)
+  (** Simple but efficient pattern matching, based on the {{:
+      https://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm}
+      Knuth-Morris-Pratt algorithm}.  Patterns are uninterpreted codepoint
+      sequences.  Searches require at most a single pass over the input,
+      regardless of whether finding one or more (optionally overlapping) matches.
+  *)
   module Pattern : sig
     type outer = t
 
@@ -353,7 +348,7 @@ module Slice : sig
   val lsplit2: t -> on:codepoint -> (t * t) option
   (** [lsplit2 t ~on] splits [t] into two slices at the leftmost codepoint for
       which [on] returns [true], or returns [None] if [on] never returns [true].
-      *)
+  *)
 
   val lsplit2_hlt: t -> on:codepoint -> t * t
   (** [lsplit2_hlt t ~on] splits [t] into two slices at the leftmost codepoint
@@ -362,7 +357,7 @@ module Slice : sig
   val rsplit2: t -> on:codepoint -> (t * t) option
   (** [rsplit2 t ~on] splits [t] into two slices at the rightmost codepoint for
       which [on] returns [true], or returns [None] if [on] never returns [true].
-      *)
+  *)
 
   val rsplit2_hlt: t -> on:codepoint -> t * t
   (** [rsplit2_hlt t ~on] splits [t] into two slices at the rightmost codepoint
@@ -444,15 +439,10 @@ val of_list_rev: ?blength:usize -> ?clength:usize -> codepoint list -> t
     length and codepoint length containing the reverse-ordered [codepoints].
     [blength]/[clength] must be accurate if specified. *)
 
-(* In Container_intf.S_mono: val to_list: t -> codepoint list *)
-(* In Container_intf.S_mono: val to_list_rev: t -> codepoint list *)
-
 val of_array: ?blength:usize -> codepoint array -> t
 (** [of_array ~blength codepoints] creates a string of given byte length
     containing the ordered [codepoints].  [blength] must be accurate if
     specified. *)
-
-(* In Container_intf.S_mono: val to_array: t -> codepoint array *)
 
 include Container_intf.S_mono with type t := t and type elm := codepoint
 
@@ -477,8 +467,8 @@ val filter: t -> f:(codepoint -> bool) -> t
     codepoints for which [f] returns [true] are incorporated into the result. *)
 
 val concat: ?sep:t -> t list -> t
-  (** [concat ~sep strings] creates a string comprised of the concatenation of
-      the [strings] list, with [sep] interposed between the inputs. *)
+(** [concat ~sep strings] creates a string comprised of the concatenation of
+    the [strings] list, with [sep] interposed between the inputs. *)
 
 val concat_rev: ?sep:t -> t list -> t
 (** [concat_rev ~sep strings] creates a string comprised of the concatenation of
@@ -612,7 +602,7 @@ val split_lines_rev: t -> t list
 val lsplit2: t -> on:codepoint -> (t * t) option
 (** [lsplit2 t ~on] splits [t] into two strings at the leftmost codepoint for
     which [on] returns [true], or returns [None] if [on] never returns [true].
-    *)
+*)
 
 val lsplit2_hlt: t -> on:codepoint -> t * t
 (** [lsplit2_hlt t ~on] splits [t] into two strings at the leftmost codepoint
@@ -621,7 +611,7 @@ val lsplit2_hlt: t -> on:codepoint -> t * t
 val rsplit2: t -> on:codepoint -> (t * t) option
 (** [rsplit2 t ~on] splits [t] into two strings at the rightmost codepoint for
     which [on] returns [true], or returns [None] if [on] never returns [true].
-    *)
+*)
 
 val rsplit2_hlt: t -> on:codepoint -> t * t
 (** [rsplit2_hlt t ~on] splits [t] into two strings at the rightmost codepoint

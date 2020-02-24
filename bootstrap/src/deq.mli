@@ -38,17 +38,17 @@ val back: 'a t -> 'a
 
 val front: 'a t -> 'a t
 (** Return front (a deq of all elements except back), or halt if deq is empty.
-    *)
+*)
 
 (** {1 Combining and partitioning} *)
 
 val push: 'a t -> 'a -> 'a t
 (** Push element onto head of deq and return resulting deq with element as head.
-    *)
+*)
 
 val push_back: 'a t -> 'a -> 'a t
 (** Push element onto back of deq and return resulting deq with element as back.
-    *)
+*)
 
 val pop: 'a t -> 'a * 'a t
 (** Pop head element off deq and return the decomposed element and remainder

@@ -8,8 +8,8 @@
 (* Our option type must be an alias of OCaml's, lest optional function arguments
  * be incompatible with our option type. *)
 type 'a t = 'a option =
-| None
-| Some of 'a
+  | None
+  | Some of 'a
 
 include Formattable_intf.S_poly with type 'a t := 'a t
 

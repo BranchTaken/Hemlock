@@ -10,17 +10,17 @@ let exec (l, f, r, s) =
     | _, [] -> not_reached ()
     | lazy Stream.Nil, y :: _ -> Lazy.force (Stream.push y s)
     | lazy (Stream.Cons(elm, f')), y :: y' -> begin
-      let s' = Stream.push y s in
-      let f'' = rotate (l, f', y', s') in
-      Lazy.force (Stream.push elm f'')
-    end
+        let s' = Stream.push y s in
+        let f'' = rotate (l, f', y', s') in
+        Lazy.force (Stream.push elm f'')
+      end
   end in
   match s with
   | lazy (Stream.Cons(_, s')) -> (l, f, r, s')
   | lazy Stream.Nil -> begin
-    let f' = rotate (l, f, r, s) in
-    (l, f', [], f')
-  end
+      let f' = rotate (l, f, r, s) in
+      (l, f', [], f')
+    end
 
 let length (l, _, _, _) =
   l
@@ -48,12 +48,11 @@ let pp pp_elm ppf (l, f, r, s) =
   let open Format in
   fprintf ppf "@[<h>";
   fprintf ppf "(len=%a,@ f=%a,@ r=%a,@ s=%a)"
-  Usize.pp l (Stream.pp pp_elm) f (List.pp pp_elm) r (Stream.pp pp_elm) s;
+    Usize.pp l (Stream.pp pp_elm) f (List.pp pp_elm) r (Stream.pp pp_elm) s;
   fprintf ppf "@]"
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "empty" =
   let open Format in
@@ -63,7 +62,9 @@ let%expect_test "empty" =
   printf "empty = %a\n" ppt t;
   printf "@]";
 
-  [%expect{| empty = (len=0, f=Nil, r=[], s=Nil) |}]
+  [%expect{|
+    empty = (len=0, f=Nil, r=[], s=Nil)
+    |}]
 
 let%expect_test "length" =
   let open Format in
@@ -73,10 +74,10 @@ let%expect_test "length" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let l = length t in
-      printf "length %a = %a\n" ppt t Usize.pp l;
-      fn (succ i) n (push_back t i)
-    end
+        let l = length t in
+        printf "length %a = %a\n" ppt t Usize.pp l;
+        fn (succ i) n (push_back t i)
+      end
   end in
   fn 0 3 empty;
 
@@ -84,8 +85,9 @@ let%expect_test "length" =
     length (len=0, f=Nil, r=[], s=Nil) = 0
     length (len=1, f=(0 Nil), r=[], s=(0 Nil)) = 1
     length (len=2, f=(0 Nil), r=[1], s=Nil) = 2
-    length (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = 3 |}]
-    
+    length (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = 3
+    |}]
+
 let%expect_test "is_empty" =
   let open Format in
   let ppt = (pp Usize.pp) in
@@ -94,10 +96,10 @@ let%expect_test "is_empty" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let e = is_empty t in
-      printf "is_empty %a = %b\n" ppt t e;
-      fn (succ i) n (push_back t i)
-    end
+        let e = is_empty t in
+        printf "is_empty %a = %b\n" ppt t e;
+        fn (succ i) n (push_back t i)
+      end
   end in
   fn 0 3 empty;
 
@@ -105,7 +107,8 @@ let%expect_test "is_empty" =
     is_empty (len=0, f=Nil, r=[], s=Nil) = true
     is_empty (len=1, f=(0 Nil), r=[], s=(0 Nil)) = false
     is_empty (len=2, f=(0 Nil), r=[1], s=Nil) = false
-    is_empty (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = false |}]
+    is_empty (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = false
+    |}]
 
 let%expect_test "hd" =
   let open Format in
@@ -115,10 +118,10 @@ let%expect_test "hd" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let elm = hd t in
-      printf "hd %a = %a\n" ppt t Usize.pp elm;
-      fn (succ i) n (push_back t i)
-    end
+        let elm = hd t in
+        printf "hd %a = %a\n" ppt t Usize.pp elm;
+        fn (succ i) n (push_back t i)
+      end
   end in
   (* halts if we start with empty *)
   fn 1 4 (push_back empty 0);
@@ -128,7 +131,8 @@ let%expect_test "hd" =
     hd (len=1, f=(0 Nil), r=[], s=(0 Nil)) = 0
     hd (len=2, f=(0 Nil), r=[1], s=Nil) = 0
     hd (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = 0
-    hd (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) = 0 |}]
+    hd (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) = 0
+    |}]
 
 let%expect_test "tl" =
   let open Format in
@@ -138,10 +142,10 @@ let%expect_test "tl" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t' = tl t in
-      printf "tl %a = %a\n" ppt t ppt t';
-      fn (succ i) n (push_back t i)
-    end
+        let t' = tl t in
+        printf "tl %a = %a\n" ppt t ppt t';
+        fn (succ i) n (push_back t i)
+      end
   end in
   (* halts if we start with empty *)
   fn 1 4 (push_back empty 0);
@@ -151,7 +155,8 @@ let%expect_test "tl" =
     tl (len=1, f=(0 Nil), r=[], s=(0 Nil)) = (len=0, f=Nil, r=[], s=Nil)
     tl (len=2, f=(0 Nil), r=[1], s=Nil) = (len=1, f=(1 Nil), r=[], s=(1 Nil))
     tl (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = (len=2, f=(1 (2 Nil)), r=[], s=(1 (2 Nil)))
-    tl (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) = (len=3, f=(1 (2 Nil)), r=[3], s=(2 Nil)) |}]
+    tl (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) = (len=3, f=(1 (2 Nil)), r=[3], s=(2 Nil))
+    |}]
 
 let%expect_test "push_back" =
   let open Format in
@@ -161,10 +166,10 @@ let%expect_test "push_back" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t' = push_back t i in
-      printf "push_back %a %a = %a\n" ppt t Usize.pp i ppt t';
-      fn (succ i) n t'
-    end
+        let t' = push_back t i in
+        printf "push_back %a %a = %a\n" ppt t Usize.pp i ppt t';
+        fn (succ i) n t'
+      end
   end in
   fn 0 3 empty;
   printf "@]";
@@ -173,7 +178,8 @@ let%expect_test "push_back" =
     push_back (len=0, f=Nil, r=[], s=Nil) 0 = (len=1, f=(0 Nil), r=[], s=(0 Nil))
     push_back (len=1, f=(0 Nil), r=[], s=(0 Nil)) 1 = (len=2, f=(0 Nil), r=[1], s=Nil)
     push_back (len=2, f=(0 Nil), r=[1], s=Nil) 2 = (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil))))
-    push_back (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) 3 = (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) |}]
+    push_back (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) 3 = (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil)))
+    |}]
 
 let%expect_test "pop" =
   let open Format in
@@ -183,10 +189,10 @@ let%expect_test "pop" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let elm, t' = pop t in
-      printf "pop %a = %a %a\n" ppt t Usize.pp elm ppt t';
-      fn (succ i) n (push_back t i)
-    end
+        let elm, t' = pop t in
+        printf "pop %a = %a %a\n" ppt t Usize.pp elm ppt t';
+        fn (succ i) n (push_back t i)
+      end
   end in
   (* halts if we start with empty *)
   fn 1 4 (push_back empty 0);
@@ -196,4 +202,5 @@ let%expect_test "pop" =
     pop (len=1, f=(0 Nil), r=[], s=(0 Nil)) = 0 (len=0, f=Nil, r=[], s=Nil)
     pop (len=2, f=(0 Nil), r=[1], s=Nil) = 0 (len=1, f=(1 Nil), r=[], s=(1 Nil))
     pop (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = 0 (len=2, f=(1 (2 Nil)), r=[], s=(1 (2 Nil)))
-    pop (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) = 0 (len=3, f=(1 (2 Nil)), r=[3], s=(2 Nil)) |}]
+    pop (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) = 0 (len=3, f=(1 (2 Nil)), r=[3], s=(2 Nil))
+    |}]

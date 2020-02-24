@@ -50,9 +50,8 @@ let not t =
   | false -> true
   | true -> false
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "hash_fold" =
   let open Format in
@@ -80,11 +79,11 @@ let%expect_test "int" =
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-      let x = to_usize t in
-      printf "to_usize %b -> %a ; " t Usize.pp x;
-      printf "of_usize %a -> %b\n" Usize.pp x (of_usize x);
-      fn ts'
-    end
+        let x = to_usize t in
+        printf "to_usize %b -> %a ; " t Usize.pp x;
+        printf "of_usize %a -> %b\n" Usize.pp x (of_usize x);
+        fn ts'
+      end
   in
   fn [false; true];
 
@@ -98,11 +97,11 @@ let%expect_test "string" =
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-      let s = to_string t in
-      printf "to_string %b -> %s ; " t s;
-      printf "of_string %s -> %b\n" s (of_string s);
-      fn ts'
-    end
+        let s = to_string t in
+        printf "to_string %b -> %s ; " t s;
+        printf "of_string %s -> %b\n" s (of_string s);
+        fn ts'
+      end
   in
   fn [false; true];
 

@@ -25,10 +25,10 @@ module T = struct
     module T = struct
       type 'a container = 'a t
       type 'a t = {
-          list: 'a container;
-          left_rev: 'a container;
-          right: 'a container;
-          index: usize;
+        list: 'a container;
+        left_rev: 'a container;
+        right: 'a container;
+        index: usize;
       }
 
       let cmp t0 t1 =
@@ -357,13 +357,13 @@ let groupi t ~break =
         end
       end
   end and fn_group t i break = begin
-    match t with
-    | [] -> []
-    | elm :: t' -> begin
-        let g, t'', i' = fn_elm elm t' (Usize.succ i) break in
-        g :: (fn_group t'' i' break)
-      end
-  end in
+  match t with
+  | [] -> []
+  | elm :: t' -> begin
+      let g, t'', i' = fn_elm elm t' (Usize.succ i) break in
+      g :: (fn_group t'' i' break)
+    end
+end in
   fn_group t 0 break
 
 let group t ~break =
@@ -601,7 +601,7 @@ let pp pp_elm ppf t =
     | elm :: t' -> begin
         fprintf ppf "%a;@ " pp_elm elm;
         pp_elms ppf t'
-    end
+      end
   in
   fprintf ppf "@[<h>[%a]@]" pp_elms t
 
@@ -679,9 +679,8 @@ module Assoc = struct
     fn t []
 end
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "cmp" =
   let open Format in
@@ -1139,24 +1138,24 @@ let%expect_test "[rev_]split_until,[rev_]take_until,drop_until" =
       let f elm = (elm >= i) in
       let l0, l1 = split_until l ~f in
       printf ("split_until/take_until,drop_until %a " ^^
-        "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
-          (pp Usize.pp) l
-          Usize.pp i
-          (pp Usize.pp) l0
-          (pp Usize.pp) l1
-          (pp Usize.pp) (take_until l ~f)
-          (pp Usize.pp) (drop_until l ~f)
+          "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
+        (pp Usize.pp) l
+        Usize.pp i
+        (pp Usize.pp) l0
+        (pp Usize.pp) l1
+        (pp Usize.pp) (take_until l ~f)
+        (pp Usize.pp) (drop_until l ~f)
       ;
 
       let rl0, rl1 = rev_split_until l ~f in
       printf ("rev_split_until/rev_take_until,drop_until %a " ^^
-        "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
-          (pp Usize.pp) l
-          Usize.pp i
-          (pp Usize.pp) rl0
-          (pp Usize.pp) rl1
-          (pp Usize.pp) (rev_take_until l ~f)
-          (pp Usize.pp) (drop_until l ~f)
+          "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
+        (pp Usize.pp) l
+        Usize.pp i
+        (pp Usize.pp) rl0
+        (pp Usize.pp) rl1
+        (pp Usize.pp) (rev_take_until l ~f)
+        (pp Usize.pp) (drop_until l ~f)
     done
   );
   printf "@]";

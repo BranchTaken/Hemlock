@@ -78,9 +78,8 @@ let rs = 0x1e
 let us = 0x1f
 let del = 0x7f
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "hash_fold" =
   let open Format in
@@ -108,11 +107,11 @@ let%expect_test "hash_fold" =
 let%expect_test "pp,pp_x" =
   let open Format in
   let rec fn = function
-  | [] -> ()
-  | x :: xs' -> begin
-      printf "%a %a\n" pp x pp_x x;
-      fn xs'
-    end
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "%a %a\n" pp x pp_x x;
+        fn xs'
+      end
   in
   printf "@[<h>";
   fn [kv 0; kv 1; kv 42; kv 0x7fffff];
@@ -249,7 +248,7 @@ let%expect_test "conversion" =
       end
   in
   fn [Usize.max_value; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001;
-      Usize.of_isize Isize.max_value];
+    Usize.of_isize Isize.max_value];
 
   [%expect{|
     of_isize 0x7fffffffffffffffi -> to_isize 0x1fffffu21 -> of_isize 0x00000000001fffffi -> 0x1fffffu21

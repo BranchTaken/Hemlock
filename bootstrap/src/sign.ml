@@ -1,9 +1,9 @@
 open Rudiments_functions
 
 type t =
-| Neg
-| Zero
-| Pos
+  | Neg
+  | Zero
+  | Pos
 
 let pp ppf t =
   Format.fprintf ppf (match t with

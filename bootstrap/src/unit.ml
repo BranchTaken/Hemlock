@@ -26,9 +26,8 @@ end
 include T
 include Identifiable.Make(T)
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "string" =
   let open Printf in

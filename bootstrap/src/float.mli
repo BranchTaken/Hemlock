@@ -10,10 +10,10 @@ include Stringable_intf.S with type t := t
 (** Rounding direction. *)
 module Dir : sig
   type t =
-  | Down    (** Round down (floor). *)
-  | Up      (** Round up (ceiling). *)
-  | Nearest (** Round to nearest integral. *)
-  | Zero    (** Round toward zero. *)
+    | Down    (** Round down (floor). *)
+    | Up      (** Round up (ceiling). *)
+    | Nearest (** Round to nearest integral. *)
+    | Zero    (** Round toward zero. *)
 
   include Formattable_intf.S_mono with type t := t
 end
@@ -21,11 +21,11 @@ end
 (** Numeric class. *)
 module Class : sig
   type t =
-  | Infinite  (** Infinite. *)
-  | Nan       (** Not a number. *)
-  | Normal    (** Normal. *)
-  | Subnormal (** Subnormal. *)
-  | Zero      (** Zero. *)
+    | Infinite  (** Infinite. *)
+    | Nan       (** Not a number. *)
+    | Normal    (** Normal. *)
+    | Subnormal (** Subnormal. *)
+    | Zero      (** Zero. *)
 
   include Formattable_intf.S_mono with type t := t
 end
@@ -59,7 +59,7 @@ val is_neg: t -> bool
 
 val exponent: t -> isize
 (** [exponent t] returns the exponent of [t], which is in [\[-1023 .. 1024\]].
-    *)
+*)
 
 val mantissa: t -> usize
 (** [mantissa t] returns the mantissa of [t], which is in [\[0 ..

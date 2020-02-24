@@ -12,10 +12,10 @@ let init n ~f =
     match i < n with
     | false -> Nil
     | true -> begin
-      let elm = f i in
-      let t = fn (succ i) n f in
-      Cons(elm, t)
-    end
+        let elm = f i in
+        let t = fn (succ i) n f in
+        Cons(elm, t)
+      end
   end in
   fn 0 n f
 
@@ -99,13 +99,16 @@ let pp pp_elm ppf t =
     match t with
     | lazy Nil -> fprintf ppf "Nil"
     | lazy (Cons(elm, t')) -> begin
-      fprintf ppf "(%a@ " pp_elm elm;
-      fn t';
-      fprintf ppf ")"
-    end
+        fprintf ppf "(%a@ " pp_elm elm;
+        fn t';
+        fprintf ppf ")"
+      end
   end in
   fn t;
   fprintf ppf "@]"
+
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "empty" =
   let open Format in
@@ -115,7 +118,9 @@ let%expect_test "empty" =
   printf "empty = %a\n" ppt t;
   printf "@]";
 
-  [%expect{| empty = Nil |}]
+  [%expect{|
+    empty = Nil
+    |}]
 
 let%expect_test "init" =
   let open Format in
@@ -125,10 +130,10 @@ let%expect_test "init" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t = init i ~f:(fun i -> i) in
-      printf "init %a ~f:(fun i -> i) = %a\n" Usize.pp i ppt t;
-      test_init_up_to (succ i) n
-    end
+        let t = init i ~f:(fun i -> i) in
+        printf "init %a ~f:(fun i -> i) = %a\n" Usize.pp i ppt t;
+        test_init_up_to (succ i) n
+      end
   end in
   test_init_up_to 0 3;
   printf "@]";
@@ -137,7 +142,8 @@ let%expect_test "init" =
     init 0 ~f:(fun i -> i) = Nil
     init 1 ~f:(fun i -> i) = (0 Nil)
     init 2 ~f:(fun i -> i) = (0 (1 Nil))
-    init 3 ~f:(fun i -> i) = (0 (1 (2 Nil))) |}]
+    init 3 ~f:(fun i -> i) = (0 (1 (2 Nil)))
+    |}]
 
 let%expect_test "length" =
   let open Format in
@@ -147,11 +153,11 @@ let%expect_test "length" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t = init i ~f:(fun i -> i) in
-      let l = length t in
-      printf "length %a = %a\n" ppt t Usize.pp l;
-      test_length_up_to (succ i) n
-    end
+        let t = init i ~f:(fun i -> i) in
+        let l = length t in
+        printf "length %a = %a\n" ppt t Usize.pp l;
+        test_length_up_to (succ i) n
+      end
   end in
   test_length_up_to 0 3;
 
@@ -159,7 +165,8 @@ let%expect_test "length" =
     length Nil = 0
     length (0 Nil) = 1
     length (0 (1 Nil)) = 2
-    length (0 (1 (2 Nil))) = 3 |}]
+    length (0 (1 (2 Nil))) = 3
+    |}]
 
 let%expect_test "is_empty" =
   let open Format in
@@ -169,11 +176,11 @@ let%expect_test "is_empty" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t = init i ~f:(fun i -> i) in
-      let e = is_empty t in
-      printf "is_empty %a = %b\n" ppt t e;
-      test_is_empty_up_to (succ i) n
-    end
+        let t = init i ~f:(fun i -> i) in
+        let e = is_empty t in
+        printf "is_empty %a = %b\n" ppt t e;
+        test_is_empty_up_to (succ i) n
+      end
   end in
   test_is_empty_up_to 0 3;
 
@@ -181,7 +188,8 @@ let%expect_test "is_empty" =
     is_empty Nil = true
     is_empty (0 Nil) = false
     is_empty (0 (1 Nil)) = false
-    is_empty (0 (1 (2 Nil))) = false |}]
+    is_empty (0 (1 (2 Nil))) = false
+    |}]
 
 let%expect_test "hd" =
   let open Format in
@@ -191,11 +199,11 @@ let%expect_test "hd" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t = init ~f:(fun i -> i) i in
-      let elm = hd t in
-      printf "hd %a = %a\n" ppt t Usize.pp elm;
-      test_hd_up_to (succ i) n
-    end
+        let t = init ~f:(fun i -> i) i in
+        let elm = hd t in
+        printf "hd %a = %a\n" ppt t Usize.pp elm;
+        test_hd_up_to (succ i) n
+      end
   end in
   (* halts if we start at 0 *)
   test_hd_up_to 1 4;
@@ -205,7 +213,8 @@ let%expect_test "hd" =
     hd (0 Nil) = 0
     hd (0 (1 Nil)) = 0
     hd (0 (1 (2 Nil))) = 0
-    hd (0 (1 (2 (3 Nil)))) = 0 |}]
+    hd (0 (1 (2 (3 Nil)))) = 0
+    |}]
 
 let%expect_test "tl" =
   let open Format in
@@ -215,11 +224,11 @@ let%expect_test "tl" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t = init ~f:(fun i -> i) i in
-      let t' = tl t in
-      printf "tl %a = %a\n" ppt t ppt t';
-      test_tl_up_to (succ i) n
-    end
+        let t = init ~f:(fun i -> i) i in
+        let t' = tl t in
+        printf "tl %a = %a\n" ppt t ppt t';
+        test_tl_up_to (succ i) n
+      end
   end in
   (* halts if we start at 0 *)
   test_tl_up_to 1 4;
@@ -229,7 +238,8 @@ let%expect_test "tl" =
     tl (0 Nil) = Nil
     tl (0 (1 Nil)) = (1 Nil)
     tl (0 (1 (2 Nil))) = (1 (2 Nil))
-    tl (0 (1 (2 (3 Nil)))) = (1 (2 (3 Nil))) |}]
+    tl (0 (1 (2 (3 Nil)))) = (1 (2 (3 Nil)))
+    |}]
 
 let%expect_test "push" =
   let open Format in
@@ -239,10 +249,10 @@ let%expect_test "push" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t' = push i t in
-      printf "push %a %a = %a\n" Usize.pp i ppt t ppt t';
-      test_push_up_to t' (succ i) n
-    end
+        let t' = push i t in
+        printf "push %a %a = %a\n" Usize.pp i ppt t ppt t';
+        test_push_up_to t' (succ i) n
+      end
   end in
   test_push_up_to empty 0 3;
   printf "@]";
@@ -251,7 +261,8 @@ let%expect_test "push" =
     push 0 Nil = (0 Nil)
     push 1 (0 Nil) = (1 (0 Nil))
     push 2 (1 (0 Nil)) = (2 (1 (0 Nil)))
-    push 3 (2 (1 (0 Nil))) = (3 (2 (1 (0 Nil)))) |}]
+    push 3 (2 (1 (0 Nil))) = (3 (2 (1 (0 Nil))))
+    |}]
 
 let%expect_test "pop" =
   let open Format in
@@ -261,10 +272,10 @@ let%expect_test "pop" =
     match t with
     | lazy Nil -> ()
     | _ -> begin
-      let elm, t' = pop t in
-      printf "pop %a = %a %a\n" ppt t Usize.pp elm ppt t';
-      test_pop t'
-    end
+        let elm, t' = pop t in
+        printf "pop %a = %a %a\n" ppt t Usize.pp elm ppt t';
+        test_pop t'
+      end
   end in
   test_pop (init 3 ~f:(fun i -> i));
   printf "@]";
@@ -272,7 +283,8 @@ let%expect_test "pop" =
   [%expect{|
     pop (0 (1 (2 Nil))) = 0 (1 (2 Nil))
     pop (1 (2 Nil)) = 1 (2 Nil)
-    pop (2 Nil) = 2 Nil |}]
+    pop (2 Nil) = 2 Nil
+    |}]
 
 let%expect_test "concat" =
   let open Format in
@@ -283,12 +295,12 @@ let%expect_test "concat" =
     | _, false -> ()
     | false, _ -> test_concat_up_to 0 (succ l) n
     | true, true -> begin
-      let t0 = init ~f:(fun i -> i) i in
-      let t1 = init ~f:(fun j -> i + j) (l - i) in
-      let t = concat t0 t1 in
-      printf "concat %a %a = %a\n" ppt t0 ppt t1 ppt t;
-      test_concat_up_to (succ i) l n
-    end
+        let t0 = init ~f:(fun i -> i) i in
+        let t1 = init ~f:(fun j -> i + j) (l - i) in
+        let t = concat t0 t1 in
+        printf "concat %a %a = %a\n" ppt t0 ppt t1 ppt t;
+        test_concat_up_to (succ i) l n
+      end
   end in
   test_concat_up_to 0 0 3;
   printf "@]";
@@ -303,7 +315,8 @@ let%expect_test "concat" =
     concat Nil (0 (1 (2 Nil))) = (0 (1 (2 Nil)))
     concat (0 Nil) (1 (2 Nil)) = (0 (1 (2 Nil)))
     concat (0 (1 Nil)) (2 Nil) = (0 (1 (2 Nil)))
-    concat (0 (1 (2 Nil))) Nil = (0 (1 (2 Nil))) |}]
+    concat (0 (1 (2 Nil))) Nil = (0 (1 (2 Nil)))
+    |}]
 
 let%expect_test "split" =
   let open Format in
@@ -314,11 +327,11 @@ let%expect_test "split" =
     | _, false -> ()
     | false, _ -> test_split_up_to 0 (succ l) n
     | true, true -> begin
-      let t = init l ~f:(fun i -> i) in
-      let t0, t1 = split t i in
-      printf "split %a %a = %a %a\n" ppt t Usize.pp i ppt t0 ppt t1;
-      test_split_up_to (succ i) l n
-    end in
+        let t = init l ~f:(fun i -> i) in
+        let t0, t1 = split t i in
+        printf "split %a %a = %a %a\n" ppt t Usize.pp i ppt t0 ppt t1;
+        test_split_up_to (succ i) l n
+      end in
   test_split_up_to 0 0 3;
   printf "@]";
 
@@ -332,7 +345,8 @@ let%expect_test "split" =
     split (0 (1 (2 Nil))) 0 = Nil (0 (1 (2 Nil)))
     split (0 (1 (2 Nil))) 1 = (0 Nil) (1 (2 Nil))
     split (0 (1 (2 Nil))) 2 = (0 (1 Nil)) (2 Nil)
-    split (0 (1 (2 Nil))) 3 = (0 (1 (2 Nil))) Nil |}]
+    split (0 (1 (2 Nil))) 3 = (0 (1 (2 Nil))) Nil
+    |}]
 
 let%expect_test "rev_split" =
   let open Format in
@@ -343,11 +357,11 @@ let%expect_test "rev_split" =
     | _, false -> ()
     | false, _ -> test_rev_split_up_to 0 (succ l) n
     | true, true -> begin
-      let t = init l ~f:(fun i -> i) in
-      let t0, t1 = rev_split t i in
-      printf "rev_split %a %a = %a %a\n" ppt t Usize.pp i ppt t0 ppt t1;
-      test_rev_split_up_to (succ i) l n
-    end in
+        let t = init l ~f:(fun i -> i) in
+        let t0, t1 = rev_split t i in
+        printf "rev_split %a %a = %a %a\n" ppt t Usize.pp i ppt t0 ppt t1;
+        test_rev_split_up_to (succ i) l n
+      end in
   test_rev_split_up_to 0 0 3;
   printf "@]";
 
@@ -361,7 +375,8 @@ let%expect_test "rev_split" =
     rev_split (0 (1 (2 Nil))) 0 = Nil (0 (1 (2 Nil)))
     rev_split (0 (1 (2 Nil))) 1 = (0 Nil) (1 (2 Nil))
     rev_split (0 (1 (2 Nil))) 2 = (1 (0 Nil)) (2 Nil)
-    rev_split (0 (1 (2 Nil))) 3 = (2 (1 (0 Nil))) Nil |}]
+    rev_split (0 (1 (2 Nil))) 3 = (2 (1 (0 Nil))) Nil
+    |}]
 
 let%expect_test "take" =
   let open Format in
@@ -373,11 +388,11 @@ let%expect_test "take" =
     | _, false -> ()
     | false, _ -> test_take_up_to 0 (succ l) n
     | true, true -> begin
-      let t = init l ~f:(fun i -> i) in
-      let t' = take t i in
-      printf "take %a %a = %a\n" ppt t Usize.pp i ppt t';
-      test_take_up_to (succ i) l n
-    end in
+        let t = init l ~f:(fun i -> i) in
+        let t' = take t i in
+        printf "take %a %a = %a\n" ppt t Usize.pp i ppt t';
+        test_take_up_to (succ i) l n
+      end in
   test_take_up_to 0 0 3;
   printf "@]";
 
@@ -395,7 +410,8 @@ let%expect_test "take" =
     take (0 (1 (2 Nil))) 1 = (0 Nil)
     take (0 (1 (2 Nil))) 2 = (0 (1 Nil))
     take (0 (1 (2 Nil))) 3 = (0 (1 (2 Nil)))
-    take (0 (1 (2 Nil))) 4 = (0 (1 (2 Nil))) |}]
+    take (0 (1 (2 Nil))) 4 = (0 (1 (2 Nil)))
+    |}]
 
 let%expect_test "rev_take" =
   let open Format in
@@ -407,11 +423,11 @@ let%expect_test "rev_take" =
     | _, false -> ()
     | false, _ -> test_rev_take_up_to 0 (succ l) n
     | true, true -> begin
-      let t = init l ~f:(fun i -> i) in
-      let t' = rev_take t i in
-      printf "rev_take %a %a = %a\n" ppt t Usize.pp i ppt t';
-      test_rev_take_up_to (succ i) l n
-    end in
+        let t = init l ~f:(fun i -> i) in
+        let t' = rev_take t i in
+        printf "rev_take %a %a = %a\n" ppt t Usize.pp i ppt t';
+        test_rev_take_up_to (succ i) l n
+      end in
   test_rev_take_up_to 0 0 3;
   printf "@]";
 
@@ -429,7 +445,8 @@ let%expect_test "rev_take" =
     rev_take (0 (1 (2 Nil))) 1 = (0 Nil)
     rev_take (0 (1 (2 Nil))) 2 = (1 (0 Nil))
     rev_take (0 (1 (2 Nil))) 3 = (2 (1 (0 Nil)))
-    rev_take (0 (1 (2 Nil))) 4 = (2 (1 (0 Nil))) |}]
+    rev_take (0 (1 (2 Nil))) 4 = (2 (1 (0 Nil)))
+    |}]
 
 let%expect_test "drop" =
   let open Format in
@@ -441,11 +458,11 @@ let%expect_test "drop" =
     | _, false -> ()
     | false, _ -> test_drop_up_to 0 (succ l) n
     | true, true -> begin
-      let t = init l ~f:(fun i -> i) in
-      let t' = drop t i in
-      printf "drop %a %a = %a\n" ppt t Usize.pp i ppt t';
-      test_drop_up_to (succ i) l n
-    end in
+        let t = init l ~f:(fun i -> i) in
+        let t' = drop t i in
+        printf "drop %a %a = %a\n" ppt t Usize.pp i ppt t';
+        test_drop_up_to (succ i) l n
+      end in
   test_drop_up_to 0 0 3;
   printf "@]";
 
@@ -463,7 +480,8 @@ let%expect_test "drop" =
     drop (0 (1 (2 Nil))) 1 = (1 (2 Nil))
     drop (0 (1 (2 Nil))) 2 = (2 Nil)
     drop (0 (1 (2 Nil))) 3 = Nil
-    drop (0 (1 (2 Nil))) 4 = Nil |}]
+    drop (0 (1 (2 Nil))) 4 = Nil
+    |}]
 
 let%expect_test "rev" =
   let open Format in
@@ -473,11 +491,11 @@ let%expect_test "rev" =
     match i <= n with
     | false -> ()
     | true -> begin
-      let t = init i ~f:(fun i -> i) in
-      let t' = rev t in
-      printf "rev %a = %a\n" ppt t ppt t';
-      test_rev_up_to (succ i) n
-    end
+        let t = init i ~f:(fun i -> i) in
+        let t' = rev t in
+        printf "rev %a = %a\n" ppt t ppt t';
+        test_rev_up_to (succ i) n
+      end
   end in
   test_rev_up_to 0 3;
   printf "@]";
@@ -486,4 +504,5 @@ let%expect_test "rev" =
     rev Nil = Nil
     rev (0 Nil) = (0 Nil)
     rev (0 (1 Nil)) = (1 (0 Nil))
-    rev (0 (1 (2 Nil))) = (2 (1 (0 Nil))) |}]
+    rev (0 (1 (2 Nil))) = (2 (1 (0 Nil)))
+    |}]
