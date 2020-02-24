@@ -56,35 +56,35 @@ val pop: 'a t -> 'a * 'a t
 val concat: 'a t -> 'a t -> 'a t
 (** Concatenate two streams. *)
 
-val split: 'a t -> usize -> 'a t * 'a t
+val split: usize -> 'a t -> 'a t * 'a t
 (** Split the stream with elements [\[0..len)] into streams with elements
     [\[0..n)] and [\[n..len)].  If stream contains fewer than [n] elements,
     returns a stream with elements [\[0..len)] and an empty stream.  Split is
     O(1), but forcing the first element of the second returned stream is O(n).
 *)
 
-val rev_split: 'a t -> usize -> 'a t * 'a t
+val rev_split: usize -> 'a t -> 'a t * 'a t
 (** Split the stream with elements [\[0..len)] into streams with elements
     [(n..0\]] and [\[n..len)].  If stream contains fewer than [n] elements,
     returns a stream with elements [(len..0\]] and an empty stream.  Split is
     O(1), but forcing the first element of either returned stream is O(n). *)
 
-val take: 'a t -> usize -> 'a t
+val take: usize -> 'a t -> 'a t
 (** Return a new stream with the first [max n len] elements of the input stream.
 *)
 
-val rev_take: 'a t -> usize -> 'a t
+val rev_take: usize -> 'a t -> 'a t
 (** Return a new stream with the first [max n len] elements of the input stream
     in reverse order.  Forcing the first element of the returned stream is O(n).
 *)
 
-val drop: 'a t -> usize -> 'a t
+val drop: usize -> 'a t -> 'a t
 (** Return a new stream without the first [max n len] elements of the input
     stream.  Drop is O(1), but forcing the first element of the returned stream
     is O(n). *)
 
 (** {1 Re-ordering} *)
 
-val rev: 'a t-> 'a t
+val rev: 'a t -> 'a t
 (** Create a stream with elements reversed relative to the input stream.
     Forcing the first element of the returned stream is Θ(n). *)

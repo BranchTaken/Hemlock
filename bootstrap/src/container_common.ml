@@ -22,7 +22,7 @@ end
 module Make_poly_fold (T : I_poly) : S_poly_fold_gen
   with type 'a t := 'a T.t
    and type 'a elm := 'a T.elm = struct
-  let fold_until t ~init ~f =
+  let fold_until ~init ~f t =
     let rec fn accum cursor = begin
       match T.Cursor.(cursor = (tl t)) with
       | true -> accum
@@ -36,7 +36,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     end in
     fn init (T.Cursor.hd t)
 
-  let fold_right_until t ~init ~f =
+  let fold_right_until ~init ~f t =
     let rec fn t ~f accum cursor = begin
       match T.Cursor.(cursor = (T.Cursor.hd t)) with
       | true -> accum
@@ -50,7 +50,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     end in
     fn t ~f init (T.Cursor.tl t)
 
-  let foldi_until t ~init ~f =
+  let foldi_until ~init ~f t =
     let _, accum = fold_until t ~init:(0, init)
       ~f:(fun (i, accum) elm ->
         let i' = (Usize.succ i) in
@@ -59,69 +59,69 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
       ) in
     accum
 
-  let fold t ~init ~f =
+  let fold ~init ~f t =
     fold_until t ~init ~f:(fun accum elm -> (f accum elm), false)
 
-  let fold_right t ~init ~f =
+  let fold_right ~init ~f t =
     fold_right_until t ~init ~f:(fun elm accum -> (f elm accum), false)
 
-  let foldi t ~init ~f =
+  let foldi ~init ~f t =
     foldi_until t ~init ~f:(fun i accum elm -> (f i accum elm), false)
 
-  let iter t ~f =
+  let iter ~f t =
     fold t ~init:() ~f:(fun _ elm -> f elm)
 
-  let iteri t ~f =
+  let iteri ~f t =
     foldi t ~init:() ~f:(fun i _ elm -> f i elm)
 
-  let count t ~f =
+  let count ~f t =
     fold t ~init:0 ~f:(fun accum elm ->
       match f elm with
       | false -> accum
       | true -> (Usize.succ accum)
     )
 
-  let for_any t ~f =
+  let for_any ~f t =
     fold_until t ~init:false ~f:(fun _ elm ->
       let any' = f elm in
       any', any'
     )
 
-  let for_all t ~f =
+  let for_all ~f t =
     fold_until t ~init:true ~f:(fun _ elm ->
       let all' = f elm in
       all', (not all')
     )
 
-  let find t ~f =
+  let find ~f t =
     fold_until t ~init:None ~f:(fun _ elm ->
       match f elm with
       | false -> None, false
       | true -> Some elm, true
     )
 
-  let find_map t ~f =
+  let find_map ~f t =
     fold_until t ~init:None ~f:(fun _ elm ->
       match f elm with
       | None -> None, false
       | Some a -> Some a, true
     )
 
-  let findi t ~f =
+  let findi ~f t =
     foldi_until t ~init:None ~f:(fun i _ elm ->
       match f i elm with
       | false -> None, false
       | true -> Some elm, true
     )
 
-  let findi_map t ~f =
+  let findi_map ~f t =
     foldi_until t ~init:None ~f:(fun i _ elm ->
       match f i elm with
       | None -> None, false
       | Some a -> Some a, true
     )
 
-  let min_elm t ~cmp =
+  let min_elm ~cmp t =
     fold t ~init:None ~f:(fun accum elm ->
       match accum with
       | None -> Some elm
@@ -133,7 +133,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
         end
     )
 
-  let max_elm t ~cmp =
+  let max_elm ~cmp t =
     fold t ~init:None ~f:(fun accum elm ->
       match accum with
       | None -> Some elm
@@ -155,7 +155,7 @@ end
 module Make_poly_mem (T : I_poly_mem) : S_poly_mem_gen
   with type 'a t := 'a T.t
    and type 'a elm := 'a T.elm = struct
-  let mem t elm =
+  let mem elm t =
     let rec fn cursor = begin
       match T.Cursor.(cursor = (tl t)) with
       | true -> false

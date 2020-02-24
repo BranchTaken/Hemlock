@@ -54,13 +54,13 @@ module type S_mono = sig
       provides total ordering, this is equivalent to [cmp t1 t0], but the
       implementation does not assume [cmp] is implemented as such. *)
 
-  val clamp: t -> min:t -> max:t -> t
-  (** [clamp t ~min ~max] returns [t] unless it is outside the open-open range
-      [min .. max], in which case it returns the nearest end of the range. *)
+  val clamp: min:t -> max:t -> t -> t
+  (** [clamp ~min ~max t] returns [t] unless it is outside the open-open range
+      [~min .. ~max], in which case it returns the nearest end of the range. *)
 
-  val between: t -> low:t -> high:t -> bool
-  (** [between t low high] returns [true] iff [t] is inside the open-open range
-      [low .. high]. *)
+  val between: low:t -> high:t -> t -> bool
+  (** [between ~low ~high t] returns [true] iff [t] is inside the open-open
+      range [~low .. ~high]. *)
 end
 
 (** Functor output signature for comparable types with ranges that contain zero.
@@ -144,11 +144,11 @@ module type S_poly = sig
       provides total ordering, this is equivalent to [cmp t1 t0], but the
       implementation does not assume [cmp] is implemented as such. *)
 
-  val clamp: 'a t -> min:'a t -> max:'a t -> 'a t
-  (** [clamp t ~min ~max] returns [t] unless it is outside the open-open range
-      [min .. max], in which case it returns the nearest end of the range. *)
+  val clamp: min:'a t -> max:'a t -> 'a t -> 'a t
+  (** [clamp ~min ~max t] returns [t] unless it is outside the open-open range
+      [~min .. ~max], in which case it returns the nearest end of the range. *)
 
-  val between: 'a t -> low:'a t -> high:'a t -> bool
-  (** [between t low high] returns [true] iff [t] is inside the open-open range
-      [low .. high]. *)
+  val between: low:'a t -> high:'a t -> 'a t -> bool
+  (** [between ~low ~high t] returns [true] iff [t] is inside the open-open
+      range [~low .. ~high]. *)
 end

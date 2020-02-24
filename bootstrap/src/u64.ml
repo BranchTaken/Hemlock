@@ -149,13 +149,13 @@ let bit_xor t0 t1 =
 let bit_not t =
   Int64.lognot t
 
-let bit_sl t i =
+let bit_sl i t =
   Int64.shift_left t i
 
-let bit_usr t i =
+let bit_usr i t =
   Int64.shift_right_logical t i
 
-let bit_ssr t i =
+let bit_ssr i t =
   Int64.shift_right t i
 
 let ( + ) t0 t1 =
@@ -185,7 +185,7 @@ let ( ** ) t0 t1 =
           | false -> r * p
         in
         let p' = p * p in
-        let n' = bit_usr n 1 in
+        let n' = bit_usr 1 n in
         fn r' p' n'
       end
   end in
@@ -201,21 +201,21 @@ let c7f = of_string "0x7f"
 
 let bit_pop x =
   let x =
-    x - (bit_and (bit_usr x 1) c5s) in
-  let x = (bit_and x c3s) + (bit_and (bit_usr x 2) c3s) in
-  let x = bit_and (x + (bit_usr x 4)) c0fs in
-  let x = x + (bit_usr x 8) in
-  let x = x + (bit_usr x 16) in
-  let x = x + (bit_usr x 32) in
+    x - (bit_and (bit_usr 1 x) c5s) in
+  let x = (bit_and x c3s) + (bit_and (bit_usr 2 x) c3s) in
+  let x = bit_and (x + (bit_usr 4 x)) c0fs in
+  let x = x + (bit_usr 8 x) in
+  let x = x + (bit_usr 16 x) in
+  let x = x + (bit_usr 32 x) in
   to_usize (bit_and x c7f)
 
 let bit_clz x =
-  let x = bit_or x (bit_usr x 1) in
-  let x = bit_or x (bit_usr x 2) in
-  let x = bit_or x (bit_usr x 4) in
-  let x = bit_or x (bit_usr x 8) in
-  let x = bit_or x (bit_usr x 16) in
-  let x = bit_or x (bit_usr x 32) in
+  let x = bit_or x (bit_usr 1 x) in
+  let x = bit_or x (bit_usr 2 x) in
+  let x = bit_or x (bit_usr 4 x) in
+  let x = bit_or x (bit_usr 8 x) in
+  let x = bit_or x (bit_usr 16 x) in
+  let x = bit_or x (bit_usr 32 x) in
   bit_pop (bit_not x)
 
 let bit_ctz t =
@@ -295,10 +295,10 @@ let%expect_test "rel" =
   fn (of_string "0x8000_0000_0000_0000") (of_string "0x7fff_ffff_ffff_ffff");
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp_x t pp_x min pp_x max pp_x (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp_x t pp_x min pp_x max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp_x min pp_x max pp_x t pp_x (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp_x min pp_x max pp_x t (between ~low:min ~high:max t);
   end in
   fn2 (of_string "0x7fff_ffff_ffff_fffe") (of_string "0x7fff_ffff_ffff_ffff")
     (of_string "0x8000_0000_0000_0001");
@@ -342,20 +342,20 @@ let%expect_test "rel" =
     ascending 0x8000_0000_0000_0000u64 0x7fff_ffff_ffff_ffffu64 -> Gt
     descending 0x8000_0000_0000_0000u64 0x7fff_ffff_ffff_ffffu64 -> Lt
 
-    clamp 0x7fff_ffff_ffff_fffeu64 ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 -> 0x7fff_ffff_ffff_ffffu64
-    between 0x7fff_ffff_ffff_fffeu64 ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 -> false
+    clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_fffeu64 -> 0x7fff_ffff_ffff_ffffu64
+    between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_fffeu64 -> false
 
-    clamp 0x7fff_ffff_ffff_ffffu64 ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 -> 0x7fff_ffff_ffff_ffffu64
-    between 0x7fff_ffff_ffff_ffffu64 ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 -> true
+    clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_ffffu64 -> 0x7fff_ffff_ffff_ffffu64
+    between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_ffffu64 -> true
 
-    clamp 0x8000_0000_0000_0000u64 ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 -> 0x8000_0000_0000_0000u64
-    between 0x8000_0000_0000_0000u64 ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 -> true
+    clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x8000_0000_0000_0000u64 -> 0x8000_0000_0000_0000u64
+    between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x8000_0000_0000_0000u64 -> true
 
-    clamp 0x8000_0000_0000_0001u64 ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 -> 0x8000_0000_0000_0001u64
-    between 0x8000_0000_0000_0001u64 ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 -> true
+    clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x8000_0000_0000_0001u64 -> 0x8000_0000_0000_0001u64
+    between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x8000_0000_0000_0001u64 -> true
 
-    clamp 0x8000_0000_0000_0002u64 ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 -> 0x8000_0000_0000_0001u64
-    between 0x8000_0000_0000_0002u64 ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 -> false
+    clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x8000_0000_0000_0002u64 -> 0x8000_0000_0000_0001u64
+    between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x8000_0000_0000_0002u64 -> false
     |}]
 
 let%expect_test "narrowing" =

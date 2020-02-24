@@ -70,7 +70,7 @@ module T = struct
       let index t =
         t.index
 
-      let seek t i =
+      let seek i t =
         match int_of_isize i with
         | -1 -> pred t
         | 0 -> t
@@ -104,7 +104,7 @@ let is_none = function
   | Some _ -> false
   | None -> true
 
-let value t ~default =
+let value ~default t =
   match t with
   | Some a -> a
   | None -> default
@@ -131,7 +131,7 @@ let first_some t0 t1 =
   | None, Some a -> Some a
   | None, None -> None
 
-let filter t ~f =
+let filter ~f t =
   match t with
   | Some a -> begin
       match f a with
@@ -140,19 +140,19 @@ let filter t ~f =
     end
   | None -> None
 
-let value_map t ~default ~f =
+let value_map ~default ~f t =
   match t with
   | Some a -> f a
   | None -> default
 
-let merge t0 t1 ~f =
+let merge ~f t0 t1 =
   match t0, t1 with
   | Some a0, Some a1 -> Some (f a0 a1)
   | Some a, None
   | None, Some a -> Some a
   | None, None -> None
 
-let map2 ta tb ~f =
+let map2 ~f ta tb =
   match ta, tb with
   | Some a, Some b -> Some (f a b)
   | _, _ -> None

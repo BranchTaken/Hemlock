@@ -87,17 +87,17 @@ let error_ignore_hlt ts =
   | Ok _ -> halt "Not all Error"
   | Error _ -> ()
 
-let map_ok t ~f =
+let map_ok ~f t =
   match t with
   | Ok ok -> Ok (f ok)
   | Error error -> Error error
 
-let map_error t ~f =
+let map_error ~f t =
   match t with
   | Ok ok -> Ok ok
   | Error error -> Error (f error)
 
-let merge t0 t1 ~ok ~error =
+let merge ~ok ~error t0 t1 =
   match t0, t1 with
   | Ok ok0, Ok ok1 -> Ok (ok ok0 ok1)
   | Error error, Ok _

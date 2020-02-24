@@ -128,8 +128,8 @@ let m2x t =
   let f, x = frexp t in
   f, (isize_of_int x)
 
-let f2x t x =
-  ldexp t (int_of_isize x)
+let f2x ~p t =
+  ldexp t (int_of_isize p)
 
 let modf t =
   let fractional, integral = modf t in
@@ -177,8 +177,8 @@ let abs t =
   | false -> t
   | true -> -1. * t
 
-let copysign t0 t1 =
-  copysign t0 t1
+let copysign ~sign t =
+  copysign t sign
 
 let classify t =
   match classify_float t with
@@ -251,15 +251,15 @@ let ln1p t =
 let log t =
   log10 t
 
-let pow t0 t1 =
-  t0 ** t1
+let pow ~p t =
+  t ** p
 
-let int_pow t x =
+let int_pow ~p t =
   (* Decompose the exponent to limit algorithmic complexity. *)
-  let neg, n = if Isize.(is_negative x) then
-      true, Isize.(-x)
+  let neg, n = if Isize.(is_negative p) then
+      true, Isize.(-p)
     else
-      false, x
+      false, p
   in
   let rec fn r p n = begin
     match n with
@@ -271,7 +271,7 @@ let int_pow t x =
           | _ -> not_reached ()
         in
         let p' = p * p in
-        let n' = Usize.bit_usr n 1 in
+        let n' = Usize.bit_usr 1 n in
         fn r' p' n'
       end
   end in
@@ -319,7 +319,7 @@ let gamma t =
       if is_neg t then nan
       else inf
     end
-  | Zero -> copysign inf t
+  | Zero -> copysign ~sign:t inf
   | Normal
   | Subnormal -> begin
       if t < 0. then nan
@@ -501,8 +501,8 @@ let%expect_test "m2x_f2x" =
     | (n, e, m) :: tups' -> begin
         let f = create ~neg:n ~exponent:e ~mantissa:m in
         let m, x = m2x f in
-        let f' = f2x m x in
-        printf "m2x %h -> f2x %h %a -> %h\n" f m Isize.pp x f';
+        let f' = f2x m ~p:x in
+        printf "m2x %h -> f2x %h ~p:%a -> %h\n" f m Isize.pp x f';
         fn tups'
       end
   end in
@@ -540,26 +540,26 @@ let%expect_test "m2x_f2x" =
   printf "@]";
 
   [%expect{|
-    m2x -infinity -> f2x -infinity 0i -> -infinity
-    m2x infinity -> f2x infinity 0i -> infinity
-    m2x nan -> f2x nan 0i -> nan
-    m2x nan -> f2x nan 0i -> nan
-    m2x nan -> f2x nan 0i -> nan
-    m2x -0x1p+0 -> f2x -0x1p-1 1i -> -0x1p+0
-    m2x 0x1p-1022 -> f2x 0x1p-1 -1021i -> 0x1p-1022
-    m2x 0x1.0000000000001p-52 -> f2x 0x1.0000000000001p-1 -51i -> 0x1.0000000000001p-52
-    m2x 0x1.0000000000001p-51 -> f2x 0x1.0000000000001p-1 -50i -> 0x1.0000000000001p-51
-    m2x 0x1p-1 -> f2x 0x1p-1 0i -> 0x1p-1
-    m2x 0x1p+0 -> f2x 0x1p-1 1i -> 0x1p+0
-    m2x 0x1p+1 -> f2x 0x1p-1 2i -> 0x1p+1
-    m2x 0x1.8p+1 -> f2x 0x1.8p-1 2i -> 0x1.8p+1
-    m2x 0x1p+2 -> f2x 0x1p-1 3i -> 0x1p+2
-    m2x 0x1.4p+2 -> f2x 0x1.4p-1 3i -> 0x1.4p+2
-    m2x 0x1.fffffffffffffp+1023 -> f2x 0x1.fffffffffffffp-1 1024i -> 0x1.fffffffffffffp+1023
-    m2x 0x0.0000000000001p-1022 -> f2x 0x1p-1 -1073i -> 0x0.0000000000001p-1022
-    m2x 0x0.fffffffffffffp-1022 -> f2x 0x1.ffffffffffffep-1 -1022i -> 0x0.fffffffffffffp-1022
-    m2x -0x0p+0 -> f2x -0x0p+0 0i -> -0x0p+0
-    m2x 0x0p+0 -> f2x 0x0p+0 0i -> 0x0p+0
+    m2x -infinity -> f2x -infinity ~p:0i -> -infinity
+    m2x infinity -> f2x infinity ~p:0i -> infinity
+    m2x nan -> f2x nan ~p:0i -> nan
+    m2x nan -> f2x nan ~p:0i -> nan
+    m2x nan -> f2x nan ~p:0i -> nan
+    m2x -0x1p+0 -> f2x -0x1p-1 ~p:1i -> -0x1p+0
+    m2x 0x1p-1022 -> f2x 0x1p-1 ~p:-1021i -> 0x1p-1022
+    m2x 0x1.0000000000001p-52 -> f2x 0x1.0000000000001p-1 ~p:-51i -> 0x1.0000000000001p-52
+    m2x 0x1.0000000000001p-51 -> f2x 0x1.0000000000001p-1 ~p:-50i -> 0x1.0000000000001p-51
+    m2x 0x1p-1 -> f2x 0x1p-1 ~p:0i -> 0x1p-1
+    m2x 0x1p+0 -> f2x 0x1p-1 ~p:1i -> 0x1p+0
+    m2x 0x1p+1 -> f2x 0x1p-1 ~p:2i -> 0x1p+1
+    m2x 0x1.8p+1 -> f2x 0x1.8p-1 ~p:2i -> 0x1.8p+1
+    m2x 0x1p+2 -> f2x 0x1p-1 ~p:3i -> 0x1p+2
+    m2x 0x1.4p+2 -> f2x 0x1.4p-1 ~p:3i -> 0x1.4p+2
+    m2x 0x1.fffffffffffffp+1023 -> f2x 0x1.fffffffffffffp-1 ~p:1024i -> 0x1.fffffffffffffp+1023
+    m2x 0x0.0000000000001p-1022 -> f2x 0x1p-1 ~p:-1073i -> 0x0.0000000000001p-1022
+    m2x 0x0.fffffffffffffp-1022 -> f2x 0x1.ffffffffffffep-1 ~p:-1022i -> 0x0.fffffffffffffp-1022
+    m2x -0x0p+0 -> f2x -0x0p+0 ~p:0i -> -0x0p+0
+    m2x 0x0p+0 -> f2x 0x0p+0 ~p:0i -> 0x0p+0
     |}]
 
 let%expect_test "min_max_value" =
@@ -599,35 +599,35 @@ let%expect_test "operators" =
     for j = -1 to 2 do
       let j = Isize.of_int j in
       let t1 = of_isize j in
-      printf ("+ - * / %% ** copysign %.1f %.1f -> " ^^
+      printf ("+ - * / %% ** copysign %.1f ~sign:%.1f -> " ^^
           "%.1f %.1f %.1f %.1f %.1f %.1f %.1f\n")
         t0 t1 (t0 + t1) (t0 - t1) (t0 * t1) (norm_nan (t0 / t1))
-        (norm_nan (t0 % t1)) (t0 ** t1) (copysign t0 t1);
+        (norm_nan (t0 % t1)) (t0 ** t1) (copysign ~sign:t1 t0);
     done;
     printf "~- ~+ neg abs %.1f -> %.1f %.1f %.1f %.1f\n"
       t0 (~- t0) (~+ t0) (neg t0) (abs t0);
   done;
 
   [%expect{|
-  + - * / % ** copysign -1.0 -1.0 -> -2.0 0.0 1.0 1.0 -0.0 -1.0 -1.0
-  + - * / % ** copysign -1.0 0.0 -> -1.0 -1.0 -0.0 -inf nan 1.0 1.0
-  + - * / % ** copysign -1.0 1.0 -> 0.0 -2.0 -1.0 -1.0 -0.0 -1.0 1.0
-  + - * / % ** copysign -1.0 2.0 -> 1.0 -3.0 -2.0 -0.5 -1.0 1.0 1.0
+  + - * / % ** copysign -1.0 ~sign:-1.0 -> -2.0 0.0 1.0 1.0 -0.0 -1.0 -1.0
+  + - * / % ** copysign -1.0 ~sign:0.0 -> -1.0 -1.0 -0.0 -inf nan 1.0 1.0
+  + - * / % ** copysign -1.0 ~sign:1.0 -> 0.0 -2.0 -1.0 -1.0 -0.0 -1.0 1.0
+  + - * / % ** copysign -1.0 ~sign:2.0 -> 1.0 -3.0 -2.0 -0.5 -1.0 1.0 1.0
   ~- ~+ neg abs -1.0 -> 1.0 -1.0 1.0 1.0
-  + - * / % ** copysign 0.0 -1.0 -> -1.0 1.0 -0.0 -0.0 0.0 inf -0.0
-  + - * / % ** copysign 0.0 0.0 -> 0.0 0.0 0.0 nan nan 1.0 0.0
-  + - * / % ** copysign 0.0 1.0 -> 1.0 -1.0 0.0 0.0 0.0 0.0 0.0
-  + - * / % ** copysign 0.0 2.0 -> 2.0 -2.0 0.0 0.0 0.0 0.0 0.0
+  + - * / % ** copysign 0.0 ~sign:-1.0 -> -1.0 1.0 -0.0 -0.0 0.0 inf -0.0
+  + - * / % ** copysign 0.0 ~sign:0.0 -> 0.0 0.0 0.0 nan nan 1.0 0.0
+  + - * / % ** copysign 0.0 ~sign:1.0 -> 1.0 -1.0 0.0 0.0 0.0 0.0 0.0
+  + - * / % ** copysign 0.0 ~sign:2.0 -> 2.0 -2.0 0.0 0.0 0.0 0.0 0.0
   ~- ~+ neg abs 0.0 -> -0.0 0.0 -0.0 0.0
-  + - * / % ** copysign 1.0 -1.0 -> 0.0 2.0 -1.0 -1.0 0.0 1.0 -1.0
-  + - * / % ** copysign 1.0 0.0 -> 1.0 1.0 0.0 inf nan 1.0 1.0
-  + - * / % ** copysign 1.0 1.0 -> 2.0 0.0 1.0 1.0 0.0 1.0 1.0
-  + - * / % ** copysign 1.0 2.0 -> 3.0 -1.0 2.0 0.5 1.0 1.0 1.0
+  + - * / % ** copysign 1.0 ~sign:-1.0 -> 0.0 2.0 -1.0 -1.0 0.0 1.0 -1.0
+  + - * / % ** copysign 1.0 ~sign:0.0 -> 1.0 1.0 0.0 inf nan 1.0 1.0
+  + - * / % ** copysign 1.0 ~sign:1.0 -> 2.0 0.0 1.0 1.0 0.0 1.0 1.0
+  + - * / % ** copysign 1.0 ~sign:2.0 -> 3.0 -1.0 2.0 0.5 1.0 1.0 1.0
   ~- ~+ neg abs 1.0 -> -1.0 1.0 -1.0 1.0
-  + - * / % ** copysign 2.0 -1.0 -> 1.0 3.0 -2.0 -2.0 0.0 0.5 -2.0
-  + - * / % ** copysign 2.0 0.0 -> 2.0 2.0 0.0 inf nan 1.0 2.0
-  + - * / % ** copysign 2.0 1.0 -> 3.0 1.0 2.0 2.0 0.0 2.0 2.0
-  + - * / % ** copysign 2.0 2.0 -> 4.0 0.0 4.0 1.0 0.0 4.0 2.0
+  + - * / % ** copysign 2.0 ~sign:-1.0 -> 1.0 3.0 -2.0 -2.0 0.0 0.5 -2.0
+  + - * / % ** copysign 2.0 ~sign:0.0 -> 2.0 2.0 0.0 inf nan 1.0 2.0
+  + - * / % ** copysign 2.0 ~sign:1.0 -> 3.0 1.0 2.0 2.0 0.0 2.0 2.0
+  + - * / % ** copysign 2.0 ~sign:2.0 -> 4.0 0.0 4.0 1.0 0.0 4.0 2.0
   ~- ~+ neg abs 2.0 -> -2.0 2.0 -2.0 2.0
   |}]
 
@@ -907,8 +907,8 @@ let%expect_test "pow" =
     | [] -> ()
     | (b, x) :: pairs' -> begin
         let xf = of_isize x in
-        printf "** pow int_pow %h %a -> %h %h %h\n"
-          b Isize.pp x (b ** xf) (pow b xf) (int_pow b x);
+        printf "** pow int_pow %h ~p:%a -> %h %h %h\n"
+          b Isize.pp x (b ** xf) (pow b ~p:xf) (int_pow b ~p:x);
         fn pairs'
       end
   end in
@@ -930,19 +930,19 @@ let%expect_test "pow" =
   printf "@]";
 
   [%expect{|
-  ** pow int_pow 0x1.8p+1 -3i -> 0x1.2f684bda12f68p-5 0x1.2f684bda12f68p-5 0x1.2f684bda12f68p-5
-  ** pow int_pow -0x1p+0 61i -> -0x1p+0 -0x1p+0 -0x1p+0
-  ** pow int_pow 0x1p+0 61i -> 0x1p+0 0x1p+0 0x1p+0
-  ** pow int_pow 0x1p+1 -1i -> 0x1p-1 0x1p-1 0x1p-1
-  ** pow int_pow 0x1p+1 0i -> 0x1p+0 0x1p+0 0x1p+0
-  ** pow int_pow 0x1p+1 1i -> 0x1p+1 0x1p+1 0x1p+1
-  ** pow int_pow 0x1p+1 2i -> 0x1p+2 0x1p+2 0x1p+2
-  ** pow int_pow 0x1p+1 61i -> 0x1p+61 0x1p+61 0x1p+61
-  ** pow int_pow 0x1.4p+3 7i -> 0x1.312dp+23 0x1.312dp+23 0x1.312dp+23
-  ** pow int_pow 0x1.5bf0a8b145769p+1 -1i -> 0x1.78b56362cef38p-2 0x1.78b56362cef38p-2 0x1.78b56362cef38p-2
-  ** pow int_pow 0x1.5bf0a8b145769p+1 0i -> 0x1p+0 0x1p+0 0x1p+0
-  ** pow int_pow 0x1.5bf0a8b145769p+1 1i -> 0x1.5bf0a8b145769p+1 0x1.5bf0a8b145769p+1 0x1.5bf0a8b145769p+1
-  ** pow int_pow 0x1.5bf0a8b145769p+1 2i -> 0x1.d8e64b8d4ddadp+2 0x1.d8e64b8d4ddadp+2 0x1.d8e64b8d4ddadp+2
+  ** pow int_pow 0x1.8p+1 ~p:-3i -> 0x1.2f684bda12f68p-5 0x1.2f684bda12f68p-5 0x1.2f684bda12f68p-5
+  ** pow int_pow -0x1p+0 ~p:61i -> -0x1p+0 -0x1p+0 -0x1p+0
+  ** pow int_pow 0x1p+0 ~p:61i -> 0x1p+0 0x1p+0 0x1p+0
+  ** pow int_pow 0x1p+1 ~p:-1i -> 0x1p-1 0x1p-1 0x1p-1
+  ** pow int_pow 0x1p+1 ~p:0i -> 0x1p+0 0x1p+0 0x1p+0
+  ** pow int_pow 0x1p+1 ~p:1i -> 0x1p+1 0x1p+1 0x1p+1
+  ** pow int_pow 0x1p+1 ~p:2i -> 0x1p+2 0x1p+2 0x1p+2
+  ** pow int_pow 0x1p+1 ~p:61i -> 0x1p+61 0x1p+61 0x1p+61
+  ** pow int_pow 0x1.4p+3 ~p:7i -> 0x1.312dp+23 0x1.312dp+23 0x1.312dp+23
+  ** pow int_pow 0x1.5bf0a8b145769p+1 ~p:-1i -> 0x1.78b56362cef38p-2 0x1.78b56362cef38p-2 0x1.78b56362cef38p-2
+  ** pow int_pow 0x1.5bf0a8b145769p+1 ~p:0i -> 0x1p+0 0x1p+0 0x1p+0
+  ** pow int_pow 0x1.5bf0a8b145769p+1 ~p:1i -> 0x1.5bf0a8b145769p+1 0x1.5bf0a8b145769p+1 0x1.5bf0a8b145769p+1
+  ** pow int_pow 0x1.5bf0a8b145769p+1 ~p:2i -> 0x1.d8e64b8d4ddadp+2 0x1.d8e64b8d4ddadp+2 0x1.d8e64b8d4ddadp+2
   |}]
 
 let%expect_test "lngamma" =

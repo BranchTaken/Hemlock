@@ -82,8 +82,8 @@ module State = struct
         match t.nrem = 0 with
         | true -> hash u t
         | false -> begin
-            let u' = u128_bit_or (u128_bit_sl u t.nrem) t.rem in
-            let rem = u128_bit_usr u (16 - t.nrem) in
+            let u' = u128_bit_or t.rem (u128_bit_sl t.nrem u) in
+            let rem = u128_bit_usr (16 - t.nrem) u in
             let t' = {t with rem} in
             hash u' t'
           end
@@ -100,12 +100,12 @@ module State = struct
         let u = {hi=Int64.zero; lo=Int64.of_int b} in
         match t.nrem = 15 with
         | true -> begin
-            let u' = u128_bit_or (u128_bit_sl u 120) t.rem in
+            let u' = u128_bit_or t.rem (u128_bit_sl 120 u) in
             let t' = {t with rem=u128_zero; nrem=0} in
             hash u' t'
           end
         | false -> begin
-            let rem = u128_bit_or (u128_bit_sl u (t.nrem * 8)) t.rem in
+            let rem = u128_bit_or t.rem (u128_bit_sl (t.nrem * 8) u) in
             {t with rem; nrem=succ t.nrem}
           end
       end in

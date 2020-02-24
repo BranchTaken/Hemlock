@@ -128,10 +128,10 @@ let%expect_test "rel" =
   fn (kv 0x8000_0000) (kv 0xffff_ffff);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp_x t pp_x min pp_x max pp_x (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp_x t pp_x min pp_x max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp_x min pp_x max pp_x t pp_x (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp_x min pp_x max pp_x t (between ~low:min ~high:max t);
   end in
   fn2 (kv 0x7fff_fffe) (kv 0x7fff_ffff) (kv 0x8000_0001);
   fn2 (kv 0x7fff_ffff) (kv 0x7fff_ffff) (kv 0x8000_0001);
@@ -170,20 +170,20 @@ let%expect_test "rel" =
     ascending 0x80000000u32 0xffffffffu32 -> Lt
     descending 0x80000000u32 0xffffffffu32 -> Gt
 
-    clamp 0x7ffffffeu32 ~min:0x7fffffffu32 ~max:0x80000001u32 -> 0x7fffffffu32
-    between 0x7ffffffeu32 ~low:0x7fffffffu32 ~high:0x80000001u32 -> false
+    clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x7ffffffeu32 -> 0x7fffffffu32
+    between ~low:0x7fffffffu32 ~high:0x80000001u32 0x7ffffffeu32 -> false
 
-    clamp 0x7fffffffu32 ~min:0x7fffffffu32 ~max:0x80000001u32 -> 0x7fffffffu32
-    between 0x7fffffffu32 ~low:0x7fffffffu32 ~high:0x80000001u32 -> true
+    clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x7fffffffu32 -> 0x7fffffffu32
+    between ~low:0x7fffffffu32 ~high:0x80000001u32 0x7fffffffu32 -> true
 
-    clamp 0x80000000u32 ~min:0x7fffffffu32 ~max:0x80000001u32 -> 0x80000000u32
-    between 0x80000000u32 ~low:0x7fffffffu32 ~high:0x80000001u32 -> true
+    clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x80000000u32 -> 0x80000000u32
+    between ~low:0x7fffffffu32 ~high:0x80000001u32 0x80000000u32 -> true
 
-    clamp 0x80000001u32 ~min:0x7fffffffu32 ~max:0x80000001u32 -> 0x80000001u32
-    between 0x80000001u32 ~low:0x7fffffffu32 ~high:0x80000001u32 -> true
+    clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x80000001u32 -> 0x80000001u32
+    between ~low:0x7fffffffu32 ~high:0x80000001u32 0x80000001u32 -> true
 
-    clamp 0x80000002u32 ~min:0x7fffffffu32 ~max:0x80000001u32 -> 0x80000001u32
-    between 0x80000002u32 ~low:0x7fffffffu32 ~high:0x80000001u32 -> false
+    clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x80000002u32 -> 0x80000001u32
+    between ~low:0x7fffffffu32 ~high:0x80000001u32 0x80000002u32 -> false
     |}]
 
 let%expect_test "wraparound" =

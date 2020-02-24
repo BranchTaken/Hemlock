@@ -151,12 +151,12 @@ let%expect_test "bit_" =
 
   let x = kv 0xff in
   let s = 4 in
-  printf "bit_sl %a %a -> %a\n" pp_x x Usize.pp s pp_x (bit_sl x s);
+  printf "bit_sl %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_sl s x);
 
   let x = kv (-1) in
   let s = 4 in
-  printf "bit_usr %a %a -> %a\n" pp_x x Usize.pp s pp_x (bit_usr x s);
-  printf "bit_ssr %a %a -> %a\n" pp_x x Usize.pp s pp_x (bit_ssr x s);
+  printf "bit_usr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_usr s x);
+  printf "bit_ssr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_ssr s x);
 
   let rec fn xs = begin
     match xs with
@@ -175,9 +175,9 @@ let%expect_test "bit_" =
     bit_or 0x0000000000000003i 0x0000000000000005i -> 0x0000000000000007i
     bit_xor 0x0000000000000003i 0x0000000000000005i -> 0x0000000000000006i
     bit_not 0x0000000000000002i -> 0x7ffffffffffffffdi
-    bit_sl 0x00000000000000ffi 4 -> 0x0000000000000ff0i
-    bit_usr 0x7fffffffffffffffi 4 -> 0x07ffffffffffffffi
-    bit_ssr 0x7fffffffffffffffi 4 -> 0x7fffffffffffffffi
+    bit_sl 4 0x00000000000000ffi -> 0x0000000000000ff0i
+    bit_usr 4 0x7fffffffffffffffi -> 0x07ffffffffffffffi
+    bit_ssr 4 0x7fffffffffffffffi -> 0x7fffffffffffffffi
     bit_pop 0x7fffffffffffffffi -> 63
     bit_clz 0x7fffffffffffffffi -> 0
     bit_ctz 0x7fffffffffffffffi -> 0
@@ -309,10 +309,10 @@ let%expect_test "rel" =
   fn (kv 1) (kv 0);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp t pp min pp max pp (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp t pp min pp max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp min pp max pp t pp (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp min pp max pp t (between ~low:min ~high:max t);
   end in
   fn2 ~-(kv 2) ~-(kv 1) (kv 1);
   fn2 ~-(kv 1) ~-(kv 1) (kv 1);
@@ -351,20 +351,20 @@ let%expect_test "rel" =
     ascending 1i 0i -> Gt
     descending 1i 0i -> Lt
 
-    clamp -2i ~min:-1i ~max:1i -> -1i
-    between -2i ~low:-1i ~high:1i -> false
+    clamp ~min:-1i ~max:1i -2i -> -1i
+    between ~low:-1i ~high:1i -2i -> false
 
-    clamp -1i ~min:-1i ~max:1i -> -1i
-    between -1i ~low:-1i ~high:1i -> true
+    clamp ~min:-1i ~max:1i -1i -> -1i
+    between ~low:-1i ~high:1i -1i -> true
 
-    clamp 0i ~min:-1i ~max:1i -> 0i
-    between 0i ~low:-1i ~high:1i -> true
+    clamp ~min:-1i ~max:1i 0i -> 0i
+    between ~low:-1i ~high:1i 0i -> true
 
-    clamp 1i ~min:-1i ~max:1i -> 1i
-    between 1i ~low:-1i ~high:1i -> true
+    clamp ~min:-1i ~max:1i 1i -> 1i
+    between ~low:-1i ~high:1i 1i -> true
 
-    clamp 2i ~min:-1i ~max:1i -> 1i
-    between 2i ~low:-1i ~high:1i -> false
+    clamp ~min:-1i ~max:1i 2i -> 1i
+    between ~low:-1i ~high:1i 2i -> false
     |}]
 
 let%expect_test "min_max" =

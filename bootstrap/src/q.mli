@@ -35,7 +35,7 @@ val tl: 'a t -> 'a t
 
 (** {1 Combining and partitioning} *)
 
-val push_back: 'a t -> 'a -> 'a t
+val push_back: 'a -> 'a t -> 'a t
 (** Push element onto back of q and return resulting q with element as back. *)
 
 val pop: 'a t -> 'a * 'a t

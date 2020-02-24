@@ -33,7 +33,7 @@ module type I_derived = sig
   val bit_and: t -> t -> t
   (** Bitwise and. *)
 
-  val bit_sl: t -> usize -> t
+  val bit_sl: usize -> t -> t
   (** Bit shift left. *)
 
   val bit_clz: t -> usize
@@ -111,13 +111,13 @@ module type S = sig
   val bit_not: t -> t
   (** Bitwise not. *)
 
-  val bit_sl: t -> usize -> t
+  val bit_sl: usize -> t -> t
   (** Bit shift left. *)
 
-  val bit_usr: t -> usize -> t
+  val bit_usr: usize -> t -> t
   (** Unsigned bit shift right (no sign extension). *)
 
-  val bit_ssr: t -> usize -> t
+  val bit_ssr: usize -> t -> t
   (** Signed bit shift right (sign extension). *)
 
   val bit_pop: t -> usize

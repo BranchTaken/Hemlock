@@ -108,7 +108,7 @@ let ( ** ) t0 t1 =
           | false -> r * p
         in
         let p' = p * p in
-        let n' = bit_usr n 1 in
+        let n' = bit_usr 1 n in
         fn r' p' n'
       end
   end in
@@ -211,10 +211,10 @@ let%expect_test "rel" =
   fn (of_string "0x8000_0000_0000_0000") (of_string "0x7fff_ffff_ffff_ffff");
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp t pp min pp max pp (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp t pp min pp max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp min pp max pp t pp (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp t pp min pp max (between ~low:min ~high:max t);
   end in
   fn2 (of_string "-2") (of_string "-1") (of_string "1");
   fn2 (of_string "-1") (of_string "-1") (of_string "1");
@@ -253,20 +253,20 @@ let%expect_test "rel" =
     ascending 0x8000_0000_0000_0000i64 0x7fff_ffff_ffff_ffffi64 -> Lt
     descending 0x8000_0000_0000_0000i64 0x7fff_ffff_ffff_ffffi64 -> Gt
 
-    clamp -2i64 ~min:-1i64 ~max:1i64 -> -1i64
-    between -2i64 ~low:-1i64 ~high:1i64 -> false
+    clamp ~min:-1i64 ~max:1i64 -2i64 -> -1i64
+    between ~low:-2i64 ~high:-1i64 1i64 -> false
 
-    clamp -1i64 ~min:-1i64 ~max:1i64 -> -1i64
-    between -1i64 ~low:-1i64 ~high:1i64 -> true
+    clamp ~min:-1i64 ~max:1i64 -1i64 -> -1i64
+    between ~low:-1i64 ~high:-1i64 1i64 -> true
 
-    clamp 0i64 ~min:-1i64 ~max:1i64 -> 0i64
-    between 0i64 ~low:-1i64 ~high:1i64 -> true
+    clamp ~min:-1i64 ~max:1i64 0i64 -> 0i64
+    between ~low:0i64 ~high:-1i64 1i64 -> true
 
-    clamp 1i64 ~min:-1i64 ~max:1i64 -> 1i64
-    between 1i64 ~low:-1i64 ~high:1i64 -> true
+    clamp ~min:-1i64 ~max:1i64 1i64 -> 1i64
+    between ~low:1i64 ~high:-1i64 1i64 -> true
 
-    clamp 2i64 ~min:-1i64 ~max:1i64 -> 1i64
-    between 2i64 ~low:-1i64 ~high:1i64 -> false
+    clamp ~min:-1i64 ~max:1i64 2i64 -> 1i64
+    between ~low:2i64 ~high:-1i64 1i64 -> false
     |}]
 
 let%expect_test "narrowing" =
