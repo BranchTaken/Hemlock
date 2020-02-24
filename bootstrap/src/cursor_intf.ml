@@ -45,8 +45,8 @@ module type S_poly = sig
   val index: 'a t -> usize
   (** Return iterator index. *)
 
-  val seek: 'a t -> isize -> 'a t
-  (** Return iterator at given offset from input iterator. *)
+  val seek: isize -> 'a t -> 'a t
+  (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
 
 (** Cursor iterator functor output signature for monomorphic types, e.g.
@@ -92,6 +92,6 @@ module type S_mono = sig
   val index: t -> usize
   (** Return iterator index. *)
 
-  val seek: t -> isize -> t
-  (** Return iterator at given offset from input iterator. *)
+  val seek: isize -> t -> t
+  (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end

@@ -63,17 +63,17 @@ val error_ignore: ('a, _) t list -> ('a list, unit) t
 val error_ignore_hlt: ('a, _) t list -> unit
 (** Convert a list of failures to [unit], or halt.  Not tail-recursive. *)
 
-val map_ok: ('a, 'b) t -> f:('a -> 'c) -> ('c, 'b) t
-(** [map_ok t ~f] returns [Ok (f a)] if [t = Ok a], or [Error b] if [t = Error
+val map_ok: f:('a -> 'c) -> ('a, 'b) t -> ('c, 'b) t
+(** [map_ok ~f t] returns [Ok (f a)] if [t = Ok a], or [Error b] if [t = Error
      b]. *)
 
-val map_error: ('a, 'b) t -> f:('b -> 'c) -> ('a, 'c) t
-(** [map_error t] returns [Error (f b)] if [t = Error b], or [Ok a] if [t = Ok
-    a]. *)
+val map_error: f:('b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
+(** [map_error ~f t] returns [Error (f b)] if [t = Error b], or [Ok a] if [t
+    = Ok a]. *)
 
-val merge: ('a, 'b) t -> ('a, 'b) t -> ok:('a -> 'a -> 'a)
-  -> error:('b -> 'b -> 'b) -> ('a, 'b) t
-(** [merge t0 t1 ~ok ~error] returns [Ok (ok a0 a1)] if [t0 = Ok a0] and [t1 =
+val merge: ok:('a -> 'a -> 'a) -> error:('b -> 'b -> 'b) -> ('a, 'b) t
+  -> ('a, 'b) t -> ('a, 'b) t
+(** [merge ~ok ~error t0 t1] returns [Ok (ok a0 a1)] if [t0 = Ok a0] and [t1 =
      Ok a1], [Error (error b0 b1)] if [t0 = Error b0] and [t1 = Error b1], or
      [Error b0] or [Error b1] if [t0 = Error b0] or [t1 = Error b1],
      respectively. *)

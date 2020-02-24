@@ -16,7 +16,7 @@ module Make_derived (T : I_derived) : S_derived with type t := T.t = struct
     | Gt -> begin
         let nb = T.num_bits in
         let lz = T.bit_clz t in
-        T.bit_sl T.one (nb - 1 - lz)
+        T.bit_sl (nb - 1 - lz) T.one
       end
 
   let ceil_pow2 t =
@@ -27,7 +27,7 @@ module Make_derived (T : I_derived) : S_derived with type t := T.t = struct
         let nb = T.num_bits in
         match T.bit_clz T.(t - one) with
         | 0 -> T.zero
-        | lz -> T.bit_sl T.one (nb - lz)
+        | lz -> T.bit_sl (nb - lz) T.one
       end
 
   let floor_lg_opt t =
@@ -217,35 +217,35 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
     let bit_not t =
       narrow (lnot t)
 
-    let bit_sl t i =
+    let bit_sl i t =
       narrow (t lsl i)
 
-    let bit_usr t i =
+    let bit_usr i t =
       narrow (t lsr i)
 
-    let bit_ssr t i =
+    let bit_ssr i t =
       narrow (t asr i)
 
     let bit_pop t =
       let x = lbclear t in
       let x =
-        x - (bit_and (bit_usr x 1) 0x5555_5555_5555_5555) in
+        x - (bit_and (bit_usr 1 x) 0x5555_5555_5555_5555) in
       let c3s = 0x3333_3333_3333_3333 in
-      let x = (bit_and x c3s) + (bit_and (bit_usr x 2) c3s) in
-      let x = bit_and (x + (bit_usr x 4)) 0x0f0f_0f0f_0f0f_0f0f in
-      let x = x + (bit_usr x 8) in
-      let x = x + (bit_usr x 16) in
-      let x = x + (bit_usr x 32) in
+      let x = (bit_and x c3s) + (bit_and (bit_usr 2 x) c3s) in
+      let x = bit_and (x + (bit_usr 4 x)) 0x0f0f_0f0f_0f0f_0f0f in
+      let x = x + (bit_usr 8 x) in
+      let x = x + (bit_usr 16 x) in
+      let x = x + (bit_usr 32 x) in
       bit_and x 0x3f
 
     let bit_clz t =
       let x = lbclear t in
-      let x = bit_or x (bit_usr x 1) in
-      let x = bit_or x (bit_usr x 2) in
-      let x = bit_or x (bit_usr x 4) in
-      let x = bit_or x (bit_usr x 8) in
-      let x = bit_or x (bit_usr x 16) in
-      let x = bit_or x (bit_usr x 32) in
+      let x = bit_or x (bit_usr 1 x) in
+      let x = bit_or x (bit_usr 2 x) in
+      let x = bit_or x (bit_usr 4 x) in
+      let x = bit_or x (bit_usr 8 x) in
+      let x = bit_or x (bit_usr 16 x) in
+      let x = bit_or x (bit_usr 32 x) in
       bit_pop (bit_not x)
 
     let bit_ctz t =
@@ -284,7 +284,7 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
               | _ -> assert false
             in
             let p' = p * p in
-            let n' = bit_usr n 1 in
+            let n' = bit_usr 1 n in
             fn r' p' n'
           end
       end in
@@ -384,14 +384,14 @@ module Make_i (T : I) : S_i with type t := isize = struct
     let bit_not t =
       isize_of_usize (V.bit_not (usize_of_isize t))
 
-    let bit_sl t i =
-      isize_of_usize (V.bit_sl (usize_of_isize t) i)
+    let bit_sl i t =
+      isize_of_usize (V.bit_sl i (usize_of_isize t))
 
-    let bit_usr t i =
-      isize_of_usize (V.bit_usr (usize_of_isize t) i)
+    let bit_usr i t =
+      isize_of_usize (V.bit_usr i (usize_of_isize t))
 
-    let bit_ssr t i =
-      isize_of_usize (V.bit_ssr (usize_of_isize t) i)
+    let bit_ssr i t =
+      isize_of_usize (V.bit_ssr i (usize_of_isize t))
 
     let bit_pop t =
       V.bit_pop (usize_of_isize t)

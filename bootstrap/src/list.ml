@@ -2,7 +2,7 @@ open Rudiments
 
 include List0
 
-let reduce t ~f =
+let reduce ~f t =
   let rec fn accum t = begin
     match t with
     | [] -> Some accum
@@ -12,12 +12,12 @@ let reduce t ~f =
   | [] -> None
   | elm :: t' -> fn elm t'
 
-let reduce_hlt t ~f =
+let reduce_hlt ~f t =
   match reduce t ~f with
   | None -> halt "Empty list cannot be reduced"
   | Some result -> result
 
-let is_sorted ?strict t ~cmp =
+let is_sorted ?strict ~cmp t =
   let strict = match strict with
     | None -> false
     | Some b -> b
@@ -37,14 +37,14 @@ let is_sorted ?strict t ~cmp =
   | [] -> true
   | elm :: t' -> fn elm t'
 
-let sort ?length ?stable t ~cmp =
+let sort ?length ?stable ~cmp t =
   let arr = Array.of_list ?length t in
   Array.sort_inplace ?stable arr ~cmp;
   Array.to_list arr
 
-let dedup ?length t ~cmp =
+let dedup ?length ~cmp t =
   let rec fn member t arr i = begin
-    let elm = Array.get arr i in
+    let elm = Array.get i arr in
     let member', t' = match cmp elm member with
       | Cmp.Lt -> elm, (member :: t)
       | Cmp.Eq -> elm, t
@@ -60,12 +60,12 @@ let dedup ?length t ~cmp =
       let arr = Array.of_list ?length t in
       Array.sort_inplace ~stable:true arr ~cmp;
       let i = Usize.pred (Array.length arr) in
-      fn (Array.get arr i) [] arr (Usize.pred i)
+      fn (Array.get i arr) [] arr (Usize.pred i)
     end
 
-let rev_dedup ?length t ~cmp =
+let rev_dedup ?length ~cmp t =
   let rec fn member t arr i = begin
-    let elm = Array.get arr i in
+    let elm = Array.get i arr in
     let member', t' = match cmp elm member with
       | Cmp.Lt -> not_reached ()
       | Cmp.Eq -> member, t
@@ -82,10 +82,10 @@ let rev_dedup ?length t ~cmp =
       let arr = Array.of_list ?length t in
       Array.sort_inplace ~stable:true arr ~cmp;
       let i = 0 in
-      fn (Array.get arr i) [] arr (Usize.succ i)
+      fn (Array.get i arr) [] arr (Usize.succ i)
     end
 
-let dedup_sorted t ~cmp =
+let dedup_sorted ~cmp t =
   let rec fn member t = begin
     match t with
     | [] -> [member]
@@ -101,7 +101,7 @@ let dedup_sorted t ~cmp =
   | _ :: [] -> t
   | elm :: t' -> fn elm t'
 
-let rev_dedup_sorted t ~cmp =
+let rev_dedup_sorted ~cmp t =
   let rec fn member t accum = begin
     match t with
     | [] -> member :: accum
@@ -117,7 +117,7 @@ let rev_dedup_sorted t ~cmp =
   | _ :: [] -> t
   | elm :: t' -> fn elm t' []
 
-let merge t0 t1 ~cmp =
+let merge ~cmp t0 t1 =
   let rec fn elm0 t0 elm1 t1 = begin
     match cmp elm0 elm1 with
     | Cmp.Lt
@@ -137,7 +137,7 @@ let merge t0 t1 ~cmp =
   | _, [] -> t0
   | (elm0 :: t0'), (elm1 :: t1') -> fn elm0 t0' elm1 t1'
 
-let rev_merge t0 t1 ~cmp =
+let rev_merge ~cmp t0 t1 =
   let rec fn elm0 t0 elm1 t1 accum = begin
     match cmp elm0 elm1 with
     | Cmp.Lt

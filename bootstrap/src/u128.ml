@@ -83,7 +83,7 @@ module T = struct
 
   let bit_usr = u128_bit_usr
 
-  let bit_ssr t i =
+  let bit_ssr i t =
     let i = i % 128 in
     let hi = begin
       if Rudiments_int.(i >= 64) then Int64.shift_right t.hi (i - 64)
@@ -117,23 +117,23 @@ module T = struct
 
   let bit_pop x =
     let x =
-      x - (bit_and (bit_usr x 1) c5s) in
-    let x = (bit_and x c3s) + (bit_and (bit_usr x 2) c3s) in
-    let x = bit_and (x + (bit_usr x 4)) c0fs in
-    let x = x + (bit_usr x 8) in
-    let x = x + (bit_usr x 16) in
-    let x = x + (bit_usr x 32) in
-    let x = x + (bit_usr x 64) in
+      x - (bit_and (bit_usr 1 x) c5s) in
+    let x = (bit_and x c3s) + (bit_and (bit_usr 2 x) c3s) in
+    let x = bit_and (x + (bit_usr 4 x)) c0fs in
+    let x = x + (bit_usr 8 x) in
+    let x = x + (bit_usr 16 x) in
+    let x = x + (bit_usr 32 x) in
+    let x = x + (bit_usr 64 x) in
     to_usize (bit_and x cff)
 
   let bit_clz x =
-    let x = bit_or x (bit_usr x 1) in
-    let x = bit_or x (bit_usr x 2) in
-    let x = bit_or x (bit_usr x 4) in
-    let x = bit_or x (bit_usr x 8) in
-    let x = bit_or x (bit_usr x 16) in
-    let x = bit_or x (bit_usr x 32) in
-    let x = bit_or x (bit_usr x 64) in
+    let x = bit_or x (bit_usr 1 x) in
+    let x = bit_or x (bit_usr 2 x) in
+    let x = bit_or x (bit_usr 4 x) in
+    let x = bit_or x (bit_usr 8 x) in
+    let x = bit_or x (bit_usr 16 x) in
+    let x = bit_or x (bit_usr 32 x) in
+    let x = bit_or x (bit_usr 64 x) in
     bit_pop (bit_not x)
 
   let bit_ctz t =
@@ -146,12 +146,12 @@ module T = struct
        The digit arrays are encoded as (u32 array), which assures that only
        significant bits are stored.  The intermediate computations use 64-bit
        math so that two digits fit. *)
-    let b = U64.(bit_sl one 32) in
+    let b = U64.(bit_sl 32 one) in
     (* Extract the high/low digit from a 2-digit value. *)
-    let hi32 x = U64.bit_usr x 32 in
+    let hi32 x = U64.bit_usr 32 x in
     let lo32 x = U64.(bit_and x (of_usize 0xffff_ffff)) in
     let div_b x = Int64.shift_right x 32 in
-    let mul_b x = I64.bit_sl x 32 in
+    let mul_b x = I64.bit_sl 32 x in
     (* Get/set digit.  Only the low 32 bits are used; if u32 were available it
        would be a better choice for array elements. *)
     let get arr i = U64.to_i64 (U32.to_u64 (Caml.Array.get arr i)) in
@@ -215,24 +215,24 @@ module T = struct
         let vn = zero_arr n in
         for i = Rudiments_int.(pred n) downto 1 do
           set vn i (U64.bit_or
-              (U64.bit_sl (get v i) shift)
-              (U64.bit_usr (get v Rudiments_int.(pred i))
-                  Rudiments_int.(32 - shift))
+              (U64.bit_sl shift (get v i))
+              (U64.bit_usr Rudiments_int.(32 - shift)
+                  (get v Rudiments_int.(pred i)))
           )
         done;
-        set vn 0 (U64.bit_sl (get v 0) shift);
+        set vn 0 (U64.bit_sl shift (get v 0));
         (* Initialize normalized dividend. *)
         let un = zero_arr (Rudiments_int.succ m) in
-        set un m (U64.bit_usr
-            (get u (Rudiments_int.pred m)) Rudiments_int.(32 - shift));
+        set un m (U64.bit_usr Rudiments_int.(32 - shift)
+          (get u (Rudiments_int.pred m)));
         for i = Rudiments_int.(pred m) downto 1 do
           set un i U64.(bit_or
-              U64.(bit_sl (get u i) shift)
-              U64.(bit_usr (get u (Rudiments_int.pred i))
-                Rudiments_int.(32 - shift))
+              U64.(bit_sl shift (get u i))
+              U64.(bit_usr Rudiments_int.(32 - shift)
+                (get u (Rudiments_int.pred i)))
           )
         done;
-        set un 0 (U64.bit_sl (get u 0) shift);
+        set un 0 (U64.bit_sl shift (get u 0));
         (* Main computation. *)
         let rec fn_j j = begin
           (* Compute quotient digit estimate and remainder.  It is possible that
@@ -306,14 +306,14 @@ module T = struct
         assert Rudiments_int.(i_last > 0);
         for i = 0 to Rudiments_int.(pred i_last) do
           set r i U64.(bit_or
-              (bit_usr (get un i) shift)
-              (bit_sl (get un (Rudiments_int.succ i))
-                  Rudiments_int.(32 - shift)))
+              (bit_usr shift (get un i))
+              (bit_sl Rudiments_int.(32 - shift)
+                  (get un (Rudiments_int.succ i))))
         done;
         set r i_last U64.(bit_or
-            (bit_usr (get un i_last) shift)
-            (bit_sl (get un (Rudiments_int.succ i_last)) Rudiments_int.(32 -
-                  shift)));
+            (bit_usr shift (get un i_last))
+            (bit_sl Rudiments_int.(32 - shift)
+                (get un (Rudiments_int.succ i_last))));
         of_arr q, of_arr r
       end
 
@@ -337,7 +337,7 @@ module T = struct
             | false -> r * p
           in
           let p' = p * p in
-          let n' = bit_usr n 1 in
+          let n' = bit_usr 1 n in
           fn r' p' n'
         end
     end in
@@ -546,10 +546,10 @@ let%expect_test "rel" =
   fn (of_string "0x8000_0000_0000_0000") (of_string "0x7fff_ffff_ffff_ffff");
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp_x t pp_x min pp_x max pp_x (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp_x t pp_x min pp_x max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp_x min pp_x max pp_x t pp_x (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp_x min pp_x max pp_x t (between ~low:min ~high:max t);
   end in
   fn2 (of_string "0x7fff_ffff_ffff_fffe") (of_string "0x7fff_ffff_ffff_ffff")
     (of_string "0x8000_0000_0000_0001");
@@ -593,20 +593,20 @@ let%expect_test "rel" =
     ascending 0x0000_0000_0000_0000_8000_0000_0000_0000u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> Gt
     descending 0x0000_0000_0000_0000_8000_0000_0000_0000u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> Lt
 
-    clamp 0x0000_0000_0000_0000_7fff_ffff_ffff_fffeu128 ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128
-    between 0x0000_0000_0000_0000_7fff_ffff_ffff_fffeu128 ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> false
+    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_fffeu128 -> 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128
+    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_fffeu128 -> false
 
-    clamp 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128
-    between 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> true
+    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128
+    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> true
 
-    clamp 0x0000_0000_0000_0000_8000_0000_0000_0000u128 ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0000u128
-    between 0x0000_0000_0000_0000_8000_0000_0000_0000u128 ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> true
+    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0000u128
+    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> true
 
-    clamp 0x0000_0000_0000_0000_8000_0000_0000_0001u128 ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0001u128
-    between 0x0000_0000_0000_0000_8000_0000_0000_0001u128 ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> true
+    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0001u128
+    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> true
 
-    clamp 0x0000_0000_0000_0000_8000_0000_0000_0002u128 ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0001u128
-    between 0x0000_0000_0000_0000_8000_0000_0000_0002u128 ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> false
+    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0002u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0001u128
+    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0002u128 -> false
     |}]
 
 let%expect_test "narrowing" =

@@ -42,11 +42,11 @@ val front: 'a t -> 'a t
 
 (** {1 Combining and partitioning} *)
 
-val push: 'a t -> 'a -> 'a t
+val push: 'a -> 'a t -> 'a t
 (** Push element onto head of deq and return resulting deq with element as head.
 *)
 
-val push_back: 'a t -> 'a -> 'a t
+val push_back: 'a -> 'a t -> 'a t
 (** Push element onto back of deq and return resulting deq with element as back.
 *)
 

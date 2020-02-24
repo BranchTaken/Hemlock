@@ -6,8 +6,8 @@ module T = struct
   type ''a ?t = ''a ?array
   type ''a elm = ''a
 
-  let get t i =
-    %hemlock_array_get t i
+  let get i t =
+    %hemlock_array_get i t
 
   let length t =
     %hemlock_array_length t
@@ -30,7 +30,7 @@ module T = struct
       let tl array =
         {array; index=(length array)}
 
-      let seek t i =
+      let seek i t =
         match Isize.(i < 0i) with
         | true -> begin
           match Usize.((of_isize Isize.(neg i)) > t.index) with
@@ -44,16 +44,16 @@ module T = struct
         end
 
       let succ t =
-        seek t 1i
+        seek 1i t
 
       let pred t =
-        seek t (-1i)
+        seek (-1i) t
 
       let lget t =
-        get t.array (pred t.index)
+        get (pred t.index) t.array
 
       let rget t =
-        get t.array t.index
+        get t.index t.array
 
       let container t =
         t.array
@@ -313,19 +313,19 @@ let of_list_rev ?length list =
 let is_empty t =
   (length t) = 0
 
-let set_inplace t i elm =
-  %hemlock_array_set_inplace t i elm
+let set_inplace i elm t =
+  %hemlock_array_set_inplace i elm t
 
 let copy t =
-  init (length t) ~f:(fun i -> get t i)
+  init (length t) ~f:(fun i -> get i t)
 
-let pare t ~base ~past =
+let pare ~base ~past t =
   assert (base <= past);
-  init (past - base) ~f:(fun i -> get t (base + i))
+  init (past - base) ~f:(fun i -> get (base + i) t)
 
-let set t i elm =
+let set i elm t =
   let t' = copy t in
-  set_inplace t' i elm;
+  set_inplace i elm t';
   t'
 
 module Array_join = struct
@@ -362,7 +362,7 @@ module Array_join = struct
               end
           end
         | true -> begin
-            let elm = get t.array t.index in
+            let elm = get t.index t.array in
             let t' = {t with index=(succ t.index)} in
             elm, t'
           end
@@ -398,24 +398,24 @@ let concat t0 t1 =
   let length_t1 = length t1 in
   let length = length_t0 + length_t1 in
   init length ~f:(fun i ->
-    if i < length_t0 then get t0 i
-    else get t1 (i - length_t0)
+    if i < length_t0 then get i t0
+    else get (i - length_t0) t1
   )
 
-let append t elm =
+let append elm t =
   let tlen = length t in
   init (succ tlen) ~f:(fun i ->
-    if i < tlen then get t i
+    if i < tlen then get i t
     else elm
   )
 
 let prepend elm t =
   init (succ (length t)) ~f:(fun i ->
     if i = 0 then elm
-    else get t (pred i)
+    else get (pred i) t
   )
 
-let insert t i elm =
+let insert i elm t =
   if i = 0 then
     prepend elm t
   else begin
@@ -423,15 +423,15 @@ let insert t i elm =
     if i < len then
       init (succ len) ~f:(fun index ->
         match Usize.cmp index i with
-        | Lt -> get t index
+        | Lt -> get index t
         | Eq -> elm
-        | Gt -> get t (pred index)
+        | Gt -> get (pred index) t
       )
     else
-      append t elm
+      append elm t
   end
 
-let remove t i =
+let remove i t =
   let len = length t in
   assert (len > 0);
   match len with
@@ -440,40 +440,40 @@ let remove t i =
     [||]
   | _ -> begin
       if i = 0 then
-        pare t ~base:1 ~past:len
+        pare ~base:1 ~past:len t
       else if i < len then
         init (pred len) ~f:(fun index ->
-          if index < i then get t index
-          else get t (succ index)
+          if index < i then get index t
+          else get (succ index) t
         )
       else
-        pare t ~base:0 ~past:(pred len)
+        pare ~base:0 ~past:(pred len) t
     end
 
-let reduce t ~f =
+let reduce ~f t =
   let rec fn i accum = begin
     match (i = (length t)) with
     | true -> accum
-    | false -> fn (succ i) (f accum (get t i))
+    | false -> fn (succ i) (f accum (get i t))
   end in
   match t with
   | [||] -> None
-  | _ -> Some (fn 1 (get t 0))
+  | _ -> Some (fn 1 (get 0 t))
 
-let reduce_hlt t ~f =
-  match reduce t ~f with
+let reduce_hlt ~f t =
+  match reduce ~f t with
   | None -> halt "Empty array"
   | Some x -> x
 
-let swap_inplace t i0 i1 =
-  let elm0 = get t i0 in
-  let elm1 = get t i1 in
-  set_inplace t i0 elm1;
-  set_inplace t i1 elm0
+let swap_inplace i0 i1 t =
+  let elm0 = get i0 t in
+  let elm1 = get i1 t in
+  set_inplace i0 elm1 t;
+  set_inplace i1 elm0 t
 
-let swap t i0 i1 =
+let swap i0 i1 t =
   let t' = copy t in
-  swap_inplace t' i0 i1;
+  swap_inplace i0 i1 t';
   t'
 
 let rev_inplace t =
@@ -481,7 +481,7 @@ let rev_inplace t =
     match (i0 >= i1) with
     | true -> ()
     | false -> begin
-        swap_inplace t i0 i1;
+        swap_inplace i0 i1 t;
         fn (succ i0) (pred i1)
       end
   end in
@@ -492,31 +492,31 @@ let rev_inplace t =
 
 let rev t =
   let l = length t in
-  init l ~f:(fun i -> get t (l - i - 1))
+  init l ~f:(fun i -> get (l - i - 1) t)
 
 (* Used directly for non-overlapping blits. *)
-let blit_ascending t0 i0 t1 i1 len =
+let blit_ascending len i0 t0 i1 t1 =
   for i = 0 to pred len do
-    set_inplace t1 (i1 + i) (get t0 (i0 + i))
+    set_inplace (i1 + i) (get (i0 + i) t0) t1
   done
-let blit_descending t0 i0 t1 i1 len =
+let blit_descending len i0 t0 i1 t1 =
   for i = pred len downto 0 do
-    set_inplace t1 (i1 + i) (get t0 (i0 + i))
+    set_inplace (i1 + i) (get (i0 + i) t0) t1
   done
 
-let blit t0 i0 t1 i1 len =
+let blit len i0 t0 i1 t1 =
   (* Choose direction such that overlapping ranges don't corrupt the source. *)
   match i0 < i1 with
-  | true -> blit_descending t0 i0 t1 i1 len
-  | false -> blit_ascending t0 i0 t1 i1 len
+  | true -> blit_descending len i0 t0 i1 t1
+  | false -> blit_ascending len i0 t0 i1 t1
 
-let is_sorted ?(strict=false) t ~cmp =
+let is_sorted ?(strict=false) ~cmp t =
   let len = length t in
   let rec fn elm i = begin
     match i = len with
     | true -> true
     | false -> begin
-        let elm' = get t i in
+        let elm' = get i t in
         match (cmp elm elm'), strict with
         | Cmp.Lt, _
         | Cmp.Eq, false -> fn elm' (succ i)
@@ -526,7 +526,7 @@ let is_sorted ?(strict=false) t ~cmp =
   end in
   match len with
   | 0 -> true
-  | _ -> fn (get t 0) 1
+  | _ -> fn (get 0 t) 1
 
 type order =
 | Increasing
@@ -536,14 +536,14 @@ type run = {
   base: usize;
   past: usize;
 }
-let sort_impl ?(stable=false) t ~cmp ~inplace =
+let sort_impl ?(stable=false) ~cmp ~inplace t =
   (* Merge a pair of adjacent runs.  Input runs may be in increasing or
    * decreasing order; the output is always in increasing order. *)
   let merge_pair ~cmp src run0 order0 run1 order1 dst = begin
     assert (run0.past = run1.base);
-    let rblit t0 i0 t1 i1 len = begin
+    let rblit len i0 t0 i1 t1 = begin
       for i = 0 to pred len do
-        set_inplace t1 (i1 + i) (get t0 (i0 + len - (i + 1)))
+        set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
       done
     end in
     let merge_pair_oo ~cmp src run0 order0 run1 order1 dst = begin
@@ -551,13 +551,13 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
         match (run0.base = run0.past), (run1.base = run1.past) with
         | false, false -> begin
             let elm0 = match order0 with
-              | Increasing -> get src run0.base
-              | Decreasing -> get src (pred run0.past)
+              | Increasing -> get run0.base src
+              | Decreasing -> get (pred run0.past) src
               | Either -> not_reached ()
             in
             let elm1 = match order1 with
-              | Increasing -> get src run1.base
-              | Decreasing -> get src (pred run1.past)
+              | Increasing -> get run1.base src
+              | Decreasing -> get (pred run1.past) src
               | Either -> not_reached ()
             in
             match cmp elm0 elm1 with
@@ -565,13 +565,13 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
             | Cmp.Eq -> begin
                 match order0 with
                 | Increasing -> begin
-                    set_inplace dst run.past elm0;
+                    set_inplace run.past elm0 dst;
                     let run0' = {run0 with base=succ run0.base} in
                     let run' = {run with past=succ run.past} in
                     fn ~cmp src run0' order0 run1 order1 dst run'
                   end
                 | Decreasing -> begin
-                    set_inplace dst run.past elm0;
+                    set_inplace run.past elm0 dst;
                     let run0' = {run0 with past=pred run0.past} in
                     let run' = {run with past=succ run.past} in
                     fn ~cmp src run0' order0 run1 order1 dst run'
@@ -581,13 +581,13 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
             | Cmp.Gt -> begin
                 match order1 with
                 | Increasing -> begin
-                    set_inplace dst run.past elm1;
+                    set_inplace run.past elm1 dst;
                     let run1' = {run1 with base=succ run1.base} in
                     let run' = {run with past=succ run.past} in
                     fn ~cmp src run0 order0 run1' order1 dst run'
                   end
                 | Decreasing -> begin
-                    set_inplace dst run.past elm1;
+                    set_inplace run.past elm1 dst;
                     let run1' = {run1 with past=pred run1.past} in
                     let run' = {run with past=succ run.past} in
                     fn ~cmp src run0 order0 run1' order1 dst run'
@@ -596,22 +596,22 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
               end
           end
         | true, false -> begin
-            let len = (run1.past - run1.base) in
+            let len = run1.past - run1.base in
             let () = match order1 with
-              | Increasing -> blit_ascending src run1.base dst run.past len;
-              | Decreasing -> rblit src run1.base dst run.past len;
+              | Increasing -> blit_ascending len run1.base src run.past dst;
+              | Decreasing -> rblit len run1.base src run.past dst;
               | Either -> not_reached ()
             in
-            {run with past=(run.past + len)}
+            {run with past=run.past + len}
           end
         | false, true -> begin
-            let len = (run0.past - run0.base) in
+            let len = run0.past - run0.base in
             let () = match order0 with
-              | Increasing -> blit_ascending src run0.base dst run.past len;
-              | Decreasing -> rblit src run0.base dst run.past len;
+              | Increasing -> blit_ascending len run0.base src run.past dst;
+              | Decreasing -> rblit len run0.base src run.past dst;
               | Either -> not_reached ()
             in
-            {run with past=(run.past + len)}
+            {run with past=run.past + len}
           end
         | true, true -> not_reached ()
       end in
@@ -633,58 +633,58 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
   (* Select monotonic runs and merge run pairs. *)
   let rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
     begin
-    match i = (length src) with
-    | true -> begin
-        let run0, order0, run1, order1 = match run0_opt with
-          | None -> begin
-              (* Copy odd run. *)
-              let run0 = {base; past=i} in
-              let run1 = {base=i; past=i} in
-              run0, order, run1, Increasing
+      match i = (length src) with
+      | true -> begin
+          let run0, order0, run1, order1 = match run0_opt with
+            | None -> begin
+                (* Copy odd run. *)
+                let run0 = {base; past=i} in
+                let run1 = {base=i; past=i} in
+                run0, order, run1, Increasing
+              end
+            | Some run0 -> run0, order0, {base; past=i}, order
+          in
+          let run = merge_pair ~cmp src run0 order0 run1 order1 dst in
+          run :: runs
+        end
+      | false -> begin
+          let elm' = get i src in
+          let i' = succ i in
+          match cmp elm elm', order, stable with
+          | Cmp.Lt, Either, _ ->
+            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
+              runs
+          | Cmp.Gt, Either, _ ->
+            select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst
+              runs
+          | Cmp.Lt, Increasing, _
+          | Cmp.Eq, Increasing, true
+          | Cmp.Eq, Either, true ->
+            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
+              runs
+          | Cmp.Eq, _, false
+          | Cmp.Gt, Decreasing, _ ->
+            select ~stable ~cmp elm' base i' order run0_opt order0 src dst runs
+          | Cmp.Lt, Decreasing, _
+          | Cmp.Eq, Decreasing, true
+          | Cmp.Gt, Increasing, _ -> begin
+              let run0_opt', order0', runs' = match run0_opt with
+                | None -> Some {base; past=i}, order, runs
+                | Some run0 -> begin
+                    let run1 = {base; past=i} in
+                    let run = merge_pair ~cmp src run0 order0 run1 order dst in
+                    None, Either, (run :: runs)
+                  end
+              in
+              select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst
+                runs'
             end
-          | Some run0 -> run0, order0, {base; past=i}, order
-        in
-        let run = merge_pair ~cmp src run0 order0 run1 order1 dst in
-        run :: runs
-      end
-    | false -> begin
-        let elm' = get src i in
-        let i' = succ i in
-        match cmp elm elm', order, stable with
-        | Cmp.Lt, Either, _ ->
-          select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
-            runs
-        | Cmp.Gt, Either, _ ->
-          select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst
-            runs
-        | Cmp.Lt, Increasing, _
-        | Cmp.Eq, Increasing, true
-        | Cmp.Eq, Either, true ->
-          select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
-            runs
-        | Cmp.Eq, _, false
-        | Cmp.Gt, Decreasing, _ ->
-          select ~stable ~cmp elm' base i' order run0_opt order0 src dst runs
-        | Cmp.Lt, Decreasing, _
-        | Cmp.Eq, Decreasing, true
-        | Cmp.Gt, Increasing, _ -> begin
-            let run0_opt', order0', runs' = match run0_opt with
-              | None -> Some {base; past=i}, order, runs
-              | Some run0 -> begin
-                  let run1 = {base; past=i} in
-                  let run =
-                    merge_pair ~cmp src run0 order0 run1 order dst in
-                  None, Either, (run :: runs)
-                end
-            in
-            select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst runs'
-          end
-      end
-  end in
+        end
+    end in
   let aux = copy t in
   let runs = match t with
     | [||] -> [{base=0; past=0}]
-    | _ -> select ~stable ~cmp (get t 0) 0 1
+    | _ -> select ~stable ~cmp (get 0 t) 0 1
         Either None Either t aux []
   in
 
@@ -704,12 +704,12 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
       end
     | run :: [], false, _ -> begin
         (* Copy odd run to dst, then start another sweep. *)
-        blit_descending src run.base dst run.base (run.past - run.base);
+        blit_descending (run.past - run.base) run.base src run.base dst;
         merge ~cmp ~inplace dst (run :: merged) (not up) src []
       end
     | run :: [], true, _ :: _ -> begin
         (* Copy odd run to dst, then start another sweep. *)
-        blit_ascending src run.base dst run.base (run.past - run.base);
+        blit_ascending (run.past - run.base) run.base src run.base dst;
         merge ~cmp ~inplace dst (run :: merged) (not up) src []
       end
     | [], true, _ :: []
@@ -717,7 +717,7 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
         match inplace with
         | true -> begin
             (* Odd number of sweeps performed; copy result back into t. *)
-            blit_ascending dst 0 src 0 (length dst);
+            blit_ascending (length dst) 0 dst 0 src;
             src
           end
         | false -> dst
@@ -727,14 +727,14 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
   end in
   merge ~cmp ~inplace aux runs false t []
 
-let sort_inplace ?stable t ~cmp =
-  let _ = sort_impl ?stable t ~cmp ~inplace:true in
+let sort_inplace ?stable ~cmp t =
+  let _ = sort_impl ?stable ~cmp ~inplace:true t in
   ()
 
-let sort ?stable t ~cmp =
-  sort_impl ?stable (copy t) ~cmp ~inplace:false
+let sort ?stable ~cmp t =
+  sort_impl ?stable ~cmp ~inplace:false (copy t)
 
-let search_impl ?base ?past t key ~cmp mode =
+let search_impl ?base ?past key ~cmp mode t =
   let base = match base with
     | None -> 0
     | Some base -> base
@@ -755,7 +755,7 @@ let search_impl ?base ?past t key ~cmp mode =
             match (base = 0), (base = (length t)) with
             | true, true -> None (* Empty; key < elms. *)
             | _, false -> begin (* At beginning, or interior. *)
-                match cmp key (get t base) with
+                match cmp key (get base t) with
                 | Cmp.Lt -> begin (* At successor. *)
                     match base = 0 with
                     | true ->
@@ -778,7 +778,7 @@ let search_impl ?base ?past t key ~cmp mode =
               Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
             | false, _ -> begin (* In interior, or past end. *)
                 let probe = pred base in
-                match cmp key (get t probe) with
+                match cmp key (get probe t) with
                 | Cmp.Lt -> not_reached ()
                 | Cmp.Eq -> Some (Cmp.Eq, probe) (* probe at rightmost match. *)
                 | Cmp.Gt -> begin
@@ -792,7 +792,7 @@ let search_impl ?base ?past t key ~cmp mode =
       end
     | false -> begin
         let mid = (base + past) / 2 in
-        match (cmp key (get t mid)), mode with
+        match (cmp key (get mid t)), mode with
         | Cmp.Lt, _
         | Cmp.Eq, Cmp.Lt -> fn ~base ~past:mid
         | Cmp.Eq, Cmp.Eq -> Some (Cmp.Eq, mid)
@@ -802,22 +802,22 @@ let search_impl ?base ?past t key ~cmp mode =
   end in
   fn ~base ~past
 
-let psearch ?base ?past t key ~cmp =
-  search_impl ?base ?past t key ~cmp Cmp.Lt
+let psearch ?base ?past key ~cmp t =
+  search_impl ?base ?past key ~cmp Cmp.Lt t
 
-let search ?base ?past t key ~cmp =
-  match search_impl ?base ?past t key ~cmp Cmp.Eq with
+let search ?base ?past key ~cmp t =
+  match search_impl ?base ?past key ~cmp Cmp.Eq t with
   | Some (_, i) -> Some i
   | _ -> None
 
-let nsearch ?base ?past t key ~cmp =
-  search_impl ?base ?past t key ~cmp Cmp.Gt
+let nsearch ?base ?past key ~cmp t =
+  search_impl ?base ?past key ~cmp Cmp.Gt t
 
-let map t ~f =
-  init (length t) ~f:(fun i -> f (get t i))
+let map ~f t =
+  init (length t) ~f:(fun i -> f (get i t))
 
-let mapi t ~f =
-  init (length t) ~f:(fun i -> f i (get t i))
+let mapi ~f t =
+  init (length t) ~f:(fun i -> f i (get i t))
 
 module Array_foldi_map = struct
   module T = struct
@@ -836,7 +836,7 @@ module Array_foldi_map = struct
       t.length
 
     let next t accum =
-      let accum', elm' = t.f t.index accum (get t.arr t.index) in
+      let accum', elm' = t.f t.index accum (get t.index t.arr) in
       let t' = {t with index=succ t.index} in
       elm', t', accum'
   end
@@ -852,20 +852,20 @@ let fold_map t ~init ~f =
 let foldi_map t ~init ~f =
     Array_foldi_map.to_accum_array (Array_foldi_map.init t ~f (length t)) ~init
 
-let filter t ~f =
+let filter ~f t =
   let _, t' = Array_foldi_map.to_accum_array
       (Array_foldi_map.init t ~f:(fun _ i _ ->
          let rec fn i elm = begin
            let i' = succ i in
            match f elm with
            | true -> i', elm
-           | false -> fn i' (get t i')
+           | false -> fn i' (get i' t)
          end in
-         fn i (get t i)
-       ) (count t ~f)) ~init:0 in
+         fn i (get i t)
+       ) (count ~f t)) ~init:0 in
   t'
 
-let filteri t ~f =
+let filteri ~f t =
   let n = foldi t ~init:0 ~f:(fun i accum elm ->
     match f i elm with
     | false -> accum
@@ -877,21 +877,21 @@ let filteri t ~f =
            let i' = succ i in
            match f i elm with
            | true -> i', elm
-           | false -> fn i' (get t i')
+           | false -> fn i' (get i' t)
          end in
-         fn i (get t i)
+         fn i (get i t)
        ) n)
       ~init:0 in
   t'
 
-let foldi2_until t0 t1 ~init ~f =
+let foldi2_until ~init ~f t0 t1 =
   assert ((length t0) = (length t1));
   let len = length t0 in
   let rec fn i accum = begin
     match i = len with
     | true -> accum
     | false -> begin
-        let accum', until = f i accum (get t0 i) (get t1 i) in
+        let accum', until = f i accum (get i t0) (get i t1) in
         match until with
         | true -> accum'
         | false -> fn (succ i) accum'
@@ -899,34 +899,34 @@ let foldi2_until t0 t1 ~init ~f =
   end in
   fn 0 init
 
-let fold2_until t0 t1 ~init ~f =
-  foldi2_until t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
+let fold2_until ~init ~f t0 t1 =
+  foldi2_until ~init ~f:(fun _ accum a b -> f accum a b) t0 t1
 
-let fold2 t0 t1 ~init ~f =
-  fold2_until t0 t1 ~init ~f:(fun accum a b -> (f accum a b), false)
+let fold2 ~init ~f t0 t1 =
+  fold2_until ~init ~f:(fun accum a b -> (f accum a b), false) t0 t1
 
-let foldi2 t0 t1 ~init ~f =
-  foldi2_until t0 t1 ~init ~f:(fun i accum a b -> (f i accum a b), false)
+let foldi2 ~init ~f t0 t1 =
+  foldi2_until ~init ~f:(fun i accum a b -> (f i accum a b), false) t0 t1
 
-let iter2 t0 t1 ~f =
+let iter2 ~f t0 t1 =
   assert ((length t0) = (length t1));
   for i = 0 to pred (length t0) do
-    f (get t0 i) (get t1 i)
+    f (get i t0) (get i t1)
   done
 
-let iteri2 t0 t1 ~f =
+let iteri2 ~f t0 t1 =
   assert ((length t0) = (length t1));
   for i = 0 to pred (length t0) do
-    f i (get t0 i) (get t1 i)
+    f i (get i t0) (get i t1)
   done
 
-let map2 t0 t1 ~f =
+let map2 ~f t0 t1 =
   assert ((length t0) = (length t1));
-  init (length t0) ~f:(fun i -> f (get t0 i) (get t1 i))
+  init (length t0) ~f:(fun i -> f (get i t0) (get i t1))
 
-let mapi2 t0 t1 ~f =
+let mapi2 ~f t0 t1 =
   assert ((length t0) = (length t1));
-  init (length t0) ~f:(fun i -> f i (get t0 i) (get t1 i))
+  init (length t0) ~f:(fun i -> f i (get i t0) (get i t1))
 
 module Array_foldi2_map = struct
   module T = struct
@@ -946,27 +946,27 @@ module Array_foldi2_map = struct
 
     let next t accum =
       let accum', elm' =
-        t.f t.index accum (get t.arr0 t.index) (get t.arr1 t.index) in
-      let t' = {t with index=succ t.index} in
+        t.f t.index accum (get t.index t.arr0) (get t.index t.arr1) in
+      let t' = {t with index=Usize.succ t.index} in
       elm', t', accum'
   end
   include T
   include Seq.Make_poly3(T)
 end
 
-let fold2_map t0 t1 ~init ~f =
+let fold2_map ~init ~f t0 t1 =
     Array_foldi2_map.to_accum_array
       (Array_foldi2_map.init t0 t1 ~f:(fun _ accum elm -> f accum elm)) ~init
 
-let foldi2_map t0 t1 ~init ~f =
+let foldi2_map ~init ~f t0 t1 =
     Array_foldi2_map.to_accum_array (Array_foldi2_map.init t0 t1 ~f) ~init
 
 let zip t0 t1 =
-  map2 t0 t1 ~f:(fun a b -> a, b)
+  map2 ~f:(fun a b -> a, b) t0 t1
 
 let unzip t =
-  let t0 = map t ~f:(fun (a, _) -> a) in
-  let t1 = map t ~f:(fun (_, b) -> b) in
+  let t0 = map ~f:(fun (a, _) -> a) t in
+  let t1 = map ~f:(fun (_, b) -> b) t in
   t0, t1
 
 let pp pp_elm ppf t =
@@ -1007,19 +1007,19 @@ let%expect_test "cursor" =
 
     let length = length arr in
     assert (Cursor.(=)
-        (Cursor.seek hd (Usize.to_isize index))
+        (Cursor.seek (Usize.to_isize index) hd)
         cursor);
     assert (Cursor.(=)
         hd
-        (Cursor.seek cursor (-(Usize.to_isize index)))
+        (Cursor.seek (-(Usize.to_isize index)) cursor)
     );
     assert (Cursor.(=)
-        (Cursor.seek cursor (Usize.to_isize (length - index)))
+        (Cursor.seek (Usize.to_isize (length - index)) cursor)
         tl
     );
     assert (Cursor.(=)
         cursor
-        (Cursor.seek tl (-(Usize.to_isize (length - index))))
+        (Cursor.seek (-(Usize.to_isize (length - index))) tl)
     );
 
     match cursor_tl with
@@ -1174,17 +1174,17 @@ let%expect_test "set,set_inplace" =
   let test_set len = begin
     for i = 0 to pred len do
       let arr = init len ~f:(fun _ -> 0) in
-      let arr' = set arr i 1 in
+      let arr' = set i 1 arr in
       printf "set %a: %a -> %a"
         Usize.pp i
         (pp Usize.pp) arr
         (pp Usize.pp) arr'
       ;
-      set_inplace arr i 1;
+      set_inplace i 1 arr;
       printf " -> set_inplace: %a" (pp Usize.pp) arr;
       let arr'' = copy arr in
       printf " -> copy,set_inplace: %a" (pp Usize.pp) arr'';
-      set_inplace arr'' i 2;
+      set_inplace i 2 arr'';
       printf " -> %a\n"
         (pp Usize.pp) arr''
     done
@@ -1346,7 +1346,7 @@ let%expect_test "concat" =
 let%expect_test "append,prepend" =
   let open Format in
   let test arr x = begin
-    let arr_x = append arr x in
+    let arr_x = append x arr in
     let x_arr = prepend x arr in
     printf "%a %a: append -> %a, prepend -> %a\n"
       (pp Usize.pp) arr
@@ -1376,7 +1376,7 @@ let%expect_test "insert" =
       Usize.pp x
     ;
     for i = 0 to length arr do
-      let arr' = insert arr i x in
+      let arr' = insert i x arr in
       printf " %a" (pp Usize.pp) arr'
     done;
     printf "\n"
@@ -1400,7 +1400,7 @@ let%expect_test "remove" =
   let test arr = begin
     printf "remove %a ->" (pp Usize.pp) arr;
     for i = 0 to pred (length arr) do
-      let arr' = remove arr i in
+      let arr' = remove i arr in
       printf " %a" (pp Usize.pp) arr';
     done;
     printf "\n"
@@ -1446,10 +1446,10 @@ let%expect_test "swap,swap_inplace" =
           Usize.pp i
           Usize.pp j
           (pp Usize.pp) arr'
-          (pp Usize.pp) (swap arr' i j)
+          (pp Usize.pp) (swap i j arr')
           (pp Usize.pp) arr'
         ;
-        swap_inplace arr' i j;
+        swap_inplace i j arr';
         printf "%a\n" (pp Usize.pp) arr'
       done
     done
@@ -1511,35 +1511,35 @@ let%expect_test "rev,rev_inplace" =
 
 let%expect_test "blit" =
   let open Format in
-  let test_blit arr0 i0 arr1 i1 len = begin
+  let test_blit len i0 arr0 i1 arr1 = begin
     printf "blit %a %a %a %a %a -> "
-      (pp Usize.pp) arr0
-      Usize.pp i0
-      (pp Usize.pp) arr1
-      Usize.pp i1
       Usize.pp len
+      Usize.pp i0
+      (pp Usize.pp) arr0
+      Usize.pp i1
+      (pp Usize.pp) arr1
     ;
-    blit arr0 i0 arr1 i1 len;
+    blit len i0 arr0 i1 arr1;
     printf "%a\n" (pp Usize.pp) arr1
   end in
   printf "@[<h>";
-  test_blit [||] 0 [||] 0 0;
-  test_blit [|0|] 0 [|1|] 0 1;
-  test_blit [|0; 1|] 1 [|2|] 0 1;
-  test_blit [|0|] 0 [|1; 2|] 1 1;
-  test_blit [|0; 1|] 0 [|2; 3|] 0 2;
-  test_blit [|0; 1; 2|] 1 [|3; 4; 5|] 0 2;
-  test_blit [|0; 1; 2|] 0 [|3; 4; 5|] 0 3;
+  test_blit 0 0 [||] 0 [||];
+  test_blit 1 0 [|0|] 0 [|1|];
+  test_blit 1 1 [|0; 1|] 0 [|2|];
+  test_blit 1 0 [|0|] 1 [|1; 2|];
+  test_blit 2 0 [|0; 1|] 0 [|2; 3|];
+  test_blit 2 1 [|0; 1; 2|] 0 [|3; 4; 5|];
+  test_blit 3 0 [|0; 1; 2|] 0 [|3; 4; 5|];
   printf "@]";
 
   [%expect{|
-    blit [||] 0 [||] 0 0 -> [||]
-    blit [|0|] 0 [|1|] 0 1 -> [|0|]
-    blit [|0; 1|] 1 [|2|] 0 1 -> [|1|]
-    blit [|0|] 0 [|1; 2|] 1 1 -> [|1; 0|]
-    blit [|0; 1|] 0 [|2; 3|] 0 2 -> [|0; 1|]
-    blit [|0; 1; 2|] 1 [|3; 4; 5|] 0 2 -> [|1; 2; 5|]
-    blit [|0; 1; 2|] 0 [|3; 4; 5|] 0 3 -> [|0; 1; 2|]
+    blit 0 0 [||] 0 [||] -> [||]
+    blit 1 0 [|0|] 0 [|1|] -> [|0|]
+    blit 1 1 [|0; 1|] 0 [|2|] -> [|1|]
+    blit 1 0 [|0|] 1 [|1; 2|] -> [|1; 0|]
+    blit 2 0 [|0; 1|] 0 [|2; 3|] -> [|0; 1|]
+    blit 2 1 [|0; 1; 2|] 0 [|3; 4; 5|] -> [|1; 2; 5|]
+    blit 3 0 [|0; 1; 2|] 0 [|3; 4; 5|] -> [|0; 1; 2|]
     |}]
 
 let%expect_test "is_sorted" =
@@ -1615,26 +1615,26 @@ let%expect_test "search" =
     printf "%a\n" (pp Usize.pp) arr;
     for probe = 0 to key_max do
       printf "  %a -> %s, %s, %s\n" Usize.pp probe
-        (match psearch arr probe ~cmp:Usize.cmp with
+        (match psearch probe ~cmp:Usize.cmp arr with
          | None -> "<"
          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
+             Usize.pp i Usize.pp (get i arr)
          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
+             Usize.pp i Usize.pp (get i arr)
          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
+             Usize.pp i Usize.pp (get i arr)
         )
-        (match search arr probe ~cmp:Usize.cmp with
+        (match search probe ~cmp:Usize.cmp arr with
          | None -> "<>"
-         | Some i -> asprintf "=%a" Usize.pp (get arr i)
+         | Some i -> asprintf "=%a" Usize.pp (get i arr)
         )
-        (match nsearch arr probe ~cmp:Usize.cmp with
+        (match nsearch probe ~cmp:Usize.cmp arr with
          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
+             Usize.pp i Usize.pp (get i arr)
          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
+             Usize.pp i Usize.pp (get i arr)
          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
+             Usize.pp i Usize.pp (get i arr)
          | None -> ">"
         );
     done

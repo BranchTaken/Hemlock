@@ -47,92 +47,91 @@ module type S_poly_fold = sig
   type 'a t
   (** Container type. *)
 
-  val fold_until: 'a t -> init:'accum -> f:('accum -> 'a -> 'accum * bool)
+  val fold_until: init:'accum -> f:('accum -> 'a -> 'accum * bool) -> 'a t
     -> 'accum
-  (** [fold_until t ~init ~f] folds [t] from left to right, using [init] as the
+  (** [fold_until ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value, continuing until [f] returns [accum, true], or
       until folding is complete if [f] always returns [accum, false]. *)
 
-  val fold_right_until: 'a t -> init:'accum
-    -> f:('a -> 'accum -> 'accum * bool) -> 'accum
-  (** [fold_right_until t ~init ~f] folds [t] from right to left, using [init]
+  val fold_right_until: init:'accum -> f:('a -> 'accum -> 'accum * bool) -> 'a t
+    -> 'accum
+  (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
       true], or until folding is complete if [f] always returns [accum, false].
   *)
 
-  val foldi_until: 'a t -> init:'accum
-    -> f:(usize -> 'accum -> 'a -> 'accum * bool) -> 'accum
-  (** [foldi_until t ~init ~f] folds [t] with index provided to [f] from left to
+  val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
+    -> 'a t -> 'accum
+  (** [foldi_until ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value, continuing until [f]
       returns [accum, true], or until folding is complete if [f] always returns
       [accum, false]. *)
 
-  val fold: 'a t -> init:'accum -> f:('accum -> 'a -> 'accum) -> 'accum
-  (** [fold t ~init ~f] folds [t] from left to right, using [init] as the
+  val fold: init:'accum -> f:('accum -> 'a -> 'accum) -> 'a t -> 'accum
+  (** [fold ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val fold_right: 'a t -> init:'accum -> f:('a -> 'accum -> 'accum)
-    -> 'accum
-  (** [fold_right t ~init ~f] folds [t] from left to right, using [init] as the
+  val fold_right: init:'accum -> f:('a -> 'accum -> 'accum) -> 'a t -> 'accum
+  (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val foldi: 'a t -> init:'accum -> f:(usize -> 'accum -> 'a -> 'accum)
+  val foldi: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum) -> 'a t
     -> 'accum
-  (** [foldi t ~init ~f] folds [t] with index provided to [f] from left to
+  (** [foldi ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value. *)
 
-  val iter: 'a t -> f:('a -> unit) -> unit
-  (** [iter t ~f] iterates from left to right over [t]. *)
+  val iter: f:('a -> unit) -> 'a t -> unit
+  (** [iter ~f t] iterates from left to right over [t]. *)
 
-  val iteri: 'a t -> f:(usize -> 'a -> unit) -> unit
-  (** [iter t ~f] iterates with index provided from left to right over [t]. *)
+  val iteri: f:(usize -> 'a -> unit) -> 'a t -> unit
+  (** [iter ~f t] iterates with index provided from left to right over [t]. *)
 
-  val count: 'a t -> f:('a -> bool) -> usize
-  (** [count t ~f] iterates over [t] and returns the number of times [f] returns
+  val count: f:('a -> bool) -> 'a t -> usize
+  (** [count ~f t] iterates over [t] and returns the number of times [f] returns
       [true]. *)
 
-  val for_any: 'a t -> f:('a -> bool) -> bool
-  (** [for_any t ~f] iterates from left to right over [t] and returns [true] if
+  val for_any: f:('a -> bool) -> 'a t -> bool
+  (** [for_any ~f t] iterates from left to right over [t] and returns [true] if
       any invocation of [f] returns [true]. *)
 
-  val for_all: 'a t -> f:('a -> bool) -> bool
-  (** [for_all t ~f] iterates from left to right over [t] and returns [true] if
+  val for_all: f:('a -> bool) -> 'a t -> bool
+  (** [for_all ~f t] iterates from left to right over [t] and returns [true] if
       all invocations of [f] return [true]. *)
 
-  val find: 'a t -> f:('a -> bool) -> 'a option
-  (** [find t ~f] iterates from left to right over [t] and returns [Some a] for
+  val find: f:('a -> bool) -> 'a t -> 'a option
+  (** [find ~f t] iterates from left to right over [t] and returns [Some a] for
       the first element which [f] returns [true], or [None] if [f] always
       returns [false]. *)
 
-  val find_map: 'a t -> f:('a -> 'b option) -> 'b option
-  (** [find_map t ~f] iterates over [t] and returns [Some b] for an element
+  val find_map: f:('a -> 'b option) -> 'a t -> 'b option
+  (** [find_map ~f t] iterates over [t] and returns [Some b] for an element
       which [f] returns [Some b], or [None] if [f] always returns [None]. *)
 
-  val findi: 'a t -> f:(usize -> 'a -> bool) -> 'a option
-  (** [findi t ~f] iterates from left to right over [t] with index provided to
+  val findi: f:(usize -> 'a -> bool) -> 'a t -> 'a option
+  (** [findi ~f t] iterates from left to right over [t] with index provided to
       [f] and returns [Some a] for an element which [f] returns [true], or
       [None] if [f] always returns [false]. *)
 
-  val findi_map: 'a t -> f:(usize -> 'a -> 'b option) -> 'b option
-  (** [findi_map t ~f] iterates from left to right over [t] with index provided
+  val findi_map: f:(usize -> 'a -> 'b option) -> 'a t -> 'b option
+  (** [findi_map ~f t] iterates from left to right over [t] with index provided
       to [f] and returns [Some b] for an element which [f] returns [Some b], or
       [None] if [f] always returns [None]. *)
 
-  val min_elm: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a option
-  (** [min_elm t ~f] iterates from left to right over [t] and returns [Some a]
+  val min_elm: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a option
+  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some a]
       for the first element which always compares as [Cmp.Lt] or [Cmp.Eq], or
       [None] if [t] is empty. *)
 
-  val max_elm: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a option
-  (** [max_elm t ~f] iterates from left to right over [t] and returns [Some a]
+  val max_elm: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a option
+  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some a]
       for the first element which compares as [Cmp.Eq] or [Cmp.Gt], or [None] if
       [t] is empty. *)
 
   val to_list: 'a t -> 'a list
-  (** [to_list t ~f] folds [t] from right to left as a {!type:'a list}. *)
+  (** [to_list t] folds [t] from right to left as a {!type:'a list}. *)
 
   val to_list_rev: 'a t -> 'a list
-  (** [to_list t ~f] folds [t] from left to right as a {!type:'a list}. *)
+  (** [to_list t] folds [t] from left to right as a {!type:'a list}. *)
 end
 
 (** {!module:S_poly_fold_gen} is equivalent to {!module:S_poly_fold}, except
@@ -141,28 +140,28 @@ end
 module type S_poly_fold_gen = sig
   type 'a t
   type 'a elm
-  val fold_until: 'a t -> init:'accum -> f:('accum -> 'a elm -> 'accum * bool)
+  val fold_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> 'a t
     -> 'accum
-  val fold_right_until: 'a t -> init:'accum
-    -> f:('a elm -> 'accum -> 'accum * bool) -> 'accum
-  val foldi_until: 'a t -> init:'accum
-    -> f:(usize -> 'accum -> 'a elm -> 'accum * bool) -> 'accum
-  val fold: 'a t -> init:'accum -> f:('accum -> 'a elm -> 'accum) -> 'accum
-  val fold_right: 'a t -> init:'accum -> f:('a elm -> 'accum -> 'accum)
+  val fold_right_until: init:'accum -> f:('a elm -> 'accum -> 'accum * bool)
+    -> 'a t -> 'accum
+  val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a elm -> 'accum * bool)
+    -> 'a t -> 'accum
+  val fold: init:'accum -> f:('accum -> 'a elm -> 'accum) -> 'a t -> 'accum
+  val fold_right: init:'accum -> f:('a elm -> 'accum -> 'accum) -> 'a t
     -> 'accum
-  val foldi: 'a t -> init:'accum -> f:(usize -> 'accum -> 'a elm -> 'accum)
+  val foldi: init:'accum -> f:(usize -> 'accum -> 'a elm -> 'accum) -> 'a t
     -> 'accum
-  val iter: 'a t -> f:('a elm -> unit) -> unit
-  val iteri: 'a t -> f:(usize -> 'a elm -> unit) -> unit
-  val count: 'a t -> f:('a elm -> bool) -> usize
-  val for_any: 'a t -> f:('a elm -> bool) -> bool
-  val for_all: 'a t -> f:('a elm -> bool) -> bool
-  val find: 'a t -> f:('a elm -> bool) -> 'a elm option
-  val find_map: 'a t -> f:('a elm -> 'b option) -> 'b option
-  val findi: 'a t -> f:(usize -> 'a elm -> bool) -> 'a elm option
-  val findi_map: 'a t -> f:(usize -> 'a elm -> 'b option) -> 'b option
-  val min_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
-  val max_elm: 'a t -> cmp:('a elm -> 'a elm -> Cmp.t) -> 'a elm option
+  val iter: f:('a elm -> unit) -> 'a t -> unit
+  val iteri: f:(usize -> 'a elm -> unit) -> 'a t -> unit
+  val count: f:('a elm -> bool) -> 'a t -> usize
+  val for_any: f:('a elm -> bool) -> 'a t -> bool
+  val for_all: f:('a elm -> bool) -> 'a t -> bool
+  val find: f:('a elm -> bool) -> 'a t -> 'a elm option
+  val find_map: f:('a elm -> 'b option) -> 'a t -> 'b option
+  val findi: f:(usize -> 'a elm -> bool) -> 'a t -> 'a elm option
+  val findi_map: f:(usize -> 'a elm -> 'b option) -> 'a t -> 'b option
+  val min_elm: cmp:('a elm -> 'a elm -> Cmp.t) -> 'a t -> 'a elm option
+  val max_elm: cmp:('a elm -> 'a elm -> Cmp.t) -> 'a t -> 'a elm option
   val to_list: 'a t -> 'a elm list
   val to_list_rev: 'a t -> 'a elm list
 end
@@ -182,8 +181,8 @@ module type S_poly_mem = sig
   type 'a t
   (** Container type. *)
 
-  val mem: 'a t -> 'a -> bool
-  (** [mem t a] returns [true] if [a] is a member of [t]; [false] otherwise. *)
+  val mem: 'a -> 'a t -> bool
+  (** [mem a t] returns [true] if [a] is a member of [t]; [false] otherwise. *)
 end
 
 (** {!module:S_poly_mem_gen} is equivalent to {!module:S_poly_mem}, except that
@@ -192,7 +191,7 @@ end
 module type S_poly_mem_gen = sig
   type 'a t
   type 'a elm
-  val mem: 'a t -> 'a elm -> bool
+  val mem: 'a elm -> 'a t -> bool
 end
 
 (* Monomorphic, e.g. string. *)
@@ -237,90 +236,90 @@ module type S_mono_fold = sig
   type elm
   (** Element type. *)
 
-  val fold_until: t -> init:'accum -> f:('accum -> elm -> 'accum * bool)
+  val fold_until: init:'accum -> f:('accum -> elm -> 'accum * bool) -> t
     -> 'accum
-  (** [fold_until t ~init ~f] folds [t] from left to right, using [init] as the
+  (** [fold_until ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value, continuing until [f] returns [accum, true], or
       until folding is complete if [f] always returns [accum, false]. *)
 
-  val fold_right_until: t -> init:'accum -> f:(elm -> 'accum -> 'accum * bool)
+  val fold_right_until: init:'accum -> f:(elm -> 'accum -> 'accum * bool) -> t
     -> 'accum
-  (** [fold_right_until t ~init ~f] folds [t] from right to left, using [init]
+  (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
       true], or until folding is complete if [f] always returns [accum, false].
   *)
 
-  val foldi_until: t -> init:'accum
-    -> f:(usize -> 'accum -> elm -> 'accum * bool) -> 'accum
-  (** [foldi_until t ~init ~f] folds [t] with index provided to [f] from left to
+  val foldi_until: init:'accum -> f:(usize -> 'accum -> elm -> 'accum * bool)
+    -> t -> 'accum
+  (** [foldi_until ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value, continuing until [f]
       returns [accum, true], or until folding is complete if [f] always returns
       [accum, false]. *)
 
-  val fold: t -> init:'accum -> f:('accum -> elm -> 'accum) -> 'accum
-  (** [fold t ~init ~f] folds [t] from left to right, using [init] as the
+  val fold: init:'accum -> f:('accum -> elm -> 'accum) -> t -> 'accum
+  (** [fold ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val fold_right: t -> init:'accum -> f:(elm -> 'accum -> 'accum) -> 'accum
-  (** [fold_right t ~init ~f] folds [t] from left to right, using [init] as the
+  val fold_right: init:'accum -> f:(elm -> 'accum -> 'accum) -> t -> 'accum
+  (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val foldi: t -> init:'accum -> f:(usize -> 'accum -> elm -> 'accum) -> 'accum
-  (** [foldi t ~init ~f] folds [t] with index provided to [f] from left to
+  val foldi: init:'accum -> f:(usize -> 'accum -> elm -> 'accum) -> t -> 'accum
+  (** [foldi ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value. *)
 
-  val iter: t -> f:(elm -> unit) -> unit
-  (** [iter t ~f] iterates from left to right over [t]. *)
+  val iter: f:(elm -> unit) -> t -> unit
+  (** [iter ~f t] iterates from left to right over [t]. *)
 
-  val iteri: t -> f:(usize -> elm -> unit) -> unit
-  (** [iter t ~f] iterates with index provided from left to right over [t]. *)
+  val iteri: f:(usize -> elm -> unit) -> t -> unit
+  (** [iter ~f t] iterates with index provided from left to right over [t]. *)
 
-  val count: t -> f:(elm -> bool) -> usize
-  (** [count t ~f] iterates over [t] and returns the number of times [f] returns
+  val count: f:(elm -> bool) -> t -> usize
+  (** [count ~f t] iterates over [t] and returns the number of times [f] returns
       [true]. *)
 
-  val for_any: t -> f:(elm -> bool) -> bool
-  (** [for_any t ~f] iterates from left to right over [t] and returns [true] if
+  val for_any: f:(elm -> bool) -> t -> bool
+  (** [for_any ~f t] iterates from left to right over [t] and returns [true] if
       any invocation of [f] returns [true]. *)
 
-  val for_all: t -> f:(elm -> bool) -> bool
-  (** [for_all t ~f] iterates from left to right over [t] and returns [true] if
+  val for_all: f:(elm -> bool) -> t -> bool
+  (** [for_all ~f t] iterates from left to right over [t] and returns [true] if
       all invocations of [f] return [true]. *)
 
-  val find: t -> f:(elm -> bool) -> elm option
-  (** [find t ~f] iterates from left to right over [t] and returns [Some a] for
+  val find: f:(elm -> bool) -> t -> elm option
+  (** [find ~f t] iterates from left to right over [t] and returns [Some a] for
       the first element which [f] returns [true], or [None] if [f] always
       returns [false]. *)
 
-  val find_map: t -> f:(elm -> 'a option) -> 'a option
-  (** [find_map t ~f] iterates over [t] and returns [Some a] for an element
+  val find_map: f:(elm -> 'a option) -> t -> 'a option
+  (** [find_map ~f t] iterates over [t] and returns [Some a] for an element
       which [f] returns [Some a], or [None] if [f] always returns [None]. *)
 
-  val findi: t -> f:(usize -> elm -> bool) -> elm option
-  (** [findi t ~f] iterates from left to right over [t] with index provided to
+  val findi: f:(usize -> elm -> bool) -> t -> elm option
+  (** [findi ~f t] iterates from left to right over [t] with index provided to
       [f] and returns [Some a] for an element which [f] returns [true], or
       [None] if [f] always returns [false]. *)
 
-  val findi_map: t -> f:(usize -> elm -> 'a option) -> 'a option
-  (** [findi_map t ~f] iterates from left to right over [t] with index provided
+  val findi_map: f:(usize -> elm -> 'a option) -> t -> 'a option
+  (** [findi_map ~f t] iterates from left to right over [t] with index provided
       to [f] and returns [Some a] for an element which [f] returns [Some a], or
       [None] if [f] always returns [None]. *)
 
-  val min_elm: t -> cmp:(elm -> elm -> Cmp.t) -> elm option
-  (** [min_elm t ~f] iterates from left to right over [t] and returns [Some a]
+  val min_elm: cmp:(elm -> elm -> Cmp.t) -> t -> elm option
+  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some a]
       for the first element which always compares as [Cmp.Lt] or [Cmp.Eq], or
       [None] if [t] is empty. *)
 
-  val max_elm: t -> cmp:(elm -> elm -> Cmp.t) -> elm option
-  (** [max_elm t ~f] iterates from left to right over [t] and returns [Some a]
+  val max_elm: cmp:(elm -> elm -> Cmp.t) -> t -> elm option
+  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some a]
       for the first element which compares as [Cmp.Eq] or [Cmp.Gt], or [None] if
       [t] is empty. *)
 
   val to_list: t -> elm list
-  (** [to_list t ~f] folds [t] from right to left as a {!type:elm list}. *)
+  (** [to_list t] folds [t] from right to left as a {!type:elm list}. *)
 
   val to_list_rev: t -> elm list
-  (** [to_list t ~f] folds [t] from left to right as a {!type:elm list}. *)
+  (** [to_list t] folds [t] from left to right as a {!type:elm list}. *)
 end
 
 (** Membership-related functor input interface for monomorphic containers, e.g.
@@ -339,7 +338,7 @@ module type S_mono_mem = sig
   type elm
   (** Element type. *)
 
-  val mem: t -> elm -> bool
-  (** [mem t elm] returns [true] if [elm] is a member of [t]; [false] otherwise.
+  val mem: elm -> t -> bool
+  (** [mem elm t] returns [true] if [elm] is a member of [t]; [false] otherwise.
   *)
 end

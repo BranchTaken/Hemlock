@@ -65,10 +65,10 @@ let%expect_test "rel" =
   fn 0x4000_0000_0000_0000 0x3fff_ffff_ffff_ffff;
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp_x t pp_x min pp_x max pp_x (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp_x t pp_x min pp_x max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp_x min pp_x max pp_x t pp_x (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp_x min pp_x max pp_x t (between ~low:min ~high:max t);
   end in
   fn2 0x3fff_ffff_ffff_fffe 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
   fn2 0x3fff_ffff_ffff_ffff 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001;
@@ -107,20 +107,20 @@ let%expect_test "rel" =
     ascending 0x4000000000000000 0x3fffffffffffffff -> Gt
     descending 0x4000000000000000 0x3fffffffffffffff -> Lt
 
-    clamp 0x3ffffffffffffffe ~min:0x3fffffffffffffff ~max:0x4000000000000001 -> 0x3fffffffffffffff
-    between 0x3ffffffffffffffe ~low:0x3fffffffffffffff ~high:0x4000000000000001 -> false
+    clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x3ffffffffffffffe -> 0x3fffffffffffffff
+    between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x3ffffffffffffffe -> false
 
-    clamp 0x3fffffffffffffff ~min:0x3fffffffffffffff ~max:0x4000000000000001 -> 0x3fffffffffffffff
-    between 0x3fffffffffffffff ~low:0x3fffffffffffffff ~high:0x4000000000000001 -> true
+    clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x3fffffffffffffff -> 0x3fffffffffffffff
+    between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x3fffffffffffffff -> true
 
-    clamp 0x4000000000000000 ~min:0x3fffffffffffffff ~max:0x4000000000000001 -> 0x4000000000000000
-    between 0x4000000000000000 ~low:0x3fffffffffffffff ~high:0x4000000000000001 -> true
+    clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x4000000000000000 -> 0x4000000000000000
+    between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x4000000000000000 -> true
 
-    clamp 0x4000000000000001 ~min:0x3fffffffffffffff ~max:0x4000000000000001 -> 0x4000000000000001
-    between 0x4000000000000001 ~low:0x3fffffffffffffff ~high:0x4000000000000001 -> true
+    clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x4000000000000001 -> 0x4000000000000001
+    between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x4000000000000001 -> true
 
-    clamp 0x4000000000000002 ~min:0x3fffffffffffffff ~max:0x4000000000000001 -> 0x4000000000000001
-    between 0x4000000000000002 ~low:0x3fffffffffffffff ~high:0x4000000000000001 -> false
+    clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x4000000000000002 -> 0x4000000000000001
+    between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x4000000000000002 -> false
     |}]
 
 let%expect_test "narrowing" =

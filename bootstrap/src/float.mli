@@ -69,8 +69,8 @@ val m2x: t -> t * isize
 (** [m2x t] splits [t] into a normalized fraction [f] and exponent [x], where
     [t = f*2^x]. *)
 
-val f2x: t -> isize -> t
-(** [f2x t x] computes [t*2^x]. *)
+val f2x: p:isize -> t -> t
+(** [f2x ~p t] computes [t*2^~p]. *)
 
 val modf: t -> Parts.t
 (** [modf t] splits decomposes [t] into the fractional value and integral
@@ -130,9 +130,9 @@ val neg: t -> t
 val abs: t -> t
 (** Absolute value. *)
 
-val copysign: t -> t -> t
-(** [copysign x y] returns the composition of the absolute value of [x] and the
-    sign of [y]. *)
+val copysign: sign:t -> t -> t
+(** [copysign ~sign t] returns the composition of the absolute value of [t] and
+    the sign of [~sign]. *)
 
 val classify: t -> Class.t
 (** Numeric class.  See {!module:Class} for further detail. *)
@@ -174,12 +174,14 @@ val ln1p: t -> t
 val log: t -> t
 (** Base 10 logarithm. *)
 
-val pow: t -> t -> t
-(** [pow x y] returns [x] raised to the [y] power.  Equivalent to [x ** y]. *)
+val pow: p:t -> t -> t
+(** [pow ~p t] returns [t] raised to the [~p] power.  Equivalent to [t ** ~p].
+*)
 
-val int_pow: t -> isize -> t
-(** [x ** y] returns [x] raised to the [y] power, where [y] is an {!type:isize}.
-    [int_pow] is typically faster than the equivalent call to {!pow}. *)
+val int_pow: p:isize -> t -> t
+(** [int_pow ~p t] returns [t] raised to the [~p] power, where [~p] is an
+    {!type:isize}.  [int_pow] is typically faster than the equivalent call to
+    {!pow}. *)
 
 val lngamma: t -> t
 (** [lngamma t] computes the natural log of the {{:
@@ -200,8 +202,8 @@ val cbrt: t -> t
 (** Cube root. *)
 
 val hypot: t -> t -> t
-(** [hypot x y] computes the hypotneuse length for a right triangle with sides
-    of length [x] and [y], i.e [sqrt (x * x + y * y)]. *)
+(** [hypot t0 t1] computes the hypotneuse length for a right triangle with sides
+    of length [t0] and [t1], i.e [sqrt (t0 * t0 + t1 * t1)]. *)
 
 val sin: t -> t
 (** [sin t] computes the sine of [t], where [t] is in radians. *)
@@ -222,8 +224,8 @@ val atan: t -> t
 (** [atan t] computes the arc tangent of [t] in radians. *)
 
 val atan2: t -> t -> t
-(** [atan2 y x] computes the arc tangent of [y / x], where the signs of [x] and
-    [y] determine the quadrant of the result. *)
+(** [atan2 t0 t1] computes the arc tangent of [t0 / t1], where the signs of
+    [t1] and [t0] determine the quadrant of the result. *)
 
 val sinh: t -> t
 (** [sinh t] computes the hyperbolic sine of [t]. *)

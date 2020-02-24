@@ -6,7 +6,7 @@ let pp ppf bytes =
 let hash_fold bytes state =
   Hash.State.Gen.init state
   |> Hash.State.Gen.fold_u8 (Array.length bytes)
-    ~f:(fun i -> (Byte.to_usize (Array.get bytes i)))
+    ~f:(fun i -> (Byte.to_usize (Array.get i bytes)))
   |> Hash.State.Gen.fini
 
 let of_codepoint cp =
@@ -81,7 +81,7 @@ module Utf8_seq = struct
       match (length t) = 0 with
       | true -> None
       | false -> begin
-          let b = Array.get t.bytes t.bindex in
+          let b = Array.get t.bindex t.bytes in
           let t' = {t with bindex=(Usize.succ t.bindex)} in
           Some (b, t')
         end

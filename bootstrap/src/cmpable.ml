@@ -47,7 +47,7 @@ module Make (T : I_mono) : S_mono with type t := T.t = struct
     | Eq -> Cmp.Eq
     | Gt -> Cmp.Lt
 
-  let clamp t ~min ~max =
+  let clamp ~min ~max t =
     assert (match T.cmp min max with
       | Lt
       | Eq -> true
@@ -63,8 +63,8 @@ module Make (T : I_mono) : S_mono with type t := T.t = struct
         | Gt -> max
       end
 
-  let between t ~low ~high =
-    match T.cmp t (clamp t ~min:low ~max:high) with
+  let between ~low ~high t =
+    match T.cmp t (clamp ~min:low ~max:high t) with
     | Lt -> false
     | Eq -> true
     | Gt -> false
@@ -153,7 +153,7 @@ module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t = struct
     | Eq -> Cmp.Eq
     | Gt -> Cmp.Lt
 
-  let clamp t ~min ~max =
+  let clamp ~min ~max t =
     assert (match T.cmp min max with
       | Lt
       | Eq -> true
@@ -169,8 +169,8 @@ module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t = struct
         | Gt -> max
       end
 
-  let between t ~low ~high =
-    match T.cmp t (clamp t ~min:low ~max:high) with
+  let between ~low ~high t =
+    match T.cmp t (clamp ~min:low ~max:high t) with
     | Lt -> false
     | Eq -> true
     | Gt -> false

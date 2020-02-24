@@ -39,8 +39,8 @@ val is_some: 'a t -> bool
 val is_none: 'a t -> bool
 (** [is_none t] returns [true] if [t] is [None], [false] otherwise. *)
 
-val value: 'a t -> default:'a -> 'a
-(** [value t ~default] returns [a] if [t = Some a], [default] otherwise. *)
+val value: default:'a -> 'a t -> 'a
+(** [value ~default t] returns [a] if [t = Some a], [default] otherwise. *)
 
 val value_hlt: 'a t -> 'a
 (** [value t ~default] returns [a] if [t = Some a], halts otherwise. *)
@@ -58,18 +58,18 @@ val first_some: 'a t -> 'a t -> 'a t
 (** [first_some t0 t1] returns [Some a0] if [t0 = Some a0], [Some a1] if [t0 =
     None] and [t1 = Some a1], [None] otherwise. *)
 
-val filter: 'a t -> f:('a -> bool) -> 'a t
-(** [filter t ~f] returns [Some a] if [t = Some a] and [f a = true], [None]
+val filter: f:('a -> bool) -> 'a t -> 'a t
+(** [filter ~f t] returns [Some a] if [t = Some a] and [f a = true], [None]
     otherwise. *)
 
-val value_map: 'a t -> default:'b -> f:('a -> 'b) -> 'b
-(** [value_map t ~default ~f] returns [f a] if [t = Some a], [default]
+val value_map: default:'b -> f:('a -> 'b) -> 'a t -> 'b
+(** [value_map ~default ~f t] returns [f a] if [t = Some a], [default]
     otherwise. *)
 
-val merge: 'a t -> 'a t -> f:('a -> 'a -> 'a) -> 'a t
-(** [merge t0 t1 ~f] returns [Some (f a0 a1)] if [t0 = Some a0] and [t1 = Some
+val merge: f:('a -> 'a -> 'a) -> 'a t -> 'a t -> 'a t
+(** [merge ~f t0 t1] returns [Some (f a0 a1)] if [t0 = Some a0] and [t1 = Some
     a1], otherwise the most preserving of [Some a0], [Some a1], and [None]. *)
 
-val map2: 'a t -> 'b t -> f:('a -> 'b -> 'c) -> 'c t
-(** [map2 t0 t1 ~f] returns [Some (f a b)] if [t0 = Some a] and [t1 = Some
+val map2: f:('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
+(** [map2 ~f t0 t1] returns [Some (f a b)] if [t0 = Some a] and [t1 = Some
     b], [None] otherwise. *)

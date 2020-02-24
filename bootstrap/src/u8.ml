@@ -137,10 +137,10 @@ let%expect_test "rel" =
   fn (kv 0x80) (kv 0xff);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp_x t pp_x min pp_x max pp_x (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp_x t pp_x min pp_x max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp_x min pp_x max pp_x t pp_x (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp_x min pp_x max pp_x t (between ~low:min ~high:max t);
   end in
   fn2 (kv 0x7e) (kv 0x7f) (kv 0x81);
   fn2 (kv 0x7f) (kv 0x7f) (kv 0x81);
@@ -179,20 +179,20 @@ let%expect_test "rel" =
     ascending 0x80u8 0xffu8 -> Lt
     descending 0x80u8 0xffu8 -> Gt
 
-    clamp 0x7eu8 ~min:0x7fu8 ~max:0x81u8 -> 0x7fu8
-    between 0x7eu8 ~low:0x7fu8 ~high:0x81u8 -> false
+    clamp ~min:0x7fu8 ~max:0x81u8 0x7eu8 -> 0x7fu8
+    between ~low:0x7fu8 ~high:0x81u8 0x7eu8 -> false
 
-    clamp 0x7fu8 ~min:0x7fu8 ~max:0x81u8 -> 0x7fu8
-    between 0x7fu8 ~low:0x7fu8 ~high:0x81u8 -> true
+    clamp ~min:0x7fu8 ~max:0x81u8 0x7fu8 -> 0x7fu8
+    between ~low:0x7fu8 ~high:0x81u8 0x7fu8 -> true
 
-    clamp 0x80u8 ~min:0x7fu8 ~max:0x81u8 -> 0x80u8
-    between 0x80u8 ~low:0x7fu8 ~high:0x81u8 -> true
+    clamp ~min:0x7fu8 ~max:0x81u8 0x80u8 -> 0x80u8
+    between ~low:0x7fu8 ~high:0x81u8 0x80u8 -> true
 
-    clamp 0x81u8 ~min:0x7fu8 ~max:0x81u8 -> 0x81u8
-    between 0x81u8 ~low:0x7fu8 ~high:0x81u8 -> true
+    clamp ~min:0x7fu8 ~max:0x81u8 0x81u8 -> 0x81u8
+    between ~low:0x7fu8 ~high:0x81u8 0x81u8 -> true
 
-    clamp 0x82u8 ~min:0x7fu8 ~max:0x81u8 -> 0x81u8
-    between 0x82u8 ~low:0x7fu8 ~high:0x81u8 -> false
+    clamp ~min:0x7fu8 ~max:0x81u8 0x82u8 -> 0x81u8
+    between ~low:0x7fu8 ~high:0x81u8 0x82u8 -> false
     |}]
 
 let%expect_test "wraparound" =

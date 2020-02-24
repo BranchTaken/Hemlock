@@ -157,10 +157,10 @@ let%expect_test "rel" =
   fn (kv 0x10_0000) (kv 0x1f_ffff);
   let fn2 t min max = begin
     printf "\n";
-    printf "clamp %a ~min:%a ~max:%a -> %a\n"
-      pp_x t pp_x min pp_x max pp_x (clamp t ~min ~max);
-    printf "between %a ~low:%a ~high:%a -> %b\n"
-      pp_x t pp_x min pp_x max (between t ~low:min ~high:max);
+    printf "clamp ~min:%a ~max:%a %a -> %a\n"
+      pp_x min pp_x max pp_x t pp_x (clamp ~min ~max t);
+    printf "between ~low:%a ~high:%a %a -> %b\n"
+      pp_x min pp_x max pp_x t (between ~low:min ~high:max t);
   end in
   fn2 (kv 0x0f_fffe) (kv 0x0f_ffff) (kv 0x10_0001);
   fn2 (kv 0x0f_ffff) (kv 0x0f_ffff) (kv 0x10_0001);
@@ -199,20 +199,20 @@ let%expect_test "rel" =
     ascending 0x100000u21 0x1fffffu21 -> Lt
     descending 0x100000u21 0x1fffffu21 -> Gt
 
-    clamp 0x0ffffeu21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x0fffffu21
-    between 0x0ffffeu21 ~low:0x0fffffu21 ~high:0x100001u21 -> false
+    clamp ~min:0x0fffffu21 ~max:0x100001u21 0x0ffffeu21 -> 0x0fffffu21
+    between ~low:0x0fffffu21 ~high:0x100001u21 0x0ffffeu21 -> false
 
-    clamp 0x0fffffu21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x0fffffu21
-    between 0x0fffffu21 ~low:0x0fffffu21 ~high:0x100001u21 -> true
+    clamp ~min:0x0fffffu21 ~max:0x100001u21 0x0fffffu21 -> 0x0fffffu21
+    between ~low:0x0fffffu21 ~high:0x100001u21 0x0fffffu21 -> true
 
-    clamp 0x100000u21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x100000u21
-    between 0x100000u21 ~low:0x0fffffu21 ~high:0x100001u21 -> true
+    clamp ~min:0x0fffffu21 ~max:0x100001u21 0x100000u21 -> 0x100000u21
+    between ~low:0x0fffffu21 ~high:0x100001u21 0x100000u21 -> true
 
-    clamp 0x100001u21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x100001u21
-    between 0x100001u21 ~low:0x0fffffu21 ~high:0x100001u21 -> true
+    clamp ~min:0x0fffffu21 ~max:0x100001u21 0x100001u21 -> 0x100001u21
+    between ~low:0x0fffffu21 ~high:0x100001u21 0x100001u21 -> true
 
-    clamp 0x100002u21 ~min:0x0fffffu21 ~max:0x100001u21 -> 0x100001u21
-    between 0x100002u21 ~low:0x0fffffu21 ~high:0x100001u21 -> false
+    clamp ~min:0x0fffffu21 ~max:0x100001u21 0x100002u21 -> 0x100001u21
+    between ~low:0x0fffffu21 ~high:0x100001u21 0x100002u21 -> false
     |}]
 
 let%expect_test "wraparound" =

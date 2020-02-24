@@ -65,15 +65,15 @@ val hd: 'a t -> 'a
 val tl: 'a t -> 'a t
 (** Return tail (all elements except head), or halt if list is empty. *)
 
-val nth_opt: 'a t -> usize -> 'a option
+val nth_opt: usize -> 'a t -> 'a option
 (** Return nth list element (0-indexed), or return [None] if list is empty. *)
 
-val nth: 'a t -> usize -> 'a
+val nth: usize -> 'a t -> 'a
 (** Return nth list element (0-indexed), or halt if list is empty. *)
 
 (** {1 Combining, grouping, and partitioning} *)
 
-val push: 'a t -> 'a -> 'a t
+val push: 'a -> 'a t -> 'a t
 (* Language syntax does not allow ( :: ) to be redefined.
  * val ( :: ): 'a -> 'a t -> 'a t *)
 (** Push element onto list and return resulting list.  Equivalent:
@@ -112,66 +112,66 @@ val zip: 'a t -> 'b t -> ('a * 'b) t
 val unzip: ('a * 'b) t -> 'a t * 'b t
 (** Create two lists with the unpaired elements of the input pair list. *)
 
-val split: 'a t -> usize -> 'a t * 'a t
+val split: usize -> 'a t -> 'a t * 'a t
 (** Split the list with elements [\[0..len)] into lists with elements [\[0..n)]
     and [\[n..len)].  Halt if list contains fewer than [n] elements.  Not
     tail-recursive. *)
 
-val rev_split: 'a t -> usize -> 'a t * 'a t
+val rev_split: usize -> 'a t -> 'a t * 'a t
 (** Split the list with elements [\[0..len)] into lists with elements [(n..0\]]
     and [\[n..len)].  Halt if list contains fewer than [n] elements. *)
 
-val split_until: 'a t -> f:('a -> bool) -> 'a t * 'a t
+val split_until: f:('a -> bool) -> 'a t -> 'a t * 'a t
 (** Split the list such that [~f] returns false for all the elements before the
     split.  Not tail-recursive. *)
 
-val rev_split_until: 'a t -> f:('a -> bool) -> 'a t * 'a t
+val rev_split_until: f:('a -> bool) -> 'a t -> 'a t * 'a t
 (** Split the list such that [~f] returns false for all the elements before the
     split, and reverse the elements to the left of the split relative to the
     input. *)
 
-val take: 'a t -> usize -> 'a t
-(** [take t i] is equivalent to [fst (split t i)]. *)
+val take: usize -> 'a t -> 'a t
+(** [take i t] is equivalent to [fst (split t i)]. *)
 
-val rev_take: 'a t -> usize -> 'a t
-(** [rev_take t i] is equivalent to [fst (rev_split t i)]. *)
+val rev_take: usize -> 'a t -> 'a t
+(** [rev_take i t] is equivalent to [fst (rev_split t i)]. *)
 
-val take_until: 'a t -> f:('a -> bool) -> 'a t
-(** [take_until t ~f] is equivalent to [fst (split_until t ~f)]. *)
+val take_until: f:('a -> bool) -> 'a t -> 'a t
+(** [take_until ~f t] is equivalent to [fst (split_until t ~f)]. *)
 
-val rev_take_until: 'a t -> f:('a -> bool) -> 'a t
-(** [rev_take_until t ~f] is equivalent to [fst (rev_split_until t ~f)]. *)
+val rev_take_until: f:('a -> bool) -> 'a t -> 'a t
+(** [rev_take_until ~f t] is equivalent to [fst (rev_split_until t ~f)]. *)
 
-val drop: 'a t -> usize -> 'a t
-(** [drop t i] is equivalent to [snd (rev_split t i)]. *)
+val drop: usize -> 'a t -> 'a t
+(** [drop i t] is equivalent to [snd (rev_split t i)]. *)
 
-val drop_until: 'a t -> f:('a -> bool) -> 'a t
-(** [drop_until t ~f] is equivalent to [snd (rev_split_until t ~f)]. *)
+val drop_until: f:('a -> bool) -> 'a t -> 'a t
+(** [drop_until ~f t] is equivalent to [snd (rev_split_until t ~f)]. *)
 
-val partition_tf: 'a t -> f:('a -> bool) -> 'a t * 'a t
+val partition_tf: f:('a -> bool) -> 'a t -> 'a t * 'a t
 (** Partition the elements for which [~f] returns [true] vs [false] into two
     lists.  Not tail-recursive. *)
 
-val rev_partition_tf: 'a t -> f:('a -> bool) -> 'a t * 'a t
+val rev_partition_tf: f:('a -> bool) -> 'a t -> 'a t * 'a t
 (** Partition the elements for which [~f] returns [true] vs [false] into two
     lists, and reverse elements relative to the input. *)
 
-val group: 'a t -> break:('a -> 'a -> bool) -> 'a t t
+val group: break:('a -> 'a -> bool) -> 'a t -> 'a t t
 (** Break input list into a list of lists, where each break is determined by
     [~break] returning [true] for adjacent elements.  Not tail-recursive. *)
 
-val groupi: 'a t -> break:(usize -> 'a -> 'a -> bool) -> 'a t t
+val groupi: break:(usize -> 'a -> 'a -> bool) -> 'a t -> 'a t t
 (** Break input list into a list of lists, where each break is determined by
     [~break] returning [true] for adjacent elements, the second of which is at
     the given index.  Not tail-recursive. *)
 
-val rev_group: 'a t -> break:('a -> 'a -> bool) -> 'a t t
-(** [rev_group t ~break] is equivalent to
+val rev_group: break:('a -> 'a -> bool) -> 'a t -> 'a t t
+(** [rev_group ~break t] is equivalent to
     [fold (group t ~break) ~init:[] ~f:(fun gs g -> (rev g) :: gs)], except that
     implementation is tail-recursive. *)
 
-val rev_groupi: 'a t -> break:(usize -> 'a -> 'a -> bool) -> 'a t t
-(** [rev_groupi t ~break] is equivalent to
+val rev_groupi: break:(usize -> 'a -> 'a -> bool) -> 'a t -> 'a t t
+(** [rev_groupi ~break t] is equivalent to
     [fold (groupi t ~break) ~init:[] ~f:(fun gs g -> (rev g) :: gs)], except
     that implementation is tail-recursive. *)
 
@@ -180,183 +180,184 @@ val rev_groupi: 'a t -> break:(usize -> 'a -> 'a -> bool) -> 'a t t
 val rev: 'a t -> 'a t
 (** Create a list with elements reversed relative to the input list. *)
 
-val reduce: 'a t -> f:('a -> 'a -> 'a) -> 'a option
+val reduce: f:('a -> 'a -> 'a) -> 'a t -> 'a option
 (** Reduce the list to a single value, or return [None] if the list is empty.
     The reduction function is assumed to be associative; thus reduction order is
     unspecified. *)
 
-val reduce_hlt: 'a t -> f:('a -> 'a -> 'a) -> 'a
+val reduce_hlt: f:('a -> 'a -> 'a) -> 'a t -> 'a
 (** Reduce the list to a single value, or halt if the list is empty.  The
     reduction function is assumed to be associative; thus reduction order is
     unspecified. *)
 
-val is_sorted: ?strict:bool -> 'a t -> cmp:('a -> 'a -> Cmp.t) -> bool
+val is_sorted: ?strict:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> bool
 (** Return true if list is sorted (strictly if [?strict] is [true]; default is
     non-strict) according to the comparison function, [false] otherwise. *)
 
-val sort: ?length:usize -> ?stable:bool -> 'a t -> cmp:('a -> 'a -> Cmp.t)
+val sort: ?length:usize -> ?stable:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t
   -> 'a t
 (** Create a list with sorted contents of the input list according to the
     comparison function.  If specified, [?length] must equal [(length list)].
     Preserve order of equivalent elements if [?stable] is [true]. *)
 
-val dedup: ?length:usize -> 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a t
+val dedup: ?length:usize -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Sort list stably and remove subsequent duplicates in forward order.  If
     specified, [?length] must equal [(length list)].  Not tail-recursive. *)
 
-val rev_dedup: ?length:usize -> 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a t
+val rev_dedup: ?length:usize -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Sort list stably, remove subsequent duplicates in forward order, and reverse
     elements relative to the input.  If specified, [?length] must equal
     [(length list)].  [rev_dedup t ~cmp] is equivalent to
     [rev (dedup t ~cmp)]. *)
 
-val dedup_sorted: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a t
+val dedup_sorted: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Remove sebsequent adjacent duplicates in forward order. *)
 
-val rev_dedup_sorted: 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a t
+val rev_dedup_sorted: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Remove sebsequent adjacent duplicates in forward order and reverse elements
     relative to the input. *)
 
-val merge: 'a t -> 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a t
-(** Merge sorted input lists into a sorted output list.  For [(merge t0 t1
-    ~cmp)], equal elements from [t0] precede those from [t1].  Not
+val merge: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> 'a t
+(** Merge sorted input lists into a sorted output list.  For [(merge ~cmp t0
+    t1)], equal elements from [t0] precede those from [t1].  Not
     tail-recursive. *)
 
-val rev_merge: 'a t -> 'a t -> cmp:('a -> 'a -> Cmp.t) -> 'a t
+val rev_merge: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> 'a t
 (** Merge sorted input lists into a reverse-sorted output list.  For
-    [(rev_merge t0 t1 ~cmp)], equal elements from [t1] precede those from [t0].
-    [rev_merge t0 t1 ~cmp] is equivalent to [rev (merge t0 t1 ~cmp)]. *)
+    [(rev_merge ~cmp t0 t1)], equal elements from [t1] precede those from [t0].
+    [rev_merge ~cmp t0 t1] is equivalent to [rev (merge ~cmp t0 t1)]. *)
 
-val map: 'a t -> f:('a -> 'b) -> 'b t
+val map: f:('a -> 'b) -> 'a t -> 'b t
 (** Create a list with elements mapped from the input list, according to the
     element mapping function.  Not tail-recursive. *)
 
-val mapi: 'a t -> f:(usize -> 'a -> 'b) -> 'b t
+val mapi: f:(usize -> 'a -> 'b) -> 'a t -> 'b t
 (** Create a list with elements mapped from the input list, according to the
     indexed element mapping function.  Not tail-recursive. *)
 
-val rev_map: 'a t -> f:('a -> 'b) -> 'b t
+val rev_map: f:('a -> 'b) -> 'a t -> 'b t
 (** Create a reversed list with elements mapped from the input list, according
     to the element mapping function. *)
 
-val rev_mapi: 'a t -> f:(usize -> 'a -> 'b) -> 'b t
+val rev_mapi: f:(usize -> 'a -> 'b) -> 'a t -> 'b t
 (** Create a reversed list with elements mapped from the input list, according
     to the indexed element mapping function. *)
 
-val rev_map_concat: 'a t -> 'b t -> f:('a -> 'b) -> 'b t
-(** For [rev_map_concat t0 t1 ~f], concatenate the reversed mapping of [t0] with
-    [t1].  Equivalent to [rev_concat (map t0 ~f) t1], except that the
+val rev_map_concat: f:('a -> 'b) -> 'a t -> 'b t -> 'b t
+(** For [rev_map_concat ~f t0 t1], concatenate the reversed mapping of [t0] with
+    [t1].  Equivalent to [rev_concat (map ~f t0) t1], except that the
     implementation is tail-recursive.  *)
 
-val fold_map: 'a t -> init:'accum -> f:('accum -> 'a -> 'accum * 'b)
+val fold_map: init:'accum -> f:('accum -> 'a -> 'accum * 'b) -> 'a t
   -> 'accum * 'b t
 (** Create a list and accumulated result with elements mapped from the input
     list, according to the folding mapping function.  Not tail-recursive. *)
 
-val foldi_map: 'a t -> init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * 'b)
+val foldi_map: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * 'b) -> 'a t
   -> 'accum * 'b t
 (** Create a list and accumulated result with elements mapped from the input
     list, according to the indexed folding mapping function.  Not
     tail-recursive. *)
 
-val rev_fold_map: 'a t -> init:'accum -> f:('accum -> 'a -> 'accum * 'b)
+val rev_fold_map: init:'accum -> f:('accum -> 'a -> 'accum * 'b) -> 'a t
   -> 'accum * 'b t
 (** Create a reversed list and accumulated result with elements mapped from the
     input list, according to the folding mapping function. *)
 
-val rev_foldi_map: 'a t -> init:'accum -> f:(usize -> 'accum -> 'a
-  -> 'accum * 'b) -> 'accum * 'b t
+val rev_foldi_map: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * 'b)
+  -> 'a t -> 'accum * 'b t
 (** Create a reversed list and accumulated result with elements mapped from the
     input list, according to the indexed folding mapping function. *)
 
-val filter: 'a t -> f:('a -> bool) -> 'a t
+val filter: f:('a -> bool) -> 'a t -> 'a t
 (** Create a list with contents filtered by the given function.  Only elements
     for which the filter function returns true are incorporated in the result.
     Not tail-recursive. *)
 
-val filteri: 'a t -> f:(usize -> 'a -> bool) -> 'a t
+val filteri: f:(usize -> 'a -> bool) -> 'a t -> 'a t
 (** Create a list with contents filtered by the given function.  Only elements
     for which the indexed filter function returns true are incorporated in the
     result.  Not tail-recursive. *)
 
-val rev_filter: 'a t -> f:('a -> bool) -> 'a t
+val rev_filter: f:('a -> bool) -> 'a t -> 'a t
 (** Create a reversed list with contents filtered by the given function.  Only
     elements for which the filter function returns true are incorporated in the
     result. *)
 
-val rev_filteri: 'a t -> f:(usize -> 'a -> bool) -> 'a t
+val rev_filteri: f:(usize -> 'a -> bool) -> 'a t -> 'a t
 (** Create a reversed list with contents filtered by the given function.  Only
     elements for which the indexed filter function returns true are incorporated
     in the result. *)
 
-val fold2_until: 'a t -> 'b t -> init:'accum
-  -> f:('accum -> 'a -> 'b -> 'accum * bool) -> 'accum
+val fold2_until: init:'accum -> f:('accum -> 'a -> 'b -> 'accum * bool) -> 'a t
+  -> 'b t -> 'accum
 (** Create an accumulated result for the paired elements of two lists, calling
     the element folding function in increasing index order, and terminate
     folding early if the folding function returns true. *)
 
-val foldi2_until: 'a t -> 'b t -> init:'accum
-  -> f:(usize -> 'accum -> 'a -> 'b -> 'accum * bool) -> 'accum
+val foldi2_until: init:'accum
+  -> f:(usize -> 'accum -> 'a -> 'b -> 'accum * bool) -> 'a t -> 'b t -> 'accum
 (** Create an accumulated result for the paired elements of two lists, calling
     the indexed element folding function in increasing index order, and
     terminate folding early if the folding function returns true. *)
 
-val fold2: 'a t -> 'b t -> init:'accum -> f:('accum -> 'a -> 'b -> 'accum)
+val fold2: init:'accum -> f:('accum -> 'a -> 'b -> 'accum) -> 'a t -> 'b t
   -> 'accum
 (** Create an accumulated result for the paired elements of two lists, calling
     the element folding function in increasing index order. *)
 
-val foldi2: 'a t -> 'b t -> init:'accum
-  -> f:(usize -> 'accum -> 'a -> 'b -> 'accum) -> 'accum
+val foldi2: init:'accum -> f:(usize -> 'accum -> 'a -> 'b -> 'accum) -> 'a t
+  -> 'b t -> 'accum
 (** Create an accumulated result for the paired elements of two lists, calling
     the indexed element folding function in increasing index order. *)
 
-val iter2: 'a t -> 'b t -> f:('a -> 'b -> unit) -> unit
+val iter2: f:('a -> 'b -> unit) -> 'a t -> 'b t -> unit
 (** Iterate over the paired elements of two lists, calling the element visiting
     function in increasing index order. *)
 
-val iteri2: 'a t -> 'b t -> f:(usize -> 'a -> 'b -> unit) -> unit
+val iteri2: f:(usize -> 'a -> 'b -> unit) -> 'a t -> 'b t -> unit
 (** Iterate over the paired elements of two lists, calling the indexed element
     visiting function in increasing index order. *)
 
-val map2: 'a t -> 'b t -> f:('a -> 'b -> 'c) -> 'c t
+val map2: f:('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 (** Create a list with elements mapped by the element mapping function from
     the paired elements of two input lists. *)
 
-val mapi2: 'a t -> 'b t -> f:(usize -> 'a -> 'b -> 'c) -> 'c t
+val mapi2: f:(usize -> 'a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 (** Create a list with elements mapped by the indexed element mapping function
     from the paired elements of two input lists. *)
 
-val rev_map2: 'a t -> 'b t -> f:('a -> 'b -> 'c) -> 'c t
+val rev_map2: f:('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 (** Create a list with elements mapped by the element mapping function from
     the paired elements of two input lists, and reverse the elements relative to
     the input lists' associated order. *)
 
-val rev_mapi2: 'a t -> 'b t -> f:(usize -> 'a -> 'b -> 'c) -> 'c t
+val rev_mapi2: f:(usize -> 'a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 (** Create a list with elements mapped by the indexed element mapping function
     from the paired elements of two input lists, and reverse the elements
     relative to the input lists' associated order. *)
 
-val fold2_map: 'a t -> 'b t -> init:'accum
-  -> f:('accum -> 'a -> 'b -> 'accum * 'c) -> 'accum * 'c t
+val fold2_map: init:'accum -> f:('accum -> 'a -> 'b -> 'accum * 'c) -> 'a t
+  -> 'b t -> 'accum * 'c t
 (** Create a list and accumulated result based on the paired elements of two
     lists, calling the element folding/mapping function in increasing index
     order.  Not tail-recursive. *)
 
-val foldi2_map: 'a t -> 'b t -> init:'accum
-  -> f:(usize -> 'accum -> 'a -> 'b -> 'accum * 'c) -> 'accum * 'c t
+val foldi2_map: init:'accum -> f:(usize -> 'accum -> 'a -> 'b -> 'accum * 'c)
+  -> 'a t -> 'b t -> 'accum * 'c t
 (** Create a list and accumulated result based on the paired elements of two
     lists, calling the indexed element folding/mapping function in increasing
     index order.  Not tail-recursive. *)
 
-val rev_fold2_map: 'a t -> 'b t -> init:'accum
-  -> f:('accum -> 'a -> 'b -> 'accum * 'c) -> 'accum * 'c t
+val rev_fold2_map: init:'accum -> f:('accum -> 'a -> 'b -> 'accum * 'c) -> 'a t
+  -> 'b t -> 'accum * 'c t
 (** Create a reversed list and accumulated result based on the paired elements
     of two lists, calling the element folding/mapping function in increasing
     index order. *)
 
-val rev_foldi2_map: 'a t -> 'b t -> init:'accum
-  -> f:(usize -> 'accum -> 'a -> 'b -> 'accum * 'c) -> 'accum * 'c t
+val rev_foldi2_map: init:'accum
+  -> f:(usize -> 'accum -> 'a -> 'b -> 'accum * 'c) -> 'a t -> 'b t
+  -> 'accum * 'c t
 (** Create a reversed list and accumulated result based on the paired elements
     of two lists, calling the indexed element folding/mapping function in
     increasing index order. *)
@@ -368,26 +369,26 @@ val rev_foldi2_map: 'a t -> 'b t -> init:'accum
 module Assoc : sig
   type nonrec ('a, 'b) t = ('a * 'b) t
 
-  val add: ('a, 'b) t -> 'a -> 'b -> ('a, 'b) t
+  val add: 'a -> 'b -> ('a, 'b) t -> ('a, 'b) t
   (** Associate value with key in list, shadowing existing association for
       equivalent key, if any. *)
 
-  val find: ('a, 'b) t -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'b option
+  val find: 'a -> cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t -> 'b option
   (** Find value associated with key, if present. *)
 
-  val find_hlt: ('a, 'b) t -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'b
+  val find_hlt: 'a -> cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t -> 'b
   (** Find value associated with key, or halt if not present. *)
 
-  val mem: ('a, 'b) t -> 'a -> cmp:('a -> 'a -> Cmp.t) -> bool
+  val mem: 'a -> cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t -> bool
   (** Return whether key is present. *)
 
-  val remove: ('a, 'b) t -> 'a -> cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t
+  val remove: 'a -> cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t -> ('a, 'b) t
   (** Remove association, if present.  Not tail-recursive. *)
 
-  val remove_hlt: ('a, 'b) t -> 'a -> cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t
+  val remove_hlt: 'a -> cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t -> ('a, 'b) t
   (** Remove association, or halt if not present.  Not tail-recursive. *)
 
-  val map: ('a, 'b) t -> f:('b -> 'c) -> ('a, 'c) t
+  val map: f:('b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
   (** Create a new associative list with values mapped from the input list via
       the map function.  Not tail-recursive. *)
 
