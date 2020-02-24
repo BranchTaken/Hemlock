@@ -15,18 +15,17 @@ end
 include T
 include Intnb.Make_i(T)
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "pp,pp_x" =
   let open Format in
   let rec fn = function
-  | [] -> ()
-  | x :: xs' -> begin
-      printf "%a %a\n" pp x pp_x x;
-      fn xs'
-    end
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "%a %a\n" pp x pp_x x;
+        fn xs'
+      end
   in
   printf "@[<h>";
   fn [kv (-1); kv 0; kv 1; kv 42; kv 0x3fff_ffff_ffff_ffff];
@@ -311,9 +310,9 @@ let%expect_test "rel" =
   let fn2 t min max = begin
     printf "\n";
     printf "clamp %a ~min:%a ~max:%a -> %a\n"
-        pp t pp min pp max pp (clamp t ~min ~max);
+      pp t pp min pp max pp (clamp t ~min ~max);
     printf "between %a ~low:%a ~high:%a -> %b\n"
-        pp t pp min pp max (between t ~low:min ~high:max);
+      pp t pp min pp max (between t ~low:min ~high:max);
   end in
   fn2 ~-(kv 2) ~-(kv 1) (kv 1);
   fn2 ~-(kv 1) ~-(kv 1) (kv 1);

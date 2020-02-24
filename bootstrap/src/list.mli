@@ -79,7 +79,7 @@ val push: 'a t -> 'a -> 'a t
 (** Push element onto list and return resulting list.  Equivalent:
     - [push t elm]
     - [elm :: t]
-    *)
+*)
 
 val pop: 'a t -> 'a * 'a t
 (** Pop head element off list and return the decomposed element and remainder
@@ -90,7 +90,7 @@ val ( @ ): 'a t -> 'a t -> 'a t
 (** Concatenate two lists.  Not tail-recursive.  Equivalent:
     - [concat t0 t1]
     - [t0 @ t1]
-    *)
+*)
 
 val join: ?sep:'a t -> 'a t t -> 'a t
 (** Concatenate a list of lists.  Not tail-recursive. *)

@@ -8,7 +8,7 @@ module type I_mono = sig
 end
 
 (** Functor input interface for comparable types with ranges that contain zero.
-    *)
+*)
 module type I_mono_zero = sig
   include I_mono
 
@@ -64,7 +64,7 @@ module type S_mono = sig
 end
 
 (** Functor output signature for comparable types with ranges that contain zero.
-    *)
+*)
 module type S_mono_zero = sig
   include I_mono_zero
   include S_mono_infix with type t := t
@@ -75,7 +75,7 @@ module type S_mono_zero = sig
 
   val is_non_negative: t -> bool
   (** [is_non_negative t] returns [false] if [t] is negative, [true] otherwise.
-      *)
+  *)
 
   val is_negative: t -> bool
   (** [is_negative t] returns [true] if [t] is negative, [false] otherwise. *)

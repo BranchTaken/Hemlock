@@ -23,7 +23,7 @@ module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
 
 (** O(n) [length] functor for monomorphic types, e.g. [string]. *)
 module Make_mono_length (T : I_mono) : S_mono_length with type t := T.t
-                                                    and type elm := T.elm
+                                                      and type elm := T.elm
 
 (** Folding-related functor for monomorphic types, e.g. [string]. *)
 module Make_mono_fold (T : I_mono) : S_mono_fold with type t := T.t

@@ -341,5 +341,5 @@ module type S_mono_mem = sig
 
   val mem: t -> elm -> bool
   (** [mem t elm] returns [true] if [elm] is a member of [t]; [false] otherwise.
-      *)
+  *)
 end

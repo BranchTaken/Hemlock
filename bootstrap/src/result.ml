@@ -1,8 +1,8 @@
 open Rudiments
 
 type ('a, 'b) t =
-| Ok of 'a
-| Error of 'b
+  | Ok of 'a
+  | Error of 'b
 
 let pp pp_a pp_b ppf = function
   | Ok a -> Format.fprintf ppf "@[<h>Ok@ %a@]" pp_a a
@@ -104,9 +104,8 @@ let merge t0 t1 ~ok ~error =
   | Ok _, Error error -> Error error
   | Error error0, Error error1 -> Error (error error0 error1)
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "pp" =
   let open Format in

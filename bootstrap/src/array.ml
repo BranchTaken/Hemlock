@@ -35,15 +35,15 @@ module T = struct
       let seek t i =
         match Isize.(i < (kv 0)) with
         | true -> begin
-          match (Usize.of_isize Isize.(neg i)) > t.index with
+            match (Usize.of_isize Isize.(neg i)) > t.index with
             | true -> halt "Cannot seek before beginning of array"
             | false -> {t with index=(t.index - Usize.of_isize (Isize.neg i))}
-        end
+          end
         | false -> begin
-          match (t.index + (Usize.of_isize i)) > (length t.array) with
-          | true -> halt "Cannot seek past end of array"
-          | false -> {t with index=(t.index + (Usize.of_isize i))}
-        end
+            match (t.index + (Usize.of_isize i)) > (length t.array) with
+            | true -> halt "Cannot seek past end of array"
+            | false -> {t with index=(t.index + (Usize.of_isize i))}
+          end
 
       let succ t =
         seek t (Isize.kv 1)
@@ -203,9 +203,9 @@ module Seq = struct
       val length: ('a,'accum,'b) t -> usize
       val next: ('a,'accum,'b) t -> 'accum -> 'b * ('a,'accum,'b) t * 'accum
     end) : sig
-      type ('a, 'accum, 'b) t
-      val to_accum_array: ('a,'accum,'b) t -> init:'accum -> 'accum * 'b outer
-    end with type ('a,'accum,'b) t := ('a,'accum,'b) T.t = struct
+    type ('a, 'accum, 'b) t
+    val to_accum_array: ('a,'accum,'b) t -> init:'accum -> 'accum * 'b outer
+  end with type ('a,'accum,'b) t := ('a,'accum,'b) T.t = struct
     let to_accum_array t ~init =
       let l = T.length t in
       match l with
@@ -234,10 +234,10 @@ module Seq = struct
       val next: ('a,'b,'accum,'c) t -> 'accum
         -> 'c * ('a,'b,'accum,'c) t * 'accum
     end) : sig
-      type ('a, 'b, 'accum, 'c) t
-      val to_accum_array: ('a,'b,'accum,'c) t -> init:'accum
-        -> 'accum * 'c outer
-    end with type ('a,'b,'accum,'c) t := ('a,'b,'accum,'c) T.t = struct
+    type ('a, 'b, 'accum, 'c) t
+    val to_accum_array: ('a,'b,'accum,'c) t -> init:'accum
+      -> 'accum * 'c outer
+  end with type ('a,'b,'accum,'c) t := ('a,'b,'accum,'c) T.t = struct
     let to_accum_array t ~init =
       let l = T.length t in
       match l with
@@ -405,15 +405,15 @@ let join ?sep tlist =
     | Some sep -> sep, length sep
   in
   let _, tlist_length = List.fold tlist ~init:(0, 0)
-      ~f:(fun (i, accum) list ->
-        let i' = Usize.succ i in
-        let sep_len' = match i with
-          | 0 -> 0
-          | _ -> sep_len
-        in
-        let accum' = accum + sep_len' + (length list) in
-        i', accum'
-      ) in
+    ~f:(fun (i, accum) list ->
+      let i' = Usize.succ i in
+      let sep_len' = match i with
+        | 0 -> 0
+        | _ -> sep_len
+      in
+      let accum' = accum + sep_len' + (length list) in
+      i', accum'
+    ) in
   Array_join.(to_array (init tlist_length sep tlist))
 
 let concat t0 t1 =
@@ -552,9 +552,9 @@ let is_sorted ?(strict=false) t ~cmp =
   | _ -> fn (get t 0) 1
 
 type order =
-| Increasing
-| Decreasing
-| Either
+  | Increasing
+  | Decreasing
+  | Either
 type run = {
   base: usize;
   past: usize;
@@ -656,59 +656,60 @@ let sort_impl ?(stable=false) t ~cmp ~inplace =
   (* Select monotonic runs and merge run pairs. *)
   let rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
     begin
-    match i = (length src) with
-    | true -> begin
-        let run0, order0, run1, order1 = match run0_opt with
-          | None -> begin
-              (* Copy odd run. *)
-              let run0 = {base; past=i} in
-              let run1 = {base=i; past=i} in
-              run0, order, run1, Increasing
+      match i = (length src) with
+      | true -> begin
+          let run0, order0, run1, order1 = match run0_opt with
+            | None -> begin
+                (* Copy odd run. *)
+                let run0 = {base; past=i} in
+                let run1 = {base=i; past=i} in
+                run0, order, run1, Increasing
+              end
+            | Some run0 -> run0, order0, {base; past=i}, order
+          in
+          let run = merge_pair ~cmp src run0 order0 run1 order1 dst in
+          run :: runs
+        end
+      | false -> begin
+          let elm' = get src i in
+          let i' = Usize.succ i in
+          match cmp elm elm', order, stable with
+          | Cmp.Lt, Either, _ ->
+            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
+              runs
+          | Cmp.Gt, Either, _ ->
+            select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst
+              runs
+          | Cmp.Lt, Increasing, _
+          | Cmp.Eq, Increasing, true
+          | Cmp.Eq, Either, true ->
+            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
+              runs
+          | Cmp.Eq, _, false
+          | Cmp.Gt, Decreasing, _ ->
+            select ~stable ~cmp elm' base i' order run0_opt order0 src dst runs
+          | Cmp.Lt, Decreasing, _
+          | Cmp.Eq, Decreasing, true
+          | Cmp.Gt, Increasing, _ -> begin
+              let run0_opt', order0', runs' = match run0_opt with
+                | None -> Some {base; past=i}, order, runs
+                | Some run0 -> begin
+                    let run1 = {base; past=i} in
+                    let run =
+                      merge_pair ~cmp src run0 order0 run1 order dst in
+                    None, Either, (run :: runs)
+                  end
+              in
+              select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst
+                runs'
             end
-          | Some run0 -> run0, order0, {base; past=i}, order
-        in
-        let run = merge_pair ~cmp src run0 order0 run1 order1 dst in
-        run :: runs
-      end
-    | false -> begin
-        let elm' = get src i in
-        let i' = Usize.succ i in
-        match cmp elm elm', order, stable with
-        | Cmp.Lt, Either, _ ->
-          select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
-            runs
-        | Cmp.Gt, Either, _ ->
-          select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst
-            runs
-        | Cmp.Lt, Increasing, _
-        | Cmp.Eq, Increasing, true
-        | Cmp.Eq, Either, true ->
-          select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
-            runs
-        | Cmp.Eq, _, false
-        | Cmp.Gt, Decreasing, _ ->
-          select ~stable ~cmp elm' base i' order run0_opt order0 src dst runs
-        | Cmp.Lt, Decreasing, _
-        | Cmp.Eq, Decreasing, true
-        | Cmp.Gt, Increasing, _ -> begin
-            let run0_opt', order0', runs' = match run0_opt with
-              | None -> Some {base; past=i}, order, runs
-              | Some run0 -> begin
-                  let run1 = {base; past=i} in
-                  let run =
-                    merge_pair ~cmp src run0 order0 run1 order dst in
-                  None, Either, (run :: runs)
-                end
-            in
-            select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst runs'
-          end
-      end
-  end in
+        end
+    end in
   let aux = copy t in
   let runs = match t with
     | [||] -> [{base=0; past=0}]
     | _ -> select ~stable ~cmp (get t 0) 0 1
-        Either None Either t aux []
+      Either None Either t aux []
   in
 
   (* Repeatedly sweep through runs and merge pairs until only one run remains.
@@ -785,7 +786,7 @@ let search_impl ?base ?past t key ~cmp mode =
                       Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
                     | false ->
                       Some (Cmp.Gt, (Usize.pred base)) (* In interior;
-                                                         key > predecessor. *)
+                                                          key > predecessor. *)
                   end
                 | Cmp.Eq -> Some (Cmp.Eq, base) (* base at leftmost match. *)
                 | Cmp.Gt -> not_reached ()
@@ -868,24 +869,24 @@ module Array_foldi_map = struct
 end
 
 let fold_map t ~init ~f =
-    Array_foldi_map.to_accum_array
-      (Array_foldi_map.init t ~f:(fun _ accum elm -> f accum elm) (length t))
-      ~init
+  Array_foldi_map.to_accum_array
+    (Array_foldi_map.init t ~f:(fun _ accum elm -> f accum elm) (length t))
+    ~init
 
 let foldi_map t ~init ~f =
-    Array_foldi_map.to_accum_array (Array_foldi_map.init t ~f (length t)) ~init
+  Array_foldi_map.to_accum_array (Array_foldi_map.init t ~f (length t)) ~init
 
 let filter t ~f =
   let _, t' = Array_foldi_map.to_accum_array
       (Array_foldi_map.init t ~f:(fun _ i _ ->
-         let rec fn i elm = begin
-           let i' = Usize.succ i in
-           match f elm with
-           | true -> i', elm
-           | false -> fn i' (get t i')
-         end in
-         fn i (get t i)
-       ) (count t ~f)) ~init:0 in
+          let rec fn i elm = begin
+            let i' = Usize.succ i in
+            match f elm with
+            | true -> i', elm
+            | false -> fn i' (get t i')
+          end in
+          fn i (get t i)
+        ) (count t ~f)) ~init:0 in
   t'
 
 let filteri t ~f =
@@ -896,14 +897,14 @@ let filteri t ~f =
   ) in
   let _, t' = Array_foldi_map.to_accum_array
       (Array_foldi_map.init t ~f:(fun _ i _ ->
-         let rec fn i elm = begin
-           let i' = Usize.succ i in
-           match f i elm with
-           | true -> i', elm
-           | false -> fn i' (get t i')
-         end in
-         fn i (get t i)
-       ) n)
+          let rec fn i elm = begin
+            let i' = Usize.succ i in
+            match f i elm with
+            | true -> i', elm
+            | false -> fn i' (get t i')
+          end in
+          fn i (get t i)
+        ) n)
       ~init:0 in
   t'
 
@@ -978,11 +979,11 @@ module Array_foldi2_map = struct
 end
 
 let fold2_map t0 t1 ~init ~f =
-    Array_foldi2_map.to_accum_array
-      (Array_foldi2_map.init t0 t1 ~f:(fun _ accum elm -> f accum elm)) ~init
+  Array_foldi2_map.to_accum_array
+    (Array_foldi2_map.init t0 t1 ~f:(fun _ accum elm -> f accum elm)) ~init
 
 let foldi2_map t0 t1 ~init ~f =
-    Array_foldi2_map.to_accum_array (Array_foldi2_map.init t0 t1 ~f) ~init
+  Array_foldi2_map.to_accum_array (Array_foldi2_map.init t0 t1 ~f) ~init
 
 let zip t0 t1 =
   map2 t0 t1 ~f:(fun a b -> a, b)
@@ -1001,9 +1002,8 @@ let pp pp_elm ppf t =
   );
   fprintf ppf "|]@]"
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "cursor" =
   let open Format in
@@ -1050,7 +1050,7 @@ let%expect_test "cursor" =
         let cursor' = Cursor.succ cursor in
         assert Cursor.(cursor = (pred cursor'));
         fn arr hd cursor' tl
-    end
+      end
     | Eq | Gt -> ()
   end in
   let arrs = [
@@ -1261,8 +1261,8 @@ let%expect_test "join" =
   let test ?sep arrs = begin
     printf "join";
     let () = match sep with
-    | None -> ()
-    | Some sep -> printf " ~sep:%a" (pp Usize.pp) sep;
+      | None -> ()
+      | Some sep -> printf " ~sep:%a" (pp Usize.pp) sep;
     in
     printf " %a -> %a\n"
       (List.pp (pp Usize.pp)) arrs
@@ -1639,26 +1639,26 @@ let%expect_test "search" =
     for probe = 0 to key_max do
       printf "  %a -> %s, %s, %s\n" Usize.pp probe
         (match psearch arr probe ~cmp:Usize.cmp with
-         | None -> "<"
-         | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
-         | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
-         | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
+          | None -> "<"
+          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
+              Usize.pp i Usize.pp (get arr i)
+          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
+              Usize.pp i Usize.pp (get arr i)
+          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
+              Usize.pp i Usize.pp (get arr i)
         )
         (match search arr probe ~cmp:Usize.cmp with
-         | None -> "<>"
-         | Some i -> asprintf "=%a" Usize.pp (get arr i)
+          | None -> "<>"
+          | Some i -> asprintf "=%a" Usize.pp (get arr i)
         )
         (match nsearch arr probe ~cmp:Usize.cmp with
-         | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
-         | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
-         | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-             Usize.pp i Usize.pp (get arr i)
-         | None -> ">"
+          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
+              Usize.pp i Usize.pp (get arr i)
+          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
+              Usize.pp i Usize.pp (get arr i)
+          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
+              Usize.pp i Usize.pp (get arr i)
+          | None -> ">"
         );
     done
   end in

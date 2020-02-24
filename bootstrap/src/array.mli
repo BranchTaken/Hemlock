@@ -17,7 +17,7 @@ module Cursor : sig
 end
 
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
-    -> Hash.State.t
+  -> Hash.State.t
 (** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
     and returns the resulting state.  Array elements are sequentially
     hash-folded into the resulting state via [hash_fold_a]. *)
@@ -73,11 +73,6 @@ val of_list: ?length:usize -> 'a list -> 'a t
 val of_list_rev: ?length:usize -> 'a list -> 'a t
 (** Initialize array using reversed contents of list.  If specified, [?length]
     must equal [(List.length list)]. *)
-
-(* In Container_common_intf.S_poly_fold:
-val to_list: 'a t -> 'a list
-val to_list_rev: 'a t -> 'a list
-*)
 
 val length: 'a t -> usize
 (** Return array length. *)

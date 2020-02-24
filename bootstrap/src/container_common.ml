@@ -52,11 +52,11 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
 
   let foldi_until t ~init ~f =
     let _, accum = fold_until t ~init:(0, init)
-        ~f:(fun (i, accum) elm ->
-          let i' = (Usize.succ i) in
-          let accum', until = f i accum elm in
-          (i', accum'), until
-        ) in
+      ~f:(fun (i, accum) elm ->
+        let i' = (Usize.succ i) in
+        let accum', until = f i accum elm in
+        (i', accum'), until
+      ) in
     accum
 
   let fold t ~init ~f =
@@ -77,8 +77,8 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
   let count t ~f =
     fold t ~init:0 ~f:(fun accum elm ->
       match f elm with
-        | false -> accum
-        | true -> (Usize.succ accum)
+      | false -> accum
+      | true -> (Usize.succ accum)
     )
 
   let for_any t ~f =

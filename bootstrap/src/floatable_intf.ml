@@ -1,5 +1,5 @@
 (** Functor output signature for types that can convert to/from {!type:float}.
-    *)
+*)
 module type S = sig
   type t
   (** Floatable type. *)

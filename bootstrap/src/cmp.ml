@@ -1,7 +1,7 @@
 type t =
-| Lt
-| Eq
-| Gt
+  | Lt
+  | Eq
+  | Gt
 
 let pp ppf t =
   Format.fprintf ppf (match t with

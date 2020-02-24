@@ -58,9 +58,8 @@ let of_codepoint_hlt x =
   | false -> halt "Lossy conversion"
   | true -> t
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "hash_fold" =
   let open Format in
@@ -88,11 +87,11 @@ let%expect_test "hash_fold" =
 let%expect_test "pp,pp_x" =
   let open Format in
   let rec fn = function
-  | [] -> ()
-  | x :: xs' -> begin
-      printf "%a %a\n" pp x pp_x x;
-      fn xs'
-    end
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "%a %a\n" pp x pp_x x;
+        fn xs'
+      end
   in
   printf "@[<h>";
   fn [kv 0; kv 1; kv 42; kv 255];
@@ -231,14 +230,14 @@ let%expect_test "conversion" =
         let c' = to_codepoint t in
         let t' = of_codepoint c' in
         printf ("Codepoint.of_usize %a -> of_codepoint %a -> " ^^
-          "to_codepoint %a -> of_codepoint %a -> %a\n") Usize.pp_x x
+            "to_codepoint %a -> of_codepoint %a -> %a\n") Usize.pp_x x
           Codepoint.pp_x c pp_x t Codepoint.pp_x c' pp_x t';
 
         fn xs'
       end
   in
   fn [Usize.max_value; 0; 42; 127; 128; 255; 256; 257;
-      Usize.of_isize Isize.max_value];
+    Usize.of_isize Isize.max_value];
 
   [%expect{|
     of_isize 0x7fffffffffffffffi -> to_isize 0xffu8 -> of_isize -1i -> 0xffu8

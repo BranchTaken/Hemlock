@@ -2,10 +2,10 @@ open Rudiments
 
 module T = struct
   type t =
-  | One   of byte
-  | Two   of byte * byte
-  | Three of byte * byte * byte
-  | Four  of byte * byte * byte * byte
+    | One   of byte
+    | Two   of byte * byte
+    | Three of byte * byte * byte
+    | Four  of byte * byte * byte * byte
 
   let of_codepoint cp =
     assert (Codepoint.(cp <= (kv 0x10ffff)));
@@ -17,7 +17,7 @@ module T = struct
       Two (
         Byte.(bit_or (kv 0b110_00000) (of_codepoint (Codepoint.bit_usr cp 6))),
         Byte.(bit_or (kv 0b10_000000)
-            (of_codepoint (Codepoint.(bit_and cp (kv 0x3f)))))
+          (of_codepoint (Codepoint.(bit_and cp (kv 0x3f)))))
       )
     else if sigbits < 17 then
       Three (
@@ -25,7 +25,7 @@ module T = struct
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
             Codepoint.(bit_and (bit_usr cp 6) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
-            (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
+          (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
     else if sigbits < 22 then
       Four (
@@ -35,24 +35,24 @@ module T = struct
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
             Codepoint.(bit_and (bit_usr cp 6) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
-            (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
+          (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
     else not_reached ()
 
   let to_codepoint = function
     | One b0 -> Byte.to_codepoint b0
     | Two (b0, b1) -> Codepoint.(bit_or
-          Byte.(to_codepoint (bit_sl (bit_and b0 (kv 0x1f)) 6))
-          Byte.(to_codepoint (bit_and b1 (kv 0x3f))))
+        Byte.(to_codepoint (bit_sl (bit_and b0 (kv 0x1f)) 6))
+        Byte.(to_codepoint (bit_and b1 (kv 0x3f))))
     | Three (b0, b1, b2) -> Codepoint.(bit_or (bit_or
-            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0xf))) 12)
-            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f))) 6))
-          Byte.(to_codepoint (bit_and b2 (kv 0x3f))))
+        Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0xf))) 12)
+        Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f))) 6))
+      Byte.(to_codepoint (bit_and b2 (kv 0x3f))))
     | Four (b0, b1, b2, b3) -> Codepoint.(bit_or (bit_or (bit_or
-              Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0x7))) 18)
-              Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f))) 12))
-            Codepoint.(bit_sl Byte.(to_codepoint (bit_and b2 (kv 0x3f))) 6))
-          Byte.(to_codepoint (bit_and b3 (kv 0x3f))))
+        Codepoint.(bit_sl Byte.(to_codepoint (bit_and b0 (kv 0x7))) 18)
+        Codepoint.(bit_sl Byte.(to_codepoint (bit_and b1 (kv 0x3f))) 12))
+      Codepoint.(bit_sl Byte.(to_codepoint (bit_and b2 (kv 0x3f))) 6))
+      Byte.(to_codepoint (bit_and b3 (kv 0x3f))))
 
   let cmp t0 t1 =
     Codepoint.cmp (to_codepoint t0) (to_codepoint t1)
@@ -94,11 +94,11 @@ module Seq = struct
       | None -> None
       | Some (b, t') -> begin
           match Byte.(bit_clz (bit_not b)) with
-            | 0 -> fn t' [b] 0
-            | 2 -> fn t' [b] 1
-            | 3 -> fn t' [b] 2
-            | 4 -> fn t' [b] 3
-            | _ -> Some (Error [b], t')
+          | 0 -> fn t' [b] 0
+          | 2 -> fn t' [b] 1
+          | 3 -> fn t' [b] 2
+          | 4 -> fn t' [b] 3
+          | _ -> Some (Error [b], t')
         end
 
     let to_utf8_hlt t =
@@ -157,31 +157,31 @@ let length = function
 
 let to_string = function
   | One b0 -> Stdlib.String.init 1 (fun _ ->
-      Stdlib.Char.chr (int_of_isize (Byte.to_isize b0))
-    )
+    Stdlib.Char.chr (int_of_isize (Byte.to_isize b0))
+  )
   | Two (b0, b1) -> Stdlib.String.init 2 (fun i ->
-      Stdlib.Char.chr (int_of_isize (Byte.to_isize (
-        match i with
-        | 0 -> b0
-        | 1 -> b1
-        | _ -> not_reached ()
+    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+      match i with
+      | 0 -> b0
+      | 1 -> b1
+      | _ -> not_reached ()
     ))))
   | Three (b0, b1, b2) -> Stdlib.String.init 3 (fun i ->
-      Stdlib.Char.chr (int_of_isize (Byte.to_isize (
-        match i with
-        | 0 -> b0
-        | 1 -> b1
-        | 2 -> b2
-        | _ -> not_reached ()
+    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+      match i with
+      | 0 -> b0
+      | 1 -> b1
+      | 2 -> b2
+      | _ -> not_reached ()
     ))))
   | Four (b0, b1, b2, b3) -> Stdlib.String.init 4 (fun i ->
-      Stdlib.Char.chr (int_of_isize (Byte.to_isize (
-        match i with
-        | 0 -> b0
-        | 1 -> b1
-        | 2 -> b2
-        | 3 -> b3
-        | _ -> not_reached ()
+    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+      match i with
+      | 0 -> b0
+      | 1 -> b1
+      | 2 -> b2
+      | 3 -> b3
+      | _ -> not_reached ()
     ))))
 
 let escape t =
@@ -232,9 +232,8 @@ let escape t =
 let pp ppf t =
   Format.fprintf ppf "'%s'" (escape t)
 
-(*******************************************************************************
- * Begin tests.
- *)
+(******************************************************************************)
+(* Begin tests. *)
 
 let%expect_test "utf8" =
   let open Format in
