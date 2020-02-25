@@ -1,8 +1,5 @@
 (** Comparator type and functors. *)
 
-(** Comparator type, with phantom type that acts as a witness which helps assure
-    that multi-container operations can only be performed on containers with
-    compatible comparison functions. *)
 type ('a, 'witness) t = private {
   hash_fold: 'a -> Hash.State.t -> Hash.State.t;
   (** Hash-fold function. *)
@@ -13,6 +10,12 @@ type ('a, 'witness) t = private {
   pp: Format.formatter -> 'a -> unit
   (** Pretty printer function. *)
 }
+(** Comparator type, with phantom type that acts as a witness which helps assure
+    that multi-container operations can only be performed on containers with
+    compatible comparison functions. *)
+
+type ('a, 'witness) cmper = ('a, 'witness) t
+(** Comparator type. *)
 
 (** Functor input interface for monomorphic comparator types, e.g.
     {!type:string}. *)
@@ -25,9 +28,6 @@ end
 (** Functor output signature for monomorphic comparator types, e.g.
     {!type:string}. *)
 module type S_mono = sig
-  type ('a, 'witness) cmper = ('a, 'witness) t
-  (** Comparator type. *)
-
   type t
   (** Container type. *)
 
@@ -72,9 +72,6 @@ end
 (** Functor output signature for polymorphic comparator types, e.g.
     {!type:'a list}. *)
 module type S_poly = sig
-  type ('a, 'witness) cmper = ('a, 'witness) t
-  (** Comparator type. *)
-
   type 'a t
   (** Container type. *)
 
