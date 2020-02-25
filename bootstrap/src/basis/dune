@@ -1,9 +1,9 @@
 (library
- (name Hemlock)
+ (name Basis)
  (foreign_stubs
   (language c)
   (names entropy))
  (inline_tests)
  (preprocess (pps ppx_expect ppx_inline_test))
- (synopsis "Hemlock bootstrap standard library")
+ (synopsis "Hemlock bootstrap Basis library")
  )

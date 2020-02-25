@@ -1,6 +1,6 @@
 (executables
  (names hlc)
- (libraries core Hemlock))
+ (libraries core Basis))
 
 (install
  (section bin)

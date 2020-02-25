@@ -1,6 +1,6 @@
 (tests
  (names seed)
- (libraries Hemlock)
+ (libraries Basis)
  (action
   (setenv HEMLOCK_ENTROPY "0"
    (run %{test} -e))))

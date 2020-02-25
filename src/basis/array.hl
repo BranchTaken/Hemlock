@@ -1582,7 +1582,7 @@ let%expect_test "sort" =
       if len > 0 then len
       else 1
     in
-    init len ~f:(fun i -> {key=Stdlib.Random.int key_limit; sn=i})
+    init len ~f:(fun i -> {key=Random.int key_limit; sn=i})
   end in
   let cmp elm0 elm1 =
     Usize.cmp elm0.key elm1.key
@@ -1599,7 +1599,7 @@ let%expect_test "sort" =
       | Cmp.Gt -> Cmp.Gt
     ));
   end in
-  Stdlib.Random.init 0;
+  Random.init 0;
   for len = 0 to 257 do
     for _ = 1 to 10 do
       test_sort (gen_array len)
