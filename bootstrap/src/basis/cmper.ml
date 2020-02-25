@@ -8,6 +8,8 @@ type ('a, 'witness) t = {
   pp: Format.formatter -> 'a -> unit
 }
 
+type ('a, 'witness) cmper = ('a, 'witness) t
+
 module type I_mono = sig
   type t
   include Cmpable_intf.Key with type t := t
@@ -15,14 +17,12 @@ module type I_mono = sig
 end
 
 module type S_mono = sig
-  type ('a, 'witness) cmper = ('a, 'witness) t
   type t
   type cmper_witness
   val cmper: (t, cmper_witness) cmper
 end
 
 module Make_mono (T : I_mono) : S_mono with type t := T.t = struct
-  type ('a, 'witness) cmper = ('a, 'witness) t
   type cmper_witness
   let cmper = T.{hash_fold; cmp; pp}
 end
@@ -38,14 +38,12 @@ module type I_poly = sig
 end
 
 module type S_poly = sig
-  type ('a, 'witness) cmper = ('a, 'witness) t
   type 'a t
   type cmper_witness
   val cmper: ('a t, cmper_witness) cmper
 end
 
 module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t = struct
-  type ('a, 'witness) cmper = ('a, 'witness) t
   type cmper_witness
 
   let hash_fold t state =
