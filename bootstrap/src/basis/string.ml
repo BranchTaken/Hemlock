@@ -1143,7 +1143,6 @@ module Slice = struct
 
     let pp ppf t =
       let open Format in
-      pp_set_max_indent ppf 2; (* Cause line break between p and pi. *)
       fprintf ppf "@[<v> p=%a@,pi=[" pp_string t.p;
       Array.iter t.pi ~f:(fun elm ->
         fprintf ppf "%a" Usize.pp (Cursori.cindex elm)
@@ -2873,11 +2872,11 @@ let%expect_test "substr_find" =
     "abaabaaab";
   ] in
   let s = concat patterns in
-  printf "@[<h>";
+  printf "@[";
   List.iter patterns ~f:(fun pattern ->
     let p = Slice.Pattern.create (Slice.of_string pattern) in
-    printf "%a\n" Slice.Pattern.pp p;
-    printf "     in_:%a\n" pp s;
+    printf "%a@\n" Slice.Pattern.pp p;
+    printf "     in_:%a@\n" pp s;
 
     let print_matches matches = begin
       match matches with
@@ -2901,11 +2900,11 @@ let%expect_test "substr_find" =
 
     printf "     all:";
     print_matches (substr_find_all s ~may_overlap:true ~pattern);
-    printf "\n";
+    printf "@\n";
 
     printf "disjoint:";
     print_matches (substr_find_all s ~may_overlap:false ~pattern);
-    printf "\n";
+    printf "@\n";
 
     printf "   first:";
     let () = match substr_find s ~pattern with
@@ -2913,8 +2912,8 @@ let%expect_test "substr_find" =
       | Some cursor ->
         printf " %*s" (succ (Cursor.bindex cursor)) "|";
     in
-    printf "\n";
-    printf "\n";
+    printf "@\n";
+    printf "@\n";
     ()
   );
   printf "@]";
