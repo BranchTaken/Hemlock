@@ -45,10 +45,7 @@ let of_usize x =
   | 0 -> false
   | _ -> true
 
-let not t =
-  match t with
-  | false -> true
-  | true -> false
+let not = not
 
 (******************************************************************************)
 (* Begin tests. *)
