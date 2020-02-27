@@ -9,3 +9,8 @@ let not_implemented s =
 let halt s =
   let () = prerr_string ("Halt: " ^ s ^ "\n") in
   exit 1
+
+let not t =
+  match t with
+  | false -> true
+  | true -> false

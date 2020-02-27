@@ -58,3 +58,6 @@ val isize_of_int: int -> isize
 (** Convert an OCaml integer to a bitwise identical signed integer. *)
 
 include Intnb_intf.S_u with type t := usize
+
+val not: bool -> bool
+(** [not t] returns the logical negation of [t]. *)
