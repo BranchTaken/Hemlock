@@ -20,6 +20,10 @@ module State : sig
       hash function can be implemented as [(fun u -> Usize.hash_fold u
       Hash.State.empty)]. *)
 
+  val of_u128: u128 -> t
+  (** [of_u128 u] creates a state based on [u].  This function has no practical
+      use outside of testing.  Prefer to manually seed via {!module:Entropy}. *)
+
   val seed: t
   (** Return the seed state for this execution of the application.  The seed
       state is based on {!Entropy.seed}. *)
