@@ -11,6 +11,9 @@ module State = struct
 
   let empty = u128_zero
 
+  let of_u128 u =
+    u
+
   let seed = Entropy.seed
 
   module Gen = struct
