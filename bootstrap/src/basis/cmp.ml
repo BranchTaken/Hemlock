@@ -9,3 +9,33 @@ let pp ppf t =
     | Eq -> "Eq"
     | Gt -> "Gt"
   )
+
+let is_ge = function
+  | Lt -> false
+  | Eq -> true
+  | Gt -> true
+
+let is_le = function
+  | Lt -> true
+  | Eq -> true
+  | Gt -> false
+
+let is_eq = function
+  | Lt -> false
+  | Eq -> true
+  | Gt -> false
+
+let is_gt = function
+  | Lt -> false
+  | Eq -> false
+  | Gt -> true
+
+let is_lt = function
+  | Lt -> true
+  | Eq -> false
+  | Gt -> false
+
+let is_ne = function
+  | Lt -> true
+  | Eq -> false
+  | Gt -> true
