@@ -49,8 +49,8 @@ let u128_one = {hi=Int64.zero; lo=Int64.one}
 let u128_bit_or t0 t1 =
   {hi=Int64.logor t0.hi t1.hi; lo=Int64.logor t0.lo t1.lo}
 
-let u128_bit_sl i t =
-  let i = i mod 128 in
+let u128_bit_sl ~shift t =
+  let i = shift mod 128 in
   let hi = begin
     if i >= 64 then Int64.shift_left t.lo (i - 64)
     else if i > 0 then
@@ -65,8 +65,8 @@ let u128_bit_sl i t =
   end in
   {hi; lo}
 
-let u128_bit_usr i t =
-  let i = i mod 128 in
+let u128_bit_usr ~shift t =
+  let i = shift mod 128 in
   let hi = begin
     if i >= 64 then Int64.zero
     else if i > 0 then Int64.shift_right_logical t.hi i

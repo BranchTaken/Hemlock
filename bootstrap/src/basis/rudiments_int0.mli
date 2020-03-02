@@ -36,10 +36,10 @@ val u128_one: u128
 val u128_bit_or: u128 -> u128 -> u128
 (** Bitwise or. *)
 
-val u128_bit_sl: usize -> u128 -> u128
+val u128_bit_sl: shift:usize -> u128 -> u128
 (** Bit shift left. *)
 
-val u128_bit_usr: usize -> u128 -> u128
+val u128_bit_usr: shift:usize -> u128 -> u128
 (** Unsigned bit shift right (no sign extension). *)
 
 val u128_add: u128 -> u128 -> u128

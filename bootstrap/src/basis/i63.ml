@@ -151,12 +151,12 @@ let%expect_test "bit_" =
 
   let x = kv 0xff in
   let s = 4 in
-  printf "bit_sl %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_sl s x);
+  printf "bit_sl %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_sl ~shift:s x);
 
   let x = kv (-1) in
   let s = 4 in
-  printf "bit_usr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_usr s x);
-  printf "bit_ssr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_ssr s x);
+  printf "bit_usr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_usr ~shift:s x);
+  printf "bit_ssr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_ssr ~shift:s x);
 
   let rec fn xs = begin
     match xs with

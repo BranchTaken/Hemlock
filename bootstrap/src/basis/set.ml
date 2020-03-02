@@ -30,10 +30,10 @@
 
 open Rudiments
 
-(* Number of bits per HAMT level.  The data type used for node's present field
-   must have at least elms_per_level bits. *)
+(* Number of bits per HAMT level.  The data type used for node's
+   present_{mem,child} fields must have at least elms_per_level bits. *)
 let bits_per_level = 6
-let elms_per_level = bit_sl bits_per_level 1
+let elms_per_level = bit_sl ~shift:bits_per_level 1
 
 (* Number of hash bits available per hash value. *)
 let bits_per_hash = 128
@@ -97,10 +97,10 @@ let shift_of_level level =
 let present_index_at_level hash level =
   let shift = shift_of_level level in
   let mask = U128.of_usize (elms_per_level - 1) in
-  U128.(to_usize (bit_and mask (bit_usr shift hash)))
+  U128.(to_usize (bit_and mask (bit_usr ~shift hash)))
 
 let present_bit_of_index index =
-  U64.bit_sl index U64.one
+  U64.bit_sl ~shift:index U64.one
 
 let elm_index_of_bit present present_bit =
   let trail_mask = U64.(present_bit - one) in
@@ -505,7 +505,8 @@ module External_iter = struct
     | node_pos :: path_tl -> begin
         match is_collision_node node_pos.node with
         | false -> begin
-            let mask = U64.(bit_not ((bit_sl 1 node_pos.present_bit) - one)) in
+            let mask =
+              U64.(bit_not ((bit_sl ~shift:1 node_pos.present_bit) - one)) in
             let mem_present_index' =
               U64.(bit_ctz (bit_and mask node_pos.node.present_mem)) in
             let child_present_index' =
@@ -821,7 +822,7 @@ module UsizeTestCmper = struct
       | 421 ->
         (* Set the least significant consumed hash bit. *)
         Hash.State.of_u128
-          (U128.bit_sl (bits_per_hash % bits_per_level) U128.one)
+          (U128.bit_sl ~shift:(bits_per_hash % bits_per_level) U128.one)
       | _ -> Usize.hash_fold a Hash.State.empty
     let cmp = Usize.cmp
     let pp = Usize.pp

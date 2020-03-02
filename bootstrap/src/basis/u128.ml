@@ -83,8 +83,8 @@ module T = struct
 
   let bit_usr = u128_bit_usr
 
-  let bit_ssr i t =
-    let i = i % 128 in
+  let bit_ssr ~shift t =
+    let i = shift % 128 in
     let hi = begin
       if Rudiments_int.(i >= 64) then Int64.shift_right t.hi (i - 64)
       else if Rudiments_int.(i > 0) then Int64.shift_right t.hi i
@@ -117,23 +117,23 @@ module T = struct
 
   let bit_pop x =
     let x =
-      x - (bit_and (bit_usr 1 x) c5s) in
-    let x = (bit_and x c3s) + (bit_and (bit_usr 2 x) c3s) in
-    let x = bit_and (x + (bit_usr 4 x)) c0fs in
-    let x = x + (bit_usr 8 x) in
-    let x = x + (bit_usr 16 x) in
-    let x = x + (bit_usr 32 x) in
-    let x = x + (bit_usr 64 x) in
+      x - (bit_and (bit_usr ~shift:1 x) c5s) in
+    let x = (bit_and x c3s) + (bit_and (bit_usr ~shift:2 x) c3s) in
+    let x = bit_and (x + (bit_usr ~shift:4 x)) c0fs in
+    let x = x + (bit_usr ~shift:8 x) in
+    let x = x + (bit_usr ~shift:16 x) in
+    let x = x + (bit_usr ~shift:32 x) in
+    let x = x + (bit_usr ~shift:64 x) in
     to_usize (bit_and x cff)
 
   let bit_clz x =
-    let x = bit_or x (bit_usr 1 x) in
-    let x = bit_or x (bit_usr 2 x) in
-    let x = bit_or x (bit_usr 4 x) in
-    let x = bit_or x (bit_usr 8 x) in
-    let x = bit_or x (bit_usr 16 x) in
-    let x = bit_or x (bit_usr 32 x) in
-    let x = bit_or x (bit_usr 64 x) in
+    let x = bit_or x (bit_usr ~shift:1 x) in
+    let x = bit_or x (bit_usr ~shift:2 x) in
+    let x = bit_or x (bit_usr ~shift:4 x) in
+    let x = bit_or x (bit_usr ~shift:8 x) in
+    let x = bit_or x (bit_usr ~shift:16 x) in
+    let x = bit_or x (bit_usr ~shift:32 x) in
+    let x = bit_or x (bit_usr ~shift:64 x) in
     bit_pop (bit_not x)
 
   let bit_ctz t =
@@ -146,12 +146,12 @@ module T = struct
        The digit arrays are encoded as (u32 array), which assures that only
        significant bits are stored.  The intermediate computations use 64-bit
        math so that two digits fit. *)
-    let b = U64.(bit_sl 32 one) in
+    let b = U64.(bit_sl ~shift:32 one) in
     (* Extract the high/low digit from a 2-digit value. *)
-    let hi32 x = U64.bit_usr 32 x in
+    let hi32 x = U64.bit_usr ~shift:32 x in
     let lo32 x = U64.(bit_and x (of_usize 0xffff_ffff)) in
     let div_b x = Int64.shift_right x 32 in
-    let mul_b x = I64.bit_sl 32 x in
+    let mul_b x = I64.bit_sl ~shift:32 x in
     (* Get/set digit.  Only the low 32 bits are used; if u32 were available it
        would be a better choice for array elements. *)
     let get arr i = U64.to_i64 (U32.to_u64 (Caml.Array.get arr i)) in
@@ -215,24 +215,24 @@ module T = struct
         let vn = zero_arr n in
         for i = Rudiments_int.(pred n) downto 1 do
           set vn i (U64.bit_or
-              (U64.bit_sl shift (get v i))
-              (U64.bit_usr Rudiments_int.(32 - shift)
+              (U64.bit_sl ~shift (get v i))
+              (U64.bit_usr ~shift:Rudiments_int.(32 - shift)
                   (get v Rudiments_int.(pred i)))
           )
         done;
-        set vn 0 (U64.bit_sl shift (get v 0));
+        set vn 0 (U64.bit_sl ~shift (get v 0));
         (* Initialize normalized dividend. *)
         let un = zero_arr (Rudiments_int.succ m) in
-        set un m (U64.bit_usr Rudiments_int.(32 - shift)
+        set un m (U64.bit_usr ~shift:Rudiments_int.(32 - shift)
           (get u (Rudiments_int.pred m)));
         for i = Rudiments_int.(pred m) downto 1 do
           set un i U64.(bit_or
-              U64.(bit_sl shift (get u i))
-              U64.(bit_usr Rudiments_int.(32 - shift)
+              U64.(bit_sl ~shift (get u i))
+              U64.(bit_usr ~shift:Rudiments_int.(32 - shift)
                 (get u (Rudiments_int.pred i)))
           )
         done;
-        set un 0 (U64.bit_sl shift (get u 0));
+        set un 0 (U64.bit_sl ~shift (get u 0));
         (* Main computation. *)
         let rec fn_j j = begin
           (* Compute quotient digit estimate and remainder.  It is possible that
@@ -306,13 +306,13 @@ module T = struct
         assert Rudiments_int.(i_last > 0);
         for i = 0 to Rudiments_int.(pred i_last) do
           set r i U64.(bit_or
-              (bit_usr shift (get un i))
-              (bit_sl Rudiments_int.(32 - shift)
+              (bit_usr ~shift (get un i))
+              (bit_sl ~shift:Rudiments_int.(32 - shift)
                   (get un (Rudiments_int.succ i))))
         done;
         set r i_last U64.(bit_or
-            (bit_usr shift (get un i_last))
-            (bit_sl Rudiments_int.(32 - shift)
+            (bit_usr ~shift (get un i_last))
+            (bit_sl ~shift:Rudiments_int.(32 - shift)
                 (get un (Rudiments_int.succ i_last))));
         of_arr q, of_arr r
       end
@@ -337,7 +337,7 @@ module T = struct
             | false -> r * p
           in
           let p' = p * p in
-          let n' = bit_usr 1 n in
+          let n' = bit_usr ~shift:1 n in
           fn r' p' n'
         end
     end in

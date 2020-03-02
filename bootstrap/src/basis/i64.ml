@@ -108,7 +108,7 @@ let ( ** ) t0 t1 =
           | false -> r * p
         in
         let p' = p * p in
-        let n' = bit_usr 1 n in
+        let n' = bit_usr ~shift:1 n in
         fn r' p' n'
       end
   end in

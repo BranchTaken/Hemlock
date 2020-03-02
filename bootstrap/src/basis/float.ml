@@ -271,7 +271,7 @@ let int_pow ~p t =
           | _ -> not_reached ()
         in
         let p' = p * p in
-        let n' = Usize.bit_usr 1 n in
+        let n' = Usize.bit_usr ~shift:1 n in
         fn r' p' n'
       end
   end in
