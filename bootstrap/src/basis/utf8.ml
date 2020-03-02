@@ -15,25 +15,28 @@ module T = struct
       One (Byte.of_codepoint cp)
     else if sigbits < 12 then
       Two (
-        Byte.(bit_or (kv 0b110_00000) (of_codepoint (Codepoint.bit_usr 6 cp))),
+        Byte.(bit_or (kv 0b110_00000)
+          (of_codepoint (Codepoint.bit_usr ~shift:6 cp))),
         Byte.(bit_or (kv 0b10_000000)
           (of_codepoint (Codepoint.(bit_and cp (kv 0x3f)))))
       )
     else if sigbits < 17 then
       Three (
-        Byte.(bit_or (kv 0b1110_0000) (of_codepoint (Codepoint.bit_usr 12 cp))),
+        Byte.(bit_or (kv 0b1110_0000) (of_codepoint
+            (Codepoint.bit_usr ~shift:12 cp))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-            Codepoint.(bit_and (bit_usr 6 cp) (kv 0x3f)))),
+            Codepoint.(bit_and (bit_usr ~shift:6 cp) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
           (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
     else if sigbits < 22 then
       Four (
-        Byte.(bit_or (kv 0b11110_000) (of_codepoint (Codepoint.bit_usr 18 cp))),
+        Byte.(bit_or (kv 0b11110_000) (of_codepoint
+            (Codepoint.bit_usr ~shift:18 cp))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-            Codepoint.(bit_and (bit_usr 12 cp) (kv 0x3f)))),
+            Codepoint.(bit_and (bit_usr ~shift:12 cp) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000) (of_codepoint
-            Codepoint.(bit_and (bit_usr 6 cp) (kv 0x3f)))),
+            Codepoint.(bit_and (bit_usr ~shift:6 cp) (kv 0x3f)))),
         Byte.(bit_or (kv 0b10_000000)
           (of_codepoint Codepoint.(bit_and cp (kv 0x3f))))
       )
@@ -42,16 +45,16 @@ module T = struct
   let to_codepoint = function
     | One b0 -> Byte.to_codepoint b0
     | Two (b0, b1) -> Codepoint.(bit_or
-        Byte.(to_codepoint (bit_sl 6 (bit_and b0 (kv 0x1f))))
+        Byte.(to_codepoint (bit_sl ~shift:6 (bit_and b0 (kv 0x1f))))
         Byte.(to_codepoint (bit_and b1 (kv 0x3f))))
     | Three (b0, b1, b2) -> Codepoint.(bit_or (bit_or
-        Codepoint.(bit_sl 12 Byte.(to_codepoint (bit_and b0 (kv 0xf))))
-        Codepoint.(bit_sl 6 Byte.(to_codepoint (bit_and b1 (kv 0x3f)))))
+        Codepoint.(bit_sl ~shift:12 Byte.(to_codepoint (bit_and b0 (kv 0xf))))
+        Codepoint.(bit_sl ~shift:6 Byte.(to_codepoint (bit_and b1 (kv 0x3f)))))
       Byte.(to_codepoint (bit_and b2 (kv 0x3f))))
     | Four (b0, b1, b2, b3) -> Codepoint.(bit_or (bit_or (bit_or
-        Codepoint.(bit_sl 18 Byte.(to_codepoint (bit_and b0 (kv 0x7))))
-        Codepoint.(bit_sl 12 Byte.(to_codepoint (bit_and b1 (kv 0x3f)))))
-      Codepoint.(bit_sl 6 Byte.(to_codepoint (bit_and b2 (kv 0x3f)))))
+        Codepoint.(bit_sl ~shift:18 Byte.(to_codepoint (bit_and b0 (kv 0x7))))
+        Codepoint.(bit_sl ~shift:12 Byte.(to_codepoint (bit_and b1 (kv 0x3f)))))
+      Codepoint.(bit_sl ~shift:6 Byte.(to_codepoint (bit_and b2 (kv 0x3f)))))
       Byte.(to_codepoint (bit_and b3 (kv 0x3f))))
 
   let cmp t0 t1 =

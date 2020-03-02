@@ -199,15 +199,15 @@ module Cursor = struct
         let b = get bindex t.string in
         match Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) with
         | true -> begin
-            let mask = Byte.(bit_usr Usize.(nbits / 6) (kv 0x3f)) in
+            let mask = Byte.(bit_usr ~shift:Usize.(nbits / 6) (kv 0x3f)) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
-            Codepoint.(bit_or cp (bit_sl nbits cp_bits))
+            Codepoint.(bit_or cp (bit_sl ~shift:nbits cp_bits))
           end
         | false -> begin
             let bindex' = (Usize.pred bindex) in
             let mask = Byte.(kv 0b00_111111) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
-            let cp' = Codepoint.(bit_or (bit_sl nbits cp_bits) cp) in
+            let cp' = Codepoint.(bit_or (bit_sl ~shift:nbits cp_bits) cp) in
             let nbits' = nbits + 6 in
             fn bindex' cp' nbits'
           end
@@ -230,13 +230,13 @@ module Cursor = struct
             let b = get bindex t.string in
             let mask = Byte.(kv 0b00_111111) in
             let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
-            let cp' = Codepoint.(bit_or (bit_sl 6 cp) cp_bits) in
+            let cp' = Codepoint.(bit_or (bit_sl ~shift:6 cp) cp_bits) in
             fn cp' (Usize.succ bindex) Usize.(pred rem_bytes)
           end
       end in
       let nbytes = Byte.(bit_clz (bit_not b)) in
       let b0_nbits = Byte.(to_usize ((kv 7) - (of_usize nbytes))) in
-      let b0_mask = Byte.((bit_sl b0_nbits one) - one) in
+      let b0_mask = Byte.((bit_sl ~shift:b0_nbits one) - one) in
       let cp = Byte.(to_codepoint (bit_and b b0_mask)) in
       fn cp (Usize.succ t.bindex) Usize.(pred nbytes)
     end

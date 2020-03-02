@@ -149,14 +149,14 @@ let bit_xor t0 t1 =
 let bit_not t =
   Int64.lognot t
 
-let bit_sl i t =
-  Int64.shift_left t i
+let bit_sl ~shift t =
+  Int64.shift_left t shift
 
-let bit_usr i t =
-  Int64.shift_right_logical t i
+let bit_usr ~shift t =
+  Int64.shift_right_logical t shift
 
-let bit_ssr i t =
-  Int64.shift_right t i
+let bit_ssr ~shift t =
+  Int64.shift_right t shift
 
 let ( + ) t0 t1 =
   Int64.add t0 t1
@@ -185,7 +185,7 @@ let ( ** ) t0 t1 =
           | false -> r * p
         in
         let p' = p * p in
-        let n' = bit_usr 1 n in
+        let n' = bit_usr ~shift:1 n in
         fn r' p' n'
       end
   end in
@@ -201,21 +201,21 @@ let c7f = of_string "0x7f"
 
 let bit_pop x =
   let x =
-    x - (bit_and (bit_usr 1 x) c5s) in
-  let x = (bit_and x c3s) + (bit_and (bit_usr 2 x) c3s) in
-  let x = bit_and (x + (bit_usr 4 x)) c0fs in
-  let x = x + (bit_usr 8 x) in
-  let x = x + (bit_usr 16 x) in
-  let x = x + (bit_usr 32 x) in
+    x - (bit_and (bit_usr ~shift:1 x) c5s) in
+  let x = (bit_and x c3s) + (bit_and (bit_usr ~shift:2 x) c3s) in
+  let x = bit_and (x + (bit_usr ~shift:4 x)) c0fs in
+  let x = x + (bit_usr ~shift:8 x) in
+  let x = x + (bit_usr ~shift:16 x) in
+  let x = x + (bit_usr ~shift:32 x) in
   to_usize (bit_and x c7f)
 
 let bit_clz x =
-  let x = bit_or x (bit_usr 1 x) in
-  let x = bit_or x (bit_usr 2 x) in
-  let x = bit_or x (bit_usr 4 x) in
-  let x = bit_or x (bit_usr 8 x) in
-  let x = bit_or x (bit_usr 16 x) in
-  let x = bit_or x (bit_usr 32 x) in
+  let x = bit_or x (bit_usr ~shift:1 x) in
+  let x = bit_or x (bit_usr ~shift:2 x) in
+  let x = bit_or x (bit_usr ~shift:4 x) in
+  let x = bit_or x (bit_usr ~shift:8 x) in
+  let x = bit_or x (bit_usr ~shift:16 x) in
+  let x = bit_or x (bit_usr ~shift:32 x) in
   bit_pop (bit_not x)
 
 let bit_ctz t =
