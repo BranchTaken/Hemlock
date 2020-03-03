@@ -31,6 +31,8 @@ type codepoint = Codepoint.t
 type u8 = U8.t
 type byte = Byte.t
 
+type i2 = I2.t
+
 (* Unnecessary, due to aliasing the built-in option type. *)
 (* type 'a option = 'a Option.t *)
 

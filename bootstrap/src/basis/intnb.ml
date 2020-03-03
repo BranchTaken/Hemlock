@@ -80,6 +80,16 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
         ~f:(fun _ -> {hi=Int64.zero; lo=Int64.of_int t})
       |> Hash.State.Gen.fini
 
+    let extend t =
+      let nlb = Sys.int_size - T.num_bits in
+      match nlb with
+      | 0 -> t
+      | _ -> begin
+          match T.signed with
+          | false -> ((1 lsl T.num_bits) - 1) land t
+          | true -> (t lsl nlb) asr nlb
+        end
+
     let narrow t =
       let nlb = Sys.int_size - T.num_bits in
       match nlb with
@@ -87,7 +97,8 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
       | _ -> begin
           match T.signed with
           | false -> ((1 lsl T.num_bits) - 1) land t
-          | true -> (t asr (Sys.int_size - 1) lsl T.num_bits) lor t
+          | true -> ((t asr (Sys.int_size - 1)) lsl (T.num_bits - 1)) lor
+              (((1 lsl (T.num_bits - 1)) - 1) land t)
         end
 
     let cmp t0 t1 =
@@ -178,11 +189,12 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
       assert (narrow t = t);
       let nlb = Sys.int_size - T.num_bits in
       let hex_digits = (T.num_bits + 3) / 4 in
+      let tbits = ((1 lsl T.num_bits) - 1) land t in (* Mask sign extension. *)
       match T.signed, nlb with
-      | false, 0 -> Format.fprintf ppf "0x%0*x" hex_digits t
-      | true, 0 -> Format.fprintf ppf "0x%0*xi" hex_digits t
-      | false, _ -> Format.fprintf ppf "0x%0*xu%u" hex_digits t T.num_bits
-      | true, _ -> Format.fprintf ppf "0x%0*xi%u" hex_digits t T.num_bits
+      | false, 0 -> Format.fprintf ppf "0x%0*x" hex_digits tbits
+      | true, 0 -> Format.fprintf ppf "0x%0*xi" hex_digits tbits
+      | false, _ -> Format.fprintf ppf "0x%0*xu%u" hex_digits tbits T.num_bits
+      | true, _ -> Format.fprintf ppf "0x%0*xi%u" hex_digits tbits T.num_bits
 
     let of_string s =
       narrow (int_of_string s)
@@ -200,52 +212,51 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
     let max_value = narrow (zero - one)
 
     let succ t =
-      narrow (t + 1)
+      extend (t + 1)
 
     let pred t =
-      narrow (t - 1)
+      extend (t - 1)
 
     let bit_and t0 t1 =
-      narrow (t0 land t1)
+      extend (t0 land t1)
 
     let bit_or t0 t1 =
-      narrow (t0 lor t1)
+      extend (t0 lor t1)
 
     let bit_xor t0 t1 =
-      narrow (t0 lxor t1)
+      extend (t0 lxor t1)
 
     let bit_not t =
-      narrow (lnot t)
+      extend (lnot t)
 
     let bit_sl ~shift t =
-      narrow (t lsl shift)
+      extend (t lsl shift)
 
     let bit_usr ~shift t =
-      narrow (t lsr shift)
+      extend (t lsr shift)
 
     let bit_ssr ~shift t =
-      narrow (t asr shift)
+      extend (t asr shift)
 
     let bit_pop t =
       let x = lbclear t in
-      let x =
-        x - (bit_and (bit_usr ~shift:1 x) 0x5555_5555_5555_5555) in
+      let x = x - ((x lsr 1) land 0x5555_5555_5555_5555) in
       let c3s = 0x3333_3333_3333_3333 in
-      let x = (bit_and x c3s) + (bit_and (bit_usr ~shift:2 x) c3s) in
-      let x = bit_and (x + (bit_usr ~shift:4 x)) 0x0f0f_0f0f_0f0f_0f0f in
-      let x = x + (bit_usr ~shift:8 x) in
-      let x = x + (bit_usr ~shift:16 x) in
-      let x = x + (bit_usr ~shift:32 x) in
-      bit_and x 0x3f
+      let x = (x land c3s) + ((x lsr 2) land c3s) in
+      let x = (x + (x lsr 4)) land 0x0f0f_0f0f_0f0f_0f0f in
+      let x = x + (x lsr 8) in
+      let x = x + (x lsr 16) in
+      let x = x + (x lsr 32) in
+      x land 0x3f
 
     let bit_clz t =
       let x = lbclear t in
-      let x = bit_or x (bit_usr ~shift:1 x) in
-      let x = bit_or x (bit_usr ~shift:2 x) in
-      let x = bit_or x (bit_usr ~shift:4 x) in
-      let x = bit_or x (bit_usr ~shift:8 x) in
-      let x = bit_or x (bit_usr ~shift:16 x) in
-      let x = bit_or x (bit_usr ~shift:32 x) in
+      let x = x lor (x lsr 1) in
+      let x = x lor (x lsr 2) in
+      let x = x lor (x lsr 4) in
+      let x = x lor (x lsr 8) in
+      let x = x lor (x lsr 16) in
+      let x = x lor (x lsr 32) in
       bit_pop (bit_not x)
 
     let bit_ctz t =
@@ -253,19 +264,19 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
       bit_pop (bit_and (bit_not t') (t' - 1))
 
     let ( + ) t0 t1 =
-      narrow (t0 + t1)
+      extend (t0 + t1)
 
     let ( - ) t0 t1 =
-      narrow (t0 - t1)
+      extend (t0 - t1)
 
     let ( * ) t0 t1 =
-      narrow (t0 * t1)
+      extend (t0 * t1)
 
     let ( / ) t0 t1 =
-      narrow (t0 / t1)
+      extend (t0 / t1)
 
     let ( % ) t0 t1 =
-      narrow (t0 mod t1)
+      extend (t0 mod t1)
 
     let ( ** ) t0 t1 =
       (* Decompose the exponent to limit algorithmic complexity. *)
