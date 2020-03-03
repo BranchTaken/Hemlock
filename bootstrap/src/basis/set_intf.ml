@@ -152,72 +152,37 @@ module type S = sig
   (** [to_list t] folds [t] from right to left if ordered, or arbitrarily if
       unordered, as a {!type:'a list}. *)
 
-  val to_array: ('a, 'cmp) t -> 'a array
-  (** [to_array t] converts the elements of [t] from left to right if ordered,
-      or arbitrarily if unordered, to an array. *)
+  include Container_array_intf.S_poly2_array
+    with type ('a, 'cmp) t := ('a, 'cmp) t
 end
 
 (** Ordered set. *)
 module type S_ord = sig
   include S
 
+  (** {1 Creation} *)
+
+  val of_array: ('a, 'cmp) cmper -> 'a array -> ('a, 'cmp) t
+  (** [of_array cmper elms] creates a set associated with [cmper] that contains
+      [elms]. *)
+
   (** {1 Cursor} *)
 
-  (** Cursor. *)
-  module type Cursor = sig
+  (** Cursor that supports arbitrary set member access.  [hd], [tl], [seek],
+      [succ], and [pred] are O(lg n), but complete traversals via [succ] or
+      [pred] are amortized O(1) per call.  [lget], [rget], [container], and
+      [index] are O(1). *)
+  module Cursor : sig
     type ('a, 'cmp) container = ('a, 'cmp) t
-    (** Container type. *)
+    type ('a, 'cmp) t
 
-    type 'a t
-    (** Cursor type. *)
-
-    include Cmpable_intf.S_poly with type 'a t := 'a t
-
-    val hd: ('a, 'cmp) container -> 'a t
-    (** Return head. *)
-
-    val tl: ('a, 'cmp) container -> 'a t
-    (** Return tail. *)
-
-    val succ: 'a t -> 'a t
-    (** Return successor. *)
-
-    val pred: 'a t -> 'a t
-    (** Return predecessor. *)
-
-    val lget: 'a t -> 'a
-    (** Return element immediately to left. *)
-
-    val rget: 'a t -> 'a
-    (** Return element immediately to right. *)
-
-    val container: 'a t -> ('a, 'cmp) container
-    (** Return container associated with iterator. *)
-
-    val index: 'a t -> usize
-    (** Return iterator index. *)
-
-    val seek: 'a t -> isize -> 'a t
-    (** Return iterator at given offset from input iterator. *)
+    include Cursor_intf.S_poly2
+      with type ('a, 'cmp) container := ('a, 'cmp) container
+      with type 'a elm := 'a
+      with type ('a, 'cmp) t := ('a, 'cmp) t
   end
 
   (** {1 Element operations} *)
-
-  val min_elm_opt: ('a, 'cmp) t -> 'a option
-  (** [min_elm t] returns the minimum element in [t], or [None] if [t] is empty.
-      O(lg n) time complexity if ordered, O(1) time complexity if unordered. *)
-
-  val min_elm: ('a, 'cmp) t -> 'a
-  (** [min_elm t] returns the minimum element in [t], or halts if [t] is empty.
-      O(lg n) time complexity if ordered, O(1) time complexity if unordered. *)
-
-  val max_elm_opt: cmp:('a -> 'a -> Cmp.t) -> ('a, 'cmp) t -> 'a option
-  (** [max_elm t] returns the maximum element in [t], or [None] if [t] is empty.
-      O(lg n) time complexity if ordered, O(1) time complexity if unordered. *)
-
-  val max_elm: cmp:('a -> 'a -> Cmp.t) -> ('a, 'cmp) t -> 'a
-  (** [max_elm t] returns the maximum element in [t], or halts if [t] is empty.
-      O(lg n) time complexity if ordered, O(1) time complexity if unordered. *)
 
   val nth_opt: usize -> ('a, 'cmp) t -> 'a option
   (** [nth i t] returns the nth set element (0-indexed), or [None] if [i] is out
@@ -234,10 +199,10 @@ module type S_ord = sig
         {- No predecessor: [Some (Cmp.Lt, 0)]}
         {- Leftmost match: [Some (Cmp.Eq, index)]}
         {- Predecessor: [Some (Cmp.Gt, index)]}
-        {- Empty array: [None]}
+        {- Empty set: [None]}
       } *)
 
-  val search: 'a -> ('a, 'cmp) t -> (Cmp.t * usize) option
+  val search: 'a -> ('a, 'cmp) t -> usize option
   (** [search a t] returns [(Some index)] if [a] is a member of [t]; [None]
       otherwise.  O(lg n) time complexity if ordered, O(1) time complexity if
       unordered. *)
@@ -263,6 +228,9 @@ module type S_ord = sig
       respectively. *)
 
   (** {1 Folding, mapping, and filtering} *)
+
+  include Container_common_intf.S_poly2_fold
+    with type ('a, 'cmp) t := ('a, 'cmp) t
 
   val fold_right_until: init:'accum -> f:('a -> 'accum -> 'accum * bool)
     -> ('a, 'cmp) t -> 'accum
