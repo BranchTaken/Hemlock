@@ -176,3 +176,73 @@ module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t = struct
     | Gt -> false
 end
 
+module Make_poly2 (T : I_poly2) : S_poly2 with type ('a, 'b) t := ('a, 'b) T.t
+= struct
+  let cmp = T.cmp
+
+  let ( >= ) t0 t1 =
+    match T.cmp t0 t1 with
+    | Lt -> false
+    | Eq
+    | Gt -> true
+
+  let ( <= ) t0 t1 =
+    match T.cmp t0 t1 with
+    | Lt
+    | Eq -> true
+    | Gt -> false
+
+  let ( = ) t0 t1 =
+    match T.cmp t0 t1 with
+    | Lt -> false
+    | Eq -> true
+    | Gt -> false
+
+  let ( > ) t0 t1 =
+    match T.cmp t0 t1 with
+    | Lt
+    | Eq -> false
+    | Gt -> true
+
+  let ( < ) t0 t1 =
+    match T.cmp t0 t1 with
+    | Lt -> true
+    | Eq
+    | Gt -> false
+
+  let ( <> ) t0 t1 =
+    match T.cmp t0 t1 with
+    | Lt -> true
+    | Eq -> false
+    | Gt -> true
+
+  let ascending = T.cmp
+
+  let descending t0 t1 =
+    match T.cmp t0 t1 with
+    | Lt -> Cmp.Gt
+    | Eq -> Cmp.Eq
+    | Gt -> Cmp.Lt
+
+  let clamp ~min ~max t =
+    assert (match T.cmp min max with
+      | Lt
+      | Eq -> true
+      | Gt -> false
+    );
+    match T.cmp t min with
+    | Lt -> min
+    | Eq
+    | Gt -> begin
+        match T.cmp t max with
+        | Lt
+        | Eq -> t
+        | Gt -> max
+      end
+
+  let between ~low ~high t =
+    match T.cmp t (clamp ~min:low ~max:high t) with
+    | Lt -> false
+    | Eq -> true
+    | Gt -> false
+end
