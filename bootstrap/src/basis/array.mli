@@ -38,6 +38,11 @@ module Seq : sig
     type 'a elm
     val to_array: 'a t -> 'a elm outer
   end
+  module type S_poly2 = sig
+    type ('a, 'b) t
+    type 'a elm
+    val to_array: ('a, 'b) t -> 'a elm outer
+  end
 
   (** Efficiently convert a sequence of fixed element type with known length to
       an array. *)
@@ -58,6 +63,17 @@ module Seq : sig
       array. *)
   module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
     with type 'a t := 'a T.t
+     and type 'a elm := 'a T.elm
+
+  (** Efficiently convert a generic sequence with known length to an array. *)
+  module Make_poly2 (T : Seq_intf.I_poly2_def) : S_poly2
+    with type ('a, 'b) t := ('a, 'b) T.t
+     and type 'a elm := 'a T.elm
+
+  (** Efficiently convert a reversed generic sequence with known length to an
+      array. *)
+  module Make_poly2_rev (T : Seq_intf.I_poly2_def) : S_poly2
+    with type ('a, 'b) t := ('a, 'b) T.t
      and type 'a elm := 'a T.elm
 end
 

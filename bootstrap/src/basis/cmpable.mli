@@ -10,3 +10,6 @@ module Make_zero (T : I_mono_zero) : S_mono_zero with type t := T.t
 
 (** Comparisons for polymorphic types. *)
 module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t
+
+(** Comparisons for polymorphic types. *)
+module Make_poly2 (T : I_poly2) : S_poly2 with type ('a, 'b) t := ('a, 'b) T.t

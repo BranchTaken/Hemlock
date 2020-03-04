@@ -152,3 +152,53 @@ module type S_poly = sig
   (** [between ~low ~high t] returns [true] iff [t] is inside the open-open
       range [~low .. ~high]. *)
 end
+
+(** Functor input interface for comparable polymorphic types. *)
+module type I_poly2 = sig
+  type ('a, 'b) t
+
+  val cmp: ('a, 'b) t -> ('a, 'b) t -> Cmp.t
+  (** [cmp a b] returns [Cmp.lt] if [a < b], [Cmp.eq] if [a = b], or [Cmp.gt] if
+      [a > b]. *)
+end
+
+(** Functor output signature for infix comparisons on comparable polymorphic
+    types. *)
+module type S_poly2 = sig
+  include I_poly2
+
+  val ( >= ): ('a, 'b) t -> ('a, 'b) t -> bool
+  (** Returns true if [t0 >= t1]. *)
+
+  val ( <= ): ('a, 'b) t -> ('a, 'b) t -> bool
+  (** Returns true if [t0 <= t1]. *)
+
+  val ( = ): ('a, 'b) t -> ('a, 'b) t -> bool
+  (** Returns true if [t0 = t1]. *)
+
+  val ( > ): ('a, 'b) t -> ('a, 'b) t -> bool
+  (** Returns true if [t0 > t1]. *)
+
+  val ( < ): ('a, 'b) t -> ('a, 'b) t -> bool
+  (** Returns true if [t0 < t1]. *)
+
+  val ( <> ): ('a, 'b) t -> ('a, 'b) t -> bool
+  (** Returns true if [t0 <> t1] (i.e. [t0] not equal to [t1]). *)
+
+  val ascending: ('a, 'b) t -> ('a, 'b) t -> Cmp.t
+  (** [ascending t0 t1] compares [t0] and [t1] in ascending order.  Equivalent
+      to [cmp t0 t1]. *)
+
+  val descending: ('a, 'b) t -> ('a, 'b) t -> Cmp.t
+  (** [descending t0 t1] compares [t0] and [t1] in descending order.  If [cmp]
+      provides total ordering, this is equivalent to [cmp t1 t0], but the
+      implementation does not assume [cmp] is implemented as such. *)
+
+  val clamp: min:('a, 'b) t -> max:('a, 'b) t -> ('a, 'b) t -> ('a, 'b) t
+  (** [clamp ~min ~max t] returns [t] unless it is outside the open-open range
+      [~min .. ~max], in which case it returns the nearest end of the range. *)
+
+  val between: low:('a, 'b) t -> high:('a, 'b) t -> ('a, 'b) t -> bool
+  (** [between ~low ~high t] returns [true] iff [t] is inside the open-open
+      range [~low .. ~high]. *)
+end

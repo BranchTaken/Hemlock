@@ -3,8 +3,10 @@ open Container_common_intf
 
 (* Polymorphic. *)
 
-module Make_poly_length (T : I_poly) : S_poly_length_gen
-  with type 'a t := 'a T.t
+(* poly2 *)
+
+module Make_poly2_length (T : I_poly2) : S_poly2_length_gen
+  with type ('a, 'b) t := ('a, 'b) T.t
    and type 'a elm := 'a T.elm =
 struct
   let length t =
@@ -19,8 +21,8 @@ struct
     (length t) = 0
 end
 
-module Make_poly_fold (T : I_poly) : S_poly_fold_gen
-  with type 'a t := 'a T.t
+module Make_poly2_fold (T : I_poly2) : S_poly2_fold_gen
+  with type ('a, 'b) t := ('a, 'b) T.t
    and type 'a elm := 'a T.elm = struct
   let fold_until ~init ~f t =
     let rec fn accum cursor = begin
@@ -152,8 +154,8 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     fold t ~init:[] ~f:(fun accum elm -> elm :: accum)
 end
 
-module Make_poly_mem (T : I_poly_mem) : S_poly_mem_gen
-  with type 'a t := 'a T.t
+module Make_poly2_mem (T : I_poly2_mem) : S_poly2_mem_gen
+  with type ('a, 'b) t := ('a, 'b) T.t
    and type 'a elm := 'a T.elm = struct
   let mem elm t =
     let rec fn cursor = begin
@@ -170,7 +172,56 @@ module Make_poly_mem (T : I_poly_mem) : S_poly_mem_gen
     fn (T.Cursor.hd t)
 end
 
-(* Monomorphic. *)
+module Make_i_poly2 (T : I_poly) : I_poly2 with type ('a, 'b) t = 'a T.t
+                                            and type 'a elm = 'a T.elm
+= struct
+  type ('a, 'b) t = 'a T.t
+  type 'a elm = 'a T.elm
+
+  module Cursor = struct
+    module V = struct
+      type ('a, 'b) t = 'a T.Cursor.t
+
+      let cmp = T.Cursor.cmp
+    end
+    include V
+    include Cmpable.Make_poly2(V)
+
+    let hd = T.Cursor.hd
+    let tl = T.Cursor.tl
+    let succ = T.Cursor.succ
+    let pred = T.Cursor.pred
+    let lget = T.Cursor.lget
+    let rget = T.Cursor.rget
+  end
+end
+
+(* poly[1]. *)
+
+module Make_poly_length (T : I_poly) : S_poly_length_gen
+  with type 'a t := 'a T.t
+   and type 'a elm := 'a T.elm = struct
+  include Make_poly2_length(Make_i_poly2(T))
+end
+
+module Make_poly_fold (T : I_poly) : S_poly_fold_gen
+  with type 'a t := 'a T.t
+   and type 'a elm := 'a T.elm = struct
+  include Make_poly2_fold(Make_i_poly2(T))
+end
+
+module Make_i_poly2_mem (T : I_poly_mem) : I_poly2_mem
+  with type ('a, 'b) t = 'a T.t
+   and type 'a elm = 'a T.elm = struct
+  include Make_i_poly2(T)
+  let cmp_elm = T.cmp_elm
+end
+
+module Make_poly_mem (T : I_poly_mem) : S_poly_mem_gen
+  with type 'a t := 'a T.t
+   and type 'a elm := 'a T.elm = struct
+  include Make_poly2_mem(Make_i_poly2_mem(T))
+end
 
 module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
                                           and type 'a elm = T.elm
@@ -195,6 +246,8 @@ module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
     let rget = T.Cursor.rget
   end
 end
+
+(* Monomorphic. *)
 
 module Make_mono_length (T : I_mono) : S_mono_length with type t := T.t
                                                       and type elm := T.elm =
