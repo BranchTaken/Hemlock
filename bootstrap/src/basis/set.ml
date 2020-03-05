@@ -439,23 +439,22 @@ let fold ~init ~f t =
 let iter ~f t =
   fold ~init:() ~f:(fun _ a -> f a) t
 
-(* External iterator, used for coupled iteration and to_array.  Internal
-   iterators cannot perform coupled traversal of non-identical trees.  Note that
-   internal iteration traverses members, then children, but that ordering is not
-   stable, and cannot be used here.  External iteration must do a true in-order
-   traversal, so that the orderings of unequal sets are monotonic relative to
-   their union. *)
-module External_iter = struct
+(* Seq.  Note that internal iteration via fold* traverses members, then
+   children, but that ordering is not stable, and cannot be used here.  External
+   iteration must do a stable in-order traversal, so that the orderings of
+   unequal sets are monotonic relative to their union. *)
+module Seq_poly2_fold2 = struct
+  type ('a, 'cmp) container = ('a, 'cmp) t
+  type 'a elm = 'a
   type 'a node_pos = {
     node: 'a node;
     present_bit: u64;
   }
-  type 'a t = {
+  type ('a, 'cmp) t = {
     ind: usize;
     len: usize;
     path: 'a node_pos list;
   }
-  type 'a elm = 'a
 
   let is_collision_node node =
     U64.(node.present_mem = max_value) && U64.(node.present_child = max_value)
@@ -564,73 +563,23 @@ module External_iter = struct
 
   let next_opt t =
     match (index t) < (length t) with
-    | false -> None, t
-    | true -> begin
-        let a, t' = next t in
-        (Some a), t'
-      end
+    | false -> None
+    | true -> Some (next t)
+
+  let cmper = cmper
+
+  let cmp cmper a0 a1 =
+    let open Cmper in
+    let open Cmp in
+    let a0_hash = Hash.State.seed |> cmper.hash_fold a0 |> Hash.t_of_state in
+    let a1_hash = Hash.State.seed |> cmper.hash_fold a1 |> Hash.t_of_state in
+    match U128.cmp a0_hash a1_hash with
+    | Lt -> Lt
+    | Eq -> cmper.cmp a0 a1
+    | Gt -> Gt
 end
-
-let fold2_until ~init ~f t0 t1 =
-  let open Cmper in (* For type inference of cmper parameter. *)
-  let rec fn accum ~f cmper a0_opt t0_iter a1_opt t1_iter = begin
-    let f_a0_a1 accum ~f cmper a0_opt t0_iter a1_opt t1_iter = begin
-      let accum', until = f accum a0_opt a1_opt in
-      match until with
-      | true -> accum'
-      | false -> begin
-          let a0_opt', t0_iter' = External_iter.next_opt t0_iter in
-          let a1_opt', t1_iter' = External_iter.next_opt t1_iter in
-          fn accum' ~f cmper a0_opt' t0_iter' a1_opt' t1_iter'
-        end
-    end in
-    let f_a0 accum ~f cmper a0_opt t0_iter a1_opt t1_iter = begin
-      let accum', until = f accum a0_opt None in
-      match until with
-      | true -> accum'
-      | false -> begin
-          let a0_opt', t0_iter' = External_iter.next_opt t0_iter in
-          fn accum' ~f cmper a0_opt' t0_iter' a1_opt t1_iter
-        end
-    end in
-    let f_a1 accum ~f cmper a0_opt t0_iter a1_opt t1_iter = begin
-      let accum', until = f accum None a1_opt in
-      match until with
-      | true -> accum'
-      | false -> begin
-          let a1_opt', t1_iter' = External_iter.next_opt t1_iter in
-          fn accum' ~f cmper a0_opt t0_iter a1_opt' t1_iter'
-        end
-    end in
-    match a0_opt, a1_opt with
-    | None, None -> accum
-    | Some _, None
-    | None, Some _ -> f_a0_a1 accum ~f cmper a0_opt t0_iter a1_opt t1_iter
-    | Some a0, Some a1 -> begin
-        let a0_hash = Hash.State.seed |> cmper.hash_fold a0
-                      |> Hash.t_of_state in
-        let a1_hash = Hash.State.seed |> cmper.hash_fold a1
-                      |> Hash.t_of_state in
-        match U128.cmp a0_hash a1_hash with
-        | Lt -> f_a0 accum ~f cmper a0_opt t0_iter a1_opt t1_iter
-        | Eq -> begin
-            match cmper.cmp a0 a1 with
-            | Lt -> f_a0 accum ~f cmper a0_opt t0_iter a1_opt t1_iter
-            | Eq -> f_a0_a1 accum ~f cmper a0_opt t0_iter a1_opt t1_iter
-            | Gt -> f_a1 accum ~f cmper a0_opt t0_iter a1_opt t1_iter
-          end
-        | Gt -> f_a1 accum ~f cmper a0_opt t0_iter a1_opt t1_iter
-      end
-  end in
-  let a0_opt, t0_iter = External_iter.(next_opt (init t0)) in
-  let a1_opt, t1_iter = External_iter.(next_opt (init t1)) in
-  fn init ~f t0.cmper a0_opt t0_iter a1_opt t1_iter
-
-let fold2 ~init ~f t0 t1 =
-  fold2_until ~init ~f:(fun accum t0 t1 -> (f accum t0 t1), false) t0 t1
-
-let iter2 ~f t0 t1 =
-  fold2 ~init:() ~f:(fun _ t0 t1 -> f t0 t1) t0 t1
+include Seq.Make_poly2_fold2(Seq_poly2_fold2)
+module Seq = Seq_poly2_fold2
 
 let equal t0 t1 =
   let open Cmper in (* For type inference of cmper parameter. *)
@@ -762,8 +711,8 @@ let to_list t =
   fold ~init:[] ~f:(fun accum a -> a :: accum) t
 
 module Set_to_array = struct
-  include External_iter
-  include Array.Seq.Make_poly(External_iter)
+  include Seq
+  include Array.Seq.Make_poly2(Seq)
 end
 
 let to_array t =

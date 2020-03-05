@@ -73,19 +73,19 @@ module type S = sig
   (** [union t0 t1] creates a set that is the union of [t0] and [t1]; that is,
       a set that contains all elements in [t0] or [t1].  O(m lg (n/m + 1)) time
       complexity if ordered, where m and n are the input set lengths and m <= n;
-      ϴ(m+n) time complexity if unordered. *)
+      Θ(m+n) time complexity if unordered. *)
 
   val inter: ('a, 'cmp) t -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [inter t0 t1] creates a set that is the intersection of [t0] and [t1];
       that is, a set that contains all elements present in both [t0] and [t1].
       O(m lg (n/m + 1)) time complexity if ordered, where m and n are the input
-      set lengths and m <= n; ϴ(m+n) time complexity if unordered. *)
+      set lengths and m <= n; Θ(m+n) time complexity if unordered. *)
 
   val diff: ('a, 'cmp) t -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [diff t0 t1] creates a set that is the difference of t0 relative to t1;
       that is, a set that contains all elements present in [t0] but not present
       in [t1].  O(m lg (n/m + 1)) time complexity if ordered, where m and n are
-      the input set lengths and m <= n; ϴ(m+n) time complexity if unordered. *)
+      the input set lengths and m <= n; Θ(m+n) time complexity if unordered. *)
 
   (** {1 Folding, mapping, filtering, and reducing} *)
 
@@ -142,33 +142,9 @@ module type S = sig
       empty.  The reduction function is assumed to be associative; thus
       reduction order is unspecified. *)
 
-  val fold2_until: init:'accum
-    -> f:('accum -> 'a option -> 'a option -> 'accum * bool) -> ('a, 'cmp) t
-    -> ('a, 'cmp) t -> 'accum
-  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1]
-      from left to right if ordered, or arbitrarily if unordered, and calls
-      [~f accum elm0_opt elm1_opt] once for each element in the union such that
-      if the element is absent from one of the input sets, the corresponding
-      parameter is [None].  Folding terminates early if [~f] returns [(_,
-      true)].  O(m+n) time complexity, where m and n are the input set
-      lengths. *)
-
-  val fold2: init:'accum -> f:('accum -> 'a option -> 'a option -> 'accum)
-    -> ('a, 'cmp) t -> ('a, 'cmp) t -> 'accum
-  (** [fold2 ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to
-      right if ordered, or arbitrarily if unordered, and calls [~f accum
-      elm0_opt elm1_opt] once for each element in the union such that if the
-      element is absent from one of the input sets, the corresponding parameter
-      is [None].  ϴ(m+n) time complexity, where m and n are the input set
-      lengths.  *)
-
-  val iter2: f:('a option -> 'a option -> unit) -> ('a, 'cmp) t -> ('a, 'cmp) t
-    -> unit
-  (** [iter2 ~f t0 t1] iterates over the union of [t0] and [t1] from left to
-      right if ordered, or arbitrarily if unordered, and calls [~f elm0_opt
-      elm1_opt] once for each element in the union, such that if the element is
-      absent from one of the input sets, the corresponding parameter is [None].
-      ϴ(m+n) time complexity, where m and n are the input set lengths. *)
+  include Seq_intf.S_poly2_fold2
+    with type ('a, 'cmp) t := ('a, 'cmp) t
+     and type 'a elm := 'a
 
   (** {1 Conversion} *)
 
