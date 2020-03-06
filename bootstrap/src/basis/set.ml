@@ -126,7 +126,7 @@ let is_empty t =
   t.length = 0
 
 let mem a t =
-  let open Cmper in (* For type inference of cmper parameter. *)
+  let open Cmper in
   let rec fn a a_hash cmper node level = begin
     match level < max_height with
     | true -> begin
@@ -158,7 +158,7 @@ let mem a t =
   fn a a_hash t.cmper t.root 0
 
 let insert a t =
-  let open Cmper in (* For type inference of cmper parameter. *)
+  let open Cmper in
   (* Create a collision node, with members canonically ordered (sorted). *)
   let node_of_collision a b cmper = begin
     let m0, m1 = match cmper.cmp a b with
@@ -210,7 +210,7 @@ let insert a t =
               elm_index_of_bit node.present_mem present_bit in
             let present_mem' = U64.bit_or present_bit node.present_mem in
             let elms_mem' = Array.insert elms_mem_index a node.elms_mem in
-            true, {node with present_mem=present_mem'; elms_mem=elms_mem'}
+            Some {node with present_mem=present_mem'; elms_mem=elms_mem'}
           end
         | false -> begin
             let elms_child_index =
@@ -219,11 +219,11 @@ let insert a t =
             match level + 1 < max_height with
             | true -> begin
                 match fn a a_hash cmper child (succ level) with
-                | false, _ -> false, node
-                | true, child' -> begin
+                | None -> None
+                | Some child' -> begin
                     let elms_child' =
                       Array.set elms_child_index child' node.elms_child in
-                    true, {node with elms_child=elms_child'}
+                    Some {node with elms_child=elms_child'}
                   end
               end
             | false -> begin
@@ -233,12 +233,12 @@ let insert a t =
                   let child' = {child with elms_mem=child_elms_mem'} in
                   let elms_child' =
                     Array.set elms_child_index child' node.elms_child in
-                  true, {node with elms_child=elms_child'}
+                  Some {node with elms_child=elms_child'}
                 end in
                 match Array.nsearch a ~cmp:cmper.cmp child.elms_mem with
                 | Some (Lt, _) ->
                   collision_insert 0 a child elms_child_index node
-                | Some (Eq, _) -> false, node (* Already in collision node. *)
+                | Some (Eq, _) -> None (* Already in collision node. *)
                 | Some (Gt, i) ->
                   collision_insert (succ i) a child elms_child_index node
                 | None -> not_reached ()
@@ -271,17 +271,16 @@ let insert a t =
             let elms_mem' = Array.remove elms_mem_index node.elms_mem in
             let elms_child' =
               Array.insert elms_child_index child node.elms_child in
-            true, {present_mem=present_mem'; present_child=present_child';
+            Some {present_mem=present_mem'; present_child=present_child';
               elms_mem=elms_mem'; elms_child=elms_child'}
           end
-        | true -> false, node
+        | true -> None
       end
   end in
   let a_hash = Hash.State.seed |> t.cmper.hash_fold a |> Hash.t_of_state in
-  let inserted, root' = fn a a_hash t.cmper t.root 0 in
-  match inserted with
-  | false -> t
-  | true -> {t with length=succ t.length; root=root'}
+  match fn a a_hash t.cmper t.root 0 with
+  | None -> t
+  | Some root' -> {t with length=succ t.length; root=root'}
 
 let of_list m alist =
   match alist with
@@ -296,7 +295,7 @@ let of_list m alist =
     end
 
 let remove a t =
-  let open Cmper in (* For type inference of cmper parameter. *)
+  let open Cmper in
   (* Collapse a child to a single member. *)
   let collapse_child m present_bit elms_child_index node = begin
     match node.elms_mem, node.elms_child with
@@ -582,7 +581,7 @@ include Seq.Make_poly2_fold2(Seq_poly2_fold2)
 module Seq = Seq_poly2_fold2
 
 let equal t0 t1 =
-  let open Cmper in (* For type inference of cmper parameter. *)
+  let open Cmper in
   let rec fn cmper node0 node1 = begin
     U64.(node0.present_mem = node1.present_mem) &&
     U64.(node0.present_child = node1.present_child) &&
