@@ -3,13 +3,25 @@
     The {!type:option} type is useful when a value may or may not be present;
     [Some value] or [None], respectively. *)
 
-(** {1 Type and derivations} *)
+(** {1 Type} *)
 
 (* Our option type must be an alias of OCaml's, lest optional function arguments
  * be incompatible with our option type. *)
 type 'a t = 'a option =
   | None
   | Some of 'a
+
+(** {1 Comparison} *)
+
+val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
+  -> Hash.State.t
+(** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
+    and returns the resulting state.  [Some a] is hash-folded into the resulting
+    state via [hash_fold_a]; [None] is hash-folded independently. *)
+
+val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
+(** Compare two options using the value comparison function.  [None] is less
+    than all [Some] values. *)
 
 include Formattable_intf.S_poly with type 'a t := 'a t
 

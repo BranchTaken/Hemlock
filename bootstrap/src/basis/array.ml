@@ -86,7 +86,12 @@ include T
 include Container_common.Make_poly_fold(T)
 
 let hash_fold hash_fold_a t state =
-  fold t ~init:state ~f:(fun state elm -> state |> hash_fold_a elm)
+  foldi t ~init:state ~f:(fun i state elm ->
+    state
+    |> Usize.hash_fold i
+    |> hash_fold_a elm
+  )
+  |> Usize.hash_fold (length t)
 
 module Seq = struct
   type 'a outer = 'a t
@@ -1160,10 +1165,29 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold [||] -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
-    hash_fold [|0|] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold [|0; 0|] -> 0x4988_6389_f40a_a2a3_3bac_4d62_a744_138bu128
-    hash_fold [|0; 1|] -> 0xcffe_8f1d_4ece_31b1_0231_7d19_4ec8_ede7u128
+    hash_fold [||] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold [|0|] -> 0x53a3_5e44_9415_8ff4_24a3_88ce_df7b_e5a4u128
+    hash_fold [|0; 0|] -> 0x8393_18f7_c117_112f_e379_a0b9_ec11_41f5u128
+    hash_fold [|0; 1|] -> 0xa677_190c_1ad3_d08a_d7f7_106c_570d_6d2eu128
+    |}]
+
+let%expect_test "hash_fold empty" =
+  let hash_empty state = begin
+    state
+    |> hash_fold Unit.hash_fold [||]
+  end in
+  let e1 =
+    Hash.State.empty
+    |> hash_empty
+  in
+  let e2 =
+    Hash.State.empty
+    |> hash_empty
+    |> hash_empty
+  in
+  assert U128.((Hash.t_of_state e1) <> (Hash.t_of_state e2));
+
+  [%expect{|
     |}]
 
 let%expect_test "cmp" =

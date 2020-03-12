@@ -8,6 +8,7 @@ let hash_fold bytes state =
   |> Hash.State.Gen.fold_u8 (Array.length bytes)
     ~f:(fun i -> (Byte.to_usize (Array.get i bytes)))
   |> Hash.State.Gen.fini
+  |> Usize.hash_fold (Array.length bytes)
 
 let of_codepoint cp =
   Array.of_list (Utf8.to_bytes (Utf8.of_codepoint cp))
@@ -144,12 +145,31 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold [||] ("") -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
-    hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0x5b1e_906a_48ae_1d19_cbd8_a7b3_41bd_9b02u128
-    hash_fold [|0x3cu8|] ("<") -> 0x7522_120f_1d81_cc74_d1be_013b_ecbc_b776u128
-    hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0x5d74_6d9d_0b34_17b0_8910_3832_f74f_4befu128
-    hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0x3255_cddb_ad4b_72c9_40f8_4445_f929_67e2u128
-    hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x220a_f996_d78e_767b_8ac0_6339_270e_2fefu128
+    hash_fold [||] ("") -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0xe7f7_3e0e_c178_5525_e460_58c5_1383_657cu128
+    hash_fold [|0x3cu8|] ("<") -> 0x4fa1_90f5_fd4b_19d9_e73e_229a_b8e4_9c7eu128
+    hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0x237d_65de_c606_4e09_6241_b399_77d7_fc8bu128
+    hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0x0eb9_1d81_6e4f_e11c_829d_ba36_47d6_1f81u128
+    hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x59b5_cf23_cff9_5c91_4b98_7455_0bbc_946fu128
+    |}]
+
+let%expect_test "hash_fold empty" =
+  let hash_empty state = begin
+    state
+    |> hash_fold [||]
+  end in
+  let e1 =
+    Hash.State.empty
+    |> hash_empty
+  in
+  let e2 =
+    Hash.State.empty
+    |> hash_empty
+    |> hash_empty
+  in
+  assert U128.((Hash.t_of_state e1) <> (Hash.t_of_state e2));
+
+  [%expect{|
     |}]
 
 let%expect_test "of_codepoint" =

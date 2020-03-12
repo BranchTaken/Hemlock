@@ -32,6 +32,12 @@ end
 
 (** {1 Comparison} *)
 
+val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
+  -> Hash.State.t
+(** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
+    and returns the resulting state.  List elements are sequentially
+    hash-folded into the resulting state via [hash_fold_a]. *)
+
 val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
 (** Compare two lists using the element comparison function.  The list lengths
     may differ. *)

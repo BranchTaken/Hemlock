@@ -3,13 +3,17 @@ open Rudiments
 module T = struct
   type t = string
 
-  let hash_fold (t:t) (state:Hash.State.t) : Hash.State.t =
+  let blength t =
+    Stdlib.String.length t
+
+  let hash_fold t state =
     state
     |> Hash.State.Gen.init
     |> Hash.State.Gen.fold_u8 (Caml.String.length t) ~f:(fun i ->
       Caml.Char.code (Caml.String.get t i)
     )
     |> Hash.State.Gen.fini
+    |> Usize.hash_fold (blength t)
 
   let cmp t0 t1 =
     let rel = Isize.of_int (compare t0 t1) in
@@ -19,9 +23,6 @@ module T = struct
       Cmp.Eq
     else
       Cmp.Gt
-
-  let blength t =
-    Stdlib.String.length t
 
   module Utf8_seq = struct
     module T = struct
@@ -1872,13 +1873,32 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold "" -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
-    hash_fold "hello" -> 0x5b1e_906a_48ae_1d19_cbd8_a7b3_41bd_9b02u128
-    hash_fold "hello_goodbye" -> 0x78ec_e9ee_b1e2_6915_721c_c31f_2e63_e7d7u128
-    hash_fold "<_>" -> 0x130c_feb5_2014_223e_1fd8_33ae_a248_9bd8u128
-    hash_fold "«»" -> 0xe916_5d4e_4ff6_34c1_915e_575e_0d4a_825bu128
-    hash_fold "‡" -> 0x3255_cddb_ad4b_72c9_40f8_4445_f929_67e2u128
-    hash_fold "𐆗" -> 0x220a_f996_d78e_767b_8ac0_6339_270e_2fefu128
+    hash_fold "" -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold "hello" -> 0xe7f7_3e0e_c178_5525_e460_58c5_1383_657cu128
+    hash_fold "hello_goodbye" -> 0xb32d_994d_9ce3_5bfc_a7a6_96d1_2dbe_3dcau128
+    hash_fold "<_>" -> 0x8e4f_1658_2513_26a4_57f0_2f66_d097_5a17u128
+    hash_fold "«»" -> 0x6ba1_06e5_6894_bd2c_2b87_6bcd_7f57_f2f9u128
+    hash_fold "‡" -> 0x0eb9_1d81_6e4f_e11c_829d_ba36_47d6_1f81u128
+    hash_fold "𐆗" -> 0x59b5_cf23_cff9_5c91_4b98_7455_0bbc_946fu128
+    |}]
+
+let%expect_test "hash_fold empty" =
+  let hash_empty state = begin
+    state
+    |> hash_fold ""
+  end in
+  let e1 =
+    Hash.State.empty
+    |> hash_empty
+  in
+  let e2 =
+    Hash.State.empty
+    |> hash_empty
+    |> hash_empty
+  in
+  assert U128.((Hash.t_of_state e1) <> (Hash.t_of_state e2));
+
+  [%expect{|
     |}]
 
 let%expect_test "cmp" =

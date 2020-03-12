@@ -321,6 +321,14 @@ include T
 include Container_common.Make_poly2_fold(T)
 include Container_array.Make_poly2_array(T)
 
+let hash_fold t state =
+  foldi t ~init:state ~f:(fun i state mem ->
+    state
+    |> Usize.hash_fold i
+    |> t.cmper.hash_fold mem
+  )
+  |> Usize.hash_fold (length t)
+
 let cmper_m (type a cmp) t : (a, cmp) cmper =
   (module struct
     type t = a
@@ -829,6 +837,54 @@ let validate t =
 
 (******************************************************************************)
 (* Begin tests. *)
+
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[";
+  let rec fn = function
+    | [] -> ()
+    | arr :: arrs' -> begin
+        let ordset = of_array (module Usize) arr in
+        printf "hash_fold (of_array (module Usize) %a) -> %a@\n"
+          (Array.pp Usize.pp) arr
+          Hash.pp (Hash.t_of_state (hash_fold ordset Hash.State.empty));
+        fn arrs'
+      end
+  in
+  let arrs = [
+    [||];
+    [|0|];
+    [|0; 1|];
+    [|0; 2|]
+  ] in
+  fn arrs;
+  printf "@]";
+
+  [%expect{|
+    hash_fold (of_array (module Usize) [||]) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold (of_array (module Usize) [|0|]) -> 0x53a3_5e44_9415_8ff4_24a3_88ce_df7b_e5a4u128
+    hash_fold (of_array (module Usize) [|0; 1|]) -> 0xa677_190c_1ad3_d08a_d7f7_106c_570d_6d2eu128
+    hash_fold (of_array (module Usize) [|0; 2|]) -> 0xcab8_697f_19cd_8c2e_5911_10d8_d88d_5cc0u128
+    |}]
+
+let%expect_test "hash_fold empty" =
+  let hash_empty state = begin
+    state
+    |> hash_fold (empty (module Usize))
+  end in
+  let e1 =
+    Hash.State.empty
+    |> hash_empty
+  in
+  let e2 =
+    Hash.State.empty
+    |> hash_empty
+    |> hash_empty
+  in
+  assert U128.((Hash.t_of_state e1) <> (Hash.t_of_state e2));
+
+  [%expect{|
+    |}]
 
 let%expect_test "empty,cmper_m,singleton,length" =
   let open Format in

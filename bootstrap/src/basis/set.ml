@@ -438,6 +438,20 @@ let fold ~init ~f t =
 let iter ~f t =
   fold ~init:() ~f:(fun _ a -> f a) t
 
+let hash_fold t state =
+  (* Fold ordering is not stable for unequal sets, but order permutation does
+     increase risk of accidental collision for sets, because each member occurs
+     precisely once regardless of order. *)
+  let n, state' = fold t ~init:(0, state) ~f:(fun (i, state) mem ->
+    (succ i),
+    (
+      state
+      |> Usize.hash_fold i
+      |> t.cmper.hash_fold mem
+    )
+  ) in
+  state' |> Usize.hash_fold n
+
 (* Seq.  Note that internal iteration via fold* traverses members, then
    children, but that ordering is not stable, and cannot be used here.  External
    iteration must do a stable in-order traversal, so that the orderings of
@@ -778,6 +792,58 @@ module UsizeTestCmper = struct
   include Cmper.Make_mono(T)
 end
 
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[";
+  let rec fn = function
+    | [] -> ()
+    | l :: lists' -> begin
+        let set = of_list (module UsizeTestCmper) l in
+        printf "hash_fold (of_list (module UsizeTestCmper) %a) -> %a@\n"
+          (List.pp Usize.pp) l
+          Hash.pp (Hash.t_of_state (hash_fold set Hash.State.empty));
+        fn lists'
+      end
+  in
+  (* NB: [0; 1] and [0; 2] collide.  This is because we're using UsizeTestCmper
+     to get stable test output; the hashing results from all but the last member
+     hashed are discarded. *)
+  let lists = [
+    [];
+    [0];
+    [0; 1];
+    [0; 2];
+    [2; 3]
+  ] in
+  fn lists;
+  printf "@]";
+
+  [%expect{|
+    hash_fold (of_list (module UsizeTestCmper) []) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold (of_list (module UsizeTestCmper) [0]) -> 0xcffe_8f1d_4ece_31b1_0231_7d19_4ec8_ede7u128
+    hash_fold (of_list (module UsizeTestCmper) [0; 1]) -> 0x55b0_b3fa_271e_6e95_175a_851f_44f1_920bu128
+    hash_fold (of_list (module UsizeTestCmper) [0; 2]) -> 0x55b0_b3fa_271e_6e95_175a_851f_44f1_920bu128
+    hash_fold (of_list (module UsizeTestCmper) [2; 3]) -> 0xd8c3_705a_8b39_1dcb_e50c_11fa_a29a_11bdu128
+    |}]
+
+let%expect_test "hash_fold empty" =
+  let hash_empty state = begin
+    state
+    |> hash_fold (empty (module UsizeTestCmper))
+  end in
+  let e1 =
+    Hash.State.empty
+    |> hash_empty
+  in
+  let e2 =
+    Hash.State.empty
+    |> hash_empty
+    |> hash_empty
+  in
+  assert U128.((Hash.t_of_state e1) <> (Hash.t_of_state e2));
+
+  [%expect{|
+    |}]
 
 let%expect_test "empty,cmper_m,singleton,length" =
   let open Format in
