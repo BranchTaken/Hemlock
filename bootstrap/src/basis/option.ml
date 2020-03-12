@@ -6,6 +6,19 @@ module T = struct
     | Some of 'a
   type 'a elm = 'a
 
+  let hash_fold hash_fold_a t state =
+    match t with
+    | None -> state |> Usize.hash_fold 0
+    | Some a -> state |> Usize.hash_fold 1 |> hash_fold_a a
+
+  let cmp cmp_a t0 t1 =
+    let open Cmp in
+    match t0, t1 with
+    | None, None -> Eq
+    | None, Some _ -> Lt
+    | Some _, None -> Gt
+    | Some a0, Some a1 -> cmp_a a0 a1
+
   module Cursor = struct
     module T = struct
       type 'a container = 'a t
@@ -159,6 +172,52 @@ let map2 ~f ta tb =
 
 (******************************************************************************)
 (* Begin tests. *)
+
+let%expect_test "hash_fold" =
+  let open Format in
+  printf "@[<h>";
+  let rec fn = function
+    | [] -> ()
+    | option :: options' -> begin
+        printf "hash_fold %a -> %a\n"
+          (pp Usize.pp) option
+          Hash.pp (Hash.t_of_state
+            (hash_fold Usize.hash_fold option Hash.State.empty));
+        fn options'
+      end
+  in
+  let options = [
+    None;
+    (Some 0);
+    (Some 1)
+  ] in
+  fn options;
+  printf "@]";
+
+  [%expect{|
+    hash_fold None -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold Some 0 -> 0xe1d0_4b10_a3f6_4eda_dfbb_5c04_579d_0b05u128
+    hash_fold Some 1 -> 0x262a_4610_b795_f867_bd59_f2c2_1134_c78cu128
+    |}]
+
+let%expect_test "hash_fold empty" =
+  let hash_empty state = begin
+    state
+    |> hash_fold Unit.hash_fold None
+  end in
+  let e1 =
+    Hash.State.empty
+    |> hash_empty
+  in
+  let e2 =
+    Hash.State.empty
+    |> hash_empty
+    |> hash_empty
+  in
+  assert U128.((Hash.t_of_state e1) <> (Hash.t_of_state e2));
+
+  [%expect{|
+    |}]
 
 let%expect_test "pp" =
   let open Format in

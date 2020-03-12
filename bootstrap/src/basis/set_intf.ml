@@ -16,6 +16,11 @@ module type S = sig
 
   (** {1 Comparators} *)
 
+  val hash_fold: ('a, 'cmp) t -> Hash.State.t -> Hash.State.t
+  (** [hash_fold t state] incorporates the hash of [t] into [state] and returns
+      the resulting state.  Set members are stably hash-folded into the
+      resulting state via the type's comparator [hash_fold] function. *)
+
   val cmper_m: ('a, 'cmp) t -> ('a, 'cmp) cmper
   (** [cmper_m t] returns a first class module that can be used to build other
       sets or maps with compatible comparison. *)
