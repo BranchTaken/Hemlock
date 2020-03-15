@@ -52,8 +52,8 @@ module type S_mono_fold = sig
     -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum, false].
-  *)
+      true], or until folding is complete if [f] always returns [accum,
+      false]. *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> elm -> 'accum * bool)
     -> t -> 'accum
@@ -145,8 +145,8 @@ module type S_mono_mem = sig
   (** Element type. *)
 
   val mem: elm -> t -> bool
-  (** [mem elm t] returns [true] if [elm] is a member of [t]; [false] otherwise.
-  *)
+  (** [mem elm t] returns [true] if [elm] is a member of [t]; [false]
+      otherwise. *)
 end
 
 (* Polymorphic container, e.g. ('a list). *)
@@ -206,8 +206,8 @@ module type S_poly_fold = sig
     -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum, false].
-  *)
+      true], or until folding is complete if [f] always returns [accum,
+      false]. *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
     -> 'a t -> 'accum
@@ -348,39 +348,17 @@ end
 (** General functor input interface for polymorphic containers, e.g. {!type:('a,
     'cmp) Ordset}. *)
 module type I_poly2 = sig
-  type ('a, 'b) t
+  type ('a, 'cmp) t
   (** Container type. *)
 
   type 'a elm
   (** Element type. *)
 
   module Cursor : sig
-    include Cursor_intf.S_poly2_iter with type ('a, 'b) container := ('a, 'b) t
-                                      and type 'a elm := 'a elm
+    include Cursor_intf.S_poly2_iter
+      with type ('a, 'cmp) container := ('a, 'cmp) t
+       and type 'a elm := 'a elm
   end
-end
-
-(** Length-related functor output signature for polymorphic containers, e.g.
-    {!type:('a, 'cmp) Ordset}. *)
-module type S_poly2_length = sig
-  type ('a, 'b) t
-  (** Container type. *)
-
-  val length: ('a, 'b) t -> usize
-  (** [length t] returns the number of elements in [t]. *)
-
-  val is_empty: ('a, 'b) t -> bool
-  (** [is_empty t] returns [true] if [t] has no elements; [false] otherwise. *)
-end
-
-(** {!module:S_poly2_length_gen} is equivalent to {!module:S_poly2_length},
-    except that {!type:'a elm} is explicit.  This near-identical signature
-    exists exclusively to enable functor implementation. *)
-module type S_poly2_length_gen = sig
-  type ('a, 'b) t
-  type 'a elm
-  val length: ('a, 'b) t -> usize
-  val is_empty: ('a, 'b) t -> bool
 end
 
 (** Folding-related functor output signature for polymorphic containers, e.g.
@@ -388,94 +366,94 @@ end
     should be implemented with O(1) iteration to avoid e.g. O(n^2) folding
     overhead. *)
 module type S_poly2_fold = sig
-  type ('a, 'b) t
+  type ('a, 'cmp) t
   (** Container type. *)
 
-  val fold_until: init:'accum -> f:('accum -> 'a -> 'accum * bool) -> ('a, 'b) t
-    -> 'accum
+  val fold_until: init:'accum -> f:('accum -> 'a -> 'accum * bool)
+    -> ('a, 'cmp) t -> 'accum
   (** [fold_until ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value, continuing until [f] returns [accum, true], or
       until folding is complete if [f] always returns [accum, false]. *)
 
   val fold_right_until: init:'accum -> f:('a -> 'accum -> 'accum * bool)
-    -> ('a, 'b) t -> 'accum
+    -> ('a, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum, false].
-  *)
+      true], or until folding is complete if [f] always returns [accum,
+      false]. *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
-    -> ('a, 'b) t -> 'accum
+    -> ('a, 'cmp) t -> 'accum
   (** [foldi_until ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value, continuing until [f]
       returns [accum, true], or until folding is complete if [f] always returns
       [accum, false]. *)
 
-  val fold: init:'accum -> f:('accum -> 'a -> 'accum) -> ('a, 'b) t -> 'accum
+  val fold: init:'accum -> f:('accum -> 'a -> 'accum) -> ('a, 'cmp) t -> 'accum
   (** [fold ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val fold_right: init:'accum -> f:('a -> 'accum -> 'accum) -> ('a, 'b) t
+  val fold_right: init:'accum -> f:('a -> 'accum -> 'accum) -> ('a, 'cmp) t
     -> 'accum
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val foldi: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum) -> ('a, 'b) t
+  val foldi: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum) -> ('a, 'cmp) t
     -> 'accum
   (** [foldi ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value. *)
 
-  val iter: f:('a -> unit) -> ('a, 'b) t -> unit
+  val iter: f:('a -> unit) -> ('a, 'cmp) t -> unit
   (** [iter ~f t] iterates from left to right over [t]. *)
 
-  val iteri: f:(usize -> 'a -> unit) -> ('a, 'b) t -> unit
+  val iteri: f:(usize -> 'a -> unit) -> ('a, 'cmp) t -> unit
   (** [iter ~f t] iterates with index provided from left to right over [t]. *)
 
-  val count: f:('a -> bool) -> ('a, 'b) t -> usize
+  val count: f:('a -> bool) -> ('a, 'cmp) t -> usize
   (** [count ~f t] iterates over [t] and returns the number of times [f] returns
       [true]. *)
 
-  val for_any: f:('a -> bool) -> ('a, 'b) t -> bool
+  val for_any: f:('a -> bool) -> ('a, 'cmp) t -> bool
   (** [for_any ~f t] iterates from left to right over [t] and returns [true] if
       any invocation of [f] returns [true]. *)
 
-  val for_all: f:('a -> bool) -> ('a, 'b) t -> bool
+  val for_all: f:('a -> bool) -> ('a, 'cmp) t -> bool
   (** [for_all ~f t] iterates from left to right over [t] and returns [true] if
       all invocations of [f] return [true]. *)
 
-  val find: f:('a -> bool) -> ('a, 'b) t -> 'a option
+  val find: f:('a -> bool) -> ('a, 'cmp) t -> 'a option
   (** [find ~f t] iterates from left to right over [t] and returns [Some a] for
       the first element which [f] returns [true], or [None] if [f] always
       returns [false]. *)
 
-  val find_map: f:('a -> 'c option) -> ('a, 'b) t -> 'c option
+  val find_map: f:('a -> 'b option) -> ('a, 'cmp) t -> 'b option
   (** [find_map ~f t] iterates over [t] and returns [Some b] for an element
       which [f] returns [Some b], or [None] if [f] always returns [None]. *)
 
-  val findi: f:(usize -> 'a -> bool) -> ('a, 'b) t -> 'a option
+  val findi: f:(usize -> 'a -> bool) -> ('a, 'cmp) t -> 'a option
   (** [findi ~f t] iterates from left to right over [t] with index provided to
       [f] and returns [Some a] for an element which [f] returns [true], or
       [None] if [f] always returns [false]. *)
 
-  val findi_map: f:(usize -> 'a -> 'c option) -> ('a, 'b) t -> 'c option
+  val findi_map: f:(usize -> 'a -> 'b option) -> ('a, 'cmp) t -> 'b option
   (** [findi_map ~f t] iterates from left to right over [t] with index provided
       to [f] and returns [Some b] for an element which [f] returns [Some b], or
       [None] if [f] always returns [None]. *)
 
-  val min_elm: cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t -> 'a option
+  val min_elm: cmp:('a -> 'a -> Cmp.t) -> ('a, 'cmp) t -> 'a option
   (** [min_elm ~f t] iterates from left to right over [t] and returns [Some a]
       for the first element which always compares as [Cmp.Lt] or [Cmp.Eq], or
       [None] if [t] is empty. *)
 
-  val max_elm: cmp:('a -> 'a -> Cmp.t) -> ('a, 'b) t -> 'a option
+  val max_elm: cmp:('a -> 'a -> Cmp.t) -> ('a, 'cmp) t -> 'a option
   (** [max_elm ~f t] iterates from left to right over [t] and returns [Some a]
       for the first element which compares as [Cmp.Eq] or [Cmp.Gt], or [None] if
       [t] is empty. *)
 
-  val to_list: ('a, 'b) t -> 'a list
+  val to_list: ('a, 'cmp) t -> 'a list
   (** [to_list t] folds [t] from right to left as a {!type:'a list}. *)
 
-  val to_list_rev: ('a, 'b) t -> 'a list
+  val to_list_rev: ('a, 'cmp) t -> 'a list
   (** [to_list_rev t] folds [t] from left to right as a {!type:'a list}. *)
 end
 
@@ -483,59 +461,198 @@ end
     that {!type:'a elm} is explicit.  This near-identical signature exists
     exclusively to enable functor implementation. *)
 module type S_poly2_fold_gen = sig
-  type ('a, 'b) t
+  type ('a, 'cmp) t
   type 'a elm
   val fold_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool)
-    -> ('a, 'b) t -> 'accum
+    -> ('a, 'cmp) t -> 'accum
   val fold_right_until: init:'accum -> f:('a elm -> 'accum -> 'accum * bool)
-    -> ('a, 'b) t -> 'accum
+    -> ('a, 'cmp) t -> 'accum
   val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a elm -> 'accum * bool)
-    -> ('a, 'b) t -> 'accum
-  val fold: init:'accum -> f:('accum -> 'a elm -> 'accum) -> ('a, 'b) t
+    -> ('a, 'cmp) t -> 'accum
+  val fold: init:'accum -> f:('accum -> 'a elm -> 'accum) -> ('a, 'cmp) t
     -> 'accum
-  val fold_right: init:'accum -> f:('a elm -> 'accum -> 'accum) -> ('a, 'b) t
+  val fold_right: init:'accum -> f:('a elm -> 'accum -> 'accum) -> ('a, 'cmp) t
     -> 'accum
   val foldi: init:'accum -> f:(usize -> 'accum -> 'a elm -> 'accum)
-    -> ('a, 'b) t -> 'accum
-  val iter: f:('a elm -> unit) -> ('a, 'b) t -> unit
-  val iteri: f:(usize -> 'a elm -> unit) -> ('a, 'b) t -> unit
-  val count: f:('a elm -> bool) -> ('a, 'b) t -> usize
-  val for_any: f:('a elm -> bool) -> ('a, 'b) t -> bool
-  val for_all: f:('a elm -> bool) -> ('a, 'b) t -> bool
-  val find: f:('a elm -> bool) -> ('a, 'b) t -> 'a elm option
-  val find_map: f:('a elm -> 'c option) -> ('a, 'b) t -> 'c option
-  val findi: f:(usize -> 'a elm -> bool) -> ('a, 'b) t -> 'a elm option
-  val findi_map: f:(usize -> 'a elm -> 'c option) -> ('a, 'b) t -> 'c option
-  val min_elm: cmp:('a elm -> 'a elm -> Cmp.t) -> ('a, 'b) t -> 'a elm option
-  val max_elm: cmp:('a elm -> 'a elm -> Cmp.t) -> ('a, 'b) t -> 'a elm option
-  val to_list: ('a, 'b) t -> 'a elm list
-  val to_list_rev: ('a, 'b) t -> 'a elm list
+    -> ('a, 'cmp) t -> 'accum
+  val iter: f:('a elm -> unit) -> ('a, 'cmp) t -> unit
+  val iteri: f:(usize -> 'a elm -> unit) -> ('a, 'cmp) t -> unit
+  val count: f:('a elm -> bool) -> ('a, 'cmp) t -> usize
+  val for_any: f:('a elm -> bool) -> ('a, 'cmp) t -> bool
+  val for_all: f:('a elm -> bool) -> ('a, 'cmp) t -> bool
+  val find: f:('a elm -> bool) -> ('a, 'cmp) t -> 'a elm option
+  val find_map: f:('a elm -> 'b option) -> ('a, 'cmp) t -> 'b option
+  val findi: f:(usize -> 'a elm -> bool) -> ('a, 'cmp) t -> 'a elm option
+  val findi_map: f:(usize -> 'a elm -> 'b option) -> ('a, 'cmp) t -> 'b option
+  val min_elm: cmp:('a elm -> 'a elm -> Cmp.t) -> ('a, 'cmp) t -> 'a elm option
+  val max_elm: cmp:('a elm -> 'a elm -> Cmp.t) -> ('a, 'cmp) t -> 'a elm option
+  val to_list: ('a, 'cmp) t -> 'a elm list
+  val to_list_rev: ('a, 'cmp) t -> 'a elm list
 end
 
-(** Membership-related functor input interface for polymorphic containers, e.g.
-    {!type:('a, 'cmp) Ordset}. *)
-module type I_poly2_mem = sig
-  include I_poly2
+(* Polymorphic container, e.g. (('k, 'v, 'cmp) Ordmap). *)
 
-  val cmp_elm: 'a elm -> 'a elm -> Cmp.t
-  (** Compare two elements. *)
-end
-
-(** Membership-related functor output signature for polymorphic containers, e.g.
-    {!type:('a, 'cmp) Ordset}. *)
-module type S_poly2_mem = sig
-  type ('a, 'b) t
+(** General functor input interface for polymorphic containers, e.g. {!type:('k,
+    'v, 'cmp) Ordmap}. *)
+module type I_poly3 = sig
+  type ('k, 'v, 'cmp) t
   (** Container type. *)
 
-  val mem: 'a -> ('a, 'b) t -> bool
-  (** [mem a t] returns [true] if [a] is a member of [t]; [false] otherwise. *)
+  type 'k key
+  (** Key type. *)
+
+  type 'v value
+  (** Value type. *)
+
+  module Cursor : sig
+    include Cursor_intf.S_poly3_iter
+      with type ('k, 'v, 'cmp) container := ('k, 'v, 'cmp) t
+       and type 'k key := 'k key
+       and type 'v value := 'v value
+  end
 end
 
-(** {!module:S_poly2_mem_gen} is equivalent to {!module:S_poly2_mem}, except
-    that {!type:'a elm} is explicit.  This near-identical signature exists
-    exclusively to enable functor implementation. *)
-module type S_poly2_mem_gen = sig
-  type ('a, 'b) t
-  type 'a elm
-  val mem: 'a elm -> ('a, 'b) t -> bool
+(** Folding-related functor output signature for polymorphic containers, e.g.
+    {!type:('k, 'v, 'cmp) Ordmap}.  Operations rely on cursor iterators, which
+    should be implemented with O(1) iteration to avoid e.g. O(n^2) folding
+    overhead. *)
+module type S_poly3_fold = sig
+  type ('k, 'v, 'cmp) t
+  (** Container type. *)
+
+  val fold_until: init:'accum -> f:('accum -> ('k * 'v) -> 'accum * bool)
+    -> ('k, 'v, 'cmp) t -> 'accum
+  (** [fold_until ~init ~f t] folds [t] from left to right, using [init] as the
+      initial accumulator value, continuing until [f] returns [accum, true], or
+      until folding is complete if [f] always returns [accum, false]. *)
+
+  val fold_right_until: init:'accum -> f:(('k * 'v) -> 'accum -> 'accum * bool)
+    -> ('k, 'v, 'cmp) t -> 'accum
+  (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
+      as the initial accumulator value, continuing until [f] returns [accum,
+      true], or until folding is complete if [f] always returns [accum,
+      false]. *)
+
+  val foldi_until: init:'accum -> f:(usize -> 'accum -> ('k * 'v)
+    -> 'accum * bool) -> ('k, 'v, 'cmp) t -> 'accum
+  (** [foldi_until ~init ~f t] folds [t] with index provided to [f] from left to
+      right, using [init] as the initial accumulator value, continuing until [f]
+      returns [accum, true], or until folding is complete if [f] always returns
+      [accum, false]. *)
+
+  val fold: init:'accum -> f:('accum -> ('k * 'v) -> 'accum)
+    -> ('k, 'v, 'cmp) t -> 'accum
+  (** [fold ~init ~f t] folds [t] from left to right, using [init] as the
+      initial accumulator value. *)
+
+  val fold_right: init:'accum -> f:(('k * 'v) -> 'accum -> 'accum)
+    -> ('k, 'v, 'cmp) t -> 'accum
+  (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the
+      initial accumulator value. *)
+
+  val foldi: init:'accum -> f:(usize -> 'accum -> ('k * 'v) -> 'accum)
+    -> ('k, 'v, 'cmp) t -> 'accum
+  (** [foldi ~init ~f t] folds [t] with index provided to [f] from left to
+      right, using [init] as the initial accumulator value. *)
+
+  val iter: f:(('k * 'v) -> unit) -> ('k, 'v, 'cmp) t -> unit
+  (** [iter ~f t] iterates from left to right over [t]. *)
+
+  val iteri: f:(usize -> ('k * 'v) -> unit) -> ('k, 'v, 'cmp) t -> unit
+  (** [iter ~f t] iterates with index provided from left to right over [t]. *)
+
+  val count: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> usize
+  (** [count ~f t] iterates over [t] and returns the number of times [f] returns
+      [true]. *)
+
+  val for_any: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> bool
+  (** [for_any ~f t] iterates from left to right over [t] and returns [true] if
+      any invocation of [f] returns [true]. *)
+
+  val for_all: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> bool
+  (** [for_all ~f t] iterates from left to right over [t] and returns [true] if
+      all invocations of [f] return [true]. *)
+
+  val find: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> ('k * 'v) option
+  (** [find ~f t] iterates from left to right over [t] and returns [Some a] for
+      the first element which [f] returns [true], or [None] if [f] always
+      returns [false]. *)
+
+  val find_map: f:(('k * 'v) -> 'a option) -> ('k, 'v, 'cmp) t -> 'a option
+  (** [find_map ~f t] iterates over [t] and returns [Some b] for an element
+      which [f] returns [Some b], or [None] if [f] always returns [None]. *)
+
+  val findi: f:(usize -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t
+    -> ('k * 'v) option
+  (** [findi ~f t] iterates from left to right over [t] with index provided to
+      [f] and returns [Some a] for an element which [f] returns [true], or
+      [None] if [f] always returns [false]. *)
+
+  val findi_map: f:(usize -> ('k * 'v) -> 'a option) -> ('k, 'v, 'cmp) t
+    -> 'a option
+  (** [findi_map ~f t] iterates from left to right over [t] with index provided
+      to [f] and returns [Some b] for an element which [f] returns [Some b], or
+      [None] if [f] always returns [None]. *)
+
+  val min_elm: cmp:(('k * 'v) -> ('k * 'v) -> Cmp.t) -> ('k, 'v, 'cmp) t
+    -> ('k * 'v) option
+  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some
+      (k, v)] for the first element which always compares as [Cmp.Lt] or
+      [Cmp.Eq], or [None] if [t] is empty. *)
+
+  val max_elm: cmp:(('k * 'v) -> ('k * 'v) -> Cmp.t) -> ('k, 'v, 'cmp) t
+    -> ('k * 'v) option
+  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some
+      (k, v)] for the first element which compares as [Cmp.Eq] or [Cmp.Gt], or
+      [None] if [t] is empty. *)
+
+  val to_list: ('k, 'v, 'cmp) t -> ('k * 'v) list
+  (** [to_list t] folds [t] from right to left as a {!type:('k * 'v) list}. *)
+
+  val to_list_rev: ('k, 'v, 'cmp) t -> ('k * 'v) list
+  (** [to_list_rev t] folds [t] from left to right as a
+      {!type:('k * 'v) list}. *)
+end
+
+(** {!module:S_poly3_fold_gen} is equivalent to {!module:S_poly3_fold}, except
+    that {!type:'k key} and {!type:'v value} are explicit.  This near-identical
+    signature exists exclusively to enable functor implementation. *)
+module type S_poly3_fold_gen = sig
+  type ('k, 'v, 'cmp) t
+  type 'k key
+  type 'v value
+  val fold_until: init:'accum -> f:('accum -> ('k key * 'v value)
+    -> 'accum * bool) -> ('k, 'v, 'cmp) t -> 'accum
+  val fold_right_until: init:'accum
+    -> f:(('k key * 'v value) -> 'accum -> 'accum * bool) -> ('k, 'v, 'cmp) t
+    -> 'accum
+  val foldi_until: init:'accum
+    -> f:(usize -> 'accum -> ('k key * 'v value) -> 'accum * bool)
+    -> ('k, 'v, 'cmp) t -> 'accum
+  val fold: init:'accum
+    -> f:('accum -> ('k key * 'v value) -> 'accum) -> ('k, 'v, 'cmp) t -> 'accum
+  val fold_right: init:'accum
+    -> f:(('k key * 'v value) -> 'accum -> 'accum) -> ('k, 'v, 'cmp) t -> 'accum
+  val foldi: init:'accum -> f:(usize -> 'accum -> ('k key * 'v value) -> 'accum)
+    -> ('k, 'v, 'cmp) t -> 'accum
+  val iter: f:(('k key * 'v value) -> unit) -> ('k, 'v, 'cmp) t -> unit
+  val iteri: f:(usize -> ('k key * 'v value) -> unit) -> ('k, 'v, 'cmp) t
+    -> unit
+  val count: f:(('k key * 'v value) -> bool) -> ('k, 'v, 'cmp) t -> usize
+  val for_any: f:(('k key * 'v value) -> bool) -> ('k, 'v, 'cmp) t -> bool
+  val for_all: f:(('k key * 'v value) -> bool) -> ('k, 'v, 'cmp) t -> bool
+  val find: f:(('k key * 'v value) -> bool) -> ('k, 'v, 'cmp) t
+    -> ('k key * 'v value) option
+  val find_map: f:(('k key * 'v value) -> 'a option) -> ('k, 'v, 'cmp) t
+    -> 'a option
+  val findi: f:(usize -> ('k key * 'v value) -> bool) -> ('k, 'v, 'cmp) t
+    -> ('k key * 'v value) option
+  val findi_map: f:(usize -> ('k key * 'v value) -> 'a option)
+    -> ('k, 'v, 'cmp) t -> 'a option
+  val min_elm: cmp:(('k key * 'v value) -> ('k key * 'v value) -> Cmp.t)
+    -> ('k, 'v, 'cmp) t -> ('k key * 'v value) option
+  val max_elm: cmp:(('k key * 'v value) -> ('k key * 'v value) -> Cmp.t)
+    -> ('k, 'v, 'cmp) t -> ('k key * 'v value) option
+  val to_list: ('k, 'v, 'cmp) t -> ('k key * 'v value) list
+  val to_list_rev: ('k, 'v, 'cmp) t -> ('k key * 'v value) list
 end
