@@ -106,9 +106,15 @@ module Seq = struct
     val to_array: 'a t -> 'a elm outer
   end
   module type S_poly2 = sig
-    type ('a, 'b) t
+    type ('a, 'cmp) t
     type 'a elm
-    val to_array: ('a, 'b) t -> 'a elm outer
+    val to_array: ('a, 'cmp) t -> 'a elm outer
+  end
+  module type S_poly3 = sig
+    type ('k, 'v, 'cmp) t
+    type 'k key
+    type 'v value
+    val to_array: ('k, 'v, 'cmp) t -> ('k key * 'v value) outer
   end
 
   module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
@@ -208,7 +214,7 @@ module Seq = struct
   end
 
   module Make_poly2 (T : Seq_intf.I_poly2_def) : S_poly2
-    with type ('a, 'b) t := ('a, 'b) T.t
+    with type ('a, 'cmp) t := ('a, 'cmp) T.t
      and type 'a elm := 'a T.elm = struct
     let to_array t =
       let l = T.length t in
@@ -231,32 +237,33 @@ module Seq = struct
         end
   end
 
-  module Make_poly2_rev (T : Seq_intf.I_poly2_def) : S_poly2
-    with type ('a, 'b) t := ('a, 'b) T.t
-     and type 'a elm := 'a T.elm = struct
+  module Make_poly3 (T : Seq_intf.I_poly3_def) : S_poly3
+    with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
+     and type 'k key := 'k T.key
+     and type 'k value := 'k T.value = struct
     let to_array t =
       let l = T.length t in
       match l with
       | 0 -> [||]
       | _ -> begin
           let rec fn t a i = begin
-            let elm, t' = T.next t in
-            let () = Stdlib.Array.set a i elm in
-            match i with
-            | 0 -> a
-            | _ -> begin
-                let i' = Usize.pred i in
+            match i = l with
+            | true -> a
+            | false -> begin
+                let kv, t' = T.next t in
+                let () = Stdlib.Array.set a i kv in
+                let i' = Usize.succ i in
                 fn t' a i'
               end
           end in
-          let elm, t' = T.next t in
-          let a = Stdlib.Array.make l elm in
-          fn t' a (Usize.pred l)
+          let kv0, t' = T.next t in
+          let a = Stdlib.Array.make l kv0 in
+          fn t' a 1
         end
   end
 
   (* Special-purpose, for fold[i]_map . *)
-  module Make_poly3 (T : sig
+  module Make_poly3_fold_map (T : sig
       type ('a, 'accum, 'b) t
       val length: ('a,'accum,'b) t -> usize
       val next: ('a,'accum,'b) t -> 'accum -> 'b * ('a,'accum,'b) t * 'accum
@@ -286,7 +293,7 @@ module Seq = struct
   end
 
   (* Special-purpose, for fold[i]2_map . *)
-  module Make_poly4 (T : sig
+  module Make_poly4_fold2_map (T : sig
       type ('a, 'b, 'accum, 'c) t
       val length: ('a,'b,'accum,'c) t -> usize
       val next: ('a,'b,'accum,'c) t -> 'accum
@@ -922,7 +929,7 @@ module Array_foldi_map = struct
       elm', t', accum'
   end
   include T
-  include Seq.Make_poly3(T)
+  include Seq.Make_poly3_fold_map(T)
 end
 
 let fold_map ~init ~f t =
@@ -1032,7 +1039,7 @@ module Array_foldi2_map = struct
       elm', t', accum'
   end
   include T
-  include Seq.Make_poly4(T)
+  include Seq.Make_poly4_fold2_map(T)
 end
 
 let fold2_map ~init ~f t0 t1 =

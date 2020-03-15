@@ -97,48 +97,100 @@ module type S_poly = sig
 end
 
 (** Cursor iterator functor output signature for polymorphic types, e.g. [(('a,
-    'cmp) set)]. *)
+    'cmp) Ordset)]. *)
 module type S_poly2_iter = sig
-  type ('a, 'b) container
+  type ('a, 'cmp) container
   (** Container type. *)
 
   type 'a elm
   (** Element type. *)
 
-  type ('a, 'b) t
+  type ('a, 'cmp) t
   (** Cursor type. *)
 
-  include Cmpable_intf.S_poly2 with type ('a, 'b) t := ('a, 'b) t
+  include Cmpable_intf.S_poly2 with type ('a, 'cmp) t := ('a, 'cmp) t
 
-  val hd: ('a, 'b) container -> ('a, 'b) t
+  val hd: ('a, 'cmp) container -> ('a, 'cmp) t
   (** Return head. *)
 
-  val tl: ('a, 'b) container -> ('a, 'b) t
+  val tl: ('a, 'cmp) container -> ('a, 'cmp) t
   (** Return tail. *)
 
-  val succ: ('a, 'b) t -> ('a, 'b) t
+  val succ: ('a, 'cmp) t -> ('a, 'cmp) t
   (** Return successor. *)
 
-  val pred: ('a, 'b) t -> ('a, 'b) t
+  val pred: ('a, 'cmp) t -> ('a, 'cmp) t
   (** Return predecessor. *)
 
-  val lget: ('a, 'b) t -> 'a elm
+  val lget: ('a, 'cmp) t -> 'a elm
   (** Return element immediately to left. *)
 
-  val rget: ('a, 'b) t -> 'a elm
+  val rget: ('a, 'cmp) t -> 'a elm
   (** Return element immediately to right. *)
 end
 
-(** Cursor functor output signature for polymorphic types, e.g. [('a array)]. *)
+(** Cursor functor output signature for polymorphic types, e.g. [('a, 'cmp)
+    Ordset)]. *)
 module type S_poly2 = sig
   include S_poly2_iter
 
-  val container: ('a, 'b) t -> ('a, 'b) container
+  val container: ('a, 'cmp) t -> ('a, 'cmp) container
   (** Return container associated with iterator. *)
 
-  val index: ('a, 'b) t -> usize
+  val index: ('a, 'cmp) t -> usize
   (** Return iterator index. *)
 
-  val seek: isize -> ('a, 'b) t -> ('a, 'b) t
+  val seek: isize -> ('a, 'cmp) t -> ('a, 'cmp) t
+  (** [seek i t] returns an iterator at offset [i] from [t]. *)
+end
+
+(** Cursor iterator functor output signature for polymorphic types, e.g. [(('k,
+    'v, 'cmp) Ordmap)]. *)
+module type S_poly3_iter = sig
+  type ('k, 'v, 'cmp) container
+  (** Container type. *)
+
+  type 'k key
+  (** Key type. *)
+
+  type 'v value
+  (** Value type. *)
+
+  type ('k, 'v, 'cmp) t
+  (** Cursor type. *)
+
+  include Cmpable_intf.S_poly3 with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
+
+  val hd: ('k, 'v, 'cmp) container -> ('k, 'v, 'cmp) t
+  (** Return head. *)
+
+  val tl: ('k, 'v, 'cmp) container -> ('k, 'v, 'cmp) t
+  (** Return tail. *)
+
+  val succ: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+  (** Return successor. *)
+
+  val pred: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+  (** Return predecessor. *)
+
+  val lget: ('k, 'v, 'cmp) t -> ('k key * 'v value)
+  (** Return element immediately to left. *)
+
+  val rget: ('k, 'v, 'cmp) t -> ('k key * 'v value)
+  (** Return element immediately to right. *)
+end
+
+(** Cursor functor output signature for polymorphic types, e.g. [('k, 'v, 'cmp)
+    Ordmap)]. *)
+module type S_poly3 = sig
+  include S_poly3_iter
+
+  val container: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) container
+  (** Return container associated with iterator. *)
+
+  val index: ('k, 'v, 'cmp) t -> usize
+  (** Return iterator index. *)
+
+  val seek: isize -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
