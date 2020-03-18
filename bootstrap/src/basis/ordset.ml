@@ -826,7 +826,7 @@ let reduce ~f t =
 let reduce_hlt ~f t =
   match reduce ~f t with
   | None -> halt "Empty set"
-  | Some set -> set
+  | Some a -> a
 
 let pp ppf t =
   let open Format in
@@ -866,7 +866,6 @@ let validate t =
               assert (Cmp.is_lt (t.cmper.cmp mem r_mem));
             end
         in
-
         assert (n = (nnodes l) + 1 + (nnodes r));
         let lh = height l in
         let rh = height r in
