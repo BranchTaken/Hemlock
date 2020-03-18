@@ -726,7 +726,7 @@ let reduce ~f t =
 let reduce_hlt ~f t =
   match reduce ~f t with
   | None -> halt "Empty set"
-  | Some set -> set
+  | Some a -> a
 
 let to_list t =
   fold ~init:[] ~f:(fun accum a -> a :: accum) t
