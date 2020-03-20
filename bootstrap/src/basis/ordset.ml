@@ -769,6 +769,47 @@ let filteri ~f t =
   end in
   {t with root=fn ~f 0 t.root}
 
+let partition_tf ~f t =
+  let rec fn ~f node = begin
+    match node with
+    | Empty -> Empty, Empty
+    | Leaf {mem} -> begin
+        match f mem with
+        | true -> node, Empty
+        | false -> Empty, node
+      end
+    | Node {l; mem; n=_; h=_; r} -> begin
+        let t_l', f_l' = fn ~f l in
+        let t_r', f_r' = fn ~f r in
+        match f mem with
+        | true -> (join t_l' mem t_r'), (join2 f_l' f_r')
+        | false -> (join2 t_l' t_r'), (join f_l' mem f_r')
+      end
+  end in
+  let t_root, f_root = fn ~f t.root in
+  {t with root=t_root}, {t with root=f_root}
+
+let partitioni_tf ~f t =
+  let rec fn ~f base node = begin
+    match node with
+    | Empty -> Empty, Empty
+    | Leaf {mem} -> begin
+        match f base mem with
+        | true -> node, Empty
+        | false -> Empty, node
+      end
+    | Node {l; mem; n=_; h=_; r} -> begin
+        let index = base + (nnodes l) in
+        let t_l', f_l' = fn ~f base l in
+        let t_r', f_r' = fn ~f (succ index) r in
+        match f index mem with
+        | true -> (join t_l' mem t_r'), (join2 f_l' f_r')
+        | false -> (join2 t_l' t_r'), (join f_l' mem f_r')
+      end
+  end in
+  let t_root, f_root = fn ~f 0 t.root in
+  {t with root=t_root}, {t with root=f_root}
+
 let reduce ~f t =
   let rec fn ~reduce2 = function
     | Leaf {mem} -> mem
@@ -1721,6 +1762,64 @@ let%expect_test "filteri" =
     [|0; 10; 20; 30|] -> [|0; 20|]
     [|0; 10; 20; 30; 40|] -> [|0; 20; 40|]
     [|0; 10; 20; 30; 40; 50|] -> [|0; 20; 40|]
+    |}]
+
+let%expect_test "partition_tf" =
+  let open Format in
+  printf "@[<h>";
+  let test arr = begin
+    let ordset = of_array (module Usize) arr in
+    let t_ordset, f_ordset = partition_tf ordset ~f:(fun mem -> mem % 2 = 0) in
+    let t_arr = to_array t_ordset in
+    let f_arr = to_array f_ordset in
+    printf "%a -> %a / %a@\n"
+      (Array.pp Usize.pp) arr
+      (Array.pp Usize.pp) t_arr
+      (Array.pp Usize.pp) f_arr
+  end in
+  for n = 0 to 6 do
+    let arr = Array.init n ~f:(fun i -> i) in
+    test arr
+  done;
+  printf "@]";
+
+  [%expect{|
+    [||] -> [||] / [||]
+    [|0|] -> [|0|] / [||]
+    [|0; 1|] -> [|0|] / [|1|]
+    [|0; 1; 2|] -> [|0; 2|] / [|1|]
+    [|0; 1; 2; 3|] -> [|0; 2|] / [|1; 3|]
+    [|0; 1; 2; 3; 4|] -> [|0; 2; 4|] / [|1; 3|]
+    [|0; 1; 2; 3; 4; 5|] -> [|0; 2; 4|] / [|1; 3; 5|]
+    |}]
+
+let%expect_test "partitioni_tf" =
+  let open Format in
+  printf "@[<h>";
+  let test arr = begin
+    let ordset = of_array (module Usize) arr in
+    let t_ordset, f_ordset = partitioni_tf ordset ~f:(fun i _mem -> i % 2 = 0) in
+    let t_arr = to_array t_ordset in
+    let f_arr = to_array f_ordset in
+    printf "%a -> %a / %a@\n"
+      (Array.pp Usize.pp) arr
+      (Array.pp Usize.pp) t_arr
+      (Array.pp Usize.pp) f_arr
+  end in
+  for n = 0 to 6 do
+    let arr = Array.init n ~f:(fun i -> i * 10) in
+    test arr
+  done;
+  printf "@]";
+
+  [%expect{|
+    [||] -> [||] / [||]
+    [|0|] -> [|0|] / [||]
+    [|0; 10|] -> [|0|] / [|10|]
+    [|0; 10; 20|] -> [|0; 20|] / [|10|]
+    [|0; 10; 20; 30|] -> [|0; 20|] / [|10; 30|]
+    [|0; 10; 20; 30; 40|] -> [|0; 20; 40|] / [|10; 30|]
+    [|0; 10; 20; 30; 40; 50|] -> [|0; 20; 40|] / [|10; 30; 50|]
     |}]
 
 let%expect_test "reduce" =

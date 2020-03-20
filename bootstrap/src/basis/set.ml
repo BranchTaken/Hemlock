@@ -685,6 +685,14 @@ let filter ~f t =
     | true -> insert a accum
   ) t
 
+let partition_tf ~f t =
+  let e = empty (cmper_m t) in
+  fold ~init:(e, e) ~f:(fun (t_set, f_set) a ->
+    match f a with
+    | true -> (insert a t_set), f_set
+    | false -> t_set, (insert a f_set)
+  ) t
+
 let reduce ~f t =
   let reduce_mems ~reduce2 mems = begin
     Array.reduce_hlt ~f:(fun m0 m1 -> reduce2 m0 m1) mems

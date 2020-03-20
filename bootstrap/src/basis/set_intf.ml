@@ -137,6 +137,11 @@ module type S = sig
       for which the filter function returns [true] are incorporated into the
       result. *)
 
+  val partition_tf: f:('a -> bool) -> ('a, 'cmp) t
+    -> ('a, 'cmp) t * ('a, 'cmp) t
+  (** [partition_tf ~f t] partitions [t] into two sets for which [~f] returns
+      [true] vs [false]. *)
+
   val reduce: f:('a -> 'a -> 'a) -> ('a, 'cmp) t -> 'a option
   (** [reduce ~f t] reduces [t] to a single value, or [None] if the set is
       empty.  The reduction function is assumed to be associative; thus
@@ -278,6 +283,11 @@ module type S_ord = sig
   (** [filter ~f t] creates a set with contents filtered by [~f].  Only elements
       for which the filter function returns [true] are incorporated into the
       result. *)
+
+  val partitioni_tf: f:(usize -> 'a -> bool) -> ('a, 'cmp) t
+    -> ('a, 'cmp) t * ('a, 'cmp) t
+  (** [partitioni_tf ~f t] partitions [t] into two sets for which [~f] returns
+      [true] vs [false]. *)
 
   (** {1 Conversion} *)
 
