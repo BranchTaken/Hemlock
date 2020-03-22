@@ -1,317 +1,47 @@
-(* AVL tree implementation of ordered sets, based on the join operation.
-   The join-based approach is both work-optimal and highly parallelizeable.
-
-     Just Join for Parallel Ordered Sets
-     Guy E. Blelloch, Daniel Ferizovic, and Yihan Sun
-     SPAA '16
-     DOI: http://dx.doi.org/10.1145/2935764.2935768
-     https://arxiv.org/pdf/1602.02120.pdf
-     https://www.cs.ucr.edu/~yihans/papers/join.pdf
-
-     https://en.wikipedia.org/wiki/AVL_tree
-     https://en.wikipedia.org/wiki/Join-based_tree_algorithms
-
-   It is possible to implement AVL trees with as little as one bit of balance
-   metadata per node, but this implementation is less svelte:
-
-   - Each node tracks the number of nodes in its subtree, in order to support
-     O(lg n) indexed access.
-   - Each node tracks height rather than balance, in order to simplify the
-     join logic.  Join heavily relies on node height, and although it is
-     possible to efficiently compute heights based on imbalance metadata, doing
-     so in join is complex and brittle.  Join is O(lg n), and the naïve
-     approach of computing node height from scratch as needed would introduce
-     O(n lg n) complexity to join.  The efficient alternative would be to
-     compute the root's height, then incrementally compute node heights.
-     The complexity of this is that computed heights must be tightly coupled
-     with their nodes, and the computations must take into account imbalance,
-     recursive joins, rotations, etc. *)
-
 open Rudiments
 
 module T = struct
-  type 'a node =
-    | Empty
-    | Leaf of {
-        (* Set member. *)
-        mem: 'a;
-      }
-    | Node of {
-        (* Left subtree. *)
-        l: 'a node;
-        (* Set member. *)
-        mem: 'a;
-        (* Subtree node count, including this node. *)
-        n: usize;
-        (* Node height, inductively defined as (succ (max (height l)
-           (height r))), where an empty subtree has height 0, and a leaf has
-           height 1. *)
-        h: usize;
-        (* Right subtree. *)
-        r: 'a node;
-      }
-  type ('a, 'cmp) t = {
-    (* Comparator. *)
-    cmper: ('a, 'cmp) Cmper.t;
-    (* Tree root. *)
-    root: 'a node;
-  }
+  type ('a, 'cmp) t = ('a, unit, 'cmp) Ordmap.t
   type 'a elm = 'a
 
-  type ('a, 'cmp) cmper =
-    (module Cmper.S_mono with type t = 'a and type cmper_witness = 'cmp)
+  type ('a, 'cmp) cmper = ('a, 'cmp) Ordmap.cmper
 
-  let nnodes = function
-    | Empty -> 0
-    | Leaf _ -> 1
-    | Node {l=_; mem=_; n; h=_; r=_} -> n
+  let length = Ordmap.length
 
-  let height = function
-    | Empty -> 0
-    | Leaf _ -> 1
-    | Node {l=_; mem=_; n=_; h; r=_} -> h
+  let is_empty = Ordmap.is_empty
 
-  let leaf_init mem =
-    Leaf {mem}
-
-  let node_init l mem r =
-    match l, r with
-    | Empty, Empty -> leaf_init mem
-    | _, _ -> begin
-        let nnodes_height = function
-          | Empty -> 0, 0
-          | Leaf _ -> 1, 1
-          | Node {l=_; mem=_; n; h; r=_} -> n, h
-        in
-        let ln, lh = nnodes_height l in
-        let rn, rh = nnodes_height r in
-        let n = ln + 1 + rn in
-        let h = succ (max lh rh) in
-        Node {l; mem; n; h; r}
-      end
-
-  let length t =
-    nnodes t.root
-
-  let is_empty t =
-    (length t) = 0
-
-  (* Path to node.  Incapable of expressing "no path". *)
-  module Path = struct
-    type 'a elm = {
-      node: 'a node;
-      index: usize;
-    }
-    type 'a t = 'a elm list
-
-    (* Record node's index in path, where base is the index of the leftmost node
-       in the subtree rooted at node.  Terminate when the path reaches the node
-       at index. *)
-    let rec descend ~index base node path =
-      assert ((index - base) < (nnodes node));
-      match node with
-      | Leaf _ ->
-        assert (index = base);
-        {node; index} :: path
-      | Node {l=Empty; mem=_; n=_; h=_; r} -> begin
-          let node_index = base in
-          match Usize.cmp index node_index with
-          | Lt -> not_reached ()
-          | Eq -> {node; index} :: path
-          | Gt -> descend ~index (succ node_index) r
-            ({node; index=node_index} :: path)
-        end
-      | Node {l; mem=_; n=_; h=_; r=Empty} -> begin
-          let node_index = base + (nnodes l) in
-          match Usize.cmp index node_index with
-          | Lt -> descend ~index base l ({node; index=node_index} :: path)
-          | Eq -> {node; index} :: path
-          | Gt -> not_reached ()
-        end
-      | Node {l; mem=_; n=_; h=_; r} -> begin
-          let node_index = base + (nnodes l) in
-          match Usize.cmp index node_index with
-          | Lt -> descend ~index base l ({node; index=node_index} :: path)
-          | Eq -> {node; index} :: path
-          | Gt -> descend ~index (succ node_index) r
-            ({node; index=node_index} :: path)
-        end
-      | Empty -> not_reached ()
-
-    let init index ordset =
-      descend ~index 0 ordset.root []
-
-    let index = function
-      | [] -> not_reached ()
-      | elm :: _ -> elm.index
-
-    (* Ascend until the desired index is beneath node, then descend into the
-       appropriate subtree. *)
-    let rec seek_nth index path =
-      match path with
-      | [] -> not_reached ()
-      | elm :: tl -> begin
-          match Usize.cmp index elm.index with
-          | Lt -> begin
-              match elm.node with
-              | Empty
-              | Leaf _ -> seek_nth index tl
-              | Node {l; mem=_; n=_; h=_; r=_} -> begin
-                  let base = elm.index - (nnodes l) in
-                  match index >= base with
-                  | true -> descend ~index base l path
-                  | false -> seek_nth index tl
-                end
-            end
-          | Eq -> path
-          | Gt -> begin
-              match elm.node with
-              | Empty
-              | Leaf _ -> seek_nth index tl
-              | Node {l=_; mem=_; n=_; h=_; r} -> begin
-                  let base = succ elm.index in
-                  match index < base + (nnodes r) with
-                  | true -> descend ~index base r path
-                  | false -> seek_nth index tl
-                end
-            end
-        end
-
-    let seek_left offset t =
-      seek_nth ((index t) - offset) t
-
-    let seek_right offset t =
-      seek_nth ((index t) + offset) t
-
-    let succ t =
-      seek_right 1 t
-
-    let pred t =
-      seek_left 1 t
-
-    let mem = function
-      | [] -> not_reached ()
-      | elm :: _ -> begin
-          match elm.node with
-          | Leaf {mem}
-          | Node {l=_; mem; n=_; h=_; r=_} -> mem
-          | Empty -> not_reached ()
-        end
-
-    let pp ppf t =
-      let open Format in
-      let pp_elm ppf elm = begin
-        fprintf ppf "%a" Usize.pp elm.index
-      end in
-      fprintf ppf "@[<h>%a@]" (List.pp pp_elm) t
-  end
-
-  (* Path-based cursor.  If this were based on just index and calls to nth,
-     complete traversals would be ϴ(n lg n) rather than ϴ(n). *)
   module Cursor = struct
     module T = struct
       type ('a, 'cmp) container = ('a, 'cmp) t
-      type ('a, 'cmp) t = {
-        ordset: ('a, 'cmp) container;
-        index: usize;
-        (* Separate paths to the nodes to the left and right of the cursor
-           efficiently handle edge conditions near the minimum/maximum nodes,
-           and they ensure that lget/rget are O(1). *)
-        lpath_opt: 'a Path.t option;
-        rpath_opt: 'a Path.t option;
-      }
+      type ('a, 'cmp) t = ('a, unit, 'cmp) Ordmap.Cursor.t
 
-      let cmp t0 t1 =
-        assert ((length t0.ordset) = (length t1.ordset));
-        Usize.cmp t0.index t1.index
+      let cmp = Ordmap.Cursor.cmp
 
-      let hd ordset =
-        let rpath_opt = match length ordset with
-          | 0 -> None
-          | _ -> Some (Path.init 0 ordset)
-        in
-        {ordset; index=0; lpath_opt=None; rpath_opt}
+      let hd = Ordmap.Cursor.hd
 
-      let tl ordset =
-        let index = length ordset in
-        let lpath_opt = match index with
-          | 0 -> None
-          | _ -> Some (Path.init (pred index) ordset)
-        in
-        {ordset; index; lpath_opt; rpath_opt=None}
+      let tl = Ordmap.Cursor.tl
 
-      let seek i t =
-        match Isize.cmp i (Isize.kv 0) with
-        | Lt -> begin
-            let u = (Usize.of_isize Isize.(neg i)) in
-            match Usize.cmp t.index u with
-            | Lt -> halt "Cannot seek before beginning of ordered set"
-            | Eq -> begin
-                {t with
-                  index=0;
-                  lpath_opt=None;
-                  rpath_opt=Some (Path.seek_left (pred u)
-                    (Option.value_hlt t.lpath_opt))
-                }
-              end
-            | Gt -> begin
-                let rpath' =
-                  Path.seek_left (pred u) (Option.value_hlt t.lpath_opt) in
-                let lpath' = Path.pred rpath' in
-                {t with index=pred t.index; lpath_opt=Some lpath';
-                        rpath_opt=Some rpath'}
-              end
-          end
-        | Eq -> t
-        | Gt -> begin
-            let u = Usize.of_isize i in
-            let index' = t.index + u in
-            match Usize.cmp index' (length t.ordset) with
-            | Lt -> begin
-                let lpath' =
-                  Path.seek_right (pred u) (Option.value_hlt t.rpath_opt) in
-                let rpath' = Path.succ lpath' in
-                {t with index=index'; lpath_opt=Some lpath';
-                        rpath_opt=Some rpath'}
-              end
-            | Eq -> begin
-                {t with
-                  index=index';
-                  lpath_opt= Some (Path.seek_right (pred u)
-                    (Option.value_hlt t.rpath_opt));
-                  rpath_opt=None
-                }
-              end
-            | Gt -> halt "Cannot seek past end of ordered set"
-          end
+      let seek = Ordmap.Cursor.seek
 
-      let succ t =
-        seek Isize.one t
+      let succ = Ordmap.Cursor.succ
 
-      let pred t =
-        seek Isize.neg_one t
+      let pred = Ordmap.Cursor.pred
 
       let lget t =
-        match t.lpath_opt with
-        | None -> halt "Out of bounds"
-        | Some lpath -> Path.mem lpath
+        let (a, _) = Ordmap.Cursor.lget t in
+        a
 
       let rget t =
-        match t.rpath_opt with
-        | None -> halt "Out of bounds"
-        | Some rpath -> Path.mem rpath
+        let (a, _) = Ordmap.Cursor.rget t in
+        a
 
-      let container t =
-        t.ordset
+      let container = Ordmap.Cursor.container
 
-      let index t =
-        t.index
+      let index = Ordmap.Cursor.index
 
       let pp ppf t =
-        Format.fprintf ppf "@[<h>{index=%a;@ lpath_opt=%a;@ rpath_opt=%a}@]"
-          Usize.pp t.index
-          (Option.pp Path.pp) t.lpath_opt
-          (Option.pp Path.pp) t.rpath_opt
+        Format.fprintf ppf "@[<h>{index=%a}@]"
+          Usize.pp (index t)
     end
     include T
     include Cmpable.Make_poly2(T)
@@ -322,330 +52,67 @@ include Container_common.Make_poly2_fold(T)
 include Container_array.Make_poly2_array(T)
 
 let hash_fold t state =
-  foldi t ~init:state ~f:(fun i state mem ->
-    state
-    |> Usize.hash_fold i
-    |> t.cmper.hash_fold mem
-  )
-  |> Usize.hash_fold (length t)
+  Ordmap.hash_fold Unit.hash_fold t state
 
-let cmper_m (type a cmp) t : (a, cmp) cmper =
-  (module struct
-    type t = a
-    type cmper_witness = cmp
-    let cmper = t.cmper
-  end)
+let cmper_m = Ordmap.cmper_m
 
-(* Extract cmper from first-class module compatible with Cmper.S_mono . *)
-let m_cmper (type a cmp) ((module M) : (a, cmp) cmper) =
-  M.cmper
+let cmper = Ordmap.cmper
 
-let cmper t =
-  t.cmper
-
-let empty m =
-  {cmper=m_cmper m; root=Empty}
+let empty = Ordmap.empty
 
 let singleton m a =
-  {cmper=m_cmper m; root=leaf_init a}
+  Ordmap.singleton m ~k:a ~v:()
 
-let mem a t =
-  let open Cmper in
-  let rec fn a cmper = function
-    | Empty -> false
-    | Leaf {mem} -> Cmp.is_eq (cmper.cmp a mem)
-    | Node {l; mem; n=_; h=_; r} ->
-      match cmper.cmp a mem with
-      | Lt -> fn a cmper l
-      | Eq -> true
-      | Gt -> fn a cmper r
-  in
-  fn a t.cmper t.root
-
-let expose = function
-  | Leaf {mem} -> Empty, mem, Empty
-  | Node {l; mem; n=_; h=_; r} -> l, mem, r
-  | Empty -> not_reached ()
-
-(* Rotate right, such that nz' becomes the new subtree root.
-
-            nx                  nz'
-           /  \                /  \
-          /    \              /    \
-        nz     (n2)  ===>  (n0)    nx'
-       /  \                       /  \
-      /    \                     /    \
-   (n0)    (n1)               (n1)    (n2) *)
-let rotate_right nx =
-  let nz, nx_mem, n2 = expose nx in
-  let n0, nz_mem, n1 = expose nz in
-  let nx' = node_init n1 nx_mem n2 in
-  node_init n0 nz_mem nx'
-
-(* Rotate left, such that nz' becomes the new subtree root.
-
-        nx                          nz'
-       /  \                        /  \
-      /    \                      /    \
-   (n0)     nz       ===>       nx'    (n2)
-           /  \                /  \
-          /    \              /    \
-       (n1)    (n2)        (n0)    (n1) *)
-let rotate_left nx =
-  let n0, nx_mem, nz = expose nx in
-  let n1, nz_mem, n2 = expose nz in
-  let nx' = node_init n0 nx_mem n1 in
-  node_init nx' nz_mem n2
+let mem = Ordmap.mem
 
 let nth_opt i t =
-  let rec fn i = function
-    | Empty -> None
-    | Leaf {mem} -> Some mem
-    | Node {l=Empty; mem; n=_; h=_; r} -> begin
-        match Usize.cmp i 0 with
-        | Lt -> not_reached ()
-        | Eq -> Some mem
-        | Gt -> fn (i - 1) r
-      end
-    | Node {l; mem; n=_; h=_; r=Empty} -> begin
-        let l_n = nnodes l in
-        match Usize.cmp i l_n with
-        | Lt -> fn i l
-        | Eq -> Some mem
-        | Gt -> None
-      end
-    | Node {l; mem; n=_; h=_; r} -> begin
-        let l_n = nnodes l in
-        match Usize.cmp i l_n with
-        | Lt -> fn i l
-        | Eq -> Some mem
-        | Gt -> fn (i - l_n - 1) r
-      end
-  in
-  fn i t.root
+  match Ordmap.nth_opt i t with
+  | Some (a, _) -> Some a
+  | None -> None
 
 let nth i t =
-  match nth_opt i t with
-  | None -> halt "Out of bounds"
-  | Some mem -> mem
+  let a, _ = Ordmap.nth i t in
+  a
 
-let search_impl a cmper mode node =
-  let open Cmper in
-  let open Cmp in
-  let lt_empty mode base index = begin
-    match mode with
-    | Lt -> begin
-        match base with
-        | 0 -> Some (Lt, 0)
-        | _ -> Some (Gt, pred index)
-      end
-    | Eq -> None
-    | Gt -> Some (Lt, index)
-  end in
-  let gt_empty mode past index = begin
-    match mode with
-    | Lt -> Some (Gt, index)
-    | Eq -> None
-    | Gt -> begin
-        match past - index with
-        | 1 -> Some (Gt, index)
-        | _ -> Some (Lt, succ index)
-      end
-  end in
-  let rec fn a cmper mode ~base ~past = function
-    | Empty -> None
-    | Leaf {mem} -> begin
-        let index = base in
-        match cmper.cmp a mem with
-        | Lt -> lt_empty mode base index
-        | Eq -> Some (Eq, index)
-        | Gt -> gt_empty mode past index
-      end
-    | Node {l; mem; n=_; h=_; r} -> begin
-        let index = match l with
-          | Empty -> base
-          | Leaf _ -> base + 1
-          | Node {l=_; mem=_; n; h=_; r=_} -> base + n
-        in
-        match cmper.cmp a mem with
-        | Lt -> begin
-            match l with
-            | Empty -> lt_empty mode base index
-            | _ -> fn a cmper mode ~base ~past l
-          end
-        | Eq -> Some (Eq, index)
-        | Gt -> begin
-            match r with
-            | Empty -> gt_empty mode past index
-            | _ -> fn a cmper mode ~base:(succ index) ~past r
-          end
-      end
-  in
-  fn a cmper mode ~base:0 ~past:(nnodes node) node
+let psearch = Ordmap.psearch
 
-let psearch a t =
-  search_impl a t.cmper Cmp.Lt t.root
+let search = Ordmap.search
 
-let search a t =
-  match search_impl a t.cmper Cmp.Eq t.root with
-  | Some (_, i) -> Some i
-  | _ -> None
-
-let nsearch a t =
-  search_impl a t.cmper Cmp.Gt t.root
+let nsearch = Ordmap.nsearch
 
 (* Seq. *)
 module Seq_poly2_fold2 = struct
   type ('a, 'cmp) container = ('a, 'cmp) t
   type 'a elm = 'a
-  type ('a, 'cmp) t = {
-    cursor_opt: ('a, 'cmp) Cursor.t option;
-  }
+  type ('a, 'cmp) t = ('a, unit, 'cmp) Ordmap.Seq.t
 
-  let init ordset =
-    match length ordset with
-    | 0 -> {cursor_opt=None}
-    | _ -> {cursor_opt=Some (Cursor.hd ordset)}
+  let init = Ordmap.Seq.init
 
-  let index t =
-    match t.cursor_opt with
-    | None -> 0
-    | Some cursor -> Cursor.index cursor
-
-  let length t =
-    match t.cursor_opt with
-    | None -> 0
-    | Some cursor -> length (Cursor.container cursor)
+  let length = Ordmap.Seq.length
 
   let next t =
-    assert (index t < length t);
-    let cursor = Option.value_hlt t.cursor_opt in
-    let a = Cursor.rget cursor in
-    let cursor' = Cursor.succ cursor in
-    a, {cursor_opt=Some cursor'}
+    let (a, _), t' = Ordmap.Seq.next t in
+    a, t'
 
   let next_opt t =
-    match (index t) < (length t) with
-    | false -> None
-    | true -> Some (next t)
+    match Ordmap.Seq.next_opt t with
+    | Some ((a, _), t') -> Some (a, t')
+    | None -> None
 
-  let cmper = cmper
+  let cmper = Ordmap.Seq.cmper
 
-  let cmp cmper a0 a1 =
-    let open Cmper in
-    cmper.cmp a0 a1
+  let cmp = Ordmap.Seq.cmp
 end
 include Seq.Make_poly2_fold2(Seq_poly2_fold2)
 
 let cmp t0 t1 =
-  let open Cmp in
-  fold2_until ~init:Eq ~f:(fun _ a0_opt a1_opt ->
-    match a0_opt, a1_opt with
-    | Some _, Some _ -> Eq, false
-    | Some _, None -> Lt, true
-    | None, Some _ -> Gt, true
-    | None, None -> not_reached ()
-  ) t0 t1
+  Ordmap.cmp Unit.cmp t0 t1
 
 let equal t0 t1 =
-  (* Check lengths first, since it's cheap and easy to do so. *)
-  match (length t0) = (length t1) with
-  | false -> false
-  | true -> Cmp.is_eq (cmp t0 t1)
-
-let join l a r =
-  let rec join_left_tall l a r = begin
-    let ll, l_mem, lr = expose l in
-    match (height lr) <= (height r) + 1 with
-    | true -> begin
-        let node = node_init lr a r in
-        match (height node) <= (height ll) + 1 with
-        | true -> node_init ll l_mem node
-        | false -> rotate_left (node_init ll l_mem (rotate_right node))
-      end
-    | false -> begin
-        let lr' = join_left_tall lr a r in
-        let node = node_init ll l_mem lr' in
-        match (height lr') <= (height ll) + 1 with
-        | true -> node
-        | false -> rotate_left node
-      end
-  end in
-  let rec join_right_tall l a r = begin
-    let rl, r_mem, rr = expose r in
-    match (height rl) <= (height l) + 1 with
-    | true -> begin
-        let node = node_init l a rl in
-        match (height node) <= (height rr) + 1 with
-        | true -> node_init node r_mem rr
-        | false -> rotate_right (node_init (rotate_left node) r_mem rr)
-      end
-    | false -> begin
-        let rl' = join_right_tall l a rl in
-        let node = node_init rl' r_mem rr in
-        match (height rl') <= (height rr) + 1 with
-        | true -> node
-        | false -> rotate_right node
-      end
-  end in
-  let lh = height l in
-  let rh = height r in
-  match (lh > rh + 1), (lh + 1 < rh) with
-  | true, _ -> join_left_tall l a r
-  | _, true -> join_right_tall l a r
-  | false, false -> node_init l a r
-
-let join2 l r =
-  let rec split_rightmost = function
-    | Leaf {mem} -> Empty, mem
-    | Node {l; mem; n=_; h=_; r=Empty} -> l, mem
-    | Node {l; mem; n=_; h=_; r} -> begin
-        let r', a = split_rightmost r in
-        (join l mem r'), a
-      end
-    | Empty -> not_reached ()
-  in
-  match l with
-  | Empty -> r
-  | _ -> begin
-      let l', a = split_rightmost l in
-      join l' a r
-    end
-
-let rec split_node a cmper node =
-  let open Cmper in
-  match node with
-  | Empty -> Empty, None, Empty
-  | Leaf {mem} -> begin
-      match cmper.cmp a mem with
-      | Lt -> Empty, None, node
-      | Eq -> Empty, (Some mem), Empty
-      | Gt -> node, None, Empty
-    end
-  | Node {l; mem; n=_; h=_; r} -> begin
-      match cmper.cmp a mem with
-      | Lt -> begin
-          let ll, a_opt, lr = split_node a cmper l in
-          ll, a_opt, (join lr mem r)
-        end
-      | Eq -> l, (Some a), r
-      | Gt -> begin
-          let rl, a_opt, rr = split_node a cmper r in
-          (join l mem rl), a_opt, rr
-        end
-    end
+  Ordmap.equal (fun _ _ -> true) t0 t1
 
 let insert a t =
-  let l, a_opt, r = split_node a t.cmper t.root in
-  match a_opt with
-  | Some _ -> t
-  | None -> {t with root=join l a r}
-
-let remove a t =
-  let l, a_opt, r = split_node a t.cmper t.root in
-  match a_opt with
-  | None -> t
-  | Some _ -> {t with root=join2 l r}
+  Ordmap.insert ~k:a ~v:() t
 
 let of_list m alist =
   match alist with
@@ -659,51 +126,15 @@ let of_list m alist =
       fn alist' (singleton m a)
     end
 
+let remove = Ordmap.remove
+
 let split a t =
-  let l, a_opt, r = split_node a t.cmper t.root in
-  {t with root=l}, a_opt, {t with root=r}
+  match Ordmap.split a t with
+  | l, Some (a, _), r -> l, Some a, r
+  | l, None, r -> l, None, r
 
 let union t0 t1 =
-  let rec fn cmper node0 node1 = begin
-    match node0, node1 with
-    | _, Empty -> node0
-    | Empty, _ -> node1
-    | Leaf {mem}, _ -> begin
-        let l1, _, r1 = split_node mem cmper node1 in
-        join l1 mem r1
-      end
-    | Node {l; mem; n=_; h=_; r}, _ -> begin
-        let l1, _, r1 = split_node mem cmper node1 in
-        let l' = fn cmper l l1 in
-        let r' = fn cmper r r1 in
-        join l' mem r'
-      end
-  end in
-  let root' = fn t0.cmper t0.root t1.root in
-  {t0 with root=root'}
-
-let inter t0 t1 =
-  let rec fn cmper node0 node1 = begin
-    match node0, node1 with
-    | _, Empty
-    | Empty, _ -> Empty
-    | Leaf {mem}, _ -> begin
-        let _, mem_opt, _ = split_node mem cmper node1 in
-        match mem_opt with
-        | Some _ -> node0
-        | None -> Empty
-      end
-    | Node {l; mem; n=_; h=_; r}, _ -> begin
-        let l1, mem_opt, r1 = split_node mem cmper node1 in
-        let l' = fn cmper l l1 in
-        let r' = fn cmper r r1 in
-        match mem_opt with
-        | Some _ -> join l' mem r'
-        | None -> join2 l' r'
-      end
-  end in
-  let root' = fn t0.cmper t0.root t1.root in
-  {t0 with root=root'}
+  Ordmap.union ~f:(fun _ _ _ -> ()) t0 t1
 
 let of_array m arr =
   match arr with
@@ -711,172 +142,45 @@ let of_array m arr =
   | _ -> Array.reduce_hlt (Array.map arr ~f:(fun a -> singleton m a))
     ~f:(fun ordset0 ordset1 -> union ordset0 ordset1)
 
-let diff t0 t1 =
-  let rec fn cmper node0 node1 = begin
-    match node0, node1 with
-    | _, Empty -> node0
-    | Empty, _ -> Empty
-    | _, Leaf {mem} -> begin
-        let l0, _, r0 = split_node mem cmper node0 in
-        join2 l0 r0
-      end
-    | _, Node {r; mem; n=_; h=_; l} -> begin
-        let l0, _, r0 = split_node mem cmper node0 in
-        let l' = fn cmper l0 l in
-        let r' = fn cmper r0 r in
-        join2 l' r'
-      end
-  end in
-  let root' = fn t0.cmper t0.root t1.root in
-  {t0 with root=root'}
+let inter t0 t1 =
+  Ordmap.inter ~f:(fun _ _ _ -> ()) t0 t1
+
+let diff = Ordmap.diff
 
 let filter ~f t =
-  let rec fn ~f node = begin
-    match node with
-    | Empty -> Empty
-    | Leaf {mem} -> begin
-        match f mem with
-        | true -> node
-        | false -> Empty
-      end
-    | Node {l; mem; n=_; h=_; r} -> begin
-        let l' = fn ~f l in
-        let r' = fn ~f r in
-        match f mem with
-        | true -> join l' mem r'
-        | false -> join2 l' r'
-      end
-  end in
-  {t with root=fn ~f t.root}
+  Ordmap.filter ~f:(fun (a, _) -> f a) t
 
 let filteri ~f t =
-  let rec fn ~f base node = begin
-    match node with
-    | Empty -> Empty
-    | Leaf {mem} -> begin
-        match f base mem with
-        | true -> node
-        | false -> Empty
-      end
-    | Node {l; mem; n=_; h=_; r} -> begin
-        let index = base + (nnodes l) in
-        let l' = fn ~f base l in
-        let r' = fn ~f (succ index) r in
-        match f index mem with
-        | true -> join l' mem r'
-        | false -> join2 l' r'
-      end
-  end in
-  {t with root=fn ~f 0 t.root}
+  Ordmap.filteri ~f:(fun i (a, _) -> f i a) t
 
 let partition_tf ~f t =
-  let rec fn ~f node = begin
-    match node with
-    | Empty -> Empty, Empty
-    | Leaf {mem} -> begin
-        match f mem with
-        | true -> node, Empty
-        | false -> Empty, node
-      end
-    | Node {l; mem; n=_; h=_; r} -> begin
-        let t_l', f_l' = fn ~f l in
-        let t_r', f_r' = fn ~f r in
-        match f mem with
-        | true -> (join t_l' mem t_r'), (join2 f_l' f_r')
-        | false -> (join2 t_l' t_r'), (join f_l' mem f_r')
-      end
-  end in
-  let t_root, f_root = fn ~f t.root in
-  {t with root=t_root}, {t with root=f_root}
+  Ordmap.partition_tf ~f:(fun (a, _) -> f a) t
 
 let partitioni_tf ~f t =
-  let rec fn ~f base node = begin
-    match node with
-    | Empty -> Empty, Empty
-    | Leaf {mem} -> begin
-        match f base mem with
-        | true -> node, Empty
-        | false -> Empty, node
-      end
-    | Node {l; mem; n=_; h=_; r} -> begin
-        let index = base + (nnodes l) in
-        let t_l', f_l' = fn ~f base l in
-        let t_r', f_r' = fn ~f (succ index) r in
-        match f index mem with
-        | true -> (join t_l' mem t_r'), (join2 f_l' f_r')
-        | false -> (join2 t_l' t_r'), (join f_l' mem f_r')
-      end
-  end in
-  let t_root, f_root = fn ~f 0 t.root in
-  {t with root=t_root}, {t with root=f_root}
+  Ordmap.partitioni_tf ~f:(fun i (a, _) -> f i a) t
 
 let reduce ~f t =
-  let rec fn ~reduce2 = function
-    | Leaf {mem} -> mem
-    | Node {l; mem; n=_; h=_; r=Empty} -> reduce2 (fn ~reduce2 l) mem
-    | Node {l=Empty; mem; n=_; h=_; r} -> reduce2 (fn ~reduce2 r) mem
-    | Node {l; mem; n=_; h=_; r} ->
-      reduce2 mem (reduce2 (fn ~reduce2 l) (fn ~reduce2 r))
-    | Empty -> not_reached ()
-  in
-  match t.root with
-  | Empty -> None
-  | _ -> Some (fn ~reduce2:f t.root)
+  Ordmap.kreduce ~f t
 
 let reduce_hlt ~f t =
-  match reduce ~f t with
-  | None -> halt "Empty set"
-  | Some a -> a
-
-let pp ppf t =
-  let open Format in
-  let rec pp_node ppf = function
-    | Empty -> fprintf ppf "Empty"
-    | Leaf {mem} -> fprintf ppf "Leaf {mem=%a}" t.cmper.pp mem
-    | Node {l; mem; n; h; r} -> fprintf ppf
-        ("@;<0 2>@[<v>Node {@;<0 2>@[<v>l=%a;@,mem=%a;@,n=%a;@,h=%a;@," ^^
-            "r=%a@]@,}@]")
-        pp_node l
-        t.cmper.pp mem
-        Usize.pp n
-        Usize.pp h
-        pp_node r
-  in
-  fprintf ppf "@[<v>Ordset {@;<0 2>@[<v>root=%a@]@,}@]"
-    pp_node t.root
-
-let validate t =
-  let rec fn = function
-    | Empty -> ()
-    | Leaf _ -> ()
-    | Node {l; mem; n; h; r} -> begin
-        fn l;
-        fn r;
-        let () = match l with
-          | Empty -> ()
-          | _ -> begin
-              let _, l_mem, _ = expose l in
-              assert (Cmp.is_lt (t.cmper.cmp l_mem mem));
-            end
-        in
-        let () = match r with
-          | Empty -> ()
-          | _ -> begin
-              let _, r_mem, _ = expose r in
-              assert (Cmp.is_lt (t.cmper.cmp mem r_mem));
-            end
-        in
-        assert (n = (nnodes l) + 1 + (nnodes r));
-        let lh = height l in
-        let rh = height r in
-        assert (h = succ (max lh rh));
-        assert ((max lh rh) - (min lh rh) < 2);
-      end
-  in
-  fn t.root
+  Ordmap.kreduce_hlt ~f t
 
 (******************************************************************************)
 (* Begin tests. *)
+
+let pp ppf t =
+  let open Format in
+  fprintf ppf "@[<h>Ordset {";
+  let cmper = Ordmap.cmper t in
+  let t_sorted = Array.sort ~cmp:cmper.cmp (to_array t) in
+  Array.iteri t_sorted ~f:(fun i a ->
+    if i > 0 then fprintf ppf ";@ ";
+    fprintf ppf "%a" cmper.pp a
+  );
+  fprintf ppf "}@]"
+
+let validate _t =
+  ()
 
 let%expect_test "hash_fold" =
   let open Format in
@@ -902,9 +206,9 @@ let%expect_test "hash_fold" =
 
   [%expect{|
     hash_fold (of_array (module Usize) [||]) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold (of_array (module Usize) [|0|]) -> 0x53a3_5e44_9415_8ff4_24a3_88ce_df7b_e5a4u128
-    hash_fold (of_array (module Usize) [|0; 1|]) -> 0xa677_190c_1ad3_d08a_d7f7_106c_570d_6d2eu128
-    hash_fold (of_array (module Usize) [|0; 2|]) -> 0xcab8_697f_19cd_8c2e_5911_10d8_d88d_5cc0u128
+    hash_fold (of_array (module Usize) [|0|]) -> 0xf931_3f2a_e691_89fb_c121_c10c_2321_2ab7u128
+    hash_fold (of_array (module Usize) [|0; 1|]) -> 0x6c19_38ef_f4fd_7d4d_0b71_57d7_a7a4_58ceu128
+    hash_fold (of_array (module Usize) [|0; 2|]) -> 0xb35d_e06b_2347_e0fb_dc0e_7169_33fc_b370u128
     |}]
 
 let%expect_test "hash_fold empty" =
@@ -941,12 +245,8 @@ let%expect_test "empty,cmper_m,singleton,length" =
   printf "@]";
 
   [%expect{|
-    Ordset {
-      root=Empty
-    }
-    Ordset {
-      root=Leaf {mem=0}
-    }
+    Ordset {}
+    Ordset {0}
     |}]
 
 let%expect_test "mem,insert" =
@@ -968,44 +268,7 @@ let%expect_test "mem,insert" =
   printf "@]";
 
   [%expect{|
-    Ordset {
-      root=
-        Node {
-          l=
-            Node {
-              l=Leaf {mem=1};
-              mem=2;
-              n=3;
-              h=2;
-              r=Leaf {mem=3}
-            };
-          mem=44;
-          n=11;
-          h=4;
-          r=
-            Node {
-              l=
-                Node {
-                  l=Leaf {mem=45};
-                  mem=56;
-                  n=3;
-                  h=2;
-                  r=Leaf {mem=60}
-                };
-              mem=66;
-              n=7;
-              h=3;
-              r=
-                Node {
-                  l=Leaf {mem=75};
-                  mem=81;
-                  n=3;
-                  h=2;
-                  r=Leaf {mem=91}
-                }
-            }
-        }
-    }
+    Ordset {1; 2; 3; 44; 45; 56; 60; 66; 75; 81; 91}
     |}]
 
 let%expect_test "of_list duplicate" =
@@ -1015,9 +278,7 @@ let%expect_test "of_list duplicate" =
   printf "@]";
 
   [%expect{|
-    Ordset {
-      root=Leaf {mem=0}
-    }
+    Ordset {0}
     |}]
 
 let%expect_test "of_list,remove" =
@@ -1046,71 +307,20 @@ let%expect_test "of_list,remove" =
   [%expect{|
     --- Not member. ---
     remove 2
-      Ordset {
-        root=
-          Node {
-            l=Leaf {mem=0};
-            mem=1;
-            n=2;
-            h=2;
-            r=Empty
-          }
-      } ->
-      Ordset {
-        root=
-          Node {
-            l=Leaf {mem=0};
-            mem=1;
-            n=2;
-            h=2;
-            r=Empty
-          }
-      }
+      Ordset {0; 1} ->
+      Ordset {0; 1}
     --- Member, length 1 -> 0. ---
     remove 0
-      Ordset {
-        root=Leaf {mem=0}
-      } ->
-      Ordset {
-        root=Empty
-      }
+      Ordset {0} ->
+      Ordset {}
     --- Member, length 2 -> 1. ---
     remove 1
-      Ordset {
-        root=
-          Node {
-            l=Leaf {mem=0};
-            mem=1;
-            n=2;
-            h=2;
-            r=Empty
-          }
-      } ->
-      Ordset {
-        root=Leaf {mem=0}
-      }
+      Ordset {0; 1} ->
+      Ordset {0}
     --- Member, length 3 -> 2. ---
     remove 2
-      Ordset {
-        root=
-          Node {
-            l=Leaf {mem=0};
-            mem=1;
-            n=3;
-            h=2;
-            r=Leaf {mem=2}
-          }
-      } ->
-      Ordset {
-        root=
-          Node {
-            l=Leaf {mem=0};
-            mem=1;
-            n=2;
-            h=2;
-            r=Empty
-          }
-      }
+      Ordset {0; 1; 2} ->
+      Ordset {0; 1}
     |}]
 
 let%expect_test "of_array,cursor" =
@@ -1168,53 +378,28 @@ let%expect_test "of_array,cursor" =
 
   [%expect{|
     of_array [||] ->
-    Ordset {
-      root=Empty
-    }
+    Ordset {}
     cursor fwd:
 
     cursor rev:
 
     of_array [|0; 1; 4; 5; 3; 2|] ->
-    Ordset {
-      root=
-        Node {
-          l=
-            Node {
-              l=Leaf {mem=0};
-              mem=1;
-              n=3;
-              h=2;
-              r=Leaf {mem=2}
-            };
-          mem=3;
-          n=6;
-          h=3;
-          r=
-            Node {
-              l=Empty;
-              mem=4;
-              n=2;
-              h=2;
-              r=Leaf {mem=5}
-            }
-        }
-    }
+    Ordset {0; 1; 2; 3; 4; 5}
     cursor fwd:
-                {index=0; lpath_opt=None; rpath_opt=Some [0; 1; 3]}=0
-                {index=1; lpath_opt=Some [0; 1; 3]; rpath_opt=Some [1; 3]}=1
-                {index=2; lpath_opt=Some [1; 3]; rpath_opt=Some [2; 1; 3]}=2
-                {index=3; lpath_opt=Some [2; 1; 3]; rpath_opt=Some [3]}=3
-                {index=4; lpath_opt=Some [3]; rpath_opt=Some [4; 3]}=4
-                {index=5; lpath_opt=Some [4; 3]; rpath_opt=Some [5; 4; 3]}=5
+                {index=0}=0
+                {index=1}=1
+                {index=2}=2
+                {index=3}=3
+                {index=4}=4
+                {index=5}=5
 
     cursor rev:
-                {index=6; lpath_opt=Some [5; 4; 3]; rpath_opt=None}=5
-                {index=5; lpath_opt=Some [4; 3]; rpath_opt=Some [5; 4; 3]}=4
-                {index=4; lpath_opt=Some [3]; rpath_opt=Some [4; 3]}=3
-                {index=3; lpath_opt=Some [2; 1; 3]; rpath_opt=Some [3]}=2
-                {index=2; lpath_opt=Some [1; 3]; rpath_opt=Some [2; 1; 3]}=1
-                {index=1; lpath_opt=Some [0; 1; 3]; rpath_opt=Some [1; 3]}=0
+                {index=6}=5
+                {index=5}=4
+                {index=4}=3
+                {index=3}=2
+                {index=2}=1
+                {index=1}=0
     |}]
 
 let%expect_test "of_list,to_list,to_array" =
@@ -1289,41 +474,19 @@ let%expect_test "search,nth" =
   printf "@]";
 
   [%expect{|
-    Ordset {
-      root=Empty
-    }
+    Ordset {}
       0 -> <, <>, >
-    Ordset {
-      root=Leaf {mem=1}
-    }
+    Ordset {1}
       0 -> <[0]=1, <>, <[0]=1
       1 -> =[0]=1, =1, =[0]=1
       2 -> >[0]=1, <>, >[0]=1
-    Ordset {
-      root=
-        Node {
-          l=Empty;
-          mem=1;
-          n=2;
-          h=2;
-          r=Leaf {mem=3}
-        }
-    }
+    Ordset {1; 3}
       0 -> <[0]=1, <>, <[0]=1
       1 -> =[0]=1, =1, =[0]=1
       2 -> >[0]=1, <>, <[1]=3
       3 -> =[1]=3, =3, =[1]=3
       4 -> >[1]=3, <>, >[1]=3
-    Ordset {
-      root=
-        Node {
-          l=Leaf {mem=1};
-          mem=3;
-          n=3;
-          h=2;
-          r=Leaf {mem=5}
-        }
-    }
+    Ordset {1; 3; 5}
       0 -> <[0]=1, <>, <[0]=1
       1 -> =[0]=1, =1, =[0]=1
       2 -> >[0]=1, <>, <[1]=3
