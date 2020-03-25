@@ -374,6 +374,12 @@ let insert_hlt ~k ~v t =
 let upsert ~k ~v t =
   insert_impl k ~f:(fun _ -> Some v) t
 
+let update ~k ~v t =
+  insert_impl k ~f:(function
+    | None -> None
+    | Some _ -> Some v
+  ) t
+
 let update_hlt ~k ~v t =
   insert_impl k ~f:(function
     | None -> halt "Key not bound in map"
@@ -1191,24 +1197,36 @@ let%expect_test "mem,get,insert,insert_hlt" =
   [%expect{|
     |}]
 
-let%expect_test "mem,get,upsert,update_hlt" =
+let%expect_test "mem,get,update,upsert,update_hlt" =
   let rec test ks map = begin
     match ks with
     | [] -> ()
     | k :: ks' -> begin
         assert (not (mem k map));
         assert (Option.is_none (get k map));
+        (* update (silently fail) *)
         let v = k * 100 in
-        let map' = upsert ~k ~v map in
-        assert (mem k map');
-        assert ((get_hlt k map') = v);
+        let map' = update ~k ~v map in
+        assert (not (mem k map'));
         validate map';
-        let v' = k * 10000 in
-        let map'' = update_hlt ~k ~v:v' map' in
+        (* upsert *)
+        let map'' = upsert ~k ~v map' in
         assert (mem k map'');
-        assert ((get_hlt k map'') = v');
+        assert ((get_hlt k map'') = v);
         validate map'';
-        test ks' map''
+        (* update_hlt *)
+        let v' = k * 10000 in
+        let map''' = update_hlt ~k ~v:v' map'' in
+        assert (mem k map''');
+        assert ((get_hlt k map''') = v');
+        validate map''';
+        (* update *)
+        let v'' = k * 1000000 in
+        let map'''' = update ~k ~v:v'' map''' in
+        assert (mem k map'''');
+        assert ((get_hlt k map'''') = v'');
+        validate map'''';
+        test ks' map''''
       end
   end in
   let ks = [1; 3; 2; 42; 44; 45; 56; 60; 66; 75; 81; 91; 420; 421; 4200] in

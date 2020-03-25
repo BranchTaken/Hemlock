@@ -694,6 +694,12 @@ let upsert ~k ~v t =
   let l, _, r = split_node k t.cmper t.root in
   {t with root=join l (k, v) r}
 
+let update ~k ~v t =
+  let l, kv_opt, r = split_node k t.cmper t.root in
+  match kv_opt with
+  | Some _ -> {t with root=join l (k, v) r}
+  | None -> t
+
 let update_hlt ~k ~v t =
   let l, kv_opt, r = split_node k t.cmper t.root in
   match kv_opt with
@@ -1214,24 +1220,36 @@ let%expect_test "mem,get,insert,insert_hlt" =
   [%expect{|
     |}]
 
-let%expect_test "mem,get,upsert,update_hlt" =
+let%expect_test "mem,get,update,upsert,update_hlt" =
   let rec test ks ordmap = begin
     match ks with
     | [] -> ()
     | k :: ks' -> begin
         assert (not (mem k ordmap));
         assert (Option.is_none (get k ordmap));
+        (* update (silently fail) *)
         let v = k * 100 in
-        let ordmap' = upsert ~k ~v ordmap in
-        assert (mem k ordmap');
-        assert ((get_hlt k ordmap') = v);
+        let ordmap' = update ~k ~v ordmap in
+        assert (not (mem k ordmap'));
         validate ordmap';
-        let v' = k * 10000 in
-        let ordmap'' = update_hlt ~k ~v:v' ordmap' in
+        (* upsert *)
+        let ordmap'' = upsert ~k ~v ordmap' in
         assert (mem k ordmap'');
-        assert ((get_hlt k ordmap'') = v');
+        assert ((get_hlt k ordmap'') = v);
         validate ordmap'';
-        test ks' ordmap''
+        (* update_hlt *)
+        let v' = k * 10000 in
+        let ordmap''' = update_hlt ~k ~v:v' ordmap'' in
+        assert (mem k ordmap''');
+        assert ((get_hlt k ordmap''') = v');
+        validate ordmap''';
+        (* update *)
+        let v'' = k * 1000000 in
+        let ordmap'''' = update ~k ~v:v'' ordmap''' in
+        assert (mem k ordmap'''');
+        assert ((get_hlt k ordmap'''') = v'');
+        validate ordmap'''';
+        test ks' ordmap''''
       end
   end in
   let ks = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
