@@ -99,6 +99,11 @@ module type S = sig
       to [v], regardless of whether [k] is a key in [t].  O(lg n) time
       complexity if ordered, O(1) time complexity if unordered. *)
 
+  val update: k:'k -> v:'v -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+  (** [update ~k ~v t] returns an incremental derivative of [t] with [k] bound
+      to [v] if [k] is a key in [t], [t] otherwise.  O(lg n) time complexity if
+      ordered, O(1) time complexity if unordered. *)
+
   val update_hlt: k:'k -> v:'v -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [update_hlt ~k ~v t] returns an incremental derivative of [t] with [k]
       bound to [v] if [k] is a key in [t], halts otherwise.  O(lg n) time
