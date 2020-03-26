@@ -46,12 +46,11 @@ details on building and interacting with `hlc` via the build system.
 To build the bootstrap standard library documentation, run
 
 ```sh
-dune build @doc-private
+dune build @doc
 ```
 
-Use a web browser to open the documentation in a location that looks similar to
-`_build/default/_doc/_html/Hemlock@<hex>/Hemlock/index.html`, where `<hex>` is
-a generated hex string.
+Use a web browser to open the documentation at
+`_build/default/_doc/_html/index.html`.
 
 ### License
 
