@@ -193,10 +193,9 @@ module Seq = struct
     with type 'a t := 'a T.t
      and type 'a elm := 'a T.elm = struct
     let to_array t =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
             let () = Stdlib.Array.set a i elm in
@@ -209,7 +208,9 @@ module Seq = struct
           end in
           let elm, t' = T.next t in
           let a = Stdlib.Array.make l elm in
-          fn t' a (Usize.pred l)
+          match l with
+          | 1 -> a
+          | _ -> fn t' a Usize.(l - 2)
         end
   end
 
@@ -1251,6 +1252,33 @@ let%expect_test "cmp" =
     cmp [|0; 0|] [|0|] -> Gt
     cmp [|0; 0|] [||] -> Gt
     cmp [|0|] [||] -> Gt
+    |}]
+
+let%expect_test "of_list,of_list_rev" =
+  let open Format in
+  printf "@[<h>";
+  let test list = begin
+    printf "of_list[_rev] %a -> %a / %a\n"
+      (List.pp Usize.pp) list
+      (pp Usize.pp) (of_list list)
+      (pp Usize.pp) (of_list_rev list);
+  end in
+  let lists = [
+    [];
+    [0];
+    [0; 1];
+    [0; 1; 2];
+    [0; 1; 2; 3];
+  ] in
+  List.iter lists ~f:test;
+  printf "@]";
+
+  [%expect{|
+    of_list[_rev] [] -> [||] / [||]
+    of_list[_rev] [0] -> [|0|] / [|0|]
+    of_list[_rev] [0; 1] -> [|0; 1|] / [|1; 0|]
+    of_list[_rev] [0; 1; 2] -> [|0; 1; 2|] / [|2; 1; 0|]
+    of_list[_rev] [0; 1; 2; 3] -> [|0; 1; 2; 3|] / [|3; 2; 1; 0|]
     |}]
 
 let%expect_test "get,length,is_empty" =
