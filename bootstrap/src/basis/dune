@@ -1,5 +1,6 @@
 (library
  (name Basis)
+ (public_name Hemlock.Basis)
  (foreign_stubs
   (language c)
   (names entropy))
