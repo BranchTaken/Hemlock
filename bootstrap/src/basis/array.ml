@@ -121,10 +121,9 @@ module Seq = struct
                                                        and type elm := T.elm =
   struct
     let to_array t =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
@@ -145,10 +144,9 @@ module Seq = struct
                                                            and type elm := T.elm
   = struct
     let to_array t =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
             let () = Stdlib.Array.set a i elm in
@@ -169,10 +167,9 @@ module Seq = struct
     with type 'a t := 'a T.t
      and type 'a elm := 'a T.elm = struct
     let to_array t =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
@@ -218,10 +215,9 @@ module Seq = struct
     with type ('a, 'cmp) t := ('a, 'cmp) T.t
      and type 'a elm := 'a T.elm = struct
     let to_array t =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
@@ -243,10 +239,9 @@ module Seq = struct
      and type 'k key := 'k T.key
      and type 'k value := 'k T.value = struct
     let to_array t =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
@@ -273,10 +268,9 @@ module Seq = struct
     val to_accum_array: ('a,'accum,'b) t -> init:'accum -> 'accum * 'b outer
   end with type ('a,'accum,'b) t := ('a,'accum,'b) T.t = struct
     let to_accum_array t ~init =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> init, [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t accum a i = begin
             match i = l with
             | true -> accum, a
@@ -305,10 +299,9 @@ module Seq = struct
       -> 'accum * 'c outer
   end with type ('a,'b,'accum,'c) t := ('a,'b,'accum,'c) T.t = struct
     let to_accum_array t ~init =
-      let l = T.length t in
-      match l with
+      match T.length t with
       | 0 -> init, [||]
-      | _ -> begin
+      | l -> begin
           let rec fn t accum a i = begin
             match i = l with
             | true -> accum, a
