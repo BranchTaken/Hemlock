@@ -1,6 +1,6 @@
 (executables
  (names hlc)
- (libraries core Basis))
+ (libraries Basis))
 
 (install
  (section bin)
