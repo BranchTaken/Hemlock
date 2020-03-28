@@ -109,7 +109,13 @@ let cmp t0 t1 =
   Ordmap.cmp Unit.cmp t0 t1
 
 let equal t0 t1 =
-  Ordmap.equal (fun _ _ -> true) t0 t1
+  Ordmap.equal Unit.( = ) t0 t1
+
+let subset t0 t1 =
+  Ordmap.subset Unit.( = ) t0 t1
+
+let disjoint t0 t1 =
+  Ordmap.disjoint t0 t1
 
 let insert a t =
   Ordmap.insert ~k:a ~v:() t
@@ -249,7 +255,7 @@ let%expect_test "empty,cmper_m,singleton,length" =
     Ordset {0}
     |}]
 
-let%expect_test "mem,insert" =
+let%expect_test "mem,insert,subset" =
   let open Format in
   printf "@[";
   let rec test ms ordset = begin
@@ -260,6 +266,8 @@ let%expect_test "mem,insert" =
         let ordset' = insert m ordset in
         validate ordset';
         assert (mem m ordset');
+        assert (subset ordset' ordset);
+        assert (not (subset ordset ordset'));
         test ms' ordset'
       end
   end in
@@ -653,13 +661,16 @@ let%expect_test "fold2" =
     fold2 [0; 1; 66; 91] [0; 1; 66; 91] -> [(Some 91, Some 91); (Some 66, Some 66); (Some 1, Some 1); (Some 0, Some 0)]
     |}]
 
-let%expect_test "iter2,equal" =
+let%expect_test "iter2,equal,subset,disjoint" =
   let open Format in
   printf "@[";
   let test_equal ms0 ms1 = begin
     let ordset0 = of_list (module Usize) ms0 in
     let ordset1 = of_list (module Usize) ms1 in
     assert (equal ordset0 ordset1);
+    assert (subset ordset0 ordset1);
+    assert (subset ordset1 ordset0);
+    assert ((length ordset0 = 0) || (not (disjoint ordset0 ordset1)));
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> ()
@@ -675,6 +686,9 @@ let%expect_test "iter2,equal" =
     let ordset0 = of_list (module Usize) ms0 in
     let ordset1 = of_list (module Usize) ms1 in
     assert (not (equal ordset0 ordset1));
+    assert (not (subset ordset0 ordset1));
+    assert ((length ordset0 = 0) || (not (subset ordset1 ordset0)));
+    assert (disjoint ordset0 ordset1);
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> begin

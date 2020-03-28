@@ -133,9 +133,19 @@ module type S = sig
 
   val equal: ('v -> 'v -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
   (** [equal veq t0 t1] returns [true] if [t0] and [t1] contain identical key
-      sets and identical key-value mappings as determined by [t]'s key
-      comparator and the [veq] value comparison function, [false] otherwise.
-      O(n) time complexity. *)
+      sets and identical key-value mappings as determined by the key comparator
+      and the [veq] value comparison function, [false] otherwise.  O(n) time
+      complexity. *)
+
+  val subset: ('v -> 'v -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
+  (** [subset veq t0 t1] returns [true] if all key-value mappings in [t1] are
+      also in [t0], as determined by the key comparator and the [veq] value
+      comparison function, [false] otherwise.  O(n) time complexity. *)
+
+  val disjoint: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
+  (** [disjoint t0 t1] returns [true] if [t0] and [t1] contain disjoint key sets
+      as determined by the key comparator, [false] otherwise.  O(n) time
+      complexity. *)
 
   val union: f:('k -> 'v -> 'v -> 'v) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
     -> ('k, 'v, 'cmp) t
