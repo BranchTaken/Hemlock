@@ -74,6 +74,14 @@ module type S = sig
   (** [equal t0 t1] returns [true] if [t0] and [t1] contain identical sets of
       elements, [false] otherwise.  O(n) time complexity. *)
 
+  val subset: ('a, 'cmp) t -> ('a, 'cmp) t -> bool
+  (** [subset t0 t1] returns [true] if all elements in [t1] are also in [t0],
+      [false] otherwise.  O(n) time complexity. *)
+
+  val disjoint: ('a, 'cmp) t -> ('a, 'cmp) t -> bool
+  (** [disjoint t0 t1] returns [true] if [t0] and [t1] contain disjoint sets of
+      elements, [false] otherwise.  O(n) time complexity. *)
+
   val union: ('a, 'cmp) t -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [union t0 t1] creates a set that is the union of [t0] and [t1]; that is,
       a set that contains all elements in [t0] or [t1].  O(m lg (n/m + 1)) time

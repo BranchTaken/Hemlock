@@ -553,8 +553,8 @@ let amend k ~f t =
 let fold_until ~init ~f t =
   let rec fn accum f node = begin
     let accum', until = Array.fold_until node.elms_kv ~init:(accum, false)
-      ~f:(fun (accum, _) m ->
-        let accum', until = f accum m in
+      ~f:(fun (accum, _) kv ->
+        let accum', until = f accum kv in
         (accum', until), until
       )
     in
@@ -756,6 +756,28 @@ let equal veq t0 t1 =
   match (length t0) = (length t1) with
   | false -> false
   | true -> fn (kvcmp t0.cmper.cmp (vcmp veq)) t0.root t1.root
+
+let subset veq t0 t1 =
+  fold_until ~init:true ~f:(fun _ (k, v) ->
+    match get k t0 with
+    | None -> false, true
+    | Some v0 -> begin
+        match veq v0 v with
+        | false -> false, true
+        | true -> true, false
+      end
+  ) t1
+
+let disjoint t0 t1 =
+  let small, large = match (length t0) <= (length t1) with
+    | true -> t0, t1
+    | false -> t1, t0
+  in
+  fold_until ~init:true ~f:(fun _ (k, _) ->
+    match get k large with
+    | None -> true, false
+    | Some _ -> false, true
+  ) small
 
 let union ~f t0 t1 =
   (* Initialize the union with the larger of the two input maps, in order to
@@ -1150,7 +1172,7 @@ let%expect_test "empty,cmper_m,singleton,length" =
     }
     |}]
 
-let%expect_test "mem,get,insert" =
+let%expect_test "mem,get,insert,subset" =
   let rec test ks map = begin
     match ks with
     | [] -> ()
@@ -1162,6 +1184,8 @@ let%expect_test "mem,get,insert" =
         validate map';
         assert (mem k map');
         assert ((get_hlt k map') = v);
+        assert (subset veq map' map);
+        assert (not (subset veq map map'));
         test ks' map'
       end
   end in
@@ -1197,7 +1221,7 @@ let%expect_test "mem,get,insert,insert_hlt" =
   [%expect{|
     |}]
 
-let%expect_test "mem,get,update,upsert,update_hlt" =
+let%expect_test "mem,get,update,upsert,update_hlt,subset" =
   let rec test ks map = begin
     match ks with
     | [] -> ()
@@ -1219,6 +1243,8 @@ let%expect_test "mem,get,update,upsert,update_hlt" =
         let map''' = update_hlt ~k ~v:v' map'' in
         assert (mem k map''');
         assert ((get_hlt k map''') = v');
+        assert (not (subset veq map'' map'''));
+        assert (not (subset veq map''' map''));
         validate map''';
         (* update *)
         let v'' = k * 1000000 in
@@ -1687,13 +1713,16 @@ let%expect_test "fold2" =
     fold2 [42; 420; 4200] [42; 420; 4200] -> [(Some (4200, 420000), Some (4200, 420000)); (Some (420, 42000), Some (420, 42000)); (Some (42, 4200), Some (42, 4200))]
     |}]
 
-let%expect_test "iter2,equal" =
+let%expect_test "iter2,equal,subset,disjoint" =
   let open Format in
   printf "@[";
   let test_equal ks0 ks1 = begin
     let map0 = of_klist ks0 in
     let map1 = of_klist ks1 in
     assert (equal veq map0 map1);
+    assert (subset veq map0 map1);
+    assert (subset veq map1 map0);
+    assert ((length map0 = 0) || (not (disjoint map0 map1)));
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> ()
@@ -1710,6 +1739,9 @@ let%expect_test "iter2,equal" =
     let map0 = of_klist ks0 in
     let map1 = of_klist ks1 in
     assert (not (equal veq map0 map1));
+    assert (not (subset veq map0 map1));
+    assert ((length map0 = 0) || (not (subset veq map1 map0)));
+    assert (disjoint map0 map1);
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin

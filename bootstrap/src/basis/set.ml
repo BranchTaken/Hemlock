@@ -75,7 +75,13 @@ include Seq.Make_poly2_fold2(Seq_poly2_fold2)
 module Seq = Seq_poly2_fold2
 
 let equal t0 t1 =
-  Map.equal (fun _ _ -> true) t0 t1
+  Map.equal Unit.( = ) t0 t1
+
+let subset t0 t1 =
+  Map.subset Unit.( = ) t0 t1
+
+let disjoint t0 t1 =
+  Map.disjoint t0 t1
 
 let union t0 t1 =
   Map.union ~f:(fun _ _ _ -> ()) t0 t1
@@ -198,7 +204,7 @@ let%expect_test "empty,cmper_m,singleton,length" =
     Set {0}
     |}]
 
-let%expect_test "mem,insert" =
+let%expect_test "mem,insert,subset" =
   let open Format in
   printf "@[";
   let rec test ms set = begin
@@ -208,6 +214,8 @@ let%expect_test "mem,insert" =
         assert (not (mem m set));
         let set' = insert m set in
         assert (mem m set');
+        assert (subset set' set);
+        assert (not (subset set set'));
         test ms' set'
       end
   end in
@@ -457,13 +465,16 @@ let%expect_test "fold2" =
     fold2 [0; 1; 66; 91] [0; 1; 66; 91] -> [(Some 0, Some 0); (Some 1, Some 1); (Some 66, Some 66); (Some 91, Some 91)]
     |}]
 
-let%expect_test "iter2,equal" =
+let%expect_test "iter2,equal,subset,disjoint" =
   let open Format in
   printf "@[";
   let test_equal ms0 ms1 = begin
     let set0 = of_list (module Usize) ms0 in
     let set1 = of_list (module Usize) ms1 in
     assert (equal set0 set1);
+    assert (subset set0 set1);
+    assert (subset set1 set0);
+    assert ((length set0 = 0) || (not (disjoint set0 set1)));
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> ()
@@ -479,6 +490,9 @@ let%expect_test "iter2,equal" =
     let set0 = of_list (module Usize) ms0 in
     let set1 = of_list (module Usize) ms1 in
     assert (not (equal set0 set1));
+    assert (not (subset set0 set1));
+    assert ((length set0 = 0) || (not (subset set1 set0)));
+    assert (disjoint set0 set1);
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> begin

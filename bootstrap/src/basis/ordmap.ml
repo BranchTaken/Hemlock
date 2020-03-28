@@ -652,9 +652,10 @@ let join2 l r =
       join l' (k, v) r
     end
 
-(* Split an AVL tree into (l, (a, v), r), where l and r are AVL trees containing
-   all mappings preceding/following a in the total key ordering, respectively.
-   split_node is join's dual. *)
+(* Split an AVL tree into (l, Some (a, v), r) if key a is in the tree, (l, None,
+   r) otherwise, where l and r are AVL trees containing all mappings
+   preceding/following a in the total key ordering, respectively.  split_node is
+   join's dual. *)
 let rec split_node a cmper node =
   let open Cmper in
   match node with
@@ -677,6 +678,69 @@ let rec split_node a cmper node =
           (join l (k, v) rl), kv_opt, rr
         end
     end
+
+(* Split an AVL tree into (Some (l, r)) if key a is not in the tree, None
+   otherwise, where l and r are AVL trees containing all mappings
+   preceding/following a in the total key ordering, respectively.  split2_node
+   is join2's dual. *)
+let rec split2_node a cmper node =
+  let open Cmper in
+  match node with
+  | Empty -> Some (Empty, Empty)
+  | Leaf {k; v=_} -> begin
+      match cmper.cmp a k with
+      | Lt -> Some (Empty, node)
+      | Eq -> None
+      | Gt -> Some (node, Empty)
+    end
+  | Node {l; k; v=_; n=_; h=_; r} -> begin
+      match cmper.cmp a k with
+      | Lt -> begin
+          match split2_node a cmper l with
+          | None -> None
+          | Some (ll, lr) -> Some (ll, (join2 lr r))
+        end
+      | Eq -> None
+      | Gt -> begin
+          match split2_node a cmper r with
+          | None -> None
+          | Some (rl, rr) -> Some ((join2 l rl), rr)
+        end
+    end
+
+let subset veq t0 t1 =
+  let rec fn cmper veq node0 node1 = begin
+    match node1 with
+    | Empty -> true
+    | Leaf {k; v} -> begin
+        let _, kv_of_opt, _ = split_node k cmper node0 in
+        match kv_of_opt with
+        | None -> false
+        | Some (_, v0) -> veq v0 v
+      end
+    | Node {l; k; v; n=_; h=_; r} -> begin
+        let l0, kv_of_opt, r0 = split_node k cmper node0 in
+        match kv_of_opt with
+        | None -> false
+        | Some (_, v0) ->
+          (veq v0 v) && (fn cmper veq l0 l) && (fn cmper veq r0 r)
+      end
+  end in
+  fn t0.cmper veq t0.root t1.root
+
+let disjoint t0 t1 =
+  let rec fn cmper node0 node1 = begin
+    match node0, node1 with
+    | _, Empty
+    | Empty, _ -> true
+    | Leaf {k; v=_}, _ -> Option.is_some (split2_node k cmper node1)
+    | Node {l; k; v=_; n=_; h=_; r}, _ -> begin
+        match split2_node k cmper node1 with
+        | None -> false
+        | Some (l1, r1) -> (fn cmper l l1) && (fn cmper r r1)
+      end
+  end in
+  fn t0.cmper t0.root t1.root
 
 let insert ~k ~v t =
   let l, kv_opt, r = split_node k t.cmper t.root in
@@ -1173,7 +1237,7 @@ let%expect_test "empty,cmper_m,singleton,length" =
     }
     |}]
 
-let%expect_test "mem,get,insert" =
+let%expect_test "mem,get,insert,subset" =
   let rec test ks ordmap = begin
     match ks with
     | [] -> ()
@@ -1185,6 +1249,8 @@ let%expect_test "mem,get,insert" =
         validate ordmap';
         assert (mem k ordmap');
         assert ((get_hlt k ordmap') = v);
+        assert (subset veq ordmap' ordmap);
+        assert (not (subset veq ordmap ordmap'));
         test ks' ordmap'
       end
   end in
@@ -1220,7 +1286,7 @@ let%expect_test "mem,get,insert,insert_hlt" =
   [%expect{|
     |}]
 
-let%expect_test "mem,get,update,upsert,update_hlt" =
+let%expect_test "mem,get,update,upsert,update_hlt,subset" =
   let rec test ks ordmap = begin
     match ks with
     | [] -> ()
@@ -1242,6 +1308,8 @@ let%expect_test "mem,get,update,upsert,update_hlt" =
         let ordmap''' = update_hlt ~k ~v:v' ordmap'' in
         assert (mem k ordmap''');
         assert ((get_hlt k ordmap''') = v');
+        assert (not (subset veq ordmap'' ordmap'''));
+        assert (not (subset veq ordmap''' ordmap''));
         validate ordmap''';
         (* update *)
         let v'' = k * 1000000 in
@@ -1847,13 +1915,16 @@ let%expect_test "fold2" =
     fold2 [0; 1; 66; 91] [0; 1; 66; 91] -> [(Some (91, 9100), Some (91, 9100)); (Some (66, 6600), Some (66, 6600)); (Some (1, 100), Some (1, 100)); (Some (0, 0), Some (0, 0))]
     |}]
 
-let%expect_test "iter2,equal" =
+let%expect_test "iter2,equal,subset,disjoint" =
   let open Format in
   printf "@[";
   let test_equal ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
     assert (equal veq ordmap0 ordmap1);
+    assert (subset veq ordmap0 ordmap1);
+    assert (subset veq ordmap1 ordmap0);
+    assert ((length ordmap0 = 0) || (not (disjoint ordmap0 ordmap1)));
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> ()
@@ -1870,6 +1941,9 @@ let%expect_test "iter2,equal" =
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
     assert (not (equal veq ordmap0 ordmap1));
+    assert (not (subset veq ordmap0 ordmap1));
+    assert ((length ordmap0 = 0) || (not (subset veq ordmap1 ordmap0)));
+    assert (disjoint ordmap0 ordmap1);
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin
