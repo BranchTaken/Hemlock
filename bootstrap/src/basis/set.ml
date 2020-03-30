@@ -19,6 +19,15 @@ let is_empty = Map.is_empty
 
 let mem = Map.mem
 
+let choose t =
+  match Map.choose t with
+  | Some (k, _) -> Some k
+  | None -> None
+
+let choose_hlt t =
+  let k, _ = Map.choose_hlt t in
+  k
+
 let insert a t =
   Map.insert ~k:a ~v:() t
 
@@ -326,6 +335,28 @@ let%expect_test "of_list,to_list,to_array" =
     of_list [0; 1; 2]; to_list -> [0; 1; 2]; to_array -> [|0; 1; 2|]
     of_list [0; 1; 66]; to_list -> [0; 1; 66]; to_array -> [|0; 1; 66|]
     of_list [0; 1; 66; 91]; to_list -> [0; 1; 66; 91]; to_array -> [|0; 1; 66; 91|]
+    |}]
+
+let%expect_test "choose_hlt" =
+  let open Format in
+  printf "@[";
+  (* test is n^2 time complexity, so keep n small. *)
+  let rec test n i set = begin
+    match i < n with
+    | false -> set
+    | true -> begin
+        let set' = test n (succ i) (insert i set) in
+        let m = choose_hlt set' in
+        let set'' = remove m set' in
+        assert ((length set') = (length set'') + 1);
+        set''
+      end
+  end in
+  let e = empty (module Usize) in
+  let _ = test 100 0 e in
+  printf "@]";
+
+  [%expect{|
     |}]
 
 let%expect_test "fold_until" =

@@ -190,6 +190,20 @@ let get_hlt a t =
 let mem a t =
   Option.is_some (get a t)
 
+let choose t =
+  let rec fn node = begin
+    match node.elms_kv, node.elms_child with
+    | [||], [||] -> None
+    | [||], _ -> fn (Array.get 0 node.elms_child)
+    | _, _ -> Some (Array.get 0 node.elms_kv)
+  end in
+  fn t.root
+
+let choose_hlt t =
+  match choose t with
+  | Some (k, v) -> k, v
+  | None -> halt "Empty map"
+
 let insert_impl k ~f t =
   let open Cmper in
   (* Create a collision node, with keys canonically ordered (sorted). *)
@@ -1550,6 +1564,31 @@ let%expect_test "of_alist,to_alist" =
     of_alist [(0, "0"); (1, "1"); (2, "2")]; to_alist -> [(0, "0"); (2, "2"); (1, "1")]
     of_alist [(0, "0"); (1, "1"); (66, "66")]; to_alist -> [(1, "1"); (66, "66"); (0, "0")]
     of_alist [(0, "0"); (1, "1"); (66, "66"); (91, "91")]; to_alist -> [(1, "1"); (91, "91"); (66, "66"); (0, "0")]
+    |}]
+
+let%expect_test "choose_hlt" =
+  let open Format in
+  printf "@[";
+  (* test is n^2 time complexity, so keep n small. *)
+  let rec test n i map = begin
+    match i < n with
+    | false -> map
+    | true -> begin
+        validate map;
+        let map' = test n (succ i) (insert_hlt ~k:i ~v:(i * 100) map) in
+        let k, v = choose_hlt map' in
+        assert (k * 100 = v);
+        let map'' = remove_hlt k map' in
+        validate map'';
+        assert ((length map') = (length map'') + 1);
+        map''
+      end
+  end in
+  let e = empty (module UsizeTestCmper) in
+  let _ = test 100 0 e in
+  printf "@]";
+
+  [%expect{|
     |}]
 
 let%expect_test "fold_until" =

@@ -84,6 +84,14 @@ module type S = sig
       key in [t], halts otherwise.  O(lg n) time complexity if ordered, O(1)
       time complexity if unordered. *)
 
+  val choose: ('k, 'v, 'cmp) t -> ('k * 'v) option
+  (** [choose t] returns an arbitrary key-value mapping in [t] if the map is
+      non-empty, [None] otherwise. *)
+
+  val choose_hlt: ('k, 'v, 'cmp) t -> ('k * 'v)
+  (** [choose_hlt t] returns an arbitrary key-value mapping in [t] if the map is
+      non-empty, halts otherwise. *)
+
   val insert: k:'k -> v:'v -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [insert ~k ~v t] returns an incremental derivative of [t] with [k] bound
       to [v] if [k] is not a key in [t], [t] otherwise.  O(lg n) time complexity

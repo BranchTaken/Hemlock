@@ -381,6 +381,24 @@ let get_hlt a t =
 let mem a t =
   Option.is_some (get a t)
 
+let choose t =
+  let rec fn = function
+    | Empty -> None
+    | Leaf {k; v} -> Some (k, v)
+    | Node {l; k; v; n=_; h=_; r=_} -> begin
+        match l with
+        | Empty -> Some (k, v)
+        | Leaf _
+        | Node _ -> fn l
+      end
+  in
+  fn t.root
+
+let choose_hlt t =
+  match choose t with
+  | Some (k, v) -> k, v
+  | None -> halt "Empty map"
+
 let expose = function
   | Leaf {k; v} -> Empty, (k, v), Empty
   | Node {l; k; v; n=_; h=_; r} -> l, (k, v), r
@@ -1669,6 +1687,31 @@ let%expect_test "of_alist,to_alist,to_array" =
     of_alist [(0, "0"); (1, "1"); (2, "2")]; to_alist -> [(0, "0"); (1, "1"); (2, "2")]; to_array -> [|(0, "0"); (1, "1"); (2, "2")|]
     of_alist [(0, "0"); (1, "1"); (66, "66")]; to_alist -> [(0, "0"); (1, "1"); (66, "66")]; to_array -> [|(0, "0"); (1, "1"); (66, "66")|]
     of_alist [(0, "0"); (1, "1"); (66, "66"); (91, "91")]; to_alist -> [(0, "0"); (1, "1"); (66, "66"); (91, "91")]; to_array -> [|(0, "0"); (1, "1"); (66, "66"); (91, "91")|]
+    |}]
+
+let%expect_test "choose_hlt" =
+  let open Format in
+  printf "@[";
+  (* test is n^2 time complexity, so keep n small. *)
+  let rec test n i ordmap = begin
+    match i < n with
+    | false -> ordmap
+    | true -> begin
+        validate ordmap;
+        let ordmap' = test n (succ i) (insert_hlt ~k:i ~v:(i * 100) ordmap) in
+        let k, v = choose_hlt ordmap' in
+        assert (k * 100 = v);
+        let ordmap'' = remove_hlt k ordmap' in
+        validate ordmap'';
+        assert ((length ordmap') = (length ordmap'') + 1);
+        ordmap''
+      end
+  end in
+  let e = empty (module Usize) in
+  let _ = test 100 0 e in
+  printf "@]";
+
+  [%expect{|
     |}]
 
 let%expect_test "search,nth" =
