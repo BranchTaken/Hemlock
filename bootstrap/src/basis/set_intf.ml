@@ -58,6 +58,14 @@ module type S = sig
   (** [mem a t] returns [true] if [a] is a member of [t]; [false] otherwise.
       O(lg n) time complexity if ordered, O(1) time complexity if unordered. *)
 
+  val choose: ('a, 'cmp) t -> 'a option
+  (** [choose t] returns an arbitrary member of [t] if the set is non-empty,
+      [None] otherwise. *)
+
+  val choose_hlt: ('a, 'cmp) t -> 'a
+  (** [choose_hlt t] returns an arbitrary member of [t] if the set is non-empty,
+      halts otherwise. *)
+
   val insert: 'a -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [insert elm t] returns a set that is equivalent to the union of a
       singleton set containing [elm] with [t].  O(lg n) time complexity if

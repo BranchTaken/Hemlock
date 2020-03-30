@@ -65,6 +65,15 @@ let singleton m a =
 
 let mem = Ordmap.mem
 
+let choose t =
+  match Ordmap.choose t with
+  | Some (k, _) -> Some k
+  | None -> None
+
+let choose_hlt t =
+  let k, _ = Ordmap.choose_hlt t in
+  k
+
 let nth_opt i t =
   match Ordmap.nth_opt i t with
   | Some (a, _) -> Some a
@@ -185,9 +194,6 @@ let pp ppf t =
   );
   fprintf ppf "}@]"
 
-let validate _t =
-  ()
-
 let%expect_test "hash_fold" =
   let open Format in
   printf "@[";
@@ -240,12 +246,10 @@ let%expect_test "empty,cmper_m,singleton,length" =
   let open Format in
   printf "@[";
   let e = empty (module Usize) in
-  validate e;
   assert (length e = 0);
   printf "%a@\n" pp e;
 
   let s = singleton (cmper_m e) 0 in
-  validate s;
   assert (length s = 1);
   printf "%a@\n" pp s;
   printf "@]";
@@ -264,7 +268,6 @@ let%expect_test "mem,insert,subset" =
     | m :: ms' -> begin
         assert (not (mem m ordset));
         let ordset' = insert m ordset in
-        validate ordset';
         assert (mem m ordset');
         assert (subset ordset' ordset);
         assert (not (subset ordset ordset'));
@@ -293,10 +296,8 @@ let%expect_test "of_list,remove" =
   let open Format in
   printf "@[";
   let test m ordset descr = begin
-    validate ordset;
     printf "--- %s ---@\n" descr;
     let ordset' = remove m ordset in
-    validate ordset';
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
       Usize.pp m pp ordset pp ordset'
   end in
@@ -371,7 +372,6 @@ let%expect_test "of_array,cursor" =
     printf "of_array %a -> @,%a@\n"
       (Array.pp Usize.pp) ms
       pp ordset;
-    validate ordset;
     test_fwd ordset;
     test_rev ordset
   end in
@@ -502,6 +502,28 @@ let%expect_test "search,nth" =
       4 -> >[1]=3, <>, <[2]=5
       5 -> =[2]=5, =5, =[2]=5
       6 -> >[2]=5, <>, >[2]=5
+    |}]
+
+let%expect_test "choose_hlt" =
+  let open Format in
+  printf "@[";
+  (* test is n^2 time complexity, so keep n small. *)
+  let rec test n i ordset = begin
+    match i < n with
+    | false -> ordset
+    | true -> begin
+        let ordset' = test n (succ i) (insert i ordset) in
+        let m = choose_hlt ordset' in
+        let ordset'' = remove m ordset' in
+        assert ((length ordset') = (length ordset'') + 1);
+        ordset''
+      end
+  end in
+  let e = empty (module Usize) in
+  let _ = test 100 0 e in
+  printf "@]";
+
+  [%expect{|
     |}]
 
 let%expect_test "fold_until" =
@@ -1043,7 +1065,6 @@ let%expect_test "stress" =
         assert (equal ordset (union ordset ordset'));
         assert (equal ordset (inter ordset ordset'));
         assert (equal e (diff ordset ordset'));
-        validate ordset';
         ordset'
       end
   end in
@@ -1065,7 +1086,6 @@ let%expect_test "stress2" =
         (* Hash i in order to test semi-random insertion order. *)
         let h = Hash.(t_of_state (Usize.hash_fold i State.empty)) in
         let ordset' = remove h (test n (succ i) e (insert h ordset)) in
-        validate ordset';
         assert (equal ordset ordset');
         assert (equal ordset (union ordset ordset'));
         assert (equal ordset (inter ordset ordset'));
