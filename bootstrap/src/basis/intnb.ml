@@ -1,6 +1,9 @@
 open Rudiments_functions
 open Intnb_intf
 
+external intnb_icmp: usize -> usize -> Cmp.t = "hemlock_intnb_icmp"
+external intnb_ucmp: usize -> usize -> Cmp.t = "hemlock_intnb_ucmp"
+
 module Make_derived (T : I_derived) : S_derived with type t := T.t = struct
   include Cmpable.Make_zero(T)
 
@@ -104,16 +107,9 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
     let cmp t0 t1 =
       assert (narrow t0 = t0);
       assert (narrow t1 = t1);
-      let rel = match T.signed || (Sys.int_size > T.num_bits) with
-        | true -> compare t0 t1
-        | false -> compare (t0 + min_int) (t1 + min_int)
-      in
-      if rel < 0 then
-        Cmp.Lt
-      else if rel = 0 then
-        Cmp.Eq
-      else
-        Cmp.Gt
+      match T.signed || (Sys.int_size > T.num_bits) with
+      | true -> intnb_icmp t0 t1
+      | false -> intnb_ucmp t0 t1
 
     let narrow_of_signed s =
       match T.signed with

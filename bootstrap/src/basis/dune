@@ -3,7 +3,7 @@
  (public_name Hemlock.Basis)
  (foreign_stubs
   (language c)
-  (names entropy))
+  (names entropy intnb))
  (inline_tests)
  (preprocess (pps ppx_expect ppx_inline_test))
  (synopsis "Hemlock bootstrap Basis library")
