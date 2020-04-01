@@ -194,32 +194,9 @@ let ( ** ) t0 t1 =
 let ( // ) t0 t1 =
   (to_float t0) /. (to_float t1)
 
-let c5s = of_string "0x5555_5555_5555_5555"
-let c3s = of_string "0x3333_3333_3333_3333"
-let c0fs = of_string "0x0f0f_0f0f_0f0f_0f0f"
-let c7f = of_string "0x7f"
-
-let bit_pop x =
-  let x =
-    x - (bit_and (bit_usr ~shift:1 x) c5s) in
-  let x = (bit_and x c3s) + (bit_and (bit_usr ~shift:2 x) c3s) in
-  let x = bit_and (x + (bit_usr ~shift:4 x)) c0fs in
-  let x = x + (bit_usr ~shift:8 x) in
-  let x = x + (bit_usr ~shift:16 x) in
-  let x = x + (bit_usr ~shift:32 x) in
-  to_usize (bit_and x c7f)
-
-let bit_clz x =
-  let x = bit_or x (bit_usr ~shift:1 x) in
-  let x = bit_or x (bit_usr ~shift:2 x) in
-  let x = bit_or x (bit_usr ~shift:4 x) in
-  let x = bit_or x (bit_usr ~shift:8 x) in
-  let x = bit_or x (bit_usr ~shift:16 x) in
-  let x = bit_or x (bit_usr ~shift:32 x) in
-  bit_pop (bit_not x)
-
-let bit_ctz t =
-  bit_pop (bit_and (bit_not t) (t - one))
+external bit_pop: t -> usize = "hemlock_u64_bit_pop"
+external bit_clz: t -> usize = "hemlock_u64_bit_clz"
+external bit_ctz: t -> usize = "hemlock_u64_bit_ctz"
 
 module U = struct
   type nonrec t = t
