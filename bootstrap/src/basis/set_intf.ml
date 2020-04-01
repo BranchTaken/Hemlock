@@ -255,9 +255,6 @@ module type S_ord = sig
 
   (** {1 Folding, mapping, and filtering} *)
 
-  include Container_common_intf.S_poly2_fold
-    with type ('a, 'cmp) t := ('a, 'cmp) t
-
   val fold_right_until: init:'accum -> f:('a -> 'accum -> 'accum * bool)
     -> ('a, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
@@ -304,6 +301,16 @@ module type S_ord = sig
     -> ('a, 'cmp) t * ('a, 'cmp) t
   (** [partitioni_tf ~f t] partitions [t] into two sets for which [~f] returns
       [true] vs [false]. *)
+
+  val min_elm: cmp:('a -> 'a -> Cmp.t) -> ('a, 'cmp) t -> 'a option
+  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some a]
+      for the leftmost element which always compares as [Cmp.Lt] or [Cmp.Eq], or
+      [None] if [t] is empty. *)
+
+  val max_elm: cmp:('a -> 'a -> Cmp.t) -> ('a, 'cmp) t -> 'a option
+  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some a]
+      for the leftmost element which always compares as [Cmp.Eq] or [Cmp.Gt], or
+      [None] if [t] is empty. *)
 
   (** {1 Conversion} *)
 

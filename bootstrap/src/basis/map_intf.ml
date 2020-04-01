@@ -349,9 +349,6 @@ module type S_ord = sig
 
   (** {1 Folding, mapping, and filtering} *)
 
-  include Container_common_intf.S_poly3_fold
-    with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
-
   val fold_right_until: init:'accum -> f:(('k * 'v) -> 'accum -> 'accum * bool)
     -> ('k, 'v, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
@@ -412,6 +409,18 @@ module type S_ord = sig
     -> ('k, 'v, 'cmp) t -> ('k, 'v2, 'cmp) t * ('k, 'v3, 'cmp) t
   (** [partitioni_map ~f t] partitions [t] into two maps for which [~f] returns
       [First v2] vs [Second v3].  Θ(n) time complexity. *)
+
+  val min_elm: cmp:(('k * 'v) -> ('k * 'v) -> Cmp.t) -> ('k, 'v, 'cmp) t
+    -> ('k * 'v) option
+  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some
+      (k, v)] for the leftmost element which always compares as [Cmp.Lt] or
+      [Cmp.Eq], or [None] if [t] is empty. *)
+
+  val max_elm: cmp:(('k * 'v) -> ('k * 'v) -> Cmp.t) -> ('k, 'v, 'cmp) t
+    -> ('k * 'v) option
+  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some
+      (k, v)] for the leftmost element which always compares as [Cmp.Eq] or
+      [Cmp.Gt], or [None] if [t] is empty. *)
 
   (** {1 Conversion} *)
 
