@@ -28,9 +28,12 @@
 
 open Rudiments
 
-(* Number of bits per HAMT level.  The data type used for node's
+(* Module for type used to encode node's present_{kv,child} bit sets. *)
+module Bitset = U63
+
+(* Number of bits per HAMT level.  Bitset.t, which is used for node's
    present_{kv,child} fields must have at least elms_per_level bits. *)
-let bits_per_level = 6
+let bits_per_level = 5
 let elms_per_level = bit_sl ~shift:bits_per_level 1
 
 (* Number of hash bits available per hash value. *)
@@ -50,8 +53,8 @@ type ('k, 'v) node = {
      they must be interpreted specially.  We set all bits in both bitmaps for
      collision nodes so that code which does not track recursion depth can still
      recognize collision nodes. *)
-  present_kv: u64;
-  present_child: u64;
+  present_kv: Bitset.t;
+  present_child: Bitset.t;
   (* Independent variable-length compressed element arrays, where the summed
      length of the arrays is in [0..elms_per_level].  For example, if the least
      significant bit of the present_kv bitmap is 1, then the corresponding
@@ -115,15 +118,15 @@ let present_index_at_level hash level =
   U128.(to_usize (bit_and mask (bit_usr ~shift hash)))
 
 let present_bit_of_index index =
-  U64.bit_sl ~shift:index U64.one
+  Bitset.bit_sl ~shift:index Bitset.one
 
 let elm_index_of_bit present present_bit =
-  let trail_mask = U64.(present_bit - one) in
-  U64.(bit_pop (bit_and trail_mask present))
+  let trail_mask = Bitset.(present_bit - one) in
+  Bitset.(bit_pop (bit_and trail_mask present))
 
 let empty m =
   {cmper=m_cmper m; length=0;
-    root={present_kv=U64.zero; present_child=U64.zero;
+    root={present_kv=Bitset.zero; present_child=Bitset.zero;
       elms_kv=[||]; elms_child=[||]}}
 
 let singleton m ~k ~v =
@@ -132,7 +135,7 @@ let singleton m ~k ~v =
   let present_index = present_index_at_level k_hash 0 in
   let present_kv = present_bit_of_index present_index in
   {cmper; length=1;
-    root={present_kv; present_child=U64.zero;
+    root={present_kv; present_child=Bitset.zero;
       elms_kv=[|(k, v)|]; elms_child=[||]}}
 
 let length t =
@@ -148,9 +151,9 @@ let get a t =
     | true -> begin
         let present_index = present_index_at_level a_hash level in
         let present_bit = present_bit_of_index present_index in
-        match U64.((bit_and present_bit node.present_kv) = zero) with
+        match Bitset.((bit_and present_bit node.present_kv) = zero) with
         | true -> begin
-            match U64.((bit_and present_bit node.present_child) = zero) with
+            match Bitset.((bit_and present_bit node.present_child) = zero) with
             | true -> None
             | false -> begin
                 let elms_child_index =
@@ -213,7 +216,7 @@ let insert_impl k ~f t =
       | Eq -> not_reached ()
       | Gt -> (k1, v1), (k0, v0)
     in
-    {present_kv=U64.max_value; present_child=U64.max_value;
+    {present_kv=Bitset.max_value; present_child=Bitset.max_value;
       elms_kv=[|kv0; kv1|]; elms_child=[||]}
   end in
   (* Create a disambiguating subtree for a and b. *)
@@ -225,9 +228,9 @@ let insert_impl k ~f t =
       assert (k0_present_index < k1_present_index);
       let k0_present_bit = present_bit_of_index k0_present_index in
       let k1_present_bit = present_bit_of_index k1_present_index in
-      let present_kv = U64.bit_or k0_present_bit k1_present_bit in
+      let present_kv = Bitset.bit_or k0_present_bit k1_present_bit in
       let elms_kv = [|kv0; kv1|] in
-      {present_kv; present_child=U64.zero; elms_kv; elms_child=[||]}
+      {present_kv; present_child=Bitset.zero; elms_kv; elms_child=[||]}
     end in
 
     let k0_present_index = present_index_at_level k0_hash level in
@@ -242,16 +245,16 @@ let insert_impl k ~f t =
             disambiguate (k0, v0) k0_hash (k1, v1) k1_hash cmper (succ level)
         in
         let elms_child = [|child|] in
-        {present_kv=U64.zero; present_child; elms_kv=[||]; elms_child}
+        {present_kv=Bitset.zero; present_child; elms_kv=[||]; elms_child}
       end
     | Gt -> node_of_kvs (k1, v1) k1_present_index (k0, v0) k0_present_index
   end in
   let rec fn k f k_hash cmper node level = begin
     let present_index = present_index_at_level k_hash level in
     let present_bit = present_bit_of_index present_index in
-    match U64.((bit_and present_bit node.present_kv) = zero) with
+    match Bitset.((bit_and present_bit node.present_kv) = zero) with
     | true -> begin
-        match U64.((bit_and present_bit node.present_child) = zero) with
+        match Bitset.((bit_and present_bit node.present_child) = zero) with
         | true -> begin
             (* Not present in node. *)
             match f None with
@@ -259,7 +262,7 @@ let insert_impl k ~f t =
                 (* Insert. *)
                 let elms_kv_index =
                   elm_index_of_bit node.present_kv present_bit in
-                let present_kv' = U64.bit_or present_bit node.present_kv in
+                let present_kv' = Bitset.bit_or present_bit node.present_kv in
                 let elms_kv' = Array.insert elms_kv_index (k, v) node.elms_kv in
                 Some {node with present_kv=present_kv'; elms_kv=elms_kv'}, 1
               end
@@ -346,9 +349,9 @@ let insert_impl k ~f t =
                         (succ level)
                     end
                 in
-                let present_kv' = U64.bit_xor present_bit node.present_kv in
+                let present_kv' = Bitset.bit_xor present_bit node.present_kv in
                 let present_child' =
-                  U64.bit_xor present_bit node.present_child in
+                  Bitset.bit_xor present_bit node.present_child in
                 let elms_kv' = Array.remove elms_kv_index node.elms_kv in
                 let elms_child' =
                   Array.insert elms_child_index child node.elms_child in
@@ -420,8 +423,8 @@ let remove_impl a ~f t =
     | [||], [|_|] -> Some (Kv kv)
     | _ -> begin
         let elms_kv_index = elm_index_of_bit node.present_kv present_bit in
-        let present_kv' = U64.bit_xor present_bit node.present_kv in
-        let present_child' = U64.bit_xor present_bit node.present_child in
+        let present_kv' = Bitset.bit_xor present_bit node.present_kv in
+        let present_child' = Bitset.bit_xor present_bit node.present_child in
         let elms_kv' = Array.insert elms_kv_index kv node.elms_kv in
         let elms_child' = Array.remove elms_child_index node.elms_child in
         let node' = {present_kv=present_kv'; present_child=present_child';
@@ -443,7 +446,7 @@ let remove_impl a ~f t =
         Some (Kv kv)
       end
     | _ -> begin
-        let present_kv' = U64.bit_xor present_bit node.present_kv in
+        let present_kv' = Bitset.bit_xor present_bit node.present_kv in
         let elms_kv' = Array.remove elms_kv_index node.elms_kv in
         let node' = {node with present_kv=present_kv'; elms_kv=elms_kv'} in
         Some (Child node')
@@ -452,9 +455,9 @@ let remove_impl a ~f t =
   let rec fn a a_hash ~f cmper node level = begin
     let present_index = present_index_at_level a_hash level in
     let present_bit = present_bit_of_index present_index in
-    match U64.((bit_and present_bit node.present_kv) = zero) with
+    match Bitset.((bit_and present_bit node.present_kv) = zero) with
     | true -> begin
-        match U64.((bit_and present_bit node.present_child) = zero) with
+        match Bitset.((bit_and present_bit node.present_child) = zero) with
         | true -> (f None), None (* Key not bound; no-op. *)
         | false -> begin
             let elms_child_index =
@@ -532,13 +535,13 @@ let remove_impl a ~f t =
       let k_hash = Hash.State.seed |> t.cmper.hash_fold k |> Hash.t_of_state in
       let present_index = present_index_at_level k_hash 0 in
       let present_kv = present_bit_of_index present_index in
-      let root' = {present_kv; present_child=U64.zero;
+      let root' = {present_kv; present_child=Bitset.zero;
         elms_kv=[|(k, v)|]; elms_child=[||]} in
       {t with length=1; root=root'}
     end
   | true, None -> begin
       (* Empty. *)
-      let root' = {present_kv=U64.zero; present_child=U64.zero;
+      let root' = {present_kv=Bitset.zero; present_child=Bitset.zero;
         elms_kv=[||]; elms_child=[||]} in
       {t with length=0; root=root'}
     end
@@ -615,7 +618,7 @@ module Seq_poly3_fold2 = struct
   type 'v value = 'v
   type ('k, 'v) node_pos = {
     node: ('k, 'v) node;
-    present_bit: u64;
+    present_bit: Bitset.t;
   }
   type ('k, 'v, 'cmp) t = {
     ind: usize;
@@ -624,7 +627,8 @@ module Seq_poly3_fold2 = struct
   }
 
   let is_collision_node node =
-    U64.(node.present_kv = max_value) && U64.(node.present_child = max_value)
+    Bitset.(node.present_kv = max_value) &&
+    Bitset.(node.present_child = max_value)
 
   let rec leftmost_path node path =
     match node.elms_kv, node.elms_child with
@@ -637,9 +641,9 @@ module Seq_poly3_fold2 = struct
     | _ -> begin
         match is_collision_node node with
         | false -> begin
-            let kv_present_index = U64.bit_ctz node.present_kv in
-            let child_present_index = U64.bit_ctz node.present_child in
-            match kv_present_index <> 64 &&
+            let kv_present_index = Bitset.bit_ctz node.present_kv in
+            let child_present_index = Bitset.bit_ctz node.present_child in
+            match kv_present_index < elms_per_level &&
                   (kv_present_index < child_present_index) with
             | true -> begin
                 let kv_present_bit = present_bit_of_index kv_present_index in
@@ -655,7 +659,7 @@ module Seq_poly3_fold2 = struct
           end
         | true -> begin
             (* Collision node. *)
-            {node; present_bit=U64.one} :: path
+            {node; present_bit=Bitset.one} :: path
           end
       end
 
@@ -672,12 +676,12 @@ module Seq_poly3_fold2 = struct
         match is_collision_node node_pos.node with
         | false -> begin
             let mask =
-              U64.(bit_not ((bit_sl ~shift:1 node_pos.present_bit) - one)) in
+              Bitset.(bit_not ((bit_sl ~shift:1 node_pos.present_bit) - one)) in
             let kv_present_index' =
-              U64.(bit_ctz (bit_and mask node_pos.node.present_kv)) in
+              Bitset.(bit_ctz (bit_and mask node_pos.node.present_kv)) in
             let child_present_index' =
-              U64.(bit_ctz (bit_and mask node_pos.node.present_child)) in
-            match (kv_present_index' <> 64) &&
+              Bitset.(bit_ctz (bit_and mask node_pos.node.present_child)) in
+            match (kv_present_index' < elms_per_level) &&
                   (kv_present_index' < child_present_index') with
             | true -> begin
                 let kv_present_bit' =
@@ -685,7 +689,7 @@ module Seq_poly3_fold2 = struct
                 {node_pos with present_bit=kv_present_bit'} :: path_tl
               end
             | false -> begin
-                match child_present_index' = 64 with
+                match child_present_index' >= elms_per_level with
                 | true -> next_path path_tl
                 | false -> begin
                     let child_present_bit' =
@@ -702,7 +706,7 @@ module Seq_poly3_fold2 = struct
           end
         | true -> begin
             (* Collision node. *)
-            let elm_index' = succ (U64.bit_ctz node_pos.present_bit) in
+            let elm_index' = succ (Bitset.bit_ctz node_pos.present_bit) in
             match elm_index' < Array.length node_pos.node.elms_kv with
             | false -> next_path path_tl
             | true -> begin
@@ -757,8 +761,8 @@ let equal veq t0 t1 =
     | true -> Eq
   end in
   let rec fn kvcmp node0 node1 = begin
-    U64.(node0.present_kv = node1.present_kv) &&
-    U64.(node0.present_child = node1.present_child) &&
+    Bitset.(node0.present_kv = node1.present_kv) &&
+    Bitset.(node0.present_child = node1.present_child) &&
     Cmp.is_eq (Array.cmp kvcmp node0.elms_kv node1.elms_kv) &&
     Cmp.is_eq (Array.cmp (fun node0 node1 ->
       match fn kvcmp node0 node1 with
@@ -1012,8 +1016,8 @@ let pp pp_v ppf t =
   end
   and pp_node ppf node = begin
     fprintf ppf "@[<v>present_kv=   %a;@,present_child=%a;@,%a;@,%a@]"
-      U64.pp_x node.present_kv
-      U64.pp_x node.present_child
+      Bitset.pp_x node.present_kv
+      Bitset.pp_x node.present_child
       pp_kvs node.elms_kv
       pp_children node.elms_child
   end
@@ -1031,7 +1035,8 @@ let pp_kv pp_v ppf (k, v) =
 let validate t =
   let open Cmper in
   let is_collision_node node = begin
-    U64.(node.present_kv = max_value) && U64.(node.present_child = max_value)
+    Bitset.(node.present_kv = max_value) &&
+    Bitset.(node.present_child = max_value)
   end in
   let rec fn t node level  = begin
     let () = Array.iter ~f:(fun (k, _) -> assert (mem k t)) node.elms_kv in
@@ -1043,8 +1048,8 @@ let validate t =
           | [|_|], [||] -> assert (level = 0)
           | _ -> ()
         in
-        assert ((U64.bit_pop node.present_kv) = (Array.length node.elms_kv));
-        assert ((U64.bit_pop node.present_child)
+        assert ((Bitset.bit_pop node.present_kv) = (Array.length node.elms_kv));
+        assert ((Bitset.bit_pop node.present_child)
           = (Array.length node.elms_child));
         Array.fold ~init:(Array.length node.elms_kv) ~f:(fun accum child ->
           accum + (fn t child (succ level))
@@ -1167,8 +1172,8 @@ let%expect_test "empty,cmper_m,singleton,length" =
     Map {
       length=0;
       root={
-        present_kv=   0x0000_0000_0000_0000u64;
-        present_child=0x0000_0000_0000_0000u64;
+        present_kv=   0x0000000000000000;
+        present_child=0x0000000000000000;
         elms_kv=[||];
         elms_child=[||]
       }
@@ -1176,8 +1181,8 @@ let%expect_test "empty,cmper_m,singleton,length" =
     Map {
       length=1;
       root={
-        present_kv=   0x0000_2000_0000_0000u64;
-        present_child=0x0000_0000_0000_0000u64;
+        present_kv=   0x0000000000400000;
+        present_child=0x0000000000000000;
         elms_kv=[|
           (0, "0")
         |];
@@ -1339,8 +1344,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000_2000_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (0, "0")
@@ -1351,8 +1356,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000_2000_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (0, "0")
@@ -1365,8 +1370,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000_2000_0000_0000u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400000;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
           |];
@@ -1376,8 +1381,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=0;
         root={
-          present_kv=   0x0000_0000_0000_0000u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000000000;
+          present_child=0x0000000000000000;
           elms_kv=[||];
           elms_child=[||]
         }
@@ -1387,8 +1392,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000_2000_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (0, "0")
@@ -1399,8 +1404,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000_2000_0000_0000u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400000;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
           |];
@@ -1412,8 +1417,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=3;
         root={
-          present_kv=   0x0000_2200_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000500004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (2, "2");
@@ -1425,8 +1430,8 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000_2000_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (0, "0")
@@ -1464,8 +1469,8 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000_2000_0000_0000u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400000;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
           |];
@@ -1475,8 +1480,8 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=0;
         root={
-          present_kv=   0x0000_0000_0000_0000u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000000000;
+          present_child=0x0000000000000000;
           elms_kv=[||];
           elms_child=[||]
         }
@@ -1486,8 +1491,8 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000_2000_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (0, "0")
@@ -1498,8 +1503,8 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000_2000_0000_0000u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400000;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
           |];
@@ -1511,8 +1516,8 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=3;
         root={
-          present_kv=   0x0000_2200_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000500004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (2, "2");
@@ -1524,8 +1529,8 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000_2000_0000_0020u64;
-          present_child=0x0000_0000_0000_0000u64;
+          present_kv=   0x0000000000400004;
+          present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
             (0, "0")
