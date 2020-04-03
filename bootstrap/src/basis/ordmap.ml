@@ -76,22 +76,15 @@ module T = struct
     | Leaf _ -> 1
     | Node {l=_; k=_; v=_; n=_; h; r=_} -> h
 
-  let leaf_init (k, v) =
+  let leaf_init k v =
     Leaf {k; v}
 
-  let node_init l (k, v) r =
+  let node_init l k v r =
     match l, r with
-    | Empty, Empty -> leaf_init (k, v)
+    | Empty, Empty -> leaf_init k v
     | _, _ -> begin
-        let nnodes_height = function
-          | Empty -> 0, 0
-          | Leaf _ -> 1, 1
-          | Node {l=_; k=_; v=_; n; h; r=_} -> n, h
-        in
-        let ln, lh = nnodes_height l in
-        let rn, rh = nnodes_height r in
-        let n = ln + 1 + rn in
-        let h = succ (max lh rh) in
+        let n = (nnodes l) + 1 + (nnodes r) in
+        let h = succ (max (height l) (height r)) in
         Node {l; k; v; n; h; r}
       end
 
@@ -486,7 +479,7 @@ let empty m =
   {cmper=m_cmper m; root=Empty}
 
 let singleton m ~k ~v =
-  {cmper=m_cmper m; root=leaf_init (k, v)}
+  {cmper=m_cmper m; root=leaf_init k v}
 
 let rec get_node a cmper node =
   let open Cmper in
@@ -705,72 +698,74 @@ let equal veq t0 t1 =
   ) t0 t1
 
 let expose = function
-  | Leaf {k; v} -> Empty, (k, v), Empty
-  | Node {l; k; v; n=_; h=_; r} -> l, (k, v), r
+  | Leaf {k; v} -> Empty, k, v, Empty
+  | Node {l; k; v; n=_; h=_; r} -> l, k, v, r
   | Empty -> not_reached ()
+
+let slack = 0
 
 (* Join AVL trees (l, (singleton m ~k ~v), r) to form an AVL tree representing
    their union, where l and r are AVL trees containing mappings strictly
    preceding/following k in the total key ordering, respectively. *)
-let join l kv r =
-  let rec join_left_tall l kv r = begin
-    let ll, l_kv, lr = expose l in
-    match (height lr) <= (height r) + 1 with
+let join l k v r =
+  let rec join_left_tall l k v r = begin
+    let ll, l_k, l_v, lr = expose l in
+    match (height lr) <= (height r) + 1 + slack with
     | true -> begin
-        match (max (height lr) (height r)) <= (height ll) with
-        | true -> node_init ll l_kv (node_init lr kv r)
+        match (max (height lr) (height r)) <= (height ll) + slack with
+        | true -> node_init ll l_k l_v (node_init lr k v r)
         | false -> begin
-            let n0, lr_kv, n1 = expose lr in
-            node_init (node_init ll l_kv n0) lr_kv (node_init n1 kv r)
+            let n0, lr_k, lr_v, n1 = expose lr in
+            node_init (node_init ll l_k l_v n0) lr_k lr_v (node_init n1 k v r)
           end
       end
     | false -> begin
-        let lr' = join_left_tall lr kv r in
-        match (height lr') <= (height ll) + 1 with
-        | true -> node_init ll l_kv lr'
+        let lr' = join_left_tall lr k v r in
+        match (height lr') <= (height ll) + 1 + slack with
+        | true -> node_init ll l_k l_v lr'
         | false -> begin
-            let n0, lr_kv', n1 = expose lr' in
-            node_init (node_init ll l_kv n0) lr_kv' n1
+            let n0, lr_k', lr_v', n1 = expose lr' in
+            node_init (node_init ll l_k l_v n0) lr_k' lr_v' n1
           end
       end
   end in
-  let rec join_right_tall l kv r = begin
-    let rl, r_kv, rr = expose r in
-    match (height rl) <= (height l) + 1 with
+  let rec join_right_tall l k v r = begin
+    let rl, r_k, r_v, rr = expose r in
+    match (height rl) <= (height l) + 1 + slack with
     | true -> begin
-        match (max (height l) (height rl)) <= (height rr) with
-        | true -> node_init (node_init l kv rl) r_kv rr
+        match (max (height l) (height rl)) <= (height rr) + slack with
+        | true -> node_init (node_init l k v rl) r_k r_v rr
         | false -> begin
-            let n0, rl_kv, n1 = expose rl in
-            node_init (node_init l kv n0) rl_kv (node_init n1 r_kv rr)
+            let n0, rl_k, rl_v, n1 = expose rl in
+            node_init (node_init l k v n0) rl_k rl_v (node_init n1 r_k r_v rr)
           end
       end
     | false -> begin
-        let rl' = join_right_tall l kv rl in
-        match (height rl') <= (height rr) + 1 with
-        | true -> node_init rl' r_kv rr
+        let rl' = join_right_tall l k v rl in
+        match (height rl') <= (height rr) + 1 + slack with
+        | true -> node_init rl' r_k r_v rr
         | false -> begin
-            let n0, rl_kv', n1 = expose rl' in
-            node_init n0 rl_kv' (node_init n1 r_kv rr)
+            let n0, rl_k', rl_v', n1 = expose rl' in
+            node_init n0 rl_k' rl_v' (node_init n1 r_k r_v rr)
           end
       end
   end in
   let lh = height l in
   let rh = height r in
-  match (lh > rh + 1), (lh + 1 < rh) with
-  | true, _ -> join_left_tall l kv r
-  | _, true -> join_right_tall l kv r
-  | false, false -> node_init l kv r
+  match (lh > rh + 1 + slack), (lh + 1 + slack < rh) with
+  | true, _ -> join_left_tall l k v r
+  | _, true -> join_right_tall l k v r
+  | false, false -> node_init l k v r
 
 (* Join AVL trees (l, r) to form an AVL tree representing their union, where l's
    keys strictly precede r's keys in the total key ordering. *)
 let join2 l r =
   let rec split_rightmost = function
-    | Leaf {k; v} -> Empty, (k, v)
-    | Node {l; k; v; n=_; h=_; r=Empty} -> l, (k, v)
+    | Leaf {k; v} -> Empty, k, v
+    | Node {l; k; v; n=_; h=_; r=Empty} -> l, k, v
     | Node {l; k; v; n=_; h=_; r} -> begin
-        let r', (k', v') = split_rightmost r in
-        (join l (k, v) r'), (k', v')
+        let r', k', v' = split_rightmost r in
+        (join l k v r'), k', v'
       end
     | Empty -> not_reached ()
   in
@@ -778,8 +773,8 @@ let join2 l r =
   | Empty, _ -> r
   | _, Empty -> l
   | _, _ -> begin
-      let l', (k, v) = split_rightmost l in
-      join l' (k, v) r
+      let l', k, v = split_rightmost l in
+      join l' k v r
     end
 
 (* Split an AVL tree into (l, Some (a, v), r) if key a is in the tree, (l, None,
@@ -802,14 +797,14 @@ let rec split_node a cmper node =
           let ll, kv_opt, lr = split_node a cmper l in
           match ll, kv_opt with
           | Empty, None -> Empty, None, node
-          | _, _ -> ll, kv_opt, (join lr (k, v) r)
+          | _, _ -> ll, kv_opt, (join lr k v r)
         end
       | Eq -> l, (Some (k, v)), r
       | Gt -> begin
           let rl, kv_opt, rr = split_node a cmper r in
           match kv_opt, rr with
           | None, Empty -> node, None, Empty
-          | _, _ -> (join l (k, v) rl), kv_opt, rr
+          | _, _ -> (join l k v rl), kv_opt, rr
         end
     end
 
@@ -835,7 +830,7 @@ let rec split2_node a cmper node =
           | Some (ll, lr) -> begin
               match ll with
               | Empty -> Some (Empty, node)
-              | _ -> Some (ll, (join lr (k, v) r))
+              | _ -> Some (ll, (join lr k v r))
             end
         end
       | Eq -> None
@@ -845,7 +840,7 @@ let rec split2_node a cmper node =
           | Some (rl, rr) -> begin
               match rr with
               | Empty -> Some (node, Empty)
-              | _ -> Some ((join l (k, v) rl), rr)
+              | _ -> Some ((join l k v rl), rr)
             end
         end
     end
@@ -887,31 +882,31 @@ let disjoint t0 t1 =
 let insert_node cmper ~k ~v node =
   let open Cmper in
   let open Cmp in
-  let rec fn cmper (k_in, v_in) node = begin
+  let rec fn cmper k_in v_in node = begin
     match node with
-    | Empty -> Some (leaf_init (k, v))
+    | Empty -> Some (leaf_init k v)
     | Leaf {k; v=_} -> begin
         match cmper.cmp k_in k with
-        | Lt -> Some (node_init Empty (k_in, v_in) node)
+        | Lt -> Some (node_init Empty k_in v_in node)
         | Eq -> None
-        | Gt -> Some (node_init node (k_in, v_in) Empty)
+        | Gt -> Some (node_init node k_in v_in Empty)
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
         match cmper.cmp k_in k with
         | Lt -> begin
-            match fn cmper (k_in, v_in) l with
+            match fn cmper k_in v_in l with
             | None -> None
-            | Some l' -> Some (join l' (k, v) r)
+            | Some l' -> Some (join l' k v r)
           end
         | Eq -> None
         | Gt -> begin
-            match fn cmper (k_in, v_in) r with
+            match fn cmper k_in v_in r with
             | None -> None
-            | Some r' -> Some (join l (k, v) r')
+            | Some r' -> Some (join l k v r')
           end
       end
   end in
-  fn cmper (k, v) node
+  fn cmper k v node
 
 let insert ~k ~v t =
   match insert_node t.cmper ~k ~v t.root with
@@ -926,51 +921,51 @@ let insert_hlt ~k ~v t =
 let upsert ~k ~v t =
   let open Cmper in
   let open Cmp in
-  let rec fn cmper (k_in, v_in) node = begin
+  let rec fn cmper k_in v_in node = begin
     match node with
-    | Empty -> leaf_init (k_in, v_in)
+    | Empty -> leaf_init k_in v_in
     | Leaf {k; v=_} -> begin
         match cmper.cmp k_in k with
-        | Lt -> node_init Empty (k_in, v_in) node
-        | Eq -> leaf_init (k_in, v_in)
-        | Gt -> node_init node (k_in, v_in) Empty
+        | Lt -> node_init Empty k_in v_in node
+        | Eq -> leaf_init k_in v_in
+        | Gt -> node_init node k_in v_in Empty
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
         match cmper.cmp k_in k with
-        | Lt -> join (fn cmper (k_in, v_in) l) (k, v) r
-        | Eq -> node_init l (k_in, v_in) r
-        | Gt -> join l (k, v) (fn cmper (k_in, v_in) r)
+        | Lt -> join (fn cmper k_in v_in l) k v r
+        | Eq -> node_init l k_in v_in r
+        | Gt -> join l k v (fn cmper k_in v_in r)
       end
   end in
-  {t with root=fn t.cmper (k, v) t.root}
+  {t with root=fn t.cmper k v t.root}
 
 let update_node cmper ~k ~v node =
   let open Cmper in
   let open Cmp in
-  let rec fn cmper (k_in, v_in) = function
+  let rec fn cmper k_in v_in = function
     | Empty -> None
     | Leaf {k; v=_} -> begin
         match cmper.cmp k_in k with
         | Lt -> None
-        | Eq -> Some (leaf_init (k_in, v_in))
+        | Eq -> Some (leaf_init k_in v_in)
         | Gt -> None
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
         match cmper.cmp k_in k with
         | Lt -> begin
-            match fn cmper (k_in, v_in) l with
+            match fn cmper k_in v_in l with
             | None -> None
-            | Some l' -> Some (join l' (k, v) r)
+            | Some l' -> Some (join l' k v r)
           end
-        | Eq -> Some (node_init l (k_in, v_in) r)
+        | Eq -> Some (node_init l k_in v_in r)
         | Gt -> begin
-            match fn cmper (k_in, v_in) r with
+            match fn cmper k_in v_in r with
             | None -> None
-            | Some r' -> Some (join l (k, v) r')
+            | Some r' -> Some (join l k v r')
           end
       end
   in
-  fn cmper (k, v) node
+  fn cmper k v node
 
 let update ~k ~v t =
   match update_node t.cmper ~k ~v t.root with
@@ -998,13 +993,13 @@ let remove_node cmper k node =
         | Lt -> begin
             match fn cmper k_in l with
             | None -> None
-            | Some l' -> Some (join l' (k, v) r)
+            | Some l' -> Some (join l' k v r)
           end
         | Eq -> Some (join2 l r)
         | Gt -> begin
             match fn cmper k_in r with
             | None -> None
-            | Some r' -> Some (join l (k, v) r')
+            | Some r' -> Some (join l k v r')
           end
       end
   in
@@ -1028,24 +1023,24 @@ let amend k ~f t =
     | Empty -> begin
         match f None with
         | None -> None
-        | Some v -> Some (leaf_init (k_in, v))
+        | Some v -> Some (leaf_init k_in v)
       end
     | Leaf {k; v} -> begin
         match cmper.cmp k_in k with
         | Lt -> begin
             match f None with
             | None -> None
-            | Some v' -> Some (node_init Empty (k_in, v') node)
+            | Some v' -> Some (node_init Empty k_in v' node)
           end
         | Eq -> begin
             match f (Some v) with
             | None -> Some Empty
-            | Some v' -> Some (leaf_init (k_in, v'))
+            | Some v' -> Some (leaf_init k_in v')
           end
         | Gt -> begin
             match f None with
             | None -> None
-            | Some v' -> Some (node_init node (k_in, v') Empty)
+            | Some v' -> Some (node_init node k_in v' Empty)
           end
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
@@ -1053,17 +1048,17 @@ let amend k ~f t =
         | Lt -> begin
             match fn cmper k_in ~f l with
             | None -> None
-            | Some l' -> Some (join l' (k, v) r)
+            | Some l' -> Some (join l' k v r)
           end
         | Eq -> begin
             match f (Some v) with
             | None -> Some (join2 l r)
-            | Some v' -> Some (node_init l (k_in, v') r)
+            | Some v' -> Some (node_init l k_in v' r)
           end
         | Gt -> begin
             match fn cmper k_in ~f r with
             | None -> None
-            | Some r' -> Some (join l (k, v) r')
+            | Some r' -> Some (join l k v r')
           end
       end
   end in
@@ -1104,7 +1099,7 @@ let union ~f t0 t1 =
           | None -> v
           | Some (_, v1) -> f k v v1
         in
-        join l1 (k, v') r1
+        join l1 k v' r1
       end
     | Node {l; k; v; n=_; h=_; r}, _ -> begin
         let l1, kv1_opt, r1 = split_node k cmper node1 in
@@ -1114,7 +1109,7 @@ let union ~f t0 t1 =
         in
         let l' = fn cmper l l1 in
         let r' = fn cmper r r1 in
-        join l' (k, v') r'
+        join l' k v' r'
       end
   end in
   let root' = fn t0.cmper t0.root t1.root in
@@ -1136,7 +1131,7 @@ let inter ~f t0 t1 =
     | Leaf {k; v}, _ -> begin
         let _, kv1_opt, _ = split_node k cmper node1 in
         match kv1_opt with
-        | Some (_, v1) -> leaf_init (k, (f k v v1))
+        | Some (_, v1) -> leaf_init k (f k v v1)
         | None -> Empty
       end
     | Node {l; k; v; n=_; h=_; r}, _ -> begin
@@ -1146,7 +1141,7 @@ let inter ~f t0 t1 =
         match kv1_opt with
         | Some (_, v1) -> begin
             let v' = f k v v1 in
-            join l' (k, v') r'
+            join l' k v' r'
           end
         | None -> join2 l' r'
       end
@@ -1186,7 +1181,7 @@ let filter ~f t =
         let l' = fn ~f l in
         let r' = fn ~f r in
         match f (k, v) with
-        | true -> join l' (k, v) r'
+        | true -> join l' k v r'
         | false -> join2 l' r'
       end
   end in
@@ -1197,14 +1192,14 @@ let filter_map ~f t =
     | Empty -> Empty
     | Leaf {k; v} -> begin
         match f (k, v) with
-        | Some v2 -> leaf_init (k, v2)
+        | Some v2 -> leaf_init k v2
         | None -> Empty
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
         let l' = fn ~f l in
         let r' = fn ~f r in
         match f (k, v) with
-        | Some v2 -> join l' (k, v2) r'
+        | Some v2 -> join l' k v2 r'
         | None -> join2 l' r'
       end
   in
@@ -1224,7 +1219,7 @@ let filteri ~f t =
         let l' = fn ~f base l in
         let r' = fn ~f (succ index) r in
         match f index (k, v) with
-        | true -> join l' (k, v) r'
+        | true -> join l' k v r'
         | false -> join2 l' r'
       end
   end in
@@ -1235,7 +1230,7 @@ let filteri_map ~f t =
     | Empty -> Empty
     | Leaf {k; v} -> begin
         match f base (k, v) with
-        | Some v2 -> leaf_init (k, v2)
+        | Some v2 -> leaf_init k v2
         | None -> Empty
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
@@ -1243,7 +1238,7 @@ let filteri_map ~f t =
         let l' = fn ~f base l in
         let r' = fn ~f (succ index) r in
         match f index (k, v) with
-        | Some v2 -> join l' (k, v2) r'
+        | Some v2 -> join l' k v2 r'
         | None -> join2 l' r'
       end
   in
@@ -1262,8 +1257,8 @@ let partition_tf ~f t =
         let t_l', f_l' = fn ~f l in
         let t_r', f_r' = fn ~f r in
         match f (k, v) with
-        | true -> (join t_l' (k, v) t_r'), (join2 f_l' f_r')
-        | false -> (join2 t_l' t_r'), (join f_l' (k, v) f_r')
+        | true -> (join t_l' k v t_r'), (join2 f_l' f_r')
+        | false -> (join2 t_l' t_r'), (join f_l' k v f_r')
       end
   end in
   let t_root, f_root = fn ~f t.root in
@@ -1283,8 +1278,8 @@ let partitioni_tf ~f t =
         let t_l', f_l' = fn ~f base l in
         let t_r', f_r' = fn ~f (succ index) r in
         match f index (k, v) with
-        | true -> (join t_l' (k, v) t_r'), (join2 f_l' f_r')
-        | false -> (join2 t_l' t_r'), (join f_l' (k, v) f_r')
+        | true -> (join t_l' k v t_r'), (join2 f_l' f_r')
+        | false -> (join2 t_l' t_r'), (join f_l' k v f_r')
       end
   end in
   let t_root, f_root = fn ~f 0 t.root in
@@ -1296,15 +1291,15 @@ let partition_map ~f t =
     | Empty -> Empty, Empty
     | Leaf {k; v} -> begin
         match f (k, v) with
-        | First v2 -> (leaf_init (k, v2)), Empty
-        | Second v3 -> Empty, (leaf_init (k, v3))
+        | First v2 -> (leaf_init k v2), Empty
+        | Second v3 -> Empty, (leaf_init k v3)
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
         let a_l', b_l' = fn ~f l in
         let a_r', b_r' = fn ~f r in
         match f (k, v) with
-        | First v2 -> (join a_l' (k, v2) a_r'), (join2 b_l' b_r')
-        | Second v3 -> (join2 a_l' a_r'), (join b_l' (k, v3) b_r')
+        | First v2 -> (join a_l' k v2 a_r'), (join2 b_l' b_r')
+        | Second v3 -> (join2 a_l' a_r'), (join b_l' k v3 b_r')
       end
   in
   let a_root, b_root = fn ~f t.root in
@@ -1316,16 +1311,16 @@ let partitioni_map ~f t =
     | Empty -> Empty, Empty
     | Leaf {k; v} -> begin
         match f base (k, v) with
-        | First v2 -> (leaf_init (k, v2)), Empty
-        | Second v3 -> Empty, (leaf_init (k, v3))
+        | First v2 -> (leaf_init k v2), Empty
+        | Second v3 -> Empty, (leaf_init k v3)
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
         let index = base + (nnodes l) in
         let a_l', b_l' = fn ~f base l in
         let a_r', b_r' = fn ~f (succ index) r in
         match f index (k, v) with
-        | First v2 -> (join a_l' (k, v2) a_r'), (join2 b_l' b_r')
-        | Second v3 -> (join2 a_l' a_r'), (join b_l' (k, v3) b_r')
+        | First v2 -> (join a_l' k v2 a_r'), (join2 b_l' b_r')
+        | Second v3 -> (join2 a_l' a_r'), (join b_l' k v3 b_r')
       end
   in
   let a_root, b_root = fn ~f 0 t.root in
@@ -1401,14 +1396,14 @@ let validate t =
         let () = match l with
           | Empty -> ()
           | _ -> begin
-              let _, (l_k, _), _ = expose l in
+              let _, l_k, _, _ = expose l in
               assert (Cmp.is_lt (t.cmper.cmp l_k k));
             end
         in
         let () = match r with
           | Empty -> ()
           | _ -> begin
-              let _, (r_k, _), _ = expose r in
+              let _, r_k, _, _ = expose r in
               assert (Cmp.is_lt (t.cmper.cmp k r_k));
             end
         in
@@ -1416,7 +1411,7 @@ let validate t =
         let lh = height l in
         let rh = height r in
         assert (h = succ (max lh rh));
-        assert ((max lh rh) - (min lh rh) < 2);
+        assert ((max lh rh) - (min lh rh) < 2 + slack);
       end
   in
   fn t.root
