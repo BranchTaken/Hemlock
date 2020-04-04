@@ -92,7 +92,7 @@ let m_cmper (type k cmp) ((module M) : (k, cmp) cmper) =
 (* Given a key and a non-empty array of key-value pairs, synthesize a pair
    of the form (k, _) to be used with k_cmp. *)
 let k__of_k_kvs k kvs =
-  let (_, v) = Array.get 0 kvs in
+  let _, v = Array.get 0 kvs in
   k, v
 
 (* Compare keys in key-value array tuples, ignoring values. *)
@@ -165,7 +165,7 @@ let get a t =
         | false -> begin
             let elms_kv_index =
               elm_index_of_bit node.present_kv present_bit in
-            let (k, v) = Array.get elms_kv_index node.elms_kv in
+            let k, v = Array.get elms_kv_index node.elms_kv in
             match Cmp.is_eq (cmper.cmp a k) with
             | true -> Some v
             | false -> None
@@ -308,7 +308,7 @@ let insert_impl k ~f t =
                   end
                 | Some (Eq, i) -> begin
                     (* Key already in collision node. *)
-                    let (_, v) = Array.get i child.elms_kv in
+                    let _, v = Array.get i child.elms_kv in
                     match f (Some v) with
                     | Some v' ->
                       (collision_replace i (k, v') child elms_child_index node),
@@ -328,7 +328,7 @@ let insert_impl k ~f t =
       end
     | false -> begin
         let elms_kv_index = elm_index_of_bit node.present_kv present_bit in
-        let (kx, vx) = Array.get elms_kv_index node.elms_kv in
+        let kx, vx = Array.get elms_kv_index node.elms_kv in
         match Cmp.is_eq (cmper.cmp k kx) with
         | false -> begin
             (* Unequal key already present. *)
