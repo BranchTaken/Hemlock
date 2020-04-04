@@ -83,15 +83,8 @@ module T = struct
     match l, r with
     | Empty, Empty -> leaf_init (k, v)
     | _, _ -> begin
-        let nnodes_height = function
-          | Empty -> 0, 0
-          | Leaf _ -> 1, 1
-          | Node {l=_; k=_; v=_; n; h; r=_} -> n, h
-        in
-        let ln, lh = nnodes_height l in
-        let rn, rh = nnodes_height r in
-        let n = ln + 1 + rn in
-        let h = succ (max lh rh) in
+        let n = (nnodes l) + 1 + (nnodes r) in
+        let h = succ (max (height l) (height r)) in
         Node {l; k; v; n; h; r}
       end
 
