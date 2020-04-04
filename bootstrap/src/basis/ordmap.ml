@@ -702,17 +702,15 @@ let expose = function
   | Node {l; k; v; n=_; h=_; r} -> l, k, v, r
   | Empty -> not_reached ()
 
-let slack = 0
-
 (* Join AVL trees (l, (singleton m ~k ~v), r) to form an AVL tree representing
    their union, where l and r are AVL trees containing mappings strictly
    preceding/following k in the total key ordering, respectively. *)
 let join l k v r =
   let rec join_left_tall l k v r = begin
     let ll, l_k, l_v, lr = expose l in
-    match (height lr) <= (height r) + 1 + slack with
+    match (height lr) <= (height r) + 1 with
     | true -> begin
-        match (max (height lr) (height r)) <= (height ll) + slack with
+        match (max (height lr) (height r)) <= (height ll) with
         | true -> node_init ll l_k l_v (node_init lr k v r)
         | false -> begin
             let n0, lr_k, lr_v, n1 = expose lr in
@@ -721,7 +719,7 @@ let join l k v r =
       end
     | false -> begin
         let lr' = join_left_tall lr k v r in
-        match (height lr') <= (height ll) + 1 + slack with
+        match (height lr') <= (height ll) + 1 with
         | true -> node_init ll l_k l_v lr'
         | false -> begin
             let n0, lr_k', lr_v', n1 = expose lr' in
@@ -731,9 +729,9 @@ let join l k v r =
   end in
   let rec join_right_tall l k v r = begin
     let rl, r_k, r_v, rr = expose r in
-    match (height rl) <= (height l) + 1 + slack with
+    match (height rl) <= (height l) + 1 with
     | true -> begin
-        match (max (height l) (height rl)) <= (height rr) + slack with
+        match (max (height l) (height rl)) <= (height rr) with
         | true -> node_init (node_init l k v rl) r_k r_v rr
         | false -> begin
             let n0, rl_k, rl_v, n1 = expose rl in
@@ -742,7 +740,7 @@ let join l k v r =
       end
     | false -> begin
         let rl' = join_right_tall l k v rl in
-        match (height rl') <= (height rr) + 1 + slack with
+        match (height rl') <= (height rr) + 1 with
         | true -> node_init rl' r_k r_v rr
         | false -> begin
             let n0, rl_k', rl_v', n1 = expose rl' in
@@ -752,7 +750,7 @@ let join l k v r =
   end in
   let lh = height l in
   let rh = height r in
-  match (lh > rh + 1 + slack), (lh + 1 + slack < rh) with
+  match (lh > rh + 1), (lh + 1 < rh) with
   | true, _ -> join_left_tall l k v r
   | _, true -> join_right_tall l k v r
   | false, false -> node_init l k v r
@@ -1411,7 +1409,7 @@ let validate t =
         let lh = height l in
         let rh = height r in
         assert (h = succ (max lh rh));
-        assert ((max lh rh) - (min lh rh) < 2 + slack);
+        assert ((max lh rh) - (min lh rh) < 2);
       end
   in
   fn t.root
