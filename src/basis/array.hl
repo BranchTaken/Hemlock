@@ -3,8 +3,8 @@ open Rudiments
 module List = List0
 
 module T = struct
-  type ''a ?t = ''a ?array
-  type ''a elm = ''a
+  type 'a /t t = 'a /t array
+  type 'a elm = 'a
 
   let get i t =
     %hemlock_array_get i t
@@ -14,22 +14,25 @@ module T = struct
 
   module Cursor = struct
     module T = struct
-      type ''a $container = ''a $t
-      type ''a $t = ${
-        $array: ''a $container;
+      type 'a /m container = 'a /m t
+      type ('a, /m) t = {
+        array: 'a /m container;
         index: usize;
       }
 
+      (* val cmp: ('a, /m) t -> ('a, /m) t -> Cmp.t *)
       let cmp t0 t1 =
-        assert (t0.array == t1.array);
         Usize.cmp t0.index t1.index
 
+      (* val hd: 'a /m container -> ('a, /m) t *)
       let hd array =
         {array; index=0}
 
+      (* val tl: 'a /m container -> ('a, /m) t *)
       let tl array =
-        {array; index=(length array)}
+        {array; index=length array}
 
+      (* val seek: isize -> ('a, /m) t -> ('a, /m) t *)
       let seek i t =
         match Isize.(i < 0i) with
         | true -> begin
@@ -43,21 +46,27 @@ module T = struct
           | false -> {t with index=t.index + (Usize.of_isize i)}
         end
 
+      (* val succ: ('a, /m) t -> ('a, /m) t *)
       let succ t =
         seek 1i t
 
+      (* val pred: ('a, /m) t -> ('a, /m) t *)
       let pred t =
         seek (-1i) t
 
+      (* val lget: ('a, _) t -> 'a *)
       let lget t =
         get (pred t.index) t.array
 
+      (* val rget: ('a, _) t -> 'a *)
       let rget t =
         get t.index t.array
 
+      (* val container: ('a, /m) t -> 'a /m container *)
       let container t =
         t.array
 
+      (* val index: (_, _) t -> usize *)
       let index t =
         t.index
     end
@@ -87,20 +96,21 @@ let hash_fold hash_fold_a t state =
   fold t ~init:state ~f:(fun state elm -> state |> hash_fold_a elm)
 
 module Seq = struct
-  type ''a ?outer = ''a ?t
+  type 'a /t outer = 'a /t t
   module type S_mono = sig
-    type $t
-    type $elm
-    val to_array: $t -> $elm ?outer
+    type /t t
+    type /m elm
+    val to_array: /t t -> /m elm /o outer
   end
   module type S_poly = sig
-    type ''a $t
-    type ''a elm
-    val to_array: ''a $t -> ''a elm ?outer
+    type 'a /t t
+    type 'a elm
+    val to_array: 'a /t t -> 'a elm /o outer
   end
 
-  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type $t := T.$t
-                                                       and type $elm := T.$elm =
+  module Make_mono (T : Seq_intf.I_mono_def) :
+    S_mono with type /t t := /t T.t
+            and type /m elm := /m T.elm =
   struct
     let to_array t =
       match T.length t with
@@ -121,8 +131,8 @@ module Seq = struct
   end
 
   module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono
-    with type $t := T.$t
-     and type $elm := T.$elm = struct
+    with type /t t := /t T.t
+     and type /m elm := /m T.elm = struct
     let to_array t =
       match T.length t with
       | 0 -> [||]
@@ -139,8 +149,8 @@ module Seq = struct
   end
 
   module Make_poly (T : Seq_intf.I_poly_def) : S_poly
-    with type ''a $t := ''a T.$t
-     and type ''a elm := ''a T.elm = struct
+    with type 'a /t t := 'a /t T.t
+     and type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
       | 0 -> [||] (* Optimization: use the same empty array for all types. *)
@@ -160,8 +170,8 @@ module Seq = struct
   end
 
   module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
-    with type ''a $t := ''a T.$t
-     and type ''a elm := ''a T.elm = struct
+    with type 'a /t t := 'a /t T.t
+     and type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
       | 0 -> [||]
@@ -179,15 +189,15 @@ module Seq = struct
 
   (* Special-purpose, for fold[i]_map . *)
   module Make_poly2 (T : sig
-      type (''a, ''accum, ''b) $t
-      val length: (''a, ''accum, ''b) $t -> usize
-      val next: (''a, ''accum, ''b) $t -> ''accum
-        -> ''b * (''a, ''accum, ''b) $t * ''accum
+      type ('a, 'b) ['accum] t
+      val length: ('a, 'b) ['accum] t -> usize
+      val next: ('a, 'b) ['accum] t -> 'accum
+        -> 'b * ('a, 'b) ['accum] t * 'accum
     end) : sig
-      type (''a, ''accum, ''b) $t
-      val to_accum_array: (''a, ''accum, ''b) t -> init:''accum
-        -> ''accum * ''b ?outer
-    end with type (''a, ''accum, ''b) $t := (''a, ''accum, ''b) T.$t = struct
+      type ('a, 'b) ['accum] t
+      val to_accum_array: ('a, 'b) ['accum] t -> init:'accum
+        -> 'accum * 'b /o outer
+    end with type ('a, 'b) ['accum] t := ('a, 'b) ['accum] T.t = struct
     let to_accum_array t ~init =
       match T.length t with
       | 0 -> init, [||]
@@ -208,16 +218,15 @@ module Seq = struct
 
   (* Special-purpose, for fold[i]2_map . *)
   module Make_poly3 (T : sig
-      type (''a, ''b, ''accum, ''c) $t
-      val length: (''a, ''b, ''accum, ''c) $t -> usize
-      val next: (''a, ''b, ''accum, ''c) $t -> ''accum
-        -> ''c * (''a, ''b, ''accum, ''c) $t * ''accum
+      type ('a, 'b) ['accum, 'c] t
+      val length: ('a, 'b) ['accum, 'c] t -> usize
+      val next: ('a, 'b) ['accum, 'c] t -> 'accum
+        -> 'c * ('a, 'b) ['accum, 'c] t * 'accum
     end) : sig
-      type (''a, ''b, ''accum, ''c) $t
-      val to_accum_array: (''a, ''b, ''accum, ''c) $t -> init:''accum
-        -> ''accum * ''c ?outer
-    end with type (''a, ''b, ''accum, ''c) $t
-               := (''a, ''b, ''accum, ''c) T.$t = struct
+      type ('a, 'b) ['accum, 'c] t
+      val to_accum_array: ('a, 'b) ['accum, 'c] t -> init:'accum
+        -> 'accum * 'c /o outer
+    end with type ('a, 'b) ['accum, 'c] t := ('a, 'b) ['accum, 'c] T.t = struct
     let to_accum_array t ~init =
       match T.length t with
       | 0 -> init, [||]
@@ -239,19 +248,22 @@ end
 
 module Array_init = struct
   module T = struct
-    type ''a t = {
-      f: usize -> ''a;
+    type >e ['a] t = {
+      f: usize >e-> 'a;
       index: usize;
       length: usize;
     }
-    type ''a elm = ''a
+    type 'a elm = 'a
 
+    (* val init: usize -> f:(usize >e-> 'a) >e-> >e ['a] t *)
     let init length ~f =
       {f; index=0; length}
 
+    (* val length: _ [_] t -> usize *)
     let length t =
       t.length
 
+    (* val next: >e ['a] t >e-> 'a * >e ['a] t *)
     let next t =
       let elm = t.f t.index in
       let t' = {t with index=(succ t.index)} in
@@ -259,17 +271,18 @@ module Array_init = struct
   end
   include T
   include Seq.Make_poly(T)
+  (* val to_array: >e ['a] t >e-> 'a /o outer *)
 end
 
 let init n ~f =
   Array_init.(to_array (init n ~f))
 
 module Array_of_list_common = struct
-  type ''a $t = ${
-    $list: ''a $list;
+  type 'a t = {
+    list: 'a list;
     length: usize;
   }
-  type ''a elm = ''a
+  type 'a elm = 'a
 
   let init length list =
     {list; length}
@@ -330,41 +343,43 @@ let set i elm t =
 
 module Array_join = struct
   module T = struct
-    type ''a ?outer = ''a ?t
-    type ''a $t = ${
-      $sep: ''a $outer;
-      $arrays: ''a $outer $list;
+    type 'a /t outer = 'a /t t
+    type ('a, /sep, /arrays) t = {
+      sep: 'a /sep outer;
+      arrays: ('a /arrays outer) list;
       length: usize;
       in_sep: bool;
-      $array: ''a $outer;
       index: usize;
     }
-    type ''a elm = ''a
+    type 'a elm = 'a
 
+    (* val init: usize -> 'a /sep outer -> 'a /arrays outer list
+         -> ('a, /sep, /arrays) t *)
     let init length sep arrays =
-      {sep; arrays; length; in_sep=true; array=[||]; index=0}
+      {sep; arrays; length; in_sep=false; index=0}
 
+    (* val next: ('a, /sep, /arrays) t -> 'a * ('a, /sep, /arrays) t *)
     let next t =
       let rec fn t = begin
-        match (t.index < (length t.array)) with
+        match t.in_sep with
         | false -> begin
-            match t.arrays with
-            | [] -> not_reached ()
-            | array' :: arrays' -> begin
-                match t.in_sep with
-                | true -> fn {t with arrays=arrays';
-                                     in_sep=false;
-                                     array=array';
-                                     index=0}
-                | false -> fn {t with in_sep=true;
-                                      array=t.sep;
-                                      index=0}
+            let array = List.hd t.arrays in
+            match t.index < length array with
+            | true -> begin
+                let elm = get t.index array in
+                let t' = {t with index=succ t.index} in
+                elm, t'
               end
+            | false -> fn {t with arrays=List.tl t.arrays; in_sep=true; index=0}
           end
         | true -> begin
-            let elm = get t.index t.array in
-            let t' = {t with index=(succ t.index)} in
-            elm, t'
+            match t.index < length t.sep with
+            | true -> begin
+                let elm = get t.index t.sep in
+                let t' = {t with index=succ t.index} in
+                elm, t'
+              end
+            | false -> fn {t with in_sep=false; index=0}
           end
       end in
       fn t
@@ -374,6 +389,7 @@ module Array_join = struct
   end
   include T
   include Seq.Make_poly(T)
+  (* val to_array: ('a, /_, /_) t -> 'a /o outer *)
 end
 
 let join ?sep tlist =
@@ -529,9 +545,9 @@ let is_sorted ?(strict=false) ~cmp t =
   | _ -> fn (get 0 t) 1
 
 type order =
-| Increasing
-| Decreasing
-| Either
+  | Increasing
+  | Decreasing
+  | Either
 type run = {
   base: usize;
   past: usize;
@@ -821,20 +837,24 @@ let mapi ~f t =
 
 module Array_foldi_map = struct
   module T = struct
-    type ''a ?outer = ''a ?t
-    type (''a, ''accum, ''b) $t = ${
-      $arr: ''a $outer;
-      f: usize -> ''accum -> ''a -> ''accum * ''b;
+    type 'a /t outer = 'a /t t
+    type ('a, /arr, >e) ['accum, 'b] t = {
+      arr: 'a /arr outer;
+      f: usize -> 'accum -> 'a >e-> 'accum * 'b;
       index: usize;
       length: usize;
     }
-
+    (* val init: 'a /arr outer -> (usize -> 'accum -> 'a >e-> 'accum * 'b)
+         -> usize -> ('a, /arr, >e) ['accum, 'b] t *)
     let init arr ~f length =
       {arr; f; length; index=0}
 
+    (* val length: (_, _, _) [_, _] t -> usize *)
     let length t =
       t.length
 
+    (* val next: ('a, /arr, >e) ['accum, 'b] t
+         >e-> 'a * ('a, /arr, >e) ['accum, 'b] t * 'accum *)
     let next t accum =
       let accum', elm' = t.f t.index accum (get t.index t.arr) in
       let t' = {t with index=succ t.index} in
@@ -842,6 +862,7 @@ module Array_foldi_map = struct
   end
   include T
   include Seq.Make_poly2(T)
+  (* val to_accum_array: (_, /_, >e) ['accum, 'b] t >e-> 'accum * 'b /o outer *)
 end
 
 let fold_map t ~init ~f =
@@ -930,20 +951,26 @@ let mapi2 ~f t0 t1 =
 
 module Array_foldi2_map = struct
   module T = struct
-    type ''a ?outer = ''a ?t
-    type (''a, ''b, ''accum, ''c) $t = {
-      $arr0: ''a $outer;
-      $arr1: ''b $outer;
-      f: usize -> ''accum -> ''a -> ''b -> ''accum * ''c;
+    type 'a /t outer = 'a /t t
+    type ('a, /m, 'b, /n, >e) ['accum, 'c] t = {
+      arr0: 'a /m outer;
+      arr1: 'b /n outer;
+      f: usize -> 'accum -> 'a -> 'b >e-> 'accum * 'c;
       index: usize;
     }
 
+    (* val init: 'a /m outer -> 'b /n outer
+         -> f:(usize -> 'accum -> 'a -> 'b -> >e-> 'accum * 'c)
+         -> ('a, /m, 'b, /n, >e) ['accum, 'c] t *)
     let init arr0 arr1 ~f =
       {arr0; arr1; f; index=0}
 
+    (* val length: (_, _, _, _, _) [_, _] t -> usize *)
     let length t =
       length t.arr0
 
+    (* val next: ('a, /m, 'b, /n, >e) ['accum, 'c] t -> 'accum
+         -> 'c * ('a, /m, 'b, /n, >e) ['accum, 'c] t * 'accum *)
     let next t accum =
       let accum', elm' =
         t.f t.index accum (get t.index t.arr0) (get t.index t.arr1) in

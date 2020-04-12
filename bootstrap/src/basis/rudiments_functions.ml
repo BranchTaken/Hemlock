@@ -10,6 +10,9 @@ let halt s =
   let () = prerr_string ("Halt: " ^ s ^ "\n") in
   exit 1
 
+let demand e =
+  assert e
+
 let not t =
   match t with
   | false -> true
