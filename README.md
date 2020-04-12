@@ -3,12 +3,9 @@
 Hemlock is a programming language in the [ML
 family](https://en.wikipedia.org/wiki/ML_(programming_language)) that
 emphasizes reliable high performance parallel computation.  Hemlock synthesizes
-the expressive type and module systems of [OCaml](http://ocaml.org/), the
-precise mutability control of [Skip](http://skiplang.com/), and the
-shared-nothing message-passing parallelism of [Erlang](https://erlang.org/).
-Hemlock's features combine to enhance human reasoning in ways that also enable
-reliable high performance parallel computation via both static compiler
-analysis and dynamic profile-driven just-in-time (JIT) optimization.
+the expressive type and module systems of [OCaml](http://ocaml.org/), a
+unified parametric effects/mutability/type system, and the shared-nothing
+message-passing parallelism of [Erlang](https://erlang.org/),
 
 ## Getting Started
 
