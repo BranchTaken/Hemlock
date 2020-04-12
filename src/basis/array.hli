@@ -1,173 +1,174 @@
 open Rudiments
 
-type ''a ?t = ''a ?array (* ''a ?array is built in. *)
+type 'a /t t = 'a /t array (* 'a /t array is built in. *)
 
-include Container_common_intf.S_poly_fold with type ''a $t := ''a $t
+include Container_common_intf.S_poly_fold with type 'a /t t := 'a /t t
 
-include Formattable_intf.S_poly with type ''a $t := ''a $t
+include Formattable_intf.S_poly with type 'a /t t := 'a /t t
 
 (** Cursor that supports arbitrary array element access.  All operations are
     O(1). *)
 module Cursor : sig
-  type ''a $container = ''a $t
-  type ''a $t
+  type 'a /c container = 'a /c t
+  type 'a /t t
 
-  include Cursor_intf.S_poly with type ''a $container := ''a $container
-                              and type ''a elm := ''a
-                              and type ''a $t := ''a $t
+  include Cursor_intf.S_poly with type 'a /c container := 'a /c container
+                              and type 'a elm := 'a
+                              and type 'a /t t := 'a /t t
 end
 
-val hash_fold: (''a -> Hash.State.t -> Hash.State.t) -> ''a $t -> Hash.State.t
+val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a /_ t -> Hash.State.t
     -> Hash.State.t
 (** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
     and returns the resulting state.  Array elements are sequentially
     hash-folded into the resulting state via [hash_fold_a]. *)
 
-val cmp: (''a -> ''a -> Cmp.t) -> ''a $t -> ''a $t -> Cmp.t
+val cmp: ('a -> 'a -> Cmp.t) -> 'a /_ t -> 'a /_ t -> Cmp.t
 (** Compare two arrays given the element comparison function.  The array lengths
     may differ. *)
 
 module Seq : sig
-  type ''a ?outer = ''a ?t
+  type 'a /o outer = 'a /o t
   module type S_mono = sig
-    type $t
-    type $elm
-    val to_array: $t -> $elm ?outer
+    type /t t
+    type /m elm
+    val to_array: /t t -> /m elm /o outer
   end
   module type S_poly = sig
-    type ''a $t
-    type ''a elm
-    val to_array: ''a $t -> ''a elm ?outer
+    type 'a /t t
+    type 'a elm
+    val to_array: 'a /t t -> 'a elm /o outer
   end
 
   (** Efficiently convert a sequence of fixed element type with known length to
       an array. *)
-  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type $t := T.$t
-                                                       and type $elm := T.$elm
+  module Make_mono (T : Seq_intf.I_mono_def) : S_mono
+    with type /t t := /t T.t
+     and type /m elm := /m T.elm
 
   (** Efficiently convert a reversed sequence of fixed element type with known
       length to an array. *)
   module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono
-    with type $t := T.$t
-     and type $elm := T.$elm
+    with type /t t := /t T.t
+     and type /m elm := /m T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
   module Make_poly (T : Seq_intf.I_poly_def) : S_poly
-    with type ''a $t := ''a T.$t
-     and type ''a elm := ''a T.elm
+    with type 'a /t t := 'a /t T.t
+     and type 'a elm := 'a T.elm
 
   (** Efficiently convert a reversed generic sequence with known length to an
       array. *)
   module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
-    with type ''a $t := ''a T.$t
-     and type ''a elm := ''a T.elm
+    with type 'a /t t := 'a /t T.t
+     and type 'a elm := 'a T.elm
 end
 
-val init: usize -> f:(usize -> ''a) -> ''a ?t
-(** Initialize array.  [init len ~f:(fun i -> ...)] initializes an array of
+val init: uns -> f:(uns >-> 'a) >-> 'a /t t
+(** Initialize array.  [init len ~f:(fun i >-> ...)] initializes an array of
     given length, where [f] provides the value for each element at given index.
 *)
 
-val of_list: ?length:usize -> ''a $list -> ''a ?t
+val of_list: ?length:uns -> 'a list -> 'a /t t
 (** Initialize array using contents of list.  If specified, [?length] must equal
     [(List.length list)]. *)
 
-val of_list_rev: ?length:usize -> ''a $list -> ''a ?t
+val of_list_rev: ?length:uns -> 'a list -> 'a /t t
 (** Initialize array using reversed contents of list.  If specified, [?length]
     must equal [(List.length list)]. *)
 
-val length: ''a $t -> usize
+val length: 'a /_ t -> uns
 (** Return array length. *)
 
-val is_empty: ''a $t -> bool
+val is_empty: 'a /_ t -> bool
 (** Return [true] if array length is 0; [false] otherwise. *)
 
-val get: usize -> ''a $t -> ''a
+val get: uns -> 'a /_ t -> 'a
 (** Get array element.  [get i t] returns the element at index [i]. *)
 
-val set_inplace: usize -> ''a -> ''a !t -> unit
+val set_inplace: uns -> 'a -> 'a !&t -> unit
 (** Set array element in place (mutate).  [set_inplace i elm t] sets the element
     at index [i] to [elm]. *)
 
-val set: usize -> ''a -> ''a $t -> ''a ?t
+val set: uns -> 'a -> 'a /_ t -> 'a /t t
 (** Create a new array based on input array, differing in one element.
     [set t i elm] creates an array equal to [t], except that element [i] is
     initialized to [elm]. *)
 
-val copy: ''a $t -> ''a ?t
+val copy: 'a /_ t -> 'a /t t
 (** Create a copy of an array. *)
 
-val pare: base:usize -> past:usize -> ''a $t -> ''a ?t
+val pare: base:uns -> past:uns -> 'a /_ t -> 'a /t t
 (** Create an array with contents initialized to equal the \[[~base]..[~past])
     input subarray. *)
 
-val join: ?sep:''a $t -> ''a $t $list -> ''a ?t
+val join: ?sep:'a /_ t -> 'a /_ t list -> 'a /t t
 (** Concatenate a list of arrays, with optional separator. *)
 
-val concat: ''a $t -> ''a $t -> ''a ?t
+val concat: 'a /_ t -> 'a /_ t -> 'a /t t
 (** Concatenate two arrays. *)
 
-val append: ''a -> ''a $t -> ''a ?t
+val append: 'a -> 'a /_ t -> 'a /t t
 (** Create an array that is the concatenation of the input array and the input
     element. *)
 
-val prepend: ''a -> ''a $t -> ''a ?t
+val prepend: 'a -> 'a /_ t -> 'a /t t
 (** Create an array that is the concatenation of the input element and the input
     array. *)
 
-val insert: usize -> ''a -> ''a $t -> ''a ?t
+val insert: uns -> 'a -> 'a /_ t -> 'a /t t
 (** Create an array that is the concatenation of the bipartition of the input
     array at specified index, with the input element interposed. *)
 
-val remove: usize -> ''a $t -> ''a ?t
+val remove: uns -> 'a /_ t -> 'a /t t
 (** Create an array that is the concatenation of the first and third components
     of the tripartition about the element at specified index. *)
 
-val reduce: f:(''a -> ''a -> ''a) -> ''a $t -> ''a option
+val reduce: f:('a -> 'a >-> 'a) -> 'a /_ t >-> 'a option
 (** Reduce the array to a single value, or return [None] if the array is empty.
     The reduction function is assumed to be associative; thus reduction order is
     unspecified. *)
 
-val reduce_hlt: f:(''a -> ''a -> ''a) -> ''a $t -> ''a
+val reduce_hlt: f:('a -> 'a >-> 'a) -> 'a /_ t >-> 'a
 (** Reduce the array to a single value, or halt if the array is empty.  The
     reduction function is assumed to be associative; thus reduction order is
     unspecified. *)
 
-val swap_inplace: usize -> usize -> ''a !t -> unit
+val swap_inplace: uns -> uns -> 'a !&t -> unit
 (** Swap elements at given indices in place (mutate). *)
 
-val swap: usize -> usize -> ''a $t -> ''a ?t
+val swap: uns -> uns -> 'a /_ t -> 'a /t t
 (** Create an array based on the input array, but with elements at given indices
     swapped. *)
 
-val rev_inplace: ''a !t -> unit
+val rev_inplace: 'a !&t -> unit
 (** Reverse array in place (mutate). *)
 
-val rev: ''a $t -> ''a ?t
+val rev: 'a /_ t -> 'a /t t
 (** Create an array with contents reversed relative to the input array. *)
 
-val blit: usize -> usize -> ''a $t -> usize -> ''a !t -> unit
+val blit: uns -> uns -> 'a /_ t -> uns -> 'a !&t -> unit
 (** Set a range of elements in place (mutate).  [blit len i0 t0 i1 t1] sets the
-    elements of [t1] at [\[i1..i1+len)] to equal the elements of [t0] at
-    [\[i0..i0+len)].  Overlapping ranges are supported: [t0] and [t1] may refer
+    elements of [t1] at [\[i1..i1&len)] to equal the elements of [t0] at
+    [\[i0..i0&len)].  Overlapping ranges are supported: [t0] and [t1] may refer
     to the same or different arrays; [i0] and [i1] may have arbitrary
     relationship. *)
 
-val is_sorted: ?strict:bool -> cmp:(''a -> ''a -> Cmp.t) -> ''a $t -> bool
+val is_sorted: ?strict:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a /_ t -> bool
 (** Return true if array is sorted (strictly if [?strict] is [true]) according
     to the comparison function. *)
 
-val sort_inplace: ?stable:bool -> cmp:(''a -> ''a -> Cmp.t) -> ''a !t -> unit
+val sort_inplace: ?stable:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a !&t -> unit
 (** Sort the array in place (mutate) according to the comparison function.
     Preserve order of equivalent elements if [?stable] is [true]. *)
 
-val sort: ?stable:bool -> cmp:(''a -> ''a -> Cmp.t) -> ''a $t -> ''a ?t
+val sort: ?stable:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a /_ t -> 'a /t t
 (** Create an array with sorted contents of the input array according to the
     comparison function.  Preserve order of equivalent elements if [?stable] is
     [true]. *)
 
-val psearch: ?base:usize -> ?past:usize -> ''a -> cmp:(''a -> ''a -> Cmp.t)
-  -> ''a $t -> (Cmp.t * usize) option
+val psearch: ?base:uns -> ?past:uns -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a /_ t
+  -> (Cmp.t * uns) option
 (** Binary search for key in array, selecting the leftmost match, and falling
     back to the predecessor in the case of no match.
     @return {ul
@@ -178,106 +179,104 @@ val psearch: ?base:usize -> ?past:usize -> ''a -> cmp:(''a -> ''a -> Cmp.t)
     }
 *)
 
-val search: ?base:usize -> ?past:usize -> ''a -> cmp:(''a -> ''a -> Cmp.t)
-  -> ''a $t -> usize option
+val search: ?base:uns -> ?past:uns -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a /_ t
+  -> uns option
 (** Binary search for key in array.  If key is found, return [(Some index)],
     otherwise return [None].  Note that if more than one element matches key, an
     arbitrary match is returned. *)
 
-val nsearch: ?base:usize -> ?past:usize -> ''a -> cmp:(''a -> ''a -> Cmp.t)
-  -> ''a t -> (Cmp.t * usize) option
+val nsearch: ?base:uns -> ?past:uns -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a /_ t
+  -> (Cmp.t * uns) option
 (** Binary search for key in array, selecting the rightmost match, and falling
     back to the successor.
     @return {ul
       {- Successor: [Some (Cmp.Lt, index)]}
       {- Rightmost match: [Some (Cmp.Eq, index)]}
-      {- No successor: [Some (Cmp.Gt, (Usize.pred (length t)))]}
+      {- No successor: [Some (Cmp.Gt, (Uns.pred (length t)))]}
       {- Empty array: [None]}
     }
 *)
 
-val map: f:(''a -> ''b) -> ''a $t -> ''b ?t
+val map: f:('a >-> 'b) -> 'a /_ t >-> 'b /t t
 (** Create an array with elements mapped from the input array, according to the
     element mapping function. *)
 
-val mapi: f:(usize -> ''a -> ''b) -> ''a $t -> ''b ?t
+val mapi: f:(uns -> 'a >-> 'b) -> 'a /_ t >-> 'b /t t
 (** Create an array with elements mapped from the input array, according to the
     indexed element mapping function. *)
 
-val fold_map: init:''accum -> f:(''accum -> ''a -> ''accum * ''b) -> ''a $t
-  -> ''accum * ''b ?t
+val fold_map: init:'accum -> f:('accum -> 'a >-> 'accum * 'b) -> 'a /_ t
+  >-> 'accum * 'b /t t
 (** Create an array and accumulated result with elements mapped from the input
     array, according to the folding mapping function. *)
 
-val foldi_map: init:''accum -> f:(usize -> ''accum -> ''a -> ''accum * ''b)
-  -> ''a $t -> ''accum * ''b ?t
+val foldi_map: init:'accum -> f:(uns -> 'accum -> 'a >-> 'accum * 'b) -> 'a /_ t
+  >-> 'accum * 'b /t t
 (** Create an array and accumulated result with elements mapped from the input
     array, according to the indexed folding mapping function. *)
 
-val filter: f:(''a -> bool) -> ''a $t -> ''a ?t
+val filter: f:('a >-> bool) -> 'a /_ t >-> 'a /t t
 (** Create an array with contents filtered by the given function.  Only elements
     for which the filter function returns true are incorporated in the result.
 *)
 
-val filteri: f:(usize -> 'a -> bool) -> ''a $t -> ''a ?t
+val filteri: f:(uns -> 'a >-> bool) -> 'a /_ t >-> 'a /t t
 (** Create an array with contents filtered by the given function.  Only elements
     for which the indexed filter function returns true are incorporated in the
     result. *)
 
-val fold2_until: init:''accum -> f:(''accum -> ''a -> ''b -> ''accum * bool)
-  -> ''a $t -> ''b $t -> ''accum
+val fold2_until: init:'accum -> f:('accum -> 'a -> 'b >-> 'accum * bool)
+  -> 'a /_ t -> 'b /_ t >-> 'accum
 (** Create an accumulated result for the paired elements of two arrays, calling
     the element folding function in increasing index order, and terminate
     folding early if the folding function returns true. *)
 
-val foldi2_until: init:''accum
-  -> f:(usize -> ''accum -> ''a -> ''b -> ''accum * bool) -> ''a t -> ''b t
-  -> ''accum
+val foldi2_until: init:'accum -> f:(uns -> 'accum -> 'a -> 'b >-> 'accum * bool)
+  -> 'a /_ t -> 'b /_ t >-> 'accum
 (** Create an accumulated result for the paired elements of two arrays, calling
     the indexed element folding function in increasing index order, and
     terminate folding early if the folding function returns true. *)
 
-val fold2: init:''accum -> f:(''accum -> ''a -> ''b -> ''accum) -> ''a $t
-  -> ''b $t -> ''accum
+val fold2: init:'accum -> f:('accum -> 'a -> 'b >-> 'accum) -> 'a /_ t
+  -> 'b /_ t >-> 'accum
 (** Create an accumulated result for the paired elements of two arrays, calling
     the element folding function in increasing index order. *)
 
-val foldi2: init:''accum -> f:(usize -> ''accum -> ''a -> ''b -> ''accum)
-  -> ''a $t -> ''b $t -> ''accum
+val foldi2: init:'accum -> f:(uns -> 'accum -> 'a -> 'b >-> 'accum) -> 'a /_ t
+  -> 'b /_ t >-> 'accum
 (** Create an accumulated result for the paired elements of two arrays, calling
     the indexed element folding function in increasing index order. *)
 
-val iter2: f:(''a -> ''b !-> unit) -> ''a $t -> ''b $t !-> unit
+val iter2: f:('a -> 'b >-> unit) -> 'a /_ t -> 'b /_ t >-> unit
 (** Iterate over the paired elements of two arrays, calling the element visiting
     function in increasing index order. *)
 
-val iteri2: f:(usize -> ''a -> ''b !-> unit) -> ''a $t -> ''b $t !-> unit
+val iteri2: f:(uns -> 'a -> 'b >-> unit) -> 'a /_ t -> 'b /_ t >-> unit
 (** Iterate over the paired elements of two arrays, calling the indexed element
     visiting function in increasing index order. *)
 
-val map2: f:(''a -> ''b -> ''c) -> ''a $t -> ''b $t -> ''c ?t
+val map2: f:('a -> 'b >-> 'c) -> 'a /_ t -> 'b /_ t >-> 'c /t t
 (** Create an array with elements mapped by the element mapping function from
     the paired elements of two input arrays. *)
 
-val mapi2: f:(usize -> ''a -> ''b -> ''c) -> ''a $t -> ''b $t -> ''c ?t
+val mapi2: f:(uns -> 'a -> 'b >-> 'c) -> 'a /_ t -> 'b /_ t >-> 'c /t t
 (** Create an array with elements mapped by the indexed element mapping function
     from the paired elements of two input arrays. *)
 
-val fold2_map: init:''accum -> f:(''accum -> ''a -> ''b -> ''accum * ''c)
-  -> ''a $t -> ''b $t -> ''accum * ''c ?t
+val fold2_map: init:'accum -> f:('accum -> 'a -> 'b >-> 'accum * 'c)
+  -> 'a /_ t -> 'b /_ t >-> 'accum * 'c /t t
 (** Create an array and accumulated result based on the paired elements of two
     arrays, calling the element folding/mapping function in increasing index
     order. *)
 
-val foldi2_map: init:''accum
-  -> f:(usize -> ''accum -> ''a -> ''b -> ''accum * ''c) -> ''a $t -> ''b $t
-  -> ''accum * ''c ?t
+val foldi2_map: init:'accum -> f:(uns -> 'accum -> 'a -> 'b >-> 'accum * 'c)
+  -> 'a /_ t -> 'b /_ t >-> 'accum * 'c /t t
 (** Create an array and accumulated result based on the paired elements of two
     arrays, calling the indexed element folding/mapping function in increasing
     index order. *)
 
-val zip: ''a $t -> ''b $t -> (''a * ''b) ?t
+val zip: 'a /_ t -> 'b /_ t -> ('a * 'b) /t t
 (** Create an array with the paired elements of two arrays. *)
 
-val unzip: (''a * ''b) $t -> ''a ?t * ''b ?t
+val unzip: ('a * 'b) /_ t -> 'a /at t * 'b /bt t
 (** Create two arrays with the unpaired elements of the input pair array. *)
