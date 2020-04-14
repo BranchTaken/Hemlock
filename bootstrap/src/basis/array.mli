@@ -96,6 +96,14 @@ val of_list_rev: ?length:usize -> 'a list -> 'a t
 (** Initialize array using reversed contents of list.  If specified, [?length]
     must equal [(List.length list)]. *)
 
+val of_stream: ?length:usize -> 'a Stream.t -> 'a t
+(** Initialize array using contents of stream.  If specified, [?length] must equal
+    [(Stream.length stream)]. *)
+
+val of_stream_rev: ?length:usize -> 'a Stream.t -> 'a t
+(** Initialize array using reversed contents of stream.  If specified, [?length]
+    must equal [(Stream.length stream)]. *)
+
 val length: 'a t -> usize
 (** Return array length. *)
 

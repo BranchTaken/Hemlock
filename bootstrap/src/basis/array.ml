@@ -392,6 +392,52 @@ let of_list_rev ?length list =
   in
   Array_of_list_rev.to_array (Array_of_list_rev.init length list)
 
+module Array_of_stream_common = struct
+  type 'a t = {
+    stream: 'a Stream.t;
+    length: usize;
+  }
+  type 'a elm = 'a
+
+  let init length stream =
+    {stream; length}
+
+  let length t =
+    t.length
+
+  let next t =
+    match t.stream with
+    | lazy Stream.Nil -> not_reached ()
+    | lazy (Stream.Cons(elm, stream')) -> begin
+        let t' = {t with stream=stream'} in
+        elm, t'
+      end
+end
+
+module Array_of_stream = struct
+  include Array_of_stream_common
+  include Seq.Make_poly(Array_of_stream_common)
+end
+
+module Array_of_stream_rev = struct
+  include Array_of_stream_common
+  include Seq.Make_poly_rev(Array_of_stream_common)
+end
+
+let of_stream ?length stream =
+  let length = match length with
+    | None -> Stream.length stream
+    | Some length -> length
+  in
+  Array_of_stream.to_array (Array_of_stream.init length stream)
+
+let of_stream_rev ?length stream =
+  let length = match length with
+    | None -> Stream.length stream
+    | Some length -> length
+  in
+  Array_of_stream_rev.to_array (Array_of_stream_rev.init length stream)
+
 let is_empty t =
   (length t) = 0
 
@@ -1272,6 +1318,38 @@ let%expect_test "of_list,of_list_rev" =
     of_list[_rev] [0; 1] -> [|0; 1|] / [|1; 0|]
     of_list[_rev] [0; 1; 2] -> [|0; 1; 2|] / [|2; 1; 0|]
     of_list[_rev] [0; 1; 2; 3] -> [|0; 1; 2; 3|] / [|3; 2; 1; 0|]
+    |}]
+
+let%expect_test "of_stream,of_stream_rev" =
+  let open Format in
+  printf "@[<h>";
+  let test stream = begin
+    printf "of_stream[_rev] %a -> %a / %a\n"
+      (Stream.pp Usize.pp) stream
+      (pp Usize.pp) (of_stream stream)
+      (pp Usize.pp) (of_stream_rev stream);
+  end in
+  let f list = begin
+    match list with
+    | [] -> None
+    | hd :: tl -> Some (hd, tl)
+  end in
+  let streams = List.map ~f:(Stream.init_indef ~f) [
+    [];
+    [0];
+    [0; 1];
+    [0; 1; 2];
+    [0; 1; 2; 3];
+  ] in
+  List.iter streams ~f:test;
+  printf "@]";
+
+  [%expect{|
+    of_stream[_rev] Nil -> [||] / [||]
+    of_stream[_rev] (0 Nil) -> [|0|] / [|0|]
+    of_stream[_rev] (0 (1 Nil)) -> [|0; 1|] / [|1; 0|]
+    of_stream[_rev] (0 (1 (2 Nil))) -> [|0; 1; 2|] / [|2; 1; 0|]
+    of_stream[_rev] (0 (1 (2 (3 Nil)))) -> [|0; 1; 2; 3|] / [|3; 2; 1; 0|]
     |}]
 
 let%expect_test "get,length,is_empty" =
