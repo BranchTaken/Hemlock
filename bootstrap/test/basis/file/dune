@@ -1,0 +1,5 @@
+(tests
+ (names file)
+ (libraries Basis)
+ (action
+  (run %{test} -e)))
