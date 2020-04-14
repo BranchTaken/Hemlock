@@ -1,5 +1,7 @@
 open Rudiments
 
+type t = byte array
+
 let pp ppf bytes =
   Array.pp Byte.pp_x ppf bytes
 
