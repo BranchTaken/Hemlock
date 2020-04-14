@@ -19,6 +19,16 @@ let init n ~f =
   end in
   fn 0 n f
 
+let rec init_indef ~f state =
+  lazy begin
+    match f state with
+    | None -> Nil
+    | Some(elm, state') -> begin
+        let t = init_indef ~f state' in
+        Cons(elm, t)
+      end
+  end
+
 let length t =
   let rec fn t i = begin
     match t with
@@ -143,6 +153,34 @@ let%expect_test "init" =
     init 1 ~f:(fun i -> i) = (0 Nil)
     init 2 ~f:(fun i -> i) = (0 (1 Nil))
     init 3 ~f:(fun i -> i) = (0 (1 (2 Nil)))
+    |}]
+
+let%expect_test "init_indef" =
+  let open Format in
+  let ppt = (pp Usize.pp) in
+  printf "@[<h>";
+  let rec test_init_indef_up_to i n = begin
+    match i <= n with
+    | false -> ()
+    | true -> begin
+        let f state = begin
+          match state < i with
+          | false -> None
+          | true -> Some(state, succ state)
+        end in
+        let t = init_indef ~f 0 in
+        printf "init_indef until %a = %a\n" Usize.pp i ppt t;
+        test_init_indef_up_to (succ i) n
+      end
+  end in
+  test_init_indef_up_to 0 3;
+  printf "@]";
+
+  [%expect{|
+    init_indef until 0 = Nil
+    init_indef until 1 = (0 Nil)
+    init_indef until 2 = (0 (1 Nil))
+    init_indef until 3 = (0 (1 (2 Nil)))
     |}]
 
 let%expect_test "length" =

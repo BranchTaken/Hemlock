@@ -26,6 +26,12 @@ val init: usize -> f:(usize -> 'a) -> 'a t
     of given length, where [f] provides the value for each element at given
     index. *)
 
+val init_indef: f:('state -> ('a * 'state) option) -> 'state -> 'a t
+(** Initialize stream.  [init_indef ~f:(fun state -> ...) state] lazily
+    initializes a stream, where [f] provides the value and remaining
+    initialization state for each subseqeunt element, continuing until [f]
+    returns [None]. *)
+
 (** {1 Length} *)
 
 val length: 'a t -> usize
@@ -40,7 +46,7 @@ val hd: 'a t -> 'a
 (** Return head (first) stream element, or halt if stream is empty. *)
 
 val tl: 'a t -> 'a t
-(** Return tail (a stream of all elements except head), or halt if list is
+(** Return tail (a stream of all elements except head), or halt if stream is
     empty. *)
 
 (** {1 Combining and partitioning} *)
@@ -51,7 +57,7 @@ val push: 'a -> 'a t -> 'a t
 
 val pop: 'a t -> 'a * 'a t
 (** Pop head element off stream and return the decomposed element and remainder
-    stream.  Halt if the input list is empty. *)
+    stream or halt if the stream is empty. *)
 
 val concat: 'a t -> 'a t -> 'a t
 (** Concatenate two streams. *)
