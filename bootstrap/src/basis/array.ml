@@ -418,35 +418,34 @@ module Array_join = struct
       arrays: 'a outer list;
       length: usize;
       in_sep: bool;
-      array: 'a outer;
       index: usize;
     }
     type 'a elm = 'a
 
     let init length sep arrays =
-      {sep; arrays; length; in_sep=true; array=[||]; index=0}
+      {sep; arrays; length; in_sep=false; index=0}
 
     let next t =
       let rec fn t = begin
-        match (t.index < (length t.array)) with
+        match t.in_sep with
         | false -> begin
-            match t.arrays with
-            | [] -> not_reached ()
-            | array' :: arrays' -> begin
-                match t.in_sep with
-                | true -> fn {t with arrays=arrays';
-                                     in_sep=false;
-                                     array=array';
-                                     index=0}
-                | false -> fn {t with in_sep=true;
-                                      array=t.sep;
-                                      index=0}
+            let array = List.hd t.arrays in
+            match t.index < length array with
+            | true -> begin
+                let elm = get t.index array in
+                let t' = {t with index=succ t.index} in
+                elm, t'
               end
+            | false -> fn {t with arrays=List.tl t.arrays; in_sep=true; index=0}
           end
         | true -> begin
-            let elm = get t.index t.array in
-            let t' = {t with index=(succ t.index)} in
-            elm, t'
+            match t.index < length t.sep with
+            | true -> begin
+                let elm = get t.index t.sep in
+                let t' = {t with index=succ t.index} in
+                elm, t'
+              end
+            | false -> fn {t with in_sep=false; index=0}
           end
       end in
       fn t
