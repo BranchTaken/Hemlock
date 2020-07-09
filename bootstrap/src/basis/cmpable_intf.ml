@@ -46,11 +46,11 @@ module type S_mono = sig
   include S_mono_infix with type t := t
 
   val ascending: t -> t -> Cmp.t
-  (** [ascending t0 t1] compares [t0] and [t1] in ascending order.  Equivalent
-      to [cmp t0 t1]. *)
+  (** [ascending t0 t1] compares [t0] and [t1] in ascending order. Equivalent to
+      [cmp t0 t1]. *)
 
   val descending: t -> t -> Cmp.t
-  (** [descending t0 t1] compares [t0] and [t1] in descending order.  If [cmp]
+  (** [descending t0 t1] compares [t0] and [t1] in descending order. If [cmp]
       provides total ordering, this is equivalent to [cmp t1 t0], but the
       implementation does not assume [cmp] is implemented as such. *)
 
@@ -70,7 +70,7 @@ module type S_mono_zero = sig
   include S_mono_infix with type t := t
 
   val is_positive: t -> bool
-  (** [is_positive t] returns [true] if [t] is positive, [false] otherwise.  NB:
+  (** [is_positive t] returns [true] if [t] is positive, [false] otherwise. NB:
       Positive does {i not} include zero. *)
 
   val is_non_negative: t -> bool
@@ -89,7 +89,7 @@ module type S_mono_zero = sig
 end
 
 (** Key interface required when creating a comparator (see {!module:Cmper}) in
-    order to use a type as a key.  Only monomorphic keys are supported by the
+    order to use a type as a key. Only monomorphic keys are supported by the
     keyed container types, so there is no need for a polymorphic version of this
     module. *)
 module type Key = sig
@@ -103,8 +103,8 @@ module type Key = sig
   include I_mono with type t := t
 end
 
-(** Functor input interface for comparable polymorphic types, e.g. ['a
-    array]. *)
+(** Functor input interface for comparable polymorphic types, e.g. ['a array].
+*)
 module type I_poly = sig
   type 'a t
 
@@ -137,11 +137,11 @@ module type S_poly = sig
   (** Returns true if [t0 <> t1] (i.e. [t0] not equal to [t1]). *)
 
   val ascending: 'a t -> 'a t -> Cmp.t
-  (** [ascending t0 t1] compares [t0] and [t1] in ascending order.  Equivalent
-      to [cmp t0 t1]. *)
+  (** [ascending t0 t1] compares [t0] and [t1] in ascending order. Equivalent to
+      [cmp t0 t1]. *)
 
   val descending: 'a t -> 'a t -> Cmp.t
-  (** [descending t0 t1] compares [t0] and [t1] in descending order.  If [cmp]
+  (** [descending t0 t1] compares [t0] and [t1] in descending order. If [cmp]
       provides total ordering, this is equivalent to [cmp t1 t0], but the
       implementation does not assume [cmp] is implemented as such. *)
 
@@ -188,11 +188,11 @@ module type S_poly2 = sig
   (** Returns true if [t0 <> t1] (i.e. [t0] not equal to [t1]). *)
 
   val ascending: ('a, 'cmp) t -> ('a, 'cmp) t -> Cmp.t
-  (** [ascending t0 t1] compares [t0] and [t1] in ascending order.  Equivalent
-      to [cmp t0 t1]. *)
+  (** [ascending t0 t1] compares [t0] and [t1] in ascending order. Equivalent to
+      [cmp t0 t1]. *)
 
   val descending: ('a, 'cmp) t -> ('a, 'cmp) t -> Cmp.t
-  (** [descending t0 t1] compares [t0] and [t1] in descending order.  If [cmp]
+  (** [descending t0 t1] compares [t0] and [t1] in descending order. If [cmp]
       provides total ordering, this is equivalent to [cmp t1 t0], but the
       implementation does not assume [cmp] is implemented as such. *)
 
@@ -240,11 +240,11 @@ module type S_poly3 = sig
   (** Returns true if [t0 <> t1] (i.e. [t0] not equal to [t1]). *)
 
   val ascending: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> Cmp.t
-  (** [ascending t0 t1] compares [t0] and [t1] in ascending order.  Equivalent
-      to [cmp t0 t1]. *)
+  (** [ascending t0 t1] compares [t0] and [t1] in ascending order. Equivalent to
+      [cmp t0 t1]. *)
 
   val descending: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> Cmp.t
-  (** [descending t0 t1] compares [t0] and [t1] in descending order.  If [cmp]
+  (** [descending t0 t1] compares [t0] and [t1] in descending order. If [cmp]
       provides total ordering, this is equivalent to [cmp t1 t0], but the
       implementation does not assume [cmp] is implemented as such. *)
 

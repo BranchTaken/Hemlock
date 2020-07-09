@@ -40,8 +40,8 @@ let tl = function
   | lazy (Cons(_, t)) -> t
 
 (* Non-lazy internal function of push (conventionally named push'). It is
-   exposed outside of push since it is useful within non-lazy sections of other
-   stream functions. *)
+ * exposed outside of push since it is useful within non-lazy sections of other
+ * stream functions. *)
 let push' elm s =
   Cons(elm, s)
 

@@ -38,9 +38,9 @@ module type S_mono = sig
   (** Comparator. *)
 end
 
-(** Functor for monomorphic comparator types, e.g. {!type:string}.  The
-    resulting module contains a comparator that can be used in conjunction with
-    e.g. {!type:OrdMap}.  The comparator witness assures that multi-container
+(** Functor for monomorphic comparator types, e.g. {!type:string}. The resulting
+    module contains a comparator that can be used in conjunction with e.g.
+    {!type:OrdMap}. The comparator witness assures that multi-container
     operations can only be performed on containers with compatible comparison
     functions. *)
 module Make_mono (T : I_mono) : S_mono with type t := T.t
@@ -52,12 +52,12 @@ module type I_poly = sig
   val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
     -> Hash.State.t
   (** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
-      and returns the resulting state.  Container elements are sequentially
+      and returns the resulting state. Container elements are sequentially
       hash-folded into the resulting state via [hash_fold_a]. *)
 
   val hash_fold_a: 'a -> Hash.State.t -> Hash.State.t
   (** [hash_fold_a a state] incorporates the hash of [a] into [state] and
-      returns the resulting state.  {!Make_poly} synthesizes a monomorphic
+      returns the resulting state. {!Make_poly} synthesizes a monomorphic
       [hash_fold] from the composition of [hash_fold] and [hash_fold_a].
       [hash_fold_a] is the hash-fold function for {!type:'a}. *)
 
@@ -66,11 +66,11 @@ module type I_poly = sig
 
   val pp_a: Format.formatter -> 'a -> unit
   (** {!Make_poly} synthesizes a monomorphic [pp] from the composition of [pp]
-      and [pp_a].  [pp_a] is the pretty printer for {!type:'a}. *)
+      and [pp_a]. [pp_a] is the pretty printer for {!type:'a}. *)
 end
 
-(** Functor output signature for polymorphic comparator types, e.g.
-    {!type:'a list}. *)
+(** Functor output signature for polymorphic comparator types, e.g. {!type:'a
+    list}. *)
 module type S_poly = sig
   type 'a t
   (** Container type. *)
@@ -82,11 +82,11 @@ module type S_poly = sig
   (** Comparator. *)
 end
 
-(** Functor for polymorphic comparator types, e.g. {!type:'a list}.  The
+(** Functor for polymorphic comparator types, e.g. {!type:'a list}. The
     resulting module contains a comparator that can be used in conjunction with
-    e.g. {!type:OrdMap}.  The comparator witness assures that multi-container
+    e.g. {!type:OrdMap}. The comparator witness assures that multi-container
     operations can only be performed on containers with compatible comparison
-    functions.  This functor is unusual in that it creates a monomorphic
-    wrapper around a specific actualization of a polymorphic type, so that
-    comparators are always in effect monomorphic. *)
+    functions. This functor is unusual in that it creates a monomorphic wrapper
+    around a specific actualization of a polymorphic type, so that comparators
+    are always in effect monomorphic. *)
 module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t

@@ -16,12 +16,12 @@ type 'a t = 'a option =
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
   -> Hash.State.t
 (** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
-    and returns the resulting state.  [Some a] is hash-folded into the resulting
+    and returns the resulting state. [Some a] is hash-folded into the resulting
     state via [hash_fold_a]; [None] is hash-folded independently. *)
 
 val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
-(** Compare two options using the value comparison function.  [None] is less
-    than all [Some] values. *)
+(** Compare two options using the value comparison function. [None] is less than
+    all [Some] values. *)
 
 include Formattable_intf.S_poly with type 'a t := 'a t
 
@@ -33,7 +33,7 @@ include Container_array_intf.S_poly_array with type 'a t := 'a t
 
 (** {1 Cursor} *)
 
-(** Cursor that supports {!type:option} access.  [None] is treated as
+(** Cursor that supports {!type:option} access. [None] is treated as
     zero-length. *)
 module Cursor : sig
   type 'a container = 'a t
@@ -83,5 +83,5 @@ val merge: f:('a -> 'a -> 'a) -> 'a t -> 'a t -> 'a t
     a1], otherwise the most preserving of [Some a0], [Some a1], and [None]. *)
 
 val map2: f:('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
-(** [map2 ~f t0 t1] returns [Some (f a b)] if [t0 = Some a] and [t1 = Some
-    b], [None] otherwise. *)
+(** [map2 ~f t0 t1] returns [Some (f a b)] if [t0 = Some a] and [t1 = Some b],
+    [None] otherwise. *)

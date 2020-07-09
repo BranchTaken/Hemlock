@@ -6,7 +6,7 @@ module type S_mono = sig
 
   val pp: Format.formatter -> t -> unit
   (** [pp ppf t] prints a representation of [t] to the pretty printing
-      formatter, [ppf].  This function is intended for use with the [%a] format
+      formatter, [ppf]. This function is intended for use with the [%a] format
       specifier to {!Format.printf}.*)
 end
 
@@ -17,7 +17,7 @@ module type S_poly = sig
   val pp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
   (** [pp pp_a ppf t] prints a syntactic representation of [t] to the pretty
       printing formatter, [ppf], using the [pp_a] printer for the parametric
-      type value [a].  This function is intended for use with the [%a] format
+      type value [a]. This function is intended for use with the [%a] format
       specifier to {!Format.printf}. *)
 end
 

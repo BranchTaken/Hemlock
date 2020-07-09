@@ -59,8 +59,8 @@ module type S_derived = sig
       nearest integer, or halts if [t] less than 1. *)
 
   val ceil_lg: t -> t
-  (** [ceil_lg t] returns the base 2 logarithm of [t], rounded up to the
-      nearest integer, or halts if [t] is less than 1. *)
+  (** [ceil_lg t] returns the base 2 logarithm of [t], rounded up to the nearest
+      integer, or halts if [t] is less than 1. *)
 
   val min: t -> t -> t
   (** [min a b] returns the minimum of [a] and [b]. *)
@@ -81,8 +81,8 @@ module type S = sig
 
   val pp_x: Format.formatter -> t -> unit
   (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty
-      printing formatter, [ppf].  This function is intended for use with the
-      [%a] format specifier to {!Format.printf}.*)
+      printing formatter, [ppf]. This function is intended for use with the [%a]
+      format specifier to {!Format.printf}.*)
 
   val one: t
   (** Constant value 1. *)
@@ -154,18 +154,18 @@ module type S = sig
   include S_derived with type t := t
 end
 
-(** Functor output signature for narrowing functions.  These functions are
-    only needed by integer types based on the default integer types, and are
-    a bootstrapping artifact. *)
+(** Functor output signature for narrowing functions. These functions are only
+    needed by integer types based on the default integer types, and are a
+    bootstrapping artifact. *)
 module type S_narrow = sig
   type t
 
   val narrow_of_signed: isize -> t
-  (** Narrow full-width signed integer.  Sign is preserved, but precision may
-      be silently lost. *)
+  (** Narrow full-width signed integer. Sign is preserved, but precision may be
+      silently lost. *)
 
   val narrow_of_unsigned: usize -> t
-  (** Narrow full-width unsigned integer.  Sign is preserved, but precision may
+  (** Narrow full-width unsigned integer. Sign is preserved, but precision may
       be silently lost. *)
 end
 
