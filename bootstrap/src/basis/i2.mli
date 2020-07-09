@@ -17,7 +17,7 @@ val of_isize_hlt: isize -> t
     lossy. *)
 
 val kv: int -> t
-(** Create constant value.  This is a stopgap solution for the lack of
+(** Create constant value. This is a stopgap solution for the lack of
     bitwidth-specific literals. *)
 
 val to_usize: t -> usize

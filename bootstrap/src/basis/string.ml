@@ -1098,7 +1098,7 @@ module Slice = struct
       (* Pattern slice. *)
       p: outer_string;
       (* Auxilliary data structure that enables Knuth-Morris-Pratt (KMP) pattern
-       * matching.  The cursors correspond to the codepoints of p.  Each cursor
+       * matching. The cursors correspond to the codepoints of p. Each cursor
        * points to the end of the longest pattern prefix that has an equivalent
        * suffix in the substring ending just prior to the corresponding
        * codepoint index. *)
@@ -1866,8 +1866,8 @@ let%expect_test "hash_fold" =
         test strs'
       end
   end in
-  (* These test inputs were manually verified against the reference
-     MurmurHash3 implementation. *)
+  (* These test inputs were manually verified against the reference MurmurHash3
+   * implementation. *)
   let strings = [""; "hello"; "hello_goodbye"; "<_>"; "«»"; "‡"; "𐆗"] in
   test strings;
   printf "@]";

@@ -1,6 +1,6 @@
 open Rudiments
 
-(** Set.  Note that O(1) time complexity for various unordered set operations
+(** Set. Note that O(1) time complexity for various unordered set operations
     assumes a collision-free hash function; beware that a degenerate hash
     function which collides for all inputs results in O(n) time complexity. *)
 module type S = sig
@@ -18,8 +18,8 @@ module type S = sig
 
   val hash_fold: ('a, 'cmp) t -> Hash.State.t -> Hash.State.t
   (** [hash_fold t state] incorporates the hash of [t] into [state] and returns
-      the resulting state.  Set members are stably hash-folded into the
-      resulting state via the type's comparator [hash_fold] function. *)
+      the resulting state. Set members are stably hash-folded into the resulting
+      state via the type's comparator [hash_fold] function. *)
 
   val cmper_m: ('a, 'cmp) t -> ('a, 'cmp) cmper
   (** [cmper_m t] returns a first class module that can be used to build other
@@ -45,8 +45,7 @@ module type S = sig
   (** {1 Length} *)
 
   val length: ('a, 'cmp) t -> usize
-  (** [length t] returns the number of elements in [t].  O(1) time
-      complexity. *)
+  (** [length t] returns the number of elements in [t]. O(1) time complexity. *)
 
   val is_empty: ('a, 'cmp) t -> bool
   (** [is_empty t] returns [true] if [t] has no elements; [false] otherwise.
@@ -68,31 +67,31 @@ module type S = sig
 
   val insert: 'a -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [insert elm t] returns a set that is equivalent to the union of a
-      singleton set containing [elm] with [t].  O(lg n) time complexity if
+      singleton set containing [elm] with [t]. O(lg n) time complexity if
       ordered, O(1) time complexity if unordered. *)
 
   val remove: 'a -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [remove a t] returns a set that is equivalent to the difference of [t]
-      relative to the singleton set containing [a].  O(lg n) time complexity if
+      relative to the singleton set containing [a]. O(lg n) time complexity if
       ordered, O(1) time complexity if unordered. *)
 
   (** {1 Set operations} *)
 
   val equal: ('a, 'cmp) t -> ('a, 'cmp) t -> bool
   (** [equal t0 t1] returns [true] if [t0] and [t1] contain identical sets of
-      elements, [false] otherwise.  O(n) time complexity. *)
+      elements, [false] otherwise. O(n) time complexity. *)
 
   val subset: ('a, 'cmp) t -> ('a, 'cmp) t -> bool
   (** [subset t0 t1] returns [true] if all elements in [t1] are also in [t0],
-      [false] otherwise.  O(n) time complexity. *)
+      [false] otherwise. O(n) time complexity. *)
 
   val disjoint: ('a, 'cmp) t -> ('a, 'cmp) t -> bool
   (** [disjoint t0 t1] returns [true] if [t0] and [t1] contain disjoint sets of
-      elements, [false] otherwise.  O(n) time complexity. *)
+      elements, [false] otherwise. O(n) time complexity. *)
 
   val union: ('a, 'cmp) t -> ('a, 'cmp) t -> ('a, 'cmp) t
-  (** [union t0 t1] creates a set that is the union of [t0] and [t1]; that is,
-      a set that contains all elements in [t0] or [t1].  O(m lg (n/m + 1)) time
+  (** [union t0 t1] creates a set that is the union of [t0] and [t1]; that is, a
+      set that contains all elements in [t0] or [t1]. O(m lg (n/m + 1)) time
       complexity if ordered, where m and n are the input set lengths and m <= n;
       Θ(m+n) time complexity if unordered. *)
 
@@ -105,7 +104,7 @@ module type S = sig
   val diff: ('a, 'cmp) t -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [diff t0 t1] creates a set that is the difference of t0 relative to t1;
       that is, a set that contains all elements present in [t0] but not present
-      in [t1].  O(m lg (n/m + 1)) time complexity if ordered, where m and n are
+      in [t1]. O(m lg (n/m + 1)) time complexity if ordered, where m and n are
       the input set lengths and m <= n; Θ(m+n) time complexity if unordered. *)
 
   (** {1 Folding, mapping, filtering, and reducing} *)
@@ -149,7 +148,7 @@ module type S = sig
       which [f] returns [Some b], or [None] if [f] always returns [None]. *)
 
   val filter: f:('a -> bool) -> ('a, 'cmp) t -> ('a, 'cmp) t
-  (** [filter ~f t] creates a set with contents filtered by [~f].  Only elements
+  (** [filter ~f t] creates a set with contents filtered by [~f]. Only elements
       for which the filter function returns [true] are incorporated into the
       result. *)
 
@@ -160,13 +159,13 @@ module type S = sig
 
   val reduce: f:('a -> 'a -> 'a) -> ('a, 'cmp) t -> 'a option
   (** [reduce ~f t] reduces [t] to a single value, or [None] if the set is
-      empty.  The reduction function is assumed to be associative; thus
-      reduction order is unspecified. *)
+      empty. The reduction function is assumed to be associative; thus reduction
+      order is unspecified. *)
 
   val reduce_hlt: f:('a -> 'a -> 'a) -> ('a, 'cmp) t -> 'a
   (** [reduce_hlt ~f t] reduces [t] to a single value, or halts if the set is
-      empty.  The reduction function is assumed to be associative; thus
-      reduction order is unspecified. *)
+      empty. The reduction function is assumed to be associative; thus reduction
+      order is unspecified. *)
 
   include Seq_intf.S_poly2_fold2
     with type ('a, 'cmp) t := ('a, 'cmp) t
@@ -194,9 +193,9 @@ module type S_ord = sig
 
   (** {1 Cursor} *)
 
-  (** Cursor that supports arbitrary set member access.  [hd], [tl], [seek],
+  (** Cursor that supports arbitrary set member access. [hd], [tl], [seek],
       [succ], and [pred] are O(lg n), but complete traversals via [succ] or
-      [pred] are amortized O(1) per call.  [lget], [rget], [container], and
+      [pred] are amortized O(1) per call. [lget], [rget], [container], and
       [index] are O(1). *)
   module Cursor : sig
     type ('a, 'cmp) container = ('a, 'cmp) t
@@ -230,7 +229,7 @@ module type S_ord = sig
 
   val search: 'a -> ('a, 'cmp) t -> usize option
   (** [search a t] returns [(Some index)] if [a] is a member of [t]; [None]
-      otherwise.  O(lg n) time complexity if ordered, O(1) time complexity if
+      otherwise. O(lg n) time complexity if ordered, O(1) time complexity if
       unordered. *)
 
   val nsearch: 'a -> ('a, 'cmp) t -> (Cmp.t * usize) option
@@ -246,12 +245,12 @@ module type S_ord = sig
   (** {1 Set operations} *)
 
   val cmp: ('a, 'cmp) t -> ('a, 'cmp) t -> Cmp.t
-  (** [cmp t0 t1] compares [t0] and [t1].  O(m+n) time complexity, where m and n
+  (** [cmp t0 t1] compares [t0] and [t1]. O(m+n) time complexity, where m and n
       are the input set lengths. *)
 
   val split: 'a -> ('a, 'cmp) t -> ('a, 'cmp) t * 'a option * ('a, 'cmp) t
-  (** [split a t] tripartitions [t] into elements \{<,=,>\} [a],
-      respectively. *)
+  (** [split a t] tripartitions [t] into elements \{<,=,>\} [a], respectively.
+  *)
 
   (** {1 Folding, mapping, and filtering} *)
 
@@ -259,8 +258,8 @@ module type S_ord = sig
     -> ('a, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum,
-      false]. *)
+      true], or until folding is complete if [f] always returns [accum, false].
+  *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
     -> ('a, 'cmp) t -> 'accum
@@ -293,7 +292,7 @@ module type S_ord = sig
       [None] if [f] always returns [None]. *)
 
   val filteri: f:(usize -> 'a -> bool) -> ('a, 'cmp) t -> ('a, 'cmp) t
-  (** [filter ~f t] creates a set with contents filtered by [~f].  Only elements
+  (** [filter ~f t] creates a set with contents filtered by [~f]. Only elements
       for which the filter function returns [true] are incorporated into the
       result. *)
 

@@ -777,8 +777,8 @@ let search_impl ?base ?past key ~cmp mode t =
                     | true ->
                       Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
                     | false ->
-                      Some (Cmp.Gt, pred base) (* In interior;
-                                                         key > predecessor. *)
+                      Some (Cmp.Gt, pred base) (* In interior; key >
+                                                * predecessor. *)
                   end
                 | Cmp.Eq -> Some (Cmp.Eq, base) (* base at leftmost match. *)
                 | Cmp.Gt -> not_reached ()
@@ -799,8 +799,8 @@ let search_impl ?base ?past key ~cmp mode t =
                 | Cmp.Eq -> Some (Cmp.Eq, probe) (* probe at rightmost match. *)
                 | Cmp.Gt -> begin
                     match (base = (length t)) with
-                    | false -> Some (Cmp.Lt, base) (* In interior;
-                                                      key < successor. *)
+                    | false -> Some (Cmp.Lt, base) (* In interior; key <
+                                                    * successor. *)
                     | true -> Some (Cmp.Gt, probe) (* Past end; key > elms. *)
                   end
               end
@@ -845,7 +845,7 @@ module Array_foldi_map = struct
       length: usize;
     }
     (* val init: 'a /arr outer -> (usize -> 'accum -> 'a >e-> 'accum * 'b)
-         -> usize -> ('a, /arr, >e) ['accum, 'b] t *)
+     *   -> usize -> ('a, /arr, >e) ['accum, 'b] t *)
     let init arr ~f length =
       {arr; f; length; index=0}
 
@@ -854,7 +854,7 @@ module Array_foldi_map = struct
       t.length
 
     (* val next: ('a, /arr, >e) ['accum, 'b] t
-         >e-> 'a * ('a, /arr, >e) ['accum, 'b] t * 'accum *)
+     *   >e-> 'a * ('a, /arr, >e) ['accum, 'b] t * 'accum *)
     let next t accum =
       let accum', elm' = t.f t.index accum (get t.index t.arr) in
       let t' = {t with index=succ t.index} in
@@ -960,8 +960,8 @@ module Array_foldi2_map = struct
     }
 
     (* val init: 'a /m outer -> 'b /n outer
-         -> f:(usize -> 'accum -> 'a -> 'b -> >e-> 'accum * 'c)
-         -> ('a, /m, 'b, /n, >e) ['accum, 'c] t *)
+     *   -> f:(usize -> 'accum -> 'a -> 'b -> >e-> 'accum * 'c)
+     *   -> ('a, /m, 'b, /n, >e) ['accum, 'c] t *)
     let init arr0 arr1 ~f =
       {arr0; arr1; f; index=0}
 
@@ -970,7 +970,7 @@ module Array_foldi2_map = struct
       length t.arr0
 
     (* val next: ('a, /m, 'b, /n, >e) ['accum, 'c] t -> 'accum
-         -> 'c * ('a, /m, 'b, /n, >e) ['accum, 'c] t * 'accum *)
+     *   -> 'c * ('a, /m, 'b, /n, >e) ['accum, 'c] t * 'accum *)
     let next t accum =
       let accum', elm' =
         t.f t.index accum (get t.index t.arr0) (get t.index t.arr1) in

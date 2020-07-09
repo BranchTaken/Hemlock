@@ -24,7 +24,7 @@ module State = struct
       (* Number of u128 blocks folded. *)
       nfolded: usize;
       (* The bottom nrem bytes of rem are remainder bytes that have yet to be
-         hashed, and the top pad bytes are always zeroed. *)
+       * hashed, and the top pad bytes are always zeroed. *)
       rem: u128;
       nrem: usize;
     }
@@ -213,7 +213,7 @@ let%expect_test "hash_fold_u128" =
       end
   end in
   (* These test inputs were manually verified against the reference
-     MurmurHash3 implementation. *)
+   * MurmurHash3 implementation. *)
   let u128s_list = [
     [||];
 
@@ -279,7 +279,7 @@ let%expect_test "hash_fold_u8" =
       end
   end in
   (* These test inputs were manually verified against the reference
-     MurmurHash3 implementation. *)
+   * MurmurHash3 implementation. *)
   let u8s_list = [
     [||];
 

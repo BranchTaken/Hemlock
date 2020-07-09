@@ -39,10 +39,10 @@ type i2 = I2.t
 (* Functions. *)
 
 val not_reached: unit -> 'a
-(** Hypothetically unreachable code.  [not_reached] halts if called. *)
+(** Hypothetically unreachable code. [not_reached] halts if called. *)
 
 val not_implemented: string -> 'a
-(** Placeholder for unimplemented code.  [not_implemented] halts if called. *)
+(** Placeholder for unimplemented code. [not_implemented] halts if called. *)
 
 val halt: string -> 'a
 (** [halt s] prints [s] to [stderr] and halts the actor. *)

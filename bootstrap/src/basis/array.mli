@@ -5,7 +5,7 @@ include Container_common_intf.S_poly_fold with type 'a t := 'a t
 
 include Formattable_intf.S_poly with type 'a t := 'a t
 
-(** Cursor that supports arbitrary array element access.  All operations are
+(** Cursor that supports arbitrary array element access. All operations are
     O(1). *)
 module Cursor : sig
   type 'a container = 'a t
@@ -19,11 +19,11 @@ end
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
   -> Hash.State.t
 (** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
-    and returns the resulting state.  Array elements are sequentially
-    hash-folded into the resulting state via [hash_fold_a]. *)
+    and returns the resulting state. Array elements are sequentially hash-folded
+    into the resulting state via [hash_fold_a]. *)
 
 val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
-(** Compare two arrays given the element comparison function.  The array lengths
+(** Compare two arrays given the element comparison function. The array lengths
     may differ. *)
 
 module Seq : sig
@@ -84,16 +84,15 @@ module Seq : sig
 end
 
 val init: usize -> f:(usize -> 'a) -> 'a t
-(** Initialize array.  [init len ~f:(fun i -> ...)] initializes an array of
-    given length, where [f] provides the value for each element at given index.
-*)
+(** Initialize array. [init len ~f:(fun i -> ...)] initializes an array of given
+    length, where [f] provides the value for each element at given index. *)
 
 val of_list: ?length:usize -> 'a list -> 'a t
-(** Initialize array using contents of list.  If specified, [?length] must equal
+(** Initialize array using contents of list. If specified, [?length] must equal
     [(List.length list)]. *)
 
 val of_list_rev: ?length:usize -> 'a list -> 'a t
-(** Initialize array using reversed contents of list.  If specified, [?length]
+(** Initialize array using reversed contents of list. If specified, [?length]
     must equal [(List.length list)]. *)
 
 val length: 'a t -> usize
@@ -103,16 +102,16 @@ val is_empty: 'a t -> bool
 (** Return [true] if array length is 0; [false] otherwise. *)
 
 val get: usize -> 'a t -> 'a
-(** Get array element.  [get i t] returns the element at index [i]. *)
+(** Get array element. [get i t] returns the element at index [i]. *)
 
 val set_inplace: usize -> 'a -> 'a t -> unit
-(** Set array element in place (mutate).  [set_inplace i elm t] sets the element
+(** Set array element in place (mutate). [set_inplace i elm t] sets the element
     at index [i] to [elm]. *)
 
 val set: usize -> 'a -> 'a t -> 'a t
-(** Create a new array based on input array, differing in one element.
-    [set i elm t] creates an array equal to [t], except that element [i] is
-    initialized to [elm]. *)
+(** Create a new array based on input array, differing in one element. [set i
+    elm t] creates an array equal to [t], except that element [i] is initialized
+    to [elm]. *)
 
 val copy: 'a t -> 'a t
 (** Create a copy of an array. *)
@@ -149,7 +148,7 @@ val reduce: f:('a -> 'a -> 'a) -> 'a t -> 'a option
     unspecified. *)
 
 val reduce_hlt: f:('a -> 'a -> 'a) -> 'a t -> 'a
-(** Reduce the array to a single value, or halt if the array is empty.  The
+(** Reduce the array to a single value, or halt if the array is empty. The
     reduction function is assumed to be associative; thus reduction order is
     unspecified. *)
 
@@ -167,9 +166,9 @@ val rev: 'a t -> 'a t
 (** Create an array with contents reversed relative to the input array. *)
 
 val blit: usize -> usize -> 'a t -> usize -> 'a t -> unit
-(** Set a range of elements in place (mutate).  [blit len i0 t0 i1 t1] sets the
+(** Set a range of elements in place (mutate). [blit len i0 t0 i1 t1] sets the
     elements of [t1] at [\[i1..i1+len)] to equal the elements of [t0] at
-    [\[i0..i0+len)].  Overlapping ranges are supported: [t0] and [t1] may refer
+    [\[i0..i0+len)]. Overlapping ranges are supported: [t0] and [t1] may refer
     to the same or different arrays; [i0] and [i1] may have arbitrary
     relationship. *)
 
@@ -183,7 +182,7 @@ val sort_inplace: ?stable:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> unit
 
 val sort: ?stable:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Create an array with sorted contents of the input array according to the
-    comparison function.  Preserve order of equivalent elements if [?stable] is
+    comparison function. Preserve order of equivalent elements if [?stable] is
     [true]. *)
 
 val psearch: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
@@ -199,8 +198,8 @@ val psearch: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
 
 val search: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
   -> usize option
-(** Binary search for key in array.  If key is found, return [(Some index)],
-    otherwise return [None].  Note that if more than one element matches key, an
+(** Binary search for key in array. If key is found, return [(Some index)],
+    otherwise return [None]. Note that if more than one element matches key, an
     arbitrary match is returned. *)
 
 val nsearch: ?base:usize -> ?past:usize -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t
@@ -233,12 +232,12 @@ val foldi_map: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * 'b) -> 'a t
     array, according to the indexed folding mapping function. *)
 
 val filter: f:('a -> bool) -> 'a t -> 'a t
-(** Create an array with contents filtered by the given function.  Only elements
+(** Create an array with contents filtered by the given function. Only elements
     for which the filter function returns [true] are incorporated into the
     result. *)
 
 val filteri: f:(usize -> 'a -> bool) -> 'a t -> 'a t
-(** Create an array with contents filtered by the given function.  Only elements
+(** Create an array with contents filtered by the given function. Only elements
     for which the indexed filter function returns [true] are incorporated into
     the result. *)
 

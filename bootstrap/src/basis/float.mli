@@ -66,15 +66,15 @@ val mantissa: t -> usize
     0xf_ffff_ffff_ffff\]]. *)
 
 val m2x: t -> t * isize
-(** [m2x t] splits [t] into a normalized fraction [f] and exponent [x], where
-    [t = f*2^x]. *)
+(** [m2x t] splits [t] into a normalized fraction [f] and exponent [x], where [t
+    = f*2^x]. *)
 
 val f2x: p:isize -> t -> t
 (** [f2x ~p t] computes [t*2^~p]. *)
 
 val modf: t -> Parts.t
-(** [modf t] splits decomposes [t] into the fractional value and integral
-    value which sum to [t].  See {!module:Parts} for further detail. *)
+(** [modf t] splits decomposes [t] into the fractional value and integral value
+    which sum to [t]. See {!module:Parts} for further detail. *)
 
 val min_value: t
 (** Minimum representable value. *)
@@ -135,7 +135,7 @@ val copysign: sign:t -> t -> t
     the sign of [~sign]. *)
 
 val classify: t -> Class.t
-(** Numeric class.  See {!module:Class} for further detail. *)
+(** Numeric class. See {!module:Class} for further detail. *)
 
 val is_nan: t -> bool
 (** [is_nan t] returns [true] if [t] is not a number. *)
@@ -147,7 +147,7 @@ val is_fin: t -> bool
 (** [is_fin t] returns [true] if [t] is finite. *)
 
 val round: ?dir:Dir.t -> t -> t
-(** [round ~dir t] rounds [t] in the specified direction.  [dir] defaults to
+(** [round ~dir t] rounds [t] in the specified direction. [dir] defaults to
     [Nearest]. *)
 
 val min: t -> t -> t
@@ -175,25 +175,25 @@ val log: t -> t
 (** Base 10 logarithm. *)
 
 val pow: p:t -> t -> t
-(** [pow ~p t] returns [t] raised to the [~p] power.  Equivalent to [t ** ~p].
+(** [pow ~p t] returns [t] raised to the [~p] power. Equivalent to [t ** ~p].
 *)
 
 val int_pow: p:isize -> t -> t
 (** [int_pow ~p t] returns [t] raised to the [~p] power, where [~p] is an
-    {!type:isize}.  [int_pow] is typically faster than the equivalent call to
+    {!type:isize}. [int_pow] is typically faster than the equivalent call to
     {!pow}. *)
 
 val lngamma: t -> t
 (** [lngamma t] computes the natural log of the {{:
     https://en.wikipedia.org/wiki/Gamma_function} Gamma} function applied to
-    [t], accurate to 10 decimal places.  This implementation is based on:
+    [t], accurate to 10 decimal places. This implementation is based on:
 
-    Pike, M.C., I.D. Hill (1966) Algorithm 291: Logarithm of Gamma
-    function \[S14\].  Communications of the ACM 9(9):684. *)
+    Pike, M.C., I.D. Hill (1966) Algorithm 291: Logarithm of Gamma function
+    \[S14\]. Communications of the ACM 9(9):684. *)
 
 val gamma: t -> t
-(** [gamma t] applies the {{:
-    https://en.wikipedia.org/wiki/Gamma_function} Gamma} function to [t]. *)
+(** [gamma t] applies the {{: https://en.wikipedia.org/wiki/Gamma_function}
+    Gamma} function to [t]. *)
 
 val sqrt: t -> t
 (** Square root. *)
@@ -224,8 +224,8 @@ val atan: t -> t
 (** [atan t] computes the arc tangent of [t] in radians. *)
 
 val atan2: t -> t -> t
-(** [atan2 t0 t1] computes the arc tangent of [t0 / t1], where the signs of
-    [t1] and [t0] determine the quadrant of the result. *)
+(** [atan2 t0 t1] computes the arc tangent of [t0 / t1], where the signs of [t1]
+    and [t0] determine the quadrant of the result. *)
 
 val sinh: t -> t
 (** [sinh t] computes the hyperbolic sine of [t]. *)

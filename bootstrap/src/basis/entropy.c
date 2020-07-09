@@ -25,8 +25,8 @@ value_of_result(const char *arg) {
 }
 
 // The OCaml FFI is quite low-level, such that returning (Int64.t option) is a
-// lot of trouble relative to returning an array.  As a consequence this
-// function returns an empty array to indicate error.
+// lot of trouble relative to returning an array. As a consequence this function
+// returns an empty array to indicate error.
 //
 //                            nbits -> [|entropy...|]
 // val hemlock_entropy_nbits: usize -> Int64.t array

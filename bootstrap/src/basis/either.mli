@@ -15,14 +15,14 @@ val hash_fold: ('a -> Hash.State.t -> Hash.State.t)
   -> ('b -> Hash.State.t -> Hash.State.t) -> ('a, 'b) t -> Hash.State.t
   -> Hash.State.t
 (** [hash_fold hash_fold_a hash_fold_b t state] incorporates the hash of [t]
-    into [state] and returns the resulting state.  [First a] is hash-folded into
+    into [state] and returns the resulting state. [First a] is hash-folded into
     the resulting state via [hash_fold_a]; [Second b] is hash-folded into the
     resulting state via [hash_fold_b]. *)
 
 val cmp: ('a -> 'a -> Cmp.t) -> ('b -> 'b -> Cmp.t) -> ('a, 'b) t -> ('a, 'b) t
   -> Cmp.t
 (** [cmp cmp_a cmp_b t0 t1] compares [t0] and [t1] using the provided comparison
-    functions.  [First a] is less than all [Second] values. *)
+    functions. [First a] is less than all [Second] values. *)
 
 include Formattable_intf.S_poly2 with type ('a, 'b) t := ('a, 'b) t
 

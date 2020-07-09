@@ -1,16 +1,16 @@
 # Hemlock
 
 Hemlock is a programming language in the [ML
-family](https://en.wikipedia.org/wiki/ML_(programming_language)) that
-emphasizes reliable high performance parallel computation.  Hemlock synthesizes
-the expressive type and module systems of [OCaml](http://ocaml.org/), a
-unified parametric effects/mutability/type system, and the shared-nothing
-message-passing parallelism of [Erlang](https://erlang.org/),
+family](https://en.wikipedia.org/wiki/ML_(programming_language)) that emphasizes
+reliable high performance parallel computation. Hemlock synthesizes the
+expressive type and module systems of [OCaml](http://ocaml.org/), a unified
+parametric effects/mutability/type system, and the shared-nothing
+message-passing parallelism of [Erlang](https://erlang.org/).
 
 ## Getting Started
 
 Hemlock is a work in progress, and is not yet self hosting (i.e. it is written
-in OCaml rather than Hemlock).  As such, Hemlock may interest researchers and
+in OCaml rather than Hemlock). As such, Hemlock may interest researchers and
 programming language developers, but it is not yet suited for any sort of
 production use.
 
@@ -19,7 +19,7 @@ production use.
 The bootstrap compiler depends on [OCaml](http://ocaml.org/) and the
 [Dune](https://dune.build/) build system, as well as several ppx rewriters.
 [opam](https://opam.ocaml.org/) is the recommended mechanism for installing and
-maintaining an OCaml development environment.  To install the necessary
+maintaining an OCaml development environment. To install the necessary
 dependencies into an existing opam repository, run
 
 ```sh
