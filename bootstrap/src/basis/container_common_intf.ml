@@ -33,7 +33,7 @@ module type S_mono_length = sig
 end
 
 (** Folding-related functor output signature for monomorphic containers, e.g.
-    {!type:string}.  Operations rely on cursor iterators, which should be
+    {!type:string}. Operations rely on cursor iterators, which should be
     implemented with O(1) iteration to avoid e.g. O(n^2) folding overhead. *)
 module type S_mono_fold = sig
   type t
@@ -52,8 +52,8 @@ module type S_mono_fold = sig
     -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum,
-      false]. *)
+      true], or until folding is complete if [f] always returns [accum, false].
+  *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> elm -> 'accum * bool)
     -> t -> 'accum
@@ -145,8 +145,8 @@ module type S_mono_mem = sig
   (** Element type. *)
 
   val mem: elm -> t -> bool
-  (** [mem elm t] returns [true] if [elm] is a member of [t]; [false]
-      otherwise. *)
+  (** [mem elm t] returns [true] if [elm] is a member of [t]; [false] otherwise.
+  *)
 end
 
 (* Polymorphic container, e.g. ('a list). *)
@@ -180,7 +180,7 @@ module type S_poly_length = sig
 end
 
 (** {!module:S_poly_length_gen} is equivalent to {!module:S_poly_length}, except
-    that {!type:'a elm} is explicit.  This near-identical signature exists
+    that {!type:'a elm} is explicit. This near-identical signature exists
     exclusively to enable functor implementation. *)
 module type S_poly_length_gen = sig
   type 'a t
@@ -190,7 +190,7 @@ module type S_poly_length_gen = sig
 end
 
 (** Folding-related functor output signature for polymorphic containers, e.g.
-    {!type:'a list}.  Operations rely on cursor iterators, which should be
+    {!type:'a list}. Operations rely on cursor iterators, which should be
     implemented with O(1) iteration to avoid e.g. O(n^2) folding overhead. *)
 module type S_poly_fold = sig
   type 'a t
@@ -206,8 +206,8 @@ module type S_poly_fold = sig
     -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum,
-      false]. *)
+      true], or until folding is complete if [f] always returns [accum, false].
+  *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
     -> 'a t -> 'accum
@@ -284,7 +284,7 @@ module type S_poly_fold = sig
 end
 
 (** {!module:S_poly_fold_gen} is equivalent to {!module:S_poly_fold}, except
-    that {!type:'a elm} is explicit.  This near-identical signature exists
+    that {!type:'a elm} is explicit. This near-identical signature exists
     exclusively to enable functor implementation. *)
 module type S_poly_fold_gen = sig
   type 'a t
@@ -335,8 +335,8 @@ module type S_poly_mem = sig
 end
 
 (** {!module:S_poly_mem_gen} is equivalent to {!module:S_poly_mem}, except that
-    {!type:'a elm} is explicit.  This near-identical signature exists
-    exclusively to enable functor implementation. *)
+    {!type:'a elm} is explicit. This near-identical signature exists exclusively
+    to enable functor implementation. *)
 module type S_poly_mem_gen = sig
   type 'a t
   type 'a elm

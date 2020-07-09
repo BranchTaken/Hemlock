@@ -4,7 +4,7 @@ type 'a t =
   usize * 'a Stream.t * 'a Stream.t * usize * 'a Stream.t * 'a Stream.t
 
 (* Increment size for rebuilding; must be either 2 or 3. Reference: Double-ended
-   queues section in Purely Functional Data Structures by Chris Okasaki. *)
+ * queues section in Purely Functional Data Structures by Chris Okasaki. *)
 let c = 2
 
 let empty = (

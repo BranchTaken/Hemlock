@@ -1,6 +1,6 @@
-(** UTF-8-encoded code point.  This module provides mechanisms for validated
+(** UTF-8-encoded code point. This module provides mechanisms for validated
     encoding conversion between code points and bytes, but is intended for
-    ephemeral use.  Most operations on code points are performed via the
+    ephemeral use. Most operations on code points are performed via the
     {!type:codepoint} and {!type:string} types. *)
 
 open Rudiments
@@ -53,5 +53,5 @@ val to_string: t -> string
 (** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
 
 val escape: t -> string
-(** [escape t] returns a syntactically valid UTF-8-encoded string
-    representation of [t]. *)
+(** [escape t] returns a syntactically valid UTF-8-encoded string representation
+    of [t]. *)

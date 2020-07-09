@@ -7,7 +7,7 @@ include Container_common_intf.S_poly_fold with type 'a /t t := 'a /t t
 include Formattable_intf.S_poly with type 'a /t t := 'a /t t
 
 (** Cursor that supports arbitrary array element access.  All operations are
-    O(1). *)
+  * O(1). *)
 module Cursor : sig
   type 'a /c container = 'a /c t
   type 'a /t t

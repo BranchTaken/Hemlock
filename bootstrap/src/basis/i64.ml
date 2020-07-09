@@ -47,7 +47,7 @@ let to_string t =
 
 let of_float f =
   (* OCaml handles overflow poorly, but this deficiency has no anticipated
-     impact on bootstrapping. *)
+   * impact on bootstrapping. *)
   Int64.of_float f
 
 let to_float t =

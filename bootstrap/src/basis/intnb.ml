@@ -161,7 +161,7 @@ module Make_common (T : I_common) : S_common with type t := usize = struct
 
     let of_float f =
       (* OCaml handles overflow poorly, but this deficiency has no anticipated
-         impact on bootstrapping. *)
+       * impact on bootstrapping. *)
       match T.signed || (f >= 0.) with
       | true -> narrow (int_of_float f)
       | false -> 0
