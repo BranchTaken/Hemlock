@@ -594,8 +594,8 @@ let%expect_test "fold_until" =
   let test ms = begin
     let ordset = of_list (module Usize) ms in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct set member.
-       The size of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct set member.
+     * The size of the triangle is insensitive to fold order. *)
     assert ((List.length ms) = (length ordset));
     let n = length ordset in
     let triangle_sum = List.fold ms ~init:0 ~f:(fun accum m ->
@@ -624,8 +624,8 @@ let%expect_test "fold_right_until" =
   let test ms = begin
     let ordset = of_list (module Usize) ms in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct set member.
-       The size of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct set member.
+     * The size of the triangle is insensitive to fold order. *)
     assert ((List.length ms) = (length ordset));
     let n = length ordset in
     let triangle_sum = List.fold ms ~init:0 ~f:(fun accum m ->
@@ -657,8 +657,8 @@ let%expect_test "fold2_until" =
     let ordset = union ordset0 ordset1 in
     let ms = to_list ordset in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct set member.
-       The size of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct set member.
+     * The size of the triangle is insensitive to fold order. *)
     assert ((List.length ms) = (length ordset));
     let n = length ordset in
     let triangle_sum = List.fold ms ~init:0 ~f:(fun accum m ->

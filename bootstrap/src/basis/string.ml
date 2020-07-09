@@ -1866,8 +1866,8 @@ let%expect_test "hash_fold" =
         test strs'
       end
   end in
-  (* These test inputs were manually verified against the reference
-     MurmurHash3 implementation. *)
+  (* These test inputs were manually verified against the reference MurmurHash3
+   * implementation. *)
   let strings = [""; "hello"; "hello_goodbye"; "<_>"; "«»"; "‡"; "𐆗"] in
   test strings;
   printf "@]";

@@ -21,8 +21,8 @@ type t = string
 include Identifiable_intf.S with type t := t
 include Stringable_intf.S with type t := t
 
-(** Cursor that supports O(1) arbitrary access to codepoints, given byte
-    index.  The codepoint index is not tracked. *)
+(** Cursor that supports O(1) arbitrary access to codepoints, given byte index.
+    The codepoint index is not tracked. *)
 module Cursor : sig
   type outer = t
 
@@ -237,8 +237,7 @@ module Slice : sig
       Knuth-Morris-Pratt algorithm}.  Patterns are uninterpreted codepoint
       sequences.  Searches require at most a single pass over the input,
       regardless of whether finding one or more (optionally overlapping)
-      matches.
-  *)
+      matches. *)
   module Pattern : sig
     type outer = t
 
@@ -327,8 +326,8 @@ module Slice : sig
 
   val split_fold: init:'accum -> on:(codepoint -> bool)
     -> f:('accum -> slice -> 'accum) -> t -> 'accum
-  (** [split_fold ~init ~on ~f t] splits [t] on [on] into slices, which
-      [f] folds in left to right order based on initial value [init]. *)
+  (** [split_fold ~init ~on ~f t] splits [t] on [on] into slices, which [f]
+      folds in left to right order based on initial value [init]. *)
 
   val split_fold_right: init:'accum -> on:(codepoint -> bool)
     -> f:(slice -> 'accum -> 'accum) -> t -> 'accum
@@ -468,8 +467,8 @@ val filter: f:(codepoint -> bool) -> t -> t
     codepoints for which [f] returns [true] are incorporated into the result. *)
 
 val concat: ?sep:t -> t list -> t
-(** [concat ~sep strings] creates a string comprised of the concatenation of
-    the [strings] list, with [sep] interposed between the inputs. *)
+(** [concat ~sep strings] creates a string comprised of the concatenation of the
+    [strings] list, with [sep] interposed between the inputs. *)
 
 val concat_rev: ?sep:t -> t list -> t
 (** [concat_rev ~sep strings] creates a string comprised of the concatenation of
@@ -511,8 +510,8 @@ val rfind: ?base:Cursor.t -> ?past:Cursor.t -> codepoint -> t
     [None] if [cp] is absent. *)
 
 val rfind_hlt: ?base:Cursor.t -> ?past:Cursor.t -> codepoint -> t -> Cursor.t
-(** [rfind_hlt cp t] returns a cursor to the rightmost instance of [cp] in
-    [t], or halts if [cp] is absent. *)
+(** [rfind_hlt cp t] returns a cursor to the rightmost instance of [cp] in [t],
+    or halts if [cp] is absent. *)
 
 val substr_find: ?base:Cursor.t -> pattern:t -> t -> Cursor.t option
 (** [substr_find ~base ~pattern t] returns a cursor to the leftmost [pattern]

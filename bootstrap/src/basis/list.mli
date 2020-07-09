@@ -35,8 +35,8 @@ end
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
   -> Hash.State.t
 (** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state]
-    and returns the resulting state.  List elements are sequentially
-    hash-folded into the resulting state via [hash_fold_a]. *)
+    and returns the resulting state.  List elements are sequentially hash-folded
+    into the resulting state via [hash_fold_a]. *)
 
 val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
 (** Compare two lists using the element comparison function.  The list lengths
@@ -174,14 +174,14 @@ val groupi: break:(usize -> 'a -> 'a -> bool) -> 'a t -> 'a t t
     the given index.  Not tail-recursive. *)
 
 val rev_group: break:('a -> 'a -> bool) -> 'a t -> 'a t t
-(** [rev_group ~break t] is equivalent to
-    [fold (group t ~break) ~init:[] ~f:(fun gs g -> (rev g) :: gs)], except that
-    implementation is tail-recursive. *)
+(** [rev_group ~break t] is equivalent to [fold (group t ~break) ~init:[]
+    ~f:(fun gs g -> (rev g) :: gs)], except that implementation is
+    tail-recursive. *)
 
 val rev_groupi: break:(usize -> 'a -> 'a -> bool) -> 'a t -> 'a t t
-(** [rev_groupi ~break t] is equivalent to
-    [fold (groupi t ~break) ~init:[] ~f:(fun gs g -> (rev g) :: gs)], except
-    that implementation is tail-recursive. *)
+(** [rev_groupi ~break t] is equivalent to [fold (groupi t ~break) ~init:[]
+    ~f:(fun gs g -> (rev g) :: gs)], except that implementation is
+    tail-recursive. *)
 
 (** {1 Re-ordering, mapping, reducing, and filtering} *)
 
@@ -214,9 +214,8 @@ val dedup: ?length:usize -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 
 val rev_dedup: ?length:usize -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Sort list stably, remove subsequent duplicates in forward order, and reverse
-    elements relative to the input.  If specified, [?length] must equal
-    [(length list)].  [rev_dedup t ~cmp] is equivalent to
-    [rev (dedup t ~cmp)]. *)
+    elements relative to the input.  If specified, [?length] must equal [(length
+    list)].  [rev_dedup t ~cmp] is equivalent to [rev (dedup t ~cmp)]. *)
 
 val dedup_sorted: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Remove sebsequent adjacent duplicates in forward order. *)
@@ -227,13 +226,13 @@ val rev_dedup_sorted: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 
 val merge: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> 'a t
 (** Merge sorted input lists into a sorted output list.  For [(merge ~cmp t0
-    t1)], equal elements from [t0] precede those from [t1].  Not
-    tail-recursive. *)
+    t1)], equal elements from [t0] precede those from [t1].  Not tail-recursive.
+*)
 
 val rev_merge: cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> 'a t
-(** Merge sorted input lists into a reverse-sorted output list.  For
-    [(rev_merge ~cmp t0 t1)], equal elements from [t1] precede those from [t0].
-    [rev_merge ~cmp t0 t1] is equivalent to [rev (merge ~cmp t0 t1)]. *)
+(** Merge sorted input lists into a reverse-sorted output list.  For [(rev_merge
+    ~cmp t0 t1)], equal elements from [t1] precede those from [t0].  [rev_merge
+    ~cmp t0 t1] is equivalent to [rev (merge ~cmp t0 t1)]. *)
 
 val map: f:('a -> 'b) -> 'a t -> 'b t
 (** Create a list with elements mapped from the input list, according to the
@@ -254,7 +253,7 @@ val rev_mapi: f:(usize -> 'a -> 'b) -> 'a t -> 'b t
 val rev_map_concat: f:('a -> 'b) -> 'a t -> 'b t -> 'b t
 (** For [rev_map_concat ~f t0 t1], concatenate the reversed mapping of [t0] with
     [t1].  Equivalent to [rev_concat (map ~f t0) t1], except that the
-    implementation is tail-recursive.  *)
+    implementation is tail-recursive. *)
 
 val fold_map: init:'accum -> f:('accum -> 'a -> 'accum * 'b) -> 'a t
   -> 'accum * 'b t
@@ -328,17 +327,17 @@ val iteri2: f:(usize -> 'a -> 'b -> unit) -> 'a t -> 'b t -> unit
     visiting function in increasing index order. *)
 
 val map2: f:('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
-(** Create a list with elements mapped by the element mapping function from
-    the paired elements of two input lists. *)
+(** Create a list with elements mapped by the element mapping function from the
+    paired elements of two input lists. *)
 
 val mapi2: f:(usize -> 'a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 (** Create a list with elements mapped by the indexed element mapping function
     from the paired elements of two input lists. *)
 
 val rev_map2: f:('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
-(** Create a list with elements mapped by the element mapping function from
-    the paired elements of two input lists, and reverse the elements relative to
-    the input lists' associated order. *)
+(** Create a list with elements mapped by the element mapping function from the
+    paired elements of two input lists, and reverse the elements relative to the
+    input lists' associated order. *)
 
 val rev_mapi2: f:(usize -> 'a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 (** Create a list with elements mapped by the indexed element mapping function

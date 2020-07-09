@@ -66,15 +66,15 @@ val mantissa: t -> usize
     0xf_ffff_ffff_ffff\]]. *)
 
 val m2x: t -> t * isize
-(** [m2x t] splits [t] into a normalized fraction [f] and exponent [x], where
-    [t = f*2^x]. *)
+(** [m2x t] splits [t] into a normalized fraction [f] and exponent [x], where [t
+    = f*2^x]. *)
 
 val f2x: p:isize -> t -> t
 (** [f2x ~p t] computes [t*2^~p]. *)
 
 val modf: t -> Parts.t
-(** [modf t] splits decomposes [t] into the fractional value and integral
-    value which sum to [t].  See {!module:Parts} for further detail. *)
+(** [modf t] splits decomposes [t] into the fractional value and integral value
+    which sum to [t].  See {!module:Parts} for further detail. *)
 
 val min_value: t
 (** Minimum representable value. *)
@@ -192,8 +192,8 @@ val lngamma: t -> t
     function \[S14\].  Communications of the ACM 9(9):684. *)
 
 val gamma: t -> t
-(** [gamma t] applies the {{:
-    https://en.wikipedia.org/wiki/Gamma_function} Gamma} function to [t]. *)
+(** [gamma t] applies the {{: https://en.wikipedia.org/wiki/Gamma_function}
+    Gamma} function to [t]. *)
 
 val sqrt: t -> t
 (** Square root. *)
@@ -224,8 +224,8 @@ val atan: t -> t
 (** [atan t] computes the arc tangent of [t] in radians. *)
 
 val atan2: t -> t -> t
-(** [atan2 t0 t1] computes the arc tangent of [t0 / t1], where the signs of
-    [t1] and [t0] determine the quadrant of the result. *)
+(** [atan2 t0 t1] computes the arc tangent of [t0 / t1], where the signs of [t1]
+    and [t0] determine the quadrant of the result. *)
 
 val sinh: t -> t
 (** [sinh t] computes the hyperbolic sine of [t]. *)

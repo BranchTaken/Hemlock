@@ -1,7 +1,7 @@
 (** Lazy-evaluated immutable queue.
 
-     The q is an immutable queue container. All operations on q are amortized
-     via lazy execution and are O(1).
+    The q is an immutable queue container.  All operations on q are amortized
+    via lazy execution and are O(1).
 *)
 
 open Rudiments

@@ -1,30 +1,30 @@
 (* Hash array mapped trie (HAMT) implementation of maps.  See the following for
-   background information:
-
-   - [Ideal Hash
-     Trees](http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf)
-   - [Optimizing Hash-Array Mapped Tries for Fast and Lean Immutable JVM
-     Collections](http://michael.steindorfer.name/publications/oopsla15.pdf)
-
-   This implementation uses a canonical representation that results in stable
-   (but arbitrary) key ordering.  The canonical representation differs slightly
-   from that described in the referenced papers with regard to collisions.
-   Following is an informal description of canonical representation.
-
-   - No subtree is empty, with the single exception of a root node representing
-     an empty map.
-   - No subtree contains a single key, with the single exception of a root node
-     representing a singleton.
-   - Collisions are always stored as children (specially interpreted nodes) of
-     maximal-depth leaf nodes; their depth uniquely defines them as collisions,
-     as does their present_{kv,child} bitmaps.  Collisions could in principle be
-     stored closer to the root, but assuming a well defined hash function, doing
-     so would increase common-case complexity for the sake of an edge condition
-     that is already degenerate performance-wise.
-   - Collisions are stored in sorted order within each collision node.  This has
-     the side benefit of making key lookup degrade from O(1) to O(lg n) in the
-     presence of collisions (rather than O(n)), but the primary benefit is that
-     it improves coupled iteration performance. *)
+ * background information:
+ *
+ * - [Ideal Hash
+ *   Trees](http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf)
+ * - [Optimizing Hash-Array Mapped Tries for Fast and Lean Immutable JVM
+ *   Collections](http://michael.steindorfer.name/publications/oopsla15.pdf)
+ *
+ * This implementation uses a canonical representation that results in stable
+ * (but arbitrary) key ordering.  The canonical representation differs slightly
+ * from that described in the referenced papers with regard to collisions.
+ * Following is an informal description of canonical representation.
+ *
+ * - No subtree is empty, with the single exception of a root node representing
+ *   an empty map.
+ * - No subtree contains a single key, with the single exception of a root node
+ *   representing a singleton.
+ * - Collisions are always stored as children (specially interpreted nodes) of
+ *   maximal-depth leaf nodes; their depth uniquely defines them as collisions,
+ *   as does their present_{kv,child} bitmaps.  Collisions could in principle be
+ *   stored closer to the root, but assuming a well defined hash function, doing
+ *   so would increase common-case complexity for the sake of an edge condition
+ *   that is already degenerate performance-wise.
+ * - Collisions are stored in sorted order within each collision node.  This has
+ *   the side benefit of making key lookup degrade from O(1) to O(lg n) in the
+ *   presence of collisions (rather than O(n)), but the primary benefit is that
+ *   it improves coupled iteration performance. *)
 
 open Rudiments
 
@@ -32,7 +32,7 @@ open Rudiments
 module Bitset = U63
 
 (* Number of bits per HAMT level.  Bitset.t, which is used for node's
-   present_{kv,child} fields must have at least elms_per_level bits. *)
+ * present_{kv,child} fields must have at least elms_per_level bits. *)
 let bits_per_level = 5
 let elms_per_level = bit_sl ~shift:bits_per_level 1
 
@@ -44,22 +44,21 @@ let max_height = bits_per_hash / bits_per_level
 
 type ('k, 'v) node = {
   (* The present_{kv,child} bitmaps encode which node elements are non-empty.
-     Each node logically has elms_per_level elements, but only the non-empty
-     ones are stored in elms_{kv,child}.  The two bitmaps are non-intersecting
-     because each node element can only be a child *or* a key-value binding.
-
-     The tree is limited to max_height levels, but leaves may need to store
-     collisions.  Collisions are stored as nodes at depth max_height, but
-     they must be interpreted specially.  We set all bits in both bitmaps for
-     collision nodes so that code which does not track recursion depth can still
-     recognize collision nodes. *)
+   * Each node logically has elms_per_level elements, but only the non-empty
+   * ones are stored in elms_{kv,child}.  The two bitmaps are non-intersecting
+   * because each node element can only be a child *or* a key-value binding.
+   *
+   * The tree is limited to max_height levels, but leaves may need to store
+   * collisions.  Collisions are stored as nodes at depth max_height, but they
+   * must be interpreted specially.  We set all bits in both bitmaps for
+   * collision nodes so that code which does not track recursion depth can still
+   * recognize collision nodes. *)
   present_kv: Bitset.t;
   present_child: Bitset.t;
   (* Independent variable-length compressed element arrays, where the summed
-     length of the arrays is in [0..elms_per_level].  For example, if the least
-     significant bit of the present_kv bitmap is 1, then the corresponding
-     element of present_kv is at index 0, regardless of
-     {present,elms}_child. *)
+   * length of the arrays is in [0..elms_per_level].  For example, if the least
+   * significant bit of the present_kv bitmap is 1, then the corresponding
+   * element of present_kv is at index 0, regardless of {present,elms}_child. *)
   elms_kv: ('k * 'v) array;
   elms_child: ('k, 'v) node array;
 }
@@ -89,8 +88,8 @@ let cmper_m (type k cmp) t : (k, cmp) cmper =
 let m_cmper (type k cmp) ((module M) : (k, cmp) cmper) =
   M.cmper
 
-(* Given a key and a non-empty array of key-value pairs, synthesize a pair
-   of the form (k, _) to be used with k_cmp. *)
+(* Given a key and a non-empty array of key-value pairs, synthesize a pair of
+ * the form (k, _) to be used with k_cmp. *)
 let k__of_k_kvs k kvs =
   let _, v = Array.get 0 kvs in
   k, v
@@ -340,9 +339,9 @@ let insert_impl k ~f t =
                   | false -> node_of_collision cmper (k, v) (kx, vx)
                   | true -> begin
                       (* Create a subtree which tries to disambiguate the two
-                         keys.  In the worst case, this creates a chain of
-                         nodes linking to a leaf of maximal depth containing a
-                         collision. *)
+                       * keys.  In the worst case, this creates a chain of nodes
+                       * linking to a leaf of maximal depth containing a
+                       * collision. *)
                       let kx_hash = Hash.State.seed |> cmper.hash_fold kx
                                     |> Hash.t_of_state in
                       disambiguate (k, v) k_hash (kx, vx) kx_hash cmper
@@ -433,7 +432,7 @@ let remove_impl a ~f t =
       end
   end in
   (* Remove binding from node; remove node if no children and one binding
-     remaining. *)
+   * remaining. *)
   let remove_kv present_bit elms_kv_index node = begin
     match node.elms_kv, node.elms_child with
     | [|_; _|], [||] -> begin
@@ -488,7 +487,7 @@ let remove_impl a ~f t =
                         match child.elms_kv with
                         | [|_; _|] -> begin
                             (* No remaining collisions (single remaining
-                               binding). *)
+                             * binding). *)
                             let kv_index = match found_index with
                               | 0 -> 1
                               | 1 -> 0
@@ -595,8 +594,8 @@ let iter ~f t =
 
 let hash_fold hash_fold_v t state =
   (* Fold ordering is not stable for unequal maps, but order permutation does
-     increase risk of accidental collision for maps, because each key occurs
-     precisely once regardless of order. *)
+   * increase risk of accidental collision for maps, because each key occurs
+   * precisely once regardless of order. *)
   let n, state' = fold t ~init:(0, state) ~f:(fun (i, state) (k, v) ->
     (succ i),
     (
@@ -609,9 +608,9 @@ let hash_fold hash_fold_v t state =
   state' |> Usize.hash_fold n
 
 (* Seq.  Note that internal iteration via fold* traverses bindings, then
-   children, but that ordering is not stable, and cannot be used here.  External
-   iteration must do a stable in-order traversal, so that the orderings of
-   unequal maps are monotonic relative to their union. *)
+ * children, but that ordering is not stable, and cannot be used here.  External
+ * iteration must do a stable in-order traversal, so that the orderings of
+ * unequal maps are monotonic relative to their union. *)
 module Seq_poly3_fold2 = struct
   type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
   type 'k key = 'k
@@ -799,7 +798,7 @@ let disjoint t0 t1 =
 
 let union ~f t0 t1 =
   (* Initialize the union with the larger of the two input maps, in order to
-     minimize number of insertions. *)
+   * minimize number of insertions. *)
   let small, big = match Cmp.is_le (cmp (length t0) (length t1)) with
     | true -> t0, t1
     | false -> t1, t0
@@ -1067,8 +1066,8 @@ let validate t =
   assert ((fn t t.root 0) = t.length)
 
 (* Test comparator module for usize that uses unseeded hashing, with several
-   specially handled values for the purpose of collision testing.  This allows
-   deterministic hashing across test runs. *)
+ * specially handled values for the purpose of collision testing.  This allows
+ * deterministic hashing across test runs. *)
 module UsizeTestCmper = struct
   type t = usize
   module T = struct
@@ -1115,8 +1114,8 @@ let%expect_test "hash_fold" =
       end
   in
   (* NB: [0; 1] and [0; 2] collide.  This is because we're using UsizeTestCmper
-     to get stable test output; the hashing results from all but the last
-     binding hashed are discarded. *)
+   * to get stable test output; the hashing results from all but the last
+   * binding hashed are discarded. *)
   let lists = [
     [];
     [0];
@@ -1600,8 +1599,8 @@ let%expect_test "fold_until" =
   let test ks = begin
     let map = of_klist ks in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct key.  The size
-       of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct key.  The size
+     * of the triangle is insensitive to fold order. *)
     assert ((List.length ks) = (length map));
     let n = length map in
     let triangle_sum = List.fold ks ~init:0 ~f:(fun accum k ->
@@ -1636,8 +1635,8 @@ let%expect_test "fold2_until" =
     let map = union ~f:merge map0 map1 in
     let kvs = to_alist map in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct key.  The size
-       of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct key.  The size
+     * of the triangle is insensitive to fold order. *)
     assert ((List.length kvs) = (length map));
     let n = length map in
     let triangle_sum = List.fold kvs ~init:0 ~f:(fun accum (k, _) ->

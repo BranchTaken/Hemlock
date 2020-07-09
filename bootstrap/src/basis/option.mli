@@ -83,5 +83,5 @@ val merge: f:('a -> 'a -> 'a) -> 'a t -> 'a t -> 'a t
     a1], otherwise the most preserving of [Some a0], [Some a1], and [None]. *)
 
 val map2: f:('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
-(** [map2 ~f t0 t1] returns [Some (f a b)] if [t0 = Some a] and [t1 = Some
-    b], [None] otherwise. *)
+(** [map2 ~f t0 t1] returns [Some (f a b)] if [t0 = Some a] and [t1 = Some b],
+    [None] otherwise. *)

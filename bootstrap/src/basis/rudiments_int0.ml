@@ -92,14 +92,14 @@ let u128_add t0 t1 =
 
 let u128_mul t0 t1 =
   (* Decompose inputs into arrays of 32-bit half-words, then use the standard
-     paper method of multi-digit multiplication, but in base 2^32.  The full
-     result requires m + n digits, where m and n are the number of input digits
-     in the muliplier and multiplicand.  For this function, ndigits=m=n=4, and
-     we only calculate/preserve the lowest ndigits digits.
-
-     The digit arrays are encoded as (u32 array), which assures that only
-     significant bits are stored.  The intermediate computations use 64-bit math
-     so that two digits fit. *)
+   * paper method of multi-digit multiplication, but in base 2^32.  The full
+   * result requires m + n digits, where m and n are the number of input digits
+   * in the muliplier and multiplicand.  For this function, ndigits=m=n=4, and
+   * we only calculate/preserve the lowest ndigits digits.
+   *
+   * The digit arrays are encoded as (u32 array), which assures that only
+   * significant bits are stored.  The intermediate computations use 64-bit math
+   * so that two digits fit. *)
   let hi32 x = Int64.shift_right_logical x 32 in
   let lo32 x = Int64.(logand x (of_int 0xffff_ffff)) in
   let digits32 x = hi32 x, lo32 x in

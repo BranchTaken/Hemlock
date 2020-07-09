@@ -69,8 +69,8 @@ module type I_poly = sig
       and [pp_a].  [pp_a] is the pretty printer for {!type:'a}. *)
 end
 
-(** Functor output signature for polymorphic comparator types, e.g.
-    {!type:'a list}. *)
+(** Functor output signature for polymorphic comparator types, e.g. {!type:'a
+    list}. *)
 module type S_poly = sig
   type 'a t
   (** Container type. *)
@@ -86,7 +86,7 @@ end
     resulting module contains a comparator that can be used in conjunction with
     e.g. {!type:OrdMap}.  The comparator witness assures that multi-container
     operations can only be performed on containers with compatible comparison
-    functions.  This functor is unusual in that it creates a monomorphic
-    wrapper around a specific actualization of a polymorphic type, so that
-    comparators are always in effect monomorphic. *)
+    functions.  This functor is unusual in that it creates a monomorphic wrapper
+    around a specific actualization of a polymorphic type, so that comparators
+    are always in effect monomorphic. *)
 module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t

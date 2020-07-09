@@ -1,31 +1,31 @@
-(* AVL tree implementation of ordered maps, based on the join operation.
-   The join-based approach is both work-optimal and highly parallelizeable.
-
-     Just Join for Parallel Ordered Sets
-     Guy E. Blelloch, Daniel Ferizovic, and Yihan Sun
-     SPAA '16
-     DOI: http://dx.doi.org/10.1145/2935764.2935768
-     https://arxiv.org/pdf/1602.02120.pdf
-     https://www.cs.ucr.edu/~yihans/papers/join.pdf
-
-     https://en.wikipedia.org/wiki/AVL_tree
-     https://en.wikipedia.org/wiki/Join-based_tree_algorithms
-
-   It is possible to implement AVL trees with as little as one bit of balance
-   metadata per node, but this implementation is less svelte:
-
-   - Each node tracks the number of nodes in its subtree, in order to support
-     O(lg n) indexed access.
-   - Each node tracks height rather than balance, in order to simplify the
-     join logic.  Join heavily relies on node height, and although it is
-     possible to efficiently compute heights based on imbalance metadata, doing
-     so in join is complex and brittle.  Join is O(lg n), and the naïve
-     approach of computing node height from scratch as needed would introduce
-     O(n lg n) complexity to join.  The efficient alternative would be to
-     compute the root's height, then incrementally compute node heights.
-     The complexity of this is that computed heights must be tightly coupled
-     with their nodes, and the computations must take into account imbalance,
-     recursive joins, rotations, etc. *)
+(* AVL tree implementation of ordered maps, based on the join operation.  The
+ * join-based approach is both work-optimal and highly parallelizeable.
+ *
+ *   Just Join for Parallel Ordered Sets
+ *   Guy E. Blelloch, Daniel Ferizovic, and Yihan Sun
+ *   SPAA '16
+ *   DOI: http://dx.doi.org/10.1145/2935764.2935768
+ *   https://arxiv.org/pdf/1602.02120.pdf
+ *   https://www.cs.ucr.edu/~yihans/papers/join.pdf
+ *
+ *   https://en.wikipedia.org/wiki/AVL_tree
+ *   https://en.wikipedia.org/wiki/Join-based_tree_algorithms
+ *
+ * It is possible to implement AVL trees with as little as one bit of balance
+ * metadata per node, but this implementation is less svelte:
+ *
+ * - Each node tracks the number of nodes in its subtree, in order to support
+ *   O(lg n) indexed access.
+ * - Each node tracks height rather than balance, in order to simplify the join
+ *   logic.  Join heavily relies on node height, and although it is possible to
+ *   efficiently compute heights based on imbalance metadata, doing so in join
+ *   is complex and brittle.  Join is O(lg n), and the naïve approach of
+ *   computing node height from scratch as needed would introduce O(n lg n)
+ *   complexity to join.  The efficient alternative would be to compute the
+ *   root's height, then incrementally compute node heights.  The complexity of
+ *   this is that computed heights must be tightly coupled with their nodes, and
+ *   the computations must take into account imbalance, recursive joins,
+ *   rotations, etc. *)
 
 open Rudiments
 
@@ -47,9 +47,9 @@ module T = struct
         v: 'v;
         (* Subtree node count, including this node. *)
         n: usize;
-        (* Node height, inductively defined as (succ (max (height l)
-           (height r))), where an empty subtree has height 0, and a leaf has
-           height 1. *)
+        (* Node height, inductively defined as (succ (max (height l) (height
+         * r))), where an empty subtree has height 0, and a leaf has height
+         * 1. *)
         h: usize;
         (* Right subtree. *)
         r: ('k, 'v) node;
@@ -95,7 +95,7 @@ module T = struct
     (length t) = 0
 
   (* Path to node.  Incapable of expressing "no path".  Seek operations are
-     incremental, such that complete tree traversal is ϴ(n). *)
+   * incremental, such that complete tree traversal is ϴ(n). *)
   module Path = struct
     type ('k, 'v) elm = {
       node: ('k, 'v) node;
@@ -104,8 +104,8 @@ module T = struct
     type ('k, 'v) t = ('k, 'v) elm list
 
     (* Record node's index in path, where base is the index of the leftmost node
-       in the subtree rooted at node.  Terminate when the path reaches the node
-       at index. *)
+     * in the subtree rooted at node.  Terminate when the path reaches the node
+     * at index. *)
     let rec descend ~index base node path =
       assert ((index - base) < (nnodes node));
       match node with
@@ -145,7 +145,7 @@ module T = struct
       | elm :: _ -> elm.index
 
     (* Ascend until the desired index is beneath node, then descend into the
-       appropriate subtree. *)
+     * appropriate subtree. *)
     let rec seek_nth index path =
       match path with
       | [] -> not_reached ()
@@ -206,7 +206,7 @@ module T = struct
   end
 
   (* Path-based cursor.  If this were based on just index and calls to nth,
-     complete traversals would be Θ(n lg n) rather than Θ(n). *)
+   * complete traversals would be Θ(n lg n) rather than Θ(n). *)
   module Cursor = struct
     module T = struct
       type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
@@ -214,8 +214,8 @@ module T = struct
         ordmap: ('k, 'v, 'cmp) container;
         index: usize;
         (* Separate paths to the nodes to the left and right of the cursor
-           efficiently handle edge conditions near the minimum/maximum nodes,
-           and they ensure that lget/rget are O(1). *)
+         * efficiently handle edge conditions near the minimum/maximum nodes,
+         * and they ensure that lget/rget are O(1). *)
         lpath_opt: ('k, 'v) Path.t option;
         rpath_opt: ('k, 'v) Path.t option;
       }
@@ -684,8 +684,8 @@ let cmp vcmp t0 t1 =
 
 let equal veq t0 t1 =
   (* Equal AVL trees may have different internal structure.  fold2_until is
-     structure-agnostic, so the following produces correct results even when
-     coupled recursive traversal would fail. *)
+   * structure-agnostic, so the following produces correct results even when
+   * coupled recursive traversal would fail. *)
   fold2_until ~init:true ~f:(fun _ kv0_opt kv1_opt ->
     match kv0_opt, kv1_opt with
     | Some (_, v0), Some (_, v1) -> begin
@@ -703,8 +703,8 @@ let expose = function
   | Empty -> not_reached ()
 
 (* Join AVL trees (l, (singleton m ~k ~v), r) to form an AVL tree representing
-   their union, where l and r are AVL trees containing mappings strictly
-   preceding/following k in the total key ordering, respectively. *)
+ * their union, where l and r are AVL trees containing mappings strictly
+ * preceding/following k in the total key ordering, respectively. *)
 let join l kv r =
   let rec join_left_tall l kv r = begin
     let ll, l_kv, lr = expose l in
@@ -756,7 +756,7 @@ let join l kv r =
   | false, false -> node_init l kv r
 
 (* Join AVL trees (l, r) to form an AVL tree representing their union, where l's
-   keys strictly precede r's keys in the total key ordering. *)
+ * keys strictly precede r's keys in the total key ordering. *)
 let join2 l r =
   let rec split_rightmost = function
     | Leaf {k; v} -> Empty, (k, v)
@@ -776,9 +776,9 @@ let join2 l r =
     end
 
 (* Split an AVL tree into (l, Some (a, v), r) if key a is in the tree, (l, None,
-   r) otherwise, where l and r are AVL trees containing all mappings
-   preceding/following a in the total key ordering, respectively.  split_node is
-   join's dual. *)
+ * r) otherwise, where l and r are AVL trees containing all mappings
+ * preceding/following a in the total key ordering, respectively.  split_node is
+ * join's dual. *)
 let rec split_node a cmper node =
   let open Cmper in
   match node with
@@ -807,9 +807,9 @@ let rec split_node a cmper node =
     end
 
 (* Split an AVL tree into (Some (l, r)) if key a is not in the tree, None
-   otherwise, where l and r are AVL trees containing all mappings
-   preceding/following a in the total key ordering, respectively.  split2_node
-   is join2's dual. *)
+ * otherwise, where l and r are AVL trees containing all mappings
+ * preceding/following a in the total key ordering, respectively.  split2_node
+ * is join2's dual. *)
 let rec split2_node a cmper node =
   let open Cmper in
   match node with
@@ -2055,8 +2055,8 @@ let%expect_test "fold_until" =
   let test ks = begin
     let ordmap = of_klist ks in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct key.  The size
-       of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct key.  The size
+     * of the triangle is insensitive to fold order. *)
     assert ((List.length ks) = (length ordmap));
     let n = length ordmap in
     let triangle_sum = List.fold ks ~init:0 ~f:(fun accum k ->
@@ -2085,8 +2085,8 @@ let%expect_test "fold_right_until" =
   let test ks = begin
     let ordmap = of_klist ks in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct key.  The size
-       of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct key.  The size
+     * of the triangle is insensitive to fold order. *)
     assert ((List.length ks) = (length ordmap));
     let n = length ordmap in
     let triangle_sum = List.fold ks ~init:0 ~f:(fun accum k ->
@@ -2118,8 +2118,8 @@ let%expect_test "fold2_until" =
     let ordmap = union ~f:merge ordmap0 ordmap1 in
     let kvs = to_alist ordmap in
     (* Compute the number of elements in the triangle defined by folding n
-       times, each time terminating upon encounter of a distinct key.  The size
-       of the triangle is insensitive to fold order. *)
+     * times, each time terminating upon encounter of a distinct key.  The size
+     * of the triangle is insensitive to fold order. *)
     assert ((List.length kvs) = (length ordmap));
     let n = length ordmap in
     let triangle_sum = List.fold kvs ~init:0 ~f:(fun accum (k, _) ->

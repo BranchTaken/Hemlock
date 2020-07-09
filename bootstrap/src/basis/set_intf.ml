@@ -45,8 +45,8 @@ module type S = sig
   (** {1 Length} *)
 
   val length: ('a, 'cmp) t -> usize
-  (** [length t] returns the number of elements in [t].  O(1) time
-      complexity. *)
+  (** [length t] returns the number of elements in [t].  O(1) time complexity.
+  *)
 
   val is_empty: ('a, 'cmp) t -> bool
   (** [is_empty t] returns [true] if [t] has no elements; [false] otherwise.
@@ -91,8 +91,8 @@ module type S = sig
       elements, [false] otherwise.  O(n) time complexity. *)
 
   val union: ('a, 'cmp) t -> ('a, 'cmp) t -> ('a, 'cmp) t
-  (** [union t0 t1] creates a set that is the union of [t0] and [t1]; that is,
-      a set that contains all elements in [t0] or [t1].  O(m lg (n/m + 1)) time
+  (** [union t0 t1] creates a set that is the union of [t0] and [t1]; that is, a
+      set that contains all elements in [t0] or [t1].  O(m lg (n/m + 1)) time
       complexity if ordered, where m and n are the input set lengths and m <= n;
       Θ(m+n) time complexity if unordered. *)
 
@@ -250,8 +250,8 @@ module type S_ord = sig
       are the input set lengths. *)
 
   val split: 'a -> ('a, 'cmp) t -> ('a, 'cmp) t * 'a option * ('a, 'cmp) t
-  (** [split a t] tripartitions [t] into elements \{<,=,>\} [a],
-      respectively. *)
+  (** [split a t] tripartitions [t] into elements \{<,=,>\} [a], respectively.
+  *)
 
   (** {1 Folding, mapping, and filtering} *)
 
@@ -259,8 +259,8 @@ module type S_ord = sig
     -> ('a, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum,
-      false]. *)
+      true], or until folding is complete if [f] always returns [accum, false].
+  *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
     -> ('a, 'cmp) t -> 'accum

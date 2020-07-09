@@ -8,7 +8,7 @@ val get: unit -> u128
 
 val seed: u128
 (** Seed entropy for this execution of the application, set prior to application
-    entry.  The seed is typically initialized using entropy bits provided
-    by the operating system, but it can be explicitly initialized via the
+    entry.  The seed is typically initialized using entropy bits provided by the
+    operating system, but it can be explicitly initialized via the
     [HEMLOCK_ENTROPY] environment variable, which is interpreted as a
     {!type:u128} constant. *)

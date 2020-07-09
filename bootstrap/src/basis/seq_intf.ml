@@ -144,13 +144,12 @@ module type S_poly2_fold2 = sig
   val fold2_until: init:'accum
     -> f:('accum -> 'a elm option -> 'a elm option -> 'accum * bool)
     -> ('a, 'cmp) t -> ('a, 'cmp) t -> 'accum
-  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1]
-      from left to right if ordered, or arbitrarily if unordered, and calls
-      [~f accum elm0_opt elm1_opt] once for each element in the union such that
-      if the element is absent from one of the input sets, the corresponding
-      parameter is [None].  Folding terminates early if [~f] returns [(_,
-      true)].  O(m+n) time complexity, where m and n are the input set
-      lengths. *)
+  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1] from
+      left to right if ordered, or arbitrarily if unordered, and calls [~f accum
+      elm0_opt elm1_opt] once for each element in the union such that if the
+      element is absent from one of the input sets, the corresponding parameter
+      is [None].  Folding terminates early if [~f] returns [(_, true)].  O(m+n)
+      time complexity, where m and n are the input set lengths. *)
 
   val fold2: init:'accum
     -> f:('accum -> 'a elm option -> 'a elm option -> 'accum) -> ('a, 'cmp) t
@@ -160,7 +159,7 @@ module type S_poly2_fold2 = sig
       elm0_opt elm1_opt] once for each element in the union such that if the
       element is absent from one of the input sets, the corresponding parameter
       is [None].  Θ(m+n) time complexity, where m and n are the input set
-      lengths.  *)
+      lengths. *)
 
   val iter2: f:('a elm option -> 'a elm option -> unit) -> ('a, 'cmp) t ->
     ('a, 'cmp) t -> unit
@@ -228,13 +227,12 @@ module type S_poly3_fold2 = sig
   val fold2_until: init:'accum -> f:('accum -> ('k key * 'v value) option ->
     ('k key * 'v value) option -> 'accum * bool) -> ('k, 'v, 'cmp) t ->
     ('k, 'v, 'cmp) t -> 'accum
-  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1]
-      from left to right if ordered, or arbitrarily if unordered, and calls
-      [~f accum elm0_opt elm1_opt] once for each element in the union such that
-      if the element is absent from one of the input sets, the corresponding
-      parameter is [None].  Folding terminates early if [~f] returns [(_,
-      true)].  O(m+n) time complexity, where m and n are the input set
-      lengths. *)
+  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1] from
+      left to right if ordered, or arbitrarily if unordered, and calls [~f accum
+      elm0_opt elm1_opt] once for each element in the union such that if the
+      element is absent from one of the input sets, the corresponding parameter
+      is [None].  Folding terminates early if [~f] returns [(_, true)].  O(m+n)
+      time complexity, where m and n are the input set lengths. *)
 
   val fold2: init:'accum -> f:('accum -> ('k key * 'v value) option ->
     ('k key * 'v value) option -> 'accum) -> ('k, 'v, 'cmp) t ->
@@ -244,7 +242,7 @@ module type S_poly3_fold2 = sig
       elm0_opt elm1_opt] once for each element in the union such that if the
       element is absent from one of the input sets, the corresponding parameter
       is [None].  Θ(m+n) time complexity, where m and n are the input set
-      lengths.  *)
+      lengths. *)
 
   val iter2: f:(('k key * 'v value) option -> ('k key * 'v value) option ->
     unit) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> unit

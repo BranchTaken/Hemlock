@@ -65,15 +65,15 @@ val error_ignore_hlt: ('a, _) t list -> unit
 
 val map_ok: f:('a -> 'c) -> ('a, 'b) t -> ('c, 'b) t
 (** [map_ok ~f t] returns [Ok (f a)] if [t = Ok a], or [Error b] if [t = Error
-     b]. *)
+    b]. *)
 
 val map_error: f:('b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
-(** [map_error ~f t] returns [Error (f b)] if [t = Error b], or [Ok a] if [t
-    = Ok a]. *)
+(** [map_error ~f t] returns [Error (f b)] if [t = Error b], or [Ok a] if [t =
+    Ok a]. *)
 
 val merge: ok:('a -> 'a -> 'a) -> error:('b -> 'b -> 'b) -> ('a, 'b) t
   -> ('a, 'b) t -> ('a, 'b) t
 (** [merge ~ok ~error t0 t1] returns [Ok (ok a0 a1)] if [t0 = Ok a0] and [t1 =
-     Ok a1], [Error (error b0 b1)] if [t0 = Error b0] and [t1 = Error b1], or
-     [Error b0] or [Error b1] if [t0 = Error b0] or [t1 = Error b1],
-     respectively. *)
+    Ok a1], [Error (error b0 b1)] if [t0 = Error b0] and [t1 = Error b1], or
+    [Error b0] or [Error b1] if [t0 = Error b0] or [t1 = Error b1],
+    respectively. *)

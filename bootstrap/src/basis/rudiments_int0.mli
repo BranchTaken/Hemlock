@@ -24,8 +24,8 @@ val u128_of_usize: usize -> u128
 
 val u128_pp_x: Format.formatter -> u128 -> unit
 (** [u128_pp_x ppf u] prints a hexadecimal representation of [u] to the pretty
-    printing formatter, [ppf].  This function is intended for use with the
-    [%a] format specifier to {!Format.printf}.*)
+    printing formatter, [ppf].  This function is intended for use with the [%a]
+    format specifier to {!Format.printf}.*)
 
 val u128_zero: u128
 (** Zero constant. *)

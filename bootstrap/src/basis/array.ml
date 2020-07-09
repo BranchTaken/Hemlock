@@ -842,8 +842,8 @@ let search_impl ?base ?past key ~cmp mode t =
                     | true ->
                       Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
                     | false ->
-                      Some (Cmp.Gt, (Usize.pred base)) (* In interior;
-                                                          key > predecessor. *)
+                      Some (Cmp.Gt, (Usize.pred base)) (* In interior; key >
+                                                        * predecessor. *)
                   end
                 | Cmp.Eq -> Some (Cmp.Eq, base) (* base at leftmost match. *)
                 | Cmp.Gt -> not_reached ()
@@ -864,8 +864,8 @@ let search_impl ?base ?past key ~cmp mode t =
                 | Cmp.Eq -> Some (Cmp.Eq, probe) (* probe at rightmost match. *)
                 | Cmp.Gt -> begin
                     match (base = (length t)) with
-                    | false -> Some (Cmp.Lt, base) (* In interior;
-                                                      key < successor. *)
+                    | false -> Some (Cmp.Lt, base) (* In interior; key <
+                                                    * successor. *)
                     | true -> Some (Cmp.Gt, probe) (* Past end; key > elms. *)
                   end
               end

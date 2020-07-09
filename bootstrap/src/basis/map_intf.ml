@@ -61,8 +61,8 @@ module type S = sig
   (** {1 Length} *)
 
   val length: ('k, 'v, 'cmp) t -> usize
-  (** [length t] returns the number of mappings in [t].  O(1) time
-      complexity. *)
+  (** [length t] returns the number of mappings in [t].  O(1) time complexity.
+  *)
 
   val is_empty: ('k, 'v, 'cmp) t -> bool
   (** [is_empty t] returns [true] if [t] has no mappings; [false] otherwise.
@@ -71,8 +71,8 @@ module type S = sig
   (** {1 Mapping operations} *)
 
   val mem: 'k -> ('k, 'v, 'cmp) t -> bool
-  (** [mem k t] returns [true] if [k] is a key in [t]; [false] otherwise.
-      O(lg n) time complexity if ordered, O(1) time complexity if unordered. *)
+  (** [mem k t] returns [true] if [k] is a key in [t]; [false] otherwise.  O(lg
+      n) time complexity if ordered, O(1) time complexity if unordered. *)
 
   val get: 'k -> ('k, 'v, 'cmp) t -> 'v option
   (** [get k t] returns the value [Some v] associated with [k] if [k] is a key
@@ -80,9 +80,9 @@ module type S = sig
       complexity if unordered. *)
 
   val get_hlt: 'k -> ('k, 'v, 'cmp) t -> 'v
-  (** [get_hlt k t] returns the value [v] associated with [k] if [k] is a
-      key in [t], halts otherwise.  O(lg n) time complexity if ordered, O(1)
-      time complexity if unordered. *)
+  (** [get_hlt k t] returns the value [v] associated with [k] if [k] is a key in
+      [t], halts otherwise.  O(lg n) time complexity if ordered, O(1) time
+      complexity if unordered. *)
 
   val choose: ('k, 'v, 'cmp) t -> ('k * 'v) option
   (** [choose t] returns an arbitrary key-value mapping in [t] if the map is
@@ -215,8 +215,8 @@ module type S = sig
       [f] returns [true], or [None] if [f] always returns [false]. *)
 
   val find_map: f:(('k * 'v) -> 'a option) -> ('k, 'v, 'cmp) t -> 'a option
-  (** [find_map ~f t] iterates over [t] and returns [Some a] for a mapping
-      which [f] returns [Some a], or [None] if [f] always returns [None]. *)
+  (** [find_map ~f t] iterates over [t] and returns [Some a] for a mapping which
+      [f] returns [Some a], or [None] if [f] always returns [None]. *)
 
   val filter: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [filter ~f t] creates a map with contents filtered by [~f].  Only mappings
@@ -240,9 +240,9 @@ module type S = sig
       [First v2] vs [Second v3].  Θ(n) time complexity. *)
 
   val kreduce: f:('k -> 'k -> 'k) -> ('k, 'v, 'cmp) t -> 'k option
-  (** [kreduce ~f t] reduces [t] to a single key, or [None] if the map is
-      empty.  The reduction function is assumed to be associative; thus
-      reduction order is unspecified. *)
+  (** [kreduce ~f t] reduces [t] to a single key, or [None] if the map is empty.
+      The reduction function is assumed to be associative; thus reduction order
+      is unspecified. *)
 
   val kreduce_hlt: f:('k -> 'k -> 'k) -> ('k, 'v, 'cmp) t -> 'k
   (** [kreduce_hlt ~f t] reduces [t] to a single key, or halts if the map is
@@ -353,8 +353,8 @@ module type S_ord = sig
     -> ('k, 'v, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum,
-      false]. *)
+      true], or until folding is complete if [f] always returns [accum, false].
+  *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> ('k * 'v)
     -> 'accum * bool) -> ('k, 'v, 'cmp) t -> 'accum
@@ -412,19 +412,19 @@ module type S_ord = sig
 
   val min_elm: cmp:(('k * 'v) -> ('k * 'v) -> Cmp.t) -> ('k, 'v, 'cmp) t
     -> ('k * 'v) option
-  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some
-      (k, v)] for the leftmost element which always compares as [Cmp.Lt] or
+  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some (k,
+      v)] for the leftmost element which always compares as [Cmp.Lt] or
       [Cmp.Eq], or [None] if [t] is empty. *)
 
   val max_elm: cmp:(('k * 'v) -> ('k * 'v) -> Cmp.t) -> ('k, 'v, 'cmp) t
     -> ('k * 'v) option
-  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some
-      (k, v)] for the leftmost element which always compares as [Cmp.Eq] or
+  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some (k,
+      v)] for the leftmost element which always compares as [Cmp.Eq] or
       [Cmp.Gt], or [None] if [t] is empty. *)
 
   (** {1 Conversion} *)
 
   val to_alist_rev: ('k, 'v, 'cmp) t -> ('k * 'v) list
-  (** [to_alist_rev t] folds [t] from left to right as a {!type:('k * 'v)
-      list}. *)
+  (** [to_alist_rev t] folds [t] from left to right as a {!type:('k * 'v) list}.
+  *)
 end

@@ -53,5 +53,5 @@ val to_string: t -> string
 (** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
 
 val escape: t -> string
-(** [escape t] returns a syntactically valid UTF-8-encoded string
-    representation of [t]. *)
+(** [escape t] returns a syntactically valid UTF-8-encoded string representation
+    of [t]. *)

@@ -16,8 +16,8 @@ val to_usize: t -> usize
 val not: t -> t
 (** [not t] returns the logical negation of [t]. *)
 
-(* The && and || operators built in to OCaml are magically short-circuiting.
- * If we define equivalent operators they lose the short-circuiting magic. *)
+(* The && and || operators built in to OCaml are magically short-circuiting.  If
+ * we define equivalent operators they lose the short-circuiting magic. *)
 (*
 val ( && ): t -> t -> t
 val ( || ): t -> t -> t

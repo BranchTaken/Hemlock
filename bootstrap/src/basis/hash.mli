@@ -29,8 +29,8 @@ module State : sig
       state is based on {!Entropy.seed}. *)
 
   (** Decomposed hash state generator API for use in implementing [hash_fold]
-      for types that do not map perfectly to other types.  The hash algorithm
-      is the 128-bit variant of {{: https://en.wikipedia.org/wiki/MurmurHash}
+      for types that do not map perfectly to other types.  The hash algorithm is
+      the 128-bit variant of {{: https://en.wikipedia.org/wiki/MurmurHash}
       MurmurHash3}, which hashes 128-bit blocks with automatic support for a
       partial block during finalization. *)
   module Gen : sig
@@ -48,11 +48,11 @@ module State : sig
         by [~f] into [t] and returns the resulting hash state generator. *)
 
     val fold_u8: usize -> f:(usize -> usize) -> t -> t
-    (** [fold_u8 n ~f t] incorporates the hash of [n] indexed values provided
-        by [~f] into [t] and returns the resulting hash state generator.  Note
-        that the values returned by [~f] are treated as {!type:u8} (only the
-        least significant 8 bits are used), but the exported type signature
-        differs due to bootstrapping constraints. *)
+    (** [fold_u8 n ~f t] incorporates the hash of [n] indexed values provided by
+        [~f] into [t] and returns the resulting hash state generator.  Note that
+        the values returned by [~f] are treated as {!type:u8} (only the least
+        significant 8 bits are used), but the exported type signature differs
+        due to bootstrapping constraints. *)
 
     val fini: t -> outer
     (** [fini t] produces a hash state which is a function of the state provided

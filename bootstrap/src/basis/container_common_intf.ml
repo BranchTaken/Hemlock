@@ -52,8 +52,8 @@ module type S_mono_fold = sig
     -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum,
-      false]. *)
+      true], or until folding is complete if [f] always returns [accum, false].
+  *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> elm -> 'accum * bool)
     -> t -> 'accum
@@ -145,8 +145,8 @@ module type S_mono_mem = sig
   (** Element type. *)
 
   val mem: elm -> t -> bool
-  (** [mem elm t] returns [true] if [elm] is a member of [t]; [false]
-      otherwise. *)
+  (** [mem elm t] returns [true] if [elm] is a member of [t]; [false] otherwise.
+  *)
 end
 
 (* Polymorphic container, e.g. ('a list). *)
@@ -206,8 +206,8 @@ module type S_poly_fold = sig
     -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init]
       as the initial accumulator value, continuing until [f] returns [accum,
-      true], or until folding is complete if [f] always returns [accum,
-      false]. *)
+      true], or until folding is complete if [f] always returns [accum, false].
+  *)
 
   val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
     -> 'a t -> 'accum

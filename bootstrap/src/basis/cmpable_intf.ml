@@ -103,8 +103,8 @@ module type Key = sig
   include I_mono with type t := t
 end
 
-(** Functor input interface for comparable polymorphic types, e.g. ['a
-    array]. *)
+(** Functor input interface for comparable polymorphic types, e.g. ['a array].
+*)
 module type I_poly = sig
   type 'a t
 

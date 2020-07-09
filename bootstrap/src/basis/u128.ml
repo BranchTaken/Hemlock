@@ -141,11 +141,11 @@ module T = struct
 
   let div_mod t0 t1 =
     (* Compute quotient and remainder using an algorithm similar to the paper
-       long division algorithm, but in base 2^32.
-
-       The digit arrays are encoded as (u32 array), which assures that only
-       significant bits are stored.  The intermediate computations use 64-bit
-       math so that two digits fit. *)
+     * long division algorithm, but in base 2^32.
+     *
+     * The digit arrays are encoded as (u32 array), which assures that only
+     * significant bits are stored.  The intermediate computations use 64-bit
+     * math so that two digits fit. *)
     let b = U64.(bit_sl ~shift:32 one) in
     (* Extract the high/low digit from a 2-digit value. *)
     let hi32 x = U64.bit_usr ~shift:32 x in
@@ -153,11 +153,11 @@ module T = struct
     let div_b x = Int64.shift_right x 32 in
     let mul_b x = I64.bit_sl ~shift:32 x in
     (* Get/set digit.  Only the low 32 bits are used; if u32 were available it
-       would be a better choice for array elements. *)
+     * would be a better choice for array elements. *)
     let get arr i = U64.to_i64 (U32.to_u64 (Caml.Array.get arr i)) in
     let set arr i x = Caml.Array.set arr i (U32.of_u64 (U64.of_i64 x)) in
     (* Digit array creation and conversion functions.  Digits are in
-       little-endian order (least significant digit at offset 0). *)
+     * little-endian order (least significant digit at offset 0). *)
     let zero_arr ndigits = Caml.Array.make ndigits U32.zero in
     let to_arr u = [|U32.of_u64 (lo32 u.lo); U32.of_u64 (hi32 u.lo);
       U32.of_u64 (lo32 u.hi); U32.of_u64 (hi32 u.hi);|] in
@@ -167,7 +167,7 @@ module T = struct
       {hi; lo}
     end in
     (* Compute the number of significant digits in a digit array, i.e. subtract
-       high-order zeros from the array size. *)
+     * high-order zeros from the array size. *)
     let sig_digits arr = begin
       let rec fn arr past = begin
         match past with
@@ -208,7 +208,7 @@ module T = struct
       end
     | _, false -> begin
         (* Choose normalization power-of-2 multiplier such that the divisor is
-           losslessly shifted left as far as possible. *)
+         * losslessly shifted left as far as possible. *)
         let shift = Rudiments_int.(
           (U64.bit_clz (get v Rudiments_int.(pred n))) - 32) in
         (* Initialize normalized divisor. *)
@@ -236,8 +236,8 @@ module T = struct
         (* Main computation. *)
         let rec fn_j j = begin
           (* Compute quotient digit estimate and remainder.  It is possible that
-             qdigit is one larger than the correct value, in which case
-             subsequent correction code executes. *)
+           * qdigit is one larger than the correct value, in which case
+           * subsequent correction code executes. *)
           let qdigit = begin
             let rec qdigit_converge qdigit rem = begin
               match (U64.(qdigit >= b) ||

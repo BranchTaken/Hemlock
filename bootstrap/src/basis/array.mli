@@ -110,9 +110,9 @@ val set_inplace: usize -> 'a -> 'a t -> unit
     at index [i] to [elm]. *)
 
 val set: usize -> 'a -> 'a t -> 'a t
-(** Create a new array based on input array, differing in one element.
-    [set i elm t] creates an array equal to [t], except that element [i] is
-    initialized to [elm]. *)
+(** Create a new array based on input array, differing in one element.  [set i
+    elm t] creates an array equal to [t], except that element [i] is initialized
+    to [elm]. *)
 
 val copy: 'a t -> 'a t
 (** Create a copy of an array. *)
