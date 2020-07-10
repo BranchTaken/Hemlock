@@ -41,7 +41,7 @@ module T = struct
 
       let pp ppf t =
         Format.fprintf ppf "@[<h>{index=%a}@]"
-          Usize.pp (index t)
+          Uns.pp (index t)
     end
     include T
     include Cmpable.Make_poly2(T)
@@ -264,9 +264,9 @@ let%expect_test "hash_fold" =
   let rec fn = function
     | [] -> ()
     | arr :: arrs' -> begin
-        let ordset = of_array (module Usize) arr in
-        printf "hash_fold (of_array (module Usize) %a) -> %a@\n"
-          (Array.pp Usize.pp) arr
+        let ordset = of_array (module Uns) arr in
+        printf "hash_fold (of_array (module Uns) %a) -> %a@\n"
+          (Array.pp Uns.pp) arr
           Hash.pp (Hash.t_of_state (hash_fold ordset Hash.State.empty));
         fn arrs'
       end
@@ -281,16 +281,16 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold (of_array (module Usize) [||]) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold (of_array (module Usize) [|0|]) -> 0xf931_3f2a_e691_89fb_c121_c10c_2321_2ab7u128
-    hash_fold (of_array (module Usize) [|0; 1|]) -> 0x6c19_38ef_f4fd_7d4d_0b71_57d7_a7a4_58ceu128
-    hash_fold (of_array (module Usize) [|0; 2|]) -> 0xb35d_e06b_2347_e0fb_dc0e_7169_33fc_b370u128
+    hash_fold (of_array (module Uns) [||]) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold (of_array (module Uns) [|0|]) -> 0xf931_3f2a_e691_89fb_c121_c10c_2321_2ab7u128
+    hash_fold (of_array (module Uns) [|0; 1|]) -> 0x6c19_38ef_f4fd_7d4d_0b71_57d7_a7a4_58ceu128
+    hash_fold (of_array (module Uns) [|0; 2|]) -> 0xb35d_e06b_2347_e0fb_dc0e_7169_33fc_b370u128
     |}]
 
 let%expect_test "hash_fold empty" =
   let hash_empty state = begin
     state
-    |> hash_fold (empty (module Usize))
+    |> hash_fold (empty (module Uns))
   end in
   let e1 =
     Hash.State.empty
@@ -309,7 +309,7 @@ let%expect_test "hash_fold empty" =
 let%expect_test "empty,cmper_m,singleton,length" =
   let open Format in
   printf "@[";
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   assert (length e = 0);
   printf "%a@\n" pp e;
 
@@ -339,7 +339,7 @@ let%expect_test "mem,insert,subset" =
       end
   end in
   let ms = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
-  test ms (empty (module Usize));
+  test ms (empty (module Uns));
   printf "@]";
 
   [%expect{|
@@ -349,7 +349,7 @@ let%expect_test "mem,insert,subset" =
 let%expect_test "of_list duplicate" =
   let open Format in
   printf "@[";
-  printf "%a@\n" pp (of_list (module Usize) [0; 0]);
+  printf "%a@\n" pp (of_list (module Uns) [0; 0]);
   printf "@]";
 
   [%expect{|
@@ -363,7 +363,7 @@ let%expect_test "of_list,remove" =
     printf "--- %s ---@\n" descr;
     let ordset' = remove m ordset in
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Usize.pp m pp ordset pp ordset'
+      Uns.pp m pp ordset pp ordset'
   end in
   let test_tuples = [
     ([0; 1], 2,            "Not member.");
@@ -372,7 +372,7 @@ let%expect_test "of_list,remove" =
     ([0; 1; 2], 2,         "Member, length 3 -> 2.");
   ] in
   List.iter test_tuples ~f:(fun (ms, m, descr) ->
-    let ordset = of_list (module Usize) ms in
+    let ordset = of_list (module Uns) ms in
     test m ordset descr
   );
   printf "@]";
@@ -405,10 +405,10 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Usize.to_isize i) (hd ordset)) = cursor);
+          assert Cursor.((seek (Uns.to_int i) (hd ordset)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
-            Usize.pp (Cursor.rget cursor);
+            Uns.pp (Cursor.rget cursor);
           fn (Cursor.succ cursor)
         end
     end in
@@ -421,10 +421,10 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Usize.to_isize i) (hd ordset)) = cursor);
+          assert Cursor.((seek (Uns.to_int i) (hd ordset)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
-            Usize.pp (Cursor.lget cursor);
+            Uns.pp (Cursor.lget cursor);
           fn (Cursor.pred cursor)
         end
     end in
@@ -432,9 +432,9 @@ let%expect_test "of_array,cursor" =
     fn (Cursor.tl ordset);
   end in
   let test ms = begin
-    let ordset = of_array (module Usize) ms in
+    let ordset = of_array (module Uns) ms in
     printf "of_array %a -> @,%a@\n"
-      (Array.pp Usize.pp) ms
+      (Array.pp Uns.pp) ms
       pp ordset;
     test_fwd ordset;
     test_rev ordset
@@ -478,11 +478,11 @@ let%expect_test "of_list,to_list,to_array" =
   let open Format in
   printf "@[<h>";
   let test ms = begin
-    let ordset = of_list (module Usize) ms in
+    let ordset = of_list (module Uns) ms in
     printf "of_list %a; to_list -> %a; to_array -> %a\n"
-      (List.pp Usize.pp) ms
-      (List.pp Usize.pp) (to_list ordset)
-      (Array.pp Usize.pp) (to_array ordset)
+      (List.pp Uns.pp) ms
+      (List.pp Uns.pp) (to_list ordset)
+      (Array.pp Uns.pp) (to_array ordset)
   end in
   let test_lists = [
     [];
@@ -511,34 +511,34 @@ let%expect_test "search,nth" =
   let test_search ordset key_max = begin
     printf "%a@\n" pp ordset;
     for probe = 0 to key_max do
-      printf "  %a -> %s, %s, %s@\n" Usize.pp probe
+      printf "  %a -> %s, %s, %s@\n" Uns.pp probe
         (match psearch probe ordset with
           | None -> "<"
           | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Usize.pp i Usize.pp (nth i ordset)
+              Uns.pp i Uns.pp (nth i ordset)
           | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Usize.pp i Usize.pp (nth i ordset)
+              Uns.pp i Uns.pp (nth i ordset)
           | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Usize.pp i Usize.pp (nth i ordset)
+              Uns.pp i Uns.pp (nth i ordset)
         )
         (match search probe ordset with
           | None -> "<>"
-          | Some i -> asprintf "=%a" Usize.pp (nth i ordset)
+          | Some i -> asprintf "=%a" Uns.pp (nth i ordset)
         )
         (match nsearch probe ordset with
           | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Usize.pp i Usize.pp (nth i ordset)
+              Uns.pp i Uns.pp (nth i ordset)
           | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Usize.pp i Usize.pp (nth i ordset)
+              Uns.pp i Uns.pp (nth i ordset)
           | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Usize.pp i Usize.pp (nth i ordset)
+              Uns.pp i Uns.pp (nth i ordset)
           | None -> ">"
         );
     done
   end in
   printf "@[";
   for len = 0 to 3 do
-    let ordset = of_array (module Usize)
+    let ordset = of_array (module Uns)
       (Array.init len ~f:(fun i -> i * 2 + 1)) in
     let key_max = len * 2 in
     test_search ordset key_max
@@ -583,7 +583,7 @@ let%expect_test "choose_hlt" =
         ordset''
       end
   end in
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   let _ = test 100 0 e in
   printf "@]";
 
@@ -592,7 +592,7 @@ let%expect_test "choose_hlt" =
 
 let%expect_test "fold_until" =
   let test ms = begin
-    let ordset = of_list (module Usize) ms in
+    let ordset = of_list (module Uns) ms in
     (* Compute the number of elements in the triangle defined by folding n
      * times, each time terminating upon encounter of a distinct set member.
      * The size of the triangle is insensitive to fold order. *)
@@ -622,7 +622,7 @@ let%expect_test "fold_until" =
 
 let%expect_test "fold_right_until" =
   let test ms = begin
-    let ordset = of_list (module Usize) ms in
+    let ordset = of_list (module Uns) ms in
     (* Compute the number of elements in the triangle defined by folding n
      * times, each time terminating upon encounter of a distinct set member.
      * The size of the triangle is insensitive to fold order. *)
@@ -652,8 +652,8 @@ let%expect_test "fold_right_until" =
 
 let%expect_test "fold2_until" =
   let test ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let ordset = union ordset0 ordset1 in
     let ms = to_list ordset in
     (* Compute the number of elements in the triangle defined by folding n
@@ -694,18 +694,18 @@ let%expect_test "fold2" =
   printf "@[";
   let pp_pair ppf (a0_opt, a1_opt) = begin
     fprintf ppf "(%a, %a)"
-      (Option.pp Usize.pp) a0_opt
-      (Option.pp Usize.pp) a1_opt
+      (Option.pp Uns.pp) a0_opt
+      (Option.pp Uns.pp) a1_opt
   end in
   let test ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let pairs = fold2 ~init:[] ~f:(fun accum a0_opt a1_opt ->
       (a0_opt, a1_opt) :: accum
     ) ordset0 ordset1 in
     printf "fold2 %a %a -> %a@\n"
-      (List.pp Usize.pp) ms0
-      (List.pp Usize.pp) ms1
+      (List.pp Uns.pp) ms0
+      (List.pp Uns.pp) ms1
       (List.pp pp_pair) pairs
   end in
   let test_lists = [
@@ -751,8 +751,8 @@ let%expect_test "iter2,equal,subset,disjoint" =
   let open Format in
   printf "@[";
   let test_equal ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     assert (equal ordset0 ordset1);
     assert (subset ordset0 ordset1);
     assert (subset ordset1 ordset0);
@@ -769,8 +769,8 @@ let%expect_test "iter2,equal,subset,disjoint" =
     ) ordset0 ordset1
   end in
   let test_disjoint ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     assert (not (equal ordset0 ordset1));
     assert (not (subset ordset0 ordset1));
     assert ((length ordset0 = 0) || (not (subset ordset1 ordset0)));
@@ -821,8 +821,8 @@ let%expect_test "iter2,equal,subset,disjoint" =
 
 let%expect_test "union" =
   let test ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let ordset = union ordset0 ordset1 in
     let ms = to_list ordset in
     List.iter ms0 ~f:(fun m -> assert ((mem m ordset) && (mem m ordset0)));
@@ -830,8 +830,8 @@ let%expect_test "union" =
     List.iter ms ~f:(fun m -> assert ((mem m ordset0) || (mem m ordset1)));
   end in
   let test_disjoint ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let ordset = union ordset0 ordset1 in
     assert ((length ordset) = (length ordset0) + (length ordset1));
   end in
@@ -871,8 +871,8 @@ let%expect_test "union" =
 
 let%expect_test "inter" =
   let test ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let ordset = inter ordset0 ordset1 in
     let ms = to_list ordset in
     List.iter ms0 ~f:(fun m ->
@@ -882,8 +882,8 @@ let%expect_test "inter" =
     List.iter ms ~f:(fun m -> assert ((mem m ordset0) && (mem m ordset1)));
   end in
   let test_disjoint ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let ordset = inter ordset0 ordset1 in
     assert ((length ordset) = 0);
   end in
@@ -923,8 +923,8 @@ let%expect_test "inter" =
 
 let%expect_test "diff" =
   let test ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let ordset = diff ordset0 ordset1 in
     let ms = to_list ordset in
     List.iter ms0 ~f:(fun m -> assert ((mem m ordset) || (mem m ordset1)));
@@ -933,8 +933,8 @@ let%expect_test "diff" =
       assert ((mem m ordset0) && (not (mem m ordset1))));
   end in
   let test_disjoint ms0 ms1 = begin
-    let ordset0 = of_list (module Usize) ms0 in
-    let ordset1 = of_list (module Usize) ms1 in
+    let ordset0 = of_list (module Uns) ms0 in
+    let ordset1 = of_list (module Uns) ms1 in
     let ordset = diff ordset0 ordset1 in
     assert ((length ordset) = (length ordset0));
   end in
@@ -976,12 +976,12 @@ let%expect_test "filter" =
   let open Format in
   printf "@[<h>";
   let test arr = begin
-    let ordset = of_array (module Usize) arr in
+    let ordset = of_array (module Uns) arr in
     let ordset' = filter ordset ~f:(fun mem -> mem % 2 = 0) in
     let arr' = to_array ordset' in
     printf "%a -> %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp Usize.pp) arr'
+      (Array.pp Uns.pp) arr
+      (Array.pp Uns.pp) arr'
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i) in
@@ -1003,12 +1003,12 @@ let%expect_test "filteri" =
   let open Format in
   printf "@[<h>";
   let test arr = begin
-    let ordset = of_array (module Usize) arr in
+    let ordset = of_array (module Uns) arr in
     let ordset' = filteri ordset ~f:(fun i _mem -> i % 2 = 0) in
     let arr' = to_array ordset' in
     printf "%a -> %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp Usize.pp) arr'
+      (Array.pp Uns.pp) arr
+      (Array.pp Uns.pp) arr'
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i * 10) in
@@ -1030,14 +1030,14 @@ let%expect_test "partition_tf" =
   let open Format in
   printf "@[<h>";
   let test arr = begin
-    let ordset = of_array (module Usize) arr in
+    let ordset = of_array (module Uns) arr in
     let t_ordset, f_ordset = partition_tf ordset ~f:(fun mem -> mem % 2 = 0) in
     let t_arr = to_array t_ordset in
     let f_arr = to_array f_ordset in
     printf "%a -> %a / %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp Usize.pp) t_arr
-      (Array.pp Usize.pp) f_arr
+      (Array.pp Uns.pp) arr
+      (Array.pp Uns.pp) t_arr
+      (Array.pp Uns.pp) f_arr
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i) in
@@ -1059,14 +1059,14 @@ let%expect_test "partitioni_tf" =
   let open Format in
   printf "@[<h>";
   let test arr = begin
-    let ordset = of_array (module Usize) arr in
+    let ordset = of_array (module Uns) arr in
     let t_ordset, f_ordset = partitioni_tf ordset ~f:(fun i _mem -> i % 2 = 0) in
     let t_arr = to_array t_ordset in
     let f_arr = to_array f_ordset in
     printf "%a -> %a / %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp Usize.pp) t_arr
-      (Array.pp Usize.pp) f_arr
+      (Array.pp Uns.pp) arr
+      (Array.pp Uns.pp) t_arr
+      (Array.pp Uns.pp) f_arr
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i * 10) in
@@ -1088,11 +1088,11 @@ let%expect_test "reduce" =
   let open Format in
   printf "@[<h>";
   let test ms = begin
-    let ordset = of_list (module Usize) ms in
+    let ordset = of_list (module Uns) ms in
     let sum = reduce ~f:( + ) ordset in
     printf "reduce ~f:( + ) %a -> %a\n"
-      (List.pp Usize.pp) ms
-      (Option.pp Usize.pp) sum
+      (List.pp Uns.pp) ms
+      (Option.pp Uns.pp) sum
   end in
   let test_lists = [
     [];
@@ -1132,7 +1132,7 @@ let%expect_test "stress" =
         ordset'
       end
   end in
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   let _ = test 100 0 e e in
   printf "@]";
 
@@ -1148,7 +1148,7 @@ let%expect_test "stress2" =
     | false -> ordset
     | true -> begin
         (* Hash i in order to test semi-random insertion order. *)
-        let h = Hash.(t_of_state (Usize.hash_fold i State.empty)) in
+        let h = Hash.(t_of_state (Uns.hash_fold i State.empty)) in
         let ordset' = remove h (test n (succ i) e (insert h ordset)) in
         assert (equal ordset ordset');
         assert (equal ordset (union ordset ordset'));

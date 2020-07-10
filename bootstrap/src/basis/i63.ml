@@ -1,15 +1,15 @@
 (* Partial Rudiments. *)
 include Rudiments_int0
-module Usize = U63
+module Uns = U63
 
 let of_int t =
-  isize_of_int t
+  t
 
 let kv t =
-  isize_of_int t
+  t
 
 module T = struct
-  type t = isize
+  type t = int
   let num_bits = Sys.int_size
 end
 include T
@@ -66,7 +66,7 @@ let%expect_test "string" =
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" Usize.pp num_bits;
+  printf "num_bits=%a\n" Uns.pp num_bits;
   printf "min_value=%a\n" pp_x min_value;
   printf "max_value=%a\n" pp_x max_value;
 
@@ -151,20 +151,20 @@ let%expect_test "bit_" =
 
   let x = kv 0xff in
   let s = 4 in
-  printf "bit_sl %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_sl ~shift:s x);
+  printf "bit_sl %a %a -> %a\n" Uns.pp s pp_x x pp_x (bit_sl ~shift:s x);
 
   let x = kv (-1) in
   let s = 4 in
-  printf "bit_usr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_usr ~shift:s x);
-  printf "bit_ssr %a %a -> %a\n" Usize.pp s pp_x x pp_x (bit_ssr ~shift:s x);
+  printf "bit_usr %a %a -> %a\n" Uns.pp s pp_x x pp_x (bit_usr ~shift:s x);
+  printf "bit_ssr %a %a -> %a\n" Uns.pp s pp_x x pp_x (bit_ssr ~shift:s x);
 
   let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_pop %a -> %a\n" pp_x x Usize.pp (bit_pop x);
-        printf "bit_clz %a -> %a\n" pp_x x Usize.pp (bit_clz x);
-        printf "bit_ctz %a -> %a\n" pp_x x Usize.pp (bit_ctz x);
+        printf "bit_pop %a -> %a\n" pp_x x Uns.pp (bit_pop x);
+        printf "bit_clz %a -> %a\n" pp_x x Uns.pp (bit_clz x);
+        printf "bit_ctz %a -> %a\n" pp_x x Uns.pp (bit_ctz x);
         fn xs'
       end
   end in

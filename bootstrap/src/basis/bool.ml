@@ -3,14 +3,14 @@ open Rudiments
 module T = struct
   type t = bool
 
-  let to_usize t =
+  let to_uns t =
     match t with
     | false -> 0
     | true -> 1
 
   let hash_fold t state =
     state
-    |> Usize.hash_fold (to_usize t)
+    |> Uns.hash_fold (to_uns t)
 
   let cmp t0 t1 =
     match t0, t1 with
@@ -40,7 +40,7 @@ end
 include T
 include Identifiable.Make(T)
 
-let of_usize x =
+let of_uns x =
   match x with
   | 0 -> false
   | _ -> true
@@ -76,17 +76,17 @@ let%expect_test "int" =
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-        let x = to_usize t in
-        printf "to_usize %b -> %a ; " t Usize.pp x;
-        printf "of_usize %a -> %b\n" Usize.pp x (of_usize x);
+        let x = to_uns t in
+        printf "to_uns %b -> %a ; " t Uns.pp x;
+        printf "of_uns %a -> %b\n" Uns.pp x (of_uns x);
         fn ts'
       end
   in
   fn [false; true];
 
   [%expect{|
-    to_usize false -> 0 ; of_usize 0 -> false
-    to_usize true -> 1 ; of_usize 1 -> true
+    to_uns false -> 0 ; of_uns 0 -> false
+    to_uns true -> 1 ; of_uns 1 -> true
     |}]
 
 let%expect_test "string" =

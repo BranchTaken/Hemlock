@@ -44,7 +44,7 @@ module type S = sig
 
   (** {1 Length} *)
 
-  val length: ('a, 'cmp) t -> usize
+  val length: ('a, 'cmp) t -> uns
   (** [length t] returns the number of elements in [t].  O(1) time complexity.
   *)
 
@@ -125,7 +125,7 @@ module type S = sig
   (** [iter ~f t] iterates from left to right if ordered, or arbitrarily if
       unordered, over [t]. *)
 
-  val count: f:('a -> bool) -> ('a, 'cmp) t -> usize
+  val count: f:('a -> bool) -> ('a, 'cmp) t -> uns
   (** [count ~f t] iterates over [t] and returns the number of times [f] returns
       [true]. *)
 
@@ -210,15 +210,15 @@ module type S_ord = sig
 
   (** {1 Element operations} *)
 
-  val nth_opt: usize -> ('a, 'cmp) t -> 'a option
+  val nth_opt: uns -> ('a, 'cmp) t -> 'a option
   (** [nth i t] returns the nth set element (0-indexed), or [None] if [i] is out
       of bounds. *)
 
-  val nth: usize -> ('a, 'cmp) t -> 'a
+  val nth: uns -> ('a, 'cmp) t -> 'a
   (** [nth i t] returns the nth set element (0-indexed), or halts if [i] is out
       of bounds. *)
 
-  val psearch: 'a -> ('a, 'cmp) t -> (Cmp.t * usize) option
+  val psearch: 'a -> ('a, 'cmp) t -> (Cmp.t * uns) option
   (** [psearch a t] searches for [a] in [t], and falls back to the nearest
       present predecessor of [a] in the case of no match.
       @return {ul
@@ -228,18 +228,18 @@ module type S_ord = sig
         {- Empty set: [None]}
       } *)
 
-  val search: 'a -> ('a, 'cmp) t -> usize option
+  val search: 'a -> ('a, 'cmp) t -> uns option
   (** [search a t] returns [(Some index)] if [a] is a member of [t]; [None]
       otherwise.  O(lg n) time complexity if ordered, O(1) time complexity if
       unordered. *)
 
-  val nsearch: 'a -> ('a, 'cmp) t -> (Cmp.t * usize) option
+  val nsearch: 'a -> ('a, 'cmp) t -> (Cmp.t * uns) option
   (** [nsearch a t] searches for [a] in [t], and falls back to the nearest
       present succesor of [a] in the case of no match.
       @return {ul
         {- Successor: [Some (Cmp.Lt, index)]}
         {- Match: [Some (Cmp.Eq, index)]}
-        {- No successor: [Some (Cmp.Gt, (Usize.pred (length t)))]}
+        {- No successor: [Some (Cmp.Gt, (Uns.pred (length t)))]}
         {- Empty set: [None]}
       } *)
 
@@ -262,7 +262,7 @@ module type S_ord = sig
       true], or until folding is complete if [f] always returns [accum, false].
   *)
 
-  val foldi_until: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum * bool)
+  val foldi_until: init:'accum -> f:(uns -> 'accum -> 'a -> 'accum * bool)
     -> ('a, 'cmp) t -> 'accum
   (** [foldi_until ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value, continuing until [f]
@@ -274,30 +274,30 @@ module type S_ord = sig
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val foldi: init:'accum -> f:(usize -> 'accum -> 'a -> 'accum) -> ('a, 'cmp) t
+  val foldi: init:'accum -> f:(uns -> 'accum -> 'a -> 'accum) -> ('a, 'cmp) t
     -> 'accum
   (** [foldi ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value. *)
 
-  val iteri: f:(usize -> 'a -> unit) -> ('a, 'cmp) t -> unit
+  val iteri: f:(uns -> 'a -> unit) -> ('a, 'cmp) t -> unit
   (** [iter ~f t] iterates with index provided from left to right over [t]. *)
 
-  val findi: f:(usize -> 'a -> bool) -> ('a, 'cmp) t -> 'a option
+  val findi: f:(uns -> 'a -> bool) -> ('a, 'cmp) t -> 'a option
   (** [findi ~f t] iterates from left to right over [t] with index provided to
       [f] and returns [Some a] for an element which [f] returns [true], or
       [None] if [f] always returns [false]. *)
 
-  val findi_map: f:(usize -> 'a -> 'b option) -> ('a, 'cmp) t -> 'b option
+  val findi_map: f:(uns -> 'a -> 'b option) -> ('a, 'cmp) t -> 'b option
   (** [findi_map ~f t] iterates from left to right over [t] with index provided
       to [f] and returns [Some b] for an element which [f] returns [Some b], or
       [None] if [f] always returns [None]. *)
 
-  val filteri: f:(usize -> 'a -> bool) -> ('a, 'cmp) t -> ('a, 'cmp) t
+  val filteri: f:(uns -> 'a -> bool) -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [filter ~f t] creates a set with contents filtered by [~f].  Only elements
       for which the filter function returns [true] are incorporated into the
       result. *)
 
-  val partitioni_tf: f:(usize -> 'a -> bool) -> ('a, 'cmp) t
+  val partitioni_tf: f:(uns -> 'a -> bool) -> ('a, 'cmp) t
     -> ('a, 'cmp) t * ('a, 'cmp) t
   (** [partitioni_tf ~f t] partitions [t] into two sets for which [~f] returns
       [true] vs [false]. *)

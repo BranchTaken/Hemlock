@@ -10,7 +10,7 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
     module T = struct
       type 'a t = {
         cursor: 'a T.Cursor.t;
-        length: usize;
+        length: uns;
       }
       type 'a elm = 'a T.elm
 
@@ -27,7 +27,7 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
         assert (length t > 0);
         let elm = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
-        let length' = (Usize.pred t.length) in
+        let length' = (Uns.pred t.length) in
         let t' = {cursor=cursor'; length=length'} in
         elm, t'
     end
@@ -63,7 +63,7 @@ module Make_poly2_array (T : I_poly2_array) : S_poly2_array_gen
     module T = struct
       type ('a, 'cmp) t = {
         cursor: ('a, 'cmp) T.Cursor.t;
-        length: usize;
+        length: uns;
       }
       type 'a elm = 'a T.elm
 
@@ -80,7 +80,7 @@ module Make_poly2_array (T : I_poly2_array) : S_poly2_array_gen
         assert (length t > 0);
         let elm = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
-        let length' = (Usize.pred t.length) in
+        let length' = (Uns.pred t.length) in
         let t' = {cursor=cursor'; length=length'} in
         elm, t'
     end
@@ -102,7 +102,7 @@ module Make_poly3_array (T : I_poly3_array) : S_poly3_array_gen
     module T = struct
       type ('k, 'v, 'cmp) t = {
         cursor: ('k, 'v, 'cmp) T.Cursor.t;
-        length: usize;
+        length: uns;
       }
       type 'k key= 'k T.key
       type 'v value = 'v T.value
@@ -120,7 +120,7 @@ module Make_poly3_array (T : I_poly3_array) : S_poly3_array_gen
         assert (length t > 0);
         let (k, v) = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
-        let length' = (Usize.pred t.length) in
+        let length' = (Uns.pred t.length) in
         let t' = {cursor=cursor'; length=length'} in
         (k, v), t'
     end

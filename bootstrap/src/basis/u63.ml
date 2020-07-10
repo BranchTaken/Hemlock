@@ -1,10 +1,10 @@
 include Rudiments_int
 
-let to_isize t =
-  isize_of_usize t
+let to_int t =
+  int_of_uns t
 
-let of_isize x =
-  usize_of_isize x
+let of_int x =
+  uns_of_int x
 
 (******************************************************************************)
 (* Begin tests. *)

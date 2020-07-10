@@ -6,7 +6,7 @@ include Rudiments_int0
 module type I = sig
   type t
 
-  val num_bits: usize
+  val num_bits: uns
   (** Number of bits in integer representation. *)
 end
 
@@ -21,7 +21,7 @@ module type I_derived = sig
   val one: t
   (** Constant value 1. *)
 
-  val of_usize: usize -> t
+  val of_uns: uns -> t
   (** Initialize from full-width unsigned integer, with possible loss. *)
 
   val ( + ): t -> t -> t
@@ -33,10 +33,10 @@ module type I_derived = sig
   val bit_and: t -> t -> t
   (** Bitwise and. *)
 
-  val bit_sl: shift:usize -> t -> t
+  val bit_sl: shift:uns -> t -> t
   (** Bit shift left. *)
 
-  val bit_clz: t -> usize
+  val bit_clz: t -> uns
   (** Count leading zeros. *)
 end
 
@@ -111,22 +111,22 @@ module type S = sig
   val bit_not: t -> t
   (** Bitwise not. *)
 
-  val bit_sl: shift:usize -> t -> t
+  val bit_sl: shift:uns -> t -> t
   (** Bit shift left. *)
 
-  val bit_usr: shift:usize -> t -> t
+  val bit_usr: shift:uns -> t -> t
   (** Unsigned bit shift right (no sign extension). *)
 
-  val bit_ssr: shift:usize -> t -> t
+  val bit_ssr: shift:uns -> t -> t
   (** Signed bit shift right (sign extension). *)
 
-  val bit_pop: t -> usize
+  val bit_pop: t -> uns
   (** Population count, i.e. number of bits set to 1. *)
 
-  val bit_clz: t -> usize
+  val bit_clz: t -> uns
   (** Count leading zeros. *)
 
-  val bit_ctz: t -> usize
+  val bit_ctz: t -> uns
   (** Count trailing zeros. *)
 
   val ( + ): t -> t -> t
@@ -160,11 +160,11 @@ end
 module type S_narrow = sig
   type t
 
-  val narrow_of_signed: isize -> t
+  val narrow_of_signed: int -> t
   (** Narrow full-width signed integer.  Sign is preserved, but precision may be
       silently lost. *)
 
-  val narrow_of_unsigned: usize -> t
+  val narrow_of_unsigned: uns -> t
   (** Narrow full-width unsigned integer.  Sign is preserved, but precision may
       be silently lost. *)
 end

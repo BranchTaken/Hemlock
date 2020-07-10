@@ -11,7 +11,7 @@ module type I_mono_def = sig
   type elm
   (** Element type. *)
 
-  val length: t -> usize
+  val length: t -> uns
   (** Remaining sequence length. *)
 
   val next: t -> elm * t
@@ -57,7 +57,7 @@ module type I_poly_def = sig
   type 'a elm
   (** Element type. *)
 
-  val length: 'a t -> usize
+  val length: 'a t -> uns
   (** Remaining sequence length. *)
 
   val next: 'a t -> 'a elm * 'a t
@@ -103,7 +103,7 @@ module type I_poly2_def = sig
   type 'a elm
   (** Element type. *)
 
-  val length: ('a, 'cmp) t -> usize
+  val length: ('a, 'cmp) t -> uns
   (** Remaining sequence length. *)
 
   val next: ('a, 'cmp) t -> 'a elm * ('a, 'cmp) t
@@ -182,7 +182,7 @@ module type I_poly3_def = sig
   type 'v value
   (** Value type. *)
 
-  val length: ('k, 'v, 'cmp) t -> usize
+  val length: ('k, 'v, 'cmp) t -> uns
   (** Remaining sequence length. *)
 
   val next: ('k, 'v, 'cmp) t -> ('k key * 'v value) * ('k, 'v, 'cmp) t

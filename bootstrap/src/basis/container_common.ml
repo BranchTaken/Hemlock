@@ -12,7 +12,7 @@ module Make_poly_length (T : I_poly) : S_poly_length_gen
     let rec fn index cursor = begin
       match T.Cursor.(cursor = (tl t)) with
       | true -> index
-      | false -> fn (Usize.succ index) (T.Cursor.succ cursor)
+      | false -> fn (Uns.succ index) (T.Cursor.succ cursor)
     end in
     fn 0 (T.Cursor.hd t)
 
@@ -54,7 +54,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
   let foldi_until ~init ~f t =
     let _, accum = fold_until t ~init:(0, init)
       ~f:(fun (i, accum) elm ->
-        let i' = (Usize.succ i) in
+        let i' = (Uns.succ i) in
         let accum', until = f i accum elm in
         (i', accum'), until
       ) in
@@ -79,7 +79,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     fold t ~init:0 ~f:(fun accum elm ->
       match f elm with
       | false -> accum
-      | true -> (Usize.succ accum)
+      | true -> (Uns.succ accum)
     )
 
   let for_any ~f t =

@@ -1,7 +1,7 @@
 (* Module aliases. *)
 
-module Isize = I63
-module Usize = U63
+module Int = I63
+module Uns = U63
 module Codepoint = U21
 module Byte = U8
 
@@ -16,10 +16,8 @@ type i64 = Rudiments_int0.i64
 
 type u64 = Rudiments_int0.u64
 
-type isize = Rudiments_int0.isize
-
-type usize = Rudiments_int0.usize
-(** {!type:usize} is the default numerical type. *)
+type uns = Rudiments_int0.uns
+(** {!type:uns} is the default numerical type. *)
 
 type i63 = I63.t
 
@@ -50,19 +48,13 @@ val halt: string -> 'a
 val demand: bool -> unit
 (** Like [assert], but cannot be disabled. *)
 
-val usize_of_isize: isize -> usize
+val uns_of_int: int -> uns
 (** Convert a signed integer to a bitwise identical unsigned integer. *)
 
-val isize_of_usize: usize -> isize
+val int_of_uns: uns -> int
 (** Convert an unsigned integer to a bitwise identical signed integer. *)
 
-val int_of_isize: isize -> int
-(** Convert a signed integer to a bitwise identical OCaml integer. *)
-
-val isize_of_int: int -> isize
-(** Convert an OCaml integer to a bitwise identical signed integer. *)
-
-include Intnb_intf.S_u with type t := usize
+include Intnb_intf.S_u with type t := uns
 
 val not: bool -> bool
 (** [not t] returns the logical negation of [t]. *)

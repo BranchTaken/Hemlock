@@ -29,7 +29,7 @@ value_of_result(const char *arg) {
 // function returns an empty array to indicate error.
 //
 //                            nbits -> [|entropy...|]
-// val hemlock_entropy_nbits: usize -> Int64.t array
+// val hemlock_entropy_nbits:   uns -> Int64.t array
 CAMLprim value
 hemlock_entropy_nbits(value a_nbits) {
   size_t nbits_in = Unsigned_long_val(a_nbits);

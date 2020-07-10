@@ -21,14 +21,14 @@ include Formattable_intf.S_poly with type 'a t := 'a t
 val empty: 'a t
 (** Return an empty stream. *)
 
-val init: usize -> f:(usize -> 'a) -> 'a t
+val init: uns -> f:(uns -> 'a) -> 'a t
 (** Initialize stream.  [init len ~f:(fun i -> ...)] lazily initializes a stream
     of given length, where [f] provides the value for each element at given
     index. *)
 
 (** {1 Length} *)
 
-val length: 'a t -> usize
+val length: 'a t -> uns
 (** Return stream length.  This forces and counts every node and is Θ(n). *)
 
 val is_empty: 'a t -> bool
@@ -56,29 +56,29 @@ val pop: 'a t -> 'a * 'a t
 val concat: 'a t -> 'a t -> 'a t
 (** Concatenate two streams. *)
 
-val split: usize -> 'a t -> 'a t * 'a t
+val split: uns -> 'a t -> 'a t * 'a t
 (** Split the stream with elements [\[0..len)] into streams with elements
     [\[0..n)] and [\[n..len)].  If stream contains fewer than [n] elements,
     returns a stream with elements [\[0..len)] and an empty stream.  Split is
     O(1), but forcing the first element of the second returned stream is O(n).
 *)
 
-val rev_split: usize -> 'a t -> 'a t * 'a t
+val rev_split: uns -> 'a t -> 'a t * 'a t
 (** Split the stream with elements [\[0..len)] into streams with elements
     [(n..0\]] and [\[n..len)].  If stream contains fewer than [n] elements,
     returns a stream with elements [(len..0\]] and an empty stream.  Split is
     O(1), but forcing the first element of either returned stream is O(n). *)
 
-val take: usize -> 'a t -> 'a t
+val take: uns -> 'a t -> 'a t
 (** Return a new stream with the first [max n len] elements of the input stream.
 *)
 
-val rev_take: usize -> 'a t -> 'a t
+val rev_take: uns -> 'a t -> 'a t
 (** Return a new stream with the first [max n len] elements of the input stream
     in reverse order.  Forcing the first element of the returned stream is O(n).
 *)
 
-val drop: usize -> 'a t -> 'a t
+val drop: uns -> 'a t -> 'a t
 (** Return a new stream without the first [max n len] elements of the input
     stream.  Drop is O(1), but forcing the first element of the returned stream
     is O(n). *)

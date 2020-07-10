@@ -10,7 +10,7 @@ module T = struct
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
-    Isize.cmp (Usize.to_isize Int64.(unsigned_compare t0 t1)) (Isize.kv 0)
+    Int.cmp (Uns.to_int Int64.(unsigned_compare t0 t1)) (Int.kv 0)
 
   let zero = Int64.zero
 
@@ -28,7 +28,7 @@ let pp_x ppf t =
     match shift with
     | 0 -> ()
     | _ -> begin
-        if Usize.(shift < 64) then Format.fprintf ppf "_";
+        if Uns.(shift < 64) then Format.fprintf ppf "_";
         let shift' = shift - 16 in
         Format.fprintf ppf "%04Lx"
           Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
@@ -108,23 +108,23 @@ let to_i64 t =
 let of_i64 i =
   i
 
-let to_usize t =
+let to_uns t =
   Int64.to_int t
 
-let to_usize_hlt t =
+let to_uns_hlt t =
   match Int64.unsigned_to_int t with
   | None -> halt "Lossy conversion"
   | Some x -> x
 
-let of_usize u =
-  let i = Usize.to_isize u in
-  match Isize.(i >= (kv 0)) with
+let of_uns u =
+  let i = Uns.to_int u in
+  match Int.(i >= (kv 0)) with
   | true -> Int64.of_int u
   | false -> begin
-      let isize_sign_bit = Usize.of_isize Isize.min_value in
+      let int_sign_bit = Uns.of_int Int.min_value in
       Int64.(add (of_int u)
-        (add (of_int isize_sign_bit)
-            (of_int isize_sign_bit)))
+        (add (of_int int_sign_bit)
+            (of_int int_sign_bit)))
     end
 
 let min_value = zero
@@ -194,9 +194,9 @@ let ( ** ) t0 t1 =
 let ( // ) t0 t1 =
   (to_float t0) /. (to_float t1)
 
-external bit_pop: t -> usize = "hemlock_u64_bit_pop"
-external bit_clz: t -> usize = "hemlock_u64_bit_clz"
-external bit_ctz: t -> usize = "hemlock_u64_bit_ctz"
+external bit_pop: t -> uns = "hemlock_u64_bit_pop"
+external bit_clz: t -> uns = "hemlock_u64_bit_clz"
+external bit_ctz: t -> uns = "hemlock_u64_bit_ctz"
 
 module U = struct
   type nonrec t = t
@@ -206,7 +206,7 @@ module U = struct
   let cmp = cmp
   let zero = zero
   let one = one
-  let of_usize = of_usize
+  let of_uns = of_uns
   let ( + ) = ( + )
   let ( - ) = ( - )
   let bit_and = bit_and

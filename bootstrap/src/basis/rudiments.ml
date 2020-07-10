@@ -1,7 +1,7 @@
 (* Aliases. *)
 
-module Isize = I63
-module Usize = U63
+module Int = I63
+module Uns = U63
 module Codepoint = U21
 module Byte = U8
 

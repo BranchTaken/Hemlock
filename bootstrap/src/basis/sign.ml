@@ -11,14 +11,14 @@ let pp ppf t =
     | Zero -> "Zero"
     | Pos -> "Pos"
   )
-let of_isize x =
+let of_int x =
   match x with
   | -1 -> Neg
   | 0 -> Zero
   | 1 -> Pos
   | _ -> not_reached ()
 
-let to_isize t =
+let to_int t =
   match t with
   | Neg -> ~-1
   | Zero -> 0

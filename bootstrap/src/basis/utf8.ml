@@ -90,7 +90,7 @@ module Seq = struct
             | Some (b, t')
               when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
               Some (Error (List.rev (b :: bytes)), t')
-            | Some (b, t') -> fn t' (b :: bytes) (Usize.pred nrem)
+            | Some (b, t') -> fn t' (b :: bytes) (Uns.pred nrem)
           end
       end in
       match T.next t with
@@ -160,32 +160,32 @@ let length = function
 
 let to_string = function
   | One b0 -> Stdlib.String.init 1 (fun _ ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize b0))
+    Stdlib.Char.chr (Byte.to_int b0)
   )
   | Two (b0, b1) -> Stdlib.String.init 2 (fun i ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+    Stdlib.Char.chr (Byte.to_int (
       match i with
       | 0 -> b0
       | 1 -> b1
       | _ -> not_reached ()
-    ))))
+    )))
   | Three (b0, b1, b2) -> Stdlib.String.init 3 (fun i ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+    Stdlib.Char.chr (Byte.to_int (
       match i with
       | 0 -> b0
       | 1 -> b1
       | 2 -> b2
       | _ -> not_reached ()
-    ))))
+    )))
   | Four (b0, b1, b2, b3) -> Stdlib.String.init 4 (fun i ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+    Stdlib.Char.chr (Byte.to_int (
       match i with
       | 0 -> b0
       | 1 -> b1
       | 2 -> b2
       | 3 -> b3
       | _ -> not_reached ()
-    ))))
+    )))
 
 let escape t =
   match t with
@@ -257,11 +257,11 @@ let%expect_test "utf8" =
     printf "codepoint=%a, codepoint'=%a, bytes=["
       Codepoint.pp_x codepoint Codepoint.pp_x codepoint';
     List.iteri bytes ~f:(fun i b ->
-      let space = if Usize.(i = 0) then "" else " " in
-      let sep = if Usize.(succ i < length) then ";" else "" in
+      let space = if Uns.(i = 0) then "" else " " in
+      let sep = if Uns.(succ i < length) then ";" else "" in
       printf "%s%a%s" space Byte.pp_x b sep
     );
-    printf "], length=%a\n" Usize.pp length
+    printf "], length=%a\n" Uns.pp length
   );
 
   [%expect{|
@@ -278,9 +278,9 @@ let%expect_test "pp,escape" =
     match i with
     | 0x80 -> ()
     | _ -> begin
-        let utf8 = of_codepoint Codepoint.(of_usize i) in
-        printf "%a -> %a\n" Usize.pp_x i pp utf8;
-        fn (Usize.succ i)
+        let utf8 = of_codepoint Codepoint.(of_uns i) in
+        printf "%a -> %a\n" Uns.pp_x i pp utf8;
+        fn (Uns.succ i)
       end
   end in
   fn 0;

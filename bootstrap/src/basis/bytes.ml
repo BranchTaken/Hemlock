@@ -6,9 +6,9 @@ let pp ppf bytes =
 let hash_fold bytes state =
   Hash.State.Gen.init state
   |> Hash.State.Gen.fold_u8 (Array.length bytes)
-    ~f:(fun i -> (Byte.to_usize (Array.get i bytes)))
+    ~f:(fun i -> (Byte.to_uns (Array.get i bytes)))
   |> Hash.State.Gen.fini
-  |> Usize.hash_fold (Array.length bytes)
+  |> Uns.hash_fold (Array.length bytes)
 
 let of_codepoint cp =
   Array.of_list (Utf8.to_bytes (Utf8.of_codepoint cp))
@@ -18,7 +18,7 @@ module Array_seq = struct
     type t = {
       string: string;
       cursor: String.Cursor.t;
-      bindex: usize;
+      bindex: uns;
       rem_bytes: byte list;
     }
     type elm = byte
@@ -39,7 +39,7 @@ module Array_seq = struct
       match t.rem_bytes with
       | b :: rem_bytes' -> begin
           let t' = {t with
-            bindex=(Usize.succ t.bindex);
+            bindex=(Uns.succ t.bindex);
             rem_bytes=rem_bytes'
           } in
           b, t'
@@ -53,7 +53,7 @@ module Array_seq = struct
           in
           let t' = {t with
             cursor=(String.Cursor.succ t.cursor);
-            bindex=(Usize.succ t.bindex);
+            bindex=(Uns.succ t.bindex);
             rem_bytes} in
           b, t'
         end
@@ -69,7 +69,7 @@ module Utf8_seq = struct
   module T = struct
     type t = {
       bytes: byte array;
-      bindex: usize;
+      bindex: uns;
     }
 
     let init t =
@@ -83,7 +83,7 @@ module Utf8_seq = struct
       | true -> None
       | false -> begin
           let b = Array.get t.bindex t.bytes in
-          let t' = {t with bindex=(Usize.succ t.bindex)} in
+          let t' = {t with bindex=(Uns.succ t.bindex)} in
           Some (b, t')
         end
   end
