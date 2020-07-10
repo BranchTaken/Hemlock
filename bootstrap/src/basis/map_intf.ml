@@ -60,7 +60,7 @@ module type S = sig
 
   (** {1 Length} *)
 
-  val length: ('k, 'v, 'cmp) t -> usize
+  val length: ('k, 'v, 'cmp) t -> uns
   (** [length t] returns the number of mappings in [t]. O(1) time complexity. *)
 
   val is_empty: ('k, 'v, 'cmp) t -> bool
@@ -194,7 +194,7 @@ module type S = sig
   (** [iter ~f t] iterates from left to right if ordered, or arbitrarily if
       unordered, over [t]. *)
 
-  val count: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> usize
+  val count: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> uns
   (** [count ~f t] iterates over [t] and returns the number of times [f] returns
       [true]. *)
 
@@ -302,15 +302,15 @@ module type S_ord = sig
 
   (** {1 Mapping operations} *)
 
-  val nth_opt: usize -> ('k, 'v, 'cmp) t -> ('k * 'v) option
+  val nth_opt: uns -> ('k, 'v, 'cmp) t -> ('k * 'v) option
   (** [nth i t] returns the nth map mapping (0-indexed), or [None] if [i] is out
       of bounds. *)
 
-  val nth: usize -> ('k, 'v, 'cmp) t -> ('k * 'v)
+  val nth: uns -> ('k, 'v, 'cmp) t -> ('k * 'v)
   (** [nth i t] returns the nth map mapping (0-indexed), or halts if [i] is out
       of bounds. *)
 
-  val psearch: 'k -> ('k, 'v, 'cmp) t -> (Cmp.t * usize) option
+  val psearch: 'k -> ('k, 'v, 'cmp) t -> (Cmp.t * uns) option
   (** [psearch k t] searches for [k] in [t], and falls back to the nearest
       present predecessor of [k] in the case of no match.
       @return {ul
@@ -320,18 +320,18 @@ module type S_ord = sig
         {- Empty map: [None]}
       } *)
 
-  val search: 'k -> ('k, 'v, 'cmp) t -> usize option
+  val search: 'k -> ('k, 'v, 'cmp) t -> uns option
   (** [search k t] returns [(Some index)] if [k] is a key in [t]; [None]
       otherwise. O(lg n) time complexity if ordered, O(1) time complexity if
       unordered. *)
 
-  val nsearch: 'k -> ('k, 'v, 'cmp) t -> (Cmp.t * usize) option
+  val nsearch: 'k -> ('k, 'v, 'cmp) t -> (Cmp.t * uns) option
   (** [nsearch k t] searches for [k] in [t], and falls back to the nearest
       present succesor of [k] in the case of no match.
       @return {ul
         {- Successor: [Some (Cmp.Lt, index)]}
         {- Match: [Some (Cmp.Eq, index)]}
-        {- No successor: [Some (Cmp.Gt, (Usize.pred (length t)))]}
+        {- No successor: [Some (Cmp.Gt, (Uns.pred (length t)))]}
         {- Empty map: [None]}
       } *)
 
@@ -355,7 +355,7 @@ module type S_ord = sig
       true], or until folding is complete if [f] always returns [accum, false].
   *)
 
-  val foldi_until: init:'accum -> f:(usize -> 'accum -> ('k * 'v)
+  val foldi_until: init:'accum -> f:(uns -> 'accum -> ('k * 'v)
     -> 'accum * bool) -> ('k, 'v, 'cmp) t -> 'accum
   (** [foldi_until ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value, continuing until [f]
@@ -367,44 +367,44 @@ module type S_ord = sig
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the
       initial accumulator value. *)
 
-  val foldi: init:'accum -> f:(usize -> 'accum -> ('k * 'v) -> 'accum)
+  val foldi: init:'accum -> f:(uns -> 'accum -> ('k * 'v) -> 'accum)
     -> ('k, 'v, 'cmp) t -> 'accum
   (** [foldi ~init ~f t] folds [t] with index provided to [f] from left to
       right, using [init] as the initial accumulator value. *)
 
-  val iteri: f:(usize -> ('k * 'v) -> unit) -> ('k, 'v, 'cmp) t -> unit
+  val iteri: f:(uns -> ('k * 'v) -> unit) -> ('k, 'v, 'cmp) t -> unit
   (** [iter ~f t] iterates with index provided from left to right over [t]. *)
 
-  val findi: f:(usize -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t
+  val findi: f:(uns -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t
     -> ('k * 'v) option
   (** [findi ~f t] iterates from left to right over [t] with index provided to
       [f] and returns [Some (k, v)] for a mapping which [f] returns [true], or
       [None] if [f] always returns [false]. *)
 
-  val findi_map: f:(usize -> ('k * 'v) -> 'a option) -> ('k, 'v, 'cmp) t
+  val findi_map: f:(uns -> ('k * 'v) -> 'a option) -> ('k, 'v, 'cmp) t
     -> 'a option
   (** [findi_map ~f t] iterates from left to right over [t] with index provided
       to [f] and returns [Some a] for a mapping which [f] returns [Some a], or
       [None] if [f] always returns [None]. *)
 
-  val filteri: f:(usize -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t
+  val filteri: f:(uns -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t
     -> ('k, 'v, 'cmp) t
   (** [filteri ~f t] creates a map with contents filtered by [~f]. Only mappings
       for which the filter function returns [true] are incorporated into the
       result. Θ(n) time complexity. *)
 
-  val filteri_map: f:(usize -> ('k * 'v) -> 'v2 option) -> ('k, 'v, 'cmp) t
+  val filteri_map: f:(uns -> ('k * 'v) -> 'v2 option) -> ('k, 'v, 'cmp) t
     -> ('k, 'v2, 'cmp) t
   (** [filteri_map ~f t] creates a map with contents filtered and mapped by
       [~f]. Only mappings for which the filter-map function returns [Some v2]
       are incorporated into the result. Θ(n) time complexity. *)
 
-  val partitioni_tf: f:(usize -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t
+  val partitioni_tf: f:(uns -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t
     -> ('k, 'v, 'cmp) t * ('k, 'v, 'cmp) t
   (** [partitioni_tf ~f t] partitions [t] into two maps for which [~f] returns
       [true] vs [false]. Θ(n) time complexity. *)
 
-  val partitioni_map: f:(usize -> ('k * 'v) -> ('v2, 'v3) Either.t)
+  val partitioni_map: f:(uns -> ('k * 'v) -> ('v2, 'v3) Either.t)
     -> ('k, 'v, 'cmp) t -> ('k, 'v2, 'cmp) t * ('k, 'v3, 'cmp) t
   (** [partitioni_map ~f t] partitions [t] into two maps for which [~f] returns
       [First v2] vs [Second v3]. Θ(n) time complexity. *)

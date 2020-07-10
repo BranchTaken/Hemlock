@@ -5,12 +5,12 @@ type u128 = {
   lo: u64;
 }
 type isize
-type usize = int
+type uns = int
 
-val usize_of_isize: isize -> usize
+val uns_of_isize: isize -> uns
 (** Convert a signed integer to a bitwise identical unsigned integer. *)
 
-val isize_of_usize: usize -> isize
+val isize_of_uns: uns -> isize
 (** Convert an unsigned integer to a bitwise identical unsigned integer. *)
 
 val int_of_isize: isize -> int
@@ -19,7 +19,7 @@ val int_of_isize: isize -> int
 val isize_of_int: int -> isize
 (** Convert a OCaml integer to a bitwise identical signed integer. *)
 
-val u128_of_usize: usize -> u128
+val u128_of_uns: uns -> u128
 (** Convert unsigned integer to 128-bit unsigned integer. *)
 
 val u128_pp_x: Format.formatter -> u128 -> unit
@@ -36,10 +36,10 @@ val u128_one: u128
 val u128_bit_or: u128 -> u128 -> u128
 (** Bitwise or. *)
 
-val u128_bit_sl: shift:usize -> u128 -> u128
+val u128_bit_sl: shift:uns -> u128 -> u128
 (** Bit shift left. *)
 
-val u128_bit_usr: shift:usize -> u128 -> u128
+val u128_bit_usr: shift:uns -> u128 -> u128
 (** Unsigned bit shift right (no sign extension). *)
 
 val u128_add: u128 -> u128 -> u128

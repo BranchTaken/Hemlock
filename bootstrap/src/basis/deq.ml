@@ -1,7 +1,7 @@
 open Rudiments
 
 type 'a t =
-  usize * 'a Stream.t * 'a Stream.t * usize * 'a Stream.t * 'a Stream.t
+  uns * 'a Stream.t * 'a Stream.t * uns * 'a Stream.t * 'a Stream.t
 
 (* Increment size for rebuilding; must be either 2 or 3. Reference: Double-ended
  * queues section in Purely Functional Data Structures by Chris Okasaki. *)
@@ -128,7 +128,7 @@ let pp pp_elm ppf (_lf, f, _sf, _lr, r, _sr) =
 
 let%expect_test "empty" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let t = empty in
   printf "empty = %a\n" ppt t;
@@ -140,14 +140,14 @@ let%expect_test "empty" =
 
 let%expect_test "length" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let l = length t in
-        printf "length %a = %a\n" ppt t Usize.pp l;
+        printf "length %a = %a\n" ppt t Uns.pp l;
         fn (succ i) n (push i t)
       end
   end in
@@ -162,7 +162,7 @@ let%expect_test "length" =
 
 let%expect_test "is_empty" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -184,7 +184,7 @@ let%expect_test "is_empty" =
 
 let%expect_test "hd" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -192,7 +192,7 @@ let%expect_test "hd" =
     | true -> begin
         let t' = push_back i t in
         let elm = hd t' in
-        printf "hd %a = %a\n" ppt t' Usize.pp elm;
+        printf "hd %a = %a\n" ppt t' Uns.pp elm;
         fn (succ i) n t'
       end
   end in
@@ -209,7 +209,7 @@ let%expect_test "hd" =
 
 let%expect_test "tl" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -234,7 +234,7 @@ let%expect_test "tl" =
 
 let%expect_test "back" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -242,7 +242,7 @@ let%expect_test "back" =
     | true -> begin
         let t' = push i t in
         let elm = back t' in
-        printf "back %a = %a\n" ppt t' Usize.pp elm;
+        printf "back %a = %a\n" ppt t' Uns.pp elm;
         fn (succ i) n t'
       end
   end in
@@ -259,7 +259,7 @@ let%expect_test "back" =
 
 let%expect_test "front" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -284,14 +284,14 @@ let%expect_test "front" =
 
 let%expect_test "push" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let t' = push i t in
-        printf "push %a %a = %a\n" Usize.pp i ppt t ppt t';
+        printf "push %a %a = %a\n" Uns.pp i ppt t ppt t';
         fn (succ i) n t'
       end
   end in
@@ -308,14 +308,14 @@ let%expect_test "push" =
 
 let%expect_test "push_back" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let t' = push_back i t in
-        printf "push_back %a %a = %a\n" Usize.pp i ppt t ppt t';
+        printf "push_back %a %a = %a\n" Uns.pp i ppt t ppt t';
         fn (succ i) n t'
       end
   end in

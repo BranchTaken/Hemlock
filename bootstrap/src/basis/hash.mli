@@ -16,8 +16,8 @@ module State : sig
 
   val empty: t
   (** Unseeded hash state (constant). Note that no stateless hash functions
-      exist, but they can be simulated. For example, a stable {!type:usize} hash
-      function can be implemented as [(fun u -> Usize.hash_fold u
+      exist, but they can be simulated. For example, a stable {!type:uns} hash
+      function can be implemented as [(fun u -> Uns.hash_fold u
       Hash.State.empty)]. *)
 
   val of_u128: u128 -> t
@@ -43,11 +43,11 @@ module State : sig
     (** [init state] creates a new hash generator, which can then be fed data
         via zero or more calls to [fold_*]. *)
 
-    val fold_u128: usize -> f:(usize -> u128) -> t -> t
+    val fold_u128: uns -> f:(uns -> u128) -> t -> t
     (** [fold_u128 n ~f t] incorporates the hash of [n] indexed values provided
         by [~f] into [t] and returns the resulting hash state generator. *)
 
-    val fold_u8: usize -> f:(usize -> usize) -> t -> t
+    val fold_u8: uns -> f:(uns -> uns) -> t -> t
     (** [fold_u8 n ~f t] incorporates the hash of [n] indexed values provided by
         [~f] into [t] and returns the resulting hash state generator. Note that
         the values returned by [~f] are treated as {!type:u8} (only the least

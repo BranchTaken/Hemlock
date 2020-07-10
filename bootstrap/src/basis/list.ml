@@ -51,7 +51,7 @@ let dedup ?length ~cmp t =
       | Cmp.Gt -> not_reached ()
     in
     if i = zero then member' :: t'
-    else fn member' t' arr (Usize.pred i)
+    else fn member' t' arr (Uns.pred i)
   end in
   match t with
   | []
@@ -59,8 +59,8 @@ let dedup ?length ~cmp t =
   | _ :: _ -> begin
       let arr = Array.of_list ?length t in
       Array.sort_inplace ~stable:true arr ~cmp;
-      let i = Usize.pred (Array.length arr) in
-      fn (Array.get i arr) [] arr (Usize.pred i)
+      let i = Uns.pred (Array.length arr) in
+      fn (Array.get i arr) [] arr (Uns.pred i)
     end
 
 let rev_dedup ?length ~cmp t =
@@ -71,7 +71,7 @@ let rev_dedup ?length ~cmp t =
       | Cmp.Eq -> member, t
       | Cmp.Gt -> elm, (member :: t)
     in
-    let i' = Usize.succ i in
+    let i' = Uns.succ i in
     if i' = (Array.length arr) then member' :: t'
     else fn member' t' arr i'
   end in
@@ -82,7 +82,7 @@ let rev_dedup ?length ~cmp t =
       let arr = Array.of_list ?length t in
       Array.sort_inplace ~stable:true arr ~cmp;
       let i = 0 in
-      fn (Array.get i arr) [] arr (Usize.succ i)
+      fn (Array.get i arr) [] arr (Uns.succ i)
     end
 
 let dedup_sorted ~cmp t =
@@ -174,10 +174,10 @@ let%expect_test "reduce[_hlt]" =
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "reduce %a" (pp Usize.pp) l;
+    printf "reduce %a" (pp Uns.pp) l;
     match (reduce l ~f:(fun a b -> a + b)) with
     | None -> printf "-> None\n"
-    | Some result -> printf " -> %a\n" Usize.pp result
+    | Some result -> printf " -> %a\n" Uns.pp result
   );
   printf "@]";
 
@@ -208,16 +208,16 @@ let%expect_test "is_sorted" =
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "is_sorted               %a -> %b\n"
-      (pp Usize.pp) l
-      (is_sorted l ~cmp:Usize.cmp)
+      (pp Uns.pp) l
+      (is_sorted l ~cmp:Uns.cmp)
     ;
     printf "is_sorted ~strict:false %a -> %b\n"
-      (pp Usize.pp) l
-      (is_sorted ~strict:false l ~cmp:Usize.cmp)
+      (pp Uns.pp) l
+      (is_sorted ~strict:false l ~cmp:Uns.cmp)
     ;
     printf "is_sorted ~strict:true  %a -> %b\n"
-      (pp Usize.pp) l
-      (is_sorted ~strict:true l ~cmp:Usize.cmp)
+      (pp Uns.pp) l
+      (is_sorted ~strict:true l ~cmp:Uns.cmp)
   );
   printf "@]";
 
@@ -254,7 +254,7 @@ let%expect_test "is_sorted" =
 let%expect_test "[rev_]dedup" =
   let open Format in
   let pp_pair ppf (a, b) =
-    Format.fprintf ppf "(%a, %a)" Usize.pp a Usize.pp b
+    Format.fprintf ppf "(%a, %a)" Uns.pp a Uns.pp b
   in
   let pair_lists = [
     [];
@@ -268,7 +268,7 @@ let%expect_test "[rev_]dedup" =
   ] in
   printf "@[<h>";
   iter pair_lists ~f:(fun pl ->
-    let cmp (a, _) (b, _) = Usize.cmp a b in
+    let cmp (a, _) (b, _) = Uns.cmp a b in
     printf "[rev_]dedup %a -> %a / %a\n"
       (pp pp_pair) pl
       (pp pp_pair) (dedup pl ~cmp)
@@ -289,7 +289,7 @@ let%expect_test "[rev_]dedup" =
 let%expect_test "[rev_]dedup_sorted" =
   let open Format in
   let pp_pair ppf (a, b) =
-    Format.fprintf ppf "(%a, %a)" Usize.pp a Usize.pp b
+    Format.fprintf ppf "(%a, %a)" Uns.pp a Uns.pp b
   in
   let pair_lists = [
     [];
@@ -303,7 +303,7 @@ let%expect_test "[rev_]dedup_sorted" =
   ] in
   printf "@[<h>";
   iter pair_lists ~f:(fun pl ->
-    let cmp (a, _) (b, _) = Usize.cmp a b in
+    let cmp (a, _) (b, _) = Uns.cmp a b in
     assert (is_sorted pl ~cmp);
     printf "[rev_]dedup_sorted %a -> %a / %a\n"
       (pp pp_pair) pl
@@ -325,7 +325,7 @@ let%expect_test "[rev_]dedup_sorted" =
 let%expect_test "[rev_]merge" =
   let open Format in
   let pp_pair ppf (a, b) =
-    Format.fprintf ppf "(%a, %a)" Usize.pp a Usize.pp b
+    Format.fprintf ppf "(%a, %a)" Uns.pp a Uns.pp b
   in
   let pair_list_pairs = [
     ([], []);
@@ -342,7 +342,7 @@ let%expect_test "[rev_]merge" =
   ] in
   printf "@[<h>";
   iter pair_list_pairs ~f:(fun (a, b) ->
-    let cmp (a, _) (b, _) = Usize.cmp a b in
+    let cmp (a, _) (b, _) = Uns.cmp a b in
     assert (is_sorted a ~cmp);
     assert (is_sorted b ~cmp);
     printf "[rev_]merge %a %a -> %a / %a\n"

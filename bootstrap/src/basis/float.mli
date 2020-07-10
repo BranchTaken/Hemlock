@@ -50,7 +50,7 @@ val of_isize: isize -> t
 val to_isize: t -> isize
 (** Convert to signed integer. *)
 
-val create: neg:bool -> exponent:isize -> mantissa:usize -> t
+val create: neg:bool -> exponent:isize -> mantissa:uns -> t
 (** [create ~neg ~exponent ~mantissa] creates a float, where [-1023 <= exponent
     <= 1024] and [mantissa <= 0xf_ffff_ffff_ffff]. *)
 
@@ -61,7 +61,7 @@ val exponent: t -> isize
 (** [exponent t] returns the exponent of [t], which is in [\[-1023 .. 1024\]].
 *)
 
-val mantissa: t -> usize
+val mantissa: t -> uns
 (** [mantissa t] returns the mantissa of [t], which is in [\[0 ..
     0xf_ffff_ffff_ffff\]]. *)
 

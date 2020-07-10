@@ -70,7 +70,7 @@ type ('k, 'v) elm =
 
 type ('k, 'v, 'cmp) t = {
   cmper: ('k, 'cmp) Cmper.t;
-  length: usize;
+  length: uns;
   root: ('k, 'v) node;
 }
 
@@ -113,8 +113,8 @@ let shift_of_level level =
 
 let present_index_at_level hash level =
   let shift = shift_of_level level in
-  let mask = U128.of_usize (elms_per_level - 1) in
-  U128.(to_usize (bit_and mask (bit_usr ~shift hash)))
+  let mask = U128.of_uns (elms_per_level - 1) in
+  U128.(to_uns (bit_and mask (bit_usr ~shift hash)))
 
 let present_bit_of_index index =
   Bitset.bit_sl ~shift:index Bitset.one
@@ -234,7 +234,7 @@ let insert_impl k ~f t =
 
     let k0_present_index = present_index_at_level k0_hash level in
     let k1_present_index = present_index_at_level k1_hash level in
-    match Usize.cmp k0_present_index k1_present_index with
+    match Uns.cmp k0_present_index k1_present_index with
     | Lt -> node_of_kvs (k0, v0) k0_present_index (k1, v1) k1_present_index
     | Eq -> begin
         let present_child = present_bit_of_index k0_present_index in
@@ -600,12 +600,12 @@ let hash_fold hash_fold_v t state =
     (succ i),
     (
       state
-      |> Usize.hash_fold i
+      |> Uns.hash_fold i
       |> t.cmper.hash_fold k
       |> hash_fold_v v
     )
   ) in
-  state' |> Usize.hash_fold n
+  state' |> Uns.hash_fold n
 
 (* Seq. Note that internal iteration via fold* traverses bindings, then
  * children, but that ordering is not stable, and cannot be used here. External
@@ -620,8 +620,8 @@ module Seq_poly3_fold2 = struct
     present_bit: Bitset.t;
   }
   type ('k, 'v, 'cmp) t = {
-    ind: usize;
-    len: usize;
+    ind: uns;
+    len: uns;
     path: ('k, 'v) node_pos list;
   }
 
@@ -1025,11 +1025,11 @@ let pp pp_v ppf t =
   end
   in
   fprintf ppf "@[<v>Map {@;<0 2>@[<v>length=%a;@,%a@]@,}@]"
-    Usize.pp t.length
+    Uns.pp t.length
     pp_root t.root
 
 let pp_kv pp_v ppf (k, v) =
-  Format.fprintf ppf "(%a,@ %a)" Usize.pp k pp_v v
+  Format.fprintf ppf "(%a,@ %a)" Uns.pp k pp_v v
 
 let validate t =
   let open Cmper in
@@ -1065,11 +1065,11 @@ let validate t =
   end in
   assert ((fn t t.root 0) = t.length)
 
-(* Test comparator module for usize that uses unseeded hashing, with several
+(* Test comparator module for uns that uses unseeded hashing, with several
  * specially handled values for the purpose of collision testing. This allows
  * deterministic hashing across test runs. *)
-module UsizeTestCmper = struct
-  type t = usize
+module UnsTestCmper = struct
+  type t = uns
   module T = struct
     type nonrec t = t
     let hash_fold a _state =
@@ -1079,23 +1079,23 @@ module UsizeTestCmper = struct
         (* Set the least significant consumed hash bit. *)
         Hash.State.of_u128
           (U128.bit_sl ~shift:(bits_per_hash % bits_per_level) U128.one)
-      | _ -> Usize.hash_fold a Hash.State.empty
-    let cmp = Usize.cmp
-    let pp = Usize.pp
+      | _ -> Uns.hash_fold a Hash.State.empty
+    let cmp = Uns.cmp
+    let pp = Uns.pp
   end
   include Cmper.Make_mono(T)
 end
 
 let of_klist ks =
-  List.fold ks ~init:(empty (module UsizeTestCmper)) ~f:(fun map k ->
+  List.fold ks ~init:(empty (module UnsTestCmper)) ~f:(fun map k ->
     insert_hlt ~k ~v:(k * 100) map
   )
 
 let veq v0 v1 =
-  Cmp.is_eq (Usize.cmp v0 v1)
+  Cmp.is_eq (Uns.cmp v0 v1)
 
 let merge k v0 v1 =
-  assert Usize.(k * 100 = v0);
+  assert Uns.(k * 100 = v0);
   assert (veq v0 v1);
   v0
 
@@ -1107,13 +1107,13 @@ let%expect_test "hash_fold" =
     | l :: lists' -> begin
         let map = of_klist l in
         printf "hash_fold (of_klist %a) -> %a@\n"
-          (List.pp Usize.pp) l
+          (List.pp Uns.pp) l
           Hash.pp (Hash.t_of_state
-            (hash_fold Usize.hash_fold map Hash.State.empty));
+            (hash_fold Uns.hash_fold map Hash.State.empty));
         fn lists'
       end
   in
-  (* NB: [0; 1] and [0; 2] collide. This is because we're using UsizeTestCmper
+  (* NB: [0; 1] and [0; 2] collide. This is because we're using UnsTestCmper
    * to get stable test output; the hashing results from all but the last
    * binding hashed are discarded. *)
   let lists = [
@@ -1137,7 +1137,7 @@ let%expect_test "hash_fold" =
 let%expect_test "hash_fold empty" =
   let hash_empty state = begin
     state
-    |> hash_fold Unit.hash_fold (empty (module UsizeTestCmper))
+    |> hash_fold Unit.hash_fold (empty (module UnsTestCmper))
   end in
   let e1 =
     Hash.State.empty
@@ -1156,7 +1156,7 @@ let%expect_test "hash_fold empty" =
 let%expect_test "empty,cmper_m,singleton,length" =
   let open Format in
   printf "@[";
-  let e = empty (module UsizeTestCmper) in
+  let e = empty (module UnsTestCmper) in
   validate e;
   assert (length e = 0);
   printf "%a@\n" (pp Unit.pp) e;
@@ -1208,7 +1208,7 @@ let%expect_test "mem,get,insert,subset" =
       end
   end in
   let ks = [1; 3; 2; 42; 44; 45; 56; 60; 66; 75; 81; 91; 420; 421; 4200] in
-  test ks (empty (module UsizeTestCmper));
+  test ks (empty (module UnsTestCmper));
 
   [%expect{|
     |}]
@@ -1234,7 +1234,7 @@ let%expect_test "mem,get,insert,insert_hlt" =
       end
   end in
   let ks = [1; 3; 2; 42; 44; 45; 56; 60; 66; 75; 81; 91; 420; 421; 4200] in
-  test ks (empty (module UsizeTestCmper));
+  test ks (empty (module UnsTestCmper));
 
   [%expect{|
     |}]
@@ -1274,7 +1274,7 @@ let%expect_test "mem,get,update,upsert,update_hlt,subset" =
       end
   end in
   let ks = [1; 3; 2; 42; 44; 45; 56; 60; 66; 75; 81; 91; 420; 421; 4200] in
-  test ks (empty (module UsizeTestCmper));
+  test ks (empty (module UnsTestCmper));
 
   [%expect{|
     |}]
@@ -1309,7 +1309,7 @@ let%expect_test "mem,get,amend" =
       end
   end in
   let ks = [1; 3; 2; 42; 44; 45; 56; 60; 66; 75; 81; 91; 420; 421; 4200] in
-  test ks (empty (module UsizeTestCmper));
+  test ks (empty (module UnsTestCmper));
 
   [%expect{|
     |}]
@@ -1323,7 +1323,7 @@ let%expect_test "of_alist,remove" =
     let map' = remove k map in
     validate map';
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Usize.pp k (pp String.pp) map (pp String.pp) map'
+      Uns.pp k (pp String.pp) map (pp String.pp) map'
   end in
   let test_tuples = [
     ([(0, "0"); (1, "1")], 2,           "Not member.");
@@ -1332,7 +1332,7 @@ let%expect_test "of_alist,remove" =
     ([(0, "0"); (1, "1"); (2, "2")], 2, "Member, length 3 -> 2.");
   ] in
   List.iter test_tuples ~f:(fun (kvs, k, descr) ->
-    let map = of_alist (module UsizeTestCmper) kvs in
+    let map = of_alist (module UnsTestCmper) kvs in
     test k map descr
   );
   printf "@]";
@@ -1449,7 +1449,7 @@ let%expect_test "of_alist,remove_hlt" =
     let map' = remove_hlt k map in
     validate map';
     printf "@[<v>remove_hlt %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Usize.pp k (pp String.pp) map (pp String.pp) map'
+      Uns.pp k (pp String.pp) map (pp String.pp) map'
   end in
   let test_tuples = [
     ([(0, "0")], 0,                     "Member, length 1 -> 0.");
@@ -1457,7 +1457,7 @@ let%expect_test "of_alist,remove_hlt" =
     ([(0, "0"); (1, "1"); (2, "2")], 2, "Member, length 3 -> 2.");
   ] in
   List.iter test_tuples ~f:(fun (kvs, k, descr) ->
-    let map = of_alist (module UsizeTestCmper) kvs in
+    let map = of_alist (module UnsTestCmper) kvs in
     test k map descr
   );
   printf "@]";
@@ -1543,7 +1543,7 @@ let%expect_test "of_alist,to_alist" =
   let open Format in
   printf "@[<h>";
   let test kvs = begin
-    let map = of_alist (module UsizeTestCmper) kvs in
+    let map = of_alist (module UnsTestCmper) kvs in
     printf "of_alist %a; to_alist -> %a\n"
       (List.pp (pp_kv String.pp)) kvs
       (List.pp (pp_kv String.pp)) (to_alist map)
@@ -1588,7 +1588,7 @@ let%expect_test "choose_hlt" =
         map''
       end
   end in
-  let e = empty (module UsizeTestCmper) in
+  let e = empty (module UnsTestCmper) in
   let _ = test 100 0 e in
   printf "@]";
 
@@ -1676,8 +1676,8 @@ let%expect_test "fold2" =
   printf "@[";
   let pp_pair ppf (kv0_opt, kv1_opt) = begin
     fprintf ppf "(%a, %a)"
-      (Option.pp (pp_kv Usize.pp)) kv0_opt
-      (Option.pp (pp_kv Usize.pp)) kv1_opt
+      (Option.pp (pp_kv Uns.pp)) kv0_opt
+      (Option.pp (pp_kv Uns.pp)) kv1_opt
   end in
   let test ks0 ks1 = begin
     let map0 = of_klist ks0 in
@@ -1686,8 +1686,8 @@ let%expect_test "fold2" =
       (kv0_opt, kv1_opt) :: accum
     ) map0 map1 in
     printf "fold2 %a %a -> %a@\n"
-      (List.pp Usize.pp) ks0
-      (List.pp Usize.pp) ks1
+      (List.pp Uns.pp) ks0
+      (List.pp Uns.pp) ks1
       (List.pp pp_pair) pairs
   end in
   let test_lists = [
@@ -1772,7 +1772,7 @@ let%expect_test "iter2,equal,subset,disjoint" =
       | None, Some _
       | Some _, None -> begin
           printf "Should be equal:@,%a@,%a@\n"
-            (pp Usize.pp) map0 (pp Usize.pp) map1;
+            (pp Uns.pp) map0 (pp Uns.pp) map1;
           assert false;
         end
       | None, None -> not_reached ()
@@ -1789,7 +1789,7 @@ let%expect_test "iter2,equal,subset,disjoint" =
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin
           printf "Should be disjoint:@,%a@,%a@\n"
-            (pp Usize.pp) map0 (pp Usize.pp) map1;
+            (pp Uns.pp) map0 (pp Uns.pp) map1;
           assert false;
         end
       | None, Some _
@@ -2005,8 +2005,8 @@ let%expect_test "filter" =
     let map' = filter map ~f:(fun (k, _) -> k % 2 = 0) in
     let kvs = to_alist map' in
     printf "%a -> %a@\n"
-      (List.pp Usize.pp) ks
-      (List.pp (pp_kv Usize.pp)) kvs
+      (List.pp Uns.pp) ks
+      (List.pp (pp_kv Uns.pp)) kvs
   end in
   for n = 0 to 6 do
     let ks = Array.(to_list (init n ~f:(fun i -> i))) in
@@ -2031,12 +2031,12 @@ let%expect_test "filter_map" =
     let map = of_klist ks in
     let map' = filter_map map ~f:(fun (k, v) ->
       match k % 2 = 0 with
-      | true -> Some (Usize.to_string v)
+      | true -> Some (Uns.to_string v)
       | false -> None
     ) in
     let kvs = to_alist map' in
     printf "%a -> %a@\n"
-      (List.pp Usize.pp) ks
+      (List.pp Uns.pp) ks
       (List.pp (pp_kv String.pp)) kvs
   end in
   for n = 0 to 6 do
@@ -2064,9 +2064,9 @@ let%expect_test "partition_tf" =
     let t_kvs = to_alist t_map in
     let f_kvs = to_alist f_map in
     printf "%a -> %a / %a@\n"
-      (List.pp Usize.pp) ks
-      (List.pp (pp_kv Usize.pp)) t_kvs
-      (List.pp (pp_kv Usize.pp)) f_kvs
+      (List.pp Uns.pp) ks
+      (List.pp (pp_kv Uns.pp)) t_kvs
+      (List.pp (pp_kv Uns.pp)) f_kvs
   end in
   for n = 0 to 6 do
     let ks = Array.(to_list (init n ~f:(fun i -> i))) in
@@ -2091,13 +2091,13 @@ let%expect_test "partition_map" =
     let map = of_klist ks in
     let a_map, b_map = partition_map map ~f:(fun (k, v) ->
       match k % 2 = 0 with
-      | true -> First (Usize.to_string v)
-      | false -> Second (Usize.to_isize v)
+      | true -> First (Uns.to_string v)
+      | false -> Second (Uns.to_isize v)
     ) in
     let a_kvs = to_alist a_map in
     let b_kvs = to_alist b_map in
     printf "%a -> %a / %a@\n"
-      (List.pp Usize.pp) ks
+      (List.pp Uns.pp) ks
       (List.pp (pp_kv String.pp)) a_kvs
       (List.pp (pp_kv Isize.pp)) b_kvs
   end in
@@ -2124,8 +2124,8 @@ let%expect_test "kreduce" =
     let map = of_klist ks in
     let sum = kreduce ~f:( + ) map in
     printf "kreduce ~f:( + ) %a -> %a\n"
-      (List.pp Usize.pp) ks
-      (Option.pp Usize.pp) sum
+      (List.pp Uns.pp) ks
+      (Option.pp Uns.pp) sum
   end in
   let test_lists = [
     [];
@@ -2156,8 +2156,8 @@ let%expect_test "reduce" =
     let map = of_klist ks in
     let sum = reduce ~f:( + ) map in
     printf "reduce ~f:( + ) %a -> %a\n"
-      (List.pp Usize.pp) ks
-      (Option.pp Usize.pp) sum
+      (List.pp Uns.pp) ks
+      (Option.pp Uns.pp) sum
   end in
   let test_lists = [
     [];
@@ -2199,7 +2199,7 @@ let%expect_test "stress" =
         map'
       end
   end in
-  let e = empty (module UsizeTestCmper) in
+  let e = empty (module UnsTestCmper) in
   let _ = test 100 0 e e in
   printf "@]";
 

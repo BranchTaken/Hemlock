@@ -4,7 +4,7 @@ open Rudiments_functions
 (* On success this function returns an array of entropy bits, where the total
  * number of bits is rounded up frome the number of bits requested to the
  * nearest multiple of 64. *)
-external entropy_nbits: usize -> Int64.t array = "hemlock_entropy_nbits"
+external entropy_nbits: uns -> Int64.t array = "hemlock_entropy_nbits"
 
 let get () =
   match entropy_nbits 128 with

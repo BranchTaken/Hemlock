@@ -160,9 +160,9 @@ let%expect_test "hash_fold" =
   let rec fn = function
     | [] -> ()
     | l :: lists' -> begin
-        let set = of_list (module Usize) l in
-        printf "hash_fold (of_list (module Usize) %a) -> %a@\n"
-          (List.pp Usize.pp) l
+        let set = of_list (module Uns) l in
+        printf "hash_fold (of_list (module Uns) %a) -> %a@\n"
+          (List.pp Uns.pp) l
           Hash.pp (Hash.t_of_state (hash_fold set Hash.State.empty));
         fn lists'
       end
@@ -174,13 +174,13 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold (of_list (module Usize) []) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold (of_list (module Uns) []) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
     |}]
 
 let%expect_test "hash_fold empty" =
   let hash_empty state = begin
     state
-    |> hash_fold (empty (module Usize))
+    |> hash_fold (empty (module Uns))
   end in
   let e1 =
     Hash.State.empty
@@ -199,7 +199,7 @@ let%expect_test "hash_fold empty" =
 let%expect_test "empty,cmper_m,singleton,length" =
   let open Format in
   printf "@[";
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   assert (length e = 0);
   printf "%a@\n" pp e;
 
@@ -229,7 +229,7 @@ let%expect_test "mem,insert,subset" =
       end
   end in
   let ms = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
-  test ms (empty (module Usize));
+  test ms (empty (module Uns));
   printf "@]";
 
   [%expect{|
@@ -239,7 +239,7 @@ let%expect_test "mem,insert,subset" =
 let%expect_test "of_list duplicate" =
   let open Format in
   printf "@[";
-  printf "%a@\n" pp (of_list (module Usize) [0; 0]);
+  printf "%a@\n" pp (of_list (module Uns) [0; 0]);
   printf "@]";
 
   [%expect{|
@@ -254,7 +254,7 @@ let%expect_test "of_list,remove" =
   let test m set descr = begin
     printf "--- %s ---@\n" descr;
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Usize.pp m pp set pp (remove m set)
+      Uns.pp m pp set pp (remove m set)
   end in
   let test_tuples = [
     ([0; 1], 2,          "Not member, elm empty.");
@@ -266,7 +266,7 @@ let%expect_test "of_list,remove" =
     ([0; 1; 66; 91], 91, "Member, subnode elms 3 -> 2.");
   ] in
   List.iter test_tuples ~f:(fun (ms, m, descr) ->
-    let set = of_list (module Usize) ms in
+    let set = of_list (module Uns) ms in
     test m set descr
   );
   printf "@]";
@@ -307,13 +307,13 @@ let%expect_test "of_list,to_list,to_array" =
   let open Format in
   printf "@[<h>";
   let test ms = begin
-    let set = of_list (module Usize) ms in
-    let list_sorted = List.sort ~cmp:Usize.cmp (to_list set) in
-    let array_sorted = Array.sort ~cmp:Usize.cmp (to_array set) in
+    let set = of_list (module Uns) ms in
+    let list_sorted = List.sort ~cmp:Uns.cmp (to_list set) in
+    let array_sorted = Array.sort ~cmp:Uns.cmp (to_array set) in
     printf "of_list %a; to_list -> %a; to_array -> %a\n"
-      (List.pp Usize.pp) ms
-      (List.pp Usize.pp) list_sorted
-      (Array.pp Usize.pp) array_sorted
+      (List.pp Uns.pp) ms
+      (List.pp Uns.pp) list_sorted
+      (Array.pp Uns.pp) array_sorted
   end in
   let test_lists = [
     [];
@@ -352,7 +352,7 @@ let%expect_test "choose_hlt" =
         set''
       end
   end in
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   let _ = test 100 0 e in
   printf "@]";
 
@@ -361,7 +361,7 @@ let%expect_test "choose_hlt" =
 
 let%expect_test "fold_until" =
   let test ms = begin
-    let set = of_list (module Usize) ms in
+    let set = of_list (module Uns) ms in
     (* Compute the number of elements in the triangle defined by folding n
      * times, each time terminating upon encounter of a distinct set member.
      * The size of the triangle is insensitive to fold order. *)
@@ -391,8 +391,8 @@ let%expect_test "fold_until" =
 
 let%expect_test "fold2_until" =
   let test ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let set = union set0 set1 in
     let ms = to_list set in
     (* Compute the number of elements in the triangle defined by folding n
@@ -433,12 +433,12 @@ let%expect_test "fold2" =
   printf "@[";
   let pp_pair ppf (a0_opt, a1_opt) = begin
     fprintf ppf "(%a, %a)"
-      (Option.pp Usize.pp) a0_opt
-      (Option.pp Usize.pp) a1_opt
+      (Option.pp Uns.pp) a0_opt
+      (Option.pp Uns.pp) a1_opt
   end in
   let test ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let pairs = fold2 ~init:[] ~f:(fun accum a0_opt a1_opt ->
       (a0_opt, a1_opt) :: accum
     ) set0 set1 in
@@ -450,11 +450,11 @@ let%expect_test "fold2" =
       in
       let a0 = a_of_pair pair0 in
       let a1 = a_of_pair pair1 in
-      Usize.cmp a0 a1
+      Uns.cmp a0 a1
     ) pairs in
     printf "fold2 %a %a -> %a@\n"
-      (List.pp Usize.pp) ms0
-      (List.pp Usize.pp) ms1
+      (List.pp Uns.pp) ms0
+      (List.pp Uns.pp) ms1
       (List.pp pp_pair) pairs_sorted
   end in
   let test_lists = [
@@ -500,8 +500,8 @@ let%expect_test "iter2,equal,subset,disjoint" =
   let open Format in
   printf "@[";
   let test_equal ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     assert (equal set0 set1);
     assert (subset set0 set1);
     assert (subset set1 set0);
@@ -518,8 +518,8 @@ let%expect_test "iter2,equal,subset,disjoint" =
     ) set0 set1
   end in
   let test_disjoint ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     assert (not (equal set0 set1));
     assert (not (subset set0 set1));
     assert ((length set0 = 0) || (not (subset set1 set0)));
@@ -570,8 +570,8 @@ let%expect_test "iter2,equal,subset,disjoint" =
 
 let%expect_test "union" =
   let test ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let set = union set0 set1 in
     let ms = to_list set in
     List.iter ms0 ~f:(fun m -> assert ((mem m set) && (mem m set0)));
@@ -579,8 +579,8 @@ let%expect_test "union" =
     List.iter ms ~f:(fun m -> assert ((mem m set0) || (mem m set1)));
   end in
   let test_disjoint ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let set = union set0 set1 in
     assert ((length set) = (length set0) + (length set1));
   end in
@@ -620,8 +620,8 @@ let%expect_test "union" =
 
 let%expect_test "inter" =
   let test ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let set = inter set0 set1 in
     let ms = to_list set in
     List.iter ms0 ~f:(fun m -> assert ((mem m set) || (not (mem m set1))));
@@ -629,8 +629,8 @@ let%expect_test "inter" =
     List.iter ms ~f:(fun m -> assert ((mem m set0) && (mem m set1)));
   end in
   let test_disjoint ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let set = inter set0 set1 in
     assert ((length set) = 0);
   end in
@@ -670,8 +670,8 @@ let%expect_test "inter" =
 
 let%expect_test "diff" =
   let test ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let set = diff set0 set1 in
     let ms = to_list set in
     List.iter ms0 ~f:(fun m -> assert ((mem m set) || (mem m set1)));
@@ -679,8 +679,8 @@ let%expect_test "diff" =
     List.iter ms ~f:(fun m -> assert ((mem m set0) && (not (mem m set1))));
   end in
   let test_disjoint ms0 ms1 = begin
-    let set0 = of_list (module Usize) ms0 in
-    let set1 = of_list (module Usize) ms1 in
+    let set0 = of_list (module Uns) ms0 in
+    let set1 = of_list (module Uns) ms1 in
     let set = diff set0 set1 in
     assert ((length set) = (length set0));
   end in
@@ -722,11 +722,11 @@ let%expect_test "reduce" =
   let open Format in
   printf "@[<h>";
   let test ms = begin
-    let set = of_list (module Usize) ms in
+    let set = of_list (module Uns) ms in
     let sum = reduce ~f:( + ) set in
     printf "reduce ~f:( + ) %a -> %a\n"
-      (List.pp Usize.pp) ms
-      (Option.pp Usize.pp) sum
+      (List.pp Uns.pp) ms
+      (Option.pp Uns.pp) sum
   end in
   let test_lists = [
     [];
@@ -766,7 +766,7 @@ let%expect_test "stress" =
         set'
       end
   end in
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   let _ = test 100 0 e e in
   printf "@]";
 

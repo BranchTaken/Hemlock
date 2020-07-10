@@ -22,11 +22,11 @@ module State = struct
       (* Hash state. *)
       state: outer;
       (* Number of u128 blocks folded. *)
-      nfolded: usize;
+      nfolded: uns;
       (* The bottom nrem bytes of rem are remainder bytes that have yet to be
        * hashed, and the top pad bytes are always zeroed. *)
       rem: u128;
-      nrem: usize;
+      nrem: uns;
     }
 
     let init state =

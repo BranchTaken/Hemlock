@@ -7,12 +7,12 @@ type u128 = {
   lo: u64;
 }
 type isize = int
-type usize = int
+type uns = int
 
-let usize_of_isize t =
+let uns_of_isize t =
   t
 
-let isize_of_usize t =
+let isize_of_uns t =
   t
 
 let int_of_isize t =
@@ -21,7 +21,7 @@ let int_of_isize t =
 let isize_of_int t =
   t
 
-let u128_of_usize u =
+let u128_of_uns u =
   {hi=Int64.zero; lo=Int64.of_int u}
 
 let u128_pp_x ppf t =
@@ -151,9 +151,9 @@ let u128_of_string s =
   let d_of_c c = begin
     match c with
     | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
-      u128_of_usize ((Caml.Char.code c) - (Caml.Char.code '0'))
+      u128_of_uns ((Caml.Char.code c) - (Caml.Char.code '0'))
     | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' ->
-      u128_of_usize (10 + (Caml.Char.code c) - (Caml.Char.code 'a'))
+      u128_of_uns (10 + (Caml.Char.code c) - (Caml.Char.code 'a'))
     | _ -> not_reached ()
   end in
   let rec suffix s i j len = begin
@@ -183,7 +183,7 @@ let u128_of_string s =
             let ndigits' = ndigits + 1 in
             let accum, mult = hexadecimal s i' ndigits' len in
             let accum' = u128_add accum (u128_mul mult  (d_of_c c)) in
-            let mult' = u128_mul mult (u128_of_usize 16) in
+            let mult' = u128_mul mult (u128_of_uns 16) in
             accum', mult'
           end
         | 'u' -> begin
@@ -202,7 +202,7 @@ let u128_of_string s =
         | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> begin
             let accum, mult = decimal s i' len in
             let accum' = u128_add accum (u128_mul mult (d_of_c c)) in
-            let mult' = u128_mul mult (u128_of_usize 10) in
+            let mult' = u128_mul mult (u128_of_uns 10) in
             accum', mult'
           end
         | 'u' -> begin
@@ -226,7 +226,7 @@ let u128_of_string s =
             let ndigits' = ndigits + 1 in
             let accum, mult = binary s i' ndigits' len in
             let accum' = u128_add accum (u128_mul mult (d_of_c c)) in
-            let mult' = u128_mul mult (u128_of_usize 2) in
+            let mult' = u128_mul mult (u128_of_uns 2) in
             accum', mult'
           end
         | 'u' -> begin

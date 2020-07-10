@@ -6,8 +6,8 @@ type ('a, 'b) t =
 
 let hash_fold hash_fold_a hash_fold_b t state =
   match t with
-  | First a -> state |> Usize.hash_fold 0 |> hash_fold_a a
-  | Second b -> state |> Usize.hash_fold 1 |> hash_fold_b b
+  | First a -> state |> Uns.hash_fold 0 |> hash_fold_a a
+  | Second b -> state |> Uns.hash_fold 1 |> hash_fold_b b
 
 let cmp cmp_a cmp_b t0 t1 =
   let open Cmp in
@@ -55,8 +55,8 @@ let%expect_test "hash_fold,pp" =
     | [] -> ()
     | either :: eithers' -> begin
         printf "hash_fold %a -> %a\n"
-          (pp Usize.pp Usize.pp) either
-          Hash.pp (Hash.t_of_state (hash_fold Usize.hash_fold Usize.hash_fold
+          (pp Uns.pp Uns.pp) either
+          Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold Uns.hash_fold
               either Hash.State.empty));
         fn eithers'
       end
@@ -84,9 +84,9 @@ let%expect_test "is_first,is_second" =
     | [] -> ()
     | either :: eithers' -> begin
         printf "is_first %a -> %b@\n"
-          (pp Usize.pp Usize.pp) either (is_first either);
+          (pp Uns.pp Uns.pp) either (is_first either);
         printf "is_second %a -> %b@\n"
-          (pp Usize.pp Usize.pp) either (is_second either);
+          (pp Uns.pp Uns.pp) either (is_second either);
         fn eithers'
       end
   in
@@ -111,7 +111,7 @@ let%expect_test "swap" =
     | [] -> ()
     | either :: eithers' -> begin
         printf "swap %a -> %a@\n"
-          (pp Usize.pp Usize.pp) either (pp Usize.pp Usize.pp) (swap either);
+          (pp Uns.pp Uns.pp) either (pp Uns.pp Uns.pp) (swap either);
         fn eithers'
       end
   in
@@ -134,7 +134,7 @@ let%expect_test "value" =
     | [] -> ()
     | either :: eithers' -> begin
         printf "value %a -> %a@\n"
-          (pp Usize.pp Usize.pp) either Usize.pp (value either);
+          (pp Uns.pp Uns.pp) either Uns.pp (value either);
         fn eithers'
       end
   in
@@ -157,7 +157,7 @@ let%expect_test "value_map" =
     | [] -> ()
     | either :: eithers' -> begin
         printf "value_map %a -> %a@\n"
-          (pp Usize.pp Usize.pp) either Usize.pp
+          (pp Uns.pp Uns.pp) either Uns.pp
           (value_map ~first:(fun x -> x + 2) ~second:(fun x -> x + 4) either);
         fn eithers'
       end
@@ -181,7 +181,7 @@ let%expect_test "map" =
     | [] -> ()
     | either :: eithers' -> begin
         printf "map %a -> %a@\n"
-          (pp Usize.pp Usize.pp) either (pp Usize.pp Usize.pp)
+          (pp Uns.pp Uns.pp) either (pp Uns.pp Uns.pp)
           (map ~first:(fun x -> x + 2) ~second:(fun x -> x + 4) either);
         fn eithers'
       end

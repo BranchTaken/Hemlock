@@ -18,7 +18,7 @@ val empty: 'a t
 
 (** {1 Length} *)
 
-val length: 'a t -> usize
+val length: 'a t -> uns
 (** Return q length. *)
 
 val is_empty: 'a t -> bool
