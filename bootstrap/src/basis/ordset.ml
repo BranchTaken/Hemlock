@@ -405,7 +405,7 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Uns.to_isize i) (hd ordset)) = cursor);
+          assert Cursor.((seek (Uns.to_sint i) (hd ordset)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
             Uns.pp (Cursor.rget cursor);
@@ -421,7 +421,7 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Uns.to_isize i) (hd ordset)) = cursor);
+          assert Cursor.((seek (Uns.to_sint i) (hd ordset)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
             Uns.pp (Cursor.lget cursor);

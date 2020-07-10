@@ -240,9 +240,9 @@ module T = struct
         {ordmap; index; lpath_opt; rpath_opt=None}
 
       let seek i t =
-        match Isize.cmp i (Isize.kv 0) with
+        match Sint.cmp i (Sint.kv 0) with
         | Lt -> begin
-            let u = (Uns.of_isize Isize.(neg i)) in
+            let u = (Uns.of_sint Sint.(neg i)) in
             match Uns.cmp t.index u with
             | Lt -> halt "Cannot seek before beginning of ordered map"
             | Eq -> begin
@@ -263,7 +263,7 @@ module T = struct
           end
         | Eq -> t
         | Gt -> begin
-            let u = Uns.of_isize i in
+            let u = Uns.of_sint i in
             let index' = t.index + u in
             match Uns.cmp index' (length t.ordmap) with
             | Lt -> begin
@@ -285,10 +285,10 @@ module T = struct
           end
 
       let succ t =
-        seek Isize.one t
+        seek Sint.one t
 
       let pred t =
-        seek Isize.neg_one t
+        seek Sint.neg_one t
 
       let lget t =
         match t.lpath_opt with
@@ -1810,7 +1810,7 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Uns.to_isize i) (hd ordmap)) = cursor);
+          assert Cursor.((seek (Uns.to_sint i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
             (pp_kv String.pp) (Cursor.rget cursor);
@@ -1826,7 +1826,7 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Uns.to_isize i) (hd ordmap)) = cursor);
+          assert Cursor.((seek (Uns.to_sint i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
             (pp_kv String.pp) (Cursor.lget cursor);
@@ -2620,14 +2620,14 @@ let%expect_test "partition_map" =
     let a_ordmap, b_ordmap = partition_map ordmap ~f:(fun (k, v) ->
       match k % 2 = 0 with
       | true -> First (Uns.to_string v)
-      | false -> Second (Uns.to_isize v)
+      | false -> Second (Uns.to_sint v)
     ) in
     let a_arr = to_array a_ordmap in
     let b_arr = to_array b_ordmap in
     printf "%a -> %a / %a@\n"
       (Array.pp Uns.pp) arr
       (Array.pp (pp_kv String.pp)) a_arr
-      (Array.pp (pp_kv Isize.pp)) b_arr
+      (Array.pp (pp_kv Sint.pp)) b_arr
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i) in
@@ -2653,14 +2653,14 @@ let%expect_test "partitioni_map" =
     let a_ordmap, b_ordmap = partitioni_map ordmap ~f:(fun i (_, v) ->
       match i % 2 = 0 with
       | true -> First (Uns.to_string v)
-      | false -> Second (Uns.to_isize v)
+      | false -> Second (Uns.to_sint v)
     ) in
     let a_arr = to_array a_ordmap in
     let b_arr = to_array b_ordmap in
     printf "%a -> %a / %a@\n"
       (Array.pp Uns.pp) arr
       (Array.pp (pp_kv String.pp)) a_arr
-      (Array.pp (pp_kv Isize.pp)) b_arr
+      (Array.pp (pp_kv Sint.pp)) b_arr
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i * 10) in

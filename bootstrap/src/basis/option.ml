@@ -84,7 +84,7 @@ module T = struct
         t.index
 
       let seek i t =
-        match int_of_isize i with
+        match int_of_sint i with
         | -1 -> pred t
         | 0 -> t
         | 1 -> succ t

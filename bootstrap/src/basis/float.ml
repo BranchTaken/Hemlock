@@ -10,10 +10,10 @@ module T = struct
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
-    let rel = Isize.of_int (compare t0 t1) in
-    if Isize.(rel < (kv 0)) then
+    let rel = Sint.of_int (compare t0 t1) in
+    if Sint.(rel < (kv 0)) then
       Cmp.Lt
-    else if Isize.(rel = (kv 0)) then
+    else if Sint.(rel = (kv 0)) then
       Cmp.Eq
     else
       Cmp.Gt
@@ -33,11 +33,11 @@ include T
 include Identifiable.Make(T)
 include Cmpable.Make_zero(T)
 
-let of_isize x =
-  float_of_int (int_of_isize x)
+let of_sint x =
+  float_of_int (int_of_sint x)
 
-let to_isize t =
-  isize_of_int (int_of_float t)
+let to_sint t =
+  sint_of_int (int_of_float t)
 
 module Dir = struct
   type t =
@@ -92,15 +92,15 @@ module Parts = struct
 end
 
 let create ~neg ~exponent ~mantissa =
-  assert Isize.(exponent >= (kv (-1023)));
-  assert Isize.(exponent <= (kv 1024));
+  assert Sint.(exponent >= (kv (-1023)));
+  assert Sint.(exponent <= (kv 1024));
   assert Uns.(mantissa <= 0xf_ffff_ffff_ffff);
   let sign = match neg with
     | false -> Int64.zero
     | true -> Int64.one
   in
   let biased_exponent =
-    Int64.of_int (int_of_isize Isize.(exponent + (kv 1023))) in
+    Int64.of_int (int_of_sint Sint.(exponent + (kv 1023))) in
   let bits =
     Int64.logor (Int64.shift_left sign 63)
       (Int64.logor (Int64.shift_left biased_exponent 52)
@@ -115,10 +115,10 @@ let is_neg t =
 
 let exponent t =
   let bits = Int64.bits_of_float t in
-  let biased_exponent = isize_of_int (Int64.to_int (
+  let biased_exponent = sint_of_int (Int64.to_int (
     Int64.logand (Int64.shift_right_logical bits 52)
       (Int64.of_int 0x7ff))) in
-  Isize.(biased_exponent - (kv 1023))
+  Sint.(biased_exponent - (kv 1023))
 
 let mantissa t =
   let bits = Int64.bits_of_float t in
@@ -126,10 +126,10 @@ let mantissa t =
 
 let m2x t =
   let f, x = frexp t in
-  f, (isize_of_int x)
+  f, (sint_of_int x)
 
 let f2x ~p t =
-  ldexp t (int_of_isize p)
+  ldexp t (int_of_sint p)
 
 let modf t =
   let fractional, integral = modf t in
@@ -256,8 +256,8 @@ let pow ~p t =
 
 let int_pow ~p t =
   (* Decompose the exponent to limit algorithmic complexity. *)
-  let neg, n = if Isize.(is_negative p) then
-      true, Isize.(-p)
+  let neg, n = if Sint.(is_negative p) then
+      true, Sint.(-p)
     else
       false, p
   in
@@ -275,7 +275,7 @@ let int_pow ~p t =
         fn r' p' n'
       end
   end in
-  let r = fn 1. t (Uns.of_isize n) in
+  let r = fn 1. t (Uns.of_sint n) in
   match neg with
   | false -> r
   | true -> 1. / r
@@ -432,40 +432,40 @@ let%expect_test "create" =
     | (n, e, m) :: tups' -> begin
         let f = create ~neg:n ~exponent:e ~mantissa:m in
         printf "n=%b, e=%a, m=%a -> %h -> n=%b, e=%a, m=%a\n"
-          n Isize.pp e Uns.pp_x m f n Isize.pp e Uns.pp_x m;
+          n Sint.pp e Uns.pp_x m f n Sint.pp e Uns.pp_x m;
         fn tups'
       end
   end in
   fn [
     (* Infinite. *)
-    (true, Isize.kv 1024, 0);
-    (false, Isize.kv 1024, 0);
+    (true, Sint.kv 1024, 0);
+    (false, Sint.kv 1024, 0);
 
     (* Nan. *)
-    (false, Isize.kv 1024, 1);
-    (false, Isize.kv 1024, 0x8_0000_0000_0001);
-    (false, Isize.kv 1024, 0xf_ffff_ffff_ffff);
+    (false, Sint.kv 1024, 1);
+    (false, Sint.kv 1024, 0x8_0000_0000_0001);
+    (false, Sint.kv 1024, 0xf_ffff_ffff_ffff);
 
     (* Normal. *)
-    (true, Isize.kv 0, 0);
-    (false, Isize.kv (-1022), 0);
-    (false, Isize.kv (-52), 1);
-    (false, Isize.kv (-51), 1);
-    (false, Isize.kv (-1), 0);
-    (false, Isize.kv 0, 0);
-    (false, Isize.kv 1, 0);
-    (false, Isize.kv 1, 0x8_0000_0000_0000);
-    (false, Isize.kv 2, 0);
-    (false, Isize.kv 2, 0x4_0000_0000_0000);
-    (false, Isize.kv 1023, 0xf_ffff_ffff_ffff);
+    (true, Sint.kv 0, 0);
+    (false, Sint.kv (-1022), 0);
+    (false, Sint.kv (-52), 1);
+    (false, Sint.kv (-51), 1);
+    (false, Sint.kv (-1), 0);
+    (false, Sint.kv 0, 0);
+    (false, Sint.kv 1, 0);
+    (false, Sint.kv 1, 0x8_0000_0000_0000);
+    (false, Sint.kv 2, 0);
+    (false, Sint.kv 2, 0x4_0000_0000_0000);
+    (false, Sint.kv 1023, 0xf_ffff_ffff_ffff);
 
     (* Subnormal. *)
-    (false, Isize.kv (-1023), 1);
-    (false, Isize.kv (-1023), 0xf_ffff_ffff_ffff);
+    (false, Sint.kv (-1023), 1);
+    (false, Sint.kv (-1023), 0xf_ffff_ffff_ffff);
 
     (* Zero. *)
-    (true, Isize.kv (-1023), 0);
-    (false, Isize.kv (-1023), 0);
+    (true, Sint.kv (-1023), 0);
+    (false, Sint.kv (-1023), 0);
   ];
   printf "@]";
 
@@ -502,40 +502,40 @@ let%expect_test "m2x_f2x" =
         let f = create ~neg:n ~exponent:e ~mantissa:m in
         let m, x = m2x f in
         let f' = f2x m ~p:x in
-        printf "m2x %h -> f2x %h ~p:%a -> %h\n" f m Isize.pp x f';
+        printf "m2x %h -> f2x %h ~p:%a -> %h\n" f m Sint.pp x f';
         fn tups'
       end
   end in
   fn [
     (* Infinite. *)
-    (true, Isize.kv 1024, 0);
-    (false, Isize.kv 1024, 0);
+    (true, Sint.kv 1024, 0);
+    (false, Sint.kv 1024, 0);
 
     (* Nan. *)
-    (false, Isize.kv 1024, 1);
-    (false, Isize.kv 1024, 0x8_0000_0000_0001);
-    (false, Isize.kv 1024, 0xf_ffff_ffff_ffff);
+    (false, Sint.kv 1024, 1);
+    (false, Sint.kv 1024, 0x8_0000_0000_0001);
+    (false, Sint.kv 1024, 0xf_ffff_ffff_ffff);
 
     (* Normal. *)
-    (true, Isize.kv 0, 0);
-    (false, Isize.kv (-1022), 0);
-    (false, Isize.kv (-52), 1);
-    (false, Isize.kv (-51), 1);
-    (false, Isize.kv (-1), 0);
-    (false, Isize.kv 0, 0);
-    (false, Isize.kv 1, 0);
-    (false, Isize.kv 1, 0x8_0000_0000_0000);
-    (false, Isize.kv 2, 0);
-    (false, Isize.kv 2, 0x4_0000_0000_0000);
-    (false, Isize.kv 1023, 0xf_ffff_ffff_ffff);
+    (true, Sint.kv 0, 0);
+    (false, Sint.kv (-1022), 0);
+    (false, Sint.kv (-52), 1);
+    (false, Sint.kv (-51), 1);
+    (false, Sint.kv (-1), 0);
+    (false, Sint.kv 0, 0);
+    (false, Sint.kv 1, 0);
+    (false, Sint.kv 1, 0x8_0000_0000_0000);
+    (false, Sint.kv 2, 0);
+    (false, Sint.kv 2, 0x4_0000_0000_0000);
+    (false, Sint.kv 1023, 0xf_ffff_ffff_ffff);
 
     (* Subnormal. *)
-    (false, Isize.kv (-1023), 1);
-    (false, Isize.kv (-1023), 0xf_ffff_ffff_ffff);
+    (false, Sint.kv (-1023), 1);
+    (false, Sint.kv (-1023), 0xf_ffff_ffff_ffff);
 
     (* Zero. *)
-    (true, Isize.kv (-1023), 0);
-    (false, Isize.kv (-1023), 0);
+    (true, Sint.kv (-1023), 0);
+    (false, Sint.kv (-1023), 0);
   ];
   printf "@]";
 
@@ -594,11 +594,11 @@ let%expect_test "operators" =
   let open Printf in
   let norm_nan t = if (is_nan t) then nan else t in
   for i = -1 to 2 do
-    let i = Isize.of_int i in
-    let t0 = of_isize i in
+    let i = Sint.of_int i in
+    let t0 = of_sint i in
     for j = -1 to 2 do
-      let j = Isize.of_int j in
-      let t1 = of_isize j in
+      let j = Sint.of_int j in
+      let t1 = of_sint j in
       printf ("+ - * / %% ** copysign %.1f ~sign:%.1f -> " ^^
           "%.1f %.1f %.1f %.1f %.1f %.1f %.1f\n")
         t0 t1 (t0 + t1) (t0 - t1) (t0 * t1) (norm_nan (t0 / t1))
@@ -722,11 +722,11 @@ let%expect_test "round" =
 let%expect_test "min_max" =
   let open Printf in
   for i = -1 to 1 do
-    let i = Isize.of_int i in
-    let t0 = of_isize i in
+    let i = Sint.of_int i in
+    let t0 = of_sint i in
     for j = -1 to 1 do
-      let j = Isize.of_int j in
-      let t1 = of_isize j in
+      let j = Sint.of_int j in
+      let t1 = of_sint j in
       printf "min max %.1f %.1f -> %.1f %.1f\n" t0 t1 (min t0 t1) (max t0 t1);
     done;
   done;
@@ -906,26 +906,26 @@ let%expect_test "pow" =
     match pairs with
     | [] -> ()
     | (b, x) :: pairs' -> begin
-        let xf = of_isize x in
+        let xf = of_sint x in
         printf "** pow int_pow %h ~p:%a -> %h %h %h\n"
-          b Isize.pp x (b ** xf) (pow b ~p:xf) (int_pow b ~p:x);
+          b Sint.pp x (b ** xf) (pow b ~p:xf) (int_pow b ~p:x);
         fn pairs'
       end
   end in
   fn [
-    (3., Isize.kv (-3));
-    (-1., Isize.kv 61);
-    (1., Isize.kv 61);
-    (2., Isize.kv (-1));
-    (2., Isize.kv 0);
-    (2., Isize.kv 1);
-    (2., Isize.kv 2);
-    (2., Isize.kv 61);
-    (10., Isize.kv 7);
-    ((ex 1.), Isize.kv (-1));
-    ((ex 1.), Isize.kv 0);
-    ((ex 1.), Isize.kv 1);
-    ((ex 1.), Isize.kv 2);
+    (3., Sint.kv (-3));
+    (-1., Sint.kv 61);
+    (1., Sint.kv 61);
+    (2., Sint.kv (-1));
+    (2., Sint.kv 0);
+    (2., Sint.kv 1);
+    (2., Sint.kv 2);
+    (2., Sint.kv 61);
+    (10., Sint.kv 7);
+    ((ex 1.), Sint.kv (-1));
+    ((ex 1.), Sint.kv 0);
+    ((ex 1.), Sint.kv 1);
+    ((ex 1.), Sint.kv 2);
   ];
   printf "@]";
 
@@ -949,8 +949,8 @@ let%expect_test "lngamma" =
   let open Printf in
 
   for n = 1 to 40 do
-    let n = Isize.of_int n in
-    let x = (of_isize n) / 4. in
+    let n = Sint.of_int n in
+    let x = (of_sint n) / 4. in
     printf "lngamma %.2f -> %.9f\n" x (lngamma x);
   done;
 
@@ -1126,8 +1126,8 @@ let%expect_test "trig" =
 let%expect_test "trigh" =
   let open Printf in
   for i = -2 to 2 do
-    let i = Isize.of_int i in
-    let t = of_isize i in
+    let i = Sint.of_int i in
+    let t = of_sint i in
     printf ("sinh cosh tanh %.1f -> (%.5f %.5f) (%.5f %.5f) (%.5f %.5f)\n")
       t
       (sinh t) (((ex t) - (ex ~-t)) / 2.)

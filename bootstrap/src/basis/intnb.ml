@@ -113,12 +113,12 @@ module Make_common (T : I_common) : S_common with type t := uns = struct
 
     let narrow_of_signed s =
       match T.signed with
-      | true -> narrow (uns_of_isize s)
+      | true -> narrow (uns_of_sint s)
       | false -> begin
           let nlb = Sys.int_size - T.num_bits in
           (match nlb with
-            | 0 -> uns_of_isize s
-            | _ -> ((1 lsl T.num_bits) - 1) land (uns_of_isize s)
+            | 0 -> uns_of_sint s
+            | _ -> ((1 lsl T.num_bits) - 1) land (uns_of_sint s)
           )
         end
 
@@ -321,153 +321,153 @@ module Make_common (T : I_common) : S_common with type t := uns = struct
   include Make_derived(V)
 end
 
-module Make_i (T : I) : S_i with type t := isize = struct
+module Make_i (T : I) : S_i with type t := sint = struct
   module U = struct
     module V = struct
       module W = struct
-        type t = isize
+        type t = sint
         let num_bits = T.num_bits
         let signed = true
       end
       include W
       include Make_common(W)
     end
-    type t = isize
+    type t = sint
 
     let hash_fold t state =
       state
-      |> V.hash_fold (uns_of_isize t)
+      |> V.hash_fold (uns_of_sint t)
 
     let cmp t0 t1 =
-      V.cmp (uns_of_isize t0) (uns_of_isize t1)
+      V.cmp (uns_of_sint t0) (uns_of_sint t1)
 
     let narrow_of_signed x =
-      isize_of_int (V.narrow_of_signed x)
+      sint_of_int (V.narrow_of_signed x)
 
     let narrow_of_unsigned x =
-      isize_of_int (V.narrow_of_unsigned x)
+      sint_of_int (V.narrow_of_unsigned x)
 
     let of_float f =
-      isize_of_int (V.of_float f)
+      sint_of_int (V.of_float f)
 
     let to_float t =
-      V.to_float (int_of_isize t)
+      V.to_float (int_of_sint t)
 
     let of_string s =
-      isize_of_uns (V.of_string s)
+      sint_of_uns (V.of_string s)
 
     let pp ppf t =
-      V.pp ppf (uns_of_isize t)
+      V.pp ppf (uns_of_sint t)
 
     let pp_x ppf t =
-      V.pp_x ppf (uns_of_isize t)
+      V.pp_x ppf (uns_of_sint t)
 
     let to_string t =
-      V.to_string (uns_of_isize t)
+      V.to_string (uns_of_sint t)
 
-    let zero = isize_of_uns V.zero
+    let zero = sint_of_uns V.zero
 
-    let one = isize_of_uns V.one
+    let one = sint_of_uns V.one
 
-    let min_value = isize_of_int (V.narrow min_int)
+    let min_value = sint_of_int (V.narrow min_int)
 
-    let max_value = isize_of_int (V.narrow max_int)
+    let max_value = sint_of_int (V.narrow max_int)
 
     let succ t =
-      isize_of_uns (V.succ (uns_of_isize t))
+      sint_of_uns (V.succ (uns_of_sint t))
 
     let pred t =
-      isize_of_uns (V.pred (uns_of_isize t))
+      sint_of_uns (V.pred (uns_of_sint t))
 
     let bit_and t0 t1 =
-      isize_of_uns (V.bit_and (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.bit_and (uns_of_sint t0) (uns_of_sint t1))
 
     let bit_or t0 t1 =
-      isize_of_uns (V.bit_or (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.bit_or (uns_of_sint t0) (uns_of_sint t1))
 
     let bit_xor t0 t1 =
-      isize_of_uns (V.bit_xor (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.bit_xor (uns_of_sint t0) (uns_of_sint t1))
 
     let bit_not t =
-      isize_of_uns (V.bit_not (uns_of_isize t))
+      sint_of_uns (V.bit_not (uns_of_sint t))
 
     let bit_sl ~shift t =
-      isize_of_uns (V.bit_sl ~shift (uns_of_isize t))
+      sint_of_uns (V.bit_sl ~shift (uns_of_sint t))
 
     let bit_usr ~shift t =
-      isize_of_uns (V.bit_usr ~shift (uns_of_isize t))
+      sint_of_uns (V.bit_usr ~shift (uns_of_sint t))
 
     let bit_ssr ~shift t =
-      isize_of_uns (V.bit_ssr ~shift (uns_of_isize t))
+      sint_of_uns (V.bit_ssr ~shift (uns_of_sint t))
 
     let bit_pop t =
-      V.bit_pop (uns_of_isize t)
+      V.bit_pop (uns_of_sint t)
 
     let bit_clz t =
-      V.bit_clz (uns_of_isize t)
+      V.bit_clz (uns_of_sint t)
 
     let bit_ctz t =
-      V.bit_ctz (uns_of_isize t)
+      V.bit_ctz (uns_of_sint t)
 
     let is_pow2 t =
-      V.is_pow2 (uns_of_isize t)
+      V.is_pow2 (uns_of_sint t)
 
     let floor_pow2 t =
-      isize_of_uns (V.floor_pow2 (uns_of_isize t))
+      sint_of_uns (V.floor_pow2 (uns_of_sint t))
 
     let ceil_pow2 t =
-      isize_of_uns (V.ceil_pow2 (uns_of_isize t))
+      sint_of_uns (V.ceil_pow2 (uns_of_sint t))
 
     let floor_lg t =
-      isize_of_uns (V.floor_lg (uns_of_isize t))
+      sint_of_uns (V.floor_lg (uns_of_sint t))
 
     let ceil_lg t =
-      isize_of_uns (V.ceil_lg (uns_of_isize t))
+      sint_of_uns (V.ceil_lg (uns_of_sint t))
 
     let ( + ) t0 t1 =
-      isize_of_uns (V.( + ) (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.( + ) (uns_of_sint t0) (uns_of_sint t1))
 
     let ( - ) t0 t1 =
-      isize_of_uns (V.( - ) (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.( - ) (uns_of_sint t0) (uns_of_sint t1))
 
     let ( * ) t0 t1 =
-      isize_of_uns (V.( * ) (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.( * ) (uns_of_sint t0) (uns_of_sint t1))
 
     let ( / ) t0 t1 =
-      isize_of_uns (V.( / ) (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.( / ) (uns_of_sint t0) (uns_of_sint t1))
 
     let ( % ) t0 t1 =
-      isize_of_uns (V.( % ) (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.( % ) (uns_of_sint t0) (uns_of_sint t1))
 
     let ( ** ) t0 t1 =
-      isize_of_uns (V.( ** ) (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.( ** ) (uns_of_sint t0) (uns_of_sint t1))
 
     let ( // ) t0 t1 =
-      V.( // ) (uns_of_isize t0) (uns_of_isize t1)
+      V.( // ) (uns_of_sint t0) (uns_of_sint t1)
 
     let min t0 t1 =
-      isize_of_uns (V.min (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.min (uns_of_sint t0) (uns_of_sint t1))
 
     let max t0 t1 =
-      isize_of_uns (V.max (uns_of_isize t0) (uns_of_isize t1))
+      sint_of_uns (V.max (uns_of_sint t0) (uns_of_sint t1))
 
-    let neg_one = isize_of_uns (V.narrow (-1))
+    let neg_one = sint_of_uns (V.narrow (-1))
 
     let ( ~- ) t =
-      assert (isize_of_int (V.narrow (int_of_isize t)) = t);
-      isize_of_uns (-(int_of_isize t))
+      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
+      sint_of_uns (-(int_of_sint t))
 
     let ( ~+) t =
-      assert (isize_of_int (V.narrow (int_of_isize t)) = t);
+      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
       t
 
     let neg t =
-      assert (isize_of_int (V.narrow (int_of_isize t)) = t);
+      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
       -t
 
     let abs t =
-      assert (isize_of_int (V.narrow (int_of_isize t)) = t);
-      isize_of_int (abs (int_of_isize t))
+      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
+      sint_of_int (abs (int_of_sint t))
   end
   include U
   include Identifiable.Make(U)

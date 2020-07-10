@@ -4,19 +4,19 @@ type u128 = {
   hi: u64;
   lo: u64;
 }
-type isize
+type sint
 type uns = int
 
-val uns_of_isize: isize -> uns
+val uns_of_sint: sint -> uns
 (** Convert a signed integer to a bitwise identical unsigned integer. *)
 
-val isize_of_uns: uns -> isize
+val sint_of_uns: uns -> sint
 (** Convert an unsigned integer to a bitwise identical unsigned integer. *)
 
-val int_of_isize: isize -> int
+val int_of_sint: sint -> int
 (** Convert a signed integer to a bitwise identical OCaml integer. *)
 
-val isize_of_int: int -> isize
+val sint_of_int: int -> sint
 (** Convert a OCaml integer to a bitwise identical signed integer. *)
 
 val u128_of_uns: uns -> u128
