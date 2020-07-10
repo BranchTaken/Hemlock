@@ -160,17 +160,17 @@ let length = function
 
 let to_string = function
   | One b0 -> Stdlib.String.init 1 (fun _ ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize b0))
+    Stdlib.Char.chr (int_of_sint (Byte.to_sint b0))
   )
   | Two (b0, b1) -> Stdlib.String.init 2 (fun i ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+    Stdlib.Char.chr (int_of_sint (Byte.to_sint (
       match i with
       | 0 -> b0
       | 1 -> b1
       | _ -> not_reached ()
     ))))
   | Three (b0, b1, b2) -> Stdlib.String.init 3 (fun i ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+    Stdlib.Char.chr (int_of_sint (Byte.to_sint (
       match i with
       | 0 -> b0
       | 1 -> b1
@@ -178,7 +178,7 @@ let to_string = function
       | _ -> not_reached ()
     ))))
   | Four (b0, b1, b2, b3) -> Stdlib.String.init 4 (fun i ->
-    Stdlib.Char.chr (int_of_isize (Byte.to_isize (
+    Stdlib.Char.chr (int_of_sint (Byte.to_sint (
       match i with
       | 0 -> b0
       | 1 -> b1

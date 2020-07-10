@@ -44,20 +44,20 @@ module Parts : sig
   include Formattable_intf.S_mono with type t := t
 end
 
-val of_isize: isize -> t
+val of_sint: sint -> t
 (** Initialize from signed integer. *)
 
-val to_isize: t -> isize
+val to_sint: t -> sint
 (** Convert to signed integer. *)
 
-val create: neg:bool -> exponent:isize -> mantissa:uns -> t
+val create: neg:bool -> exponent:sint -> mantissa:uns -> t
 (** [create ~neg ~exponent ~mantissa] creates a float, where [-1023 <= exponent
     <= 1024] and [mantissa <= 0xf_ffff_ffff_ffff]. *)
 
 val is_neg: t -> bool
 (** [is_neg t] returns [true] if [t] is negative. *)
 
-val exponent: t -> isize
+val exponent: t -> sint
 (** [exponent t] returns the exponent of [t], which is in [\[-1023 .. 1024\]].
 *)
 
@@ -65,11 +65,11 @@ val mantissa: t -> uns
 (** [mantissa t] returns the mantissa of [t], which is in [\[0 ..
     0xf_ffff_ffff_ffff\]]. *)
 
-val m2x: t -> t * isize
+val m2x: t -> t * sint
 (** [m2x t] splits [t] into a normalized fraction [f] and exponent [x], where [t
     = f*2^x]. *)
 
-val f2x: p:isize -> t -> t
+val f2x: p:sint -> t -> t
 (** [f2x ~p t] computes [t*2^~p]. *)
 
 val modf: t -> Parts.t
@@ -178,9 +178,9 @@ val pow: p:t -> t -> t
 (** [pow ~p t] returns [t] raised to the [~p] power. Equivalent to [t ** ~p].
 *)
 
-val int_pow: p:isize -> t -> t
+val int_pow: p:sint -> t -> t
 (** [int_pow ~p t] returns [t] raised to the [~p] power, where [~p] is an
-    {!type:isize}. [int_pow] is typically faster than the equivalent call to
+    {!type:sint}. [int_pow] is typically faster than the equivalent call to
     {!pow}. *)
 
 val lngamma: t -> t

@@ -160,7 +160,7 @@ end
 module type S_narrow = sig
   type t
 
-  val narrow_of_signed: isize -> t
+  val narrow_of_signed: sint -> t
   (** Narrow full-width signed integer. Sign is preserved, but precision may be
       silently lost. *)
 

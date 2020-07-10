@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <caml/mlvalues.h>
 
-// val hemlock_intnb_icmp: isize -> isize -> Cmp.t
+// val hemlock_intnb_icmp: sint -> sint -> Cmp.t
 CAMLprim value
 hemlock_intnb_icmp(value a_a, value a_b) {
   ssize_t a = Long_val(a_a);
