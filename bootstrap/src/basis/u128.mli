@@ -15,12 +15,12 @@ val to_u64_hlt: t -> u64
 val of_u64: u64 -> t
 (** Initialize from a 64-bit unsigned integer. *)
 
-val to_usize: t -> usize
+val to_uns: t -> uns
 (** Convert to default-width unsigned integer, with possible loss. *)
 
-val to_usize_hlt: t -> usize
+val to_uns_hlt: t -> uns
 (** Convert to default-width unsigned integer, or halt if conversion would be
     lossy. *)
 
-val of_usize: usize -> t
+val of_uns: uns -> t
 (** Initialize from a default-width unsigned integer. *)

@@ -44,15 +44,15 @@ module T = struct
   let of_u64 u =
     {hi=U64.zero; lo=u}
 
-  let to_usize t =
-    U64.to_usize t.lo
+  let to_uns t =
+    U64.to_uns t.lo
 
-  let to_usize_hlt t =
+  let to_uns_hlt t =
     match U64.(t.hi = zero) with
     | false -> halt "Lossy conversion"
-    | true -> U64.to_usize_hlt t.lo
+    | true -> U64.to_uns_hlt t.lo
 
-  let of_usize = u128_of_usize
+  let of_uns = u128_of_uns
 
   let min_value = zero
 
@@ -124,7 +124,7 @@ module T = struct
     let x = x + (bit_usr ~shift:16 x) in
     let x = x + (bit_usr ~shift:32 x) in
     let x = x + (bit_usr ~shift:64 x) in
-    to_usize (bit_and x cff)
+    to_uns (bit_and x cff)
 
   let bit_clz x =
     let x = bit_or x (bit_usr ~shift:1 x) in
@@ -149,7 +149,7 @@ module T = struct
     let b = U64.(bit_sl ~shift:32 one) in
     (* Extract the high/low digit from a 2-digit value. *)
     let hi32 x = U64.bit_usr ~shift:32 x in
-    let lo32 x = U64.(bit_and x (of_usize 0xffff_ffff)) in
+    let lo32 x = U64.(bit_and x (of_uns 0xffff_ffff)) in
     let div_b x = Int64.shift_right x 32 in
     let mul_b x = I64.bit_sl ~shift:32 x in
     (* Get/set digit. Only the low 32 bits are used; if u32 were available it
@@ -354,7 +354,7 @@ module T = struct
     let cmp = cmp
     let zero = zero
     let one = one
-    let of_usize = of_usize
+    let of_uns = of_uns
     let ( + ) = ( + )
     let ( - ) = ( - )
     let bit_and = bit_and
@@ -368,9 +368,9 @@ module T = struct
       match cmp t zero with
       | Cmp.Eq -> 0
       | Cmp.Lt | Cmp.Gt -> begin
-          let t' = t / (of_usize 10) in
+          let t' = t / (of_uns 10) in
           let i = fn t' in
-          let digit = t % (of_usize 10) in
+          let digit = t % (of_uns 10) in
           if Rudiments_int.(i % 3 = 0) && Rudiments_int.(i > 0) then
             Format.fprintf ppf "_";
           Format.fprintf ppf "%Lu" digit.lo;

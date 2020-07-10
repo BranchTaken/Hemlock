@@ -46,11 +46,11 @@ module T = struct
         (* Value. *)
         v: 'v;
         (* Subtree node count, including this node. *)
-        n: usize;
+        n: uns;
         (* Node height, inductively defined as (succ (max (height l) (height
          * r))), where an empty subtree has height 0, and a leaf has height
          * 1. *)
-        h: usize;
+        h: uns;
         (* Right subtree. *)
         r: ('k, 'v) node;
       }
@@ -99,7 +99,7 @@ module T = struct
   module Path = struct
     type ('k, 'v) elm = {
       node: ('k, 'v) node;
-      index: usize;
+      index: uns;
     }
     type ('k, 'v) t = ('k, 'v) elm list
 
@@ -114,7 +114,7 @@ module T = struct
         {node; index} :: path
       | Node {l=Empty; k=_; v=_; n=_; h=_; r} -> begin
           let node_index = base in
-          match Usize.cmp index node_index with
+          match Uns.cmp index node_index with
           | Lt -> not_reached ()
           | Eq -> {node; index} :: path
           | Gt -> descend ~index (succ node_index) r
@@ -122,14 +122,14 @@ module T = struct
         end
       | Node {l; k=_; v=_; n=_; h=_; r=Empty} -> begin
           let node_index = base + (nnodes l) in
-          match Usize.cmp index node_index with
+          match Uns.cmp index node_index with
           | Lt -> descend ~index base l ({node; index=node_index} :: path)
           | Eq -> {node; index} :: path
           | Gt -> not_reached ()
         end
       | Node {l; k=_; v=_; n=_; h=_; r} -> begin
           let node_index = base + (nnodes l) in
-          match Usize.cmp index node_index with
+          match Uns.cmp index node_index with
           | Lt -> descend ~index base l ({node; index=node_index} :: path)
           | Eq -> {node; index} :: path
           | Gt -> descend ~index (succ node_index) r
@@ -150,7 +150,7 @@ module T = struct
       match path with
       | [] -> not_reached ()
       | elm :: tl -> begin
-          match Usize.cmp index elm.index with
+          match Uns.cmp index elm.index with
           | Lt -> begin
               match elm.node with
               | Empty
@@ -200,7 +200,7 @@ module T = struct
     let pp ppf t =
       let open Format in
       let pp_elm ppf elm = begin
-        fprintf ppf "%a" Usize.pp elm.index
+        fprintf ppf "%a" Uns.pp elm.index
       end in
       fprintf ppf "@[<h>%a@]" (List.pp pp_elm) t
   end
@@ -212,7 +212,7 @@ module T = struct
       type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
       type ('k, 'v, 'cmp) t = {
         ordmap: ('k, 'v, 'cmp) container;
-        index: usize;
+        index: uns;
         (* Separate paths to the nodes to the left and right of the cursor
          * efficiently handle edge conditions near the minimum/maximum nodes,
          * and they ensure that lget/rget are O(1). *)
@@ -222,7 +222,7 @@ module T = struct
 
       let cmp t0 t1 =
         assert ((length t0.ordmap) = (length t1.ordmap));
-        Usize.cmp t0.index t1.index
+        Uns.cmp t0.index t1.index
 
       let hd ordmap =
         let rpath_opt = match length ordmap with
@@ -242,8 +242,8 @@ module T = struct
       let seek i t =
         match Isize.cmp i (Isize.kv 0) with
         | Lt -> begin
-            let u = (Usize.of_isize Isize.(neg i)) in
-            match Usize.cmp t.index u with
+            let u = (Uns.of_isize Isize.(neg i)) in
+            match Uns.cmp t.index u with
             | Lt -> halt "Cannot seek before beginning of ordered map"
             | Eq -> begin
                 {t with
@@ -263,9 +263,9 @@ module T = struct
           end
         | Eq -> t
         | Gt -> begin
-            let u = Usize.of_isize i in
+            let u = Uns.of_isize i in
             let index' = t.index + u in
-            match Usize.cmp index' (length t.ordmap) with
+            match Uns.cmp index' (length t.ordmap) with
             | Lt -> begin
                 let lpath' =
                   Path.seek_right (pred u) (Option.value_hlt t.rpath_opt) in
@@ -308,7 +308,7 @@ module T = struct
 
       let pp ppf t =
         Format.fprintf ppf "@[<h>{index=%a;@ lpath_opt=%a;@ rpath_opt=%a}@]"
-          Usize.pp t.index
+          Uns.pp t.index
           (Option.pp Path.pp) t.lpath_opt
           (Option.pp Path.pp) t.rpath_opt
     end
@@ -360,7 +360,7 @@ let fold_right_until ~init ~f t =
 let foldi_until ~init ~f t =
   let _, accum = fold_until t ~init:(0, init)
     ~f:(fun (i, accum) (k, v) ->
-      let i' = (Usize.succ i) in
+      let i' = (Uns.succ i) in
       let accum', until = f i accum (k, v) in
       (i', accum'), until
     ) in
@@ -385,7 +385,7 @@ let count ~f t =
   fold t ~init:0 ~f:(fun accum (k, v) ->
     match f (k, v) with
     | false -> accum
-    | true -> (Usize.succ accum)
+    | true -> (Uns.succ accum)
   )
 
 let for_any ~f t =
@@ -455,11 +455,11 @@ let max_elm ~cmp t =
 let hash_fold hash_fold_v t state =
   foldi t ~init:state ~f:(fun i state (k, v) ->
     state
-    |> Usize.hash_fold i
+    |> Uns.hash_fold i
     |> t.cmper.hash_fold k
     |> hash_fold_v v
   )
-  |> Usize.hash_fold (length t)
+  |> Uns.hash_fold (length t)
 
 let cmper_m (type k cmp) t : (k, cmp) cmper =
   (module struct
@@ -530,21 +530,21 @@ let nth_opt i t =
     | Empty -> None
     | Leaf {k; v} -> Some (k, v)
     | Node {l=Empty; k; v; n=_; h=_; r} -> begin
-        match Usize.cmp i 0 with
+        match Uns.cmp i 0 with
         | Lt -> not_reached ()
         | Eq -> Some (k, v)
         | Gt -> fn (i - 1) r
       end
     | Node {l; k; v; n=_; h=_; r=Empty} -> begin
         let l_n = nnodes l in
-        match Usize.cmp i l_n with
+        match Uns.cmp i l_n with
         | Lt -> fn i l
         | Eq -> Some (k, v)
         | Gt -> None
       end
     | Node {l; k; v; n=_; h=_; r} -> begin
         let l_n = nnodes l in
-        match Usize.cmp i l_n with
+        match Uns.cmp i l_n with
         | Lt -> fn i l
         | Eq -> Some (k, v)
         | Gt -> fn (i - l_n - 1) r
@@ -1374,15 +1374,15 @@ let pp pp_v ppf t =
         pp_node l
         t.cmper.pp k
         pp_v v
-        Usize.pp n
-        Usize.pp h
+        Uns.pp n
+        Uns.pp h
         pp_node r
   in
   fprintf ppf "@[<v>Ordmap {@;<0 2>@[<v>root=%a@]@,}@]"
     pp_node t.root
 
 let pp_kv pp_v ppf (k, v) =
-  Format.fprintf ppf "(%a, %a)" Usize.pp k pp_v v
+  Format.fprintf ppf "(%a, %a)" Uns.pp k pp_v v
 
 let validate t =
   let rec fn = function
@@ -1415,20 +1415,20 @@ let validate t =
   fn t.root
 
 let of_klist ks =
-  List.fold ks ~init:(empty (module Usize)) ~f:(fun ordmap k ->
+  List.fold ks ~init:(empty (module Uns)) ~f:(fun ordmap k ->
     insert_hlt ~k ~v:(k * 100) ordmap
   )
 
 let of_karray ks =
-  Array.fold ks ~init:(empty (module Usize)) ~f:(fun ordmap k ->
+  Array.fold ks ~init:(empty (module Uns)) ~f:(fun ordmap k ->
     insert_hlt ~k ~v:(k * 100) ordmap
   )
 
 let veq v0 v1 =
-  Cmp.is_eq (Usize.cmp v0 v1)
+  Cmp.is_eq (Uns.cmp v0 v1)
 
 let merge k v0 v1 =
-  assert Usize.(k * 100 = v0);
+  assert Uns.(k * 100 = v0);
   assert (veq v0 v1);
   v0
 
@@ -1440,9 +1440,9 @@ let%expect_test "hash_fold" =
     | l :: lists' -> begin
         let ordmap = of_klist l in
         printf "hash_fold (of_klist %a) -> %a@\n"
-          (List.pp Usize.pp) l
+          (List.pp Uns.pp) l
           Hash.pp (Hash.t_of_state
-            (hash_fold Usize.hash_fold ordmap Hash.State.empty));
+            (hash_fold Uns.hash_fold ordmap Hash.State.empty));
         fn lists'
       end
   in
@@ -1467,7 +1467,7 @@ let%expect_test "hash_fold" =
 let%expect_test "hash_fold empty" =
   let hash_empty state = begin
     state
-    |> hash_fold Unit.hash_fold (empty (module Usize))
+    |> hash_fold Unit.hash_fold (empty (module Uns))
   end in
   let e1 =
     Hash.State.empty
@@ -1486,7 +1486,7 @@ let%expect_test "hash_fold empty" =
 let%expect_test "empty,cmper_m,singleton,length" =
   let open Format in
   printf "@[";
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   validate e;
   assert (length e = 0);
   printf "%a@\n" (pp Unit.pp) e;
@@ -1524,7 +1524,7 @@ let%expect_test "mem,get,insert,subset" =
       end
   end in
   let ks = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
-  test ks (empty (module Usize));
+  test ks (empty (module Uns));
 
   [%expect{|
     |}]
@@ -1550,7 +1550,7 @@ let%expect_test "mem,get,insert,insert_hlt" =
       end
   end in
   let ks = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
-  test ks (empty (module Usize));
+  test ks (empty (module Uns));
 
   [%expect{|
     |}]
@@ -1590,7 +1590,7 @@ let%expect_test "mem,get,update,upsert,update_hlt,subset" =
       end
   end in
   let ks = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
-  test ks (empty (module Usize));
+  test ks (empty (module Uns));
 
   [%expect{|
     |}]
@@ -1625,7 +1625,7 @@ let%expect_test "mem,get,amend" =
       end
   end in
   let ks = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
-  test ks (empty (module Usize));
+  test ks (empty (module Uns));
 
   [%expect{|
     |}]
@@ -1639,7 +1639,7 @@ let%expect_test "of_alist,remove" =
     let ordmap' = remove k ordmap in
     validate ordmap';
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Usize.pp k (pp String.pp) ordmap (pp String.pp) ordmap'
+      Uns.pp k (pp String.pp) ordmap (pp String.pp) ordmap'
   end in
   let test_tuples = [
     ([(0, "0"); (1, "1")], 2,           "Not member.");
@@ -1648,7 +1648,7 @@ let%expect_test "of_alist,remove" =
     ([(0, "0"); (1, "1"); (2, "2")], 2, "Member, length 3 -> 2.");
   ] in
   List.iter test_tuples ~f:(fun (kvs, k, descr) ->
-    let ordmap = of_alist (module Usize) kvs in
+    let ordmap = of_alist (module Uns) kvs in
     test k ordmap descr
   );
   printf "@]";
@@ -1737,7 +1737,7 @@ let%expect_test "of_alist,remove_hlt" =
     let ordmap' = remove_hlt k ordmap in
     validate ordmap';
     printf "@[<v>remove_hlt %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Usize.pp k (pp String.pp) ordmap (pp String.pp) ordmap'
+      Uns.pp k (pp String.pp) ordmap (pp String.pp) ordmap'
   end in
   let test_tuples = [
     ([(0, "0")], 0,                     "Member, length 1 -> 0.");
@@ -1745,7 +1745,7 @@ let%expect_test "of_alist,remove_hlt" =
     ([(0, "0"); (1, "1"); (2, "2")], 2, "Member, length 3 -> 2.");
   ] in
   List.iter test_tuples ~f:(fun (kvs, k, descr) ->
-    let ordmap = of_alist (module Usize) kvs in
+    let ordmap = of_alist (module Uns) kvs in
     test k ordmap descr
   );
   printf "@]";
@@ -1810,7 +1810,7 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Usize.to_isize i) (hd ordmap)) = cursor);
+          assert Cursor.((seek (Uns.to_isize i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
             (pp_kv String.pp) (Cursor.rget cursor);
@@ -1826,7 +1826,7 @@ let%expect_test "of_array,cursor" =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Usize.to_isize i) (hd ordmap)) = cursor);
+          assert Cursor.((seek (Uns.to_isize i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
             Cursor.pp cursor
             (pp_kv String.pp) (Cursor.lget cursor);
@@ -1837,7 +1837,7 @@ let%expect_test "of_array,cursor" =
     fn (Cursor.tl ordmap);
   end in
   let test kvs = begin
-    let ordmap = of_array (module Usize) kvs in
+    let ordmap = of_array (module Uns) kvs in
     printf "of_array %a -> @,%a@\n"
       (Array.pp (pp_kv String.pp)) kvs
       (pp String.pp) ordmap;
@@ -1912,7 +1912,7 @@ let%expect_test "of_alist,to_alist,to_array" =
   let open Format in
   printf "@[<h>";
   let test kvs = begin
-    let ordmap = of_alist (module Usize) kvs in
+    let ordmap = of_alist (module Uns) kvs in
     printf "of_alist %a; to_alist -> %a; to_array -> %a\n"
       (List.pp (pp_kv String.pp)) kvs
       (List.pp (pp_kv String.pp)) (to_alist ordmap)
@@ -1958,7 +1958,7 @@ let%expect_test "choose_hlt" =
         ordmap''
       end
   end in
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   let _ = test 100 0 e in
   printf "@]";
 
@@ -1968,36 +1968,36 @@ let%expect_test "choose_hlt" =
 let%expect_test "search,nth" =
   let open Format in
   let test_search ordmap key_max = begin
-    printf "%a@\n" (pp Usize.pp) ordmap;
+    printf "%a@\n" (pp Uns.pp) ordmap;
     for probe = 0 to key_max do
-      printf "  %a -> %s, %s, %s@\n" Usize.pp probe
+      printf "  %a -> %s, %s, %s@\n" Uns.pp probe
         (match psearch probe ordmap with
           | None -> "<"
           | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Usize.pp i (pp_kv Usize.pp) (nth i ordmap)
+              Uns.pp i (pp_kv Uns.pp) (nth i ordmap)
           | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Usize.pp i (pp_kv Usize.pp) (nth i ordmap)
+              Uns.pp i (pp_kv Uns.pp) (nth i ordmap)
           | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Usize.pp i (pp_kv Usize.pp) (nth i ordmap)
+              Uns.pp i (pp_kv Uns.pp) (nth i ordmap)
         )
         (match search probe ordmap with
           | None -> "<>"
-          | Some i -> asprintf "=%a" (pp_kv Usize.pp) (nth i ordmap)
+          | Some i -> asprintf "=%a" (pp_kv Uns.pp) (nth i ordmap)
         )
         (match nsearch probe ordmap with
           | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Usize.pp i (pp_kv Usize.pp) (nth i ordmap)
+              Uns.pp i (pp_kv Uns.pp) (nth i ordmap)
           | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Usize.pp i (pp_kv Usize.pp) (nth i ordmap)
+              Uns.pp i (pp_kv Uns.pp) (nth i ordmap)
           | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Usize.pp i (pp_kv Usize.pp) (nth i ordmap)
+              Uns.pp i (pp_kv Uns.pp) (nth i ordmap)
           | None -> ">"
         );
     done
   end in
   printf "@[";
   for len = 0 to 3 do
-    let ordmap = of_array (module Usize)
+    let ordmap = of_array (module Uns)
       (Array.init len ~f:(fun i -> let k = (i * 2 + 1) in k, k * 10)) in
     let key_max = len * 2 in
     test_search ordmap key_max
@@ -2156,8 +2156,8 @@ let%expect_test "fold2" =
   printf "@[";
   let pp_pair ppf (kv0_opt, kv1_opt) = begin
     fprintf ppf "(%a, %a)"
-      (Option.pp (pp_kv Usize.pp)) kv0_opt
-      (Option.pp (pp_kv Usize.pp)) kv1_opt
+      (Option.pp (pp_kv Uns.pp)) kv0_opt
+      (Option.pp (pp_kv Uns.pp)) kv1_opt
   end in
   let test ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
@@ -2166,8 +2166,8 @@ let%expect_test "fold2" =
       (kv0_opt, kv1_opt) :: accum
     ) ordmap0 ordmap1 in
     printf "fold2 %a %a -> %a@\n"
-      (List.pp Usize.pp) ks0
-      (List.pp Usize.pp) ks1
+      (List.pp Uns.pp) ks0
+      (List.pp Uns.pp) ks1
       (List.pp pp_pair) pairs
   end in
   let test_lists = [
@@ -2225,7 +2225,7 @@ let%expect_test "iter2,equal,subset,disjoint" =
       | None, Some _
       | Some _, None -> begin
           printf "Should be equal:@,%a@,%a@\n"
-            (pp Usize.pp) ordmap0 (pp Usize.pp) ordmap1;
+            (pp Uns.pp) ordmap0 (pp Uns.pp) ordmap1;
           assert false;
         end
       | None, None -> not_reached ()
@@ -2242,7 +2242,7 @@ let%expect_test "iter2,equal,subset,disjoint" =
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin
           printf "Should be disjoint:@,%a@,%a@\n"
-            (pp Usize.pp) ordmap0 (pp Usize.pp) ordmap1;
+            (pp Uns.pp) ordmap0 (pp Uns.pp) ordmap1;
           assert false;
         end
       | None, Some _
@@ -2446,8 +2446,8 @@ let%expect_test "filter" =
     let ordmap' = filter ordmap ~f:(fun (k, _) -> k % 2 = 0) in
     let arr' = to_array ordmap' in
     printf "%a -> %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp (pp_kv Usize.pp)) arr'
+      (Array.pp Uns.pp) arr
+      (Array.pp (pp_kv Uns.pp)) arr'
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i) in
@@ -2472,12 +2472,12 @@ let%expect_test "filter_map" =
     let ordmap = of_karray arr in
     let ordmap' = filter_map ordmap ~f:(fun (k, v) ->
       match k % 2 = 0 with
-      | true -> Some (Usize.to_string v)
+      | true -> Some (Uns.to_string v)
       | false -> None
     ) in
     let arr' = to_array ordmap' in
     printf "%a -> %a@\n"
-      (Array.pp Usize.pp) arr
+      (Array.pp Uns.pp) arr
       (Array.pp (pp_kv String.pp)) arr'
   end in
   for n = 0 to 6 do
@@ -2504,8 +2504,8 @@ let%expect_test "filteri" =
     let ordmap' = filteri ordmap ~f:(fun i _kv -> i % 2 = 0) in
     let arr' = to_array ordmap' in
     printf "%a -> %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp (pp_kv Usize.pp)) arr'
+      (Array.pp Uns.pp) arr
+      (Array.pp (pp_kv Uns.pp)) arr'
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i * 10) in
@@ -2530,12 +2530,12 @@ let%expect_test "filteri_map" =
     let ordmap = of_karray arr in
     let ordmap' = filteri_map ordmap ~f:(fun i (_, v) ->
       match i % 2 = 0 with
-      | true -> Some (Usize.to_string v)
+      | true -> Some (Uns.to_string v)
       | false -> None
     ) in
     let arr' = to_array ordmap' in
     printf "%a -> %a@\n"
-      (Array.pp Usize.pp) arr
+      (Array.pp Uns.pp) arr
       (Array.pp (pp_kv String.pp)) arr'
   end in
   for n = 0 to 6 do
@@ -2563,9 +2563,9 @@ let%expect_test "partition_tf" =
     let t_arr = to_array t_ordmap in
     let f_arr = to_array f_ordmap in
     printf "%a -> %a / %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp (pp_kv Usize.pp)) t_arr
-      (Array.pp (pp_kv Usize.pp)) f_arr
+      (Array.pp Uns.pp) arr
+      (Array.pp (pp_kv Uns.pp)) t_arr
+      (Array.pp (pp_kv Uns.pp)) f_arr
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i) in
@@ -2592,9 +2592,9 @@ let%expect_test "partitioni_tf" =
     let t_arr = to_array t_ordmap in
     let f_arr = to_array f_ordmap in
     printf "%a -> %a / %a@\n"
-      (Array.pp Usize.pp) arr
-      (Array.pp (pp_kv Usize.pp)) t_arr
-      (Array.pp (pp_kv Usize.pp)) f_arr
+      (Array.pp Uns.pp) arr
+      (Array.pp (pp_kv Uns.pp)) t_arr
+      (Array.pp (pp_kv Uns.pp)) f_arr
   end in
   for n = 0 to 6 do
     let arr = Array.init n ~f:(fun i -> i * 10) in
@@ -2619,13 +2619,13 @@ let%expect_test "partition_map" =
     let ordmap = of_karray arr in
     let a_ordmap, b_ordmap = partition_map ordmap ~f:(fun (k, v) ->
       match k % 2 = 0 with
-      | true -> First (Usize.to_string v)
-      | false -> Second (Usize.to_isize v)
+      | true -> First (Uns.to_string v)
+      | false -> Second (Uns.to_isize v)
     ) in
     let a_arr = to_array a_ordmap in
     let b_arr = to_array b_ordmap in
     printf "%a -> %a / %a@\n"
-      (Array.pp Usize.pp) arr
+      (Array.pp Uns.pp) arr
       (Array.pp (pp_kv String.pp)) a_arr
       (Array.pp (pp_kv Isize.pp)) b_arr
   end in
@@ -2652,13 +2652,13 @@ let%expect_test "partitioni_map" =
     let ordmap = of_karray arr in
     let a_ordmap, b_ordmap = partitioni_map ordmap ~f:(fun i (_, v) ->
       match i % 2 = 0 with
-      | true -> First (Usize.to_string v)
-      | false -> Second (Usize.to_isize v)
+      | true -> First (Uns.to_string v)
+      | false -> Second (Uns.to_isize v)
     ) in
     let a_arr = to_array a_ordmap in
     let b_arr = to_array b_ordmap in
     printf "%a -> %a / %a@\n"
-      (Array.pp Usize.pp) arr
+      (Array.pp Uns.pp) arr
       (Array.pp (pp_kv String.pp)) a_arr
       (Array.pp (pp_kv Isize.pp)) b_arr
   end in
@@ -2685,8 +2685,8 @@ let%expect_test "kreduce" =
     let ordmap = of_klist ks in
     let sum = kreduce ~f:( + ) ordmap in
     printf "kreduce ~f:( + ) %a -> %a\n"
-      (List.pp Usize.pp) ks
-      (Option.pp Usize.pp) sum
+      (List.pp Uns.pp) ks
+      (Option.pp Uns.pp) sum
   end in
   let test_lists = [
     [];
@@ -2717,8 +2717,8 @@ let%expect_test "reduce" =
     let ordmap = of_klist ks in
     let sum = reduce ~f:( + ) ordmap in
     printf "reduce ~f:( + ) %a -> %a\n"
-      (List.pp Usize.pp) ks
-      (Option.pp Usize.pp) sum
+      (List.pp Uns.pp) ks
+      (Option.pp Uns.pp) sum
   end in
   let test_lists = [
     [];
@@ -2760,7 +2760,7 @@ let%expect_test "stress" =
         ordmap'
       end
   end in
-  let e = empty (module Usize) in
+  let e = empty (module Uns) in
   let _ = test 100 0 e e in
   printf "@]";
 
@@ -2782,7 +2782,7 @@ let%expect_test "stress2" =
     | false -> ordmap
     | true -> begin
         (* Hash i in order to test semi-random insertion order. *)
-        let h = Hash.(t_of_state (Usize.hash_fold i State.empty)) in
+        let h = Hash.(t_of_state (Uns.hash_fold i State.empty)) in
         let ordmap' = remove_hlt h
             (test n (succ i) e (insert_hlt ~k:h ~v:(U128.bit_not h) ordmap)) in
         validate ordmap';

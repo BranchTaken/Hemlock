@@ -42,7 +42,7 @@ module type S_mono = sig
   val container: t -> container
   (** Return container associated with iterator. *)
 
-  val index: t -> usize
+  val index: t -> uns
   (** Return iterator index. *)
 
   val seek: isize -> t -> t
@@ -89,7 +89,7 @@ module type S_poly = sig
   val container: 'a t -> 'a container
   (** Return container associated with iterator. *)
 
-  val index: 'a t -> usize
+  val index: 'a t -> uns
   (** Return iterator index. *)
 
   val seek: isize -> 'a t -> 'a t
@@ -137,7 +137,7 @@ module type S_poly2 = sig
   val container: ('a, 'cmp) t -> ('a, 'cmp) container
   (** Return container associated with iterator. *)
 
-  val index: ('a, 'cmp) t -> usize
+  val index: ('a, 'cmp) t -> uns
   (** Return iterator index. *)
 
   val seek: isize -> ('a, 'cmp) t -> ('a, 'cmp) t
@@ -188,7 +188,7 @@ module type S_poly3 = sig
   val container: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) container
   (** Return container associated with iterator. *)
 
-  val index: ('k, 'v, 'cmp) t -> usize
+  val index: ('k, 'v, 'cmp) t -> uns
   (** Return iterator index. *)
 
   val seek: isize -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t

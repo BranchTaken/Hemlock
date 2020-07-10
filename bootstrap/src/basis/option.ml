@@ -8,8 +8,8 @@ module T = struct
 
   let hash_fold hash_fold_a t state =
     match t with
-    | None -> state |> Usize.hash_fold 0
-    | Some a -> state |> Usize.hash_fold 1 |> hash_fold_a a
+    | None -> state |> Uns.hash_fold 0
+    | Some a -> state |> Uns.hash_fold 1 |> hash_fold_a a
 
   let cmp cmp_a t0 t1 =
     let open Cmp in
@@ -24,14 +24,14 @@ module T = struct
       type 'a container = 'a t
       type 'a t = {
         option: 'a container;
-        index: usize;
+        index: uns;
       }
 
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
         assert ((t0.option == t1.option)
                 || (Stdlib.( = ) t0.option t1.option));
-        Usize.cmp t0.index t1.index
+        Uns.cmp t0.index t1.index
 
       let hd option =
         {option; index=0}
@@ -180,9 +180,9 @@ let%expect_test "hash_fold" =
     | [] -> ()
     | option :: options' -> begin
         printf "hash_fold %a -> %a\n"
-          (pp Usize.pp) option
+          (pp Uns.pp) option
           Hash.pp (Hash.t_of_state
-            (hash_fold Usize.hash_fold option Hash.State.empty));
+            (hash_fold Uns.hash_fold option Hash.State.empty));
         fn options'
       end
   in
@@ -222,8 +222,8 @@ let%expect_test "hash_fold empty" =
 let%expect_test "pp" =
   let open Format in
   printf "@[<h>";
-  printf "Some 42 -> %a\n" (pp Usize.pp) (Some 42);
-  printf "None -> %a\n" (pp Usize.pp) None;
+  printf "Some 42 -> %a\n" (pp Uns.pp) (Some 42);
+  printf "None -> %a\n" (pp Uns.pp) None;
   printf "@]";
 
   [%expect{|
@@ -235,8 +235,8 @@ let%expect_test "is_some,is_none" =
   let open Format in
   printf "@[<h>";
   List.iter [Some 42; None] ~f:(fun o ->
-    printf "is_some %a -> %b\n" (pp Usize.pp) o (is_some o);
-    printf "is_none %a -> %b\n" (pp Usize.pp) o (is_none o);
+    printf "is_some %a -> %b\n" (pp Uns.pp) o (is_some o);
+    printf "is_none %a -> %b\n" (pp Uns.pp) o (is_none o);
   );
   printf "@]";
 
@@ -252,7 +252,7 @@ let%expect_test "value" =
   printf "@[<h>";
   List.iter [Some 42; None] ~f:(fun o ->
     printf "value %a -> %a\n"
-      (pp Usize.pp) o Usize.pp (value ~default:13 o)
+      (pp Uns.pp) o Uns.pp (value ~default:13 o)
   );
   printf "@]";
 
@@ -268,8 +268,8 @@ let%expect_test "some_if" =
     let a = 42 in
     printf "some_if %b %a -> %a\n"
       b
-      Usize.pp a
-      (pp Usize.pp) (some_if b a)
+      Uns.pp a
+      (pp Uns.pp) (some_if b a)
   );
   printf "@]";
 
@@ -280,12 +280,12 @@ let%expect_test "some_if" =
 
 let%expect_test "both" =
   let open Format in
-  let pp_ab ppf (a, b) = fprintf ppf "(%a, %a)" Usize.pp a String.pp b in
+  let pp_ab ppf (a, b) = fprintf ppf "(%a, %a)" Uns.pp a String.pp b in
   printf "@[<h>";
   List.iter [Some 42; None] ~f:(fun o0 ->
     List.iter [Some "hi"; None] ~f:(fun o1 ->
       printf "both (%a) (%a) -> %a\n"
-        (pp Usize.pp) o0
+        (pp Uns.pp) o0
         (pp String.pp) o1
         (pp pp_ab) (both o0 o1)
     )
@@ -305,9 +305,9 @@ let%expect_test "first_some" =
   List.iter [Some 42; None] ~f:(fun o0 ->
     List.iter [Some 13; None] ~f:(fun o1 ->
       printf "first_some (%a) (%a) -> %a\n"
-        (pp Usize.pp) o0
-        (pp Usize.pp) o1
-        (pp Usize.pp) (first_some o0 o1)
+        (pp Uns.pp) o0
+        (pp Uns.pp) o1
+        (pp Uns.pp) (first_some o0 o1)
     )
   );
   printf "@]";
@@ -325,9 +325,9 @@ let%expect_test "filter" =
   List.iter [false; true] ~f:(fun b ->
     List.iter [Some 42; None] ~f:(fun o ->
       printf "filter %a ~f:(fun _ -> %b) -> %a\n"
-        (pp Usize.pp) o
+        (pp Uns.pp) o
         b
-        (pp Usize.pp) (filter o ~f:(fun _ -> b))
+        (pp Uns.pp) (filter o ~f:(fun _ -> b))
     )
   );
   printf "@]";
@@ -346,10 +346,10 @@ let%expect_test "value_map" =
   let replacement = 43 in
   List.iter [Some 42; None] ~f:(fun o ->
     printf "value_map %a ~default:%a ~f:(fun _ -> %a) -> %a\n"
-      (pp Usize.pp) o
-      Usize.pp default
-      Usize.pp replacement
-      Usize.pp (value_map o ~default ~f:(fun _ -> replacement))
+      (pp Uns.pp) o
+      Uns.pp default
+      Uns.pp replacement
+      Uns.pp (value_map o ~default ~f:(fun _ -> replacement))
   );
   printf "@]";
 
@@ -365,10 +365,10 @@ let%expect_test "merge" =
   List.iter [Some 42; None] ~f:(fun o0 ->
     List.iter [Some 43; None] ~f:(fun o1 ->
       printf "merge (%a) (%a) ~f:(fun _ _ -> %a) -> %a\n"
-        (pp Usize.pp) o0
-        (pp Usize.pp) o1
-        Usize.pp replacement
-        (pp Usize.pp) (merge o0 o1 ~f:(fun _ _ -> replacement))
+        (pp Uns.pp) o0
+        (pp Uns.pp) o1
+        Uns.pp replacement
+        (pp Uns.pp) (merge o0 o1 ~f:(fun _ _ -> replacement))
     )
   );
   printf "@]";
@@ -382,12 +382,12 @@ let%expect_test "merge" =
 
 let%expect_test "map2" =
   let open Format in
-  let pp_ab ppf (a, b) = fprintf ppf "(%a, %a)" Usize.pp a String.pp b in
+  let pp_ab ppf (a, b) = fprintf ppf "(%a, %a)" Uns.pp a String.pp b in
   printf "@[<h>";
   List.iter [Some 42; None] ~f:(fun o0 ->
     List.iter [Some "hi"; None] ~f:(fun o1 ->
       printf "map2 (%a) (%a) ~f:(fun a b -> (a, b)) -> %a\n"
-        (pp Usize.pp) o0
+        (pp Uns.pp) o0
         (pp String.pp) o1
         (pp pp_ab) (map2 o0 o1 ~f:(fun a b -> (a, b)))
     )

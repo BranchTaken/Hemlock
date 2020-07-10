@@ -31,22 +31,22 @@ module Cursor : sig
                               and type elm := codepoint
                               and type t := t
 
-  val index: t -> usize [@@ocaml.deprecated "Use bindex instead"]
+  val index: t -> uns [@@ocaml.deprecated "Use bindex instead"]
   (** @deprecated Use {!bindex} instead.
       @raise halt Not implemented. *)
 
-  val bindex: t -> usize
+  val bindex: t -> uns
   (** Return current {!type:byte} index. *)
 
-  val cindex: t -> usize [@@ocaml.deprecated "Do not use; O(n)"]
+  val cindex: t -> uns [@@ocaml.deprecated "Do not use; O(n)"]
   (** @deprecated Use {!Cursori.cindex} instead.
       @raise halt Not implemented. *)
 
-  val at: bindex:usize -> outer -> t
+  val at: bindex:uns -> outer -> t
   (** Return {!type:Cursor.t} at [bindex], or halt if not at {!type:codepoint}
       boundary. *)
 
-  val near: bindex:usize -> outer -> t
+  val near: bindex:uns -> outer -> t
   (** Return {!type:Cursor.t} at or before [bindex]. *)
 end
 
@@ -62,20 +62,20 @@ module Cursori : sig
                               and type elm := codepoint
                               and type t := t
 
-  val index: t -> usize [@@ocaml.deprecated "Use [bc]index instead"]
+  val index: t -> uns [@@ocaml.deprecated "Use [bc]index instead"]
   (** @deprecated Use {!bindex} or {!cindex} instead.
       @raise halt Not implemented. *)
 
-  val bindex: t -> usize
+  val bindex: t -> uns
   (** Return current {!type:byte} index. *)
 
-  val cindex: t -> usize
+  val cindex: t -> uns
   (** Return Current {!type:codepoint} index. *)
 
   val cursor: t -> Cursor.t
   (** Return encapsulated {!type:Cursor.t}. *)
 
-  val at: cindex:usize -> outer -> t
+  val at: cindex:uns -> outer -> t
   (** Return {!type:Cursori.t} at {!type:codepoint} index [cindex]. *)
 end
 
@@ -133,16 +133,16 @@ module Slice : sig
   (** [past_pred t] returns a derivative slice with its [past] cursor
       initialized to the predecessor of [t]'s [past] cursor. *)
 
-  val blength: t -> usize
+  val blength: t -> uns
   (** Length of the slice in bytes. *)
 
-  val clength: t -> usize
+  val clength: t -> uns
   (** Length of the slice in codepoints. O(n) time complexity. *)
 
-  val get: usize -> t -> byte
+  val get: uns -> t -> byte
   (** [get i t] returns the bytes at offset [i] from the [base] of the slice. *)
 
-  val init: ?blength:usize -> usize -> f:(usize -> codepoint) -> t
+  val init: ?blength:uns -> uns -> f:(uns -> codepoint) -> t
   (** [init ~blength clength ~f] creates a slice of given byte length and
       codepoint length using ~f to determine the values of the codepoints at
       each index. [blength] must be accurate if specified. *)
@@ -150,24 +150,24 @@ module Slice : sig
   val of_codepoint: codepoint -> t
   (** Create a slice containing a single codepoint. *)
 
-  val of_list: ?blength:usize -> ?clength:usize -> codepoint list -> t
+  val of_list: ?blength:uns -> ?clength:uns -> codepoint list -> t
   (** [of_list ~blength ~clength codepoints] creates a slice of given byte
       length and codepoint length containing the ordered [codepoints].
       [blength]/[clength] must be accurate if specified. *)
 
-  val of_list_rev: ?blength:usize -> ?clength:usize -> codepoint list -> t
+  val of_list_rev: ?blength:uns -> ?clength:uns -> codepoint list -> t
   (** [of_list_rev ~blength ~clength codepoints] creates a slice of given byte
       length and codepoint length containing the reverse-ordered [codepoints].
       [blength]/[clength] must be accurate if specified. *)
 
-  val of_array: ?blength:usize -> codepoint array -> t
+  val of_array: ?blength:uns -> codepoint array -> t
   (** [of_array ~blength codepoints] creates a slice of given byte length
       containing the ordered [codepoints]. [blength] must be accurate if
       specified. *)
 
   include Container_intf.S_mono with type t := t and type elm := codepoint
 
-  val length: t -> usize [@@ocaml.deprecated "Use blength instead"]
+  val length: t -> uns [@@ocaml.deprecated "Use blength instead"]
   (** Use {!blength} instead of [length], to keep the difference between byte
       length and codepoint length explicit. *)
 
@@ -175,7 +175,7 @@ module Slice : sig
   (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints.
   *)
 
-  val mapi: f:(usize -> codepoint -> codepoint) -> t -> t
+  val mapi: f:(uns -> codepoint -> codepoint) -> t -> t
   (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints.
       Codepoint index within [t] is provided to [f]. *)
 
@@ -274,10 +274,10 @@ module Slice : sig
   val is_suffix: suffix:t -> t -> bool
   (** [is_suffix ~suffix t] returns true if [suffix] is a suffix of [t]. *)
 
-  val prefix: usize -> t -> t
+  val prefix: uns -> t -> t
   (** [prefix i t] returns the prefix of [t] comprising [i] codepoints. *)
 
-  val suffix: usize -> t -> t
+  val suffix: uns -> t -> t
   (** [suffix i t] returns the suffix of [t] comprising [i] codepoints. *)
 
   val chop_prefix: prefix:t -> t -> t option
@@ -411,16 +411,16 @@ module Seq : sig
   end
 end
 
-val blength: t -> usize
+val blength: t -> uns
 (** Byte length. *)
 
-val clength: t -> usize
+val clength: t -> uns
 (** Codepoint length. *)
 
-val get: usize -> t -> byte
+val get: uns -> t -> byte
 (** Get byte at index. *)
 
-val init: ?blength:usize -> usize -> f:(usize -> codepoint) -> t
+val init: ?blength:uns -> uns -> f:(uns -> codepoint) -> t
 (** [init ~blength clength ~f] creates a string of given byte length and
     codepoint length using ~f to determine the values of the codepoints at each
     index. [blength] must be accurate if specified. *)
@@ -428,31 +428,31 @@ val init: ?blength:usize -> usize -> f:(usize -> codepoint) -> t
 val of_codepoint: codepoint -> t
 (** Create a string containing a single codepoint. *)
 
-val of_list: ?blength:usize -> ?clength:usize -> codepoint list -> t
+val of_list: ?blength:uns -> ?clength:uns -> codepoint list -> t
 (** [of_list ~blength ~clength codepoints] creates a string of given byte length
     and codepoint length containing the ordered [codepoints].
     [blength]/[clength] must be accurate if specified. *)
 
-val of_list_rev: ?blength:usize -> ?clength:usize -> codepoint list -> t
+val of_list_rev: ?blength:uns -> ?clength:uns -> codepoint list -> t
 (** [of_list_rev ~blength ~clength codepoints] creates a string of given byte
     length and codepoint length containing the reverse-ordered [codepoints].
     [blength]/[clength] must be accurate if specified. *)
 
-val of_array: ?blength:usize -> codepoint array -> t
+val of_array: ?blength:uns -> codepoint array -> t
 (** [of_array ~blength codepoints] creates a string of given byte length
     containing the ordered [codepoints]. [blength] must be accurate if
     specified. *)
 
 include Container_intf.S_mono with type t := t and type elm := codepoint
 
-val length: t -> usize [@@ocaml.deprecated "Use [bc]length instead"]
+val length: t -> uns [@@ocaml.deprecated "Use [bc]length instead"]
 (** Use {!blength} instead of [length], to keep the difference between byte
     length and codepoint length explicit. *)
 
 val map: f:(codepoint -> codepoint) -> t -> t
 (** [map ~f t] creates a string with codepoints mapped from [t]'s codepoints. *)
 
-val mapi: f:(usize -> codepoint -> codepoint) -> t -> t
+val mapi: f:(uns -> codepoint -> codepoint) -> t -> t
 (** [mapi ~f t] creates a string with codepoints mapped from [t]'s codepoints.
     Codepoint index within [t] is provided to [f]. *)
 
@@ -546,10 +546,10 @@ val pare: base:Cursor.t -> past:Cursor.t -> t
 (** [pare ~base ~past] returns a string comprised of the codepoint sequence in
     [\[base .. past)]. *)
 
-val prefix: usize -> t -> t
+val prefix: uns -> t -> t
 (** [prefix i t] returns the prefix of [t] comprising [i] codepoints. *)
 
-val suffix: usize -> t -> t
+val suffix: uns -> t -> t
 (** [suffix i t] returns the suffix of [t] comprising [i] codepoints. *)
 
 val chop_prefix: prefix:t -> t -> t option

@@ -1,18 +1,18 @@
 (* Partial Rudiments. *)
-module Usize = U63
+module Uns = U63
 module Isize = I63
 open Rudiments_int
 open Rudiments_functions
 
 module T = struct
-  type t = usize
+  type t = uns
   let num_bits = 21
 end
 include T
 include Intnb.Make_u(T)
 
 let to_isize t =
-  Usize.to_isize t
+  Uns.to_isize t
 
 let of_isize x =
   narrow_of_signed x
@@ -27,16 +27,16 @@ let of_isize_hlt x =
 let kv x =
   narrow_of_unsigned x
 
-let to_usize t =
+let to_uns t =
   t
 
-let of_usize x =
+let of_uns x =
   narrow_of_unsigned x
 
-let of_usize_hlt x =
-  let t = of_usize x in
-  let x' = to_usize t in
-  match Usize.(x' = x) with
+let of_uns_hlt x =
+  let t = of_uns x in
+  let x' = to_uns t in
+  match Uns.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 
@@ -127,7 +127,7 @@ let%expect_test "pp,pp_x" =
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" Usize.pp num_bits;
+  printf "num_bits=%a\n" Uns.pp num_bits;
   printf "min_value=%a\n" pp_x min_value;
   printf "max_value=%a\n" pp_x max_value;
 
@@ -239,32 +239,32 @@ let%expect_test "conversion" =
         let t' = of_isize i' in
         printf "of_isize %a -> to_isize %a -> of_isize %a -> %a\n"
           Isize.pp_x i pp_x t Isize.pp_x i' pp_x t';
-        let t = of_usize (Usize.of_isize i) in
-        let u = to_usize t in
-        let t' = of_usize u in
-        printf "of_usize %a -> to_usize %a -> of_usize %a -> %a\n"
-          Usize.pp_x x pp_x t Usize.pp_x u pp_x t';
+        let t = of_uns (Uns.of_isize i) in
+        let u = to_uns t in
+        let t' = of_uns u in
+        printf "of_uns %a -> to_uns %a -> of_uns %a -> %a\n"
+          Uns.pp_x x pp_x t Uns.pp_x u pp_x t';
         fn xs'
       end
   in
-  fn [Usize.max_value; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001;
-    Usize.of_isize Isize.max_value];
+  fn [Uns.max_value; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001;
+    Uns.of_isize Isize.max_value];
 
   [%expect{|
     of_isize 0x7fffffffffffffffi -> to_isize 0x1fffffu21 -> of_isize 0x00000000001fffffi -> 0x1fffffu21
-    of_usize 0x7fffffffffffffff -> to_usize 0x1fffffu21 -> of_usize 0x00000000001fffff -> 0x1fffffu21
+    of_uns 0x7fffffffffffffff -> to_uns 0x1fffffu21 -> of_uns 0x00000000001fffff -> 0x1fffffu21
     of_isize 0x0000000000000000i -> to_isize 0x000000u21 -> of_isize 0x0000000000000000i -> 0x000000u21
-    of_usize 0x0000000000000000 -> to_usize 0x000000u21 -> of_usize 0x0000000000000000 -> 0x000000u21
+    of_uns 0x0000000000000000 -> to_uns 0x000000u21 -> of_uns 0x0000000000000000 -> 0x000000u21
     of_isize 0x000000000000002ai -> to_isize 0x00002au21 -> of_isize 0x000000000000002ai -> 0x00002au21
-    of_usize 0x000000000000002a -> to_usize 0x00002au21 -> of_usize 0x000000000000002a -> 0x00002au21
+    of_uns 0x000000000000002a -> to_uns 0x00002au21 -> of_uns 0x000000000000002a -> 0x00002au21
     of_isize 0x00000000001fffffi -> to_isize 0x1fffffu21 -> of_isize 0x00000000001fffffi -> 0x1fffffu21
-    of_usize 0x00000000001fffff -> to_usize 0x1fffffu21 -> of_usize 0x00000000001fffff -> 0x1fffffu21
+    of_uns 0x00000000001fffff -> to_uns 0x1fffffu21 -> of_uns 0x00000000001fffff -> 0x1fffffu21
     of_isize 0x0000000000200000i -> to_isize 0x000000u21 -> of_isize 0x0000000000000000i -> 0x000000u21
-    of_usize 0x0000000000200000 -> to_usize 0x000000u21 -> of_usize 0x0000000000000000 -> 0x000000u21
+    of_uns 0x0000000000200000 -> to_uns 0x000000u21 -> of_uns 0x0000000000000000 -> 0x000000u21
     of_isize 0x0000000000200001i -> to_isize 0x000001u21 -> of_isize 0x0000000000000001i -> 0x000001u21
-    of_usize 0x0000000000200001 -> to_usize 0x000001u21 -> of_usize 0x0000000000000001 -> 0x000001u21
+    of_uns 0x0000000000200001 -> to_uns 0x000001u21 -> of_uns 0x0000000000000001 -> 0x000001u21
     of_isize 0x3fffffffffffffffi -> to_isize 0x1fffffu21 -> of_isize 0x00000000001fffffi -> 0x1fffffu21
-    of_usize 0x3fffffffffffffff -> to_usize 0x1fffffu21 -> of_usize 0x00000000001fffff -> 0x1fffffu21
+    of_uns 0x3fffffffffffffff -> to_uns 0x1fffffu21 -> of_uns 0x00000000001fffff -> 0x1fffffu21
     |}]
 
 let%expect_test "of_float,to_float" =

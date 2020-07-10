@@ -1,6 +1,6 @@
 open Rudiments
 
-type 'a t = usize * 'a Stream.t * 'a list * 'a Stream.t
+type 'a t = uns * 'a Stream.t * 'a list * 'a Stream.t
 
 let empty = (0, lazy Stream.Nil, [], lazy Stream.Nil)
 
@@ -48,7 +48,7 @@ let pp pp_elm ppf (l, f, r, s) =
   let open Format in
   fprintf ppf "@[<h>";
   fprintf ppf "(len=%a,@ f=%a,@ r=%a,@ s=%a)"
-    Usize.pp l (Stream.pp pp_elm) f (List.pp pp_elm) r (Stream.pp pp_elm) s;
+    Uns.pp l (Stream.pp pp_elm) f (List.pp pp_elm) r (Stream.pp pp_elm) s;
   fprintf ppf "@]"
 
 (******************************************************************************)
@@ -56,7 +56,7 @@ let pp pp_elm ppf (l, f, r, s) =
 
 let%expect_test "empty" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let t = empty in
   printf "empty = %a\n" ppt t;
@@ -68,14 +68,14 @@ let%expect_test "empty" =
 
 let%expect_test "length" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let l = length t in
-        printf "length %a = %a\n" ppt t Usize.pp l;
+        printf "length %a = %a\n" ppt t Uns.pp l;
         fn (succ i) n (push_back i t)
       end
   end in
@@ -90,7 +90,7 @@ let%expect_test "length" =
 
 let%expect_test "is_empty" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -112,14 +112,14 @@ let%expect_test "is_empty" =
 
 let%expect_test "hd" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let elm = hd t in
-        printf "hd %a = %a\n" ppt t Usize.pp elm;
+        printf "hd %a = %a\n" ppt t Uns.pp elm;
         fn (succ i) n (push_back i t)
       end
   end in
@@ -136,7 +136,7 @@ let%expect_test "hd" =
 
 let%expect_test "tl" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -160,14 +160,14 @@ let%expect_test "tl" =
 
 let%expect_test "push_back" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let t' = push_back i t in
-        printf "push_back %a %a = %a\n" Usize.pp i ppt t ppt t';
+        printf "push_back %a %a = %a\n" Uns.pp i ppt t ppt t';
         fn (succ i) n t'
       end
   end in
@@ -183,14 +183,14 @@ let%expect_test "push_back" =
 
 let%expect_test "pop" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let elm, t' = pop t in
-        printf "pop %a = %a %a\n" ppt t Usize.pp elm ppt t';
+        printf "pop %a = %a %a\n" ppt t Uns.pp elm ppt t';
         fn (succ i) n (push_back i t)
       end
   end in
