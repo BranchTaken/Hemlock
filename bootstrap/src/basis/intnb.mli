@@ -9,4 +9,4 @@ module Make_derived (T : I_derived) : S_derived with type t := T.t
 module Make_i (T : I) : S_i with type t := isize
 
 (** Functor for unsigned integers of specific bitwidth. *)
-module Make_u (T : I) : S_u with type t := usize
+module Make_u (T : I) : S_u with type t := uns

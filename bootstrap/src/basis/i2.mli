@@ -20,12 +20,12 @@ val kv: int -> t
 (** Create constant value. This is a stopgap solution for the lack of
     bitwidth-specific literals. *)
 
-val to_usize: t -> usize
+val to_uns: t -> uns
 (** Convert to full-width unsigned integer. *)
 
-val of_usize: usize -> t
+val of_uns: uns -> t
 (** Initialize from full-width unsigned integer, with possible loss. *)
 
-val of_usize_hlt: usize -> t
+val of_uns_hlt: uns -> t
 (** Initialize from full-width unsigned integer, or halt if conversion would be
     lossy. *)

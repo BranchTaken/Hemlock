@@ -10,7 +10,7 @@ module T = struct
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
-    Isize.cmp (Usize.to_isize Int64.(compare t0 t1)) (Isize.kv 0)
+    Isize.cmp (Uns.to_isize Int64.(compare t0 t1)) (Isize.kv 0)
 
   let zero = Int64.zero
 
@@ -28,7 +28,7 @@ let pp_x ppf t =
     match shift with
     | 0 -> ()
     | _ -> begin
-        if Usize.(shift < 64) then Format.fprintf ppf "_";
+        if Uns.(shift < 64) then Format.fprintf ppf "_";
         let shift' = shift - 16 in
         Format.fprintf ppf "%04Lx"
           Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
@@ -53,12 +53,12 @@ let of_float f =
 let to_float t =
   Int64.to_float t
 
-let of_usize u =
-  let i = Usize.to_isize u in
+let of_uns u =
+  let i = Uns.to_isize u in
   match Isize.(i >= (kv 0)) with
   | true -> Int64.of_int u
   | false -> begin
-      let isize_sign_bit = Usize.of_isize Isize.min_value in
+      let isize_sign_bit = Uns.of_isize Isize.min_value in
       Int64.(add (of_int u)
         (add (of_int isize_sign_bit)
             (of_int isize_sign_bit)))
@@ -131,7 +131,7 @@ module U = struct
   let cmp = cmp
   let zero = zero
   let one = one
-  let of_usize = of_usize
+  let of_uns = of_uns
   let ( + ) = ( + )
   let ( - ) = ( - )
   let bit_and = bit_and

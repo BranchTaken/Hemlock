@@ -2,7 +2,7 @@
 
 open Rudiments_int0
 
-type t = usize
+type t = uns
 include Intnb_intf.S_u with type t := t
 
 val to_isize: t -> isize

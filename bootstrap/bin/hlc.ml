@@ -6,6 +6,6 @@ let _ =
   let x = Array.of_list [1; 2; 3] in
   printf "@[<h>";
   printf "Array.length %a -> %a\n"
-    (Array.pp Usize.pp) x
-    Usize.pp (Array.length x);
+    (Array.pp Uns.pp) x
+    Uns.pp (Array.length x);
   printf "@]"

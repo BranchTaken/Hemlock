@@ -11,7 +11,7 @@ hemlock_intnb_icmp(value a_a, value a_b) {
   return Val_long(rel + 1);
 }
 
-// val hemlock_intnb_ucmp: usize -> usize -> Cmp.t
+// val hemlock_intnb_ucmp: uns -> uns -> Cmp.t
 CAMLprim value
 hemlock_intnb_ucmp(value a_a, value a_b) {
   size_t a = Unsigned_long_val(a_a);

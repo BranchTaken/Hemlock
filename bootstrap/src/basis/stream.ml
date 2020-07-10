@@ -112,7 +112,7 @@ let pp pp_elm ppf t =
 
 let%expect_test "empty" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let t = empty in
   printf "empty = %a\n" ppt t;
@@ -124,14 +124,14 @@ let%expect_test "empty" =
 
 let%expect_test "init" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_init_up_to i n = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let t = init i ~f:(fun i -> i) in
-        printf "init %a ~f:(fun i -> i) = %a\n" Usize.pp i ppt t;
+        printf "init %a ~f:(fun i -> i) = %a\n" Uns.pp i ppt t;
         test_init_up_to (succ i) n
       end
   end in
@@ -147,7 +147,7 @@ let%expect_test "init" =
 
 let%expect_test "length" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_length_up_to i n = begin
     match i <= n with
@@ -155,7 +155,7 @@ let%expect_test "length" =
     | true -> begin
         let t = init i ~f:(fun i -> i) in
         let l = length t in
-        printf "length %a = %a\n" ppt t Usize.pp l;
+        printf "length %a = %a\n" ppt t Uns.pp l;
         test_length_up_to (succ i) n
       end
   end in
@@ -170,7 +170,7 @@ let%expect_test "length" =
 
 let%expect_test "is_empty" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_is_empty_up_to i n = begin
     match i <= n with
@@ -193,7 +193,7 @@ let%expect_test "is_empty" =
 
 let%expect_test "hd" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_hd_up_to i n = begin
     match i <= n with
@@ -201,7 +201,7 @@ let%expect_test "hd" =
     | true -> begin
         let t = init ~f:(fun i -> i) i in
         let elm = hd t in
-        printf "hd %a = %a\n" ppt t Usize.pp elm;
+        printf "hd %a = %a\n" ppt t Uns.pp elm;
         test_hd_up_to (succ i) n
       end
   end in
@@ -218,7 +218,7 @@ let%expect_test "hd" =
 
 let%expect_test "tl" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_tl_up_to i n = begin
     match i <= n with
@@ -243,14 +243,14 @@ let%expect_test "tl" =
 
 let%expect_test "push" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_push_up_to t i n = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let t' = push i t in
-        printf "push %a %a = %a\n" Usize.pp i ppt t ppt t';
+        printf "push %a %a = %a\n" Uns.pp i ppt t ppt t';
         test_push_up_to t' (succ i) n
       end
   end in
@@ -266,14 +266,14 @@ let%expect_test "push" =
 
 let%expect_test "pop" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_pop t = begin
     match t with
     | lazy Nil -> ()
     | _ -> begin
         let elm, t' = pop t in
-        printf "pop %a = %a %a\n" ppt t Usize.pp elm ppt t';
+        printf "pop %a = %a %a\n" ppt t Uns.pp elm ppt t';
         test_pop t'
       end
   end in
@@ -288,7 +288,7 @@ let%expect_test "pop" =
 
 let%expect_test "concat" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_concat_up_to i l n = begin
     match i <= l, l <= n with
@@ -320,7 +320,7 @@ let%expect_test "concat" =
 
 let%expect_test "split" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_split_up_to i l n =
     match i <= l, l <= n with
@@ -329,7 +329,7 @@ let%expect_test "split" =
     | true, true -> begin
         let t = init l ~f:(fun i -> i) in
         let t0, t1 = split i t in
-        printf "split %a %a = %a %a\n" Usize.pp i ppt t ppt t0 ppt t1;
+        printf "split %a %a = %a %a\n" Uns.pp i ppt t ppt t0 ppt t1;
         test_split_up_to (succ i) l n
       end in
   test_split_up_to 0 0 3;
@@ -350,7 +350,7 @@ let%expect_test "split" =
 
 let%expect_test "rev_split" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_rev_split_up_to i l n =
     match i <= l, l <= n with
@@ -359,7 +359,7 @@ let%expect_test "rev_split" =
     | true, true -> begin
         let t = init l ~f:(fun i -> i) in
         let t0, t1 = rev_split i t in
-        printf "rev_split %a %a = %a %a\n" Usize.pp i ppt t ppt t0 ppt t1;
+        printf "rev_split %a %a = %a %a\n" Uns.pp i ppt t ppt t0 ppt t1;
         test_rev_split_up_to (succ i) l n
       end in
   test_rev_split_up_to 0 0 3;
@@ -380,7 +380,7 @@ let%expect_test "rev_split" =
 
 let%expect_test "take" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_take_up_to i l n =
     (* l + 1 so that we test taking one more than the stream contains *)
@@ -390,7 +390,7 @@ let%expect_test "take" =
     | true, true -> begin
         let t = init l ~f:(fun i -> i) in
         let t' = take i t in
-        printf "take %a %a = %a\n" ppt t Usize.pp i ppt t';
+        printf "take %a %a = %a\n" ppt t Uns.pp i ppt t';
         test_take_up_to (succ i) l n
       end in
   test_take_up_to 0 0 3;
@@ -415,7 +415,7 @@ let%expect_test "take" =
 
 let%expect_test "rev_take" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_rev_take_up_to i l n =
     (* l + 1 so that we test taking one more than the stream contains *)
@@ -425,7 +425,7 @@ let%expect_test "rev_take" =
     | true, true -> begin
         let t = init l ~f:(fun i -> i) in
         let t' = rev_take i t in
-        printf "rev_take %a %a = %a\n" Usize.pp i ppt t ppt t';
+        printf "rev_take %a %a = %a\n" Uns.pp i ppt t ppt t';
         test_rev_take_up_to (succ i) l n
       end in
   test_rev_take_up_to 0 0 3;
@@ -450,7 +450,7 @@ let%expect_test "rev_take" =
 
 let%expect_test "drop" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_drop_up_to i l n =
     (* l + 1 so that we test dropping one more than the stream contains *)
@@ -460,7 +460,7 @@ let%expect_test "drop" =
     | true, true -> begin
         let t = init l ~f:(fun i -> i) in
         let t' = drop i t in
-        printf "drop %a %a = %a\n" Usize.pp i ppt t ppt t';
+        printf "drop %a %a = %a\n" Uns.pp i ppt t ppt t';
         test_drop_up_to (succ i) l n
       end in
   test_drop_up_to 0 0 3;
@@ -485,7 +485,7 @@ let%expect_test "drop" =
 
 let%expect_test "rev" =
   let open Format in
-  let ppt = (pp Usize.pp) in
+  let ppt = (pp Uns.pp) in
   printf "@[<h>";
   let rec test_rev_up_to i n = begin
     match i <= n with

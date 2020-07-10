@@ -110,8 +110,8 @@ let merge ~ok ~error t0 t1 =
 let%expect_test "pp" =
   let open Format in
   printf "@[<h>";
-  printf "Ok 42 -> %a\n" (pp Usize.pp String.pp) (Ok 42);
-  printf "Error \"bang\" -> %a\n" (pp Usize.pp String.pp) (Error "bang");
+  printf "Ok 42 -> %a\n" (pp Uns.pp String.pp) (Ok 42);
+  printf "Error \"bang\" -> %a\n" (pp Uns.pp String.pp) (Error "bang");
   printf "@]";
 
   [%expect{|

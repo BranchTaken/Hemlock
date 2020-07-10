@@ -90,7 +90,7 @@ module Seq = struct
             | Some (b, t')
               when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
               Some (Error (List.rev (b :: bytes)), t')
-            | Some (b, t') -> fn t' (b :: bytes) (Usize.pred nrem)
+            | Some (b, t') -> fn t' (b :: bytes) (Uns.pred nrem)
           end
       end in
       match T.next t with
@@ -257,11 +257,11 @@ let%expect_test "utf8" =
     printf "codepoint=%a, codepoint'=%a, bytes=["
       Codepoint.pp_x codepoint Codepoint.pp_x codepoint';
     List.iteri bytes ~f:(fun i b ->
-      let space = if Usize.(i = 0) then "" else " " in
-      let sep = if Usize.(succ i < length) then ";" else "" in
+      let space = if Uns.(i = 0) then "" else " " in
+      let sep = if Uns.(succ i < length) then ";" else "" in
       printf "%s%a%s" space Byte.pp_x b sep
     );
-    printf "], length=%a\n" Usize.pp length
+    printf "], length=%a\n" Uns.pp length
   );
 
   [%expect{|
@@ -278,9 +278,9 @@ let%expect_test "pp,escape" =
     match i with
     | 0x80 -> ()
     | _ -> begin
-        let utf8 = of_codepoint Codepoint.(of_usize i) in
-        printf "%a -> %a\n" Usize.pp_x i pp utf8;
-        fn (Usize.succ i)
+        let utf8 = of_codepoint Codepoint.(of_uns i) in
+        printf "%a -> %a\n" Uns.pp_x i pp utf8;
+        fn (Uns.succ i)
       end
   end in
   fn 0;

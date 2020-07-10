@@ -94,7 +94,7 @@ end
 let create ~neg ~exponent ~mantissa =
   assert Isize.(exponent >= (kv (-1023)));
   assert Isize.(exponent <= (kv 1024));
-  assert Usize.(mantissa <= 0xf_ffff_ffff_ffff);
+  assert Uns.(mantissa <= 0xf_ffff_ffff_ffff);
   let sign = match neg with
     | false -> Int64.zero
     | true -> Int64.one
@@ -265,17 +265,17 @@ let int_pow ~p t =
     match n with
     | 0 -> r
     | _ -> begin
-        let r' = match Usize.bit_and n 1 with
+        let r' = match Uns.bit_and n 1 with
           | 0 -> r
           | 1 -> r * p
           | _ -> not_reached ()
         in
         let p' = p * p in
-        let n' = Usize.bit_usr ~shift:1 n in
+        let n' = Uns.bit_usr ~shift:1 n in
         fn r' p' n'
       end
   end in
-  let r = fn 1. t (Usize.of_isize n) in
+  let r = fn 1. t (Uns.of_isize n) in
   match neg with
   | false -> r
   | true -> 1. / r
@@ -432,7 +432,7 @@ let%expect_test "create" =
     | (n, e, m) :: tups' -> begin
         let f = create ~neg:n ~exponent:e ~mantissa:m in
         printf "n=%b, e=%a, m=%a -> %h -> n=%b, e=%a, m=%a\n"
-          n Isize.pp e Usize.pp_x m f n Isize.pp e Usize.pp_x m;
+          n Isize.pp e Uns.pp_x m f n Isize.pp e Uns.pp_x m;
         fn tups'
       end
   end in
