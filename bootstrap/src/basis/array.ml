@@ -33,23 +33,23 @@ module T = struct
         {array; index=(length array)}
 
       let seek i t =
-        match Isize.(i < (kv 0)) with
+        match Sint.(i < (kv 0)) with
         | true -> begin
-            match (Uns.of_isize Isize.(neg i)) > t.index with
+            match (Uns.of_sint Sint.(neg i)) > t.index with
             | true -> halt "Cannot seek before beginning of array"
-            | false -> {t with index=(t.index - Uns.of_isize (Isize.neg i))}
+            | false -> {t with index=(t.index - Uns.of_sint (Sint.neg i))}
           end
         | false -> begin
-            match (t.index + (Uns.of_isize i)) > (length t.array) with
+            match (t.index + (Uns.of_sint i)) > (length t.array) with
             | true -> halt "Cannot seek past end of array"
-            | false -> {t with index=(t.index + (Uns.of_isize i))}
+            | false -> {t with index=(t.index + (Uns.of_sint i))}
           end
 
       let succ t =
-        seek (Isize.kv 1) t
+        seek (Sint.kv 1) t
 
       let pred t =
-        seek (Isize.kv (-1)) t
+        seek (Sint.kv (-1)) t
 
       let lget t =
         get (Uns.pred t.index) t.array
@@ -1087,19 +1087,19 @@ let%expect_test "cursor" =
 
     let length = length arr in
     assert (Cursor.(=)
-        (Cursor.seek (Uns.to_isize index) hd)
+        (Cursor.seek (Uns.to_sint index) hd)
         cursor);
     assert (Cursor.(=)
         hd
-        (Cursor.seek (Isize.neg (Uns.to_isize index)) cursor)
+        (Cursor.seek (Sint.neg (Uns.to_sint index)) cursor)
     );
     assert (Cursor.(=)
-        (Cursor.seek (Uns.to_isize (length - index)) cursor)
+        (Cursor.seek (Uns.to_sint (length - index)) cursor)
         tl
     );
     assert (Cursor.(=)
         cursor
-        (Cursor.seek (Isize.neg (Uns.to_isize (length - index))) tl)
+        (Cursor.seek (Sint.neg (Uns.to_sint (length - index))) tl)
     );
 
     match cursor_tl with

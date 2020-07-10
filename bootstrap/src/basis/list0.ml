@@ -79,16 +79,16 @@ module T = struct
 
       let seek i t =
         let rec seek_rev i t = begin
-          match Isize.(i = (kv 0)) with
+          match Sint.(i = (kv 0)) with
           | true -> t
-          | false -> seek_rev Isize.(succ i) (pred t)
+          | false -> seek_rev Sint.(succ i) (pred t)
         end in
         let rec seek_fwd i t = begin
-          match Isize.(i = (kv 0)) with
+          match Sint.(i = (kv 0)) with
           | true -> t
-          | false -> seek_fwd Isize.(pred i) (succ t)
+          | false -> seek_fwd Sint.(pred i) (succ t)
         end in
-        match Isize.(cmp i (kv 0)) with
+        match Sint.(cmp i (kv 0)) with
         | Cmp.Lt -> seek_rev i t
         | Cmp.Eq -> t
         | Cmp.Gt -> seek_fwd i t

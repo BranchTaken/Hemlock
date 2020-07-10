@@ -1,6 +1,6 @@
 (* Partial Rudiments. *)
 module Uns = U63
-module Isize = I63
+module Sint = I63
 open Rudiments_int
 open Rudiments_functions
 
@@ -11,16 +11,16 @@ end
 include T
 include Intnb.Make_u(T)
 
-let to_isize t =
-  Uns.to_isize t
+let to_sint t =
+  Uns.to_sint t
 
-let of_isize x =
+let of_sint x =
   narrow_of_signed x
 
-let of_isize_hlt x =
-  let t = of_isize x in
-  let x' = to_isize t in
-  match Isize.(x' = x) with
+let of_sint_hlt x =
+  let t = of_sint x in
+  let x' = to_sint t in
+  match Sint.(x' = x) with
   | false -> halt "Lossy conversion"
   | true -> t
 
@@ -204,13 +204,13 @@ let%expect_test "conversion" =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        let i = isize_of_int x in
-        let t = of_isize i in
-        let i' = to_isize t in
-        let t' = of_isize i' in
-        printf "of_isize %a -> to_isize %a -> of_isize %a -> %a\n"
-          Isize.pp_x i pp_x t Isize.pp_x i' pp_x t';
-        let t = of_uns (Uns.of_isize i) in
+        let i = sint_of_int x in
+        let t = of_sint i in
+        let i' = to_sint t in
+        let t' = of_sint i' in
+        printf "of_sint %a -> to_sint %a -> of_sint %a -> %a\n"
+          Sint.pp_x i pp_x t Sint.pp_x i' pp_x t';
+        let t = of_uns (Uns.of_sint i) in
         let u = to_uns t in
         let t' = of_uns u in
         printf "of_uns %a -> to_uns %a -> of_uns %a -> %a\n"
@@ -219,22 +219,22 @@ let%expect_test "conversion" =
       end
   in
   fn [Uns.max_value; 0; 42; 0x1f_ffff; 0x20_0000; 0x20_0001;
-    Uns.of_isize Isize.max_value];
+    Uns.of_sint Sint.max_value];
 
   [%expect{|
-    of_isize 0x7fffffffffffffffi -> to_isize 0xffffffffu32 -> of_isize 0x00000000ffffffffi -> 0xffffffffu32
+    of_sint 0x7fffffffffffffffi -> to_sint 0xffffffffu32 -> of_sint 0x00000000ffffffffi -> 0xffffffffu32
     of_uns 0x7fffffffffffffff -> to_uns 0xffffffffu32 -> of_uns 0x00000000ffffffff -> 0xffffffffu32
-    of_isize 0x0000000000000000i -> to_isize 0x00000000u32 -> of_isize 0x0000000000000000i -> 0x00000000u32
+    of_sint 0x0000000000000000i -> to_sint 0x00000000u32 -> of_sint 0x0000000000000000i -> 0x00000000u32
     of_uns 0x0000000000000000 -> to_uns 0x00000000u32 -> of_uns 0x0000000000000000 -> 0x00000000u32
-    of_isize 0x000000000000002ai -> to_isize 0x0000002au32 -> of_isize 0x000000000000002ai -> 0x0000002au32
+    of_sint 0x000000000000002ai -> to_sint 0x0000002au32 -> of_sint 0x000000000000002ai -> 0x0000002au32
     of_uns 0x000000000000002a -> to_uns 0x0000002au32 -> of_uns 0x000000000000002a -> 0x0000002au32
-    of_isize 0x00000000001fffffi -> to_isize 0x001fffffu32 -> of_isize 0x00000000001fffffi -> 0x001fffffu32
+    of_sint 0x00000000001fffffi -> to_sint 0x001fffffu32 -> of_sint 0x00000000001fffffi -> 0x001fffffu32
     of_uns 0x00000000001fffff -> to_uns 0x001fffffu32 -> of_uns 0x00000000001fffff -> 0x001fffffu32
-    of_isize 0x0000000000200000i -> to_isize 0x00200000u32 -> of_isize 0x0000000000200000i -> 0x00200000u32
+    of_sint 0x0000000000200000i -> to_sint 0x00200000u32 -> of_sint 0x0000000000200000i -> 0x00200000u32
     of_uns 0x0000000000200000 -> to_uns 0x00200000u32 -> of_uns 0x0000000000200000 -> 0x00200000u32
-    of_isize 0x0000000000200001i -> to_isize 0x00200001u32 -> of_isize 0x0000000000200001i -> 0x00200001u32
+    of_sint 0x0000000000200001i -> to_sint 0x00200001u32 -> of_sint 0x0000000000200001i -> 0x00200001u32
     of_uns 0x0000000000200001 -> to_uns 0x00200001u32 -> of_uns 0x0000000000200001 -> 0x00200001u32
-    of_isize 0x3fffffffffffffffi -> to_isize 0xffffffffu32 -> of_isize 0x00000000ffffffffi -> 0xffffffffu32
+    of_sint 0x3fffffffffffffffi -> to_sint 0xffffffffu32 -> of_sint 0x00000000ffffffffi -> 0xffffffffu32
     of_uns 0x3fffffffffffffff -> to_uns 0xffffffffu32 -> of_uns 0x00000000ffffffff -> 0xffffffffu32
     |}]
 

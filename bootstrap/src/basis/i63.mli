@@ -2,7 +2,7 @@
 
 open Rudiments_int0
 
-type t = isize
+type t = sint
 include Intnb_intf.S_i with type t := t
 
 val of_int: int -> t

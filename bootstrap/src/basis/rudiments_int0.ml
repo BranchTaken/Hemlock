@@ -6,19 +6,19 @@ type u128 = {
   hi: u64;
   lo: u64;
 }
-type isize = int
+type sint = int
 type uns = int
 
-let uns_of_isize t =
+let uns_of_sint t =
   t
 
-let isize_of_uns t =
+let sint_of_uns t =
   t
 
-let int_of_isize t =
+let int_of_sint t =
   t
 
-let isize_of_int t =
+let sint_of_int t =
   t
 
 let u128_of_uns u =

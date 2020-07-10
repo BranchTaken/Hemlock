@@ -10,7 +10,7 @@ module T = struct
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
-    Isize.cmp (Uns.to_isize Int64.(unsigned_compare t0 t1)) (Isize.kv 0)
+    Sint.cmp (Uns.to_sint Int64.(unsigned_compare t0 t1)) (Sint.kv 0)
 
   let zero = Int64.zero
 
@@ -117,14 +117,14 @@ let to_uns_hlt t =
   | Some x -> x
 
 let of_uns u =
-  let i = Uns.to_isize u in
-  match Isize.(i >= (kv 0)) with
+  let i = Uns.to_sint u in
+  match Sint.(i >= (kv 0)) with
   | true -> Int64.of_int u
   | false -> begin
-      let isize_sign_bit = Uns.of_isize Isize.min_value in
+      let sint_sign_bit = Uns.of_sint Sint.min_value in
       Int64.(add (of_int u)
-        (add (of_int isize_sign_bit)
-            (of_int isize_sign_bit)))
+        (add (of_int sint_sign_bit)
+            (of_int sint_sign_bit)))
     end
 
 let min_value = zero

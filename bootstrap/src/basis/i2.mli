@@ -6,13 +6,13 @@ open Rudiments_int
 type t
 include Intnb_intf.S_i with type t := t
 
-val to_isize: t -> isize
+val to_sint: t -> sint
 (** Convert to full-width signed integer. *)
 
-val of_isize: isize -> t
+val of_sint: sint -> t
 (** Initialize from full-width signed integer, with possible loss. *)
 
-val of_isize_hlt: isize -> t
+val of_sint_hlt: sint -> t
 (** Initialize from full-width signed integer, or halt if conversion would be
     lossy. *)
 

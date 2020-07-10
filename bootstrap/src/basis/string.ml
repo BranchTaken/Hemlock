@@ -16,10 +16,10 @@ module T = struct
     |> Uns.hash_fold (blength t)
 
   let cmp t0 t1 =
-    let rel = Isize.of_int (compare t0 t1) in
-    if Isize.(rel < (kv 0)) then
+    let rel = Sint.of_int (compare t0 t1) in
+    if Sint.(rel < (kv 0)) then
       Cmp.Lt
-    else if Isize.(rel = (kv 0)) then
+    else if Sint.(rel = (kv 0)) then
       Cmp.Eq
     else
       Cmp.Gt
@@ -81,8 +81,8 @@ let is_empty t =
   Uns.((blength t) = 0)
 
 let get bindex t =
-  Byte.of_isize_hlt
-    (isize_of_int (Stdlib.Char.code (Stdlib.String.get t bindex)))
+  Byte.of_sint_hlt
+    (sint_of_int (Stdlib.Char.code (Stdlib.String.get t bindex)))
 
 module Cursor = struct
   module T = struct
@@ -158,16 +158,16 @@ module Cursor = struct
 
   let seek coffset t =
     let rec left coffset t = begin
-      match Isize.(coffset = (kv 0)) with
+      match Sint.(coffset = (kv 0)) with
       | true -> t
       | false -> begin
           let t' = near t.string ~bindex:(Uns.pred t.bindex) in
-          let coffset' = Isize.(pred coffset) in
+          let coffset' = Sint.(pred coffset) in
           left coffset' t'
         end
     end in
     let rec right coffset t = begin
-      match Isize.(coffset = (kv 0)) with
+      match Sint.(coffset = (kv 0)) with
       | true -> t
       | false -> begin
           let b = get t.bindex t.string in
@@ -176,20 +176,20 @@ module Cursor = struct
             else Byte.(bit_clz (bit_not b))
           in
           let t' = {t with bindex=t.bindex + nbytes} in
-          let coffset' = Isize.(pred coffset) in
+          let coffset' = Sint.(pred coffset) in
           right coffset' t'
         end
     end in
-    if Isize.(coffset < (kv 0)) then
-      left Isize.(neg coffset) t
+    if Sint.(coffset < (kv 0)) then
+      left Sint.(neg coffset) t
     else
       right coffset t
 
   let succ t =
-    seek (Isize.kv 1) t
+    seek (Sint.kv 1) t
 
   let pred t =
-    seek (Isize.kv (-1)) t
+    seek (Sint.kv (-1)) t
 
   let lget t =
     let bindex = (Uns.pred t.bindex) in
@@ -300,7 +300,7 @@ module Cursori = struct
     (* coffset may be negative, but it's okay to convert blindly to uns
      * because 2s complement addition does the right thing. *)
     {cursor=(Cursor.seek coffset t.cursor);
-      cindex=Uns.(t.cindex + (of_isize coffset))}
+      cindex=Uns.(t.cindex + (of_sint coffset))}
 
   let succ t =
     {cursor=(Cursor.succ t.cursor); cindex=(Uns.succ t.cindex)}
@@ -321,7 +321,7 @@ module Cursori = struct
     t.cindex
 
   let at ~cindex s =
-    {cursor=(Cursor.seek (Uns.to_isize cindex) (Cursor.hd s));
+    {cursor=(Cursor.seek (Uns.to_sint cindex) (Cursor.hd s));
       cindex}
 end
 type cursori = Cursori.t
@@ -368,11 +368,11 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
+                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
+                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
                 end
             ) in
             assert (Uns.((List.length !rem_bytes) = 0));
@@ -415,11 +415,11 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
+                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
+                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
                 end
             ) in
             assert (Uns.((List.length !rem_bytes) = 0));
@@ -462,7 +462,7 @@ module Seq = struct
                 | false -> begin
                     let b = get (!slice_base + !slice_ind) !slice_str in
                     slice_ind := Uns.succ !slice_ind;
-                    Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
+                    Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
                   end
               end in
               fn ()
@@ -516,7 +516,7 @@ module Seq = struct
                 | false -> begin
                     let b = get (!slice_base + !slice_ind) !slice_str in
                     slice_ind := Uns.succ !slice_ind;
-                    Stdlib.Char.chr (int_of_isize (Byte.to_isize b))
+                    Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
                   end
               end in
               fn ()
@@ -1279,7 +1279,7 @@ module Slice = struct
                     end
                   | cursor :: at' -> begin
                       let in_cursor' = Cursor.seek
-                          (Uns.to_isize (string_clength t.pattern)) cursor in
+                          (Uns.to_sint (string_clength t.pattern)) cursor in
                       let slice' = t.with_ in
                       in_cursor', slice', at'
                     end
@@ -1366,7 +1366,7 @@ module Slice = struct
     let base = t.base in
     let past = match Uns.((clength t) < n) with
       | true -> t.past
-      | false -> Cursor.(seek (Uns.to_isize n) base)
+      | false -> Cursor.(seek (Uns.to_sint n) base)
     in
     of_cursors ~base ~past
 
@@ -1374,7 +1374,7 @@ module Slice = struct
     let past = t.past in
     let base = match Uns.((clength t) < n) with
       | true -> t.base
-      | false -> Cursor.(seek Isize.(neg (Uns.to_isize n)) past)
+      | false -> Cursor.(seek Sint.(neg (Uns.to_sint n)) past)
     in
     of_cursors ~base ~past
 

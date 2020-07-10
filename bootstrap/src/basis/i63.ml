@@ -3,13 +3,13 @@ include Rudiments_int0
 module Uns = U63
 
 let of_int t =
-  isize_of_int t
+  sint_of_int t
 
 let kv t =
-  isize_of_int t
+  sint_of_int t
 
 module T = struct
-  type t = isize
+  type t = sint
   let num_bits = Sys.int_size
 end
 include T

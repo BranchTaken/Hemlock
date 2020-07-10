@@ -45,7 +45,7 @@ module type S_mono = sig
   val index: t -> uns
   (** Return iterator index. *)
 
-  val seek: isize -> t -> t
+  val seek: sint -> t -> t
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
 
@@ -92,7 +92,7 @@ module type S_poly = sig
   val index: 'a t -> uns
   (** Return iterator index. *)
 
-  val seek: isize -> 'a t -> 'a t
+  val seek: sint -> 'a t -> 'a t
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
 
@@ -140,7 +140,7 @@ module type S_poly2 = sig
   val index: ('a, 'cmp) t -> uns
   (** Return iterator index. *)
 
-  val seek: isize -> ('a, 'cmp) t -> ('a, 'cmp) t
+  val seek: sint -> ('a, 'cmp) t -> ('a, 'cmp) t
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
 
@@ -191,6 +191,6 @@ module type S_poly3 = sig
   val index: ('k, 'v, 'cmp) t -> uns
   (** Return iterator index. *)
 
-  val seek: isize -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+  val seek: sint -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end

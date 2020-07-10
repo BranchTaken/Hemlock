@@ -107,7 +107,7 @@ module Slice : sig
   val to_string: t -> outer
   (** Return a string with contents equivalent to those of the slice. *)
 
-  val base_seek: isize -> t -> t
+  val base_seek: sint -> t -> t
   (** [base_seek i t] returns a derivative slice with its [base] cursor
       initialized by seeking [t]'s [base] cursor [i] codepoints
       forward/backward. *)
@@ -120,7 +120,7 @@ module Slice : sig
   (** [base_pred t] returns a derivative slice with its [base] cursor
       initialized to the predecessor of [t]'s [base] cursor. *)
 
-  val past_seek: isize -> t -> t
+  val past_seek: sint -> t -> t
   (** [past_seek i t] returns a derivative slice with its [past] cursor
       initialized by seeking [t]'s [past] cursor [i] codepoints
       forward/backward. *)
