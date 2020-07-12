@@ -28,13 +28,3 @@ val of_uns: uns -> t
 val of_uns_hlt: uns -> t
 (** Initialize from full-width unsigned integer, or halt if conversion would be
     lossy. *)
-
-val to_u64: t -> U64.t
-(** Convert to 64-bit unsigned integer. *)
-
-val of_u64: U64.t -> t
-(** Initialize from 64-bit unsigned integer, with possible loss. *)
-
-val of_u64_hlt: U64.t -> t
-(** Initialize from 64-bit unsigned integer, or halt if conversion would be
-    lossy. *)
