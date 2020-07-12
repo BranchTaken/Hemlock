@@ -11,6 +11,8 @@ type i63 = I63.t
 
 type u63 = U63.t
 
+type u32 = U32.t
+
 type u21 = U21.t
 type codepoint = Codepoint.t
 
