@@ -34,6 +34,8 @@ type u32 = U32.t
 type u21 = U21.t
 type codepoint = Codepoint.t
 
+type u16 = U16.t
+
 type u8 = U8.t
 type byte = Byte.t
 
