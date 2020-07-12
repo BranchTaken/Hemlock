@@ -40,15 +40,6 @@ let of_uns_hlt x =
   | false -> halt "Lossy conversion"
   | true -> t
 
-let to_u64 t =
-  U64.of_uns (to_uns t)
-
-let of_u64 x =
-  of_uns (U64.to_uns x)
-
-let of_u64_hlt x =
-  of_uns_hlt (U64.to_uns_hlt x)
-
 (******************************************************************************)
 (* Begin tests. *)
 

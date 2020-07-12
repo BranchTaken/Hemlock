@@ -154,13 +154,12 @@ module T = struct
     let mul_b x = I64.bit_sl ~shift:32 x in
     (* Get/set digit. Only the low 32 bits are used; if u32 were available it
      * would be a better choice for array elements. *)
-    let get arr i = U64.to_i64 (U32.to_u64 (Caml.Array.get arr i)) in
-    let set arr i x = Caml.Array.set arr i (U32.of_u64 (U64.of_i64 x)) in
+    let get arr i = U64.to_i64 (Caml.Array.get arr i) in
+    let set arr i x = Caml.Array.set arr i U64.(lo32 (of_i64 x)) in
     (* Digit array creation and conversion functions. Digits are in
      * little-endian order (least significant digit at offset 0). *)
-    let zero_arr ndigits = Caml.Array.make ndigits U32.zero in
-    let to_arr u = [|U32.of_u64 (lo32 u.lo); U32.of_u64 (hi32 u.lo);
-      U32.of_u64 (lo32 u.hi); U32.of_u64 (hi32 u.hi);|] in
+    let zero_arr ndigits = Caml.Array.make ndigits U64.zero in
+    let to_arr u = [|lo32 u.lo; hi32 u.lo; lo32 u.hi; hi32 u.hi;|] in
     let of_arr arr = begin
       let hi = U64.(bit_or (mul_b (get arr 3)) (get arr 2)) in
       let lo = U64.(bit_or (mul_b (get arr 1)) (get arr 0)) in
