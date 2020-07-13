@@ -1,4 +1,4 @@
-(** 21-bit unsigned integer. *)
+(** Unicode code point. *)
 
 open Rudiments_int
 
@@ -58,7 +58,7 @@ val bel: t
 (** Constant [0x07]. *)
 
 val bs: t
-(** Constant ['\b']. *)
+(** Constant [0x08]. *)
 
 val ht: t
 (** Constant ['\t']. *)

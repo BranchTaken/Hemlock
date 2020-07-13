@@ -2,7 +2,6 @@
 
 (* Partial Rudiments. *)
 open Rudiments_int
-module Codepoint = U21
 type codepoint = Codepoint.t
 
 type t
