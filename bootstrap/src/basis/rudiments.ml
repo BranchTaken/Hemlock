@@ -22,6 +22,8 @@ type i16 = I16.t
 
 type u16 = U16.t
 
+type i8 = I8.t
+
 type u8 = U8.t
 type byte = Byte.t
 
