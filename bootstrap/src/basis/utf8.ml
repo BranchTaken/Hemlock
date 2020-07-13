@@ -191,41 +191,41 @@ let escape t =
   match t with
   | One b0 -> begin
       match Byte.to_codepoint b0 with
-      | cp when Codepoint.(cp = nul) -> "\\0"
-      | cp when Codepoint.(cp = soh) -> "\\x01"
-      | cp when Codepoint.(cp = stx) -> "\\x02"
-      | cp when Codepoint.(cp = etx) -> "\\x03"
-      | cp when Codepoint.(cp = eot) -> "\\x04"
-      | cp when Codepoint.(cp = enq) -> "\\x05"
-      | cp when Codepoint.(cp = ack) -> "\\x06"
-      | cp when Codepoint.(cp = bel) -> "\\a"
-      | cp when Codepoint.(cp = bs) -> "\\b"
+      | cp when Codepoint.(cp = nul) -> "\\u{0}"
+      | cp when Codepoint.(cp = soh) -> "\\u{1}"
+      | cp when Codepoint.(cp = stx) -> "\\u{2}"
+      | cp when Codepoint.(cp = etx) -> "\\u{3}"
+      | cp when Codepoint.(cp = eot) -> "\\u{4}"
+      | cp when Codepoint.(cp = enq) -> "\\u{5}"
+      | cp when Codepoint.(cp = ack) -> "\\u{6}"
+      | cp when Codepoint.(cp = bel) -> "\\u{7}"
+      | cp when Codepoint.(cp = bs) -> "\\u{8}"
       | cp when Codepoint.(cp = ht) -> "\\t"
       | cp when Codepoint.(cp = nl) -> "\\n"
-      | cp when Codepoint.(cp = vt) -> "\\v"
-      | cp when Codepoint.(cp = ff) -> "\\f"
+      | cp when Codepoint.(cp = vt) -> "\\u{b}"
+      | cp when Codepoint.(cp = ff) -> "\\u{c}"
       | cp when Codepoint.(cp = cr) -> "\\r"
-      | cp when Codepoint.(cp = so) -> "\\x0e"
-      | cp when Codepoint.(cp = si) -> "\\x0f"
-      | cp when Codepoint.(cp = dle) -> "\\x10"
-      | cp when Codepoint.(cp = dc1) -> "\\x11"
-      | cp when Codepoint.(cp = dc2) -> "\\x12"
-      | cp when Codepoint.(cp = dc3) -> "\\x13"
-      | cp when Codepoint.(cp = dc4) -> "\\x14"
-      | cp when Codepoint.(cp = nak) -> "\\x15"
-      | cp when Codepoint.(cp = syn) -> "\\x16"
-      | cp when Codepoint.(cp = etb) -> "\\x17"
-      | cp when Codepoint.(cp = can) -> "\\x18"
-      | cp when Codepoint.(cp = em) -> "\\x19"
-      | cp when Codepoint.(cp = sub) -> "\\x1a"
-      | cp when Codepoint.(cp = esc) -> "\\x1b"
-      | cp when Codepoint.(cp = fs) -> "\\x1c"
-      | cp when Codepoint.(cp = gs) -> "\\x1d"
-      | cp when Codepoint.(cp = rs) -> "\\x1e"
-      | cp when Codepoint.(cp = us) -> "\\x1f"
+      | cp when Codepoint.(cp = so) -> "\\u{e}"
+      | cp when Codepoint.(cp = si) -> "\\u{f}"
+      | cp when Codepoint.(cp = dle) -> "\\u{10}"
+      | cp when Codepoint.(cp = dc1) -> "\\u{11}"
+      | cp when Codepoint.(cp = dc2) -> "\\u{12}"
+      | cp when Codepoint.(cp = dc3) -> "\\u{13}"
+      | cp when Codepoint.(cp = dc4) -> "\\u{14}"
+      | cp when Codepoint.(cp = nak) -> "\\u{15}"
+      | cp when Codepoint.(cp = syn) -> "\\u{16}"
+      | cp when Codepoint.(cp = etb) -> "\\u{17}"
+      | cp when Codepoint.(cp = can) -> "\\u{18}"
+      | cp when Codepoint.(cp = em) -> "\\u{19}"
+      | cp when Codepoint.(cp = sub) -> "\\u{1a}"
+      | cp when Codepoint.(cp = esc) -> "\\u{1b}"
+      | cp when Codepoint.(cp = fs) -> "\\u{1c}"
+      | cp when Codepoint.(cp = gs) -> "\\u{1d}"
+      | cp when Codepoint.(cp = rs) -> "\\u{1e}"
+      | cp when Codepoint.(cp = us) -> "\\u{1f}"
       | cp when Codepoint.(cp = (of_char '"')) -> "\\\""
       | cp when Codepoint.(cp = (of_char '\\')) -> "\\\\"
-      | cp when Codepoint.(cp = del) -> "\\x7f"
+      | cp when Codepoint.(cp = del) -> "\\u{7f}"
       | _ -> to_string t
     end
   | Two _
@@ -286,38 +286,38 @@ let%expect_test "pp,escape" =
   fn 0;
 
   [%expect{|
-    0x0000000000000000 -> '\0'
-    0x0000000000000001 -> '\x01'
-    0x0000000000000002 -> '\x02'
-    0x0000000000000003 -> '\x03'
-    0x0000000000000004 -> '\x04'
-    0x0000000000000005 -> '\x05'
-    0x0000000000000006 -> '\x06'
-    0x0000000000000007 -> '\a'
-    0x0000000000000008 -> '\b'
+    0x0000000000000000 -> '\u{0}'
+    0x0000000000000001 -> '\u{1}'
+    0x0000000000000002 -> '\u{2}'
+    0x0000000000000003 -> '\u{3}'
+    0x0000000000000004 -> '\u{4}'
+    0x0000000000000005 -> '\u{5}'
+    0x0000000000000006 -> '\u{6}'
+    0x0000000000000007 -> '\u{7}'
+    0x0000000000000008 -> '\u{8}'
     0x0000000000000009 -> '\t'
     0x000000000000000a -> '\n'
-    0x000000000000000b -> '\v'
-    0x000000000000000c -> '\f'
+    0x000000000000000b -> '\u{b}'
+    0x000000000000000c -> '\u{c}'
     0x000000000000000d -> '\r'
-    0x000000000000000e -> '\x0e'
-    0x000000000000000f -> '\x0f'
-    0x0000000000000010 -> '\x10'
-    0x0000000000000011 -> '\x11'
-    0x0000000000000012 -> '\x12'
-    0x0000000000000013 -> '\x13'
-    0x0000000000000014 -> '\x14'
-    0x0000000000000015 -> '\x15'
-    0x0000000000000016 -> '\x16'
-    0x0000000000000017 -> '\x17'
-    0x0000000000000018 -> '\x18'
-    0x0000000000000019 -> '\x19'
-    0x000000000000001a -> '\x1a'
-    0x000000000000001b -> '\x1b'
-    0x000000000000001c -> '\x1c'
-    0x000000000000001d -> '\x1d'
-    0x000000000000001e -> '\x1e'
-    0x000000000000001f -> '\x1f'
+    0x000000000000000e -> '\u{e}'
+    0x000000000000000f -> '\u{f}'
+    0x0000000000000010 -> '\u{10}'
+    0x0000000000000011 -> '\u{11}'
+    0x0000000000000012 -> '\u{12}'
+    0x0000000000000013 -> '\u{13}'
+    0x0000000000000014 -> '\u{14}'
+    0x0000000000000015 -> '\u{15}'
+    0x0000000000000016 -> '\u{16}'
+    0x0000000000000017 -> '\u{17}'
+    0x0000000000000018 -> '\u{18}'
+    0x0000000000000019 -> '\u{19}'
+    0x000000000000001a -> '\u{1a}'
+    0x000000000000001b -> '\u{1b}'
+    0x000000000000001c -> '\u{1c}'
+    0x000000000000001d -> '\u{1d}'
+    0x000000000000001e -> '\u{1e}'
+    0x000000000000001f -> '\u{1f}'
     0x0000000000000020 -> ' '
     0x0000000000000021 -> '!'
     0x0000000000000022 -> '\"'
@@ -413,5 +413,5 @@ let%expect_test "pp,escape" =
     0x000000000000007c -> '|'
     0x000000000000007d -> '}'
     0x000000000000007e -> '~'
-    0x000000000000007f -> '\x7f'
+    0x000000000000007f -> '\u{7f}'
     |}]
