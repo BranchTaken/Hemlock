@@ -1,7 +1,6 @@
 (* Partial Rudiments. *)
 module Sint = I63
 module Uns = U63
-module Codepoint = U21
 type codepoint = Codepoint.t
 open Rudiments_int
 open Rudiments_functions
@@ -225,7 +224,7 @@ let%expect_test "conversion" =
         printf "of_uns %a -> to_uns %a -> of_uns %a -> %a\n"
           Sint.pp_x i pp_x t Uns.pp_x u pp_x t';
 
-        let c = U21.of_uns (Uns.of_sint i) in
+        let c = Codepoint.of_uns (Uns.of_sint i) in
         let t = of_codepoint c in
         let c' = to_codepoint t in
         let t' = of_codepoint c' in
