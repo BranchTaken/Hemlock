@@ -27,7 +27,5 @@ type i8 = I8.t
 type u8 = U8.t
 type byte = Byte.t
 
-type i2 = I2.t
-
 include Rudiments_functions
 include Rudiments_int
