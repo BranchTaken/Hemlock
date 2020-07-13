@@ -128,7 +128,7 @@ module Make_common (T : I_common) : S_common with type t := uns = struct
           let nlb = Sys.int_size - T.num_bits in
           match nlb with
           | 0 -> u
-          | _ -> ((1 lsl T.num_bits) - 1) land u
+          | _ -> ((1 lsl (T.num_bits - 1)) - 1) land u
         end
       | false -> narrow u
 
