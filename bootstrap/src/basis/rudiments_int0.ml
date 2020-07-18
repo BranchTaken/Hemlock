@@ -182,7 +182,7 @@ let u128_of_string s =
         | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' -> begin
             let ndigits' = ndigits + 1 in
             let accum, mult = hexadecimal s i' ndigits' len in
-            let accum' = u128_add accum (u128_mul mult  (d_of_c c)) in
+            let accum' = u128_add accum (u128_mul mult (d_of_c c)) in
             let mult' = u128_mul mult (u128_of_uns 16) in
             accum', mult'
           end
