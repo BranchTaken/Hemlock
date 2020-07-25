@@ -3,7 +3,7 @@
     ephemeral use. Most operations on code points are performed via the
     {!type:codepoint} and {!type:string} types. *)
 
-open Rudiments
+open Rudiments0
 
 type t
 

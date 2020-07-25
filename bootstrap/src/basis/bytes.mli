@@ -3,7 +3,7 @@
     convenient less constrained representation for conversion to/from
     {!type:string}. *)
 
-open Rudiments
+open Rudiments0
 
 include Formattable_intf.S_mono with type t := byte array
 

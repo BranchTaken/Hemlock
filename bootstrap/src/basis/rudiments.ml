@@ -1,29 +1,11 @@
-(* Aliases. *)
+include Rudiments0
 
-module Sint = I63
-module Uns = U63
-module Byte = U8
+type i128 = I128.t
 
-(* Types. *)
+type i256 = I256.t
 
-type i63 = I63.t
+type u256 = U256.t
 
-type u63 = U63.t
+type i512 = I512.t
 
-type i32 = I32.t
-
-type u32 = U32.t
-
-type i16 = I16.t
-
-type u16 = U16.t
-
-type i8 = I8.t
-
-type u8 = U8.t
-type byte = Byte.t
-
-type codepoint = Codepoint.t
-
-include Rudiments_functions
-include Rudiments_int
+type u512 = U512.t

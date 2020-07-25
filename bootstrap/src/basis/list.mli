@@ -4,7 +4,7 @@
     many sequential algorithms. A {!type:list} is either empty, or it has a head
     element followed by a tail {!type:list}. *)
 
-open Rudiments
+open Rudiments0
 
 (** {1 Type and derivations} *)
 

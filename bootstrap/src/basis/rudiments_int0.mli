@@ -1,9 +1,6 @@
 type i64 = int64
 type u64 = int64
-type u128 = {
-  hi: u64;
-  lo: u64;
-}
+type u128
 type sint
 type uns = int
 
@@ -17,7 +14,19 @@ val int_of_sint: sint -> int
 (** Convert a signed integer to a bitwise identical OCaml integer. *)
 
 val sint_of_int: int -> sint
-(** Convert a OCaml integer to a bitwise identical signed integer. *)
+(** Convert an OCaml integer to a bitwise identical signed integer. *)
+
+val u128_to_arr: u128 -> u64 array
+(** Convert to a little-endian array of words (first word is least significant.
+*)
+
+val u128_of_arr: u64 array -> u128
+(** Initialize from a little-endian tuple of words (first word is least
+    significant). *)
+
+val u128_to_tup: u128 -> u64 * u64
+(** Convert to a little-endian tuple of words (first word is least significant.
+*)
 
 val u128_of_uns: uns -> u128
 (** Convert unsigned integer to 128-bit unsigned integer. *)
@@ -26,6 +35,9 @@ val u128_pp_x: Format.formatter -> u128 -> unit
 (** [u128_pp_x ppf u] prints a hexadecimal representation of [u] to the pretty
     printing formatter, [ppf]. This function is intended for use with the [%a]
     format specifier to {!Format.printf}.*)
+
+val u128_compare: u128 -> u128 -> sint
+(** [u128_compare a b] returns [{-1, 0, 1}] if [a {<,=,>} b], respectively. *)
 
 val u128_zero: u128
 (** Zero constant. *)

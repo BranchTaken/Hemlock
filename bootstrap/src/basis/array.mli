@@ -1,4 +1,4 @@
-open Rudiments
+open Rudiments0
 
 type 'a t = 'a array
 include Container_common_intf.S_poly_fold with type 'a t := 'a t

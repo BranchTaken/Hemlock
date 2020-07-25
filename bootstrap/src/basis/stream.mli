@@ -4,7 +4,7 @@
     that would typically be O(n) are amortized via lazy execution and (with a
     few noted exceptions) are O(1). *)
 
-open Rudiments
+open Rudiments0
 
 (** {1 Type and derivations} *)
 

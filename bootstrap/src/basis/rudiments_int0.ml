@@ -2,10 +2,7 @@ open Rudiments_functions
 
 type i64 = int64
 type u64 = int64
-type u128 = {
-  hi: u64;
-  lo: u64;
-}
+type u128 = u64 array
 type sint = int
 type uns = int
 
@@ -21,8 +18,19 @@ let int_of_sint t =
 let sint_of_int t =
   t
 
+let u128_of_arr = function
+  | [|_; _|] as a -> a
+  | _ -> not_reached ()
+
+let u128_to_arr t =
+  t
+
+let u128_to_tup = function
+  | [|lo; hi|] -> (lo, hi)
+  | _ -> not_reached ()
+
 let u128_of_uns u =
-  {hi=Int64.zero; lo=Int64.of_int u}
+  u128_of_arr [|Int64.of_int u; Int64.zero|]
 
 let u128_pp_x ppf t =
   let rec fn x shift = begin
@@ -36,66 +44,87 @@ let u128_pp_x ppf t =
         fn x shift'
       end
   end in
+  let t_lo, t_hi = u128_to_tup t in
   Format.fprintf ppf "0x";
-  fn t.hi 64;
+  fn t_hi 64;
   Format.fprintf ppf "_";
-  fn t.lo 64;
+  fn t_lo 64;
   Format.fprintf ppf "u128"
 
-let u128_zero = {hi=Int64.zero; lo=Int64.zero}
+let u128_compare t0 t1 =
+  let t0_lo, t0_hi = u128_to_tup t0 in
+  let t1_lo, t1_hi = u128_to_tup t1 in
+  sint_of_uns (
+    match (Int64.unsigned_compare t0_hi t1_hi),
+      (Int64.unsigned_compare t0_lo t1_lo) with
+    | -1, _
+    | 0, -1 -> -1
+    | 0, 0 -> 0
+    | 1, _
+    | 0, 1 -> 1
+    | _ -> not_reached ()
+  )
 
-let u128_one = {hi=Int64.zero; lo=Int64.one}
+let u128_zero = u128_of_arr [|Int64.zero; Int64.zero|]
+
+let u128_one = u128_of_arr [|Int64.one; Int64.zero|]
 
 let u128_bit_or t0 t1 =
-  {hi=Int64.logor t0.hi t1.hi; lo=Int64.logor t0.lo t1.lo}
+  let t0_lo, t0_hi = u128_to_tup t0 in
+  let t1_lo, t1_hi = u128_to_tup t1 in
+  u128_of_arr [|Int64.logor t0_lo t1_lo; Int64.logor t0_hi t1_hi|]
 
 let u128_bit_sl ~shift t =
+  let t_lo, t_hi = u128_to_tup t in
   let i = shift mod 128 in
   let hi = begin
-    if i >= 64 then Int64.shift_left t.lo (i - 64)
+    if i >= 64 then Int64.shift_left t_lo (i - 64)
     else if i > 0 then
-      Int64.logor (Int64.shift_left t.hi i)
-        (Int64.shift_right_logical t.lo (64 - i))
-    else t.hi
+      Int64.logor (Int64.shift_left t_hi i)
+        (Int64.shift_right_logical t_lo (64 - i))
+    else t_hi
   end in
   let lo = begin
     if i >= 64 then Int64.zero
-    else if i > 0 then Int64.shift_left t.lo i
-    else t.lo
+    else if i > 0 then Int64.shift_left t_lo i
+    else t_lo
   end in
-  {hi; lo}
+  u128_of_arr [|lo; hi|]
 
 let u128_bit_usr ~shift t =
+  let t_lo, t_hi = u128_to_tup t in
   let i = shift mod 128 in
   let hi = begin
     if i >= 64 then Int64.zero
-    else if i > 0 then Int64.shift_right_logical t.hi i
-    else t.hi
+    else if i > 0 then Int64.shift_right_logical t_hi i
+    else t_hi
   end in
   let lo = begin
-    if i >= 64 then Int64.shift_right_logical t.hi (i - 64)
+    if i >= 64 then Int64.shift_right_logical t_hi (i - 64)
     else if i > 0 then
-      Int64.logor (Int64.shift_left t.hi (64 - i))
-        (Int64.shift_right_logical t.lo i)
-    else t.lo
+      Int64.logor (Int64.shift_left t_hi (64 - i))
+        (Int64.shift_right_logical t_lo i)
+    else t_lo
   end in
-  {hi; lo}
+  u128_of_arr [|lo; hi|]
 
 let u128_add t0 t1 =
-  let lo = Int64.add t0.lo t1.lo in
+  let t0_lo, t0_hi = u128_to_tup t0 in
+  let t1_lo, t1_hi = u128_to_tup t1 in
+  let lo = Int64.add t0_lo t1_lo in
   let carry =
-    if (Int64.unsigned_compare lo t0.lo) < 0 then Int64.one
+    if (Int64.unsigned_compare lo t0_lo) < 0 then Int64.one
     else Int64.zero
   in
-  let hi = Int64.(add (add t0.hi t1.hi) carry) in
-  {hi; lo}
+  let hi = Int64.(add (add t0_hi t1_hi) carry) in
+  u128_of_arr [|lo; hi|]
 
 let u128_mul t0 t1 =
   (* Decompose inputs into arrays of 32-bit half-words, then use the standard
    * paper method of multi-digit multiplication, but in base 2^32. The full
    * result requires m + n digits, where m and n are the number of input digits
-   * in the muliplier and multiplicand. For this function, ndigits=m=n=4, and we
-   * only calculate/preserve the lowest ndigits digits.
+   * in the multiplier and multiplicand. For this function, ndigits=m=n=4, and
+   * we only calculate/preserve the lowest ndigits digits.
    *
    * The digit arrays are encoded as (u32 array), which assures that only
    * significant bits are stored. The intermediate computations use 64-bit math
@@ -106,11 +135,14 @@ let u128_mul t0 t1 =
   let get arr i = Caml.Array.get arr i in
   let set arr i x =
     Caml.Array.set arr i Int64.(logand x (of_int 0xffff_ffff)) in
-  let to_arr u = [|lo32 u.lo; hi32 u.lo; lo32 u.hi; hi32 u.hi;|] in
+  let to_arr u =
+    let u_lo, u_hi = u128_to_tup u in
+    [|lo32 u_lo; hi32 u_lo; lo32 u_hi; hi32 u_hi;|]
+  in
   let of_arr arr = begin
     let hi = Int64.(logor (shift_left (get arr 3) 32) (get arr 2)) in
     let lo = Int64.(logor (shift_left (get arr 1) 32) (get arr 0)) in
-    {hi; lo}
+    u128_of_arr [|lo; hi|]
   end in
   let t0_arr = to_arr t0 in
   let t1_arr = to_arr t1 in
@@ -182,7 +214,7 @@ let u128_of_string s =
         | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' -> begin
             let ndigits' = ndigits + 1 in
             let accum, mult = hexadecimal s i' ndigits' len in
-            let accum' = u128_add accum (u128_mul mult  (d_of_c c)) in
+            let accum' = u128_add accum (u128_mul mult (d_of_c c)) in
             let mult' = u128_mul mult (u128_of_uns 16) in
             accum', mult'
           end

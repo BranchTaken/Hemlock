@@ -1,6 +1,6 @@
 (** Sequence functor interfaces and signatures. *)
 
-open Rudiments
+open Rudiments0
 
 (** Definite sequence functor input interface for monomorphic containers, e.g.
     {!type:string}. *)

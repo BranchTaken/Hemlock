@@ -27,7 +27,7 @@
  *   the computations must take into account imbalance, recursive joins,
  *   rotations, etc. *)
 
-open Rudiments
+open Rudiments0
 
 module T = struct
   type ('k, 'v) node =
