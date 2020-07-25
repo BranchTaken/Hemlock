@@ -8,7 +8,7 @@ external entropy_nbits: uns -> Int64.t array = "hemlock_entropy_nbits"
 
 let get () =
   match entropy_nbits 128 with
-  | [|hi; lo|] -> {hi; lo}
+  | [|lo; hi|] -> u128_of_arr [|lo; hi|]
   | _ -> halt "Entropy.get error: Entropy acquisition failure"
 
 let seed =

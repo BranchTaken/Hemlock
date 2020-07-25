@@ -1,6 +1,6 @@
 (** Cursor interfaces. *)
 
-open Rudiments
+open Rudiments0
 
 (** Cursor iterator functor output signature for monomorphic types, e.g.
     [string]. *)

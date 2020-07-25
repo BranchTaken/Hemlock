@@ -1,4 +1,5 @@
-open Rudiments
+open Rudiments_int
+open Rudiments0
 
 module T = struct
   type t = float
@@ -6,7 +7,7 @@ module T = struct
   let hash_fold t state =
     Hash.State.Gen.init state
     |> Hash.State.Gen.fold_u128 1
-      ~f:(fun _ -> {hi=Int64.zero; lo=Int64.bits_of_float t})
+      ~f:(fun _ -> u128_of_arr [|Int64.bits_of_float t; Int64.zero|])
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =

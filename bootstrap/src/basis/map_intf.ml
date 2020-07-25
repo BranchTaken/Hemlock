@@ -1,4 +1,4 @@
-open Rudiments
+open Rudiments0
 
 (** Map. Note that O(1) time complexity for various unordered map operations
     assumes a collision-free hash function; beware that a degenerate hash

@@ -26,7 +26,7 @@
  *   presence of collisions (rather than O(n)), but the primary benefit is that
  *   it improves coupled iteration performance. *)
 
-open Rudiments
+open Rudiments0
 
 (* Module for type used to encode node's present_{kv,child} bit sets. *)
 module Bitset = U63

@@ -3,7 +3,7 @@
     The q is an immutable queue container. All operations on q are amortized via
     lazy execution and are O(1). *)
 
-open Rudiments
+open Rudiments0
 
 (** {1 Type and derivations} *)
 

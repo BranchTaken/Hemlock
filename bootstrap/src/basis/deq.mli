@@ -3,7 +3,7 @@
     The deq is an immutable double-ended queue container. All operations on deq
     are amortized via lazy execution and are O(1). *)
 
-open Rudiments
+open Rudiments0
 
 (** {1 Type and derivations} *)
 

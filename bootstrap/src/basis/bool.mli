@@ -1,6 +1,6 @@
 (** Boolean type. *)
 
-open Rudiments
+open Rudiments0
 
 type t = bool
 

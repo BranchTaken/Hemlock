@@ -1,6 +1,6 @@
 (** 64-bit floating point numeric type. *)
 
-open Rudiments
+open Rudiments0
 
 type t = float
 

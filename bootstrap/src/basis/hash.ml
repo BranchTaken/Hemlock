@@ -56,8 +56,8 @@ module State = struct
     let hash_c2 = Int64.of_string "0x4cf5ad432745937f"
 
     let hash u t =
-      let h1, h2 = match t.state with {hi; lo} -> lo, hi in
-      let k1, k2 = match u with {hi; lo} -> lo, hi in
+      let h1, h2 = u128_to_tup t.state in
+      let k1, k2 = u128_to_tup u in
 
       let k1 = Int64.mul k1 hash_c1 in
       let k1 = rotl k1 31 in
@@ -77,7 +77,7 @@ module State = struct
       let h2 = Int64.add h2 h1 in
       let h2 = Int64.(add (mul h2 (of_int 5)) (of_int 0x38495ab5)) in
 
-      let state = {hi=h2; lo=h1} in
+      let state = u128_of_arr [|h1; h2|] in
       {t with state; nfolded=succ t.nfolded}
 
     let fold_u128 n ~f t =
@@ -100,7 +100,7 @@ module State = struct
 
     let fold_u8 n ~f t =
       let feed b t = begin
-        let u = {hi=Int64.zero; lo=Int64.of_int b} in
+        let u = u128_of_arr [|Int64.of_int b; Int64.zero|] in
         match t.nrem = 15 with
         | true -> begin
             let u' = u128_bit_or t.rem (u128_bit_sl ~shift:120 u) in
@@ -125,8 +125,8 @@ module State = struct
         match t.nrem > 0 with
         | false -> t, len
         | true -> begin
-            let h1, h2 = match t.state with {hi; lo} -> lo, hi in
-            let k1, k2 = match t.rem with {hi; lo} -> lo, hi in
+            let h1, h2 = u128_to_tup t.state in
+            let k1, k2 = u128_to_tup t.rem in
 
             let k2 = Int64.mul k2 hash_c2 in
             let k2 = rotl k2 33 in
@@ -138,12 +138,12 @@ module State = struct
             let k1 = Int64.mul k1 hash_c2 in
             let h1 = Int64.logxor h1 k1 in
 
-            let state = {hi=h2; lo=h1} in
+            let state = u128_of_arr [|h1; h2|] in
             {t with state; rem=u128_zero; nrem=0}, len
           end
       end in
       let t', len = fold_rem t in
-      let h1, h2 = match t'.state with {hi; lo} -> lo, hi in
+      let h1, h2 = u128_to_tup t'.state in
 
       let h1 = Int64.logxor h1 (Int64.of_int len) in
       let h2 = Int64.logxor h2 (Int64.of_int len) in
@@ -157,7 +157,7 @@ module State = struct
       let h1 = Int64.add h1 h2 in
       let h2 = Int64.add h2 h1 in
 
-      {hi=h2; lo=h1}
+      u128_of_arr [|h1; h2|]
   end
 end
 
@@ -217,21 +217,21 @@ let%expect_test "hash_fold_u128" =
   let u128s_list = [
     [||];
 
-    [|{hi=Int64.of_string "0xfedcba9876543210";
-      lo=Int64.of_string "0x0123456789abcdef"}|];
+    [|u128_of_arr [|Int64.of_string "0x0123456789abcdef";
+        Int64.of_string "0xfedcba9876543210"|]|];
 
     [|u128_zero|];
 
-    [|{hi=Int64.of_string "0x0123456789abcdef";
-      lo=Int64.of_string "0xfedcba9876543210"}|];
+    [|u128_of_arr [|Int64.of_string "0xfedcba9876543210";
+        Int64.of_string "0x0123456789abcdef"|]|];
 
-    [|{hi=Int64.of_string "0xfedcba9876543210";
-      lo=Int64.of_string "0x0123456789abcdef"};
+    [|u128_of_arr [|Int64.of_string "0x0123456789abcdef";
+        Int64.of_string "0xfedcba9876543210"|];
 
       u128_zero;
 
-      {hi=Int64.of_string "0x0123456789abcdef";
-        lo=Int64.of_string "0xfedcba9876543210"}|]
+      u128_of_arr [|Int64.of_string "0xfedcba9876543210";
+        Int64.of_string "0x0123456789abcdef"|]|]
   ] in
   test_hash_fold u128s_list;
   printf "@]";

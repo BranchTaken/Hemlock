@@ -1,4 +1,5 @@
-open Rudiments
+open Rudiments0
+open Rudiments_int
 
 module List = List0
 
@@ -1185,7 +1186,8 @@ let%expect_test "hash_fold empty" =
     |> hash_empty
     |> hash_empty
   in
-  assert U128.((Hash.t_of_state e1) <> (Hash.t_of_state e2));
+  assert Sint.((u128_compare (Hash.t_of_state e1) (Hash.t_of_state e2)) <>
+      kv 0);
 
   [%expect{|
     |}]

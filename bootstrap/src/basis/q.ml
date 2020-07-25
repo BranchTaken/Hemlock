@@ -1,4 +1,4 @@
-open Rudiments
+open Rudiments0
 
 type 'a t = uns * 'a Stream.t * 'a list * 'a Stream.t
 

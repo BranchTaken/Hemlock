@@ -13,7 +13,7 @@
     containing {!type:string}. Slices avoid copying, which makes them both
     convenient and efficient. *)
 
-open Rudiments
+open Rudiments0
 
 type t = string
 

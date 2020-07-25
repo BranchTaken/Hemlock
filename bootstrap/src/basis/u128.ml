@@ -1,396 +1,22 @@
-include Rudiments_int
-open Rudiments_functions
+open Rudiments_int
 
 module T = struct
   module U = struct
     type t = u128
-
-    let hash_fold t state =
-      Hash.State.Gen.init state
-      |> Hash.State.Gen.fold_u128 1 ~f:(fun _ -> t)
-      |> Hash.State.Gen.fini
-
-    let cmp t0 t1 =
-      match (U64.cmp t0.hi t1.hi), (U64.cmp t0.lo t1.lo) with
-      | Lt, _
-      | Eq, Lt -> Cmp.Lt
-      | Eq, Eq -> Cmp.Eq
-      | Gt, _
-      | Eq, Gt -> Cmp.Gt
-
-    let zero = u128_zero
-
-    let one = u128_one
+    let num_bits = 128
+    let of_arr a =
+      u128_of_arr a
+    let to_arr t =
+      match u128_to_tup t with (lo, hi) -> [|lo; hi|]
   end
   include U
-  include Cmpable.Make(U)
-
-  let of_float f =
-    let hi = U64.of_float (f /. (Caml.Float.pow 2. 64.)) in
-    let lo = U64.of_float f in
-    {hi; lo}
-
-  let to_float t =
-    (U64.to_float t.hi) *. (Caml.Float.pow 2. 64.) +. (U64.to_float t.lo)
-
-  let to_u64 t =
-    t.lo
-
-  let to_u64_hlt t =
-    match U64.(t.hi = zero) with
-    | false -> halt "Lossy conversion"
-    | true -> t.lo
-
-  let of_u64 u =
-    {hi=U64.zero; lo=u}
-
-  let to_uns t =
-    U64.to_uns t.lo
-
-  let to_uns_hlt t =
-    match U64.(t.hi = zero) with
-    | false -> halt "Lossy conversion"
-    | true -> U64.to_uns_hlt t.lo
-
-  let of_uns = u128_of_uns
-
-  let min_value = zero
-
-  let max_value = {hi=U64.max_value; lo=U64.max_value}
-
-  let succ t =
-    match U64.(t.lo = max_value) with
-    | false -> {t with lo=U64.succ t.lo}
-    | true -> {hi=U64.succ t.hi; lo=U64.zero}
-
-  let pred t =
-    match U64.(t.lo = zero) with
-    | false -> {t with lo=U64.pred t.lo}
-    | true -> {hi=U64.pred t.hi; lo=U64.max_value}
-
-  let bit_and t0 t1 =
-    {hi=U64.bit_and t0.hi t1.hi; lo=U64.bit_and t0.lo t1.lo}
-
-  let bit_or = u128_bit_or
-
-  let bit_xor t0 t1 =
-    {hi=U64.bit_xor t0.hi t1.hi; lo=U64.bit_xor t0.lo t1.lo}
-
-  let bit_not t =
-    {hi=U64.bit_not t.hi; lo=U64.bit_not t.lo}
-
-  let bit_sl = u128_bit_sl
-
-  let bit_usr = u128_bit_usr
-
-  let bit_ssr ~shift t =
-    let i = shift % 128 in
-    let hi = begin
-      if Rudiments_int.(i >= 64) then Int64.shift_right t.hi (i - 64)
-      else if Rudiments_int.(i > 0) then Int64.shift_right t.hi i
-      else t.hi
-    end in
-    let lo = begin
-      if Rudiments_int.(i >= 64) then Int64.shift_right t.hi (i - 64)
-      else if Rudiments_int.(i > 0) then
-        Int64.logor (Int64.shift_left t.hi (64 - i))
-          (Int64.shift_right_logical t.lo i)
-      else t.lo
-    end in
-    {hi; lo}
-
-  let ( + ) = u128_add
-
-  let ( - ) t0 t1 =
-    let borrow = if U64.(t0.lo < t1.lo) then U64.one else U64.zero in
-    let hi = U64.(t0.hi - t1.hi - borrow) in
-    let lo = U64.(t0.lo - t1.lo) in
-    {hi; lo}
-
-  let ( * ) = u128_mul
-
-  let of_string = u128_of_string
-  let c5s = of_string "0x5555_5555_5555_5555_5555_5555_5555_5555"
-  let c3s = of_string "0x3333_3333_3333_3333_3333_3333_3333_3333"
-  let c0fs = of_string "0x0f0f_0f0f_0f0f_0f0f_0f0f_0f0f_0f0f_0f0f"
-  let cff = of_string "0xff"
-
-  let bit_pop x =
-    let x =
-      x - (bit_and (bit_usr ~shift:1 x) c5s) in
-    let x = (bit_and x c3s) + (bit_and (bit_usr ~shift:2 x) c3s) in
-    let x = bit_and (x + (bit_usr ~shift:4 x)) c0fs in
-    let x = x + (bit_usr ~shift:8 x) in
-    let x = x + (bit_usr ~shift:16 x) in
-    let x = x + (bit_usr ~shift:32 x) in
-    let x = x + (bit_usr ~shift:64 x) in
-    to_uns (bit_and x cff)
-
-  let bit_clz x =
-    let x = bit_or x (bit_usr ~shift:1 x) in
-    let x = bit_or x (bit_usr ~shift:2 x) in
-    let x = bit_or x (bit_usr ~shift:4 x) in
-    let x = bit_or x (bit_usr ~shift:8 x) in
-    let x = bit_or x (bit_usr ~shift:16 x) in
-    let x = bit_or x (bit_usr ~shift:32 x) in
-    let x = bit_or x (bit_usr ~shift:64 x) in
-    bit_pop (bit_not x)
-
-  let bit_ctz t =
-    bit_pop (bit_and (bit_not t) (t - one))
-
-  let div_mod t0 t1 =
-    (* Compute quotient and remainder using an algorithm similar to the paper
-     * long division algorithm, but in base 2^32.
-     *
-     * The digit arrays are encoded as (u32 array), which assures that only
-     * significant bits are stored. The intermediate computations use 64-bit
-     * math so that two digits fit. *)
-    let b = U64.(bit_sl ~shift:32 one) in
-    (* Extract the high/low digit from a 2-digit value. *)
-    let hi32 x = U64.bit_usr ~shift:32 x in
-    let lo32 x = U64.(bit_and x (of_uns 0xffff_ffff)) in
-    let div_b x = Int64.shift_right x 32 in
-    let mul_b x = I64.bit_sl ~shift:32 x in
-    (* Get/set digit. Only the low 32 bits are used; if u32 were available it
-     * would be a better choice for array elements. *)
-    let get arr i = U64.to_i64 (Caml.Array.get arr i) in
-    let set arr i x = Caml.Array.set arr i U64.(lo32 (of_i64 x)) in
-    (* Digit array creation and conversion functions. Digits are in
-     * little-endian order (least significant digit at offset 0). *)
-    let zero_arr ndigits = Caml.Array.make ndigits U64.zero in
-    let to_arr u = [|lo32 u.lo; hi32 u.lo; lo32 u.hi; hi32 u.hi;|] in
-    let of_arr arr = begin
-      let hi = U64.(bit_or (mul_b (get arr 3)) (get arr 2)) in
-      let lo = U64.(bit_or (mul_b (get arr 1)) (get arr 0)) in
-      {hi; lo}
-    end in
-    (* Compute the number of significant digits in a digit array, i.e. subtract
-     * high-order zeros from the array size. *)
-    let sig_digits arr = begin
-      let rec fn arr past = begin
-        match past with
-        | 0 -> 0
-        | _ -> begin
-            let i = Rudiments_int.pred past in
-            let digit = get arr i in
-            match U64.(digit = zero) with
-            | false -> past
-            | true -> fn arr i
-          end
-      end in
-      fn arr (Caml.Array.length arr)
-    end in
-    let u = to_arr t0 in (* Dividend. *)
-    let v = to_arr t1 in (* Divisor. *)
-    let q = to_arr zero in (* Quotient. *)
-    let r = to_arr zero in (* Remainder. *)
-    let m = sig_digits u in
-    let n = sig_digits v in
-
-    match n, Rudiments_int.(m < n) with
-    | 0, _ -> halt "Division by 0"
-    | _, true -> zero, t0
-    | 1, _ -> begin
-        (* Single-digit divisor. *)
-        let rec fn_j j carry = begin
-          let t = I64.(carry * b + (get u j)) in
-          set q j I64.(t / (get v 0));
-          let carry' = U64.(t - (get q j) * (get v 0)) in
-          match Rudiments_int.(j = 0) with
-          | true -> carry'
-          | false -> fn_j Rudiments_int.(pred j) carry'
-        end in
-        let carry = fn_j Rudiments_int.(pred m) U64.zero in
-        set r 0 carry;
-        of_arr q, of_arr r
-      end
-    | _, false -> begin
-        (* Choose normalization power-of-2 multiplier such that the divisor is
-         * losslessly shifted left as far as possible. *)
-        let shift = Rudiments_int.(
-          (U64.bit_clz (get v Rudiments_int.(pred n))) - 32) in
-        (* Initialize normalized divisor. *)
-        let vn = zero_arr n in
-        for i = Rudiments_int.(pred n) downto 1 do
-          set vn i (U64.bit_or
-              (U64.bit_sl ~shift (get v i))
-              (U64.bit_usr ~shift:Rudiments_int.(32 - shift)
-                  (get v Rudiments_int.(pred i)))
-          )
-        done;
-        set vn 0 (U64.bit_sl ~shift (get v 0));
-        (* Initialize normalized dividend. *)
-        let un = zero_arr (Rudiments_int.succ m) in
-        set un m (U64.bit_usr ~shift:Rudiments_int.(32 - shift)
-          (get u (Rudiments_int.pred m)));
-        for i = Rudiments_int.(pred m) downto 1 do
-          set un i U64.(bit_or
-              U64.(bit_sl ~shift (get u i))
-              U64.(bit_usr ~shift:Rudiments_int.(32 - shift)
-                (get u (Rudiments_int.pred i)))
-          )
-        done;
-        set un 0 (U64.bit_sl ~shift (get u 0));
-        (* Main computation. *)
-        let rec fn_j j = begin
-          (* Compute quotient digit estimate and remainder. It is possible that
-           * qdigit is one larger than the correct value, in which case
-           * subsequent correction code executes. *)
-          let qdigit = begin
-            let rec qdigit_converge qdigit rem = begin
-              match (U64.(qdigit >= b) ||
-                     U64.((qdigit * (get vn Rudiments_int.(n - 2))) >
-                       (b * rem + (get un Rudiments_int.(j + n - 2))))) with
-              | false -> qdigit
-              | true -> begin
-                  let qdigit' = U64.pred qdigit in
-                  let rem' = U64.(rem + (get vn (Rudiments_int.pred n))) in
-                  match U64.(rem' < b) with
-                  | true -> qdigit_converge qdigit' rem'
-                  | false -> qdigit'
-                end
-            end in
-            let t = U64.(((get un Rudiments_int.(j + n)) * b +
-                (get un Rudiments_int.(j + n - 1)))) in
-            let qdigit_est = U64.(t / (get vn (Rudiments_int.pred n))) in
-            let rem = U64.(t - qdigit_est * (get vn (Rudiments_int.pred n))) in
-            qdigit_converge qdigit_est rem
-          end in
-          (* Multiply and subtract. *)
-          let rec fn_i i carry = begin
-            match Rudiments_int.(i = n) with
-            | true -> carry
-            | false -> begin
-                let p = U64.(qdigit * (get vn i)) in
-                let t =
-                  I64.((get un Rudiments_int.(i + j)) - carry - (lo32 p)) in
-                set un Rudiments_int.(i + j) t;
-                let carry' = I64.((div_b p) - (div_b t)) in
-                fn_i (Rudiments_int.succ i) carry'
-              end
-          end in
-          let carry = fn_i 0 I64.zero in
-          let t = I64.((get un Rudiments_int.(j + n)) - carry) in
-          set un Rudiments_int.(j + n) t;
-          (* Store quotient digit. *)
-          match I64.(t < zero) with
-          | false -> set q j qdigit
-          | true -> begin
-              (* Subtracted too much; correct. *)
-              set q j (U64.pred qdigit);
-              let rec fn_i i carry = begin
-                match Rudiments_int.(i = n) with
-                | true -> carry
-                | false -> begin
-                    let t = I64.((get un Rudiments_int.(i + j)) + (get vn i)
-                      + carry) in
-                    set un Rudiments_int.(i + j) t;
-                    let carry' = div_b t in
-                    fn_i (Rudiments_int.succ i) carry'
-                  end
-              end in
-              let carry = fn_i 0 I64.zero in
-              set un Rudiments_int.(j + n)
-                I64.((get un Rudiments_int.(j + n)) + carry)
-            end
-            ;
-            match Rudiments_int.(j = 0) with
-            | true -> ()
-            | false -> fn_j (Rudiments_int.pred j)
-        end in
-        fn_j Rudiments_int.(m - n);
-        (* Denormalize remainder. *)
-        let i_last = Rudiments_int.(pred n) in
-        assert Rudiments_int.(i_last > 0);
-        for i = 0 to Rudiments_int.(pred i_last) do
-          set r i U64.(bit_or
-              (bit_usr ~shift (get un i))
-              (bit_sl ~shift:Rudiments_int.(32 - shift)
-                  (get un (Rudiments_int.succ i))))
-        done;
-        set r i_last U64.(bit_or
-            (bit_usr ~shift (get un i_last))
-            (bit_sl ~shift:Rudiments_int.(32 - shift)
-                (get un (Rudiments_int.succ i_last))));
-        of_arr q, of_arr r
-      end
-
-  let ( / ) t0 t1 =
-    let quotient, _ = div_mod t0 t1 in
-    quotient
-
-  let ( % ) t0 t1 =
-    let _, remainder = div_mod t0 t1 in
-    remainder
-
-  let ( ** ) t0 t1 =
-    (* Decompose the exponent to limit algorithmic complexity. *)
-    let rec fn r p n = begin
-      match n = zero with
-      | true -> r
-      | false -> begin
-          let r' =
-            match (bit_and n one) = zero with
-            | true -> r
-            | false -> r * p
-          in
-          let p' = p * p in
-          let n' = bit_usr ~shift:1 n in
-          fn r' p' n'
-        end
-    end in
-    fn one t0 t1
-
-  let ( // ) t0 t1 =
-    (to_float t0) /. (to_float t1)
-
-  module V = struct
-    type nonrec t = t
-
-    let num_bits = 128
-
-    let cmp = cmp
-    let zero = zero
-    let one = one
-    let of_uns = of_uns
-    let ( + ) = ( + )
-    let ( - ) = ( - )
-    let bit_and = bit_and
-    let bit_sl = bit_sl
-    let bit_clz = bit_clz
-  end
-  include Intnb.Make_derived(V)
-
-  let pp ppf t =
-    let rec fn t = begin
-      match cmp t zero with
-      | Cmp.Eq -> 0
-      | Cmp.Lt | Cmp.Gt -> begin
-          let t' = t / (of_uns 10) in
-          let i = fn t' in
-          let digit = t % (of_uns 10) in
-          if Rudiments_int.(i % 3 = 0) && Rudiments_int.(i > 0) then
-            Format.fprintf ppf "_";
-          Format.fprintf ppf "%Lu" digit.lo;
-          Rudiments_int.(succ i)
-        end
-    end in
-    match t = zero with
-    | true -> Format.fprintf ppf "0u128"
-    | false -> begin
-        let _ = fn t in
-        Format.fprintf ppf "u128"
-      end
-
-  let pp_x = u128_pp_x
-
-  let to_string t =
-    Format.asprintf "%a" pp t
+  include Intnw.Make_u(U)
 end
 include T
 include Identifiable.Make(T)
 include Cmpable.Make_zero(T)
+
+let to_tup = u128_to_tup
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -538,11 +164,12 @@ let%expect_test "rel" =
     printf "ascending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (ascending x y);
     printf "descending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (descending x y);
   end in
-  fn zero (of_string "0x8000_0000_0000_0000");
+  fn zero (of_string "0x8000_0000_0000_0000_0000_0000_0000_0000");
   printf "\n";
-  fn zero (of_string "0xffff_ffff_ffff_ffff");
+  fn zero (of_string "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff");
   printf "\n";
-  fn (of_string "0x8000_0000_0000_0000") (of_string "0x7fff_ffff_ffff_ffff");
+  fn (of_string "0x8000_0000_0000_0000_0000_0000_0000_0000")
+    (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff");
   let fn2 t min max = begin
     printf "\n";
     printf "clamp ~min:%a ~max:%a %a -> %a\n"
@@ -550,62 +177,67 @@ let%expect_test "rel" =
     printf "between ~low:%a ~high:%a %a -> %b\n"
       pp_x min pp_x max pp_x t (between ~low:min ~high:max t);
   end in
-  fn2 (of_string "0x7fff_ffff_ffff_fffe") (of_string "0x7fff_ffff_ffff_ffff")
-    (of_string "0x8000_0000_0000_0001");
-  fn2 (of_string "0x7fff_ffff_ffff_ffff") (of_string "0x7fff_ffff_ffff_ffff")
-    (of_string "0x8000_0000_0000_0001");
-  fn2 (of_string "0x8000_0000_0000_0000") (of_string "0x7fff_ffff_ffff_ffff")
-    (of_string "0x8000_0000_0000_0001");
-  fn2 (of_string "0x8000_0000_0000_0001") (of_string "0x7fff_ffff_ffff_ffff")
-    (of_string "0x8000_0000_0000_0001");
-  fn2 (of_string "0x8000_0000_0000_0002") (of_string "0x7fff_ffff_ffff_ffff")
-    (of_string "0x8000_0000_0000_0001");
+  fn2 (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_fffe")
+    (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff")
+    (of_string "0x8000_0000_0000_0000_0000_0000_0000_0001");
+  fn2 (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff")
+    (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff")
+    (of_string "0x8000_0000_0000_0000_0000_0000_0000_0001");
+  fn2 (of_string "0x8000_0000_0000_0000_0000_0000_0000_0000")
+    (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff")
+    (of_string "0x8000_0000_0000_0000_0000_0000_0000_0001");
+  fn2 (of_string "0x8000_0000_0000_0000_0000_0000_0000_0001")
+    (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff")
+    (of_string "0x8000_0000_0000_0000_0000_0000_0000_0001");
+  fn2 (of_string "0x8000_0000_0000_0000_0000_0000_0000_0002")
+    (of_string "0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff")
+    (of_string "0x8000_0000_0000_0000_0000_0000_0000_0001");
 
   [%expect{|
-    cmp 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> Lt
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 >= 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> false
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <= 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> true
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 = 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> false
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 > 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> false
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 < 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> true
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <> 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> true
-    ascending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> Lt
-    descending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> Gt
+    cmp 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> Lt
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 >= 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> false
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <= 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> true
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 = 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> false
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 > 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> false
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 < 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> true
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <> 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> true
+    ascending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> Lt
+    descending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> Gt
 
-    cmp 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> Lt
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 >= 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> false
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <= 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> true
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 = 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> false
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 > 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> false
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 < 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> true
-    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <> 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> true
-    ascending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> Lt
-    descending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> Gt
+    cmp 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> Lt
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 >= 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> false
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <= 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> true
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> false
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 > 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> false
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 < 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> true
+    0x0000_0000_0000_0000_0000_0000_0000_0000u128 <> 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> true
+    ascending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> Lt
+    descending 0x0000_0000_0000_0000_0000_0000_0000_0000u128 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> Gt
 
-    cmp 0x0000_0000_0000_0000_8000_0000_0000_0000u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> Gt
-    0x0000_0000_0000_0000_8000_0000_0000_0000u128 >= 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> true
-    0x0000_0000_0000_0000_8000_0000_0000_0000u128 <= 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> false
-    0x0000_0000_0000_0000_8000_0000_0000_0000u128 = 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> false
-    0x0000_0000_0000_0000_8000_0000_0000_0000u128 > 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> true
-    0x0000_0000_0000_0000_8000_0000_0000_0000u128 < 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> false
-    0x0000_0000_0000_0000_8000_0000_0000_0000u128 <> 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> true
-    ascending 0x0000_0000_0000_0000_8000_0000_0000_0000u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> Gt
-    descending 0x0000_0000_0000_0000_8000_0000_0000_0000u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> Lt
+    cmp 0x8000_0000_0000_0000_0000_0000_0000_0000u128 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> Gt
+    0x8000_0000_0000_0000_0000_0000_0000_0000u128 >= 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> true
+    0x8000_0000_0000_0000_0000_0000_0000_0000u128 <= 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> false
+    0x8000_0000_0000_0000_0000_0000_0000_0000u128 = 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> false
+    0x8000_0000_0000_0000_0000_0000_0000_0000u128 > 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> true
+    0x8000_0000_0000_0000_0000_0000_0000_0000u128 < 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> false
+    0x8000_0000_0000_0000_0000_0000_0000_0000u128 <> 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> true
+    ascending 0x8000_0000_0000_0000_0000_0000_0000_0000u128 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> Gt
+    descending 0x8000_0000_0000_0000_0000_0000_0000_0000u128 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> Lt
 
-    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_fffeu128 -> 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128
-    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_fffeu128 -> false
+    clamp ~min:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~max:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_fffeu128 -> 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128
+    between ~low:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~high:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_fffeu128 -> false
 
-    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128
-    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 -> true
+    clamp ~min:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~max:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128
+    between ~low:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~high:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> true
 
-    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0000u128
-    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0000u128 -> true
+    clamp ~min:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~max:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> 0x8000_0000_0000_0000_0000_0000_0000_0000u128
+    between ~low:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~high:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x8000_0000_0000_0000_0000_0000_0000_0000u128 -> true
 
-    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0001u128
-    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0001u128 -> true
+    clamp ~min:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~max:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x8000_0000_0000_0000_0000_0000_0000_0001u128 -> 0x8000_0000_0000_0000_0000_0000_0000_0001u128
+    between ~low:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~high:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x8000_0000_0000_0000_0000_0000_0000_0001u128 -> true
 
-    clamp ~min:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~max:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0002u128 -> 0x0000_0000_0000_0000_8000_0000_0000_0001u128
-    between ~low:0x0000_0000_0000_0000_7fff_ffff_ffff_ffffu128 ~high:0x0000_0000_0000_0000_8000_0000_0000_0001u128 0x0000_0000_0000_0000_8000_0000_0000_0002u128 -> false
+    clamp ~min:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~max:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x8000_0000_0000_0000_0000_0000_0000_0002u128 -> 0x8000_0000_0000_0000_0000_0000_0000_0001u128
+    between ~low:0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 ~high:0x8000_0000_0000_0000_0000_0000_0000_0001u128 0x8000_0000_0000_0000_0000_0000_0000_0002u128 -> false
     |}]
 
 let%expect_test "narrowing" =
@@ -831,7 +463,7 @@ let%expect_test "/,%" =
     0x0000_0000_0000_0000_0000_0002_ffff_ffffu128 /,% 0x0000_0000_0000_0000_0000_0001_0000_0000u128 -> 0x0000_0000_0000_0000_0000_0000_0000_0002u128, 0x0000_0000_0000_0000_0000_0000_ffff_ffffu128
     0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 /,% 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> 0x0000_0000_0000_0000_0000_0000_0000_0001u128, 0x0000_0000_0000_0000_0000_0000_0000_0000u128
     0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 /,% 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 -> 0x0000_0000_0000_0000_0000_0000_0000_0001u128, 0x0000_0000_0000_0000_0000_0000_0000_0000u128
-    0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 /,% 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> 0x0000_0000_0000_0001_0000_0000_0000_0000u128, 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128
+    0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128 /,% 0x0000_0000_0000_0000_ffff_ffff_ffff_ffffu128 -> 0x0000_0000_0000_0001_0000_0000_0000_0001u128, 0x0000_0000_0000_0000_0000_0000_0000_0000u128
     |}]
 
 let%expect_test "bit_and,bit_or,bit_xor" =
