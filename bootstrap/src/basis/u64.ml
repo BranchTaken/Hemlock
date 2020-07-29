@@ -79,12 +79,8 @@ let of_float f =
         end
     end
   | Subnormal
-  | Zero -> zero
-  | Infinite -> begin
-      match Float.(f > 0.) with
-      | false -> zero
-      | true -> Int64.minus_one
-    end
+  | Zero
+  | Infinite -> zero
   | Nan -> halt "Not a number"
 
 let c8000_0000_0000_0000 = of_string "0x8000_0000_0000_0000"
