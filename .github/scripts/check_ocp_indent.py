@@ -82,17 +82,22 @@ class FileDiff:
     async def from_path(path: Path, /) -> FileDiff:
         """Return File with diff-text suggested by ocp-indent."""
 
-        # Update file contents by running ocp-indent on every hunk of code changed since master.
-        text = path.read_text()
-        hunks = await Hunk.from_path(path)
-        for hunk in hunks:
-            text = await get_text(
-                f'opam exec -- ocp-indent --lines={hunk.start}-{hunk.stop}', stdin=text,
-            )
+        if not path.is_file():
+            # File was deleted, there are no contents. ocp-indent can't possibly have a suggestion.
+            text = ''
+        else:
+            # Update file contents by running ocp-indent on every hunk of code changed since master.
+            text = path.read_text()
 
-        # Get diff of file contents as suggested by ocp-indent and original file. Error codes 0/1
-        # indicate no/some difference respectively.
-        text = await get_text(f'diff -u {path} -', stdin=text, error_codes=frozenset({0, 1}))
+            hunks = await Hunk.from_path(path)
+            for hunk in hunks:
+                text = await get_text(
+                    f'opam exec -- ocp-indent --lines={hunk.start}-{hunk.stop}', stdin=text,
+                )
+
+            # Get diff of file contents as suggested by ocp-indent and original file. Error codes
+            # 0/1 indicate no/some difference respectively.
+            text = await get_text(f'diff -u {path} -', stdin=text, error_codes=frozenset({0, 1}))
 
         return FileDiff(text=text)
 
