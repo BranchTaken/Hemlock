@@ -89,13 +89,13 @@ fundamentally depends on at least a 64-bit architecture, so `uns`/`int` always
 provide at least a 64-bit range.
 
 Integer literals start with an optional sign if signed, followed by the
-magnitude, and finally a type suffix (optional for `uns`).  Non-zero
-signed integers have an optional `+`/`-` sign prefix; unsigned integers
-never have an explicit sign.  Magnitudes can be specified in base 10, 16
-(`0x` prefix), or 2 (`0b` prefix).  The type suffix matches the pattern,
-`[ui](8|16|32|64|128|256|512)?`.  `_` separators can be arbitrarily internally
+magnitude, and finally a type suffix (optional for `uns`). Non-zero signed
+integers have an optional `+`/`-` sign prefix; unsigned integers never have an
+explicit sign. Magnitudes can be specified in base 10, 16 (`0x` prefix), 8 (`0o`
+prefix), or 2 (`0b` prefix). The type suffix matches the pattern,
+`[ui](8|16|32|64|128|256|512)?`. `_` separators can be arbitrarily internally
 interspersed, so long as they come after the base prefix (if present) and before
-the type suffix (if present).  Out-of-range literals cause compile-time failure.
+the type suffix (if present). Out-of-range literals cause compile-time failure.
 
 `uns` literal examples:
 
@@ -103,6 +103,7 @@ the type suffix (if present).  Out-of-range literals cause compile-time failure.
     42
     15u
     0x0123_4567_89ab_cdef
+    0o660
     0b10_0001
 
 `int` literal examples:
@@ -110,7 +111,8 @@ the type suffix (if present).  Out-of-range literals cause compile-time failure.
     0i
     +42i
     -14i
-    -0x_ab__c_i
+    0x_ab__c_i
+    0o777
 
 `byte` literal examples:
 
