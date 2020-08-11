@@ -33,3 +33,17 @@ val to_string_replace: t -> string
 val to_string_hlt: t -> string
 (** [to_string_hlt t] interprets [t] as a sequence of UTF-8 code points and
     returns a corresponding {!type:string}, or halts if [t] is malformed. *)
+
+
+module Cursor : sig
+  include Cursor_intf.S_mono with type container := byte array
+                              and type elm := byte
+end
+
+module Slice : sig
+  include Slice_intf.S_mono with type container := byte array
+                             and type cursor := Cursor.t
+                             and type elm := byte
+
+  val of_string: string -> t
+end

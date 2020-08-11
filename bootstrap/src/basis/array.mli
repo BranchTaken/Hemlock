@@ -9,6 +9,7 @@ include Formattable_intf.S_poly with type 'a t := 'a t
     O(1). *)
 module Cursor : sig
   type 'a container = 'a t
+  type 'a elm = 'a
   type 'a t
 
   include Cursor_intf.S_poly with type 'a container := 'a container
@@ -81,6 +82,12 @@ module Seq : sig
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
      and type 'k key := 'k T.key
      and type 'v value := 'v T.value
+end
+
+module Slice : sig
+  include Slice_intf.S_poly with type 'a container := 'a t
+                             and type 'a cursor := 'a Cursor.t
+                             and type 'a elm := 'a
 end
 
 val init: uns -> f:(uns -> 'a) -> 'a t

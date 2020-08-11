@@ -37,40 +37,6 @@ module Flag = struct
     | RW_O
 end
 
-module Buffer = struct
-  (* type /t t *)
-  type t = {
-    (* hd: byte /t Array.Cursor.t *)
-    hd: Byte.t Array.Cursor.t;
-    (* hd: byte /t Array.Cursor.t *)
-    tl: Byte.t Array.Cursor.t;
-  }
-
-  let of_bytes bytes =
-    let hd = Array.Cursor.hd bytes in
-    let tl = Array.Cursor.tl bytes in
-    {hd; tl}
-
-  let of_string string =
-    of_bytes (Bytes.of_string string)
-
-  (* i: /t t -> uns *)
-  let i t =
-    Array.Cursor.index t.hd
-
-  (* j: /t t -> uns *)
-  let j t =
-    Array.Cursor.index t.tl
-
-  (* container: /t t -> Byte.t /t Array.t *)
-  let container t =
-    Array.Cursor.container t.hd
-
-  (* length: /t t -> uns *)
-  let length t =
-    (Array.Cursor.index t.tl) - (Array.Cursor.index t.hd)
-end
-
 type t = uns
 
 (* external of_path_inner: t -> uns -> uns -> uns -> byte /_ array $-> sint *)
@@ -78,8 +44,10 @@ external of_path_inner: Flag.t -> uns -> uns -> uns -> Bytes.t -> sint =
   "hemlock_file_of_path_inner"
 
 let of_path ?(flag=Flag.RW) ?(mode=0o660) path =
-  let value = of_path_inner
-      flag mode (Buffer.i path) (Buffer.j path) (Buffer.container path) in
+  let value = of_path_inner flag mode
+      (Bytes.Cursor.index (Bytes.Slice.base path))
+      (Bytes.Cursor.index (Bytes.Slice.past path))
+      (Bytes.Slice.container path) in
   match Sint.(value < kv 0) with
   | false -> Ok (Uns.of_sint value)
   | true -> Error (Uns.of_sint Sint.(-value))
@@ -125,10 +93,16 @@ let read_n = 1024
 
 let read_base inner buffer t =
   let value = inner
-      (Buffer.i buffer) (Buffer.j buffer) (Buffer.container buffer) t in
+      (Bytes.Cursor.index (Bytes.Slice.base buffer))
+      (Bytes.Cursor.index (Bytes.Slice.past buffer))
+      (Bytes.Slice.container buffer)
+      t in
   match Sint.(value < kv 0) with
   | true -> Error (Uns.of_sint Sint.(-value))
-  | false -> Ok {Buffer.hd=buffer.hd; tl=Array.Cursor.seek value buffer.hd}
+  | false -> Ok (Bytes.Slice.of_cursors
+      ~base:(Bytes.Slice.base buffer)
+      ~past:(Bytes.Cursor.seek value (Bytes.Slice.base buffer))
+  )
 
 (* external read_inner: uns -> uns -> byte array -> t $-> sint *)
 external read_inner: uns -> uns -> Bytes.t -> t -> sint =
@@ -136,7 +110,7 @@ external read_inner: uns -> uns -> Bytes.t -> t -> sint =
 
 let read ?(n=read_n) t =
   let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0) in
-  let buffer = Buffer.of_bytes bytes in
+  let buffer = Bytes.Slice.of_container bytes in
   read_base read_inner buffer t
 
 let read_hlt ?n t =
@@ -166,14 +140,22 @@ external write_inner: uns -> uns -> Bytes.t -> t -> sint =
   "hemlock_file_write_inner"
 
 let rec write buffer t =
-  match Buffer.length buffer > 0 with
+  match Bytes.Cursor.index (Bytes.Slice.base buffer) <
+    Bytes.Cursor.index (Bytes.Slice.past buffer) with
   | false -> None
   | true -> begin
       let value = write_inner
-          (Buffer.i buffer) (Buffer.j buffer) (Buffer.container buffer) t in
+          (Bytes.Cursor.index (Bytes.Slice.base buffer))
+          (Bytes.Cursor.index (Bytes.Slice.past buffer))
+          (Bytes.Slice.container buffer)
+          t in
       match Sint.(value < kv 0) with
       | true -> Some (Error.of_value value)
-      | false -> write {hd=Array.Cursor.seek value buffer.hd; tl=buffer.tl} t
+      | false -> write (
+        Bytes.Slice.of_cursors
+          ~base:(Bytes.Cursor.seek value (Bytes.Slice.base buffer))
+          ~past:(Bytes.Slice.base buffer)
+      ) t
     end
 
 let write_hlt buffer t =
@@ -221,14 +203,15 @@ let seek_tl_hlt = seek_hlt_base seek_tl_inner
 
 module Stream = struct
   type file = t
-  type t = Buffer.t Stream.t
+  type t = Bytes.Slice.t Stream.t
 
   let of_file file =
     let f file = begin
       match read file with
       | Error _ -> None
       | Ok buffer -> begin
-          match Buffer.length buffer > 0 with
+          match Bytes.Cursor.index (Bytes.Slice.base buffer) <
+            Bytes.Cursor.index (Bytes.Slice.past buffer) with
           | false -> begin
               let _ = close file in
               None
