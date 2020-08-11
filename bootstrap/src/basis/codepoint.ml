@@ -43,6 +43,7 @@ let of_uns_hlt x =
 let of_char c =
   Stdlib.Char.code c
 
+let replacement = 0xfffd
 let nul = 0x00
 let soh = 0x01
 let stx = 0x02

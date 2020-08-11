@@ -63,89 +63,6 @@ end
 include T
 include Cmpable.Make(T)
 
-module Seq = struct
-  type outer = t
-  module type S = sig
-    type t
-    val to_utf8: t -> ((outer, byte list) result * t) option
-    val to_utf8_hlt: t -> (outer * t) option
-  end
-
-  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
-    S with type t := T.t = struct
-    let to_utf8 t =
-      let rec fn t bytes nrem = begin
-        match nrem with
-        | 0 -> begin
-            match bytes with
-            |                   b0 :: [] -> Some (Ok (One b0), t)
-            |             b1 :: b0 :: [] -> Some (Ok (Two (b0, b1)), t)
-            |       b2 :: b1 :: b0 :: [] -> Some (Ok (Three (b0, b1, b2)), t)
-            | b3 :: b2 :: b1 :: b0 :: [] -> Some (Ok (Four (b0, b1, b2, b3)), t)
-            | _ -> not_reached ()
-          end
-        | _ -> begin
-            match T.next t with
-            | None -> Some (Error bytes, t)
-            | Some (b, t')
-              when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
-              Some (Error (List.rev (b :: bytes)), t')
-            | Some (b, t') -> fn t' (b :: bytes) (Uns.pred nrem)
-          end
-      end in
-      match T.next t with
-      | None -> None
-      | Some (b, t') -> begin
-          match Byte.(bit_clz (bit_not b)) with
-          | 0 -> fn t' [b] 0
-          | 2 -> fn t' [b] 1
-          | 3 -> fn t' [b] 2
-          | 4 -> fn t' [b] 3
-          | _ -> Some (Error [b], t')
-        end
-
-    let to_utf8_hlt t =
-      match to_utf8 t with
-      | Some (Error _, _) -> halt "Invalid utf8 sequence"
-      | Some (Ok utf8, t') -> Some (utf8, t')
-      | None -> None
-  end
-
-  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
-    S with type t := T.t = struct
-    let to_utf8 t =
-      let rec fn t bytes = begin
-        match (T.next t), bytes with
-        | None, [] -> None
-        | None, _ :: _ -> Some (Error bytes, t)
-        | Some (b, t'), _ -> begin
-            let bytes' = b :: bytes in
-            match Byte.(bit_clz (bit_not b)), bytes' with
-            | 0, b0 :: [] -> Some (Ok (One b0), t')
-            | 2, b0 :: b1 :: [] ->
-              Some (Ok (Two (b0, b1)), t')
-            | 3, b0 :: b1 :: b2 :: [] ->
-              Some (Ok (Three (b0, b1, b2)), t')
-            | 4, b0 :: b1 :: b2 :: b3 :: [] ->
-              Some (Ok (Four (b0, b1, b2, b3)), t')
-            | 1, _ ->
-              (* It's possible that an excessive number of 0b10_xxxxxx bytes
-               * will be processed, but these excesses will cause match failure
-               * later on. *)
-              fn t' bytes'
-            | _ -> Some (Error bytes', t')
-          end
-      end in
-      fn t []
-
-    let to_utf8_hlt t =
-      match to_utf8 t with
-      | Some (Error _, _) -> halt "Invalid utf8 sequence"
-      | Some (Ok utf8, t') -> Some (utf8, t')
-      | None -> None
-  end
-end
-
 let to_bytes = function
   | One b0 -> [b0]
   | Two (b0, b1) -> [b0; b1]
@@ -234,6 +151,127 @@ let escape t =
 
 let pp ppf t =
   Format.fprintf ppf "'%s'" (escape t)
+
+module Seq = struct
+  type outer = t
+  module type S = sig
+    type t
+    val to_codepoint: t -> (codepoint option * t) option
+    val to_codepoint_replace: t -> (codepoint * t) option
+    val to_codepoint_hlt: t -> (codepoint * t) option
+  end
+
+  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
+    S with type t := T.t = struct
+    let to_codepoint t =
+      let rec fn t u n nrem = begin
+        match nrem with
+        | 0 -> begin
+            let cp = Codepoint.of_uns u in
+            match Uns.(length (of_codepoint cp) = n) with
+            | true -> Some (Some cp, t)
+            | false -> Some (None, t)
+          end
+        | _ -> begin
+            match T.next t with
+            | None -> Some (None, t)
+            | Some (b, _)
+              when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
+              Some (None, t)
+            | Some (b, t') -> begin
+                let u' = bit_or (bit_sl ~shift:6 u)
+                  (bit_and 0x3f (Byte.to_uns b)) in
+                fn t' u' n (pred nrem)
+              end
+          end
+      end in
+      match T.next t with
+      | None -> None
+      | Some (b, t') -> begin
+          match Byte.(bit_clz (bit_not b)) with
+          | 0 -> fn t' (Byte.to_uns b) 1 0 (* 0xxxxxxx *)
+          | 2 -> fn t' (bit_and 0x1f (Byte.to_uns b)) 2 1 (* 110xxxxx *)
+          | 3 -> fn t' (bit_and 0x0f (Byte.to_uns b)) 3 2 (* 1110xxxx *)
+          | 4 -> fn t' (bit_and 0x07 (Byte.to_uns b)) 4 3 (* 11110xxx *)
+          | _ -> Some (None, t')
+        end
+
+    let to_codepoint_replace t =
+      match to_codepoint t with
+      | Some (None, t') -> Some (Codepoint.replacement, t')
+      | Some (Some cp, t') -> Some (cp, t')
+      | None -> None
+
+    let to_codepoint_hlt t =
+      match to_codepoint t with
+      | Some (None, _) -> halt "Invalid utf8 sequence"
+      | Some (Some cp, t') -> Some (cp, t')
+      | None -> None
+  end
+
+  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
+    S with type t := T.t = struct
+    let to_codepoint t =
+      let merge u nbytes x =
+        bit_or (bit_sl ~shift:(nbytes*6) x) u
+      in
+      let validate t u nbytes =
+        let cp = Codepoint.of_uns u in
+        match Uns.(length (of_codepoint cp) = nbytes) with
+        | true -> Some (Some cp, t)
+        | false -> Some (None, t) (* Overlong. *)
+      in
+      let rec fn t u nbytes = begin
+        match T.next t, nbytes with
+        | None, 0 -> None
+        | None, _ -> Some (None, t)
+        | Some (b, t'), _ -> begin
+            match Byte.(bit_clz (bit_not b)), nbytes with
+            | 0, 0 -> begin
+                (* 0xxxxxxx *)
+                let u' = Byte.to_uns b in
+                validate t' u' (succ nbytes)
+              end
+            | 1, 0
+            | 1, 1
+            | 1, 2 -> begin
+                (* 10xxxxxx *)
+                let u' = merge u nbytes (bit_and 0x3f (Byte.to_uns b)) in
+                fn t' u' (succ nbytes)
+              end
+            | 2, 1 -> begin
+                (* 110xxxxx *)
+                let u' = merge u nbytes (bit_and 0x1f (Byte.to_uns b)) in
+                validate t' u' (succ nbytes)
+              end
+            | 3, 2 -> begin
+                (* 1110xxxx *)
+                let u' = merge u nbytes (bit_and 0x0f (Byte.to_uns b)) in
+                validate t' u' (succ nbytes)
+              end
+            | 4, 3 -> begin
+                (* 11110xxx *)
+                let u' = merge u nbytes (bit_and 0x07 (Byte.to_uns b)) in
+                validate t' u' (succ nbytes)
+              end
+            | _ -> Some (None, t')
+          end
+      end in
+      fn t 0 0
+
+    let to_codepoint_replace t =
+      match to_codepoint t with
+      | Some (None, t') -> Some (Codepoint.replacement, t')
+      | Some (Some cp, t') -> Some (cp, t')
+      | None -> None
+
+    let to_codepoint_hlt t =
+      match to_codepoint t with
+      | Some (None, _) -> halt "Invalid utf8 sequence"
+      | Some (Some cp, t') -> Some (cp, t')
+      | None -> None
+  end
+end
 
 (******************************************************************************)
 (* Begin tests. *)

@@ -98,8 +98,8 @@ module String_seq = struct
     include Utf8_seq
 
     let next t =
-      match to_utf8_hlt t with
-      | Some (utf8, t') -> (Utf8.to_codepoint utf8), t'
+      match to_codepoint_hlt t with
+      | Some (cp, t') -> cp, t'
       | None -> not_reached ()
   end
   include U
@@ -108,10 +108,10 @@ end
 
 let to_string bytes =
   let rec validate seq = begin
-    match Utf8_seq.to_utf8 seq with
+    match Utf8_seq.to_codepoint seq with
+    | Some (Some _, seq') -> validate seq'
+    | Some (None, _) -> true
     | None -> false
-    | Some (Ok _, seq') -> validate seq'
-    | Some (Error _, _) -> true
   end in
   let invalid = validate (Utf8_seq.init bytes) in
   match invalid with
@@ -122,6 +122,50 @@ let to_string_hlt bytes =
   match to_string bytes with
   | None -> halt "Invalid utf8 sequence"
   | Some s -> s
+
+module String_replace_seq = struct
+  module T = struct
+    type t = {
+      seq: Utf8_seq.t;
+      (* vlength is how long bytes would be if all encoding errors were
+       * corrected via replacement. *)
+      vlength: uns;
+      (* vindex tracks how many bytes would be required to correctly encode
+       * already-consumed bytes. *)
+      vindex: uns
+    }
+
+    let init bytes =
+      let rec fn seq vindex = begin
+        match Utf8_seq.to_codepoint_replace seq with
+        | None -> vindex
+        | Some (cp, seq') -> begin
+            let vindex' = vindex + Utf8.(length (of_codepoint cp)) in
+            fn seq' vindex'
+          end
+      end in
+      let vlength = fn (Utf8_seq.init bytes) 0 in
+      {seq=Utf8_seq.init bytes; vlength; vindex=0}
+
+    let length t =
+      t.vlength - t.vindex
+
+    let next t =
+      match Utf8_seq.to_codepoint_replace t.seq with
+      | Some (cp, seq') -> begin
+          let vincr = Utf8.(length (of_codepoint cp)) in
+          let vindex' = t.vindex + vincr in
+          let t' = {t with seq=seq'; vindex=vindex'} in
+          cp, t'
+        end
+      | None -> not_reached ()
+  end
+  include T
+  include String.Seq.Codepoint.Make(T)
+end
+
+let to_string_replace bytes =
+  String_replace_seq.(to_string (init bytes))
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -223,16 +267,87 @@ let%expect_test "of_string" =
     "<_>«‡𐆗»[_]" -> [|0x3cu8; 0x5fu8; 0x3eu8; 0xc2u8; 0xabu8; 0xe2u8; 0x80u8; 0xa1u8; 0xf0u8; 0x90u8; 0x86u8; 0x97u8; 0xc2u8; 0xbbu8; 0x5bu8; 0x5fu8; 0x5du8|] -> "<_>«‡𐆗»[_]"
     |}]
 
+module Utf8_seq_rev = struct
+  module T = struct
+    type t = {
+      bytes: byte array;
+      bpast: uns;
+    }
+
+    let init bytes =
+      {bytes; bpast=Array.length bytes}
+
+    let length t =
+      t.bpast
+
+    let next t =
+      match (length t) = 0 with
+      | true -> None
+      | false -> begin
+          let bpast' = Uns.pred t.bpast in
+          let b = Array.get bpast' t.bytes in
+          let t' = {t with bpast=bpast'} in
+          Some (b, t')
+        end
+  end
+  include T
+  include Utf8.Seq.Make_rev(T)
+end
+
+module String_replace_seq_rev = struct
+  module T = struct
+    type t = {
+      seq: Utf8_seq_rev.t;
+      (* vpast is the index past the unprocessed sequence, were all encoding
+       * errors corrected via replacement. *)
+      vpast: uns;
+    }
+
+    let init bytes =
+      let rec fn seq vlength = begin
+        match Utf8_seq_rev.to_codepoint_replace seq with
+        | None -> vlength
+        | Some (cp, seq') -> begin
+            let vlength' = Utf8.(length (of_codepoint cp)) + vlength in
+            fn seq' vlength'
+          end
+      end in
+      let seq = Utf8_seq_rev.init bytes in
+      let vpast = fn seq 0 in
+      {seq; vpast}
+
+    let length t =
+      t.vpast
+
+    let next t =
+      match Utf8_seq_rev.to_codepoint_replace t.seq with
+      | Some (cp, seq') -> begin
+          let vincr = Utf8.(length (of_codepoint cp)) in
+          let vpast' = t.vpast - vincr in
+          let t' = {seq=seq'; vpast=vpast'} in
+          cp, t'
+        end
+      | None -> not_reached ()
+  end
+  include T
+  include String.Seq.Codepoint.Make_rev(T)
+end
+
+let rev_to_string_replace bytes =
+  String_replace_seq_rev.(to_string (init bytes))
+
 let%expect_test "to_string" =
   let open Format in
   let test_to_string (bytes_list:byte list) = begin
     let bytes = Array.of_list bytes_list in
-    printf "to_string %a -> %s\n"
+    printf "to_string %a -> %s, \"%s\", \"%s\"\n"
       pp bytes
       (match to_string bytes with
         | None -> "None"
         | Some s -> "\"" ^ s ^ "\""
       )
+      (to_string_replace bytes)
+      (rev_to_string_replace bytes)
   end in
   let open Byte in
   printf "@[<h>";
@@ -245,16 +360,46 @@ let%expect_test "to_string" =
   test_to_string [(kv 0xc0); (kv 0xc0)];
   test_to_string [kv 0x80];
   test_to_string [(kv 0x80); (kv 0x80); (kv 0x80); (kv 0x80)];
+  test_to_string [kv 0x61; kv 0xc0; kv 0x62];
+  test_to_string [kv 0x61; kv 0xe0; kv 0x80; kv 0x63];
+  test_to_string [kv 0x61; kv 0xc0; kv 0x80; kv 0x80; kv 0x64];
+  test_to_string [kv 0x61; kv 0xff; kv 0x65];
+  (* Overlong encoding. *)
+  (* "a<b" *)
+  test_to_string [kv 0x61; kv 0x3c; kv 0x62];
+  test_to_string [kv 0x61; kv 0xc0; kv 0xbc; kv 0x62];
+  test_to_string [kv 0x61; kv 0xe0; kv 0x80; kv 0xbc; kv 0x62];
+  test_to_string [kv 0x61; kv 0xf0; kv 0x80; kv 0x80; kv 0xbc; kv 0x62];
+  (* "a«b" *)
+  test_to_string [kv 0x61; kv 0xc2; kv 0xab; kv 0x62];
+  test_to_string [kv 0x61; kv 0xe0; kv 0x82; kv 0xab; kv 0x62];
+  test_to_string [kv 0x61; kv 0xf0; kv 0x80; kv 0x82; kv 0xab; kv 0x62];
+  (* "a‡b" *)
+  test_to_string [kv 0x61; kv 0xe2; kv 0x80; kv 0xa1; kv 0x62];
+  test_to_string [kv 0x61; kv 0xf0; kv 0x82; kv 0x80; kv 0xa1; kv 0x62];
   printf "@]";
 
   [%expect{|
-    to_string [|0x61u8|] -> "a"
-    to_string [|0xf0u8; 0x80u8; 0x80u8|] -> None
-    to_string [|0xe0u8; 0x80u8|] -> None
-    to_string [|0xc0u8|] -> None
-    to_string [|0xf0u8; 0x80u8; 0x80u8; 0xf0u8|] -> None
-    to_string [|0xe0u8; 0x80u8; 0xe0u8|] -> None
-    to_string [|0xc0u8; 0xc0u8|] -> None
-    to_string [|0x80u8|] -> None
-    to_string [|0x80u8; 0x80u8; 0x80u8; 0x80u8|] -> None
+    to_string [|0x61u8|] -> "a", "a", "a"
+    to_string [|0xf0u8; 0x80u8; 0x80u8|] -> None, "�", "�"
+    to_string [|0xe0u8; 0x80u8|] -> None, "�", "�"
+    to_string [|0xc0u8|] -> None, "�", "�"
+    to_string [|0xf0u8; 0x80u8; 0x80u8; 0xf0u8|] -> None, "��", "��"
+    to_string [|0xe0u8; 0x80u8; 0xe0u8|] -> None, "��", "��"
+    to_string [|0xc0u8; 0xc0u8|] -> None, "��", "��"
+    to_string [|0x80u8|] -> None, "�", "�"
+    to_string [|0x80u8; 0x80u8; 0x80u8; 0x80u8|] -> None, "����", "�"
+    to_string [|0x61u8; 0xc0u8; 0x62u8|] -> None, "a�b", "a�b"
+    to_string [|0x61u8; 0xe0u8; 0x80u8; 0x63u8|] -> None, "a�c", "a�c"
+    to_string [|0x61u8; 0xc0u8; 0x80u8; 0x80u8; 0x64u8|] -> None, "a��d", "a�d"
+    to_string [|0x61u8; 0xffu8; 0x65u8|] -> None, "a�e", "a�e"
+    to_string [|0x61u8; 0x3cu8; 0x62u8|] -> "a<b", "a<b", "a<b"
+    to_string [|0x61u8; 0xc0u8; 0xbcu8; 0x62u8|] -> None, "a�b", "a�b"
+    to_string [|0x61u8; 0xe0u8; 0x80u8; 0xbcu8; 0x62u8|] -> None, "a�b", "a�b"
+    to_string [|0x61u8; 0xf0u8; 0x80u8; 0x80u8; 0xbcu8; 0x62u8|] -> None, "a�b", "a�b"
+    to_string [|0x61u8; 0xc2u8; 0xabu8; 0x62u8|] -> "a«b", "a«b", "a«b"
+    to_string [|0x61u8; 0xe0u8; 0x82u8; 0xabu8; 0x62u8|] -> None, "a�b", "a�b"
+    to_string [|0x61u8; 0xf0u8; 0x80u8; 0x82u8; 0xabu8; 0x62u8|] -> None, "a�b", "a�b"
+    to_string [|0x61u8; 0xe2u8; 0x80u8; 0xa1u8; 0x62u8|] -> "a‡b", "a‡b", "a‡b"
+    to_string [|0x61u8; 0xf0u8; 0x82u8; 0x80u8; 0xa1u8; 0x62u8|] -> None, "a�b", "a�b"
     |}]

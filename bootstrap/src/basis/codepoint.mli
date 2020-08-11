@@ -33,6 +33,9 @@ val of_char: char -> t
 (** Initialize from character literal. This is a stopgap for the lack of
     codepoint literals. *)
 
+val replacement: t
+(** Replacement character '�', [0xfffd]. *)
+
 val nul: t
 (** Constant [0x00]. *)
 
