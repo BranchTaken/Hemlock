@@ -53,13 +53,12 @@ module T = struct
 
   let pp ppf t =
     let rec fn seq = begin
-      match Utf8_seq.to_utf8 seq with
+      match Utf8_seq.to_codepoint_hlt seq with
       | None -> ()
-      | Some (Ok utf8, seq') -> begin
-          Format.fprintf ppf "%s" (Utf8.escape utf8);
+      | Some (cp, seq') -> begin
+          Format.fprintf ppf "%s" Utf8.(escape (of_codepoint cp));
           fn seq'
         end
-      | Some (Error _, _) -> not_reached ()
     end in
     Format.fprintf ppf "\"";
     fn (Utf8_seq.init t);

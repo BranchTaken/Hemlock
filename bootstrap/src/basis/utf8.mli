@@ -11,37 +11,10 @@ include Cmpable_intf.S_mono with type t := t
 include Formattable_intf.S_mono with type t := t
 
 val of_codepoint: codepoint -> t
-(** Initialize from [codepoint]. *)
+(** Initialize from {!type:codepoint}. *)
 
 val to_codepoint: t -> codepoint
-(** Convert to [codepoint]. *)
-
-(** Functors for converting bytes to UTF-8 code points. *)
-module Seq : sig
-  type outer = t
-  module type S = sig
-    type t
-
-    val to_utf8: t -> ((outer, byte list) result * t) option
-    (** Convert beginning of sequence to a validated UTF-8 code point and return
-        it along with the sequence remainder, or return [Error] along with
-        sequence remainder if the sequence is malformed, or return [None] if the
-        sequence is empty. *)
-
-    val to_utf8_hlt: t -> (outer * t) option
-    (** Convert beginning of sequence to a validated UTF-8 code point and return
-        it along with the sequence remainder, or halt if the sequence is
-        malformed, or return [None] if the sequence is empty. *)
-  end
-
-  (** Iteratively convert a byte sequence to UTF-8 code points. *)
-  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
-    S with type t := T.t
-
-  (** Iteratively convert a reversed byte sequence to UTF-8 code points. *)
-  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
-    S with type t := T.t
-end
+(** Convert to {!type:codepoint}. *)
 
 val to_bytes: t -> byte list
 (** Convert to a byte list. *)
@@ -55,3 +28,37 @@ val to_string: t -> string
 val escape: t -> string
 (** [escape t] returns a syntactically valid UTF-8-encoded string representation
     of [t]. *)
+
+(** Functors for converting UTF-8-encoded byte sequences to {!type:codepoint}
+    values. *)
+module Seq : sig
+  type outer = t
+  module type S = sig
+    type t
+
+    val to_codepoint: t -> (codepoint option * t) option
+    (** Convert beginning of sequence to a {!type:codepoint} ([None] upon
+        encountering a UTF-8 encoding error) and return it along with the
+        sequence remainder, or return [None] if the sequence is empty. *)
+
+    val to_codepoint_replace: t -> (codepoint * t) option
+    (** Convert beginning of sequence to a {!type:codepoint} (replacing UTF-8
+        encoding errors with '�') and return it along with the sequence
+        remainder, or return [None] if the sequence is empty. *)
+
+    val to_codepoint_hlt: t -> (codepoint * t) option
+    (** Convert beginning of sequence to a {!type:codepoint} (halt on UTF-8
+        encoding errors) and return it along with the sequence remainder, or
+        return [None] if the sequence is empty. *)
+  end
+
+  (** Iteratively convert a UTF-8-encoded byte sequence to {!type:codepoint}
+      values. *)
+  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
+    S with type t := T.t
+
+  (** Iteratively convert a reversed UTF-8-encoded byte sequence to
+      {!type:codepoint} values. *)
+  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
+    S with type t := T.t
+end
