@@ -16,6 +16,7 @@ module T = struct
   module Cursor = struct
     module T = struct
       type 'a container = 'a t
+      type 'a elm = 'a
       type 'a t = {
         array: 'a container;
         index: uns;
@@ -318,6 +319,10 @@ module Seq = struct
           fn t' accum a 1
         end
   end
+end
+
+module Slice = struct
+  include Slice.Make_poly(Cursor)
 end
 
 module Array_init = struct
