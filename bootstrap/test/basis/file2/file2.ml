@@ -11,7 +11,7 @@ culpa qui officia deserunt mollit anim id est laborum.
 "
 
 let () =
-  let file = File.of_path_hlt (File.Buffer.of_string "./foo") in
+  let file = File.of_path_hlt (Bytes.Slice.of_string "./foo") in
   let _ = File.write_hlt buffer file in
   let _ = File.seek_hd_hlt (Sint.kv 0) file in
   let file_stream = File.Stream.of_file file in

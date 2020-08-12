@@ -78,8 +78,10 @@ external of_path_inner: Flag.t -> uns -> uns -> uns -> Bytes.t -> sint =
   "hemlock_file_of_path_inner"
 
 let of_path ?(flag=Flag.RW) ?(mode=0o660) path =
-  let value = of_path_inner
-      flag mode (Buffer.i path) (Buffer.j path) (Buffer.container path) in
+  let value = of_path_inner flag mode
+    (Bytes.Cursor.index (Bytes.Slice.base path))
+    (Bytes.Cursor.index (Bytes.Slice.past path))
+    (Bytes.Slice.container path) in
   match Sint.(value < kv 0) with
   | false -> Ok (Uns.of_sint value)
   | true -> Error (Uns.of_sint Sint.(-value))

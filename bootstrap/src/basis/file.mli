@@ -58,14 +58,14 @@ val stderr: t
 
 (* val of_path: ?flag:Flag.t -> ?mode:uns -> /t Buffer.t
      $-> (t, Error.t) result *)
-val of_path: ?flag:Flag.t -> ?mode:uns -> Buffer.t -> (t, Error.t) result
+val of_path: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> (t, Error.t) result
 (** [of_path ~flag ~mode path] opens or creates the file at [path] with [flag]
     (default Flag.RW) Unix file permissions and [mode] (default 0o660) Unix file
     permissions and and returns the resulting file or an error if the file could
     not be opened. *)
 
 (* val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Buffer.t $-> t *)
-val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Buffer.t -> t
+val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> t
 (** [of_path_hlt ~flag ~mode path] opens or creates the file at [path] with
     [flag] (default Flag.RW) Unix file permissions and [mode] (default 0o660)
     Unix file permissions and and returns the resulting file or halts if the

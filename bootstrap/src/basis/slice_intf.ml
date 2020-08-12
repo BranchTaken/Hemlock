@@ -1,4 +1,4 @@
-open Rudiments
+open Rudiments0
 
 module type S_mono = sig
   type container
@@ -33,4 +33,39 @@ module type S_mono = sig
   val past_pred: t -> t
 
   val get: uns -> t -> elm
+end
+
+module type S_poly = sig
+  type 'a container
+  type 'a cursor
+  type 'a elm
+  type 'a t
+
+  val of_cursors: base:'a cursor -> past:'a cursor -> 'a t
+
+  val to_cursors: 'a t -> 'a cursor * 'a cursor
+
+  val container: 'a t -> 'a container
+
+  val base: 'a t -> 'a cursor
+
+  val past: 'a t -> 'a cursor
+
+  val of_container: 'a container -> 'a t
+
+  val to_container: 'a t -> 'a container
+
+  val base_seek: sint -> 'a t -> 'a t
+
+  val base_succ: 'a t -> 'a t
+
+  val base_pred: 'a t -> 'a t
+
+  val past_seek: sint -> 'a t -> 'a t
+
+  val past_succ: 'a t -> 'a t
+
+  val past_pred: 'a t -> 'a t
+
+  val get: uns -> 'a t -> 'a elm
 end

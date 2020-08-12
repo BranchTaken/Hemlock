@@ -167,6 +167,69 @@ end
 let to_string_replace bytes =
   String_replace_seq.(to_string (init bytes))
 
+module Cursor = struct
+  module T = struct
+    type container = byte array
+    type elm = byte
+    type t = {
+      array: container;
+      index: uns;
+    }
+
+    let cmp t0 t1 =
+      (* == is excessively vague in OCaml. *)
+      assert ((t0.array == t1.array)
+              || (Stdlib.( = ) t0.array t1.array));
+      Uns.cmp t0.index t1.index
+
+    let hd array =
+      {array; index=0}
+
+    let tl array =
+      {array; index=(Array.length array)}
+
+    let seek i t =
+      match Sint.(i < (kv 0)) with
+      | true -> begin
+          match (Uns.of_sint Sint.(neg i)) > t.index with
+          | true -> halt "Cannot seek before beginning of array"
+          | false -> {t with index=(t.index - Uns.of_sint (Sint.neg i))}
+        end
+      | false -> begin
+          match (t.index + (Uns.of_sint i)) > (Array.length t.array) with
+          | true -> halt "Cannot seek past end of array"
+          | false -> {t with index=(t.index + (Uns.of_sint i))}
+        end
+
+    let succ t =
+      seek (Sint.kv 1) t
+
+    let pred t =
+      seek (Sint.kv (-1)) t
+
+    let lget t =
+      Array.get (Uns.pred t.index) t.array
+
+    let rget t =
+      Array.get t.index t.array
+
+    let container t =
+      t.array
+
+    let index t =
+      t.index
+  end
+  include T
+  include Cmpable.Make(T)
+end
+
+module Slice = struct
+  include Slice.Make_mono(Cursor)
+
+  let of_string string =
+    of_container (of_string string)
+end
+
 (******************************************************************************)
 (* Begin tests. *)
 
