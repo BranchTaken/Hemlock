@@ -2,7 +2,6 @@
 
 (* Partial Rudiments. *)
 open Rudiments_int
-type codepoint = Codepoint.t
 
 type t
 include Intnb_intf.S_u with type t := t
@@ -34,12 +33,3 @@ val of_uns_hlt: uns -> t
 val of_char: char -> t
 (** Initialize from character literal. This is a stopgap for the lack of
     codepoint literals. *)
-
-val to_codepoint: t -> codepoint
-(** Convert to codepoint. *)
-
-val of_codepoint: codepoint -> t
-(** Initialize from codepoint, with possible loss. *)
-
-val of_codepoint_hlt: codepoint -> t
-(** Initialize from codepoint, or halt if conversion would be lossy. *)

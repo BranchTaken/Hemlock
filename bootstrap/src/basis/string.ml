@@ -24,7 +24,7 @@ module T = struct
     else
       Cmp.Gt
 
-  module Utf8_seq = struct
+  module Codepoint_seq = struct
     module T = struct
       type outer = t
       type t = {
@@ -48,20 +48,20 @@ module T = struct
           end
     end
     include T
-    include Utf8.Seq.Make(T)
+    include Codepoint.Seq.Make(T)
   end
 
   let pp ppf t =
     let rec fn seq = begin
-      match Utf8_seq.to_codepoint_hlt seq with
+      match Codepoint_seq.to_codepoint_hlt seq with
       | None -> ()
       | Some (cp, seq') -> begin
-          Format.fprintf ppf "%s" Utf8.(escape (of_codepoint cp));
+          Format.fprintf ppf "%s" Codepoint.Utf8.(escape (of_codepoint cp));
           fn seq'
         end
     end in
     Format.fprintf ppf "\"";
-    fn (Utf8_seq.init t);
+    fn (Codepoint_seq.init t);
     Format.fprintf ppf "\""
 
   (* For internal use only, needed due to shadowing. *)
@@ -192,53 +192,51 @@ module Cursor = struct
 
   let lget t =
     let bindex = (Uns.pred t.bindex) in
-    let b = get bindex t.string in
-    if Byte.(b <= (kv 0b0111_1111)) then Byte.to_codepoint b
+    let b = Byte.to_uns (get bindex t.string) in
+    if Uns.(b <= 0b0111_1111) then Codepoint.of_uns b
     else begin
-      let rec fn bindex cp nbits = begin
-        let b = get bindex t.string in
-        match Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) with
+      let rec fn bindex u nbits = begin
+        let b = Byte.to_uns (get bindex t.string) in
+        match Uns.((bit_and b 0b11_000000) <> 0b10_000000) with
         | true -> begin
-            let mask = Byte.(bit_usr ~shift:Uns.(nbits / 6) (kv 0x3f)) in
-            let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
-            Codepoint.(bit_or cp (bit_sl ~shift:nbits cp_bits))
+            let mask = bit_usr ~shift:(nbits/6) 0x3f in
+            let bits = bit_and b mask in
+            let u' = bit_or u (bit_sl ~shift:nbits bits) in
+            Codepoint.of_uns u'
           end
         | false -> begin
-            let bindex' = (Uns.pred bindex) in
-            let mask = Byte.(kv 0b00_111111) in
-            let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
-            let cp' = Codepoint.(bit_or (bit_sl ~shift:nbits cp_bits) cp) in
+            let bindex' = Uns.pred bindex in
+            let bits = bit_and b 0b00_111111 in
+            let u' = bit_or (bit_sl ~shift:nbits bits) u in
             let nbits' = nbits + 6 in
-            fn bindex' cp' nbits'
+            fn bindex' u' nbits'
           end
       end in
-      let bindex' = (Uns.pred bindex) in
-      let mask = Byte.(kv 0b00_111111) in
-      let cp = Byte.(to_codepoint (bit_and b mask)) in
+      let bindex' = Uns.pred bindex in
+      let u = bit_and b 0b00_111111 in
       let nbits = 6 in
-      fn bindex' cp nbits
+      fn bindex' u nbits
     end
 
   let rget t =
-    let b = get t.bindex t.string in
-    if Byte.(b <= (kv 0b0111_1111)) then Byte.to_codepoint b
+    let b = Byte.to_uns (get t.bindex t.string) in
+    if Uns.(b <= 0b0111_1111) then Codepoint.of_uns b
     else begin
-      let rec fn cp bindex rem_bytes = begin
+      let rec fn u bindex rem_bytes = begin
         match rem_bytes with
-        | 0 -> cp
+        | 0 -> Codepoint.of_uns u
         | _ -> begin
-            let b = get bindex t.string in
-            let mask = Byte.(kv 0b00_111111) in
-            let cp_bits = Byte.(to_codepoint (bit_and b mask)) in
-            let cp' = Codepoint.(bit_or (bit_sl ~shift:6 cp) cp_bits) in
-            fn cp' (Uns.succ bindex) Uns.(pred rem_bytes)
+            let b = Byte.to_uns (get bindex t.string) in
+            let bits = bit_and b 0b00_111111 in
+            let u' = bit_or (bit_sl ~shift:6 u) bits in
+            fn u' (Uns.succ bindex) (Uns.pred rem_bytes)
           end
       end in
-      let nbytes = Byte.(bit_clz (bit_not b)) in
-      let b0_nbits = Byte.(to_uns ((kv 7) - (of_uns nbytes))) in
-      let b0_mask = Byte.((bit_sl ~shift:b0_nbits one) - one) in
-      let cp = Byte.(to_codepoint (bit_and b b0_mask)) in
-      fn cp (Uns.succ t.bindex) Uns.(pred nbytes)
+      let nbytes = Byte.(bit_clz (bit_not (of_uns b))) in
+      let b0_nbits = 7 - nbytes in
+      let b0_mask = (bit_sl ~shift:b0_nbits 1) - 1 in
+      let u = bit_and b b0_mask in
+      fn u (Uns.succ t.bindex) (Uns.pred nbytes)
     end
 end
 type cursor = Cursor.t
@@ -359,10 +357,10 @@ module Seq = struct
               match !rem_bytes with
               | [] -> begin
                   let cp, t' = T.next !tmut in
-                  assert (Uns.(Utf8.(length (of_codepoint cp)) + (T.length t')
-                    = (T.length !tmut)));
+                  assert (Uns.(Codepoint.Utf8.(length (of_codepoint cp)) +
+                      (T.length t') = (T.length !tmut)));
                   tmut := t';
-                  let b, tl = match Utf8.(to_bytes (of_codepoint cp)) with
+                  let b, tl = match Codepoint.to_bytes cp with
                     | b :: tl -> b, tl
                     | [] -> not_reached ()
                   in
@@ -393,8 +391,8 @@ module Seq = struct
               | 0 -> cps
               | _ -> begin
                   let cp, t' = T.next t in
-                  assert (Uns.(Utf8.(length (of_codepoint cp)) + (T.length t')
-                    = (T.length t)));
+                  assert (Uns.(Codepoint.Utf8.(length (of_codepoint cp)) +
+                      (T.length t') = (T.length t)));
                   let cps' = cp :: cps in
                   fn t' cps'
                 end
@@ -409,7 +407,7 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   cps := cps';
-                  let b, tl = match Utf8.(to_bytes (of_codepoint cp)) with
+                  let b, tl = match Codepoint.to_bytes cp with
                     | b :: tl -> b, tl
                     | [] -> not_reached ()
                   in
@@ -706,7 +704,7 @@ module Slice = struct
 
       let next t =
         let codepoint = t.f t.cindex in
-        let cp_nbytes = Utf8.(length (of_codepoint codepoint)) in
+        let cp_nbytes = Codepoint.Utf8.(length (of_codepoint codepoint)) in
         let blength' = t.blength - cp_nbytes in
         let t' = {t with cindex=(Uns.succ t.cindex);
              blength=blength'} in
@@ -722,7 +720,7 @@ module Slice = struct
       | true -> nbytes
       | false -> begin
           let codepoint, seq' = f seq in
-          let cp_nbytes = Utf8.(length (of_codepoint codepoint)) in
+          let cp_nbytes = Codepoint.Utf8.(length (of_codepoint codepoint)) in
           let nbytes' = nbytes + cp_nbytes in
           fn ~seq:seq' (Uns.succ cindex) nbytes'
         end
@@ -759,7 +757,7 @@ module Slice = struct
         | cp :: cps -> cp, cps
         | [] -> not_reached ()
       in
-      let nbytes = Utf8.(length (of_codepoint codepoint)) in
+      let nbytes = Codepoint.Utf8.(length (of_codepoint codepoint)) in
       let blength = t.blength - nbytes in
       codepoint, {codepoints; blength}
   end
@@ -868,7 +866,7 @@ module Slice = struct
       let next t =
         let codepoint = Cursor.rget t.cursor in
         let codepoint' = t.f t.cindex codepoint in
-        let utf8_length = Utf8.(length (of_codepoint codepoint')) in
+        let utf8_length = Codepoint.Utf8.(length (of_codepoint codepoint')) in
         let cursor' = Cursor.succ t.cursor in
         let cindex' = Uns.succ t.cindex in
         let blength' = t.blength - utf8_length in
@@ -885,7 +883,7 @@ module Slice = struct
     foldi t ~init:(0, false) ~f:(fun i (blength, modified) codepoint ->
       let codepoint' = f i codepoint in
       let modified' = modified || Codepoint.(codepoint' <> codepoint) in
-      (blength + Utf8.(length (of_codepoint codepoint'))), modified'
+      (blength + Codepoint.Utf8.(length (of_codepoint codepoint'))), modified'
     )
 
   let map ~f t =
@@ -1010,7 +1008,7 @@ module Slice = struct
         let slice = f cp in
         let modified' = modified
                         || Uns.((blength slice)
-                          <> Utf8.(length (of_codepoint cp)))
+                          <> Codepoint.Utf8.(length (of_codepoint cp)))
                         || Codepoint.(Cursor.(rget slice.base) <> cp) in
         let slices' = slice :: slices in
         modified', slices'
@@ -1020,7 +1018,8 @@ module Slice = struct
     | _ -> concat ?sep slices
 
   let escaped t =
-    concat_map t ~f:(fun cp -> of_string Utf8.(escape (of_codepoint cp)))
+    concat_map t ~f:(fun cp ->
+      of_string Codepoint.Utf8.(escape (of_codepoint cp)))
 
   module String_rev = struct
     module T = struct
@@ -2583,11 +2582,11 @@ let%expect_test "map" =
   let open Format in
   let s = "abcde" in
   printf "map: %a -> %a\n" pp s pp (map s ~f:(fun cp ->
-    Codepoint.(cp - (kv 32))));
+    Codepoint.of_uns ((Codepoint.to_uns cp) - 32)));
   printf "mapi: %a -> %a\n" pp s pp (mapi s ~f:(fun i cp ->
     match (bit_and i 0x1) with
     | 0 -> cp
-    | 1 -> Codepoint.(cp - (kv 32))
+    | 1 -> Codepoint.of_uns ((Codepoint.to_uns cp) - 32)
     | _ -> not_reached ()
   ));
   let s = "a:b:cd:e" in

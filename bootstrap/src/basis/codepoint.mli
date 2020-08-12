@@ -1,23 +1,16 @@
 (** Unicode code point. *)
 
 open Rudiments_int
+type byte = U8.t
 
 type t
-include Intnb_intf.S_u with type t := t
 
-val to_sint: t -> sint
-(** Convert to full-width signed integer. *)
-
-val of_sint: sint -> t
-(** Initialize from full-width signed integer, with possible loss. *)
-
-val of_sint_hlt: sint -> t
-(** Initialize from full-width signed integer, or halt if conversion would be
-    lossy. *)
+include Formattable_intf.S_mono with type t := t
+include Cmpable_intf.S_mono with type t := t
 
 val kv: int -> t
 (** Create constant value. This is a stopgap solution for the lack of
-    bitwidth-specific literals. *)
+    codepoint literals. *)
 
 val to_uns: t -> uns
 (** Convert to full-width unsigned integer. *)
@@ -29,9 +22,19 @@ val of_uns_hlt: uns -> t
 (** Initialize from full-width unsigned integer, or halt if conversion would be
     lossy. *)
 
+val to_bytes: t -> byte list
+(** Convert to a byte list. *)
+
 val of_char: char -> t
 (** Initialize from character literal. This is a stopgap for the lack of
     codepoint literals. *)
+
+val to_string: t -> string
+(** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
+
+val escape: t -> string
+(** [escape t] returns a syntactically valid UTF-8-encoded codepoint literal
+    representation of [t]. *)
 
 val replacement: t
 (** Replacement character '�', [0xfffd]. *)
@@ -137,3 +140,65 @@ val us: t
 
 val del: t
 (** Constant [0x7f]. *)
+
+(** UTF-8-encoded code point. This module provides mechanisms for validated
+    encoding conversion between code points and bytes, but is intended for
+    ephemeral use. Most operations on code points are performed via the
+    {!type:codepoint} and {!type:string} types. *)
+module Utf8 : sig
+  type outer = t
+  type t
+
+  val of_codepoint: outer -> t
+  (** Initialize from {!type:codepoint}. *)
+
+  val to_codepoint: t -> outer
+  (** Convert to {!type:codepoint}. *)
+
+  val to_bytes: t -> byte list
+  (** Convert to a byte list. *)
+
+  val length: t -> uns
+  (** Return the length of the UTF-8 code point in bytes. *)
+
+  val to_string: t -> string
+  (** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
+
+  val escape: t -> string
+  (** [escape t] returns a syntactically valid UTF-8-encoded string
+      representation of [t]. *)
+end
+
+(** Functors for converting UTF-8-encoded byte sequences to {!type:codepoint}
+    values. *)
+module Seq : sig
+  type outer = t
+  module type S = sig
+    type t
+
+    val to_codepoint: t -> (outer option * t) option
+    (** Convert beginning of sequence to a {!type:codepoint} ([None] upon
+        encountering a UTF-8 encoding error) and return it along with the
+        sequence remainder, or return [None] if the sequence is empty. *)
+
+    val to_codepoint_replace: t -> (outer * t) option
+    (** Convert beginning of sequence to a {!type:codepoint} (replacing UTF-8
+        encoding errors with '�') and return it along with the sequence
+        remainder, or return [None] if the sequence is empty. *)
+
+    val to_codepoint_hlt: t -> (outer * t) option
+    (** Convert beginning of sequence to a {!type:codepoint} (halt on UTF-8
+        encoding errors) and return it along with the sequence remainder, or
+        return [None] if the sequence is empty. *)
+  end
+
+  (** Iteratively convert a UTF-8-encoded byte sequence to {!type:codepoint}
+      values. *)
+  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
+    S with type t := T.t
+
+  (** Iteratively convert a reversed UTF-8-encoded byte sequence to
+      {!type:codepoint} values. *)
+  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
+    S with type t := T.t
+end
