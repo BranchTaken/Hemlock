@@ -13,7 +13,7 @@ let hash_fold bytes state =
   |> Uns.hash_fold (Array.length bytes)
 
 let of_codepoint cp =
-  Array.of_list (Utf8.to_bytes (Utf8.of_codepoint cp))
+  Array.of_list (Codepoint.to_bytes cp)
 
 module Array_seq = struct
   module T = struct
@@ -48,7 +48,7 @@ module Array_seq = struct
         end
       | [] -> begin
           let codepoint = String.Cursor.rget t.cursor in
-          let bytes = Utf8.(to_bytes (of_codepoint codepoint)) in
+          let bytes = Codepoint.to_bytes codepoint in
           let b, rem_bytes = match bytes with
             | b :: bytes' -> b, bytes'
             | [] -> not_reached ()
@@ -67,7 +67,7 @@ end
 let of_string s =
   Array_seq.to_array (Array_seq.init s)
 
-module Utf8_seq = struct
+module Codepoint_seq = struct
   module T = struct
     type t = {
       bytes: byte array;
@@ -90,12 +90,12 @@ module Utf8_seq = struct
         end
   end
   include T
-  include Utf8.Seq.Make(T)
+  include Codepoint.Seq.Make(T)
 end
 
 module String_seq = struct
   module U = struct
-    include Utf8_seq
+    include Codepoint_seq
 
     let next t =
       match to_codepoint_hlt t with
@@ -108,12 +108,12 @@ end
 
 let to_string bytes =
   let rec validate seq = begin
-    match Utf8_seq.to_codepoint seq with
+    match Codepoint_seq.to_codepoint seq with
     | Some (Some _, seq') -> validate seq'
     | Some (None, _) -> true
     | None -> false
   end in
-  let invalid = validate (Utf8_seq.init bytes) in
+  let invalid = validate (Codepoint_seq.init bytes) in
   match invalid with
   | true -> None
   | false -> Some (String_seq.(to_string (init bytes)))
@@ -126,7 +126,7 @@ let to_string_hlt bytes =
 module String_replace_seq = struct
   module T = struct
     type t = {
-      seq: Utf8_seq.t;
+      seq: Codepoint_seq.t;
       (* vlength is how long bytes would be if all encoding errors were
        * corrected via replacement. *)
       vlength: uns;
@@ -137,23 +137,23 @@ module String_replace_seq = struct
 
     let init bytes =
       let rec fn seq vindex = begin
-        match Utf8_seq.to_codepoint_replace seq with
+        match Codepoint_seq.to_codepoint_replace seq with
         | None -> vindex
         | Some (cp, seq') -> begin
-            let vindex' = vindex + Utf8.(length (of_codepoint cp)) in
+            let vindex' = vindex + Codepoint.Utf8.(length (of_codepoint cp)) in
             fn seq' vindex'
           end
       end in
-      let vlength = fn (Utf8_seq.init bytes) 0 in
-      {seq=Utf8_seq.init bytes; vlength; vindex=0}
+      let vlength = fn (Codepoint_seq.init bytes) 0 in
+      {seq=Codepoint_seq.init bytes; vlength; vindex=0}
 
     let length t =
       t.vlength - t.vindex
 
     let next t =
-      match Utf8_seq.to_codepoint_replace t.seq with
+      match Codepoint_seq.to_codepoint_replace t.seq with
       | Some (cp, seq') -> begin
-          let vincr = Utf8.(length (of_codepoint cp)) in
+          let vincr = Codepoint.Utf8.(length (of_codepoint cp)) in
           let vindex' = t.vindex + vincr in
           let t' = {t with seq=seq'; vindex=vindex'} in
           cp, t'
@@ -267,7 +267,7 @@ let%expect_test "of_string" =
     "<_>«‡𐆗»[_]" -> [|0x3cu8; 0x5fu8; 0x3eu8; 0xc2u8; 0xabu8; 0xe2u8; 0x80u8; 0xa1u8; 0xf0u8; 0x90u8; 0x86u8; 0x97u8; 0xc2u8; 0xbbu8; 0x5bu8; 0x5fu8; 0x5du8|] -> "<_>«‡𐆗»[_]"
     |}]
 
-module Utf8_seq_rev = struct
+module Codepoint_seq_rev = struct
   module T = struct
     type t = {
       bytes: byte array;
@@ -291,13 +291,13 @@ module Utf8_seq_rev = struct
         end
   end
   include T
-  include Utf8.Seq.Make_rev(T)
+  include Codepoint.Seq.Make_rev(T)
 end
 
 module String_replace_seq_rev = struct
   module T = struct
     type t = {
-      seq: Utf8_seq_rev.t;
+      seq: Codepoint_seq_rev.t;
       (* vpast is the index past the unprocessed sequence, were all encoding
        * errors corrected via replacement. *)
       vpast: uns;
@@ -305,14 +305,15 @@ module String_replace_seq_rev = struct
 
     let init bytes =
       let rec fn seq vlength = begin
-        match Utf8_seq_rev.to_codepoint_replace seq with
+        match Codepoint_seq_rev.to_codepoint_replace seq with
         | None -> vlength
         | Some (cp, seq') -> begin
-            let vlength' = Utf8.(length (of_codepoint cp)) + vlength in
+            let vlength' =
+              Codepoint.Utf8.(length (of_codepoint cp)) + vlength in
             fn seq' vlength'
           end
       end in
-      let seq = Utf8_seq_rev.init bytes in
+      let seq = Codepoint_seq_rev.init bytes in
       let vpast = fn seq 0 in
       {seq; vpast}
 
@@ -320,9 +321,9 @@ module String_replace_seq_rev = struct
       t.vpast
 
     let next t =
-      match Utf8_seq_rev.to_codepoint_replace t.seq with
+      match Codepoint_seq_rev.to_codepoint_replace t.seq with
       | Some (cp, seq') -> begin
-          let vincr = Utf8.(length (of_codepoint cp)) in
+          let vincr = Codepoint.Utf8.(length (of_codepoint cp)) in
           let vpast' = t.vpast - vincr in
           let t' = {seq=seq'; vpast=vpast'} in
           cp, t'

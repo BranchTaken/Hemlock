@@ -1,7 +1,6 @@
 (* Partial Rudiments. *)
 module Sint = I63
 module Uns = U63
-type codepoint = Codepoint.t
 open Rudiments_int
 open Rudiments_functions
 
@@ -43,19 +42,6 @@ let of_uns_hlt x =
 
 let of_char c =
   Stdlib.Char.code c
-
-let to_codepoint t =
-  Codepoint.of_uns (to_uns t)
-
-let of_codepoint x =
-  narrow_of_unsigned (Codepoint.to_uns x)
-
-let of_codepoint_hlt x =
-  let t = of_codepoint x in
-  let x' = to_codepoint (to_uns t) in
-  match Codepoint.(x' = x) with
-  | false -> halt "Lossy conversion"
-  | true -> t
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -223,15 +209,6 @@ let%expect_test "conversion" =
         let t' = of_uns u in
         printf "of_uns %a -> to_uns %a -> of_uns %a -> %a\n"
           Sint.pp_x i pp_x t Uns.pp_x u pp_x t';
-
-        let c = Codepoint.of_uns (Uns.of_sint i) in
-        let t = of_codepoint c in
-        let c' = to_codepoint t in
-        let t' = of_codepoint c' in
-        printf ("Codepoint.of_uns %a -> of_codepoint %a -> " ^^
-            "to_codepoint %a -> of_codepoint %a -> %a\n") Uns.pp_x x
-          Codepoint.pp_x c pp_x t Codepoint.pp_x c' pp_x t';
-
         fn xs'
       end
   in
@@ -241,31 +218,22 @@ let%expect_test "conversion" =
   [%expect{|
     of_sint 0x7fffffffffffffffi -> to_sint 0xffu8 -> of_sint -1i -> 0xffu8
     of_uns 0x7fffffffffffffffi -> to_uns 0xffu8 -> of_uns 0x00000000000000ff -> 0xffu8
-    Codepoint.of_uns 0x7fffffffffffffff -> of_codepoint 0x1fffffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
     of_sint 0x0000000000000000i -> to_sint 0x00u8 -> of_sint 0i -> 0x00u8
     of_uns 0x0000000000000000i -> to_uns 0x00u8 -> of_uns 0x0000000000000000 -> 0x00u8
-    Codepoint.of_uns 0x0000000000000000 -> of_codepoint 0x000000u21 -> to_codepoint 0x00u8 -> of_codepoint 0x000000u21 -> 0x00u8
     of_sint 0x000000000000002ai -> to_sint 0x2au8 -> of_sint 42i -> 0x2au8
     of_uns 0x000000000000002ai -> to_uns 0x2au8 -> of_uns 0x000000000000002a -> 0x2au8
-    Codepoint.of_uns 0x000000000000002a -> of_codepoint 0x00002au21 -> to_codepoint 0x2au8 -> of_codepoint 0x00002au21 -> 0x2au8
     of_sint 0x000000000000007fi -> to_sint 0x7fu8 -> of_sint 127i -> 0x7fu8
     of_uns 0x000000000000007fi -> to_uns 0x7fu8 -> of_uns 0x000000000000007f -> 0x7fu8
-    Codepoint.of_uns 0x000000000000007f -> of_codepoint 0x00007fu21 -> to_codepoint 0x7fu8 -> of_codepoint 0x00007fu21 -> 0x7fu8
     of_sint 0x0000000000000080i -> to_sint 0x80u8 -> of_sint 128i -> 0x80u8
     of_uns 0x0000000000000080i -> to_uns 0x80u8 -> of_uns 0x0000000000000080 -> 0x80u8
-    Codepoint.of_uns 0x0000000000000080 -> of_codepoint 0x000080u21 -> to_codepoint 0x80u8 -> of_codepoint 0x000080u21 -> 0x80u8
     of_sint 0x00000000000000ffi -> to_sint 0xffu8 -> of_sint 255i -> 0xffu8
     of_uns 0x00000000000000ffi -> to_uns 0xffu8 -> of_uns 0x00000000000000ff -> 0xffu8
-    Codepoint.of_uns 0x00000000000000ff -> of_codepoint 0x0000ffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
     of_sint 0x0000000000000100i -> to_sint 0x00u8 -> of_sint 256i -> 0x00u8
     of_uns 0x0000000000000100i -> to_uns 0x00u8 -> of_uns 0x0000000000000000 -> 0x00u8
-    Codepoint.of_uns 0x0000000000000100 -> of_codepoint 0x000100u21 -> to_codepoint 0x00u8 -> of_codepoint 0x000000u21 -> 0x00u8
     of_sint 0x0000000000000101i -> to_sint 0x01u8 -> of_sint 257i -> 0x01u8
     of_uns 0x0000000000000101i -> to_uns 0x01u8 -> of_uns 0x0000000000000001 -> 0x01u8
-    Codepoint.of_uns 0x0000000000000101 -> of_codepoint 0x000101u21 -> to_codepoint 0x01u8 -> of_codepoint 0x000001u21 -> 0x01u8
     of_sint 0x3fffffffffffffffi -> to_sint 0xffu8 -> of_sint 4611686018427387903i -> 0xffu8
     of_uns 0x3fffffffffffffffi -> to_uns 0xffu8 -> of_uns 0x00000000000000ff -> 0xffu8
-    Codepoint.of_uns 0x3fffffffffffffff -> of_codepoint 0x1fffffu21 -> to_codepoint 0xffu8 -> of_codepoint 0x0000ffu21 -> 0xffu8
     |}]
 
 let%expect_test "of_float,to_float" =

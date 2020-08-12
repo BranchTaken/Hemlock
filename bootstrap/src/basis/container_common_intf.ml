@@ -1,4 +1,4 @@
-open Rudiments0
+open Rudiments_int
 
 (* Monomorphic, e.g. string. *)
 
