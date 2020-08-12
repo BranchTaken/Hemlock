@@ -31,6 +31,7 @@ module Flag: sig
              * file does not exist. *)
 end
 
+(*
 module Buffer: sig
   (* type /t t *)
   type t
@@ -41,6 +42,7 @@ module Buffer: sig
   (* val of_string: string -> /t t *)
   val of_string: String.t -> t
 end
+*)
 
 (* type t *)
 type t
@@ -56,7 +58,7 @@ val stdout: t
 (* val stderr: t *)
 val stderr: t
 
-(* val of_path: ?flag:Flag.t -> ?mode:uns -> /t Buffer.t
+(* val of_path: ?flag:Flag.t -> ?mode:uns -> /t Bytes.Slice.t
      $-> (t, Error.t) result *)
 val of_path: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> (t, Error.t) result
 (** [of_path ~flag ~mode path] opens or creates the file at [path] with [flag]
@@ -64,42 +66,42 @@ val of_path: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> (t, Error.t) result
     permissions and and returns the resulting file or an error if the file could
     not be opened. *)
 
-(* val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Buffer.t $-> t *)
+(* val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t $-> t *)
 val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> t
 (** [of_path_hlt ~flag ~mode path] opens or creates the file at [path] with
     [flag] (default Flag.RW) Unix file permissions and [mode] (default 0o660)
     Unix file permissions and and returns the resulting file or halts if the
     file could not be opened. *)
 
-(* val read_into: !&Buffer.t -> t $-> Error.t option *)
-val read_into: Buffer.t -> t -> Error.t option
+(* val read_into: !&Bytes.Slice.t -> t $-> Error.t option *)
+val read_into: Bytes.Slice.t -> t -> Error.t option
 (** [read_into buffer t] reads up to n bytes from [t] into the given mutable
     [buffer], where n is the size of the buffer. Returns an error if bytes could
     not be read. *)
 
-(* val read_into_hlt: !&Buffer.t -> t $-> unit *)
-val read_into_hlt: Buffer.t -> t -> unit
+(* val read_into_hlt: !&Bytes.Slice.t -> t $-> unit *)
+val read_into_hlt: Bytes.Slice.t -> t -> unit
 (** [read_into_hlt buffer t] reads up to n bytes from [t] into the given mutable
     [buffer], where n is the size of the buffer. Halts if bytes could not be
     read. *)
 
-(* val read: t $-> (/t Buffer.t, Error.t) result *)
-val read: ?n:uns -> t -> (Buffer.t, Error.t) result
+(* val read: t $-> (/t Bytes.Slice.t, Error.t) result *)
+val read: ?n:uns -> t -> (Bytes.Slice.t, Error.t) result
 (** [read ~n t] reads up to [n] (default 1024) bytes from [t] into a new buffer
     and returns the buffer or an error if bytes could not be read. *)
 
-(* val read_hlt: t $-> /t Buffer.t *)
-val read_hlt: ?n:uns -> t -> Buffer.t
+(* val read_hlt: t $-> /t Bytes.Slice.t *)
+val read_hlt: ?n:uns -> t -> Bytes.Slice.t
 (** [read_hlt n t] reads up to [n] (default 1024) bytes from [t] into a new
     buffer and returns the buffer or halts if bytes could not be read. *)
 
-(* val write: /_ Buffer.t -> t $-> Error.t option *)
-val write: Buffer.t -> t -> Error.t option
+(* val write: /_ Bytes.Slice.t -> t $-> Error.t option *)
+val write: Bytes.Slice.t -> t -> Error.t option
 (** [write bytes t] writes [bytes] to [t] and returns None or an error if bytes
     could not be written. *)
 
-(* val write_hlt: /_ Buffer.t -> t $-> unit *)
-val write_hlt: Buffer.t -> t -> unit
+(* val write_hlt: /_ Bytes.Slice.t -> t $-> unit *)
+val write_hlt: Bytes.Slice.t -> t -> unit
 (** [write_hlt bytes t] writes [bytes] to [t] and returns a unit or halts if
     bytes could not be written. *)
 
@@ -159,8 +161,8 @@ module Stream : sig
   (* type file = t *)
   type file = t
 
-  (* type /t $t = (/t Buffer.t, >_) Stream.t *)
-  type t = Buffer.t Stream.t
+  (* type /t $t = (/t Bytes.Slice.t, >_) Stream.t *)
+  type t = Bytes.Slice.t Stream.t
 
   (* val of_file: file -> /t $t *)
   val of_file: file -> t

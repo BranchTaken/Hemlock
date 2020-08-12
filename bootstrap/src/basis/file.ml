@@ -37,6 +37,7 @@ module Flag = struct
     | RW_O
 end
 
+(*
 module Buffer = struct
   (* type /t t *)
   type t = {
@@ -70,6 +71,7 @@ module Buffer = struct
   let length t =
     (Array.Cursor.index t.tl) - (Array.Cursor.index t.hd)
 end
+*)
 
 type t = uns
 
@@ -127,10 +129,16 @@ let read_n = 1024
 
 let read_base inner buffer t =
   let value = inner
-      (Buffer.i buffer) (Buffer.j buffer) (Buffer.container buffer) t in
+      (Bytes.Cursor.index (Bytes.Slice.base buffer))
+      (Bytes.Cursor.index (Bytes.Slice.past buffer))
+      (Bytes.Slice.container buffer)
+      t in
   match Sint.(value < kv 0) with
   | true -> Error (Uns.of_sint Sint.(-value))
-  | false -> Ok {Buffer.hd=buffer.hd; tl=Array.Cursor.seek value buffer.hd}
+  | false -> Ok (Bytes.Slice.of_cursors
+      ~base:(Bytes.Slice.base buffer)
+      ~past:(Bytes.Cursor.seek value (Bytes.Slice.base buffer))
+    )
 
 (* external read_inner: uns -> uns -> byte array -> t $-> sint *)
 external read_inner: uns -> uns -> Bytes.t -> t -> sint =
@@ -138,7 +146,7 @@ external read_inner: uns -> uns -> Bytes.t -> t -> sint =
 
 let read ?(n=read_n) t =
   let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0) in
-  let buffer = Buffer.of_bytes bytes in
+  let buffer = Bytes.Slice.of_container bytes in
   read_base read_inner buffer t
 
 let read_hlt ?n t =
@@ -168,14 +176,22 @@ external write_inner: uns -> uns -> Bytes.t -> t -> sint =
   "hemlock_file_write_inner"
 
 let rec write buffer t =
-  match Buffer.length buffer > 0 with
+  match Bytes.Cursor.index (Bytes.Slice.base buffer) <
+    Bytes.Cursor.index (Bytes.Slice.past buffer) with
   | false -> None
   | true -> begin
       let value = write_inner
-          (Buffer.i buffer) (Buffer.j buffer) (Buffer.container buffer) t in
+          (Bytes.Cursor.index (Bytes.Slice.base buffer))
+          (Bytes.Cursor.index (Bytes.Slice.past buffer))
+          (Bytes.Slice.container buffer)
+          t in
       match Sint.(value < kv 0) with
       | true -> Some (Error.of_value value)
-      | false -> write {hd=Array.Cursor.seek value buffer.hd; tl=buffer.tl} t
+      | false -> write (
+          Bytes.Slice.of_cursors
+          ~base:(Bytes.Cursor.seek value (Bytes.Slice.base buffer))
+          ~past:(Bytes.Slice.base buffer)
+        ) t
     end
 
 let write_hlt buffer t =
@@ -223,14 +239,15 @@ let seek_tl_hlt = seek_hlt_base seek_tl_inner
 
 module Stream = struct
   type file = t
-  type t = Buffer.t Stream.t
+  type t = Bytes.Slice.t Stream.t
 
   let of_file file =
     let f file = begin
       match read file with
       | Error _ -> None
       | Ok buffer -> begin
-          match Buffer.length buffer > 0 with
+          match Bytes.Cursor.index (Bytes.Slice.base buffer) <
+            Bytes.Cursor.index (Bytes.Slice.past buffer) with
           | false -> begin
               let _ = close file in
               None
