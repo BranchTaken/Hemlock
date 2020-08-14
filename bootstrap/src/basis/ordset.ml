@@ -35,6 +35,12 @@ module T = struct
         let (a, _) = Ordmap.Cursor.rget t in
         a
 
+      let prev t =
+        lget t, pred t
+
+      let next t =
+        rget t, succ t
+
       let container = Ordmap.Cursor.container
 
       let index = Ordmap.Cursor.index

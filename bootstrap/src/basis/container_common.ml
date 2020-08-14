@@ -192,6 +192,8 @@ module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
     let pred = T.Cursor.pred
     let lget = T.Cursor.lget
     let rget = T.Cursor.rget
+    let prev = T.Cursor.prev
+    let next = T.Cursor.next
   end
 end
 

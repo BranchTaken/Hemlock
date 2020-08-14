@@ -71,6 +71,18 @@ module T = struct
         | [] -> halt "At end of list"
         | hd :: _ -> hd
 
+      let prev t =
+        match t.left_rev with
+        | [] -> halt "At beginning of list"
+        | hd :: tl -> hd, {t with left_rev=tl; right=(hd :: t.right);
+             index=(Uns.pred t.index)}
+
+      let next t =
+        match t.right with
+        | [] -> halt "At end of list"
+        | hd :: tl -> hd, {t with left_rev=(hd :: t.left_rev); right=tl;
+             index=(Uns.succ t.index)}
+
       let container t =
         t.list
 

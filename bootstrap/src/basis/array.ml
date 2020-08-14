@@ -59,6 +59,12 @@ module T = struct
       let rget t =
         get t.index t.array
 
+      let prev t =
+        lget t, pred t
+
+      let next t =
+        rget t, succ t
+
       let container t =
         t.array
 
