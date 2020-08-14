@@ -33,6 +33,14 @@ module type S_mono_iter = sig
 
   val rget: t -> elm
   (** Return element immediately to right. *)
+
+  val prev: t -> elm * t
+  (** [prev t] is equivalent to [lget t, pred t], but potentially more
+      efficient. *)
+
+  val next: t -> elm * t
+  (** [next t] is equivalent to [rget t, succ t], but potentially more
+      efficient. *)
 end
 
 (** Cursor functor output signature for monomorphic types, e.g. [string]. *)
@@ -80,6 +88,14 @@ module type S_poly_iter = sig
 
   val rget: 'a t -> 'a elm
   (** Return element immediately to right. *)
+
+  val prev: 'a t -> 'a elm * 'a t
+  (** [prev t] is equivalent to [lget t, pred t], but potentially more
+      efficient. *)
+
+  val next: 'a t -> 'a elm * 'a t
+  (** [next t] is equivalent to [rget t, succ t], but potentially more
+      efficient. *)
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('a array)]. *)
@@ -127,6 +143,14 @@ module type S_poly2_iter = sig
 
   val rget: ('a, 'cmp) t -> 'a elm
   (** Return element immediately to right. *)
+
+  val prev: ('a, 'cmp) t -> 'a elm * ('a, 'cmp) t
+  (** [prev t] is equivalent to [lget t, pred t], but potentially more
+      efficient. *)
+
+  val next: ('a, 'cmp) t -> 'a elm * ('a, 'cmp) t
+  (** [next t] is equivalent to [rget t, succ t], but potentially more
+      efficient. *)
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('a, 'cmp)
@@ -178,6 +202,14 @@ module type S_poly3_iter = sig
 
   val rget: ('k, 'v, 'cmp) t -> ('k key * 'v value)
   (** Return element immediately to right. *)
+
+  val prev: ('k, 'v, 'cmp) t -> ('k key * 'v value) * ('k, 'v, 'cmp) t
+  (** [prev t] is equivalent to [lget t, pred t], but potentially more
+      efficient. *)
+
+  val next: ('k, 'v, 'cmp) t -> ('k key * 'v value) * ('k, 'v, 'cmp) t
+  (** [next t] is equivalent to [rget t, succ t], but potentially more
+      efficient. *)
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('k, 'v, 'cmp)

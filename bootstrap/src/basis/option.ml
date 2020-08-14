@@ -77,6 +77,12 @@ module T = struct
             v
           end
 
+      let prev t =
+        lget t, pred t
+
+      let next t =
+        rget t, succ t
+
       let container t =
         t.option
 

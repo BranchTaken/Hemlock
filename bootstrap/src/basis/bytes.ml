@@ -213,6 +213,12 @@ module Cursor = struct
     let rget t =
       Array.get t.index t.array
 
+    let prev t =
+      lget t, pred t
+
+    let next t =
+      rget t, succ t
+
     let container t =
       t.array
 

@@ -300,6 +300,12 @@ module T = struct
         | None -> halt "Out of bounds"
         | Some rpath -> Path.kv rpath
 
+      let prev t =
+        lget t, pred t
+
+      let next t =
+        rget t, succ t
+
       let container t =
         t.ordmap
 
