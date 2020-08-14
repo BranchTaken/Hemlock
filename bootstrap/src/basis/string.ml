@@ -191,54 +191,62 @@ module Cursor = struct
   let pred t =
     seek (Sint.kv (-1)) t
 
-  let lget t =
-    let bindex = (Uns.pred t.bindex) in
+  let prev t =
+    let bindex = Uns.pred t.bindex in
     let b = Byte.to_uns (get bindex t.string) in
-    if Uns.(b <= 0b0111_1111) then Codepoint.of_uns b
+    if Uns.(b <= 0b0111_1111) then (Codepoint.of_uns b), {t with bindex}
     else begin
-      let rec fn bindex u nbits = begin
-        let b = Byte.to_uns (get bindex t.string) in
+      let rec fn string bindex u nbits = begin
+        let b = Byte.to_uns (get bindex string) in
         match Uns.((bit_and b 0b11_000000) <> 0b10_000000) with
         | true -> begin
             let mask = bit_usr ~shift:(nbits/6) 0x3f in
             let bits = bit_and b mask in
             let u' = bit_or u (bit_sl ~shift:nbits bits) in
-            Codepoint.of_uns u'
+            (Codepoint.of_uns u'), {string; bindex}
           end
         | false -> begin
             let bindex' = Uns.pred bindex in
             let bits = bit_and b 0b00_111111 in
             let u' = bit_or (bit_sl ~shift:nbits bits) u in
             let nbits' = nbits + 6 in
-            fn bindex' u' nbits'
+            fn string bindex' u' nbits'
           end
       end in
       let bindex' = Uns.pred bindex in
       let u = bit_and b 0b00_111111 in
       let nbits = 6 in
-      fn bindex' u nbits
+      fn t.string bindex' u nbits
     end
 
-  let rget t =
+  let next t =
     let b = Byte.to_uns (get t.bindex t.string) in
-    if Uns.(b <= 0b0111_1111) then Codepoint.of_uns b
+    let bindex' = Uns.succ t.bindex in
+    if Uns.(b <= 0b0111_1111) then (Codepoint.of_uns b), {t with bindex=bindex'}
     else begin
-      let rec fn u bindex rem_bytes = begin
+      let rec fn u string bindex rem_bytes = begin
         match rem_bytes with
-        | 0 -> Codepoint.of_uns u
+        | 0 -> (Codepoint.of_uns u), {string; bindex}
         | _ -> begin
-            let b = Byte.to_uns (get bindex t.string) in
+            let b = Byte.to_uns (get bindex string) in
             let bits = bit_and b 0b00_111111 in
             let u' = bit_or (bit_sl ~shift:6 u) bits in
-            fn u' (Uns.succ bindex) (Uns.pred rem_bytes)
+            let bindex' = Uns.succ bindex in
+            fn u' string bindex' (Uns.pred rem_bytes)
           end
       end in
       let nbytes = Byte.(bit_clz (bit_not (of_uns b))) in
       let b0_nbits = 7 - nbytes in
       let b0_mask = (bit_sl ~shift:b0_nbits 1) - 1 in
       let u = bit_and b b0_mask in
-      fn u (Uns.succ t.bindex) (Uns.pred nbytes)
+      fn u t.string bindex' (Uns.pred nbytes)
     end
+
+  let lget t =
+    match prev t with cp, _ -> cp
+
+  let rget t =
+    match next t with cp, _ -> cp
 end
 type cursor = Cursor.t
 
@@ -311,6 +319,12 @@ module Cursori = struct
 
   let rget t =
     Cursor.rget t.cursor
+
+  let prev t =
+    lget t, pred t
+
+  let next t =
+    rget t, succ t
 
   let cursor t =
     t.cursor
@@ -788,6 +802,10 @@ module Slice = struct
         let lget = Cursor.lget
 
         let rget = Cursor.rget
+
+        let prev = Cursor.prev
+
+        let next = Cursor.next
       end
       include T
       include Cmpable.Make(T)
@@ -2004,6 +2022,9 @@ let%expect_test "cursor" =
           in
           printf "            %a=%s\n"
             Cursor.pp cursor (of_codepoint (Cursor.rget cursor));
+          let cp, cursor' = Cursor.next cursor in
+          assert Codepoint.(cp = Cursor.rget cursor);
+          assert Cursor.(pred cursor' = cursor);
           fn (Cursor.succ cursor) i
         end
     end in
@@ -2024,6 +2045,9 @@ let%expect_test "cursor" =
           in
           printf "            %a=%s\n"
             Cursor.pp cursor (of_codepoint (Cursor.lget cursor));
+          let cp, cursor' = Cursor.prev cursor in
+          assert Codepoint.(cp = Cursor.lget cursor);
+          assert Cursor.(succ cursor' = cursor);
           fn (Cursor.pred cursor) i
         end
     end in
