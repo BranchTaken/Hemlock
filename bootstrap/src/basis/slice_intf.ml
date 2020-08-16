@@ -1,6 +1,6 @@
 open Rudiments0
 
-module type S_mono = sig
+module type S_mono_fwd = sig
   type container
   type cursor
   type elm
@@ -20,15 +20,25 @@ module type S_mono = sig
 
   val to_container: t -> container
 
-  val base_seek: sint -> t -> t
+  val base_seek_fwd: uns -> t -> t
 
   val base_succ: t -> t
+
+  val past_seek_fwd: uns -> t -> t
+
+  val past_succ: t -> t
+
+  val get: uns -> t -> elm
+end
+
+module type S_mono = sig
+  include S_mono_fwd
+
+  val base_seek: sint -> t -> t
 
   val base_pred: t -> t
 
   val past_seek: sint -> t -> t
-
-  val past_succ: t -> t
 
   val past_pred: t -> t
 

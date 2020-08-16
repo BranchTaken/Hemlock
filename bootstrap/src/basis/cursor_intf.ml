@@ -2,9 +2,9 @@
 
 open Rudiments0
 
-(** Cursor iterator functor output signature for monomorphic types, e.g.
-    [string]. *)
-module type S_mono_iter = sig
+(** Forward-only cursor iterator functor output signature for monomorphic types.
+*)
+module type S_mono_fwd_iter = sig
   type container
   (** Container type. *)
 
@@ -25,22 +25,43 @@ module type S_mono_iter = sig
   val succ: t -> t
   (** Return successor. *)
 
+  val rget: t -> elm
+  (** Return element immediately to right. *)
+
+  val next: t -> elm * t
+  (** [next t] is equivalent to [rget t, succ t], but potentially more
+      efficient. *)
+end
+
+(** Cursor iterator functor output signature for monomorphic types, e.g.
+    [string]. *)
+module type S_mono_iter = sig
+  include S_mono_fwd_iter
+
   val pred: t -> t
   (** Return predecessor. *)
 
   val lget: t -> elm
   (** Return element immediately to left. *)
 
-  val rget: t -> elm
-  (** Return element immediately to right. *)
-
   val prev: t -> elm * t
   (** [prev t] is equivalent to [lget t, pred t], but potentially more
       efficient. *)
+end
 
-  val next: t -> elm * t
-  (** [next t] is equivalent to [rget t, succ t], but potentially more
-      efficient. *)
+(** Forward-only cursor functor output signature for monomorphic types, e.g.
+    [Text.t]. *)
+module type S_mono_fwd = sig
+  include S_mono_fwd_iter
+
+  val container: t -> container
+  (** Return container associated with iterator. *)
+
+  val index: t -> uns
+  (** Return iterator index. *)
+
+  val seek_fwd: uns -> t -> t
+  (** [seek_fwd i t] returns an iterator at offset [i] from [t]. *)
 end
 
 (** Cursor functor output signature for monomorphic types, e.g. [string]. *)
