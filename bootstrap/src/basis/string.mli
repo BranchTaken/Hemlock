@@ -23,12 +23,12 @@ include Stringable_intf.S with type t := t
 (** Cursor that supports O(1) arbitrary access to codepoints, given byte index.
     The codepoint index is not tracked. *)
 module Cursor : sig
-  type outer = t
-
+  type container = t
+  type elm = codepoint
   type t
   include Identifiable_intf.S with type t := t
-  include Cursor_intf.S_mono with type container := outer
-                              and type elm := codepoint
+  include Cursor_intf.S_mono with type container := container
+                              and type elm := elm
                               and type t := t
 
   val index: t -> uns [@@ocaml.deprecated "Use bindex instead"]
@@ -42,11 +42,11 @@ module Cursor : sig
   (** @deprecated Use {!Cursori.cindex} instead.
       @raise halt Not implemented. *)
 
-  val at: bindex:uns -> outer -> t
+  val at: bindex:uns -> container -> t
   (** Return {!type:Cursor.t} at [bindex], or halt if not at {!type:codepoint}
       boundary. *)
 
-  val near: bindex:uns -> outer -> t
+  val near: bindex:uns -> container -> t
   (** Return {!type:Cursor.t} at or before [bindex]. *)
 end
 
@@ -79,27 +79,13 @@ module Cursori : sig
   (** Return {!type:Cursori.t} at {!type:codepoint} index [cindex]. *)
 end
 
-type slice
 module Slice : sig
   type outer = t
-  type t = slice
+
+  include Slice_intf.S_mono with type container := outer
+                             and type cursor := Cursor.t
+                             and type elm := codepoint
   include Identifiable_intf.S with type t := t
-
-  val of_cursors: base:Cursor.t -> past:Cursor.t -> t
-  (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)].
-  *)
-
-  val to_cursors: t -> Cursor.t * Cursor.t
-  (** Return the cursors comprising the slice. *)
-
-  val string: t -> outer
-  (** [string t] returns the unsliced string underlying [t]. *)
-
-  val base: t -> Cursor.t
-  (** Return the cursor at the base of the slice. *)
-
-  val past: t -> Cursor.t
-  (** Return the cursor past the end of the slice. *)
 
   val of_string: outer -> t
   (** [of_string s] returns a slice enclosing the entirety of [s]. *)
@@ -107,40 +93,11 @@ module Slice : sig
   val to_string: t -> outer
   (** Return a string with contents equivalent to those of the slice. *)
 
-  val base_seek: sint -> t -> t
-  (** [base_seek i t] returns a derivative slice with its [base] cursor
-      initialized by seeking [t]'s [base] cursor [i] codepoints
-      forward/backward. *)
-
-  val base_succ: t -> t
-  (** [base_succ t] returns a derivative slice with its [base] cursor
-      initialized to the successor of [t]'s [base] cursor. *)
-
-  val base_pred: t -> t
-  (** [base_pred t] returns a derivative slice with its [base] cursor
-      initialized to the predecessor of [t]'s [base] cursor. *)
-
-  val past_seek: sint -> t -> t
-  (** [past_seek i t] returns a derivative slice with its [past] cursor
-      initialized by seeking [t]'s [past] cursor [i] codepoints
-      forward/backward. *)
-
-  val past_succ: t -> t
-  (** [past_succ t] returns a derivative slice with its [past] cursor
-      initialized to the successor of [t]'s [past] cursor. *)
-
-  val past_pred: t -> t
-  (** [past_pred t] returns a derivative slice with its [past] cursor
-      initialized to the predecessor of [t]'s [past] cursor. *)
-
   val blength: t -> uns
   (** Length of the slice in bytes. *)
 
   val clength: t -> uns
   (** Length of the slice in codepoints. O(n) time complexity. *)
-
-  val get: uns -> t -> byte
-  (** [get i t] returns the bytes at offset [i] from the [base] of the slice. *)
 
   val init: ?blength:uns -> uns -> f:(uns -> codepoint) -> t
   (** [init ~blength clength ~f] creates a slice of given byte length and
@@ -312,33 +269,33 @@ module Slice : sig
       newline (['\n']), carriage return (['\r']), and space ([' ']). *)
 
   val split_fold_until: init:'accum -> on:(codepoint -> bool)
-    -> f:('accum -> slice -> 'accum * bool) -> t -> 'accum
+    -> f:('accum -> t -> 'accum * bool) -> t -> 'accum
   (** [split_fold_until ~init ~on ~f t] splits [t] on [on] into slices, which
       [f] folds in left to right order based on initial value [init], until [f]
       returns [accum, true], or until all slices have been folded. *)
 
   val split_fold_right_until: init:'accum -> on:(codepoint -> bool)
-    -> f:(slice -> 'accum -> 'accum * bool) -> t -> 'accum
+    -> f:(t -> 'accum -> 'accum * bool) -> t -> 'accum
   (** [split_fold_right_until ~init ~on ~f t] splits [t] on [on] into slices,
       which [f] folds in right to left order based on initial value [init],
       until [f] returns [accum, true], or until all slices have been folded. *)
 
   val split_fold: init:'accum -> on:(codepoint -> bool)
-    -> f:('accum -> slice -> 'accum) -> t -> 'accum
+    -> f:('accum -> t -> 'accum) -> t -> 'accum
   (** [split_fold ~init ~on ~f t] splits [t] on [on] into slices, which [f]
       folds in left to right order based on initial value [init]. *)
 
   val split_fold_right: init:'accum -> on:(codepoint -> bool)
-    -> f:(slice -> 'accum -> 'accum) -> t -> 'accum
+    -> f:(t -> 'accum -> 'accum) -> t -> 'accum
   (** [split_fold_right ~init ~on ~f t] splits [t] on [on] into slices, which
       [f] folds in right to left order based on initial value [init]. *)
 
-  val lines_fold: init:'accum -> f:('accum -> slice -> 'accum) -> t -> 'accum
+  val lines_fold: init:'accum -> f:('accum -> t -> 'accum) -> t -> 'accum
   (** [lines_fold ~init ~f t] splits [t] into lines separated by ["\r\n"] or
       ["\n"], which [f] folds in left to right order based on initial value
       [init]. *)
 
-  val lines_fold_right: init:'accum -> f:(slice -> 'accum -> 'accum) -> t
+  val lines_fold_right: init:'accum -> f:(t -> 'accum -> 'accum) -> t
     -> 'accum
   (** [lines_fold_right ~init ~f t] splits [t] into lines separated by ["\r\n"]
       or ["\n"], which [f] folds in right to left order based on initial value
@@ -394,9 +351,9 @@ module Seq : sig
       next function returns (base, past) cursors for the next string slice which
       is copied into to_string. *)
   module Slice : sig
-    module Make (T : Seq_intf.I_mono_def with type elm := slice) :
+    module Make (T : Seq_intf.I_mono_def with type elm := Slice.t) :
       S with type t := T.t
-    module Make_rev (T : Seq_intf.I_mono_def with type elm := slice) :
+    module Make_rev (T : Seq_intf.I_mono_def with type elm := Slice.t) :
       S with type t := T.t
   end
 
