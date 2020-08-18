@@ -13,12 +13,16 @@ include T
 include Intnb.Make_u(T)
 
 let max_codepoint = narrow_of_unsigned 0x10ffff
+let replacement = 0xfffd
 
-let narrow_of_unsigned t =
-  let t' = narrow_of_unsigned t in
-  match t' <= max_codepoint with
-  | false -> max_codepoint
-  | true -> t'
+let is_surrogate t =
+  t >= 0xd800 && t < 0xe000
+
+let narrow_of_unsigned u =
+  let t = narrow_of_unsigned u in
+  match t > max_codepoint || is_surrogate t with
+  | true -> replacement
+  | false -> t
 
 let kv x =
   narrow_of_unsigned x
@@ -39,7 +43,6 @@ let of_uns_hlt x =
 let of_char c =
   Stdlib.Char.code c
 
-let replacement = 0xfffd
 let nul = 0x00
 let soh = 0x01
 let stx = 0x02
@@ -247,122 +250,148 @@ let pp ppf t =
 
 module Seq = struct
   type outer = t
+  (* Silence ocp-indent. *)
+
   module type S = sig
     type t
-    val to_codepoint: t -> (outer option * t) option
-    val to_codepoint_replace: t -> (outer * t) option
-    val to_codepoint_hlt: t -> (outer * t) option
+    type decoded =
+      | Valid    of outer * t
+      | Invalid  of t
+    val to_codepoint: t -> decoded option
   end
 
   module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
     S with type t := T.t = struct
+    type fragment = {
+      u: uns;
+      n: uns;
+      nrem: uns;
+    }
+
+    (* It should be equivalent to write t vs T.t , but the compiler gets
+     * confused unless we write T.t here. An alternative is to explicitly define
+     * outer and t as:
+     *
+     *   type nonrec outer = outer
+     *   type t = T.t *)
+    type decoded =
+      | Valid    of outer * T.t
+      | Invalid  of T.t
+
+    let rec to_codepoint_cont fragment t =
+      match fragment.nrem with
+      | 0 -> begin
+          let cp = of_uns fragment.u in
+          match Uns.(Utf8.(length (of_codepoint cp) = fragment.n)) with
+          | true -> Valid (cp, t)
+          | false -> Invalid t
+        end
+      | _ -> begin
+          match T.next t with
+          | None -> Invalid t
+          | Some (b, _)
+            when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
+            Invalid t
+          | Some (b, t') -> begin
+              let u' = bit_or (bit_sl ~shift:6 fragment.u)
+                (bit_and 0x3f (Byte.to_uns b)) in
+              to_codepoint_cont {fragment with u=u'; nrem=pred fragment.nrem} t'
+            end
+        end
+
     let to_codepoint t =
-      let rec fn t u n nrem = begin
-        match nrem with
-        | 0 -> begin
-            let cp = of_uns u in
-            match Uns.(Utf8.(length (of_codepoint cp) = n)) with
-            | true -> Some (Some cp, t)
-            | false -> Some (None, t)
-          end
-        | _ -> begin
-            match T.next t with
-            | None -> Some (None, t)
-            | Some (b, _)
-              when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
-              Some (None, t)
-            | Some (b, t') -> begin
-                let u' = bit_or (bit_sl ~shift:6 u)
-                  (bit_and 0x3f (Byte.to_uns b)) in
-                fn t' u' n (pred nrem)
-              end
-          end
-      end in
       match T.next t with
       | None -> None
       | Some (b, t') -> begin
           match Byte.(bit_clz (bit_not b)) with
-          | 0 -> fn t' (Byte.to_uns b) 1 0 (* 0xxxxxxx *)
-          | 2 -> fn t' (bit_and 0x1f (Byte.to_uns b)) 2 1 (* 110xxxxx *)
-          | 3 -> fn t' (bit_and 0x0f (Byte.to_uns b)) 3 2 (* 1110xxxx *)
-          | 4 -> fn t' (bit_and 0x07 (Byte.to_uns b)) 4 3 (* 11110xxx *)
-          | _ -> Some (None, t')
+          | 0 -> begin
+              (* 0xxxxxxx *)
+              Some (to_codepoint_cont {u=(Byte.to_uns b); n=1; nrem=0} t')
+            end
+          | 2 -> begin
+              (* 110xxxxx *)
+              Some (to_codepoint_cont
+                  {u=(bit_and 0x1f (Byte.to_uns b)); n=2; nrem=1} t')
+            end
+          | 3 -> begin
+              (* 1110xxxx *)
+              Some (to_codepoint_cont
+                  {u=(bit_and 0x0f (Byte.to_uns b)); n=3; nrem=2} t')
+            end
+          | 4 -> begin
+              (* 11110xxx *)
+              Some (to_codepoint_cont
+                  {u=(bit_and 0x07 (Byte.to_uns b)); n=4; nrem=3} t')
+            end
+          | _ -> Some (Invalid t')
         end
-
-    let to_codepoint_replace t =
-      match to_codepoint t with
-      | Some (None, t') -> Some (replacement, t')
-      | Some (Some cp, t') -> Some (cp, t')
-      | None -> None
-
-    let to_codepoint_hlt t =
-      match to_codepoint t with
-      | Some (None, _) -> halt "Invalid utf8 sequence"
-      | Some (Some cp, t') -> Some (cp, t')
-      | None -> None
   end
 
   module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
     S with type t := T.t = struct
+    type fragment = {
+      u: uns;
+      n: uns;
+      t_one: T.t; (* Sequence after having consumed one byte. *)
+    }
+
+    type decoded =
+      | Valid    of outer * T.t
+      | Invalid  of T.t
+
+    let merge x fragment =
+      let u' = bit_or (bit_sl ~shift:(fragment.n*6) x) fragment.u in
+      let n' = succ fragment.n in
+      {fragment with u=u'; n=n'}
+
+    let validate fragment t =
+      let cp = of_uns fragment.u in
+      match Uns.(Utf8.(length (of_codepoint cp) = fragment.n)) with
+      | true -> Valid (cp, t)
+      | false -> Invalid t (* Overlong. *)
+
+    let rec to_codepoint_impl fragment bt_opt =
+      match bt_opt with
+      | None -> Invalid fragment.t_one (* Extra 0x10xxxxxx byte. *)
+      | Some (b, t') -> begin
+          match Byte.(bit_clz (bit_not b)), fragment.n with
+          | 0, 0 -> begin
+              (* 0xxxxxxx *)
+              let u' = Byte.to_uns b in
+              let fragment' = {fragment with u=u'; n=succ fragment.n} in
+              validate fragment' t'
+            end
+          | 1, 0
+          | 1, 1
+          | 1, 2 -> begin
+              (* 10xxxxxx *)
+              let fragment' = merge (bit_and 0x3f (Byte.to_uns b)) fragment in
+              to_codepoint_impl fragment' (T.next t')
+            end
+          | 2, 1 -> begin
+              (* 110xxxxx *)
+              let fragment' = merge (bit_and 0x1f (Byte.to_uns b)) fragment in
+              validate fragment' t'
+            end
+          | 3, 2 -> begin
+              (* 1110xxxx *)
+              let fragment' = merge (bit_and 0x0f (Byte.to_uns b)) fragment in
+              validate fragment' t'
+            end
+          | 4, 3 -> begin
+              (* 11110xxx *)
+              let fragment' = merge (bit_and 0x07 (Byte.to_uns b)) fragment in
+              validate fragment' t'
+            end
+          | lz, ncont when (lz >= ncont + 2) -> Invalid t'
+          | _ -> Invalid fragment.t_one
+        end
+
     let to_codepoint t =
-      let merge u nbytes x =
-        bit_or (bit_sl ~shift:(nbytes*6) x) u
-      in
-      let validate t u nbytes =
-        let cp = of_uns u in
-        match Uns.(Utf8.(length (of_codepoint cp) = nbytes)) with
-        | true -> Some (Some cp, t)
-        | false -> Some (None, t) (* Overlong. *)
-      in
-      let rec fn t u nbytes = begin
-        match T.next t, nbytes with
-        | None, 0 -> None
-        | None, _ -> Some (None, t)
-        | Some (b, t'), _ -> begin
-            match Byte.(bit_clz (bit_not b)), nbytes with
-            | 0, 0 -> begin
-                (* 0xxxxxxx *)
-                let u' = Byte.to_uns b in
-                validate t' u' (succ nbytes)
-              end
-            | 1, 0
-            | 1, 1
-            | 1, 2 -> begin
-                (* 10xxxxxx *)
-                let u' = merge u nbytes (bit_and 0x3f (Byte.to_uns b)) in
-                fn t' u' (succ nbytes)
-              end
-            | 2, 1 -> begin
-                (* 110xxxxx *)
-                let u' = merge u nbytes (bit_and 0x1f (Byte.to_uns b)) in
-                validate t' u' (succ nbytes)
-              end
-            | 3, 2 -> begin
-                (* 1110xxxx *)
-                let u' = merge u nbytes (bit_and 0x0f (Byte.to_uns b)) in
-                validate t' u' (succ nbytes)
-              end
-            | 4, 3 -> begin
-                (* 11110xxx *)
-                let u' = merge u nbytes (bit_and 0x07 (Byte.to_uns b)) in
-                validate t' u' (succ nbytes)
-              end
-            | _ -> Some (None, t')
-          end
-      end in
-      fn t 0 0
-
-    let to_codepoint_replace t =
-      match to_codepoint t with
-      | Some (None, t') -> Some (replacement, t')
-      | Some (Some cp, t') -> Some (cp, t')
+      match T.next t with
       | None -> None
-
-    let to_codepoint_hlt t =
-      match to_codepoint t with
-      | Some (None, _) -> halt "Invalid utf8 sequence"
-      | Some (Some cp, t') -> Some (cp, t')
-      | None -> None
+      | Some (_, t') as bt ->
+        Some (to_codepoint_impl {u=0; n=0; t_one=t'} bt)
   end
 end
 
@@ -402,7 +431,7 @@ let%expect_test "pp,pp_x" =
       end
   in
   printf "@[<h>";
-  fn [kv 0; kv 1; kv 0x27; kv 0x41; kv 0xfffd; max_codepoint];
+  fn [kv 0; kv 1; kv 0x27; kv 0x41; replacement; max_codepoint];
   printf "@]";
 
   [%expect{|
@@ -506,14 +535,17 @@ let%expect_test "conversion" =
         fn xs'
       end
   in
-  fn [Uns.max_value; 0; 42; 0x10_ffff; 0x1f_ffff; 0x20_0000; 0x20_0001];
+  fn [Uns.max_value; 0; 42; 0xd800; 0xdfff; 0x10_ffff; 0x11_0000; 0x20_0000;
+    0x20_0001];
 
   [%expect{|
-    of_uns 0x7fffffffffffffff -> to_uns 0x10ffffu21 -> of_uns 0x000000000010ffff -> 0x10ffffu21
+    of_uns 0x7fffffffffffffff -> to_uns 0x00fffdu21 -> of_uns 0x000000000000fffd -> 0x00fffdu21
     of_uns 0x0000000000000000 -> to_uns 0x000000u21 -> of_uns 0x0000000000000000 -> 0x000000u21
     of_uns 0x000000000000002a -> to_uns 0x00002au21 -> of_uns 0x000000000000002a -> 0x00002au21
+    of_uns 0x000000000000d800 -> to_uns 0x00fffdu21 -> of_uns 0x000000000000fffd -> 0x00fffdu21
+    of_uns 0x000000000000dfff -> to_uns 0x00fffdu21 -> of_uns 0x000000000000fffd -> 0x00fffdu21
     of_uns 0x000000000010ffff -> to_uns 0x10ffffu21 -> of_uns 0x000000000010ffff -> 0x10ffffu21
-    of_uns 0x00000000001fffff -> to_uns 0x10ffffu21 -> of_uns 0x000000000010ffff -> 0x10ffffu21
+    of_uns 0x0000000000110000 -> to_uns 0x00fffdu21 -> of_uns 0x000000000000fffd -> 0x00fffdu21
     of_uns 0x0000000000200000 -> to_uns 0x000000u21 -> of_uns 0x0000000000000000 -> 0x000000u21
     of_uns 0x0000000000200001 -> to_uns 0x000001u21 -> of_uns 0x0000000000000001 -> 0x000001u21
     |}]
@@ -535,7 +567,7 @@ let%expect_test "bit_and,bit_or,bit_xor" =
   let pairs = [
     (kv 0, kv 0);
     (kv 0x10_ffff, kv 0);
-    (kv 0, kv 0x1f_ffff);
+    (kv 0, kv 0x10_ffff);
     (kv 0x10_ffff, kv 0x10_ffff);
   ] in
   test_pairs pairs;
