@@ -23,7 +23,7 @@ val of_uns_hlt: uns -> t
     lossy. *)
 
 val to_bytes: t -> byte list
-(** Convert to a byte list. *)
+(** Convert to a UTF-8-encoded byte list. *)
 
 val of_char: char -> t
 (** Initialize from character literal. This is a stopgap for the lack of
@@ -169,27 +169,23 @@ module Utf8 : sig
       representation of [t]. *)
 end
 
-(** Functors for converting UTF-8-encoded byte sequences to {!type:codepoint}
+(** Functors for decoding UTF-8-encoded byte sequences as {!type:codepoint}
     values. *)
 module Seq : sig
   type outer = t
+  (* Silence ocp-indent. *)
+
   module type S = sig
     type t
+    (** Sequence type. *)
 
-    val to_codepoint: t -> (outer option * t) option
-    (** Convert beginning of sequence to a {!type:codepoint} ([None] upon
-        encountering a UTF-8 encoding error) and return it along with the
-        sequence remainder, or return [None] if the sequence is empty. *)
+    type decoded =
+      | Valid    of outer * t (** Valid codepoint and remainder sequence. *)
+      | Invalid  of t         (** Remainder sequence past invalid encoding. *)
 
-    val to_codepoint_replace: t -> (outer * t) option
-    (** Convert beginning of sequence to a {!type:codepoint} (replacing UTF-8
-        encoding errors with '�') and return it along with the sequence
-        remainder, or return [None] if the sequence is empty. *)
-
-    val to_codepoint_hlt: t -> (outer * t) option
-    (** Convert beginning of sequence to a {!type:codepoint} (halt on UTF-8
-        encoding errors) and return it along with the sequence remainder, or
-        return [None] if the sequence is empty. *)
+    val to_codepoint: t -> decoded option
+    (** [to_codepoint t] decodes beginning of sequence [t], or returns [None] if
+        [t] is empty. *)
   end
 
   (** Iteratively convert a UTF-8-encoded byte sequence to {!type:codepoint}

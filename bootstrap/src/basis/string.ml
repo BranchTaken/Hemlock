@@ -53,12 +53,13 @@ module T = struct
 
   let pp ppf t =
     let rec fn seq = begin
-      match Codepoint_seq.to_codepoint_hlt seq with
-      | None -> ()
-      | Some (cp, seq') -> begin
+      match Codepoint_seq.to_codepoint seq with
+      | Some (Valid (cp, seq')) -> begin
           Format.fprintf ppf "%s" Codepoint.Utf8.(escape (of_codepoint cp));
           fn seq'
         end
+      | Some (Invalid _) -> not_reached ()
+      | None -> ()
     end in
     Format.fprintf ppf "\"";
     fn (Codepoint_seq.init t);
