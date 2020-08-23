@@ -86,26 +86,35 @@ module Utf8 = struct
     | Three of byte * byte * byte
     | Four  of byte * byte * byte * byte
 
-  let of_codepoint cp =
+  let length_of_codepoint cp =
     assert (cp <= max_codepoint);
     let lz = bit_clz cp in
     let sigbits = 21 - lz in
+    Caml.Array.get [|
+      1; 1; 1; 1; 1; 1; 1; 1; (* [0..7] *)
+      2; 2; 2; 2;             (* [8..11] *)
+      3; 3; 3; 3; 3;          (* [12..16] *)
+      4; 4; 4; 4; 4;          (* [17..21] *)
+    |] sigbits
+
+  let of_codepoint cp =
+    assert (cp <= max_codepoint);
     let u = to_uns cp in
-    if sigbits < 8 then
-      One (Byte.of_uns u)
-    else if sigbits < 12 then
+    match length_of_codepoint cp with
+    | 1 -> One (Byte.of_uns u)
+    | 2 ->
       Two (
         Byte.of_uns Uns.(bit_or 0b110_00000 (bit_usr ~shift:6 u)),
         Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and u 0x3f))
       )
-    else if sigbits < 17 then
+    | 3 ->
       Three (
         Byte.of_uns Uns.(bit_or 0b1110_0000 (bit_usr ~shift:12 u)),
         Byte.of_uns Uns.(bit_or 0b10_000000
             (bit_and (bit_usr ~shift:6 u) 0x3f)),
         Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and u 0x3f))
       )
-    else if sigbits < 22 then
+    | 4 ->
       Four (
         Byte.of_uns Uns.(bit_or 0b11110_000 (bit_usr ~shift:18 u)),
         Byte.of_uns Uns.(bit_or 0b10_000000
@@ -114,7 +123,7 @@ module Utf8 = struct
             (bit_and (bit_usr ~shift:6 u) 0x3f)),
         Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and u 0x3f))
       )
-    else not_reached ()
+    | _ -> not_reached ()
 
   let to_codepoint = function
     | One b0 -> of_uns (Byte.to_uns b0)
@@ -282,7 +291,7 @@ module Seq = struct
       match fragment.nrem with
       | 0 -> begin
           let cp = of_uns fragment.u in
-          match Uns.(Utf8.(length (of_codepoint cp) = fragment.n)) with
+          match Uns.((Utf8.length_of_codepoint cp) = fragment.n) with
           | true -> Valid (cp, t)
           | false -> Invalid t
         end
@@ -346,7 +355,7 @@ module Seq = struct
 
     let validate fragment t =
       let cp = of_uns fragment.u in
-      match Uns.(Utf8.(length (of_codepoint cp) = fragment.n)) with
+      match Uns.((Utf8.length_of_codepoint cp) = fragment.n) with
       | true -> Valid (cp, t)
       | false -> Invalid t (* Overlong. *)
 

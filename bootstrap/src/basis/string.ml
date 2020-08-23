@@ -364,7 +364,7 @@ module Seq = struct
               match !rem_bytes with
               | [] -> begin
                   let cp, t' = T.next !tmut in
-                  assert (Uns.(Codepoint.Utf8.(length (of_codepoint cp)) +
+                  assert (Uns.((Codepoint.Utf8.length_of_codepoint cp) +
                       (T.length t') = (T.length !tmut)));
                   tmut := t';
                   let b, tl = match Codepoint.to_bytes cp with
@@ -398,7 +398,7 @@ module Seq = struct
               | 0 -> cps
               | _ -> begin
                   let cp, t' = T.next t in
-                  assert (Uns.(Codepoint.Utf8.(length (of_codepoint cp)) +
+                  assert (Uns.((Codepoint.Utf8.length_of_codepoint cp) +
                       (T.length t') = (T.length t)));
                   let cps' = cp :: cps in
                   fn t' cps'
@@ -677,7 +677,7 @@ module Slice = struct
 
       let next t =
         let codepoint = t.f t.cindex in
-        let cp_nbytes = Codepoint.Utf8.(length (of_codepoint codepoint)) in
+        let cp_nbytes = Codepoint.Utf8.length_of_codepoint codepoint in
         let blength' = t.blength - cp_nbytes in
         let t' = {t with cindex=(Uns.succ t.cindex);
              blength=blength'} in
@@ -693,7 +693,7 @@ module Slice = struct
       | true -> nbytes
       | false -> begin
           let codepoint, seq' = f seq in
-          let cp_nbytes = Codepoint.Utf8.(length (of_codepoint codepoint)) in
+          let cp_nbytes = Codepoint.Utf8.length_of_codepoint codepoint in
           let nbytes' = nbytes + cp_nbytes in
           fn ~seq:seq' (Uns.succ cindex) nbytes'
         end
@@ -730,7 +730,7 @@ module Slice = struct
         | cp :: cps -> cp, cps
         | [] -> not_reached ()
       in
-      let nbytes = Codepoint.Utf8.(length (of_codepoint codepoint)) in
+      let nbytes = Codepoint.Utf8.length_of_codepoint codepoint in
       let blength = t.blength - nbytes in
       codepoint, {codepoints; blength}
   end
@@ -843,7 +843,7 @@ module Slice = struct
       let next t =
         let codepoint = Cursor.rget t.cursor in
         let codepoint' = t.f t.cindex codepoint in
-        let utf8_length = Codepoint.Utf8.(length (of_codepoint codepoint')) in
+        let utf8_length = Codepoint.Utf8.length_of_codepoint codepoint' in
         let cursor' = Cursor.succ t.cursor in
         let cindex' = Uns.succ t.cindex in
         let blength' = t.blength - utf8_length in
@@ -860,7 +860,7 @@ module Slice = struct
     foldi t ~init:(0, false) ~f:(fun i (blength, modified) codepoint ->
       let codepoint' = f i codepoint in
       let modified' = modified || Codepoint.(codepoint' <> codepoint) in
-      (blength + Codepoint.Utf8.(length (of_codepoint codepoint'))), modified'
+      (blength + (Codepoint.Utf8.length_of_codepoint codepoint')), modified'
     )
 
   let map ~f t =
@@ -985,7 +985,7 @@ module Slice = struct
         let slice = f cp in
         let modified' = modified
                         || Uns.((blength slice)
-                          <> Codepoint.Utf8.(length (of_codepoint cp)))
+                          <> (Codepoint.Utf8.length_of_codepoint cp))
                         || Codepoint.(Cursor.(rget (base slice)) <> cp) in
         let slices' = slice :: slices in
         modified', slices'
