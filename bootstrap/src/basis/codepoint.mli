@@ -149,6 +149,10 @@ module Utf8 : sig
   type outer = t
   type t
 
+  val length_of_codepoint: outer -> uns
+  (** [length_of_codepoint cp] returns the length in bytes of the UTF-8 encoding
+      which corresponds to [cp]. *)
+
   val of_codepoint: outer -> t
   (** Initialize from {!type:codepoint}. *)
 

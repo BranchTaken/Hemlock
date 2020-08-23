@@ -136,14 +136,14 @@ module String_seq = struct
     let rec vlength ~on_invalid seq vindex =
       match on_invalid, (Codepoint_seq.to_codepoint seq) with
       | _, Some (Valid (cp, seq')) -> begin
-          let vindex' = vindex + Codepoint.Utf8.(length (of_codepoint cp)) in
+          let vindex' = vindex + (Codepoint.Utf8.length_of_codepoint cp) in
           vlength ~on_invalid seq' vindex'
         end
       | Error, Some (Invalid _) -> None
       | Replace, Some (Invalid seq') -> begin
           let cp = Codepoint.replacement in
           let vindex' =
-            vindex + Codepoint.Utf8.(length (of_codepoint cp)) in
+            vindex + (Codepoint.Utf8.length_of_codepoint cp) in
           vlength ~on_invalid seq' vindex'
         end
       | Halt, Some (Invalid _) -> halt "Invalid utf8 sequence"
@@ -161,7 +161,7 @@ module String_seq = struct
     let next t =
       match t.on_invalid, (Codepoint_seq.to_codepoint t.seq) with
       | _, Some (Valid (cp, seq')) -> begin
-          let vincr = Codepoint.Utf8.(length (of_codepoint cp)) in
+          let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vindex' = t.vindex + vincr in
           let t' = {t with seq=seq'; vindex=vindex'} in
           cp, t'
@@ -169,7 +169,7 @@ module String_seq = struct
       | Error, Some (Invalid _) -> not_reached ()
       | Replace, Some (Invalid seq') -> begin
           let cp = Codepoint.replacement in
-          let vincr = Codepoint.Utf8.(length (of_codepoint cp)) in
+          let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vindex' = t.vindex + vincr in
           let t' = {t with seq=seq'; vindex=vindex'} in
           cp, t'
@@ -409,13 +409,13 @@ module String_replace_seq_rev = struct
         match Codepoint_seq_rev.to_codepoint seq with
         | Some (Valid (cp, seq')) -> begin
             let vlength' =
-              Codepoint.Utf8.(length (of_codepoint cp)) + vlength in
+              (Codepoint.Utf8.length_of_codepoint cp) + vlength in
             fn seq' vlength'
           end
         | Some (Invalid seq') -> begin
             let cp = Codepoint.replacement in
             let vlength' =
-              Codepoint.Utf8.(length (of_codepoint cp)) + vlength in
+              (Codepoint.Utf8.length_of_codepoint cp) + vlength in
             fn seq' vlength'
           end
         | None -> vlength
@@ -430,14 +430,14 @@ module String_replace_seq_rev = struct
     let next t =
       match Codepoint_seq_rev.to_codepoint t.seq with
       | Some (Valid (cp, seq')) -> begin
-          let vincr = Codepoint.Utf8.(length (of_codepoint cp)) in
+          let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vpast' = t.vpast - vincr in
           let t' = {seq=seq'; vpast=vpast'} in
           cp, t'
         end
       | Some (Invalid seq') -> begin
           let cp = Codepoint.replacement in
-          let vincr = Codepoint.Utf8.(length (of_codepoint cp)) in
+          let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vpast' = t.vpast - vincr in
           let t' = {seq=seq'; vpast=vpast'} in
           cp, t'
