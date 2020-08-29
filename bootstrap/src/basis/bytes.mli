@@ -23,7 +23,10 @@ module Slice : sig
       the resulting state. *)
 
   val length: t -> uns
-  (* [length t] returns the length of [t] in bytes. *)
+  (** [length t] returns the length of [t] in bytes. *)
+
+  val get: uns -> t -> byte
+  (** [get i t] returns the byte at index [i] within [t]. *)
 
   val of_codepoint: codepoint -> t
   (** [of_codepoint codepoint] creates a slice of bytes corresponding to the
@@ -55,6 +58,9 @@ val hash_fold: t -> Hash.State.t -> Hash.State.t
 
 val length: t -> uns
 (* [length t] returns the length of [t] in bytes. *)
+
+val get: uns -> t -> byte
+(** [get i t] returns the byte at index [i] within [t]. *)
 
 val of_codepoint: codepoint -> t
 (** [of_codepoint codepoint] creates an array of bytes corresponding to the
