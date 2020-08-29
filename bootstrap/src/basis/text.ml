@@ -89,8 +89,57 @@ module Excerpt = struct
   let eind t =
     t.eind
 
-  let bytes t =
-    t.bytes
+  let length t =
+    Bytes.Slice.length t.bytes
+
+  let get i t =
+    Bytes.Slice.get i t.bytes
+
+  module Cursor = struct
+    module T = struct
+      type container = t
+      type t = {
+        excerpt: container;
+        index: uns;
+      }
+
+      let cmp t0 t1 =
+        Uns.cmp t0.index t1.index
+
+      let hd excerpt =
+        {excerpt; index=0}
+
+      let tl excerpt =
+        {excerpt; index=Bytes.Slice.length excerpt.bytes}
+
+      let succ t =
+        match t.index = length t.excerpt with
+        | true -> halt "Cannot seek past end of excerpt"
+        | false -> {t with index=Uns.succ t.index}
+
+      let pred t =
+        match t.index = 0 with
+        | true -> halt "Cannot seek before beginning of excerpt"
+        | false -> {t with index=Uns.pred t.index}
+
+      let lget t =
+        get (Uns.pred t.index) t.excerpt
+
+      let rget t =
+        get t.index t.excerpt
+
+      let prev t =
+        lget t, pred t
+
+      let next t =
+        rget t, succ t
+
+      let container t =
+        t.excerpt
+    end
+    include T
+    include Cmpable.Make(T)
+  end
 end
 
 type t = {
@@ -145,16 +194,14 @@ module Cursor = struct
       vind: Vind.t;
       (* Line/column. *)
       spos: Spos.t;
-      (* Excerpt which contains bcursor's bytes. *)
-      excerpt: Excerpt.t;
-      (* Bytes cursor, used for iterating over bytes within a single excerpt.
+      (* Excerpt cursor, used for iterating over bytes within a single excerpt.
        * Note that for the positions between excerpts, there are two logically
-       * equivalent cursors, one of which can only handle lget, and the other of
-       * which can only handle rget. We make no effort to amortize repeated
-       * conversions between equivalent cursors to transparently support
-       * lget/rget, under the assumption that no reasonable use case suffers
-       * more than constant additional overhead. *)
-      bcursor: Bytes.Cursor.t;
+       * equivalent text cursors, one of which can only handle lget, and the
+       * other of which can only handle rget. We make no effort to amortize
+       * repeated conversions between equivalent text cursors to transparently
+       * support lget/rget, under the assumption that no reasonable use case
+       * suffers more than constant additional overhead. *)
+      ecursor: Excerpt.Cursor.t;
     }
 
     let cmp t0 t1 =
@@ -168,13 +215,11 @@ module Cursor = struct
 
     let hd text =
       let excerpt = Map.get_hlt 0 text.excerpts in
-      let bcursor = Bytes.Slice.base (Excerpt.bytes excerpt) in
       {
         text;
         vind=Vind.init 0;
         spos=Spos.init ~line:1 ~scol:(Sint.kv 0);
-        excerpt;
-        bcursor;
+        ecursor=Excerpt.Cursor.hd excerpt;
       }
 
     module Codepoint_seq = struct
@@ -185,19 +230,19 @@ module Cursor = struct
           cursor
 
         let rec next t =
-          match Bytes.Cursor.(t.bcursor < tl (container t.bcursor)) with
+          match Excerpt.Cursor.(t.ecursor < tl (container t.ecursor)) with
           | true -> begin
-              let b, bcursor' = Bytes.Cursor.next t.bcursor in
-              Some (b, {t with bcursor=bcursor'})
+              let b, ecursor' = Excerpt.Cursor.next t.ecursor in
+              Some (b, {t with ecursor=ecursor'})
             end
           | false -> begin
-              match (Uns.succ (Excerpt.eind t.excerpt)) <
+              match (Uns.succ Excerpt.(eind (Cursor.container t.ecursor))) <
                 (Map.length t.text.excerpts) with
               | true -> begin
-                  let excerpt' =
-                    Map.get_hlt (Uns.succ t.excerpt.eind) t.text.excerpts in
-                  let bcursor' = Bytes.Slice.base (Excerpt.bytes excerpt') in
-                  next {t with excerpt=excerpt'; bcursor=bcursor'}
+                  let excerpt' = Map.get_hlt (Uns.succ t.ecursor.excerpt.eind)
+                    t.text.excerpts in
+                  let ecursor' = Excerpt.Cursor.hd excerpt' in
+                  next {t with ecursor=ecursor'}
                 end
               | false -> begin
                   match Lazy.force (t.text.extend) with
@@ -269,18 +314,18 @@ module Cursor = struct
           cursor
 
         let rec next t =
-          match Bytes.Cursor.(t.bcursor > hd (container t.bcursor)) with
+          match Excerpt.Cursor.(t.ecursor > hd (container t.ecursor)) with
           | true -> begin
-              let b, bcursor' = Bytes.Cursor.prev t.bcursor in
-              Some (b, {t with bcursor=bcursor'})
+              let b, ecursor' = Excerpt.Cursor.prev t.ecursor in
+              Some (b, {t with ecursor=ecursor'})
             end
           | false -> begin
-              match (Excerpt.eind t.excerpt) > 0 with
+              match (Excerpt.eind t.ecursor.excerpt) > 0 with
               | true -> begin
-                  let excerpt' =
-                    Map.get_hlt (Uns.pred t.excerpt.eind) t.text.excerpts in
-                  let bcursor' = Bytes.Slice.past (Excerpt.bytes excerpt') in
-                  next {t with excerpt=excerpt'; bcursor=bcursor'}
+                  let excerpt' = Map.get_hlt (Uns.pred t.ecursor.excerpt.eind)
+                    t.text.excerpts in
+                  let ecursor' = Excerpt.Cursor.tl excerpt' in
+                  next {t with ecursor=ecursor'}
                 end
               | false -> None
             end

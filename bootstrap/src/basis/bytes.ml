@@ -187,6 +187,9 @@ module Slice = struct
   let length t =
     (Cursor.index (past t)) - (Cursor.index (base t))
 
+  let get i t =
+    Array.get (Cursor.index (base t) + i) (container t)
+
   let pp ppf t =
     let open Format in
     fprintf ppf "@[<h>[|";
@@ -252,6 +255,9 @@ let hash_fold t state =
 
 let length t =
   Slice.(length (of_container t))
+
+let get i t =
+  Slice.(get i (of_container t))
 
 let of_codepoint cp =
   Slice.(to_container (of_codepoint cp))
