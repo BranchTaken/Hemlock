@@ -1,7 +1,3 @@
-(* Aliases. *)
-
-module Byte = U8
-
 (* Types. *)
 
 type i63 = I63.t
