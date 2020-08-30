@@ -1,6 +1,5 @@
 (* Partial Rudiments. *)
 include Rudiments_int0
-module Uns = U63
 
 let of_int t =
   sint_of_int t
