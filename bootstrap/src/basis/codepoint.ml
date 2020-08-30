@@ -1,5 +1,4 @@
 (* Partial Rudiments. *)
-module Uns = U63
 module Byte = U8
 open Rudiments_int
 open Rudiments_functions

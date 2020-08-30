@@ -1,6 +1,5 @@
 open Rudiments_functions
 open Intnw_intf
-module Uns = U63
 
 external intnw_icmp: int64 array -> int64 array -> Cmp.t = "hemlock_intnw_icmp"
 external intnw_ucmp: int64 array -> int64 array -> Cmp.t = "hemlock_intnw_ucmp"

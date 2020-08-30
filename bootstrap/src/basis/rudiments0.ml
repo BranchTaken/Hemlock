@@ -1,6 +1,5 @@
 (* Aliases. *)
 
-module Uns = U63
 module Byte = U8
 
 (* Types. *)
