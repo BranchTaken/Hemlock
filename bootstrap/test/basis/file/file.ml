@@ -1,5 +1,4 @@
 open Basis
-open Basis.Rudiments
 
 let () =
   let file = File.of_path_hlt
