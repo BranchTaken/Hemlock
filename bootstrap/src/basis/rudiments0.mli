@@ -1,7 +1,3 @@
-(* Module aliases. *)
-
-module Byte = U8
-
 (* Type aliases. *)
 
 (* Redundant; ('a array) is intrinsic and equivalent to ('a Array.t). *)
