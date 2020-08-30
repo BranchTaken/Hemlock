@@ -1,5 +1,4 @@
 open Basis
-open Basis.Rudiments
 
 let buffer = Bytes.Slice.of_string_slice (String.Slice.of_string "
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor

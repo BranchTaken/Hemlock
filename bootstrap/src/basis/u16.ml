@@ -1,6 +1,5 @@
 (* Partial Rudiments. *)
 module Uns = U63
-module Sint = I63
 open Rudiments_int
 open Rudiments_functions
 

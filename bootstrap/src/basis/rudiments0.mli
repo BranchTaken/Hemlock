@@ -1,6 +1,5 @@
 (* Module aliases. *)
 
-module Sint = I63
 module Uns = U63
 module Byte = U8
 
