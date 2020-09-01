@@ -34,7 +34,7 @@ async def get_text(
         log.debug(f'"{stdin}" | {cmd}\n{text}')
 
     assert proc.returncode in error_codes, cmd
-    
+
     return text
 
 
@@ -45,7 +45,7 @@ async def get_lines(
 ) -> Tuple[Text]:
     """Run shell command (with optional piped stdin) and return lines of combined stdout/stderr."""
     lines = tuple((await get_text(cmd=cmd, stdin=stdin, error_codes=error_codes)).splitlines())
-    
+
     return lines
 
 
@@ -70,7 +70,7 @@ class Hunk:
                 stop = start + int(match.groupdict()['delta'] or '0')
                 hunks.append(Hunk(start, stop))
         hunks: Tuple[Hunk] = tuple(hunks)
-        
+
         return hunks
 
 
@@ -133,7 +133,7 @@ class CommitDiff:
         text = '\n\n'.join(file_diff.text for file_diff in file_diffs if file_diff.text)
 
         return CommitDiff(text=text)
-    
+
 
 def main() -> int:
     async def main_inner() -> int:
@@ -144,7 +144,7 @@ def main() -> int:
             return 1
 
         return 0
-        
+
     return run(main_inner())
 
 
