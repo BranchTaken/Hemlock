@@ -19,7 +19,7 @@ dev-repo: "git+https://github.com/BranchTaken/Hemlock"
 tags: [ "languages" "org:BranchTaken" ]
 depends: [
   "ocaml" {>= "4.10.0"}
-  "dune" {>= "2.4.0"}
+  "dune" {>= "2.7.0"}
   "odoc" {build}
   "topkg" {build}
   "ppx_expect"
