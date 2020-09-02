@@ -53,9 +53,6 @@ val not_implemented: string -> 'a
 val halt: string -> 'a
 (** [halt s] prints [s] to [stderr] and halts the actor. *)
 
-val demand: bool -> unit
-(** Like [assert], but cannot be disabled. *)
-
 val uns_of_sint: sint -> uns
 (** Convert a signed integer to a bitwise identical unsigned integer. *)
 

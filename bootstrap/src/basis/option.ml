@@ -41,15 +41,6 @@ module T = struct
         | None -> {option; index=0}
         | Some _ -> {option; index=1}
 
-      let succ t =
-        match t.option, t.index with
-        | None, _ -> halt "At end of option"
-        | Some _, 1 -> halt "At end of option"
-        | Some _, _ -> begin
-            assert (t.index = 0);
-            {t with index=1}
-          end
-
       let pred t =
         match t.option, t.index with
         | None, _ -> halt "At beginning of option"
@@ -57,6 +48,15 @@ module T = struct
         | Some _, _ -> begin
             assert (t.index = 1);
             {t with index=0}
+          end
+
+      let succ t =
+        match t.option, t.index with
+        | None, _ -> halt "At end of option"
+        | Some _, 1 -> halt "At end of option"
+        | Some _, _ -> begin
+            assert (t.index = 0);
+            {t with index=1}
           end
 
       let lget t =
@@ -201,9 +201,9 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold None -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold Some 0 -> 0xe1d0_4b10_a3f6_4eda_dfbb_5c04_579d_0b05u128
-    hash_fold Some 1 -> 0x262a_4610_b795_f867_bd59_f2c2_1134_c78cu128
+    hash_fold None -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold Some 0 -> 0x03ed_688f_024a_5170_df17_bbe2_160e_8fa0u128
+    hash_fold Some 1 -> 0x2c31_1233_8879_fc2a_f407_45af_d2ef_7351u128
     |}]
 
 let%expect_test "hash_fold empty" =

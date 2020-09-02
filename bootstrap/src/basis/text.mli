@@ -16,21 +16,28 @@ open Rudiments
 type t
 (** Text. *)
 
-val of_bytes_stream: ?path:string -> Bytes.Slice.t Stream.t -> t
-(** [of_string_stream ~path stream] returns a text which streams from [stream].
-*)
+val of_bytes_stream: ?path:string -> ?tabwidth:uns -> Bytes.Slice.t Stream.t
+  -> t
+(** [of_string_stream ~path ~tabwidth stream] returns a text which streams from
+    [stream]. [~tabwidth] defaults to 8. *)
 
-val of_string_slice: ?path:string -> String.Slice.t -> t
-(** [of_string_slice ~path slice] returns an eagerly initialized text. *)
+val of_string_slice: ?path:string -> ?tabwidth:uns -> String.Slice.t -> t
+(** [of_string_slice ~path slice] returns an eagerly initialized text.
+    [~tabwidth] defaults to 8. *)
 
 val path: t -> string option
 (** [path t] returns the optional path associated with the text. *)
+
+val tabwidth: t -> uns
+(** [tabwidth t] returns the column multiple for tab stops. *)
 
 (** Position within a text. The associated text is intentionally not referenced,
     lest values retain references to arbitrary incremental texts. *)
 module Pos: sig
   type t
   (** Position type. *)
+
+  include FormattableIntf.SMono with type t := t
 
   val init: line:uns -> col:uns -> t
   (** Initialize position. *)
@@ -61,14 +68,47 @@ module Cursor : sig
   (** [rget_opt t] returns [Some codepoint] if [t] is not at the text's tail,
       [None] otherwise. Source data are lazily streamed as needed. *)
 
+  val rgetv_opt: t -> (codepoint * bool) option
+  (** [rgetv_opt t] returns [Some (codepoint, valid)] if [t] is not at the text's
+      tail, [None] otherwise. [codepoint] is valid unless it is '�' and the
+      result of invalid byte encoding. Source data are lazily streamed as
+      needed. *)
+
   val next_opt: t -> (codepoint * t) option
   (** [next_opt t] returns [Some (codepoint, t')] if [t] is not at the text's
       tail, [None] otherwise. Source data are lazily streamed as needed. *)
 
+  val nextv_opt: t -> (codepoint * bool * t) option
+  (** [nextv_opt t] returns [Some (codepoint, valid, t')] if [t] is not at the
+      text's tail, [None] otherwise. [codepoint] is valid unless it is '�' and
+      the result of invalid byte encoding. Source data are lazily streamed as
+      needed. *)
+
+  val nextv: t -> codepoint * bool * t
+  (** [nextv t] returns [codepoint, valid, t'] if [t] is not at the
+      text's tail, halts otherwise. [codepoint] is valid unless it is '�' and
+      the result of invalid byte encoding. Source data are lazily streamed as
+      needed. *)
+
+  val rvalid: t -> bool
+  (** [rvalid t] returns whether the byte sequence to the right of the cursor is
+      valid UTF-8. Note that [rget t] returns '�' if the byte sequence is
+      invalid, but valid UTF-8 may also directly encode '�'. *)
+
+  val prevv: t -> codepoint * bool * t
+  (** [prevv t] returns [codepoint, valid, t'] if [t] is not at the
+      text's head, halts otherwise. [codepoint] is valid unless it is '�' and
+      the result of invalid byte encoding. *)
+
+  val lvalid: t -> bool
+  (** [lvalid t] returns whether the byte sequence to the left of the cursor is
+      valid UTF-8. Note that [lget t] returns '�' if the byte sequence is
+      invalid, but UTF-8 may also directly encode '�'. *)
+
   val pos: t -> Pos.t
   (** [pos t] returns the position of [t]. Note that if [t] derives from having
-      moved backward over a ['\n'] as recently as having moved from column 0,
-      the column number must be calculated. *)
+      moved backward over a ['\n'] or ['\t'] as recently as having moved from
+      column 0, the column number must be calculated. *)
 end
 
 (** Text slice. *)

@@ -18,6 +18,10 @@ val to_uns: t -> uns
 val of_uns: uns -> t
 (** Initialize from full-width unsigned integer, with possible loss. *)
 
+val of_uns_opt: uns -> t option
+(** Initialize from full-width unsigned integer, or return [None] if conversion
+    would be lossy. *)
+
 val of_uns_hlt: uns -> t
 (** Initialize from full-width unsigned integer, or halt if conversion would be
     lossy. *)

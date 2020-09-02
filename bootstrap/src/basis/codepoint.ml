@@ -5,7 +5,7 @@ type byte = Byte.t
 
 module T = struct
   type t = uns
-  let num_bits = 21
+  let bit_length = 21
 end
 include T
 include Intnb.MakeU(T)
@@ -31,12 +31,17 @@ let to_uns t =
 let of_uns x =
   narrow_of_unsigned x
 
-let of_uns_hlt x =
+let of_uns_opt x =
   let t = of_uns x in
   let x' = to_uns t in
   match Uns.(x' = x) with
-  | false -> halt "Lossy conversion"
-  | true -> t
+  | false -> None
+  | true -> Some t
+
+let of_uns_hlt x =
+  match of_uns_opt x with
+  | None -> halt "Lossy conversion"
+  | Some t -> t
 
 let of_char c =
   Stdlib.Char.code c
@@ -422,10 +427,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold 0x000000u21 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x000001u21 -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
-    hash_fold 0x000000u21 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x10ffffu21 -> 0x5017_4d83_ef7a_1f63_7f02_8e26_ef80_61ebu128
+    hash_fold 0x000000u21 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x000001u21 -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
+    hash_fold 0x000000u21 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x10ffffu21 -> 0x6895_ad2b_59d6_e057_069b_fbcc_4ae9_608au128
     |}]
 
 let%expect_test "pp,pp_x" =

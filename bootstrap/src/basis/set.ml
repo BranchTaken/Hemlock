@@ -174,7 +174,7 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold (of_list (module Uns) []) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold (of_list (module Uns) []) -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
     |}]
 
 let%expect_test "hash_fold empty" =

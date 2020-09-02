@@ -49,17 +49,17 @@ module T = struct
         let left_rev, len = fn [] list 0 in
         {list; left_rev; right=[]; index=len}
 
-      let succ t =
-        match t.right with
-        | [] -> halt "At end of list"
-        | hd :: tl -> {t with left_rev=(hd :: t.left_rev); right=tl;
-             index=(Uns.succ t.index)}
-
       let pred t =
         match t.left_rev with
         | [] -> halt "At beginning of list"
         | hd :: tl -> {t with left_rev=tl; right=(hd :: t.right);
              index=(Uns.pred t.index)}
+
+      let succ t =
+        match t.right with
+        | [] -> halt "At end of list"
+        | hd :: tl -> {t with left_rev=(hd :: t.left_rev); right=tl;
+             index=(Uns.succ t.index)}
 
       let lget t =
         match t.left_rev with
@@ -726,10 +726,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold [] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold [0] -> 0x53a3_5e44_9415_8ff4_24a3_88ce_df7b_e5a4u128
-    hash_fold [0; 0] -> 0x8393_18f7_c117_112f_e379_a0b9_ec11_41f5u128
-    hash_fold [0; 1] -> 0xa677_190c_1ad3_d08a_d7f7_106c_570d_6d2eu128
+    hash_fold [] -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold [0] -> 0x5813_89d3_d926_9f3c_ffb4_92a6_b118_4dfcu128
+    hash_fold [0; 0] -> 0x322f_9602_7919_2b02_9116_8e4e_6e9c_67b0u128
+    hash_fold [0; 1] -> 0xa627_52f5_ea2f_d3c0_39a9_536b_6256_1d94u128
     |}]
 
 let%expect_test "hash_fold empty" =

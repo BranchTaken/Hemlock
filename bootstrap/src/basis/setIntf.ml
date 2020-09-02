@@ -159,13 +159,13 @@ module type S = sig
 
   val reduce: f:('a -> 'a -> 'a) -> ('a, 'cmp) t -> 'a option
   (** [reduce ~f t] reduces [t] to a single value, or [None] if the set is
-      empty. The reduction function is assumed to be associative; thus reduction
-      order is unspecified. *)
+      empty. The reduction function is assumed to be associative and
+      commutative; thus reduction order is unspecified. *)
 
   val reduce_hlt: f:('a -> 'a -> 'a) -> ('a, 'cmp) t -> 'a
   (** [reduce_hlt ~f t] reduces [t] to a single value, or halts if the set is
-      empty. The reduction function is assumed to be associative; thus reduction
-      order is unspecified. *)
+      empty. The reduction function is assumed to be associative and
+      commutative; thus reduction order is unspecified. *)
 
   include SeqIntf.SPoly2Fold2
     with type ('a, 'cmp) t := ('a, 'cmp) t

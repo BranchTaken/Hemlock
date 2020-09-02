@@ -1127,11 +1127,11 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold (of_klist []) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold (of_klist [0]) -> 0x53a3_5e44_9415_8ff4_24a3_88ce_df7b_e5a4u128
-    hash_fold (of_klist [0; 1]) -> 0xcc6a_388f_cbb9_0721_e04c_974f_50b8_4baau128
-    hash_fold (of_klist [0; 2]) -> 0xcc6a_388f_cbb9_0721_e04c_974f_50b8_4baau128
-    hash_fold (of_klist [2; 3]) -> 0x9918_3447_d883_5d42_0a2c_4ef8_8fdd_b8deu128
+    hash_fold (of_klist []) -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold (of_klist [0]) -> 0x5813_89d3_d926_9f3c_ffb4_92a6_b118_4dfcu128
+    hash_fold (of_klist [0; 1]) -> 0x1fb6_2e2e_e975_1639_a1a8_f71f_e091_3f54u128
+    hash_fold (of_klist [0; 2]) -> 0x1fb6_2e2e_e975_1639_a1a8_f71f_e091_3f54u128
+    hash_fold (of_klist [2; 3]) -> 0x53b0_5405_22ff_9a4c_9692_83f9_4e79_db8fu128
     |}]
 
 let%expect_test "hash_fold empty" =
@@ -1180,7 +1180,7 @@ let%expect_test "empty,cmper_m,singleton,length" =
     Map {
       length=1;
       root={
-        present_kv=   0x0000000000400000;
+        present_kv=   0x0000000040000000;
         present_child=0x0000000000000000;
         elms_kv=[|
           (0, "0")
@@ -1343,7 +1343,7 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000000000400004;
+          present_kv=   0x0000000040000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1355,7 +1355,7 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000000000400004;
+          present_kv=   0x0000000040000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1369,7 +1369,7 @@ let%expect_test "of_alist,remove" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000000000400000;
+          present_kv=   0x0000000040000000;
           present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
@@ -1391,7 +1391,7 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000000000400004;
+          present_kv=   0x0000000040000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1403,7 +1403,7 @@ let%expect_test "of_alist,remove" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000000000400000;
+          present_kv=   0x0000000040000000;
           present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
@@ -1416,7 +1416,7 @@ let%expect_test "of_alist,remove" =
       Map {
         length=3;
         root={
-          present_kv=   0x0000000000500004;
+          present_kv=   0x0000000050000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1429,7 +1429,7 @@ let%expect_test "of_alist,remove" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000000000400004;
+          present_kv=   0x0000000040000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1468,7 +1468,7 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000000000400000;
+          present_kv=   0x0000000040000000;
           present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
@@ -1490,7 +1490,7 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000000000400004;
+          present_kv=   0x0000000040000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1502,7 +1502,7 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=1;
         root={
-          present_kv=   0x0000000000400000;
+          present_kv=   0x0000000040000000;
           present_child=0x0000000000000000;
           elms_kv=[|
             (0, "0")
@@ -1515,7 +1515,7 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=3;
         root={
-          present_kv=   0x0000000000500004;
+          present_kv=   0x0000000050000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1528,7 +1528,7 @@ let%expect_test "of_alist,remove_hlt" =
       Map {
         length=2;
         root={
-          present_kv=   0x0000000000400004;
+          present_kv=   0x0000000040000080;
           present_child=0x0000000000000000;
           elms_kv=[|
             (1, "1");
@@ -1566,8 +1566,8 @@ let%expect_test "of_alist,to_alist" =
     of_alist [(0, "0")]; to_alist -> [(0, "0")]
     of_alist [(0, "0"); (1, "1")]; to_alist -> [(0, "0"); (1, "1")]
     of_alist [(0, "0"); (1, "1"); (2, "2")]; to_alist -> [(0, "0"); (2, "2"); (1, "1")]
-    of_alist [(0, "0"); (1, "1"); (66, "66")]; to_alist -> [(1, "1"); (66, "66"); (0, "0")]
-    of_alist [(0, "0"); (1, "1"); (66, "66"); (91, "91")]; to_alist -> [(1, "1"); (91, "91"); (66, "66"); (0, "0")]
+    of_alist [(0, "0"); (1, "1"); (66, "66")]; to_alist -> [(0, "0"); (66, "66"); (1, "1")]
+    of_alist [(0, "0"); (1, "1"); (66, "66"); (91, "91")]; to_alist -> [(0, "0"); (66, "66"); (91, "91"); (1, "1")]
     |}]
 
 let%expect_test "choose_hlt" =
@@ -1713,41 +1713,41 @@ let%expect_test "fold2" =
     fold2 [] [0] -> [(None, Some (0, 0))]
     fold2 [] [0; 1] -> [(None, Some (0, 0)); (None, Some (1, 100))]
     fold2 [] [0; 1; 2] -> [(None, Some (0, 0)); (None, Some (2, 200)); (None, Some (1, 100))]
-    fold2 [] [0; 1; 66] -> [(None, Some (0, 0)); (None, Some (1, 100)); (None, Some (66, 6600))]
-    fold2 [] [0; 1; 66; 91] -> [(None, Some (0, 0)); (None, Some (1, 100)); (None, Some (91, 9100)); (None, Some (66, 6600))]
+    fold2 [] [0; 1; 66] -> [(None, Some (0, 0)); (None, Some (66, 6600)); (None, Some (1, 100))]
+    fold2 [] [0; 1; 66; 91] -> [(None, Some (0, 0)); (None, Some (66, 6600)); (None, Some (91, 9100)); (None, Some (1, 100))]
     fold2 [] [42; 420] -> [(None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [] [42; 420; 421] -> [(None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [] [42; 420; 4200] -> [(None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0] [0] -> [(Some (0, 0), Some (0, 0))]
     fold2 [0] [0; 1] -> [(Some (0, 0), Some (0, 0)); (None, Some (1, 100))]
     fold2 [0] [0; 1; 2] -> [(Some (0, 0), Some (0, 0)); (None, Some (2, 200)); (None, Some (1, 100))]
-    fold2 [0] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (None, Some (1, 100)); (None, Some (66, 6600))]
-    fold2 [0] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (None, Some (1, 100)); (None, Some (91, 9100)); (None, Some (66, 6600))]
+    fold2 [0] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (None, Some (66, 6600)); (None, Some (1, 100))]
+    fold2 [0] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (None, Some (66, 6600)); (None, Some (91, 9100)); (None, Some (1, 100))]
     fold2 [0] [42; 420] -> [(Some (0, 0), None); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0] [42; 420; 421] -> [(Some (0, 0), None); (None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0] [42; 420; 4200] -> [(Some (0, 0), None); (None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0; 1] [0; 1] -> [(Some (0, 0), Some (0, 0)); (Some (1, 100), Some (1, 100))]
     fold2 [0; 1] [0; 1; 2] -> [(Some (0, 0), Some (0, 0)); (None, Some (2, 200)); (Some (1, 100), Some (1, 100))]
-    fold2 [0; 1] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (Some (1, 100), Some (1, 100)); (None, Some (66, 6600))]
-    fold2 [0; 1] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (Some (1, 100), Some (1, 100)); (None, Some (91, 9100)); (None, Some (66, 6600))]
+    fold2 [0; 1] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (None, Some (66, 6600)); (Some (1, 100), Some (1, 100))]
+    fold2 [0; 1] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (None, Some (66, 6600)); (None, Some (91, 9100)); (Some (1, 100), Some (1, 100))]
     fold2 [0; 1] [42; 420] -> [(Some (0, 0), None); (Some (1, 100), None); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0; 1] [42; 420; 421] -> [(Some (0, 0), None); (Some (1, 100), None); (None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0; 1] [42; 420; 4200] -> [(Some (0, 0), None); (Some (1, 100), None); (None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0; 1; 2] [0; 1; 2] -> [(Some (0, 0), Some (0, 0)); (Some (2, 200), Some (2, 200)); (Some (1, 100), Some (1, 100))]
-    fold2 [0; 1; 2] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (Some (2, 200), None); (Some (1, 100), Some (1, 100)); (None, Some (66, 6600))]
-    fold2 [0; 1; 2] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (Some (2, 200), None); (Some (1, 100), Some (1, 100)); (None, Some (91, 9100)); (None, Some (66, 6600))]
+    fold2 [0; 1; 2] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (Some (2, 200), None); (None, Some (66, 6600)); (Some (1, 100), Some (1, 100))]
+    fold2 [0; 1; 2] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (Some (2, 200), None); (None, Some (66, 6600)); (None, Some (91, 9100)); (Some (1, 100), Some (1, 100))]
     fold2 [0; 1; 2] [42; 420] -> [(Some (0, 0), None); (Some (2, 200), None); (Some (1, 100), None); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0; 1; 2] [42; 420; 421] -> [(Some (0, 0), None); (Some (2, 200), None); (Some (1, 100), None); (None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [0; 1; 2] [42; 420; 4200] -> [(Some (0, 0), None); (Some (2, 200), None); (Some (1, 100), None); (None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
-    fold2 [0; 1; 66] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (Some (1, 100), Some (1, 100)); (Some (66, 6600), Some (66, 6600))]
-    fold2 [0; 1; 66] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (Some (1, 100), Some (1, 100)); (None, Some (91, 9100)); (Some (66, 6600), Some (66, 6600))]
-    fold2 [0; 1; 66] [42; 420] -> [(Some (0, 0), None); (Some (1, 100), None); (Some (66, 6600), None); (None, Some (420, 42000)); (None, Some (42, 4200))]
-    fold2 [0; 1; 66] [42; 420; 421] -> [(Some (0, 0), None); (Some (1, 100), None); (Some (66, 6600), None); (None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
-    fold2 [0; 1; 66] [42; 420; 4200] -> [(Some (0, 0), None); (Some (1, 100), None); (Some (66, 6600), None); (None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
-    fold2 [0; 1; 66; 91] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (Some (1, 100), Some (1, 100)); (Some (91, 9100), Some (91, 9100)); (Some (66, 6600), Some (66, 6600))]
-    fold2 [0; 1; 66; 91] [42; 420] -> [(Some (0, 0), None); (Some (1, 100), None); (Some (91, 9100), None); (Some (66, 6600), None); (None, Some (420, 42000)); (None, Some (42, 4200))]
-    fold2 [0; 1; 66; 91] [42; 420; 421] -> [(Some (0, 0), None); (Some (1, 100), None); (Some (91, 9100), None); (Some (66, 6600), None); (None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
-    fold2 [0; 1; 66; 91] [42; 420; 4200] -> [(Some (0, 0), None); (Some (1, 100), None); (Some (91, 9100), None); (Some (66, 6600), None); (None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
+    fold2 [0; 1; 66] [0; 1; 66] -> [(Some (0, 0), Some (0, 0)); (Some (66, 6600), Some (66, 6600)); (Some (1, 100), Some (1, 100))]
+    fold2 [0; 1; 66] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (Some (66, 6600), Some (66, 6600)); (None, Some (91, 9100)); (Some (1, 100), Some (1, 100))]
+    fold2 [0; 1; 66] [42; 420] -> [(Some (0, 0), None); (Some (66, 6600), None); (Some (1, 100), None); (None, Some (420, 42000)); (None, Some (42, 4200))]
+    fold2 [0; 1; 66] [42; 420; 421] -> [(Some (0, 0), None); (Some (66, 6600), None); (Some (1, 100), None); (None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
+    fold2 [0; 1; 66] [42; 420; 4200] -> [(Some (0, 0), None); (Some (66, 6600), None); (Some (1, 100), None); (None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
+    fold2 [0; 1; 66; 91] [0; 1; 66; 91] -> [(Some (0, 0), Some (0, 0)); (Some (66, 6600), Some (66, 6600)); (Some (91, 9100), Some (91, 9100)); (Some (1, 100), Some (1, 100))]
+    fold2 [0; 1; 66; 91] [42; 420] -> [(Some (0, 0), None); (Some (66, 6600), None); (Some (91, 9100), None); (Some (1, 100), None); (None, Some (420, 42000)); (None, Some (42, 4200))]
+    fold2 [0; 1; 66; 91] [42; 420; 421] -> [(Some (0, 0), None); (Some (66, 6600), None); (Some (91, 9100), None); (Some (1, 100), None); (None, Some (421, 42100)); (None, Some (420, 42000)); (None, Some (42, 4200))]
+    fold2 [0; 1; 66; 91] [42; 420; 4200] -> [(Some (0, 0), None); (Some (66, 6600), None); (Some (91, 9100), None); (Some (1, 100), None); (None, Some (4200, 420000)); (None, Some (420, 42000)); (None, Some (42, 4200))]
     fold2 [42; 420] [42; 420] -> [(Some (420, 42000), Some (420, 42000)); (Some (42, 4200), Some (42, 4200))]
     fold2 [42; 420] [42; 420; 421] -> [(None, Some (421, 42100)); (Some (420, 42000), Some (420, 42000)); (Some (42, 4200), Some (42, 4200))]
     fold2 [42; 420] [42; 420; 4200] -> [(None, Some (4200, 420000)); (Some (420, 42000), Some (420, 42000)); (Some (42, 4200), Some (42, 4200))]
@@ -2079,9 +2079,9 @@ let%expect_test "partition_tf" =
     [0] -> [(0, 0)] / []
     [0; 1] -> [(0, 0)] / [(1, 100)]
     [0; 1; 2] -> [(0, 0); (2, 200)] / [(1, 100)]
-    [0; 1; 2; 3] -> [(0, 0); (2, 200)] / [(1, 100); (3, 300)]
-    [0; 1; 2; 3; 4] -> [(0, 0); (2, 200); (4, 400)] / [(1, 100); (3, 300)]
-    [0; 1; 2; 3; 4; 5] -> [(0, 0); (2, 200); (4, 400)] / [(5, 500); (1, 100); (3, 300)]
+    [0; 1; 2; 3] -> [(0, 0); (2, 200)] / [(3, 300); (1, 100)]
+    [0; 1; 2; 3; 4] -> [(0, 0); (2, 200); (4, 400)] / [(3, 300); (1, 100)]
+    [0; 1; 2; 3; 4; 5] -> [(0, 0); (2, 200); (4, 400)] / [(3, 300); (1, 100); (5, 500)]
     |}]
 
 let%expect_test "partition_map" =
@@ -2112,9 +2112,9 @@ let%expect_test "partition_map" =
     [0] -> [(0, "0")] / []
     [0; 1] -> [(0, "0")] / [(1, 100i)]
     [0; 1; 2] -> [(0, "0"); (2, "200")] / [(1, 100i)]
-    [0; 1; 2; 3] -> [(0, "0"); (2, "200")] / [(1, 100i); (3, 300i)]
-    [0; 1; 2; 3; 4] -> [(0, "0"); (2, "200"); (4, "400")] / [(1, 100i); (3, 300i)]
-    [0; 1; 2; 3; 4; 5] -> [(0, "0"); (2, "200"); (4, "400")] / [(5, 500i); (1, 100i); (3, 300i)]
+    [0; 1; 2; 3] -> [(0, "0"); (2, "200")] / [(3, 300i); (1, 100i)]
+    [0; 1; 2; 3; 4] -> [(0, "0"); (2, "200"); (4, "400")] / [(3, 300i); (1, 100i)]
+    [0; 1; 2; 3; 4; 5] -> [(0, "0"); (2, "200"); (4, "400")] / [(3, 300i); (1, 100i); (5, 500i)]
     |}]
 
 let%expect_test "kreduce" =

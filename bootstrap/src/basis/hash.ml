@@ -77,7 +77,7 @@ module State = struct
       let h2 = Int64.add h2 h1 in
       let h2 = Int64.(add (mul h2 (of_int 5)) (of_int 0x38495ab5)) in
 
-      let state = u128_of_arr [|h1; h2|] in
+      let state = u128_of_tup (h1, h2) in
       {t with state; nfolded=succ t.nfolded}
 
     let fold_u128 n ~f t =
@@ -98,9 +98,33 @@ module State = struct
       end in
       fn 0 n ~f t
 
+    let fold_u64 n ~f t =
+      let feed w t = begin
+        let u = u128_of_tup (w, Int64.zero) in
+        match t.nrem >= 8 with
+        | true -> begin
+            let u' = u128_bit_or t.rem (u128_bit_sl ~shift:(t.nrem * 8) u) in
+            let t' = {t with
+              rem=u128_bit_usr ~shift:((16 - t.nrem) * 8) u;
+              nrem=t.nrem mod 8
+            } in
+            hash u' t'
+          end
+        | false -> begin
+            let rem = u128_bit_or t.rem (u128_bit_sl ~shift:(t.nrem * 8) u) in
+            {t with rem; nrem=t.nrem + 8}
+          end
+      end in
+      let rec fn i n ~f t = begin
+        match i = n with
+        | true -> t
+        | false -> fn (succ i) n ~f (feed (f i) t)
+      end in
+      fn 0 n ~f t
+
     let fold_u8 n ~f t =
       let feed b t = begin
-        let u = u128_of_arr [|Int64.of_int b; Int64.zero|] in
+        let u = u128_of_tup (Int64.of_int b, Int64.zero) in
         match t.nrem = 15 with
         | true -> begin
             let u' = u128_bit_or t.rem (u128_bit_sl ~shift:120 u) in
@@ -138,7 +162,7 @@ module State = struct
             let k1 = Int64.mul k1 hash_c2 in
             let h1 = Int64.logxor h1 k1 in
 
-            let state = u128_of_arr [|h1; h2|] in
+            let state = u128_of_tup (h1, h2) in
             {t with state; rem=u128_zero; nrem=0}, len
           end
       end in
@@ -157,7 +181,7 @@ module State = struct
       let h1 = Int64.add h1 h2 in
       let h2 = Int64.add h2 h1 in
 
-      u128_of_arr [|h1; h2|]
+      u128_of_tup (h1, h2)
   end
 end
 
@@ -217,21 +241,21 @@ let%expect_test "hash_fold_u128" =
   let u128s_list = [
     [||];
 
-    [|u128_of_arr [|Int64.of_string "0x0123456789abcdef";
-        Int64.of_string "0xfedcba9876543210"|]|];
+    [|u128_of_tup (Int64.of_string "0x0123456789abcdef",
+        Int64.of_string "0xfedcba9876543210")|];
 
     [|u128_zero|];
 
-    [|u128_of_arr [|Int64.of_string "0xfedcba9876543210";
-        Int64.of_string "0x0123456789abcdef"|]|];
+    [|u128_of_tup (Int64.of_string "0xfedcba9876543210",
+        Int64.of_string "0x0123456789abcdef")|];
 
-    [|u128_of_arr [|Int64.of_string "0x0123456789abcdef";
-        Int64.of_string "0xfedcba9876543210"|];
+    [|u128_of_tup (Int64.of_string "0x0123456789abcdef",
+        Int64.of_string "0xfedcba9876543210");
 
       u128_zero;
 
-      u128_of_arr [|Int64.of_string "0xfedcba9876543210";
-        Int64.of_string "0x0123456789abcdef"|]|]
+      u128_of_tup (Int64.of_string "0xfedcba9876543210",
+        Int64.of_string "0x0123456789abcdef")|]
   ] in
   test_hash_fold u128s_list;
   printf "@]";
@@ -242,6 +266,74 @@ let%expect_test "hash_fold_u128" =
     hash_fold [|0x0000_0000_0000_0000_0000_0000_0000_0000u128|] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
     hash_fold [|0x0123_4567_89ab_cdef_fedc_ba98_7654_3210u128|] -> 0x0eb8_4470_9565_7807_4f87_4a06_b0db_435eu128
     hash_fold [|0xfedc_ba98_7654_3210_0123_4567_89ab_cdefu128; 0x0000_0000_0000_0000_0000_0000_0000_0000u128; 0x0123_4567_89ab_cdef_fedc_ba98_7654_3210u128|] -> 0x368d_c0ef_bb0a_0838_afb5_c175_06c0_c15eu128
+    |}]
+
+let%expect_test "hash_fold_u64" =
+  let open Format in
+  let hash_fold u64s t = begin
+    State.Gen.init t
+    |> State.Gen.fold_u64 (Caml.Array.length u64s) ~f:(fun i ->
+      Caml.Array.get u64s i
+    )
+    |> State.Gen.fini
+  end in
+  let pp_arr pp_elm ppf arr = begin
+    let rec fn arr i len = begin
+      match i = len with
+      | true -> ()
+      | false -> begin
+          if i > 0 then fprintf ppf ";@ ";
+          fprintf ppf "%a" pp_elm (Caml.Array.get arr i);
+          fn arr (succ i) len
+        end
+    end in
+    fprintf ppf "@[<h>[|";
+    fn arr 0 (Caml.Array.length arr);
+    fprintf ppf "|]@]"
+  end in
+  let pp_u64 ppf u = begin
+    Format.fprintf ppf "0x%016Lx" u
+  end in
+  printf "@[<h>";
+  let rec test_hash_fold u64s_list = begin
+    match u64s_list with
+    | [] -> ()
+    | u64s :: u64s_list' -> begin
+        printf "hash_fold %a -> %a\n"
+          (pp_arr pp_u64) u64s pp (t_of_state State.(hash_fold u64s empty));
+        test_hash_fold u64s_list'
+      end
+  end in
+  (* These test inputs were manually verified against the reference
+   * MurmurHash3 implementation. *)
+  let u64s_list = [
+    [||];
+
+    [|Int64.of_string "0x0123456789abcdef";
+      Int64.of_string "0xfedcba9876543210"|];
+
+    [|Int64.zero; Int64.zero|];
+
+    [|Int64.of_string "0xfedcba9876543210";
+      Int64.of_string "0x0123456789abcdef"|];
+
+    [|Int64.of_string "0x0123456789abcdef";
+      Int64.of_string "0xfedcba9876543210";
+
+      Int64.zero; Int64.zero;
+
+      Int64.of_string "0xfedcba9876543210";
+      Int64.of_string "0x0123456789abcdef"|]
+  ] in
+  test_hash_fold u64s_list;
+  printf "@]";
+
+  [%expect{|
+    hash_fold [||] -> 0x0000_0000_0000_0000_0000_0000_0000_0000u128
+    hash_fold [|0x0123456789abcdef; 0xfedcba9876543210|] -> 0x6bc0_bad4_001a_c79a_3a7b_e286_a34a_7a71u128
+    hash_fold [|0x0000000000000000; 0x0000000000000000|] -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
+    hash_fold [|0xfedcba9876543210; 0x0123456789abcdef|] -> 0x0eb8_4470_9565_7807_4f87_4a06_b0db_435eu128
+    hash_fold [|0x0123456789abcdef; 0xfedcba9876543210; 0x0000000000000000; 0x0000000000000000; 0xfedcba9876543210; 0x0123456789abcdef|] -> 0x368d_c0ef_bb0a_0838_afb5_c175_06c0_c15eu128
     |}]
 
 let%expect_test "hash_fold_u8" =

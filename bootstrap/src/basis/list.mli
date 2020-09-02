@@ -188,13 +188,13 @@ val rev: 'a t -> 'a t
 
 val reduce: f:('a -> 'a -> 'a) -> 'a t -> 'a option
 (** Reduce the list to a single value, or return [None] if the list is empty.
-    The reduction function is assumed to be associative; thus reduction order is
-    unspecified. *)
+    The reduction function is assumed to be associative and commutative; thus
+    reduction order is unspecified. *)
 
 val reduce_hlt: f:('a -> 'a -> 'a) -> 'a t -> 'a
 (** Reduce the list to a single value, or halt if the list is empty. The
-    reduction function is assumed to be associative; thus reduction order is
-    unspecified. *)
+    reduction function is assumed to be associative and commutative; thus
+    reduction order is unspecified. *)
 
 val is_sorted: ?strict:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> bool
 (** Return true if list is sorted (strictly if [?strict] is [true]; default is

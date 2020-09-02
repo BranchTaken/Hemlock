@@ -60,11 +60,11 @@ module Cursor = struct
           | false -> {t with index=(t.index + (Uns.of_sint i))}
         end
 
-    let succ t =
-      seek (Sint.kv 1) t
-
     let pred t =
       seek (Sint.kv (-1)) t
+
+    let succ t =
+      seek (Sint.kv 1) t
 
     let lget t =
       Array.get (Uns.pred t.index) t.array
@@ -298,12 +298,12 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold [||] ("") -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0xe7f7_3e0e_c178_5525_e460_58c5_1383_657cu128
-    hash_fold [|0x3cu8|] ("<") -> 0x4fa1_90f5_fd4b_19d9_e73e_229a_b8e4_9c7eu128
-    hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0x237d_65de_c606_4e09_6241_b399_77d7_fc8bu128
-    hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0x0eb9_1d81_6e4f_e11c_829d_ba36_47d6_1f81u128
-    hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x59b5_cf23_cff9_5c91_4b98_7455_0bbc_946fu128
+    hash_fold [||] ("") -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0x3128_f4fd_508b_45ed_9cac_ecd5_d1b9_3d0eu128
+    hash_fold [|0x3cu8|] ("<") -> 0xd488_7be1_4394_3141_39e3_a675_b018_bbb3u128
+    hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0xfffc_51b3_ca09_5402_2bcf_597e_64b2_a607u128
+    hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0xfc24_ad42_f613_537a_e903_d82f_077b_81b7u128
+    hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x9fbc_28bd_d639_1c44_1305_4901_c3c5_ee46u128
     |}]
 
 let%expect_test "hash_fold empty" =

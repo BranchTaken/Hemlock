@@ -206,7 +206,7 @@ Large forwarding pointer:
   heap. White/marked state is redundant with respect to the mark table, but is
   simpler to access during marking and amortizes repeated marking of the same
   value.
-- **z:** Size.
+- **z:** Size, excluding header.
   - 0x0: Size exceeds 15 words.
   - [0x1..0xf]: Size in words of value.
 - **a:** Biased lg alignment, [8, 16, 32, ..., 2<sup>62</sup>]
@@ -358,7 +358,7 @@ originally constituted the generation; subsequent copy-collection and/or
 advancement results in spaces of more advanced exposure, but the generation's
 exposure remains fixed.
 
-The young->old value reference DAG induces a generation DAG with similar
+The young→old value reference DAG induces a generation DAG with similar
 structure, and the generation DAG guarantees that younger generations cannot be
 referred to by exposure-disjoint older generations. The generation DAG allows
 young generations to be copy-collected with complete disregard for most of the
@@ -367,7 +367,7 @@ exposure-disjoint, but this does not necessarily hold true for generations
 across multiple executor heaps. When we refer to dependent generations, we mean
 younger generations *and* any such exposure-intersecting generations.)
 
-Once a fromspace->tospace copy is complete, the fromspace is obsolete and
+Once a fromspace→tospace copy is complete, the fromspace is obsolete and
 contains only redundant data. However, the fromspace cannot be destroyed until
 its exposure is disjoint from all spaces within dependent generations, and its
 exposure is disjoint from all actors' exposures. We leave forwarding pointers in
@@ -545,7 +545,7 @@ work can be hooked to various events, especially:
 There are several types of incremental work:
 
 - Process an element in an `unreachable` value stack.
-- Copy a value fromspace->tospace.
+- Copy a value fromspace→tospace.
 - Advance an actor.
 - Advance a generation's space(s).
 
@@ -798,10 +798,10 @@ barrier. However, Hemlock's local GC is incremental in two distinct ways that
 require write barrier cooperation:
 
 - The minor heap is often GCed independently of the major heap, but the major
-  heap may contain major->minor references that must be gathered as roots during
+  heap may contain major→minor references that must be gathered as roots during
   minor GC. Scanning the entire major heap for minor heap roots would often be
   cost-prohibitive, so Hemlock uses a three-level card table to narrow down
-  which regions of the major heap may contain roots. Every time a major->minor
+  which regions of the major heap may contain roots. Every time a major→minor
   reference is written to the major heap, the corresponding card is "dirtied" so
   that the card is scanned for roots and summarized during the next minor GC.
 - The major heap is marked incrementally, i.e. marking is interleaved with
@@ -813,13 +813,13 @@ require write barrier cooperation:
   conditions result from reference graph mutation, we fail to mark all reachable
   values:
 
-  1. A black->white reference is created.
-  2. The last gray->white*->white path is destroyed. (The white chain can be
+  1. A black→white reference is created.
+  2. The last gray→white*→white path is destroyed. (The white chain can be
      arbitrarily long.)
 
   Hemlock uses a deletion barrier to prevent (2). This is commonly referred to
   as maintaining the "weak tri-color invariant". The deletion barrier marks the
-  target of a major->major reference prior to mutation.
+  target of a major→major reference prior to mutation.
 
 As mentioned earlier, `actx` is strategically placed between the major and minor
 heaps in order to facilitate the write barrier. Following is an approximation of
@@ -830,24 +830,24 @@ the write barrier logic which provides the necessary GC support.
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef uint64_t hl_word_t;
+typedef uint64_t hm_word_t;
 
 typedef struct {
     // ...
-} hl_actx_t;
+} hm_actx_t;
 
 void
-major_mark(hl_actx_t *actx, const hl_word_t *val);
+major_mark(hm_actx_t *actx, const hm_word_t *val);
 void
-card_dirty(hl_actx_t *actx, const hl_word_t *val);
+card_dirty(hm_actx_t *actx, const hm_word_t *val);
 
 inline bool __attribute__ ((always_inline))
-is_major(const hl_actx_t *actx, const hl_word_t *val) {
+is_major(const hm_actx_t *actx, const hm_word_t *val) {
     return ((uintptr_t)val > (uintptr_t)actx);
 }
 
 void __attribute__ ((noinline))
-write_barrier_slow(hl_actx_t *actx, const hl_word_t *fr, const hl_word_t *to) {
+write_barrier_slow(hm_actx_t *actx, const hm_word_t *fr, const hm_word_t *to) {
     if (is_major(actx, fr)) {
         if (is_major(actx, to)) {
             major_mark(actx, to);
@@ -858,7 +858,7 @@ write_barrier_slow(hl_actx_t *actx, const hl_word_t *fr, const hl_word_t *to) {
 }
 
 void
-write_barrier(hl_actx_t *actx, const hl_word_t *fr, const hl_word_t *to) {
+write_barrier(hm_actx_t *actx, const hm_word_t *fr, const hm_word_t *to) {
     if (is_major(actx, fr)) {
         write_barrier_slow(actx, fr, to);
     }
@@ -979,7 +979,7 @@ finalizer registry items. Global value references are merged into the finalizer
 registry under any of the following conditions:
 
 - A message is moved from the mailbox to the minor heap.
-- A local->global reference is traced, whether during minor or major GC.
+- A local→global reference is traced, whether during minor or major GC.
 - A local value is moved to the global heap, whether during promotion from the
   oldest aging cohort, or as a root of a message to be sent.
 
@@ -1042,11 +1042,11 @@ Finalizer registry items are marked/copied during GC in distinct ways, depending
 on whether they are global root references:
 
 - Global root references are marked/copied upon tracing reachable values which
-  refer to the corresponding globals. In other words, as local->global
+  refer to the corresponding globals. In other words, as local→global
   references are traced, the corresponding finalizer registry item is looked up
   (created on the fly if necessary) and marked/copied.
 - Other finalizable values are uniquely associated with their finalizer registry
-  items,and are explicitly referenced (item->value). During finalizer registry
+  items,and are explicitly referenced (item→value). During finalizer registry
   rebuilding, if an item's associated value was not reached during tracing, it
   is finalized.
 
@@ -1076,18 +1076,18 @@ the nursery frontier to incorporate only the result:
 #### Copy collection
 
 Minor heap copy collection is conceptually simple. Live values are copied
-fromspace->tospace as they are traced, and forwarding pointers are written to
+fromspace→tospace as they are traced, and forwarding pointers are written to
 their obsolete fromspace headers to enable reference updates. Live values that
 have been copied to tospace are linearly scanned for references to fromspace,
-which in turn trigger fromspace->tospace copying of any values which have not
+which in turn trigger fromspace→tospace copying of any values which have not
 already been copied, followed by updating the fromspace references to tospace
-references. Once all roots have been traced, and all tospace->fromspace
+references. Once all roots have been traced, and all tospace→fromspace
 references have been traced, copying is complete.
 
 Tracing starts at the roots, which are found in the following places:
 
 - Execution stack.
-- Major->minor references.
+- Major→minor references.
 
 Root scanning triggers immediate copying, so that the root references can be
 immediately updated to tospace pointers rather than during a second pass.
@@ -1099,14 +1099,14 @@ meet, copy-collection is complete. Note that because some values may be promoted
 to the major heap, copy-collection actually performs this linear scanning on
 both the minor heap tospace *and* the newly promoted values in the major heap.
 
-During scanning, every time a minor->major reference is encountered, the major
+During scanning, every time a minor→major reference is encountered, the major
 heap value constitutes a major heap root and it must be marked, in support of
 incremental major GC. Marking a major heap value requires setting the marked
 bits (one bit in the metadata header, two bits in the mark table), and if not
 already marking, pushing a reference to the value onto the gray stack.
 
 The major heap cards corresponding to newly promoted values are marked as dirty,
-because they may contain major->minor references that must be incorporated into
+because they may contain major→minor references that must be incorporated into
 the root set during the next minor GC.
 
 Transitively immutable values are promoted to the global heap rather than the
@@ -1114,7 +1114,7 @@ major heap. This presents an extra challenge, in that global values must be
 allocated in a valid post-order (i.e. older values must be allocated before
 dependent younger values). Post-order promotion requires a stack for maintaining
 DAG traversal state; this ephemeral "move" stack is placed on top of the gray
-stack. Note that burying the gray stack during local->global promotion is always
+stack. Note that burying the gray stack during local→global promotion is always
 safe because the transitively immutable value(s) being promoted never contain
 references to the major heap, which can only contain transitively *mutable*
 values.
@@ -1398,7 +1398,7 @@ table.
 
 ##### Card tables
 
-As mentioned earlier, major->minor references constitute minor heap roots that
+As mentioned earlier, major→minor references constitute minor heap roots that
 must be traced during every minor collection. The simple-but-slow method for
 finding such roots would be to linearly scan the entire major heap. Hemlock
 avoids this overhead by maintaining a three-level card table, where cards are
@@ -1410,19 +1410,19 @@ follows.
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef uint64_t hl_word_t;
+typedef uint64_t hm_word_t;
 
 typedef struct {
     // ...
-    hl_word_t *major_base; // Base of current major heap.
+    hm_word_t *major_base; // Base of current major heap.
     // ...
     uint8_t *card_tab0; // Current primary card table (1024 B per card).
     uint8_t *card_tab1; // Current secondary card table (2^10 cards per entry).
     uint8_t *card_tab2; // Current tertiary card table (2^20 cards per entry).
-} hl_actx_t;
+} hm_actx_t;
 
 void
-card_dirty(hl_actx_t *actx, const hl_word_t *val) {
+card_dirty(hm_actx_t *actx, const hm_word_t *val) {
     size_t word_ind = val - actx->major_base;
     size_t card_ind = word_ind >> 7;
     actx->card_tab0[card_ind] = 1;
@@ -1439,17 +1439,17 @@ mainline execution without incurring dynamic data dependencies.
 
 Incremental compaction of the major heap adds a complication to the card tables.
 Upon transitioning from marking to copy-compaction, the major heap tospace needs
-an accompanying card table which prevents any major->minor references going
+an accompanying card table which prevents any major→minor references going
 unnoticed during the next minor GC. Again, the simple-but-slow approach would be
 to scan the entire major heap tospace, but that would defeat the purpose of
 incremental copy-compaction. Instead, a separate card table is synchronously
 constructed based on the fromspace's card table to conservatively capture all
-major->minor references in the major heap tospace. The tospace card table is
+major→minor references in the major heap tospace. The tospace card table is
 computed in a single pass in conjunction with the relocation table.
 
 The tospace's card table is conservative in that it may contain spuriously dirty
 cards due to unreachable fromspace values near reachable fromspace values having
-contained major->minor references. Although unnecessary card dirtying triggers
+contained major→minor references. Although unnecessary card dirtying triggers
 extra work during the next minor GC, no correctness issues arise, nor are any
 special code paths required.
 
@@ -1457,7 +1457,7 @@ special code paths required.
 
 The card size is chosen to be small enough that when a major heap write occurs
 and the card is dirtied, only a small portion of the major heap must be scanned
-for major->minor references during the next minor GC. Even so, card scanning is
+for major→minor references during the next minor GC. Even so, card scanning is
 a significant minor GC overhead, and card summarization amortizes the cost of
 scanning infrequently mutated cards.
 
@@ -1466,7 +1466,7 @@ write barrier, the card table is unconditionally overwritten with a 1. That
 leaves values [2..255] as card summary indices, that serve as lookups into a
 254-element summary table that is directly embedded in `actx`. Each card summary
 table entry contains one bit per card word, i.e. 128 bits. The corresponding
-summary table bit is set to 1 if the card contains a major->minor reference.
+summary table bit is set to 1 if the card contains a major→minor reference.
 This expedites minor heap root gathering; parsing the major heap (see [crossing
 table](#crossing-table) documentation) and conditionally extracting roots based
 on reference target address is much more work than referring to the card summary
@@ -1490,10 +1490,10 @@ gathering, a fresh bitmap is used to mark which entries remain used. Any table
 entries which were unused prior to root gathering are available for card
 summarization during the current collection, whereas the entries which are
 reclaimed during the current GC become available only once root gathering has
-completed (i.e. a delay of one minor GC). Were major->minor references rewritten
+completed (i.e. a delay of one minor GC). Were major→minor references rewritten
 during a second pass, it would be useful to maximize summary table use during
 the second pass, but minor GC is a single-pass algorithm wherein the
-major->minor references are updated to refer to minor tospace as they are
+major→minor references are updated to refer to minor tospace as they are
 discovered.
 
 ##### Crossing table
@@ -1502,7 +1502,7 @@ Arbitrary pointers into the major heap arise in two contexts. In both cases,
 such pointers must be contextualized by their containing value's header in order
 to be of use.
 
-- Minor heap root finding of major->minor references in the major heap requires
+- Minor heap root finding of major→minor references in the major heap requires
   that card contents can be parsed independently of the rest of the major heap.
   Card table scanning begins at the beginning of each dirty card. The first word
   within a card may or may not be in the interior of a value. Given the location

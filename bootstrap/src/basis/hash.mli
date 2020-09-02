@@ -47,6 +47,10 @@ module State : sig
     (** [fold_u128 n ~f t] incorporates the hash of [n] indexed values provided
         by [~f] into [t] and returns the resulting hash state generator. *)
 
+    val fold_u64: uns -> f:(uns -> u64) -> t -> t
+    (** [fold_u64 n ~f t] incorporates the hash of [n] indexed values provided
+        by [~f] into [t] and returns the resulting hash state generator. *)
+
     val fold_u8: uns -> f:(uns -> uns) -> t -> t
     (** [fold_u8 n ~f t] incorporates the hash of [n] indexed values provided by
         [~f] into [t] and returns the resulting hash state generator. Note that

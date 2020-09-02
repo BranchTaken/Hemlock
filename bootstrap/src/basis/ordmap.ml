@@ -182,11 +182,11 @@ module T = struct
     let seek_right offset t =
       seek_nth ((index t) + offset) t
 
-    let succ t =
-      seek_right 1 t
-
     let pred t =
       seek_left 1 t
+
+    let succ t =
+      seek_right 1 t
 
     let kv = function
       | [] -> not_reached ()
@@ -284,11 +284,11 @@ module T = struct
             | Gt -> halt "Cannot seek past end of ordered map"
           end
 
-      let succ t =
-        seek Sint.one t
-
       let pred t =
         seek Sint.neg_one t
+
+      let succ t =
+        seek Sint.one t
 
       let lget t =
         match t.lpath_opt with
@@ -1463,11 +1463,11 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold (of_klist []) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold (of_klist [0]) -> 0xf931_3f2a_e691_89fb_c121_c10c_2321_2ab7u128
-    hash_fold (of_klist [0; 1]) -> 0x6e2d_e492_9376_8d4d_6ed4_d4a1_826a_e0f3u128
-    hash_fold (of_klist [0; 2]) -> 0xd095_5072_d648_e202_4c57_11bf_5e6f_9d1bu128
-    hash_fold (of_klist [2; 3]) -> 0xe261_acf8_6d66_7835_4c5e_2250_ae24_ada9u128
+    hash_fold (of_klist []) -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold (of_klist [0]) -> 0xb978_4708_6e65_ae45_2de4_cfcd_b8a3_131eu128
+    hash_fold (of_klist [0; 1]) -> 0xa4c1_0614_74d1_114e_feae_0875_b590_8b45u128
+    hash_fold (of_klist [0; 2]) -> 0xe464_a98d_26ee_f2f1_c84a_abbc_10e6_8b6cu128
+    hash_fold (of_klist [2; 3]) -> 0x394a_2b8a_046c_9407_633b_5c51_05e2_14d9u128
     |}]
 
 let%expect_test "hash_fold empty" =

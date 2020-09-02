@@ -186,11 +186,11 @@ module Cursor = struct
     else
       right coffset t
 
-  let succ t =
-    seek (Sint.kv 1) t
-
   let pred t =
     seek (Sint.kv (-1)) t
+
+  let succ t =
+    seek (Sint.kv 1) t
 
   let prev t =
     let bindex = Uns.pred t.bindex in
@@ -309,11 +309,11 @@ module Cursori = struct
     {cursor=(Cursor.seek coffset t.cursor);
       cindex=Uns.(t.cindex + (of_sint coffset))}
 
-  let succ t =
-    {cursor=(Cursor.succ t.cursor); cindex=(Uns.succ t.cindex)}
-
   let pred t =
     {cursor=(Cursor.pred t.cursor); cindex=(Uns.pred t.cindex)}
+
+  let succ t =
+    {cursor=(Cursor.succ t.cursor); cindex=(Uns.succ t.cindex)}
 
   let lget t =
     Cursor.lget t.cursor
@@ -797,9 +797,9 @@ module Slice = struct
         let tl slice =
           (past slice)
 
-        let succ = Cursor.succ
-
         let pred = Cursor.pred
+
+        let succ = Cursor.succ
 
         let lget = Cursor.lget
 
@@ -1849,13 +1849,13 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold "" -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold "hello" -> 0xe7f7_3e0e_c178_5525_e460_58c5_1383_657cu128
-    hash_fold "hello_goodbye" -> 0xb32d_994d_9ce3_5bfc_a7a6_96d1_2dbe_3dcau128
-    hash_fold "<_>" -> 0x8e4f_1658_2513_26a4_57f0_2f66_d097_5a17u128
-    hash_fold "«»" -> 0x6ba1_06e5_6894_bd2c_2b87_6bcd_7f57_f2f9u128
-    hash_fold "‡" -> 0x0eb9_1d81_6e4f_e11c_829d_ba36_47d6_1f81u128
-    hash_fold "𐆗" -> 0x59b5_cf23_cff9_5c91_4b98_7455_0bbc_946fu128
+    hash_fold "" -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold "hello" -> 0x3128_f4fd_508b_45ed_9cac_ecd5_d1b9_3d0eu128
+    hash_fold "hello_goodbye" -> 0xd6d0_eb4d_f49b_3d1d_2f69_bc41_817e_6fe0u128
+    hash_fold "<_>" -> 0xde67_b895_c176_2ed2_1ac3_366f_7368_8471u128
+    hash_fold "«»" -> 0x5caf_027a_5927_7a86_2c22_2383_e256_bcd7u128
+    hash_fold "‡" -> 0xfc24_ad42_f613_537a_e903_d82f_077b_81b7u128
+    hash_fold "𐆗" -> 0x9fbc_28bd_d639_1c44_1305_4901_c3c5_ee46u128
     |}]
 
 let%expect_test "hash_fold empty" =

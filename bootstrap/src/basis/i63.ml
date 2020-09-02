@@ -9,7 +9,7 @@ let kv t =
 
 module T = struct
   type t = sint
-  let num_bits = Sys.int_size
+  let bit_length = Sys.int_size
 end
 include T
 include Intnb.MakeI(T)
@@ -65,12 +65,12 @@ let%expect_test "string" =
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" Uns.pp num_bits;
+  printf "bit_length=%a\n" Uns.pp bit_length;
   printf "min_value=%a\n" pp_x min_value;
   printf "max_value=%a\n" pp_x max_value;
 
   [%expect{|
-    num_bits=63
+    bit_length=63
     min_value=0x4000000000000000i
     max_value=0x3fffffffffffffffi
     |}]

@@ -163,13 +163,13 @@ val remove: uns -> 'a t -> 'a t
 
 val reduce: f:('a -> 'a -> 'a) -> 'a t -> 'a option
 (** Reduce the array to a single value, or return [None] if the array is empty.
-    The reduction function is assumed to be associative; thus reduction order is
-    unspecified. *)
+    The reduction function is assumed to be associative and commutative; thus
+    reduction order is unspecified. *)
 
 val reduce_hlt: f:('a -> 'a -> 'a) -> 'a t -> 'a
 (** Reduce the array to a single value, or halt if the array is empty. The
-    reduction function is assumed to be associative; thus reduction order is
-    unspecified. *)
+    reduction function is assumed to be associative and commutative; thus
+    reduction order is unspecified. *)
 
 val swap_inplace: uns -> uns -> 'a t -> unit
 (** Swap elements at given indices in place (mutate). *)

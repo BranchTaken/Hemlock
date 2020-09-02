@@ -1,6 +1,8 @@
 (env
  (dev
-  (flags (:standard)))
+  (flags (:standard))
+  (c_flags (-O0 -g)))
  (release
   (flags (:standard))
+  (c_flags (:standard -O3 -g -DNDEBUG))
   (ocamlopt_flags (:standard -O3 -noassert))))

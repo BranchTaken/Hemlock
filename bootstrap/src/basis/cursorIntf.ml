@@ -77,11 +77,11 @@ module type SPolyIter = sig
   val tl: 'a container -> 'a t
   (** Return tail. *)
 
-  val succ: 'a t -> 'a t
-  (** Return successor. *)
-
   val pred: 'a t -> 'a t
   (** Return predecessor. *)
+
+  val succ: 'a t -> 'a t
+  (** Return successor. *)
 
   val lget: 'a t -> 'a elm
   (** Return element immediately to left. *)
@@ -132,11 +132,11 @@ module type SPoly2Iter = sig
   val tl: ('a, 'cmp) container -> ('a, 'cmp) t
   (** Return tail. *)
 
-  val succ: ('a, 'cmp) t -> ('a, 'cmp) t
-  (** Return successor. *)
-
   val pred: ('a, 'cmp) t -> ('a, 'cmp) t
   (** Return predecessor. *)
+
+  val succ: ('a, 'cmp) t -> ('a, 'cmp) t
+  (** Return successor. *)
 
   val lget: ('a, 'cmp) t -> 'a elm
   (** Return element immediately to left. *)
@@ -191,11 +191,11 @@ module type SPoly3Iter = sig
   val tl: ('k, 'v, 'cmp) container -> ('k, 'v, 'cmp) t
   (** Return tail. *)
 
-  val succ: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
-  (** Return successor. *)
-
   val pred: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** Return predecessor. *)
+
+  val succ: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+  (** Return successor. *)
 
   val lget: ('k, 'v, 'cmp) t -> ('k key * 'v value)
   (** Return element immediately to left. *)

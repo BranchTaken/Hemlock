@@ -2,17 +2,25 @@ open RudimentsInt
 open RudimentsFunctions
 
 module T = struct
-  type t = u64 array
-  let num_bits = 256
-  let of_arr a = a
-  let to_arr t = t
+  type t = {w0: u64; w1: u64; w2: u64; w3: u64}
+  let word_length = 4
+
+  let init ~f =
+    {w0=f 0; w1=f 1; w2=f 2; w3=f 3}
+
+  let get i t =
+    match i with
+    | 0 -> t.w0
+    | 1 -> t.w1
+    | 2 -> t.w2
+    | 3 -> t.w3
+    | _ -> not_reached ()
 end
 include T
-include Intnw.MakeI(T)
+include Intw.MakeFI(T)
 
 let to_tup = function
-  | [|w0; w1; w2; w3|] -> (w0, w1, w2, w3)
-  | _ -> not_reached ()
+  | {w0; w1; w2; w3} -> (w0, w1, w2, w3)
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -62,9 +70,9 @@ let%expect_test "hash_fold" =
 
   [%expect{|
     hash_fold 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> 0x10c0_1d1b_b334_2d3c_3172_3c28_4ade_5cd0u128
-    hash_fold 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256 -> 0xeb9f_c6c4_25fe_306a_6957_1e92_1a0d_5dcdu128
-    hash_fold 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> 0x10c0_1d1b_b334_2d3c_3172_3c28_4ade_5cd0u128
-    hash_fold 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256 -> 0x6c23_2c39_aa5d_9f16_7592_e77d_c551_13f1u128
+    hash_fold 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256 -> 0x575c_b50a_1556_dd4e_57e0_2bc7_19ab_e995u128
+    hash_fold 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> 0x44df_8aec_eafe_a44b_959d_b564_4bf3_0396u128
+    hash_fold 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256 -> 0xaeed_0d52_ef17_d00c_fee9_a200_c2eb_c9beu128
     |}]
 
 let%expect_test "constants" =

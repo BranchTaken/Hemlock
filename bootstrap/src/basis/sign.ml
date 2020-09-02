@@ -9,8 +9,8 @@ let pp ppf t =
   Format.fprintf ppf (match t with
     | Neg -> "Neg"
     | Zero -> "Zero"
-    | Pos -> "Pos"
-  )
+    | Pos -> "Pos")
+
 let of_sint x =
   match x with
   | -1 -> Neg

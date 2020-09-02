@@ -1,37 +1,53 @@
-open Rudiments
+using Rudiments as *
 
 module List = List0
 
 module T = struct
-    type 'a /t t = 'a /t array
+    type 'a t^ = 'a array^t
     type 'a elm = 'a
 
-    let get i t =
-        %hemlock_array_get i t
+    module Builder = struct
+        # `array_builder` is built into the compiler similarly to `array`, but
+        # it is only exposed when compiling Basis code, as controlled by a
+        # compiler flag.
+        type 'a t& = 'a array_builder&
 
-    let length t =
-        %hemlock_array_length t
+        external alloc_lput: uns -> 'a -> 'a t& =
+          "hm_basis_array_builder_alloc_lput"
+        external alloc_rput: uns -> 'a -> 'a t& =
+          "hm_basis_array_builder_alloc_rput"
+        external lput: 'a -> 'a t& >{mut}~> -> unit =
+          "hm_basis_array_builder_lput"
+        external rput: 'a -> 'a t& >{mut}~> -> unit =
+          "hm_basis_array_builder_rput"
+        external build: 'a t& >{mut}~> -> 'a t^ = "hm_basis_array_builder_build"
+
+    external empty: 'a t^ = "hm_basis_array_empty"
+
+    external get: uns -> 'a t^_ -> 'a = "hm_basis_array_get"
+
+    external length: 'a t^_ -> uns = "hm_basis_array_length"
 
     module Cursor = struct
         module T = struct
-            type 'a /m container = 'a /m t
-            type ('a, /m) t =
-                array: 'a /m container
+            type 'a container^ = 'a t^container
+            type ('a, ^container) t =
+                array: 'a container^
                 index: uns
 
-            (* val cmp: ('a, /m) t -> ('a, /m) t -> Cmp.t *)
+            (* val cmp: ('a, ^container) t -> ('a, ^container) t -> Cmp.t *)
             let cmp t0 t1 =
                 Uns.cmp t0.index t1.index
 
-            (* val hd: 'a /m container -> ('a, /m) t *)
+            (* val hd: 'a container^ -> ('a, ^container) t *)
             let hd array =
                 {array; index=0}
 
-            (* val tl: 'a /m container -> ('a, /m) t *)
+            (* val tl: 'a container^ -> ('a, ^container) t *)
             let tl array =
                 {array; index=length array}
 
-            (* val seek: sint -> ('a, /m) t -> ('a, /m) t *)
+            (* val seek: sint -> ('a, ^container) t -> ('a, ^container) t *)
             let seek i t =
                 match Sint.(i < 0i) with
                 | true ->
@@ -44,11 +60,11 @@ module T = struct
                     | true -> halt "Cannot seek past end of array"
                     | false -> {t with index=t.index + (Uns.of_sint i)}
 
-            (* val succ: ('a, /m) t -> ('a, /m) t *)
+            (* val succ: ('a, ^container) t -> ('a, ^container) t *)
             let succ t =
                 seek 1i t
 
-            (* val pred: ('a, /m) t -> ('a, /m) t *)
+            (* val pred: ('a, ^container) t -> ('a, ^container) t *)
             let pred t =
                 seek (-1i) t
 
@@ -60,7 +76,7 @@ module T = struct
             let rget t =
                 get t.index t.array
 
-            (* val container: ('a, /m) t -> 'a /m container *)
+            (* val container: ('a, ^container) t -> 'a container^ *)
             let container t =
                 t.array
 
@@ -68,7 +84,7 @@ module T = struct
             let index t =
                 t.index
         include T
-        include Cmpable.Make_poly(T)
+        include Cmpable.MakePoly(T)
 
     let cmp cmp_elm t0 t1 =
         let rec fn cursor0 cursor1 =
@@ -84,146 +100,149 @@ module T = struct
           in
         fn (Cursor.hd t0) (Cursor.hd t1)
 include T
-include Container_common.Make_poly_fold(T)
+include ContainerCommon.MakePolyFold(T)
 
 let hash_fold hash_fold_a t state =
     fold t ~init:state ~f:(fun state elm -> state |> hash_fold_a elm)
 
 module Seq = struct
-    type 'a /t outer = 'a /t t
-    module type S_mono = sig
-        type /t t
-        type /m elm
-        val to_array: /t t -> /m elm /o outer
-    module type S_poly = sig
-        type 'a /t t
+    type 'a outer^ = 'a t^outer
+    module type SMono = sig
+        type t^
+        type elm^
+        val to_array: t^ -> elm^ outer^
+    module type SPoly = sig
+        type 'a t^
         type 'a elm
-        val to_array: 'a /t t -> 'a elm /o outer
+        val to_array: 'a t^ -> 'a elm outer^
 
-    module Make_mono (T : Seq_intf.I_mono_def) : S_mono
-      with type /t t := /t T.t
-      also type /m elm := /m T.elm = struct
-        let to_array t =
-            match T.length t with
-            | 0 ->
-                (* Optimization: use the same empty array for all types. *)
-                [||]
-            | l ->
-                let rec fn t builder i =
-                    match i = l with
-                    | true -> %hemlock_array_build builder
-                    | false ->
-                        let elm, t' = T.next t in
-                        %hemlock_array_gap_lput builder i elm
-                        let i' = succ i in
-                        fn t' builder i'
-                  in
-                fn t (%hemlock_array_alloc l) 0
-
-    module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono
-      with type /t t := /t T.t
-      also type /m elm := /m T.elm = struct
-        let to_array t =
+    module MakeMono (T : SeqIntf.IMonoDef) : SMono
+      with type t^ := T.t^
+      also type elm^ := T.elm^ = struct
+        let to_array t = expose
             match T.length t with
             | 0 -> [||]
             | l ->
-                let rec fn t builder i =
-                    let elm, t' = T.next t in
-                    %hemlock_array_gap_rput builder i elm
-                    match i = 0 with
-                    | true -> %hemlock_array_build builder
-                    | false -> fn t' builder (pred i)
-                  in
-                fn t' (%hemlock_array_alloc l) (pred l)
-
-    module Make_poly (T : Seq_intf.I_poly_def) : S_poly
-      with type 'a /t t := 'a /t T.t
-      also type 'a elm := 'a T.elm = struct
-        let to_array t =
-            match T.length t with
-            | 0 -> (* Optimization: use the same empty array for all types. *)
-              [||]
-            | l ->
-                let rec fn t builder i =
+                let rec fn t i builder =
                     match i = l with
-                    | true -> %hemlock_array_build builder
+                    | true -> Builder.build builder
                     | false ->
                         let elm, t' = T.next t in
-                        %hemlock_array_gap_lput builder i elm
-                        let i' = succ i in
-                        fn t' builder i'
+                        Builder.lput elm builder
+                        fn t' (succ i) builder
                   in
-                fn t (%hemlock_array_alloc l) 0
+                let elm, t' = T.next t in
+                fn t' 1 (Builder.alloc_lput l elm)
 
-    module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
-      with type 'a /t t := 'a /t T.t
-      also type 'a elm := 'a T.elm = struct
-        let to_array t =
+    module MakeMonoRev (T : SeqIntf.IMonoDef) : SMono
+      with type t^ := T.t^
+      also type elm^ := T.elm^ = struct
+        let to_array t = expose
             match T.length t with
             | 0 -> [||]
             | l ->
-                let rec fn t builder i =
-                    let elm, t' = T.next t in
-                    %hemlock_array_gap_rput builder i elm
+                let rec fn t i builder =
                     match i = 0 with
-                    | true -> %hemlock_array_build builder
-                    | false -> fn t' builder (pred i)
+                    | true -> Builder.build builder
+                    | false ->
+                        let elm, t' = T.next t in
+                        Builder.rput elm builder
+                        fn t' (pred i) builder
                   in
-                fn t' (%hemlock_array_alloc l) (pred l)
+                let elm, t' = T.next t in
+                fn t' (pred l) (Builder.alloc_rput l elm)
+
+    module MakePoly (T : SeqIntf.IPolyDef) : SPoly
+      with type 'a t^ := 'a T.t^
+      also type 'a elm := 'a T.elm = struct
+        let to_array t = expose
+            match T.length t with
+            | 0 -> [||]
+            | l ->
+                let rec fn t i builder =
+                    match i = l with
+                    | true -> Builder.build builder
+                    | false ->
+                        let elm, t' = T.next t in
+                        Builder.lput elm builder
+                        fn t' (succ i) builder
+                  in
+                let elm, t' = T.next t in
+                fn t' 1 (Builder.alloc_lput l)
+
+    module MakePolyRev (T : SeqIntf.IPolyDef) : SPoly
+      with type 'a t^ := 'a T.t^
+      also type 'a elm := 'a T.elm = struct
+        let to_array t = expose
+            match T.length t with
+            | 0 -> [||]
+            | l ->
+                let rec fn t i builder =
+                    match i = 0 with
+                    | true -> Builder.build builder
+                    | false ->
+                        let elm, t' = T.next t in
+                        Builder.rput elm builder
+                        fn t' (pred i) builder
+                  in
+                let elm, t' = T.next t in
+                fn t' (pred l) (Builder.alloc_rput l elm)
 
     (* Special-purpose, for fold[i]_map . *)
-    module Make_poly2 (T : sig
-        type ('a, 'b) ['accum] t
-        val length: ('a, 'b) ['accum] t -> uns
-        val next: ('a, 'b) ['accum] t -> 'accum -> 'b * ('a, 'b) ['accum] t *
-          'accum
+    module MakePoly2 (T : sig
+        type ('a, ^arr, >e) ['accum, 'b] t
+        val length: ('a, ^arr, >e) ['accum, 'b] t -> uns
+        val next: ('a, ^arr, >e) ['accum, 'b] t -> 'accum ->
+          'b * ('a, ^arr, >e) ['accum, 'b] t * 'accum
       ) : sig
-        type ('a, 'b) ['accum] t
-        val to_accum_array: ('a, 'b) ['accum] t -> init:'accum
-          -> 'accum * 'b /o outer
-      with type ('a, 'b) ['accum] t := ('a, 'b) ['accum] T.t = struct
-        let to_accum_array t ~init =
+        type ('a, ^arr, >e) ['accum, 'b] t
+        val to_accum_array: ('a, ^arr, >e) ['accum, 'b] t -> init:'accum
+          -> 'accum * 'b outer^
+      with type ('a, ^arr, >e) ['accum, 'b] t :=
+      ('a, ^arr, >e) ['accum, 'b] T.t = struct
+        let to_accum_array t ~init = expose
             match T.length t with
             | 0 -> init, [||]
             | l ->
-                let rec fn t accum builder i =
+                let rec fn t i accum builder =
                     match i = l with
-                    | true -> accum, (%hemlock_array_build builder)
+                    | true -> accum, (Builder.build builder)
                     | false ->
                         let elm, t', accum' = T.next t accum in
-                        %hemlock_array_gap_lput builder i elm
-                        let i' = succ i in
-                        fn t' accum' builder i'
+                        Builder.lput elm builder
+                        fn t' (succ i) accum' builder
                   in
-                fn t init (%hemlock_array_alloc l) 0
+                let elm, t', accum = T.next t init in
+                fn t' 1 accum (Builder.alloc_lput l elm)
 
     (* Special-purpose, for fold[i]2_map . *)
-    module Make_poly3 (T : sig
-        type ('a, 'b) ['accum, 'c] t
-        val length: ('a, 'b) ['accum, 'c] t -> uns
-        val next: ('a, 'b) ['accum, 'c] t -> 'accum -> 'c * ('a, 'b) ['accum,
-          'c] t * 'accum
+    module MakePoly3 (T : sig
+        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t
+        val length: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> uns
+        val next: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> 'accum
+          -> 'c * ('a, ^m, 'b, ^n, >e) ['accum, 'c] t * 'accum
       ) : sig
-        type ('a, 'b) ['accum, 'c] t
-        val to_accum_array: ('a, 'b) ['accum, 'c] t -> init:'accum -> 'accum *
-          'c /o outer
-      with type ('a, 'b) ['accum, 'c] t := ('a, 'b) ['accum, 'c] T.t = struct
-        let to_accum_array t ~init =
+        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t
+        val to_accum_array: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> init:'accum
+          -> 'accum * 'c outer^
+      with type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t :=
+      ('a, ^m, 'b, ^n, >e) ['accum, 'c] T.t = struct
+        let to_accum_array t ~init = expose
             match T.length t with
             | 0 -> init, [||]
             | l ->
-                let rec fn t accum builder i =
+                let rec fn t i accum builder =
                     match i = l with
-                    | true -> accum, (%hemlock_array_build builder)
+                    | true -> accum, (Builder.build builder)
                     | false ->
                         let elm, t', accum' = T.next t accum in
-                        %hemlock_array_gap_lput builder i elm
-                        let i' = succ i in
-                        fn t' accum' builder i'
+                        Builder.lput elm builder
+                        fn t' (succ i) accum' builder
                   in
-                fn t init (%hemlock_array_alloc l) 0
+                let elm, t' accum = T.next t init in
+                fn t' 1 accum (Builder.alloc_lput l elm)
 
-module Array_init = struct
+module ArrayInit = struct
     module T = struct
         type >e ['a] t =
             f      : uns >e-> 'a
@@ -245,13 +264,13 @@ module Array_init = struct
             let t' = {t with index=(succ t.index)} in
             elm, t'
     include T
-    include Seq.Make_poly(T)
-    (* val to_array: >e ['a] t >e-> 'a /o outer *)
+    include Seq.MakePoly(T)
+    (* val to_array: >e ['a] t >e-> 'a outer^ *)
 
-let init n ~f =
-    Array_init.(to_array (init n ~f))
+let init n ~f = expose
+    ArrayInit.(to_array (init n ~f))
 
-module Array_of_list_common = struct
+module ArrayOfListCommon = struct
     type 'a t =
         list: 'a list
         length: uns
@@ -270,33 +289,33 @@ module Array_of_list_common = struct
             let t' = {t with list=list'} in
             elm, t'
 
-module Array_of_list = struct
-    include Array_of_list_common
-    include Seq.Make_poly(Array_of_list_common)
+module ArrayOfList = struct
+    include ArrayOfListCommon
+    include Seq.MakePoly(ArrayOfListCommon)
 
-module Array_of_list_rev = struct
-    include Array_of_list_common
-    include Seq.Make_poly_rev(Array_of_list_common)
+module ArrayOfListRev = struct
+    include ArrayOfListCommon
+    include Seq.MakePolyRev(ArrayOfListCommon)
 
 let of_list ?length list =
     let length = match length with
         | None -> List.length list
         | Some length -> length
       in
-    Array_of_list.to_array (Array_of_list.init length list)
+    ArrayOfList.to_array (ArrayOfList.init length list)
 
 let of_list_rev ?length list =
     let length = match length with
         | None -> List.length list
         | Some length -> length
       in
-    Array_of_list_rev.to_array (Array_of_list_rev.init length list)
+    ArrayOfListRev.to_array (ArrayOfListRev.init length list)
 
 let is_empty t =
     (length t) = 0
 
-let set_inplace i elm t =
-    %hemlock_array_set_inplace i elm t
+external set_inplace: uns -> 'a -> 'a t& >{mut}~> -> unit =
+  "hm_basis_array_set_inplace"
 
 let copy t =
     init (length t) ~f:(fun i -> get i t)
@@ -310,23 +329,23 @@ let set i elm t =
     set_inplace i elm t'
     t'
 
-module Array_join = struct
+module ArrayJoin = struct
     module T = struct
-        type 'a /t outer = 'a /t t
-        type ('a, /sep, /arrays) t =
-            sep: 'a /sep outer
-            arrays: ('a /arrays outer) list
+        type 'a outer^ = 'a t^outer
+        type ('a, ^sep, ^arrays) t =
+            sep: 'a outer^sep
+            arrays: 'a outer^arrays list
             length: uns
             in_sep: bool
             index: uns
         type 'a elm = 'a
 
-        (* val init: uns -> 'a /sep outer -> 'a /arrays outer list
-         *   -> ('a, /sep, /arrays) t *)
+        (* val init: uns -> 'a outer^sep -> 'a outer^arrays list
+         *   -> ('a, ^sep, ^arrays) t *)
         let init length sep arrays =
             {sep; arrays; length; in_sep=false; index=0}
 
-        (* val next: ('a, /sep, /arrays) t -> 'a * ('a, /sep, /arrays) t *)
+        (* val next: ('a, ^sep, ^arrays) t -> 'a * ('a, ^sep, ^arrays) t *)
         let next t =
             let rec fn t =
                 match t.in_sep with
@@ -355,8 +374,8 @@ module Array_join = struct
         let length t =
             t.length
     include T
-    include Seq.Make_poly(T)
-    (* val to_array: ('a, /_, /_) t -> 'a /o outer *)
+    include Seq.MakePoly(T)
+    (* val to_array: ('a, ^_, ^_) t -> 'a outer^ *)
 
 let join ?sep tlist =
     let sep, sep_len = match sep with
@@ -373,7 +392,7 @@ let join ?sep tlist =
         let accum' = accum + sep_len' + (length list) in
         i', accum'
       ) in
-    Array_join.(to_array (init tlist_length sep tlist))
+    ArrayJoin.(to_array (init tlist_length sep tlist))
 
 let concat t0 t1 =
     let length_t0 = length t0 in
@@ -430,7 +449,7 @@ let remove i t =
         else
             pare ~base:0 ~past:(pred len) t
 
-let reduce ~f t =
+let reduce ~f t = expose
     let rec fn i accum =
         match (i = (length t)) with
         | true -> accum
@@ -440,9 +459,9 @@ let reduce ~f t =
     | [||] -> None
     | _ -> Some (fn 1 (get 0 t))
 
-let reduce_hlt ~f t =
+let reduce_hlt ~f t = expose
     match reduce ~f t with
-    | None -> halt "Empty array"
+    | None -> conceal (halt "Empty array")
     | Some x -> x
 
 let swap_inplace i0 i1 t =
@@ -765,50 +784,49 @@ let search ?base ?past key ~cmp t =
 let nsearch ?base ?past key ~cmp t =
     search_impl ?base ?past key ~cmp Cmp.Gt t
 
-let map ~f t =
+let map ~f t = expose
     init (length t) ~f:(fun i -> f (get i t))
 
-let mapi ~f t =
+let mapi ~f t = expose
     init (length t) ~f:(fun i -> f i (get i t))
 
-module Array_foldi_map = struct
+module ArrayFoldiMap = struct
     module T = struct
-        type 'a /t outer = 'a /t t
-        type ('a, /arr, >e) ['accum, 'b] t =
-            arr: 'a /arr outer
+        type 'a outer^ = 'a t^outer
+        type ('a, ^arr, >e) ['accum, 'b] t =
+            arr: ('a, ^arr) outer
             f: uns -> 'accum -> 'a >e-> 'accum * 'b
             index: uns
             length: uns
-        (* val init: 'a /arr outer -> (uns -> 'accum -> 'a >e-> 'accum * 'b)
-         *   -> uns -> ('a, /arr, >e) ['accum, 'b] t *)
-        let init arr ~f length =
+        (* val init: ('a, ^arr) outer -> f:(uns -> 'accum -> 'a
+         *   >e-> 'accum * 'b) -> uns -> ('a, ^arr, >e) ['accum, 'b] t *)
+        let init arr ~f length = expose
             {arr; f; length; index=0}
 
         (* val length: (_, _, _) [_, _] t -> uns *)
         let length t =
             t.length
 
-        (* val next: ('a, /arr, >e) ['accum, 'b] t
-         *   >e-> 'a * ('a, /arr, >e) ['accum, 'b] t * 'accum *)
+        (* val next: ('a, ^arr, >e) ['accum, 'b] t
+         *   >e-> 'a * ('a, ^arr, >e) ['accum, 'b] t * 'accum *)
         let next t accum =
             let accum', elm' = t.f t.index accum (get t.index t.arr) in
             let t' = {t with index=succ t.index} in
             elm', t', accum'
     include T
-    include Seq.Make_poly2(T)
-    (* val to_accum_array: (_, /_, >e) ['accum, 'b] t >e-> 'accum * 'b /o outer
-     *)
+    include Seq.MakePoly2(T)
+    (* val to_accum_array: (_, ^_, >e) ['accum, 'b] t >e-> 'accum * 'b outer^ *)
 
-let fold_map t ~init ~f =
-    Array_foldi_map.to_accum_array (Array_foldi_map.init t
+let fold_map t ~init ~f = expose
+    ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t
       ~f:(fun _ accum elm -> f accum elm) (length t)) ~init
 
-let foldi_map t ~init ~f =
-    Array_foldi_map.to_accum_array (Array_foldi_map.init t ~f (length t)) ~init
+let foldi_map t ~init ~f = expose
+    ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t ~f (length t)) ~init
 
-let filter ~f t =
-    let _, t' = Array_foldi_map.to_accum_array
-      (Array_foldi_map.init t ~f:(fun _ i _ ->
+let filter ~f t = expose
+    let _, t' = ArrayFoldiMap.to_accum_array
+      (ArrayFoldiMap.init t ~f:(fun _ i _ ->
         let rec fn i elm =
             let i' = succ i in
             match f elm with
@@ -819,14 +837,14 @@ let filter ~f t =
       ) (count ~f t)) ~init:0 in
     t'
 
-let filteri ~f t =
+let filteri ~f t = expose
     let n = foldi t ~init:0 ~f:(fun i accum elm ->
         match f i elm with
         | false -> accum
         | true -> succ accum
       ) in
-    let _, t' = Array_foldi_map.to_accum_array
-      Array_foldi_map.init t ~f:(fun _ i _ ->
+    let _, t' = ArrayFoldiMap.to_accum_array
+      ArrayFoldiMap.init t ~f:(fun _ i _ ->
         let rec fn i elm =
             let i' = succ i in
             match f i elm with
@@ -838,8 +856,8 @@ let filteri ~f t =
       ~init:0 in
     t'
 
-let foldi2_until ~init ~f t0 t1 =
-    assert ((length t0) = (length t1))
+let foldi2_until ~init ~f t0 t1 = expose
+    conceal (assert ((length t0) = (length t1)))
     let len = length t0 in
     let rec fn i accum =
         match i = len with
@@ -852,45 +870,45 @@ let foldi2_until ~init ~f t0 t1 =
       in
     fn 0 init
 
-let fold2_until ~init ~f t0 t1 =
+let fold2_until ~init ~f t0 t1 = expose
     foldi2_until ~init ~f:(fun _ accum a b -> f accum a b) t0 t1
 
-let fold2 ~init ~f t0 t1 =
+let fold2 ~init ~f t0 t1 = expose
     fold2_until ~init ~f:(fun accum a b -> (f accum a b), false) t0 t1
 
-let foldi2 ~init ~f t0 t1 =
+let foldi2 ~init ~f t0 t1 = expose
     foldi2_until ~init ~f:(fun i accum a b -> (f i accum a b), false) t0 t1
 
-let iter2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+let iter2 ~f t0 t1 = expose
+    conceal (assert ((length t0) = (length t1)))
     for i = 0 to pred (length t0) do
         f (get i t0) (get i t1)
 
-let iteri2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+let iteri2 ~f t0 t1 = expose
+    conceal (assert ((length t0) = (length t1)))
     for i = 0 to pred (length t0) do
         f i (get i t0) (get i t1)
 
-let map2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+let map2 ~f t0 t1 = expose
+    conceal (assert ((length t0) = (length t1)))
     init (length t0) ~f:(fun i -> f (get i t0) (get i t1))
 
-let mapi2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+let mapi2 ~f t0 t1 = expose
+    conceal (assert ((length t0) = (length t1)))
     init (length t0) ~f:(fun i -> f i (get i t0) (get i t1))
 
-module Array_foldi2_map = struct
+module ArrayFoldi2Map = struct
     module T = struct
-        type 'a /t outer = 'a /t t
-        type ('a, /m, 'b, /n, >e) ['accum, 'c] t =
-            arr0: 'a /m outer
-            arr1: 'b /n outer
+        type 'a outer^ = 'a t^outer
+        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t =
+            arr0: ('a, ^m) outer
+            arr1: ('b, ^n) outer
             f: uns -> 'accum -> 'a -> 'b >e-> 'accum * 'c
             index: uns
 
-        (* val init: 'a /m outer -> 'b /n outer
+        (* val init: 'a outer^m -> 'b outer^n
          *   -> f:(uns -> 'accum -> 'a -> 'b -> >e-> 'accum * 'c)
-         *   -> ('a, /m, 'b, /n, >e) ['accum, 'c] t *)
+         *   -> ('a, ^m, 'b, ^n, >e) ['accum, 'c] t *)
         let init arr0 arr1 ~f =
             {arr0; arr1; f; index=0}
 
@@ -898,22 +916,24 @@ module Array_foldi2_map = struct
         let length t =
             length t.arr0
 
-        (* val next: ('a, /m, 'b, /n, >e) ['accum, 'c] t -> 'accum
-         *   -> 'c * ('a, /m, 'b, /n, >e) ['accum, 'c] t * 'accum *)
+        (* val next: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> 'accum
+         *   -> 'c * ('a, ^m, 'b, ^n, >e) ['accum, 'c] t * 'accum *)
         let next t accum =
             let accum', elm' = t.f t.index accum (get t.index t.arr0)
               (get t.index t.arr1) in
             let t' = {t with index=Uns.succ t.index} in
             elm', t', accum'
     include T
-    include Seq.Make_poly3(T)
+    include Seq.MakePoly3(T)
+    (* val to_accum_array: (_, ^_, _, ^_, >e) ['accum, 'c] t
+     *   >e-> 'accum * 'c outer^ *)
 
-let fold2_map ~init ~f t0 t1 =
-        Array_foldi2_map.to_accum_array (Array_foldi2_map.init t0 t1 ~f:(fun _
-          accum elm -> f accum elm)) ~init
+let fold2_map ~init ~f t0 t1 = expose
+    ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f:(fun _ accum elm
+      -> f accum elm)) ~init
 
-let foldi2_map ~init ~f t0 t1 =
-        Array_foldi2_map.to_accum_array (Array_foldi2_map.init t0 t1 ~f) ~init
+let foldi2_map ~init ~f t0 t1 = expose
+    ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f) ~init
 
 let zip t0 t1 =
     map2 ~f:(fun a b -> a, b) t0 t1
@@ -988,7 +1008,7 @@ let%expect_test "cursor" =
       )
     printf "@]"
 
-    [%expect{"\
+    [%expect``
 --- [||] ---
 index=0, container Eq arr, hd Eq cursor, cursor Eq tl, lget=_, rget=_
 --- [|0|] ---
@@ -1003,7 +1023,7 @@ index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
 index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
 index=2, container Eq arr, hd Lt cursor, cursor Lt tl, lget=1, rget=2
 index=3, container Eq arr, hd Lt cursor, cursor Eq tl, lget=2, rget=_
-"}]
+``]
 
 let%expect_test "hash_fold" =
     let open Format in
@@ -1025,11 +1045,11 @@ let%expect_test "hash_fold" =
     fn arrs
     printf "@]"
 
-    [%expect{|hash_fold [||] -> 0x0000000000000000
+    [%expect`|hash_fold [||] -> 0x0000000000000000
              |hash_fold [|0|] -> 0x0000000007be548a
              |hash_fold [|0; 0|] -> 0x0000000012cbe18f
              |hash_fold [|0; 1|] -> 0x0000000005e8da31
-             |}]
+            `]
 
 let%expect_test "cmp" =
     let open Format in
@@ -1060,7 +1080,7 @@ let%expect_test "cmp" =
     fn hd tl
     printf "@]"
 
-    [%expect{|cmp [||] [|0|] -> Lt
+    [%expect`|cmp [||] [|0|] -> Lt
              |cmp [||] [|0; 0|] -> Lt
              |cmp [||] [|0; 1|] -> Lt
              |cmp [||] [|0; 0|] -> Lt
@@ -1081,7 +1101,7 @@ let%expect_test "cmp" =
              |cmp [|0; 0|] [|0|] -> Gt
              |cmp [|0; 0|] [||] -> Gt
              |cmp [|0|] [||] -> Gt
-             |}]
+            `]
 
 let%expect_test "get,length,is_empty" =
     let open Format in
@@ -1096,11 +1116,11 @@ let%expect_test "get,length,is_empty" =
     test_length [|0; 1; 2|]
     printf "@]"
 
-    [%expect{|[||]: length=0, is_empty=true
+    [%expect`|[||]: length=0, is_empty=true
              |[|0|]: length=1, is_empty=false
              |[|0; 1|]: length=2, is_empty=false
              |[|0; 1; 2|]: length=3, is_empty=false
-             |}]
+            `]
 
 let%expect_test "set,set_inplace" =
     let open Format in
@@ -1124,14 +1144,14 @@ let%expect_test "set,set_inplace" =
     test_set 3
     printf "@]"
 
-    [%expect{"\
+    [%expect{``
 set 0: [|0|] -> [|1|] -> set_inplace: [|1|] -> copy,set_inplace: [|1|] -> [|2|]
 set 0: [|0; 0|] -> [|1; 0|] -> set_inplace: [|1; 0|] -> copy,set_inplace: [|1; 0|] -> [|2; 0|]
 set 1: [|0; 0|] -> [|0; 1|] -> set_inplace: [|0; 1|] -> copy,set_inplace: [|0; 1|] -> [|0; 2|]
 set 0: [|0; 0; 0|] -> [|1; 0; 0|] -> set_inplace: [|1; 0; 0|] -> copy,set_inplace: [|1; 0; 0|] -> [|2; 0; 0|]
 set 1: [|0; 0; 0|] -> [|0; 1; 0|] -> set_inplace: [|0; 1; 0|] -> copy,set_inplace: [|0; 1; 0|] -> [|0; 2; 0|]
 set 2: [|0; 0; 0|] -> [|0; 0; 1|] -> set_inplace: [|0; 0; 1|] -> copy,set_inplace: [|0; 0; 1|] -> [|0; 0; 2|]
-"}]
+``]
 
 let%expect_test "pare" =
     let open Format in
@@ -1150,11 +1170,11 @@ let%expect_test "pare" =
     test [|0; 1; 2|]
     printf "@]"
 
-    [%expect{|pare [||] -> [0,0)=[||]
+    [%expect`|pare [||] -> [0,0)=[||]
              |pare [|0|] -> [0,0)=[||] [0,1)=[|0|] [1,1)=[||]
              |pare [|0; 1|] -> [0,0)=[||] [0,1)=[|0|] [0,2)=[|0; 1|] [1,1)=[||] [1,2)=[|1|] [2,2)=[||]
              |pare [|0; 1; 2|] -> [0,0)=[||] [0,1)=[|0|] [0,2)=[|0; 1|] [0,3)=[|0; 1; 2|] [1,1)=[||] [1,2)=[|1|] [1,3)=[|1; 2|] [2,2)=[||] [2,3)=[|2|] [3,3)=[||]
-             |}]
+            `]
 
 let%expect_test "join" =
     let open Format in
@@ -1205,7 +1225,7 @@ let%expect_test "join" =
     test ~sep:[|3|] [[|0|]; [|1|]; [|2|]]
     printf "@]";
 
-    [%expect{|join [] -> [||]
+    [%expect`|join [] -> [||]
              |join [[||]] -> [||]
              |join [[||]; [||]] -> [||]
              |join [[||]; [||]; [||]] -> [||]
@@ -1233,7 +1253,7 @@ let%expect_test "join" =
              |join ~sep:[|3|] [[|0|]; [|1|]; [||]] -> [|0; 3; 1; 3|]
              |join ~sep:[|3|] [[|0|]; [||]; [|1|]] -> [|0; 3; 3; 1|]
              |join ~sep:[|3|] [[|0|]; [|1|]; [|2|]] -> [|0; 3; 1; 3; 2|]
-             |}]
+            `]
 
 let%expect_test "concat" =
     let open Format in
@@ -1251,14 +1271,14 @@ let%expect_test "concat" =
     test [|0; 1|] [|2; 3|]
     printf "@]"
 
-    [%expect{|concat [||] [||] -> [||]
+    [%expect`|concat [||] [||] -> [||]
              |concat [|0|] [||] -> [|0|]
              |concat [||] [|0|] -> [|0|]
              |concat [|0|] [|1|] -> [|0; 1|]
              |concat [|0; 1|] [|2|] -> [|0; 1; 2|]
              |concat [|0|] [|1; 2|] -> [|0; 1; 2|]
              |concat [|0; 1|] [|2; 3|] -> [|0; 1; 2; 3|]
-             |}]
+            `]
 
 let%expect_test "append,prepend" =
     let open Format in
@@ -1275,11 +1295,11 @@ let%expect_test "append,prepend" =
     test [|0; 1; 2|] 3
     printf "@]"
 
-    [%expect{|[||] 0: append -> [|0|], prepend -> [|0|]
+    [%expect`|[||] 0: append -> [|0|], prepend -> [|0|]
              |[|0|] 1: append -> [|0; 1|], prepend -> [|1; 0|]
              |[|0; 1|] 2: append -> [|0; 1; 2|], prepend -> [|2; 0; 1|]
              |[|0; 1; 2|] 3: append -> [|0; 1; 2; 3|], prepend -> [|3; 0; 1; 2|]
-             |}]
+            `]
 
 let%expect_test "insert" =
     let open Format in
@@ -1297,11 +1317,11 @@ let%expect_test "insert" =
     test [|0; 1; 2|] 3
     printf "@]"
 
-    [%expect{|insert [||] 0 -> [|0|]
+    [%expect`|insert [||] 0 -> [|0|]
              |insert [|0|] 1 -> [|1; 0|] [|0; 1|]
              |insert [|0; 1|] 2 -> [|2; 0; 1|] [|0; 2; 1|] [|0; 1; 2|]
              |insert [|0; 1; 2|] 3 -> [|3; 0; 1; 2|] [|0; 3; 1; 2|] [|0; 1; 3; 2|] [|0; 1; 2; 3|]
-             |}]
+            `]
 
 let%expect_test "remove" =
     let open Format in
@@ -1318,10 +1338,10 @@ let%expect_test "remove" =
     test [|0; 1; 2|]
     printf "@]"
 
-    [%expect{|remove [|0|] -> [||]
+    [%expect`|remove [|0|] -> [||]
              |remove [|0; 1|] -> [|1|] [|0|]
              |remove [|0; 1; 2|] -> [|1; 2|] [|0; 2|] [|0; 1|]
-             |}]
+            `]
 
 let%expect_test "reduce" =
     let open Format in
@@ -1337,9 +1357,9 @@ let%expect_test "reduce" =
     test_reduce [|0; 1; 2; 3; 4|] ~f
     printf "@]"
 
-    [%expect{|reduce [||] -> None
+    [%expect`|reduce [||] -> None
              |reduce [|0; 1; 2; 3; 4|] -> 10
-             |}]
+            `]
 
 let%expect_test "swap,swap_inplace" =
     let open Format in
@@ -1360,7 +1380,7 @@ let%expect_test "swap,swap_inplace" =
     test_swap [|0; 1; 2; 3|]
     printf "@]"
 
-    [%expect{"\
+    [%expect``
 0 0: swap [|0|] -> [|0|] -> swap_inplace [|0|] -> [|0|]
 0 0: swap [|0; 1|] -> [|0; 1|] -> swap_inplace [|0; 1|] -> [|0; 1|]
 0 1: swap [|0; 1|] -> [|1; 0|] -> swap_inplace [|0; 1|] -> [|1; 0|]
@@ -1381,7 +1401,7 @@ let%expect_test "swap,swap_inplace" =
 2 2: swap [|0; 1; 2; 3|] -> [|0; 1; 2; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 2; 3|]
 2 3: swap [|0; 1; 2; 3|] -> [|0; 1; 3; 2|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 3; 2|]
 3 3: swap [|0; 1; 2; 3|] -> [|0; 1; 2; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 2; 3|]
-"}]
+``]
 
 let%expect_test "rev,rev_inplace" =
     let open Format in
@@ -1398,11 +1418,11 @@ let%expect_test "rev,rev_inplace" =
     test_rev [|0; 1; 2; 3|]
     printf "@]"
 
-    [%expect{|rev [|0|] -> [|0|] -> rev_inplace [|0|] -> [|0|]
+    [%expect`|rev [|0|] -> [|0|] -> rev_inplace [|0|] -> [|0|]
              |rev [|0; 1|] -> [|1; 0|] -> rev_inplace [|0; 1|] -> [|1; 0|]
              |rev [|0; 1; 2|] -> [|2; 1; 0|] -> rev_inplace [|0; 1; 2|] -> [|2; 1; 0|]
              |rev [|0; 1; 2; 3|] -> [|3; 2; 1; 0|] -> rev_inplace [|0; 1; 2; 3|] -> [|3; 2; 1; 0|]
-             |}]
+            `]
 
 let%expect_test "blit" =
     let open Format in
@@ -1422,14 +1442,14 @@ let%expect_test "blit" =
     test_blit 3 0 [|0; 1; 2|] 0 [|3; 4; 5|]
     printf "@]"
 
-    [%expect{|blit 0 0 [||] 0 [||] -> [||]
+    [%expect`|blit 0 0 [||] 0 [||] -> [||]
              |blit 1 0 [|0|] 0 [|1|] -> [|0|]
              |blit 1 1 [|0; 1|] 0 [|2|] -> [|1|]
              |blit 1 0 [|0|] 1 [|1; 2|] -> [|1; 0|]
              |blit 2 0 [|0; 1|] 0 [|2; 3|] -> [|0; 1|]
              |blit 2 1 [|0; 1; 2|] 0 [|3; 4; 5|] -> [|1; 2; 5|]
              |blit 3 0 [|0; 1; 2|] 0 [|3; 4; 5|] -> [|0; 1; 2|]
-             |}]
+            `]
 
 let%expect_test "is_sorted" =
     let open Format in
@@ -1448,7 +1468,7 @@ let%expect_test "is_sorted" =
     test_is_sorted [|0; 2; 1|]
     printf "@]"
 
-    [%expect{|is_sorted [||]: not strict -> true, strict -> true
+    [%expect`|is_sorted [||]: not strict -> true, strict -> true
              |is_sorted [|0|]: not strict -> true, strict -> true
              |is_sorted [|0; 0|]: not strict -> true, strict -> false
              |is_sorted [|0; 1|]: not strict -> true, strict -> true
@@ -1456,7 +1476,7 @@ let%expect_test "is_sorted" =
              |is_sorted [|0; 1; 1|]: not strict -> true, strict -> false
              |is_sorted [|0; 1; 2|]: not strict -> true, strict -> true
              |is_sorted [|0; 2; 1|]: not strict -> false, strict -> false
-             |}]
+            `]
 
 type sort_elm =
     key: uns (* Random, possibly non-unique. *)
@@ -1530,7 +1550,7 @@ let%expect_test "search" =
         test_search arr key_max
     printf "@]"
 
-    [%expect{|[||]
+    [%expect`|[||]
              |    0 -> <, <>, >
              |[|1|]
              |    0 -> <[0]=1, <>, <[0]=1
@@ -1568,7 +1588,7 @@ let%expect_test "search" =
              |    4 -> >[3]=3, <>, <[4]=5
              |    5 -> =[4]=5, =5, =[5]=5
              |    6 -> >[5]=5, <>, >[5]=5
-             |}]
+            `]
 
 let%expect_test "map,mapi" =
     let open Format in
@@ -1590,11 +1610,11 @@ let%expect_test "map,mapi" =
     test_map [|2; 1; 0|]
     printf "@]"
 
-    [%expect{|[||] -> map [||] -> mapi [||]
+    [%expect`|[||] -> map [||] -> mapi [||]
              |[|0|] -> map [|"0"|] -> mapi [|"[0]=0"|]
              |[|1; 0|] -> map [|"1"; "0"|] -> mapi [|"[0]=1"; "[1]=0"|]
              |[|2; 1; 0|] -> map [|"2"; "1"; "0"|] -> mapi [|"[0]=2"; "[1]=1"; "[2]=0"|]
-             |}]
+            `]
 
 let%expect_test "fold_map,foldi_map" =
     let open Format in
@@ -1621,11 +1641,11 @@ let%expect_test "fold_map,foldi_map" =
     test_fold_map [|2; 1; 0|]
     printf "@]"
 
-    [%expect{|[||] -> fold_map 0 [||] -> foldi_map 0 [||]
+    [%expect`|[||] -> fold_map 0 [||] -> foldi_map 0 [||]
              |[|0|] -> fold_map 0 [|"0"|] -> foldi_map 0 [|"[0]=0"|]
              |[|1; 0|] -> fold_map 1 [|"1"; "0"|] -> foldi_map 2 [|"[0]=1"; "[1]=0"|]
              |[|2; 1; 0|] -> fold_map 3 [|"2"; "1"; "0"|] -> foldi_map 6 [|"[0]=2"; "[1]=1"; "[2]=0"|]
-             |}]
+            `]
 
 let%expect_test "filter,filteri" =
     let open Format in
@@ -1647,12 +1667,12 @@ let%expect_test "filter,filteri" =
     test_filter [|3; 2; 1; 0|]
     printf "@]"
 
-    [%expect{|[||] -> filter [||] -> filteri [||] [||]
+    [%expect`|[||] -> filter [||] -> filteri [||] [||]
              |[|0|] -> filter [|0|] -> filteri [|0|] [|0|]
              |[|1; 0|] -> filter [|0|] -> filteri [|0|] [|1|]
              |[|2; 1; 0|] -> filter [|2; 0|] -> filteri [|2; 0|] [|2; 0|]
              |[|3; 2; 1; 0|] -> filter [|2; 0|] -> filteri [|2; 0|] [|3; 1|]
-             |}]
+            `]
 
 let%expect_test "fold2_until,foldi2_until" =
     let open Format in
@@ -1678,11 +1698,11 @@ let%expect_test "fold2_until,foldi2_until" =
     test_fold2_until [|5; 4; 3|] [|2; 1; 0|]
     printf "@]"
 
-    [%expect{|[||] [||] -> fold2_until 0 -> foldi2_until 0
+    [%expect`|[||] [||] -> fold2_until 0 -> foldi2_until 0
              |[|1|] [|0|] -> fold2_until 1 -> foldi2_until 1
              |[|3; 2|] [|1; 0|] -> fold2_until 6 -> foldi2_until 4
              |[|5; 4; 3|] [|2; 1; 0|] -> fold2_until 15 -> foldi2_until 13
-             |}]
+            `]
 
 let%expect_test "fold2,foldi2" =
     let open Format in
@@ -1705,11 +1725,11 @@ let%expect_test "fold2,foldi2" =
     test_fold2 [|5; 4; 3|] [|2; 1; 0|]
     printf "@]"
 
-    [%expect{|[||] [||] -> fold2 0 -> foldi2 0
+    [%expect`|[||] [||] -> fold2 0 -> foldi2 0
              |[|1|] [|0|] -> fold2 1 -> foldi2 1
              |[|3; 2|] [|1; 0|] -> fold2 6 -> foldi2 7
              |[|5; 4; 3|] [|2; 1; 0|] -> fold2 15 -> foldi2 18
-             |}]
+            `]
 
 let%expect_test "iteri2" =
     let open Format in
@@ -1730,11 +1750,11 @@ let%expect_test "iteri2" =
     test_iter2 [|0; 1|] [|2; 3|]
     test_iter2 [|0; 1; 2|] [|3; 4; 5|]
 
-    [%expect{|[||]
+    [%expect`|[||]
              |[|(0, 1)|]
              |[|(0, 2); (1, 3)|]
              |[|(0, 3); (1, 4); (2, 5)|]
-             |}]
+            `]
 
 let%expect_test "map2,mapi2" =
     let open Format in
@@ -1759,11 +1779,11 @@ let%expect_test "map2,mapi2" =
     test_map2 [|5; 4; 3|] [|2; 1; 0|]
     printf "@]"
 
-    [%expect{|[||] [||] -> map2 [||] -> mapi2 [||]
+    [%expect`|[||] [||] -> map2 [||] -> mapi2 [||]
              |[|1|] [|0|] -> map2 [|"(1,0)"|] -> mapi2 [|"[0]=(1,0)"|]
              |[|3; 2|] [|1; 0|] -> map2 [|"(3,1)"; "(2,0)"|] -> mapi2 [|"[0]=(3,1)"; "[1]=(2,0)"|]
              |[|5; 4; 3|] [|2; 1; 0|] -> map2 [|"(5,2)"; "(4,1)"; "(3,0)"|] -> mapi2 [|"[0]=(5,2)"; "[1]=(4,1)"; "[2]=(3,0)"|]
-             |}]
+            `]
 
 let%expect_test "fold2_map,foldi2_map" =
     let open Format in
@@ -1795,11 +1815,11 @@ let%expect_test "fold2_map,foldi2_map" =
     printf "@]"
 
     [%expect
-      {|[||] [||] -> fold2_map 0 [||] -> foldi2_map 0 [||]
+      `|[||] [||] -> fold2_map 0 [||] -> foldi2_map 0 [||]
        |[|1|] [|0|] -> fold2_map 1 [|"(1,0)"|] -> foldi2_map 1 [|"[0]=(1,0)"|]
        |[|3; 2|] [|1; 0|] -> fold2_map 6 [|"(3,1)"; "(2,0)"|] -> foldi2_map 7 [|"[0]=(3,1)"; "[1]=(2,0)"|]
        |[|5; 4; 3|] [|2; 1; 0|] -> fold2_map 15 [|"(5,2)"; "(4,1)"; "(3,0)"|] -> foldi2_map 18 [|"[0]=(5,2)"; "[1]=(4,1)"; "[2]=(3,0)"|]
-       |}]
+      `]
 
 let%expect_test "zip,unzip" =
     let open Format in
@@ -1816,8 +1836,8 @@ let%expect_test "zip,unzip" =
     test_zip [|0; 1; 2|] [|3; 4; 5|]
     printf "@]"
 
-    [%expect{|[||] [||]
+    [%expect`|[||] [||]
              |[|0|] [|1|]
              |[|0; 1|] [|2; 3|]
              |[|0; 1; 2|] [|3; 4; 5|]
-             |}]
+            `]
