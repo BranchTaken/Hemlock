@@ -23,9 +23,9 @@ module T = struct
 
       let seek = Ordmap.Cursor.seek
 
-      let succ = Ordmap.Cursor.succ
-
       let pred = Ordmap.Cursor.pred
+
+      let succ = Ordmap.Cursor.succ
 
       let lget t =
         let (a, _) = Ordmap.Cursor.lget t in
@@ -287,10 +287,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold (of_array (module Uns) [||]) -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold (of_array (module Uns) [|0|]) -> 0xf931_3f2a_e691_89fb_c121_c10c_2321_2ab7u128
-    hash_fold (of_array (module Uns) [|0; 1|]) -> 0x6c19_38ef_f4fd_7d4d_0b71_57d7_a7a4_58ceu128
-    hash_fold (of_array (module Uns) [|0; 2|]) -> 0xb35d_e06b_2347_e0fb_dc0e_7169_33fc_b370u128
+    hash_fold (of_array (module Uns) [||]) -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold (of_array (module Uns) [|0|]) -> 0xb978_4708_6e65_ae45_2de4_cfcd_b8a3_131eu128
+    hash_fold (of_array (module Uns) [|0; 1|]) -> 0xd635_171d_1814_1fda_524b_85ac_d4fb_8a5au128
+    hash_fold (of_array (module Uns) [|0; 2|]) -> 0x09bf_6cdf_151d_5771_da7e_9c1b_51db_ef0au128
     |}]
 
 let%expect_test "hash_fold empty" =

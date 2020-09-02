@@ -71,10 +71,10 @@ let%expect_test "hash_fold,pp" =
   printf "@]";
 
   [%expect{|
-    hash_fold First 0 -> 0x4988_6389_f40a_a2a3_3bac_4d62_a744_138bu128
-    hash_fold First 1 -> 0xcffe_8f1d_4ece_31b1_0231_7d19_4ec8_ede7u128
-    hash_fold Second 0 -> 0xe1d0_4b10_a3f6_4eda_dfbb_5c04_579d_0b05u128
-    hash_fold Second 1 -> 0x262a_4610_b795_f867_bd59_f2c2_1134_c78cu128
+    hash_fold First 0 -> 0x8f43_bfd8_0288_c2c9_5ad9_7fd2_09c0_23c2u128
+    hash_fold First 1 -> 0xbb5a_c90a_3df6_44e7_ea10_f44c_8798_963du128
+    hash_fold Second 0 -> 0x03ed_688f_024a_5170_df17_bbe2_160e_8fa0u128
+    hash_fold Second 1 -> 0x2c31_1233_8879_fc2a_f407_45af_d2ef_7351u128
     |}]
 
 let%expect_test "is_first,is_second" =

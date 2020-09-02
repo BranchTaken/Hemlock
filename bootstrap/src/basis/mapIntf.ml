@@ -240,23 +240,23 @@ module type S = sig
 
   val kreduce: f:('k -> 'k -> 'k) -> ('k, 'v, 'cmp) t -> 'k option
   (** [kreduce ~f t] reduces [t] to a single key, or [None] if the map is empty.
-      The reduction function is assumed to be associative; thus reduction order
-      is unspecified. *)
+      The reduction function is assumed to be associative and commutative; thus
+      reduction order is unspecified. *)
 
   val kreduce_hlt: f:('k -> 'k -> 'k) -> ('k, 'v, 'cmp) t -> 'k
   (** [kreduce_hlt ~f t] reduces [t] to a single key, or halts if the map is
-      empty. The reduction function is assumed to be associative; thus reduction
-      order is unspecified. *)
+      empty. The reduction function is assumed to be associative and
+      commutative; thus reduction order is unspecified. *)
 
   val reduce: f:('v -> 'v -> 'v) -> ('k, 'v, 'cmp) t -> 'v option
   (** [reduce ~f t] reduces [t] to a single value, or [None] if the map is
-      empty. The reduction function is assumed to be associative; thus reduction
-      order is unspecified. *)
+      empty. The reduction function is assumed to be associative and
+      commutative; thus reduction order is unspecified. *)
 
   val reduce_hlt: f:('v -> 'v -> 'v) -> ('k, 'v, 'cmp) t -> 'v
   (** [reduce_hlt ~f t] reduces [t] to a single value, or halts if the map is
-      empty. The reduction function is assumed to be associative; thus reduction
-      order is unspecified. *)
+      empty. The reduction function is assumed to be associative and
+      commutative; thus reduction order is unspecified. *)
 
   include SeqIntf.SPoly3Fold2
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t

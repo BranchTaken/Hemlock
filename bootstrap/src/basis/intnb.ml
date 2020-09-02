@@ -17,7 +17,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
     | Lt -> halt "Invalid input"
     | Eq -> t
     | Gt -> begin
-        let nb = T.num_bits in
+        let nb = T.bit_length in
         let lz = T.bit_clz t in
         T.bit_sl ~shift:(nb - 1 - lz) T.one
       end
@@ -27,7 +27,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
     | Lt -> halt "Invalid input"
     | Eq -> t
     | Gt -> begin
-        let nb = T.num_bits in
+        let nb = T.bit_length in
         match T.bit_clz T.(t - one) with
         | 0 -> T.zero
         | lz -> T.bit_sl ~shift:(nb - lz) T.one
@@ -37,7 +37,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
     match T.cmp t T.zero with
     | Lt | Eq -> None
     | Gt -> begin
-        let nb = T.num_bits in
+        let nb = T.bit_length in
         let lz = T.bit_clz t in
         Some (T.of_uns (nb - 1 - lz))
       end
@@ -50,7 +50,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
   let ceil_lg t =
     match floor_lg_opt t with
     | None -> halt "Invalid input"
-    | Some x -> T.(x + (if is_pow2 t then zero else one))
+    | Some x -> T.(x + (if is_pow2 t then T.zero else T.one))
 
   let min t0 t1 =
     if t0 <= t1 then t0 else t1
@@ -79,35 +79,34 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
 
     let hash_fold t state =
       Hash.State.Gen.init state
-      |> Hash.State.Gen.fold_u128 1
-        ~f:(fun _ -> u128_of_arr [|Int64.of_int t; Int64.zero|])
+      |> Hash.State.Gen.fold_u64 1 ~f:(fun _ -> Int64.of_int t)
       |> Hash.State.Gen.fini
 
     let extend t =
-      let nlb = Sys.int_size - T.num_bits in
+      let nlb = Sys.int_size - T.bit_length in
       match nlb with
       | 0 -> t
       | _ -> begin
           match T.signed with
-          | false -> ((1 lsl T.num_bits) - 1) land t
+          | false -> ((1 lsl T.bit_length) - 1) land t
           | true -> (t lsl nlb) asr nlb
         end
 
     let narrow t =
-      let nlb = Sys.int_size - T.num_bits in
+      let nlb = Sys.int_size - T.bit_length in
       match nlb with
       | 0 ->  t
       | _ -> begin
           match T.signed with
-          | false -> ((1 lsl T.num_bits) - 1) land t
-          | true -> ((t asr (Sys.int_size - 1)) lsl (T.num_bits - 1)) lor
-              (((1 lsl (T.num_bits - 1)) - 1) land t)
+          | false -> ((1 lsl T.bit_length) - 1) land t
+          | true -> ((t asr (Sys.int_size - 1)) lsl (T.bit_length - 1)) lor
+              (((1 lsl (T.bit_length - 1)) - 1) land t)
         end
 
     let cmp t0 t1 =
       assert (narrow t0 = t0);
       assert (narrow t1 = t1);
-      match T.signed || (Sys.int_size > T.num_bits) with
+      match T.signed || (Sys.int_size > T.bit_length) with
       | true -> intnb_icmp t0 t1
       | false -> intnb_ucmp t0 t1
 
@@ -115,29 +114,29 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       match T.signed with
       | true -> narrow (uns_of_sint s)
       | false -> begin
-          let nlb = Sys.int_size - T.num_bits in
+          let nlb = Sys.int_size - T.bit_length in
           (match nlb with
             | 0 -> uns_of_sint s
-            | _ -> ((1 lsl T.num_bits) - 1) land (uns_of_sint s)
+            | _ -> ((1 lsl T.bit_length) - 1) land (uns_of_sint s)
           )
         end
 
     let narrow_of_unsigned u =
       match T.signed with
       | true -> begin
-          let nlb = Sys.int_size - T.num_bits in
+          let nlb = Sys.int_size - T.bit_length in
           match nlb with
           | 0 -> u
-          | _ -> ((1 lsl (T.num_bits - 1)) - 1) land u
+          | _ -> ((1 lsl (T.bit_length - 1)) - 1) land u
         end
       | false -> narrow u
 
     let lbfill t =
-      let nlb = Sys.int_size - T.num_bits in
+      let nlb = Sys.int_size - T.bit_length in
       match nlb with
       | 0 -> t
       | _ -> begin
-          let mask = ((1 lsl T.num_bits) - 1) in
+          let mask = ((1 lsl T.bit_length) - 1) in
           let lb = lnot mask in
           lb lor t
         end
@@ -146,7 +145,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       match T.signed with
       | false -> t
       | true -> begin
-          let nlb = Sys.int_size - T.num_bits in
+          let nlb = Sys.int_size - T.bit_length in
           match nlb with
           | 0 -> begin
               (* Leading bits are already zeros. *)
@@ -154,7 +153,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
               t
             end
           | _ -> begin
-              let mask = ((1 lsl T.num_bits) - 1) in
+              let mask = ((1 lsl T.bit_length) - 1) in
               t land mask
             end
         end
@@ -174,23 +173,55 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
 
     let pp ppf t =
       assert (narrow t = t);
-      let nlb = Sys.int_size - T.num_bits in
+      let nlb = Sys.int_size - T.bit_length in
       match T.signed, nlb with
       | false, 0 -> Format.fprintf ppf "%u" t
       | true, 0 -> Format.fprintf ppf "%di" t
-      | false, _ -> Format.fprintf ppf "%uu%u" t T.num_bits
-      | true, _ -> Format.fprintf ppf "%di%u" t T.num_bits
+      | false, _ -> Format.fprintf ppf "%uu%u" t T.bit_length
+      | true, _ -> Format.fprintf ppf "%di%u" t T.bit_length
+
+    let pp_b ppf t =
+      assert (narrow t = t);
+      let nlb = Sys.int_size - T.bit_length in
+      let tbits = ((1 lsl T.bit_length) - 1) land t in (* Mask leading ones. *)
+      let rec string_of_bits bits i accum = begin
+        match i = T.bit_length with
+        | true -> Stdlib.String.concat "" accum
+        | false -> begin
+            let bits' = bits lsr 1 in
+            let i' = i + 1 in
+            let accum' = (string_of_int (bits land 1)) :: accum in
+            string_of_bits bits' i' accum'
+          end
+      end in
+      let bits_string = string_of_bits tbits 0 [] in
+      match T.signed, nlb with
+      | false, 0 -> Format.fprintf ppf "0b%s" bits_string
+      | true, 0 -> Format.fprintf ppf "0b%si" bits_string
+      | false, _ -> Format.fprintf ppf "0b%su%u" bits_string T.bit_length
+      | true, _ -> Format.fprintf ppf "0b%si%u" bits_string T.bit_length
+
+    let pp_o ppf t =
+      assert (narrow t = t);
+      let nlb = Sys.int_size - T.bit_length in
+      let oct_digits = (T.bit_length + 2) / 3 in
+      let tbits = ((1 lsl T.bit_length) - 1) land t in (* Mask leading ones. *)
+      match T.signed, nlb with
+      | false, 0 -> Format.fprintf ppf "0o%0*o" oct_digits tbits
+      | true, 0 -> Format.fprintf ppf "0o%0*oi" oct_digits tbits
+      | false, _ -> Format.fprintf ppf "0o%0*ou%u" oct_digits tbits T.bit_length
+      | true, _ -> Format.fprintf ppf "0o%0*oi%u" oct_digits tbits T.bit_length
 
     let pp_x ppf t =
       assert (narrow t = t);
-      let nlb = Sys.int_size - T.num_bits in
-      let hex_digits = (T.num_bits + 3) / 4 in
-      let tbits = ((1 lsl T.num_bits) - 1) land t in (* Mask sign extension. *)
+      let nlb = Sys.int_size - T.bit_length in
+      let hex_digits = (T.bit_length + 3) / 4 in
+      let tbits = ((1 lsl T.bit_length) - 1) land t in (* Mask leading ones. *)
       match T.signed, nlb with
       | false, 0 -> Format.fprintf ppf "0x%0*x" hex_digits tbits
       | true, 0 -> Format.fprintf ppf "0x%0*xi" hex_digits tbits
-      | false, _ -> Format.fprintf ppf "0x%0*xu%u" hex_digits tbits T.num_bits
-      | true, _ -> Format.fprintf ppf "0x%0*xi%u" hex_digits tbits T.num_bits
+      | false, _ -> Format.fprintf ppf "0x%0*xu%u" hex_digits tbits T.bit_length
+      | true, _ -> Format.fprintf ppf "0x%0*xi%u" hex_digits tbits T.bit_length
 
     let of_string s =
       narrow (int_of_string s)
@@ -313,7 +344,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
   module V = struct
     include U
 
-    let num_bits = T.num_bits
+    let bit_length = T.bit_length
 
     let of_uns t =
       U.narrow_of_unsigned t
@@ -326,7 +357,7 @@ module MakeI (T : I) : SI with type t := sint = struct
     module V = struct
       module W = struct
         type t = sint
-        let num_bits = T.num_bits
+        let bit_length = T.bit_length
         let signed = true
       end
       include W
@@ -358,6 +389,12 @@ module MakeI (T : I) : SI with type t := sint = struct
 
     let pp ppf t =
       V.pp ppf (uns_of_sint t)
+
+    let pp_b ppf t =
+      V.pp_b ppf (uns_of_sint t)
+
+    let pp_o ppf t =
+      V.pp_o ppf (uns_of_sint t)
 
     let pp_x ppf t =
       V.pp_x ppf (uns_of_sint t)
@@ -477,7 +514,7 @@ end
 module MakeU (T : I) : SU with type t := uns = struct
   module U = struct
     type t = uns
-    let num_bits = T.num_bits
+    let bit_length = T.bit_length
     let signed = false
   end
   include U

@@ -10,7 +10,7 @@ corresponding modules in the `Basis` library:
 - [Unit](#unit)
 - [Boolean](#boolean)
 - [Integer](#integer)
-- [Float](#float)
+- [Real](#real)
 - [Codepoint](#codepoint)
 - [String](#string)
 
@@ -86,100 +86,24 @@ The following integer types are provided:
 `uns` is the default integer type, and should be preferred over other integer
 types unless the use case demands a specific signedness or bit width. Hemlock
 fundamentally depends on at least a 64-bit architecture, so `uns`/`int` always
-provide at least a 64-bit range.
+provide at least a 64-bit range. See [integer literal syntax](syntax.md#integer)
+for further details.
 
-Integer literals start with an optional sign if signed, followed by the
-magnitude, and finally a type suffix (optional for `uns`). Non-zero signed
-integers have an optional `+`/`-` sign prefix; unsigned integers never have an
-explicit sign. Magnitudes can be specified in base 10, 16 (`0x` prefix), 8 (`0o`
-prefix), or 2 (`0b` prefix). The type suffix matches the pattern,
-`[ui](8|16|32|64|128|256|512)?`. `_` separators can be arbitrarily internally
-interspersed, so long as they come after the base prefix (if present) and before
-the type suffix (if present). Out-of-range literals cause compile-time failure.
+### Real
 
-`uns` literal examples:
-
-    0
-    42
-    15u
-    0x0123_4567_89ab_cdef
-    0o660
-    0b10_0001
-
-`int` literal examples:
-
-    0i
-    +42i
-    -14i
-    0x_ab__c_i
-    0o777
-
-`byte` literal examples:
-
-    0u8
-    0xffu8
-
-### Float
-
-Floating point numbers use the [IEEE
+Real numbers use the [IEEE
 754](https://en.wikipedia.org/wiki/IEEE_754) binary floating point formats and
 ubiquitous hardware support for [32-bit
-`p32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) and
+`r32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) and
 [64-bit
-`p64`/`float`](https://en.wikipedia.org/wiki/Double-precision_floating-point_format).
+`r64`/`real`](https://en.wikipedia.org/wiki/Double-precision_floating-point_format).
 Although [16,128,256]-bit formats are also well defined, they are omitted from
 Hemlock because they are not commonly supported in hardware, making them of
 limited practical use.
 
-Floating point literals are always syntactically distinct from integers, due to
-a decimal point or type suffix if nothing else. The default `float` bitwidth is
-64; a `p64` type suffix allows the bitwidth to be explicit, and a `p32` suffix
-allows specification of 32-bit `p32` constants. Values can be specified in
-decimal or hexadecimal; the latter allows bit-precise specification of
-constants, whereas many decimal floating point numbers have no exact binary
-representation.
-
-    0.
-    1.0
-    0p64
-    1.5p32
-    4.2
-    +4.2
-    42.
-    42.^44
-    1^44
-    3.2^42
-    1_000_000.0
-    16^+_42
-    16.000_342^-42
-    -inf
-    inf
-    +inf
-    nan
-    -0.0
-    0.0
-    +0.0
-    4^3
-    42.3^-78_p64
-    42.3^-78
-    42.3^+78
-    42.3^78
-    -0x1.42
-    -0x0.0
-    +0x0.0
-    0x0.0
-    0x4.a3
-    +0x4.a3
-    0x4a^42
-    0x4a^-42
-    0x4a^+42
-    0x4a.3d2^+42
-    0x4a.3d2^+42_p32
-    -0x1.ffffffc
-    0x1.ffff_ffc
-    0x1.ffffffc^-1022
-    0x1.ffffffc^1023
-    0x1.ffffffc^+1023
+Real number literals are always syntactically distinct from integers, due to a
+decimal point or type suffix if nothing else. See [real literal
+syntax](syntax.md#real) for further details.
 
 ### Codepoint
 
@@ -187,57 +111,20 @@ The `codepoint` type encodes a single 21-bit
 [Unicode](https://en.wikipedia.org/wiki/Unicode) code point. Internally,
 `codepoint` is stored as a `u32`:
 
-    type codepoint = private u32
+```hemlock
+type codepoint = conceal u32
+```
 
 However, `codepoint` is intentionally type-incompatible with `u32`, thus
-requiring explicit validating conversion.
-
-Hemlock's source code encoding is always
-[UTF-8](https://en.wikipedia.org/wiki/UTF-8), so the simplest way to specify a
-`codepoint` literal is as UTF-8 inside `'` delimiters, e.g.:
-
-    '<'
-    '«'
-    '‡'
-    '𐆗'
-
-Alternately, codepoints can be specified in hexadecimal:
-
-    '\u{3c}' # '<'
-    '\u{ab}' # '«'
-    '\u{2021}' # '‡'
-    '\u{10197}' # '𐆗'
-
-Various special characters can be specified via `\` escapes:
-
-    '\t' # Tab
-    '\n' # Newline
-    '\r' # Carriage return
-    '\'' # Single quote
-    '\\' # Backslash
+requiring explicit validating conversion. See [codepoint literal
+syntax](syntax.md#codepoint) for further details.
 
 ### String
 
 The `string` type contains a UTF-8-encoded sequence of `codepoint` values. It is
 impossible to construct a string with invalid UTF-8 encoding, whether via string
-literals or programmatically at run time. Similarly to `codepoint` literals, the
-simplest way to specify a `string` literal is as UTF-8, inside `"` delimiters,
-e.g.
-
-    "Hello"
-    "A non-ASCII string -- <«‡𐆗"
-
-Codepoints can also be specified in delimited hexadecimal, e.g.:
-
-    "A non-ASCII string -- \u{3c}\u{ab}\u{2021}\u{10197}"
-
-Various special characters can be specified via `\` escapes:
-
-    "\t" # Tab
-    "\n" # Newline
-    "\r" # Carriage return
-    "\"" # Double quote
-    "\\" # Backslash
+literals or programmatically at run time. See [string literal
+syntax](syntax.md#string) for further details.
 
 ## Collection types
 
@@ -252,21 +139,27 @@ in typical code. Every element is independently allocated, so traversal requires
 pointer chasing, but memory locality tends to be good due to allocation/copying
 order.
 
-    [] # 'a list
-    [0] # 0 :: [] # uns list
-    [0; 1] # 0 :: 1 :: [] # uns list
+```hemlock
+[] # 'a list
+[0] # 0 :: [] # uns list
+[0; 1] # 0 :: 1 :: [] # uns list
+```
 
 ### Array
 
-The `'a /r array` type provides unresizable contiguous arrays, which may
+The `'a array^` type provides unresizable contiguous arrays, which may
 optionally be directly mutable. Depending on the type supplied as `'a`, elements
-may be boxed (e.g. `string array`) or unboxed (e.g. `codepoint array`). Unboxed
-arrays are particularly compelling from a density and performance perspective.
+may be boxed (e.g. `string array^_`) or unboxed (e.g. `codepoint array^_`).
+Unboxed arrays are particularly compelling from a density and performance
+perspective.
 
-    [||] # 'a /r array
-    [|0; 1|] # uns /r array
-    [|"boxed"; "element"; "references"|] # string /r array
-    [|'u'; 'n'; 'b'; 'o'; 'x'; 'e'; 'd'|] # codepoint /r array
+```hemlock
+[||] # 'a array^
+[|0; 1|] # uns array^
+[|0; 1|]& # uns array&
+[|"boxed"; "element"; "references"|] # string array^
+[|'u'; 'n'; 'b'; 'o'; 'x'; 'e'; 'd'|] # codepoint array^
+```
 
 ## Composite types
 
@@ -279,32 +172,50 @@ composite types do *not* have companion modules in the `Basis` library.
 A tuple comprises two or more independently typed values. Tuples are directly
 immutable, but may refer to transitively mutable values.
 
-    (1, "b") # uns * string
-    (None, [|'a'; 'b'|], 42) # 'a option * codepoint /r array * uns
+```hemlock
+(1, "b") # uns * string
+(None, [|'a'; 'b'|], 42) # 'a option * codepoint array^ * uns
+```
 
 ### Variant
 
 A variant is a discriminated union that can contain exactly one variant, as
 indicated by its discriminator.
 
-    type color =
-      | Red
-      | Green
-      | Blue
-      | RGBA of u8 * u8 * u8 * u8
+```hemlock
+type color =
+    | Red
+    | Green
+    | Blue
+    | RGBA of u8 * u8 * u8 * u8
+```
 
 Variants are directly immutable (the discriminator cannot be mutated), but may
 refer to transitively mutable values.
 
-    # Transitive non-parametric mutability.
-    type &odd =
-      | Odd of uns &array
-      | Odder of unit array
+```hemlock
+# Transitive non-parametric mutability.
+type odd& =
+    | Odd of uns array&
+    | Odder of unit array
 
-    # Transitive parametric mutability (mutable if 'a is mutable).
-    type 'a option =
-      | None
-      | Some of * 'a
+# Transitive parametric mutability (mutable if 'a is mutable).
+type 'a option =
+    | None
+    | Some of * 'a
+```
+
+Recursive variant types must be explicitly specified as `rec`.
+
+```hemlock
+type rec 'a node =
+    | Leaf of 'a
+    | Node of 'a * 'a node
+
+let leaf = Leaf 2
+let child = Node(1, leaf)
+let root = Node(0, child)
+```
 
 ### Record
 
@@ -312,51 +223,52 @@ A record maps field names to independently typed values. Each field may be of
 fixed or parametric type; all field type parameters are transitively exposed as
 record type parameters.
 
-    # Non-parametric mutability.
-    type &r1 = {
-      &x: uns; # Direct mutability.
-      a: codepoint &array; # Indirect mutability.
-    }
+```hemlock
+# Non-parametric mutability.
+type r1& =
+    x&: uns # Direct mutability.
+    a: codepoint array& # Indirect mutability.
 
-    # Transitive parametric mutability.
-    type 'a r2 = {
-      a: 'a array; # Indirect mutability if 'a is transitively mutable.
-    }
+# Transitive parametric mutability.
+type 'a r2 =
+    a: 'a array # Indirect mutability if 'a is transitively mutable.
 
-    # Parametric effect.
-    type ('a, >e) r3 {
-      f: uns >e-> 'a array
-    }
+# Parametric effect.
+type ('a, >e) r3
+    f: uns >e-> 'a array
 
-    # All of the above.
-    type ('a, >e) &r4 {
-      &x: uns;
-      a: codepoint &array;
-      b: 'a array;
-      f: uns >e-> 'a array
-    }
+# All of the above.
+type ('a, >e) r4&
+    x&: uns
+    a: codepoint array&
+    b: 'a array
+    f: uns >e-> 'a array
+```
 
-Record typess are non-recursive by default, but the `rec` keyword allows
+Record types are non-recursive by default, but the `rec` keyword allows
 self-referential record typing, e.g.:
 
-    type rec 'a node = {
-      sibling: 'a node;
-   }
+```hemlock
+type rec 'a node =
+    child: 'a node option
 
-    let a = {sibling=b} and b = {sibling=a} in
-    # ...
+let leaf = {child=None}
+let root = {child=Some leaf}
+```
 
-Mutually recursive records must be specified as `rec` *and* co-declared, e.g.:
+Mutually recursive records must be specified as `rec` *and* use mutation to tie
+the knot, e.g.:
 
-    type rec blue = {
-      black: black option;
-    }
-    and black = {
-      blue: blue option;
-    }
+```hemlock
+type rec blue& =
+    black&: black option
+also black& =
+    blue&: blue option
 
-    let a = {black=Some b} and b = {blue=Some a} in
-    # ...
+let a& := {black=None}
+let b = {blue=Some a}
+a.black := Some b
+```
 
 ### Function
 
@@ -369,18 +281,20 @@ optionally causes side effects). In practice, function invocation is monolithic
 in the number of parameters provided, so partial application only comes into
 play when the program omits parameters from a call.
 
-    # val sq: uns -> uns
-    let xx x =
-      x * x
+```hemlock
+# val sq: uns -> uns
+let xx x =
+    x * x
 
-    # Transitive parametric effect, depending on the implementation of ~f .
-    val init: uns -> f:(uns >-> 'a) >-> 'a /t t
+# Transitive parametric effect, depending on the implementation of ~f .
+val init: uns -> f:(uns >-> 'a) >-> 'a t^
 
-    # Mutation effect on mutable parameter.
-    val set_inplace: uns -> 'a -> 'a !&t -> unit
+# Mutation effect on mutable parameter.
+val set_inplace: uns -> 'a -> 'a t& >[mut] -> unit
 
-    # Internal environment effect.
-    val abort: unit !-> 'a
+# Internal environment effect.
+val abort: unit >{mut}-> 'a
+```
 
 ### Module
 

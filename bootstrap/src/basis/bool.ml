@@ -67,8 +67,8 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold false -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold true -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
+    hash_fold false -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold true -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
     |}]
 
 let%expect_test "int" =

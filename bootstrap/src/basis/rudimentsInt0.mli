@@ -16,16 +16,19 @@ val int_of_sint: sint -> int
 val sint_of_int: int -> sint
 (** Convert an OCaml integer to a bitwise identical signed integer. *)
 
-val u128_to_arr: u128 -> u64 array
-(** Convert to a little-endian array of words (first word is least significant.
-*)
+val u128_init: f:(uns -> u64) -> u128
+(** [init ~f] initializes a {!type:u128}, where [f] provides the value for each
+    element at given little-endian index. *)
 
-val u128_of_arr: u64 array -> u128
+val u128_get: uns -> u128 -> u64
+(** Get word at given little-endian index. *)
+
+val u128_of_tup: u64 * u64-> u128
 (** Initialize from a little-endian tuple of words (first word is least
     significant). *)
 
 val u128_to_tup: u128 -> u64 * u64
-(** Convert to a little-endian tuple of words (first word is least significant.
+(** Convert to a little-endian tuple of words (first word is least significant).
 *)
 
 val u128_of_uns: uns -> u128

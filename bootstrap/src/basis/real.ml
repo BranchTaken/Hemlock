@@ -1,4 +1,3 @@
-open RudimentsInt
 open Rudiments0
 
 module T = struct
@@ -6,8 +5,7 @@ module T = struct
 
   let hash_fold t state =
     Hash.State.Gen.init state
-    |> Hash.State.Gen.fold_u128 1
-      ~f:(fun _ -> u128_of_arr [|Int64.bits_of_float t; Int64.zero|])
+    |> Hash.State.Gen.fold_u64 1 ~f:(fun _ -> Int64.bits_of_float t)
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
@@ -418,10 +416,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold 0x0p+0 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x1p+0 -> 0x96b9_b9e8_7688_bee1_f1af_8bd0_2aa3_2f56u128
-    hash_fold 0x1.5p+5 -> 0xcbb6_698f_134f_7e07_fafb_a2c9_4442_61edu128
-    hash_fold infinity -> 0x23c7_6490_6a30_242b_61cc_57d4_7f64_339du128
+    hash_fold 0x0p+0 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x1p+0 -> 0x6647_5934_5d9e_f10b_3bc9_f01d_ba97_b012u128
+    hash_fold 0x1.5p+5 -> 0xd124_aacf_1254_4060_8fea_ded2_f257_2611u128
+    hash_fold infinity -> 0x60e8_6423_6582_8edd_87ec_35b6_d822_888bu128
     |}]
 
 let%expect_test "create" =

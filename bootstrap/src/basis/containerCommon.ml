@@ -188,8 +188,8 @@ module MakeIPoly (T : IMono) : IPoly
 
     let hd = T.Cursor.hd
     let tl = T.Cursor.tl
-    let succ = T.Cursor.succ
     let pred = T.Cursor.pred
+    let succ = T.Cursor.succ
     let lget = T.Cursor.lget
     let rget = T.Cursor.rget
     let prev = T.Cursor.prev

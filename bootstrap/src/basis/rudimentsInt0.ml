@@ -2,7 +2,7 @@ open RudimentsFunctions
 
 type i64 = int64
 type u64 = int64
-type u128 = u64 array
+type u128 = {w0: u64; w1: u64}
 type sint = int
 type uns = int
 
@@ -18,19 +18,23 @@ let int_of_sint t =
 let sint_of_int t =
   t
 
-let u128_of_arr = function
-  | [|_; _|] as a -> a
+let u128_init ~f =
+  {w0=f 0; w1=f 1}
+
+let u128_get i t =
+  match i, t with
+  | 0, {w0; w1=_} -> w0
+  | 1, {w0=_; w1} -> w1
   | _ -> not_reached ()
 
-let u128_to_arr t =
-  t
+let u128_of_tup (w0, w1) =
+  {w0; w1}
 
 let u128_to_tup = function
-  | [|lo; hi|] -> (lo, hi)
-  | _ -> not_reached ()
+  | {w0; w1} -> (w0, w1)
 
 let u128_of_uns u =
-  u128_of_arr [|Int64.of_int u; Int64.zero|]
+  u128_of_tup (Int64.of_int u, Int64.zero)
 
 let u128_pp_x ppf t =
   let rec fn x shift = begin
@@ -65,14 +69,14 @@ let u128_compare t0 t1 =
     | _ -> not_reached ()
   )
 
-let u128_zero = u128_of_arr [|Int64.zero; Int64.zero|]
+let u128_zero = u128_of_tup (Int64.zero, Int64.zero)
 
-let u128_one = u128_of_arr [|Int64.one; Int64.zero|]
+let u128_one = u128_of_tup (Int64.one, Int64.zero)
 
 let u128_bit_or t0 t1 =
   let t0_lo, t0_hi = u128_to_tup t0 in
   let t1_lo, t1_hi = u128_to_tup t1 in
-  u128_of_arr [|Int64.logor t0_lo t1_lo; Int64.logor t0_hi t1_hi|]
+  u128_of_tup (Int64.logor t0_lo t1_lo, Int64.logor t0_hi t1_hi)
 
 let u128_bit_sl ~shift t =
   let t_lo, t_hi = u128_to_tup t in
@@ -89,7 +93,7 @@ let u128_bit_sl ~shift t =
     else if i > 0 then Int64.shift_left t_lo i
     else t_lo
   end in
-  u128_of_arr [|lo; hi|]
+  u128_of_tup (lo, hi)
 
 let u128_bit_usr ~shift t =
   let t_lo, t_hi = u128_to_tup t in
@@ -106,7 +110,7 @@ let u128_bit_usr ~shift t =
         (Int64.shift_right_logical t_lo i)
     else t_lo
   end in
-  u128_of_arr [|lo; hi|]
+  u128_of_tup (lo, hi)
 
 let u128_add t0 t1 =
   let t0_lo, t0_hi = u128_to_tup t0 in
@@ -117,7 +121,7 @@ let u128_add t0 t1 =
     else Int64.zero
   in
   let hi = Int64.(add (add t0_hi t1_hi) carry) in
-  u128_of_arr [|lo; hi|]
+  u128_of_tup (lo, hi)
 
 let u128_mul t0 t1 =
   (* Decompose inputs into arrays of 32-bit half-words, then use the standard
@@ -142,7 +146,7 @@ let u128_mul t0 t1 =
   let of_arr arr = begin
     let hi = Int64.(logor (shift_left (get arr 3) 32) (get arr 2)) in
     let lo = Int64.(logor (shift_left (get arr 1) 32) (get arr 0)) in
-    u128_of_arr [|lo; hi|]
+    u128_of_tup (lo, hi)
   end in
   let t0_arr = to_arr t0 in
   let t1_arr = to_arr t1 in

@@ -115,7 +115,7 @@ algorithmic clarity and program reliability benefits to Hemlock.
 - [Types](types.md)
 - [Effects and mutability](effects_mutability.md)
 - [XXX Actors](actors.md)
-- [XXX Syntax](syntax.md)
+- [Syntax](syntax.md)
 - [XXX Compiler](compiler.md)
 - [Runtime](runtime.md)
 - [XXX Documentation](documentation.md)

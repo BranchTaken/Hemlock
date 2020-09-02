@@ -3,14 +3,15 @@ open RudimentsInt
 module T = struct
   module U = struct
     type t = u128
-    let num_bits = 128
-    let of_arr a =
-      u128_of_arr a
-    let to_arr t =
-      match u128_to_tup t with (lo, hi) -> [|lo; hi|]
+    let word_length = 2
+
+    let init ~f =
+      u128_init ~f
+
+    let get = u128_get
   end
   include U
-  include Intnw.MakeU(U)
+  include Intw.MakeFU(U)
 end
 include T
 include Identifiable.Make(T)

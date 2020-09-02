@@ -9,6 +9,30 @@ let of_sint x =
 (******************************************************************************)
 (* Begin tests. *)
 
+let%expect_test "pp" =
+  let open Format in
+  printf "@[<h>";
+  let rec print_xs xs = begin
+    match xs with
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "%a, %a, %a, %a\n" pp_b x pp_o x pp x pp_x x;
+        print_xs xs'
+      end
+  end in
+  print_xs [
+    min_value;
+    42;
+    max_value;
+  ];
+  printf "@]";
+
+  [%expect{|
+    0b000000000000000000000000000000000000000000000000000000000000000, 0o000000000000000000000, 0, 0x0000000000000000
+    0b000000000000000000000000000000000000000000000000000000000101010, 0o000000000000000000052, 42, 0x000000000000002a
+    0b111111111111111111111111111111111111111111111111111111111111111, 0o777777777777777777777, 9223372036854775807, 0x7fffffffffffffff
+    |}]
+
 let%expect_test "hash_fold" =
   let open Format in
   printf "@[<h>";
@@ -26,21 +50,21 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold 0x0000000000000000 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x0000000000000001 -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
-    hash_fold 0x0000000000000000 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x7fffffffffffffff -> 0x913b_a441_dcb5_f088_efa8_6f78_1580_b321u128
+    hash_fold 0x0000000000000000 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x0000000000000001 -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
+    hash_fold 0x0000000000000000 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x7fffffffffffffff -> 0x6921_12c9_6b4a_46af_a0e4_b27a_1aba_ed73u128
     |}]
 
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" pp num_bits;
+  printf "bit_length=%a\n" pp bit_length;
   printf "min_value=%a\n" pp_x min_value;
   printf "max_value=%a\n" pp_x max_value;
 
   [%expect{|
-    num_bits=63
+    bit_length=63
     min_value=0x0000000000000000
     max_value=0x7fffffffffffffff
     |}]

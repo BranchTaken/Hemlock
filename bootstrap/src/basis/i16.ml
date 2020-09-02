@@ -4,7 +4,7 @@ open RudimentsFunctions
 
 module T = struct
   type t = sint
-  let num_bits = 16
+  let bit_length = 16
 end
 include T
 include Intnb.MakeI(T)
@@ -15,12 +15,17 @@ let to_sint t =
 let of_sint x =
   narrow_of_signed x
 
-let of_sint_hlt x =
+let of_sint_opt x =
   let t = of_sint x in
   let x' = to_sint t in
   match Sint.(x' = x) with
-  | false -> halt "Lossy conversion"
-  | true -> t
+  | false -> None
+  | true -> Some t
+
+let of_sint_hlt x =
+  match of_sint_opt x with
+  | None -> halt "Lossy conversion"
+  | Some t -> t
 
 let kv x =
   narrow_of_signed (sint_of_int x)
@@ -31,12 +36,17 @@ let to_uns t =
 let of_uns x =
   narrow_of_unsigned x
 
-let of_uns_hlt x =
+let of_uns_opt x =
   let t = of_uns x in
   let x' = to_uns t in
   match Uns.(x' = x) with
-  | false -> halt "Lossy conversion"
-  | true -> t
+  | false -> None
+  | true -> Some t
+
+let of_uns_hlt x =
+  match of_uns_opt x with
+  | None -> halt "Lossy conversion"
+  | Some t -> t
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -58,11 +68,11 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold 0x8000i16 -> 0xfa20_40e1_012f_6bbb_091e_e550_a8fd_db99u128
-    hash_fold 0xffffi16 -> 0x913b_a441_dcb5_f088_efa8_6f78_1580_b321u128
-    hash_fold 0x0000i16 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x0001i16 -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
-    hash_fold 0x7fffi16 -> 0x32cb_c4fc_3d5d_c980_402b_5dbe_a963_b77du128
+    hash_fold 0x8000i16 -> 0x8bf5_6f8c_da2e_cc12_9596_673a_36eb_a422u128
+    hash_fold 0xffffi16 -> 0x6921_12c9_6b4a_46af_a0e4_b27a_1aba_ed73u128
+    hash_fold 0x0000i16 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x0001i16 -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
+    hash_fold 0x7fffi16 -> 0x29f0_5d38_26f9_2b90_4dbf_5c8e_a2ee_799du128
     |}]
 
 let%expect_test "pp,pp_x" =
@@ -89,12 +99,12 @@ let%expect_test "pp,pp_x" =
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" Uns.pp num_bits;
+  printf "bit_length=%a\n" Uns.pp bit_length;
   printf "min_value=%a %a\n" pp min_value pp_x min_value;
   printf "max_value=%a %a\n" pp max_value pp_x max_value;
 
   [%expect{|
-    num_bits=16
+    bit_length=16
     min_value=-32768i16 0x8000i16
     max_value=32767i16 0x7fffi16
     |}]

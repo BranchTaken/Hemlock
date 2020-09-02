@@ -23,7 +23,6 @@ depends: [
   "odoc" {build}
   "topkg" {build}
   "ppx_expect"
-  "ppx_inline_test"
 ]
 build: [
   ["dune" "subst"] {pinned}

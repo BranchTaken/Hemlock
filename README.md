@@ -29,7 +29,7 @@ opam install --deps-only .
 
 ### Building
 
-To build the bootstrap `hlc` Hemlock compiler and invoke the test suite, run
+To build the bootstrap `hmc` Hemlock compiler and invoke the test suite, run
 
 ```sh
 cd bootstrap
@@ -38,7 +38,7 @@ dune runtest
 ```
 
 See the [Dune documentation](https://dune.readthedocs.io/en/latest/) for more
-details on building and interacting with `hlc` via the build system.
+details on building and interacting with `hmc` via the build system.
 
 To build the bootstrap standard library documentation, run
 

@@ -7,7 +7,7 @@ type real = float
 module type I = sig
   type t
 
-  val num_bits: uns
+  val bit_length: uns
   (** Number of bits in integer representation. *)
 end
 
@@ -71,14 +71,25 @@ module type SDerived = sig
 end
 
 (** Common subset of functor output signatures for unsigned and signed integer
-    types with specific bitwidths. *)
-module type S = sig
+    types, but without [min_value] and [max_value], which are not always usable
+    with variable-bitwidth types. *)
+module type SLimitless = sig
   type t
 
   include IdentifiableIntf.S with type t := t
   include StringableIntf.S with type t := t
   include CmpableIntf.SMonoZero with type t := t
   include RealableIntf.S with type t := t
+
+  val pp_b: Format.formatter -> t -> unit
+  (** [pp_b ppf t] prints a binary representation of [t] to the pretty printing
+      formatter, [ppf]. This function is intended for use with the [%a] format
+      specifier to {!Format.printf}.*)
+
+  val pp_o: Format.formatter -> t -> unit
+  (** [pp_o ppf t] prints an octal representation of [t] to the pretty printing
+      formatter, [ppf]. This function is intended for use with the [%a] format
+      specifier to {!Format.printf}.*)
 
   val pp_x: Format.formatter -> t -> unit
   (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty
@@ -87,12 +98,6 @@ module type S = sig
 
   val one: t
   (** Constant value 1. *)
-
-  val min_value: t
-  (** Minimum representable value. *)
-
-  val max_value: t
-  (** Maximum representable value. *)
 
   val succ: t -> t
   (** Successor, i.e. [t + 1]. *)
@@ -152,6 +157,18 @@ module type S = sig
   (** [x // y] performs real division on real-converted [x] and [y]. *)
 
   include SDerived with type t := t
+end
+
+(** Common subset of functor output signatures for unsigned and signed integer
+    types with specific bitwidths. *)
+module type S = sig
+  include SLimitless
+
+  val min_value: t
+  (** Minimum representable value. *)
+
+  val max_value: t
+  (** Maximum representable value. *)
 end
 
 (** Functor output signature for narrowing functions. These functions are only

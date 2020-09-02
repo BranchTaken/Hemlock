@@ -1,4 +1,3 @@
-open RudimentsInt
 open Rudiments0
 
 module T = struct
@@ -6,7 +5,7 @@ module T = struct
 
   let hash_fold t state =
     Hash.State.Gen.init state
-    |> Hash.State.Gen.fold_u128 1 ~f:(fun _ -> u128_of_arr [|t; Int64.zero|])
+    |> Hash.State.Gen.fold_u64 1 ~f:(fun _ -> t)
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
@@ -22,6 +21,25 @@ end
 include T
 include Identifiable.Make(T)
 include Cmpable.MakeZero(T)
+
+let pp_b ppf t =
+  let rec fn x shift = begin
+    match shift with
+    | 0 -> ()
+    | _ -> begin
+        if Uns.(shift % 8 = 0 && shift < 64) then Format.fprintf ppf "_";
+        let shift' = Uns.pred shift in
+        let bit = Int64.(logand (shift_right_logical x shift') (of_int 0x1)) in
+        Format.fprintf ppf "%Ld" bit;
+        fn x shift'
+      end
+  end in
+  Format.fprintf ppf "0b";
+  fn t 64;
+  Format.fprintf ppf "i64"
+
+let pp_o ppf t =
+  Format.fprintf ppf "0o%Loi64" t
 
 let pp_x ppf t =
   let rec fn x shift = begin
@@ -126,7 +144,7 @@ let bit_ctz = U64.bit_ctz
 module U = struct
   type nonrec t = t
 
-  let num_bits = 64
+  let bit_length = 64
 
   let cmp = cmp
   let zero = zero
@@ -154,8 +172,54 @@ let ( ~- ) t =
 
 let neg_one = Int64.minus_one
 
+let min_sint = neg (bit_sl ~shift:62 one)
+let max_sint = pred (bit_sl ~shift:62 one)
+
+let to_sint t =
+  Sint.of_int (Int64.to_int t)
+
+let to_sint_opt t =
+  match t < min_sint || t > max_sint with
+  | false -> Some (to_sint t)
+  | true -> None
+
+let to_sint_hlt t =
+  match to_sint_opt t with
+  | Some x -> x
+  | None -> halt "Lossy conversion"
+
+let of_sint x =
+  Int64.of_int (Uns.of_sint x)
+
 (******************************************************************************)
 (* Begin tests. *)
+
+let%expect_test "pp" =
+  let open Format in
+  let rec fn = function
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "%a %a %a %a\n" pp_b x pp_o x pp x pp_x x;
+        fn xs'
+      end
+  in
+  printf "@[<h>";
+  fn [
+    zero;
+    one;
+    of_string "42";
+    min_value;
+    max_value;
+  ];
+  printf "@]";
+
+  [%expect{|
+    0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000i64 0o0i64 0i64 0x0000_0000_0000_0000i64
+    0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001i64 0o1i64 1i64 0x0000_0000_0000_0001i64
+    0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00101010i64 0o52i64 42i64 0x0000_0000_0000_002ai64
+    0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000i64 0o1000000000000000000000i64 -9223372036854775808i64 0x8000_0000_0000_0000i64
+    0b01111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111i64 0o777777777777777777777i64 9223372036854775807i64 0x7fff_ffff_ffff_ffffi64
+    |}]
 
 let%expect_test "hash_fold" =
   let open Format in
@@ -174,10 +238,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold 0x0000_0000_0000_0000i64 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x0000_0000_0000_0001i64 -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
-    hash_fold 0x8000_0000_0000_0000i64 -> 0xeec2_2c93_f68d_d3ec_fae5_b54a_bd13_1d53u128
-    hash_fold 0x7fff_ffff_ffff_ffffi64 -> 0x6742_c7ab_b64b_04c2_105e_972f_0c7b_e315u128
+    hash_fold 0x0000_0000_0000_0000i64 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x0000_0000_0000_0001i64 -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
+    hash_fold 0x8000_0000_0000_0000i64 -> 0x8bde_f8b0_ec4f_e0b6_0115_9dfe_b459_3227u128
+    hash_fold 0x7fff_ffff_ffff_ffffi64 -> 0x7dfb_92c0_a900_3d9e_6c76_ebcb_dad6_69d4u128
     |}]
 
 let%expect_test "limits" =
@@ -468,4 +532,39 @@ let%expect_test "**" =
     0x0000_0000_0000_00ffi64 ** 0x0000_0000_0000_00ffi64 -> 0x5997_756b_007f_feffi64
     0x0000_0000_0000_0001i64 ** 0x7fff_ffff_ffff_ffffi64 -> 0x0000_0000_0000_0001i64
     0x7fff_ffff_ffff_ffffi64 ** 0x7fff_ffff_ffff_ffffi64 -> 0x7fff_ffff_ffff_ffffi64
+    |}]
+
+let%expect_test "of_sint,to_sint" =
+  let open Format in
+  printf "@[<h>";
+  let rec test_xs xs = begin
+    match xs with
+    | [] -> ()
+    | x :: xs' -> begin
+        let sx = to_sint x in
+        printf "to_sint %a -> %a; of_sint -> %a\n"
+          pp_x x Sint.pp_x sx pp_x (of_sint sx);
+        test_xs xs'
+      end
+  end in
+  let xs = [
+    zero;
+    one;
+    neg_one;
+    min_sint;
+    max_sint;
+    min_value;
+    max_value;
+  ] in
+  test_xs xs;
+  printf "@]";
+
+  [%expect{|
+    to_sint 0x0000_0000_0000_0000i64 -> 0x0000000000000000i; of_sint -> 0x0000_0000_0000_0000i64
+    to_sint 0x0000_0000_0000_0001i64 -> 0x0000000000000001i; of_sint -> 0x0000_0000_0000_0001i64
+    to_sint 0xffff_ffff_ffff_ffffi64 -> 0x7fffffffffffffffi; of_sint -> 0xffff_ffff_ffff_ffffi64
+    to_sint 0xc000_0000_0000_0000i64 -> 0x4000000000000000i; of_sint -> 0xc000_0000_0000_0000i64
+    to_sint 0x3fff_ffff_ffff_ffffi64 -> 0x3fffffffffffffffi; of_sint -> 0x3fff_ffff_ffff_ffffi64
+    to_sint 0x8000_0000_0000_0000i64 -> 0x0000000000000000i; of_sint -> 0x0000_0000_0000_0000i64
+    to_sint 0x7fff_ffff_ffff_ffffi64 -> 0x7fffffffffffffffi; of_sint -> 0xffff_ffff_ffff_ffffi64
     |}]

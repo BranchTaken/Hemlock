@@ -4,7 +4,7 @@ open RudimentsFunctions
 
 module T = struct
   type t = uns
-  let num_bits = 16
+  let bit_length = 16
 end
 include T
 include Intnb.MakeU(T)
@@ -15,12 +15,17 @@ let to_sint t =
 let of_sint x =
   narrow_of_signed x
 
-let of_sint_hlt x =
+let of_sint_opt x =
   let t = of_sint x in
   let x' = to_sint t in
   match Sint.(x' = x) with
-  | false -> halt "Lossy conversion"
-  | true -> t
+  | false -> None
+  | true -> Some t
+
+let of_sint_hlt x =
+  match of_sint_opt x with
+  | None -> halt "Lossy conversion"
+  | Some t -> t
 
 let kv x =
   narrow_of_unsigned x
@@ -31,12 +36,17 @@ let to_uns t =
 let of_uns x =
   narrow_of_unsigned x
 
-let of_uns_hlt x =
+let of_uns_opt x =
   let t = of_uns x in
   let x' = to_uns t in
   match Uns.(x' = x) with
-  | false -> halt "Lossy conversion"
-  | true -> t
+  | false -> None
+  | true -> Some t
+
+let of_uns_hlt x =
+  match of_uns_opt x with
+  | None -> halt "Lossy conversion"
+  | Some t -> t
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -58,10 +68,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold 0x0000u16 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x0001u16 -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
-    hash_fold 0x0000u16 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0xffffu16 -> 0xf906_730b_3136_7fd4_9f0a_ae5d_b01d_d270u128
+    hash_fold 0x0000u16 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x0001u16 -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
+    hash_fold 0x0000u16 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0xffffu16 -> 0x63d0_1075_a2d8_9c87_cc90_3361_4a7e_eac6u128
     |}]
 
 let%expect_test "pp,pp_x" =
@@ -87,12 +97,12 @@ let%expect_test "pp,pp_x" =
 let%expect_test "limits" =
   let open Format in
 
-  printf "num_bits=%a\n" Uns.pp num_bits;
+  printf "bit_length=%a\n" Uns.pp bit_length;
   printf "min_value=%a\n" pp_x min_value;
   printf "max_value=%a\n" pp_x max_value;
 
   [%expect{|
-    num_bits=16
+    bit_length=16
     min_value=0x0000u16
     max_value=0xffffu16
     |}]

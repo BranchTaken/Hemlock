@@ -1,4 +1,3 @@
-open RudimentsInt
 open Rudiments0
 
 module T = struct
@@ -6,7 +5,7 @@ module T = struct
 
   let hash_fold t state =
     Hash.State.Gen.init state
-    |> Hash.State.Gen.fold_u128 1 ~f:(fun _ -> u128_of_arr [|t; Int64.zero|])
+    |> Hash.State.Gen.fold_u64 1 ~f:(fun _ -> t)
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
@@ -22,6 +21,25 @@ end
 include T
 include Cmpable.MakeZero(T)
 include Identifiable.Make(T)
+
+let pp_b ppf t =
+  let rec fn x shift = begin
+    match shift with
+    | 0 -> ()
+    | _ -> begin
+        if Uns.(shift % 8 = 0 && shift < 64) then Format.fprintf ppf "_";
+        let shift' = Uns.pred shift in
+        let bit = Int64.(logand (shift_right_logical x shift') (of_int 0x1)) in
+        Format.fprintf ppf "%Ld" bit;
+        fn x shift'
+      end
+  end in
+  Format.fprintf ppf "0b";
+  fn t 64;
+  Format.fprintf ppf "u64"
+
+let pp_o ppf t =
+  Format.fprintf ppf "0o%Lou64" t
 
 let pp_x ppf t =
   let rec fn x shift = begin
@@ -107,8 +125,11 @@ let of_i64 i =
 let to_uns t =
   Int64.to_int t
 
+let to_uns_opt t =
+  Int64.unsigned_to_int t
+
 let to_uns_hlt t =
-  match Int64.unsigned_to_int t with
+  match to_uns_opt t with
   | None -> halt "Lossy conversion"
   | Some x -> x
 
@@ -197,7 +218,7 @@ external bit_ctz: t -> uns = "hemlock_u64_bit_ctz"
 module U = struct
   type nonrec t = t
 
-  let num_bits = 64
+  let bit_length = 64
 
   let cmp = cmp
   let zero = zero
@@ -213,6 +234,33 @@ include Intnb.MakeDerived(U)
 
 (******************************************************************************)
 (* Begin tests. *)
+
+let%expect_test "pp" =
+  let open Format in
+  let rec fn = function
+    | [] -> ()
+    | x :: xs' -> begin
+        printf "%a %a %a %a\n" pp_b x pp_o x pp x pp_x x;
+        fn xs'
+      end
+  in
+  printf "@[<h>";
+  fn [
+    zero;
+    one;
+    of_string "42";
+    min_value;
+    max_value;
+  ];
+  printf "@]";
+
+  [%expect{|
+    0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000u64 0o0u64 0u64 0x0000_0000_0000_0000u64
+    0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001u64 0o1u64 1u64 0x0000_0000_0000_0001u64
+    0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00101010u64 0o52u64 42u64 0x0000_0000_0000_002au64
+    0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000u64 0o0u64 0u64 0x0000_0000_0000_0000u64
+    0b11111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111u64 0o1777777777777777777777u64 18446744073709551615u64 0xffff_ffff_ffff_ffffu64
+    |}]
 
 let%expect_test "hash_fold" =
   let open Format in
@@ -231,10 +279,10 @@ let%expect_test "hash_fold" =
   printf "@]";
 
   [%expect{|
-    hash_fold 0x0000_0000_0000_0000u64 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0x0000_0000_0000_0001u64 -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128
-    hash_fold 0x0000_0000_0000_0000u64 -> 0xb465_a9ec_cd79_1cb6_4bbd_1bf2_7da9_18d6u128
-    hash_fold 0xffff_ffff_ffff_ffffu64 -> 0x913b_a441_dcb5_f088_efa8_6f78_1580_b321u128
+    hash_fold 0x0000_0000_0000_0000u64 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0x0000_0000_0000_0001u64 -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
+    hash_fold 0x0000_0000_0000_0000u64 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+    hash_fold 0xffff_ffff_ffff_ffffu64 -> 0x6921_12c9_6b4a_46af_a0e4_b27a_1aba_ed73u128
     |}]
 
 let%expect_test "limits" =

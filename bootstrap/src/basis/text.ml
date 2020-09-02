@@ -1,5 +1,7 @@
 open Rudiments
 
+let default_tabwidth = 8
+
 (* Line/column position independent of previous lines' contents, with signed
  * column number to facilitate backward cursoring. *)
 module Spos = struct
@@ -7,23 +9,25 @@ module Spos = struct
     line: uns;
     (* Column number if non-negative, in which case conversion to t is trivial.
      * If negative, the column number for the equivalent t must be calculated
-     * via backward iteration. *)
+     * via two-pass (backward, then forward) scanning. *)
     scol: sint;
   }
 
   let init ~line ~scol =
     {line; scol}
 
-  let succ cp t =
-    match cp with
-    | cp when Codepoint.(cp = nl) -> {line=Uns.succ t.line; scol=Sint.kv 0}
-    | _ -> {t with scol=Sint.succ t.scol}
-
   let pred cp t =
     match cp with
-    | cp when Codepoint.(cp = nl) ->
-      {line=Uns.pred t.line; scol=Sint.neg_one}
+    | cp when Codepoint.(cp = nl) -> {line=Uns.pred t.line; scol=Sint.neg_one}
+    | cp when Codepoint.(cp = ht) -> {t with scol=Sint.neg_one}
     | _ -> {t with scol=Sint.pred t.scol}
+
+  let succ tabwidth cp t =
+    match cp with
+    | cp when Codepoint.(cp = nl) -> {line=Uns.succ t.line; scol=Sint.kv 0}
+    | cp when Codepoint.(cp = ht) ->
+      {t with scol=Sint.(t.scol + (kv tabwidth) - (t.scol % (kv tabwidth)))}
+    | _ -> {t with scol=Sint.succ t.scol}
 
   let line t =
     t.line
@@ -55,6 +59,9 @@ module Pos = struct
 
     let col t =
       t.col
+
+    let pp ppf t =
+      Format.fprintf ppf "@[<h>%a:%a@]" Uns.pp t.line Uns.pp t.col
   end
   include T
   include Cmpable.Make(T)
@@ -123,15 +130,15 @@ module Excerpt = struct
       let tl excerpt =
         {excerpt; index=Bytes.Slice.length excerpt.bytes}
 
-      let succ t =
-        match t.index = length t.excerpt with
-        | true -> halt "Cannot seek past end of excerpt"
-        | false -> {t with index=Uns.succ t.index}
-
       let pred t =
         match t.index = 0 with
         | true -> halt "Cannot seek before beginning of excerpt"
         | false -> {t with index=Uns.pred t.index}
+
+      let succ t =
+        match t.index = length t.excerpt with
+        | true -> halt "Cannot seek past end of excerpt"
+        | false -> {t with index=Uns.succ t.index}
 
       let lget t =
         get (Uns.pred t.index) t.excerpt
@@ -156,6 +163,8 @@ end
 type t = {
   (* Filesystem path. *)
   path: string option;
+  (* Tab width. *)
+  tabwidth: uns;
   (* Excerpts already forced into text. The map is initialized with a base
    * excerpt, which simplifies various logic. *)
   excerpts: (uns, Excerpt.t, Uns.cmper_witness) Map.t;
@@ -163,7 +172,7 @@ type t = {
   extend: t option Lazy.t;
 }
 
-let of_bytes_stream ?path stream =
+let of_bytes_stream ?path ?(tabwidth=default_tabwidth) stream =
   let rec susp_extend path pred_excerpt excerpts stream = lazy begin
     match Stream.is_empty stream with
     | true -> None
@@ -173,7 +182,7 @@ let of_bytes_stream ?path stream =
         let excerpts' =
           Map.insert ~k:(Excerpt.eind excerpt) ~v:excerpt excerpts in
         let extend' = susp_extend path excerpt excerpts' stream' in
-        let t' = {path; excerpts=excerpts'; extend=extend'} in
+        let t' = {path; tabwidth; excerpts=excerpts'; extend=extend'} in
         Some t'
       end
   end in
@@ -181,19 +190,22 @@ let of_bytes_stream ?path stream =
   let excerpts =
     Map.singleton (module Uns) ~k:(Excerpt.eind excerpt) ~v:excerpt in
   let extend = susp_extend path excerpt excerpts stream in
-  {path; excerpts; extend}
+  {path; tabwidth; excerpts; extend}
 
-let of_string_slice ?path slice =
+let of_string_slice ?path ?(tabwidth=default_tabwidth) slice =
   let susp_extend () = lazy None in
   let excerpt = Excerpt.(of_string_slice base slice) in
   let excerpts =
     Map.singleton (module Uns) ~k:Excerpt.base.eind ~v:Excerpt.base
     |> Map.insert ~k:excerpt.eind ~v:excerpt in
   let extend = susp_extend () in
-  {path; excerpts; extend}
+  {path; tabwidth; excerpts; extend}
 
 let path t =
   t.path
+
+let tabwidth t =
+  t.tabwidth
 
 module Cursor = struct
   module T = struct
@@ -266,37 +278,55 @@ module Cursor = struct
       include Codepoint.Seq.Make(T)
     end
 
-    let next_opt t =
+    let nextv_opt t =
       match CodepointSeq.(to_codepoint (init t)) with
       | None -> None
       | Some (Valid (cp, t')) -> begin
           let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vind' = Vind.(init ((index t.vind) + vincr)) in
-          let spos' = Spos.succ cp t.spos in
-          Some (cp, {t' with vind=vind'; spos=spos'})
+          let spos' = Spos.succ (tabwidth (container t)) cp t.spos in
+          Some (cp, true, {t' with vind=vind'; spos=spos'})
         end
       | Some (Invalid t') -> begin
           let cp = Codepoint.replacement in
           let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vind' = Vind.(init ((index t.vind) + vincr)) in
-          let spos' = Spos.succ cp t.spos in
-          Some (cp, {t' with vind=vind'; spos=spos'})
+          let spos' = Spos.succ (tabwidth (container t)) cp t.spos in
+          Some (cp, false, {t' with vind=vind'; spos=spos'})
         end
+
+    let next_opt t =
+      match nextv_opt t with
+      | Some (cp, _, t) -> Some (cp, t)
+      | None -> None
 
     let rget_opt t =
       match next_opt t with
       | None -> None
       | Some (cp, _) -> Some cp
 
+    let rgetv_opt t =
+      match nextv_opt t with
+      | None -> None
+      | Some (cp, valid, _) -> Some (cp, valid)
+
+    let rvalid t =
+      match nextv_opt t with
+      | None -> halt "Out of bounds"
+      | Some (_, valid, _) -> valid
+
     let rget t =
       match rget_opt t with
       | None -> halt "Out of bounds"
       | Some cp -> cp
 
-    let next t =
-      match next_opt t with
+    let nextv t =
+      match nextv_opt t with
       | None -> halt "Out of bounds"
-      | Some (cp, t') -> cp, t'
+      | Some (cp, valid, t') -> cp, valid, t'
+
+    let next t =
+      match nextv t with cp, _, t' -> cp, t'
 
     let succ t =
       match next t with _, t' -> t'
@@ -345,22 +375,31 @@ module Cursor = struct
       include Codepoint.Seq.MakeRev(T)
     end
 
-    let prev t =
+    let prevv t =
       match CodepointRevSeq.(to_codepoint (init t)) with
       | None -> halt "Out of bounds"
       | Some (Valid (cp, t')) -> begin
           let vdecr = Codepoint.Utf8.length_of_codepoint cp in
           let vind' = Vind.(init ((index t.vind) - vdecr)) in
           let spos' = Spos.pred cp t.spos in
-          cp, {t' with vind=vind'; spos=spos'}
+          cp, true, {t' with vind=vind'; spos=spos'}
         end
       | Some (Invalid t') -> begin
           let cp = Codepoint.replacement in
           let vdecr = Codepoint.Utf8.length_of_codepoint cp in
           let vind' = Vind.(init ((index t.vind) - vdecr)) in
           let spos' = Spos.pred cp t.spos in
-          cp, {t' with vind=vind'; spos=spos'}
+          cp, false, {t' with vind=vind'; spos=spos'}
         end
+
+    let prev t =
+      match prevv t with cp, _, t' -> cp, t'
+
+    let lvalid t =
+      match CodepointRevSeq.(to_codepoint (init t)) with
+      | None -> halt "Out of bounds"
+      | Some (Valid _) -> true
+      | Some (Invalid _) -> false
 
     let lget t =
       match prev t with cp, _ -> cp
@@ -381,19 +420,34 @@ module Cursor = struct
       else seek_fwd (Uns.of_sint offset) t
 
     let pos t =
-      let rec col0_delta t i = begin
-        match t.vind = 0 with
-        | true -> i
-        | false -> begin
-            let cp, t' = prev t in
-            match cp with
-            | cp when Codepoint.(cp = nl) -> i
-            | _ -> col0_delta t' (Uns.succ i)
-          end
+      let col0_delta t = begin
+        let rec seek_col0 t = begin
+          match t.vind = 0 with
+          | true -> t
+          | false -> begin
+              let cp, t' = prev t in
+              match cp with
+              | cp when Codepoint.(cp = nl) -> t
+              | _ -> seek_col0 t'
+            end
+        end in
+        let rec col_delta tabwidth t0 t1 i = begin
+          match cmp t0 t1 with
+          | Lt -> begin
+              let i' = match rget t0 with
+                | cp when Codepoint.(cp = ht) -> i + tabwidth - (i % tabwidth)
+                | _ -> Uns.succ i
+              in
+              col_delta tabwidth (succ t0) t1 i'
+            end
+          | Eq -> i
+          | Gt -> not_reached ()
+        end in
+        col_delta (tabwidth (container t)) (seek_col0 t) t 0
       end in
       let col = match Sint.is_negative (Spos.scol t.spos) with
         | false -> Uns.of_sint (Spos.scol t.spos)
-        | true -> col0_delta t 0
+        | true -> col0_delta t
       in
       {Pos.line=Spos.line t.spos; col}
   end
@@ -568,7 +622,10 @@ let%expect_test "of_bytes_stream_replace" =
       match Cursor.next_opt cursor with
       | None -> cursor
       | Some (cp, cursor') -> begin
-          printf "%s" (Codepoint.to_string cp);
+          let () = match Cursor.rvalid cursor with
+            | true -> printf "%s" (Codepoint.to_string cp)
+            | false -> printf "%s" "«�»"
+          in
           fwd_iter cursor'
         end
     end in
@@ -582,7 +639,10 @@ let%expect_test "of_bytes_stream_replace" =
       | false -> cursor
       | true -> begin
           let cp, cursor' = Cursor.prev cursor in
-          printf "%s" (Codepoint.to_string cp);
+          let () = match Cursor.lvalid cursor with
+            | true -> printf "%s" (Codepoint.to_string cp)
+            | false -> printf "%s" "«�»"
+          in
           rev_iter cursor'
         end
     end in
@@ -611,6 +671,7 @@ let%expect_test "of_bytes_stream_replace" =
     fn [kv 0x61; kv 0xe0; kv 0x80; kv 0x63];
     fn [kv 0x61; kv 0xc0; kv 0x80; kv 0x80; kv 0x64];
     fn [kv 0x61; kv 0xff; kv 0x65];
+    fn [kv 0xef; kv 0xbf; kv 0xbd];
     (* Overlong encoding. *)
     (* "a<b" *)
     fn [kv 0x61; kv 0x3c; kv 0x62];
@@ -657,160 +718,164 @@ let%expect_test "of_bytes_stream_replace" =
       rev   -> index=1 "a"
       slice -> "a"
     [0xf0u8; 0x80u8; 0x80u8]
-      fwd   -> index=0 "�"
-      rev   -> index=3 "�"
+      fwd   -> index=0 "«�»"
+      rev   -> index=3 "«�»"
       slice -> "�"
     [0xe0u8; 0x80u8]
-      fwd   -> index=0 "�"
-      rev   -> index=3 "�"
+      fwd   -> index=0 "«�»"
+      rev   -> index=3 "«�»"
       slice -> "�"
     [0xc0u8]
-      fwd   -> index=0 "�"
-      rev   -> index=3 "�"
+      fwd   -> index=0 "«�»"
+      rev   -> index=3 "«�»"
       slice -> "�"
     [0xf0u8; 0x80u8; 0x80u8; 0xf0u8]
-      fwd   -> index=0 "��"
-      rev   -> index=6 "��"
+      fwd   -> index=0 "«�»«�»"
+      rev   -> index=6 "«�»«�»"
       slice -> "��"
     [0xe0u8; 0x80u8; 0xe0u8]
-      fwd   -> index=0 "��"
-      rev   -> index=6 "��"
+      fwd   -> index=0 "«�»«�»"
+      rev   -> index=6 "«�»«�»"
       slice -> "��"
     [0xc0u8; 0xc0u8]
-      fwd   -> index=0 "��"
-      rev   -> index=6 "��"
+      fwd   -> index=0 "«�»«�»"
+      rev   -> index=6 "«�»«�»"
       slice -> "��"
     [0x80u8]
+      fwd   -> index=0 "«�»"
+      rev   -> index=3 "«�»"
+      slice -> "�"
+    [0x80u8; 0x80u8; 0x80u8; 0x80u8]
+      fwd   -> index=0 "«�»«�»«�»«�»"
+      rev   -> index=12 "«�»«�»«�»«�»"
+      slice -> "����"
+    [0x61u8; 0xc0u8; 0x62u8]
+      fwd   -> index=0 "a«�»b"
+      rev   -> index=5 "b«�»a"
+      slice -> "a�b"
+    [0x61u8; 0xe0u8; 0x80u8; 0x63u8]
+      fwd   -> index=0 "a«�»c"
+      rev   -> index=5 "c«�»a"
+      slice -> "a�c"
+    [0x61u8; 0xc0u8; 0x80u8; 0x80u8; 0x64u8]
+      fwd   -> index=0 "a«�»«�»d"
+      rev   -> index=8 "d«�»«�»a"
+      slice -> "a��d"
+    [0x61u8; 0xffu8; 0x65u8]
+      fwd   -> index=0 "a«�»e"
+      rev   -> index=5 "e«�»a"
+      slice -> "a�e"
+    [0xefu8; 0xbfu8; 0xbdu8]
       fwd   -> index=0 "�"
       rev   -> index=3 "�"
       slice -> "�"
-    [0x80u8; 0x80u8; 0x80u8; 0x80u8]
-      fwd   -> index=0 "����"
-      rev   -> index=12 "����"
-      slice -> "����"
-    [0x61u8; 0xc0u8; 0x62u8]
-      fwd   -> index=0 "a�b"
-      rev   -> index=5 "b�a"
-      slice -> "a�b"
-    [0x61u8; 0xe0u8; 0x80u8; 0x63u8]
-      fwd   -> index=0 "a�c"
-      rev   -> index=5 "c�a"
-      slice -> "a�c"
-    [0x61u8; 0xc0u8; 0x80u8; 0x80u8; 0x64u8]
-      fwd   -> index=0 "a��d"
-      rev   -> index=8 "d��a"
-      slice -> "a��d"
-    [0x61u8; 0xffu8; 0x65u8]
-      fwd   -> index=0 "a�e"
-      rev   -> index=5 "e�a"
-      slice -> "a�e"
     [0x61u8; 0x3cu8; 0x62u8]
       fwd   -> index=0 "a<b"
       rev   -> index=3 "b<a"
       slice -> "a<b"
     [0x61u8; 0xc0u8; 0xbcu8; 0x62u8]
-      fwd   -> index=0 "a�b"
-      rev   -> index=5 "b�a"
+      fwd   -> index=0 "a«�»b"
+      rev   -> index=5 "b«�»a"
       slice -> "a�b"
     [0x61u8; 0xe0u8; 0x80u8; 0xbcu8; 0x62u8]
-      fwd   -> index=0 "a�b"
-      rev   -> index=5 "b�a"
+      fwd   -> index=0 "a«�»b"
+      rev   -> index=5 "b«�»a"
       slice -> "a�b"
     [0x61u8; 0xf0u8; 0x80u8; 0x80u8; 0xbcu8; 0x62u8]
-      fwd   -> index=0 "a�b"
-      rev   -> index=5 "b�a"
+      fwd   -> index=0 "a«�»b"
+      rev   -> index=5 "b«�»a"
       slice -> "a�b"
     [0x61u8; 0x3cu8]
       fwd   -> index=0 "a<"
       rev   -> index=2 "<a"
       slice -> "a<"
     [0x61u8; 0xc0u8; 0xbcu8]
-      fwd   -> index=0 "a�"
-      rev   -> index=4 "�a"
+      fwd   -> index=0 "a«�»"
+      rev   -> index=4 "«�»a"
       slice -> "a�"
     [0x61u8; 0xe0u8; 0x80u8; 0xbcu8]
-      fwd   -> index=0 "a�"
-      rev   -> index=4 "�a"
+      fwd   -> index=0 "a«�»"
+      rev   -> index=4 "«�»a"
       slice -> "a�"
     [0x61u8; 0xf0u8; 0x80u8; 0x80u8; 0xbcu8]
-      fwd   -> index=0 "a�"
-      rev   -> index=4 "�a"
+      fwd   -> index=0 "a«�»"
+      rev   -> index=4 "«�»a"
       slice -> "a�"
     [0x3cu8; 0x62u8]
       fwd   -> index=0 "<b"
       rev   -> index=2 "b<"
       slice -> "<b"
     [0xc0u8; 0xbcu8; 0x62u8]
-      fwd   -> index=0 "�b"
-      rev   -> index=4 "b�"
+      fwd   -> index=0 "«�»b"
+      rev   -> index=4 "b«�»"
       slice -> "�b"
     [0xe0u8; 0x80u8; 0xbcu8; 0x62u8]
-      fwd   -> index=0 "�b"
-      rev   -> index=4 "b�"
+      fwd   -> index=0 "«�»b"
+      rev   -> index=4 "b«�»"
       slice -> "�b"
     [0xf0u8; 0x80u8; 0x80u8; 0xbcu8; 0x62u8]
-      fwd   -> index=0 "�b"
-      rev   -> index=4 "b�"
+      fwd   -> index=0 "«�»b"
+      rev   -> index=4 "b«�»"
       slice -> "�b"
     [0x61u8; 0xc2u8; 0xabu8; 0x62u8]
       fwd   -> index=0 "a«b"
       rev   -> index=4 "b«a"
       slice -> "a«b"
     [0x61u8; 0xe0u8; 0x82u8; 0xabu8; 0x62u8]
-      fwd   -> index=0 "a�b"
-      rev   -> index=5 "b�a"
+      fwd   -> index=0 "a«�»b"
+      rev   -> index=5 "b«�»a"
       slice -> "a�b"
     [0x61u8; 0xf0u8; 0x80u8; 0x82u8; 0xabu8; 0x62u8]
-      fwd   -> index=0 "a�b"
-      rev   -> index=5 "b�a"
+      fwd   -> index=0 "a«�»b"
+      rev   -> index=5 "b«�»a"
       slice -> "a�b"
     [0x61u8; 0xc2u8; 0xabu8]
       fwd   -> index=0 "a«"
       rev   -> index=3 "«a"
       slice -> "a«"
     [0x61u8; 0xe0u8; 0x82u8; 0xabu8]
-      fwd   -> index=0 "a�"
-      rev   -> index=4 "�a"
+      fwd   -> index=0 "a«�»"
+      rev   -> index=4 "«�»a"
       slice -> "a�"
     [0x61u8; 0xf0u8; 0x80u8; 0x82u8; 0xabu8]
-      fwd   -> index=0 "a�"
-      rev   -> index=4 "�a"
+      fwd   -> index=0 "a«�»"
+      rev   -> index=4 "«�»a"
       slice -> "a�"
     [0xc2u8; 0xabu8; 0x62u8]
       fwd   -> index=0 "«b"
       rev   -> index=3 "b«"
       slice -> "«b"
     [0xe0u8; 0x82u8; 0xabu8; 0x62u8]
-      fwd   -> index=0 "�b"
-      rev   -> index=4 "b�"
+      fwd   -> index=0 "«�»b"
+      rev   -> index=4 "b«�»"
       slice -> "�b"
     [0xf0u8; 0x80u8; 0x82u8; 0xabu8; 0x62u8]
-      fwd   -> index=0 "�b"
-      rev   -> index=4 "b�"
+      fwd   -> index=0 "«�»b"
+      rev   -> index=4 "b«�»"
       slice -> "�b"
     [0x61u8; 0xe2u8; 0x80u8; 0xa1u8; 0x62u8]
       fwd   -> index=0 "a‡b"
       rev   -> index=5 "b‡a"
       slice -> "a‡b"
     [0x61u8; 0xf0u8; 0x82u8; 0x80u8; 0xa1u8; 0x62u8]
-      fwd   -> index=0 "a�b"
-      rev   -> index=5 "b�a"
+      fwd   -> index=0 "a«�»b"
+      rev   -> index=5 "b«�»a"
       slice -> "a�b"
     [0x61u8; 0xe2u8; 0x80u8; 0xa1u8]
       fwd   -> index=0 "a‡"
       rev   -> index=4 "‡a"
       slice -> "a‡"
     [0x61u8; 0xf0u8; 0x82u8; 0x80u8; 0xa1u8]
-      fwd   -> index=0 "a�"
-      rev   -> index=4 "�a"
+      fwd   -> index=0 "a«�»"
+      rev   -> index=4 "«�»a"
       slice -> "a�"
     [0xe2u8; 0x80u8; 0xa1u8; 0x62u8]
       fwd   -> index=0 "‡b"
       rev   -> index=4 "b‡"
       slice -> "‡b"
     [0xf0u8; 0x82u8; 0x80u8; 0xa1u8; 0x62u8]
-      fwd   -> index=0 "�b"
-      rev   -> index=4 "b�"
+      fwd   -> index=0 "«�»b"
+      rev   -> index=4 "b«�»"
       slice -> "�b"
     |}]
 
@@ -830,6 +895,12 @@ let%expect_test "pos" =
             | cp when Codepoint.(cp = nl) -> begin
                 assert (Pos.line pos = Uns.succ line);
                 assert (Pos.col pos = 0)
+              end
+            | cp when Codepoint.(cp = ht) -> begin
+                let tabwidth = tabwidth (Cursor.container cursor) in
+                assert (Pos.line pos = line);
+                assert ((Pos.col pos) / tabwidth = Uns.succ (col / tabwidth));
+                assert (Pos.col pos % tabwidth = 0);
               end
             | _ -> begin
                 assert (Pos.line pos = line);
@@ -854,6 +925,11 @@ let%expect_test "pos" =
             | cp when Codepoint.(cp = nl) -> begin
                 assert (Pos.line pos = Uns.pred line)
               end
+            | cp when Codepoint.(cp = ht) -> begin
+                let tabwidth = tabwidth (Cursor.container cursor) in
+                assert (Pos.line pos = line);
+                assert ((Pos.col (Cursor.pos cursor)) % tabwidth = 0)
+              end
             | _ -> begin
                 assert (Pos.line pos = line);
                 assert (Pos.col pos = Uns.pred col)
@@ -875,6 +951,14 @@ let%expect_test "pos" =
   fn ["A"; "\n"; "B"; "\n"];
   fn ["A"; "\n"; "B"; "\n"; "C"];
   fn ["A"; "\n"; "\n"; "C"];
+  fn ["\t"];
+  fn ["A"; "\t"];
+  fn ["\t"; "B"];
+  fn ["A"; "\t"; "B"];
+  fn ["A"; "\t"; "\t"; "B"];
+  fn ["A"; "\n"; "\t"; "B"];
+  fn ["A"; "\t"; "\n"; "B"];
+  fn ["A"; "\t"; "B"; "\t"; "C"];
   printf "@]";
 
   [%expect{|
@@ -895,5 +979,29 @@ let%expect_test "pos" =
       pos hd = 1:0
     ["A"; "\n"; "\n"; "C"]
       pos tl = 3:1
+      pos hd = 1:0
+    ["\t"]
+      pos tl = 1:8
+      pos hd = 1:0
+    ["A"; "\t"]
+      pos tl = 1:8
+      pos hd = 1:0
+    ["\t"; "B"]
+      pos tl = 1:9
+      pos hd = 1:0
+    ["A"; "\t"; "B"]
+      pos tl = 1:9
+      pos hd = 1:0
+    ["A"; "\t"; "\t"; "B"]
+      pos tl = 1:17
+      pos hd = 1:0
+    ["A"; "\n"; "\t"; "B"]
+      pos tl = 2:9
+      pos hd = 1:0
+    ["A"; "\t"; "\n"; "B"]
+      pos tl = 2:1
+      pos hd = 1:0
+    ["A"; "\t"; "B"; "\t"; "C"]
+      pos tl = 1:17
       pos hd = 1:0
     |}]

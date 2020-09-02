@@ -1,7 +1,7 @@
 (executables
- (names hlc)
- (libraries Basis))
+ (names hmc)
+ (libraries Basis Hmc))
 
 (install
  (section bin)
-  (files (hlc.exe as hlc)))
+  (files (hmc.exe as hmc)))
