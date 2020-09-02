@@ -41,6 +41,8 @@ module Pos: sig
   val col: t -> uns
   (** [col t] returns the position's column, where column numbering starts at 0.
   *)
+
+  include Cmpable_intf.S_mono with type t := t
 end
 
 (** Text cursor which tracks position (line and column) in addition to codepoint

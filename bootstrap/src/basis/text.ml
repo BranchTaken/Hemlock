@@ -34,19 +34,30 @@ end
 
 (* Line/column position independent of previous lines' contents. *)
 module Pos = struct
-  type t = {
-    line: uns;
-    col: uns;
-  }
+  module T = struct
+    type t = {
+      line: uns;
+      col: uns;
+    }
 
-  let init ~line ~col =
-    {line; col}
+    let cmp t0 t1 =
+      let open Cmp in
+      match Uns.cmp t0.line t1.line with
+      | Lt -> Lt
+      | Eq -> Uns.cmp t0.col t1.col
+      | Gt -> Gt
 
-  let line t =
-    t.line
+    let init ~line ~col =
+      {line; col}
 
-  let col t =
-    t.col
+    let line t =
+      t.line
+
+    let col t =
+      t.col
+  end
+  include T
+  include Cmpable.Make(T)
 end
 
 (* Absolute virtual index relative to beginning of text. *)
