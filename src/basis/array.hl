@@ -102,7 +102,7 @@ module Seq = struct
 
     module Make_mono (T : Seq_intf.I_mono_def) : S_mono
       with type /t t := /t T.t
-      and  type /m elm := /m T.elm = struct
+      also type /m elm := /m T.elm = struct
         let to_array t =
             match T.length t with
             | 0 ->
@@ -122,7 +122,7 @@ module Seq = struct
 
     module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono
       with type /t t := /t T.t
-      and  type /m elm := /m T.elm = struct
+      also type /m elm := /m T.elm = struct
         let to_array t =
             match T.length t with
             | 0 -> [||]
@@ -138,7 +138,7 @@ module Seq = struct
 
     module Make_poly (T : Seq_intf.I_poly_def) : S_poly
       with type 'a /t t := 'a /t T.t
-      and  type 'a elm := 'a T.elm = struct
+      also type 'a elm := 'a T.elm = struct
         let to_array t =
             match T.length t with
             | 0 -> (* Optimization: use the same empty array for all types. *)
@@ -157,7 +157,7 @@ module Seq = struct
 
     module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
       with type 'a /t t := 'a /t T.t
-      and  type 'a elm := 'a T.elm = struct
+      also type 'a elm := 'a T.elm = struct
         let to_array t =
             match T.length t with
             | 0 -> [||]
