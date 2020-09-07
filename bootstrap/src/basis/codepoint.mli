@@ -5,7 +5,7 @@ type byte = U8.t
 
 type t
 
-include Formattable_intf.S_mono with type t := t
+include Identifiable_intf.S with type t := t
 include Cmpable_intf.S_mono with type t := t
 
 val kv: int -> t
