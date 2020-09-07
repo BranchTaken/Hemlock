@@ -14,8 +14,8 @@ module Cursor : sig
 
     include Cursor_intf.S_poly
       with type 'a /c container := 'a /c container
-      and  type 'a elm := 'a
-      and  type 'a /t t := 'a /t t
+      also type 'a elm := 'a
+      also type 'a /t t := 'a /t t
 
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a /_ t -> Hash.State.t
   -> Hash.State.t
@@ -42,22 +42,22 @@ module Seq : sig
       |an array. *)
     module Make_mono (T : Seq_intf.I_mono_def) : S_mono
       with type /t t := /t T.t
-      and  type /m elm := /m T.elm
+      also type /m elm := /m T.elm
 
     (*|Efficiently convert a reversed sequence of fixed element type with known
       |length to an array. *)
     module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono
       with type /t t := /t T.t
-      and  type /m elm := /m T.elm
+      also type /m elm := /m T.elm
     (*|Efficiently convert a generic sequence with known length to an array. *)
     module Make_poly (T : Seq_intf.I_poly_def) : S_poly
       with type 'a /t t := 'a /t T.t
-      and  type 'a elm := 'a T.elm
+      also type 'a elm := 'a T.elm
     (*|Efficiently convert a reversed generic sequence with known length to an
       |array. *)
     module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
       with type 'a /t t := 'a /t T.t
-      and  type 'a elm := 'a T.elm
+      also type 'a elm := 'a T.elm
 
 val init: uns -> f:(uns >-> 'a) >-> 'a /t t
 (*|Initialize array. `init len ~f:(fun i >-> ...)` initializes an array of given
