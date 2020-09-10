@@ -1,7 +1,7 @@
 # Types
 
 Hemlock provides a foundational set of types that the compiler has inherent
-knowledge of.  All types are built up from this foundation, including various
+knowledge of. All types are built up from this foundation, including various
 types provided by the `Basis` library, e.g. `option` and `map`.
 
 The [atomic types](#atomic-types) have dedicated syntax, as well as
@@ -33,19 +33,19 @@ corresponding `Basis` modules:
 ## Atomic types
 
 The atomic types are monomorphic, immutable, and are the only types which may
-have unboxed native hardware formats.  Many features of these types have
-explicit syntax, and further functionality is provided by their respective
-companion modules in the `Basis` library.
+have unboxed native hardware formats. Many features of these types have explicit
+syntax, and further functionality is provided by their respective companion
+modules in the `Basis` library.
 
 ### Unit
 
-The `unit` type has only one possible value, which is written as `()`.
-Because there is only one possible `unit` value, it rarely needs a concrete
-data representation; rather it logically acts as a placeholder where data would
-otherwise go.  For example, a function which has no inputs cannot be called, but
-a function with a single `unit` parameter dodges this problem.  `unit` can
-also be used to elide record fields; e.g. `('a, 'cmp) set` is implemented as
-`('a, unit, 'cmp) map`, and no space is consumed by values in the concrete data
+The `unit` type has only one possible value, which is written as `()`. Because
+there is only one possible `unit` value, it rarely needs a concrete data
+representation; rather it logically acts as a placeholder where data would
+otherwise go. For example, a function which has no inputs cannot be called, but
+a function with a single `unit` parameter dodges this problem. `unit` can also
+be used to elide record fields; e.g. `('a, 'cmp) set` is implemented as `('a,
+unit, 'cmp) map`, and no space is consumed by values in the concrete data
 representation.
 
 ### Boolean
@@ -54,15 +54,15 @@ The `bool` type is either `false` or `true`.
 
 ### Integer
 
-Integers are either unsigned or signed (2's complement), and their range
-is determined by their bit widths.  In all cases, integer operations which
-overflow/underflow silently wrap; there are no undefined behaviors.  Unsigned
-and signed integers behave identically at the machine level with the exception
-that different instructions are used for comparison, depending on type
-signedness.  In many programming languages, sign extension for bit shifting
-right also depends on signedness, but Hemlock explicitly provides both right
-shifting options regardless of signedness (`bit_usr`/`bit_ssr`), and the
-application must choose which to use.
+Integers are either unsigned or signed (2's complement), and their range is
+determined by their bit widths. In all cases, integer operations which
+overflow/underflow silently wrap; there are no undefined behaviors. Unsigned and
+signed integers behave identically at the machine level with the exception that
+different instructions are used for comparison, depending on type signedness. In
+many programming languages, sign extension for bit shifting right also depends
+on signedness, but Hemlock explicitly provides both right shifting options
+regardless of signedness (`bit_usr`/`bit_ssr`), and the application must choose
+which to use.
 
 The following integer types are provided:
 
@@ -84,7 +84,7 @@ The following integer types are provided:
   - `i512`
 
 `uns` is the default integer type, and should be preferred over other integer
-types unless the use case demands a specific signedness or bit width.  Hemlock
+types unless the use case demands a specific signedness or bit width. Hemlock
 fundamentally depends on at least a 64-bit architecture, so `uns`/`int` always
 provide at least a 64-bit range.
 
@@ -124,19 +124,19 @@ the type suffix (if present). Out-of-range literals cause compile-time failure.
 Floating point numbers use the [IEEE
 754](https://en.wikipedia.org/wiki/IEEE_754) binary floating point formats and
 ubiquitous hardware support for [32-bit
-`p32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
-and [64-bit
+`p32`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) and
+[64-bit
 `p64`/`float`](https://en.wikipedia.org/wiki/Double-precision_floating-point_format).
 Although [16,128,256]-bit formats are also well defined, they are omitted from
 Hemlock because they are not commonly supported in hardware, making them of
 limited practical use.
 
-Floating point literals are always syntactically distinct from integers,
-due to a decimal point or type suffix if nothing else.  The default `float`
-bitwidth is 64; a `p64` type suffix allows the bitwidth to be explicit, and a
-`p32` suffix allows specification of 32-bit `p32` constants.  Values can be
-specified in decimal or hexadecimal; the latter allows bit-precise specification
-of constants, whereas many decimal floating point numbers have no exact binary
+Floating point literals are always syntactically distinct from integers, due to
+a decimal point or type suffix if nothing else. The default `float` bitwidth is
+64; a `p64` type suffix allows the bitwidth to be explicit, and a `p32` suffix
+allows specification of 32-bit `p32` constants. Values can be specified in
+decimal or hexadecimal; the latter allows bit-precise specification of
+constants, whereas many decimal floating point numbers have no exact binary
 representation.
 
     0.
@@ -184,7 +184,7 @@ representation.
 ### Codepoint
 
 The `codepoint` type encodes a single 21-bit
-[Unicode](https://en.wikipedia.org/wiki/Unicode) code point.  Internally,
+[Unicode](https://en.wikipedia.org/wiki/Unicode) code point. Internally,
 `codepoint` is stored as a `u32`:
 
     type codepoint = private u32
@@ -218,11 +218,11 @@ Various special characters can be specified via `\` escapes:
 
 ### String
 
-The `string` type contains a UTF-8-encoded sequence of `codepoint` values.
-It is impossible to construct a string with invalid UTF-8 encoding, whether via
-string literals or programmatically at run time.  Similarly to `codepoint`
-literals, the simplest way to specify a `string` literal is as UTF-8, inside `"`
-delimiters, e.g.
+The `string` type contains a UTF-8-encoded sequence of `codepoint` values. It is
+impossible to construct a string with invalid UTF-8 encoding, whether via string
+literals or programmatically at run time. Similarly to `codepoint` literals, the
+simplest way to specify a `string` literal is as UTF-8, inside `"` delimiters,
+e.g.
 
     "Hello"
     "A non-ASCII string -- <«‡𐆗"
@@ -242,15 +242,15 @@ Various special characters can be specified via `\` escapes:
 ## Collection types
 
 The collection types are polymorphic, and therefore potentially transitively
-mutable.  The collection types have rich APIs provided by their respective
+mutable. The collection types have rich APIs provided by their respective
 companion modules in the `Basis` library.
 
 ### List
 
 The `'a list` type provides persistent singly-linked lists, which are ubiquitous
-in typical code.  Every element is independently allocated, so traversal
-requires pointer chasing, but memory locality tends to be good due to
-allocation/copying order.
+in typical code. Every element is independently allocated, so traversal requires
+pointer chasing, but memory locality tends to be good due to allocation/copying
+order.
 
     [] # 'a list
     [0] # 0 :: [] # uns list
@@ -259,10 +259,9 @@ allocation/copying order.
 ### Array
 
 The `'a /r array` type provides unresizable contiguous arrays, which may
-optionally be directly mutable.  Depending on the type supplied as `'a`,
-elements may be boxed (e.g. `string array`) or unboxed (e.g. `codepoint array`).
-Unboxed arrays are particularly compelling from a density and performance
-perspective.
+optionally be directly mutable. Depending on the type supplied as `'a`, elements
+may be boxed (e.g. `string array`) or unboxed (e.g. `codepoint array`). Unboxed
+arrays are particularly compelling from a density and performance perspective.
 
     [||] # 'a /r array
     [|0; 1|] # uns /r array
@@ -272,12 +271,12 @@ perspective.
 ## Composite types
 
 The composite types are polymorphic, and therefore potentially transitively
-mutable.  All common functionality for these types has explicit syntax, so the
+mutable. All common functionality for these types has explicit syntax, so the
 composite types do *not* have companion modules in the `Basis` library.
 
 ### Tuple
 
-A tuple comprises two or more independently typed values.  Tuples are directly
+A tuple comprises two or more independently typed values. Tuples are directly
 immutable, but may refer to transitively mutable values.
 
     (1, "b") # uns * string
@@ -309,7 +308,7 @@ refer to transitively mutable values.
 
 ### Record
 
-A record maps field names to independently typed values.  Each field may be of
+A record maps field names to independently typed values. Each field may be of
 fixed or parametric type; all field type parameters are transitively exposed as
 record type parameters.
 
@@ -363,10 +362,10 @@ Mutually recursive records must be specified as `rec` *and* co-declared, e.g.:
 
 A function takes one or more parameters as input, causes zero or more side
 effects (which must be explicit in the function type), and produces a value.
-Functions are conceptually curried, i.e. they can be reasoned about as a
-series of partial applications, each of which consumes an input and produces
-a continuation, and the final application produces the resulting value (and
-optionally causes side effects).  In practice, function invocation is monolithic
+Functions are conceptually curried, i.e. they can be reasoned about as a series
+of partial applications, each of which consumes an input and produces a
+continuation, and the final application produces the resulting value (and
+optionally causes side effects). In practice, function invocation is monolithic
 in the number of parameters provided, so partial application only comes into
 play when the program omits parameters from a call.
 
