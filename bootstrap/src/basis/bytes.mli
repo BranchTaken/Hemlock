@@ -9,13 +9,13 @@ type t = byte array
 
 module Cursor : sig
   include Cursor_intf.S_mono with type container := byte array
-                              and type elm := byte
+                             with type elm := byte
 end
 
 module Slice : sig
   include Slice_intf.S_mono with type container := byte array
-                             and type cursor := Cursor.t
-                             and type elm := byte
+                            with type cursor := Cursor.t
+                            with type elm := byte
   include Formattable_intf.S_mono with type t := t
 
   val hash_fold: t -> Hash.State.t -> Hash.State.t

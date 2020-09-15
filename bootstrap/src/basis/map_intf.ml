@@ -260,8 +260,8 @@ module type S = sig
 
   include Seq_intf.S_poly3_fold2
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
-     and type 'k key := 'k
-     and type 'v value := 'v
+    with type 'k key := 'k
+    with type 'v value := 'v
 
   (** {1 Conversion} *)
 

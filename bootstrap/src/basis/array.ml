@@ -126,7 +126,7 @@ module Seq = struct
   end
 
   module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                       and type elm := T.elm =
+                                                      with type elm := T.elm =
   struct
     let to_array t =
       match T.length t with
@@ -149,7 +149,7 @@ module Seq = struct
   end
 
   module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                           and type elm := T.elm
+                                                          with type elm := T.elm
   = struct
     let to_array t =
       match T.length t with
@@ -173,7 +173,7 @@ module Seq = struct
 
   module Make_poly (T : Seq_intf.I_poly_def) : S_poly
     with type 'a t := 'a T.t
-     and type 'a elm := 'a T.elm = struct
+    with type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
       | 0 -> [||]
@@ -196,7 +196,7 @@ module Seq = struct
 
   module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
     with type 'a t := 'a T.t
-     and type 'a elm := 'a T.elm = struct
+    with type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
       | 0 -> [||]
@@ -221,7 +221,7 @@ module Seq = struct
 
   module Make_poly2 (T : Seq_intf.I_poly2_def) : S_poly2
     with type ('a, 'cmp) t := ('a, 'cmp) T.t
-     and type 'a elm := 'a T.elm = struct
+    with type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
       | 0 -> [||]
@@ -244,8 +244,8 @@ module Seq = struct
 
   module Make_poly3 (T : Seq_intf.I_poly3_def) : S_poly3
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
-     and type 'k key := 'k T.key
-     and type 'k value := 'k T.value = struct
+    with type 'k key := 'k T.key
+    with type 'k value := 'k T.value = struct
     let to_array t =
       match T.length t with
       | 0 -> [||]

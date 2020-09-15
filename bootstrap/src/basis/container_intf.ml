@@ -14,7 +14,7 @@ end
 (** Monomorphic container, e.g. {!type:string}. *)
 module type S_mono = sig
   include S_mono_length
-  include S_mono_fold with type t := t and type elm := elm
-  include S_mono_mem with type t := t and type elm := elm
-  include S_mono_array with type t := t and type elm := elm
+  include S_mono_fold with type t := t with type elm := elm
+  include S_mono_mem with type t := t with type elm := elm
+  include S_mono_array with type t := t with type elm := elm
 end

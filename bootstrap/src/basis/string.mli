@@ -28,8 +28,8 @@ module Cursor : sig
   type t
   include Identifiable_intf.S with type t := t
   include Cursor_intf.S_mono with type container := container
-                              and type elm := elm
-                              and type t := t
+                             with type elm := elm
+                             with type t := t
 
   val index: t -> uns [@@ocaml.deprecated "Use bindex instead"]
   (** @deprecated Use {!bindex} instead.
@@ -59,8 +59,8 @@ module Cursori : sig
   type t
   include Identifiable_intf.S with type t := t
   include Cursor_intf.S_mono with type container := outer
-                              and type elm := codepoint
-                              and type t := t
+                             with type elm := codepoint
+                             with type t := t
 
   val index: t -> uns [@@ocaml.deprecated "Use [bc]index instead"]
   (** @deprecated Use {!bindex} or {!cindex} instead.
@@ -83,8 +83,8 @@ module Slice : sig
   type outer = t
 
   include Slice_intf.S_mono with type container := outer
-                             and type cursor := Cursor.t
-                             and type elm := codepoint
+                            with type cursor := Cursor.t
+                            with type elm := codepoint
   include Identifiable_intf.S with type t := t
 
   (*
@@ -171,7 +171,7 @@ module Slice : sig
       containing the ordered [codepoints]. [blength] must be accurate if
       specified. *)
 
-  include Container_intf.S_mono with type t := t and type elm := codepoint
+  include Container_intf.S_mono with type t := t with type elm := codepoint
 
   val length: t -> uns [@@ocaml.deprecated "Use blength instead"]
   (** Use {!blength} instead of [length], to keep the difference between byte
@@ -449,7 +449,7 @@ val of_array: ?blength:uns -> codepoint array -> t
     containing the ordered [codepoints]. [blength] must be accurate if
     specified. *)
 
-include Container_intf.S_mono with type t := t and type elm := codepoint
+include Container_intf.S_mono with type t := t with type elm := codepoint
 
 val length: t -> uns [@@ocaml.deprecated "Use [bc]length instead"]
 (** Use {!blength} instead of [length], to keep the difference between byte

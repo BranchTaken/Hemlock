@@ -13,8 +13,8 @@ module Cursor : sig
   type 'a t
 
   include Cursor_intf.S_poly with type 'a container := 'a container
-                              and type 'a elm := 'a
-                              and type 'a t := 'a t
+                             with type 'a elm := 'a
+                             with type 'a t := 'a t
 end
 
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
@@ -54,40 +54,40 @@ module Seq : sig
   (** Efficiently convert a sequence of fixed element type with known length to
       an array. *)
   module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                       and type elm := T.elm
+                                                      with type elm := T.elm
 
   (** Efficiently convert a reversed sequence of fixed element type with known
       length to an array. *)
   module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                           and type elm := T.elm
+                                                          with type elm := T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
   module Make_poly (T : Seq_intf.I_poly_def) : S_poly
     with type 'a t := 'a T.t
-     and type 'a elm := 'a T.elm
+    with type 'a elm := 'a T.elm
 
   (** Efficiently convert a reversed generic sequence with known length to an
       array. *)
   module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
     with type 'a t := 'a T.t
-     and type 'a elm := 'a T.elm
+    with type 'a elm := 'a T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
   module Make_poly2 (T : Seq_intf.I_poly2_def) : S_poly2
     with type ('a, 'cmp) t := ('a, 'cmp) T.t
-     and type 'a elm := 'a T.elm
+    with type 'a elm := 'a T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
   module Make_poly3 (T : Seq_intf.I_poly3_def) : S_poly3
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
-     and type 'k key := 'k T.key
-     and type 'v value := 'v T.value
+    with type 'k key := 'k T.key
+    with type 'v value := 'v T.value
 end
 
 module Slice : sig
   include Slice_intf.S_poly with type 'a container := 'a t
-                             and type 'a cursor := 'a Cursor.t
-                             and type 'a elm := 'a
+                            with type 'a cursor := 'a Cursor.t
+                            with type 'a elm := 'a
 end
 
 val init: uns -> f:(uns -> 'a) -> 'a t

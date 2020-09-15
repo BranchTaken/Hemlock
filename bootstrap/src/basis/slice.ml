@@ -2,8 +2,8 @@ open Slice_intf
 
 module Make_mono (Cursor : Cursor_intf.S_mono) :
   S_mono with type container := Cursor.container
-          and type cursor := Cursor.t
-          and type elm := Cursor.elm = struct
+         with type cursor := Cursor.t
+         with type elm := Cursor.elm = struct
   type t = {
     base: Cursor.t;
     past: Cursor.t;
@@ -59,8 +59,8 @@ end
 
 module Make_poly (Cursor : Cursor_intf.S_poly) :
   S_poly with type 'a container := 'a Cursor.container
-          and type 'a cursor := 'a Cursor.t
-          and type 'a elm := 'a Cursor.elm = struct
+         with type 'a cursor := 'a Cursor.t
+         with type 'a elm := 'a Cursor.elm = struct
   type 'a t = {
     base: 'a Cursor.t;
     past: 'a Cursor.t;
