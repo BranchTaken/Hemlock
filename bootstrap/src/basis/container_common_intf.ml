@@ -12,7 +12,8 @@ module type I_mono = sig
   (** Element type. *)
 
   module Cursor : sig
-    include Cursor_intf.S_mono_iter with type container := t and type elm := elm
+    include Cursor_intf.S_mono_iter with type container := t
+                                    with type elm := elm
   end
 end
 
@@ -162,7 +163,7 @@ module type I_poly = sig
 
   module Cursor : sig
     include Cursor_intf.S_poly_iter with type 'a container := 'a t
-                                     and type 'a elm := 'a elm
+                                    with type 'a elm := 'a elm
   end
 end
 
@@ -357,7 +358,7 @@ module type I_poly2 = sig
   module Cursor : sig
     include Cursor_intf.S_poly2_iter
       with type ('a, 'cmp) container := ('a, 'cmp) t
-       and type 'a elm := 'a elm
+      with type 'a elm := 'a elm
   end
 end
 
@@ -378,7 +379,7 @@ module type I_poly3 = sig
   module Cursor : sig
     include Cursor_intf.S_poly3_iter
       with type ('k, 'v, 'cmp) container := ('k, 'v, 'cmp) t
-       and type 'k key := 'k key
-       and type 'v value := 'v value
+      with type 'k key := 'k key
+      with type 'v value := 'v value
   end
 end

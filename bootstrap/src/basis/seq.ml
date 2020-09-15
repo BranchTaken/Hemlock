@@ -1,7 +1,7 @@
 open Seq_intf
 
 module Make_def (T : I_mono_def) : S_mono_def with type t := T.t
-                                               and type elm := T.elm =
+                                              with type elm := T.elm =
 struct
   include T
 
@@ -12,14 +12,14 @@ struct
 end
 
 module Make_indef (T : I_mono_indef) : S_mono_indef with type t := T.t
-                                                     and type elm := T.elm =
+                                                    with type elm := T.elm =
 struct
   include T
 end
 
 module Make_poly2_fold2 (T : I_poly2_fold2) : S_poly2_fold2
   with type ('a, 'cmp) t := ('a, 'cmp) T.container
-   and type 'a elm := 'a T.elm = struct
+  with type 'a elm := 'a T.elm = struct
   let fold2_until ~init ~f t0 t1 =
     let open Cmp in
     let next seq  = begin
@@ -79,8 +79,8 @@ end
 
 module Make_poly3_fold2 (T : I_poly3_fold2) : S_poly3_fold2
   with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.container
-   and type 'k key := 'k T.key
-   and type 'v value := 'v T.value = struct
+  with type 'k key := 'k T.key
+  with type 'v value := 'v T.value = struct
   let fold2_until ~init ~f t0 t1 =
     let open Cmp in
     let next seq  = begin

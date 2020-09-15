@@ -39,8 +39,8 @@ module Cursor : sig
   type 'a container = 'a t
   type 'a t
   include Cursor_intf.S_poly with type 'a container := 'a container
-                              and type 'a elm := 'a
-                              and type 'a t := 'a t
+                             with type 'a elm := 'a
+                             with type 'a t := 'a t
 end
 
 (** {1 Access} *)

@@ -169,7 +169,7 @@ module type S = sig
 
   include Seq_intf.S_poly2_fold2
     with type ('a, 'cmp) t := ('a, 'cmp) t
-     and type 'a elm := 'a
+    with type 'a elm := 'a
 
   (** {1 Conversion} *)
 

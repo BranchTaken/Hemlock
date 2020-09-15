@@ -54,7 +54,7 @@ end
     [rget]/[next] counterparts to avoid the need for [tl] calls. *)
 module Cursor : sig
   include Cursor_intf.S_mono with type container := t
-                              and type elm := codepoint
+                             with type elm := codepoint
 
   val rget_opt: t -> codepoint option
   (** [rget_opt t] returns [Some codepoint] if [t] is not at the text's tail,
@@ -73,8 +73,8 @@ end
 (** Text slice. *)
 module Slice : sig
   include Slice_intf.S_mono with type container := t
-                             and type cursor := Cursor.t
-                             and type elm := codepoint
+                            with type cursor := Cursor.t
+                            with type elm := codepoint
 
   val to_string: t -> string
   (** [to_string t] returns a string representation of [t]. *)
