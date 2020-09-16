@@ -221,20 +221,20 @@ let%expect_test "conversion" =
     of_uns 0x3fffffffffffffffi -> to_uns 0x7fffi16 -> of_uns 0x0000000000007fff -> 0x7fffi16
     |}]
 
-let%expect_test "of_float,to_float" =
+let%expect_test "of_real,to_real" =
   let open Format in
   printf "@[<h>";
-  let rec test_fs fs = begin
-    match fs with
+  let rec test_rs rs = begin
+    match rs with
     | [] -> ()
-    | f :: fs' -> begin
-        let x = of_float f in
-        printf "of_float %h -> %a; to_float -> %h\n"
-          f pp_x x (to_float x);
-        test_fs fs'
+    | r :: rs' -> begin
+        let x = of_real r in
+        printf "of_real %h -> %a; to_real -> %h\n"
+          r pp_x x (to_real x);
+        test_rs rs'
       end
   end in
-  let fs = [
+  let rs = [
     -1.;
     0.;
     0x1.1p-1;
@@ -249,15 +249,15 @@ let%expect_test "of_float,to_float" =
     0x1p14;
     0x1p15;
   ] in
-  test_fs fs;
+  test_rs rs;
   printf "\n";
   let rec test_xs xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        let f = to_float x in
-        printf "to_float %a -> %h; of_float -> %a\n"
-          pp_x x f pp_x (of_float f);
+        let r = to_real x in
+        printf "to_real %a -> %h; of_real -> %a\n"
+          pp_x x r pp_x (of_real r);
         test_xs xs'
       end
   end in
@@ -271,21 +271,21 @@ let%expect_test "of_float,to_float" =
   printf "@]";
 
   [%expect{|
-    of_float -0x1p+0 -> 0xffffi16; to_float -> -0x1p+0
-    of_float 0x0p+0 -> 0x0000i16; to_float -> 0x0p+0
-    of_float 0x1.1p-1 -> 0x0000i16; to_float -> 0x0p+0
-    of_float 0x1p+0 -> 0x0001i16; to_float -> 0x1p+0
-    of_float 0x1.fffffffffffffp+48 -> 0x7fffi16; to_float -> 0x1.fffcp+14
-    of_float 0x1.fffffffffffffp+52 -> 0x7fffi16; to_float -> 0x1.fffcp+14
-    of_float 0x1.fffffffffffffp+56 -> 0x7ff0i16; to_float -> 0x1.ffcp+14
-    of_float 0x1.fffffffffffffp+61 -> 0x7e00i16; to_float -> 0x1.f8p+14
-    of_float 0x1p+14 -> 0x4000i16; to_float -> 0x1p+14
-    of_float 0x1p+15 -> 0x0000i16; to_float -> 0x0p+0
+    of_real -0x1p+0 -> 0xffffi16; to_real -> -0x1p+0
+    of_real 0x0p+0 -> 0x0000i16; to_real -> 0x0p+0
+    of_real 0x1.1p-1 -> 0x0000i16; to_real -> 0x0p+0
+    of_real 0x1p+0 -> 0x0001i16; to_real -> 0x1p+0
+    of_real 0x1.fffffffffffffp+48 -> 0x7fffi16; to_real -> 0x1.fffcp+14
+    of_real 0x1.fffffffffffffp+52 -> 0x7fffi16; to_real -> 0x1.fffcp+14
+    of_real 0x1.fffffffffffffp+56 -> 0x7ff0i16; to_real -> 0x1.ffcp+14
+    of_real 0x1.fffffffffffffp+61 -> 0x7e00i16; to_real -> 0x1.f8p+14
+    of_real 0x1p+14 -> 0x4000i16; to_real -> 0x1p+14
+    of_real 0x1p+15 -> 0x0000i16; to_real -> 0x0p+0
 
-    to_float 0xffffi16 -> -0x1p+0; of_float -> 0xffffi16
-    to_float 0x0000i16 -> 0x0p+0; of_float -> 0x0000i16
-    to_float 0x0001i16 -> 0x1p+0; of_float -> 0x0001i16
-    to_float 0x7fffi16 -> 0x1.fffcp+14; of_float -> 0x7fffi16
+    to_real 0xffffi16 -> -0x1p+0; of_real -> 0xffffi16
+    to_real 0x0000i16 -> 0x0p+0; of_real -> 0x0000i16
+    to_real 0x0001i16 -> 0x1p+0; of_real -> 0x0001i16
+    to_real 0x7fffi16 -> 0x1.fffcp+14; of_real -> 0x7fffi16
     |}]
 
 let%expect_test "bit_and,bit_or,bit_xor" =

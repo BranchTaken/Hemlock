@@ -24,7 +24,7 @@ let to_sint t =
   | Zero -> 0
   | Pos -> 1
 
-let to_float t =
+let to_real t =
   match t with
   | Neg -> -1.
   | Zero -> 0.

@@ -14,8 +14,8 @@ val of_sint: int -> t
 val to_sint: t -> int
 (** [to_sint t] returns [-1], [0], or [1]. *)
 
-val to_float: t -> float
-(** [to_float t] returns [-1.], [0.], or [1.]. *)
+val to_real: t -> float
+(** [to_real t] returns [-1.], [0.], or [1.]. *)
 
 val flip: t -> t
 (** [flip t] negates [t]. *)

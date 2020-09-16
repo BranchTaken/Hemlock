@@ -1,5 +1,6 @@
 open Rudiments_functions
 open Intnw_intf
+type real = float
 
 external intnw_icmp: int64 array -> int64 array -> Cmp.t = "hemlock_intnw_icmp"
 external intnw_ucmp: int64 array -> int64 array -> Cmp.t = "hemlock_intnw_ucmp"
@@ -38,12 +39,12 @@ external intnw_imod: int64 array -> int64 array -> int64 array
 external intnw_neg: int64 array -> int64 array = "hemlock_intnw_neg"
 external intnw_abs: int64 array -> int64 array = "hemlock_intnw_abs"
 
-external intnw_i_of_float: uns -> float -> int64 array =
-  "hemlock_intnw_i_of_float"
-external intnw_u_of_float: uns -> float -> int64 array =
-  "hemlock_intnw_u_of_float"
-external intnw_i_to_float: int64 array -> float = "hemlock_intnw_i_to_float"
-external intnw_u_to_float: int64 array -> float = "hemlock_intnw_u_to_float"
+external intnw_i_of_real: uns -> real -> int64 array =
+  "hemlock_intnw_i_of_real"
+external intnw_u_of_real: uns -> real -> int64 array =
+  "hemlock_intnw_u_of_real"
+external intnw_i_to_real: int64 array -> real = "hemlock_intnw_i_to_real"
+external intnw_u_to_real: int64 array -> real = "hemlock_intnw_u_to_real"
 
 module type I_common = sig
   include I
@@ -232,24 +233,24 @@ module Make_common (T : I_common) : S_common with type t := T.t = struct
       | true -> of_arr (intnw_abs (to_arr t))
       | false -> t
 
-    let of_float f =
-      match Float.is_nan f with
+    let of_real r =
+      match Real.is_nan r with
       | true -> halt "Not a number"
       | false -> begin
           of_arr (
             match T.signed with
-            | true -> intnw_i_of_float Uns.(T.num_bits / 64) f
-            | false -> intnw_u_of_float Uns.(T.num_bits / 64) f
+            | true -> intnw_i_of_real Uns.(T.num_bits / 64) r
+            | false -> intnw_u_of_real Uns.(T.num_bits / 64) r
           )
         end
 
-    let to_float t =
+    let to_real t =
       match T.signed with
-      | true -> intnw_i_to_float (to_arr t)
-      | false -> intnw_u_to_float (to_arr t)
+      | true -> intnw_i_to_real (to_arr t)
+      | false -> intnw_u_to_real (to_arr t)
 
     let ( // ) t0 t1 =
-      (to_float t0) /. (to_float t1)
+      (to_real t0) /. (to_real t1)
 
     let pp ppf t =
       let ten = of_uns 10 in

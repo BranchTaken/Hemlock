@@ -801,7 +801,7 @@ hemlock_intnw_abs(value a_a) {
 }
 
 static value
-of_float(bool signed_, value a_nwords, value a_f) {
+of_real(bool signed_, value a_nwords, value a_r) {
   size_t nwords = Unsigned_long_val(a_nwords);
   size_t nbits = nwords * hl_bpw;
   size_t sig_bits = nwords * hl_bpw - (signed_ ? 1 : 0);
@@ -809,7 +809,7 @@ of_float(bool signed_, value a_nwords, value a_f) {
     double f;
     uint64_t bits;
   } u;
-  u.f = Double_val(a_f);
+  u.f = Double_val(a_r);
   hl_word_t r[nwords];
   switch (fpclassify(u.f)) {
   case FP_NORMAL: {
@@ -871,17 +871,17 @@ of_float(bool signed_, value a_nwords, value a_f) {
 }
 
 CAMLprim value
-hemlock_intnw_i_of_float(value a_nwords, value a_f) {
-  return of_float(true, a_nwords, a_f);
+hemlock_intnw_i_of_real(value a_nwords, value a_r) {
+  return of_real(true, a_nwords, a_r);
 }
 
 CAMLprim value
-hemlock_intnw_u_of_float(value a_nwords, value a_f) {
-  return of_float(false, a_nwords, a_f);
+hemlock_intnw_u_of_real(value a_nwords, value a_r) {
+  return of_real(false, a_nwords, a_r);
 }
 
 static value
-float_of_parts(bool negative, unsigned exponent, uint64_t mantissa) {
+real_of_parts(bool negative, unsigned exponent, uint64_t mantissa) {
   assert(mantissa & 0xfffffffffffffLU == mantissa);
   uint64_t sign = negative ? 1 : 0;
   uint64_t biased_exponent = exponent + 1023;
@@ -904,7 +904,7 @@ is_signed_min_value(const hl_word_t *a, size_t nwords) {
 }
 
 static value
-to_float(bool signed_, value a_a) {
+to_real(bool signed_, value a_a) {
   size_t nwords = caml_array_length(a_a);
   size_t nbits = nwords * hl_bpw;
   hl_word_t a[nwords];
@@ -912,7 +912,7 @@ to_float(bool signed_, value a_a) {
   bool negative = (signed_ && is_neg(a, nwords));
   if (negative) {
     if (is_signed_min_value(a, nwords)) {
-      return float_of_parts(true, nbits - 1, 0);
+      return real_of_parts(true, nbits - 1, 0);
     }
     hl_word_t t[nwords];
     dup(a, nwords, t);
@@ -933,15 +933,15 @@ to_float(bool signed_, value a_a) {
     bit_usr(sig_bits - 53, a, nwords, t);
   }
   uint64_t mantissa = t[0] & 0xfffffffffffffLU;
-  return float_of_parts(negative, exponent, mantissa);
+  return real_of_parts(negative, exponent, mantissa);
 }
 
 CAMLprim value
-hemlock_intnw_i_to_float(value a_a) {
-  return to_float(true, a_a);
+hemlock_intnw_i_to_real(value a_a) {
+  return to_real(true, a_a);
 }
 
 CAMLprim value
-hemlock_intnw_u_to_float(value a_a) {
-  return to_float(false, a_a);
+hemlock_intnw_u_to_real(value a_a) {
+  return to_real(false, a_a);
 }

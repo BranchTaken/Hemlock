@@ -37,6 +37,8 @@ type byte = Byte.t
 
 type codepoint = Codepoint.t
 
+type real = float
+
 (* Unnecessary, due to aliasing the built-in option type. *)
 (* type 'a option = 'a Option.t *)
 

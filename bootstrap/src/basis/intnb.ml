@@ -159,14 +159,14 @@ module Make_common (T : I_common) : S_common with type t := uns = struct
             end
         end
 
-    let of_float f =
+    let of_real r =
       (* OCaml handles overflow poorly, but this deficiency has no anticipated
        * impact on bootstrapping. *)
-      match T.signed || (f >= 0.) with
-      | true -> narrow (int_of_float f)
+      match T.signed || (r >= 0.) with
+      | true -> narrow (int_of_float r)
       | false -> 0
 
-    let to_float t =
+    let to_real t =
       assert (narrow t = t);
       match T.signed with
       | true -> float_of_int t
@@ -305,7 +305,7 @@ module Make_common (T : I_common) : S_common with type t := uns = struct
     let ( // ) t0 t1 =
       assert (narrow t0 = t0);
       assert (narrow t1 = t1);
-      (to_float t0) /. (to_float t1)
+      (to_real t0) /. (to_real t1)
   end
   include U
   include Identifiable.Make(U)
@@ -347,11 +347,11 @@ module Make_i (T : I) : S_i with type t := sint = struct
     let narrow_of_unsigned x =
       sint_of_int (V.narrow_of_unsigned x)
 
-    let of_float f =
-      sint_of_int (V.of_float f)
+    let of_real r =
+      sint_of_int (V.of_real r)
 
-    let to_float t =
-      V.to_float (int_of_sint t)
+    let to_real t =
+      V.to_real (int_of_sint t)
 
     let of_string s =
       sint_of_uns (V.of_string s)
