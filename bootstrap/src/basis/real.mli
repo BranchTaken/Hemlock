@@ -1,8 +1,8 @@
-(** 64-bit floating point numeric type. *)
+(** 64-bit real numeric type. *)
 
 open Rudiments0
 
-type t = float
+type t = real
 
 include Identifiable_intf.S with type t := t
 include Stringable_intf.S with type t := t
@@ -51,7 +51,7 @@ val to_sint: t -> sint
 (** Convert to signed integer. *)
 
 val create: neg:bool -> exponent:sint -> mantissa:uns -> t
-(** [create ~neg ~exponent ~mantissa] creates a float, where [-1023 <= exponent
+(** [create ~neg ~exponent ~mantissa] creates a real, where [-1023 <= exponent
     <= 1024] and [mantissa <= 0xf_ffff_ffff_ffff]. *)
 
 val is_neg: t -> bool
@@ -236,7 +236,7 @@ val cosh: t -> t
 val tanh: t -> t
 (** [tanh t] computes the hyperbolic tangent of [t]. *)
 
-(** Float operators. *)
+(** Real operators. *)
 module O : sig
   type nonrec t = t
 

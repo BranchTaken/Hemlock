@@ -2,7 +2,7 @@ open Rudiments_int
 open Rudiments0
 
 module T = struct
-  type t = float
+  type t = real
 
   let hash_fold t state =
     Hash.State.Gen.init state
@@ -404,17 +404,17 @@ end
 let%expect_test "hash_fold" =
   let open Format in
   printf "@[<h>";
-  let rec test_hash_fold floats = begin
-    match floats with
+  let rec test_hash_fold reals = begin
+    match reals with
     | [] -> ()
-    | x :: floats' -> begin
+    | x :: reals' -> begin
         printf "hash_fold %h -> %a\n"
           x Hash.pp (Hash.t_of_state (hash_fold x Hash.State.empty));
-        test_hash_fold floats'
+        test_hash_fold reals'
       end
   end in
-  let floats = [0.; 1.; 42.; infinity] in
-  test_hash_fold floats;
+  let reals = [0.; 1.; 42.; infinity] in
+  test_hash_fold reals;
   printf "@]";
 
   [%expect{|

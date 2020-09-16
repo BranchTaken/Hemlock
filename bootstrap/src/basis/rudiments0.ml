@@ -17,6 +17,8 @@ type i8 = I8.t
 type u8 = U8.t
 type byte = Byte.t
 
+type real = float
+
 type codepoint = Codepoint.t
 
 include Rudiments_functions

@@ -1,6 +1,7 @@
 (** Functor interfaces and signatures for integers of specific bitwidth. *)
 
 include Rudiments_int0
+type real = float
 
 (** Functor input interface for an integer type with a specific bitwidth. *)
 module type I = sig
@@ -77,7 +78,7 @@ module type S = sig
   include Identifiable_intf.S with type t := t
   include Stringable_intf.S with type t := t
   include Cmpable_intf.S_mono_zero with type t := t
-  include Floatable_intf.S with type t := t
+  include Realable_intf.S with type t := t
 
   val pp_x: Format.formatter -> t -> unit
   (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty
@@ -147,9 +148,8 @@ module type S = sig
   val ( ** ): t -> t -> t
   (** [x ** y] returns [x] raised to the [y] power. *)
 
-  val ( // ): t -> t -> float
-  (** [x // y] performs floating point division on float-converted [x] and [y].
-  *)
+  val ( // ): t -> t -> real
+  (** [x // y] performs real division on real-converted [x] and [y]. *)
 
   include S_derived with type t := t
 end

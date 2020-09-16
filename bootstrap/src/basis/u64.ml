@@ -54,13 +54,13 @@ let cf_ffff_ffff_ffff = Int64.of_string "0xf_ffff_ffff_ffff"
 let c7ff = Int64.of_string "0x7ff"
 let c10_0000_0000_0000 = Int64.of_string "0x10_0000_0000_0000"
 
-let of_float f =
-  match Float.classify f with
+let of_real r =
+  match Real.classify r with
   | Normal -> begin
-      match Float.(f >= 0.) with
+      match Real.(r >= 0.) with
       | false -> zero
       | true -> begin
-          let bits = Int64.bits_of_float f in
+          let bits = Int64.bits_of_float r in
           let biased_exponent =
             Int64.(to_int (logand (shift_right_logical bits 52) c7ff)) in
           match Rudiments_int.(biased_exponent >= 1023) with
@@ -86,7 +86,7 @@ let of_float f =
 let c8000_0000_0000_0000 = of_string "0x8000_0000_0000_0000"
 let c43e0_0000_0000_0000 = of_string "0x43e0_0000_0000_0000"
 
-let to_float t =
+let to_real t =
   match Rudiments_int.(Int64.(compare (logand t c8000_0000_0000_0000) zero) = 0)
   with
   | true -> Int64.to_float t
@@ -188,7 +188,7 @@ let ( ** ) t0 t1 =
   fn one t0 t1
 
 let ( // ) t0 t1 =
-  (to_float t0) /. (to_float t1)
+  (to_real t0) /. (to_real t1)
 
 external bit_pop: t -> uns = "hemlock_u64_bit_pop"
 external bit_clz: t -> uns = "hemlock_u64_bit_clz"
@@ -344,20 +344,20 @@ let%expect_test "narrowing" =
     max_value * 15u64 -> 0xffff_ffff_ffff_fff1u64
     |}]
 
-let%expect_test "of_float,to_float" =
+let%expect_test "of_real,to_real" =
   let open Format in
   printf "@[<h>";
-  let rec test_fs fs = begin
-    match fs with
+  let rec test_rs rs = begin
+    match rs with
     | [] -> ()
-    | f :: fs' -> begin
-        let x = of_float f in
-        printf "of_float %h -> %a; to_float -> %h\n"
-          f pp_x x (to_float x);
-        test_fs fs'
+    | r :: rs' -> begin
+        let x = of_real r in
+        printf "of_real %h -> %a; to_real -> %h\n"
+          r pp_x x (to_real x);
+        test_rs rs'
       end
   end in
-  let fs = [
+  let rs = [
     -1.;
     0.;
     0x1.1p-1;
@@ -375,15 +375,15 @@ let%expect_test "of_float,to_float" =
     0x1p63;
     0x1p64;
   ] in
-  test_fs fs;
+  test_rs rs;
   printf "\n";
   let rec test_xs xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        let f = to_float x in
-        printf "to_float %a -> %h; of_float -> %a\n"
-          pp_x x f pp_x (of_float f);
+        let r = to_real x in
+        printf "to_real %a -> %h; of_real -> %a\n"
+          pp_x x r pp_x (of_real r);
         test_xs xs'
       end
   end in
@@ -396,23 +396,23 @@ let%expect_test "of_float,to_float" =
   printf "@]";
 
   [%expect{|
-    of_float -0x1p+0 -> 0x0000_0000_0000_0000u64; to_float -> 0x0p+0
-    of_float 0x0p+0 -> 0x0000_0000_0000_0000u64; to_float -> 0x0p+0
-    of_float 0x1.1p-1 -> 0x0000_0000_0000_0000u64; to_float -> 0x0p+0
-    of_float 0x1p+0 -> 0x0000_0000_0000_0001u64; to_float -> 0x1p+0
-    of_float 0x1.fffffffffffffp+48 -> 0x0001_ffff_ffff_ffffu64; to_float -> 0x1.ffffffffffffp+48
-    of_float 0x1.fffffffffffffp+52 -> 0x001f_ffff_ffff_ffffu64; to_float -> 0x1.fffffffffffffp+52
-    of_float 0x1.fffffffffffffp+56 -> 0x01ff_ffff_ffff_fff0u64; to_float -> 0x1.fffffffffffffp+56
-    of_float 0x1.fffffffffffffp+63 -> 0xffff_ffff_ffff_f800u64; to_float -> 0x1.fffffffffffffp+63
-    of_float 0x1.fffffffffffffp+64 -> 0xffff_ffff_ffff_f000u64; to_float -> 0x1.ffffffffffffep+63
-    of_float 0x1.fffffffffffffp+68 -> 0xffff_ffff_ffff_0000u64; to_float -> 0x1.fffffffffffep+63
-    of_float 0x1p+62 -> 0x4000_0000_0000_0000u64; to_float -> 0x1p+62
-    of_float 0x1p+63 -> 0x8000_0000_0000_0000u64; to_float -> 0x1p+63
-    of_float 0x1p+64 -> 0x0000_0000_0000_0000u64; to_float -> 0x0p+0
+    of_real -0x1p+0 -> 0x0000_0000_0000_0000u64; to_real -> 0x0p+0
+    of_real 0x0p+0 -> 0x0000_0000_0000_0000u64; to_real -> 0x0p+0
+    of_real 0x1.1p-1 -> 0x0000_0000_0000_0000u64; to_real -> 0x0p+0
+    of_real 0x1p+0 -> 0x0000_0000_0000_0001u64; to_real -> 0x1p+0
+    of_real 0x1.fffffffffffffp+48 -> 0x0001_ffff_ffff_ffffu64; to_real -> 0x1.ffffffffffffp+48
+    of_real 0x1.fffffffffffffp+52 -> 0x001f_ffff_ffff_ffffu64; to_real -> 0x1.fffffffffffffp+52
+    of_real 0x1.fffffffffffffp+56 -> 0x01ff_ffff_ffff_fff0u64; to_real -> 0x1.fffffffffffffp+56
+    of_real 0x1.fffffffffffffp+63 -> 0xffff_ffff_ffff_f800u64; to_real -> 0x1.fffffffffffffp+63
+    of_real 0x1.fffffffffffffp+64 -> 0xffff_ffff_ffff_f000u64; to_real -> 0x1.ffffffffffffep+63
+    of_real 0x1.fffffffffffffp+68 -> 0xffff_ffff_ffff_0000u64; to_real -> 0x1.fffffffffffep+63
+    of_real 0x1p+62 -> 0x4000_0000_0000_0000u64; to_real -> 0x1p+62
+    of_real 0x1p+63 -> 0x8000_0000_0000_0000u64; to_real -> 0x1p+63
+    of_real 0x1p+64 -> 0x0000_0000_0000_0000u64; to_real -> 0x0p+0
 
-    to_float 0x0000_0000_0000_0000u64 -> 0x0p+0; of_float -> 0x0000_0000_0000_0000u64
-    to_float 0x0000_0000_0000_0001u64 -> 0x1p+0; of_float -> 0x0000_0000_0000_0001u64
-    to_float 0xffff_ffff_ffff_ffffu64 -> 0x1.fffffffffffffp+63; of_float -> 0xffff_ffff_ffff_f800u64
+    to_real 0x0000_0000_0000_0000u64 -> 0x0p+0; of_real -> 0x0000_0000_0000_0000u64
+    to_real 0x0000_0000_0000_0001u64 -> 0x1p+0; of_real -> 0x0000_0000_0000_0001u64
+    to_real 0xffff_ffff_ffff_ffffu64 -> 0x1.fffffffffffffp+63; of_real -> 0xffff_ffff_ffff_f800u64
     |}]
 
 let%expect_test "bit_and,bit_or,bit_xor" =

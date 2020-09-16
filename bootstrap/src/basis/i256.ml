@@ -329,20 +329,20 @@ let%expect_test "*" =
     0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256 * 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256
     |}]
 
-let%expect_test "of_float,to_float" =
+let%expect_test "of_real,to_real" =
   let open Format in
   printf "@[<h>";
-  let rec test_fs fs = begin
-    match fs with
+  let rec test_rs rs = begin
+    match rs with
     | [] -> ()
-    | f :: fs' -> begin
-        let x = of_float f in
-        printf "of_float %h -> %a; to_float -> %h\n"
-          f pp_x x (to_float x);
-        test_fs fs'
+    | r :: rs' -> begin
+        let x = of_real r in
+        printf "of_real %h -> %a; to_real -> %h\n"
+          r pp_x x (to_real x);
+        test_rs rs'
       end
   end in
-  let fs = [
+  let rs = [
     -1.;
     0.;
     0x1.1p-1;
@@ -365,15 +365,15 @@ let%expect_test "of_float,to_float" =
     0x1p254;
     0x1p255;
   ] in
-  test_fs fs;
+  test_rs rs;
   printf "\n";
   let rec test_xs xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        let f = to_float x in
-        printf "to_float %a -> %h; of_float -> %a\n"
-          pp_x x f pp_x (of_float f);
+        let r = to_real x in
+        printf "to_real %a -> %h; of_real -> %a\n"
+          pp_x x r pp_x (of_real r);
         test_xs xs'
       end
   end in
@@ -390,30 +390,30 @@ let%expect_test "of_float,to_float" =
   printf "@]";
 
   [%expect{|
-    of_float -0x1p+0 -> 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256; to_float -> -0x1p+0
-    of_float 0x0p+0 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x0p+0
-    of_float 0x1.1p-1 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x0p+0
-    of_float 0x1p+0 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256; to_float -> 0x1p+0
-    of_float 0x1.fffffffffffffp+48 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001_ffff_ffff_ffffi256; to_float -> 0x1.ffffffffffffp+48
-    of_float 0x1.fffffffffffffp+52 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_001f_ffff_ffff_ffffi256; to_float -> 0x1.fffffffffffffp+52
-    of_float 0x1.fffffffffffffp+56 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_01ff_ffff_ffff_fff0i256; to_float -> 0x1.fffffffffffffp+56
-    of_float 0x1.fffffffffffffp+127 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_ffff_ffff_ffff_f800_0000_0000_0000_0000i256; to_float -> 0x1.fffffffffffffp+127
-    of_float 0x1.fffffffffffffp+128 -> 0x0000_0000_0000_0000_0000_0000_0000_0001_ffff_ffff_ffff_f000_0000_0000_0000_0000i256; to_float -> 0x1.fffffffffffffp+128
-    of_float 0x1.fffffffffffffp+132 -> 0x0000_0000_0000_0000_0000_0000_0000_001f_ffff_ffff_ffff_0000_0000_0000_0000_0000i256; to_float -> 0x1.fffffffffffffp+132
-    of_float 0x1.fffffffffffffp+254 -> 0x7fff_ffff_ffff_fc00_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x1.fffffffffffffp+254
-    of_float 0x1.fffffffffffffp+255 -> 0x7fff_ffff_ffff_f800_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x1.ffffffffffffep+254
-    of_float 0x1.fffffffffffffp+256 -> 0x7fff_ffff_ffff_f000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x1.ffffffffffffcp+254
-    of_float 0x1.fffffffffffffp+260 -> 0x7fff_ffff_ffff_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x1.fffffffffffcp+254
-    of_float 0x1p+253 -> 0x2000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x1p+253
-    of_float 0x1p+254 -> 0x4000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x1p+254
-    of_float 0x1p+255 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_float -> 0x0p+0
+    of_real -0x1p+0 -> 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256; to_real -> -0x1p+0
+    of_real 0x0p+0 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x0p+0
+    of_real 0x1.1p-1 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x0p+0
+    of_real 0x1p+0 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256; to_real -> 0x1p+0
+    of_real 0x1.fffffffffffffp+48 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001_ffff_ffff_ffffi256; to_real -> 0x1.ffffffffffffp+48
+    of_real 0x1.fffffffffffffp+52 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_001f_ffff_ffff_ffffi256; to_real -> 0x1.fffffffffffffp+52
+    of_real 0x1.fffffffffffffp+56 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_01ff_ffff_ffff_fff0i256; to_real -> 0x1.fffffffffffffp+56
+    of_real 0x1.fffffffffffffp+127 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_ffff_ffff_ffff_f800_0000_0000_0000_0000i256; to_real -> 0x1.fffffffffffffp+127
+    of_real 0x1.fffffffffffffp+128 -> 0x0000_0000_0000_0000_0000_0000_0000_0001_ffff_ffff_ffff_f000_0000_0000_0000_0000i256; to_real -> 0x1.fffffffffffffp+128
+    of_real 0x1.fffffffffffffp+132 -> 0x0000_0000_0000_0000_0000_0000_0000_001f_ffff_ffff_ffff_0000_0000_0000_0000_0000i256; to_real -> 0x1.fffffffffffffp+132
+    of_real 0x1.fffffffffffffp+254 -> 0x7fff_ffff_ffff_fc00_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x1.fffffffffffffp+254
+    of_real 0x1.fffffffffffffp+255 -> 0x7fff_ffff_ffff_f800_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x1.ffffffffffffep+254
+    of_real 0x1.fffffffffffffp+256 -> 0x7fff_ffff_ffff_f000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x1.ffffffffffffcp+254
+    of_real 0x1.fffffffffffffp+260 -> 0x7fff_ffff_ffff_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x1.fffffffffffcp+254
+    of_real 0x1p+253 -> 0x2000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x1p+253
+    of_real 0x1p+254 -> 0x4000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x1p+254
+    of_real 0x1p+255 -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256; to_real -> 0x0p+0
 
-    to_float 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> 0x0p+0; of_float -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
-    to_float 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256 -> 0x1p+0; of_float -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256
-    to_float 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0002i256 -> 0x1p+1; of_float -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0002i256
-    to_float 0xc000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> -0x1p+254; of_float -> 0xc000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
-    to_float 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> -0x1p+255; of_float -> 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
-    to_float 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256 -> 0x1.fffffffffffffp+254; of_float -> 0x7fff_ffff_ffff_fc00_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
+    to_real 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> 0x0p+0; of_real -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
+    to_real 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256 -> 0x1p+0; of_real -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0001i256
+    to_real 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0002i256 -> 0x1p+1; of_real -> 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0002i256
+    to_real 0xc000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> -0x1p+254; of_real -> 0xc000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
+    to_real 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256 -> -0x1p+255; of_real -> 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
+    to_real 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi256 -> 0x1.fffffffffffffp+254; of_real -> 0x7fff_ffff_ffff_fc00_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000i256
     |}]
 
 let%expect_test "/,%" =
