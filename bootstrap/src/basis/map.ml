@@ -75,7 +75,7 @@ type ('k, 'v, 'cmp) t = {
 }
 
 type ('k, 'cmp) cmper =
-  (module Cmper.S_mono with type t = 'k and type cmper_witness = 'cmp)
+  (module Cmper.SMono with type t = 'k and type cmper_witness = 'cmp)
 
 let cmper_m (type k cmp) t : (k, cmp) cmper =
   (module struct
@@ -84,7 +84,7 @@ let cmper_m (type k cmp) t : (k, cmp) cmper =
     let cmper = t.cmper
   end)
 
-(* Extract cmper from first-class module compatible with Cmper.S_mono . *)
+(* Extract cmper from first-class module compatible with Cmper.SMono . *)
 let m_cmper (type k cmp) ((module M) : (k, cmp) cmper) =
   M.cmper
 
@@ -611,7 +611,7 @@ let hash_fold hash_fold_v t state =
  * children, but that ordering is not stable, and cannot be used here. External
  * iteration must do a stable in-order traversal, so that the orderings of
  * unequal maps are monotonic relative to their union. *)
-module Seq_poly3_fold2 = struct
+module SeqPoly3Fold2 = struct
   type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
   type 'k key = 'k
   type 'v value = 'v
@@ -748,8 +748,8 @@ module Seq_poly3_fold2 = struct
     | Eq -> cmper.cmp k0 k1
     | Gt -> Gt
 end
-include Seq.Make_poly3_fold2(Seq_poly3_fold2)
-module Seq = Seq_poly3_fold2
+include Seq.MakePoly3Fold2(SeqPoly3Fold2)
+module Seq = SeqPoly3Fold2
 
 let equal veq t0 t1 =
   let open Cmp in
@@ -980,13 +980,13 @@ let reduce_hlt ~f t =
 let to_alist t =
   fold ~init:[] ~f:(fun accum kv -> kv :: accum) t
 
-module Set_to_array = struct
+module SetToArray = struct
   include Seq
-  include Array.Seq.Make_poly3(Seq)
+  include Array.Seq.MakePoly3(Seq)
 end
 
 let to_array t =
-  Set_to_array.(to_array (init t))
+  SetToArray.(to_array (init t))
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -1083,7 +1083,7 @@ module UnsTestCmper = struct
     let cmp = Uns.cmp
     let pp = Uns.pp
   end
-  include Cmper.Make_mono(T)
+  include Cmper.MakeMono(T)
 end
 
 let of_klist ks =

@@ -1,4 +1,4 @@
-open Rudiments_functions
+open RudimentsFunctions
 
 type t =
   | Neg

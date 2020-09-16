@@ -10,7 +10,7 @@ module type S = sig
   (** Map type. *)
 
   type ('k, 'cmp) cmper =
-    (module Cmper.S_mono with type t = 'k and type cmper_witness = 'cmp)
+    (module Cmper.SMono with type t = 'k and type cmper_witness = 'cmp)
   (** Comparator type. *)
 
   (** {1 Seq} *)
@@ -20,7 +20,7 @@ module type S = sig
     type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
     type ('k, 'v, 'cmp) t
 
-    include Seq_intf.I_poly3_fold2
+    include SeqIntf.IPoly3Fold2
       with type ('k, 'v, 'cmp) container := ('k, 'v, 'cmp) container
       with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
       with type 'k key := 'k
@@ -258,7 +258,7 @@ module type S = sig
       empty. The reduction function is assumed to be associative; thus reduction
       order is unspecified. *)
 
-  include Seq_intf.S_poly3_fold2
+  include SeqIntf.SPoly3Fold2
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
     with type 'k key := 'k
     with type 'v value := 'v
@@ -269,12 +269,12 @@ module type S = sig
   (** [to_alist t] folds [t] from right to left if ordered, or arbitrarily if
       unordered, as a {!type:('k * 'v) list}. *)
 
-  include Container_array_intf.S_poly3_array
+  include ContainerArrayIntf.SPoly3Array
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
 end
 
 (** Ordered map. *)
-module type S_ord = sig
+module type SOrd = sig
   include S
 
   (** {1 Creation} *)
@@ -293,7 +293,7 @@ module type S_ord = sig
     type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
     type ('k, 'v, 'cmp) t
 
-    include Cursor_intf.S_poly3
+    include CursorIntf.SPoly3
       with type ('k, 'v, 'cmp) container := ('k, 'v, 'cmp) container
       with type 'k key := 'k
       with type 'v value := 'v

@@ -1,18 +1,18 @@
 (** Hash type. *)
 
-open Rudiments_int0
+open RudimentsInt0
 
 type t = u128
 (** Hash type. All bits are i.i.d. uniform variables. *)
 
-include Formattable_intf.S_mono with type t := t
+include FormattableIntf.SMono with type t := t
 
 (** Hash state management and hashing. *)
 module State : sig
   type t
   (** Hash state type. *)
 
-  include Formattable_intf.S_mono with type t := t
+  include FormattableIntf.SMono with type t := t
 
   val empty: t
   (** Unseeded hash state (constant). Note that no stateless hash functions

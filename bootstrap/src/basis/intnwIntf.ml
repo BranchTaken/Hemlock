@@ -1,7 +1,7 @@
 (** Functor interfaces and signatures for integers of specific power-of-two
     wordwidth. *)
 
-include Rudiments_int0
+include RudimentsInt0
 
 (** Functor input interface for an integer type with a specific power-of-two
     wordwidth. *)
@@ -19,7 +19,7 @@ module type I = sig
 end
 
 module type S = sig
-  include Intnb_intf.S
+  include IntnbIntf.S
 
   val of_arr: u64 array -> t
   (** Convert from array. *)
@@ -50,19 +50,19 @@ end
 
 (** Functor output signature for an unsigned integer type with a specific
     power-of-two wordwidth. *)
-module type S_u = sig
+module type SU = sig
   type t
 
   include S with type t := t
 end
 
-module type S_signed = Intnb_intf.S_signed
+module type SSigned = IntnbIntf.SSigned
 
 (** Functor output signature for a signed integer type with a specific
     power-of-two wordwidth. *)
-module type S_i = sig
+module type SI = sig
   type t
 
   include S with type t := t
-  include S_signed with type t := t
+  include SSigned with type t := t
 end

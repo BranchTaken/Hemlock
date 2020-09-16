@@ -21,5 +21,5 @@ type real = float
 
 type codepoint = Codepoint.t
 
-include Rudiments_functions
-include Rudiments_int
+include RudimentsFunctions
+include RudimentsInt

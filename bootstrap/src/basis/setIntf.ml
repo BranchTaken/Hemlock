@@ -11,7 +11,7 @@ module type S = sig
   (** Set type. *)
 
   type ('a, 'cmp) cmper =
-    (module Cmper.S_mono with type t = 'a and type cmper_witness = 'cmp)
+    (module Cmper.SMono with type t = 'a and type cmper_witness = 'cmp)
   (** Comparator type. *)
 
   (** {1 Comparators} *)
@@ -167,7 +167,7 @@ module type S = sig
       empty. The reduction function is assumed to be associative; thus reduction
       order is unspecified. *)
 
-  include Seq_intf.S_poly2_fold2
+  include SeqIntf.SPoly2Fold2
     with type ('a, 'cmp) t := ('a, 'cmp) t
     with type 'a elm := 'a
 
@@ -177,12 +177,12 @@ module type S = sig
   (** [to_list t] folds [t] from right to left if ordered, or arbitrarily if
       unordered, as a {!type:'a list}. *)
 
-  include Container_array_intf.S_poly2_array
+  include ContainerArrayIntf.SPoly2Array
     with type ('a, 'cmp) t := ('a, 'cmp) t
 end
 
 (** Ordered set. *)
-module type S_ord = sig
+module type SOrd = sig
   include S
 
   (** {1 Creation} *)
@@ -201,7 +201,7 @@ module type S_ord = sig
     type ('a, 'cmp) container = ('a, 'cmp) t
     type ('a, 'cmp) t
 
-    include Cursor_intf.S_poly2
+    include CursorIntf.SPoly2
       with type ('a, 'cmp) container := ('a, 'cmp) container
       with type 'a elm := 'a
       with type ('a, 'cmp) t := ('a, 'cmp) t

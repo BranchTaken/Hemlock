@@ -1,6 +1,6 @@
 (** Functor interfaces and signatures for integers of specific bitwidth. *)
 
-include Rudiments_int0
+include RudimentsInt0
 type real = float
 
 (** Functor input interface for an integer type with a specific bitwidth. *)
@@ -13,11 +13,11 @@ end
 
 (** Functor input interface required to derive functions on an integer type with
     a specific bitwidth. *)
-module type I_derived = sig
+module type IDerived = sig
   type t
 
   include I with type t := t
-  include Cmpable_intf.I_mono_zero with type t := t
+  include CmpableIntf.IMonoZero with type t := t
 
   val one: t
   (** Constant value 1. *)
@@ -41,7 +41,7 @@ module type I_derived = sig
   (** Count leading zeros. *)
 end
 
-module type S_derived = sig
+module type SDerived = sig
   type t
 
   val is_pow2: t -> bool
@@ -75,10 +75,10 @@ end
 module type S = sig
   type t
 
-  include Identifiable_intf.S with type t := t
-  include Stringable_intf.S with type t := t
-  include Cmpable_intf.S_mono_zero with type t := t
-  include Realable_intf.S with type t := t
+  include IdentifiableIntf.S with type t := t
+  include StringableIntf.S with type t := t
+  include CmpableIntf.SMonoZero with type t := t
+  include RealableIntf.S with type t := t
 
   val pp_x: Format.formatter -> t -> unit
   (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty
@@ -151,13 +151,13 @@ module type S = sig
   val ( // ): t -> t -> real
   (** [x // y] performs real division on real-converted [x] and [y]. *)
 
-  include S_derived with type t := t
+  include SDerived with type t := t
 end
 
 (** Functor output signature for narrowing functions. These functions are only
     needed by integer types based on the default integer types, and are a
     bootstrapping artifact. *)
-module type S_narrow = sig
+module type SNarrow = sig
   type t
 
   val narrow_of_signed: sint -> t
@@ -171,16 +171,16 @@ end
 
 (** Functor output signature for an unsigned integer type with a specific
     bitwidth. *)
-module type S_u = sig
+module type SU = sig
   type t
 
   include S with type t := t
-  include S_narrow with type t := t
+  include SNarrow with type t := t
 end
 
 (** Functor output signature for functions that exist only for signed integers.
 *)
-module type S_signed = sig
+module type SSigned = sig
   type t
 
   val neg_one: t
@@ -201,10 +201,10 @@ end
 
 (** Functor output signature for a signed integer type with a specific bitwidth.
 *)
-module type S_i = sig
+module type SI = sig
   type t
 
   include S with type t := t
-  include S_narrow with type t := t
-  include S_signed with type t := t
+  include SNarrow with type t := t
+  include SSigned with type t := t
 end

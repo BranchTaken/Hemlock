@@ -1,13 +1,13 @@
 (* Partial Rudiments. *)
-open Rudiments_int
-open Rudiments_functions
+open RudimentsInt
+open RudimentsFunctions
 
 module T = struct
   type t = uns
   let num_bits = 16
 end
 include T
-include Intnb.Make_u(T)
+include Intnb.MakeU(T)
 
 let to_sint t =
   Uns.to_sint t

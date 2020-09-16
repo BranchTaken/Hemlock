@@ -4,8 +4,8 @@ open Rudiments0
 
 type t = real
 
-include Identifiable_intf.S with type t := t
-include Stringable_intf.S with type t := t
+include IdentifiableIntf.S with type t := t
+include StringableIntf.S with type t := t
 
 (** Rounding direction. *)
 module Dir : sig
@@ -15,7 +15,7 @@ module Dir : sig
     | Nearest (** Round to nearest integral. *)
     | Zero    (** Round toward zero. *)
 
-  include Formattable_intf.S_mono with type t := t
+  include FormattableIntf.SMono with type t := t
 end
 
 (** Numeric class. *)
@@ -27,7 +27,7 @@ module Class : sig
     | Subnormal (** Subnormal. *)
     | Zero      (** Zero. *)
 
-  include Formattable_intf.S_mono with type t := t
+  include FormattableIntf.SMono with type t := t
 end
 
 (** Fractional and integral value results from {!modf}. *)
@@ -41,7 +41,7 @@ module Parts : sig
   val integral: t -> outer
   (** Integral value, i.e. a whole number. *)
 
-  include Formattable_intf.S_mono with type t := t
+  include FormattableIntf.SMono with type t := t
 end
 
 val of_sint: sint -> t
@@ -240,7 +240,7 @@ val tanh: t -> t
 module O : sig
   type nonrec t = t
 
-  include Cmpable_intf.S_mono_infix with type t := t
+  include CmpableIntf.SMonoInfix with type t := t
 
   val ( + ): t -> t -> t
   (** Addition. *)

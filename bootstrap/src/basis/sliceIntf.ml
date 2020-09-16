@@ -1,6 +1,6 @@
 open Rudiments0
 
-module type S_mono = sig
+module type SMono = sig
   type container
   type cursor
   type elm
@@ -33,7 +33,7 @@ module type S_mono = sig
   val past_pred: t -> t
 end
 
-module type S_poly = sig
+module type SPoly = sig
   type 'a container
   type 'a cursor
   type 'a elm

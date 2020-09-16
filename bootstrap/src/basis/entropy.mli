@@ -1,6 +1,6 @@
 (** Entropy generation. *)
 
-open Rudiments_int0
+open RudimentsInt0
 
 val get: unit -> u128
 (** Get entropy bits from the operating system. Prefer to use [state] unless

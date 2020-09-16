@@ -1,5 +1,5 @@
-open Rudiments_int0
-open Rudiments_functions
+open RudimentsInt0
+open RudimentsFunctions
 
 (* On success this function returns an array of entropy bits, where the total
  * number of bits is rounded up frome the number of bits requested to the

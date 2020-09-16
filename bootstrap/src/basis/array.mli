@@ -1,9 +1,9 @@
 open Rudiments0
 
 type 'a t = 'a array
-include Container_common_intf.S_poly_fold with type 'a t := 'a t
+include ContainerCommonIntf.SPolyFold with type 'a t := 'a t
 
-include Formattable_intf.S_poly with type 'a t := 'a t
+include FormattableIntf.SPoly with type 'a t := 'a t
 
 (** Cursor that supports arbitrary array element access. All operations are
     O(1). *)
@@ -12,9 +12,10 @@ module Cursor : sig
   type 'a elm = 'a
   type 'a t
 
-  include Cursor_intf.S_poly with type 'a container := 'a container
-                             with type 'a elm := 'a
-                             with type 'a t := 'a t
+  include CursorIntf.SPoly
+    with type 'a container := 'a container
+    with type 'a elm := 'a
+    with type 'a t := 'a t
 end
 
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
@@ -29,22 +30,22 @@ val cmp: ('a -> 'a -> Cmp.t) -> 'a t -> 'a t -> Cmp.t
 
 module Seq : sig
   type 'a outer = 'a t
-  module type S_mono = sig
+  module type SMono = sig
     type t
     type elm
     val to_array: t -> elm outer
   end
-  module type S_poly = sig
+  module type SPoly = sig
     type 'a t
     type 'a elm
     val to_array: 'a t -> 'a elm outer
   end
-  module type S_poly2 = sig
+  module type SPoly2 = sig
     type ('a, 'cmp) t
     type 'a elm
     val to_array: ('a, 'cmp) t -> 'a elm outer
   end
-  module type S_poly3 = sig
+  module type SPoly3 = sig
     type ('k, 'v, 'cmp) t
     type 'k key
     type 'v value
@@ -53,41 +54,44 @@ module Seq : sig
 
   (** Efficiently convert a sequence of fixed element type with known length to
       an array. *)
-  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                      with type elm := T.elm
+  module MakeMono (T : SeqIntf.IMonoDef) : SMono
+    with type t := T.t
+    with type elm := T.elm
 
   (** Efficiently convert a reversed sequence of fixed element type with known
       length to an array. *)
-  module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                          with type elm := T.elm
+  module MakeMonoRev (T : SeqIntf.IMonoDef) : SMono
+    with type t := T.t
+    with type elm := T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
-  module Make_poly (T : Seq_intf.I_poly_def) : S_poly
+  module MakePoly (T : SeqIntf.IPolyDef) : SPoly
     with type 'a t := 'a T.t
     with type 'a elm := 'a T.elm
 
   (** Efficiently convert a reversed generic sequence with known length to an
       array. *)
-  module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
+  module MakePolyRev (T : SeqIntf.IPolyDef) : SPoly
     with type 'a t := 'a T.t
     with type 'a elm := 'a T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
-  module Make_poly2 (T : Seq_intf.I_poly2_def) : S_poly2
+  module MakePoly2 (T : SeqIntf.IPoly2Def) : SPoly2
     with type ('a, 'cmp) t := ('a, 'cmp) T.t
     with type 'a elm := 'a T.elm
 
   (** Efficiently convert a generic sequence with known length to an array. *)
-  module Make_poly3 (T : Seq_intf.I_poly3_def) : S_poly3
+  module MakePoly3 (T : SeqIntf.IPoly3Def) : SPoly3
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
     with type 'k key := 'k T.key
     with type 'v value := 'v T.value
 end
 
 module Slice : sig
-  include Slice_intf.S_poly with type 'a container := 'a t
-                            with type 'a cursor := 'a Cursor.t
-                            with type 'a elm := 'a
+  include SliceIntf.SPoly
+    with type 'a container := 'a t
+    with type 'a cursor := 'a Cursor.t
+    with type 'a elm := 'a
 end
 
 val init: uns -> f:(uns -> 'a) -> 'a t

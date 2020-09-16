@@ -58,7 +58,7 @@ let hash_fold t state =
   Map.hash_fold Unit.hash_fold t state
 
 (* Seq. *)
-module Seq_poly2_fold2 = struct
+module SeqPoly2Fold2 = struct
   type ('a, 'cmp) container = ('a, 'cmp) t
   type 'a elm = 'a
   type ('a, 'cmp) t = ('a, unit, 'cmp) Map.Seq.t
@@ -80,8 +80,8 @@ module Seq_poly2_fold2 = struct
 
   let cmp = Map.Seq.cmp
 end
-include Seq.Make_poly2_fold2(Seq_poly2_fold2)
-module Seq = Seq_poly2_fold2
+include Seq.MakePoly2Fold2(SeqPoly2Fold2)
+module Seq = SeqPoly2Fold2
 
 let equal t0 t1 =
   Map.equal Unit.( = ) t0 t1
@@ -132,13 +132,13 @@ let reduce_hlt ~f t =
 let to_list t =
   fold ~init:[] ~f:(fun accum a -> a :: accum) t
 
-module Set_to_array = struct
+module SetToArray = struct
   include Seq
-  include Array.Seq.Make_poly2(Seq)
+  include Array.Seq.MakePoly2(Seq)
 end
 
 let to_array t =
-  Set_to_array.(to_array (init t))
+  SetToArray.(to_array (init t))
 
 (******************************************************************************)
 (* Begin tests. *)

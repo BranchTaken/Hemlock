@@ -8,15 +8,17 @@ open Rudiments0
 type t = byte array
 
 module Cursor : sig
-  include Cursor_intf.S_mono with type container := byte array
-                             with type elm := byte
+  include CursorIntf.SMono
+    with type container := byte array
+    with type elm := byte
 end
 
 module Slice : sig
-  include Slice_intf.S_mono with type container := byte array
-                            with type cursor := Cursor.t
-                            with type elm := byte
-  include Formattable_intf.S_mono with type t := t
+  include SliceIntf.SMono
+    with type container := byte array
+    with type cursor := Cursor.t
+    with type elm := byte
+  include FormattableIntf.SMono with type t := t
 
   val hash_fold: t -> Hash.State.t -> Hash.State.t
   (** [hash_fold bytes] incorporates the hash of [t] into [state] and returns
@@ -50,7 +52,7 @@ module Slice : sig
       returns a corresponding {!type:string}, or halts if [t] is malformed. *)
 end
 
-include Formattable_intf.S_mono with type t := t
+include FormattableIntf.SMono with type t := t
 
 val hash_fold: t -> Hash.State.t -> Hash.State.t
 (** [hash_fold bytes] incorporates the hash of [t] into [state] and returns the

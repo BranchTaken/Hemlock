@@ -1,6 +1,6 @@
 (* Partial Rudiments. *)
-open Rudiments_int
-open Rudiments_functions
+open RudimentsInt
+open RudimentsFunctions
 type byte = Byte.t
 
 module T = struct
@@ -8,7 +8,7 @@ module T = struct
   let num_bits = 21
 end
 include T
-include Intnb.Make_u(T)
+include Intnb.MakeU(T)
 
 let max_codepoint = narrow_of_unsigned 0x10ffff
 let replacement = 0xfffd
@@ -267,7 +267,7 @@ module Seq = struct
     val to_codepoint: t -> decoded option
   end
 
-  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
+  module Make (T : SeqIntf.IMonoIndef with type elm := byte) :
     S with type t := T.t = struct
     type fragment = {
       u: uns;
@@ -334,7 +334,7 @@ module Seq = struct
         end
   end
 
-  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
+  module MakeRev (T : SeqIntf.IMonoIndef with type elm := byte) :
     S with type t := T.t = struct
     type fragment = {
       u: uns;

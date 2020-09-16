@@ -1,4 +1,4 @@
-open Rudiments_int
+open RudimentsInt
 open Rudiments0
 
 module T = struct
@@ -21,7 +21,7 @@ module T = struct
 end
 include T
 include Identifiable.Make(T)
-include Cmpable.Make_zero(T)
+include Cmpable.MakeZero(T)
 
 let pp_x ppf t =
   let rec fn x shift = begin
@@ -138,7 +138,7 @@ module U = struct
   let bit_sl = bit_sl
   let bit_clz = bit_clz
 end
-include Intnb.Make_derived(U)
+include Intnb.MakeDerived(U)
 
 let abs t =
   Int64.abs t

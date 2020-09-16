@@ -1,10 +1,10 @@
 (** 64-bit unsigned integer type. *)
 
-open Rudiments_int0
+open RudimentsInt0
 
 type t = u64
 
-include Intnb_intf.S with type t := t
+include IntnbIntf.S with type t := t
 
 val to_i64: t -> i64
 (** Convert an unsigned integer to a bitwise identical signed integer. *)

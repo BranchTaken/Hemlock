@@ -64,7 +64,7 @@ module T = struct
   type 'v value = 'v
 
   type ('k, 'cmp) cmper =
-    (module Cmper.S_mono with type t = 'k and type cmper_witness = 'cmp)
+    (module Cmper.SMono with type t = 'k and type cmper_witness = 'cmp)
 
   let nnodes = function
     | Empty -> 0
@@ -319,11 +319,11 @@ module T = struct
           (Option.pp Path.pp) t.rpath_opt
     end
     include T
-    include Cmpable.Make_poly3(T)
+    include Cmpable.MakePoly3(T)
   end
 end
 include T
-include Container_array.Make_poly3_array(T)
+include ContainerArray.MakePoly3Array(T)
 
 let fold_until ~init ~f t =
   let rec fn accum f = function
@@ -474,7 +474,7 @@ let cmper_m (type k cmp) t : (k, cmp) cmper =
     let cmper = t.cmper
   end)
 
-(* Extract cmper from first-class module compatible with Cmper.S_mono . *)
+(* Extract cmper from first-class module compatible with Cmper.SMono . *)
 let m_cmper (type k cmp) ((module M) : (k, cmp) cmper) =
   M.cmper
 
@@ -629,7 +629,7 @@ let nsearch a t =
   search_impl a t.cmper Cmp.Gt t.root
 
 (* Seq. *)
-module Seq_poly3_fold2 = struct
+module SeqPoly3Fold2 = struct
   type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
   type 'k key = 'k
   type 'v value = 'v
@@ -670,8 +670,8 @@ module Seq_poly3_fold2 = struct
     let open Cmper in
     cmper.cmp k0 k1
 end
-include Seq.Make_poly3_fold2(Seq_poly3_fold2)
-module Seq = Seq_poly3_fold2
+include Seq.MakePoly3Fold2(SeqPoly3Fold2)
+module Seq = SeqPoly3Fold2
 
 let cmp vcmp t0 t1 =
   let open Cmp in

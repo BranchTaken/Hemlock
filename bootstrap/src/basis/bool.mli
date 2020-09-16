@@ -4,8 +4,8 @@ open Rudiments0
 
 type t = bool
 
-include Identifiable_intf.S with type t := t
-include Stringable_intf.S with type t := t
+include IdentifiableIntf.S with type t := t
+include StringableIntf.S with type t := t
 
 val of_uns: uns -> t
 (** Initialize from unsigned integer. *)

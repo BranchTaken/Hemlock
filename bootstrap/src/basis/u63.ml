@@ -1,4 +1,4 @@
-include Rudiments_int
+include RudimentsInt
 
 let to_sint t =
   sint_of_uns t

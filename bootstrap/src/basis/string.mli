@@ -17,8 +17,8 @@ open Rudiments0
 
 type t = string
 
-include Identifiable_intf.S with type t := t
-include Stringable_intf.S with type t := t
+include IdentifiableIntf.S with type t := t
+include StringableIntf.S with type t := t
 
 (** Cursor that supports O(1) arbitrary access to codepoints, given byte index.
     The codepoint index is not tracked. *)
@@ -26,10 +26,11 @@ module Cursor : sig
   type container = t
   type elm = codepoint
   type t
-  include Identifiable_intf.S with type t := t
-  include Cursor_intf.S_mono with type container := container
-                             with type elm := elm
-                             with type t := t
+  include IdentifiableIntf.S with type t := t
+  include CursorIntf.SMono
+    with type container := container
+    with type elm := elm
+    with type t := t
 
   val index: t -> uns [@@ocaml.deprecated "Use bindex instead"]
   (** @deprecated Use {!bindex} instead.
@@ -57,10 +58,11 @@ module Cursori : sig
   type outer = t
 
   type t
-  include Identifiable_intf.S with type t := t
-  include Cursor_intf.S_mono with type container := outer
-                             with type elm := codepoint
-                             with type t := t
+  include IdentifiableIntf.S with type t := t
+  include CursorIntf.SMono
+    with type container := outer
+    with type elm := codepoint
+    with type t := t
 
   val index: t -> uns [@@ocaml.deprecated "Use [bc]index instead"]
   (** @deprecated Use {!bindex} or {!cindex} instead.
@@ -82,10 +84,11 @@ end
 module Slice : sig
   type outer = t
 
-  include Slice_intf.S_mono with type container := outer
-                            with type cursor := Cursor.t
-                            with type elm := codepoint
-  include Identifiable_intf.S with type t := t
+  include SliceIntf.SMono
+    with type container := outer
+    with type cursor := Cursor.t
+    with type elm := codepoint
+  include IdentifiableIntf.S with type t := t
 
   (*
   val of_cursors: base:Cursor.t -> past:Cursor.t -> t
@@ -171,7 +174,7 @@ module Slice : sig
       containing the ordered [codepoints]. [blength] must be accurate if
       specified. *)
 
-  include Container_intf.S_mono with type t := t with type elm := codepoint
+  include ContainerIntf.SMono with type t := t with type elm := codepoint
 
   val length: t -> uns [@@ocaml.deprecated "Use blength instead"]
   (** Use {!blength} instead of [length], to keep the difference between byte
@@ -372,7 +375,7 @@ module Slice : sig
   module O : sig
     type nonrec t = t
 
-    include Cmpable_intf.S_mono_infix with type t := t
+    include CmpableIntf.SMonoInfix with type t := t
   end
 end
 
@@ -389,9 +392,9 @@ module Seq : sig
       function returns the next codepoint which is converted to bytes in
       to_string. *)
   module Codepoint : sig
-    module Make (T : Seq_intf.I_mono_def with type elm := codepoint) :
+    module Make (T : SeqIntf.IMonoDef with type elm := codepoint) :
       S with type t := T.t
-    module Make_rev (T : Seq_intf.I_mono_def with type elm := codepoint) :
+    module MakeRev (T : SeqIntf.IMonoDef with type elm := codepoint) :
       S with type t := T.t
   end
 
@@ -400,9 +403,9 @@ module Seq : sig
       next function returns (base, past) cursors for the next string slice which
       is copied into to_string. *)
   module Slice : sig
-    module Make (T : Seq_intf.I_mono_def with type elm := Slice.t) :
+    module Make (T : SeqIntf.IMonoDef with type elm := Slice.t) :
       S with type t := T.t
-    module Make_rev (T : Seq_intf.I_mono_def with type elm := Slice.t) :
+    module MakeRev (T : SeqIntf.IMonoDef with type elm := Slice.t) :
       S with type t := T.t
   end
 
@@ -410,9 +413,9 @@ module Seq : sig
       length function returns blength of the remaining sequence; the next
       function returns the next string which is copied into to_string. *)
   module String : sig
-    module Make (T : Seq_intf.I_mono_def with type elm := string) :
+    module Make (T : SeqIntf.IMonoDef with type elm := string) :
       S with type t := T.t
-    module Make_rev (T : Seq_intf.I_mono_def with type elm := string) :
+    module MakeRev (T : SeqIntf.IMonoDef with type elm := string) :
       S with type t := T.t
   end
 end
@@ -449,7 +452,7 @@ val of_array: ?blength:uns -> codepoint array -> t
     containing the ordered [codepoints]. [blength] must be accurate if
     specified. *)
 
-include Container_intf.S_mono with type t := t with type elm := codepoint
+include ContainerIntf.SMono with type t := t with type elm := codepoint
 
 val length: t -> uns [@@ocaml.deprecated "Use [bc]length instead"]
 (** Use {!blength} instead of [length], to keep the difference between byte
@@ -626,5 +629,5 @@ val rsplit2_hlt: on:codepoint -> t -> t * t
 module O : sig
   type nonrec t = t
 
-  include Cmpable_intf.S_mono_infix with type t := t
+  include CmpableIntf.SMonoInfix with type t := t
 end

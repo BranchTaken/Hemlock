@@ -1,12 +1,12 @@
 open Rudiments0
-open Container_common_intf
+open ContainerCommonIntf
 
 (* Monomorphic, e.g. string. *)
 
 (** Array-related functor input interface for monomorphic containers, e.g.
     {!type:string}. *)
-module type I_mono_array = sig
-  include I_mono
+module type IMonoArray = sig
+  include IMono
 
   val length: t -> uns
   (** Container length. *)
@@ -14,7 +14,7 @@ end
 
 (** Array-related functor output signature for monomorphic containers, e.g.
     {!type:string}. *)
-module type S_mono_array = sig
+module type SMonoArray = sig
   type t
   (** Container type. *)
 
@@ -29,8 +29,8 @@ end
 
 (** Array-related functor input interface for polymorphic containers, e.g.
     {!type:'a list}. *)
-module type I_poly_array = sig
-  include I_poly
+module type IPolyArray = sig
+  include IPoly
 
   val length: 'a t -> uns
   (** Container length. *)
@@ -38,7 +38,7 @@ end
 
 (** Array-related functor output signature for polymorphic containers, e.g.
     {!type:'a list}. *)
-module type S_poly_array = sig
+module type SPolyArray = sig
   type 'a t
   (** Container type. *)
 
@@ -47,10 +47,10 @@ module type S_poly_array = sig
   *)
 end
 
-(** {!module:S_poly_array_gen} is equivalent to {!module:S_poly_array}, except
-    that {!type:'a elm} is explicit. This near-identical signature exists
-    exclusively to enable functor implementation. *)
-module type S_poly_array_gen = sig
+(** {!module:SPolyArrayGen} is equivalent to {!module:SPolyArray}, except that
+    {!type:'a elm} is explicit. This near-identical signature exists exclusively
+    to enable functor implementation. *)
+module type SPolyArrayGen = sig
   type 'a t
   type 'a elm
   val to_array: 'a t -> 'a elm array
@@ -60,8 +60,8 @@ end
 
 (** Array-related functor input interface for polymorphic containers, e.g.
     {!type:('a, 'cmp) Ordset}. *)
-module type I_poly2_array = sig
-  include I_poly2
+module type IPoly2Array = sig
+  include IPoly2
 
   val length: ('a, 'cmp) t -> uns
   (** Container length. *)
@@ -69,7 +69,7 @@ end
 
 (** Array-related functor output signature for polymorphic containers, e.g.
     {!type:('a, 'cmp) Ordset}. *)
-module type S_poly2_array = sig
+module type SPoly2Array = sig
   type ('a, 'cmp) t
   (** Container type. *)
 
@@ -78,10 +78,10 @@ module type S_poly2_array = sig
   *)
 end
 
-(** {!module:S_poly2_array_gen} is equivalent to {!module:S_poly2_array}, except
-    that {!type:'a elm} is explicit. This near-identical signature exists
-    exclusively to enable functor implementation. *)
-module type S_poly2_array_gen = sig
+(** {!module:SPoly2ArrayGen} is equivalent to {!module:SPoly2Array}, except that
+    {!type:'a elm} is explicit. This near-identical signature exists exclusively
+    to enable functor implementation. *)
+module type SPoly2ArrayGen = sig
   type ('a, 'cmp) t
   type 'a elm
   val to_array: ('a, 'cmp) t -> 'a elm array
@@ -91,8 +91,8 @@ end
 
 (** Array-related functor input interface for polymorphic containers, e.g.
     {!type:('k, 'v, 'cmp) Ordmap}. *)
-module type I_poly3_array = sig
-  include I_poly3
+module type IPoly3Array = sig
+  include IPoly3
 
   val length: ('k, 'v, 'cmp) t -> uns
   (** Container length. *)
@@ -100,7 +100,7 @@ end
 
 (** Array-related functor output signature for polymorphic containers, e.g.
     {!type:('k, 'v, 'cmp) Ordmap}. *)
-module type S_poly3_array = sig
+module type SPoly3Array = sig
   type ('k, 'v, 'cmp) t
   (** Container type. *)
 
@@ -109,10 +109,10 @@ module type S_poly3_array = sig
   *)
 end
 
-(** {!module:S_poly3_array_gen} is equivalent to {!module:S_poly3_array}, except
-    that {!type:'k key} and {!type:'v value} are explicit. This near-identical
+(** {!module:SPoly3ArrayGen} is equivalent to {!module:SPoly3Array}, except that
+    {!type:'k key} and {!type:'v value} are explicit. This near-identical
     signature exists exclusively to enable functor implementation. *)
-module type S_poly3_array_gen = sig
+module type SPoly3ArrayGen = sig
   type ('k, 'v, 'cmp) t
   type 'k key
   type 'v value

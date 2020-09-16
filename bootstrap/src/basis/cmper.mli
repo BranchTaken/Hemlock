@@ -19,15 +19,15 @@ type ('a, 'witness) cmper = ('a, 'witness) t
 
 (** Functor input interface for monomorphic comparator types, e.g.
     {!type:string}. *)
-module type I_mono = sig
+module type IMono = sig
   type t
-  include Cmpable_intf.Key with type t := t
-  include Formattable_intf.S_mono with type t := t
+  include CmpableIntf.Key with type t := t
+  include FormattableIntf.SMono with type t := t
 end
 
 (** Functor output signature for monomorphic comparator types, e.g.
     {!type:string}. *)
-module type S_mono = sig
+module type SMono = sig
   type t
   (** Container type. *)
 
@@ -43,11 +43,11 @@ end
     {!type:OrdMap}. The comparator witness assures that multi-container
     operations can only be performed on containers with compatible comparison
     functions. *)
-module Make_mono (T : I_mono) : S_mono with type t := T.t
+module MakeMono (T : IMono) : SMono with type t := T.t
 
 (** Functor input interface for polymorphic comparator types, e.g.
     {!type:'a list}. *)
-module type I_poly = sig
+module type IPoly = sig
   type 'a t
   val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
     -> Hash.State.t
@@ -57,21 +57,21 @@ module type I_poly = sig
 
   val hash_fold_a: 'a -> Hash.State.t -> Hash.State.t
   (** [hash_fold_a a state] incorporates the hash of [a] into [state] and
-      returns the resulting state. {!Make_poly} synthesizes a monomorphic
+      returns the resulting state. {!MakePoly} synthesizes a monomorphic
       [hash_fold] from the composition of [hash_fold] and [hash_fold_a].
       [hash_fold_a] is the hash-fold function for {!type:'a}. *)
 
-  include Cmpable_intf.I_poly with type 'a t := 'a t
-  include Formattable_intf.S_poly with type 'a t := 'a t
+  include CmpableIntf.IPoly with type 'a t := 'a t
+  include FormattableIntf.SPoly with type 'a t := 'a t
 
   val pp_a: Format.formatter -> 'a -> unit
-  (** {!Make_poly} synthesizes a monomorphic [pp] from the composition of [pp]
+  (** {!MakePoly} synthesizes a monomorphic [pp] from the composition of [pp]
       and [pp_a]. [pp_a] is the pretty printer for {!type:'a}. *)
 end
 
 (** Functor output signature for polymorphic comparator types, e.g. {!type:'a
     list}. *)
-module type S_poly = sig
+module type SPoly = sig
   type 'a t
   (** Container type. *)
 
@@ -89,4 +89,4 @@ end
     functions. This functor is unusual in that it creates a monomorphic wrapper
     around a specific actualization of a polymorphic type, so that comparators
     are always in effect monomorphic. *)
-module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t
+module MakePoly (T : IPoly) : SPoly with type 'a t := 'a T.t

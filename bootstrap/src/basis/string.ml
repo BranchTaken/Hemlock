@@ -24,7 +24,7 @@ module T = struct
     else
       Cmp.Gt
 
-  module Codepoint_seq = struct
+  module CodepointSeq = struct
     module T = struct
       type outer = t
       type t = {
@@ -53,7 +53,7 @@ module T = struct
 
   let pp ppf t =
     let rec fn seq = begin
-      match Codepoint_seq.to_codepoint seq with
+      match CodepointSeq.to_codepoint seq with
       | Some (Valid (cp, seq')) -> begin
           Format.fprintf ppf "%s" Codepoint.Utf8.(escape (of_codepoint cp));
           fn seq'
@@ -62,7 +62,7 @@ module T = struct
       | None -> ()
     end in
     Format.fprintf ppf "\"";
-    fn (Codepoint_seq.init t);
+    fn (CodepointSeq.init t);
     Format.fprintf ppf "\""
 
   (* For internal use only, needed due to shadowing. *)
@@ -339,8 +339,8 @@ module Cursori = struct
 end
 type cursori = Cursori.t
 
-module Slice_pre = struct
-  include Slice.Make_mono(Cursor)
+module SlicePre = struct
+  include Slice.MakeMono(Cursor)
 end
 
 module Seq = struct
@@ -351,7 +351,7 @@ module Seq = struct
   end
 
   module Codepoint = struct
-    module Make (T : Seq_intf.I_mono_def with type elm := codepoint) :
+    module Make (T : SeqIntf.IMonoDef with type elm := codepoint) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -384,7 +384,7 @@ module Seq = struct
           end
     end
 
-    module Make_rev (T : Seq_intf.I_mono_def with type elm := codepoint) :
+    module MakeRev (T : SeqIntf.IMonoDef with type elm := codepoint) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -433,7 +433,7 @@ module Seq = struct
   end
 
   module Slice = struct
-    module Make (T : Seq_intf.I_mono_def with type elm := Slice_pre.t) :
+    module Make (T : SeqIntf.IMonoDef with type elm := SlicePre.t) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -450,14 +450,14 @@ module Seq = struct
                 match Uns.(!slice_ind = !slice_len) with
                 | true -> begin
                     let slice, t' = T.next !tmut in
-                    let slice_base' = Cursor.bindex (Slice_pre.base slice) in
+                    let slice_base' = Cursor.bindex (SlicePre.base slice) in
                     let slice_len' =
-                      (Cursor.bindex (Slice_pre.past slice)) - slice_base' in
+                      (Cursor.bindex (SlicePre.past slice)) - slice_base' in
                     assert (Uns.(slice_len' + (T.length t') =
                       (T.length !tmut)));
                     tmut := t';
 
-                    slice_str := Cursor.string (Slice_pre.base slice);
+                    slice_str := Cursor.string (SlicePre.base slice);
                     slice_base := slice_base';
                     slice_ind := 0;
                     slice_len := slice_len';
@@ -476,7 +476,7 @@ module Seq = struct
           end
     end
 
-    module Make_rev (T : Seq_intf.I_mono_def with type elm := Slice_pre.t) :
+    module MakeRev (T : SeqIntf.IMonoDef with type elm := SlicePre.t) :
       S with type t := T.t = struct
       let to_string t =
         let len = T.length t in
@@ -508,10 +508,11 @@ module Seq = struct
                       | slice :: slices' -> slice, slices'
                       | [] -> not_reached ()
                     in
-                    let slice_base' = Cursor.bindex (Slice_pre.base slice) in
-                    let slice_len' = (Cursor.bindex (Slice_pre.past slice)) - slice_base' in
+                    let slice_base' = Cursor.bindex (SlicePre.base slice) in
+                    let slice_len' =
+                      (Cursor.bindex (SlicePre.past slice)) - slice_base' in
                     slices := slices';
-                    slice_str := Cursor.string (Slice_pre.base slice);
+                    slice_str := Cursor.string (SlicePre.base slice);
                     slice_base := slice_base';
                     slice_ind := 0;
                     slice_len := slice_len';
@@ -532,7 +533,7 @@ module Seq = struct
   end
 
   module String = struct
-    module Make (T : Seq_intf.I_mono_def with type elm := string) :
+    module Make (T : SeqIntf.IMonoDef with type elm := string) :
       S with type t := T.t = struct
       module U = struct
         type t = T.t
@@ -541,14 +542,14 @@ module Seq = struct
 
         let next t =
           let str, t' = T.next t in
-          let slice = Slice_pre.of_container str in
+          let slice = SlicePre.of_container str in
           slice, t'
       end
       include U
       include Slice.Make(U)
     end
 
-    module Make_rev (T : Seq_intf.I_mono_def with type elm := string) :
+    module MakeRev (T : SeqIntf.IMonoDef with type elm := string) :
       S with type t := T.t = struct
       module U = struct
         type t = T.t
@@ -557,11 +558,11 @@ module Seq = struct
 
         let next t =
           let str, t' = T.next t in
-          let slice = Slice_pre.of_container str in
+          let slice = SlicePre.of_container str in
           slice, t'
       end
       include U
-      include Slice.Make_rev(U)
+      include Slice.MakeRev(U)
     end
   end
 end
@@ -569,7 +570,7 @@ end
 module Slice = struct
   module T = struct
     type outer = string
-    include Slice_pre
+    include SlicePre
 
     let hash_fold t state =
       state
@@ -598,14 +599,14 @@ module Slice = struct
   include Identifiable.Make(T)
 
   let string t =
-    Slice_pre.container t
+    SlicePre.container t
 
   let of_string s =
-    Slice_pre.of_container s
+    SlicePre.of_container s
 
-  module String_slice = struct
+  module StringSlice = struct
     module T = struct
-      type t = Slice_pre.t
+      type t = SlicePre.t
 
       let length t =
         (Cursor.bindex (past t)) - (Cursor.bindex (base t))
@@ -622,7 +623,7 @@ module Slice = struct
     let s = string t in
     match Cursor.(base t = (hd s)) && Cursor.(past t = (tl s)) with
     | true -> s (* Avoid creating an exact copy. *)
-    | false -> String_slice.to_string t
+    | false -> StringSlice.to_string t
 
   let string_blength = blength
 
@@ -661,7 +662,7 @@ module Slice = struct
           ((Cursor.bindex (base t)) + bindex)))
       end
 
-  module String_of_indexed = struct
+  module StringOfIndexed = struct
     module T = struct
       type t = {
         f: uns -> codepoint;
@@ -708,12 +709,12 @@ module Slice = struct
           )
       | Some blength -> blength
     in
-    of_string String_of_indexed.(to_string (init ~f blength))
+    of_string StringOfIndexed.(to_string (init ~f blength))
 
   let of_codepoint codepoint =
     init 1 ~f:(fun _ -> codepoint)
 
-  module String_of_list_common = struct
+  module StringOfListCommon = struct
     type t = {
       codepoints: codepoint list;
       blength: uns;
@@ -735,14 +736,14 @@ module Slice = struct
       codepoint, {codepoints; blength}
   end
 
-  module String_of_list = struct
-    include String_of_list_common
-    include Seq.Codepoint.Make(String_of_list_common)
+  module StringOfList = struct
+    include StringOfListCommon
+    include Seq.Codepoint.Make(StringOfListCommon)
   end
 
-  module String_of_list_rev = struct
-    include String_of_list_common
-    include Seq.Codepoint.Make_rev(String_of_list_common)
+  module StringOfListRev = struct
+    include StringOfListCommon
+    include Seq.Codepoint.MakeRev(StringOfListCommon)
   end
 
   let blength_of_list clength codepoints =
@@ -761,7 +762,7 @@ module Slice = struct
       | None -> blength_of_list clength codepoints
       | Some blength -> blength
     in
-    of_string String_of_list.(to_string (init codepoints blength))
+    of_string StringOfList.(to_string (init codepoints blength))
 
   let of_list_rev ?blength ?clength codepoints_rev =
     let clength = match clength with
@@ -772,7 +773,7 @@ module Slice = struct
       | None -> blength_of_list clength codepoints_rev
       | Some blength -> blength
     in
-    of_string String_of_list_rev.(to_string (init codepoints_rev blength))
+    of_string StringOfListRev.(to_string (init codepoints_rev blength))
 
   let of_array ?blength codepoints =
     init ?blength (Array.length codepoints) ~f:(fun i ->
@@ -816,11 +817,11 @@ module Slice = struct
 
     let length = clength
   end
-  include Container_common.Make_mono_fold(U)
-  include Container_common.Make_mono_mem(U)
-  include Container_array.Make_mono_array(U)
+  include ContainerCommon.MakeMonoFold(U)
+  include ContainerCommon.MakeMonoMem(U)
+  include ContainerArray.MakeMonoArray(U)
 
-  module String_mapi = struct
+  module StringMapi = struct
     module T = struct
       type t = {
         f: uns -> codepoint -> codepoint;
@@ -870,13 +871,13 @@ module Slice = struct
     let blength, modified = blength_of_map t ~f:f' in
     match modified with
     | false -> t
-    | true -> of_string String_mapi.(to_string (init t blength ~f:f'))
+    | true -> of_string StringMapi.(to_string (init t blength ~f:f'))
 
   let mapi ~f t =
     let blength, modified = blength_of_map t ~f in
     match modified with
     | false -> t
-    | true -> of_string String_mapi.(to_string (init t blength ~f))
+    | true -> of_string StringMapi.(to_string (init t blength ~f))
 
   let tr ~target ~replacement t =
     let f _ codepoint = begin
@@ -886,7 +887,7 @@ module Slice = struct
     let blength, modified = blength_of_map t ~f in
     match modified with
     | false -> t
-    | true -> of_string String_mapi.(to_string (init t blength ~f))
+    | true -> of_string StringMapi.(to_string (init t blength ~f))
 
   let filter ~f t =
     let codepoints, modified = fold_right t ~init:([], false)
@@ -898,7 +899,7 @@ module Slice = struct
     | false -> t
     | true -> of_list codepoints
 
-  module String_concat = struct
+  module StringConcat = struct
     module T = struct
       type outer = t
       type source =
@@ -957,8 +958,8 @@ module Slice = struct
     match (length sep), (List.length slices) with
     | _, 0 -> of_string ""
     | 0, 1 -> List.hd slices
-    | _ -> of_string (String_concat.to_string
-        (String_concat.init sep slices blength))
+    | _ -> of_string (StringConcat.to_string
+        (StringConcat.init sep slices blength))
 
   let concat_rev ?(sep=(of_string "")) slices_rev =
     let slices, blength = List.fold slices_rev ~init:([], 0)
@@ -974,8 +975,8 @@ module Slice = struct
     match (length sep), (List.length slices) with
     | _, 0 -> of_string ""
     | 0, 1 -> List.hd slices
-    | _ -> of_string (String_concat.to_string
-        (String_concat.init sep slices blength))
+    | _ -> of_string (StringConcat.to_string
+        (StringConcat.init sep slices blength))
 
   let concat_map ?sep ~f t =
     (* Iterate in reverse order to generate a list of slices that can then be
@@ -998,7 +999,7 @@ module Slice = struct
     concat_map t ~f:(fun cp ->
       of_string Codepoint.Utf8.(escape (of_codepoint cp)))
 
-  module String_rev = struct
+  module StringRev = struct
     module T = struct
       type outer = t
       type t = {
@@ -1018,11 +1019,11 @@ module Slice = struct
         codepoint, t'
     end
     include T
-    include Seq.Codepoint.Make_rev(T)
+    include Seq.Codepoint.MakeRev(T)
   end
 
   let rev t =
-    of_string String_rev.(to_string (init t))
+    of_string StringRev.(to_string (init t))
 
   let lfind codepoint t =
     let rec fn cursor = begin
@@ -1204,7 +1205,7 @@ module Slice = struct
     let find_all ~may_overlap ~in_ t =
       find_impl ~may_overlap ~in_ t
 
-    module String_pattern_replace = struct
+    module StringPatternReplace = struct
       module T = struct
         type source =
           | In
@@ -1215,7 +1216,7 @@ module Slice = struct
           with_: outer;
           at: cursor list;
           in_cursor: cursor;
-          slice: Slice_pre.t;
+          slice: SlicePre.t;
           source: source;
           blength: uns;
         }
@@ -1285,13 +1286,13 @@ module Slice = struct
     let replace_first ~in_ ~with_ t =
       match find t ~in_ with
       | None -> in_
-      | Some cursor -> of_string (String_pattern_replace.(to_string
+      | Some cursor -> of_string (StringPatternReplace.(to_string
           (init ~pattern:t.p ~in_ ~with_ ~at:[cursor])))
 
     let replace_all ~in_ ~with_ t =
       match find_all t ~may_overlap:false ~in_ with
       | [] -> in_
-      | cursors -> of_string (String_pattern_replace.(to_string
+      | cursors -> of_string (StringPatternReplace.(to_string
           (init ~pattern:t.p ~in_ ~with_ ~at:cursors)))
   end
 
@@ -1424,7 +1425,7 @@ module Slice = struct
 
   let split_fold_until ~init ~on ~f t =
     let rec fn base past accum = begin
-      match Cursor.(past = Slice_pre.past t) with
+      match Cursor.(past = SlicePre.past t) with
       | true -> begin
           let slice = of_cursors ~base ~past in
           let accum', _ = f accum slice in
@@ -1451,7 +1452,7 @@ module Slice = struct
 
   let split_fold_right_until ~init ~on ~f t =
     let rec fn base past accum = begin
-      match Cursor.(base = Slice_pre.base t) with
+      match Cursor.(base = SlicePre.base t) with
       | true -> begin
           let slice = of_cursors ~base ~past in
           let accum', _ = f slice accum in
@@ -1479,7 +1480,7 @@ module Slice = struct
 
   let lines_fold ~init ~f t =
     let rec fn base past cr_seen accum = begin
-      match Cursor.(past = Slice_pre.past t) with
+      match Cursor.(past = SlicePre.past t) with
       | true -> begin
           let slice = of_cursors ~base ~past in
           f accum slice
@@ -1504,7 +1505,7 @@ module Slice = struct
 
   let lines_fold_right ~init ~f t =
     let rec fn base past nl_seen accum = begin
-      match Cursor.(base = Slice_pre.base t) with
+      match Cursor.(base = SlicePre.base t) with
       | true -> begin
           match nl_seen with
           | false -> begin
@@ -1607,9 +1608,9 @@ module U = struct
 
   let length = clength
 end
-include Container_common.Make_mono_fold(U)
-include Container_common.Make_mono_mem(U)
-include Container_array.Make_mono_array(U)
+include ContainerCommon.MakeMonoFold(U)
+include ContainerCommon.MakeMonoMem(U)
+include ContainerArray.MakeMonoArray(U)
 
 let map ~f t =
   Slice.(to_string (map ~f (of_string t)))

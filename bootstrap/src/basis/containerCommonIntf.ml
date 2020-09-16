@@ -1,10 +1,10 @@
-open Rudiments_int
+open RudimentsInt
 
 (* Monomorphic, e.g. string. *)
 
 (** General functor input interface for monomorphic containers, e.g.
     {!type:string}. *)
-module type I_mono = sig
+module type IMono = sig
   type t
   (** Container type. *)
 
@@ -12,14 +12,15 @@ module type I_mono = sig
   (** Element type. *)
 
   module Cursor : sig
-    include Cursor_intf.S_mono_iter with type container := t
-                                    with type elm := elm
+    include CursorIntf.SMonoIter
+      with type container := t
+      with type elm := elm
   end
 end
 
 (** Length-related functor output signature for monomorphic containers, e.g.
     {!type:string}. *)
-module type S_mono_length = sig
+module type SMonoLength = sig
   type t
   (** Container type. *)
 
@@ -36,7 +37,7 @@ end
 (** Folding-related functor output signature for monomorphic containers, e.g.
     {!type:string}. Operations rely on cursor iterators, which should be
     implemented with O(1) iteration to avoid e.g. O(n^2) folding overhead. *)
-module type S_mono_fold = sig
+module type SMonoFold = sig
   type t
   (** Container type. *)
 
@@ -131,14 +132,14 @@ end
 
 (** Membership-related functor input interface for monomorphic containers, e.g.
     {!type:string}. *)
-module type I_mono_mem = sig
-  include I_mono
+module type IMonoMem = sig
+  include IMono
 
   val cmp_elm: elm -> elm -> Cmp.t
   (** Compare two elements. *)
 end
 
-module type S_mono_mem = sig
+module type SMonoMem = sig
   type t
   (** Container type. *)
 
@@ -154,7 +155,7 @@ end
 
 (** General functor input interface for polymorphic containers, e.g. {!type:'a
     list}. *)
-module type I_poly = sig
+module type IPoly = sig
   type 'a t
   (** Container type. *)
 
@@ -162,14 +163,15 @@ module type I_poly = sig
   (** Element type. *)
 
   module Cursor : sig
-    include Cursor_intf.S_poly_iter with type 'a container := 'a t
-                                    with type 'a elm := 'a elm
+    include CursorIntf.SPolyIter
+      with type 'a container := 'a t
+      with type 'a elm := 'a elm
   end
 end
 
 (** Length-related functor output signature for polymorphic containers, e.g.
     {!type:'a list}. *)
-module type S_poly_length = sig
+module type SPolyLength = sig
   type 'a t
   (** Container type. *)
 
@@ -180,10 +182,10 @@ module type S_poly_length = sig
   (** [is_empty t] returns [true] if [t] has no elements; [false] otherwise. *)
 end
 
-(** {!module:S_poly_length_gen} is equivalent to {!module:S_poly_length}, except
-    that {!type:'a elm} is explicit. This near-identical signature exists
+(** {!module:SPolyLengthGen} is equivalent to {!module:SPolyLength}, except that
+    {!type:'a elm} is explicit. This near-identical signature exists
     exclusively to enable functor implementation. *)
-module type S_poly_length_gen = sig
+module type SPolyLengthGen = sig
   type 'a t
   type 'a elm
   val length: 'a t -> uns
@@ -193,7 +195,7 @@ end
 (** Folding-related functor output signature for polymorphic containers, e.g.
     {!type:'a list}. Operations rely on cursor iterators, which should be
     implemented with O(1) iteration to avoid e.g. O(n^2) folding overhead. *)
-module type S_poly_fold = sig
+module type SPolyFold = sig
   type 'a t
   (** Container type. *)
 
@@ -284,10 +286,10 @@ module type S_poly_fold = sig
   (** [to_list_rev t] folds [t] from left to right as a {!type:'a list}. *)
 end
 
-(** {!module:S_poly_fold_gen} is equivalent to {!module:S_poly_fold}, except
-    that {!type:'a elm} is explicit. This near-identical signature exists
+(** {!module:SPolyFoldGen} is equivalent to {!module:SPolyFold}, except that
+    {!type:'a elm} is explicit. This near-identical signature exists
     exclusively to enable functor implementation. *)
-module type S_poly_fold_gen = sig
+module type SPolyFoldGen = sig
   type 'a t
   type 'a elm
   val fold_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> 'a t
@@ -318,8 +320,8 @@ end
 
 (** Membership-related functor input interface for polymorphic containers, e.g.
     {!type:'a list}. *)
-module type I_poly_mem = sig
-  include I_poly
+module type IPolyMem = sig
+  include IPoly
 
   val cmp_elm: 'a elm -> 'a elm -> Cmp.t
   (** Compare two elements. *)
@@ -327,7 +329,7 @@ end
 
 (** Membership-related functor output signature for polymorphic containers, e.g.
     {!type:'a list}. *)
-module type S_poly_mem = sig
+module type SPolyMem = sig
   type 'a t
   (** Container type. *)
 
@@ -335,10 +337,10 @@ module type S_poly_mem = sig
   (** [mem a t] returns [true] if [a] is a member of [t]; [false] otherwise. *)
 end
 
-(** {!module:S_poly_mem_gen} is equivalent to {!module:S_poly_mem}, except that
+(** {!module:SPolyMemGen} is equivalent to {!module:SPolyMem}, except that
     {!type:'a elm} is explicit. This near-identical signature exists exclusively
     to enable functor implementation. *)
-module type S_poly_mem_gen = sig
+module type SPolyMemGen = sig
   type 'a t
   type 'a elm
   val mem: 'a elm -> 'a t -> bool
@@ -348,7 +350,7 @@ end
 
 (** General functor input interface for polymorphic containers, e.g. {!type:('a,
     'cmp) Ordset}. *)
-module type I_poly2 = sig
+module type IPoly2 = sig
   type ('a, 'cmp) t
   (** Container type. *)
 
@@ -356,7 +358,7 @@ module type I_poly2 = sig
   (** Element type. *)
 
   module Cursor : sig
-    include Cursor_intf.S_poly2_iter
+    include CursorIntf.SPoly2Iter
       with type ('a, 'cmp) container := ('a, 'cmp) t
       with type 'a elm := 'a elm
   end
@@ -366,7 +368,7 @@ end
 
 (** General functor input interface for polymorphic containers, e.g. {!type:('k,
     'v, 'cmp) Ordmap}. *)
-module type I_poly3 = sig
+module type IPoly3 = sig
   type ('k, 'v, 'cmp) t
   (** Container type. *)
 
@@ -377,7 +379,7 @@ module type I_poly3 = sig
   (** Value type. *)
 
   module Cursor : sig
-    include Cursor_intf.S_poly3_iter
+    include CursorIntf.SPoly3Iter
       with type ('k, 'v, 'cmp) container := ('k, 'v, 'cmp) t
       with type 'k key := 'k key
       with type 'v value := 'v value

@@ -233,7 +233,7 @@ module Cursor = struct
         ecursor=Excerpt.Cursor.hd excerpt;
       }
 
-    module Codepoint_seq = struct
+    module CodepointSeq = struct
       module T = struct
         type nonrec t = t
 
@@ -267,7 +267,7 @@ module Cursor = struct
     end
 
     let next_opt t =
-      match Codepoint_seq.(to_codepoint (init t)) with
+      match CodepointSeq.(to_codepoint (init t)) with
       | None -> None
       | Some (Valid (cp, t')) -> begin
           let vincr = Codepoint.Utf8.length_of_codepoint cp in
@@ -317,7 +317,7 @@ module Cursor = struct
       end in
       fn (hd text)
 
-    module Codepoint_rev_seq = struct
+    module CodepointRevSeq = struct
       module T = struct
         type nonrec t = t
 
@@ -342,11 +342,11 @@ module Cursor = struct
             end
       end
       include T
-      include Codepoint.Seq.Make_rev(T)
+      include Codepoint.Seq.MakeRev(T)
     end
 
     let prev t =
-      match Codepoint_rev_seq.(to_codepoint (init t)) with
+      match CodepointRevSeq.(to_codepoint (init t)) with
       | None -> halt "Out of bounds"
       | Some (Valid (cp, t')) -> begin
           let vdecr = Codepoint.Utf8.length_of_codepoint cp in
@@ -402,9 +402,9 @@ module Cursor = struct
 end
 
 module Slice = struct
-  include Slice.Make_mono(Cursor)
+  include Slice.MakeMono(Cursor)
 
-  module String_seq = struct
+  module StringSeq = struct
     module T = struct
       type t = {
         base: Cursor.t;
@@ -427,7 +427,7 @@ module Slice = struct
   end
 
   let to_string t =
-    String_seq.(to_string (init t))
+    StringSeq.(to_string (init t))
 end
 
 (******************************************************************************)

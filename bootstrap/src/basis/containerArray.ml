@@ -1,12 +1,12 @@
 open Rudiments0
-open Container_array_intf
+open ContainerArrayIntf
 
 (* Polymorphic (poly[1]). *)
 
-module Make_poly_array (T : I_poly_array) : S_poly_array_gen
+module MakePolyArray (T : IPolyArray) : SPolyArrayGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
-  module Array_seq = struct
+  module ArraySeq = struct
     module T = struct
       type 'a t = {
         cursor: 'a T.Cursor.t;
@@ -32,34 +32,34 @@ module Make_poly_array (T : I_poly_array) : S_poly_array_gen
         elm, t'
     end
     include T
-    include Array.Seq.Make_poly(T)
+    include Array.Seq.MakePoly(T)
   end
 
   let to_array t =
-    Array_seq.to_array (Array_seq.init t)
+    ArraySeq.to_array (ArraySeq.init t)
 end
 
 (* Monomorphic. *)
 
-module Make_i_poly_array (T : I_mono_array) : I_poly_array
+module MakeIPolyArray (T : IMonoArray) : IPolyArray
   with type 'a t = T.t
   with type 'a elm = T.elm = struct
   include T
-  include Container_common.Make_i_poly(T)
+  include ContainerCommon.MakeIPoly(T)
 end
 
-module Make_mono_array (T : I_mono_array) : S_mono_array
+module MakeMonoArray (T : IMonoArray) : SMonoArray
   with type t := T.t
   with type elm := T.elm = struct
-  include Make_poly_array(Make_i_poly_array(T))
+  include MakePolyArray(MakeIPolyArray(T))
 end
 
 (* Polymorphic (poly2). *)
 
-module Make_poly2_array (T : I_poly2_array) : S_poly2_array_gen
+module MakePoly2Array (T : IPoly2Array) : SPoly2ArrayGen
   with type ('a, 'cmp) t := ('a, 'cmp) T.t
   with type 'a elm := 'a T.elm = struct
-  module Array_seq = struct
+  module ArraySeq = struct
     module T = struct
       type ('a, 'cmp) t = {
         cursor: ('a, 'cmp) T.Cursor.t;
@@ -85,20 +85,20 @@ module Make_poly2_array (T : I_poly2_array) : S_poly2_array_gen
         elm, t'
     end
     include T
-    include Array.Seq.Make_poly2(T)
+    include Array.Seq.MakePoly2(T)
   end
 
   let to_array t =
-    Array_seq.to_array (Array_seq.init t)
+    ArraySeq.to_array (ArraySeq.init t)
 end
 
 (* Polymorphic (poly3). *)
 
-module Make_poly3_array (T : I_poly3_array) : S_poly3_array_gen
+module MakePoly3Array (T : IPoly3Array) : SPoly3ArrayGen
   with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
   with type 'k key := 'k T.key
   with type 'v value := 'v T.value = struct
-  module Array_seq = struct
+  module ArraySeq = struct
     module T = struct
       type ('k, 'v, 'cmp) t = {
         cursor: ('k, 'v, 'cmp) T.Cursor.t;
@@ -125,9 +125,9 @@ module Make_poly3_array (T : I_poly3_array) : S_poly3_array_gen
         (k, v), t'
     end
     include T
-    include Array.Seq.Make_poly3(T)
+    include Array.Seq.MakePoly3(T)
   end
 
   let to_array t =
-    Array_seq.to_array (Array_seq.init t)
+    ArraySeq.to_array (ArraySeq.init t)
 end

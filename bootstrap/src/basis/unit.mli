@@ -2,5 +2,5 @@
 
 type t = unit
 
-include Identifiable_intf.S with type t := t
-include Stringable_intf.S with type t := t
+include IdentifiableIntf.S with type t := t
+include StringableIntf.S with type t := t

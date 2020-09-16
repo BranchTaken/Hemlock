@@ -5,7 +5,7 @@ type t =
   | Zero (** Zero. *)
   | Pos  (** Positive. *)
 
-include Formattable_intf.S_mono with type t := t
+include FormattableIntf.SMono with type t := t
 
 val of_sint: int -> t
 (** [of_sint x] returns [Neg] if [x < 0], [Zero] if [x = 0], or [Pos] if [x >
