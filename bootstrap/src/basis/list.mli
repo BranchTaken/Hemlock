@@ -10,11 +10,11 @@ open Rudiments0
 
 type 'a t = 'a list
 
-include Formattable_intf.S_poly with type 'a t := 'a t
+include FormattableIntf.SPoly with type 'a t := 'a t
 
 (** {1 Container} *)
 
-include Container_common_intf.S_poly_fold with type 'a t := 'a t
+include ContainerCommonIntf.SPolyFold with type 'a t := 'a t
 
 (** {1 Cursor} *)
 
@@ -24,9 +24,10 @@ module Cursor : sig
   type 'a container = 'a t
   type 'a t
 
-  include Cursor_intf.S_poly with type 'a container := 'a container
-                             with type 'a elm := 'a
-                             with type 'a t := 'a t
+  include CursorIntf.SPoly
+    with type 'a container := 'a container
+    with type 'a elm := 'a
+    with type 'a t := 'a t
 end
 
 (** {1 Comparison} *)

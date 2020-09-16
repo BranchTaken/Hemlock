@@ -4,7 +4,7 @@ type t =
   | Eq (** Equal. *)
   | Gt (** Greater than. *)
 
-include Formattable_intf.S_mono with type t := t
+include FormattableIntf.SMono with type t := t
 
 val is_ge: t -> bool
 (** [is_ge t] returns [true] if t is [Gt] or [Eq]; false otherwise. *)

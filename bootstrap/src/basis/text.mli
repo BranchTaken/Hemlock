@@ -42,7 +42,7 @@ module Pos: sig
   (** [col t] returns the position's column, where column numbering starts at 0.
   *)
 
-  include Cmpable_intf.S_mono with type t := t
+  include CmpableIntf.SMono with type t := t
 end
 
 (** Text cursor which tracks position (line and column) in addition to codepoint
@@ -53,8 +53,9 @@ end
     efficiency is a concern. Prefer [rget_opt]/[next_opt] over their halting
     [rget]/[next] counterparts to avoid the need for [tl] calls. *)
 module Cursor : sig
-  include Cursor_intf.S_mono with type container := t
-                             with type elm := codepoint
+  include CursorIntf.SMono
+    with type container := t
+    with type elm := codepoint
 
   val rget_opt: t -> codepoint option
   (** [rget_opt t] returns [Some codepoint] if [t] is not at the text's tail,
@@ -72,9 +73,10 @@ end
 
 (** Text slice. *)
 module Slice : sig
-  include Slice_intf.S_mono with type container := t
-                            with type cursor := Cursor.t
-                            with type elm := codepoint
+  include SliceIntf.SMono
+    with type container := t
+    with type cursor := Cursor.t
+    with type elm := codepoint
 
   val to_string: t -> string
   (** [to_string t] returns a string representation of [t]. *)

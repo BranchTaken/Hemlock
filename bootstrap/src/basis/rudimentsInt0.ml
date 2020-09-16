@@ -1,4 +1,4 @@
-open Rudiments_functions
+open RudimentsFunctions
 
 type i64 = int64
 type u64 = int64

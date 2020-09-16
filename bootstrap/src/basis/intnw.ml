@@ -1,5 +1,5 @@
-open Rudiments_functions
-open Intnw_intf
+open RudimentsFunctions
+open IntnwIntf
 type real = float
 
 external intnw_icmp: int64 array -> int64 array -> Cmp.t = "hemlock_intnw_icmp"
@@ -46,19 +46,19 @@ external intnw_u_of_real: uns -> real -> int64 array =
 external intnw_i_to_real: int64 array -> real = "hemlock_intnw_i_to_real"
 external intnw_u_to_real: int64 array -> real = "hemlock_intnw_u_to_real"
 
-module type I_common = sig
+module type ICommon = sig
   include I
   val signed: bool
 end
 
-module type S_common = sig
+module type SCommon = sig
   type t
 
   include S with type t := t
-  include S_signed with type t := t
+  include SSigned with type t := t
 end
 
-module Make_common (T : I_common) : S_common with type t := T.t = struct
+module MakeCommon (T : ICommon) : SCommon with type t := T.t = struct
   module U = struct
     type t = T.t
 
@@ -329,7 +329,7 @@ module Make_common (T : I_common) : S_common with type t := T.t = struct
               match j' < len with
               | true -> fn s i j' len
               | false -> begin
-                  let suf = Caml.String.sub s i Rudiments_int.(j' - i) in
+                  let suf = Caml.String.sub s i RudimentsInt.(j' - i) in
                   let nbits = int_of_string suf in
                   match nbits = T.num_bits with
                   | false -> halt "Malformed string"
@@ -478,30 +478,30 @@ module Make_common (T : I_common) : S_common with type t := T.t = struct
   end
   include U
   include Identifiable.Make(U)
-  include Cmpable.Make_zero(U)
+  include Cmpable.MakeZero(U)
   module V = struct
     include U
 
     let num_bits = T.num_bits
   end
-  include Intnb.Make_derived(V)
+  include Intnb.MakeDerived(V)
 end
 
-module Make_i (T : I) : S_i with type t := T.t = struct
+module MakeI (T : I) : SI with type t := T.t = struct
   module U = struct
     include T
     let signed = true
   end
   include U
-  include Make_common(U)
+  include MakeCommon(U)
 
 end
 
-module Make_u (T : I) : S_u with type t := T.t = struct
+module MakeU (T : I) : SU with type t := T.t = struct
   module U = struct
     include T
     let signed = false
   end
   include U
-  include Make_common(U)
+  include MakeCommon(U)
 end

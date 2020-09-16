@@ -1,12 +1,12 @@
 (** Unicode code point. *)
 
-open Rudiments_int
+open RudimentsInt
 type byte = U8.t
 
 type t
 
-include Identifiable_intf.S with type t := t
-include Cmpable_intf.S_mono with type t := t
+include IdentifiableIntf.S with type t := t
+include CmpableIntf.SMono with type t := t
 
 val kv: int -> t
 (** Create constant value. This is a stopgap solution for the lack of
@@ -194,11 +194,11 @@ module Seq : sig
 
   (** Iteratively convert a UTF-8-encoded byte sequence to {!type:codepoint}
       values. *)
-  module Make (T : Seq_intf.I_mono_indef with type elm := byte) :
+  module Make (T : SeqIntf.IMonoIndef with type elm := byte) :
     S with type t := T.t
 
   (** Iteratively convert a reversed UTF-8-encoded byte sequence to
       {!type:codepoint} values. *)
-  module Make_rev (T : Seq_intf.I_mono_indef with type elm := byte) :
+  module MakeRev (T : SeqIntf.IMonoIndef with type elm := byte) :
     S with type t := T.t
 end

@@ -1,4 +1,4 @@
-open Rudiments_int
+open RudimentsInt
 
 module T = struct
   module U = struct
@@ -10,11 +10,11 @@ module T = struct
       match u128_to_tup t with (lo, hi) -> [|lo; hi|]
   end
   include U
-  include Intnw.Make_u(U)
+  include Intnw.MakeU(U)
 end
 include T
 include Identifiable.Make(T)
-include Cmpable.Make_zero(T)
+include Cmpable.MakeZero(T)
 
 let to_tup = u128_to_tup
 

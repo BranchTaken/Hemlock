@@ -1,10 +1,10 @@
 (** Sequence functor interfaces and signatures. *)
 
-open Rudiments_int
+open RudimentsInt
 
 (** Definite sequence functor input interface for monomorphic containers, e.g.
     {!type:string}. *)
-module type I_mono_def = sig
+module type IMonoDef = sig
   type t
   (** Sequence type. *)
 
@@ -20,7 +20,7 @@ end
 
 (** Indefinite sequence functor input interface for monomorphic containers, e.g.
     {!type:byte list}. *)
-module type I_mono_indef = sig
+module type IMonoIndef = sig
   type t
   (** Sequence type. *)
 
@@ -34,8 +34,8 @@ end
 
 (** Definite sequence functor output signature for monomorphic containers, e.g.
     {!type:string}. *)
-module type S_mono_def = sig
-  include I_mono_def
+module type SMonoDef = sig
+  include IMonoDef
 
   val next_opt: t -> (elm * t) option
   (** Return next element and sequence absent the element, or [None] if sequence
@@ -44,13 +44,13 @@ end
 
 (** Indefinite sequence functor output signature for monomorphic containers,
     e.g. {!type:byte list}. *)
-module type S_mono_indef = sig
-  include I_mono_indef
+module type SMonoIndef = sig
+  include IMonoIndef
 end
 
 (** Definite sequence functor input interface for polymorphic containers, e.g.
     {!type:'a array}. *)
-module type I_poly_def = sig
+module type IPolyDef = sig
   type 'a t
   (** Sequence type. *)
 
@@ -66,7 +66,7 @@ end
 
 (** Indefinite sequence functor input interface for polymorphic containers, e.g.
     {!type:'a list}. *)
-module type I_poly_indef = sig
+module type IPolyIndef = sig
   type 'a t
   (** Sequence type. *)
 
@@ -80,8 +80,8 @@ end
 
 (** Definite sequence functor output signature for polymorphic containers, e.g.
     {!type:'a array}. *)
-module type S_poly_def = sig
-  include I_poly_def
+module type SPolyDef = sig
+  include IPolyDef
 
   val next_opt: 'a t -> ('a elm * 'a t) option
   (** Return next element and sequence absent the element, or [None] if sequence
@@ -90,13 +90,13 @@ end
 
 (** Indefinite sequence functor output signature for polymorphic containers,
     e.g. {!type:'a list}. *)
-module type S_poly_indef = sig
-  include I_poly_indef
+module type SPolyIndef = sig
+  include IPolyIndef
 end
 
 (** Definite sequence functor input interface for polymorphic containers, e.g.
     {!type:('a, 'cmp) Ordset}. *)
-module type I_poly2_def = sig
+module type IPoly2Def = sig
   type ('a, 'cmp) t
   (** Sequence type. *)
 
@@ -112,19 +112,19 @@ end
 
 (** Definite sequence functor output signature for polymorphic containers, e.g.
     {!type:('a, 'cmp) Ordset}. *)
-module type S_poly2_def = sig
-  include I_poly2_def
+module type SPoly2Def = sig
+  include IPoly2Def
 
   val next_opt: ('a, 'cmp) t -> ('a elm * ('a, 'cmp) t) option
   (** Return next element and sequence absent the element, or [None] if sequence
       is empty. *)
 end
 
-module type I_poly2_fold2 = sig
+module type IPoly2Fold2 = sig
   type ('a, 'cmp) container
   (** Container type. *)
 
-  include S_poly2_def
+  include SPoly2Def
 
   val cmper: ('a, 'cmp) container -> ('a elm, 'cmp) Cmper.t
 
@@ -134,7 +134,7 @@ module type I_poly2_fold2 = sig
   (** [init container] returns an initialized sequence. *)
 end
 
-module type S_poly2_fold2 = sig
+module type SPoly2Fold2 = sig
   type ('a, 'cmp) t
   (** Container type. *)
 
@@ -172,7 +172,7 @@ end
 
 (** Definite sequence functor input interface for polymorphic containers, e.g.
     {!type:('k, 'v, 'cmp) Ordmap}. *)
-module type I_poly3_def = sig
+module type IPoly3Def = sig
   type ('k, 'v, 'cmp) t
   (** Sequence type. *)
 
@@ -191,8 +191,8 @@ end
 
 (** Definite sequence functor output signature for polymorphic containers, e.g.
     {!type:('a, 'cmp) Ordset}. *)
-module type S_poly3_def = sig
-  include I_poly3_def
+module type SPoly3Def = sig
+  include IPoly3Def
 
   val next_opt: ('k, 'v, 'cmp) t -> (('k key * 'v value) *
       ('k, 'v, 'cmp) t) option
@@ -200,11 +200,11 @@ module type S_poly3_def = sig
       is empty. *)
 end
 
-module type I_poly3_fold2 = sig
+module type IPoly3Fold2 = sig
   type ('k, 'v, 'cmp) container
   (** Container type. *)
 
-  include S_poly3_def
+  include SPoly3Def
 
   val cmper: ('k, 'v, 'cmp) container -> ('k key, 'cmp) Cmper.t
 
@@ -214,7 +214,7 @@ module type I_poly3_fold2 = sig
   (** [init container] returns an initialized sequence. *)
 end
 
-module type S_poly3_fold2 = sig
+module type SPoly3Fold2 = sig
   type ('k, 'v, 'cmp) t
   (** Container type. *)
 

@@ -1,10 +1,10 @@
 (** 8-bit unsigned integer. *)
 
 (* Partial Rudiments. *)
-open Rudiments_int
+open RudimentsInt
 
 type t
-include Intnb_intf.S_u with type t := t
+include IntnbIntf.SU with type t := t
 
 val to_sint: t -> sint
 (** Convert to full-width signed integer. *)

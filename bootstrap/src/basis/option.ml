@@ -97,7 +97,7 @@ module T = struct
         | _ -> halt "Out of bounds"
     end
     include T
-    include Cmpable.Make_poly(T)
+    include Cmpable.MakePoly(T)
   end
 
   let length = function
@@ -108,8 +108,8 @@ module T = struct
     (length t) = 0
 end
 include T
-include Container_common.Make_poly_fold(T)
-include Container_array.Make_poly_array(T)
+include ContainerCommon.MakePolyFold(T)
+include ContainerArray.MakePolyArray(T)
 
 let pp pp_a ppf = function
   | Some a -> Format.fprintf ppf "@[<h>Some@ %a@]" pp_a a

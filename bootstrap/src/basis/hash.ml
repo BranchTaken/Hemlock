@@ -1,4 +1,4 @@
-open Rudiments_int0
+open RudimentsInt0
 
 type t = u128
 

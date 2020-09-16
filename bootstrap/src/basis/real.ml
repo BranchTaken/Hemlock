@@ -1,4 +1,4 @@
-open Rudiments_int
+open RudimentsInt
 open Rudiments0
 
 module T = struct
@@ -32,7 +32,7 @@ module T = struct
 end
 include T
 include Identifiable.Make(T)
-include Cmpable.Make_zero(T)
+include Cmpable.MakeZero(T)
 
 let of_sint x =
   float_of_int (int_of_sint x)

@@ -1,4 +1,4 @@
-open Rudiments_int
+open RudimentsInt
 open Rudiments0
 
 module T = struct
@@ -20,7 +20,7 @@ module T = struct
     Format.fprintf ppf "%Luu64" t
 end
 include T
-include Cmpable.Make_zero(T)
+include Cmpable.MakeZero(T)
 include Identifiable.Make(T)
 
 let pp_x ppf t =
@@ -63,15 +63,15 @@ let of_real r =
           let bits = Int64.bits_of_float r in
           let biased_exponent =
             Int64.(to_int (logand (shift_right_logical bits 52) c7ff)) in
-          match Rudiments_int.(biased_exponent >= 1023) with
+          match RudimentsInt.(biased_exponent >= 1023) with
           | false -> zero
           | true -> begin
               let exponent = biased_exponent - 1023 in
               let significand = Int64.(logor c10_0000_0000_0000
                   (logand bits cf_ffff_ffff_ffff)) in
-              if Rudiments_int.(exponent < 52) then
+              if RudimentsInt.(exponent < 52) then
                 Int64.shift_right_logical significand (52 - exponent)
-              else if Rudiments_int.(exponent < 116) then
+              else if RudimentsInt.(exponent < 116) then
                 Int64.shift_left significand (exponent - 52)
               else
                 zero
@@ -87,7 +87,7 @@ let c8000_0000_0000_0000 = of_string "0x8000_0000_0000_0000"
 let c43e0_0000_0000_0000 = of_string "0x43e0_0000_0000_0000"
 
 let to_real t =
-  match Rudiments_int.(Int64.(compare (logand t c8000_0000_0000_0000) zero) = 0)
+  match RudimentsInt.(Int64.(compare (logand t c8000_0000_0000_0000) zero) = 0)
   with
   | true -> Int64.to_float t
   | false -> begin
@@ -209,7 +209,7 @@ module U = struct
   let bit_sl = bit_sl
   let bit_clz = bit_clz
 end
-include Intnb.Make_derived(U)
+include Intnb.MakeDerived(U)
 
 (******************************************************************************)
 (* Begin tests. *)

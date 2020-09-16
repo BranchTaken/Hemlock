@@ -1,10 +1,10 @@
 (** 32-bit signed integer. *)
 
 (* Partial Rudiments. *)
-open Rudiments_int
+open RudimentsInt
 
 type t
-include Intnb_intf.S_i with type t := t
+include IntnbIntf.SI with type t := t
 
 val to_sint: t -> sint
 (** Convert to full-width signed integer. *)

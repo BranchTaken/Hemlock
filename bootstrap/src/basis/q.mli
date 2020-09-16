@@ -9,7 +9,7 @@ open Rudiments0
 
 type 'a t
 
-include Formattable_intf.S_poly with type 'a t := 'a t
+include FormattableIntf.SPoly with type 'a t := 'a t
 
 (** {1 Creation} *)
 

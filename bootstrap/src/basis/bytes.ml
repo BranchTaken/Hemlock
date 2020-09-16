@@ -2,7 +2,7 @@ open Rudiments0
 
 type t = byte array
 
-module Array_seq = struct
+module ArraySeq = struct
   module T = struct
     type t = {
       slice: String.Slice.t;
@@ -23,7 +23,7 @@ module Array_seq = struct
       b, t'
   end
   include T
-  include Array.Seq.Make_mono(T)
+  include Array.Seq.MakeMono(T)
 end
 
 module Cursor = struct
@@ -88,7 +88,7 @@ module Cursor = struct
   include Cmpable.Make(T)
 end
 
-module Codepoint_seq = struct
+module CodepointSeq = struct
   module T = struct
     type t = {
       cursor: Cursor.t;
@@ -120,11 +120,11 @@ type on_invalid =
   | Replace (* Replace with '�'. *)
   | Halt    (* Halt. *)
 
-module String_seq = struct
+module StringSeq = struct
   module T = struct
     type t = {
       on_invalid: on_invalid;
-      seq: Codepoint_seq.t;
+      seq: CodepointSeq.t;
       (* vlength is how long bytes would be if all encoding errors were
        * corrected via replacement. *)
       vlength: uns;
@@ -134,7 +134,7 @@ module String_seq = struct
     }
 
     let rec vlength ~on_invalid seq vindex =
-      match on_invalid, (Codepoint_seq.to_codepoint seq) with
+      match on_invalid, (CodepointSeq.to_codepoint seq) with
       | _, Some (Valid (cp, seq')) -> begin
           let vindex' = vindex + (Codepoint.Utf8.length_of_codepoint cp) in
           vlength ~on_invalid seq' vindex'
@@ -150,7 +150,7 @@ module String_seq = struct
       | _, None -> Some vindex
 
     let init ~on_invalid ~cursor ~past =
-      let seq = Codepoint_seq.init ~cursor ~past in
+      let seq = CodepointSeq.init ~cursor ~past in
       match vlength ~on_invalid seq 0 with
       | Some vlength -> Some {on_invalid; seq; vlength; vindex=0}
       | None -> None
@@ -159,7 +159,7 @@ module String_seq = struct
       t.vlength - t.vindex
 
     let next t =
-      match t.on_invalid, (Codepoint_seq.to_codepoint t.seq) with
+      match t.on_invalid, (CodepointSeq.to_codepoint t.seq) with
       | _, Some (Valid (cp, seq')) -> begin
           let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vindex' = t.vindex + vincr in
@@ -182,7 +182,7 @@ module String_seq = struct
 end
 
 module Slice = struct
-  include Slice.Make_mono(Cursor)
+  include Slice.MakeMono(Cursor)
 
   let length t =
     (Cursor.index (past t)) - (Cursor.index (base t))
@@ -225,12 +225,12 @@ module Slice = struct
     of_container (Array.of_list (Codepoint.to_bytes cp))
 
   let of_string_slice slice =
-    of_container (Array_seq.to_array (Array_seq.init slice))
+    of_container (ArraySeq.to_array (ArraySeq.init slice))
 
   let transcode ?(on_invalid=Error) t =
     let cursor, past = to_cursors t in
-    match String_seq.init ~on_invalid ~cursor ~past with
-    | Some seq -> Some (String_seq.to_string seq)
+    match StringSeq.init ~on_invalid ~cursor ~past with
+    | Some seq -> Some (StringSeq.to_string seq)
     | None -> None
 
   let to_string t =
@@ -374,7 +374,7 @@ let%expect_test "of_string" =
     "<_>«‡𐆗»[_]" -> [|0x3cu8; 0x5fu8; 0x3eu8; 0xc2u8; 0xabu8; 0xe2u8; 0x80u8; 0xa1u8; 0xf0u8; 0x90u8; 0x86u8; 0x97u8; 0xc2u8; 0xbbu8; 0x5bu8; 0x5fu8; 0x5du8|] -> "<_>«‡𐆗»[_]"
     |}]
 
-module Codepoint_seq_rev = struct
+module CodepointSeqRev = struct
   module T = struct
     type t = {
       bytes: byte array;
@@ -398,13 +398,13 @@ module Codepoint_seq_rev = struct
         end
   end
   include T
-  include Codepoint.Seq.Make_rev(T)
+  include Codepoint.Seq.MakeRev(T)
 end
 
-module String_replace_seq_rev = struct
+module StringReplaceSeqRev = struct
   module T = struct
     type t = {
-      seq: Codepoint_seq_rev.t;
+      seq: CodepointSeqRev.t;
       (* vpast is the index past the unprocessed sequence, were all encoding
        * errors corrected via replacement. *)
       vpast: uns;
@@ -412,7 +412,7 @@ module String_replace_seq_rev = struct
 
     let init bytes =
       let rec fn seq vlength = begin
-        match Codepoint_seq_rev.to_codepoint seq with
+        match CodepointSeqRev.to_codepoint seq with
         | Some (Valid (cp, seq')) -> begin
             let vlength' =
               (Codepoint.Utf8.length_of_codepoint cp) + vlength in
@@ -426,7 +426,7 @@ module String_replace_seq_rev = struct
           end
         | None -> vlength
       end in
-      let seq = Codepoint_seq_rev.init bytes in
+      let seq = CodepointSeqRev.init bytes in
       let vpast = fn seq 0 in
       {seq; vpast}
 
@@ -434,7 +434,7 @@ module String_replace_seq_rev = struct
       t.vpast
 
     let next t =
-      match Codepoint_seq_rev.to_codepoint t.seq with
+      match CodepointSeqRev.to_codepoint t.seq with
       | Some (Valid (cp, seq')) -> begin
           let vincr = Codepoint.Utf8.length_of_codepoint cp in
           let vpast' = t.vpast - vincr in
@@ -451,11 +451,11 @@ module String_replace_seq_rev = struct
       | None -> not_reached ()
   end
   include T
-  include String.Seq.Codepoint.Make_rev(T)
+  include String.Seq.Codepoint.MakeRev(T)
 end
 
 let rev_to_string_replace bytes =
-  String_replace_seq_rev.(to_string (init bytes))
+  StringReplaceSeqRev.(to_string (init bytes))
 
 let%expect_test "to_string" =
   let open Format in

@@ -4,7 +4,7 @@ open Rudiments0
 
 (** Cursor iterator functor output signature for monomorphic types, e.g.
     [string]. *)
-module type S_mono_iter = sig
+module type SMonoIter = sig
   type container
   (** Container type. *)
 
@@ -14,7 +14,7 @@ module type S_mono_iter = sig
   type t
   (** Cursor type. *)
 
-  include Cmpable_intf.S_mono with type t := t
+  include CmpableIntf.SMono with type t := t
 
   val hd: container -> t
   (** Return head. *)
@@ -44,8 +44,8 @@ module type S_mono_iter = sig
 end
 
 (** Cursor functor output signature for monomorphic types, e.g. [string]. *)
-module type S_mono = sig
-  include S_mono_iter
+module type SMono = sig
+  include SMonoIter
 
   val container: t -> container
   (** Return container associated with iterator. *)
@@ -59,7 +59,7 @@ end
 
 (** Cursor iterator functor output signature for polymorphic types, e.g. [('a
     array)]. *)
-module type S_poly_iter = sig
+module type SPolyIter = sig
   type 'a container
   (** Container type. *)
 
@@ -69,7 +69,7 @@ module type S_poly_iter = sig
   type 'a t
   (** Cursor type. *)
 
-  include Cmpable_intf.S_poly with type 'a t := 'a t
+  include CmpableIntf.SPoly with type 'a t := 'a t
 
   val hd: 'a container -> 'a t
   (** Return head. *)
@@ -99,8 +99,8 @@ module type S_poly_iter = sig
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('a array)]. *)
-module type S_poly = sig
-  include S_poly_iter
+module type SPoly = sig
+  include SPolyIter
 
   val container: 'a t -> 'a container
   (** Return container associated with iterator. *)
@@ -114,7 +114,7 @@ end
 
 (** Cursor iterator functor output signature for polymorphic types, e.g. [(('a,
     'cmp) Ordset)]. *)
-module type S_poly2_iter = sig
+module type SPoly2Iter = sig
   type ('a, 'cmp) container
   (** Container type. *)
 
@@ -124,7 +124,7 @@ module type S_poly2_iter = sig
   type ('a, 'cmp) t
   (** Cursor type. *)
 
-  include Cmpable_intf.S_poly2 with type ('a, 'cmp) t := ('a, 'cmp) t
+  include CmpableIntf.SPoly2 with type ('a, 'cmp) t := ('a, 'cmp) t
 
   val hd: ('a, 'cmp) container -> ('a, 'cmp) t
   (** Return head. *)
@@ -155,8 +155,8 @@ end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('a, 'cmp)
     Ordset)]. *)
-module type S_poly2 = sig
-  include S_poly2_iter
+module type SPoly2 = sig
+  include SPoly2Iter
 
   val container: ('a, 'cmp) t -> ('a, 'cmp) container
   (** Return container associated with iterator. *)
@@ -170,7 +170,7 @@ end
 
 (** Cursor iterator functor output signature for polymorphic types, e.g. [(('k,
     'v, 'cmp) Ordmap)]. *)
-module type S_poly3_iter = sig
+module type SPoly3Iter = sig
   type ('k, 'v, 'cmp) container
   (** Container type. *)
 
@@ -183,7 +183,7 @@ module type S_poly3_iter = sig
   type ('k, 'v, 'cmp) t
   (** Cursor type. *)
 
-  include Cmpable_intf.S_poly3 with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
+  include CmpableIntf.SPoly3 with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
 
   val hd: ('k, 'v, 'cmp) container -> ('k, 'v, 'cmp) t
   (** Return head. *)
@@ -214,8 +214,8 @@ end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('k, 'v, 'cmp)
     Ordmap)]. *)
-module type S_poly3 = sig
-  include S_poly3_iter
+module type SPoly3 = sig
+  include SPoly3Iter
 
   val container: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) container
   (** Return container associated with iterator. *)

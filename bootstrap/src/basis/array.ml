@@ -1,5 +1,5 @@
 open Rudiments0
-open Rudiments_int
+open RudimentsInt
 
 module List = List0
 
@@ -72,7 +72,7 @@ module T = struct
         t.index
     end
     include T
-    include Cmpable.Make_poly(T)
+    include Cmpable.MakePoly(T)
   end
 
   let cmp cmp_elm t0 t1 =
@@ -91,7 +91,7 @@ module T = struct
     fn (Cursor.hd t0) (Cursor.hd t1)
 end
 include T
-include Container_common.Make_poly_fold(T)
+include ContainerCommon.MakePolyFold(T)
 
 let hash_fold hash_fold_a t state =
   foldi t ~init:state ~f:(fun i state elm ->
@@ -103,30 +103,31 @@ let hash_fold hash_fold_a t state =
 
 module Seq = struct
   type 'a outer = 'a t
-  module type S_mono = sig
+  module type SMono = sig
     type t
     type elm
     val to_array: t -> elm outer
   end
-  module type S_poly = sig
+  module type SPoly = sig
     type 'a t
     type 'a elm
     val to_array: 'a t -> 'a elm outer
   end
-  module type S_poly2 = sig
+  module type SPoly2 = sig
     type ('a, 'cmp) t
     type 'a elm
     val to_array: ('a, 'cmp) t -> 'a elm outer
   end
-  module type S_poly3 = sig
+  module type SPoly3 = sig
     type ('k, 'v, 'cmp) t
     type 'k key
     type 'v value
     val to_array: ('k, 'v, 'cmp) t -> ('k key * 'v value) outer
   end
 
-  module Make_mono (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                      with type elm := T.elm =
+  module MakeMono (T : SeqIntf.IMonoDef) : SMono
+    with type t := T.t
+    with type elm := T.elm =
   struct
     let to_array t =
       match T.length t with
@@ -148,9 +149,9 @@ module Seq = struct
         end
   end
 
-  module Make_mono_rev (T : Seq_intf.I_mono_def) : S_mono with type t := T.t
-                                                          with type elm := T.elm
-  = struct
+  module MakeMonoRev (T : SeqIntf.IMonoDef) : SMono
+    with type t := T.t
+    with type elm := T.elm = struct
     let to_array t =
       match T.length t with
       | 0 -> [||]
@@ -171,7 +172,7 @@ module Seq = struct
         end
   end
 
-  module Make_poly (T : Seq_intf.I_poly_def) : S_poly
+  module MakePoly (T : SeqIntf.IPolyDef) : SPoly
     with type 'a t := 'a T.t
     with type 'a elm := 'a T.elm = struct
     let to_array t =
@@ -194,7 +195,7 @@ module Seq = struct
         end
   end
 
-  module Make_poly_rev (T : Seq_intf.I_poly_def) : S_poly
+  module MakePolyRev (T : SeqIntf.IPolyDef) : SPoly
     with type 'a t := 'a T.t
     with type 'a elm := 'a T.elm = struct
     let to_array t =
@@ -219,7 +220,7 @@ module Seq = struct
         end
   end
 
-  module Make_poly2 (T : Seq_intf.I_poly2_def) : S_poly2
+  module MakePoly2 (T : SeqIntf.IPoly2Def) : SPoly2
     with type ('a, 'cmp) t := ('a, 'cmp) T.t
     with type 'a elm := 'a T.elm = struct
     let to_array t =
@@ -242,7 +243,7 @@ module Seq = struct
         end
   end
 
-  module Make_poly3 (T : Seq_intf.I_poly3_def) : S_poly3
+  module MakePoly3 (T : SeqIntf.IPoly3Def) : SPoly3
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
     with type 'k key := 'k T.key
     with type 'k value := 'k T.value = struct
@@ -267,7 +268,7 @@ module Seq = struct
   end
 
   (* Special-purpose, for fold[i]_map . *)
-  module Make_poly3_fold_map (T : sig
+  module MakePoly3FoldMap (T : sig
       type ('a, 'accum, 'b) t
       val length: ('a,'accum,'b) t -> uns
       val next: ('a,'accum,'b) t -> 'accum -> 'b * ('a,'accum,'b) t * 'accum
@@ -296,7 +297,7 @@ module Seq = struct
   end
 
   (* Special-purpose, for fold[i]2_map . *)
-  module Make_poly4_fold2_map (T : sig
+  module MakePoly4Fold2Map (T : sig
       type ('a, 'b, 'accum, 'c) t
       val length: ('a,'b,'accum,'c) t -> uns
       val next: ('a,'b,'accum,'c) t -> 'accum
@@ -328,10 +329,10 @@ module Seq = struct
 end
 
 module Slice = struct
-  include Slice.Make_poly(Cursor)
+  include Slice.MakePoly(Cursor)
 end
 
-module Array_init = struct
+module ArrayInit = struct
   module T = struct
     type 'a t = {
       f: uns -> 'a;
@@ -352,13 +353,13 @@ module Array_init = struct
       elm, t'
   end
   include T
-  include Seq.Make_poly(T)
+  include Seq.MakePoly(T)
 end
 
 let init n ~f =
-  Array_init.(to_array (init n ~f))
+  ArrayInit.(to_array (init n ~f))
 
-module Array_of_list_common = struct
+module ArrayOfListCommon = struct
   type 'a t = {
     list: 'a list;
     length: uns;
@@ -380,14 +381,14 @@ module Array_of_list_common = struct
       end
 end
 
-module Array_of_list = struct
-  include Array_of_list_common
-  include Seq.Make_poly(Array_of_list_common)
+module ArrayOfList = struct
+  include ArrayOfListCommon
+  include Seq.MakePoly(ArrayOfListCommon)
 end
 
-module Array_of_list_rev = struct
-  include Array_of_list_common
-  include Seq.Make_poly_rev(Array_of_list_common)
+module ArrayOfListRev = struct
+  include ArrayOfListCommon
+  include Seq.MakePolyRev(ArrayOfListCommon)
 end
 
 let of_list ?length list =
@@ -395,16 +396,16 @@ let of_list ?length list =
     | None -> List.length list
     | Some length -> length
   in
-  Array_of_list.to_array (Array_of_list.init length list)
+  ArrayOfList.to_array (ArrayOfList.init length list)
 
 let of_list_rev ?length list =
   let length = match length with
     | None -> List.length list
     | Some length -> length
   in
-  Array_of_list_rev.to_array (Array_of_list_rev.init length list)
+  ArrayOfListRev.to_array (ArrayOfListRev.init length list)
 
-module Array_of_stream_common = struct
+module ArrayOfStreamCommon = struct
   type 'a t = {
     stream: 'a Stream.t;
     length: uns;
@@ -426,14 +427,14 @@ module Array_of_stream_common = struct
       end
 end
 
-module Array_of_stream = struct
-  include Array_of_stream_common
-  include Seq.Make_poly(Array_of_stream_common)
+module ArrayOfStream = struct
+  include ArrayOfStreamCommon
+  include Seq.MakePoly(ArrayOfStreamCommon)
 end
 
-module Array_of_stream_rev = struct
-  include Array_of_stream_common
-  include Seq.Make_poly_rev(Array_of_stream_common)
+module ArrayOfStreamRev = struct
+  include ArrayOfStreamCommon
+  include Seq.MakePolyRev(ArrayOfStreamCommon)
 end
 
 let of_stream ?length stream =
@@ -441,14 +442,14 @@ let of_stream ?length stream =
     | None -> Stream.length stream
     | Some length -> length
   in
-  Array_of_stream.to_array (Array_of_stream.init length stream)
+  ArrayOfStream.to_array (ArrayOfStream.init length stream)
 
 let of_stream_rev ?length stream =
   let length = match length with
     | None -> Stream.length stream
     | Some length -> length
   in
-  Array_of_stream_rev.to_array (Array_of_stream_rev.init length stream)
+  ArrayOfStreamRev.to_array (ArrayOfStreamRev.init length stream)
 
 let is_empty t =
   (length t) = 0
@@ -468,7 +469,7 @@ let set i elm t =
   set_inplace i elm t';
   t'
 
-module Array_join = struct
+module ArrayJoin = struct
   module T = struct
     type 'a outer = 'a t
     type 'a t = {
@@ -512,7 +513,7 @@ module Array_join = struct
       t.length
   end
   include T
-  include Seq.Make_poly(T)
+  include Seq.MakePoly(T)
 end
 
 let join ?sep tlist =
@@ -530,7 +531,7 @@ let join ?sep tlist =
       let accum' = accum + sep_len' + (length list) in
       i', accum'
     ) in
-  Array_join.(to_array (init tlist_length sep tlist))
+  ArrayJoin.(to_array (init tlist_length sep tlist))
 
 let concat t0 t1 =
   let length_t0 = length t0 in
@@ -958,7 +959,7 @@ let map ~f t =
 let mapi ~f t =
   init (length t) ~f:(fun i -> f i (get i t))
 
-module Array_foldi_map = struct
+module ArrayFoldiMap = struct
   module T = struct
     type 'a outer = 'a t
     type ('a, 'accum, 'b) t = {
@@ -980,20 +981,20 @@ module Array_foldi_map = struct
       elm', t', accum'
   end
   include T
-  include Seq.Make_poly3_fold_map(T)
+  include Seq.MakePoly3FoldMap(T)
 end
 
 let fold_map ~init ~f t =
-  Array_foldi_map.to_accum_array
-    (Array_foldi_map.init t ~f:(fun _ accum elm -> f accum elm) (length t))
+  ArrayFoldiMap.to_accum_array
+    (ArrayFoldiMap.init t ~f:(fun _ accum elm -> f accum elm) (length t))
     ~init
 
 let foldi_map ~init ~f t =
-  Array_foldi_map.to_accum_array (Array_foldi_map.init t ~f (length t)) ~init
+  ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t ~f (length t)) ~init
 
 let filter ~f t =
-  let _, t' = Array_foldi_map.to_accum_array
-      (Array_foldi_map.init t ~f:(fun _ i _ ->
+  let _, t' = ArrayFoldiMap.to_accum_array
+      (ArrayFoldiMap.init t ~f:(fun _ i _ ->
           let rec fn i elm = begin
             let i' = Uns.succ i in
             match f elm with
@@ -1010,8 +1011,8 @@ let filteri ~f t =
     | false -> accum
     | true -> Uns.succ accum
   ) in
-  let _, t' = Array_foldi_map.to_accum_array
-      (Array_foldi_map.init t ~f:(fun _ i _ ->
+  let _, t' = ArrayFoldiMap.to_accum_array
+      (ArrayFoldiMap.init t ~f:(fun _ i _ ->
           let rec fn i elm = begin
             let i' = Uns.succ i in
             match f i elm with
@@ -1067,7 +1068,7 @@ let mapi2 ~f t0 t1 =
   assert ((length t0) = (length t1));
   init (length t0) ~f:(fun i -> f i (get i t0) (get i t1))
 
-module Array_foldi2_map = struct
+module ArrayFoldi2Map = struct
   module T = struct
     type 'a outer = 'a t
     type ('a, 'b, 'accum, 'c) t = {
@@ -1090,15 +1091,15 @@ module Array_foldi2_map = struct
       elm', t', accum'
   end
   include T
-  include Seq.Make_poly4_fold2_map(T)
+  include Seq.MakePoly4Fold2Map(T)
 end
 
 let fold2_map ~init ~f t0 t1 =
-  Array_foldi2_map.to_accum_array
-    (Array_foldi2_map.init t0 t1 ~f:(fun _ accum elm -> f accum elm)) ~init
+  ArrayFoldi2Map.to_accum_array
+    (ArrayFoldi2Map.init t0 t1 ~f:(fun _ accum elm -> f accum elm)) ~init
 
 let foldi2_map ~init ~f t0 t1 =
-  Array_foldi2_map.to_accum_array (Array_foldi2_map.init t0 t1 ~f) ~init
+  ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f) ~init
 
 let zip t0 t1 =
   map2 ~f:(fun a b -> a, b) t0 t1

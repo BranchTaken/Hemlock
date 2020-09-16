@@ -1,11 +1,11 @@
 open Rudiments0
-open Container_common_intf
+open ContainerCommonIntf
 
 (* Polymorphic. *)
 
 (* poly[1]. *)
 
-module Make_poly_length (T : I_poly) : S_poly_length_gen
+module MakePolyLength (T : IPoly) : SPolyLengthGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
   let length t =
@@ -20,7 +20,7 @@ module Make_poly_length (T : I_poly) : S_poly_length_gen
     (length t) = 0
 end
 
-module Make_poly_fold (T : I_poly) : S_poly_fold_gen
+module MakePolyFold (T : IPoly) : SPolyFoldGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
   let fold_until ~init ~f t =
@@ -153,7 +153,7 @@ module Make_poly_fold (T : I_poly) : S_poly_fold_gen
     fold t ~init:[] ~f:(fun accum elm -> elm :: accum)
 end
 
-module Make_poly_mem (T : I_poly_mem) : S_poly_mem_gen
+module MakePolyMem (T : IPolyMem) : SPolyMemGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
   let mem elm t =
@@ -171,9 +171,9 @@ module Make_poly_mem (T : I_poly_mem) : S_poly_mem_gen
     fn (T.Cursor.hd t)
 end
 
-module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
-                                         with type 'a elm = T.elm
-= struct
+module MakeIPoly (T : IMono) : IPoly
+  with type 'a t = T.t
+  with type 'a elm = T.elm = struct
   type 'a t = T.t
   type 'a elm = T.elm
 
@@ -184,7 +184,7 @@ module Make_i_poly (T : I_mono) : I_poly with type 'a t = T.t
       let cmp = T.Cursor.cmp
     end
     include V
-    include Cmpable.Make_poly(V)
+    include Cmpable.MakePoly(V)
 
     let hd = T.Cursor.hd
     let tl = T.Cursor.tl
@@ -199,26 +199,27 @@ end
 
 (* Monomorphic. *)
 
-module Make_mono_length (T : I_mono) : S_mono_length with type t := T.t
-                                                     with type elm := T.elm =
-struct
-  include Make_poly_length(Make_i_poly(T))
+module MakeMonoLength (T : IMono) : SMonoLength
+  with type t := T.t
+  with type elm := T.elm = struct
+  include MakePolyLength(MakeIPoly(T))
 end
 
-module Make_mono_fold (T : I_mono) : S_mono_fold with type t := T.t
-                                                 with type elm := T.elm = struct
-  include Make_poly_fold(Make_i_poly(T))
+module MakeMonoFold (T : IMono) : SMonoFold
+  with type t := T.t
+  with type elm := T.elm = struct
+  include MakePolyFold(MakeIPoly(T))
 end
 
-module Make_i_poly_mem (T : I_mono_mem) : I_poly_mem with type 'a t = T.t
-                                                     with type 'a elm = T.elm
-= struct
-  include Make_i_poly(T)
+module MakeIPolyMem (T : IMonoMem) : IPolyMem
+  with type 'a t = T.t
+  with type 'a elm = T.elm = struct
+  include MakeIPoly(T)
   let cmp_elm = T.cmp_elm
 end
 
-module Make_mono_mem (T : I_mono_mem) : S_mono_mem with type t := T.t
-                                                   with type elm := T.elm =
-struct
-  include Make_poly_mem(Make_i_poly_mem(T))
+module MakeMonoMem (T : IMonoMem) : SMonoMem
+  with type t := T.t
+  with type elm := T.elm = struct
+  include MakePolyMem(MakeIPolyMem(T))
 end

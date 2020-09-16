@@ -10,40 +10,40 @@ type ('a, 'witness) t = {
 
 type ('a, 'witness) cmper = ('a, 'witness) t
 
-module type I_mono = sig
+module type IMono = sig
   type t
-  include Cmpable_intf.Key with type t := t
-  include Formattable_intf.S_mono with type t := t
+  include CmpableIntf.Key with type t := t
+  include FormattableIntf.SMono with type t := t
 end
 
-module type S_mono = sig
+module type SMono = sig
   type t
   type cmper_witness
   val cmper: (t, cmper_witness) cmper
 end
 
-module Make_mono (T : I_mono) : S_mono with type t := T.t = struct
+module MakeMono (T : IMono) : SMono with type t := T.t = struct
   type cmper_witness
   let cmper = T.{hash_fold; cmp; pp}
 end
 
-module type I_poly = sig
+module type IPoly = sig
   type 'a t
   val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
     -> Hash.State.t
   val hash_fold_a: 'a -> Hash.State.t -> Hash.State.t
-  include Cmpable_intf.I_poly with type 'a t := 'a t
-  include Formattable_intf.S_poly with type 'a t := 'a t
+  include CmpableIntf.IPoly with type 'a t := 'a t
+  include FormattableIntf.SPoly with type 'a t := 'a t
   val pp_a: Format.formatter -> 'a -> unit
 end
 
-module type S_poly = sig
+module type SPoly = sig
   type 'a t
   type cmper_witness
   val cmper: ('a t, cmper_witness) cmper
 end
 
-module Make_poly (T : I_poly) : S_poly with type 'a t := 'a T.t = struct
+module MakePoly (T : IPoly) : SPoly with type 'a t := 'a T.t = struct
   type cmper_witness
 
   let hash_fold t state =

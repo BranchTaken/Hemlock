@@ -24,7 +24,7 @@ val cmp: ('a -> 'a -> Cmp.t) -> ('b -> 'b -> Cmp.t) -> ('a, 'b) t -> ('a, 'b) t
 (** [cmp cmp_a cmp_b t0 t1] compares [t0] and [t1] using the provided comparison
     functions. [First a] is less than all [Second] values. *)
 
-include Formattable_intf.S_poly2 with type ('a, 'b) t := ('a, 'b) t
+include FormattableIntf.SPoly2 with type ('a, 'b) t := ('a, 'b) t
 
 (** {1 Access} *)
 

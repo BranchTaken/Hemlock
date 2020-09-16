@@ -14,7 +14,7 @@ type 'a elm =
   | Cons of 'a * 'a t
 and 'a t = 'a elm Lazy.t
 
-include Formattable_intf.S_poly with type 'a t := 'a t
+include FormattableIntf.SPoly with type 'a t := 'a t
 
 (** {1 Creation} *)
 

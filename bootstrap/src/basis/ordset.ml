@@ -50,11 +50,11 @@ module T = struct
           Uns.pp (index t)
     end
     include T
-    include Cmpable.Make_poly2(T)
+    include Cmpable.MakePoly2(T)
   end
 end
 include T
-include Container_array.Make_poly2_array(T)
+include ContainerArray.MakePoly2Array(T)
 
 let fold_until ~init ~f t =
   Ordmap.fold_until ~init ~f:(fun accum (k, _) -> f accum k) t
@@ -160,7 +160,7 @@ let search = Ordmap.search
 let nsearch = Ordmap.nsearch
 
 (* Seq. *)
-module Seq_poly2_fold2 = struct
+module SeqPoly2Fold2 = struct
   type ('a, 'cmp) container = ('a, 'cmp) t
   type 'a elm = 'a
   type ('a, 'cmp) t = ('a, unit, 'cmp) Ordmap.Seq.t
@@ -182,7 +182,7 @@ module Seq_poly2_fold2 = struct
 
   let cmp = Ordmap.Seq.cmp
 end
-include Seq.Make_poly2_fold2(Seq_poly2_fold2)
+include Seq.MakePoly2Fold2(SeqPoly2Fold2)
 
 let cmp t0 t1 =
   Ordmap.cmp Unit.cmp t0 t1

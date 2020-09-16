@@ -1,11 +1,11 @@
-open Rudiments_functions
-open Intnb_intf
+open RudimentsFunctions
+open IntnbIntf
 
 external intnb_icmp: uns -> uns -> Cmp.t = "hemlock_intnb_icmp"
 external intnb_ucmp: uns -> uns -> Cmp.t = "hemlock_intnb_ucmp"
 
-module Make_derived (T : I_derived) : S_derived with type t := T.t = struct
-  include Cmpable.Make_zero(T)
+module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
+  include Cmpable.MakeZero(T)
 
   let is_pow2 t =
     match t > T.zero with
@@ -59,21 +59,21 @@ module Make_derived (T : I_derived) : S_derived with type t := T.t = struct
     if t0 < t1 then t1 else t0
 end
 
-module type I_common = sig
+module type ICommon = sig
   include I
   val signed: bool
 end
 
-module type S_common = sig
+module type SCommon = sig
   type t
 
   include S with type t := t
-  include S_narrow with type t := t
+  include SNarrow with type t := t
 
   val narrow: t -> int
 end
 
-module Make_common (T : I_common) : S_common with type t := uns = struct
+module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
   module U = struct
     type t = int
 
@@ -309,7 +309,7 @@ module Make_common (T : I_common) : S_common with type t := uns = struct
   end
   include U
   include Identifiable.Make(U)
-  include Cmpable.Make_zero(U)
+  include Cmpable.MakeZero(U)
   module V = struct
     include U
 
@@ -318,10 +318,10 @@ module Make_common (T : I_common) : S_common with type t := uns = struct
     let of_uns t =
       U.narrow_of_unsigned t
   end
-  include Make_derived(V)
+  include MakeDerived(V)
 end
 
-module Make_i (T : I) : S_i with type t := sint = struct
+module MakeI (T : I) : SI with type t := sint = struct
   module U = struct
     module V = struct
       module W = struct
@@ -330,7 +330,7 @@ module Make_i (T : I) : S_i with type t := sint = struct
         let signed = true
       end
       include W
-      include Make_common(W)
+      include MakeCommon(W)
     end
     type t = sint
 
@@ -471,15 +471,15 @@ module Make_i (T : I) : S_i with type t := sint = struct
   end
   include U
   include Identifiable.Make(U)
-  include Cmpable.Make_zero(U)
+  include Cmpable.MakeZero(U)
 end
 
-module Make_u (T : I) : S_u with type t := uns = struct
+module MakeU (T : I) : SU with type t := uns = struct
   module U = struct
     type t = uns
     let num_bits = T.num_bits
     let signed = false
   end
   include U
-  include Make_common(U)
+  include MakeCommon(U)
 end

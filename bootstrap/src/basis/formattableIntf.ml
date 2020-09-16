@@ -1,7 +1,7 @@
 (** Formattable type functor signature. *)
 
 (** Monomorphic Format pretty printing conversion functions. *)
-module type S_mono = sig
+module type SMono = sig
   type t
 
   val pp: Format.formatter -> t -> unit
@@ -11,7 +11,7 @@ module type S_mono = sig
 end
 
 (** Polymorphic Format pretty printing conversion functions. *)
-module type S_poly = sig
+module type SPoly = sig
   type 'a t
 
   val pp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
@@ -22,7 +22,7 @@ module type S_poly = sig
 end
 
 (** Polymorphic Format pretty printing conversion functions. *)
-module type S_poly2 = sig
+module type SPoly2 = sig
   type ('a, 'b) t
 
   val pp: (Format.formatter -> 'a -> unit) ->

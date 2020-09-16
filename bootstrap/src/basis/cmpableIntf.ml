@@ -1,5 +1,5 @@
 (** Functor input interface for comparable monomorphic types. *)
-module type I_mono = sig
+module type IMono = sig
   type t
 
   val cmp: t -> t -> Cmp.t
@@ -9,8 +9,8 @@ end
 
 (** Functor input interface for comparable types with ranges that contain zero.
 *)
-module type I_mono_zero = sig
-  include I_mono
+module type IMonoZero = sig
+  include IMono
 
   val zero: t
   (** Zero constant. *)
@@ -18,7 +18,7 @@ end
 
 (** Functor output signature for infix comparisons on comparable monomorphic
     types. *)
-module type S_mono_infix = sig
+module type SMonoInfix = sig
   type t
 
   val ( >= ): t -> t -> bool
@@ -41,9 +41,9 @@ module type S_mono_infix = sig
 end
 
 (** Functor output signature for comparisons on comparable monomorphic types. *)
-module type S_mono = sig
-  include I_mono
-  include S_mono_infix with type t := t
+module type SMono = sig
+  include IMono
+  include SMonoInfix with type t := t
 
   val ascending: t -> t -> Cmp.t
   (** [ascending t0 t1] compares [t0] and [t1] in ascending order. Equivalent to
@@ -65,9 +65,9 @@ end
 
 (** Functor output signature for comparable types with ranges that contain zero.
 *)
-module type S_mono_zero = sig
-  include I_mono_zero
-  include S_mono_infix with type t := t
+module type SMonoZero = sig
+  include IMonoZero
+  include SMonoInfix with type t := t
 
   val is_positive: t -> bool
   (** [is_positive t] returns [true] if [t] is positive, [false] otherwise. NB:
@@ -100,12 +100,12 @@ module type Key = sig
   (** [hash_fold a state] incorporates the hash of [a] into [state] and returns
       the resulting state. *)
 
-  include I_mono with type t := t
+  include IMono with type t := t
 end
 
 (** Functor input interface for comparable polymorphic types, e.g. ['a array].
 *)
-module type I_poly = sig
+module type IPoly = sig
   type 'a t
 
   val cmp: 'a t -> 'a t -> Cmp.t
@@ -115,8 +115,8 @@ end
 
 (** Functor output signature for infix comparisons on comparable polymorphic
     types, e.g. ['a array]. *)
-module type S_poly = sig
-  include I_poly
+module type SPoly = sig
+  include IPoly
 
   val ( >= ): 'a t -> 'a t -> bool
   (** Returns true if [t0 >= t1]. *)
@@ -156,7 +156,7 @@ end
 
 (** Functor input interface for comparable polymorphic types, e.g. [('a, 'cmp)
     Ordset]. *)
-module type I_poly2 = sig
+module type IPoly2 = sig
   type ('a, 'cmp) t
 
   val cmp: ('a, 'cmp) t -> ('a, 'cmp) t -> Cmp.t
@@ -166,8 +166,8 @@ end
 
 (** Functor output signature for infix comparisons on comparable polymorphic
     types, e.g. [('a, 'cmp) Ordset]. *)
-module type S_poly2 = sig
-  include I_poly2
+module type SPoly2 = sig
+  include IPoly2
 
   val ( >= ): ('a, 'cmp) t -> ('a, 'cmp) t -> bool
   (** Returns true if [t0 >= t1]. *)
@@ -208,7 +208,7 @@ end
 
 (** Functor input interface for comparable polymorphic types, e.g. [('k, 'v,
     'cmp) Ordmap]. *)
-module type I_poly3 = sig
+module type IPoly3 = sig
   type ('k, 'v, 'cmp) t
 
   val cmp: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> Cmp.t
@@ -218,8 +218,8 @@ end
 
 (** Functor output signature for infix comparisons on comparable polymorphic
     types, e.g. [('k, 'v, 'cmp) Ordmap]. *)
-module type S_poly3 = sig
-  include I_poly3
+module type SPoly3 = sig
+  include IPoly3
 
   val ( >= ): ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
   (** Returns true if [t0 >= t1]. *)

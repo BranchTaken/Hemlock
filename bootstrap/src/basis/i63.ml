@@ -1,5 +1,5 @@
 (* Partial Rudiments. *)
-include Rudiments_int0
+include RudimentsInt0
 
 let of_int t =
   sint_of_int t
@@ -12,7 +12,7 @@ module T = struct
   let num_bits = Sys.int_size
 end
 include T
-include Intnb.Make_i(T)
+include Intnb.MakeI(T)
 
 (******************************************************************************)
 (* Begin tests. *)

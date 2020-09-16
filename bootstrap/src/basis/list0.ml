@@ -1,5 +1,5 @@
 open Rudiments0
-open Rudiments_int0
+open RudimentsInt0
 
 module T = struct
   type 'a t = 'a list
@@ -106,7 +106,7 @@ module T = struct
         | Cmp.Gt -> seek_fwd i t
     end
     include T
-    include Cmpable.Make_poly(T)
+    include Cmpable.MakePoly(T)
   end
 
   let cmp cmp_elm t0 t1 =
@@ -144,7 +144,7 @@ module T = struct
     fn t limit
 end
 include T
-include Container_common.Make_poly_fold(T)
+include ContainerCommon.MakePolyFold(T)
 
 let hash_fold hash_fold_a t state =
   foldi t ~init:state ~f:(fun i state elm ->
