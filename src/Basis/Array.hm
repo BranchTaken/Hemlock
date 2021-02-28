@@ -1,12 +1,12 @@
-using Rudiments as *
+open import Rudiments
 
-module List = List0
+let List = List0
 
-module T = struct
+let T = module
     type 'a t^ = 'a array^t
     type 'a elm = 'a
 
-    module Builder = struct
+    let Builder = module
         # `array_builder` is built into the compiler similarly to `array`, but
         # it is only exposed when compiling Basis code, as controlled by a
         # compiler flag.
@@ -28,12 +28,13 @@ module T = struct
 
     external length: 'a t^_ -> uns = "hm_basis_array_length"
 
-    module Cursor = struct
-        module T = struct
+    let Cursor = module
+        let T = module
             type 'a container^ = 'a t^container
-            type ('a, ^container) t =
+            type ('a, ^container) t = {
                 array: 'a container^
                 index: uns
+              }
 
             (* val cmp: ('a, ^container) t -> ('a, ^container) t -> Cmp.t *)
             let cmp t0 t1 =
@@ -84,7 +85,7 @@ module T = struct
             let index t =
                 t.index
         include T
-        include Cmpable.MakePoly(T)
+        include Cmpable.make_Poly(T)
 
     let cmp cmp_elm t0 t1 =
         let rec fn cursor0 cursor1 =
@@ -100,25 +101,28 @@ module T = struct
           in
         fn (Cursor.hd t0) (Cursor.hd t1)
 include T
-include ContainerCommon.MakePolyFold(T)
+include ContainerCommon.make_PolyFold(T)
 
 let hash_fold hash_fold_a t state =
     fold t ~init:state ~f:(fun state elm -> state |> hash_fold_a elm)
 
-module Seq = struct
+let Seq = module
     type 'a outer^ = 'a t^outer
-    module type SMono = sig
+    type SMono = {|
         type t^
         type elm^
         val to_array: t^ -> elm^ outer^
-    module type SPoly = sig
+      |}
+    type SPoly = {|
         type 'a t^
         type 'a elm
         val to_array: 'a t^ -> 'a elm outer^
+      |}
 
-    module MakeMono (T : SeqIntf.IMonoDef) : SMono
-      with type t^ := T.t^
-      also type elm^ := T.elm^ = struct
+    let make_Mono (T : SeqIntf.IMonoDef) : {|SMono with
+        type t^ := T.t^
+        type elm^ := T.elm^
+      |} = module
         let to_array t = expose
             match T.length t with
             | 0 -> [||]
@@ -134,9 +138,10 @@ module Seq = struct
                 let elm, t' = T.next t in
                 fn t' 1 (Builder.alloc_lput l elm)
 
-    module MakeMonoRev (T : SeqIntf.IMonoDef) : SMono
-      with type t^ := T.t^
-      also type elm^ := T.elm^ = struct
+    let make_MonoRev (T : SeqIntf.IMonoDef) : {|SMono with
+        type t^ := T.t^
+        type elm^ := T.elm^
+      |} = module
         let to_array t = expose
             match T.length t with
             | 0 -> [||]
@@ -152,9 +157,10 @@ module Seq = struct
                 let elm, t' = T.next t in
                 fn t' (pred l) (Builder.alloc_rput l elm)
 
-    module MakePoly (T : SeqIntf.IPolyDef) : SPoly
-      with type 'a t^ := 'a T.t^
-      also type 'a elm := 'a T.elm = struct
+    let make_Poly (T : SeqIntf.IPolyDef) : {|SPoly with
+        type 'a t^ := 'a T.t^
+        type 'a elm := 'a T.elm
+      |} = module
         let to_array t = expose
             match T.length t with
             | 0 -> [||]
@@ -170,9 +176,10 @@ module Seq = struct
                 let elm, t' = T.next t in
                 fn t' 1 (Builder.alloc_lput l)
 
-    module MakePolyRev (T : SeqIntf.IPolyDef) : SPoly
-      with type 'a t^ := 'a T.t^
-      also type 'a elm := 'a T.elm = struct
+    let make_PolyRev (T : SeqIntf.IPolyDef) : {|SPoly with
+        type 'a t^ := 'a T.t^
+        type 'a elm := 'a T.elm
+      |} = module
         let to_array t = expose
             match T.length t with
             | 0 -> [||]
@@ -189,17 +196,16 @@ module Seq = struct
                 fn t' (pred l) (Builder.alloc_rput l elm)
 
     (* Special-purpose, for fold[i]_map . *)
-    module MakePoly2 (T : sig
+    let make_Poly2 (T : {|
         type ('a, ^arr, >e) ['accum, 'b] t
         val length: ('a, ^arr, >e) ['accum, 'b] t -> uns
         val next: ('a, ^arr, >e) ['accum, 'b] t -> 'accum ->
           'b * ('a, ^arr, >e) ['accum, 'b] t * 'accum
-      ) : sig
-        type ('a, ^arr, >e) ['accum, 'b] t
+      |}) : {|
+        type ('a, ^arr, >e) ['accum, 'b] t := ('a, ^arr, >e) ['accum, 'b] T.t
         val to_accum_array: ('a, ^arr, >e) ['accum, 'b] t -> init:'accum
           -> 'accum * 'b outer^
-      with type ('a, ^arr, >e) ['accum, 'b] t :=
-      ('a, ^arr, >e) ['accum, 'b] T.t = struct
+      |} = module
         let to_accum_array t ~init = expose
             match T.length t with
             | 0 -> init, [||]
@@ -216,17 +222,17 @@ module Seq = struct
                 fn t' 1 accum (Builder.alloc_lput l elm)
 
     (* Special-purpose, for fold[i]2_map . *)
-    module MakePoly3 (T : sig
+    let make_Poly3 (T : {|
         type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t
         val length: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> uns
         val next: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> 'accum
           -> 'c * ('a, ^m, 'b, ^n, >e) ['accum, 'c] t * 'accum
-      ) : sig
-        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t
+      |}) : {|
+        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t :=
+          ('a, ^m, 'b, ^n, >e) ['accum, 'c] T.t
         val to_accum_array: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> init:'accum
           -> 'accum * 'c outer^
-      with type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t :=
-      ('a, ^m, 'b, ^n, >e) ['accum, 'c] T.t = struct
+      |} = module
         let to_accum_array t ~init = expose
             match T.length t with
             | 0 -> init, [||]
@@ -242,12 +248,13 @@ module Seq = struct
                 let elm, t' accum = T.next t init in
                 fn t' 1 accum (Builder.alloc_lput l elm)
 
-module ArrayInit = struct
-    module T = struct
-        type >e ['a] t =
+let ArrayInit = module
+    let T = module
+        type >e ['a] t = {
             f      : uns >e-> 'a
             index  : uns
             length : uns
+          }
         type 'a elm = 'a
 
         (* val init: uns -> f:(uns >e-> 'a) >e-> >e ['a] t *)
@@ -264,16 +271,17 @@ module ArrayInit = struct
             let t' = {t with index=(succ t.index)} in
             elm, t'
     include T
-    include Seq.MakePoly(T)
+    include Seq.make_Poly(T)
     (* val to_array: >e ['a] t >e-> 'a outer^ *)
 
 let init n ~f = expose
     ArrayInit.(to_array (init n ~f))
 
-module ArrayOfListCommon = struct
-    type 'a t =
+let ArrayOfListCommon = module
+    type 'a t = {
         list: 'a list
         length: uns
+      }
     type 'a elm = 'a
 
     let init length list =
@@ -289,13 +297,13 @@ module ArrayOfListCommon = struct
             let t' = {t with list=list'} in
             elm, t'
 
-module ArrayOfList = struct
+let ArrayOfList = module
     include ArrayOfListCommon
-    include Seq.MakePoly(ArrayOfListCommon)
+    include Seq.make_Poly(ArrayOfListCommon)
 
-module ArrayOfListRev = struct
+let ArrayOfListRev = module
     include ArrayOfListCommon
-    include Seq.MakePolyRev(ArrayOfListCommon)
+    include Seq.make_PolyRev(ArrayOfListCommon)
 
 let of_list ?length list =
     let length = match length with
@@ -329,15 +337,16 @@ let set i elm t =
     set_inplace i elm t'
     t'
 
-module ArrayJoin = struct
-    module T = struct
+let ArrayJoin = module
+    let T = module
         type 'a outer^ = 'a t^outer
-        type ('a, ^sep, ^arrays) t =
+        type ('a, ^sep, ^arrays) t = {
             sep: 'a outer^sep
             arrays: 'a outer^arrays list
             length: uns
             in_sep: bool
             index: uns
+          }
         type 'a elm = 'a
 
         (* val init: uns -> 'a outer^sep -> 'a outer^arrays list
@@ -374,7 +383,7 @@ module ArrayJoin = struct
         let length t =
             t.length
     include T
-    include Seq.MakePoly(T)
+    include Seq.make_Poly(T)
     (* val to_array: ('a, ^_, ^_) t -> 'a outer^ *)
 
 let join ?sep tlist =
@@ -528,9 +537,10 @@ type order =
     | Increasing
     | Decreasing
     | Either
-type run =
+type run = {
     base: uns
     past: uns
+  }
 let sort_impl ?(stable=false) ~cmp ~inplace t =
     (* Merge a pair of adjacent runs. Input runs may be in increasing or
      * decreasing order; the output is always in increasing order. *)
@@ -790,14 +800,15 @@ let map ~f t = expose
 let mapi ~f t = expose
     init (length t) ~f:(fun i -> f i (get i t))
 
-module ArrayFoldiMap = struct
-    module T = struct
+let ArrayFoldiMap = module
+    let T = module
         type 'a outer^ = 'a t^outer
-        type ('a, ^arr, >e) ['accum, 'b] t =
+        type ('a, ^arr, >e) ['accum, 'b] t = {
             arr: ('a, ^arr) outer
             f: uns -> 'accum -> 'a >e-> 'accum * 'b
             index: uns
             length: uns
+          }
         (* val init: ('a, ^arr) outer -> f:(uns -> 'accum -> 'a
          *   >e-> 'accum * 'b) -> uns -> ('a, ^arr, >e) ['accum, 'b] t *)
         let init arr ~f length = expose
@@ -814,7 +825,7 @@ module ArrayFoldiMap = struct
             let t' = {t with index=succ t.index} in
             elm', t', accum'
     include T
-    include Seq.MakePoly2(T)
+    include Seq.make_Poly2(T)
     (* val to_accum_array: (_, ^_, >e) ['accum, 'b] t >e-> 'accum * 'b outer^ *)
 
 let fold_map t ~init ~f = expose
@@ -833,7 +844,7 @@ let filter ~f t = expose
             | true -> i', elm
             | false -> fn i' (get i' t)
           in
-         fn i (get i t)
+        fn i (get i t)
       ) (count ~f t)) ~init:0 in
     t'
 
@@ -897,14 +908,15 @@ let mapi2 ~f t0 t1 = expose
     conceal (assert ((length t0) = (length t1)))
     init (length t0) ~f:(fun i -> f i (get i t0) (get i t1))
 
-module ArrayFoldi2Map = struct
-    module T = struct
+let ArrayFoldi2Map = module
+    let T = module
         type 'a outer^ = 'a t^outer
-        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t =
+        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t = {
             arr0: ('a, ^m) outer
             arr1: ('b, ^n) outer
             f: uns -> 'accum -> 'a -> 'b >e-> 'accum * 'c
             index: uns
+          }
 
         (* val init: 'a outer^m -> 'b outer^n
          *   -> f:(uns -> 'accum -> 'a -> 'b -> >e-> 'accum * 'c)
@@ -924,7 +936,7 @@ module ArrayFoldi2Map = struct
             let t' = {t with index=Uns.succ t.index} in
             elm', t', accum'
     include T
-    include Seq.MakePoly3(T)
+    include Seq.make_Poly3(T)
     (* val to_accum_array: (_, ^_, _, ^_, >e) ['accum, 'c] t
      *   >e-> 'accum * 'c outer^ *)
 
@@ -1478,9 +1490,10 @@ let%expect_test "is_sorted" =
              |is_sorted [|0; 2; 1|]: not strict -> false, strict -> false
             `]
 
-type sort_elm =
+type sort_elm = {
     key: uns (* Random, possibly non-unique. *)
     sn: uns (* Sequential in initial array. *)
+  }
 let%expect_test "sort" =
     let gen_array len =
         let key_limit =

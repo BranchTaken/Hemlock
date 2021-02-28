@@ -104,7 +104,7 @@ carriage returns, form feeds, etc. are not treated as whitespace.
 
 Comments have two syntaxes.
 - Single-line `#...` comments are delimited by a leading `#` and a trailing
-  `\n`.
+  `\n` (or end of input).
 - `(*...*)` comments are delimited by symmetric `(*` and `*)` sequences, which
   allows `(* comments (* to be *) nested *)`.
 
@@ -117,7 +117,7 @@ Hemlock uses various symbols as punctuation:
 ( ) [ ] [| |] { }
 \ ' ^ &
 ~ ?
-| -> >->
+| ~> -> >->
 ```
 
 ### Operator
@@ -134,15 +134,16 @@ The following words are keywords which are used as syntactic elements, and
 cannot be used for other purposes.
 
 ```hemlock
-and      external  lazy    struct
-also     false     let     then
-as       for       match   to
-assert   fun       module  true
-conceal  function  of      type
-do       functor   open    val
-downto   if        or      when
-else     in        rec     while
-expose   include   sig     with
+and      external  lazy    then
+also     false     let     to
+as       for       match   true
+assert   fun       module  type
+conceal  function  of      val
+do       functor   open    when
+downto   if        or      while
+effect   import    rec     with
+else     in        sig
+expose   include   struct
 ```
 
 ### Identifier
