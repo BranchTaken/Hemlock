@@ -28,7 +28,6 @@ corresponding `Basis` modules:
 - [Record](#record)
 - [Function](#function)
 - [Module](#module)
-- [Functor](#functor)
 
 ## Atomic types
 
@@ -202,7 +201,7 @@ type odd& =
 # Transitive parametric mutability (mutable if 'a is mutable).
 type 'a option =
     | None
-    | Some of * 'a
+    | Some of 'a
 ```
 
 Recursive variant types must be explicitly specified as `rec`.
@@ -225,32 +224,46 @@ record type parameters.
 
 ```hemlock
 # Non-parametric mutability.
-type r1& =
+type r1& = {
     x&: uns # Direct mutability.
     a: codepoint array& # Indirect mutability.
+  }&
 
 # Transitive parametric mutability.
-type 'a r2 =
+type 'a r2 = {
     a: 'a array # Indirect mutability if 'a is transitively mutable.
+  }
 
 # Parametric effect.
-type ('a, >e) r3
+type ('a, >e) r3 = {
     f: uns >e-> 'a array
+  }
 
 # All of the above.
-type ('a, >e) r4&
+type ('a, >e) r4& = {
     x&: uns
     a: codepoint array&
     b: 'a array
     f: uns >e-> 'a array
+  }
+
+# Parametric direct mutability.
+type 'a r5^x = {
+    x^: uns
+    l: 'a list
+  }
+
+{x=42, l=["hi"]} # string r5^
+{x=43; l=['c']}& # codepoint r5&
 ```
 
 Record types are non-recursive by default, but the `rec` keyword allows
 self-referential record typing, e.g.:
 
 ```hemlock
-type rec 'a node =
+type rec 'a node = {
     child: 'a node option
+  }
 
 let leaf = {child=None}
 let root = {child=Some leaf}
@@ -260,10 +273,12 @@ Mutually recursive records must be specified as `rec` *and* use mutation to tie
 the knot, e.g.:
 
 ```hemlock
-type rec blue& =
+type rec blue& = {
     black&: black option
-also black& =
+  }
+also black& = {
     blue&: blue option
+  }
 
 let a& := {black=None}
 let b = {blue=Some a}
@@ -272,34 +287,283 @@ a.black := Some b
 
 ### Function
 
-A function takes one or more parameters as input, causes zero or more side
-effects (which must be explicit in the function type), and produces a value.
-Functions are conceptually curried, i.e. they can be reasoned about as a series
-of partial applications, each of which consumes an input and produces a
-continuation, and the final application produces the resulting value (and
-optionally causes side effects). In practice, function invocation is monolithic
-in the number of parameters provided, so partial application only comes into
-play when the program omits parameters from a call.
+A function takes one or more parameters as input, causes zero or more effects
+(which must be explicit in the function type), and produces a value. Functions
+are conceptually curried, i.e. they can be reasoned about as a series of partial
+applications. Each partial application consumes one input and produces a
+continuation. Additionally, the final application optionally causes effects. In
+practice, function invocation is monolithic in the number of parameters
+provided, so partial application only comes into play when the program omits
+parameters from a call.
 
 ```hemlock
 # val sq: uns -> uns
-let xx x =
+let sq x =
     x * x
 
 # Transitive parametric effect, depending on the implementation of ~f .
 val init: uns -> f:(uns >-> 'a) >-> 'a t^
 
 # Mutation effect on mutable parameter.
-val set_inplace: uns -> 'a -> 'a t& >[mut] -> unit
+val set_inplace: uns -> 'a -> 'a t& >{mut}~> -> unit
 
-# Internal environment effect.
-val abort: unit >{mut}-> 'a
+# Halt effect.
+val abort: string >{hlt}-> 'a
 ```
 
 ### Module
 
-XXX
+A module is a value which bundles together a set of types and values. Due to
+type erasure, modules are little different from records at run time, but the two
+types provide very different language capabilities that are best kept
+conceptually distinct. Module types can be specified from scratch, or be based
+on another module type. Constraints and/or extensions are supported when basing
+one module type on another.
 
-### Functor
+```hemlock
+# Empty module, not very useful in practice.
+type E = {||}
 
-XXX
+type M = {|
+    type t
+
+    val f: uns -> t
+  |}
+
+# M' extends M.
+type M' = {|M with
+    type u
+
+    val g: t -> u
+  |}
+
+type SMono = {|
+    type t^
+    type elm^
+    val to_array: t^ -> elm^ outer^
+  |}
+
+# The return type is of type SMono, but with constraints relative to input T.
+val make_Mono: (T : SeqIntf.IMonoDef) -> {|SMono with
+    type t^ := T.t^
+    type elm^ := T.elm^
+  |}
+
+# make_Mono produces a result of type roughly equivalent to type Mono, but it is
+# common to use an anonymous type as above in order to specify constraints in
+# terms of function input types.
+type Mono = {|SMono with
+    type t^ := SeqIntf.IMonoDef.t^
+    type elm^ := SeqIntf.IMonoDef.elm^
+  |}
+```
+
+Module type and value names (lexical bindings) are always capitalized, e.g.
+`A._B.MType` and `A._B.M`, but record field tags remain uncapitalized even when
+they are associated with modules, e.g. `A.t._u.m`. There are no critical
+technical reasons to require capitalization of module types and names in
+Hemlock, but the distinct naming aids readability to a degree that justifies the
+strict naming requirement.
+
+```hemlock
+let A = module
+    let _B = module
+        type MType = {|
+            ...
+          |}
+        # M, U, and I are in the same namespace; beware module vs variant
+        # constructor name collisions.
+        let M = module
+            ...
+        type v =
+            | U of uns
+            | I of int
+
+    type t = {
+        _u: {
+            m: A._B.MType
+          }
+      }
+```
+
+Following is a complete example of a module which implements persistent binary
+trees.
+
+```hemlock
+let Tree = module
+    type rec 'a t =
+        | Empty
+        | Node of
+            lchild: 'a t
+            value: 'a
+            rchild: 'a t
+
+    let empty = Empty
+
+    let is_empty = function
+        | Empty -> true
+        | Node _ -> false
+
+    let node lchild value rchild =
+        {lchild; value; rchild}
+
+    let leaf value =
+        node empty value empty
+
+    let lchild = function
+        | Empty -> empty
+        | Node {lchild; value=_; rchild=_} -> lchild
+
+    let root_value_opt = function
+        | Empty -> None
+        | Node {lchild=_; value; rchild=_} -> Some value
+
+    let root_value_hlt t =
+        match value_opt t with
+        | None -> halt "Empty tree"
+        | Some value -> value
+
+    let root_value = root_value_hlt
+
+    let rchild = function
+        | Empty -> empty
+        | Node {lchild=_; value=_; rchild} -> rchild
+```
+
+`Tree` has the following type:
+
+```hemlock
+val Tree : {|
+    type rec 'a t =
+        | Empty
+        | Node of
+            lchild: 'a t
+            value: 'a
+            rchild: 'a t
+    val empty: 'a t
+    val is_empty: '_ t -> bool
+    val node: 'a t -> 'a -> 'a t -> 'a t
+    val leaf: 'a -> 'a t
+    val lchild: 'a t -> 'a t
+    val root_value_opt: 'a t -> 'a option
+    val root_value_hlt: 'a t -> 'a
+    val root_value: 'a t -> 'a
+    val rchild: 'a t -> 'a t
+  |}
+
+type TreeSig = type of Tree
+```
+
+By default a module exports all of its contents, but an explicit module type,
+delimited by `{|...|}`, can constrain what module contents are visible by
+omitting elements and/or narrowing to less general types than the module
+definition can support. The following example demonstrates a module type which
+constrains what is externally visible (`'a t` is made abstract, `root_value_opt`
+and `root_value_hlt` are omitted).
+
+```hemlock
+let TreeConstrained
+  : {|
+    type 'a t
+    val empty: 'a t
+    val is_empty: '_ t -> bool
+    val node: 'a t -> 'a -> 'a t -> 'a t
+    val leaf: 'a -> 'a t
+    val lchild: 'a t -> 'a t
+    val root_value: 'a t -> 'a
+    val rchild: 'a t -> 'a t
+  |} = module
+    include Tree
+
+type TreeConstrainedSig = type of TreeConstrained
+```
+
+`TreeConstrained` conceptually demonstrates an implicit application of a
+function with type `TreeSig -> {|...|}`, though the syntax obscures that fact.
+The following is equivalent.
+
+```hemlock
+# val make_TreeConstrained: (T: TreeSig) -> TreeConstrainedSig
+let make_TreeConstrained (T: TreeSig)
+  : {|TreeConstrainedSig with type 'a t := 'a T.t|}
+  = module
+    let empty = T.empty
+    let is_empty = T.empty
+    let node = T.node
+    let leaf = T.leaf
+    let lchild = T.child
+    let root_value = T.root_value
+    let rchild = T.rchild
+
+let TreeConstrained = make_TreeConstrained Tree
+```
+
+Implicit function application also commonly occurs for top-level modules. For
+example, suppose that `Tree` is implemented as a top-level module in `Tree.hm`.
+The file contents (denoted as `<Tree.hm>`) are treated as if wrapped.
+
+```hemlock
+let Tree = module
+    <Tree.hm>
+```
+
+If there is also a corresponding interface file, `Tree.hmi`, then the file
+contents (denoted as `<Tree.hmi>`) are treated as if wrapped in combination with
+`Tree.hm`.
+
+```hemlock
+let Tree
+  : {|
+    <Tree.hmi>
+  |} = module
+    <Tree.hm>
+```
+
+As seen earlier, this is application of a function with type `() ->
+{|<Tree.hmi>|}`. If the module body were to cause effects during execution, the
+function type would contain corresponding effects, e.g. `() >{os}->
+{|<Tree.hmi>|}`.
+
+#### `open`, `include`, and `import`
+
+Outside `Tree`, the visible contents can be referred to via dot notation, e.g.
+`Tree.value`. It is also possible to `open` a module's lexical namespace, i.e.
+shadow the current lexical scope for the purposes of lookup without creating any
+new lexical bindings.
+
+```hemlock
+open Tree
+let tree = node (leaf 0) 1 empty
+```
+
+Alternatively, the scope for which the module is opened can be constrained to an
+expression.
+
+```hemlock
+let tree = Tree.(node (leaf 0) 1 empty)
+```
+
+The `open` keyword merely shadows the current lexical scope for the purpose of
+supporting identifier lookups, whereas the `include` keyword merges bindings
+into the current lexical scope. The most common use case for `include` is to
+create a new module which incorporates part or all of an `include`d module.
+
+The `import` keyword returns a top-level module. As described earlier, top-level
+module creation may cause effects, so `import` can incur effects. Therefore it
+is generally advisable to `import` external modules at at the top level of a
+module, and use `open`/`include` thereafter, in order to limit transitive effect
+impacts to the top-level module, thus sparing submodules and functions from API
+brittleness.
+
+```hemlock
+open import Basis
+let Tree = import Tree
+
+let AugmentedTree = module
+    include Tree
+    ...
+
+let triple a b c =
+    let open Tree
+    node (leaf a) b (leaf c)
+```

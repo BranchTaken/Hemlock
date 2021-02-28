@@ -14,16 +14,16 @@ categorized as:
 - Input/output mediated by the host operating system, whether for durable
   storage, communication with other processes and/or computers, etc., are all
   effects outside the runtime system.
-- Halting. Although an actor cannot observe itself halting, doing so prevents
-  subsequent computation. In many cases it is okay to ignore whether a
-  computation may halt, but calls to functions like `assert` must not be
-  optimized out, even though the calls produce no outputs.
+- Halting prevents subsequent computation, although an cannot observe itself
+  halting. In many cases it is okay for an actor to ignore whether a computation
+  may halt, but calls to functions like `assert` must not be optimized out, even
+  though the calls produce no outputs.
 
 Runtime system effects can be thought of in terms of reading/writing mutable
 program state. Reading a mutable value may not seem like it should be
 considered an effect, but the fact that the mutable value does not have a stable
-state means that repeated reads of the same may return differing results, thus
-affecting subsequent computation. Effectful reads must happen at "the right
+state means that repeated reads of the same value may return differing results,
+thus affecting subsequent computation. Effectful reads must happen at "the right
 time" to preserve program correctness, whereas reads of immutable values may
 occur at any time prior to use. Halting is not effectful from the halting
 actor's perspective, but other actors can observe the effect.
@@ -72,12 +72,12 @@ reference, see below.
   - `'a`: Parametric type, whether simple as in `uns` or with its own parameters
     as in `('aa, ^m, >e) 'a^`.
   - `'a t`, `('a, ^m, >e) t`, ...: Directly immutable parametric type.
-  - `'a t&`, `('a, ^m, >e) t`, ...: Directly mutable parametric type.
+  - `'a t&`, `('a, ^m, >e) t&`, ...: Directly mutable parametric type.
   - `'a t ^t`, `'a t^`, `('a, ^m) t^`: Parametric type with parametric direct
-    mutability. Note that `^m` is an indirect mutability parameter, whereas the
-    direct mutability parameter `^t` is distinct from the comma-separated
-    `(...)` parameter list, such that its absence and the absence of `&`
-    indicates that the type is directly immutable.
+    mutability. `^m` is an indirect mutability parameter, whereas the direct
+    mutability parameter `^t` is distinct from the comma-separated `(...)`
+    parameter list, such that its absence and the absence of `&` indicates that
+    the type is directly immutable.
   - `val f: 'a -> 'a t^`: The function produces an isolated value with
     parametric mutability. The value's mutability is either immutable or mutable
     as determined by type unification in the caller's context.
@@ -127,7 +127,7 @@ some examples from the Basis library.
 
 val halt: string >{hlt}-> 'a
 val not_reached: unit >{hlt}-> 'a
-val abort: string >{os,hlt}-> 'a
+val abort: string >{hlt}-> 'a
 
 val finalize: ('a& >-> unit) -> 'a& >-> unit
 
@@ -139,9 +139,9 @@ val force: ('a, >e) lazy_t >e-> 'a
 ```
 
 Parametric type `'a` may have its own effect and mutability parameters, e.g.
-`('aa, >a) 'a^`. For example, the set type could be `>a 'a^\&, >cmp 'cmp^) set`.
-The `'a` parameter is constrained to prohibit mutability, lest key mutation
-corrupt the set.
+`('aa, >a) 'a^`. For example, the set type could be `(>a 'a^\&, >cmp 'cmp^)
+set`. The `'a` parameter is constrained to prohibit mutability, lest key
+mutation corrupt the set.
 
 Regarding effects versus mutability consider that `'a array&` is a mutable type,
 but actual mutation is an effect.
@@ -495,3 +495,67 @@ Precise effects typing of callback functions is useful for local optimization
 even if the intermediary (e.g. `iter2`) is not specialized to take advantage of
 the precision. And if the entire call chain is inlined, the precise effect
 typing enables optimal machine code generation.
+
+# Modules
+
+Module types are special in that they can constrain which internal
+implementation details are visible outside the module. Therefore module types
+must explicitly reveal direct mutability, regardless of whether visible values
+make the information redundant.
+
+```hemlock
+# X's type partially reveals why it is mutable (x and set are mutable).
+let X
+  : {|val set&: uns >{mut}-> unit|}&
+  = module
+    let x& := 0
+    let set& := (fun u -> x := u)
+# unit -> {|val set&: uns >{mut}-> unit|}&
+
+# M's type doesn't reveal why it is mutable (m is mutable).
+let M
+  : {|val f: uns >{ld}-> uns|}&
+  = module
+    let m& := 42
+    let f u = u * m
+    X.mutate := (fun u -> m := u)
+# unit >{mut}-> {|val f: uns >{ld} -> uns|}&
+```
+
+Note that the right-hand side (RHS) of the module assignment to `M` is actually
+application of an effectful function. This is due to mutating `X.mutate` within
+the module body, which occurs during module creation. The mutation is treated as
+affecting the general environment rather than specifically `X`, because `X` is a
+free variable, i.e. not a parameter to the module creation function. This
+environment effect could be avoided as follows.
+
+```hemlock
+let make_M X
+  : {|val f: uns >{ld}-> uns|}&
+  = module
+    let m& := 42
+    let f u = u * m
+    X.mutate := (fun u -> m := u)
+# val make_M: {|val set&: uns >{mut}-> unit|}& >{mut}~>
+#   -> {|val f: uns >{ld} -> uns|}&
+
+let M = make_M X
+
+# Equivalent to the above, but avoids creating the make_M lexical binding.
+let M = (fun X
+  : {|val f: uns >{ld}-> uns|}&
+  -> module
+    let m& := 42
+    let f u = u * m
+    X.mutate := (fun u -> m := u)
+  ) X
+# {|val set&: uns >{mut}-> unit|}& >{mut}~> -> {|val f: uns >{ld} -> uns|}&
+```
+
+If `X` were instead mutated inside `M.f`, then applying `M.f` would cause an
+environment effect unless `X` were an explicit parameter to `M.f`, *regardless*
+of whether the module creation function takes `X` as an explicit parameter. Put
+simply, module creation functions behave typically with regard to effects, but
+this fact is obscured by the `let M : {|...|} = module ...` syntax if the
+programmer is unaware of its duality with the more general function application
+syntax.

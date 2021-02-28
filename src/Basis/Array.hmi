@@ -2,20 +2,22 @@ open Rudiments
 
 type 'a t^ = 'a array^t (* 'a array^ is built in. *)
 
-include ContainerCommonIntf.SPolyFold with type 'a t^ := 'a t^
+include {|ContainerCommonIntf.SPolyFold with type 'a t^ := 'a t^|}
 
-include FormattableIntf.SPoly with type 'a t^ := 'a, t^
+include {|FormattableIntf.SPoly with type 'a t^ := 'a, t^|}
 
 `|Cursor that supports arbitrary array element access. All operations are O(1).
 `
-module Cursor : sig
+val Cursor : {|
     type 'a container^c = 'a t^c
     type 'a t^
 
-    include CursorIntf.SPoly
-      with type 'a container^c := 'a container^c
-      also type 'a elm := 'a
-      also type 'a t^ := 'a t^
+    include {|CursorIntf.SPoly with
+        type 'a container^c := 'a container^c
+        type 'a elm := 'a
+        type 'a t^ := 'a t^
+      |}
+  |}
 
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t^_ -> Hash.State.t
   -> Hash.State.t
@@ -29,40 +31,47 @@ val cmp: ('a -> 'a -> Cmp.t) -> 'a t^_ -> 'a t^_ -> Cmp.t
  |may differ.
 `
 
-module Seq : sig
+val Seq : {|
     type 'a outer^ = 'a t^outer
-    module type SMono = sig
+    type SMono = {|
         type t^
         type elm^
         val to_array: t^ -> elm^ outer^
-    module type SPoly = sig
+      |}
+    type SPoly = {|
         type 'a t^
         type 'a elm
         val to_array: 'a t^ -> 'a elm outer^
+      |}
 
     `|Efficiently convert a sequence of fixed element type with known length to
      |an array.
     `
-    module MakeMono (T : SeqIntf.IMonoDef) : SMono
-      with type t^ := T.t^
-      also type elm^ := T.elm^
+    val make_Mono: (T : SeqIntf.IMonoDef) -> {|SMono with
+        type t^ := T.t^
+        type elm^ := T.elm^
+      |}
 
     `|Efficiently convert a reversed sequence of fixed element type with known
      |length to an array.
     `
-    module MakeMonoRev (T : SeqIntf.IMonoDef) : SMono
-      with type t^ := T.t^
-      also type elm^ := T.elm^
+    val make_MonoRev: (T : SeqIntf.IMonoDef) -> {|SMono with
+        type t^ := T.t^
+        type elm^ := T.elm^
+      |}
     ``Efficiently convert a generic sequence with known length to an array.``
-    module MakePoly (T : SeqIntf.IPolyDef) : SPoly
-      with type 'a t^ := 'a T.t^
-      also type 'a elm := 'a T.elm
+    val make_Poly: (T : SeqIntf.IPolyDef) -> {|SPoly with
+        type 'a t^ := 'a T.t^
+        type 'a elm := 'a T.elm
+      |}
     `|Efficiently convert a reversed generic sequence with known length to an
      |array.
     `
-    module MakePolyRev (T : SeqIntf.IPolyDef) : SPoly
-      with type 'a t^ := 'a T.t^
-      also type 'a elm := 'a T.elm
+    val make_PolyRev: (T : SeqIntf.IPolyDef) -> {|SPoly with
+        type 'a t^ := 'a T.t^
+        type 'a elm := 'a T.elm
+      |}
+  |}
 
 val empty: 'a t^
 `|The empty array, equivalent to `[||]`.
