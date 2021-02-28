@@ -11,24 +11,24 @@ end
 module Flag: sig
   (* type t *)
   type t =
-    | R_O   (* Open existing file for read or fail if it does not exist. *)
-    | W     (* Create new or truncate existing file and open for write. *)
-    | W_A   (* Create new or append to existing file and open for write. *)
-    | W_AO  (* Append to existing file and open for write, failing if it does
-             * not exist. *)
-    | W_C   (* Create new file and open for write, failing if file exists *)
-    | W_O   (* Truncate existing file and open for write, failing if file does
-             * not exist. *)
-    | RW    (* Create new or truncate existing file and open for read and
-             * write. *)
-    | RW_A  (* Create new or append to existing file and open for read and
-             * write. *)
-    | RW_AO (* Append to existing file and open for read and write, failing if
-             * file does not exist. *)
-    | RW_C  (* Create new file and open for read and write, failing if file
-             * exists. *)
-    | RW_O  (* Truncate existing file and open for read and write, failing if
-             * file does not exist. *)
+    | R_O   (** Open existing file for read or fail if it does not exist. *)
+    | W     (** Create new or truncate existing file and open for write. *)
+    | W_A   (** Create new or append to existing file and open for write. *)
+    | W_AO  (** Append to existing file and open for write, failing if it does
+                not exist. *)
+    | W_C   (** Create new file and open for write, failing if file exists *)
+    | W_O   (** Truncate existing file and open for write, failing if file does
+                not exist. *)
+    | RW    (** Create new or truncate existing file and open for read and
+                write. *)
+    | RW_A  (** Create new or append to existing file and open for read and
+                write. *)
+    | RW_AO (** Append to existing file and open for read and write, failing if
+                file does not exist. *)
+    | RW_C  (** Create new file and open for read and write, failing if file
+                exists. *)
+    | RW_O  (** Truncate existing file and open for read and write, failing if
+                file does not exist. *)
 end
 
 (*
