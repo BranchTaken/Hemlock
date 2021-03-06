@@ -2046,167 +2046,170 @@ let end_of_input cursor t =
   | _, 0 -> accept Tok_end_of_input cursor t
   | _ -> accept_dentation Tok_dedent cursor {t with level=Uns.pred t.level}
 
-(* The scanner's directed acyclic subgraph is expressed as a DAG of states with
- * a unified state transition driver. *)
-type action = Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-type eoi_action = Text.Cursor.t -> t -> t * ConcreteToken.t
-type state = {
-  edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
-  eoi: eoi_action;
-  default: action;
-}
+module Dag = struct
+  (* The scanner's directed acyclic subgraph is expressed as a DAG of states
+   * with a unified state transition driver. *)
+  type action = Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
+  type eoi_action = Text.Cursor.t -> t -> t * ConcreteToken.t
+  type state = {
+    edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
+    eoi: eoi_action;
+    default: action;
+  }
 
-let act state _pcursor cursor t =
-  match Text.Cursor.next_opt cursor with
-  | None -> state.eoi cursor t
-  | Some (cp, cursor') -> begin
-      match Map.get cp state.edges with
-      | Some action' -> action' cursor cursor' t
-      | None -> state.default cursor cursor' t
-    end
+  let act state _pcursor cursor t =
+    match Text.Cursor.next_opt cursor with
+    | None -> state.eoi cursor t
+    | Some (cp, cursor') -> begin
+        match Map.get cp state.edges with
+        | Some action' -> action' cursor cursor' t
+        | None -> state.default cursor cursor' t
+      end
 
-let start_state = {
-  edges=(map_of_cps_alist [
-    (",", (accept_incl Tok_comma));
-    (".", (accept_incl Tok_dot));
-    (":", (act {
-        edges=(map_of_cps_alist [
-          (":", (accept_incl Tok_cons));
-          ("=", (accept_incl Tok_colon_eq));
-        ]);
-        eoi=(accept Tok_colon);
-        default=(accept_excl Tok_colon);
-      }));
-    (";", (accept_incl Tok_semi));
-    ("(", (act {
-        edges=Map.singleton (module Codepoint)
-          ~k:(Codepoint.of_char '*') ~v:paren_comment;
-        eoi=(accept Tok_lparen);
-        default=(accept_excl Tok_lparen);
-      }));
-    (")", (accept_incl Tok_rparen));
-    ("[", (act {
-        edges=Map.singleton (module Codepoint)
-          ~k:(Codepoint.of_char '|') ~v:(act {
-            edges=Map.empty (module Codepoint);
-            eoi=(accept Tok_larray);
-            default=(accept_excl Tok_larray);
-          });
-        eoi=(accept Tok_lbrack);
-        default=(accept_excl Tok_lbrack);
-      }));
-    ("]", (act {
-        edges=Map.empty (module Codepoint);
-        eoi=(accept Tok_rbrack);
-        default=(accept_excl Tok_rbrack);
-      }));
-    ("{", (accept_incl Tok_lcurly));
-    ("}", (accept_incl Tok_rcurly));
-    ("\\", (act {
-        edges=(map_of_cps_alist [
-          ("\n", whitespace);
-        ]);
-        eoi=(accept Tok_bslash);
-        default=(accept_excl Tok_bslash);
-      }));
-    ("^", (accept_incl Tok_caret));
-    ("&", (accept_incl Tok_amp));
-    ("\n", (accept_delim_incl Tok_whitespace));
-    ("~", (act {
-        edges=(map_of_cps_alist [
-          (operator_cps, (operator (fun s -> Tok_tilde_op s)));
-        ]);
-        eoi=(accept Tok_tilde);
-        default=(accept_excl Tok_tilde);
-      }));
-    ("?", (act {
-        edges=(map_of_cps_alist [
-          (operator_cps, (operator (fun s -> Tok_qmark_op s)));
-        ]);
-        eoi=(accept Tok_qmark);
-        default=(accept_excl Tok_qmark);
-      }));
-    ("*", (act {
-        edges=(map_of_cps_alist [
-          ("*", (operator (fun s -> Tok_star_star_op s)));
-          ("-+/%@!$<=>|:.~?", (operator (fun s -> Tok_star_op s)));
-        ]);
-        eoi=(accept (Tok_star_op "*"));
-        default=(accept_excl (Tok_star_op "*"));
-      }));
-    ("/", (operator (fun s -> Tok_slash_op s)));
-    ("%", (operator (fun s -> Tok_pct_op s)));
-    ("+", (operator (fun s -> Tok_plus_op s)));
-    ("-", (operator (fun s -> Tok_minus_op s)));
-    ("@", (operator (fun s -> Tok_at_op s)));
-    ("<", (operator (fun s -> Tok_lt_op s)));
-    ("=", (operator (fun s -> Tok_eq_op s)));
-    (">", (operator (fun s -> Tok_gt_op s)));
-    ("|", (act {
-        edges=(map_of_cps_alist [
-          ("]", (act {
+  let start_state = {
+    edges=(map_of_cps_alist [
+      (",", (accept_incl Tok_comma));
+      (".", (accept_incl Tok_dot));
+      (":", (act {
+          edges=(map_of_cps_alist [
+            (":", (accept_incl Tok_cons));
+            ("=", (accept_incl Tok_colon_eq));
+          ]);
+          eoi=(accept Tok_colon);
+          default=(accept_excl Tok_colon);
+        }));
+      (";", (accept_incl Tok_semi));
+      ("(", (act {
+          edges=Map.singleton (module Codepoint)
+            ~k:(Codepoint.of_char '*') ~v:paren_comment;
+          eoi=(accept Tok_lparen);
+          default=(accept_excl Tok_lparen);
+        }));
+      (")", (accept_incl Tok_rparen));
+      ("[", (act {
+          edges=Map.singleton (module Codepoint)
+            ~k:(Codepoint.of_char '|') ~v:(act {
               edges=Map.empty (module Codepoint);
-              eoi=(accept Tok_rarray);
-              default=(accept_excl Tok_rarray);
-            }));
-          (operator_cps, (operator (fun s -> Tok_bar_op s)));
-        ]);
-        eoi=(accept Tok_bar);
-        default=(accept_excl Tok_bar);
-      }));
-    (" ", whitespace);
-    ("#", hash_comment);
-    ("abcdefghijklmnopqrstuvwxyz_", uident);
-    ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
-    ("'", Codepoint_.codepoint);
-    ("\"", String_.istring);
-    ("`", (act {
-        edges=Map.singleton (module Codepoint)
-          ~k:(Codepoint.of_char '|') ~v:String_.bstring;
-        eoi=String_.accept_unterminated_rstring;
-        default=String_.rstring;
-      }));
-    ("0", (act {
-        edges=(map_of_cps_alist [
-          ("0_", Integer.(dec Nat.k_0));
-          ("1", Integer.(dec Nat.k_1));
-          ("2", Integer.(dec Nat.k_2));
-          ("3", Integer.(dec Nat.k_3));
-          ("4", Integer.(dec Nat.k_4));
-          ("5", Integer.(dec Nat.k_5));
-          ("6", Integer.(dec Nat.k_6));
-          ("7", Integer.(dec Nat.k_7));
-          ("8", Integer.(dec Nat.k_8));
-          ("9", Integer.(dec Nat.k_9));
-          ("b", Integer.(bin Nat.k_0));
-          ("o", Integer.(oct Nat.k_0));
-          ("x", Integer.(hex Nat.k_0));
-          ("u", Integer.zero_u_suffix);
-          ("i", Integer.zero_i_suffix);
-          ("r", Real.zero_r_suffix);
-          (".", Real.zero_frac);
-          ("e", Real.zero_exp);
-          ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", Integer.mal_ident);
-        ]);
-        eoi=(accept Integer.zero);
-        default=(accept_excl Integer.zero);
-      }));
-    ("1", Integer.(dec Nat.k_1));
-    ("2", Integer.(dec Nat.k_2));
-    ("3", Integer.(dec Nat.k_3));
-    ("4", Integer.(dec Nat.k_4));
-    ("5", Integer.(dec Nat.k_5));
-    ("6", Integer.(dec Nat.k_6));
-    ("7", Integer.(dec Nat.k_7));
-    ("8", Integer.(dec Nat.k_8));
-    ("9", Integer.(dec Nat.k_9));
-  ]);
-  eoi=end_of_input;
-  default=(accept_incl Tok_error);
-}
+              eoi=(accept Tok_larray);
+              default=(accept_excl Tok_larray);
+            });
+          eoi=(accept Tok_lbrack);
+          default=(accept_excl Tok_lbrack);
+        }));
+      ("]", (act {
+          edges=Map.empty (module Codepoint);
+          eoi=(accept Tok_rbrack);
+          default=(accept_excl Tok_rbrack);
+        }));
+      ("{", (accept_incl Tok_lcurly));
+      ("}", (accept_incl Tok_rcurly));
+      ("\\", (act {
+          edges=(map_of_cps_alist [
+            ("\n", whitespace);
+          ]);
+          eoi=(accept Tok_bslash);
+          default=(accept_excl Tok_bslash);
+        }));
+      ("^", (accept_incl Tok_caret));
+      ("&", (accept_incl Tok_amp));
+      ("\n", (accept_delim_incl Tok_whitespace));
+      ("~", (act {
+          edges=(map_of_cps_alist [
+            (operator_cps, (operator (fun s -> Tok_tilde_op s)));
+          ]);
+          eoi=(accept Tok_tilde);
+          default=(accept_excl Tok_tilde);
+        }));
+      ("?", (act {
+          edges=(map_of_cps_alist [
+            (operator_cps, (operator (fun s -> Tok_qmark_op s)));
+          ]);
+          eoi=(accept Tok_qmark);
+          default=(accept_excl Tok_qmark);
+        }));
+      ("*", (act {
+          edges=(map_of_cps_alist [
+            ("*", (operator (fun s -> Tok_star_star_op s)));
+            ("-+/%@!$<=>|:.~?", (operator (fun s -> Tok_star_op s)));
+          ]);
+          eoi=(accept (Tok_star_op "*"));
+          default=(accept_excl (Tok_star_op "*"));
+        }));
+      ("/", (operator (fun s -> Tok_slash_op s)));
+      ("%", (operator (fun s -> Tok_pct_op s)));
+      ("+", (operator (fun s -> Tok_plus_op s)));
+      ("-", (operator (fun s -> Tok_minus_op s)));
+      ("@", (operator (fun s -> Tok_at_op s)));
+      ("<", (operator (fun s -> Tok_lt_op s)));
+      ("=", (operator (fun s -> Tok_eq_op s)));
+      (">", (operator (fun s -> Tok_gt_op s)));
+      ("|", (act {
+          edges=(map_of_cps_alist [
+            ("]", (act {
+                edges=Map.empty (module Codepoint);
+                eoi=(accept Tok_rarray);
+                default=(accept_excl Tok_rarray);
+              }));
+            (operator_cps, (operator (fun s -> Tok_bar_op s)));
+          ]);
+          eoi=(accept Tok_bar);
+          default=(accept_excl Tok_bar);
+        }));
+      (" ", whitespace);
+      ("#", hash_comment);
+      ("abcdefghijklmnopqrstuvwxyz_", uident);
+      ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
+      ("'", Codepoint_.codepoint);
+      ("\"", String_.istring);
+      ("`", (act {
+          edges=Map.singleton (module Codepoint)
+            ~k:(Codepoint.of_char '|') ~v:String_.bstring;
+          eoi=String_.accept_unterminated_rstring;
+          default=String_.rstring;
+        }));
+      ("0", (act {
+          edges=(map_of_cps_alist [
+            ("0_", Integer.(dec Nat.k_0));
+            ("1", Integer.(dec Nat.k_1));
+            ("2", Integer.(dec Nat.k_2));
+            ("3", Integer.(dec Nat.k_3));
+            ("4", Integer.(dec Nat.k_4));
+            ("5", Integer.(dec Nat.k_5));
+            ("6", Integer.(dec Nat.k_6));
+            ("7", Integer.(dec Nat.k_7));
+            ("8", Integer.(dec Nat.k_8));
+            ("9", Integer.(dec Nat.k_9));
+            ("b", Integer.(bin Nat.k_0));
+            ("o", Integer.(oct Nat.k_0));
+            ("x", Integer.(hex Nat.k_0));
+            ("u", Integer.zero_u_suffix);
+            ("i", Integer.zero_i_suffix);
+            ("r", Real.zero_r_suffix);
+            (".", Real.zero_frac);
+            ("e", Real.zero_exp);
+            ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'",
+              Integer.mal_ident);
+          ]);
+          eoi=(accept Integer.zero);
+          default=(accept_excl Integer.zero);
+        }));
+      ("1", Integer.(dec Nat.k_1));
+      ("2", Integer.(dec Nat.k_2));
+      ("3", Integer.(dec Nat.k_3));
+      ("4", Integer.(dec Nat.k_4));
+      ("5", Integer.(dec Nat.k_5));
+      ("6", Integer.(dec Nat.k_6));
+      ("7", Integer.(dec Nat.k_7));
+      ("8", Integer.(dec Nat.k_8));
+      ("9", Integer.(dec Nat.k_9));
+    ]);
+    eoi=end_of_input;
+    default=(accept_incl Tok_error);
+  }
 
-let start t =
-  act start_state t.cursor t.cursor t
+  let start t =
+    act start_state t.cursor t.cursor t
+end
 
 module LineDirective : sig
   val start: Text.Cursor.t -> t -> t * ConcreteToken.t option
@@ -2287,56 +2290,68 @@ end = struct
       end
 end
 
-let rec dentation_cont cursor t =
-  match Text.Cursor.next_opt cursor with
-  | None -> begin
-      match t.line_state with
-      | LineDentation -> accept Tok_whitespace cursor t
-      | LineDelim -> accept_dentation Tok_line_delim cursor t
-      | LineBody -> not_reached ()
-    end
-  | Some (cp, cursor') -> begin
-      match cp with
-      | cp when Codepoint.(cp = of_char ' ') -> dentation_cont cursor' t
-      | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
-      | _ -> begin
-          let col = Text.(Pos.col (Cursor.pos cursor)) in
-          let level = col / 4 in
-          let rem = col % 4 in
-          match rem, t.level, level with
-          | 0, t_level, level when t_level = level -> begin
-              match t.line_state with
-              | LineDentation -> start {t with line_state=LineBody}
-              | LineDelim -> accept_dentation Tok_line_delim cursor t
-              | LineBody -> not_reached ()
-            end
-          | 0, t_level, level when Uns.succ t_level = level ->
-            accept_dentation Tok_indent cursor {t with level}
-          | 0, t_level, level when t_level = Uns.succ level ->
-            accept_dentation Tok_dedent cursor {t with level}
-          | 2, t_level, level when t_level = level ->
-            accept_dentation Tok_whitespace cursor t
-          | _ -> accept_dentation Tok_indent_error cursor t
-        end
-    end
+module Dentation : sig
+  val start: Text.Cursor.t -> t -> t * ConcreteToken.t
+end = struct
+  type paren_comment_lookahead_result =
+    | LineExpr
+    | LineNoop of t * ConcreteToken.t
 
-type paren_comment_lookahead_result =
-  | LineExpr
-  | LineNoop of t * ConcreteToken.t
+  let rec next cursor t =
+    match Text.Cursor.next_opt cursor with
+    | None -> begin
+        match t.line_state with
+        | LineDentation -> accept Tok_whitespace cursor t
+        | LineDelim -> accept_dentation Tok_line_delim cursor t
+        | LineBody -> not_reached ()
+      end
+    | Some (cp, cursor') -> begin
+        match cp with
+        | cp when Codepoint.(cp = of_char ' ') -> next cursor' t
+        | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
+        | _ -> begin
+            let col = Text.(Pos.col (Cursor.pos cursor)) in
+            let level = col / 4 in
+            let rem = col % 4 in
+            match rem, t.level, level with
+            | 0, t_level, level when t_level = level -> begin
+                match t.line_state with
+                | LineDentation -> Dag.start {t with line_state=LineBody}
+                | LineDelim -> accept_dentation Tok_line_delim cursor t
+                | LineBody -> not_reached ()
+              end
+            | 0, t_level, level when succ t_level = level ->
+              accept_dentation Tok_indent cursor {t with level}
 
-let rec dentation cursor t =
-  (* Lines comprising only whitespace and/or comments are ignored with regard
-   * to indentation. Leading paren comments are problematic in that we must
-   * look ahead far enough to determine whether the line contains an expression.
+            | 0, t_level, level when t_level > succ level ->
+              accept Tok_dedent t.cursor {t with level=pred t_level}
+            | 0, t_level, level when t_level = succ level ->
+              accept_dentation Tok_dedent cursor {t with level}
+
+            | 2, t_level, level when t_level > succ level ->
+              accept Tok_dedent t.cursor {t with level=pred t_level}
+            | 2, t_level, level when t_level = succ level ->
+              accept_dentation Tok_dedent cursor {t with level}
+
+            | 2, t_level, level when t_level = level ->
+              accept_dentation Tok_whitespace cursor t
+
+            | _ -> accept_dentation Tok_indent_error cursor t
+          end
+      end
+
+  (* Lines comprising only whitespace and/or comments are ignored with regard to
+   * indentation. Leading paren comments are problematic in that we must look
+   * ahead far enough to determine whether the line contains an expression.
    * While this could require looking ahead an arbitrary number of tokens, in
    * the overwhelmingly common case the leading paren comment is immediately
    * followed by line-delimiting whitespace. In the LineNoop case the leading
    * paren comment only gets scanned once, and therefore the line-delimiting
    * whitespace token is the only token to be scanned twice in the common case.
   *)
-  let paren_comment_lookahead pcursor cursor t = begin
+  let paren_comment_lookahead pcursor cursor t =
     let rec fn t = begin
-      let t', ctoken = start t in
+      let t', ctoken = Dag.start t in
       match ctoken.atoken, t'.line_state with
       | Tok_end_of_input, _
       | Tok_hash_comment, _
@@ -2352,52 +2367,54 @@ let rec dentation cursor t =
         | false -> LineExpr
         | true -> LineNoop ({t' with line_state=LineBody}, ctoken)
       end
-  end in
-  let other cursor t = begin
+
+  let other cursor t =
     match t.level with
     | 0 -> begin
         match t.line_state with
-        | LineDentation -> start {t with line_state=LineBody}
+        | LineDentation -> Dag.start {t with line_state=LineBody}
         | LineDelim -> accept_dentation Tok_line_delim cursor t
         | LineBody -> not_reached ()
       end
     | 1 -> accept_dentation Tok_dedent cursor {t with level=0}
-    | _ -> accept_dentation Tok_indent_error cursor t
-  end in
-  match Text.Cursor.next_opt cursor with
-  | None -> end_of_input cursor t
-  | Some (cp, cursor') -> begin
-      match cp with
-      | cp when Codepoint.(cp = of_char ' ') -> dentation_cont cursor' t
-      | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
-      | cp when Codepoint.(cp = of_char '#') -> hash_comment cursor cursor' t
-      | cp when Codepoint.(cp = of_char '(') -> begin
-          match Text.Cursor.next_opt cursor' with
-          | None -> other cursor t
-          | Some (cp, cursor'') -> begin
-              match cp with
-              | cp when Codepoint.(cp = of_char '*') -> begin
-                  match paren_comment_lookahead cursor' cursor'' t with
-                  | LineExpr -> other cursor t
-                  | LineNoop (t', ctoken) -> t', ctoken
-                end
-              | _ -> other cursor t
-            end
-        end
-      | cp when Codepoint.(cp = of_char ':') -> begin
-          let t', tok_opt = LineDirective.start cursor' t in
-          match tok_opt with
-          | None -> dentation t'.cursor t'
-          | Some tok -> t', tok
-        end
-      | _ -> other cursor t
-    end
+    | _ -> accept Tok_dedent cursor {t with level=pred t.level}
+
+  let rec start cursor t =
+    match Text.Cursor.next_opt cursor with
+    | None -> end_of_input cursor t
+    | Some (cp, cursor') -> begin
+        match cp with
+        | cp when Codepoint.(cp = of_char ' ') -> next cursor' t
+        | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
+        | cp when Codepoint.(cp = of_char '#') -> hash_comment cursor cursor' t
+        | cp when Codepoint.(cp = of_char '(') -> begin
+            match Text.Cursor.next_opt cursor' with
+            | None -> other cursor t
+            | Some (cp, cursor'') -> begin
+                match cp with
+                | cp when Codepoint.(cp = of_char '*') -> begin
+                    match paren_comment_lookahead cursor' cursor'' t with
+                    | LineExpr -> other cursor t
+                    | LineNoop (t', ctoken) -> t', ctoken
+                  end
+                | _ -> other cursor t
+              end
+          end
+        | cp when Codepoint.(cp = of_char ':') -> begin
+            let t', tok_opt = LineDirective.start cursor' t in
+            match tok_opt with
+            | None -> start t'.cursor t'
+            | Some tok -> t', tok
+          end
+        | _ -> other cursor t
+      end
+end
 
 let next t =
   match t.line_state with
   | LineDentation
-  | LineDelim -> dentation t.cursor t
-  | LineBody -> start t
+  | LineDelim -> Dentation.start t.cursor t
+  | LineBody -> Dag.start t
 
 (******************************************************************************)
 (* Begin tests. *)
@@ -2579,6 +2596,42 @@ g
  ... *) true
     c
 |};
+  scan_str {|a
+    b
+        c
+            d
+    e
+|};
+  scan_str {|a
+    b
+        c
+            d
+      e
+    f
+|};
+  scan_str {|a
+    b
+    c
+  d
+    e
+        f
+      g
+        h
+    i
+|};
+  scan_str {|a
+  b
+  c
+d
+|};
+  scan_str {|a
+        b
+|};
+  scan_str {|a
+    b
+        c
+d
+|};
 
   printf "@]";
 
@@ -2710,10 +2763,10 @@ g
       [3:0..3:4) : <Tok_indent>
       [3:4..3:5) : <Tok_uident="b">
       [3:5..4:0) : <Tok_whitespace>
-      [4:0..4:2) : <Tok_indent_error>
+      [4:0..4:2) : <Tok_dedent>
       [4:2..4:3) : <Tok_uident="c">
       [4:3..5:0) : <Tok_whitespace>
-      [5:0..5:4) : <Tok_line_delim>
+      [5:0..5:4) : <Tok_indent>
       [5:4..5:5) : <Tok_uident="d">
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:0) : <Tok_dedent>
@@ -2953,6 +3006,141 @@ g
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:0) : <Tok_dedent>
       [6:0..6:0) : <Tok_end_of_input>
+    {|a
+        b
+            c
+                d
+        e
+    |}
+      [1:0..1:1) : <Tok_uident="a">
+      [1:1..2:0) : <Tok_whitespace>
+      [2:0..2:4) : <Tok_indent>
+      [2:4..2:5) : <Tok_uident="b">
+      [2:5..3:0) : <Tok_whitespace>
+      [3:0..3:8) : <Tok_indent>
+      [3:8..3:9) : <Tok_uident="c">
+      [3:9..4:0) : <Tok_whitespace>
+      [4:0..4:12) : <Tok_indent>
+      [4:12..4:13) : <Tok_uident="d">
+      [4:13..5:0) : <Tok_whitespace>
+      [5:0..5:0) : <Tok_dedent>
+      [5:0..5:4) : <Tok_dedent>
+      [5:4..5:5) : <Tok_uident="e">
+      [5:5..6:0) : <Tok_whitespace>
+      [6:0..6:0) : <Tok_dedent>
+      [6:0..6:0) : <Tok_end_of_input>
+    {|a
+        b
+            c
+                d
+          e
+        f
+    |}
+      [1:0..1:1) : <Tok_uident="a">
+      [1:1..2:0) : <Tok_whitespace>
+      [2:0..2:4) : <Tok_indent>
+      [2:4..2:5) : <Tok_uident="b">
+      [2:5..3:0) : <Tok_whitespace>
+      [3:0..3:8) : <Tok_indent>
+      [3:8..3:9) : <Tok_uident="c">
+      [3:9..4:0) : <Tok_whitespace>
+      [4:0..4:12) : <Tok_indent>
+      [4:12..4:13) : <Tok_uident="d">
+      [4:13..5:0) : <Tok_whitespace>
+      [5:0..5:0) : <Tok_dedent>
+      [5:0..5:6) : <Tok_dedent>
+      [5:6..5:7) : <Tok_uident="e">
+      [5:7..6:0) : <Tok_whitespace>
+      [6:0..6:4) : <Tok_line_delim>
+      [6:4..6:5) : <Tok_uident="f">
+      [6:5..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:0) : <Tok_end_of_input>
+    {|a
+        b
+        c
+      d
+        e
+            f
+          g
+            h
+        i
+    |}
+      [1:0..1:1) : <Tok_uident="a">
+      [1:1..2:0) : <Tok_whitespace>
+      [2:0..2:4) : <Tok_indent>
+      [2:4..2:5) : <Tok_uident="b">
+      [2:5..3:0) : <Tok_whitespace>
+      [3:0..3:4) : <Tok_line_delim>
+      [3:4..3:5) : <Tok_uident="c">
+      [3:5..4:0) : <Tok_whitespace>
+      [4:0..4:2) : <Tok_dedent>
+      [4:2..4:3) : <Tok_uident="d">
+      [4:3..5:0) : <Tok_whitespace>
+      [5:0..5:4) : <Tok_indent>
+      [5:4..5:5) : <Tok_uident="e">
+      [5:5..6:0) : <Tok_whitespace>
+      [6:0..6:8) : <Tok_indent>
+      [6:8..6:9) : <Tok_uident="f">
+      [6:9..7:0) : <Tok_whitespace>
+      [7:0..7:6) : <Tok_dedent>
+      [7:6..7:7) : <Tok_uident="g">
+      [7:7..8:0) : <Tok_whitespace>
+      [8:0..8:8) : <Tok_indent>
+      [8:8..8:9) : <Tok_uident="h">
+      [8:9..9:0) : <Tok_whitespace>
+      [9:0..9:4) : <Tok_dedent>
+      [9:4..9:5) : <Tok_uident="i">
+      [9:5..10:0) : <Tok_whitespace>
+      [10:0..10:0) : <Tok_dedent>
+      [10:0..10:0) : <Tok_end_of_input>
+    {|a
+      b
+      c
+    d
+    |}
+      [1:0..1:1) : <Tok_uident="a">
+      [1:1..2:0) : <Tok_whitespace>
+      [2:0..2:2) : <Tok_whitespace>
+      [2:2..2:3) : <Tok_uident="b">
+      [2:3..3:0) : <Tok_whitespace>
+      [3:0..3:2) : <Tok_whitespace>
+      [3:2..3:3) : <Tok_uident="c">
+      [3:3..4:0) : <Tok_whitespace>
+      [4:0..4:0) : <Tok_line_delim>
+      [4:0..4:1) : <Tok_uident="d">
+      [4:1..5:0) : <Tok_whitespace>
+      [5:0..5:0) : <Tok_line_delim>
+      [5:0..5:0) : <Tok_end_of_input>
+    {|a
+            b
+    |}
+      [1:0..1:1) : <Tok_uident="a">
+      [1:1..2:0) : <Tok_whitespace>
+      [2:0..2:8) : <Tok_indent_error>
+      [2:8..2:9) : <Tok_uident="b">
+      [2:9..3:0) : <Tok_whitespace>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:0) : <Tok_end_of_input>
+    {|a
+        b
+            c
+    d
+    |}
+      [1:0..1:1) : <Tok_uident="a">
+      [1:1..2:0) : <Tok_whitespace>
+      [2:0..2:4) : <Tok_indent>
+      [2:4..2:5) : <Tok_uident="b">
+      [2:5..3:0) : <Tok_whitespace>
+      [3:0..3:8) : <Tok_indent>
+      [3:8..3:9) : <Tok_uident="c">
+      [3:9..4:0) : <Tok_whitespace>
+      [4:0..4:0) : <Tok_dedent>
+      [4:0..4:0) : <Tok_dedent>
+      [4:0..4:1) : <Tok_uident="d">
+      [4:1..5:0) : <Tok_whitespace>
+      [5:0..5:0) : <Tok_line_delim>
+      [5:0..5:0) : <Tok_end_of_input>
     |xxx}]
 
 let%expect_test "line directive" =
