@@ -114,7 +114,7 @@ Hemlock uses various symbols as punctuation:
 
 ```hemlock
 . , ; : :: :=
-( ) [ ] [| |] { }
+( ) [ ] [| |] { } {| |}
 \ ' ^ &
 ~ ?
 | ~> -> >->
@@ -134,16 +134,16 @@ The following words are keywords which are used as syntactic elements, and
 cannot be used for other purposes.
 
 ```hemlock
-and      external  lazy    then
-also     false     let     to
-as       for       match   true
-assert   fun       module  type
-conceal  function  of      val
-do       functor   open    when
-downto   if        or      while
-effect   import    rec     with
-else     in        sig
-expose   include   struct
+and      external  match   val
+also     false     module  when
+as       for       of      while
+assert   fun       open    with
+conceal  function  or
+do       if        rec
+downto   import    then
+effect   include   to
+else     lazy      true
+expose   let       type
 ```
 
 ### Identifier

@@ -65,10 +65,8 @@ module AbstractToken : sig
     | Tok_for
     | Tok_fun
     | Tok_function
-    | Tok_functor
     | Tok_if
     | Tok_import
-    | Tok_in
     | Tok_include
     | Tok_lazy
     | Tok_let
@@ -78,8 +76,6 @@ module AbstractToken : sig
     | Tok_open
     | Tok_or
     | Tok_rec
-    | Tok_sig
-    | Tok_struct
     | Tok_then
     | Tok_to
     | Tok_true

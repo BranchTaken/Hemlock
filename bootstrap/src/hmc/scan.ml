@@ -226,10 +226,8 @@ module AbstractToken = struct
     | Tok_for
     | Tok_fun
     | Tok_function
-    | Tok_functor
     | Tok_if
     | Tok_import
-    | Tok_in
     | Tok_include
     | Tok_lazy
     | Tok_let
@@ -239,8 +237,6 @@ module AbstractToken = struct
     | Tok_open
     | Tok_or
     | Tok_rec
-    | Tok_sig
-    | Tok_struct
     | Tok_then
     | Tok_to
     | Tok_true
@@ -347,10 +343,8 @@ module AbstractToken = struct
     | Tok_for -> "<Tok_for>"
     | Tok_fun -> "<Tok_fun>"
     | Tok_function -> "<Tok_function>"
-    | Tok_functor -> "<Tok_functor>"
     | Tok_if -> "<Tok_if>"
     | Tok_import -> "<Tok_import>"
-    | Tok_in -> "<Tok_in>"
     | Tok_include -> "<Tok_include>"
     | Tok_lazy -> "<Tok_lazy>"
     | Tok_let -> "<Tok_let>"
@@ -360,8 +354,6 @@ module AbstractToken = struct
     | Tok_open -> "<Tok_open>"
     | Tok_or -> "<Tok_or>"
     | Tok_rec -> "<Tok_rec>"
-    | Tok_sig -> "<Tok_sig>"
-    | Tok_struct -> "<Tok_struct>"
     | Tok_then -> "<Tok_then>"
     | Tok_to -> "<Tok_to>"
     | Tok_true -> "<Tok_true>"
@@ -492,10 +484,8 @@ module AbstractToken = struct
     ("for", Tok_for);
     ("fun", Tok_fun);
     ("function", Tok_function);
-    ("functor", Tok_functor);
     ("if", Tok_if);
     ("import", Tok_import);
-    ("in", Tok_in);
     ("include", Tok_include);
     ("lazy", Tok_lazy);
     ("let", Tok_let);
@@ -505,8 +495,6 @@ module AbstractToken = struct
     ("open", Tok_open);
     ("or", Tok_or);
     ("rec", Tok_rec);
-    ("sig", Tok_sig);
-    ("struct", Tok_struct);
     ("then", Tok_then);
     ("to", Tok_to);
     ("true", Tok_true);
@@ -4452,10 +4440,8 @@ let%expect_test "uident" =
   scan_str "for";
   scan_str "fun";
   scan_str "function";
-  scan_str "functor";
   scan_str "if";
   scan_str "import";
-  scan_str "in";
   scan_str "include";
   scan_str "lazy";
   scan_str "let";
@@ -4465,8 +4451,6 @@ let%expect_test "uident" =
   scan_str "open";
   scan_str "or";
   scan_str "rec";
-  scan_str "sig";
-  scan_str "struct";
   scan_str "then";
   scan_str "to";
   scan_str "true";
@@ -4596,18 +4580,12 @@ let%expect_test "uident" =
     {|function|}
       [1:0..1:8) : <Tok_function>
       [1:8..1:8) : <Tok_end_of_input>
-    {|functor|}
-      [1:0..1:7) : <Tok_functor>
-      [1:7..1:7) : <Tok_end_of_input>
     {|if|}
       [1:0..1:2) : <Tok_if>
       [1:2..1:2) : <Tok_end_of_input>
     {|import|}
       [1:0..1:6) : <Tok_import>
       [1:6..1:6) : <Tok_end_of_input>
-    {|in|}
-      [1:0..1:2) : <Tok_in>
-      [1:2..1:2) : <Tok_end_of_input>
     {|include|}
       [1:0..1:7) : <Tok_include>
       [1:7..1:7) : <Tok_end_of_input>
@@ -4635,12 +4613,6 @@ let%expect_test "uident" =
     {|rec|}
       [1:0..1:3) : <Tok_rec>
       [1:3..1:3) : <Tok_end_of_input>
-    {|sig|}
-      [1:0..1:3) : <Tok_sig>
-      [1:3..1:3) : <Tok_end_of_input>
-    {|struct|}
-      [1:0..1:6) : <Tok_struct>
-      [1:6..1:6) : <Tok_end_of_input>
     {|then|}
       [1:0..1:4) : <Tok_then>
       [1:4..1:4) : <Tok_end_of_input>
