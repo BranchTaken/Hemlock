@@ -284,6 +284,8 @@ module AbstractToken = struct
     | Tok_bar
     | Tok_larray
     | Tok_rarray
+    | Tok_lmodule
+    | Tok_rmodule
     | Tok_bslash
     | Tok_tick
     | Tok_caret
@@ -404,6 +406,8 @@ module AbstractToken = struct
     | Tok_bar -> "<Tok_bar>"
     | Tok_larray -> "<Tok_larray>"
     | Tok_rarray -> "<Tok_rarray>"
+    | Tok_lmodule -> "<Tok_lmodule>"
+    | Tok_rmodule -> "<Tok_rmodule>"
     | Tok_bslash -> "<Tok_bslash>"
     | Tok_tick -> "<Tok_tick>"
     | Tok_caret -> "<Tok_caret>"
@@ -2092,20 +2096,17 @@ module Dag = struct
       (")", (accept_incl Tok_rparen));
       ("[", (act {
           edges=Map.singleton (module Codepoint)
-            ~k:(Codepoint.of_char '|') ~v:(act {
-              edges=Map.empty (module Codepoint);
-              eoi=(accept Tok_larray);
-              default=(accept_excl Tok_larray);
-            });
+            ~k:(Codepoint.of_char '|') ~v:(accept_incl Tok_larray);
           eoi=(accept Tok_lbrack);
           default=(accept_excl Tok_lbrack);
         }));
-      ("]", (act {
-          edges=Map.empty (module Codepoint);
-          eoi=(accept Tok_rbrack);
-          default=(accept_excl Tok_rbrack);
+      ("]", (accept_incl Tok_rbrack));
+      ("{", (act {
+          edges=Map.singleton (module Codepoint)
+            ~k:(Codepoint.of_char '|') ~v:(accept_incl Tok_lmodule);
+          eoi=(accept Tok_lcurly);
+          default=(accept_excl Tok_lcurly);
         }));
-      ("{", (accept_incl Tok_lcurly));
       ("}", (accept_incl Tok_rcurly));
       ("\\", (act {
           edges=(map_of_cps_alist [
@@ -2149,11 +2150,8 @@ module Dag = struct
       (">", (operator (fun s -> Tok_gt_op s)));
       ("|", (act {
           edges=(map_of_cps_alist [
-            ("]", (act {
-                edges=Map.empty (module Codepoint);
-                eoi=(accept Tok_rarray);
-                default=(accept_excl Tok_rarray);
-              }));
+            ("]", (accept_incl Tok_rarray));
+            ("}", (accept_incl Tok_rmodule));
             (operator_cps, (operator (fun s -> Tok_bar_op s)));
           ]);
           eoi=(accept Tok_bar);
@@ -4207,6 +4205,7 @@ let%expect_test "punctuation" =
   scan_str "; ;; ;;;";
   scan_str "; : := :: :::"; (* Avoid line directive syntax. *)
   scan_str "]|]|[|[";
+  scan_str "}|}|{|{";
   scan_str "{}";
   scan_str {|\^&\&\|};
   scan_str "- -> ->> --> ->";
@@ -4256,6 +4255,13 @@ let%expect_test "punctuation" =
       [1:3..1:4) : <Tok_bar>
       [1:4..1:6) : <Tok_larray>
       [1:6..1:7) : <Tok_lbrack>
+      [1:7..1:7) : <Tok_end_of_input>
+    {|}|}|{|{|}
+      [1:0..1:1) : <Tok_rcurly>
+      [1:1..1:3) : <Tok_rmodule>
+      [1:3..1:4) : <Tok_bar>
+      [1:4..1:6) : <Tok_lmodule>
+      [1:6..1:7) : <Tok_lcurly>
       [1:7..1:7) : <Tok_end_of_input>
     {|{}|}
       [1:0..1:1) : <Tok_lcurly>
