@@ -296,6 +296,7 @@ module AbstractToken = struct
     | Tok_whitespace
     | Tok_hash_comment
     | Tok_paren_comment of unit Rendition.t
+    | Tok_uscore
     | Tok_uident of string
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
@@ -420,6 +421,7 @@ module AbstractToken = struct
           asprintf "@[<h><Tok_paren_comment=%a>@]"
             (Rendition.pp Unit.pp) rendition
       end
+    | Tok_uscore -> "<Tok_uscore>"
     | Tok_uident uident -> asprintf "@[<h><Tok_uident=%a>@]" String.pp uident
     | Tok_cident cident -> asprintf "@[<h><Tok_cident=%a>@]" String.pp cident
     | Tok_codepoint rendition ->
@@ -788,17 +790,39 @@ let ident ~f_accept cursor t =
   end in
   fn cursor t
 
-let uident _pcursor cursor t =
-  ident ~f_accept:(fun cursor t ->
+let accept_uident cursor t =
     let uident_str = str_of_cursor cursor t in
     accept (AbstractToken.of_uident_str uident_str) cursor t
-  ) cursor t
+
+let uident _pcursor cursor t =
+  ident ~f_accept:accept_uident cursor t
 
 let cident _pcursor cursor t =
   ident ~f_accept:(fun cursor t ->
     let cident_str = str_of_cursor cursor t in
     accept (Tok_cident cident_str) cursor t
   ) cursor t
+
+let uscore_ident_map = map_of_cps_alist [
+  ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
+  ("abcdefghijklmnopqrstuvwxyz0123456789'", uident);
+]
+
+let uscore_ident _pcursor cursor t =
+  let rec fn cursor t = begin
+    match Text.Cursor.next_opt cursor with
+    | None -> accept_uident cursor t
+    | Some (cp, cursor') -> begin
+        match Map.get cp uscore_ident_map with
+        | Some ident -> ident cursor cursor' t
+        | None -> begin
+            match cp with
+            | cp when Codepoint.(cp = of_char '_') -> fn cursor' t
+            | _ -> accept_uident cursor t
+          end
+      end
+  end in
+  fn cursor t
 
 let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past t =
   let nat_to_cp_opt nat = begin
@@ -2147,7 +2171,16 @@ module Dag = struct
         }));
       (" ", whitespace);
       ("#", hash_comment);
-      ("abcdefghijklmnopqrstuvwxyz_", uident);
+      ("_", (act {
+          edges=(map_of_cps_alist [
+            ("abcdefghijklmnopqrstuvwxyz0123456789'", uident);
+            ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
+            ("_", uscore_ident);
+          ]);
+          eoi=(accept Tok_uscore);
+          default=(accept_excl Tok_uscore);
+        }));
+      ("abcdefghijklmnopqrstuvwxyz", uident);
       ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
       ("'", Codepoint_.codepoint);
       ("\"", String_.istring);
@@ -4421,8 +4454,15 @@ let%expect_test "operators" =
 let%expect_test "uident" =
   let open Format in
   printf "@[<h>";
+  scan_str "_";
+  scan_str "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";
+  scan_str "a b c d e f g h i j k l m n o p q r s t u v w x y z";
   scan_str "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'";
-  scan_str "a b c d e f g h i j k l m n o p q r s t u v w x y z _";
+  scan_str "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'";
+  scan_str "A _A __A ___A";
+  scan_str "a _a __a ___a";
+  scan_str "__ _0 _' __0 __'";
+
   scan_str "a as ass asse asser assert asserts";
 
   scan_str "and";
@@ -4462,10 +4502,63 @@ let%expect_test "uident" =
   printf "@]";
 
   [%expect{xxx|
-    {|_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'|}
-      [1:0..1:65) : <Tok_uident="_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'">
-      [1:65..1:65) : <Tok_end_of_input>
-    {|a b c d e f g h i j k l m n o p q r s t u v w x y z _|}
+    {|_|}
+      [1:0..1:1) : <Tok_uscore>
+      [1:1..1:1) : <Tok_end_of_input>
+    {|A B C D E F G H I J K L M N O P Q R S T U V W X Y Z|}
+      [1:0..1:1) : <Tok_cident="A">
+      [1:1..1:2) : <Tok_whitespace>
+      [1:2..1:3) : <Tok_cident="B">
+      [1:3..1:4) : <Tok_whitespace>
+      [1:4..1:5) : <Tok_cident="C">
+      [1:5..1:6) : <Tok_whitespace>
+      [1:6..1:7) : <Tok_cident="D">
+      [1:7..1:8) : <Tok_whitespace>
+      [1:8..1:9) : <Tok_cident="E">
+      [1:9..1:10) : <Tok_whitespace>
+      [1:10..1:11) : <Tok_cident="F">
+      [1:11..1:12) : <Tok_whitespace>
+      [1:12..1:13) : <Tok_cident="G">
+      [1:13..1:14) : <Tok_whitespace>
+      [1:14..1:15) : <Tok_cident="H">
+      [1:15..1:16) : <Tok_whitespace>
+      [1:16..1:17) : <Tok_cident="I">
+      [1:17..1:18) : <Tok_whitespace>
+      [1:18..1:19) : <Tok_cident="J">
+      [1:19..1:20) : <Tok_whitespace>
+      [1:20..1:21) : <Tok_cident="K">
+      [1:21..1:22) : <Tok_whitespace>
+      [1:22..1:23) : <Tok_cident="L">
+      [1:23..1:24) : <Tok_whitespace>
+      [1:24..1:25) : <Tok_cident="M">
+      [1:25..1:26) : <Tok_whitespace>
+      [1:26..1:27) : <Tok_cident="N">
+      [1:27..1:28) : <Tok_whitespace>
+      [1:28..1:29) : <Tok_cident="O">
+      [1:29..1:30) : <Tok_whitespace>
+      [1:30..1:31) : <Tok_cident="P">
+      [1:31..1:32) : <Tok_whitespace>
+      [1:32..1:33) : <Tok_cident="Q">
+      [1:33..1:34) : <Tok_whitespace>
+      [1:34..1:35) : <Tok_cident="R">
+      [1:35..1:36) : <Tok_whitespace>
+      [1:36..1:37) : <Tok_cident="S">
+      [1:37..1:38) : <Tok_whitespace>
+      [1:38..1:39) : <Tok_cident="T">
+      [1:39..1:40) : <Tok_whitespace>
+      [1:40..1:41) : <Tok_cident="U">
+      [1:41..1:42) : <Tok_whitespace>
+      [1:42..1:43) : <Tok_cident="V">
+      [1:43..1:44) : <Tok_whitespace>
+      [1:44..1:45) : <Tok_cident="W">
+      [1:45..1:46) : <Tok_whitespace>
+      [1:46..1:47) : <Tok_cident="X">
+      [1:47..1:48) : <Tok_whitespace>
+      [1:48..1:49) : <Tok_cident="Y">
+      [1:49..1:50) : <Tok_whitespace>
+      [1:50..1:51) : <Tok_cident="Z">
+      [1:51..1:51) : <Tok_end_of_input>
+    {|a b c d e f g h i j k l m n o p q r s t u v w x y z|}
       [1:0..1:1) : <Tok_uident="a">
       [1:1..1:2) : <Tok_whitespace>
       [1:2..1:3) : <Tok_uident="b">
@@ -4517,9 +4610,42 @@ let%expect_test "uident" =
       [1:48..1:49) : <Tok_uident="y">
       [1:49..1:50) : <Tok_whitespace>
       [1:50..1:51) : <Tok_uident="z">
-      [1:51..1:52) : <Tok_whitespace>
-      [1:52..1:53) : <Tok_uident="_">
-      [1:53..1:53) : <Tok_end_of_input>
+      [1:51..1:51) : <Tok_end_of_input>
+    {|_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'|}
+      [1:0..1:65) : <Tok_cident="_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'">
+      [1:65..1:65) : <Tok_end_of_input>
+    {|_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'|}
+      [1:0..1:65) : <Tok_uident="_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'">
+      [1:65..1:65) : <Tok_end_of_input>
+    {|A _A __A ___A|}
+      [1:0..1:1) : <Tok_cident="A">
+      [1:1..1:2) : <Tok_whitespace>
+      [1:2..1:4) : <Tok_cident="_A">
+      [1:4..1:5) : <Tok_whitespace>
+      [1:5..1:8) : <Tok_cident="__A">
+      [1:8..1:9) : <Tok_whitespace>
+      [1:9..1:13) : <Tok_cident="___A">
+      [1:13..1:13) : <Tok_end_of_input>
+    {|a _a __a ___a|}
+      [1:0..1:1) : <Tok_uident="a">
+      [1:1..1:2) : <Tok_whitespace>
+      [1:2..1:4) : <Tok_uident="_a">
+      [1:4..1:5) : <Tok_whitespace>
+      [1:5..1:8) : <Tok_uident="__a">
+      [1:8..1:9) : <Tok_whitespace>
+      [1:9..1:13) : <Tok_uident="___a">
+      [1:13..1:13) : <Tok_end_of_input>
+    {|__ _0 _' __0 __'|}
+      [1:0..1:2) : <Tok_uident="__">
+      [1:2..1:3) : <Tok_whitespace>
+      [1:3..1:5) : <Tok_uident="_0">
+      [1:5..1:6) : <Tok_whitespace>
+      [1:6..1:8) : <Tok_uident="_'">
+      [1:8..1:9) : <Tok_whitespace>
+      [1:9..1:12) : <Tok_uident="__0">
+      [1:12..1:13) : <Tok_whitespace>
+      [1:13..1:16) : <Tok_uident="__'">
+      [1:16..1:16) : <Tok_end_of_input>
     {|a as ass asse asser assert asserts|}
       [1:0..1:1) : <Tok_uident="a">
       [1:1..1:2) : <Tok_whitespace>

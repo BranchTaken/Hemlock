@@ -135,6 +135,7 @@ module AbstractToken : sig
     | Tok_whitespace
     | Tok_hash_comment
     | Tok_paren_comment of unit Rendition.t
+    | Tok_uscore
     | Tok_uident of string
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
