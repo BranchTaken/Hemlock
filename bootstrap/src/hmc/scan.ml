@@ -321,7 +321,9 @@ module AbstractToken = struct
     | Tok_u512 of u512 Rendition.t
     | Tok_i512 of i512 Rendition.t
     | Tok_end_of_input
-    | Tok_indent_error
+    | Tok_indent_absent
+    | Tok_dedent_absent
+    | Tok_misaligned
     | Tok_error
 
   let to_string t =
@@ -465,7 +467,9 @@ module AbstractToken = struct
     | Tok_i512 rendition ->
       asprintf "@[<h><Tok_i512=%a>@]" (Rendition.pp I512.pp) rendition
     | Tok_end_of_input -> "<Tok_end_of_input>"
-    | Tok_indent_error -> "<Tok_indent_error>"
+    | Tok_indent_absent -> "<Tok_indent_absent>"
+    | Tok_dedent_absent -> "<Tok_dedent_absent>"
+    | Tok_misaligned -> "<Tok_misaligned>"
     | Tok_error -> "<Tok_error>"
 
   let keyword_map = Map.of_alist (module String) [
@@ -2313,30 +2317,71 @@ end = struct
             let col = Text.(Pos.col (Cursor.pos cursor)) in
             let level = col / 4 in
             let rem = col % 4 in
+            (* The following patterns incrementally handle all
+             * dentation/alignment cases. Tokens are synthesized in error cases
+             * such that the cursor does not advance, but the level is
+             * incrementally adjusted to converge. The overall result is that
+             * Tok_indent[_absent]/Tok_dedent[_absent] nesting is always well
+             * formed, with the expectation that the parser converts the
+             * Tok_{in,de}dent_absent tokens to their non-error forms when
+             * feeding the parser, but notes them as errors for post-parse error
+             * reporting. *)
             match rem, t.level, level with
+            (* New expression at same level. *)
             | 0, t_level, level when t_level = level -> begin
                 match t.line_state with
                 | LineDentation -> Dag.start {t with line_state=LineBody}
                 | LineDelim -> accept_dentation Tok_line_delim cursor t
                 | LineBody -> not_reached ()
               end
+
+            (* Continuation of expression at current level. *)
+            | 2, t_level, level when t_level = level ->
+              accept_dentation Tok_whitespace cursor t
+
+            (* New expression at higher level. *)
             | 0, t_level, level when succ t_level = level ->
               accept_dentation Tok_indent cursor {t with level}
 
-            | 0, t_level, level when t_level > succ level ->
-              accept Tok_dedent t.cursor {t with level=pred t_level}
-            | 0, t_level, level when t_level = succ level ->
-              accept_dentation Tok_dedent cursor {t with level}
-
+            (* Continuation of expression at lower level. *)
             | 2, t_level, level when t_level > succ level ->
               accept Tok_dedent t.cursor {t with level=pred t_level}
             | 2, t_level, level when t_level = succ level ->
               accept_dentation Tok_dedent cursor {t with level}
 
-            | 2, t_level, level when t_level = level ->
-              accept_dentation Tok_whitespace cursor t
+            (* New expression at lower level. *)
+            | 0, t_level, level when t_level > succ level ->
+              accept Tok_dedent t.cursor {t with level=pred t_level}
+            | 0, t_level, level when t_level = succ level ->
+              accept_dentation Tok_dedent cursor {t with level}
 
-            | _ -> accept_dentation Tok_indent_error cursor t
+            (* Off by one column at lower level. *)
+            | 3, t_level, level when t_level > succ level ->
+              accept Tok_dedent_absent t.cursor {t with level=pred t_level}
+            | 1, t_level, level when t_level > level ->
+              accept Tok_dedent_absent t.cursor {t with level=pred t_level}
+
+            (* Off by one column at current level. *)
+            | 3, t_level, level when t_level = succ level ->
+              accept_dentation Tok_misaligned cursor t
+            | 1, t_level, level when t_level = level ->
+              accept_dentation Tok_misaligned cursor t
+
+            (* Excess aligned indentation. *)
+            | 0, t_level, level when succ t_level < level ->
+              accept Tok_indent_absent t.cursor {t with level=succ t_level}
+
+            (* Off by one column at higher level. *)
+            | 3, t_level, level when t_level < succ level ->
+              accept Tok_indent_absent t.cursor {t with level=succ t_level}
+            | 1, t_level, level when t_level < level ->
+              accept Tok_indent_absent t.cursor {t with level=succ t_level}
+
+            (* Continuation of expression at higher level. *)
+            | 2, t_level, level when t_level < level ->
+              accept Tok_indent_absent t.cursor {t with level=succ t_level}
+
+            | _ -> not_reached ()
           end
       end
 
@@ -2631,6 +2676,207 @@ d
     b
         c
 d
+|};
+
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+a2
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+ x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+  a'
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+   x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+    b2
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+     x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+      b'
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+       x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+        c2
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+         x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+          c'
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+           x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+            d2
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+             x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+              d'
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+               x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                e
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                 x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                  x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                   x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                    x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                     x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                      x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                       x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+a
+    b
+        c
+            d
+                        x
 |};
 
   printf "@]";
@@ -3117,10 +3363,12 @@ d
     |}
       [1:0..1:1) : <Tok_uident="a">
       [1:1..2:0) : <Tok_whitespace>
-      [2:0..2:8) : <Tok_indent_error>
+      [2:0..2:0) : <Tok_indent_absent>
+      [2:0..2:8) : <Tok_indent>
       [2:8..2:9) : <Tok_uident="b">
       [2:9..3:0) : <Tok_whitespace>
-      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:0) : <Tok_dedent>
+      [3:0..3:0) : <Tok_dedent>
       [3:0..3:0) : <Tok_end_of_input>
     {|a
         b
@@ -3141,6 +3389,761 @@ d
       [4:1..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_line_delim>
       [5:0..5:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+    a2
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:2) : <Tok_uident="a2">
+      [7:2..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_line_delim>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+     x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:1) : <Tok_misaligned>
+      [7:1..7:2) : <Tok_uident="x">
+      [7:2..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_line_delim>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+      a'
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:2) : <Tok_dedent>
+      [7:2..7:4) : <Tok_uident="a'">
+      [7:4..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_line_delim>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+       x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:3) : <Tok_misaligned>
+      [7:3..7:4) : <Tok_uident="x">
+      [7:4..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+        b2
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:4) : <Tok_dedent>
+      [7:4..7:6) : <Tok_uident="b2">
+      [7:6..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+         x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:5) : <Tok_misaligned>
+      [7:5..7:6) : <Tok_uident="x">
+      [7:6..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+          b'
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent>
+      [7:0..7:6) : <Tok_dedent>
+      [7:6..7:8) : <Tok_uident="b'">
+      [7:8..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+           x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:7) : <Tok_misaligned>
+      [7:7..7:8) : <Tok_uident="x">
+      [7:8..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+            c2
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:8) : <Tok_dedent>
+      [7:8..7:10) : <Tok_uident="c2">
+      [7:10..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+             x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:9) : <Tok_misaligned>
+      [7:9..7:10) : <Tok_uident="x">
+      [7:10..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+              c'
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:10) : <Tok_dedent>
+      [7:10..7:12) : <Tok_uident="c'">
+      [7:12..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+               x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:11) : <Tok_misaligned>
+      [7:11..7:12) : <Tok_uident="x">
+      [7:12..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                d2
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:12) : <Tok_line_delim>
+      [7:12..7:14) : <Tok_uident="d2">
+      [7:14..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                 x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:13) : <Tok_misaligned>
+      [7:13..7:14) : <Tok_uident="x">
+      [7:14..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                  d'
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:14) : <Tok_whitespace>
+      [7:14..7:16) : <Tok_uident="d'">
+      [7:16..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                   x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:15) : <Tok_misaligned>
+      [7:15..7:16) : <Tok_uident="x">
+      [7:16..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                    e
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:16) : <Tok_indent>
+      [7:16..7:17) : <Tok_uident="e">
+      [7:17..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                     x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:17) : <Tok_misaligned>
+      [7:17..7:18) : <Tok_uident="x">
+      [7:18..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                      x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:18) : <Tok_whitespace>
+      [7:18..7:19) : <Tok_uident="x">
+      [7:19..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                       x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:19) : <Tok_misaligned>
+      [7:19..7:20) : <Tok_uident="x">
+      [7:20..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                        x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:20) : <Tok_indent>
+      [7:20..7:21) : <Tok_uident="x">
+      [7:21..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                         x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:21) : <Tok_misaligned>
+      [7:21..7:22) : <Tok_uident="x">
+      [7:22..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                          x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:22) : <Tok_whitespace>
+      [7:22..7:23) : <Tok_uident="x">
+      [7:23..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                           x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:23) : <Tok_misaligned>
+      [7:23..7:24) : <Tok_uident="x">
+      [7:24..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
+    {|
+    # : | : | : | : | : | : |
+    a
+        b
+            c
+                d
+                            x
+    |}
+      [1:0..2:0) : <Tok_whitespace>
+      [2:0..3:0) : <Tok_hash_comment>
+      [3:0..3:0) : <Tok_line_delim>
+      [3:0..3:1) : <Tok_uident="a">
+      [3:1..4:0) : <Tok_whitespace>
+      [4:0..4:4) : <Tok_indent>
+      [4:4..4:5) : <Tok_uident="b">
+      [4:5..5:0) : <Tok_whitespace>
+      [5:0..5:8) : <Tok_indent>
+      [5:8..5:9) : <Tok_uident="c">
+      [5:9..6:0) : <Tok_whitespace>
+      [6:0..6:12) : <Tok_indent>
+      [6:12..6:13) : <Tok_uident="d">
+      [6:13..7:0) : <Tok_whitespace>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:24) : <Tok_indent>
+      [7:24..7:25) : <Tok_uident="x">
+      [7:25..8:0) : <Tok_whitespace>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_dedent>
+      [8:0..8:0) : <Tok_end_of_input>
     |xxx}]
 
 let%expect_test "line directive" =
