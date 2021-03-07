@@ -160,7 +160,9 @@ module AbstractToken : sig
     | Tok_u512 of u512 Rendition.t
     | Tok_i512 of i512 Rendition.t
     | Tok_end_of_input
-    | Tok_indent_error
+    | Tok_indent_absent
+    | Tok_dedent_absent
+    | Tok_misaligned
     | Tok_error
 
   val to_string: t -> string
