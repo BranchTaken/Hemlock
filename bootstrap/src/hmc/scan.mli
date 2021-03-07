@@ -123,6 +123,8 @@ module AbstractToken : sig
     | Tok_bar
     | Tok_larray
     | Tok_rarray
+    | Tok_lmodule
+    | Tok_rmodule
     | Tok_bslash
     | Tok_tick
     | Tok_caret
