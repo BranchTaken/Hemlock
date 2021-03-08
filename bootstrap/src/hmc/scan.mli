@@ -57,6 +57,7 @@ module AbstractToken : sig
     | Tok_conceal
     | Tok_do
     | Tok_downto
+    | Tok_effect
     | Tok_else
     | Tok_expose
     | Tok_external
@@ -66,6 +67,7 @@ module AbstractToken : sig
     | Tok_function
     | Tok_functor
     | Tok_if
+    | Tok_import
     | Tok_in
     | Tok_include
     | Tok_lazy
@@ -107,6 +109,7 @@ module AbstractToken : sig
     | Tok_qmark
     | Tok_gt
     | Tok_comma
+    | Tok_dot
     | Tok_semi
     | Tok_colon
     | Tok_cons
@@ -124,6 +127,7 @@ module AbstractToken : sig
     | Tok_tick
     | Tok_caret
     | Tok_amp
+    | Tok_earrow
     | Tok_arrow
     | Tok_parrow
 
