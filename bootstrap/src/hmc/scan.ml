@@ -218,6 +218,7 @@ module AbstractToken = struct
     | Tok_conceal
     | Tok_do
     | Tok_downto
+    | Tok_effect
     | Tok_else
     | Tok_expose
     | Tok_external
@@ -227,6 +228,7 @@ module AbstractToken = struct
     | Tok_function
     | Tok_functor
     | Tok_if
+    | Tok_import
     | Tok_in
     | Tok_include
     | Tok_lazy
@@ -268,6 +270,7 @@ module AbstractToken = struct
     | Tok_qmark
     | Tok_gt
     | Tok_comma
+    | Tok_dot
     | Tok_semi
     | Tok_colon
     | Tok_cons
@@ -285,6 +288,7 @@ module AbstractToken = struct
     | Tok_tick
     | Tok_caret
     | Tok_amp
+    | Tok_earrow
     | Tok_arrow
     | Tok_parrow
 
@@ -331,6 +335,7 @@ module AbstractToken = struct
     | Tok_conceal -> "<Tok_conceal>"
     | Tok_do -> "<Tok_do>"
     | Tok_downto -> "<Tok_downto>"
+    | Tok_effect -> "<Tok_effect>"
     | Tok_else -> "<Tok_else>"
     | Tok_expose -> "<Tok_expose>"
     | Tok_external -> "<Tok_external>"
@@ -340,6 +345,7 @@ module AbstractToken = struct
     | Tok_function -> "<Tok_function>"
     | Tok_functor -> "<Tok_functor>"
     | Tok_if -> "<Tok_if>"
+    | Tok_import -> "<Tok_import>"
     | Tok_in -> "<Tok_in>"
     | Tok_include -> "<Tok_include>"
     | Tok_lazy -> "<Tok_lazy>"
@@ -382,6 +388,7 @@ module AbstractToken = struct
     | Tok_qmark -> "<Tok_qmark>"
     | Tok_gt -> "<Tok_gt>"
     | Tok_comma -> "<Tok_comma>"
+    | Tok_dot -> "<Tok_dot>"
     | Tok_semi -> "<Tok_semi>"
     | Tok_colon -> "<Tok_colon>"
     | Tok_cons -> "<Tok_cons>"
@@ -399,6 +406,7 @@ module AbstractToken = struct
     | Tok_tick -> "<Tok_tick>"
     | Tok_caret -> "<Tok_caret>"
     | Tok_amp -> "<Tok_amp>"
+    | Tok_earrow -> "<Tok_earrow>"
     | Tok_arrow -> "<Tok_arrow>"
     | Tok_parrow -> "<Tok_parrow>"
 
@@ -468,6 +476,7 @@ module AbstractToken = struct
     ("conceal", Tok_conceal);
     ("do", Tok_do);
     ("downto", Tok_downto);
+    ("effect", Tok_effect);
     ("else", Tok_else);
     ("expose", Tok_expose);
     ("external", Tok_external);
@@ -477,6 +486,7 @@ module AbstractToken = struct
     ("function", Tok_function);
     ("functor", Tok_functor);
     ("if", Tok_if);
+    ("import", Tok_import);
     ("in", Tok_in);
     ("include", Tok_include);
     ("lazy", Tok_lazy);
@@ -743,6 +753,7 @@ let operator_map = (
   let open AbstractToken in
   Map.of_alist (module String) [
     ("|", Tok_bar);
+    ("~>", Tok_earrow);
     ("->", Tok_arrow);
     (">", Tok_gt);
     (">->", Tok_parrow);
@@ -2057,6 +2068,7 @@ let act state _pcursor cursor t =
 let start_state = {
   edges=(map_of_cps_alist [
     (",", (accept_incl Tok_comma));
+    (".", (accept_incl Tok_dot));
     (":", (act {
         edges=(map_of_cps_alist [
           (":", (accept_incl Tok_cons));
@@ -3000,14 +3012,15 @@ let%expect_test "punctuation" =
   let open Format in
   printf "@[<h>";
   scan_str ", ,,";
+  scan_str ". ..";
   scan_str "; ;; ;;;";
   scan_str "; : := :: :::"; (* Avoid line directive syntax. *)
   scan_str "]|]|[|[";
   scan_str "{}";
   scan_str {|\^&\&\|};
   scan_str "- -> ->> --> ->";
-  scan_str "> >- >-> >->> >>-> >->";
-  scan_str "~f ~- ~-+*/%@!$<=>|:.~?";
+  scan_str "> >- >-> >->> >>-> >-> >e-> >{>e,mut}->";
+  scan_str "~f ~> >{mut}~> ~- ~-+*/%@!$<=>|:.~?";
   scan_str "?x ?? ?-+*/%@!$<=>|:.~?";
   printf "@]";
 
@@ -3017,6 +3030,12 @@ let%expect_test "punctuation" =
       [1:1..1:2) : <Tok_whitespace>
       [1:2..1:3) : <Tok_comma>
       [1:3..1:4) : <Tok_comma>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|. ..|}
+      [1:0..1:1) : <Tok_dot>
+      [1:1..1:2) : <Tok_whitespace>
+      [1:2..1:3) : <Tok_dot>
+      [1:3..1:4) : <Tok_dot>
       [1:4..1:4) : <Tok_end_of_input>
     {|; ;; ;;;|}
       [1:0..1:1) : <Tok_semi>
@@ -3070,7 +3089,7 @@ let%expect_test "punctuation" =
       [1:12..1:13) : <Tok_whitespace>
       [1:13..1:15) : <Tok_arrow>
       [1:15..1:15) : <Tok_end_of_input>
-    {|> >- >-> >->> >>-> >->|}
+    {|> >- >-> >->> >>-> >-> >e-> >{>e,mut}->|}
       [1:0..1:1) : <Tok_gt>
       [1:1..1:2) : <Tok_whitespace>
       [1:2..1:4) : <Tok_gt_op=">-">
@@ -3082,15 +3101,36 @@ let%expect_test "punctuation" =
       [1:14..1:18) : <Tok_gt_op=">>->">
       [1:18..1:19) : <Tok_whitespace>
       [1:19..1:22) : <Tok_parrow>
-      [1:22..1:22) : <Tok_end_of_input>
-    {|~f ~- ~-+*/%@!$<=>|:.~?|}
+      [1:22..1:23) : <Tok_whitespace>
+      [1:23..1:24) : <Tok_gt>
+      [1:24..1:25) : <Tok_uident="e">
+      [1:25..1:27) : <Tok_arrow>
+      [1:27..1:28) : <Tok_whitespace>
+      [1:28..1:29) : <Tok_gt>
+      [1:29..1:30) : <Tok_lcurly>
+      [1:30..1:31) : <Tok_gt>
+      [1:31..1:32) : <Tok_uident="e">
+      [1:32..1:33) : <Tok_comma>
+      [1:33..1:36) : <Tok_uident="mut">
+      [1:36..1:37) : <Tok_rcurly>
+      [1:37..1:39) : <Tok_arrow>
+      [1:39..1:39) : <Tok_end_of_input>
+    {|~f ~> >{mut}~> ~- ~-+*/%@!$<=>|:.~?|}
       [1:0..1:1) : <Tok_tilde>
       [1:1..1:2) : <Tok_uident="f">
       [1:2..1:3) : <Tok_whitespace>
-      [1:3..1:5) : <Tok_tilde_op="~-">
+      [1:3..1:5) : <Tok_earrow>
       [1:5..1:6) : <Tok_whitespace>
-      [1:6..1:23) : <Tok_tilde_op="~-+*/%@!$<=>|:.~?">
-      [1:23..1:23) : <Tok_end_of_input>
+      [1:6..1:7) : <Tok_gt>
+      [1:7..1:8) : <Tok_lcurly>
+      [1:8..1:11) : <Tok_uident="mut">
+      [1:11..1:12) : <Tok_rcurly>
+      [1:12..1:14) : <Tok_earrow>
+      [1:14..1:15) : <Tok_whitespace>
+      [1:15..1:17) : <Tok_tilde_op="~-">
+      [1:17..1:18) : <Tok_whitespace>
+      [1:18..1:35) : <Tok_tilde_op="~-+*/%@!$<=>|:.~?">
+      [1:35..1:35) : <Tok_end_of_input>
     {|?x ?? ?-+*/%@!$<=>|:.~?|}
       [1:0..1:1) : <Tok_qmark>
       [1:1..1:2) : <Tok_uident="x">
@@ -3200,9 +3240,44 @@ let%expect_test "uident" =
   scan_str "a b c d e f g h i j k l m n o p q r s t u v w x y z _";
   scan_str "a as ass asse asser assert asserts";
 
-  scan_str "and also as assert conceal do downto else expose external false";
-  scan_str "for fun function functor if in include lazy let match module of";
-  scan_str "open or rec sig struct then to true type val when while with";
+  scan_str "and";
+  scan_str "also";
+  scan_str "as";
+  scan_str "assert";
+  scan_str "conceal";
+  scan_str "do";
+  scan_str "downto";
+  scan_str "effect";
+  scan_str "else";
+  scan_str "expose";
+  scan_str "external";
+  scan_str "false";
+  scan_str "for";
+  scan_str "fun";
+  scan_str "function";
+  scan_str "functor";
+  scan_str "if";
+  scan_str "import";
+  scan_str "in";
+  scan_str "include";
+  scan_str "lazy";
+  scan_str "let";
+  scan_str "match";
+  scan_str "module";
+  scan_str "of";
+  scan_str "open";
+  scan_str "or";
+  scan_str "rec";
+  scan_str "sig";
+  scan_str "struct";
+  scan_str "then";
+  scan_str "to";
+  scan_str "true";
+  scan_str "type";
+  scan_str "val";
+  scan_str "when";
+  scan_str "while";
+  scan_str "with";
   printf "@]";
 
   [%expect{xxx|
@@ -3279,81 +3354,120 @@ let%expect_test "uident" =
       [1:26..1:27) : <Tok_whitespace>
       [1:27..1:34) : <Tok_uident="asserts">
       [1:34..1:34) : <Tok_end_of_input>
-    {|and also as assert conceal do downto else expose external false|}
+    {|and|}
       [1:0..1:3) : <Tok_and>
-      [1:3..1:4) : <Tok_whitespace>
-      [1:4..1:8) : <Tok_also>
-      [1:8..1:9) : <Tok_whitespace>
-      [1:9..1:11) : <Tok_as>
-      [1:11..1:12) : <Tok_whitespace>
-      [1:12..1:18) : <Tok_assert>
-      [1:18..1:19) : <Tok_whitespace>
-      [1:19..1:26) : <Tok_conceal>
-      [1:26..1:27) : <Tok_whitespace>
-      [1:27..1:29) : <Tok_do>
-      [1:29..1:30) : <Tok_whitespace>
-      [1:30..1:36) : <Tok_downto>
-      [1:36..1:37) : <Tok_whitespace>
-      [1:37..1:41) : <Tok_else>
-      [1:41..1:42) : <Tok_whitespace>
-      [1:42..1:48) : <Tok_expose>
-      [1:48..1:49) : <Tok_whitespace>
-      [1:49..1:57) : <Tok_external>
-      [1:57..1:58) : <Tok_whitespace>
-      [1:58..1:63) : <Tok_false>
-      [1:63..1:63) : <Tok_end_of_input>
-    {|for fun function functor if in include lazy let match module of|}
+      [1:3..1:3) : <Tok_end_of_input>
+    {|also|}
+      [1:0..1:4) : <Tok_also>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|as|}
+      [1:0..1:2) : <Tok_as>
+      [1:2..1:2) : <Tok_end_of_input>
+    {|assert|}
+      [1:0..1:6) : <Tok_assert>
+      [1:6..1:6) : <Tok_end_of_input>
+    {|conceal|}
+      [1:0..1:7) : <Tok_conceal>
+      [1:7..1:7) : <Tok_end_of_input>
+    {|do|}
+      [1:0..1:2) : <Tok_do>
+      [1:2..1:2) : <Tok_end_of_input>
+    {|downto|}
+      [1:0..1:6) : <Tok_downto>
+      [1:6..1:6) : <Tok_end_of_input>
+    {|effect|}
+      [1:0..1:6) : <Tok_effect>
+      [1:6..1:6) : <Tok_end_of_input>
+    {|else|}
+      [1:0..1:4) : <Tok_else>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|expose|}
+      [1:0..1:6) : <Tok_expose>
+      [1:6..1:6) : <Tok_end_of_input>
+    {|external|}
+      [1:0..1:8) : <Tok_external>
+      [1:8..1:8) : <Tok_end_of_input>
+    {|false|}
+      [1:0..1:5) : <Tok_false>
+      [1:5..1:5) : <Tok_end_of_input>
+    {|for|}
       [1:0..1:3) : <Tok_for>
-      [1:3..1:4) : <Tok_whitespace>
-      [1:4..1:7) : <Tok_fun>
-      [1:7..1:8) : <Tok_whitespace>
-      [1:8..1:16) : <Tok_function>
-      [1:16..1:17) : <Tok_whitespace>
-      [1:17..1:24) : <Tok_functor>
-      [1:24..1:25) : <Tok_whitespace>
-      [1:25..1:27) : <Tok_if>
-      [1:27..1:28) : <Tok_whitespace>
-      [1:28..1:30) : <Tok_in>
-      [1:30..1:31) : <Tok_whitespace>
-      [1:31..1:38) : <Tok_include>
-      [1:38..1:39) : <Tok_whitespace>
-      [1:39..1:43) : <Tok_lazy>
-      [1:43..1:44) : <Tok_whitespace>
-      [1:44..1:47) : <Tok_let>
-      [1:47..1:48) : <Tok_whitespace>
-      [1:48..1:53) : <Tok_match>
-      [1:53..1:54) : <Tok_whitespace>
-      [1:54..1:60) : <Tok_module>
-      [1:60..1:61) : <Tok_whitespace>
-      [1:61..1:63) : <Tok_of>
-      [1:63..1:63) : <Tok_end_of_input>
-    {|open or rec sig struct then to true type val when while with|}
+      [1:3..1:3) : <Tok_end_of_input>
+    {|fun|}
+      [1:0..1:3) : <Tok_fun>
+      [1:3..1:3) : <Tok_end_of_input>
+    {|function|}
+      [1:0..1:8) : <Tok_function>
+      [1:8..1:8) : <Tok_end_of_input>
+    {|functor|}
+      [1:0..1:7) : <Tok_functor>
+      [1:7..1:7) : <Tok_end_of_input>
+    {|if|}
+      [1:0..1:2) : <Tok_if>
+      [1:2..1:2) : <Tok_end_of_input>
+    {|import|}
+      [1:0..1:6) : <Tok_import>
+      [1:6..1:6) : <Tok_end_of_input>
+    {|in|}
+      [1:0..1:2) : <Tok_in>
+      [1:2..1:2) : <Tok_end_of_input>
+    {|include|}
+      [1:0..1:7) : <Tok_include>
+      [1:7..1:7) : <Tok_end_of_input>
+    {|lazy|}
+      [1:0..1:4) : <Tok_lazy>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|let|}
+      [1:0..1:3) : <Tok_let>
+      [1:3..1:3) : <Tok_end_of_input>
+    {|match|}
+      [1:0..1:5) : <Tok_match>
+      [1:5..1:5) : <Tok_end_of_input>
+    {|module|}
+      [1:0..1:6) : <Tok_module>
+      [1:6..1:6) : <Tok_end_of_input>
+    {|of|}
+      [1:0..1:2) : <Tok_of>
+      [1:2..1:2) : <Tok_end_of_input>
+    {|open|}
       [1:0..1:4) : <Tok_open>
-      [1:4..1:5) : <Tok_whitespace>
-      [1:5..1:7) : <Tok_or>
-      [1:7..1:8) : <Tok_whitespace>
-      [1:8..1:11) : <Tok_rec>
-      [1:11..1:12) : <Tok_whitespace>
-      [1:12..1:15) : <Tok_sig>
-      [1:15..1:16) : <Tok_whitespace>
-      [1:16..1:22) : <Tok_struct>
-      [1:22..1:23) : <Tok_whitespace>
-      [1:23..1:27) : <Tok_then>
-      [1:27..1:28) : <Tok_whitespace>
-      [1:28..1:30) : <Tok_to>
-      [1:30..1:31) : <Tok_whitespace>
-      [1:31..1:35) : <Tok_true>
-      [1:35..1:36) : <Tok_whitespace>
-      [1:36..1:40) : <Tok_type>
-      [1:40..1:41) : <Tok_whitespace>
-      [1:41..1:44) : <Tok_val>
-      [1:44..1:45) : <Tok_whitespace>
-      [1:45..1:49) : <Tok_when>
-      [1:49..1:50) : <Tok_whitespace>
-      [1:50..1:55) : <Tok_while>
-      [1:55..1:56) : <Tok_whitespace>
-      [1:56..1:60) : <Tok_with>
-      [1:60..1:60) : <Tok_end_of_input>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|or|}
+      [1:0..1:2) : <Tok_or>
+      [1:2..1:2) : <Tok_end_of_input>
+    {|rec|}
+      [1:0..1:3) : <Tok_rec>
+      [1:3..1:3) : <Tok_end_of_input>
+    {|sig|}
+      [1:0..1:3) : <Tok_sig>
+      [1:3..1:3) : <Tok_end_of_input>
+    {|struct|}
+      [1:0..1:6) : <Tok_struct>
+      [1:6..1:6) : <Tok_end_of_input>
+    {|then|}
+      [1:0..1:4) : <Tok_then>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|to|}
+      [1:0..1:2) : <Tok_to>
+      [1:2..1:2) : <Tok_end_of_input>
+    {|true|}
+      [1:0..1:4) : <Tok_true>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|type|}
+      [1:0..1:4) : <Tok_type>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|val|}
+      [1:0..1:3) : <Tok_val>
+      [1:3..1:3) : <Tok_end_of_input>
+    {|when|}
+      [1:0..1:4) : <Tok_when>
+      [1:4..1:4) : <Tok_end_of_input>
+    {|while|}
+      [1:0..1:5) : <Tok_while>
+      [1:5..1:5) : <Tok_end_of_input>
+    {|with|}
+      [1:0..1:4) : <Tok_with>
+      [1:4..1:4) : <Tok_end_of_input>
   |xxx}]
 
 let%expect_test "cident" =
