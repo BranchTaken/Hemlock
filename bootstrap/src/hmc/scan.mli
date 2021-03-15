@@ -129,9 +129,9 @@ module AbstractToken : sig
     | Tok_arrow
     | Tok_parrow
 
-    | Tok_indent
+    | Tok_indent of unit Rendition.t
     | Tok_line_delim
-    | Tok_dedent
+    | Tok_dedent of unit Rendition.t
     | Tok_whitespace
     | Tok_hash_comment
     | Tok_paren_comment of unit Rendition.t
@@ -159,8 +159,6 @@ module AbstractToken : sig
     | Tok_u512 of u512 Rendition.t
     | Tok_i512 of i512 Rendition.t
     | Tok_end_of_input
-    | Tok_indent_absent
-    | Tok_dedent_absent
     | Tok_misaligned
     | Tok_error
 

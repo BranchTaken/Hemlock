@@ -290,9 +290,9 @@ module AbstractToken = struct
     | Tok_arrow
     | Tok_parrow
 
-    | Tok_indent
+    | Tok_indent of unit Rendition.t
     | Tok_line_delim
-    | Tok_dedent
+    | Tok_dedent of unit Rendition.t
     | Tok_whitespace
     | Tok_hash_comment
     | Tok_paren_comment of unit Rendition.t
@@ -320,8 +320,6 @@ module AbstractToken = struct
     | Tok_u512 of u512 Rendition.t
     | Tok_i512 of i512 Rendition.t
     | Tok_end_of_input
-    | Tok_indent_absent
-    | Tok_dedent_absent
     | Tok_misaligned
     | Tok_error
 
@@ -408,10 +406,21 @@ module AbstractToken = struct
     | Tok_earrow -> "<Tok_earrow>"
     | Tok_arrow -> "<Tok_arrow>"
     | Tok_parrow -> "<Tok_parrow>"
-
-    | Tok_indent -> "<Tok_indent>"
+    | Tok_indent rendition -> begin
+        match rendition with
+        | Constant _ -> "<Tok_indent>"
+        | Malformed _ ->
+          asprintf "@[<h><Tok_indent=%a>@]"
+            (Rendition.pp Unit.pp) rendition
+      end
     | Tok_line_delim -> "<Tok_line_delim>"
-    | Tok_dedent -> "<Tok_dedent>"
+    | Tok_dedent rendition -> begin
+        match rendition with
+        | Constant _ -> "<Tok_dedent>"
+        | Malformed _ ->
+          asprintf "@[<h><Tok_dedent=%a>@]"
+            (Rendition.pp Unit.pp) rendition
+      end
     | Tok_whitespace -> "<Tok_whitespace>"
     | Tok_hash_comment -> "<Tok_hash_comment>"
     | Tok_paren_comment rendition -> begin
@@ -465,8 +474,6 @@ module AbstractToken = struct
     | Tok_i512 rendition ->
       asprintf "@[<h><Tok_i512=%a>@]" (Rendition.pp I512.pp) rendition
     | Tok_end_of_input -> "<Tok_end_of_input>"
-    | Tok_indent_absent -> "<Tok_indent_absent>"
-    | Tok_dedent_absent -> "<Tok_dedent_absent>"
     | Tok_misaligned -> "<Tok_misaligned>"
     | Tok_error -> "<Tok_error>"
 
@@ -2064,7 +2071,10 @@ let end_of_input cursor t =
   match t.line_state, t.level with
   | LineDelim, 0 -> accept_dentation Tok_line_delim cursor t
   | _, 0 -> accept Tok_end_of_input cursor t
-  | _ -> accept_dentation Tok_dedent cursor {t with level=Uns.pred t.level}
+  | _ -> begin
+      accept_dentation (Tok_dedent (Constant ())) cursor
+        {t with level=Uns.pred t.level}
+    end
 
 module Dag = struct
   (* The scanner's directed acyclic subgraph is expressed as a DAG of states
@@ -2320,6 +2330,16 @@ end = struct
     | LineExpr
     | LineNoop of t * ConcreteToken.t
 
+  open AbstractToken
+  let tok_indent = Tok_indent (Constant ())
+  let tok_dedent = Tok_dedent (Constant ())
+  let tok_indent_absent t =
+    Tok_indent (Malformed [
+      malformation ~base:t.cursor ~past:t.cursor "Indent absent" t])
+  let tok_dedent_absent t =
+    Tok_dedent (Malformed [
+      malformation ~base:t.cursor ~past:t.cursor "Dedent absent" t])
+
   let rec next cursor t =
     match Text.Cursor.next_opt cursor with
     | None -> begin
@@ -2337,14 +2357,10 @@ end = struct
             let level = col / 4 in
             let rem = col % 4 in
             (* The following patterns incrementally handle all
-             * dentation/alignment cases. Tokens are synthesized in error cases
-             * such that the cursor does not advance, but the level is
-             * incrementally adjusted to converge. The overall result is that
-             * Tok_indent[_absent]/Tok_dedent[_absent] nesting is always well
-             * formed, with the expectation that the parser converts the
-             * Tok_{in,de}dent_absent tokens to their non-error forms when
-             * feeding the parser, but notes them as errors for post-parse error
-             * reporting. *)
+             * dentation/alignment cases. Malformed tokens are synthesized in
+             * error cases such that the cursor does not advance, but the level
+             * is incrementally adjusted to converge. The overall result is that
+             * Tok_indent/Tok_dedent nesting is always well formed. *)
             match rem, t.level, level with
             (* New expression at same level. *)
             | 0, t_level, level when t_level = level -> begin
@@ -2360,25 +2376,25 @@ end = struct
 
             (* New expression at higher level. *)
             | 0, t_level, level when succ t_level = level ->
-              accept_dentation Tok_indent cursor {t with level}
+              accept_dentation tok_indent cursor {t with level}
 
             (* Continuation of expression at lower level. *)
             | 2, t_level, level when t_level > succ level ->
-              accept Tok_dedent t.cursor {t with level=pred t_level}
+              accept tok_dedent t.cursor {t with level=pred t_level}
             | 2, t_level, level when t_level = succ level ->
-              accept_dentation Tok_dedent cursor {t with level}
+              accept_dentation tok_dedent cursor {t with level}
 
             (* New expression at lower level. *)
             | 0, t_level, level when t_level > succ level ->
-              accept Tok_dedent t.cursor {t with level=pred t_level}
+              accept tok_dedent t.cursor {t with level=pred t_level}
             | 0, t_level, level when t_level = succ level ->
-              accept_dentation Tok_dedent cursor {t with level}
+              accept_dentation tok_dedent cursor {t with level}
 
             (* Off by one column at lower level. *)
             | 3, t_level, level when t_level > succ level ->
-              accept Tok_dedent_absent t.cursor {t with level=pred t_level}
+              accept (tok_dedent_absent t) t.cursor {t with level=pred t_level}
             | 1, t_level, level when t_level > level ->
-              accept Tok_dedent_absent t.cursor {t with level=pred t_level}
+              accept (tok_dedent_absent t) t.cursor {t with level=pred t_level}
 
             (* Off by one column at current level. *)
             | 3, t_level, level when t_level = succ level ->
@@ -2388,17 +2404,16 @@ end = struct
 
             (* Excess aligned indentation. *)
             | 0, t_level, level when succ t_level < level ->
-              accept Tok_indent_absent t.cursor {t with level=succ t_level}
-
+              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
             (* Off by one column at higher level. *)
             | 3, t_level, level when t_level < succ level ->
-              accept Tok_indent_absent t.cursor {t with level=succ t_level}
+              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
             | 1, t_level, level when t_level < level ->
-              accept Tok_indent_absent t.cursor {t with level=succ t_level}
+              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
 
             (* Continuation of expression at higher level. *)
             | 2, t_level, level when t_level < level ->
-              accept Tok_indent_absent t.cursor {t with level=succ t_level}
+              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
 
             | _ -> not_reached ()
           end
@@ -2440,8 +2455,8 @@ end = struct
         | LineDelim -> accept_dentation Tok_line_delim cursor t
         | LineBody -> not_reached ()
       end
-    | 1 -> accept_dentation Tok_dedent cursor {t with level=0}
-    | _ -> accept Tok_dedent cursor {t with level=pred t.level}
+    | 1 -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=0}
+    | _ -> accept (Tok_dedent (Constant ())) cursor {t with level=pred t.level}
 
   let rec start cursor t =
     match Text.Cursor.next_opt cursor with
@@ -3382,7 +3397,7 @@ a
     |}
       [1:0..1:1) : <Tok_uident="a">
       [1:1..2:0) : <Tok_whitespace>
-      [2:0..2:0) : <Tok_indent_absent>
+      [2:0..2:0) : <Tok_indent=Malformed ["[2:0..2:0): Indent absent"]>
       [2:0..2:8) : <Tok_indent>
       [2:8..2:9) : <Tok_uident="b">
       [2:9..3:0) : <Tok_whitespace>
@@ -3459,9 +3474,9 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_dedent_absent>
-      [7:0..7:0) : <Tok_dedent_absent>
-      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:1) : <Tok_misaligned>
       [7:1..7:2) : <Tok_uident="x">
       [7:2..8:0) : <Tok_whitespace>
@@ -3518,8 +3533,8 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_dedent_absent>
-      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:3) : <Tok_misaligned>
       [7:3..7:4) : <Tok_uident="x">
       [7:4..8:0) : <Tok_whitespace>
@@ -3575,8 +3590,8 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_dedent_absent>
-      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:5) : <Tok_misaligned>
       [7:5..7:6) : <Tok_uident="x">
       [7:6..8:0) : <Tok_whitespace>
@@ -3632,7 +3647,7 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:7) : <Tok_misaligned>
       [7:7..7:8) : <Tok_uident="x">
       [7:8..8:0) : <Tok_whitespace>
@@ -3689,7 +3704,7 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_dedent_absent>
+      [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:9) : <Tok_misaligned>
       [7:9..7:10) : <Tok_uident="x">
       [7:10..8:0) : <Tok_whitespace>
@@ -3862,7 +3877,7 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:15) : <Tok_misaligned>
       [7:15..7:16) : <Tok_uident="x">
       [7:16..8:0) : <Tok_whitespace>
@@ -3923,7 +3938,7 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:17) : <Tok_misaligned>
       [7:17..7:18) : <Tok_uident="x">
       [7:18..8:0) : <Tok_whitespace>
@@ -3954,7 +3969,7 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:18) : <Tok_whitespace>
       [7:18..7:19) : <Tok_uident="x">
       [7:19..8:0) : <Tok_whitespace>
@@ -3985,8 +4000,8 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:19) : <Tok_misaligned>
       [7:19..7:20) : <Tok_uident="x">
       [7:20..8:0) : <Tok_whitespace>
@@ -4018,7 +4033,7 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:20) : <Tok_indent>
       [7:20..7:21) : <Tok_uident="x">
       [7:21..8:0) : <Tok_whitespace>
@@ -4050,8 +4065,8 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:21) : <Tok_misaligned>
       [7:21..7:22) : <Tok_uident="x">
       [7:22..8:0) : <Tok_whitespace>
@@ -4083,8 +4098,8 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:22) : <Tok_whitespace>
       [7:22..7:23) : <Tok_uident="x">
       [7:23..8:0) : <Tok_whitespace>
@@ -4116,9 +4131,9 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
-      [7:0..7:0) : <Tok_indent_absent>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:23) : <Tok_misaligned>
       [7:23..7:24) : <Tok_uident="x">
       [7:24..8:0) : <Tok_whitespace>
@@ -4151,8 +4166,8 @@ a
       [6:0..6:12) : <Tok_indent>
       [6:12..6:13) : <Tok_uident="d">
       [6:13..7:0) : <Tok_whitespace>
-      [7:0..7:0) : <Tok_indent_absent>
-      [7:0..7:0) : <Tok_indent_absent>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
+      [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:24) : <Tok_indent>
       [7:24..7:25) : <Tok_uident="x">
       [7:25..8:0) : <Tok_whitespace>
