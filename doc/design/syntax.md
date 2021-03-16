@@ -155,9 +155,8 @@ lexical binding at all.
 
 - Capitalized identifiers match `[_]*[A-Z][A-Za-z0-9_']*`, and are used for
   module names and variant type constructors.
-- Uncapitalized identifiers match `[_]*[a-z][A-Za-z0-9_']*` and
-  `[_]+[0-9_'][A-Za-z0-9_']*`, and are used for value names, parameter label
-  names, type names, and record field names.
+- Uncapitalized identifiers match `[_]*[a-z][A-Za-z0-9_']*`, and are used for
+  value names, parameter label names, type names, and record field names.
 
 ### Integer
 
