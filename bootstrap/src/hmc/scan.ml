@@ -715,9 +715,8 @@ let paren_comment _pcursor cursor t =
   let rec fn_wrapper ~f nesting cursor t = begin
     match Text.Cursor.next_opt cursor with
     | None -> begin
-        let open AbstractToken.Rendition in
-        accept (Tok_paren_comment (Malformed [unterminated_comment t.cursor
-            cursor t])) cursor t
+        accept (Tok_paren_comment (malformed (unterminated_comment t.cursor
+            cursor t))) cursor t
       end
     | Some (cp, cursor') -> f cp nesting cursor' t
   end
@@ -1178,7 +1177,7 @@ end = struct
     }
 
   let accept_unterminated_rstring cursor t =
-    accept (Tok_rstring (Malformed [unterminated_string t.cursor cursor t]))
+    accept (Tok_rstring (malformed (unterminated_string t.cursor cursor t)))
       cursor t
 
   (* Raw string: ``...`` *)
@@ -1485,16 +1484,14 @@ end = struct
               Tok_r32 (
                 match Realer.to_r32_opt realer with
                 | Some r -> (Constant r)
-                | None ->
-                  (Rendition.Malformed [out_of_range_real t.cursor cursor t])
+                | None -> malformed (out_of_range_real t.cursor cursor t)
               )
             end
           | Subtype_r64 -> begin
               Tok_r64 (
                 match Realer.to_r64_opt realer with
                 | Some r -> (Constant r)
-                | None ->
-                  (Rendition.Malformed [out_of_range_real t.cursor cursor t])
+                | None -> malformed (out_of_range_real t.cursor cursor t)
               )
             end
         in
@@ -2345,11 +2342,11 @@ end = struct
   let tok_indent = Tok_indent (Constant ())
   let tok_dedent = Tok_dedent (Constant ())
   let tok_indent_absent t =
-    Tok_indent (Malformed [
-      malformation ~base:t.cursor ~past:t.cursor "Indent absent" t])
+    Tok_indent (malformed (
+      malformation ~base:t.cursor ~past:t.cursor "Indent absent" t))
   let tok_dedent_absent t =
-    Tok_dedent (Malformed [
-      malformation ~base:t.cursor ~past:t.cursor "Dedent absent" t])
+    Tok_dedent (malformed (
+      malformation ~base:t.cursor ~past:t.cursor "Dedent absent" t))
 
   let rec next cursor t =
     match Text.Cursor.next_opt cursor with
