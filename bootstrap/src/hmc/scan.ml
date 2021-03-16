@@ -297,7 +297,7 @@ module AbstractToken = struct
     | Tok_hash_comment
     | Tok_paren_comment of unit Rendition.t
     | Tok_uscore
-    | Tok_uident of string
+    | Tok_uident of string Rendition.t
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
     | Tok_istring of string Rendition.t
@@ -431,7 +431,8 @@ module AbstractToken = struct
             (Rendition.pp Unit.pp) rendition
       end
     | Tok_uscore -> "<Tok_uscore>"
-    | Tok_uident uident -> asprintf "@[<h><Tok_uident=%a>@]" String.pp uident
+    | Tok_uident rendition ->
+      asprintf "@[<h><Tok_uident=%a>@]" (Rendition.pp String.pp) rendition
     | Tok_cident cident -> asprintf "@[<h><Tok_cident=%a>@]" String.pp cident
     | Tok_codepoint rendition ->
       asprintf "@[<h><Tok_codepoint=%a>@]" (Rendition.pp Codepoint.pp) rendition
@@ -517,7 +518,7 @@ module AbstractToken = struct
   let of_uident_str uident_str =
     match Map.get uident_str keyword_map with
     | Some t -> t
-    | None -> Tok_uident uident_str
+    | None -> Tok_uident (Constant uident_str)
 end
 
 module ConcreteToken = struct
@@ -804,6 +805,15 @@ let accept_uident cursor t =
 let uident _pcursor cursor t =
   ident ~f_accept:accept_uident cursor t
 
+let malformed_uident _pcursor cursor t =
+  ident ~f_accept:(fun cursor t ->
+    let ident_str = str_of_cursor cursor t in
+    let mal = (malformed (malformation ~base:t.cursor ~past:cursor
+        (Format.asprintf "@[<h>Identifier %s lacks _*[A-Za-z] prefix" ident_str)
+        t)) in
+    accept (Tok_uident mal) cursor t
+  ) cursor t
+
 let cident _pcursor cursor t =
   ident ~f_accept:(fun cursor t ->
     let cident_str = str_of_cursor cursor t in
@@ -812,7 +822,8 @@ let cident _pcursor cursor t =
 
 let uscore_ident_map = map_of_cps_alist [
   ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
-  ("abcdefghijklmnopqrstuvwxyz0123456789'", uident);
+  ("abcdefghijklmnopqrstuvwxyz", uident);
+  ("0123456789'", malformed_uident);
 ]
 
 let uscore_ident _pcursor cursor t =
@@ -2919,7 +2930,7 @@ a
     {||}
       [1:0..1:0) : <Tok_end_of_input>
     {|a|}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..1:1) : <Tok_end_of_input>
     {|
     |}
@@ -2928,13 +2939,13 @@ a
       [2:0..2:0) : <Tok_end_of_input>
     {|    a|}
       [1:0..1:4) : <Tok_indent>
-      [1:4..1:5) : <Tok_uident="a">
+      [1:4..1:5) : <Tok_uident=Constant "a">
       [1:5..1:5) : <Tok_dedent>
       [1:5..1:5) : <Tok_end_of_input>
     {|    a
     |}
       [1:0..1:4) : <Tok_indent>
-      [1:4..1:5) : <Tok_uident="a">
+      [1:4..1:5) : <Tok_uident=Constant "a">
       [1:5..2:0) : <Tok_whitespace>
       [2:0..2:0) : <Tok_dedent>
       [2:0..2:0) : <Tok_end_of_input>
@@ -2942,10 +2953,10 @@ a
     b
     |}
       [1:0..1:4) : <Tok_indent>
-      [1:4..1:5) : <Tok_uident="a">
+      [1:4..1:5) : <Tok_uident=Constant "a">
       [1:5..2:0) : <Tok_whitespace>
       [2:0..2:0) : <Tok_dedent>
-      [2:0..2:1) : <Tok_uident="b">
+      [2:0..2:1) : <Tok_uident=Constant "b">
       [2:1..3:0) : <Tok_whitespace>
       [3:0..3:0) : <Tok_line_delim>
       [3:0..3:0) : <Tok_end_of_input>
@@ -2959,31 +2970,31 @@ a
     h
     i
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:0) : <Tok_line_delim>
-      [2:0..2:1) : <Tok_uident="b">
+      [2:0..2:1) : <Tok_uident=Constant "b">
       [2:1..3:0) : <Tok_whitespace>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="c">
+      [3:0..3:1) : <Tok_uident=Constant "c">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="d">
+      [4:4..4:5) : <Tok_uident=Constant "d">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:4) : <Tok_line_delim>
-      [5:4..5:5) : <Tok_uident="e">
+      [5:4..5:5) : <Tok_uident=Constant "e">
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:4) : <Tok_line_delim>
-      [6:4..6:5) : <Tok_uident="f">
+      [6:4..6:5) : <Tok_uident=Constant "f">
       [6:5..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
-      [7:0..7:1) : <Tok_uident="g">
+      [7:0..7:1) : <Tok_uident=Constant "g">
       [7:1..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_line_delim>
-      [8:0..8:1) : <Tok_uident="h">
+      [8:0..8:1) : <Tok_uident=Constant "h">
       [8:1..9:0) : <Tok_whitespace>
       [9:0..9:0) : <Tok_line_delim>
-      [9:0..9:1) : <Tok_uident="i">
+      [9:0..9:1) : <Tok_uident=Constant "i">
       [9:1..10:0) : <Tok_whitespace>
       [10:0..10:0) : <Tok_line_delim>
       [10:0..10:0) : <Tok_end_of_input>
@@ -2993,19 +3004,19 @@ a
         d
     e
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:6) : <Tok_whitespace>
-      [3:6..3:7) : <Tok_uident="c">
+      [3:6..3:7) : <Tok_uident=Constant "c">
       [3:7..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_line_delim>
-      [4:4..4:5) : <Tok_uident="d">
+      [4:4..4:5) : <Tok_uident=Constant "d">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_dedent>
-      [5:0..5:1) : <Tok_uident="e">
+      [5:0..5:1) : <Tok_uident=Constant "e">
       [5:1..6:0) : <Tok_whitespace>
       [6:0..6:0) : <Tok_line_delim>
       [6:0..6:0) : <Tok_end_of_input>
@@ -3017,16 +3028,16 @@ a
     |}
       [1:0..2:0) : <Tok_whitespace>
       [2:0..2:0) : <Tok_line_delim>
-      [2:0..2:1) : <Tok_uident="a">
+      [2:0..2:1) : <Tok_uident=Constant "a">
       [2:1..3:0) : <Tok_whitespace>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="b">
+      [3:0..3:1) : <Tok_uident=Constant "b">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="c">
+      [4:4..4:5) : <Tok_uident=Constant "c">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_dedent>
-      [5:0..5:1) : <Tok_uident="d">
+      [5:0..5:1) : <Tok_uident=Constant "d">
       [5:1..6:0) : <Tok_whitespace>
       [6:0..6:0) : <Tok_line_delim>
       [6:0..6:0) : <Tok_end_of_input>
@@ -3038,16 +3049,16 @@ a
     |}
       [1:0..2:0) : <Tok_whitespace>
       [2:0..2:0) : <Tok_line_delim>
-      [2:0..2:1) : <Tok_uident="a">
+      [2:0..2:1) : <Tok_uident=Constant "a">
       [2:1..3:0) : <Tok_whitespace>
       [3:0..3:4) : <Tok_indent>
-      [3:4..3:5) : <Tok_uident="b">
+      [3:4..3:5) : <Tok_uident=Constant "b">
       [3:5..4:0) : <Tok_whitespace>
       [4:0..4:2) : <Tok_dedent>
-      [4:2..4:3) : <Tok_uident="c">
+      [4:2..4:3) : <Tok_uident=Constant "c">
       [4:3..5:0) : <Tok_whitespace>
       [5:0..5:4) : <Tok_indent>
-      [5:4..5:5) : <Tok_uident="d">
+      [5:4..5:5) : <Tok_uident=Constant "d">
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:0) : <Tok_dedent>
       [6:0..6:0) : <Tok_end_of_input>
@@ -3058,23 +3069,23 @@ a
         d
             e
             f|}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:4) : <Tok_line_delim>
-      [3:4..3:5) : <Tok_uident="c">
+      [3:4..3:5) : <Tok_uident=Constant "c">
       [3:5..4:0) : <Tok_whitespace>
       [4:0..5:0) : <Tok_whitespace>
       [5:0..5:4) : <Tok_line_delim>
-      [5:4..5:5) : <Tok_uident="d">
+      [5:4..5:5) : <Tok_uident=Constant "d">
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:8) : <Tok_indent>
-      [6:8..6:9) : <Tok_uident="e">
+      [6:8..6:9) : <Tok_uident=Constant "e">
       [6:9..7:0) : <Tok_whitespace>
       [7:0..7:8) : <Tok_line_delim>
-      [7:8..7:9) : <Tok_uident="f">
+      [7:8..7:9) : <Tok_uident=Constant "f">
       [7:9..7:9) : <Tok_dedent>
       [7:9..7:9) : <Tok_dedent>
       [7:9..7:9) : <Tok_end_of_input>
@@ -3084,14 +3095,14 @@ a
         c
         d|}
       [1:0..2:4) : <Tok_whitespace>
-      [2:4..2:5) : <Tok_uident="a">
+      [2:4..2:5) : <Tok_uident=Constant "a">
       [2:5..3:4) : <Tok_whitespace>
-      [3:4..3:5) : <Tok_uident="b">
+      [3:4..3:5) : <Tok_uident=Constant "b">
       [3:5..4:4) : <Tok_whitespace>
-      [4:4..4:5) : <Tok_uident="c">
+      [4:4..4:5) : <Tok_uident=Constant "c">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:4) : <Tok_indent>
-      [5:4..5:5) : <Tok_uident="d">
+      [5:4..5:5) : <Tok_uident=Constant "d">
       [5:5..5:5) : <Tok_dedent>
       [5:5..5:5) : <Tok_end_of_input>
     {|	||}
@@ -3115,13 +3126,13 @@ a
     {|\
     a|}
       [1:0..2:0) : <Tok_whitespace>
-      [2:0..2:1) : <Tok_uident="a">
+      [2:0..2:1) : <Tok_uident=Constant "a">
       [2:1..2:1) : <Tok_end_of_input>
     {|\
     \
     a|}
       [1:0..3:0) : <Tok_whitespace>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..3:1) : <Tok_end_of_input>
     {|# a
     b
@@ -3133,19 +3144,19 @@ a
     |}
       [1:0..2:0) : <Tok_hash_comment>
       [2:0..2:0) : <Tok_line_delim>
-      [2:0..2:1) : <Tok_uident="b">
+      [2:0..2:1) : <Tok_uident=Constant "b">
       [2:1..3:0) : <Tok_whitespace>
       [3:0..3:4) : <Tok_indent>
-      [3:4..3:5) : <Tok_uident="c">
+      [3:4..3:5) : <Tok_uident=Constant "c">
       [3:5..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_line_delim>
       [4:4..5:0) : <Tok_hash_comment>
       [5:0..6:0) : <Tok_hash_comment>
       [6:0..6:4) : <Tok_line_delim>
-      [6:4..6:5) : <Tok_uident="f">
+      [6:4..6:5) : <Tok_uident=Constant "f">
       [6:5..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
-      [7:0..7:1) : <Tok_uident="g">
+      [7:0..7:1) : <Tok_uident=Constant "g">
       [7:1..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_line_delim>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3153,27 +3164,27 @@ a
 
 
     b|}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_whitespace>
       [3:0..4:0) : <Tok_whitespace>
       [4:0..4:0) : <Tok_line_delim>
-      [4:0..4:1) : <Tok_uident="b">
+      [4:0..4:1) : <Tok_uident=Constant "b">
       [4:1..4:1) : <Tok_end_of_input>
     {|a
         b
     (* Ignore. *)
         c
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:13) : <Tok_paren_comment>
       [3:13..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_line_delim>
-      [4:4..4:5) : <Tok_uident="c">
+      [4:4..4:5) : <Tok_uident=Constant "c">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_dedent>
       [5:0..5:0) : <Tok_end_of_input>
@@ -3182,10 +3193,10 @@ a
     (* Ignore. *) (* ... *) # ...
         c
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:13) : <Tok_paren_comment>
       [3:13..3:14) : <Tok_whitespace>
@@ -3193,7 +3204,7 @@ a
       [3:23..3:24) : <Tok_whitespace>
       [3:24..4:0) : <Tok_hash_comment>
       [4:0..4:4) : <Tok_line_delim>
-      [4:4..4:5) : <Tok_uident="c">
+      [4:4..4:5) : <Tok_uident=Constant "c">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_dedent>
       [5:0..5:0) : <Tok_end_of_input>
@@ -3204,10 +3215,10 @@ a
     # ...
         c
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:13) : <Tok_paren_comment>
       [3:13..3:14) : <Tok_whitespace>
@@ -3215,7 +3226,7 @@ a
       [4:7..5:0) : <Tok_whitespace>
       [5:0..6:0) : <Tok_hash_comment>
       [6:0..6:4) : <Tok_line_delim>
-      [6:4..6:5) : <Tok_uident="c">
+      [6:4..6:5) : <Tok_uident=Constant "c">
       [6:5..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:0) : <Tok_end_of_input>
@@ -3224,10 +3235,10 @@ a
     (* Don't ignore. *) true
         c
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:0) : <Tok_dedent>
       [3:0..3:19) : <Tok_paren_comment>
@@ -3235,7 +3246,7 @@ a
       [3:20..3:24) : <Tok_true>
       [3:24..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="c">
+      [4:4..4:5) : <Tok_uident=Constant "c">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_dedent>
       [5:0..5:0) : <Tok_end_of_input>
@@ -3246,10 +3257,10 @@ a
      true
         c
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:0) : <Tok_dedent>
       [3:0..3:19) : <Tok_paren_comment>
@@ -3259,7 +3270,7 @@ a
       [5:1..5:5) : <Tok_true>
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:4) : <Tok_indent>
-      [6:4..6:5) : <Tok_uident="c">
+      [6:4..6:5) : <Tok_uident=Constant "c">
       [6:5..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:0) : <Tok_end_of_input>
@@ -3269,10 +3280,10 @@ a
      ... *) true
         c
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:0) : <Tok_dedent>
       [3:0..3:19) : <Tok_paren_comment>
@@ -3282,7 +3293,7 @@ a
       [4:8..4:12) : <Tok_true>
       [4:12..5:0) : <Tok_whitespace>
       [5:0..5:4) : <Tok_indent>
-      [5:4..5:5) : <Tok_uident="c">
+      [5:4..5:5) : <Tok_uident=Constant "c">
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:0) : <Tok_dedent>
       [6:0..6:0) : <Tok_end_of_input>
@@ -3292,20 +3303,20 @@ a
                 d
         e
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:8) : <Tok_indent>
-      [3:8..3:9) : <Tok_uident="c">
+      [3:8..3:9) : <Tok_uident=Constant "c">
       [3:9..4:0) : <Tok_whitespace>
       [4:0..4:12) : <Tok_indent>
-      [4:12..4:13) : <Tok_uident="d">
+      [4:12..4:13) : <Tok_uident=Constant "d">
       [4:13..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_dedent>
       [5:0..5:4) : <Tok_dedent>
-      [5:4..5:5) : <Tok_uident="e">
+      [5:4..5:5) : <Tok_uident=Constant "e">
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:0) : <Tok_dedent>
       [6:0..6:0) : <Tok_end_of_input>
@@ -3316,23 +3327,23 @@ a
           e
         f
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:8) : <Tok_indent>
-      [3:8..3:9) : <Tok_uident="c">
+      [3:8..3:9) : <Tok_uident=Constant "c">
       [3:9..4:0) : <Tok_whitespace>
       [4:0..4:12) : <Tok_indent>
-      [4:12..4:13) : <Tok_uident="d">
+      [4:12..4:13) : <Tok_uident=Constant "d">
       [4:13..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_dedent>
       [5:0..5:6) : <Tok_dedent>
-      [5:6..5:7) : <Tok_uident="e">
+      [5:6..5:7) : <Tok_uident=Constant "e">
       [5:7..6:0) : <Tok_whitespace>
       [6:0..6:4) : <Tok_line_delim>
-      [6:4..6:5) : <Tok_uident="f">
+      [6:4..6:5) : <Tok_uident=Constant "f">
       [6:5..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:0) : <Tok_end_of_input>
@@ -3346,31 +3357,31 @@ a
             h
         i
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:4) : <Tok_line_delim>
-      [3:4..3:5) : <Tok_uident="c">
+      [3:4..3:5) : <Tok_uident=Constant "c">
       [3:5..4:0) : <Tok_whitespace>
       [4:0..4:2) : <Tok_dedent>
-      [4:2..4:3) : <Tok_uident="d">
+      [4:2..4:3) : <Tok_uident=Constant "d">
       [4:3..5:0) : <Tok_whitespace>
       [5:0..5:4) : <Tok_indent>
-      [5:4..5:5) : <Tok_uident="e">
+      [5:4..5:5) : <Tok_uident=Constant "e">
       [5:5..6:0) : <Tok_whitespace>
       [6:0..6:8) : <Tok_indent>
-      [6:8..6:9) : <Tok_uident="f">
+      [6:8..6:9) : <Tok_uident=Constant "f">
       [6:9..7:0) : <Tok_whitespace>
       [7:0..7:6) : <Tok_dedent>
-      [7:6..7:7) : <Tok_uident="g">
+      [7:6..7:7) : <Tok_uident=Constant "g">
       [7:7..8:0) : <Tok_whitespace>
       [8:0..8:8) : <Tok_indent>
-      [8:8..8:9) : <Tok_uident="h">
+      [8:8..8:9) : <Tok_uident=Constant "h">
       [8:9..9:0) : <Tok_whitespace>
       [9:0..9:4) : <Tok_dedent>
-      [9:4..9:5) : <Tok_uident="i">
+      [9:4..9:5) : <Tok_uident=Constant "i">
       [9:5..10:0) : <Tok_whitespace>
       [10:0..10:0) : <Tok_dedent>
       [10:0..10:0) : <Tok_end_of_input>
@@ -3379,27 +3390,27 @@ a
       c
     d
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:2) : <Tok_whitespace>
-      [2:2..2:3) : <Tok_uident="b">
+      [2:2..2:3) : <Tok_uident=Constant "b">
       [2:3..3:0) : <Tok_whitespace>
       [3:0..3:2) : <Tok_whitespace>
-      [3:2..3:3) : <Tok_uident="c">
+      [3:2..3:3) : <Tok_uident=Constant "c">
       [3:3..4:0) : <Tok_whitespace>
       [4:0..4:0) : <Tok_line_delim>
-      [4:0..4:1) : <Tok_uident="d">
+      [4:0..4:1) : <Tok_uident=Constant "d">
       [4:1..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_line_delim>
       [5:0..5:0) : <Tok_end_of_input>
     {|a
             b
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:0) : <Tok_indent=Malformed ["[2:0..2:0): Indent absent"]>
       [2:0..2:8) : <Tok_indent>
-      [2:8..2:9) : <Tok_uident="b">
+      [2:8..2:9) : <Tok_uident=Constant "b">
       [2:9..3:0) : <Tok_whitespace>
       [3:0..3:0) : <Tok_dedent>
       [3:0..3:0) : <Tok_dedent>
@@ -3409,17 +3420,17 @@ a
             c
     d
     |}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..2:0) : <Tok_whitespace>
       [2:0..2:4) : <Tok_indent>
-      [2:4..2:5) : <Tok_uident="b">
+      [2:4..2:5) : <Tok_uident=Constant "b">
       [2:5..3:0) : <Tok_whitespace>
       [3:0..3:8) : <Tok_indent>
-      [3:8..3:9) : <Tok_uident="c">
+      [3:8..3:9) : <Tok_uident=Constant "c">
       [3:9..4:0) : <Tok_whitespace>
       [4:0..4:0) : <Tok_dedent>
       [4:0..4:0) : <Tok_dedent>
-      [4:0..4:1) : <Tok_uident="d">
+      [4:0..4:1) : <Tok_uident=Constant "d">
       [4:1..5:0) : <Tok_whitespace>
       [5:0..5:0) : <Tok_line_delim>
       [5:0..5:0) : <Tok_end_of_input>
@@ -3434,21 +3445,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:0) : <Tok_dedent>
-      [7:0..7:2) : <Tok_uident="a2">
+      [7:0..7:2) : <Tok_uident=Constant "a2">
       [7:2..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_line_delim>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3463,22 +3474,22 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:1) : <Tok_misaligned>
-      [7:1..7:2) : <Tok_uident="x">
+      [7:1..7:2) : <Tok_uident=Constant "x">
       [7:2..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_line_delim>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3493,21 +3504,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:2) : <Tok_dedent>
-      [7:2..7:4) : <Tok_uident="a'">
+      [7:2..7:4) : <Tok_uident=Constant "a'">
       [7:4..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_line_delim>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3522,21 +3533,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:3) : <Tok_misaligned>
-      [7:3..7:4) : <Tok_uident="x">
+      [7:3..7:4) : <Tok_uident=Constant "x">
       [7:4..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3551,20 +3562,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:4) : <Tok_dedent>
-      [7:4..7:6) : <Tok_uident="b2">
+      [7:4..7:6) : <Tok_uident=Constant "b2">
       [7:6..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3579,21 +3590,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:5) : <Tok_misaligned>
-      [7:5..7:6) : <Tok_uident="x">
+      [7:5..7:6) : <Tok_uident=Constant "x">
       [7:6..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3608,20 +3619,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent>
       [7:0..7:6) : <Tok_dedent>
-      [7:6..7:8) : <Tok_uident="b'">
+      [7:6..7:8) : <Tok_uident=Constant "b'">
       [7:8..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_end_of_input>
@@ -3636,20 +3647,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:7) : <Tok_misaligned>
-      [7:7..7:8) : <Tok_uident="x">
+      [7:7..7:8) : <Tok_uident=Constant "x">
       [7:8..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3665,19 +3676,19 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:8) : <Tok_dedent>
-      [7:8..7:10) : <Tok_uident="c2">
+      [7:8..7:10) : <Tok_uident=Constant "c2">
       [7:10..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3693,20 +3704,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_dedent=Malformed ["[7:0..7:0): Dedent absent"]>
       [7:0..7:9) : <Tok_misaligned>
-      [7:9..7:10) : <Tok_uident="x">
+      [7:9..7:10) : <Tok_uident=Constant "x">
       [7:10..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3722,19 +3733,19 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:10) : <Tok_dedent>
-      [7:10..7:12) : <Tok_uident="c'">
+      [7:10..7:12) : <Tok_uident=Constant "c'">
       [7:12..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3750,19 +3761,19 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:11) : <Tok_misaligned>
-      [7:11..7:12) : <Tok_uident="x">
+      [7:11..7:12) : <Tok_uident=Constant "x">
       [7:12..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3779,19 +3790,19 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:12) : <Tok_line_delim>
-      [7:12..7:14) : <Tok_uident="d2">
+      [7:12..7:14) : <Tok_uident=Constant "d2">
       [7:14..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3808,19 +3819,19 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:13) : <Tok_misaligned>
-      [7:13..7:14) : <Tok_uident="x">
+      [7:13..7:14) : <Tok_uident=Constant "x">
       [7:14..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3837,19 +3848,19 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:14) : <Tok_whitespace>
-      [7:14..7:16) : <Tok_uident="d'">
+      [7:14..7:16) : <Tok_uident=Constant "d'">
       [7:16..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3866,20 +3877,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:15) : <Tok_misaligned>
-      [7:15..7:16) : <Tok_uident="x">
+      [7:15..7:16) : <Tok_uident=Constant "x">
       [7:16..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3897,19 +3908,19 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:16) : <Tok_indent>
-      [7:16..7:17) : <Tok_uident="e">
+      [7:16..7:17) : <Tok_uident=Constant "e">
       [7:17..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3927,20 +3938,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:17) : <Tok_misaligned>
-      [7:17..7:18) : <Tok_uident="x">
+      [7:17..7:18) : <Tok_uident=Constant "x">
       [7:18..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3958,20 +3969,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:18) : <Tok_whitespace>
-      [7:18..7:19) : <Tok_uident="x">
+      [7:18..7:19) : <Tok_uident=Constant "x">
       [7:19..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -3989,21 +4000,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:19) : <Tok_misaligned>
-      [7:19..7:20) : <Tok_uident="x">
+      [7:19..7:20) : <Tok_uident=Constant "x">
       [7:20..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -4022,20 +4033,20 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:20) : <Tok_indent>
-      [7:20..7:21) : <Tok_uident="x">
+      [7:20..7:21) : <Tok_uident=Constant "x">
       [7:21..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -4054,21 +4065,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:21) : <Tok_misaligned>
-      [7:21..7:22) : <Tok_uident="x">
+      [7:21..7:22) : <Tok_uident=Constant "x">
       [7:22..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -4087,21 +4098,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:22) : <Tok_whitespace>
-      [7:22..7:23) : <Tok_uident="x">
+      [7:22..7:23) : <Tok_uident=Constant "x">
       [7:23..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -4120,22 +4131,22 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:23) : <Tok_misaligned>
-      [7:23..7:24) : <Tok_uident="x">
+      [7:23..7:24) : <Tok_uident=Constant "x">
       [7:24..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -4155,21 +4166,21 @@ a
       [1:0..2:0) : <Tok_whitespace>
       [2:0..3:0) : <Tok_hash_comment>
       [3:0..3:0) : <Tok_line_delim>
-      [3:0..3:1) : <Tok_uident="a">
+      [3:0..3:1) : <Tok_uident=Constant "a">
       [3:1..4:0) : <Tok_whitespace>
       [4:0..4:4) : <Tok_indent>
-      [4:4..4:5) : <Tok_uident="b">
+      [4:4..4:5) : <Tok_uident=Constant "b">
       [4:5..5:0) : <Tok_whitespace>
       [5:0..5:8) : <Tok_indent>
-      [5:8..5:9) : <Tok_uident="c">
+      [5:8..5:9) : <Tok_uident=Constant "c">
       [5:9..6:0) : <Tok_whitespace>
       [6:0..6:12) : <Tok_indent>
-      [6:12..6:13) : <Tok_uident="d">
+      [6:12..6:13) : <Tok_uident=Constant "d">
       [6:13..7:0) : <Tok_whitespace>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:0) : <Tok_indent=Malformed ["[7:0..7:0): Indent absent"]>
       [7:0..7:24) : <Tok_indent>
-      [7:24..7:25) : <Tok_uident="x">
+      [7:24..7:25) : <Tok_uident=Constant "x">
       [7:25..8:0) : <Tok_whitespace>
       [8:0..8:0) : <Tok_dedent>
       [8:0..8:0) : <Tok_dedent>
@@ -4336,27 +4347,27 @@ let%expect_test "punctuation" =
       [1:19..1:22) : <Tok_parrow>
       [1:22..1:23) : <Tok_whitespace>
       [1:23..1:24) : <Tok_gt>
-      [1:24..1:25) : <Tok_uident="e">
+      [1:24..1:25) : <Tok_uident=Constant "e">
       [1:25..1:27) : <Tok_arrow>
       [1:27..1:28) : <Tok_whitespace>
       [1:28..1:29) : <Tok_gt>
       [1:29..1:30) : <Tok_lcurly>
       [1:30..1:31) : <Tok_gt>
-      [1:31..1:32) : <Tok_uident="e">
+      [1:31..1:32) : <Tok_uident=Constant "e">
       [1:32..1:33) : <Tok_comma>
-      [1:33..1:36) : <Tok_uident="mut">
+      [1:33..1:36) : <Tok_uident=Constant "mut">
       [1:36..1:37) : <Tok_rcurly>
       [1:37..1:39) : <Tok_arrow>
       [1:39..1:39) : <Tok_end_of_input>
     {|~f ~> >{mut}~> ~- ~-+*/%@!$<=>|:.~?|}
       [1:0..1:1) : <Tok_tilde>
-      [1:1..1:2) : <Tok_uident="f">
+      [1:1..1:2) : <Tok_uident=Constant "f">
       [1:2..1:3) : <Tok_whitespace>
       [1:3..1:5) : <Tok_earrow>
       [1:5..1:6) : <Tok_whitespace>
       [1:6..1:7) : <Tok_gt>
       [1:7..1:8) : <Tok_lcurly>
-      [1:8..1:11) : <Tok_uident="mut">
+      [1:8..1:11) : <Tok_uident=Constant "mut">
       [1:11..1:12) : <Tok_rcurly>
       [1:12..1:14) : <Tok_earrow>
       [1:14..1:15) : <Tok_whitespace>
@@ -4366,7 +4377,7 @@ let%expect_test "punctuation" =
       [1:35..1:35) : <Tok_end_of_input>
     {|?x ?? ?-+*/%@!$<=>|:.~?|}
       [1:0..1:1) : <Tok_qmark>
-      [1:1..1:2) : <Tok_uident="x">
+      [1:1..1:2) : <Tok_uident=Constant "x">
       [1:2..1:3) : <Tok_whitespace>
       [1:3..1:5) : <Tok_qmark_op="??">
       [1:5..1:6) : <Tok_whitespace>
@@ -4574,63 +4585,63 @@ let%expect_test "uident" =
       [1:50..1:51) : <Tok_cident="Z">
       [1:51..1:51) : <Tok_end_of_input>
     {|a b c d e f g h i j k l m n o p q r s t u v w x y z|}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:3) : <Tok_uident="b">
+      [1:2..1:3) : <Tok_uident=Constant "b">
       [1:3..1:4) : <Tok_whitespace>
-      [1:4..1:5) : <Tok_uident="c">
+      [1:4..1:5) : <Tok_uident=Constant "c">
       [1:5..1:6) : <Tok_whitespace>
-      [1:6..1:7) : <Tok_uident="d">
+      [1:6..1:7) : <Tok_uident=Constant "d">
       [1:7..1:8) : <Tok_whitespace>
-      [1:8..1:9) : <Tok_uident="e">
+      [1:8..1:9) : <Tok_uident=Constant "e">
       [1:9..1:10) : <Tok_whitespace>
-      [1:10..1:11) : <Tok_uident="f">
+      [1:10..1:11) : <Tok_uident=Constant "f">
       [1:11..1:12) : <Tok_whitespace>
-      [1:12..1:13) : <Tok_uident="g">
+      [1:12..1:13) : <Tok_uident=Constant "g">
       [1:13..1:14) : <Tok_whitespace>
-      [1:14..1:15) : <Tok_uident="h">
+      [1:14..1:15) : <Tok_uident=Constant "h">
       [1:15..1:16) : <Tok_whitespace>
-      [1:16..1:17) : <Tok_uident="i">
+      [1:16..1:17) : <Tok_uident=Constant "i">
       [1:17..1:18) : <Tok_whitespace>
-      [1:18..1:19) : <Tok_uident="j">
+      [1:18..1:19) : <Tok_uident=Constant "j">
       [1:19..1:20) : <Tok_whitespace>
-      [1:20..1:21) : <Tok_uident="k">
+      [1:20..1:21) : <Tok_uident=Constant "k">
       [1:21..1:22) : <Tok_whitespace>
-      [1:22..1:23) : <Tok_uident="l">
+      [1:22..1:23) : <Tok_uident=Constant "l">
       [1:23..1:24) : <Tok_whitespace>
-      [1:24..1:25) : <Tok_uident="m">
+      [1:24..1:25) : <Tok_uident=Constant "m">
       [1:25..1:26) : <Tok_whitespace>
-      [1:26..1:27) : <Tok_uident="n">
+      [1:26..1:27) : <Tok_uident=Constant "n">
       [1:27..1:28) : <Tok_whitespace>
-      [1:28..1:29) : <Tok_uident="o">
+      [1:28..1:29) : <Tok_uident=Constant "o">
       [1:29..1:30) : <Tok_whitespace>
-      [1:30..1:31) : <Tok_uident="p">
+      [1:30..1:31) : <Tok_uident=Constant "p">
       [1:31..1:32) : <Tok_whitespace>
-      [1:32..1:33) : <Tok_uident="q">
+      [1:32..1:33) : <Tok_uident=Constant "q">
       [1:33..1:34) : <Tok_whitespace>
-      [1:34..1:35) : <Tok_uident="r">
+      [1:34..1:35) : <Tok_uident=Constant "r">
       [1:35..1:36) : <Tok_whitespace>
-      [1:36..1:37) : <Tok_uident="s">
+      [1:36..1:37) : <Tok_uident=Constant "s">
       [1:37..1:38) : <Tok_whitespace>
-      [1:38..1:39) : <Tok_uident="t">
+      [1:38..1:39) : <Tok_uident=Constant "t">
       [1:39..1:40) : <Tok_whitespace>
-      [1:40..1:41) : <Tok_uident="u">
+      [1:40..1:41) : <Tok_uident=Constant "u">
       [1:41..1:42) : <Tok_whitespace>
-      [1:42..1:43) : <Tok_uident="v">
+      [1:42..1:43) : <Tok_uident=Constant "v">
       [1:43..1:44) : <Tok_whitespace>
-      [1:44..1:45) : <Tok_uident="w">
+      [1:44..1:45) : <Tok_uident=Constant "w">
       [1:45..1:46) : <Tok_whitespace>
-      [1:46..1:47) : <Tok_uident="x">
+      [1:46..1:47) : <Tok_uident=Constant "x">
       [1:47..1:48) : <Tok_whitespace>
-      [1:48..1:49) : <Tok_uident="y">
+      [1:48..1:49) : <Tok_uident=Constant "y">
       [1:49..1:50) : <Tok_whitespace>
-      [1:50..1:51) : <Tok_uident="z">
+      [1:50..1:51) : <Tok_uident=Constant "z">
       [1:51..1:51) : <Tok_end_of_input>
     {|_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'|}
       [1:0..1:65) : <Tok_cident="_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'">
       [1:65..1:65) : <Tok_end_of_input>
     {|_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'|}
-      [1:0..1:65) : <Tok_uident="_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'">
+      [1:0..1:65) : <Tok_uident=Constant "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'">
       [1:65..1:65) : <Tok_end_of_input>
     {|A _A __A ___A|}
       [1:0..1:1) : <Tok_cident="A">
@@ -4642,39 +4653,39 @@ let%expect_test "uident" =
       [1:9..1:13) : <Tok_cident="___A">
       [1:13..1:13) : <Tok_end_of_input>
     {|a _a __a ___a|}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:4) : <Tok_uident="_a">
+      [1:2..1:4) : <Tok_uident=Constant "_a">
       [1:4..1:5) : <Tok_whitespace>
-      [1:5..1:8) : <Tok_uident="__a">
+      [1:5..1:8) : <Tok_uident=Constant "__a">
       [1:8..1:9) : <Tok_whitespace>
-      [1:9..1:13) : <Tok_uident="___a">
+      [1:9..1:13) : <Tok_uident=Constant "___a">
       [1:13..1:13) : <Tok_end_of_input>
     {|__ _0 _' __0 __'|}
-      [1:0..1:2) : <Tok_uident="__">
+      [1:0..1:2) : <Tok_uident=Constant "__">
       [1:2..1:3) : <Tok_whitespace>
-      [1:3..1:5) : <Tok_uident="_0">
+      [1:3..1:5) : <Tok_uident=Constant "_0">
       [1:5..1:6) : <Tok_whitespace>
-      [1:6..1:8) : <Tok_uident="_'">
+      [1:6..1:8) : <Tok_uident=Constant "_'">
       [1:8..1:9) : <Tok_whitespace>
-      [1:9..1:12) : <Tok_uident="__0">
+      [1:9..1:12) : <Tok_uident=Malformed ["[1:9..1:12): Identifier __0 lacks _*[A-Za-z] prefix"]>
       [1:12..1:13) : <Tok_whitespace>
-      [1:13..1:16) : <Tok_uident="__'">
+      [1:13..1:16) : <Tok_uident=Malformed ["[1:13..1:16): Identifier __' lacks _*[A-Za-z] prefix"]>
       [1:16..1:16) : <Tok_end_of_input>
     {|a as ass asse asser assert asserts|}
-      [1:0..1:1) : <Tok_uident="a">
+      [1:0..1:1) : <Tok_uident=Constant "a">
       [1:1..1:2) : <Tok_whitespace>
       [1:2..1:4) : <Tok_as>
       [1:4..1:5) : <Tok_whitespace>
-      [1:5..1:8) : <Tok_uident="ass">
+      [1:5..1:8) : <Tok_uident=Constant "ass">
       [1:8..1:9) : <Tok_whitespace>
-      [1:9..1:13) : <Tok_uident="asse">
+      [1:9..1:13) : <Tok_uident=Constant "asse">
       [1:13..1:14) : <Tok_whitespace>
-      [1:14..1:19) : <Tok_uident="asser">
+      [1:14..1:19) : <Tok_uident=Constant "asser">
       [1:19..1:20) : <Tok_whitespace>
       [1:20..1:26) : <Tok_assert>
       [1:26..1:27) : <Tok_whitespace>
-      [1:27..1:34) : <Tok_uident="asserts">
+      [1:27..1:34) : <Tok_uident=Constant "asserts">
       [1:34..1:34) : <Tok_end_of_input>
     {|and|}
       [1:0..1:3) : <Tok_and>
@@ -4931,19 +4942,19 @@ let%expect_test "codepoint" =
     {|' a|}
       [1:0..1:1) : <Tok_tick>
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:3) : <Tok_uident="a">
+      [1:2..1:3) : <Tok_uident=Constant "a">
       [1:3..1:3) : <Tok_end_of_input>
     {|'a|}
       [1:0..1:1) : <Tok_tick>
-      [1:1..1:2) : <Tok_uident="a">
+      [1:1..1:2) : <Tok_uident=Constant "a">
       [1:2..1:2) : <Tok_end_of_input>
     {|'abcdefghijklmnopqrstuvwxyz_|}
       [1:0..1:1) : <Tok_tick>
-      [1:1..1:28) : <Tok_uident="abcdefghijklmnopqrstuvwxyz_">
+      [1:1..1:28) : <Tok_uident=Constant "abcdefghijklmnopqrstuvwxyz_">
       [1:28..1:28) : <Tok_end_of_input>
     {|'aa'|}
       [1:0..1:1) : <Tok_tick>
-      [1:1..1:4) : <Tok_uident="aa'">
+      [1:1..1:4) : <Tok_uident=Constant "aa'">
       [1:4..1:4) : <Tok_end_of_input>
     {|'\u{0}x'|}
       [1:0..1:8) : <Tok_codepoint=Malformed ["[1:6..1:7): Excess codepoint before terminator"]>
