@@ -1255,10 +1255,17 @@ u_div_mod(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw,
         hm_word_t qdigit;
         {
             hm_word_t t = hm_word_sl(uh[j+n], hm_bphw) + (hm_word_t)uh[j+n-1];
+            /* / and % are inseparable at the microarchitecture level, so use %
+             * to get the already-computed remainder rather than manually
+             * computing it based on qdigit. */
             qdigit = t / (hm_word_t)vh[n-1];
-            hm_word_t rem = t - qdigit * (hm_word_t)vh[n-1];
-            while (qdigit >= base || qdigit * (hm_word_t)vh[n-2] > base * rem +
-              (hm_word_t)uh[j+n-2]) {
+            hm_word_t rem = t % (hm_word_t)vh[n-1];
+
+            /* Once the first part of the following conditional is satisfied,
+             * qdigit fits in a half word, so it can be safely cast to
+             * hm_hword_t as a manual strength reduction optimization. */
+            while (qdigit >= base || (hm_hword_t)qdigit * (hm_word_t)vh[n-2] >
+              base * rem + (hm_word_t)uh[j+n-2]) {
                 qdigit--;
                 rem += (hm_word_t)vh[n-1];
                 if (rem >= base) break;
@@ -1267,7 +1274,7 @@ u_div_mod(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw,
         // Multiply and subtract.
         hm_iword_t carry = 0;
         for (size_t i = 0; i < n; i++) {
-            hm_word_t p = qdigit * (hm_word_t)vh[i];
+            hm_word_t p = (hm_hword_t)qdigit * (hm_word_t)vh[i];
             hm_iword_t t = (hm_word_t)uh[i+j] - carry - (p & digit_mask);
             uh[i+j] = t;
             carry = hm_word_usr(p, hm_bphw) - hm_word_ssr(t, hm_bphw);
