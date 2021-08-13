@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  prod:
+    build:
+      args:
+        - HEMLOCK_BOOTSTRAP_OCAML_VERSION
+      context: .
+      dockerfile: .dockerfile
+      target: prod
+    container_name: branchtaken__hemlock__prod
+    cap_add:
+      - SYS_PTRACE
+    environment:
+      - SSH_AUTH_SOCK
+    image: branchtaken/hemlock:prod
+    security_opt:
+      - seccomp:unconfined
+    privileged: true
+    volumes:
+      - .:/home/hemlock/Hemlock
+      - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
+    working_dir: /home/hemlock/Hemlock
+  dev:
+    build:
+      args:
+        - DOTFILES_HASH
+        - DOTFILES_URL
+      target: dev
+    container_name: branchtaken__hemlock__dev
+    extends: prod
+    image: branchtaken/hemlock:dev

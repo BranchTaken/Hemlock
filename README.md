@@ -14,6 +14,61 @@ not yet suited for any sort of production use.
 
 ### Prerequisites
 
+There are two separate methods for building the bootstrap compiler (Docker and Native). Follow
+prerequisites for your preferred method.
+
+#### Docker Prerequisites
+
+Install [docker](https://docs.docker.com/engine/install/).
+
+Install [docker compose](https://docs.docker.com/compose/cli-command/).
+
+Build the Hemlock `prod` docker image from the root of the Hemlock repo checkout.
+
+```sh
+docker compose build prod
+```
+
+Run a Hemlock `prod` docker container.
+
+```sh
+docker compose run prod
+```
+
+##### (Optional) Building Dotfiles Into `dev` Image
+
+Set a `DOTFILES_URL` environment variable to include your dotfiles in the Hemlock `dev` image.
+
+```sh
+export DOTFILES_URL=https://github.com/<you>/dotfiles.git
+docker compose build dev
+docker compose run dev
+```
+
+Note that cloning dotfiles via SSH is not supported due to current `docker compose` limitations. We
+provide a build script, `.docker-build-with-private-dotfiles.sh` to work around the issue.
+
+```sh
+./.docker-build-with-private-dotfiles.sh
+```
+
+You may include an `install.sh` script at the base of your dotfiles repo to automatically execute
+dotfiles setup during `docker compose build dev`.
+
+Set an additional environment variable, `DOTFILES_HASH` if you need `docker compose build dev` to
+rebuild dotfiles whenever the hash changes. This is useful when making upstream changes in your
+dotfiles repo. You may find it best to set `DOTFILE_*` variables programmatically via your shell
+setup script like so.
+
+```sh
+pushd $YOUR_DOTFILES_PATH > /dev/null
+export DOTFILES_URL=$(git remote get-url origin 2> /dev/null || :)
+export DOTFILES_HASH=$(git rev-parse origin/master 2> /dev/null || :)
+popd > /dev/null
+```
+
+#### Native Prerequisites
+
 The bootstrap compiler depends on [OCaml](http://ocaml.org/) and the [Dune](https://dune.build/)
 build system, as well as several ppx rewriters.  [opam](https://opam.ocaml.org/) is the recommended
 mechanism for installing and maintaining an OCaml development environment. To install the necessary
