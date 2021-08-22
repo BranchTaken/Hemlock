@@ -126,7 +126,8 @@ In addition to punctuation, Hemlock supports an extensible set of operators.
 Operators are either prefix or infix, as determined by the leading codepoint.
 
 - Prefix operator: `[~?][-+*/%@!$<=>|:.~?]+`
-- Infix operator: `[-+*/%@!$<=>|:.~?]+` excluding punctuation symbols
+- Infix operator: `[-+*/%@!$<=>|:.][-+*/%@!$<=>|:.~?]*` excluding punctuation
+  symbols
 
 ### Keyword
 
