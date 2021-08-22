@@ -7,9 +7,8 @@ let T = module
     type 'a elm = 'a
 
     let Builder = module
-        # `array_builder` is built into the compiler similarly to `array`, but
-        # it is only exposed when compiling Basis code, as controlled by a
-        # compiler flag.
+        # `array_builder` is built into the compiler similarly to `array`, but it is only exposed
+        # when compiling Basis code, as controlled by a compiler flag.
         type 'a t& = 'a array_builder&
 
         external alloc_lput: uns -> 'a -> 'a t& =
@@ -54,8 +53,7 @@ let T = module
                 | true ->
                     match Uns.((of_sint Sint.(neg i)) > t.index) with
                     | true -> halt "Cannot seek before beginning of array"
-                    | false -> {t with index=Uns.(t.index - of_sint (Sint.neg
-                      i))}
+                    | false -> {t with index=Uns.(t.index - of_sint (Sint.neg i))}
                 | false ->
                     match Uns.((t.index + (of_sint i)) > (length t.array)) with
                     | true -> halt "Cannot seek past end of array"
@@ -194,12 +192,11 @@ let Seq = module
     let make_Poly2 (T : {|
         type ('a, ^arr, >e) ['accum, 'b] t
         val length: ('a, ^arr, >e) ['accum, 'b] t -> uns
-        val next: ('a, ^arr, >e) ['accum, 'b] t -> 'accum ->
-          'b * ('a, ^arr, >e) ['accum, 'b] t * 'accum
+        val next: ('a, ^arr, >e) ['accum, 'b] t -> 'accum
+          >e-> 'b * ('a, ^arr, >e) ['accum, 'b] t * 'accum
       |}) : {|
         type ('a, ^arr, >e) ['accum, 'b] t := ('a, ^arr, >e) ['accum, 'b] T.t
-        val to_accum_array: ('a, ^arr, >e) ['accum, 'b] t -> init:'accum
-          -> 'accum * 'b outer^
+        val to_accum_array: ('a, ^arr, >e) ['accum, 'b] t -> init:'accum >e-> 'accum * 'b outer^
       |} = module
         let to_accum_array t ~init = expose
             match T.length t with
@@ -220,12 +217,10 @@ let Seq = module
         type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t
         val length: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> uns
         val next: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> 'accum
-          -> 'c * ('a, ^m, 'b, ^n, >e) ['accum, 'c] t * 'accum
+          >e-> 'c * ('a, ^m, 'b, ^n, >e) ['accum, 'c] t * 'accum
       |}) : {|
-        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t :=
-          ('a, ^m, 'b, ^n, >e) ['accum, 'c] T.t
-        val to_accum_array: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> init:'accum
-          -> 'accum * 'c outer^
+        type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t := ('a, ^m, 'b, ^n, >e) ['accum, 'c] T.t
+        val to_accum_array: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> init:'accum -> 'accum * 'c outer^
       |} = module
         let to_accum_array t ~init = expose
             match T.length t with
@@ -340,8 +335,7 @@ let ArrayJoin = module
           }
         type 'a elm = 'a
 
-        (* val init: uns -> 'a outer^sep -> 'a outer^arrays list
-         *   -> ('a, ^sep, ^arrays) t *)
+        (* val init: uns -> 'a outer^sep -> 'a outer^arrays list -> ('a, ^sep, ^arrays) t *)
         let init length sep arrays =
             {sep; arrays; length; in_sep=false; index=0}
 
@@ -496,8 +490,7 @@ let blit_descending len i0 t0 i1 t1 =
         set_inplace (i1 + i) (get (i0 + i) t0) t1
 
 let blit len i0 t0 i1 t1 =
-    (* Choose direction such that overlapping ranges don't corrupt the source.
-     *)
+    (* Choose direction such that overlapping ranges don't corrupt the source. *)
     match i0 < i1 with
     | true -> blit_descending len i0 t0 i1 t1
     | false -> blit_ascending len i0 t0 i1 t1
@@ -527,8 +520,8 @@ type run = {
     past: uns
   }
 let sort_impl ?(stable=false) ~cmp ~inplace t =
-    (* Merge a pair of adjacent runs. Input runs may be in increasing or
-     * decreasing order; the output is always in increasing order. *)
+    (* Merge a pair of adjacent runs. Input runs may be in increasing or decreasing order; the
+     * output is always in increasing order. *)
     let merge_pair ~cmp src run0 order0 run1 order1 dst =
         assert (run0.past = run1.base)
         let rblit len i0 t0 i1 t1 =
@@ -577,16 +570,14 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
                 | true, false ->
                     let len = run1.past - run1.base
                     let () = match order1 with
-                        | Increasing ->
-                          blit_ascending len run1.base src run.past dst
+                        | Increasing -> blit_ascending len run1.base src run.past dst
                         | Decreasing -> rblit len run1.base src run.past dst
                         | Either -> not_reached ()
                     {run with past=run.past + len}
                 | false, true ->
                     let len = run0.past - run0.base
                     let () = match order0 with
-                        | Increasing ->
-                          blit_ascending len run0.base src run.past dst
+                        | Increasing -> blit_ascending len run0.base src run.past dst
                         | Decreasing -> rblit len run0.base src run.past dst
                         | Either -> not_reached ()
                     {run with past=run.past + len}
@@ -641,16 +632,15 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
                         let run1 = {base; past=i}
                         let run = merge_pair ~cmp src run0 order0 run1 order dst
                         None, Either, (run :: runs)
-                select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst
-                  runs'
+                select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst runs'
     let aux = copy t
     let runs = match t with
         | [||] -> [{base=0; past=0}]
         | _ -> select ~stable ~cmp (get 0 t) 0 1 Either None Either t aux []
 
-    (* Repeatedly sweep through runs and merge pairs until only one run remains.
-     * Take care to read/write linearly up/down based on the sweep direction, in
-     * order to improve cache locality. *)
+    (* Repeatedly sweep through runs and merge pairs until only one run remains. Take care to
+     * read/write linearly up/down based on the sweep direction, in order to improve cache locality.
+     *)
     let rec merge ~cmp ~inplace src to_merge up dst merged =
         match to_merge, up, merged with
         | run0 :: run1 :: to_merge', true, _
@@ -704,42 +694,31 @@ let search_impl ?base ?past key ~cmp mode t =
             match mode with
             | Cmp.Lt ->
                 match (base = 0), (base = (length t)) with
-                | true, true -> None (* Empty; key < elms. *)
-                | _, false -> (* At beginning, or interior. *)
+                | true, true -> None # Empty; key < elms.
+                | _, false -> # At beginning, or interior.
                     match cmp key (get base t) with
                     | Cmp.Lt -> (* At successor. *)
                         match base = 0 with
-                        | true ->
-                            (* At beginning; key < elms. *)
-                            Some (Cmp.Lt, 0)
-                        | false ->
-                            (* In interior; key > predecessor. *)
-                            Some (Cmp.Gt, pred base
-                    | Cmp.Eq ->
-                        (* base at leftmost match. *)
-                        Some (Cmp.Eq, base)
+                        | true -> Some (Cmp.Lt, 0) # At beginning; key < elms.
+                        | false -> Some (Cmp.Gt, pred base # In interior; key > predecessor.
+                    | Cmp.Eq -> Some (Cmp.Eq, base) # base at leftmost match.
                     | Cmp.Gt -> not_reached ()
-                | false, true ->
-                    Some (Cmp.Gt, pred base) (* Past end; key > elms. *)
-            | Cmp.Eq -> None (* No match. *)
+                | false, true -> Some (Cmp.Gt, pred base) # Past end; key > elms.
+            | Cmp.Eq -> None # No match.
             | Cmp.Gt ->
                 match (base = 0), (base = (length t)) with
-                | true, true -> None (* Empty; key > elms. *)
+                | true, true -> None # Empty; key > elms.
                 | true, false ->
-                    Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
-                | false, _ -> (* In interior, or past end. *)
+                    Some (Cmp.Lt, 0) # At beginning; key < elms.
+                | false, _ -> # In interior, or past end.
                     let probe = pred base
                     match cmp key (get probe t) with
                     | Cmp.Lt -> not_reached ()
-                    | Cmp.Eq ->
-                        Some (Cmp.Eq, probe) (* probe at rightmost match. *)
+                    | Cmp.Eq -> Some (Cmp.Eq, probe) # probe at rightmost match.
                     | Cmp.Gt ->
                         match (base = (length t)) with
-                        | false ->
-                            (* In interior; key < * successor. *)
-                            Some (Cmp.Lt, base)
-                        | true ->
-                            Some (Cmp.Gt, probe) (* Past end; key > elms. *)
+                        | false -> Some (Cmp.Lt, base) # In interior; key < * successor.
+                        | true -> Some (Cmp.Gt, probe) # Past end; key > elms.
         | false ->
             let mid = (base + past) / 2
             match (cmp key (get mid t)), mode with
@@ -785,8 +764,8 @@ let ArrayFoldiMap = module
         let length t =
             t.length
 
-        (* val next: ('a, ^arr, >e) ['accum, 'b] t
-         *   >e-> 'a * ('a, ^arr, >e) ['accum, 'b] t * 'accum *)
+        (* val next: ('a, ^arr, >e) ['accum, 'b] t -> 'accum
+         *   >e-> 'b * ('a, ^arr, >e) ['accum, 'b] t * 'accum *)
         let next t accum =
             let accum', elm' = t.f t.index accum (get t.index t.arr)
             let t' = {t with index=succ t.index}
@@ -893,7 +872,7 @@ let ArrayFoldi2Map = module
             length t.arr0
 
         (* val next: ('a, ^m, 'b, ^n, >e) ['accum, 'c] t -> 'accum
-         *   -> 'c * ('a, ^m, 'b, ^n, >e) ['accum, 'c] t * 'accum *)
+         *   >e-> 'c * ('a, ^m, 'b, ^n, >e) ['accum, 'c] t * 'accum *)
         let next t accum =
             let accum', elm' = t.f t.index accum (get t.index t.arr0)
               (get t.index t.arr1)
@@ -928,7 +907,7 @@ let pp pp_elm ppf t =
       )
     fprintf ppf "|]@]"
 
-(*******************************************************************************
+(***************************************************************************************************
  * Begin tests.
  *)
 
@@ -956,10 +935,8 @@ let%expect_test "cursor" =
         let length = length arr
         assert (Cursor.(=) (Cursor.seek (Uns.to_sint index) hd) cursor)
         assert (Cursor.(=) hd (Cursor.seek (-(Uns.to_sint index)) cursor))
-        assert (Cursor.(=) (Cursor.seek (Uns.to_sint (length - index)) cursor)
-          tl)
-        assert (Cursor.(=) cursor (Cursor.seek (-(Uns.to_sint (length - index)))
-          tl))
+        assert (Cursor.(=) (Cursor.seek (Uns.to_sint (length - index)) cursor) tl)
+        assert (Cursor.(=) cursor (Cursor.seek (-(Uns.to_sint (length - index))) tl))
 
         match cursor_tl with
         | Lt ->
@@ -1076,8 +1053,7 @@ let%expect_test "cmp" =
 let%expect_test "get,length,is_empty" =
     let open Format
     let test_length arr =
-        printf "%a: length=%a, is_empty=%B\n" (pp Uns.pp) arr Uns.pp (length
-          arr) (is_empty arr)
+        printf "%a: length=%a, is_empty=%B\n" (pp Uns.pp) arr Uns.pp (length arr) (is_empty arr)
     printf "@[<h>"
     test_length [||]
     test_length [|0|]
@@ -1150,8 +1126,7 @@ let%expect_test "join" =
         let () = match sep with
             | None -> ()
             | Some sep -> printf " ~sep:%a" (pp Uns.pp) sep
-        printf " %a -> %a\n" (List.pp (pp Uns.pp)) arrs (pp Uns.pp) (join ?sep
-          arrs)
+        printf " %a -> %a\n" (List.pp (pp Uns.pp)) arrs (pp Uns.pp) (join ?sep arrs)
     printf "@[<h>"
     test []
     test [[||]]
@@ -1327,9 +1302,8 @@ let%expect_test "swap,swap_inplace" =
         for i = 0 to pred (length arr) do
             for j = i to pred (length arr) do
                 let arr' = copy arr
-                printf "%a %a: swap %a -> %a -> swap_inplace %a -> " Uns.pp i
-                  Uns.pp j (pp Uns.pp) arr' (pp Uns.pp) (swap i j arr') (pp
-                  Uns.pp) arr'
+                printf "%a %a: swap %a -> %a -> swap_inplace %a -> " Uns.pp i Uns.pp j
+                  (pp Uns.pp) arr' (pp Uns.pp) (swap i j arr') (pp Uns.pp) arr'
                 swap_inplace i j arr';
                 printf "%a\n" (pp Uns.pp) arr'
     printf "@[<h>"
