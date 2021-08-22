@@ -48,6 +48,9 @@ For more semantics detail than is provided in the following syntax quick referen
     parameter, separated from effects on lexical closure by the `~>` delimiter.
     Function-parameter-specific effects can be paramatric and/or constrained, though this is less
     common than for lexical closure effects.
+  - `-{alloc}`, `-{alloc,hlt}`: Explicit [never-parametric] concealed effect(s). An explicitly pure
+    application is written as `-->`, which is shorthand for `-{}->` (or more verbosely,
+    `>{}\{}-{}->`).
 - Mutability
   - `^m t`, `^m t ^t`, `^m t^`: Parametric mutability. `^m` is an indirect mutability parameter,
     whereas `^t` comes after the type name and is the direct mutability parameter. When otherwise
@@ -86,6 +89,23 @@ therefore cannot be supported in the global heap. These restrictions are evaluat
 which means that the programming model is unaffected by type erasure. The absence of dynamic
 validation overhead enables fast message passing, as well as fully automated migration of compatible
 long-lived values to the global heap.
+
+Effects are inferred prior to any transformations which could cause their elision. For example,
+`f` has a `mut` effect even though the mutation is unreachable.
+
+```hemlock
+# val f: uns& >{mut}~> -> uns
+let f x =
+    if false
+        x := 0
+    x
+```
+
+If effect elision were performed, APIs would be extremely brittle. Nearby code changes, changes in
+any function in the transitive call graph, and even compiler flag/version changes could impact APIs.
+That said, although interfaces are conservatively inferred, the compiler is free to internally
+optimize away effectless code which does not produce useful values, whether via constant
+propagation, dead code elimination, inlining, etc.
 
 # Parametrization
 
@@ -153,6 +173,7 @@ Hemlock does model runtime system read-only effects, but write effects imply rea
 - `effect mut = >{ld,st}`: Runtime system read-write effect (mnemonic: MUTate), superset of `>{ld}`
   rather than disjoint so that both `\{ld}` and `\{mut}` effect constraints independently prohibit
   mutable data accesses.
+- `effect conceal alloc`: Concealable allocation effect (mnemonic: ALLOCation)
 - `effect conceal hlt`: Concealable may-halt effect (mnemonic: HaLT)
 - `effect rt = >{mut,hlt}`: Runtime system effect (mnemonic: RunTime)
 - `effect all = >{os,rt}`: Set of all effects
@@ -215,24 +236,90 @@ type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t =
     index: uns
 ```
 
-## `expose`/`conceal` and may-halt effects
+## Concealable effects (`expose`/`conceal`)
 
 The runtime requires most pre-defined effects to be fully transitive for correctness reasons, so
 that, for example, it is impossible to hide a mutation effect from the runtime. On the other hand,
-the may-halt effect can usually be locally handled and hidden from callers without affecting
-correctness. Furthermore, the may-halt effect would have a huge deleterious impact on APIs were it
-allowed to transitively propagate without limit. Therefore the may-halt effect is declared as
-concealable, so that it is concealed by default, and can be explicitly exposed only where important
-to correctness.
+some effects can usually be locally handled and hidden from callers without affecting correctness.
+Furthermore, pervasive effects would have huge deleterious impacts on APIs were they allowed to
+transitively propagate without limit. Therefore effects can be declared as concealable, with
+exposure at the outermost lexical scope either `conceal` or `expose`.
+
+```hemlock
+effect         eu   # Unconcealable effect.
+effect conceal ec   # Concealable effect, concealed at outermost scope.
+effect expose  ee   # Concealable effect, exposed at outermost scope.
+```
+
+The `expose` and `conceal` keywords introduce nestable lexical scopes which expose and conceal
+specific concealable effects, respectively.
+
+```hemlock
+# Outermost scope, with exposure as if the module were wrapped with
+#     conceal >{ec} \
+#     expose >{ee} \
+[...]
+expose >{ec} \
+[...]
+conceal >{ee}
+    [...]
+    expose >{ee}
+        [...]
+```
+
+See the following `hlt` and `alloc` documentation for more sophisticated examples of
+`expose`/`conceal` usage.
+
+Concealable effects are usually irrelevant, and therefore omitted, in function signatures. However,
+low-level runtime code (and perhaps performance-critical application code) sometimes needs complete
+knowledge and control over effects. For example, `alloc` effects must be avoided in portions of the
+garbage collector. The compiler needs comprehensive transitive knowledge of effects to guarantee
+that such code is `alloc`-free. The following example application arrows illustrate explicit
+concealable effects syntax. The key syntactic feature of arrows with explicit concealable effects is
+the `-{...}` effects set syntax, where `-{}` can be abbreviated as `-`.
+
+```hemlock
+>{>e,os}\{mut}-{alloc,hlt}->
+-{alloc,hlt}->
+>{>e,os}\{mut}-{}-> >{>e,os}\{mut}-->
+-->
+>-->
+>e-{}-> >e-->
+>{>e}-{}-> >{>e}-->
+>-~>
+-~>
+
+```
+
+In general, empty effects sets can be optionally omitted, but the `-` sigil for explicit concealable
+effects is mandatory. All the following arrows are equivalent.
+
+```hemlock
+    -->
+    >{}-->
+    >{}\{}-->
+    -{}->
+    >{}-{}->
+    >{}\{}-{}->
+```
+
+A function which make concealed effects explicit can only call functions which in turn transitively
+make concealed effects explicit. This restriction is obviously required for the compiler to be able
+to infer concealed effects. In practice, this means that any facility which low-level code requires
+must make its concealed effects explicit, and that such low-level code must be carefully written to
+avoid undesirable concealed effect propagation.
+
+### May-halt effect (`hlt`)
+
+The `hlt` (may-halt) effect can usually be hidden from callers without affecting correctness, and is
+therefore concealed by default.
 
 ```hemlock
 effect conceal hlt
 ```
 
-The outermost lexical scope conceals all concealable effects. The `expose` and `conceal` keywords
-introduce lexical scopes which expose and conceal specific concealable effects, respectively. In
-order for a function type to divulge may-halt effects, all lexical scopes within the function which
-contain the effectful code must expose may-halt effects. Following are several examples of a
+In order for a function type to divulge may-halt effects, all lexical scopes within the function
+which contain the effectful code must expose may-halt effects. Following are several examples of a
 division function which demonstrate how `expose`/`conceal` affect may-halt effect visibility.
 
 ```hemlock
@@ -385,7 +472,69 @@ let iter2' ~f a0 a1 =
     iter2 ~f a0 a1
 ```
 
-## Combined application effects
+### Allocation effect (`alloc`)
+
+Implicit allocation is pervasive in Hemlock, whether for explicit composite values like lists and
+arrays, or for implicit data structures like closures as they capture free variables from their
+environments. The `alloc` effect is concealed by default.
+
+```hemlock
+effect conceal alloc
+```
+
+Unlike the `hlt` effect, the `alloc` effect is almost never exposed. Instead it is used in
+conjunction with explicit concealed effects to assure that low-level code does not allocate. For
+example, the garbage collector internally makes its concealed effects explicit and pointedly omits
+`alloc` from its effects. If `collect_impl` were to have an `alloc` effect, it would be incompatible
+with the interface and a compiler error would result.
+
+```hemlock
+# Gc.hmi excerpt.
+type t
+
+val collect: t >{os}-> t
+```
+
+```hemlock
+# Gc.hm excerpt.
+type t = [...]
+
+effect conceal gc
+
+let T : {|
+    val collect_minor: t >{os}-{gc,hlt}-> t
+  |} = module
+    effect conceal gc
+    let collect_impl t =
+        [...]
+
+let collect t =
+    T.collect_impl t
+```
+
+Conversely, if the implementation were to have no `hlt` effects, the implementation would remain
+compatible with the interface. Nonetheless, explicit concealed effects present a brittle API that
+can require transitively exposing incidental implementation details. Module interfaces should leave
+concealable effects implicit unless functions have legitimate uses in low-level code which requires
+complete knowledge of transitive effects, and even then such interfaces should have few, if any,
+concealed effects. `Uns.( + )` is a prime practical example.
+
+```hemlock
+    val ( + ): uns --> uns --> uns
+```
+
+## Partial application
+
+Partial application may transform function signatures with regard to effects. The following are
+equivalent, but per parameter effects and explicit concealed effects require non-trivial signature
+transformation.
+
+```hemlock
+val f_complete: uns -> uns -> uns
+val f_partial: uns -> (uns -> uns)
+```
+
+### Per parameter effects
 
 Partial application of parameters to a function requires special consideration if applied parameters
 have associated effects. Similarly, parametric effects denoted by e.g. `>->` require special
@@ -453,6 +602,32 @@ val iter2: f:('a >a~> -> 'b >b~> >f-> unit) -> 'a t^_ -> 'b t^_ >{>a,>b,>f}-> un
 Precise effects typing of callback functions is useful for local optimization even if the
 intermediary (e.g. `iter2`) is not specialized to take advantage of the precision. And if the entire
 call chain is inlined, the precise effect typing enables optimal machine code generation.
+
+### Explicit concealed effects
+
+Partial application requires closure allocation. Functions like `Uns.( + )` do not require
+allocation, and because addition is critical functionality in low-level code, the API is explicit
+regarding (lack of) concealed effects.
+
+```hemlock
+    val ( + ): uns --> uns --> uns
+```
+
+However, if `+` is partially applied, the compiler transforms the function to one with an `alloc`
+effect, with signature equivalent to `+*`.
+
+```hemlock
+    val ( +* ): uns -{alloc}-> (uns --> uns)
+```
+
+As a consequence, partial application is prohibited in functions like `f`, and allowed in functions
+like `g` and `h`.
+
+```hemlock
+    val f: uns --> uns --> uns
+    val g: uns -{alloc}-> (uns --> uns)
+    val h: uns --> uns -{alloc}-> uns
+```
 
 # Modules
 
