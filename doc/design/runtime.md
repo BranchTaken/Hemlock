@@ -9,7 +9,7 @@ individual actors from unintentionally dominating memory usage.
 
 - [XXX Executors](executors.md) schedule actors, multiplex I/O, and drive incremental garbage
   collection for the global heap.
-- [XXX Work stealing](work_stealing.md) can automatically distribute long-running pure computation
+- [Work stealing](work_stealing.md) can automatically distribute long-running pure computation
   when there are fewer runnable actors than there are executors.
 - [XXX Messaging](messaging.md) between actors is the only mechanism for communication, though
   messages can refer to the global heap.
