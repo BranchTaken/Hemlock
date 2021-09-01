@@ -119,12 +119,13 @@ bounded. Hemlock mitigates the risk of memory exhaustion two main ways.
   overhead is bounded to the same algorithmic complexity as ordinary actor scheduling overheads.
 
 Work stealing is initiated by the executor. When the executor preempts an actor at the end of a
-fully utilized scheduling quantum (i.e. the actor did not block for any reason), it may introspect
-the actor's execution stack to look for right continuations in pure functions that were created
-prior to the scheduling quantum. If two or more such right continuations exist and the executor is
-able to select an underutilized executor without a runnable delegate in the same posse, the executor
-steals two right continuations, delegates one to the selected executor, and self-delegates one since
-the victim cannot run until all delegates have merged.
+fully utilized scheduling quantum (i.e. the actor did not block for any reason), it may [introspect
+the actor's execution stack](execution_stack.md#work_stealing) to look for right continuations in
+pure functions that were created prior to the scheduling quantum. If two or more such right
+continuations exist and the executor is able to select an underutilized executor without a runnable
+delegate in the same posse, the executor steals two right continuations, delegates one to the
+selected executor, and self-delegates one since the victim cannot run until all delegates have
+merged.
 
 There is no point in stealing a single right continuation from a runnable delegate, since doing so
 would result in a linearly dependent posse that could only make use of a single executor at a time.

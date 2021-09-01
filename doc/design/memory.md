@@ -513,11 +513,12 @@ local heap structures. While an actor is executing, a dedicated machine register
 to the `actx`, which makes all heap data structures readily accessible.
 
 Each actor has its own local heap which contains all of the actor's data structures, including its
-dedicated execution stack (which is traditionally considered distinct from the heap). The local heap
-is initialized with a fixed layout at actor creation time, and that layout imposes an immutable size
-limit. The fixed heap size limit is not an onerous constraint since Hemlock only targets 64-bit
-platforms, yet the finality of the maximum heap size makes operational considerations regarding heap
-growth and out-of-memory (OOM) conditions simpler to reason about and provision for.
+dedicated [execution stack](execution_stack.md) (which is traditionally considered distinct from the
+heap). The local heap is initialized with a fixed layout at actor creation time, and that layout
+imposes an immutable size limit. The fixed heap size limit is not an onerous constraint since
+Hemlock only targets 64-bit platforms, yet the finality of the maximum heap size makes operational
+considerations regarding heap growth and out-of-memory (OOM) conditions simpler to reason about and
+provision for.
 
 The local heap primarily comprises a major heap and a minor heap, which together support
 generational GC. The major heap is collected using the
@@ -975,7 +976,7 @@ have been traced, and all tospace→fromspace references have been traced, copyi
 
 Tracing starts at the roots, which are found in the following places:
 
-- Execution stack.
+- [Execution stack](execution_stack.md#garbage_collection).
 - Major→minor references.
 
 Root scanning triggers immediate copying, so that the root references can be immediately updated to
