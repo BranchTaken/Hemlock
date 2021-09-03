@@ -256,6 +256,8 @@ module AbstractToken = struct
     | Tok_plus_op of string
     | Tok_minus_op of string
     | Tok_at_op of string
+    | Tok_xmark_op of string
+    | Tok_dollar_op of string
     | Tok_lt_op of string
     | Tok_eq_op of string
     | Tok_gt_op of string
@@ -373,6 +375,8 @@ module AbstractToken = struct
     | Tok_plus_op op -> asprintf "@[<h><Tok_plus_op=%a>@]" String.pp op
     | Tok_minus_op op -> asprintf "@[<h><Tok_minus_op=%a>@]" String.pp op
     | Tok_at_op op -> asprintf "@[<h><Tok_at_op=%a>@]" String.pp op
+    | Tok_xmark_op op -> asprintf "@[<h><Tok_xmark_op=%a>@]" String.pp op
+    | Tok_dollar_op op -> asprintf "@[<h><Tok_dollar_op=%a>@]" String.pp op
     | Tok_lt_op op -> asprintf "@[<h><Tok_lt_op=%a>@]" String.pp op
     | Tok_eq_op op -> asprintf "@[<h><Tok_eq_op=%a>@]" String.pp op
     | Tok_gt_op op -> asprintf "@[<h><Tok_gt_op=%a>@]" String.pp op
@@ -2175,6 +2179,8 @@ module Dag = struct
       ("+", (operator (fun s -> Tok_plus_op s)));
       ("-", (operator (fun s -> Tok_minus_op s)));
       ("@", (operator (fun s -> Tok_at_op s)));
+      ("!", (operator (fun s -> Tok_xmark_op s)));
+      ("$", (operator (fun s -> Tok_dollar_op s)));
       ("<", (operator (fun s -> Tok_lt_op s)));
       ("=", (operator (fun s -> Tok_eq_op s)));
       (">", (operator (fun s -> Tok_gt_op s)));
@@ -4443,16 +4449,14 @@ let%expect_test "operators" =
       [1:2..1:19) : <Tok_at_op="@-+*/%@!$<=>|:.~?">
       [1:19..1:19) : <Tok_end_of_input>
     {|! !-+*/%@!$<=>|:.~?|}
-      [1:0..1:1) : <Tok_error>
+      [1:0..1:1) : <Tok_xmark_op="!">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:3) : <Tok_error>
-      [1:3..1:19) : <Tok_minus_op="-+*/%@!$<=>|:.~?">
+      [1:2..1:19) : <Tok_xmark_op="!-+*/%@!$<=>|:.~?">
       [1:19..1:19) : <Tok_end_of_input>
     {|$ $-+*/%@!$<=>|:.~?|}
-      [1:0..1:1) : <Tok_error>
+      [1:0..1:1) : <Tok_dollar_op="$">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:3) : <Tok_error>
-      [1:3..1:19) : <Tok_minus_op="-+*/%@!$<=>|:.~?">
+      [1:2..1:19) : <Tok_dollar_op="$-+*/%@!$<=>|:.~?">
       [1:19..1:19) : <Tok_end_of_input>
     {|< <-+*/%@!$<=>|:.~?|}
       [1:0..1:1) : <Tok_lt_op="<">
