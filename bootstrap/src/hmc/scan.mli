@@ -95,6 +95,8 @@ module AbstractToken : sig
     | Tok_plus_op of string
     | Tok_minus_op of string
     | Tok_at_op of string
+    | Tok_xmark_op of string
+    | Tok_dollar_op of string
     | Tok_lt_op of string
     | Tok_eq_op of string
     | Tok_gt_op of string
