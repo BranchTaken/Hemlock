@@ -45,19 +45,14 @@ docker compose build dev
 docker compose run dev
 ```
 
-Note that cloning dotfiles via SSH is not supported due to current `docker compose` limitations. We
-provide a build script, `.docker-build-with-private-dotfiles.sh` to work around the issue.
-
-```sh
-./.docker-build-with-private-dotfiles.sh
-```
+Note that cloning dotfiles via SSH is not supported due to current `docker compose` limitations.
 
 You may include an `install.sh` script at the base of your dotfiles repo to automatically execute
 dotfiles setup during `docker compose build dev`.
 
 Set an additional environment variable, `DOTFILES_HASH` if you need `docker compose build dev` to
 rebuild dotfiles whenever the hash changes. This is useful when making upstream changes in your
-dotfiles repo. You may find it best to set `DOTFILE_*` variables programmatically via your shell
+dotfiles repo. You may find it best to set `DOTFILES_*` variables programmatically via your shell
 setup script like so.
 
 ```sh
