@@ -33,6 +33,7 @@ RUN --mount=type=cache,target=/home/hemlock/.opam/download-cache,uid=1000,gid=10
     && opam switch create ${HEMLOCK_BOOTSTRAP_OCAML_VERSION} \
     && opam install -y \
         ocaml-lsp-server \
+        ocp-indent \
         utop \
     && opam install -y --deps-only . \
     && rm Hemlock.opam
