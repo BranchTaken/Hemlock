@@ -35,6 +35,15 @@ Run a Hemlock `prod` docker container.
 docker compose run prod
 ```
 
+(Optional) Install
+[binfmt_misc](https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images). This
+enables building and running cross-platform images.
+```sh
+docker run --privileged --rm tonistiigi/binfmt --install all
+HEMLOCK_PLATFORM=linux/arm64 docker compose build prod
+HEMLOCK_PLATFORM=linux/arm64 docker compose run prod
+```
+
 ##### (Optional) Building Dotfiles Into `dev` Image
 
 Set a `DOTFILES_URL` environment variable to include your dotfiles in the Hemlock `dev` image.

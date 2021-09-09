@@ -1,4 +1,5 @@
-FROM ubuntu AS base
+ARG HEMLOCK_PLATFORM=$BUILDPLATFORM
+FROM --platform=${HEMLOCK_PLATFORM} ubuntu AS base
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     rm /etc/apt/apt.conf.d/docker-clean \
@@ -15,7 +16,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 CMD [ "/bin/bash" ]
 
-FROM base AS prod
+FROM --platform=${HEMLOCK_PLATFORM} base AS prod
 ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION
 USER hemlock
 WORKDIR /home/hemlock
@@ -38,7 +39,7 @@ RUN --mount=type=cache,target=/home/hemlock/.opam/download-cache,uid=1000,gid=10
     && opam install -y --deps-only . \
     && rm Hemlock.opam
 
-FROM base AS dev
+FROM --platform=${HEMLOCK_PLATFORM} base AS dev
 USER root
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
