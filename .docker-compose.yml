@@ -4,6 +4,7 @@ services:
     build:
       args:
         - HEMLOCK_BOOTSTRAP_OCAML_VERSION
+        - HEMLOCK_PLATFORM
       context: .
       dockerfile: .dockerfile
       target: prod
