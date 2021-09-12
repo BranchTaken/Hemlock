@@ -11,15 +11,11 @@ let T = module
         # when compiling Basis code, as controlled by a compiler flag.
         type 'a t& = 'a array_builder&
 
-        external alloc_lput: uns -> 'a -> 'a t& =
-          "hm_basis_array_builder_alloc_lput"
-        external alloc_rput: uns -> 'a -> 'a t& =
-          "hm_basis_array_builder_alloc_rput"
-        external lput: 'a -> 'a t& >{mut}~> -> unit =
-          "hm_basis_array_builder_lput"
-        external rput: 'a -> 'a t& >{mut}~> -> unit =
-          "hm_basis_array_builder_rput"
-        external build: 'a t& >{mut}~> -> 'a t^ = "hm_basis_array_builder_build"
+        external alloc_lput: uns -> 'a -> 'a t& = "hm_basis_array_builder_alloc_lput"
+        external alloc_rput: uns -> 'a -> 'a t& = "hm_basis_array_builder_alloc_rput"
+        external lput: 'a -> 'a t&! -> unit = "hm_basis_array_builder_lput"
+        external rput: 'a -> 'a t&! -> unit = "hm_basis_array_builder_rput"
+        external build: 'a t&! -> 'a t^ = "hm_basis_array_builder_build"
 
     external empty: 'a t^ = "hm_basis_array_empty"
 
@@ -308,8 +304,7 @@ let of_list_rev ?length list =
 let is_empty t =
     (length t) = 0
 
-external set_inplace: uns -> 'a -> 'a t& >{mut}~> -> unit =
-  "hm_basis_array_set_inplace"
+external set_inplace: uns -> 'a -> 'a t&! -> unit = "hm_basis_array_set_inplace"
 
 let copy t =
     init (length t) ~f:(fun i -> get i t)

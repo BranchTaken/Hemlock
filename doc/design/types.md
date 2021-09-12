@@ -30,9 +30,9 @@ The [composite types](#compsite-types) have dedicated syntax, but no correspondi
 
 ## Atomic types
 
-The atomic types are monomorphic, immutable, and are the only types which may have unboxed native
-hardware formats. Many features of these types have explicit syntax, and further functionality is
-provided by their respective companion modules in the `Basis` library.
+The atomic types are monomorphic, intransitive, immutable, and are the only types which may have
+immediate native hardware formats. Many features of these types have explicit syntax, and further
+functionality is provided by their respective companion modules in the `Basis` library.
 
 ### Unit
 
@@ -130,16 +130,15 @@ tends to be good due to allocation/copying order.
 
 ### Array
 
-The `'a array^` type provides unresizable contiguous arrays, which may optionally be directly
-mutable. Depending on the type supplied as `'a`, elements may be boxed (e.g. `string array^_`) or
-unboxed (e.g. `codepoint array^_`). Unboxed arrays are particularly compelling from a density and
-performance perspective.
+The `'a array^` type provides unresizable contiguous arrays, which may optionally be primarily
+mutable. Depending on the type supplied as `'a`, elements may be indirect (e.g. `string array^_`) or
+immediate (e.g. `codepoint array^_`). Immediate arrays are particularly compelling from a density
+and performance perspective.
 
 ```hemlock
 [||] # 'a array^
 [|0; 1|] # uns array^
-[|0; 1|]& # uns array&
-[|"boxed"; "element"; "references"|] # string array^
+[|"element"; "references"|] # string array^
 [|'u'; 'n'; 'b'; 'o'; 'x'; 'e'; 'd'|] # codepoint array^
 ```
 
@@ -151,12 +150,16 @@ modules in the `Basis` library.
 
 ### Tuple
 
-A tuple comprises two or more independently typed values. Tuples are directly immutable, but may
-refer to transitively mutable values.
+A tuple comprises two or more independently typed values. Tuple elements cannot be re-bound, but
+elements may transitively refer to mutable values.
 
 ```hemlock
-(1, "b") # uns * string
-(None, [|'a'; 'b'|], 42) # 'a option * codepoint array^ * uns
+type tup = (uns * string)
+type tup2& = (uns box& * codepoint) # Non-parametric transitive primary mutability.
+type ('a, ^array) tup3 = ('a option * codepoint array^ * uns) # Parametric subsidiary mutability.
+
+(1, "b") # (uns * string)
+(None, [|'a'; 'b'|], 42) # ('a option * codepoint array^ * uns)
 ```
 
 ### Variant
@@ -169,19 +172,19 @@ type color =
     | Red
     | Green
     | Blue
-    | RGBA of u8 * u8 * u8 * u8
+    | RGBA of (u8 * u8 * u8 * u8)
 ```
 
-Variants are directly immutable (the discriminator cannot be mutated), but may refer to transitively
-mutable values.
+The variant discriminator is immutable, but a variant may nonetheless be primarily mutable due to
+transitive non-parametric mutability of variants.
 
 ```hemlock
-# Transitive non-parametric mutability.
+# Non-parametric transitive primary mutability.
 type odd& =
     | Odd of uns array&
     | Odder of unit array
 
-# Transitive parametric mutability (mutable if 'a is mutable).
+# Parametric subsidiary mutability (mutable if 'a is mutable).
 type 'a option =
     | None
     | Some of 'a
@@ -205,15 +208,15 @@ A record maps field names to independently typed values. Each field may be of fi
 type; all field type parameters are transitively exposed as record type parameters.
 
 ```hemlock
-# Non-parametric mutability.
+# Non-parametric primary mutability.
 type r1& = {
-    x&: uns # Direct mutability.
-    a: codepoint array& # Indirect mutability.
-  }&
+    x&: uns # Mutable immediate value.
+    a: codepoint array& # Mutable indirect value.
+  }
 
-# Transitive parametric mutability.
+# Parametric subsidiary mutability.
 type 'a r2 = {
-    a: 'a array # Indirect mutability if 'a is transitively mutable.
+    a: 'a array
   }
 
 # Parametric effect.
@@ -229,14 +232,14 @@ type ('a, >e) r4& = {
     f: uns >e-> 'a array
   }
 
-# Parametric direct mutability.
-type 'a r5^x = {
-    x^: uns
+# Parametric primary mutability.
+type 'a r5^ = {
+    x^r5: uns
     l: 'a list
   }
 
 {x=42, l=["hi"]} # string r5^
-{x=43; l=['c']}& # codepoint r5&
+{x=43; l=['c']} # codepoint r5^
 ```
 
 Record types are non-recursive by default, but the `rec` keyword allows self-referential record
@@ -258,11 +261,11 @@ type rec blue& = {
     black&: black option
   }
 also black& = {
-    blue&: blue option
+    blue: blue&
   }
 
-let a& := {black=None}
-let b = {blue=Some a}
+let a = {black=None}
+let b = {blue=a}
 a.black := Some b
 ```
 
@@ -270,10 +273,10 @@ a.black := Some b
 
 A function takes one or more parameters as input, causes zero or more effects (which must be
 explicit in the function type), and produces a value. Functions are conceptually curried, i.e. they
-can be reasoned about as a series of partial applications. Each partial application consumes one
-input and produces a continuation. Additionally, the final application optionally causes effects. In
-practice, function invocation is monolithic in the number of parameters provided, so partial
-application only comes into play when the program omits parameters from a call.
+can be reasoned about as a series of partial applications. Each partial application closes on one
+input. Additionally, the final application optionally causes effects as it computes the resulting
+value. In practice, function invocation is monolithic in the number of parameters provided, so
+partial application only comes into play when the program omits parameters from a call.
 
 ```hemlock
 # val sq: uns -> uns
@@ -284,7 +287,7 @@ let sq x =
 val init: uns -> f:(uns >-> 'a) >-> 'a t^
 
 # Mutation effect on mutable parameter.
-val set_inplace: uns -> 'a -> 'a t& >{mut}~> -> unit
+val set_inplace: uns -> 'a -> 'a t&! -> unit
 
 # Halt effect.
 val abort: string >{hlt}-> 'a
@@ -431,7 +434,7 @@ type TreeSig = type of Tree
 
 By default a module exports all of its contents, but an explicit module type, delimited by
 `{|...|}`, can constrain what module contents are visible by omitting elements and/or narrowing to
-less general types than the module definition can support. The following example demonstrates a
+less general types than the module implementation can support. The following example demonstrates a
 module type which constrains what is externally visible (`'a t` is made abstract, `root_value_opt`
 and `root_value_hlt` are omitted).
 

@@ -256,7 +256,6 @@ module AbstractToken = struct
     | Tok_plus_op of string
     | Tok_minus_op of string
     | Tok_at_op of string
-    | Tok_xmark_op of string
     | Tok_dollar_op of string
     | Tok_lt_op of string
     | Tok_eq_op of string
@@ -288,7 +287,7 @@ module AbstractToken = struct
     | Tok_tick
     | Tok_caret
     | Tok_amp
-    | Tok_earrow
+    | Tok_xmark
     | Tok_arrow
     | Tok_parrow
 
@@ -375,7 +374,6 @@ module AbstractToken = struct
     | Tok_plus_op op -> asprintf "@[<h><Tok_plus_op=%a>@]" String.pp op
     | Tok_minus_op op -> asprintf "@[<h><Tok_minus_op=%a>@]" String.pp op
     | Tok_at_op op -> asprintf "@[<h><Tok_at_op=%a>@]" String.pp op
-    | Tok_xmark_op op -> asprintf "@[<h><Tok_xmark_op=%a>@]" String.pp op
     | Tok_dollar_op op -> asprintf "@[<h><Tok_dollar_op=%a>@]" String.pp op
     | Tok_lt_op op -> asprintf "@[<h><Tok_lt_op=%a>@]" String.pp op
     | Tok_eq_op op -> asprintf "@[<h><Tok_eq_op=%a>@]" String.pp op
@@ -407,7 +405,7 @@ module AbstractToken = struct
     | Tok_tick -> "<Tok_tick>"
     | Tok_caret -> "<Tok_caret>"
     | Tok_amp -> "<Tok_amp>"
-    | Tok_earrow -> "<Tok_earrow>"
+    | Tok_xmark -> "<Tok_xmark>"
     | Tok_arrow -> "<Tok_arrow>"
     | Tok_parrow -> "<Tok_parrow>"
     | Tok_indent rendition -> begin
@@ -755,14 +753,13 @@ let paren_comment _pcursor cursor t =
   end in
   fn 1 cursor t
 
-let operator_cps = "-+*/%@!$<=>|:.~?"
+let operator_cps = "-+*/%@$<=>|:.~?"
 let operator_set = set_of_cps operator_cps
 
 let operator_map = (
   let open AbstractToken in
   Map.of_alist (module String) [
     ("|", Tok_bar);
-    ("~>", Tok_earrow);
     ("->", Tok_arrow);
     (">", Tok_gt);
     (">->", Tok_parrow);
@@ -2151,6 +2148,7 @@ module Dag = struct
         }));
       ("^", (accept_incl Tok_caret));
       ("&", (accept_incl Tok_amp));
+      ("!", (accept_incl Tok_xmark));
       ("\n", (accept_delim_incl Tok_whitespace));
       ("~", (act {
           edges=(map_of_cps_alist [
@@ -2169,7 +2167,7 @@ module Dag = struct
       ("*", (act {
           edges=(map_of_cps_alist [
             ("*", (operator (fun s -> Tok_star_star_op s)));
-            ("-+/%@!$<=>|:.~?", (operator (fun s -> Tok_star_op s)));
+            ("-+/%@$<=>|:.~?", (operator (fun s -> Tok_star_op s)));
           ]);
           eoi=(accept (Tok_star_op "*"));
           default=(accept_excl (Tok_star_op "*"));
@@ -2179,7 +2177,6 @@ module Dag = struct
       ("+", (operator (fun s -> Tok_plus_op s)));
       ("-", (operator (fun s -> Tok_minus_op s)));
       ("@", (operator (fun s -> Tok_at_op s)));
-      ("!", (operator (fun s -> Tok_xmark_op s)));
       ("$", (operator (fun s -> Tok_dollar_op s)));
       ("<", (operator (fun s -> Tok_lt_op s)));
       ("=", (operator (fun s -> Tok_eq_op s)));
@@ -4258,10 +4255,11 @@ let%expect_test "punctuation" =
   scan_str "}|}|{|{";
   scan_str "{}";
   scan_str {|\^&\&\|};
+  scan_str {|!&!!\|};
   scan_str "- -> ->> --> ->";
   scan_str "> >- >-> >->> >>-> >-> >e-> >{>e,mut}->";
-  scan_str "~f ~> >{mut}~> ~- ~-+*/%@!$<=>|:.~?";
-  scan_str "?x ?? ?-+*/%@!$<=>|:.~?";
+  scan_str "~f ~- ~-+*/%@$<=>|:.~?";
+  scan_str "?x ?? ?-+*/%@$<=>|:.~?";
   printf "@]";
 
   [%expect{xxx|
@@ -4325,6 +4323,13 @@ let%expect_test "punctuation" =
       [1:4..1:5) : <Tok_amp>
       [1:5..1:6) : <Tok_bslash>
       [1:6..1:6) : <Tok_end_of_input>
+    {|!&!!\|}
+      [1:0..1:1) : <Tok_xmark>
+      [1:1..1:2) : <Tok_amp>
+      [1:2..1:3) : <Tok_xmark>
+      [1:3..1:4) : <Tok_xmark>
+      [1:4..1:5) : <Tok_bslash>
+      [1:5..1:5) : <Tok_end_of_input>
     {|- -> ->> --> ->|}
       [1:0..1:1) : <Tok_minus_op="-">
       [1:1..1:2) : <Tok_whitespace>
@@ -4362,120 +4367,106 @@ let%expect_test "punctuation" =
       [1:36..1:37) : <Tok_rcurly>
       [1:37..1:39) : <Tok_arrow>
       [1:39..1:39) : <Tok_end_of_input>
-    {|~f ~> >{mut}~> ~- ~-+*/%@!$<=>|:.~?|}
+    {|~f ~- ~-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_tilde>
       [1:1..1:2) : <Tok_uident=Constant "f">
       [1:2..1:3) : <Tok_whitespace>
-      [1:3..1:5) : <Tok_earrow>
+      [1:3..1:5) : <Tok_tilde_op="~-">
       [1:5..1:6) : <Tok_whitespace>
-      [1:6..1:7) : <Tok_gt>
-      [1:7..1:8) : <Tok_lcurly>
-      [1:8..1:11) : <Tok_uident=Constant "mut">
-      [1:11..1:12) : <Tok_rcurly>
-      [1:12..1:14) : <Tok_earrow>
-      [1:14..1:15) : <Tok_whitespace>
-      [1:15..1:17) : <Tok_tilde_op="~-">
-      [1:17..1:18) : <Tok_whitespace>
-      [1:18..1:35) : <Tok_tilde_op="~-+*/%@!$<=>|:.~?">
-      [1:35..1:35) : <Tok_end_of_input>
-    {|?x ?? ?-+*/%@!$<=>|:.~?|}
+      [1:6..1:22) : <Tok_tilde_op="~-+*/%@$<=>|:.~?">
+      [1:22..1:22) : <Tok_end_of_input>
+    {|?x ?? ?-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_qmark>
       [1:1..1:2) : <Tok_uident=Constant "x">
       [1:2..1:3) : <Tok_whitespace>
       [1:3..1:5) : <Tok_qmark_op="??">
       [1:5..1:6) : <Tok_whitespace>
-      [1:6..1:23) : <Tok_qmark_op="?-+*/%@!$<=>|:.~?">
-      [1:23..1:23) : <Tok_end_of_input>
+      [1:6..1:22) : <Tok_qmark_op="?-+*/%@$<=>|:.~?">
+      [1:22..1:22) : <Tok_end_of_input>
     |xxx}]
 
 let%expect_test "operators" =
   let open Format in
   printf "@[<h>";
-  scan_str "~ ~-+*/%@!$<=>|:.~?";
-  scan_str "? ?-+*/%@!$<=>|:.~?";
-  scan_str "* *-+*/%@!$<=>|:.~?";
-  scan_str "** **-+*/%@!$<=>|:.~?";
-  scan_str "% %-+*/%@!$<=>|:.~?";
-  scan_str "+ +-+*/%@!$<=>|:.~?";
-  scan_str "- --+*/%@!$<=>|:.~?";
-  scan_str "@ @-+*/%@!$<=>|:.~?";
-  scan_str "! !-+*/%@!$<=>|:.~?";
-  scan_str "$ $-+*/%@!$<=>|:.~?";
-  scan_str "< <-+*/%@!$<=>|:.~?";
-  scan_str "= =-+*/%@!$<=>|:.~?";
-  scan_str "> >-+*/%@!$<=>|:.~?";
-  scan_str "|-+*/%@!$<=>|:.~?";
+  scan_str "~ ~-+*/%@$<=>|:.~?";
+  scan_str "? ?-+*/%@$<=>|:.~?";
+  scan_str "* *-+*/%@$<=>|:.~?";
+  scan_str "** **-+*/%@$<=>|:.~?";
+  scan_str "% %-+*/%@$<=>|:.~?";
+  scan_str "+ +-+*/%@$<=>|:.~?";
+  scan_str "- --+*/%@$<=>|:.~?";
+  scan_str "@ @-+*/%@$<=>|:.~?";
+  scan_str "$ $-+*/%@$<=>|:.~?";
+  scan_str "< <-+*/%@$<=>|:.~?";
+  scan_str "= =-+*/%@$<=>|:.~?";
+  scan_str "> >-+*/%@$<=>|:.~?";
+  scan_str "|-+*/%@$<=>|:.~?";
   printf "@]";
 
   [%expect{xxx|
-    {|~ ~-+*/%@!$<=>|:.~?|}
+    {|~ ~-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_tilde>
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_tilde_op="~-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|? ?-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_tilde_op="~-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|? ?-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_qmark>
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_qmark_op="?-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|* *-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_qmark_op="?-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|* *-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_star_op="*">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_star_op="*-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|** **-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_star_op="*-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|** **-+*/%@$<=>|:.~?|}
       [1:0..1:2) : <Tok_star_star_op="**">
       [1:2..1:3) : <Tok_whitespace>
-      [1:3..1:21) : <Tok_star_star_op="**-+*/%@!$<=>|:.~?">
-      [1:21..1:21) : <Tok_end_of_input>
-    {|% %-+*/%@!$<=>|:.~?|}
+      [1:3..1:20) : <Tok_star_star_op="**-+*/%@$<=>|:.~?">
+      [1:20..1:20) : <Tok_end_of_input>
+    {|% %-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_pct_op="%">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_pct_op="%-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|+ +-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_pct_op="%-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|+ +-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_plus_op="+">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_plus_op="+-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|- --+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_plus_op="+-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|- --+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_minus_op="-">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_minus_op="--+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|@ @-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_minus_op="--+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|@ @-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_at_op="@">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_at_op="@-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|! !-+*/%@!$<=>|:.~?|}
-      [1:0..1:1) : <Tok_xmark_op="!">
-      [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_xmark_op="!-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|$ $-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_at_op="@-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|$ $-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_dollar_op="$">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_dollar_op="$-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|< <-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_dollar_op="$-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|< <-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_lt_op="<">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_lt_op="<-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|= =-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_lt_op="<-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|= =-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_eq_op="=">
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_eq_op="=-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {|> >-+*/%@!$<=>|:.~?|}
+      [1:2..1:18) : <Tok_eq_op="=-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {|> >-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_gt>
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:19) : <Tok_gt_op=">-+*/%@!$<=>|:.~?">
-      [1:19..1:19) : <Tok_end_of_input>
-    {||-+*/%@!$<=>|:.~?|}
-      [1:0..1:17) : <Tok_bar_op="|-+*/%@!$<=>|:.~?">
-      [1:17..1:17) : <Tok_end_of_input>
+      [1:2..1:18) : <Tok_gt_op=">-+*/%@$<=>|:.~?">
+      [1:18..1:18) : <Tok_end_of_input>
+    {||-+*/%@$<=>|:.~?|}
+      [1:0..1:16) : <Tok_bar_op="|-+*/%@$<=>|:.~?">
+      [1:16..1:16) : <Tok_end_of_input>
   |xxx}]
 
 let%expect_test "uident" =

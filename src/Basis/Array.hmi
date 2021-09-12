@@ -95,7 +95,7 @@ val is_empty: 'a t^_ -> bool
 val get: uns -> 'a t^_ -> 'a
 ``Get array element. `get i t` returns the element at index `i`.``
 
-val set_inplace: uns -> 'a -> 'a t& >{mut}~> -> unit
+val set_inplace: uns -> 'a -> 'a t&! -> unit
 `|Set array element in place (mutate). `set_inplace i elm t` sets the element at index `i` to `elm`.
 `
 
@@ -146,20 +146,20 @@ val reduce_hlt: f:('a -> 'a >-> 'a) -> 'a t^_ >-> 'a
  |assumed to be associative and commutative; thus reduction order is unspecified.
 `
 
-val swap_inplace: uns -> uns -> 'a t& >{mut}~> -> unit
+val swap_inplace: uns -> uns -> 'a t&! -> unit
 ``Swap elements at given indices in place (mutate).``
 
 val swap: uns -> uns -> 'a t^_ -> 'a t^
 `|Create an array based on the input array, but with elements at given indices swapped.
 `
 
-val rev_inplace: 'a t& >{mut}~> -> unit
+val rev_inplace: 'a t&! -> unit
 ``Reverse array in place (mutate).``
 
 val rev: 'a t^_ -> 'a t^
 ``Create an array with contents reversed relative to the input array.``
 
-val blit: uns -> uns -> 'a t^_ -> uns -> 'a t& >{mut}~> -> unit
+val blit: uns -> uns -> 'a t^_ -> uns -> 'a t&! -> unit
 `|Set a range of elements in place (mutate). `blit len i0 t0 i1 t1` sets the elements of `t1` at
  |[`i1`..`i1+len`) to equal the elements of `t0` at [`i0`..`i0+len`). Overlapping ranges are
  |supported: `t0` and `t1` may refer to the same or different arrays; `i0` and `i1` may have
@@ -171,7 +171,7 @@ val is_sorted: ?strict:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t^_ -> bool
  |function.
 `
 
-val sort_inplace: ?stable:bool -> cmp:('a -> 'a >-> Cmp.t) -> 'a t& >{mut}~> >-> unit
+val sort_inplace: ?stable:bool -> cmp:('a -> 'a >-> Cmp.t) -> 'a t&! >-> unit
 `|Sort the array in place (mutate) according to the comparison function. Preserve order of
  |equivalent elements if `?stable` is `true`.
 `
