@@ -67,7 +67,7 @@ setup script like so.
 ```sh
 pushd $YOUR_DOTFILES_PATH > /dev/null
 export DOTFILES_URL=$(git remote get-url origin 2> /dev/null || :)
-export DOTFILES_HASH=$(git rev-parse origin/master 2> /dev/null || :)
+export DOTFILES_HASH=$(git rev-parse origin/main 2> /dev/null || :)
 popd > /dev/null
 ```
 

@@ -60,11 +60,11 @@ class Hunk:
 
     @staticmethod
     async def from_path(path: Path, /) -> Tuple[Hunk]:
-        """Return Tuple[Hunk] of with start/stop of each hunk changed since repo's master branch."""
+        """Return Tuple[Hunk] of with start/stop of each hunk changed since repo's main branch."""
 
         # For each hunk header in git diff, extract start/stop of changed lines, and create Hunk.
         hunks: List[Hunk] = []
-        for line in await get_lines(f'git diff remotes/origin/master -U0 {path}'):
+        for line in await get_lines(f'git diff remotes/origin/main -U0 {path}'):
             if match := Hunk._header_pattern.match(line):
                 start = int(match.groupdict()['start'])
                 stop = start + int(match.groupdict()['delta'] or '0')
@@ -86,7 +86,7 @@ class FileDiff:
             # File was deleted, there are no contents. ocp-indent can't possibly have a suggestion.
             text = ''
         else:
-            # Update file contents by running ocp-indent on every hunk of code changed since master.
+            # Update file contents by running ocp-indent on every hunk of code changed since main.
             text = path.read_text()
 
             hunks = await Hunk.from_path(path)
@@ -113,14 +113,14 @@ class CommitDiff:
         # Repo path is needed to construct absolute paths for changed OCaml files.
         repo_path = Path((await get_text('git rev-parse --show-toplevel')).strip())
 
-        # Ensure master is checked out for comparison.
+        # Ensure main is checked out for comparison.
         lines = tuple(line.strip() for line in await get_lines('git branch -a'))
-        assert 'remotes/origin/master' in lines, 'local checkout of origin/master is required'
+        assert 'remotes/origin/main' in lines, 'local checkout of origin/main is required'
 
-        # Names of files changed since master.
-        lines = await get_lines('git diff --name-only remotes/origin/master')
+        # Names of files changed since main.
+        lines = await get_lines('git diff --name-only remotes/origin/main')
 
-        # Absolute paths of all OCaml files changed since master.
+        # Absolute paths of all OCaml files changed since main.
         paths = tuple(
             path for path in [repo_path / Path(line) for line in lines]
             if path.suffix in {'.ml', '.mli'}

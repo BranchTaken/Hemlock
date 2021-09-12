@@ -10,7 +10,7 @@ jobs:
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{matrix.platform}}
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@main
     - uses: actions/cache@v2
       id: cache-opam
       with:
@@ -36,6 +36,6 @@ jobs:
       with:
         python-version: '3.8'
     - name: check-ocp-indent deps
-      run: opam install ocp-indent && git fetch origin master
+      run: opam install ocp-indent && git fetch origin main
     - name: check-ocp-indent
       run: python ./.github/scripts/check_ocp_indent.py
