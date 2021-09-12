@@ -1,10 +1,10 @@
 # Syntax
 
-Hemlock's syntax derives from [OCaml](https://ocaml.org/), which in turn is loosely based on the
-[lambda calculus](https://en.wikipedia.org/wiki/Lambda_calculus) syntax. Hemlock omits OCaml syntax
-such as that for objects and polymorphic variants, and adds syntax for distinct features like
-algebraic effects. But the biggest difference is that Hemlock uses indentation to rigidly define
-block structure.
+Hemlock's syntax derives from the [ML](https://en.wikipedia.org/wiki/ML_(programming_language))
+language family, which in turn is loosely based on the [lambda
+calculus](https://en.wikipedia.org/wiki/Lambda_calculus) syntax. Hemlock adds syntax for distinct
+features like algebraic effects. But the most striking visual difference is that Hemlock uses
+indentation to rigidly define block structure.
 
 ## Encoding
 
@@ -39,7 +39,7 @@ considerably. The following languages have particularly interesting takes on the
   significant, and the rules for what constitutes acceptable indentation are quite flexible. The
   details changed a bit between Python 2 and 3 to reduce ways in which tab width could obscure code
   meaning.
-- [Haskell](https://www.haskell.org/) requires continuation of an expressions to be indented more
+- [Haskell](https://www.haskell.org/) requires continuation of an expression to be indented more
   than its beginning token. The rules are simple and consistent; the biggest common pitfall is that
   if a multi-line expression starts on a line with preceding tokens that change length, the entire
   expression must be re-indented during refactoring.
@@ -61,14 +61,14 @@ Hemlock takes a comparatively simple approach to avoid some of the pitfalls ment
 
 Automated formatting only needs to perform a few actions:
 
-- Wrap lines that exceed 80 columns if at all possible without changing the token stream.
+- Wrap lines that exceed 100 columns if at all possible without changing the token stream.
 - Strip extraneous trailing whitespace, including any `'\n'` codepoints following the last token.
 - Dense wrapping of expressions (as well as removal of `'\\'` continuation) can be used to enforce
   uniform coding style. This is Hemlock's answer to endless coding style debate, but it is a
   draconian approach, and therefore opt-in. In the absence of dense wrapping, code formatting style
   guidelines are pretty minimal.
 
-  + Wrap expressions such that lines do not exceed 80 columns if possible. (Don't bother with
+  + Wrap expressions such that lines do not exceed 100 columns if possible. (Don't bother with
     heroics such as string literal splitting unless it makes the code more readable.)
   + Prefer to densely wrap long expressions unless sparser wrapping significantly improves
     readability.
@@ -96,9 +96,9 @@ Hemlock uses various symbols as punctuation:
 ```hemlock
 . , ; : :: :=
 ( ) [ ] [| |] { } {| |}
-\ ' ^ &
+\ ' ^ & !
 ~ ?
-| ~> -> >->
+| -> >->
 ```
 
 ### Operator
@@ -106,8 +106,8 @@ Hemlock uses various symbols as punctuation:
 In addition to punctuation, Hemlock supports an extensible set of operators. Operators are either
 prefix or infix, as determined by the leading codepoint.
 
-- Prefix operator: `[~?][-+*/%@!$<=>|:.~?]+`
-- Infix operator: `[-+*/%@!$<=>|:.][-+*/%@!$<=>|:.~?]*` excluding punctuation symbols
+- Prefix operator: `[~?][-+*/%@$<=>|:.~?]+`
+- Infix operator: `[-+*/%@$<=>|:.][-+*/%@$<=>|:.~?]*` excluding punctuation symbols
 
 ### Keyword
 
