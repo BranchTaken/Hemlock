@@ -1,5 +1,6 @@
 ARG HEMLOCK_PLATFORM=$BUILDPLATFORM
-FROM --platform=${HEMLOCK_PLATFORM} ubuntu AS base
+ARG HEMLOCK_UBUNTU_TAG
+FROM --platform=${HEMLOCK_PLATFORM} ubuntu:${HEMLOCK_UBUNTU_TAG} AS base
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     rm /etc/apt/apt.conf.d/docker-clean \
