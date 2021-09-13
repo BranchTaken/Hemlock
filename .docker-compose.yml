@@ -5,6 +5,7 @@ services:
       args:
         - HEMLOCK_BOOTSTRAP_OCAML_VERSION
         - HEMLOCK_PLATFORM
+        - HEMLOCK_UBUNTU_TAG
       context: .
       dockerfile: .dockerfile
       target: prod
