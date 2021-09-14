@@ -1,10 +1,10 @@
 # Hemlock
 
-Hemlock is a programming language in the [ML
-family](https://en.wikipedia.org/wiki/ML_(programming_language)) that emphasizes reliable high
-performance parallel computation. Hemlock synthesizes the expressive type and module systems of
-[OCaml](http://ocaml.org/), a unified parametric effects/mutability/type system, and the
-shared-nothing message-passing parallelism of [Erlang](https://erlang.org/).
+Hemlock is a systems programming language that emphasizes reliable high performance parallel
+computation. Hemlock synthesizes the expressive type and module systems of [ML-family
+languages](https://en.wikipedia.org/wiki/ML_(programming_language)), a unified parametric
+effects/mutability/type system, and the shared-nothing message-passing parallelism of
+[Erlang](https://erlang.org/).
 
 ## Getting Started
 

@@ -8,10 +8,11 @@ the overhead of parallel execution, but it meets all the requirements for work s
 
 ```hemlock
 # Array signature excerpt.
-let Array = module
-    type 'a t
+let Array = {|
+    type t 'a ^t: ^&t a
 
-    val map: f:('a >-> 'b) -> 'a t >-> 'b t
+    val map 'a 'b ^t >e: f:(a >e-> b) -> _&t a >e-> ^&t b
+  |}
 
 let sum = Array.map ~f:(fun x -> x * x) [|1, 2, 3, 4, 5|]
 ```
@@ -52,17 +53,17 @@ execution. Practical examples abound; the following are simple illustrative case
 
   ```hemlock
   let reduce ~f t =
-    let rec fn ~reduce2 = function
-      | Leaf {k=_; v} -> v
-      | Node {l; k=_; v; n=_; h=_; r=Empty} -> reduce2 (fn ~reduce2 l) v
-      | Node {l=Empty; k=_; v; n=_; h=_; r} -> reduce2 (fn ~reduce2 r) v
-      | Node {l; k=_; v; n=_; h=_; r} ->
-        reduce2 v (reduce2 (fn ~reduce2 l) (fn ~reduce2 r))
-      | Empty -> not_reached ()
-    in
-    match t.root with
-    | Empty -> None
-    | _ -> Some (fn ~reduce2:f t.root)
+      let rec fn ~reduce2 = function
+          | Leaf {k=_; v} -> v
+          | Node {l; k=_; v; n=_; h=_; r=Empty} -> reduce2 (fn ~reduce2 l) v
+          | Node {l=Empty; k=_; v; n=_; h=_; r} -> reduce2 (fn ~reduce2 r) v
+          | Node {l; k=_; v; n=_; h=_; r} ->
+              reduce2 v (reduce2 (fn ~reduce2 l) (fn ~reduce2 r))
+          | Empty -> not_reached ()
+      in
+      match t.root with
+      | Empty -> None
+      | _ -> Some (fn ~reduce2:f t.root)
   ```
 
   Note that even trinary reductions (two children plus current node) are implemented as binary

@@ -94,11 +94,11 @@ Comments have two syntaxes.
 Hemlock uses various symbols as punctuation:
 
 ```hemlock
-. , ; : :: :=
+. , ; ;; : :: :=
 ( ) [ ] [| |] { } {| |}
-\ ' ^ & !
+| \ ' ^ & !
 ~ ?
-| -> >->
+->
 ```
 
 ### Operator
@@ -115,10 +115,10 @@ The following words are keywords which are used as syntactic elements, and canno
 purposes.
 
 ```hemlock
-and      external  match   val
-also     false     module  when
-as       for       of      while
-assert   fun       open    with
+and      external  match       val
+also     false     mutability  when
+as       for       of          while
+assert   fun       open        with
 conceal  function  or
 do       if        rec
 downto   import    then

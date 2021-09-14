@@ -70,7 +70,7 @@ module AbstractToken : sig
     | Tok_lazy
     | Tok_let
     | Tok_match
-    | Tok_module
+    | Tok_mutability
     | Tok_of
     | Tok_open
     | Tok_or
@@ -103,12 +103,14 @@ module AbstractToken : sig
     (* Punctuation. *)
     | Tok_tilde
     | Tok_qmark
+    | Tok_minus
     | Tok_gt
     | Tok_comma
     | Tok_dot
     | Tok_semi
+    | Tok_semi_semi
     | Tok_colon
-    | Tok_cons
+    | Tok_colon_colon
     | Tok_colon_eq
     | Tok_lparen
     | Tok_rparen
@@ -127,7 +129,7 @@ module AbstractToken : sig
     | Tok_amp
     | Tok_xmark
     | Tok_arrow
-    | Tok_parrow
+    | Tok_carrow
 
     | Tok_indent of unit Rendition.t
     | Tok_line_delim

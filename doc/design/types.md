@@ -28,6 +28,38 @@ The [composite types](#compsite-types) have dedicated syntax, but no correspondi
 - [Function](#function)
 - [Module](#module)
 
+## Parametric types
+
+Every type has a primary component which is always a type, aka primary type. Parametric types may
+additionally have subsidiary type/mutability/effect components. For example, `uns` has only a
+primary type, whereas `type t 'a 'b ^m >e: t a b m e` has `t` as its primary type, `'a` and `'b` as
+subsidiary types, `^m` as a subsidiary mutability, and `>e` as a subsidiary effect.
+
+Type constructors can be reasoned about as functions, for which parametric types have inferred
+parameters. The following type declarations are equivalent, though the first form is ergonomically
+preferrable.
+
+```hemlock
+type t 'a 'b ^m >e: t a b m e
+type t: 'a -> 'b -> ^m -> >e -> t a b m e
+type t: '(a: type) -> '(b: type) -> ^(m: mutability) -> >(e: effect) -> t a b m e
+```
+
+Every type has associated mutability, of which there are three cases:
+
+- **Immutable:** The type is [non-parametrically] immutable, e.g. `type uns: uns`.
+- **Mutable:** The type is [non-parametrically] mutable, e.g. the array in `type mut_array 'a:
+  &mut_array a = &array a` and the arrays in `val ba: box &mut_array uns`. (There are no
+  non-parametrically mutable types in `Basis`, so these examples use a mutable array type based on
+  mutability-constrained arrays.)
+- **Parametrically mutable:** The type's mutability is a parameter of the type, e.g. the array in
+  `val v ^array: ^&array uns`, the boxes in `val v ^box: array ^&box uns`, and the record `r` in
+  `val v ^r: ^&r`.
+
+All of the above examples focus on concrete types, but subsidiary mutability can come into play
+for abstract types. For example, `val v 'a: array a` denotes an immutable array, but the subsidiary
+`'a` elements are parametrically mutable.
+
 ## Atomic types
 
 The atomic types are monomorphic, intransitive, immutable, and are the only types which may have
@@ -40,8 +72,8 @@ The `unit` type has only one possible value, which is written as `()`. Because t
 possible `unit` value, it rarely needs a concrete data representation; rather it logically acts as a
 placeholder where data would otherwise go. For example, a function which has no inputs cannot be
 called, but a function with a single `unit` parameter dodges this problem. `unit` can also be used
-to elide record fields; e.g. `('a, 'cmp) set` is implemented as `('a, unit, 'cmp) map`, and no space
-is consumed by values in the concrete data representation.
+to elide record fields; e.g. `set a cmp` is implemented as `map a unit cmp`, and no space is
+consumed by values in the concrete data representation.
 
 ### Boolean
 
@@ -99,7 +131,7 @@ The `codepoint` type encodes a single 21-bit [Unicode](https://en.wikipedia.org/
 point. Internally, `codepoint` is stored as a `u32`:
 
 ```hemlock
-type codepoint = conceal u32
+type codepoint: codepoint = conceal u32
 ```
 
 However, `codepoint` is intentionally type-incompatible with `u32`, thus requiring explicit
@@ -130,16 +162,16 @@ tends to be good due to allocation/copying order.
 
 ### Array
 
-The `'a array^` type provides unresizable contiguous arrays, which may optionally be primarily
-mutable. Depending on the type supplied as `'a`, elements may be indirect (e.g. `string array^_`) or
-immediate (e.g. `codepoint array^_`). Immediate arrays are particularly compelling from a density
-and performance perspective.
+The `type array 'a ^array: ^&array a` type provides unresizable contiguous arrays, which may
+optionally be primarily mutable. Depending on the type supplied as `a`, elements may be indirect
+(e.g. `_&array string`) or immediate (e.g. `_&array codepoint`). Immediate arrays are particularly
+compelling from a density and performance perspective.
 
 ```hemlock
-[||] # 'a array^
-[|0; 1|] # uns array^
-[|"element"; "references"|] # string array^
-[|'u'; 'n'; 'b'; 'o'; 'x'; 'e'; 'd'|] # codepoint array^
+[||] # _&array a
+[|0; 1|] # _&array uns
+[|"element"; "references"|] # _&array string
+[|'u'; 'n'; 'b'; 'o'; 'x'; 'e'; 'd'|] # _&array codepoint
 ```
 
 ## Composite types
@@ -154,12 +186,14 @@ A tuple comprises two or more independently typed values. Tuple elements cannot 
 elements may transitively refer to mutable values.
 
 ```hemlock
-type tup = (uns * string)
-type tup2& = (uns box& * codepoint) # Non-parametric transitive primary mutability.
-type ('a, ^array) tup3 = ('a option * codepoint array^ * uns) # Parametric subsidiary mutability.
+type tup: tup = (uns, string)
+type tup2: tup2 = bool, uns, list codepoint # Parens not required.
+type tup3: &tup3 = (&box uns, codepoint) # Non-parametric transitive primary mutability.
+type tup4 'a ^array: tup4 a array = (option a, ^&array codepoint) # Parametric subsidiary
+                                                                  # mutability.
 
-(1, "b") # (uns * string)
-(None, [|'a'; 'b'|], 42) # ('a option * codepoint array^ * uns)
+(1, "b") # (uns, string)
+(None, [|'a'; 'b'|]) # (option a, _&array codepoint)
 ```
 
 ### Variant
@@ -168,11 +202,11 @@ A variant is a discriminated union that can contain exactly one variant, as indi
 discriminator.
 
 ```hemlock
-type color =
+type color: color =
     | Red
     | Green
     | Blue
-    | RGBA of (u8 * u8 * u8 * u8)
+    | RGBA of (u8, u8, u8, u8)
 ```
 
 The variant discriminator is immutable, but a variant may nonetheless be primarily mutable due to
@@ -180,22 +214,22 @@ transitive non-parametric mutability of variants.
 
 ```hemlock
 # Non-parametric transitive primary mutability.
-type odd& =
-    | Odd of uns array&
-    | Odder of unit array
+type odd: &odd =
+    | Odd of &array uns
+    | Odder of array unit
 
 # Parametric subsidiary mutability (mutable if 'a is mutable).
-type 'a option =
+type option 'a: option a =
     | None
-    | Some of 'a
+    | Some of a
 ```
 
 Recursive variant types must be explicitly specified as `rec`.
 
 ```hemlock
-type rec 'a node =
-    | Leaf of 'a
-    | Node of 'a * 'a node
+type rec node 'a: node a =
+    | Leaf of a
+    | Node of (a, node a)
 
 let leaf = Leaf 2
 let child = Node(1, leaf)
@@ -209,46 +243,40 @@ type; all field type parameters are transitively exposed as record type paramete
 
 ```hemlock
 # Non-parametric primary mutability.
-type r1& = {
-    x&: uns # Mutable immediate value.
-    a: codepoint array& # Mutable indirect value.
-  }
+type r1: &r1 =
+    &x: uns # Mutable immediate value.
+    a: &array codepoint # Mutable indirect value.
 
 # Parametric subsidiary mutability.
-type 'a r2 = {
-    a: 'a array
-  }
+type r2 'a: r2 a =
+    a: array a
 
 # Parametric effect.
-type ('a, >e) r3 = {
-    f: uns >e-> 'a array
-  }
+type r3 'a >e: r3 a e =
+    f: uns >e-> array a
 
 # All of the above.
-type ('a, >e) r4& = {
-    x&: uns
-    a: codepoint array&
-    b: 'a array
-    f: uns >e-> 'a array
-  }
+type r4 'a >e: &r4 a e =
+    &x: uns
+    a: &array codepoint
+    b: array a
+    f: uns >e-> array a
 
 # Parametric primary mutability.
-type 'a r5^ = {
-    x^r5: uns
-    l: 'a list
-  }
+type r5 'a ^r5: ^&r5 a =
+    ^r5&x: uns
+    l: list a
 
-{x=42, l=["hi"]} # string r5^
-{x=43; l=['c']} # codepoint r5^
+{x=42; l=["hi"]} # ^&r5 string
+{x=43; l=['c']} # ^&r5 codepoint
 ```
 
 Record types are non-recursive by default, but the `rec` keyword allows self-referential record
 typing, e.g.:
 
 ```hemlock
-type rec 'a node = {
-    child: 'a node option
-  }
+type rec node 'a: node a =
+    child: option node a
 
 let leaf = {child=None}
 let root = {child=Some leaf}
@@ -257,12 +285,10 @@ let root = {child=Some leaf}
 Mutually recursive records must be specified as `rec` *and* use mutation to tie the knot, e.g.:
 
 ```hemlock
-type rec blue& = {
-    black&: black option
-  }
-also black& = {
-    blue: blue&
-  }
+type rec blue: &blue =
+    &black: option black
+also black: &black =
+    blue: &blue
 
 let a = {black=None}
 let b = {blue=a}
@@ -284,13 +310,13 @@ let sq x =
     x * x
 
 # Transitive parametric effect, depending on the implementation of ~f .
-val init: uns -> f:(uns >-> 'a) >-> 'a t^
+val init 'a ^t >e: uns -> f:(uns >e-> a) >e-> ^&t a
 
 # Mutation effect on mutable parameter.
-val set_inplace: uns -> 'a -> 'a t&! -> unit
+val set_inplace 'a: uns -> a -> !&t a -> unit
 
 # Halt effect.
-val abort: string >{hlt}-> 'a
+val abort 'a: string >hlt-> a
 ```
 
 ### Module
@@ -302,39 +328,36 @@ or be based on another module type. Constraints and/or extensions are supported 
 module type on another.
 
 ```hemlock
-# Empty module, not very useful in practice.
-type E = {||}
+# Empty module.
+type E = ;;
 
-type M = {|
-    type t
+type M: M =
+    type t: t
 
     val f: uns -> t
-  |}
 
 # M' extends M.
-type M' = {|M with
-    type u
+type M': M' =
+    include M
+    type u: u
 
     val g: t -> u
-  |}
 
-type SMono = {|
-    type t^
-    type elm^
-    val to_array: t^ -> elm^ outer^
-  |}
+type SMono: SMono =
+    type t ^t: ^&t
+    type elm ^elm: ^&elm
+    val to_array ^t ^elm ^outer: ^&t -> ^&elm ^&outer
 
 # The return type is of type SMono, but with constraints relative to input T.
-val make_Mono: (T : SeqIntf.IMonoDef) -> {|SMono with
-    type t^ := T.t^
-    type elm^ := T.elm^
-  |}
+val makeMono: (T : SeqIntf.IMonoDef) : SMono
+  with type t ^t: ^&t := T.^&t
+  with type elm ^elm: ^&elm := T.^&elm
 
-# make_Mono produces a result of type roughly equivalent to type Mono, but it is common to use an
+# makeMono produces a result of type roughly equivalent to type Mono, but it is common to use an
 # anonymous type as above in order to specify constraints in terms of function input types.
-type Mono = {|SMono with
-    type t^ := SeqIntf.IMonoDef.t^
-    type elm^ := SeqIntf.IMonoDef.elm^
+type Mono = SMono
+  with type t ^t: ^&t := SeqIntf.IMonoDef.^&t
+  with type elm ^elm: ^&elm := SeqIntf.IMonoDef.^&elm
   |}
 ```
 
@@ -345,36 +368,36 @@ and names in Hemlock, but the distinct naming aids readability to a degree that 
 naming requirement.
 
 ```hemlock
-let A = module
-    let _B = module
-        type MType = {|
+let A = {|
+    let _B = {|
+        type MType: MType =
             ...
-          |}
         # M, U, and I are in the same namespace; beware module vs variant constructor name
         # collisions.
-        let M = module
+        let M = {|
             ...
+          |}
         type v =
             | U of uns
             | I of int
+      |}
 
-    type t = {
-        _u: {
+    type t =
+        _u:
             m: A._B.MType
-          }
-      }
+  |}
 ```
 
 Following is a complete example of a module which implements persistent binary trees.
 
 ```hemlock
-let Tree = module
-    type rec 'a t =
+let Tree = {|
+    type rec t 'a: t a =
         | Empty
         | Node of
-            lchild: 'a t
-            value: 'a
-            rchild: 'a t
+            lchild: t a
+            value: a
+            rchild: t a
 
     let empty = Empty
 
@@ -406,63 +429,63 @@ let Tree = module
     let rchild = function
         | Empty -> empty
         | Node {lchild=_; value=_; rchild} -> rchild
+  |}
 ```
 
 `Tree` has the following type:
 
 ```hemlock
-val Tree : {|
-    type rec 'a t =
+val Tree :
+    type rec t a: t a =
         | Empty
         | Node of
-            lchild: 'a t
-            value: 'a
-            rchild: 'a t
-    val empty: 'a t
-    val is_empty: '_ t -> bool
-    val node: 'a t -> 'a -> 'a t -> 'a t
-    val leaf: 'a -> 'a t
-    val lchild: 'a t -> 'a t
-    val root_value_opt: 'a t -> 'a option
-    val root_value_hlt: 'a t -> 'a
-    val root_value: 'a t -> 'a
-    val rchild: 'a t -> 'a t
-  |}
+            lchild: t a
+            value: a
+            rchild: t a
+    val empty 'a: t a
+    val is_empty: t _ -> bool
+    val node 'a: t a -> a -> t a -> t a
+    val leaf 'a: a -> t a
+    val lchild 'a: t a -> t a
+    val root_value_opt a: t a -> option a
+    val root_value_hlt 'a: t a -> a
+    val root_value 'a: t a -> a
+    val rchild 'a: t a -> t a
 
 type TreeSig = type of Tree
 ```
 
-By default a module exports all of its contents, but an explicit module type, delimited by
-`{|...|}`, can constrain what module contents are visible by omitting elements and/or narrowing to
-less general types than the module implementation can support. The following example demonstrates a
-module type which constrains what is externally visible (`'a t` is made abstract, `root_value_opt`
-and `root_value_hlt` are omitted).
+Hemlock infers the type of a module expression `{|...|}` to divulge all type and value bindings.
+Often there are portions of the module type which the programmer wants to omit. The simplest way to
+accomplish this is to ascribe an explicit type which makes the omitted portion of the original type
+opaque. The following example ascribes the module to a type with abstract `t a` and no
+`root_value_opt` nor `root_value_hlt` functions.
 
 ```hemlock
-let TreeConstrained
-  : {|
-    type 'a t
-    val empty: 'a t
+let TreeConstrained :
+    type t 'a: t a
+    val empty 'a: t a
     val is_empty: '_ t -> bool
-    val node: 'a t -> 'a -> 'a t -> 'a t
-    val leaf: 'a -> 'a t
-    val lchild: 'a t -> 'a t
-    val root_value: 'a t -> 'a
-    val rchild: 'a t -> 'a t
-  |} = module
-    include Tree
+    val node 'a: t a -> a -> t a -> t a
+    val leaf 'a: a -> t a
+    val lchild 'a: t a -> t a
+    val root_value 'a: t a -> a
+    val rchild 'a: t a -> t a
+  = Tree
 
 type TreeConstrainedSig = type of TreeConstrained
 ```
 
-`TreeConstrained` conceptually demonstrates an implicit application of a function with type `TreeSig
--> {|...|}`, though the syntax obscures that fact. The following is equivalent.
+Type ascription by itself cannot augment the resulting module type; for that a function can be
+combined with type ascription. The following function creates a module equivalent to
+`TreeConstrained` above.
 
 ```hemlock
-# val make_TreeConstrained: (T: TreeSig) -> TreeConstrainedSig
-let make_TreeConstrained (T: TreeSig)
-  : {|TreeConstrainedSig with type 'a t := 'a T.t|}
-  = module
+# val makeTreeConstrained: (T: TreeSig) -> TreeConstrainedSig
+let makeTreeConstrained (T: TreeSig)
+  : TreeConstrainedSig with type t 'a: t a := T.t a
+  = {|
+    type t 'a: t a := T.t a
     let empty = T.empty
     let is_empty = T.empty
     let node = T.node
@@ -470,33 +493,53 @@ let make_TreeConstrained (T: TreeSig)
     let lchild = T.child
     let root_value = T.root_value
     let rchild = T.rchild
+  |}
 
-let TreeConstrained = make_TreeConstrained Tree
+let TreeConstrained = makeTreeConstrained Tree
 ```
 
-Implicit function application also commonly occurs for top-level modules. For example, suppose that
-`Tree` is implemented as a top-level module in `Tree.hm`. The file contents (denoted as `<Tree.hm>`)
-are treated as if wrapped.
+#### Top-level modules
+
+Top-level modules require extra explanation with regard to how they are created. As an example,
+suppose that `Tree` is implemented as a top-level module in `Tree.hm`. The file contents (denoted as
+`<Tree.hm>`) are treated as if wrapped.
 
 ```hemlock
-let Tree = module
+# val makeTree: unit -> type of Tree
+let makeTree () = {|
     <Tree.hm>
+  |}
 ```
 
 If there is also a corresponding interface file, `Tree.hmi`, then the file contents (denoted as
-`<Tree.hmi>`) are treated as if wrapped in combination with `Tree.hm`.
+`<Tree.hmi>`) are treated as an ascribed type for the module defined by `Tree.hm`.
 
 ```hemlock
-let Tree
-  : {|
+# val makeTree: unit -> type of Tree
+let makeTree () :
     <Tree.hmi>
-  |} = module
+  = {|
     <Tree.hm>
+  |}
 ```
 
-As seen earlier, this is application of a function with type `() -> {|<Tree.hmi>|}`. If the module
-body were to cause effects during execution, the function type would contain corresponding effects,
-e.g. `() >{os}-> {|<Tree.hmi>|}`.
+Note that an `import` expression triggers function application to create the module, and the module
+body can of course cause effects when executed. Such effects propagate to all corresponding `import`
+expressions, even though the module is created only once.
+
+```hemlock
+# val makeM: unit >os-> type of M
+let makeM () :
+    <M.hmi>
+  = {|
+    <M.hm>
+  |}
+
+# val importM: unit >os-> type of M
+let importM () =
+    (lazy (makeM ())) |> Lazy.force
+```
+
 
 #### `open`, `include`, and `import`
 
@@ -530,9 +573,10 @@ API brittleness.
 open import Basis
 let Tree = import Tree
 
-let AugmentedTree = module
+let AugmentedTree = {|
     include Tree
     ...
+  |}
 
 let triple a b c =
     let open Tree
