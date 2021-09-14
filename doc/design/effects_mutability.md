@@ -32,59 +32,54 @@ made between operating system load versus store effects.
 
 For more semantics detail than is provided in the following syntax quick reference, see below.
 
-- Effects
-  - `>{>e,>f}`, `>e`, `>`: Parametric effect(s). The `>e` and `>` short forms can be used only if
-    there is a single parametric effect.
-  - `>_`: Effects are contextually irrelevant, and therefore arbitrarily permitted.
+- Effect (`effect`)
+  - + `e`, `{e}` `{e|f}`, `{e|os|hlt}`: Effect sets. A set with only one member may omit the `{...}`
+    enclosure. Empty effect sets have no explicit syntax.
   - Select pre-defined effects. See [Effects categories](#effects-categories) for more.
-    + `>{os}`: Operating system load-store effect
-    + `>{ld}`: Runtime system load effect
-    + `>{mut}`: Runtime system load-store effect
-    + `>{hlt}`: Runtime system may-halt effect
-  - `>{os,hlt}`: Set of effects.
-  - `>{>e,>f}\{os,mut}`, `>\{mut}`: Effects constraint; transitively prohibited effects are
-    enumerated as `\{...}` following any effects.
-  - `('a t&! -> unit)`, `('a&! t& >{hlt}-> unit)`: Mutation effect on mutable function
-    parameter type suffixed by `!`. The affected type need not be the outermost type, but the
-    affected type must be mutable.
-  - `('a t& -> 'a t)`: Load effect on mutable function parameter. A mutable function parameter
-    always implies a `ld` effect on the parameter, without which the parameter would be useless.
-  - `(uns >{t&,u&!}-> unit)`, `(t&! >{t&!}-> unit)` : Type-constrained environment `ld`/`mut` effect
-    during function application, listed in `>{...}->`. Note that a `t&!` parameter mutation is
-    distinct from `>{t&!}->` environment mutation.
-  - `(uns >{ld}-> unit)`, `(uns >{mut}-> unit)`: Environment `ld`/`mut` effect during function
-    application. Type-agnostic environment effects impact mutable values of all types.
-  - `-{alloc}`, `-{alloc,hlt}`: Explicit [never-parametric] concealed effect(s). An explicitly pure
-    application is written as `-->`, which is shorthand for `-{}->` (or more verbosely,
-    `>{}\{}-{}->`).
-- Mutability
-  - `^m t`, `^m t ^t`, `^m t^`: Parametric mutability. `^m` is an subsidiary mutability parameter,
-    whereas `^t` comes after the type name and is the primary mutability parameter. When otherwise
-    unambiguous in a type expression, `t ^t` can be shortened to `t^` (or `t ^`) and the parameter
-    takes the same name as the type.
-  - `^_ t`, `^_ t^_`: Mutability is contextually irrelevant, and therefore both immutable and
-    mutable values are supported.
-  - `t&`: Non-parametric primary mutability. `t&!` indicates a mutation effect on the value, which
-    must therefore be mutable, as in `... -> 'a t&! -> ...`.
-  - `t\&`, `^_ t^_\&`: Transitive prohibited mutability constraint.
-- Parametric types:
-  - `'a`: Parametric type, whether simple as in `uns` or with its own parameters as in
-    `('aa, ^m, >e) 'a^`.
-  - `'a t`, `('a, ^m, >e) t`, ...: Primarily immutable parametric type.
-  - `'a t&`, `('a, ^m, >e) t&`, ...: Primarily mutable parametric type.
-  - `'a& t`: Subsidiarily mutable parametric type.
-  - `'a t ^t`, `'a t^`, `('a, ^m) t^`: Parametric type with parametric primary mutability. `^m` is a
-    subsidiary mutability parameter, whereas the primary mutability parameter `^t` is distinct from
-    the comma-separated `(...)` parameter list, such that its absence and the absence of `&`
-    indicates that the type is primarily immutable.
-  - `val f: 'a -> 'a t^`: The function produces an isolated value with parametric mutability. The
-    value's mutability is either immutable or mutable as determined by type unification in the
+    + `os`: Operating system load-store effect
+    + `ld`: Runtime system load effect
+    + `mut`: Runtime system load-store effect
+    + `hlt`: Runtime system may-halt effect
+  - `val f >e: ... >e-> ...`: Parametric effect.
+  - `val f >e\{os|mut}: ... >e-> ...`: Parametric effects constraint; transitively prohibited effects
+    are enumerated as `\...` following parametric effect.
+  - `(a: type) -> !&t a -> unit`, `(a: type) -> &t !&a >hlt-> unit`: Mutation effect on mutable
+    function parameter type prefixed by `!`. The affected type need not be the outermost type, but
+    the affected type must be mutable.
+  - `(a: type) -> &t a -> &t a`: Load effect on mutable function parameter. A mutable function
+    parameter always implies a `ld` effect on the parameter, without which the parameter would be
+    useless.
+  - `uns >{&t|(!&u)}-> unit`, `!&t >!&t-> unit`: Type-constrained environment `ld`/`mut` effect(s)
+    during function application. Parentheses around type-constrained effects are optional, though
+    they often improve readability. Note that a `!&t` parameter mutation is distinct from
+    `>(!&t)->` environment mutation.
+  - `uns >ld-> unit`, `uns >mut-> unit`: Environment `ld`/`mut` effect during function application.
+    Type-agnostic environment effects impact mutable values of all types.
+  - `~alloc->`, `~{alloc|hlt}->`, `>e~alloc->`: Explicit [never-parametric] concealed effect(s). An
+    explicitly pure application is written as `~->`.
+- Mutability (`mutability`)
+  - `val v ^m: t m`, `val v ^t ^m: ^t&t m`, `val v ^t ^m: ^&t m`: Parametric mutability. `^m` is a
+    subsidiary mutability parameter, whereas `^t` comes after the type name and is the primary
+    mutability parameter. `^t&t` can be shortened to `^&t`.
+  - `_&t`: Mutability is contextually irrelevant, and therefore both immutable and mutable values
+    are supported.
+  - `&t`: Non-parametric primary mutability. `!&t` indicates a mutation effect on the value, which
+    must therefore be mutable, as in `(a: type) -> ... -> !&t a -> ...`.
+  - `\&t`: Transitive prohibited mutability constraint.
+- Type (`type`)
+  - `type a 'a: a`, `type a 'aa ^a ^m >e: ^&a aa m e`: Parametric type.
+  - `type t 'a: t a`, `type t 'a ^m >e: t a m e`, ...: Primarily immutable parametric type.
+  - `type t 'a: &t a`, `type t 'a ^m >e: &t a m e`, ...: Primarily mutable parametric type.
+  - `type t 'a: t &a`: Subsidiarily mutable parametric type.
+  - `type t 'a ^t: ^&t a`, `type t 'a ^t ^m: ^&t a m`: Parametric type with parametric primary
+    mutability. `^m` is a subsidiary mutability parameter, whereas the primary mutability parameter
+    `^t` is always the first type parameter (syntactically prefixing the type name), such that its
+    absence and the absence of `&` indicates that the type is primarily immutable.
+  - `val f 'a ^t: a -> ^&t a`: The function produces an isolated value with parametric mutability.
+    The value's mutability is either immutable or mutable as determined by type unification in the
     caller's context.
-  - `('a, ^m, >e) ['c, 'd] t&`: Primarily mutable type with transitive effects and mutability
-    determined by `('a, ^m, >e)`, and additional parameters which have no impact on the type's
-    transitive effects and mutability determined by `['c, 'd]`.
-  - `('a, >t\{rt}) t\&`: Parametric type constrained to prohibit both runtime system effects (for
-    associated functions which have the `>t` effect) and transitive mutability.
+  - `type 'a >e\rt: \&t a e`: Parametric type constrained to prohibit runtime system effects
+    (for associated functions which have the `>e` effect) and to prohibit transitive mutability.
 
 # Static inference
 
@@ -98,10 +93,10 @@ validation overhead enables fast message passing, as well as fully automated mig
 immutable values to the global heap.
 
 Effects are inferred prior to any transformations which could cause their elision. For example,
-`f` has a `(uns box&!)` mutation effect even though the mutation is unreachable.
+`f` has a `!&box uns` mutation effect even though the mutation is unreachable.
 
 ```hemlock
-# val f: uns box&! -> uns
+# val f: !&box uns -> uns
 let f b =
     if false
         b.value := 0
@@ -114,82 +109,68 @@ That said, although interfaces are conservatively inferred, the compiler is free
 optimize away effectless code which does not produce useful values, whether via constant
 propagation, dead code elimination, inlining, etc.
 
-# Parametricity and mutability/effects
+# Mutation of function parameters
 
-Every type has a primary component which is always a type, aka primary type. Parametric types may
-additionally have subsidiary components, some of which may be subsidiary types. For example, `uns`
-has only a primary type, whereas `('a, 'b, ^m) t` has `t` as its primary type, `'a` and `'b` as
-subsidiary types, and `^m` as a non-type subsidiary component. Every type has associated mutability,
-of which there are three cases:
-
-- **Immutable:** The type is [non-parametrically] immutable, e.g. `uns` and `uns array`.
-- **Mutable:** The type is [non-parametrically] mutable, e.g. the array in `uns array&` and the
-  boxes in `uns box& array`.
-- **Parametrically mutable:** The type's mutability is a parameter of the type, e.g. the array in
-  `uns array^`, the boxes in `uns box^ array`, and the record `r` in `r^`.
-
-All of the above examples focus on concrete types, but subsidiary mutability can come into play
-for abstract types. For example, `'a array` denotes an immutable array, but the subsidiary `'a`
-elements are parametrically mutable.
+See [Parametric types](types.md#parametric-types) for background on parametric types.
 
 Only non-parametrically mutable types can be used in conjunction with mutation effects on function
 parameters, as illustrated by the following examples.
 
 ```hemlock
 # The array is mutable.
-val f_ok: 'a array&! -> unit
+val f_ok 'a: !&array a -> unit
 
 # The boxes in the array are mutable.
-val f_ok2: 'a box& array! -> unit
+val f_ok2 'a: !array ^&box a -> unit
 
 # The type may not be mutable at all, so a mutation effect doesn't make sense.
-val f_wat: 'a array! -> unit
+val f_wat 'a: !array a -> unit
 ```
 
 ## Mutability constraints
 
 Concrete types have fixed effects and mutability, whereas abstract types also have transitive
 effects and/or mutability that allow differing parametrizations to be any combination of
-effectless/effectful and/or immutable/mutable. For example, `'a array` is primarily immutable, but
-it may be transitively mutable depending on the particulars of the type supplied to the subsidiary
-`'a` parameter. Were we to attempt passing `'a array` in a message, the compiler would be unable to
-prove that the message is compatible with the aforementioned constraints. Therefore we must specify
-a transitive immutability constraint for the type, e.g. `'a array\&`. Similarly, finalization is
-only supported for primarily mutable values, e.g. `'a&`, because referential transparency of
-immutable values makes finalization ill-defined.
+effectless/effectful and/or immutable/mutable. For example, `val v 'a: array a` is primarily
+immutable, but it may be transitively mutable depending on the particulars of the type supplied to
+the subsidiary `'a` parameter. Were we to attempt passing `array a` in a message, the compiler would
+be unable to prove that the message is compatible with the aforementioned constraints. Therefore we
+must specify a transitive immutability constraint for the type, e.g. `val v 'a: \&array a`.
+Similarly, finalization is only supported for primarily mutable values, e.g. `val v 'a: &a`, because
+referential transparency of immutable values makes finalization ill-defined.
 
 Type syntax is rather involved in its most general form, but most of its complexities only come into
 play with module types. Following are some examples from the `Basis` library.
 
 ```hemlock
-'a list
-'a array^
-('k\&, 'v, 'cmp) map
-('a\&, 'cmp) set
+type list 'a: 'list a
+type array 'a ^array: ^&array a
+type map 'k 'v 'cmp: map \&k v cmp
+type set 'a 'cmp: set \&a cmp
 
-val halt: string >{hlt}-> 'a
-val not_reached: unit >{hlt}-> 'a
-val abort: string >{hlt}-> 'a
+val halt 'a: string >hlt-> a
+val not_reached 'a: unit >hlt-> a
+val abort 'a: string >hlt-> a
 
-val finalize: ('a& >-> unit) -> 'a& >-> unit
+val finalize 'a >e: (&a >e-> unit) -> &a >e-> unit
 
-type 'a elm =
+type elm 'a >e: elm a e =
   | Nil
-  | Cons of 'a * ('a, >e) stream
-also ('a, >e) stream = ('a elm, >e) Lazy.t
-val force: ('a, >e) lazy_t >e-> 'a
+  | Cons of (a, stream a e)
+also stream 'a >e: stream a e = Lazy.t (elm a e)
+val force 'a >e: lazy_t (elm a e) >e-> a
 ```
 
-Parametric type `'a` may have its own effect and mutability parameters, e.g. `('aa, >a) 'a^`. For
-example, the set type could be `(>a 'a^\&, >cmp 'cmp^) set`. The `'a` parameter is constrained to
-prohibit mutability, lest key mutation corrupt the set.
+Parametric type `'a` may have its own effect and mutability parameters, e.g. `type a 'aa ^a >e: ^&a
+aa e`. Given such a type for `a`, the set type could be instantiated as `set (^&a aa e) cmp`. The
+`'a` parameter for `set` is constrained to prohibit mutability, lest key mutation corrupt the set.
 
-Regarding effects versus mutability consider that `'a array&` is a mutable type, but actual mutation
-is an effect.
+Regarding effects versus mutability consider that `&array uns` is a mutable type, but actual
+mutation is an effect.
 
 ```hemlock
-val length: 'a array^_ -> uns
-val set_inplace: uns -> 'a -> 'a array&! -> unit
+val length 'a: _&array a -> uns
+val set_inplace 'a: uns -> a -> !&array a -> unit
 ```
 
 The `length` function has no effect even though it can operate on a mutable array, whereas the
@@ -205,17 +186,25 @@ cannot in general accurately model operating system load-only effects (and speci
 be fraught with peril), so all operating system effects are modeled as combined load-store effects.
 Hemlock does model runtime system load-only effects, but store effects imply load effects.
 
-- `effect none = >{}`: Empty set
 - `effect os`: Operating system load-store effect (mnemonic: Operating System)
 - `effect ld`: Runtime system load effect (mnemonic: LoaD)
-- `effect st`: Runtime system store effect (mnemonic: STore), used only via `>{mut}`
-- `effect mut = >{ld,st}`: Runtime system load-store effect (mnemonic: MUTate), superset of `>{ld}`
-  rather than disjoint so that both `\{ld}` and `\{mut}` effect constraints independently prohibit
-  mutable data accesses.
+- `effect st`: Runtime system store effect (mnemonic: STore), used only via `mut`
+- `effect mut = {ld|st}`: Runtime system load-store effect (mnemonic: MUTate), superset of `ld`
+  rather than disjoint so that both `ld` and `mut` effect constraints independently prohibit mutable
+  data accesses.
 - `effect conceal alloc`: Concealable allocation effect (mnemonic: ALLOCation)
 - `effect conceal hlt`: Concealable may-halt effect (mnemonic: HaLT)
-- `effect rt = >{mut,hlt}`: Runtime system effect (mnemonic: RunTime)
-- `effect all = >{os,rt}`: Set of all effects
+- `effect rt = {mut|alloc|hlt}`: Runtime system effect (mnemonic: RunTime)
+
+Effect declarations are always transparent, because the compiler needs full knowledge of effect
+interrelationships in order to infer/propagate effects. In other words, if a module implementation
+defines e.g. `effect e = {os|hlt}`, the module interface must also specify the full declaration;
+`effect e` actually declares an independent effect.
+
+`expose`/`conceal` preceding the name of in an effect declaration indicates 1) that the effect is
+concealable, and 2) whether the effect is exposed or concealed at the outermost lexical scope. An
+unconcealable effect can incorporate a concealable effect into its declaration. However a
+concealable effect cannot incorporate unconcealable effects into its declaration.
 
 Effects are tracked at partial application granularity, though with the exception of optional
 parameter defaults, it typically suffices to think in terms of whole function applications.
@@ -224,60 +213,36 @@ arises outside of function signatures. Even function signatures rarely require t
 parametric effects.
 
 ```hemlock
-val unzip_map: ('a >e-> 'c) -> ('b >f-> 'd) -> ('a * 'b) list
-  >{>e,>f}-> 'c list * 'd list
+val unzip_map 'a 'b 'c 'd >e >f: (a >e-> c) -> (b >f-> d) -> list (a, b) >{e|f}-> (list c, list d)
 ```
 
 Here `unzip_map` has the combined effects of two callback functions. Although this generalizes to an
-arbitrary number of callback functions, the common cases are zero and one. If there is only one
-parametric effect in a function signature, the effect parameter name can be omitted, e.g.
-
-```hemlock
-val iter2: f:('a -> 'b >-> unit) -> 'a t^_ -> 'b t^_ >-> unit
-```
+arbitrary number of callback functions, the common cases are zero and one.
 
 Parametric mutability exists primarily to constrain function parameter types, e.g. so that an input
-type dictates an output type. Consider this monomorphic identity function:
+type dictates an output type. Consider monomorphic identity function `id`, which subsumes the less
+general `id_pure` and `id_mutable` signatures.
 
 ```hemlock
-val id: >e t^ -> >e t^
-```
-
-`id` subsumes several less general signatures, e.g.
-
-```hemlock
+val id ^t: ^&t -> ^&t
 val id_pure: t -> t
-val id_mutable: t& -> t&
-val id_effectful: >e t -> >e t
+val id_mutable: &t -> &t
 ```
 
 This basic concept enables more sophisticated parametric mutability within type parameters. For
-example, suppose we want a record type to contain two `'a array` fields of distinct parametric
+example, suppose we want a record type to contain two `array a` fields of distinct parametric
 mutabilities.
 
 ```hemlock
-type ('a, ^m, ^n) t =
-    m: 'a array^m
-    n: 'a array^n
-val init: 'a array^m -> 'a array^n -> ('a, ^m, ^n) t
-```
-
-In more involved cases, parametric types require parameters which have no direct bearing on the
-type's effects nor mutability. Such parameters are segregated into a separate `[...]` parameter
-list, e.g.
-
-```hemlock
-type 'a outer^ = 'a t^outer
-type ('a, ^m, 'b, ^n, >e) ['accum, 'c] t =
-    m: 'a outer^m
-    n: 'b outer^n
-    f: uns -> 'accum -> 'a -> 'b >e-> 'accum * 'c
-    index: uns
+type t 'a ^m ^n: t a m n =
+    m: ^m&array a
+    n: ^n&array a
+val init 'a ^m ^n: ^m&array a -> ^n&array a -> t a m n
 ```
 
 ## Concealable effects (`expose`/`conceal`)
 
-The runtime requires most pre-defined effects to be fully transitive for correctness reasons, so
+The runtime requires most pre-defined effects to be fully transitive for correctness reasons so
 that, for example, it is impossible to hide a mutation effect from the runtime. On the other hand,
 some effects can usually be hidden from callers without affecting correctness. Furthermore,
 pervasive effects would have huge deleterious impacts on APIs were they allowed to transitively
@@ -285,9 +250,9 @@ propagate without limit. Therefore effects can be declared as concealable, with 
 outermost lexical scope either `conceal` or `expose`.
 
 ```hemlock
-effect         eu   # Unconcealable effect.
-effect conceal ec   # Concealable effect, concealed at outermost scope.
-effect expose  ee   # Concealable effect, exposed at outermost scope.
+effect         eu # Unconcealable effect.
+effect conceal ec # Concealable effect, concealed at outermost scope.
+effect expose  ee # Concealable effect, exposed at outermost scope.
 ```
 
 The `expose` and `conceal` keywords introduce nestable lexical scopes which expose and conceal
@@ -295,14 +260,14 @@ specific concealable effects, respectively.
 
 ```hemlock
 # Outermost scope, with exposure as if the module were wrapped with
-#     conceal >{ec} \
-#     expose >{ee} \
+#     conceal ec \
+#     expose ee \
 [...]
-expose >{ec} \
+expose ec \
 [...]
-conceal >{ee}
+conceal ee
     [...]
-    expose >{ee}
+    expose ee
         [...]
 ```
 
@@ -315,31 +280,17 @@ knowledge and control over effects. For example, `alloc` effects must be avoided
 garbage collector. The compiler needs comprehensive transitive knowledge of effects to guarantee
 that such code is `alloc`-free. The following example application arrows illustrate explicit
 concealable effects syntax. The key syntactic feature of arrows with explicit concealable effects is
-the `-{...}` effects set syntax, where `-{}` can be abbreviated as `-`.
+the `~` preceding the effect set in `~...->`. `...~->` indicates an empty set of concealed effects.
 
 ```hemlock
->{>e,os}\{mut}-{alloc,hlt}->
--{alloc,hlt}->
->{>e,os}\{mut}-{}-> >{>e,os}\{mut}-->
--->
->-->
->e-{}-> >e-->
->{>e}-{}-> >{>e}-->
+>{e|os}~{alloc|hlt}->
+~{alloc|hlt}->
+>{e|os}~->
+~->
+>e~->
 ```
 
-In general, empty effects sets can be optionally omitted, but the `-` sigil for explicit concealable
-effects is mandatory. All the following arrows are equivalent.
-
-```hemlock
--->
->{}-->
->{}\{}-->
--{}->
->{}-{}->
->{}\{}-{}->
-```
-
-A function which make concealed effects explicit can only call functions which in turn transitively
+A function which makes concealed effects explicit can only call functions which in turn transitively
 make concealed effects explicit. This restriction is obviously required for the compiler to be able
 to infer concealed effects. In practice, this means that any facility which low-level code requires
 must make its concealed effects explicit, and that such low-level code must be carefully written to
@@ -359,30 +310,30 @@ which contain the effectful code must expose may-halt effects. Following are sev
 division function which demonstrate how `expose`/`conceal` affect may-halt effect visibility.
 
 ```hemlock
-val halt_unless: bool >{hlt}-> 'a
+val halt_unless 'a: bool >hlt-> a
 
 # val div: uns -> uns -> uns
 let div x y =                       # concealed | C
-    halt_unless (y > 0)             # | >{hlt}  | C
+    halt_unless (y > 0)             # | hlt     | C
     x / y                           # |         | C
 
-# val div': uns -> uns >{hlt}-> uns
-let div' x y = expose >{hlt}        # exposed  | E
-    halt_unless (y > 0)             # | >{hlt} | E
-    x / y                           # |        | E
+# val div': uns -> uns >hlt-> uns
+let div' x y = expose hlt           # exposed | E
+    halt_unless (y > 0)             # | hlt   | E
+    x / y                           # |       | E
 
 # val div'': uns -> uns -> uns
-let div'' x y = expose >{hlt}       # exposed     | E
-    conceal >{hlt}                  # | concealed | C
-        halt_unless (y > 0)         # | | >{hlt}  | C
+let div'' x y = expose hlt          # exposed     | E
+    conceal hlt                     # | concealed | C
+        halt_unless (y > 0)         # | | hlt     | C
     x / y                           # |           | E
 
 # val div''': uns -> uns -> uns
-let div''' x y = expose >{hlt}      # exposed      | E
-    conceal >{hlt}                  # | concealed  | C
-        expose >{hlt}               # | | exposed  | C
-            halt_unless (y > 0)     # | | | >{hlt} | C
-    x / y                           # |            | E
+let div''' x y = expose hlt         # exposed     | E
+    conceal hlt                     # | concealed | C
+        expose hlt                  # | | exposed | C
+            halt_unless (y > 0)     # | | | hlt   | C
+    x / y                           # |           | E
 ```
 
 The limited need for may-halt effect tracking is a subtle topic. In many cases the lack of may-halt
@@ -391,10 +342,10 @@ some critical cases where code breaks unless may-halt effects are exposed. For e
 a `halt_unless` function as follows, calls to it can be optimized out.
 
 ```hemlock
-val halt_pure: string -> 'a # Hypothetical effectless halt.
-val continue: unit -> 'a
+val halt_pure 'a: string -> a # Hypothetical effectless halt.
+val continue 'a: unit -> a
 
-# val halt_unless: bool -> 'a
+# val halt_unless 'a: bool -> a
 let halt_unless cnd =
     match cnd with
     | false -> halt_pure "Condition false"
@@ -407,10 +358,10 @@ let _ = halt_unless false
 This could be worked around by causing a mutation.
 
 ```hemlock
-val halt_pure: string -> 'a # Hypothetical effectless halt.
-val continue: unit -> 'a
+val halt_pure 'a: string -> a # Hypothetical effectless halt.
+val continue 'a: unit -> a
 
-# val halt_unless: bool >{mut}-> unit
+# val halt_unless: bool >mut-> unit
 let halt_unless cnd =
     match cnd with
     | false ->
@@ -419,7 +370,7 @@ let halt_unless cnd =
     | true -> continue ()
 
 # div has a transitive mutation effect due to calling halt_unless.
-# val div: uns -> uns >{mut}-> uns
+# val div: uns -> uns >mut-> uns
 let div a b =
     halt_unless (b <> 0)
     a / b
@@ -432,14 +383,14 @@ Clearly `halt_unless` needs to have a may-halt effect in order to behave as desi
 is also true of any otherwise effectless function which may be called without regard for the result.
 
 ```hemlock
-val halt_unless: cnd -> 'a
+val halt_unless 'a: cnd -> a
 
-type t =
+type t: t =
     field_a: bool
     field_b: uns
 
 # Effectless; calls may be optimized out!
-# val validate: t -> 'a
+# val validate 'a: t -> a
 let validate t =
     halt_unless t.field_a
     halt_unless (t.field_b > 0)
@@ -449,11 +400,11 @@ In the following, `halt_unless` has a may-halt effect, because it exposes transi
 effects, namely those of the `halt` function.
 
 ```hemlock
-# val halt: string >{hlt}-> 'a
-# val continue: unit -> 'a
+# val halt 'a: string >hlt-> a
+# val continue 'a: unit -> a
 
-# val halt_unless: bool >{hlt}-> 'a
-let halt_unless cnd = expose >{hlt}
+# val halt_unless 'a: bool >hlt-> a
+let halt_unless cnd = expose hlt
     match cnd with
     | false -> halt "Condition false"
     | true -> continue ()
@@ -471,7 +422,7 @@ let _ = div 1 0 # Would halt, but can be optimized away.
 Note that `div` has no exposed may-halt effect, even though it can halt! That is desirable in this
 case because there is no point in failing to divide by zero unless the division actually needs to
 happen. But it would be possible to `expose` halts within the function body and change the signature
-to `(uns -> uns >{hlt}-> uns)`.
+to `(uns -> uns >hlt-> uns)`.
 
 For most functions which produce non-unit values, concealing may-halt effects is preferable, for
 multiple reasons:
@@ -489,10 +440,10 @@ transitive parametric effects should transitively expose the callback's may-halt
 to avoid an effects constraint on the callback function.
 
 ```hemlock
-# val iter2: f:('a -> 'b >-> unit) -> 'a array^_ -> 'b array^_ >-> unit
-let iter2 ~f a0 a1 = expose >{hlt}
+# val iter2 'a 'b >e: f:(a -> b >e-> unit) -> _&array a -> _&array b >e-> unit
+let iter2 ~f a0 a1 = expose hlt
     let open Array in
-    conceal >{hlt} (assert (length a0 = length a1))
+    conceal hlt (assert (length a0 = length a1))
     for i = 0 to pred (length a0) do
         f (get i a0) (get i a1)
 
@@ -503,7 +454,7 @@ iter2 ~f:(fun elm_a elm_b -> assert (elm_a + 3 = elm_b)) a b
 # ... Dependencies on a and/or b which prevent optimizing them away.
 
 # May-halt effects are prohibited in ~f because of may-halt concealment.
-# val iter2': f:('a -> 'b >e\{hlt}-> unit) -> 'a array^_ -> 'b array^_ >e\{hlt}-> unit
+# val iter2' 'a 'b >e\hlt: f:(a -> b >e-> unit) -> _&array a -> _&array b >e-> unit
 let iter2' ~f a0 a1 =
     iter2 ~f a0 a1
 ```
@@ -528,21 +479,20 @@ with the interface and a compiler error would result.
 # Gc.hmi excerpt.
 type t
 
-val collect: t >-> t
+val collect: t -> t
 ```
 
 ```hemlock
 # Gc.hm excerpt.
-type t = [...]
+type t: t = [...]
 
-effect conceal gc
-
-let T : {|
-    val collect_minor: t >-{gc,hlt}-> t
-  |} = module
+let T :
+    val collect_minor: t ~{gc|hlt}-> t
+  = {|
     effect conceal gc
     let collect_impl t =
         [...]
+  |}
 
 let collect t =
     T.collect_impl t
@@ -556,7 +506,7 @@ complete knowledge of transitive effects, and even then such interfaces should h
 concealed effects. `Uns.( + )` is a prime practical example.
 
 ```hemlock
-val ( + ): uns --> uns --> uns
+val ( + ): uns ~-> uns ~-> uns
 ```
 
 ## Partial application
@@ -573,7 +523,7 @@ val f_partial: uns -> (uns -> uns)
 ### Per parameter effects
 
 Partial application of parameters to a function requires special consideration if applied parameters
-have associated effects. Similarly, parametric effects denoted by e.g. `>->` require special
+have associated effects. Similarly, parametric effects denoted by e.g. `>e->` require special
 consideration when a supplied function has parameter-specific effects.
 
 Consider what happens when partial application of a parameter with associated effects produces a
@@ -583,11 +533,11 @@ affect correctness. The following example illustrates how mutation of `f`'s arra
 preserves the mutation effect in the closure it produces.
 
 ```hemlock
-# val g: uns array&! -> unit -> unit
+# val g: !&array uns -> unit -> unit
 let g arr () =
     Array.set_inplace 0 42 arr
 
-# val f: uns array&! -> (unit >{uns array&!}-> unit)
+# val f: !&array uns -> (unit >(!&array uns)-> unit)
 let f arr =
     g arr
 ```
@@ -600,9 +550,9 @@ function as defined below can be trivially wrapped and made compatible with the 
 which aids both programmer reasoning and compiler optimization.
 
 ```hemlock
-val f_precise: uns array&! -> uns -> unit
-val f_general: uns array&! -> uns >{uns array&!}-> unit
-val f_vague: uns array&! -> uns >{mut}-> unit
+val f_precise: !&array uns -> uns -> unit
+val f_general: !&array uns -> uns >(!&array uns)-> unit
+val f_vague: !&array uns -> uns >mut-> unit
 ```
 
 Although the compiler will infer the most precise function types possible, Hemlock permits a module
@@ -612,12 +562,12 @@ enabling succinct parametric effect typing for callback functions. Consider the 
 `iter2` as defined earlier.
 
 ```hemlock
-val iter2: f:('a -> 'b >-> unit) -> 'a t^_ -> 'b t^_ >-> unit
+val iter2 'a 'b >e: f:(a -> b >e-> unit) -> _&t a -> _&t b >e-> unit
 
-let a: uns array^_ = [|0; 1; 2|]
-let b: uns box& array^_ = [|box 3; box 4; box 5|]
+let a: _&array uns = [|0; 1; 2|]
+let b: _&array &box uns = [|box 3; box 4; box 5|]
 
-# val f: uns -> uns box&! -> unit
+# val f: uns -> !&box uns -> unit
 let f elm_a elm_b =
     elm_b.value := elm_a + elm_b.value
 
@@ -631,7 +581,7 @@ specializations of the more general form.
 
 ```hemlock
 # Excessive parametric effect typing.
-val iter2: f:('a >a-> 'b >{>b,>f}-> unit) -> 'a t^_ -> 'b t^_ >{>a,>b,>f}-> unit
+val iter2 'a 'b >ea >eb >ef: f:(a >ea-> 'b >{eb|ef}-> unit) -> _&t a -> _&t b >{ea|eb|ef}-> unit
 ```
 
 Precise effects typing of callback functions is useful for local optimization even if the
@@ -645,23 +595,23 @@ allocation, and because addition is critical functionality in low-level code, th
 regarding (lack of) concealed effects.
 
 ```hemlock
-val ( + ): uns --> uns --> uns
+val ( + ): uns ~-> uns ~-> uns
 ```
 
 However, if `+` is partially applied, the compiler transforms the function to one with an `alloc`
 effect, with signature equivalent to `+*`.
 
 ```hemlock
-val ( +* ): uns -{alloc}-> (uns --> uns)
+val ( +* ): uns ~alloc-> (uns ~-> uns)
 ```
 
 As a consequence, partial application is prohibited within functions like `f`, and allowed within
 functions like `g` and `h`.
 
 ```hemlock
-val f: uns --> uns --> uns
-val g: uns -{alloc}-> (uns --> uns)
-val h: uns --> uns -{alloc}-> uns
+val f: uns ~-> uns ~-> uns
+val g: uns ~alloc-> (uns ~-> uns)
+val h: uns ~-> uns ~alloc-> uns
 ```
 
 # Modules
@@ -671,24 +621,26 @@ visible outside the module. Therefore module types must explicitly reveal primar
 regardless of whether visible values make the information redundant.
 
 ```hemlock
-type SX& = {|val assign&: uns >{mut}-> unit|}&
+type &SX = & val &assign: uns >mut-> unit
 
 # X's type partially reveals why it is mutable (x and assign are mutable).
 let X
-  : SX&
-  = module
-    let x& := 0
-    let assign& := (fun u -> x := u)
-# unit -> SX&
+  : &SX
+  = {|
+    let &x := 0
+    let &assign := (fun u -> x := u)
+  |}
+# unit -> &SX
 
 # M's type doesn't reveal why it is mutable (m is mutable).
 let M
-  : {|val f: uns >{ld}-> uns|}&
-  = module
-    let m& := 42
+  : & val f: uns >ld-> uns
+  = {|
+    let &m := 42
     let f u = u * m
     X.assign := (fun u -> m := u)
-# unit >{SX&!}-> {|val f: uns >{ld} -> uns|}&
+  |}
+# unit >(!&SX)-> & val f: uns >ld-> uns
 ```
 
 Note that the right-hand side (RHS) of the module assignment to `M` is actually application of an
@@ -697,27 +649,24 @@ module creation. Every application of `M` causes a mutation effect on type `SX&`
 be avoided as follows.
 
 ```hemlock
-let make_M X
-  : {|val f: uns >{ld}-> uns|}&
-  = module
-    let m& := 42
+let makeM X
+  : & val f: uns >ld-> uns
+  = {|
+    let &m := 42
     let f u = u * m
     X.assign := (fun u -> m := u)
-# val make_M: SX&! -> {|val f: uns >{ld} -> uns|}&
+  |}
+# val makeM: !&SX -> & val f: uns >ld-> uns
 
-let M = make_M X
+let M = makeM X
 
-# Equivalent to the above, but avoids creating the make_M lexical binding.
+# Equivalent to the above, but avoids creating the makeM lexical binding.
 let M = (fun X
-  : {|val f: uns >{ld}-> uns|}&
-  -> module
-    let m& := 42
+  : & val f: uns >ld-> uns
+  -> {|
+    let &m := 42
     let f u = u * m
     X.assign := (fun u -> m := u)
-  ) X
-# SX&! -> {|val f: uns >{ld} -> uns|}&
+  |}) X
+# !&SX -> & val f: uns >ld-> uns
 ```
-
-Module creation functions behave typically with regard to effects, but this fact is obscured by the
-`let M : {|...|} = module ...` syntax if the programmer is unaware of its duality with the more
-general function application syntax.

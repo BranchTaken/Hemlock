@@ -228,7 +228,7 @@ module AbstractToken = struct
     | Tok_lazy
     | Tok_let
     | Tok_match
-    | Tok_module
+    | Tok_mutability
     | Tok_of
     | Tok_open
     | Tok_or
@@ -261,12 +261,14 @@ module AbstractToken = struct
     (* Punctuation. *)
     | Tok_tilde
     | Tok_qmark
+    | Tok_minus
     | Tok_gt
     | Tok_comma
     | Tok_dot
     | Tok_semi
+    | Tok_semi_semi
     | Tok_colon
-    | Tok_cons
+    | Tok_colon_colon
     | Tok_colon_eq
     | Tok_lparen
     | Tok_rparen
@@ -285,7 +287,7 @@ module AbstractToken = struct
     | Tok_amp
     | Tok_xmark
     | Tok_arrow
-    | Tok_parrow
+    | Tok_carrow
 
     | Tok_indent of unit Rendition.t
     | Tok_line_delim
@@ -345,7 +347,7 @@ module AbstractToken = struct
     | Tok_lazy -> "<Tok_lazy>"
     | Tok_let -> "<Tok_let>"
     | Tok_match -> "<Tok_match>"
-    | Tok_module -> "<Tok_module>"
+    | Tok_mutability -> "<Tok_mutability>"
     | Tok_of -> "<Tok_of>"
     | Tok_open -> "<Tok_open>"
     | Tok_or -> "<Tok_or>"
@@ -378,12 +380,14 @@ module AbstractToken = struct
     (* Punctuation. *)
     | Tok_tilde -> "<Tok_tilde>"
     | Tok_qmark -> "<Tok_qmark>"
+    | Tok_minus -> "<Tok_minus>"
     | Tok_gt -> "<Tok_gt>"
     | Tok_comma -> "<Tok_comma>"
     | Tok_dot -> "<Tok_dot>"
     | Tok_semi -> "<Tok_semi>"
+    | Tok_semi_semi -> "<Tok_semi_semi>"
     | Tok_colon -> "<Tok_colon>"
-    | Tok_cons -> "<Tok_cons>"
+    | Tok_colon_colon -> "<Tok_colon_colon>"
     | Tok_colon_eq -> "<Tok_colon_eq>"
     | Tok_lparen -> "<Tok_lparen>"
     | Tok_rparen -> "<Tok_rparen>"
@@ -402,7 +406,7 @@ module AbstractToken = struct
     | Tok_amp -> "<Tok_amp>"
     | Tok_xmark -> "<Tok_xmark>"
     | Tok_arrow -> "<Tok_arrow>"
-    | Tok_parrow -> "<Tok_parrow>"
+    | Tok_carrow -> "<Tok_carrow>"
     | Tok_indent rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_indent>"
@@ -471,7 +475,7 @@ module AbstractToken = struct
     ("lazy", Tok_lazy);
     ("let", Tok_let);
     ("match", Tok_match);
-    ("module", Tok_module);
+    ("mutability", Tok_mutability);
     ("of", Tok_of);
     ("open", Tok_open);
     ("or", Tok_or);
@@ -725,9 +729,10 @@ let operator_map = (
   let open AbstractToken in
   Map.of_alist (module String) [
     ("|", Tok_bar);
-    ("->", Tok_arrow);
+    ("-", Tok_minus);
     (">", Tok_gt);
-    (">->", Tok_parrow);
+    ("->", Tok_arrow);
+    ("~->", Tok_carrow);
   ])
 
 let operator fop _pcursor cursor t =
@@ -2020,13 +2025,19 @@ module Dag = struct
       (".", (accept_incl Tok_dot));
       (":", (act {
           edges=(map_of_cps_alist [
-            (":", (accept_incl Tok_cons));
+            (":", (accept_incl Tok_colon_colon));
             ("=", (accept_incl Tok_colon_eq));
           ]);
           eoi=(accept Tok_colon);
           default=(accept_excl Tok_colon);
         }));
-      (";", (accept_incl Tok_semi));
+      (";", (act {
+          edges=(map_of_cps_alist [
+            (";", (accept_incl Tok_semi_semi));
+          ]);
+          eoi=(accept Tok_semi);
+          default=(accept_excl Tok_semi);
+        }));
       ("(", (act {
           edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '*') ~v:paren_comment;
           eoi=(accept Tok_lparen);
@@ -4156,8 +4167,10 @@ let%expect_test "punctuation" =
   scan_str "{}";
   scan_str {|\^&\&\|};
   scan_str {|!&!!\|};
-  scan_str "- -> ->> --> ->";
-  scan_str "> >- >-> >->> >>-> >-> >e-> >{>e,mut}->";
+  scan_str "- -> ->> ->";
+  scan_str "~- ~-> ~->> -~->";
+  scan_str "> >- >-> >->> >>-> >e-> >{e|mut}->";
+  scan_str ">e~-> >{e|mut}~-> ~hlt-> ~{hlt|alloc}-> >e~hlt-> >{e|os}~{hlt|alloc}->";
   scan_str "~f ~- ~-+*/%@$<=>|:.~?";
   scan_str "?x ?? ?-+*/%@$<=>|:.~?";
   printf "@]";
@@ -4178,11 +4191,9 @@ let%expect_test "punctuation" =
     {|; ;; ;;;|}
       [1:0..1:1) : <Tok_semi>
       [1:1..1:2) : <Tok_whitespace>
-      [1:2..1:3) : <Tok_semi>
-      [1:3..1:4) : <Tok_semi>
+      [1:2..1:4) : <Tok_semi_semi>
       [1:4..1:5) : <Tok_whitespace>
-      [1:5..1:6) : <Tok_semi>
-      [1:6..1:7) : <Tok_semi>
+      [1:5..1:7) : <Tok_semi_semi>
       [1:7..1:8) : <Tok_semi>
       [1:8..1:8) : <Tok_end_of_input>
     {|; : := :: :::|}
@@ -4192,9 +4203,9 @@ let%expect_test "punctuation" =
       [1:3..1:4) : <Tok_whitespace>
       [1:4..1:6) : <Tok_colon_eq>
       [1:6..1:7) : <Tok_whitespace>
-      [1:7..1:9) : <Tok_cons>
+      [1:7..1:9) : <Tok_colon_colon>
       [1:9..1:10) : <Tok_whitespace>
-      [1:10..1:12) : <Tok_cons>
+      [1:10..1:12) : <Tok_colon_colon>
       [1:12..1:13) : <Tok_colon>
       [1:13..1:13) : <Tok_end_of_input>
     {|]|]|[|[|}
@@ -4230,43 +4241,92 @@ let%expect_test "punctuation" =
       [1:3..1:4) : <Tok_xmark>
       [1:4..1:5) : <Tok_bslash>
       [1:5..1:5) : <Tok_end_of_input>
-    {|- -> ->> --> ->|}
-      [1:0..1:1) : <Tok_minus_op="-">
+    {|- -> ->> ->|}
+      [1:0..1:1) : <Tok_minus>
       [1:1..1:2) : <Tok_whitespace>
       [1:2..1:4) : <Tok_arrow>
       [1:4..1:5) : <Tok_whitespace>
       [1:5..1:8) : <Tok_minus_op="->>">
       [1:8..1:9) : <Tok_whitespace>
-      [1:9..1:12) : <Tok_minus_op="-->">
-      [1:12..1:13) : <Tok_whitespace>
-      [1:13..1:15) : <Tok_arrow>
-      [1:15..1:15) : <Tok_end_of_input>
-    {|> >- >-> >->> >>-> >-> >e-> >{>e,mut}->|}
+      [1:9..1:11) : <Tok_arrow>
+      [1:11..1:11) : <Tok_end_of_input>
+    {|~- ~-> ~->> -~->|}
+      [1:0..1:2) : <Tok_tilde_op="~-">
+      [1:2..1:3) : <Tok_whitespace>
+      [1:3..1:6) : <Tok_carrow>
+      [1:6..1:7) : <Tok_whitespace>
+      [1:7..1:11) : <Tok_tilde_op="~->>">
+      [1:11..1:12) : <Tok_whitespace>
+      [1:12..1:16) : <Tok_minus_op="-~->">
+      [1:16..1:16) : <Tok_end_of_input>
+    {|> >- >-> >->> >>-> >e-> >{e|mut}->|}
       [1:0..1:1) : <Tok_gt>
       [1:1..1:2) : <Tok_whitespace>
       [1:2..1:4) : <Tok_gt_op=">-">
       [1:4..1:5) : <Tok_whitespace>
-      [1:5..1:8) : <Tok_parrow>
+      [1:5..1:8) : <Tok_gt_op=">->">
       [1:8..1:9) : <Tok_whitespace>
       [1:9..1:13) : <Tok_gt_op=">->>">
       [1:13..1:14) : <Tok_whitespace>
       [1:14..1:18) : <Tok_gt_op=">>->">
       [1:18..1:19) : <Tok_whitespace>
-      [1:19..1:22) : <Tok_parrow>
-      [1:22..1:23) : <Tok_whitespace>
-      [1:23..1:24) : <Tok_gt>
-      [1:24..1:25) : <Tok_uident=Constant "e">
-      [1:25..1:27) : <Tok_arrow>
-      [1:27..1:28) : <Tok_whitespace>
-      [1:28..1:29) : <Tok_gt>
-      [1:29..1:30) : <Tok_lcurly>
-      [1:30..1:31) : <Tok_gt>
-      [1:31..1:32) : <Tok_uident=Constant "e">
-      [1:32..1:33) : <Tok_comma>
-      [1:33..1:36) : <Tok_uident=Constant "mut">
+      [1:19..1:20) : <Tok_gt>
+      [1:20..1:21) : <Tok_uident=Constant "e">
+      [1:21..1:23) : <Tok_arrow>
+      [1:23..1:24) : <Tok_whitespace>
+      [1:24..1:25) : <Tok_gt>
+      [1:25..1:26) : <Tok_lcurly>
+      [1:26..1:27) : <Tok_uident=Constant "e">
+      [1:27..1:28) : <Tok_bar>
+      [1:28..1:31) : <Tok_uident=Constant "mut">
+      [1:31..1:32) : <Tok_rcurly>
+      [1:32..1:34) : <Tok_arrow>
+      [1:34..1:34) : <Tok_end_of_input>
+    {|>e~-> >{e|mut}~-> ~hlt-> ~{hlt|alloc}-> >e~hlt-> >{e|os}~{hlt|alloc}->|}
+      [1:0..1:1) : <Tok_gt>
+      [1:1..1:2) : <Tok_uident=Constant "e">
+      [1:2..1:5) : <Tok_carrow>
+      [1:5..1:6) : <Tok_whitespace>
+      [1:6..1:7) : <Tok_gt>
+      [1:7..1:8) : <Tok_lcurly>
+      [1:8..1:9) : <Tok_uident=Constant "e">
+      [1:9..1:10) : <Tok_bar>
+      [1:10..1:13) : <Tok_uident=Constant "mut">
+      [1:13..1:14) : <Tok_rcurly>
+      [1:14..1:17) : <Tok_carrow>
+      [1:17..1:18) : <Tok_whitespace>
+      [1:18..1:19) : <Tok_tilde>
+      [1:19..1:22) : <Tok_uident=Constant "hlt">
+      [1:22..1:24) : <Tok_arrow>
+      [1:24..1:25) : <Tok_whitespace>
+      [1:25..1:26) : <Tok_tilde>
+      [1:26..1:27) : <Tok_lcurly>
+      [1:27..1:30) : <Tok_uident=Constant "hlt">
+      [1:30..1:31) : <Tok_bar>
+      [1:31..1:36) : <Tok_uident=Constant "alloc">
       [1:36..1:37) : <Tok_rcurly>
       [1:37..1:39) : <Tok_arrow>
-      [1:39..1:39) : <Tok_end_of_input>
+      [1:39..1:40) : <Tok_whitespace>
+      [1:40..1:41) : <Tok_gt>
+      [1:41..1:42) : <Tok_uident=Constant "e">
+      [1:42..1:43) : <Tok_tilde>
+      [1:43..1:46) : <Tok_uident=Constant "hlt">
+      [1:46..1:48) : <Tok_arrow>
+      [1:48..1:49) : <Tok_whitespace>
+      [1:49..1:50) : <Tok_gt>
+      [1:50..1:51) : <Tok_lcurly>
+      [1:51..1:52) : <Tok_uident=Constant "e">
+      [1:52..1:53) : <Tok_bar>
+      [1:53..1:55) : <Tok_uident=Constant "os">
+      [1:55..1:56) : <Tok_rcurly>
+      [1:56..1:57) : <Tok_tilde>
+      [1:57..1:58) : <Tok_lcurly>
+      [1:58..1:61) : <Tok_uident=Constant "hlt">
+      [1:61..1:62) : <Tok_bar>
+      [1:62..1:67) : <Tok_uident=Constant "alloc">
+      [1:67..1:68) : <Tok_rcurly>
+      [1:68..1:70) : <Tok_arrow>
+      [1:70..1:70) : <Tok_end_of_input>
     {|~f ~- ~-+*/%@$<=>|:.~?|}
       [1:0..1:1) : <Tok_tilde>
       [1:1..1:2) : <Tok_uident=Constant "f">
@@ -4335,7 +4395,7 @@ let%expect_test "operators" =
       [1:2..1:18) : <Tok_plus_op="+-+*/%@$<=>|:.~?">
       [1:18..1:18) : <Tok_end_of_input>
     {|- --+*/%@$<=>|:.~?|}
-      [1:0..1:1) : <Tok_minus_op="-">
+      [1:0..1:1) : <Tok_minus>
       [1:1..1:2) : <Tok_whitespace>
       [1:2..1:18) : <Tok_minus_op="--+*/%@$<=>|:.~?">
       [1:18..1:18) : <Tok_end_of_input>
@@ -4404,7 +4464,7 @@ let%expect_test "uident" =
   scan_str "lazy";
   scan_str "let";
   scan_str "match";
-  scan_str "module";
+  scan_str "mutability";
   scan_str "of";
   scan_str "open";
   scan_str "or";
@@ -4642,9 +4702,9 @@ let%expect_test "uident" =
     {|match|}
       [1:0..1:5) : <Tok_match>
       [1:5..1:5) : <Tok_end_of_input>
-    {|module|}
-      [1:0..1:6) : <Tok_module>
-      [1:6..1:6) : <Tok_end_of_input>
+    {|mutability|}
+      [1:0..1:10) : <Tok_mutability>
+      [1:10..1:10) : <Tok_end_of_input>
     {|of|}
       [1:0..1:2) : <Tok_of>
       [1:2..1:2) : <Tok_end_of_input>
@@ -5602,7 +5662,7 @@ let%expect_test "integer" =
       [1:0..1:1) : <Tok_u64=Constant 1u64>
       [1:1..1:1) : <Tok_end_of_input>
     {|-1|}
-      [1:0..1:1) : <Tok_minus_op="-">
+      [1:0..1:1) : <Tok_minus>
       [1:1..1:2) : <Tok_u64=Constant 1u64>
       [1:2..1:2) : <Tok_end_of_input>
     {|42|}

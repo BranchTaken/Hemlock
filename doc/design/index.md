@@ -71,16 +71,17 @@ disagree in part or in whole, but these opinions illuminate Hemlock's internal c
 ## Practical
 
 Hemlock is a synthesis of existing language technology; its innovations are overwhelmingly
-engineering-based over science-based. Hemlock most closely resembles [OCaml](http://ocaml.org/),
-though it differs significantly in several ways:
+engineering-based over science-based. Hemlock most closely resembles
+[1ML](https://people.mpi-sws.org/~rossberg/1ml/) and [OCaml](http://ocaml.org/), though it differs
+significantly in several ways:
 
-- There is no object model (the "O" in OCaml) nor polymorphic variants.
 - A unified parametric effects/mutability/type system precisely tracks effects and enables automated
   work-stealing parallel execution.
 - An enhanced derivative of [Erlang's](https://erlang.org/) actor-based parallelism supports
   incremental sharing of immutable persistent data.
 - Exceptions are omitted from Hemlock. Actors *halt* when exceptional conditions arise, which leaves
   it up to supervisor actors to implement recovery strategies.
+- There is no object model (the "O" in OCaml) nor polymorphic variants.
 
 Hemlock is a mostly pure, mostly eager functional language, for which purity and eagerness are
 opt-out on a case-by-case basis. This makes the language well suited to writing major subsystems in
