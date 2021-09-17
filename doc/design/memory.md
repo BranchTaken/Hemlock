@@ -959,7 +959,11 @@ only its return value escapes the computation. Subject to the following limitati
 which are strictly required), the runtime may copy out the result of a pure computation and reset
 the nursery frontier to incorporate only the result:
 
-- No GC has occurred since function entry.
+- No GC has occurred since function entry. GC reorders values in the heap, but nursery reset
+  requires all values in the pure computation to be contiguous and adjacent to the wilderness.
+- No local previously unforced lazy suspension has been forced since function entry. Lazy
+  suspensions may allocate values which outlive the pure computation, which prevents wilderness
+  reset if the values were allocated in the minor heap.
 - The result type is non-recursive (and therefore size can be computed in constant time).
 - The result size is either fixed and small, or the result size is small in proportion to the memory
   allocated since function entry.
