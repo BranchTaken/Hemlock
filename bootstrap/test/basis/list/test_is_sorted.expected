@@ -1,0 +1,27 @@
+is_sorted               [] -> true
+is_sorted ~strict:false [] -> true
+is_sorted ~strict:true  [] -> true
+is_sorted               [0] -> true
+is_sorted ~strict:false [0] -> true
+is_sorted ~strict:true  [0] -> true
+is_sorted               [0; 1] -> true
+is_sorted ~strict:false [0; 1] -> true
+is_sorted ~strict:true  [0; 1] -> true
+is_sorted               [0; 1; 2] -> true
+is_sorted ~strict:false [0; 1; 2] -> true
+is_sorted ~strict:true  [0; 1; 2] -> true
+is_sorted               [0; 0] -> true
+is_sorted ~strict:false [0; 0] -> true
+is_sorted ~strict:true  [0; 0] -> false
+is_sorted               [0; 1; 1] -> true
+is_sorted ~strict:false [0; 1; 1] -> true
+is_sorted ~strict:true  [0; 1; 1] -> false
+is_sorted               [0; 1; 2; 2] -> true
+is_sorted ~strict:false [0; 1; 2; 2] -> true
+is_sorted ~strict:true  [0; 1; 2; 2] -> false
+is_sorted               [1; 0] -> false
+is_sorted ~strict:false [1; 0] -> false
+is_sorted ~strict:true  [1; 0] -> false
+is_sorted               [0; 2; 1] -> false
+is_sorted ~strict:false [0; 2; 1] -> false
+is_sorted ~strict:true  [0; 2; 1] -> false

@@ -1,0 +1,20 @@
+of_real -0x1p+0 -> 0x0000_0000_0000_0000; to_real -> 0x0p+0
+of_real 0x0p+0 -> 0x0000_0000_0000_0000; to_real -> 0x0p+0
+of_real 0x1.1p-1 -> 0x0000_0000_0000_0000; to_real -> 0x0p+0
+of_real 0x1p+0 -> 0x0000_0000_0000_0001; to_real -> 0x1p+0
+of_real 0x1.fffffffffffffp+48 -> 0x0001_ffff_ffff_ffff; to_real -> 0x1.ffffffffffffp+48
+of_real 0x1.fffffffffffffp+52 -> 0x001f_ffff_ffff_ffff; to_real -> 0x1.fffffffffffffp+52
+of_real 0x1.fffffffffffffp+56 -> 0x01ff_ffff_ffff_fff0; to_real -> 0x1.fffffffffffffp+56
+of_real 0x1.fffffffffffffp+127 -> 0xffff_ffff_ffff_f800_0000_0000_0000_0000; to_real -> 0x1.fffffffffffffp+127
+of_real 0x1.fffffffffffffp+128 -> 0x0000_0000_0000_0001_ffff_ffff_ffff_f000_0000_0000_0000_0000; to_real -> 0x1.fffffffffffffp+128
+of_real 0x1.fffffffffffffp+132 -> 0x0000_0000_0000_001f_ffff_ffff_ffff_0000_0000_0000_0000_0000; to_real -> 0x1.fffffffffffffp+132
+of_real 0x1.fffffffffffffp+255 -> 0xffff_ffff_ffff_f800_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000; to_real -> 0x1.fffffffffffffp+255
+of_real 0x1.fffffffffffffp+256 -> 0x0000_0000_0000_0001_ffff_ffff_ffff_f000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000; to_real -> 0x1.fffffffffffffp+256
+of_real 0x1.fffffffffffffp+260 -> 0x0000_0000_0000_001f_ffff_ffff_ffff_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000; to_real -> 0x1.fffffffffffffp+260
+of_real 0x1.fffffffffffffp+1023 -> 0xffff_ffff_ffff_f800_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000; to_real -> 0x1.fffffffffffffp+1023
+of_real 0x1p+254 -> 0x4000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000; to_real -> 0x1p+254
+of_real 0x1p+255 -> 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000; to_real -> 0x1p+255
+of_real 0x1p+256 -> 0x0000_0000_0000_0001_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000; to_real -> 0x1p+256
+
+to_real 0x0000_0000_0000_0000 -> 0x0p+0; of_real -> 0x0000_0000_0000_0000
+to_real 0x0000_0000_0000_0001 -> 0x1p+0; of_real -> 0x0000_0000_0000_0001

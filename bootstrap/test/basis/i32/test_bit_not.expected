@@ -1,0 +1,2 @@
+bit_not 0x00000000i32 -> 0xffffffffi32
+bit_not 0x7fffffffi32 -> 0x80000000i32

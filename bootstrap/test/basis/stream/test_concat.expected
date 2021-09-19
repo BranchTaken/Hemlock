@@ -1,0 +1,10 @@
+concat Nil Nil = Nil
+concat Nil (0 Nil) = (0 Nil)
+concat (0 Nil) Nil = (0 Nil)
+concat Nil (0 (1 Nil)) = (0 (1 Nil))
+concat (0 Nil) (1 Nil) = (0 (1 Nil))
+concat (0 (1 Nil)) Nil = (0 (1 Nil))
+concat Nil (0 (1 (2 Nil))) = (0 (1 (2 Nil)))
+concat (0 Nil) (1 (2 Nil)) = (0 (1 (2 Nil)))
+concat (0 (1 Nil)) (2 Nil) = (0 (1 (2 Nil)))
+concat (0 (1 (2 Nil))) Nil = (0 (1 (2 Nil)))

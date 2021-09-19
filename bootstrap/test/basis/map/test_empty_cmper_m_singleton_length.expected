@@ -1,0 +1,20 @@
+Map {
+  length=0;
+  root={
+    present_kv=   0x0000000000000000;
+    present_child=0x0000000000000000;
+    elms_kv=[||];
+    elms_child=[||]
+  }
+}
+Map {
+  length=1;
+  root={
+    present_kv=   0x0000000040000000;
+    present_child=0x0000000000000000;
+    elms_kv=[|
+      (0, "0")
+    |];
+    elms_child=[||]
+  }
+}

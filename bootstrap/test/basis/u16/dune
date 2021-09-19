@@ -1,0 +1,14 @@
+(tests
+ (names
+  test_bit_and_bit_or_bit_xor
+  test_bit_not
+  test_bit_pop_bit_clz_bit_ctz
+  test_conversion
+  test_exp
+  test_hash_fold
+  test_limits
+  test_of_real_to_real
+  test_pp
+  test_rel
+  test_wraparound)
+ (libraries Basis))

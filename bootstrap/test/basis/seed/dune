@@ -1,6 +1,15 @@
-(tests
- (names seed)
+(test
+ (name test_seed0)
+ (modules test_seed0)
  (libraries Basis)
  (action
   (setenv HEMLOCK_ENTROPY "0"
+   (run %{test} -e))))
+
+(test
+ (name test_seed42)
+ (modules test_seed42)
+ (libraries Basis)
+ (action
+  (setenv HEMLOCK_ENTROPY "42"
    (run %{test} -e))))

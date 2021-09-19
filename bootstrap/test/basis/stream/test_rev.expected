@@ -1,0 +1,4 @@
+rev Nil = Nil
+rev (0 Nil) = (0 Nil)
+rev (0 (1 Nil)) = (1 (0 Nil))
+rev (0 (1 (2 Nil))) = (2 (1 (0 Nil)))

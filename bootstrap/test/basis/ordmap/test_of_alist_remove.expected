@@ -1,0 +1,72 @@
+--- Not member. ---
+remove 2
+  Ordmap {
+    root=
+      Node {
+        l=Leaf {k=0; v="0"};
+        k=1;
+        v="1";
+        n=2;
+        h=2;
+        r=Empty
+      }
+  } ->
+  Ordmap {
+    root=
+      Node {
+        l=Leaf {k=0; v="0"};
+        k=1;
+        v="1";
+        n=2;
+        h=2;
+        r=Empty
+      }
+  }
+--- Member, length 1 -> 0. ---
+remove 0
+  Ordmap {
+    root=Leaf {k=0; v="0"}
+  } ->
+  Ordmap {
+    root=Empty
+  }
+--- Member, length 2 -> 1. ---
+remove 1
+  Ordmap {
+    root=
+      Node {
+        l=Leaf {k=0; v="0"};
+        k=1;
+        v="1";
+        n=2;
+        h=2;
+        r=Empty
+      }
+  } ->
+  Ordmap {
+    root=Leaf {k=0; v="0"}
+  }
+--- Member, length 3 -> 2. ---
+remove 2
+  Ordmap {
+    root=
+      Node {
+        l=Leaf {k=0; v="0"};
+        k=1;
+        v="1";
+        n=3;
+        h=2;
+        r=Leaf {k=2; v="2"}
+      }
+  } ->
+  Ordmap {
+    root=
+      Node {
+        l=Leaf {k=0; v="0"};
+        k=1;
+        v="1";
+        n=2;
+        h=2;
+        r=Empty
+      }
+  }

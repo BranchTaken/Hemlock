@@ -1,0 +1,164 @@
+[0x61u8]
+  fwd   -> index=0 "a"
+  rev   -> index=1 "a"
+  slice -> "a"
+[0xf0u8; 0x80u8; 0x80u8]
+  fwd   -> index=0 "«�»"
+  rev   -> index=3 "«�»"
+  slice -> "�"
+[0xe0u8; 0x80u8]
+  fwd   -> index=0 "«�»"
+  rev   -> index=3 "«�»"
+  slice -> "�"
+[0xc0u8]
+  fwd   -> index=0 "«�»"
+  rev   -> index=3 "«�»"
+  slice -> "�"
+[0xf0u8; 0x80u8; 0x80u8; 0xf0u8]
+  fwd   -> index=0 "«�»«�»"
+  rev   -> index=6 "«�»«�»"
+  slice -> "��"
+[0xe0u8; 0x80u8; 0xe0u8]
+  fwd   -> index=0 "«�»«�»"
+  rev   -> index=6 "«�»«�»"
+  slice -> "��"
+[0xc0u8; 0xc0u8]
+  fwd   -> index=0 "«�»«�»"
+  rev   -> index=6 "«�»«�»"
+  slice -> "��"
+[0x80u8]
+  fwd   -> index=0 "«�»"
+  rev   -> index=3 "«�»"
+  slice -> "�"
+[0x80u8; 0x80u8; 0x80u8; 0x80u8]
+  fwd   -> index=0 "«�»«�»«�»«�»"
+  rev   -> index=12 "«�»«�»«�»«�»"
+  slice -> "����"
+[0x61u8; 0xc0u8; 0x62u8]
+  fwd   -> index=0 "a«�»b"
+  rev   -> index=5 "b«�»a"
+  slice -> "a�b"
+[0x61u8; 0xe0u8; 0x80u8; 0x63u8]
+  fwd   -> index=0 "a«�»c"
+  rev   -> index=5 "c«�»a"
+  slice -> "a�c"
+[0x61u8; 0xc0u8; 0x80u8; 0x80u8; 0x64u8]
+  fwd   -> index=0 "a«�»«�»d"
+  rev   -> index=8 "d«�»«�»a"
+  slice -> "a��d"
+[0x61u8; 0xffu8; 0x65u8]
+  fwd   -> index=0 "a«�»e"
+  rev   -> index=5 "e«�»a"
+  slice -> "a�e"
+[0xefu8; 0xbfu8; 0xbdu8]
+  fwd   -> index=0 "�"
+  rev   -> index=3 "�"
+  slice -> "�"
+[0x61u8; 0x3cu8; 0x62u8]
+  fwd   -> index=0 "a<b"
+  rev   -> index=3 "b<a"
+  slice -> "a<b"
+[0x61u8; 0xc0u8; 0xbcu8; 0x62u8]
+  fwd   -> index=0 "a«�»b"
+  rev   -> index=5 "b«�»a"
+  slice -> "a�b"
+[0x61u8; 0xe0u8; 0x80u8; 0xbcu8; 0x62u8]
+  fwd   -> index=0 "a«�»b"
+  rev   -> index=5 "b«�»a"
+  slice -> "a�b"
+[0x61u8; 0xf0u8; 0x80u8; 0x80u8; 0xbcu8; 0x62u8]
+  fwd   -> index=0 "a«�»b"
+  rev   -> index=5 "b«�»a"
+  slice -> "a�b"
+[0x61u8; 0x3cu8]
+  fwd   -> index=0 "a<"
+  rev   -> index=2 "<a"
+  slice -> "a<"
+[0x61u8; 0xc0u8; 0xbcu8]
+  fwd   -> index=0 "a«�»"
+  rev   -> index=4 "«�»a"
+  slice -> "a�"
+[0x61u8; 0xe0u8; 0x80u8; 0xbcu8]
+  fwd   -> index=0 "a«�»"
+  rev   -> index=4 "«�»a"
+  slice -> "a�"
+[0x61u8; 0xf0u8; 0x80u8; 0x80u8; 0xbcu8]
+  fwd   -> index=0 "a«�»"
+  rev   -> index=4 "«�»a"
+  slice -> "a�"
+[0x3cu8; 0x62u8]
+  fwd   -> index=0 "<b"
+  rev   -> index=2 "b<"
+  slice -> "<b"
+[0xc0u8; 0xbcu8; 0x62u8]
+  fwd   -> index=0 "«�»b"
+  rev   -> index=4 "b«�»"
+  slice -> "�b"
+[0xe0u8; 0x80u8; 0xbcu8; 0x62u8]
+  fwd   -> index=0 "«�»b"
+  rev   -> index=4 "b«�»"
+  slice -> "�b"
+[0xf0u8; 0x80u8; 0x80u8; 0xbcu8; 0x62u8]
+  fwd   -> index=0 "«�»b"
+  rev   -> index=4 "b«�»"
+  slice -> "�b"
+[0x61u8; 0xc2u8; 0xabu8; 0x62u8]
+  fwd   -> index=0 "a«b"
+  rev   -> index=4 "b«a"
+  slice -> "a«b"
+[0x61u8; 0xe0u8; 0x82u8; 0xabu8; 0x62u8]
+  fwd   -> index=0 "a«�»b"
+  rev   -> index=5 "b«�»a"
+  slice -> "a�b"
+[0x61u8; 0xf0u8; 0x80u8; 0x82u8; 0xabu8; 0x62u8]
+  fwd   -> index=0 "a«�»b"
+  rev   -> index=5 "b«�»a"
+  slice -> "a�b"
+[0x61u8; 0xc2u8; 0xabu8]
+  fwd   -> index=0 "a«"
+  rev   -> index=3 "«a"
+  slice -> "a«"
+[0x61u8; 0xe0u8; 0x82u8; 0xabu8]
+  fwd   -> index=0 "a«�»"
+  rev   -> index=4 "«�»a"
+  slice -> "a�"
+[0x61u8; 0xf0u8; 0x80u8; 0x82u8; 0xabu8]
+  fwd   -> index=0 "a«�»"
+  rev   -> index=4 "«�»a"
+  slice -> "a�"
+[0xc2u8; 0xabu8; 0x62u8]
+  fwd   -> index=0 "«b"
+  rev   -> index=3 "b«"
+  slice -> "«b"
+[0xe0u8; 0x82u8; 0xabu8; 0x62u8]
+  fwd   -> index=0 "«�»b"
+  rev   -> index=4 "b«�»"
+  slice -> "�b"
+[0xf0u8; 0x80u8; 0x82u8; 0xabu8; 0x62u8]
+  fwd   -> index=0 "«�»b"
+  rev   -> index=4 "b«�»"
+  slice -> "�b"
+[0x61u8; 0xe2u8; 0x80u8; 0xa1u8; 0x62u8]
+  fwd   -> index=0 "a‡b"
+  rev   -> index=5 "b‡a"
+  slice -> "a‡b"
+[0x61u8; 0xf0u8; 0x82u8; 0x80u8; 0xa1u8; 0x62u8]
+  fwd   -> index=0 "a«�»b"
+  rev   -> index=5 "b«�»a"
+  slice -> "a�b"
+[0x61u8; 0xe2u8; 0x80u8; 0xa1u8]
+  fwd   -> index=0 "a‡"
+  rev   -> index=4 "‡a"
+  slice -> "a‡"
+[0x61u8; 0xf0u8; 0x82u8; 0x80u8; 0xa1u8]
+  fwd   -> index=0 "a«�»"
+  rev   -> index=4 "«�»a"
+  slice -> "a�"
+[0xe2u8; 0x80u8; 0xa1u8; 0x62u8]
+  fwd   -> index=0 "‡b"
+  rev   -> index=4 "b‡"
+  slice -> "‡b"
+[0xf0u8; 0x82u8; 0x80u8; 0xa1u8; 0x62u8]
+  fwd   -> index=0 "«�»b"
+  rev   -> index=4 "b«�»"
+  slice -> "�b"

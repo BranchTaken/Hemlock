@@ -1,0 +1,7 @@
+(tests
+ (names
+  test_empty_t_of_state
+  test_hash_fold_u128
+  test_hash_fold_u64
+  test_hash_fold_u8)
+ (libraries Basis))

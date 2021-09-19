@@ -1,0 +1,7 @@
+[rev_]groupi [] ~break:inds -> [] / []
+[rev_]groupi [9] ~break:inds -> [[9]] / [[9]]
+[rev_]groupi [9; 9] ~break:inds -> [[9; 9]] / [[9; 9]]
+[rev_]groupi [0; 1] ~break:inds -> [[0]; [1]] / [[1]; [0]]
+[rev_]groupi [9; 1; 2; 9] ~break:inds -> [[9; 1]; [2; 9]] / [[9; 2]; [1; 9]]
+[rev_]groupi [0; 1; 2] ~break:inds -> [[0]; [1]; [2]] / [[2]; [1]; [0]]
+[rev_]groupi [9; 1; 2; 9; 4; 5; 9] ~break:inds -> [[9; 1]; [2; 9; 4]; [5; 9]] / [[9; 5]; [4; 9; 2]; [1; 9]]

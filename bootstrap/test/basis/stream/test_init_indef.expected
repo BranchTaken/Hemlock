@@ -1,0 +1,4 @@
+init_indef until 0 = Nil
+init_indef until 1 = (0 Nil)
+init_indef until 2 = (0 (1 Nil))
+init_indef until 3 = (0 (1 (2 Nil)))

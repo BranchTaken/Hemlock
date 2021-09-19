@@ -1,0 +1,4 @@
+[||] [||] -> fold2_until 0 -> foldi2_until 0
+[|1|] [|0|] -> fold2_until 1 -> foldi2_until 1
+[|3; 2|] [|1; 0|] -> fold2_until 6 -> foldi2_until 4
+[|5; 4; 3|] [|2; 1; 0|] -> fold2_until 15 -> foldi2_until 13

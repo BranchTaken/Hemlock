@@ -1,0 +1,14 @@
+of_sint 0x7fffffffffffffffi -> to_sint 0xffffffffu32 -> of_sint 0x00000000ffffffffi -> 0xffffffffu32
+of_uns 0x7fffffffffffffff -> to_uns 0xffffffffu32 -> of_uns 0x00000000ffffffff -> 0xffffffffu32
+of_sint 0x0000000000000000i -> to_sint 0x00000000u32 -> of_sint 0x0000000000000000i -> 0x00000000u32
+of_uns 0x0000000000000000 -> to_uns 0x00000000u32 -> of_uns 0x0000000000000000 -> 0x00000000u32
+of_sint 0x000000000000002ai -> to_sint 0x0000002au32 -> of_sint 0x000000000000002ai -> 0x0000002au32
+of_uns 0x000000000000002a -> to_uns 0x0000002au32 -> of_uns 0x000000000000002a -> 0x0000002au32
+of_sint 0x00000000001fffffi -> to_sint 0x001fffffu32 -> of_sint 0x00000000001fffffi -> 0x001fffffu32
+of_uns 0x00000000001fffff -> to_uns 0x001fffffu32 -> of_uns 0x00000000001fffff -> 0x001fffffu32
+of_sint 0x0000000000200000i -> to_sint 0x00200000u32 -> of_sint 0x0000000000200000i -> 0x00200000u32
+of_uns 0x0000000000200000 -> to_uns 0x00200000u32 -> of_uns 0x0000000000200000 -> 0x00200000u32
+of_sint 0x0000000000200001i -> to_sint 0x00200001u32 -> of_sint 0x0000000000200001i -> 0x00200001u32
+of_uns 0x0000000000200001 -> to_uns 0x00200001u32 -> of_uns 0x0000000000200001 -> 0x00200001u32
+of_sint 0x3fffffffffffffffi -> to_sint 0xffffffffu32 -> of_sint 0x00000000ffffffffi -> 0xffffffffu32
+of_uns 0x3fffffffffffffff -> to_uns 0xffffffffu32 -> of_uns 0x00000000ffffffff -> 0xffffffffu32

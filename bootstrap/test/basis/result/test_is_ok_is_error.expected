@@ -1,0 +1,4 @@
+is_ok Ok "ok" -> true
+is_error Ok "ok" -> false
+is_ok Error "error" -> false
+is_error Error "error" -> true

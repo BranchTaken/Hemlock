@@ -1,0 +1,3 @@
+bit_length=8
+min_value=0x00u8
+max_value=0xffu8

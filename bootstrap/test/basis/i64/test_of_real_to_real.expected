@@ -1,0 +1,13 @@
+of_real -0x1p+0 -> 0xffff_ffff_ffff_ffffi64; to_real -> -0x1p+0
+of_real 0x0p+0 -> 0x0000_0000_0000_0000i64; to_real -> 0x0p+0
+of_real 0x1.1p-1 -> 0x0000_0000_0000_0000i64; to_real -> 0x0p+0
+of_real 0x1p+0 -> 0x0000_0000_0000_0001i64; to_real -> 0x1p+0
+of_real 0x1.fffffffffffffp+48 -> 0x0001_ffff_ffff_ffffi64; to_real -> 0x1.ffffffffffffp+48
+of_real 0x1.fffffffffffffp+52 -> 0x001f_ffff_ffff_ffffi64; to_real -> 0x1.fffffffffffffp+52
+of_real 0x1.fffffffffffffp+56 -> 0x01ff_ffff_ffff_fff0i64; to_real -> 0x1.fffffffffffffp+56
+of_real 0x1.fffffffffffffp+62 -> 0x7fff_ffff_ffff_fc00i64; to_real -> 0x1.fffffffffffffp+62
+
+to_real 0x0000_0000_0000_0000i64 -> 0x0p+0; of_real -> 0x0000_0000_0000_0000i64
+to_real 0x0000_0000_0000_0001i64 -> 0x1p+0; of_real -> 0x0000_0000_0000_0001i64
+to_real 0x8000_0000_0000_0000i64 -> -0x1p+63; of_real -> 0x8000_0000_0000_0000i64
+to_real 0x7fff_ffff_ffff_ffffi64 -> 0x1p+63; of_real -> 0x8000_0000_0000_0000i64

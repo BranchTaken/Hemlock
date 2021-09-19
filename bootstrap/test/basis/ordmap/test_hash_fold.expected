@@ -1,0 +1,5 @@
+hash_fold (of_klist []) -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+hash_fold (of_klist [0]) -> 0xb978_4708_6e65_ae45_2de4_cfcd_b8a3_131eu128
+hash_fold (of_klist [0; 1]) -> 0xa4c1_0614_74d1_114e_feae_0875_b590_8b45u128
+hash_fold (of_klist [0; 2]) -> 0xe464_a98d_26ee_f2f1_c84a_abbc_10e6_8b6cu128
+hash_fold (of_klist [2; 3]) -> 0x394a_2b8a_046c_9407_633b_5c51_05e2_14d9u128

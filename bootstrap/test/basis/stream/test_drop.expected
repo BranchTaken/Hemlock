@@ -1,0 +1,14 @@
+drop 0 Nil = Nil
+drop 1 Nil = Nil
+drop 0 (0 Nil) = (0 Nil)
+drop 1 (0 Nil) = Nil
+drop 2 (0 Nil) = Nil
+drop 0 (0 (1 Nil)) = (0 (1 Nil))
+drop 1 (0 (1 Nil)) = (1 Nil)
+drop 2 (0 (1 Nil)) = Nil
+drop 3 (0 (1 Nil)) = Nil
+drop 0 (0 (1 (2 Nil))) = (0 (1 (2 Nil)))
+drop 1 (0 (1 (2 Nil))) = (1 (2 Nil))
+drop 2 (0 (1 (2 Nil))) = (2 Nil)
+drop 3 (0 (1 (2 Nil))) = Nil
+drop 4 (0 (1 (2 Nil))) = Nil

@@ -1,0 +1,28 @@
+cursor fwd:
+
+cursor rev:
+
+cursor fwd:
+            {string="<_>«‡𐆗»[_]", bindex=0}=<
+            {string="<_>«‡𐆗»[_]", bindex=1}=_
+            {string="<_>«‡𐆗»[_]", bindex=2}=>
+            {string="<_>«‡𐆗»[_]", bindex=3}=«
+            {string="<_>«‡𐆗»[_]", bindex=5}=‡
+            {string="<_>«‡𐆗»[_]", bindex=8}=𐆗
+            {string="<_>«‡𐆗»[_]", bindex=12}=»
+            {string="<_>«‡𐆗»[_]", bindex=14}=[
+            {string="<_>«‡𐆗»[_]", bindex=15}=_
+            {string="<_>«‡𐆗»[_]", bindex=16}=]
+
+cursor rev:
+            {string="<_>«‡𐆗»[_]", bindex=17}=]
+            {string="<_>«‡𐆗»[_]", bindex=16}=_
+            {string="<_>«‡𐆗»[_]", bindex=15}=[
+            {string="<_>«‡𐆗»[_]", bindex=14}=»
+            {string="<_>«‡𐆗»[_]", bindex=12}=𐆗
+            {string="<_>«‡𐆗»[_]", bindex=8}=‡
+            {string="<_>«‡𐆗»[_]", bindex=5}=«
+            {string="<_>«‡𐆗»[_]", bindex=3}=>
+            {string="<_>«‡𐆗»[_]", bindex=2}=_
+            {string="<_>«‡𐆗»[_]", bindex=1}=<
+

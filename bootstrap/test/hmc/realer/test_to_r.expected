@@ -1,0 +1,45 @@
+0x0p0
+  to_r64 -> Precise 0x0p+0
+  to_r32 -> Precise 0x0p+0
+0x1p0
+  to_r64 -> Precise 0x1p+0
+  to_r32 -> Precise 0x1p+0
+inf
+  to_r64 -> Precise infinity
+  to_r32 -> Precise infinity
+nan
+  to_r64 -> Precise nan
+  to_r32 -> Precise nan
+-0x0p0
+  to_r64 -> Precise -0x0p+0
+  to_r32 -> Precise -0x0p+0
+-0x1p0
+  to_r64 -> Precise -0x1p+0
+  to_r32 -> Precise -0x1p+0
+-inf
+  to_r64 -> Precise -infinity
+  to_r32 -> Precise -infinity
+0x1p0
+  to_r64 -> Precise 0x1p+0
+  to_r32 -> Precise 0x1p+0
+0x1.8p0
+  to_r64 -> Precise 0x1.8p+0
+  to_r32 -> Precise 0x1.8p+0
+0x1.fp0
+  to_r64 -> Precise 0x1.fp+0
+  to_r32 -> Precise 0x1.fp+0
+0x1.fffffep0
+  to_r64 -> Precise 0x1.fffffep+0
+  to_r32 -> Precise 0x1.fffffep+0
+0x1.ffffffp0
+  to_r64 -> Precise 0x1.ffffffp+0
+  to_r32 -> Rounded 0x1.fffffep+0
+0x1.fffffffffffffp0
+  to_r64 -> Precise 0x1.fffffffffffffp+0
+  to_r32 -> Rounded 0x1.fffffep+0
+0x1.fffffffffffff8p0
+  to_r64 -> Rounded 0x1.fffffffffffffp+0
+  to_r32 -> Rounded 0x1.fffffep+0
+0x1.56p2
+  to_r64 -> Precise 0x1.56p+2
+  to_r32 -> Precise 0x1.56p+2

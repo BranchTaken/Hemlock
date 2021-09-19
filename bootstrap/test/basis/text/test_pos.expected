@@ -1,0 +1,42 @@
+[""]
+  pos tl = 1:0
+  pos hd = 1:0
+["Hello"]
+  pos tl = 1:5
+  pos hd = 1:0
+["Hello"; "\n"; "Goodbye"]
+  pos tl = 2:7
+  pos hd = 1:0
+["A"; "\n"; "B"; "\n"]
+  pos tl = 3:0
+  pos hd = 1:0
+["A"; "\n"; "B"; "\n"; "C"]
+  pos tl = 3:1
+  pos hd = 1:0
+["A"; "\n"; "\n"; "C"]
+  pos tl = 3:1
+  pos hd = 1:0
+["\t"]
+  pos tl = 1:8
+  pos hd = 1:0
+["A"; "\t"]
+  pos tl = 1:8
+  pos hd = 1:0
+["\t"; "B"]
+  pos tl = 1:9
+  pos hd = 1:0
+["A"; "\t"; "B"]
+  pos tl = 1:9
+  pos hd = 1:0
+["A"; "\t"; "\t"; "B"]
+  pos tl = 1:17
+  pos hd = 1:0
+["A"; "\n"; "\t"; "B"]
+  pos tl = 2:9
+  pos hd = 1:0
+["A"; "\t"; "\n"; "B"]
+  pos tl = 2:1
+  pos hd = 1:0
+["A"; "\t"; "B"; "\t"; "C"]
+  pos tl = 1:17
+  pos hd = 1:0

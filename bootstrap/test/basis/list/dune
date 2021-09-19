@@ -1,0 +1,36 @@
+(tests
+ (names
+  test_assoc
+  test_cmp
+  test_cmp_length
+  test_cmp_length_with
+  test_concat_rev_concat
+  test_foldi2
+  test_foldi2_until
+  test_hash_fold
+  test_hash_fold_empty
+  test_init
+  test_is_sorted
+  test_iteri2
+  test_join_join_unordered
+  test_nth_length_is_empty
+  test_nth_opt
+  test_push_pop_hd_tl
+  test_reduce_hlt
+  test_rev
+  test_rev_dedup
+  test_rev_dedup_sorted
+  test_rev_filteri
+  test_rev_fold_mapi
+  test_rev_foldi2_map
+  test_rev_group
+  test_rev_groupi
+  test_rev_map_concat
+  test_rev_mapi
+  test_rev_mapi2
+  test_rev_merge
+  test_rev_partition_tf
+  test_rev_split_take_drop
+  test_rev_split_take_drop_until
+  test_zip_unzip)
+ (libraries Basis))

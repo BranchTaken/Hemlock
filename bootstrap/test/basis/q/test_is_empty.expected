@@ -1,0 +1,4 @@
+is_empty (len=0, f=Nil, r=[], s=Nil) = true
+is_empty (len=1, f=(0 Nil), r=[], s=(0 Nil)) = false
+is_empty (len=2, f=(0 Nil), r=[1], s=Nil) = false
+is_empty (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = false

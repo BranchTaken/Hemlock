@@ -1,0 +1,8 @@
+(tests
+ (names
+  test_of_bytes_stream
+  test_of_bytes_stream_replace
+  test_of_string_slice
+  test_path
+  test_pos)
+ (libraries Basis))

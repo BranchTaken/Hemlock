@@ -1,0 +1,25 @@
+bit_and 0x0000000000000003i 0x0000000000000005i -> 0x0000000000000001i
+bit_or 0x0000000000000003i 0x0000000000000005i -> 0x0000000000000007i
+bit_xor 0x0000000000000003i 0x0000000000000005i -> 0x0000000000000006i
+bit_not 0x0000000000000002i -> 0x7ffffffffffffffdi
+bit_sl 4 0x00000000000000ffi -> 0x0000000000000ff0i
+bit_usr 4 0x7fffffffffffffffi -> 0x07ffffffffffffffi
+bit_ssr 4 0x7fffffffffffffffi -> 0x7fffffffffffffffi
+bit_pop 0x7fffffffffffffffi -> 63
+bit_clz 0x7fffffffffffffffi -> 0
+bit_ctz 0x7fffffffffffffffi -> 0
+bit_pop 0x0000000000000000i -> 0
+bit_clz 0x0000000000000000i -> 63
+bit_ctz 0x0000000000000000i -> 63
+bit_pop 0x0000000000000001i -> 1
+bit_clz 0x0000000000000001i -> 62
+bit_ctz 0x0000000000000001i -> 0
+bit_pop 0x4000000000000000i -> 1
+bit_clz 0x4000000000000000i -> 0
+bit_ctz 0x4000000000000000i -> 62
+bit_pop 0x3fffffffffffffffi -> 62
+bit_clz 0x3fffffffffffffffi -> 1
+bit_ctz 0x3fffffffffffffffi -> 0
+bit_pop 0x0000000000f73100i -> 10
+bit_clz 0x0000000000f73100i -> 39
+bit_ctz 0x0000000000f73100i -> 8

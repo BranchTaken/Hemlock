@@ -1,0 +1,4 @@
+push 0 Nil = (0 Nil)
+push 1 (0 Nil) = (1 (0 Nil))
+push 2 (1 (0 Nil)) = (2 (1 (0 Nil)))
+push 3 (2 (1 (0 Nil))) = (3 (2 (1 (0 Nil))))

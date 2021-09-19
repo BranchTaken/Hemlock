@@ -1,0 +1,15 @@
+(tests
+ (names
+  test_both
+  test_filter
+  test_first_some
+  test_hash_fold
+  test_hash_fold_empty
+  test_is_some_is_none
+  test_map2
+  test_merge
+  test_pp
+  test_some_if
+  test_value
+  test_value_map)
+ (libraries Basis))

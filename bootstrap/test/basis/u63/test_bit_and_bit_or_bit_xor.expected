@@ -1,0 +1,4 @@
+bit_{and,or,xor} 0x0000000000000000 0x0000000000000000 -> 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
+bit_{and,or,xor} 0x7fffffffffffffff 0x0000000000000000 -> 0x0000000000000000, 0x7fffffffffffffff, 0x7fffffffffffffff
+bit_{and,or,xor} 0x0000000000000000 0x7fffffffffffffff -> 0x0000000000000000, 0x7fffffffffffffff, 0x7fffffffffffffff
+bit_{and,or,xor} 0x7fffffffffffffff 0x7fffffffffffffff -> 0x7fffffffffffffff, 0x7fffffffffffffff, 0x0000000000000000

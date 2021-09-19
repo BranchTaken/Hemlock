@@ -1,0 +1,4 @@
+map: "abcde" -> "ABCDE"
+mapi: "abcde" -> "aBcDe"
+tr: "a:b:cd:e" -> "a b cd e"
+filter: "a:b:cd:e" -> "abcde"

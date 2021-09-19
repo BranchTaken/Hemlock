@@ -1,0 +1,10 @@
+rev_split 0 Nil = Nil Nil
+rev_split 0 (0 Nil) = Nil (0 Nil)
+rev_split 1 (0 Nil) = (0 Nil) Nil
+rev_split 0 (0 (1 Nil)) = Nil (0 (1 Nil))
+rev_split 1 (0 (1 Nil)) = (0 Nil) (1 Nil)
+rev_split 2 (0 (1 Nil)) = (1 (0 Nil)) Nil
+rev_split 0 (0 (1 (2 Nil))) = Nil (0 (1 (2 Nil)))
+rev_split 1 (0 (1 (2 Nil))) = (0 Nil) (1 (2 Nil))
+rev_split 2 (0 (1 (2 Nil))) = (1 (0 Nil)) (2 Nil)
+rev_split 3 (0 (1 (2 Nil))) = (2 (1 (0 Nil))) Nil

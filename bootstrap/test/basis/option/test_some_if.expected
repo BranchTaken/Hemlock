@@ -1,0 +1,2 @@
+some_if false 42 -> None
+some_if true 42 -> Some 42

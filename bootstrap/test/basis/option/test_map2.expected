@@ -1,0 +1,4 @@
+map2 (Some 42) (Some "hi") ~f:(fun a b -> (a, b)) -> Some (42, "hi")
+map2 (Some 42) (None) ~f:(fun a b -> (a, b)) -> None
+map2 (None) (Some "hi") ~f:(fun a b -> (a, b)) -> None
+map2 (None) (None) ~f:(fun a b -> (a, b)) -> None

@@ -1,0 +1,2 @@
+None -> None
+Some "/foo/bar" -> Some "/foo/bar"

@@ -1,0 +1,5 @@
+rev "" -> ""
+rev "a" -> "a"
+rev "ab" -> "ba"
+rev "abc" -> "cba"
+rev "abcd" -> "dcba"

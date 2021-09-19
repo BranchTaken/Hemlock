@@ -1,0 +1,16 @@
+is_suffix "abc" ~suffix:"" -> true
+chop_suffix "abc" ~suffix:"" -> "abc"
+is_suffix "abc" ~suffix:"c" -> true
+chop_suffix "abc" ~suffix:"c" -> "ab"
+is_suffix "abc" ~suffix:"bc" -> true
+chop_suffix "abc" ~suffix:"bc" -> "a"
+is_suffix "abc" ~suffix:"abc" -> true
+chop_suffix "abc" ~suffix:"abc" -> ""
+is_suffix "abc" ~suffix:"d" -> false
+chop_suffix "abc" ~suffix:"d" -> None
+is_suffix "abc" ~suffix:"dc" -> false
+chop_suffix "abc" ~suffix:"dc" -> None
+is_suffix "abc" ~suffix:"dab" -> false
+chop_suffix "abc" ~suffix:"dab" -> None
+is_suffix "abc" ~suffix:"dabc" -> false
+chop_suffix "abc" ~suffix:"dabc" -> None

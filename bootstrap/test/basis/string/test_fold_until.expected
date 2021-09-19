@@ -1,0 +1,2 @@
+fold_until "" ->
+fold_until "abcde" -> a b c

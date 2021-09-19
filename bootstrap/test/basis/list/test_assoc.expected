@@ -1,0 +1,74 @@
+[]
+find/mem 3 -> None / false
+remove 3 -> []
+map -> []
+inverse -> []
+
+[(0, 10)]
+find_hlt/mem 0 -> 10 / true
+find/mem 3 -> None / false
+remove_hlt 0 -> []
+remove 3 -> [(0, 10)]
+map -> [(0, 20)]
+inverse -> [(10, 0)]
+
+[(0, 10); (1, 11)]
+find_hlt/mem 0 -> 10 / true
+find_hlt/mem 1 -> 11 / true
+find/mem 3 -> None / false
+remove_hlt 0 -> [(1, 11)]
+remove_hlt 1 -> [(0, 10)]
+remove 3 -> [(0, 10); (1, 11)]
+map -> [(0, 20); (1, 22)]
+inverse -> [(11, 1); (10, 0)]
+
+[(0, 10); (0, 11); (1, 12)]
+find_hlt/mem 0 -> 10 / true
+find_hlt/mem 0 -> 10 / true
+find_hlt/mem 1 -> 12 / true
+find/mem 3 -> None / false
+remove_hlt 0 -> [(0, 11); (1, 12)]
+remove_hlt 0 -> [(0, 11); (1, 12)]
+remove_hlt 1 -> [(0, 10); (0, 11)]
+remove 3 -> [(0, 10); (0, 11); (1, 12)]
+map -> [(0, 20); (0, 22); (1, 24)]
+inverse -> [(12, 1); (11, 0); (10, 0)]
+
+[(0, 10); (1, 11); (0, 12)]
+find_hlt/mem 0 -> 10 / true
+find_hlt/mem 1 -> 11 / true
+find_hlt/mem 0 -> 10 / true
+find/mem 3 -> None / false
+remove_hlt 0 -> [(1, 11); (0, 12)]
+remove_hlt 1 -> [(0, 10); (0, 12)]
+remove_hlt 0 -> [(1, 11); (0, 12)]
+remove 3 -> [(0, 10); (1, 11); (0, 12)]
+map -> [(0, 20); (1, 22); (0, 24)]
+inverse -> [(12, 0); (11, 1); (10, 0)]
+
+[(1, 10); (0, 11); (0, 12)]
+find_hlt/mem 1 -> 10 / true
+find_hlt/mem 0 -> 11 / true
+find_hlt/mem 0 -> 11 / true
+find/mem 3 -> None / false
+remove_hlt 1 -> [(0, 11); (0, 12)]
+remove_hlt 0 -> [(1, 10); (0, 12)]
+remove_hlt 0 -> [(1, 10); (0, 12)]
+remove 3 -> [(1, 10); (0, 11); (0, 12)]
+map -> [(1, 20); (0, 22); (0, 24)]
+inverse -> [(12, 0); (11, 0); (10, 1)]
+
+[(0, 10); (1, 11); (1, 12); (2, 13)]
+find_hlt/mem 0 -> 10 / true
+find_hlt/mem 1 -> 11 / true
+find_hlt/mem 1 -> 11 / true
+find_hlt/mem 2 -> 13 / true
+find/mem 3 -> None / false
+remove_hlt 0 -> [(1, 11); (1, 12); (2, 13)]
+remove_hlt 1 -> [(0, 10); (1, 12); (2, 13)]
+remove_hlt 1 -> [(0, 10); (1, 12); (2, 13)]
+remove_hlt 2 -> [(0, 10); (1, 11); (1, 12)]
+remove 3 -> [(0, 10); (1, 11); (1, 12); (2, 13)]
+map -> [(0, 20); (1, 22); (1, 24); (2, 26)]
+inverse -> [(13, 2); (12, 1); (11, 1); (10, 0)]
+

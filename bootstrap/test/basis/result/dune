@@ -1,0 +1,11 @@
+(tests
+ (names
+  test_all
+  test_is_ok_is_error
+  test_ok_if_error_if
+  test_ok_ignore_error_ignore
+  test_map_ok_map_error
+  test_merge
+  test_ok_opt_error_opt
+  test_pp)
+ (libraries Basis))

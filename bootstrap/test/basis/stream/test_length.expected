@@ -1,0 +1,4 @@
+length Nil = 0
+length (0 Nil) = 1
+length (0 (1 Nil)) = 2
+length (0 (1 (2 Nil))) = 3

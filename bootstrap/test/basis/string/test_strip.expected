@@ -1,0 +1,6 @@
+lstrip "  a b c  " -> "a b c  "
+rstrip "  a b c  " -> "  a b c"
+strip "  a b c  " -> "a b c"
+lstrip "_ a_b_c _" -> " a_b_c _"
+rstrip "_ a_b_c _" -> "_ a_b_c "
+strip "_ a_b_c _" -> " a_b_c "

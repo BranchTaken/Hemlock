@@ -1,0 +1,4 @@
+both (Some 42) (Some "hi") -> Some (42, "hi")
+both (Some 42) (None) -> None
+both (None) (Some "hi") -> None
+both (None) (None) -> None

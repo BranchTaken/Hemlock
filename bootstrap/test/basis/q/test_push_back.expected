@@ -1,0 +1,4 @@
+push_back 0 (len=0, f=Nil, r=[], s=Nil) = (len=1, f=(0 Nil), r=[], s=(0 Nil))
+push_back 1 (len=1, f=(0 Nil), r=[], s=(0 Nil)) = (len=2, f=(0 Nil), r=[1], s=Nil)
+push_back 2 (len=2, f=(0 Nil), r=[1], s=Nil) = (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil))))
+push_back 3 (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil)))

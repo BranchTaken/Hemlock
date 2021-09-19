@@ -1,0 +1,4 @@
+ok_if true -> Ok ()
+error_if true -> Error ()
+ok_if false -> Error "oops"
+error_if false -> Ok "whew"

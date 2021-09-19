@@ -1,0 +1,4 @@
+[||]: length=0, is_empty=true
+[|0|]: length=1, is_empty=false
+[|0; 1|]: length=2, is_empty=false
+[|0; 1; 2|]: length=3, is_empty=false

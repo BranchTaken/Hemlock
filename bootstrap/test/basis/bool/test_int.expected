@@ -1,0 +1,2 @@
+to_uns false -> 0 ; of_uns 0 -> false
+to_uns true -> 1 ; of_uns 1 -> true

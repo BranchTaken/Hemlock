@@ -1,0 +1,4 @@
+cmp_length_with []:  (limit=0 -> Eq),  (limit=1 -> Lt),  (limit=2 -> Lt),  (limit=3 -> Lt)
+cmp_length_with [0]:  (limit=0 -> Gt),  (limit=1 -> Eq),  (limit=2 -> Lt),  (limit=3 -> Lt)
+cmp_length_with [0; 1]:  (limit=0 -> Gt),  (limit=1 -> Gt),  (limit=2 -> Eq),  (limit=3 -> Lt)
+cmp_length_with [0; 1; 2]:  (limit=0 -> Gt),  (limit=1 -> Gt),  (limit=2 -> Gt),  (limit=3 -> Eq)

@@ -1,0 +1,69 @@
+s/// "" -> ""
+s///g "" -> ""
+
+s/// "abc" -> "abc"
+s///g "abc" -> "abc"
+
+s//x/ "abc" -> "xabc"
+s//x/g "abc" -> "xaxbxcx"
+
+s/x/y/ "abc" -> "abc"
+s/x/y/g "abc" -> "abc"
+
+s//x/ "" -> "x"
+s//x/g "" -> "x"
+
+s/a/A/ "abc" -> "Abc"
+s/a/A/g "abc" -> "Abc"
+
+s/b/B/ "abc" -> "aBc"
+s/b/B/g "abc" -> "aBc"
+
+s/c/C/ "abc" -> "abC"
+s/c/C/g "abc" -> "abC"
+
+s/abc// "abc" -> ""
+s/abc//g "abc" -> ""
+
+s/abc/A/ "abc" -> "A"
+s/abc/A/g "abc" -> "A"
+
+s/abc/AB/ "abc" -> "AB"
+s/abc/AB/g "abc" -> "AB"
+
+s/abc/ABC/ "abc" -> "ABC"
+s/abc/ABC/g "abc" -> "ABC"
+
+s/ab// "abc" -> "c"
+s/ab//g "abc" -> "c"
+
+s/ab/A/ "abc" -> "Ac"
+s/ab/A/g "abc" -> "Ac"
+
+s/ab/AB/ "abc" -> "ABc"
+s/ab/AB/g "abc" -> "ABc"
+
+s/ab/ABC/ "abc" -> "ABCc"
+s/ab/ABC/g "abc" -> "ABCc"
+
+s/bc// "abc" -> "a"
+s/bc//g "abc" -> "a"
+
+s/bc/A/ "abc" -> "aA"
+s/bc/A/g "abc" -> "aA"
+
+s/bc/AB/ "abc" -> "aAB"
+s/bc/AB/g "abc" -> "aAB"
+
+s/bc/ABC/ "abc" -> "aABC"
+s/bc/ABC/g "abc" -> "aABC"
+
+s/b/B/ "ababa" -> "aBaba"
+s/b/B/g "ababa" -> "aBaBa"
+
+s/ab/AB/ "ababa" -> "ABaba"
+s/ab/AB/g "ababa" -> "ABABa"
+
+s/ba/BA/ "ababa" -> "aBAba"
+s/ba/BA/g "ababa" -> "aBABA"
+

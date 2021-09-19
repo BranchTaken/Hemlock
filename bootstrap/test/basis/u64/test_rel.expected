@@ -1,0 +1,44 @@
+cmp 0x0000_0000_0000_0000u64 0x8000_0000_0000_0000u64 -> Lt
+0x0000_0000_0000_0000u64 >= 0x8000_0000_0000_0000u64 -> false
+0x0000_0000_0000_0000u64 <= 0x8000_0000_0000_0000u64 -> true
+0x0000_0000_0000_0000u64 = 0x8000_0000_0000_0000u64 -> false
+0x0000_0000_0000_0000u64 > 0x8000_0000_0000_0000u64 -> false
+0x0000_0000_0000_0000u64 < 0x8000_0000_0000_0000u64 -> true
+0x0000_0000_0000_0000u64 <> 0x8000_0000_0000_0000u64 -> true
+ascending 0x0000_0000_0000_0000u64 0x8000_0000_0000_0000u64 -> Lt
+descending 0x0000_0000_0000_0000u64 0x8000_0000_0000_0000u64 -> Gt
+
+cmp 0x0000_0000_0000_0000u64 0xffff_ffff_ffff_ffffu64 -> Lt
+0x0000_0000_0000_0000u64 >= 0xffff_ffff_ffff_ffffu64 -> false
+0x0000_0000_0000_0000u64 <= 0xffff_ffff_ffff_ffffu64 -> true
+0x0000_0000_0000_0000u64 = 0xffff_ffff_ffff_ffffu64 -> false
+0x0000_0000_0000_0000u64 > 0xffff_ffff_ffff_ffffu64 -> false
+0x0000_0000_0000_0000u64 < 0xffff_ffff_ffff_ffffu64 -> true
+0x0000_0000_0000_0000u64 <> 0xffff_ffff_ffff_ffffu64 -> true
+ascending 0x0000_0000_0000_0000u64 0xffff_ffff_ffff_ffffu64 -> Lt
+descending 0x0000_0000_0000_0000u64 0xffff_ffff_ffff_ffffu64 -> Gt
+
+cmp 0x8000_0000_0000_0000u64 0x7fff_ffff_ffff_ffffu64 -> Gt
+0x8000_0000_0000_0000u64 >= 0x7fff_ffff_ffff_ffffu64 -> true
+0x8000_0000_0000_0000u64 <= 0x7fff_ffff_ffff_ffffu64 -> false
+0x8000_0000_0000_0000u64 = 0x7fff_ffff_ffff_ffffu64 -> false
+0x8000_0000_0000_0000u64 > 0x7fff_ffff_ffff_ffffu64 -> true
+0x8000_0000_0000_0000u64 < 0x7fff_ffff_ffff_ffffu64 -> false
+0x8000_0000_0000_0000u64 <> 0x7fff_ffff_ffff_ffffu64 -> true
+ascending 0x8000_0000_0000_0000u64 0x7fff_ffff_ffff_ffffu64 -> Gt
+descending 0x8000_0000_0000_0000u64 0x7fff_ffff_ffff_ffffu64 -> Lt
+
+clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_fffeu64 -> 0x7fff_ffff_ffff_ffffu64
+between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_fffeu64 -> false
+
+clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_ffffu64 -> 0x7fff_ffff_ffff_ffffu64
+between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x7fff_ffff_ffff_ffffu64 -> true
+
+clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x8000_0000_0000_0000u64 -> 0x8000_0000_0000_0000u64
+between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x8000_0000_0000_0000u64 -> true
+
+clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x8000_0000_0000_0001u64 -> 0x8000_0000_0000_0001u64
+between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x8000_0000_0000_0001u64 -> true
+
+clamp ~min:0x7fff_ffff_ffff_ffffu64 ~max:0x8000_0000_0000_0001u64 0x8000_0000_0000_0002u64 -> 0x8000_0000_0000_0001u64
+between ~low:0x7fff_ffff_ffff_ffffu64 ~high:0x8000_0000_0000_0001u64 0x8000_0000_0000_0002u64 -> false

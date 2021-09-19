@@ -1,0 +1,5 @@
+floor_lg,ceil_lg 0x0000_0000_0000_0001 -> 0, 0
+floor_lg,ceil_lg 0x0000_0000_0000_0002 -> 1, 1
+floor_lg,ceil_lg 0x0000_0000_0000_0003 -> 1, 2
+floor_lg,ceil_lg 0x0000_0000_0000_0000_8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000 -> 255, 255
+floor_lg,ceil_lg 0x0000_0000_0000_0000_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff -> 255, 256
