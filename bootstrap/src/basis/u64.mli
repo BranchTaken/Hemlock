@@ -16,12 +16,10 @@ val to_uns: t -> uns
 (** Convert to default-width unsigned integer, with possible loss. *)
 
 val to_uns_opt: t -> uns option
-(** Convert to default-width unsigned integer, or return [None] if conversion
-    would be lossy. *)
+(** Convert to default-width unsigned integer, or return [None] if conversion would be lossy. *)
 
 val to_uns_hlt: t -> uns
-(** Convert to default-width unsigned integer, or halt if conversion would be
-    lossy. *)
+(** Convert to default-width unsigned integer, or halt if conversion would be lossy. *)
 
 val of_uns: uns -> t
 (** Initialize from a default-width unsigned integer. *)

@@ -9,8 +9,7 @@ include IdentifiableIntf.S with type t := t
 include CmpableIntf.SMono with type t := t
 
 val kv: int -> t
-(** Create constant value. This is a stopgap solution for the lack of
-    codepoint literals. *)
+(** Create constant value. This is a stopgap solution for the lack of codepoint literals. *)
 
 val to_uns: t -> uns
 (** Convert to full-width unsigned integer. *)
@@ -19,26 +18,23 @@ val of_uns: uns -> t
 (** Initialize from full-width unsigned integer, with possible loss. *)
 
 val of_uns_opt: uns -> t option
-(** Initialize from full-width unsigned integer, or return [None] if conversion
-    would be lossy. *)
+(** Initialize from full-width unsigned integer, or return [None] if conversion would be lossy. *)
 
 val of_uns_hlt: uns -> t
-(** Initialize from full-width unsigned integer, or halt if conversion would be
-    lossy. *)
+(** Initialize from full-width unsigned integer, or halt if conversion would be lossy. *)
 
 val to_bytes: t -> byte list
 (** Convert to a UTF-8-encoded byte list. *)
 
 val of_char: char -> t
-(** Initialize from character literal. This is a stopgap for the lack of
-    codepoint literals. *)
+(** Initialize from character literal. This is a stopgap for the lack of codepoint literals. *)
 
 val to_string: t -> string
 (** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
 
 val escape: t -> string
-(** [escape t] returns a syntactically valid UTF-8-encoded codepoint literal
-    representation of [t]. *)
+(** [escape t] returns a syntactically valid UTF-8-encoded codepoint literal representation of [t].
+*)
 
 val replacement: t
 (** Replacement character '�', [0xfffd]. *)
@@ -145,17 +141,16 @@ val us: t
 val del: t
 (** Constant [0x7f]. *)
 
-(** UTF-8-encoded code point. This module provides mechanisms for validated
-    encoding conversion between code points and bytes, but is intended for
-    ephemeral use. Most operations on code points are performed via the
-    {!type:codepoint} and {!type:string} types. *)
+(** UTF-8-encoded code point. This module provides mechanisms for validated encoding conversion
+    between code points and bytes, but is intended for ephemeral use. Most operations on code points
+    are performed via the {!type:codepoint} and {!type:string} types. *)
 module Utf8 : sig
   type outer = t
   type t
 
   val length_of_codepoint: outer -> uns
-  (** [length_of_codepoint cp] returns the length in bytes of the UTF-8 encoding
-      which corresponds to [cp]. *)
+  (** [length_of_codepoint cp] returns the length in bytes of the UTF-8 encoding which corresponds
+      to [cp]. *)
 
   val of_codepoint: outer -> t
   (** Initialize from {!type:codepoint}. *)
@@ -173,12 +168,10 @@ module Utf8 : sig
   (** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
 
   val escape: t -> string
-  (** [escape t] returns a syntactically valid UTF-8-encoded string
-      representation of [t]. *)
+  (** [escape t] returns a syntactically valid UTF-8-encoded string representation of [t]. *)
 end
 
-(** Functors for decoding UTF-8-encoded byte sequences as {!type:codepoint}
-    values. *)
+(** Functors for decoding UTF-8-encoded byte sequences as {!type:codepoint} values. *)
 module Seq : sig
   type outer = t
   (* Silence ocp-indent. *)
@@ -192,17 +185,12 @@ module Seq : sig
       | Invalid  of t         (** Remainder sequence past invalid encoding. *)
 
     val to_codepoint: t -> decoded option
-    (** [to_codepoint t] decodes beginning of sequence [t], or returns [None] if
-        [t] is empty. *)
+    (** [to_codepoint t] decodes beginning of sequence [t], or returns [None] if [t] is empty. *)
   end
 
-  (** Iteratively convert a UTF-8-encoded byte sequence to {!type:codepoint}
-      values. *)
-  module Make (T : SeqIntf.IMonoIndef with type elm := byte) :
-    S with type t := T.t
+  (** Iteratively convert a UTF-8-encoded byte sequence to {!type:codepoint} values. *)
+  module Make (T : SeqIntf.IMonoIndef with type elm := byte) : S with type t := T.t
 
-  (** Iteratively convert a reversed UTF-8-encoded byte sequence to
-      {!type:codepoint} values. *)
-  module MakeRev (T : SeqIntf.IMonoIndef with type elm := byte) :
-    S with type t := T.t
+  (** Iteratively convert a reversed UTF-8-encoded byte sequence to {!type:codepoint} values. *)
+  module MakeRev (T : SeqIntf.IMonoIndef with type elm := byte) : S with type t := T.t
 end

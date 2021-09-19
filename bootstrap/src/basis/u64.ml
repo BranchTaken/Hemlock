@@ -48,8 +48,7 @@ let pp_x ppf t =
     | _ -> begin
         if Uns.(shift < 64) then Format.fprintf ppf "_";
         let shift' = shift - 16 in
-        Format.fprintf ppf "%04Lx"
-          Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
+        Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
         fn x shift'
       end
   end in
@@ -79,14 +78,12 @@ let of_real r =
       | false -> zero
       | true -> begin
           let bits = Int64.bits_of_float r in
-          let biased_exponent =
-            Int64.(to_int (logand (shift_right_logical bits 52) c7ff)) in
+          let biased_exponent = Int64.(to_int (logand (shift_right_logical bits 52) c7ff)) in
           match RudimentsInt.(biased_exponent >= 1023) with
           | false -> zero
           | true -> begin
               let exponent = biased_exponent - 1023 in
-              let significand = Int64.(logor c10_0000_0000_0000
-                  (logand bits cf_ffff_ffff_ffff)) in
+              let significand = Int64.(logor c10_0000_0000_0000 (logand bits cf_ffff_ffff_ffff)) in
               if RudimentsInt.(exponent < 52) then
                 Int64.shift_right_logical significand (52 - exponent)
               else if RudimentsInt.(exponent < 116) then
@@ -109,8 +106,7 @@ let to_real t =
   with
   | true -> Int64.to_float t
   | false -> begin
-      let fraction =
-        Int64.(logand (shift_right_logical t 11) cf_ffff_ffff_ffff) in
+      let fraction = Int64.(logand (shift_right_logical t 11) cf_ffff_ffff_ffff) in
       let exponent = c43e0_0000_0000_0000 in
       let bits = Int64.logor exponent fraction in
       Int64.float_of_bits bits
@@ -139,9 +135,7 @@ let of_uns u =
   | true -> Int64.of_int u
   | false -> begin
       let sint_sign_bit = Uns.of_sint Sint.min_value in
-      Int64.(add (of_int u)
-        (add (of_int sint_sign_bit)
-            (of_int sint_sign_bit)))
+      Int64.(add (of_int u) (add (of_int sint_sign_bit) (of_int sint_sign_bit)))
     end
 
 let min_value = zero

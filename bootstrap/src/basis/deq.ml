@@ -3,8 +3,8 @@ open Rudiments0
 type 'a t =
   uns * 'a Stream.t * 'a Stream.t * uns * 'a Stream.t * 'a Stream.t
 
-(* Increment size for rebuilding; must be either 2 or 3. Reference: Double-ended
- * queues section in Purely Functional Data Structures by Chris Okasaki. *)
+(* Increment size for rebuilding; must be either 2 or 3. Reference: Double-ended queues section in
+ * Purely Functional Data Structures by Chris Okasaki. *)
 let c = 2
 
 let empty = (

@@ -13,16 +13,13 @@ val of_sint: sint -> t
 (** Initialize from full-width signed integer, with possible loss. *)
 
 val of_sint_opt: sint -> t option
-(** Initialize from full-width signed integer, or return [None] if conversion
-    would be lossy. *)
+(** Initialize from full-width signed integer, or return [None] if conversion would be lossy. *)
 
 val of_sint_hlt: sint -> t
-(** Initialize from full-width signed integer, or halt if conversion would be
-    lossy. *)
+(** Initialize from full-width signed integer, or halt if conversion would be lossy. *)
 
 val kv: int -> t
-(** Create constant value. This is a stopgap solution for the lack of
-    bitwidth-specific literals. *)
+(** Create constant value. This is a stopgap solution for the lack of bitwidth-specific literals. *)
 
 val to_uns: t -> uns
 (** Convert to full-width unsigned integer. *)
@@ -31,13 +28,10 @@ val of_uns: uns -> t
 (** Initialize from full-width unsigned integer, with possible loss. *)
 
 val of_uns_opt: uns -> t option
-(** Initialize from full-width unsigned integer, or return [None] if conversion
-    would be lossy. *)
+(** Initialize from full-width unsigned integer, or return [None] if conversion would be lossy. *)
 
 val of_uns_hlt: uns -> t
-(** Initialize from full-width unsigned integer, or halt if conversion would be
-    lossy. *)
+(** Initialize from full-width unsigned integer, or halt if conversion would be lossy. *)
 
 val of_char: char -> t
-(** Initialize from character literal. This is a stopgap for the lack of
-    codepoint literals. *)
+(** Initialize from character literal. This is a stopgap for the lack of codepoint literals. *)

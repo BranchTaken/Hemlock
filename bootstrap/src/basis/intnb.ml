@@ -99,8 +99,9 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       | _ -> begin
           match T.signed with
           | false -> ((1 lsl T.bit_length) - 1) land t
-          | true -> ((t asr (Sys.int_size - 1)) lsl (T.bit_length - 1)) lor
-              (((1 lsl (T.bit_length - 1)) - 1) land t)
+          | true ->
+            ((t asr (Sys.int_size - 1)) lsl (T.bit_length - 1)) lor (((1 lsl (T.bit_length - 1)) -
+                1) land t)
         end
 
     let cmp t0 t1 =
@@ -159,8 +160,8 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
         end
 
     let of_real r =
-      (* OCaml handles overflow poorly, but this deficiency has no anticipated
-       * impact on bootstrapping. *)
+      (* OCaml handles overflow poorly, but this deficiency has no anticipated impact on
+       * bootstrapping. *)
       match T.signed || (r >= 0.) with
       | true -> narrow (int_of_float r)
       | false -> 0

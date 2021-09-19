@@ -41,10 +41,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       |> Hash.State.Gen.fold_u64 (word_length t) ~f:(fun i -> get i t)
       |> Hash.State.Gen.fini
 
-    external intw_icmp: t -> t -> word_length_cb -> get_cb -> Cmp.t =
-      "hm_basis_intw_i_cmp"
-    external intw_ucmp: t -> t -> word_length_cb -> get_cb -> Cmp.t =
-      "hm_basis_intw_u_cmp"
+    external intw_icmp: t -> t -> word_length_cb -> get_cb -> Cmp.t = "hm_basis_intw_i_cmp"
+    external intw_ucmp: t -> t -> word_length_cb -> get_cb -> Cmp.t = "hm_basis_intw_u_cmp"
 
     let cmp t0 t1 =
       match T.signed with
@@ -118,201 +116,156 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     let of_uns u =
       of_u64 (U64.of_uns u)
 
-    external intw_ubit_and: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_bit_and_bytecode"
-        "hm_basis_intw_u_bit_and_native"
-    external intw_ibit_and: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_bit_and_bytecode"
-        "hm_basis_intw_i_bit_and_native"
+    external intw_ubit_and: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_bit_and_bytecode" "hm_basis_intw_u_bit_and_native"
+    external intw_ibit_and: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_bit_and_bytecode" "hm_basis_intw_i_bit_and_native"
 
     let bit_and t0 t1 =
       of_arr (
         match T.signed with
-        | true -> intw_ibit_and t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false -> intw_ubit_and t0 t1 word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_ibit_and t0 t1 word_length get T.min_word_length T.max_word_length
+        | false -> intw_ubit_and t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_ubit_or: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_bit_or_bytecode"
-        "hm_basis_intw_u_bit_or_native"
-    external intw_ibit_or: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_bit_or_bytecode"
-        "hm_basis_intw_i_bit_or_native"
+    external intw_ubit_or: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_bit_or_bytecode" "hm_basis_intw_u_bit_or_native"
+    external intw_ibit_or: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_bit_or_bytecode" "hm_basis_intw_i_bit_or_native"
     let bit_or t0 t1 =
       of_arr (
         match T.signed with
-        | true -> intw_ibit_or t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false-> intw_ubit_or t0 t1 word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_ibit_or t0 t1 word_length get T.min_word_length T.max_word_length
+        | false-> intw_ubit_or t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_ubit_xor: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_bit_xor_bytecode"
-        "hm_basis_intw_u_bit_xor_native"
-    external intw_ibit_xor: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_bit_xor_bytecode"
-        "hm_basis_intw_i_bit_xor_native"
+    external intw_ubit_xor: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_bit_xor_bytecode" "hm_basis_intw_u_bit_xor_native"
+    external intw_ibit_xor: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_bit_xor_bytecode" "hm_basis_intw_i_bit_xor_native"
 
     let bit_xor t0 t1 =
       of_arr (
         match T.signed with
-        | true -> intw_ibit_xor t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false -> intw_ubit_xor t0 t1 word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_ibit_xor t0 t1 word_length get T.min_word_length T.max_word_length
+        | false -> intw_ubit_xor t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_bit_unot: t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_bit_not"
-    external intw_bit_inot: t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_bit_not"
+    external intw_bit_unot: t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_bit_not"
+    external intw_bit_inot: t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_bit_not"
 
     let bit_not t =
       of_arr (
         match T.signed with
-        | true -> intw_bit_inot t word_length get T.min_word_length
-            T.max_word_length
-        | false -> intw_bit_unot t word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_bit_inot t word_length get T.min_word_length T.max_word_length
+        | false -> intw_bit_unot t word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_bit_usl: uns -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_bit_sl_bytecode"
-        "hm_basis_intw_u_bit_sl_native"
-    external intw_bit_isl: uns -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_bit_sl_bytecode"
-        "hm_basis_intw_i_bit_sl_native"
+    external intw_bit_usl: uns -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_bit_sl_bytecode" "hm_basis_intw_u_bit_sl_native"
+    external intw_bit_isl: uns -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_bit_sl_bytecode" "hm_basis_intw_i_bit_sl_native"
 
     let bit_sl ~shift t =
       of_arr (
         match T.signed with
-        | true -> intw_bit_isl shift t word_length get T.min_word_length
-            T.max_word_length
-        | false -> intw_bit_usl shift t word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_bit_isl shift t word_length get T.min_word_length T.max_word_length
+        | false -> intw_bit_usl shift t word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_bit_usr: uns -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_bit_usr_bytecode"
-        "hm_basis_intw_bit_usr_native"
+    external intw_bit_usr: uns -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_bit_usr_bytecode" "hm_basis_intw_bit_usr_native"
 
     let bit_usr ~shift t =
-      of_arr (intw_bit_usr shift t word_length get T.min_word_length
-          T.max_word_length)
+      of_arr (intw_bit_usr shift t word_length get T.min_word_length T.max_word_length)
 
-    external intw_bit_ssr: uns -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_bit_ssr_bytecode"
-        "hm_basis_intw_bit_ssr_native"
+    external intw_bit_ssr: uns -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_bit_ssr_bytecode" "hm_basis_intw_bit_ssr_native"
 
     let bit_ssr ~shift t =
-      of_arr (intw_bit_ssr shift t word_length get T.min_word_length
-          T.max_word_length)
+      of_arr (intw_bit_ssr shift t word_length get T.min_word_length T.max_word_length)
 
-    external intw_bit_pop: t -> word_length_cb -> get_cb -> uns =
-      "hm_basis_intw_bit_pop"
+    external intw_bit_pop: t -> word_length_cb -> get_cb -> uns = "hm_basis_intw_bit_pop"
 
     let bit_pop t =
       intw_bit_pop t word_length get
 
-    external intw_bit_clz: t -> word_length_cb -> get_cb -> uns =
-      "hm_basis_intw_bit_clz"
+    external intw_bit_clz: t -> word_length_cb -> get_cb -> uns = "hm_basis_intw_bit_clz"
 
     let bit_clz t =
       intw_bit_clz t word_length get
 
-    external intw_bit_ctz: t -> word_length_cb -> get_cb -> uns =
-      "hm_basis_intw_bit_ctz"
+    external intw_bit_ctz: t -> word_length_cb -> get_cb -> uns = "hm_basis_intw_bit_ctz"
 
     let bit_ctz t =
       intw_bit_ctz t word_length get
 
-    external intw_uadd: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_add_bytecode"
-        "hm_basis_intw_u_add_native"
-    external intw_iadd: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_add_bytecode"
-        "hm_basis_intw_i_add_native"
+    external intw_uadd: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_add_bytecode" "hm_basis_intw_u_add_native"
+    external intw_iadd: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_add_bytecode" "hm_basis_intw_i_add_native"
 
     let ( + ) t0 t1 =
       of_arr (
         match T.signed with
-        | true -> intw_iadd t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false -> intw_uadd t0 t1 word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_iadd t0 t1 word_length get T.min_word_length T.max_word_length
+        | false -> intw_uadd t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_usub: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_sub_bytecode"
-        "hm_basis_intw_u_sub_native"
-    external intw_isub: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_sub_bytecode"
-        "hm_basis_intw_i_sub_native"
+    external intw_usub: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_sub_bytecode" "hm_basis_intw_u_sub_native"
+    external intw_isub: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_sub_bytecode" "hm_basis_intw_i_sub_native"
 
     let ( - ) t0 t1 =
       of_arr (
         match T.signed with
-        | true -> intw_isub t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false -> intw_usub t0 t1 word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_isub t0 t1 word_length get T.min_word_length T.max_word_length
+        | false -> intw_usub t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_umul: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_mul_bytecode"
-        "hm_basis_intw_u_mul_native"
-    external intw_imul: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_mul_bytecode"
-        "hm_basis_intw_i_mul_native"
+    external intw_umul: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_mul_bytecode" "hm_basis_intw_u_mul_native"
+    external intw_imul: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_mul_bytecode" "hm_basis_intw_i_mul_native"
 
     let ( * ) t0 t1 =
       of_arr (
         match T.signed with
-        | true -> intw_imul t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false -> intw_umul t0 t1 word_length get T.min_word_length
-            T.max_word_length
+        | true -> intw_imul t0 t1 word_length get T.min_word_length T.max_word_length
+        | false -> intw_umul t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_udiv: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_div_bytecode"
-        "hm_basis_intw_u_div_native"
-    external intw_idiv: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_div_bytecode"
-        "hm_basis_intw_i_div_native"
+    external intw_udiv: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_div_bytecode" "hm_basis_intw_u_div_native"
+    external intw_idiv: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_div_bytecode" "hm_basis_intw_i_div_native"
 
     let ( / ) t0 t1 =
       of_arr (
         match t1 = zero, T.signed with
         | true, _ -> halt "Division by 0"
-        | false, true -> intw_idiv t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false, false ->
-          intw_udiv t0 t1 word_length get T.min_word_length T.max_word_length
+        | false, true -> intw_idiv t0 t1 word_length get T.min_word_length T.max_word_length
+        | false, false -> intw_udiv t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_umod: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_u_mod_bytecode"
-        "hm_basis_intw_u_mod_native"
-    external intw_imod: t -> t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_mod_bytecode"
-        "hm_basis_intw_i_mod_native"
+    external intw_umod: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_u_mod_bytecode" "hm_basis_intw_u_mod_native"
+    external intw_imod: t -> t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_mod_bytecode" "hm_basis_intw_i_mod_native"
 
     let ( % ) t0 t1 =
       of_arr (
         match t1 = zero, T.signed with
         | true, _ -> halt "Division by 0"
-        | false, true -> intw_imod t0 t1 word_length get T.min_word_length
-            T.max_word_length
-        | false, false ->
-          intw_umod t0 t1 word_length get T.min_word_length T.max_word_length
+        | false, true -> intw_imod t0 t1 word_length get T.min_word_length T.max_word_length
+        | false, false -> intw_umod t0 t1 word_length get T.min_word_length T.max_word_length
       )
 
-    external intw_neg: t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_neg"
+    external intw_neg: t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_neg"
 
     let ( ~- ) t =
       of_arr (intw_neg t word_length get T.min_word_length T.max_word_length)
@@ -322,13 +275,12 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
 
     let neg = ( ~- )
 
-    external intw_abs: t -> word_length_cb -> get_cb -> uns -> uns
-      -> int64 array = "hm_basis_intw_i_abs"
+    external intw_abs: t -> word_length_cb -> get_cb -> uns -> uns -> int64 array =
+      "hm_basis_intw_i_abs"
 
     let abs t =
       match T.signed with
-      | true -> of_arr (intw_abs t word_length get T.min_word_length
-          T.max_word_length)
+      | true -> of_arr (intw_abs t word_length get T.min_word_length T.max_word_length)
       | false -> t
 
     let ( ** ) t0 t1 =
@@ -413,10 +365,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       assert T.signed;
       of_i64 (I64.of_sint u)
 
-    external intw_i_of_real: real -> uns -> uns -> int64 array =
-      "hm_basis_intw_i_of_real"
-    external intw_u_of_real: real -> uns -> uns -> int64 array =
-      "hm_basis_intw_u_of_real"
+    external intw_i_of_real: real -> uns -> uns -> int64 array = "hm_basis_intw_i_of_real"
+    external intw_u_of_real: real -> uns -> uns -> int64 array = "hm_basis_intw_u_of_real"
 
     let of_real r =
       match Real.is_nan r with
@@ -424,17 +374,13 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       | false -> begin
           of_arr (
             match T.signed with
-            | true ->
-              intw_i_of_real r T.min_word_length T.max_word_length
-            | false ->
-              intw_u_of_real r T.min_word_length T.max_word_length
+            | true -> intw_i_of_real r T.min_word_length T.max_word_length
+            | false -> intw_u_of_real r T.min_word_length T.max_word_length
           )
         end
 
-    external intw_i_to_real: t -> word_length_cb -> get_cb -> real =
-      "hm_basis_intw_i_to_real"
-    external intw_u_to_real: t -> word_length_cb -> get_cb -> real =
-      "hm_basis_intw_u_to_real"
+    external intw_i_to_real: t -> word_length_cb -> get_cb -> real = "hm_basis_intw_i_to_real"
+    external intw_u_to_real: t -> word_length_cb -> get_cb -> real = "hm_basis_intw_u_to_real"
 
     let to_real t =
       match T.signed with
@@ -491,8 +437,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         | _ -> begin
             if Uns.(shift % 8 = 0 && shift < 64) then Format.fprintf ppf "_";
             let shift' = Uns.pred shift in
-            let bit =
-              Int64.(logand (shift_right_logical x shift') (of_int 0x1)) in
+            let bit = Int64.(logand (shift_right_logical x shift') (of_int 0x1)) in
             Format.fprintf ppf "%Ld" bit;
             fn x shift'
           end
@@ -540,8 +485,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         | _ -> begin
             if Uns.(shift < 64) then Format.fprintf ppf "_";
             let shift' = Uns.(shift - 16) in
-            Format.fprintf ppf "%04Lx"
-              Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
+            Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x shift') (of_int
+                0xffff));
             fn x shift'
           end
       end in
@@ -587,8 +532,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
               | false -> begin
                   let suf = Caml.String.sub s i RudimentsInt.(j' - i) in
                   let nbits = int_of_string suf in
-                  match T.min_word_length = T.max_word_length &&
-                        nbits = Uns.(T.min_word_length * 64) with
+                  match T.min_word_length = T.max_word_length && nbits = Uns.(T.min_word_length *
+                      64) with
                   | false -> halt "Malformed string"
                   | true -> j'
                 end
@@ -737,10 +682,9 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
   include Identifiable.Make(U)
   include Cmpable.MakeZero(U)
 
-  (* Intnb.MakeDerived() cannot be used here because `bit_length` isn't
-   * constant. It would be possible to adapt the `bit_length` provided via the
-   * input module interface such that all other users ignore the value
-   * parameter, but the API ripple effects would be rather difficult to
+  (* Intnb.MakeDerived() cannot be used here because `bit_length` isn't constant. It would be
+   * possible to adapt the `bit_length` provided via the input module interface such that all other
+   * users ignore the value parameter, but the API ripple effects would be rather difficult to
    * recognize as valid/intentional. *)
 
   let is_pow2 t =
@@ -763,8 +707,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     | Eq -> t
     | Gt -> begin
         let pred_t = t - one in
-        match Uns.(T.min_word_length = T.max_word_length),
-          bit_clz pred_t with
+        match Uns.(T.min_word_length = T.max_word_length), bit_clz pred_t with
         | true, 0 -> zero
         | _, lz -> bit_sl ~shift:Uns.((bit_length pred_t) - lz) one
       end

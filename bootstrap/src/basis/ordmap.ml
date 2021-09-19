@@ -1,5 +1,5 @@
-(* AVL tree implementation of ordered maps, based on the join operation. The
- * join-based approach is both work-optimal and highly parallelizeable.
+(* AVL tree implementation of ordered maps, based on the join operation. The join-based approach is
+ * both work-optimal and highly parallelizeable.
  *
  *   Just Join for Parallel Ordered Sets
  *   Guy E. Blelloch, Daniel Ferizovic, and Yihan Sun
@@ -11,20 +11,18 @@
  *   https://en.wikipedia.org/wiki/AVL_tree
  *   https://en.wikipedia.org/wiki/Join-based_tree_algorithms
  *
- * It is possible to implement AVL trees with as little as one bit of balance
- * metadata per node, but this implementation is less svelte:
+ * It is possible to implement AVL trees with as little as one bit of balance metadata per node, but
+ * this implementation is less svelte:
  *
- * - Each node tracks the number of nodes in its subtree, in order to support
- *   O(lg n) indexed access.
- * - Each node tracks height rather than balance, in order to simplify the join
- *   logic. Join heavily relies on node height, and although it is possible to
- *   efficiently compute heights based on imbalance metadata, doing so in join
- *   is complex and brittle. Join is O(lg n), and the naïve approach of
- *   computing node height from scratch as needed would introduce O(n lg n)
- *   complexity to join. The efficient alternative would be to compute the
- *   root's height, then incrementally compute node heights. The complexity of
- *   this is that computed heights must be tightly coupled with their nodes, and
- *   the computations must take into account imbalance, recursive joins,
+ * - Each node tracks the number of nodes in its subtree, in order to support O(lg n) indexed
+ *   access.
+ * - Each node tracks height rather than balance, in order to simplify the join logic. Join heavily
+ *   relies on node height, and although it is possible to efficiently compute heights based on
+ *   imbalance metadata, doing so in join is complex and brittle. Join is O(lg n), and the naïve
+ *   approach of computing node height from scratch as needed would introduce O(n lg n) complexity
+ *   to join. The efficient alternative would be to compute the root's height, then incrementally
+ *   compute node heights. The complexity of this is that computed heights must be tightly coupled
+ *   with their nodes, and the computations must take into account imbalance, recursive joins,
  *   rotations, etc. *)
 
 open Rudiments0
@@ -47,9 +45,8 @@ module T = struct
         v: 'v;
         (* Subtree node count, including this node. *)
         n: uns;
-        (* Node height, inductively defined as (succ (max (height l) (height
-         * r))), where an empty subtree has height 0, and a leaf has height
-         * 1. *)
+        (* Node height, inductively defined as (succ (max (height l) (height r))), where an empty
+         * subtree has height 0, and a leaf has height 1. *)
         h: uns;
         (* Right subtree. *)
         r: ('k, 'v) node;
@@ -94,8 +91,8 @@ module T = struct
   let is_empty t =
     (length t) = 0
 
-  (* Path to node. Incapable of expressing "no path". Seek operations are
-   * incremental, such that complete tree traversal is ϴ(n). *)
+  (* Path to node. Incapable of expressing "no path". Seek operations are incremental, such that
+   * complete tree traversal is ϴ(n). *)
   module Path = struct
     type ('k, 'v) elm = {
       node: ('k, 'v) node;
@@ -103,9 +100,8 @@ module T = struct
     }
     type ('k, 'v) t = ('k, 'v) elm list
 
-    (* Record node's index in path, where base is the index of the leftmost node
-     * in the subtree rooted at node. Terminate when the path reaches the node
-     * at index. *)
+    (* Record node's index in path, where base is the index of the leftmost node in the subtree
+     * rooted at node. Terminate when the path reaches the node at index. *)
     let rec descend ~index base node path =
       assert ((index - base) < (nnodes node));
       match node with
@@ -117,8 +113,7 @@ module T = struct
           match Uns.cmp index node_index with
           | Lt -> not_reached ()
           | Eq -> {node; index} :: path
-          | Gt -> descend ~index (succ node_index) r
-            ({node; index=node_index} :: path)
+          | Gt -> descend ~index (succ node_index) r ({node; index=node_index} :: path)
         end
       | Node {l; k=_; v=_; n=_; h=_; r=Empty} -> begin
           let node_index = base + (nnodes l) in
@@ -132,8 +127,7 @@ module T = struct
           match Uns.cmp index node_index with
           | Lt -> descend ~index base l ({node; index=node_index} :: path)
           | Eq -> {node; index} :: path
-          | Gt -> descend ~index (succ node_index) r
-            ({node; index=node_index} :: path)
+          | Gt -> descend ~index (succ node_index) r ({node; index=node_index} :: path)
         end
       | Empty -> not_reached ()
 
@@ -144,8 +138,7 @@ module T = struct
       | [] -> not_reached ()
       | elm :: _ -> elm.index
 
-    (* Ascend until the desired index is beneath node, then descend into the
-     * appropriate subtree. *)
+    (* Ascend until the desired index is beneath node, then descend into the appropriate subtree. *)
     let rec seek_nth index path =
       match path with
       | [] -> not_reached ()
@@ -205,17 +198,16 @@ module T = struct
       fprintf ppf "@[<h>%a@]" (List.pp pp_elm) t
   end
 
-  (* Path-based cursor. If this were based on just index and calls to nth,
-   * complete traversals would be Θ(n lg n) rather than Θ(n). *)
+  (* Path-based cursor. If this were based on just index and calls to nth, complete traversals would
+   * be Θ(n lg n) rather than Θ(n). *)
   module Cursor = struct
     module T = struct
       type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
       type ('k, 'v, 'cmp) t = {
         ordmap: ('k, 'v, 'cmp) container;
         index: uns;
-        (* Separate paths to the nodes to the left and right of the cursor
-         * efficiently handle edge conditions near the minimum/maximum nodes,
-         * and they ensure that lget/rget are O(1). *)
+        (* Separate paths to the nodes to the left and right of the cursor efficiently handle edge
+         * conditions near the minimum/maximum nodes, and they ensure that lget/rget are O(1). *)
         lpath_opt: ('k, 'v) Path.t option;
         rpath_opt: ('k, 'v) Path.t option;
       }
@@ -249,16 +241,13 @@ module T = struct
                 {t with
                   index=0;
                   lpath_opt=None;
-                  rpath_opt=Some (Path.seek_left (pred u)
-                    (Option.value_hlt t.lpath_opt))
+                  rpath_opt=Some (Path.seek_left (pred u) (Option.value_hlt t.lpath_opt))
                 }
               end
             | Gt -> begin
-                let rpath' =
-                  Path.seek_left (pred u) (Option.value_hlt t.lpath_opt) in
+                let rpath' = Path.seek_left (pred u) (Option.value_hlt t.lpath_opt) in
                 let lpath' = Path.pred rpath' in
-                {t with index=pred t.index; lpath_opt=Some lpath';
-                        rpath_opt=Some rpath'}
+                {t with index=pred t.index; lpath_opt=Some lpath'; rpath_opt=Some rpath'}
               end
           end
         | Eq -> t
@@ -267,17 +256,14 @@ module T = struct
             let index' = t.index + u in
             match Uns.cmp index' (length t.ordmap) with
             | Lt -> begin
-                let lpath' =
-                  Path.seek_right (pred u) (Option.value_hlt t.rpath_opt) in
+                let lpath' = Path.seek_right (pred u) (Option.value_hlt t.rpath_opt) in
                 let rpath' = Path.succ lpath' in
-                {t with index=index'; lpath_opt=Some lpath';
-                        rpath_opt=Some rpath'}
+                {t with index=index'; lpath_opt=Some lpath'; rpath_opt=Some rpath'}
               end
             | Eq -> begin
                 {t with
                   index=index';
-                  lpath_opt= Some (Path.seek_right (pred u)
-                    (Option.value_hlt t.rpath_opt));
+                  lpath_opt= Some (Path.seek_right (pred u) (Option.value_hlt t.rpath_opt));
                   rpath_opt=None
                 }
               end
@@ -689,9 +675,8 @@ let cmp vcmp t0 t1 =
   ) t0 t1
 
 let equal veq t0 t1 =
-  (* Equal AVL trees may have different internal structure. fold2_until is
-   * structure-agnostic, so the following produces correct results even when
-   * coupled recursive traversal would fail. *)
+  (* Equal AVL trees may have different internal structure. fold2_until is structure-agnostic, so
+   * the following produces correct results even when coupled recursive traversal would fail. *)
   fold2_until ~init:true ~f:(fun _ kv0_opt kv1_opt ->
     match kv0_opt, kv1_opt with
     | Some (_, v0), Some (_, v1) -> begin
@@ -708,9 +693,9 @@ let expose = function
   | Node {l; k; v; n=_; h=_; r} -> l, (k, v), r
   | Empty -> not_reached ()
 
-(* Join AVL trees (l, (singleton m ~k ~v), r) to form an AVL tree representing
- * their union, where l and r are AVL trees containing mappings strictly
- * preceding/following k in the total key ordering, respectively. *)
+(* Join AVL trees (l, (singleton m ~k ~v), r) to form an AVL tree representing their union, where l
+ * and r are AVL trees containing mappings strictly preceding/following k in the total key ordering,
+ * respectively. *)
 let join l kv r =
   let rec join_left_tall l kv r = begin
     let ll, l_kv, lr = expose l in
@@ -761,8 +746,8 @@ let join l kv r =
   | _, true -> join_right_tall l kv r
   | false, false -> node_init l kv r
 
-(* Join AVL trees (l, r) to form an AVL tree representing their union, where l's
- * keys strictly precede r's keys in the total key ordering. *)
+(* Join AVL trees (l, r) to form an AVL tree representing their union, where l's keys strictly
+ * precede r's keys in the total key ordering. *)
 let join2 l r =
   let rec split_rightmost = function
     | Leaf {k; v} -> Empty, (k, v)
@@ -781,10 +766,9 @@ let join2 l r =
       join l' (k, v) r
     end
 
-(* Split an AVL tree into (l, Some (a, v), r) if key a is in the tree, (l, None,
- * r) otherwise, where l and r are AVL trees containing all mappings
- * preceding/following a in the total key ordering, respectively. split_node is
- * join's dual. *)
+(* Split an AVL tree into (l, Some (a, v), r) if key a is in the tree, (l, None, r) otherwise, where
+ * l and r are AVL trees containing all mappings preceding/following a in the total key ordering,
+ * respectively. split_node is join's dual. *)
 let rec split_node a cmper node =
   let open Cmper in
   match node with
@@ -812,10 +796,9 @@ let rec split_node a cmper node =
         end
     end
 
-(* Split an AVL tree into (Some (l, r)) if key a is not in the tree, None
- * otherwise, where l and r are AVL trees containing all mappings
- * preceding/following a in the total key ordering, respectively. split2_node is
- * join2's dual. *)
+(* Split an AVL tree into (Some (l, r)) if key a is not in the tree, None otherwise, where l and r
+ * are AVL trees containing all mappings preceding/following a in the total key ordering,
+ * respectively. split2_node is join2's dual. *)
 let rec split2_node a cmper node =
   let open Cmper in
   match node with

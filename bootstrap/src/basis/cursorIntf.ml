@@ -2,8 +2,7 @@
 
 open Rudiments0
 
-(** Cursor iterator functor output signature for monomorphic types, e.g.
-    [string]. *)
+(** Cursor iterator functor output signature for monomorphic types, e.g. [string]. *)
 module type SMonoIter = sig
   type container
   (** Container type. *)
@@ -39,8 +38,7 @@ module type SMonoIter = sig
       efficient. *)
 
   val next: t -> elm * t
-  (** [next t] is equivalent to [rget t, succ t], but potentially more
-      efficient. *)
+  (** [next t] is equivalent to [rget t, succ t], but potentially more efficient. *)
 end
 
 (** Cursor functor output signature for monomorphic types, e.g. [string]. *)
@@ -57,8 +55,7 @@ module type SMono = sig
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
 
-(** Cursor iterator functor output signature for polymorphic types, e.g. [('a
-    array)]. *)
+(** Cursor iterator functor output signature for polymorphic types, e.g. [('a array)]. *)
 module type SPolyIter = sig
   type 'a container
   (** Container type. *)
@@ -90,12 +87,10 @@ module type SPolyIter = sig
   (** Return element immediately to right. *)
 
   val prev: 'a t -> 'a elm * 'a t
-  (** [prev t] is equivalent to [lget t, pred t], but potentially more
-      efficient. *)
+  (** [prev t] is equivalent to [lget t, pred t], but potentially more efficient. *)
 
   val next: 'a t -> 'a elm * 'a t
-  (** [next t] is equivalent to [rget t, succ t], but potentially more
-      efficient. *)
+  (** [next t] is equivalent to [rget t, succ t], but potentially more efficient. *)
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('a array)]. *)
@@ -112,8 +107,7 @@ module type SPoly = sig
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
 
-(** Cursor iterator functor output signature for polymorphic types, e.g. [(('a,
-    'cmp) Ordset)]. *)
+(** Cursor iterator functor output signature for polymorphic types, e.g. [(('a, 'cmp) Ordset)]. *)
 module type SPoly2Iter = sig
   type ('a, 'cmp) container
   (** Container type. *)
@@ -145,16 +139,13 @@ module type SPoly2Iter = sig
   (** Return element immediately to right. *)
 
   val prev: ('a, 'cmp) t -> 'a elm * ('a, 'cmp) t
-  (** [prev t] is equivalent to [lget t, pred t], but potentially more
-      efficient. *)
+  (** [prev t] is equivalent to [lget t, pred t], but potentially more efficient. *)
 
   val next: ('a, 'cmp) t -> 'a elm * ('a, 'cmp) t
-  (** [next t] is equivalent to [rget t, succ t], but potentially more
-      efficient. *)
+  (** [next t] is equivalent to [rget t, succ t], but potentially more efficient. *)
 end
 
-(** Cursor functor output signature for polymorphic types, e.g. [('a, 'cmp)
-    Ordset)]. *)
+(** Cursor functor output signature for polymorphic types, e.g. [('a, 'cmp) Ordset)]. *)
 module type SPoly2 = sig
   include SPoly2Iter
 
@@ -168,8 +159,8 @@ module type SPoly2 = sig
   (** [seek i t] returns an iterator at offset [i] from [t]. *)
 end
 
-(** Cursor iterator functor output signature for polymorphic types, e.g. [(('k,
-    'v, 'cmp) Ordmap)]. *)
+(** Cursor iterator functor output signature for polymorphic types, e.g. [(('k, 'v, 'cmp) Ordmap)].
+*)
 module type SPoly3Iter = sig
   type ('k, 'v, 'cmp) container
   (** Container type. *)
@@ -204,16 +195,13 @@ module type SPoly3Iter = sig
   (** Return element immediately to right. *)
 
   val prev: ('k, 'v, 'cmp) t -> ('k key * 'v value) * ('k, 'v, 'cmp) t
-  (** [prev t] is equivalent to [lget t, pred t], but potentially more
-      efficient. *)
+  (** [prev t] is equivalent to [lget t, pred t], but potentially more efficient. *)
 
   val next: ('k, 'v, 'cmp) t -> ('k key * 'v value) * ('k, 'v, 'cmp) t
-  (** [next t] is equivalent to [rget t, succ t], but potentially more
-      efficient. *)
+  (** [next t] is equivalent to [rget t, succ t], but potentially more efficient. *)
 end
 
-(** Cursor functor output signature for polymorphic types, e.g. [('k, 'v, 'cmp)
-    Ordmap)]. *)
+(** Cursor functor output signature for polymorphic types, e.g. [('k, 'v, 'cmp) Ordmap)]. *)
 module type SPoly3 = sig
   include SPoly3Iter
 

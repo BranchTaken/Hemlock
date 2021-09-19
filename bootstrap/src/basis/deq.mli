@@ -1,7 +1,7 @@
 (** Lazy-evaluated immutable double-ended queue.
 
-    The deq is an immutable double-ended queue container. All operations on deq
-    are amortized via lazy execution and are O(1). *)
+    The deq is an immutable double-ended queue container. All operations on deq are amortized via
+    lazy execution and are O(1). *)
 
 open Rudiments0
 
@@ -36,23 +36,20 @@ val back: 'a t -> 'a
 (** Return back (last) deq element, or halt if deq is empty. *)
 
 val front: 'a t -> 'a t
-(** Return front (a deq of all elements except back), or halt if deq is empty.
-*)
+(** Return front (a deq of all elements except back), or halt if deq is empty. *)
 
 (** {1 Combining and partitioning} *)
 
 val push: 'a -> 'a t -> 'a t
-(** Push element onto head of deq and return resulting deq with element as head.
-*)
+(** Push element onto head of deq and return resulting deq with element as head. *)
 
 val push_back: 'a -> 'a t -> 'a t
-(** Push element onto back of deq and return resulting deq with element as back.
-*)
+(** Push element onto back of deq and return resulting deq with element as back. *)
 
 val pop: 'a t -> 'a * 'a t
-(** Pop head element off deq and return the decomposed element and remainder
-    deq. Halt if the input deq is empty. *)
+(** Pop head element off deq and return the decomposed element and remainder deq. Halt if the input
+    deq is empty. *)
 
 val pop_back: 'a t -> 'a * 'a t
-(** Pop back element off deq and return the decomposed element and remainder
-    deq. Halt if the input deq is empty. *)
+(** Pop back element off deq and return the decomposed element and remainder deq. Halt if the input
+    deq is empty. *)

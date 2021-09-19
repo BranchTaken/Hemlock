@@ -33,8 +33,7 @@ module T = struct
 
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
-        assert ((t0.list == t1.list)
-                || (Stdlib.( = ) t0.list t1.list));
+        assert ((t0.list == t1.list) || (Stdlib.( = ) t0.list t1.list));
         Uns.cmp t0.index t1.index
 
       let hd list =
@@ -52,14 +51,12 @@ module T = struct
       let pred t =
         match t.left_rev with
         | [] -> halt "At beginning of list"
-        | hd :: tl -> {t with left_rev=tl; right=(hd :: t.right);
-             index=(Uns.pred t.index)}
+        | hd :: tl -> {t with left_rev=tl; right=(hd :: t.right); index=(Uns.pred t.index)}
 
       let succ t =
         match t.right with
         | [] -> halt "At end of list"
-        | hd :: tl -> {t with left_rev=(hd :: t.left_rev); right=tl;
-             index=(Uns.succ t.index)}
+        | hd :: tl -> {t with left_rev=(hd :: t.left_rev); right=tl; index=(Uns.succ t.index)}
 
       let lget t =
         match t.left_rev with
@@ -74,14 +71,12 @@ module T = struct
       let prev t =
         match t.left_rev with
         | [] -> halt "At beginning of list"
-        | hd :: tl -> hd, {t with left_rev=tl; right=(hd :: t.right);
-             index=(Uns.pred t.index)}
+        | hd :: tl -> hd, {t with left_rev=tl; right=(hd :: t.right); index=(Uns.pred t.index)}
 
       let next t =
         match t.right with
         | [] -> halt "At end of list"
-        | hd :: tl -> hd, {t with left_rev=(hd :: t.left_rev); right=tl;
-             index=(Uns.succ t.index)}
+        | hd :: tl -> hd, {t with left_rev=(hd :: t.left_rev); right=tl; index=(Uns.succ t.index)}
 
       let container t =
         t.list

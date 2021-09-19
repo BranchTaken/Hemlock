@@ -1,7 +1,7 @@
 (** Lazy-evaluated immutable queue.
 
-    The q is an immutable queue container. All operations on q are amortized via
-    lazy execution and are O(1). *)
+    The q is an immutable queue container. All operations on q are amortized via lazy execution and
+    are O(1). *)
 
 open Rudiments0
 
@@ -38,5 +38,5 @@ val push_back: 'a -> 'a t -> 'a t
 (** Push element onto back of q and return resulting q with element as back. *)
 
 val pop: 'a t -> 'a * 'a t
-(** Pop head element off q and return the decomposed element and remainder q.
-    Halt if the input q is empty. *)
+(** Pop head element off q and return the decomposed element and remainder q. Halt if the input q is
+    empty. *)
