@@ -1,0 +1,9 @@
+(tests
+ (names
+  test_hash_fold
+  test_is_first_is_second
+  test_map
+  test_swap
+  test_value
+  test_value_map)
+ (libraries Basis))

@@ -1,0 +1,4 @@
+merge (Ok "ok0") (Ok "ok1") -> (Ok "ok0 + ok1")
+merge (Error "error0") (Ok "ok1") -> (Error "error0")
+merge (Ok "ok0") (Error "error1") -> (Error "error1")
+merge (Error "error0") (Error "error1") -> (Error "error0 + error1")

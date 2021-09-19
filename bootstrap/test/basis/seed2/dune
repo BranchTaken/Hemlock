@@ -1,6 +1,0 @@
-(tests
- (names seed2)
- (libraries Basis)
- (action
-  (setenv HEMLOCK_ENTROPY "42"
-   (run %{test} -e))))

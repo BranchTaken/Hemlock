@@ -1,0 +1,2 @@
+fold_right "" ->
+fold_right "abcde" -> e d c b a

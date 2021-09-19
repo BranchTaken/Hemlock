@@ -1,0 +1,7 @@
+to_sint 0x0000_0000_0000_0000i64 -> 0x0000000000000000i; of_sint -> 0x0000_0000_0000_0000i64
+to_sint 0x0000_0000_0000_0001i64 -> 0x0000000000000001i; of_sint -> 0x0000_0000_0000_0001i64
+to_sint 0xffff_ffff_ffff_ffffi64 -> 0x7fffffffffffffffi; of_sint -> 0xffff_ffff_ffff_ffffi64
+to_sint 0xc000_0000_0000_0000i64 -> 0x4000000000000000i; of_sint -> 0xc000_0000_0000_0000i64
+to_sint 0x3fff_ffff_ffff_ffffi64 -> 0x3fffffffffffffffi; of_sint -> 0x3fff_ffff_ffff_ffffi64
+to_sint 0x8000_0000_0000_0000i64 -> 0x0000000000000000i; of_sint -> 0x0000_0000_0000_0000i64
+to_sint 0x7fff_ffff_ffff_ffffi64 -> 0x7fffffffffffffffi; of_sint -> 0xffff_ffff_ffff_ffffi64

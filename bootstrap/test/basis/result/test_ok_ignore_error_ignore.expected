@@ -1,0 +1,4 @@
+ok_ignore [Ok "ok0"; Ok "ok1"; Ok "ok2"] -> Ok ()
+error_ignore [Ok "ok0"; Ok "ok1"; Ok "ok2"] -> Ok ["ok0"; "ok1"; "ok2"]
+ok_ignore [Ok "ok0"; Error "error0"; Ok "ok1"; Error "error1"; Ok "ok2"] -> Error ["error0"; "error1"]
+error_ignore [Ok "ok0"; Error "error0"; Ok "ok1"; Error "error1"; Ok "ok2"] -> Error ()

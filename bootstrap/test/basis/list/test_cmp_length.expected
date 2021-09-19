@@ -1,0 +1,16 @@
+cmp_length [] [] -> Eq
+cmp_length [] [0] -> Lt
+cmp_length [] [0; 1] -> Lt
+cmp_length [] [0; 1; 2] -> Lt
+cmp_length [0] [] -> Gt
+cmp_length [0] [0] -> Eq
+cmp_length [0] [0; 1] -> Lt
+cmp_length [0] [0; 1; 2] -> Lt
+cmp_length [0; 1] [] -> Gt
+cmp_length [0; 1] [0] -> Gt
+cmp_length [0; 1] [0; 1] -> Eq
+cmp_length [0; 1] [0; 1; 2] -> Lt
+cmp_length [0; 1; 2] [] -> Gt
+cmp_length [0; 1; 2] [0] -> Gt
+cmp_length [0; 1; 2] [0; 1] -> Gt
+cmp_length [0; 1; 2] [0; 1; 2] -> Eq

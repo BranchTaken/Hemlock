@@ -1,0 +1,11 @@
+(tests
+ (names
+  test_and
+  test_eq
+  test_hash_fold
+  test_int
+  test_not
+  test_or
+  test_pp
+  test_string)
+ (libraries Basis))

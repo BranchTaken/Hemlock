@@ -1,0 +1,3 @@
+find_map "" -> None
+find_map "abcde" -> 'c'
+find_map "ab de" -> None

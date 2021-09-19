@@ -1,0 +1,7 @@
+hash_fold "" -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+hash_fold "hello" -> 0x3128_f4fd_508b_45ed_9cac_ecd5_d1b9_3d0eu128
+hash_fold "hello_goodbye" -> 0xd6d0_eb4d_f49b_3d1d_2f69_bc41_817e_6fe0u128
+hash_fold "<_>" -> 0xde67_b895_c176_2ed2_1ac3_366f_7368_8471u128
+hash_fold "«»" -> 0x5caf_027a_5927_7a86_2c22_2383_e256_bcd7u128
+hash_fold "‡" -> 0xfc24_ad42_f613_537a_e903_d82f_077b_81b7u128
+hash_fold "𐆗" -> 0x9fbc_28bd_d639_1c44_1305_4901_c3c5_ee46u128

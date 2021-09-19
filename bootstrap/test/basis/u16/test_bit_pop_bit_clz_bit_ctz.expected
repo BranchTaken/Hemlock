@@ -1,0 +1,4 @@
+bit_{pop,clz,ctz} 0x0000u16 -> 0, 16, 16
+bit_{pop,clz,ctz} 0x0001u16 -> 1, 15, 0
+bit_{pop,clz,ctz} 0x8000u16 -> 1, 0, 15
+bit_{pop,clz,ctz} 0xffffu16 -> 16, 0, 0

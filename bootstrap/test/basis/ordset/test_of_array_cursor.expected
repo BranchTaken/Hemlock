@@ -1,0 +1,24 @@
+of_array [||] ->
+Ordset {}
+cursor fwd:
+
+cursor rev:
+
+of_array [|0; 1; 4; 5; 3; 2|] ->
+Ordset {0; 1; 2; 3; 4; 5}
+cursor fwd:
+            {index=0}=0
+            {index=1}=1
+            {index=2}=2
+            {index=3}=3
+            {index=4}=4
+            {index=5}=5
+
+cursor rev:
+            {index=6}=5
+            {index=5}=4
+            {index=4}=3
+            {index=3}=2
+            {index=2}=1
+            {index=1}=0
+

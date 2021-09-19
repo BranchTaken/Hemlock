@@ -1,0 +1,28 @@
+cursori fwd:
+
+cursori rev:
+
+cursori fwd:
+             {cursor={string="<_>«‡𐆗»[_]", bindex=0}, cindex=0}=<
+             {cursor={string="<_>«‡𐆗»[_]", bindex=1}, cindex=1}=_
+             {cursor={string="<_>«‡𐆗»[_]", bindex=2}, cindex=2}=>
+             {cursor={string="<_>«‡𐆗»[_]", bindex=3}, cindex=3}=«
+             {cursor={string="<_>«‡𐆗»[_]", bindex=5}, cindex=4}=‡
+             {cursor={string="<_>«‡𐆗»[_]", bindex=8}, cindex=5}=𐆗
+             {cursor={string="<_>«‡𐆗»[_]", bindex=12}, cindex=6}=»
+             {cursor={string="<_>«‡𐆗»[_]", bindex=14}, cindex=7}=[
+             {cursor={string="<_>«‡𐆗»[_]", bindex=15}, cindex=8}=_
+             {cursor={string="<_>«‡𐆗»[_]", bindex=16}, cindex=9}=]
+
+cursori rev:
+             {cursor={string="<_>«‡𐆗»[_]", bindex=17}, cindex=10}=]
+             {cursor={string="<_>«‡𐆗»[_]", bindex=16}, cindex=9}=_
+             {cursor={string="<_>«‡𐆗»[_]", bindex=15}, cindex=8}=[
+             {cursor={string="<_>«‡𐆗»[_]", bindex=14}, cindex=7}=»
+             {cursor={string="<_>«‡𐆗»[_]", bindex=12}, cindex=6}=𐆗
+             {cursor={string="<_>«‡𐆗»[_]", bindex=8}, cindex=5}=‡
+             {cursor={string="<_>«‡𐆗»[_]", bindex=5}, cindex=4}=«
+             {cursor={string="<_>«‡𐆗»[_]", bindex=3}, cindex=3}=>
+             {cursor={string="<_>«‡𐆗»[_]", bindex=2}, cindex=2}=_
+             {cursor={string="<_>«‡𐆗»[_]", bindex=1}, cindex=1}=<
+

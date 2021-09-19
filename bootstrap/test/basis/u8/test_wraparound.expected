@@ -1,0 +1,3 @@
+max_value + 1u8 -> 0x00u8
+min_value - 1u8 -> 0xffu8
+max_value * 15u8 -> 0xf1u8

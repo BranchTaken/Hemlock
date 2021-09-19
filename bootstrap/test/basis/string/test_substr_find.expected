@@ -1,0 +1,91 @@
+ p=""
+pi=[]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all: |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+disjoint: |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+   first: |
+
+ p="a"
+pi=[0]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all: |||| || || || | ||| || | |||| ||| || | |||||| |||| ||| || | | | || | || |||
+disjoint: |||| || || || | ||| || | |||| ||| || | |||||| |||| ||| || | | | || | || |||
+   first: |
+
+ p="aa"
+pi=[01]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all: |||  |  |  |    ||  |    |||  ||  |    |||||  |||  ||  |        |    |  ||
+disjoint: | |  |  |  |    |   |    | |  |   |    | | |  | |  |   |        |    |  |
+   first: |
+
+ p="aba"
+pi=[001]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:    |  |  |  | |   |  | |    |   |  | |      |    |   |  | | | |  | |  |
+disjoint:    |  |  |  |     |  |      |   |  |        |    |   |  |   |    |    |
+   first:    |
+
+ p="ab"
+pi=[00]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:    |  |  |  | |   |  | |    |   |  | |      |    |   |  | | | |  | |  |   |
+disjoint:    |  |  |  | |   |  | |    |   |  | |      |    |   |  | | | |  | |  |   |
+   first:    |
+
+ p="aab"
+pi=[010]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:   |  |  |  |     |  |      |   |  |        |    |   |  |        |    |   |
+disjoint:   |  |  |  |     |  |      |   |  |        |    |   |  |        |    |   |
+   first:   |
+
+ p="aabab"
+pi=[01010]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:            |        |             |                    |        |
+disjoint:            |        |             |                    |        |
+   first:            |
+
+ p="aaabaabab"
+pi=[012012010]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:                 |             |                    |
+disjoint:                 |             |                    |
+   first:                 |
+
+ p="aaaabaaabaabab"
+pi=[01230123012010]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:                          |                    |
+disjoint:                          |                    |
+   first:                          |
+
+ p="aaaaaabaaaabaaabaabab"
+pi=[012345012340123012010]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:                                        |
+disjoint:                                        |
+   first:                                        |
+
+ p="ab"
+pi=[00]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:    |  |  |  | |   |  | |    |   |  | |      |    |   |  | | | |  | |  |   |
+disjoint:    |  |  |  | |   |  | |    |   |  | |      |    |   |  | | | |  | |  |   |
+   first:    |
+
+ p="abaab"
+pi=[00112]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:    |  |  |        |             |                    |        |    |
+disjoint:    |     |        |             |                    |        |    |
+   first:    |
+
+ p="abaabaaab"
+pi=[001123412]
+     in_:"aaaabaabaabaababaaabaababaaaabaaabaababaaaaaabaaaabaaabaababababaababaabaaab"
+     all:                                                                    |
+disjoint:                                                                    |
+   first:                                                                    |
+

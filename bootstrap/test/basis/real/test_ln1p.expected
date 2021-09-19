@@ -1,0 +1,12 @@
+ln,ln1p infinity -> infinity infinity
+ln,ln1p -infinity -> nan nan
+ln,ln1p nan -> nan nan
+ln,ln1p -0x1p+1 -> nan nan
+ln,ln1p -0x1p+0 -> -infinity -infinity
+ln,ln1p 0x1p+0 -> 0x1.62e42fefa39efp-1 0x1.62e42fefa39efp-1
+ln,ln1p 0x1.5bf0a8b145769p+1 -> 0x1.5031eafefb049p+0 0x1.5031eafefb049p+0
+ln,ln1p 0x1.d8e64b8d4ddaep+2 -> 0x1.103f2d54301d5p+1 0x1.103f2d54301d5p+1
+ln,ln1p 0x0.0000000000001p-1022 -> 0x0p+0 0x0.0000000000001p-1022
+ln,ln1p 0x0.fffffffffffffp-1022 -> 0x0p+0 0x0.fffffffffffffp-1022
+ln,ln1p -0x0p+0 -> 0x0p+0 -0x0p+0
+ln,ln1p 0x0p+0 -> 0x0p+0 0x0p+0

@@ -1,0 +1,4 @@
+map_ok Ok "ok" -> Ok "ok'"
+map_error Ok "ok" -> Ok "ok"
+map_ok Error "error" -> Error "error"
+map_error Error "error" -> Error "error'"

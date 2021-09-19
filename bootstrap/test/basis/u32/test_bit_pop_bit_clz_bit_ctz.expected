@@ -1,0 +1,4 @@
+bit_{pop,clz,ctz} 0x00000000u32 -> 0, 32, 32
+bit_{pop,clz,ctz} 0x00000001u32 -> 1, 31, 0
+bit_{pop,clz,ctz} 0x80000000u32 -> 1, 0, 31
+bit_{pop,clz,ctz} 0xffffffffu32 -> 32, 0, 0

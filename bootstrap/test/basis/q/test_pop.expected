@@ -1,0 +1,4 @@
+pop (len=1, f=(0 Nil), r=[], s=(0 Nil)) = 0 (len=0, f=Nil, r=[], s=Nil)
+pop (len=2, f=(0 Nil), r=[1], s=Nil) = 0 (len=1, f=(1 Nil), r=[], s=(1 Nil))
+pop (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = 0 (len=2, f=(1 (2 Nil)), r=[], s=(1 (2 Nil)))
+pop (len=4, f=(0 (1 (2 Nil))), r=[3], s=(1 (2 Nil))) = 0 (len=3, f=(1 (2 Nil)), r=[3], s=(2 Nil))

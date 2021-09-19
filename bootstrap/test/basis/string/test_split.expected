@@ -1,0 +1,12 @@
+split ";a::bc;de;" -> [";a"; ""; "bc;de;"]
+split_rev ";a::bc;de;" -> ["bc;de;"; ""; ";a"]
+lsplit2_hlt ";a::bc;de;" -> (";a", ":bc;de;")
+rsplit2_hlt ";a::bc;de;" -> (";a:", "bc;de;")
+split ":a::bc;de:" -> [""; "a"; ""; "bc;de"; ""]
+split_rev ":a::bc;de:" -> [""; "bc;de"; ""; "a"; ""]
+lsplit2_hlt ":a::bc;de:" -> (":a::bc", "de:")
+rsplit2_hlt ":a::bc;de:" -> (":a::bc", "de:")
+split ":a::bc;de;" -> [""; "a"; ""; "bc"; "de"; ""]
+split_rev ":a::bc;de;" -> [""; "de"; "bc"; ""; "a"; ""]
+lsplit2_hlt ":a::bc;de;" -> (":a::bc", "de;")
+rsplit2_hlt ":a::bc;de;" -> (":a::bc;de", "")

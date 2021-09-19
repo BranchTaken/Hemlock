@@ -1,0 +1,21 @@
+(tests
+ (names
+  test_add_sub
+  test_bit_and_bit_or_bit_xor
+  test_bit_not
+  test_bit_pop_bit_clz_bit_ctz
+  test_constants
+  test_div_mod
+  test_exp
+  test_floor_lg_ceil_lg
+  test_floor_pow2_ceil_pow2
+  test_hash_fold
+  test_is_pow2
+  test_min_max
+  test_mul
+  test_narrowing
+  test_of_real_to_real
+  test_of_string
+  test_pp
+  test_rel)
+ (libraries Basis))

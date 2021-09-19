@@ -1,0 +1,2 @@
+bit_not 0x0000000000000000 -> 0x7fffffffffffffff
+bit_not 0x7fffffffffffffff -> 0x0000000000000000

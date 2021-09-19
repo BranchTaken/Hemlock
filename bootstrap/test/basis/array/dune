@@ -1,0 +1,33 @@
+(tests
+ (names
+  test_append_prepend
+  test_blit
+  test_cmp
+  test_concat
+  test_cursor
+  test_filter_filteri
+  test_fold_map_foldi_map
+  test_fold2_foldi2
+  test_fold2_map_foldi2_map
+  test_fold2_until_foldi2_until
+  test_get_length_is_empty
+  test_hash_fold
+  test_hash_fold_empty
+  test_insert
+  test_is_sorted
+  test_iteri2
+  test_join
+  test_map_mapi
+  test_map2_mapi2
+  test_of_list
+  test_of_stream
+  test_pare
+  test_reduce
+  test_remove
+  test_rev_rev_inplace
+  test_search
+  test_set_set_inplace
+  test_sort
+  test_swap_swap_inplace
+  test_zip_unzip)
+ (libraries Basis))

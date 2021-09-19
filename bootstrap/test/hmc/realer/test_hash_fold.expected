@@ -1,0 +1,7 @@
+hash_fold 0x0p0 -> 0x6b0e_1fc4_597e_946a_8a48_8705_bc9c_1792u128
+hash_fold 0x1p0 -> 0xe64a_b76b_55b6_9bc9_b16f_58cd_7dfd_1656u128
+hash_fold inf -> 0x2f85_0527_54e1_e577_deed_8b2b_e489_f006u128
+hash_fold nan -> 0xe535_e296_538b_77a5_de08_20a0_6c76_c0a8u128
+hash_fold -0x0p0 -> 0xe58e_6a7f_044b_e77f_c30b_7ea8_b67e_5dd5u128
+hash_fold -0x1p0 -> 0x05ff_e465_d5d7_c96a_5c76_c50b_32ec_aca3u128
+hash_fold -inf -> 0x17ed_c9d0_759f_4dce_c1c4_c5ee_1138_72dbu128

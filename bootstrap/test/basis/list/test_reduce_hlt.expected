@@ -1,0 +1,6 @@
+reduce []-> None
+reduce [0] -> 0
+reduce [0; 1] -> 1
+reduce [0; 1; 2] -> 3
+reduce [0; 1; 2; 3] -> 6
+reduce [0; 1; 2; 3; 4] -> 10

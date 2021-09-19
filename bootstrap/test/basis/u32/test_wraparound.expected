@@ -1,0 +1,3 @@
+max_value + 1u32 -> 0x00000000u32
+min_value - 1u32 -> 0xffffffffu32
+max_value * 15u32 -> 0xfffffff1u32

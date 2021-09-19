@@ -1,0 +1,15 @@
+cmp false false -> Eq
+false = false -> true
+false <> false -> false
+
+cmp false true -> Lt
+false = true -> false
+false <> true -> true
+
+cmp true false -> Gt
+true = false -> false
+true <> false -> true
+
+cmp true true -> Eq
+true = true -> true
+true <> true -> false

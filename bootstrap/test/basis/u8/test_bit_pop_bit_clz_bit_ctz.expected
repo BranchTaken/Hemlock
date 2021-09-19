@@ -1,0 +1,4 @@
+bit_{pop,clz,ctz} 0x00u8 -> 0, 8, 8
+bit_{pop,clz,ctz} 0x01u8 -> 1, 7, 0
+bit_{pop,clz,ctz} 0x80u8 -> 1, 0, 7
+bit_{pop,clz,ctz} 0xffu8 -> 8, 0, 0

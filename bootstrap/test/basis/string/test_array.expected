@@ -1,0 +1,6 @@
+array: "" -> ... -> ""
+array: "a" -> ... -> "a"
+array: "ab" -> ... -> "ab"
+array: "abc" -> ... -> "abc"
+array: "abcd" -> ... -> "abcd"
+array: "abcde" -> ... -> "abcde"

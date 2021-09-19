@@ -1,0 +1,28 @@
+--- Not member, elm empty. ---
+remove 2
+  Set {0; 1} ->
+  Set {0; 1}
+--- Not member, elm of different value. ---
+remove 91
+  Set {1} ->
+  Set {1}
+--- Member, length 1 -> 0. ---
+remove 0
+  Set {0} ->
+  Set {}
+--- Member, length 2 -> 1. ---
+remove 1
+  Set {0; 1} ->
+  Set {0}
+--- Member, length 3 -> 2. ---
+remove 2
+  Set {0; 1; 2} ->
+  Set {0; 1}
+--- Member, subnode elms 2 -> 1. ---
+remove 66
+  Set {0; 1; 66} ->
+  Set {0; 1}
+--- Member, subnode elms 3 -> 2. ---
+remove 91
+  Set {0; 1; 66; 91} ->
+  Set {0; 1; 66}

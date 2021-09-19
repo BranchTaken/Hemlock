@@ -1,0 +1,5 @@
+s="", blength=0, clength=0, is_empty=true
+s="<_>", blength=3, clength=3, is_empty=false
+s="«»", blength=4, clength=2, is_empty=false
+s="‡", blength=3, clength=1, is_empty=false
+s="𐆗", blength=4, clength=1, is_empty=false

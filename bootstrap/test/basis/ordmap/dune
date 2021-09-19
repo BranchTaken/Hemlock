@@ -1,0 +1,36 @@
+(tests
+ (names
+  test_choose_hlt
+  test_diff
+  test_empty_cmper_m_singleton_length
+  test_filter
+  test_filter_map
+  test_filteri
+  test_filteri_map
+  test_fold_right_until
+  test_fold_until
+  test_fold2
+  test_fold2_until
+  test_hash_fold
+  test_hash_fold_empty
+  test_inter
+  test_iter2_equal_subset_disjoint
+  test_kreduce
+  test_mem_get_amend
+  test_mem_get_insert_insert_hlt
+  test_mem_get_insert_subset
+  test_mem_get_update_upsert_update_hlt_subset
+  test_of_alist_remove
+  test_of_alist_remove_hlt
+  test_of_alist_to_alist_to_array
+  test_of_array_cursor
+  test_partition_map
+  test_partitioni_map
+  test_partition_tf
+  test_partitioni_tf
+  test_reduce
+  test_search_nth
+  test_stress
+  test_stress2
+  test_union)
+ (libraries Basis))

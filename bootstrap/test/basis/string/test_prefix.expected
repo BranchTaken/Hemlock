@@ -1,0 +1,16 @@
+is_prefix "abc" ~prefix:"" -> true
+chop_prefix "abc" ~prefix:"" -> "abc"
+is_prefix "abc" ~prefix:"a" -> true
+chop_prefix "abc" ~prefix:"a" -> "bc"
+is_prefix "abc" ~prefix:"ab" -> true
+chop_prefix "abc" ~prefix:"ab" -> "c"
+is_prefix "abc" ~prefix:"abc" -> true
+chop_prefix "abc" ~prefix:"abc" -> ""
+is_prefix "abc" ~prefix:"d" -> false
+chop_prefix "abc" ~prefix:"d" -> None
+is_prefix "abc" ~prefix:"ad" -> false
+chop_prefix "abc" ~prefix:"ad" -> None
+is_prefix "abc" ~prefix:"abd" -> false
+chop_prefix "abc" ~prefix:"abd" -> None
+is_prefix "abc" ~prefix:"abcd" -> false
+chop_prefix "abc" ~prefix:"abcd" -> None

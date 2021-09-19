@@ -1,0 +1,10 @@
+side effect a
+side effect b
+(false || false) -> false
+side effect a
+side effect b
+(false || true) -> true
+side effect a
+(true || false) -> true
+side effect a
+(true || true) -> true

@@ -1,5 +1,5 @@
 (tests
- (names file)
- (libraries Basis)
- (action
-  (run %{test} -e)))
+ (names
+  test_file
+  test_file2)
+ (libraries Basis))

@@ -1,0 +1,15 @@
+for_any "" 'a' -> false
+for_all "" 'a' -> true
+mem "" 'a' -> false
+for_any "abcde" 'a' -> true
+for_all "abcde" 'a' -> false
+mem "abcde" 'a' -> true
+for_any "abcde" 'b' -> true
+for_all "abcde" 'b' -> false
+mem "abcde" 'b' -> true
+for_any "abcde" 'f' -> false
+for_all "abcde" 'f' -> false
+mem "abcde" 'f' -> false
+for_any "fff" 'f' -> true
+for_all "fff" 'f' -> true
+mem "fff" 'f' -> true

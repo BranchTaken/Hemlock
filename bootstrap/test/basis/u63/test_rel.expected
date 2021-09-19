@@ -1,0 +1,44 @@
+cmp 0x0000000000000000 0x4000000000000000 -> Lt
+0x0000000000000000 >= 0x4000000000000000 -> false
+0x0000000000000000 <= 0x4000000000000000 -> true
+0x0000000000000000 = 0x4000000000000000 -> false
+0x0000000000000000 > 0x4000000000000000 -> false
+0x0000000000000000 < 0x4000000000000000 -> true
+0x0000000000000000 <> 0x4000000000000000 -> true
+ascending 0x0000000000000000 0x4000000000000000 -> Lt
+descending 0x0000000000000000 0x4000000000000000 -> Gt
+
+cmp 0x0000000000000000 0x7fffffffffffffff -> Lt
+0x0000000000000000 >= 0x7fffffffffffffff -> false
+0x0000000000000000 <= 0x7fffffffffffffff -> true
+0x0000000000000000 = 0x7fffffffffffffff -> false
+0x0000000000000000 > 0x7fffffffffffffff -> false
+0x0000000000000000 < 0x7fffffffffffffff -> true
+0x0000000000000000 <> 0x7fffffffffffffff -> true
+ascending 0x0000000000000000 0x7fffffffffffffff -> Lt
+descending 0x0000000000000000 0x7fffffffffffffff -> Gt
+
+cmp 0x4000000000000000 0x3fffffffffffffff -> Gt
+0x4000000000000000 >= 0x3fffffffffffffff -> true
+0x4000000000000000 <= 0x3fffffffffffffff -> false
+0x4000000000000000 = 0x3fffffffffffffff -> false
+0x4000000000000000 > 0x3fffffffffffffff -> true
+0x4000000000000000 < 0x3fffffffffffffff -> false
+0x4000000000000000 <> 0x3fffffffffffffff -> true
+ascending 0x4000000000000000 0x3fffffffffffffff -> Gt
+descending 0x4000000000000000 0x3fffffffffffffff -> Lt
+
+clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x3ffffffffffffffe -> 0x3fffffffffffffff
+between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x3ffffffffffffffe -> false
+
+clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x3fffffffffffffff -> 0x3fffffffffffffff
+between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x3fffffffffffffff -> true
+
+clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x4000000000000000 -> 0x4000000000000000
+between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x4000000000000000 -> true
+
+clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x4000000000000001 -> 0x4000000000000001
+between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x4000000000000001 -> true
+
+clamp ~min:0x3fffffffffffffff ~max:0x4000000000000001 0x4000000000000002 -> 0x4000000000000001
+between ~low:0x3fffffffffffffff ~high:0x4000000000000001 0x4000000000000002 -> false

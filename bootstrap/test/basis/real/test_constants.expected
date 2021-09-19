@@ -1,0 +1,6 @@
+one: 0x1p+0
+neg_one: -0x1p+0
+nan: nan
+inf: infinity
+neg_inf: -infinity
+pi: 0x1.921fb54442d18p+1

@@ -1,0 +1,7 @@
+ex infinity -> infinity
+ex -infinity -> 0x0p+0
+ex nan -> nan
+ex -0x1p+0 -> 0x1.78b56362cef38p-2
+ex 0x1p+0 -> 0x1.5bf0a8b145769p+1
+ex -0x0p+0 -> 0x1p+0
+ex 0x0p+0 -> 0x1p+0

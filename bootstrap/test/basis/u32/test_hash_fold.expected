@@ -1,0 +1,4 @@
+hash_fold 0x00000000u32 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+hash_fold 0x00000001u32 -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
+hash_fold 0x00000000u32 -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
+hash_fold 0xffffffffu32 -> 0x9670_07f2_6798_4cd6_ab87_9e40_456e_a4f6u128

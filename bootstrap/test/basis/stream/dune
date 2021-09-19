@@ -1,0 +1,19 @@
+(tests
+ (names
+  test_concat
+  test_drop
+  test_empty
+  test_hd
+  test_init
+  test_init_indef
+  test_is_empty
+  test_length
+  test_push
+  test_pop
+  test_rev
+  test_rev_split
+  test_rev_take
+  test_split
+  test_take
+  test_tl)
+ (libraries Basis))

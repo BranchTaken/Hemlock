@@ -1,0 +1,20 @@
+[]
+  fwd   -> index=0 ""
+  rev   -> index=0 ""
+  slice -> ""
+[""]
+  fwd   -> index=0 ""
+  rev   -> index=0 ""
+  slice -> ""
+[""; ""]
+  fwd   -> index=0 ""
+  rev   -> index=0 ""
+  slice -> ""
+["Hello"]
+  fwd   -> index=0 "Hello"
+  rev   -> index=5 "olleH"
+  slice -> "Hello"
+["Hello"; " "; "Goodbye"]
+  fwd   -> index=0 "Hello Goodbye"
+  rev   -> index=13 "eybdooG olleH"
+  slice -> "Hello Goodbye"

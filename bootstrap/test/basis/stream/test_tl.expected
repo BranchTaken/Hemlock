@@ -1,0 +1,4 @@
+tl (0 Nil) = Nil
+tl (0 (1 Nil)) = (1 Nil)
+tl (0 (1 (2 Nil))) = (1 (2 Nil))
+tl (0 (1 (2 (3 Nil)))) = (1 (2 (3 Nil)))

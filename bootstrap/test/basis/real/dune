@@ -1,0 +1,24 @@
+(tests
+ (names
+  test_classify
+  test_constants
+  test_create
+  test_ex
+  test_gamma
+  test_hash_fold
+  test_hypot
+  test_lg
+  test_ln
+  test_ln1p
+  test_lngamma
+  test_log
+  test_m2x_f2x
+  test_min_max
+  test_min_max_value
+  test_operators
+  test_pow
+  test_round
+  test_rt
+  test_trig
+  test_trigh)
+ (libraries Basis))

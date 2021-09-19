@@ -1,0 +1,15 @@
+lfind "" 'b' -> <not found>
+contains "" 'b' -> false
+rfind "" 'b' -> <not found>
+lfind "abcba" 'a' -> 0
+contains "abcba" 'a' -> true
+rfind "abcba" 'a' -> 4
+lfind "abcba" 'b' -> 1
+contains "abcba" 'b' -> true
+rfind "abcba" 'b' -> 3
+lfind "abcba" 'c' -> 2
+contains "abcba" 'c' -> true
+rfind "abcba" 'c' -> 2
+lfind "abcba" 'd' -> <not found>
+contains "abcba" 'd' -> false
+rfind "abcba" 'd' -> <not found>

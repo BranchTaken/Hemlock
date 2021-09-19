@@ -592,3 +592,6 @@ module O : sig
 
   include CmpableIntf.SMonoInfix with type t := t
 end
+
+(* Exposed for testing purposes only. *)
+val slice_pattern_pp: Format.formatter -> Slice.Pattern.t -> unit

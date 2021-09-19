@@ -1,0 +1,4 @@
+is_empty Nil = true
+is_empty (0 Nil) = false
+is_empty (0 (1 Nil)) = false
+is_empty (0 (1 (2 Nil))) = false

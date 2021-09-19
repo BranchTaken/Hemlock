@@ -1,0 +1,2 @@
+max_value + 1i8 -> 0x80i8
+min_value - 1i8 -> 0x7fi8

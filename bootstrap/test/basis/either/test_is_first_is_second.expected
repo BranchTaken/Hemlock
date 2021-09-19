@@ -1,0 +1,4 @@
+is_first First 0 -> true
+is_second First 0 -> false
+is_first Second 0 -> false
+is_second Second 0 -> true

@@ -1,0 +1,14 @@
+rev_take 0 Nil = Nil
+rev_take 1 Nil = Nil
+rev_take 0 (0 Nil) = Nil
+rev_take 1 (0 Nil) = (0 Nil)
+rev_take 2 (0 Nil) = (0 Nil)
+rev_take 0 (0 (1 Nil)) = Nil
+rev_take 1 (0 (1 Nil)) = (0 Nil)
+rev_take 2 (0 (1 Nil)) = (1 (0 Nil))
+rev_take 3 (0 (1 Nil)) = (1 (0 Nil))
+rev_take 0 (0 (1 (2 Nil))) = Nil
+rev_take 1 (0 (1 (2 Nil))) = (0 Nil)
+rev_take 2 (0 (1 (2 Nil))) = (1 (0 Nil))
+rev_take 3 (0 (1 (2 Nil))) = (2 (1 (0 Nil)))
+rev_take 4 (0 (1 (2 Nil))) = (2 (1 (0 Nil)))

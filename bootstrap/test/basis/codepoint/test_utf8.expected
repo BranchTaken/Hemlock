@@ -1,0 +1,4 @@
+codepoint=0x000000000000003c, codepoint'=0x000000000000003c, bytes=[0x3cu8], length=1
+codepoint=0x00000000000000ab, codepoint'=0x00000000000000ab, bytes=[0xc2u8; 0xabu8], length=2
+codepoint=0x0000000000002021, codepoint'=0x0000000000002021, bytes=[0xe2u8; 0x80u8; 0xa1u8], length=3
+codepoint=0x0000000000010197, codepoint'=0x0000000000010197, bytes=[0xf0u8; 0x90u8; 0x86u8; 0x97u8], length=4

@@ -1,0 +1,44 @@
+cmp -1i 0i -> Lt
+-1i >= 0i -> false
+-1i <= 0i -> true
+-1i = 0i -> false
+-1i > 0i -> false
+-1i < 0i -> true
+-1i <> 0i -> true
+ascending -1i 0i -> Lt
+descending -1i 0i -> Gt
+
+cmp 0i 0i -> Eq
+0i >= 0i -> true
+0i <= 0i -> true
+0i = 0i -> true
+0i > 0i -> false
+0i < 0i -> false
+0i <> 0i -> false
+ascending 0i 0i -> Eq
+descending 0i 0i -> Eq
+
+cmp 1i 0i -> Gt
+1i >= 0i -> true
+1i <= 0i -> false
+1i = 0i -> false
+1i > 0i -> true
+1i < 0i -> false
+1i <> 0i -> true
+ascending 1i 0i -> Gt
+descending 1i 0i -> Lt
+
+clamp ~min:-1i ~max:1i -2i -> -1i
+between ~low:-1i ~high:1i -2i -> false
+
+clamp ~min:-1i ~max:1i -1i -> -1i
+between ~low:-1i ~high:1i -1i -> true
+
+clamp ~min:-1i ~max:1i 0i -> 0i
+between ~low:-1i ~high:1i 0i -> true
+
+clamp ~min:-1i ~max:1i 1i -> 1i
+between ~low:-1i ~high:1i 1i -> true
+
+clamp ~min:-1i ~max:1i 2i -> 1i
+between ~low:-1i ~high:1i 2i -> false

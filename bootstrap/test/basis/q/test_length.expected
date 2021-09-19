@@ -1,0 +1,4 @@
+length (len=0, f=Nil, r=[], s=Nil) = 0
+length (len=1, f=(0 Nil), r=[], s=(0 Nil)) = 1
+length (len=2, f=(0 Nil), r=[1], s=Nil) = 2
+length (len=3, f=(0 (1 (2 Nil))), r=[], s=(0 (1 (2 Nil)))) = 3

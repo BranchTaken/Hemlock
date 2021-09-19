@@ -1,0 +1,7 @@
+(tests
+ (names
+  test_hash_fold
+  test_ops
+  test_pp
+  test_to_r)
+ (libraries Basis Hmc))

@@ -1,0 +1,10 @@
+(tests
+ (names
+  test_empty
+  test_hd
+  test_is_empty
+  test_length
+  test_pop
+  test_push_back
+  test_tl)
+ (libraries Basis))

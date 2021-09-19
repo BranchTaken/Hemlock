@@ -1,0 +1,3 @@
+is_empty ( | ) = true
+is_empty (0 | ) = false
+is_empty ( | 0) = false

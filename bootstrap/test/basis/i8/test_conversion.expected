@@ -1,0 +1,14 @@
+of_sint 0x7fffffffffffffffi -> to_sint 0xffi8 -> of_sint -1i -> 0xffi8
+of_uns 0x7fffffffffffffffi -> to_uns 0x7fi8 -> of_uns 0x000000000000007f -> 0x7fi8
+of_sint 0x7ffffffffffffffei -> to_sint 0xfei8 -> of_sint -2i -> 0xfei8
+of_uns 0x7ffffffffffffffei -> to_uns 0x7ei8 -> of_uns 0x000000000000007e -> 0x7ei8
+of_sint 0x7fffffffffffffffi -> to_sint 0xffi8 -> of_sint -1i -> 0xffi8
+of_uns 0x7fffffffffffffffi -> to_uns 0x7fi8 -> of_uns 0x000000000000007f -> 0x7fi8
+of_sint 0x0000000000000000i -> to_sint 0x00i8 -> of_sint 0i -> 0x00i8
+of_uns 0x0000000000000000i -> to_uns 0x00i8 -> of_uns 0x0000000000000000 -> 0x00i8
+of_sint 0x0000000000000001i -> to_sint 0x01i8 -> of_sint 1i -> 0x01i8
+of_uns 0x0000000000000001i -> to_uns 0x01i8 -> of_uns 0x0000000000000001 -> 0x01i8
+of_sint 0x0000000000000002i -> to_sint 0x02i8 -> of_sint 2i -> 0x02i8
+of_uns 0x0000000000000002i -> to_uns 0x02i8 -> of_uns 0x0000000000000002 -> 0x02i8
+of_sint 0x3fffffffffffffffi -> to_sint 0x7fi8 -> of_sint 127i -> 0x7fi8
+of_uns 0x3fffffffffffffffi -> to_uns 0x7fi8 -> of_uns 0x000000000000007f -> 0x7fi8

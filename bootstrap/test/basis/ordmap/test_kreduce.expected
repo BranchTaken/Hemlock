@@ -1,0 +1,6 @@
+kreduce ~f:( + ) [] -> None
+kreduce ~f:( + ) [0] -> Some 0
+kreduce ~f:( + ) [0; 1] -> Some 1
+kreduce ~f:( + ) [0; 1; 2] -> Some 3
+kreduce ~f:( + ) [0; 1; 66] -> Some 67
+kreduce ~f:( + ) [0; 1; 66; 91] -> Some 158

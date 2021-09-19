@@ -1,0 +1,6 @@
+(tests
+ (names
+  test_eq
+  test_pp
+  test_string)
+ (libraries Basis))

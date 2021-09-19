@@ -1,0 +1,14 @@
+--- [||] ---
+index=0, container Eq arr, hd Eq cursor, cursor Eq tl, lget=_, rget=_
+--- [|0|] ---
+index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
+index=1, container Eq arr, hd Lt cursor, cursor Eq tl, lget=0, rget=_
+--- [|0; 1|] ---
+index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
+index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
+index=2, container Eq arr, hd Lt cursor, cursor Eq tl, lget=1, rget=_
+--- [|0; 1; 2|] ---
+index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
+index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
+index=2, container Eq arr, hd Lt cursor, cursor Lt tl, lget=1, rget=2
+index=3, container Eq arr, hd Lt cursor, cursor Eq tl, lget=2, rget=_
