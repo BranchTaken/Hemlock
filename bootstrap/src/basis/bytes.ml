@@ -37,8 +37,7 @@ module Cursor = struct
 
     let cmp t0 t1 =
       (* == is excessively vague in OCaml. *)
-      assert ((t0.array == t1.array)
-              || (Stdlib.( = ) t0.array t1.array));
+      assert ((t0.array == t1.array) || (Stdlib.( = ) t0.array t1.array));
       Uns.cmp t0.index t1.index
 
     let hd array =
@@ -125,11 +124,11 @@ module StringSeq = struct
     type t = {
       on_invalid: on_invalid;
       seq: CodepointSeq.t;
-      (* vlength is how long bytes would be if all encoding errors were
-       * corrected via replacement. *)
+      (* vlength is how long bytes would be if all encoding errors were corrected via replacement.
+      *)
       vlength: uns;
-      (* vindex tracks how many bytes would be required to correctly encode
-       * already-consumed bytes. *)
+      (* vindex tracks how many bytes would be required to correctly encode already-consumed bytes.
+      *)
       vindex: uns
     }
 
@@ -142,8 +141,7 @@ module StringSeq = struct
       | Error, Some (Invalid _) -> None
       | Replace, Some (Invalid seq') -> begin
           let cp = Codepoint.replacement in
-          let vindex' =
-            vindex + (Codepoint.Utf8.length_of_codepoint cp) in
+          let vindex' = vindex + (Codepoint.Utf8.length_of_codepoint cp) in
           vlength ~on_invalid seq' vindex'
         end
       | Halt, Some (Invalid _) -> halt "Invalid utf8 sequence"

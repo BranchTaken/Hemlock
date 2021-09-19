@@ -2,8 +2,7 @@
 
 open RudimentsInt
 
-(** Definite sequence functor input interface for monomorphic containers, e.g.
-    {!type:string}. *)
+(** Definite sequence functor input interface for monomorphic containers, e.g. {!type:string}. *)
 module type IMonoDef = sig
   type t
   (** Sequence type. *)
@@ -18,8 +17,8 @@ module type IMonoDef = sig
   (** Return next element and sequence absent the element. *)
 end
 
-(** Indefinite sequence functor input interface for monomorphic containers, e.g.
-    {!type:byte list}. *)
+(** Indefinite sequence functor input interface for monomorphic containers, e.g. {!type:byte list}.
+*)
 module type IMonoIndef = sig
   type t
   (** Sequence type. *)
@@ -28,28 +27,24 @@ module type IMonoIndef = sig
   (** Element type. *)
 
   val next: t -> (elm * t) option
-  (** Return next element and sequence absent the element, or [None] if sequence
-      is empty. *)
+  (** Return next element and sequence absent the element, or [None] if sequence is empty. *)
 end
 
-(** Definite sequence functor output signature for monomorphic containers, e.g.
-    {!type:string}. *)
+(** Definite sequence functor output signature for monomorphic containers, e.g. {!type:string}. *)
 module type SMonoDef = sig
   include IMonoDef
 
   val next_opt: t -> (elm * t) option
-  (** Return next element and sequence absent the element, or [None] if sequence
-      is empty. *)
+  (** Return next element and sequence absent the element, or [None] if sequence is empty. *)
 end
 
-(** Indefinite sequence functor output signature for monomorphic containers,
-    e.g. {!type:byte list}. *)
+(** Indefinite sequence functor output signature for monomorphic containers, e.g. {!type:byte list}.
+*)
 module type SMonoIndef = sig
   include IMonoIndef
 end
 
-(** Definite sequence functor input interface for polymorphic containers, e.g.
-    {!type:'a array}. *)
+(** Definite sequence functor input interface for polymorphic containers, e.g. {!type:'a array}. *)
 module type IPolyDef = sig
   type 'a t
   (** Sequence type. *)
@@ -64,8 +59,7 @@ module type IPolyDef = sig
   (** Return next element and sequence absent the element. *)
 end
 
-(** Indefinite sequence functor input interface for polymorphic containers, e.g.
-    {!type:'a list}. *)
+(** Indefinite sequence functor input interface for polymorphic containers, e.g. {!type:'a list}. *)
 module type IPolyIndef = sig
   type 'a t
   (** Sequence type. *)
@@ -74,28 +68,25 @@ module type IPolyIndef = sig
   (** Element type. *)
 
   val next: 'a t -> ('a elm * 'a t) option
-  (** Return next element and sequence absent the element, or [None] if sequence
-      is empty. *)
+  (** Return next element and sequence absent the element, or [None] if sequence is empty. *)
 end
 
-(** Definite sequence functor output signature for polymorphic containers, e.g.
-    {!type:'a array}. *)
+(** Definite sequence functor output signature for polymorphic containers, e.g. {!type:'a array}. *)
 module type SPolyDef = sig
   include IPolyDef
 
   val next_opt: 'a t -> ('a elm * 'a t) option
-  (** Return next element and sequence absent the element, or [None] if sequence
-      is empty. *)
+  (** Return next element and sequence absent the element, or [None] if sequence is empty. *)
 end
 
-(** Indefinite sequence functor output signature for polymorphic containers,
-    e.g. {!type:'a list}. *)
+(** Indefinite sequence functor output signature for polymorphic containers, e.g. {!type:'a list}.
+*)
 module type SPolyIndef = sig
   include IPolyIndef
 end
 
-(** Definite sequence functor input interface for polymorphic containers, e.g.
-    {!type:('a, 'cmp) Ordset}. *)
+(** Definite sequence functor input interface for polymorphic containers, e.g. {!type:('a, 'cmp)
+    Ordset}. *)
 module type IPoly2Def = sig
   type ('a, 'cmp) t
   (** Sequence type. *)
@@ -110,14 +101,13 @@ module type IPoly2Def = sig
   (** Return next element and sequence absent the element. *)
 end
 
-(** Definite sequence functor output signature for polymorphic containers, e.g.
-    {!type:('a, 'cmp) Ordset}. *)
+(** Definite sequence functor output signature for polymorphic containers, e.g. {!type:('a, 'cmp)
+    Ordset}. *)
 module type SPoly2Def = sig
   include IPoly2Def
 
   val next_opt: ('a, 'cmp) t -> ('a elm * ('a, 'cmp) t) option
-  (** Return next element and sequence absent the element, or [None] if sequence
-      is empty. *)
+  (** Return next element and sequence absent the element, or [None] if sequence is empty. *)
 end
 
 module type IPoly2Fold2 = sig
@@ -141,37 +131,30 @@ module type SPoly2Fold2 = sig
   type 'a elm
   (** Element type. *)
 
-  val fold2_until: init:'accum
-    -> f:('accum -> 'a elm option -> 'a elm option -> 'accum * bool)
+  val fold2_until: init:'accum -> f:('accum -> 'a elm option -> 'a elm option -> 'accum * bool)
     -> ('a, 'cmp) t -> ('a, 'cmp) t -> 'accum
-  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1] from
-      left to right if ordered, or arbitrarily if unordered, and calls [~f accum
-      elm0_opt elm1_opt] once for each element in the union such that if the
-      element is absent from one of the input sets, the corresponding parameter
-      is [None]. Folding terminates early if [~f] returns [(_, true)]. O(m+n)
-      time complexity, where m and n are the input set lengths. *)
+  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to right if
+      ordered, or arbitrarily if unordered, and calls [~f accum elm0_opt elm1_opt] once for each
+      element in the union such that if the element is absent from one of the input sets, the
+      corresponding parameter is [None]. Folding terminates early if [~f] returns [(_, true)].
+      O(m+n) time complexity, where m and n are the input set lengths. *)
 
-  val fold2: init:'accum
-    -> f:('accum -> 'a elm option -> 'a elm option -> 'accum) -> ('a, 'cmp) t
+  val fold2: init:'accum -> f:('accum -> 'a elm option -> 'a elm option -> 'accum) -> ('a, 'cmp) t
     -> ('a, 'cmp) t -> 'accum
-  (** [fold2 ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to
-      right if ordered, or arbitrarily if unordered, and calls [~f accum
-      elm0_opt elm1_opt] once for each element in the union such that if the
-      element is absent from one of the input sets, the corresponding parameter
-      is [None]. Θ(m+n) time complexity, where m and n are the input set
-      lengths. *)
+  (** [fold2 ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to right if ordered, or
+      arbitrarily if unordered, and calls [~f accum elm0_opt elm1_opt] once for each element in the
+      union such that if the element is absent from one of the input sets, the corresponding
+      parameter is [None]. Θ(m+n) time complexity, where m and n are the input set lengths. *)
 
-  val iter2: f:('a elm option -> 'a elm option -> unit) -> ('a, 'cmp) t ->
-    ('a, 'cmp) t -> unit
-  (** [iter2 ~f t0 t1] iterates over the union of [t0] and [t1] from left to
-      right if ordered, or arbitrarily if unordered, and calls [~f elm0_opt
-      elm1_opt] once for each element in the union, such that if the element is
-      absent from one of the input sets, the corresponding parameter is [None].
-      Θ(m+n) time complexity, where m and n are the input set lengths. *)
+  val iter2: f:('a elm option -> 'a elm option -> unit) -> ('a, 'cmp) t -> ('a, 'cmp) t -> unit
+  (** [iter2 ~f t0 t1] iterates over the union of [t0] and [t1] from left to right if ordered, or
+      arbitrarily if unordered, and calls [~f elm0_opt elm1_opt] once for each element in the union,
+      such that if the element is absent from one of the input sets, the corresponding parameter is
+      [None]. Θ(m+n) time complexity, where m and n are the input set lengths. *)
 end
 
-(** Definite sequence functor input interface for polymorphic containers, e.g.
-    {!type:('k, 'v, 'cmp) Ordmap}. *)
+(** Definite sequence functor input interface for polymorphic containers, e.g. {!type:('k, 'v, 'cmp)
+    Ordmap}. *)
 module type IPoly3Def = sig
   type ('k, 'v, 'cmp) t
   (** Sequence type. *)
@@ -189,15 +172,14 @@ module type IPoly3Def = sig
   (** Return next element and sequence absent the element. *)
 end
 
-(** Definite sequence functor output signature for polymorphic containers, e.g.
-    {!type:('a, 'cmp) Ordset}. *)
+(** Definite sequence functor output signature for polymorphic containers, e.g. {!type:('a, 'cmp)
+    Ordset}. *)
 module type SPoly3Def = sig
   include IPoly3Def
 
   val next_opt: ('k, 'v, 'cmp) t -> (('k key * 'v value) *
       ('k, 'v, 'cmp) t) option
-  (** Return next element and sequence absent the element, or [None] if sequence
-      is empty. *)
+  (** Return next element and sequence absent the element, or [None] if sequence is empty. *)
 end
 
 module type IPoly3Fold2 = sig
@@ -225,30 +207,24 @@ module type SPoly3Fold2 = sig
   (** Value type. *)
 
   val fold2_until: init:'accum -> f:('accum -> ('k key * 'v value) option ->
-    ('k key * 'v value) option -> 'accum * bool) -> ('k, 'v, 'cmp) t ->
-    ('k, 'v, 'cmp) t -> 'accum
-  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1] from
-      left to right if ordered, or arbitrarily if unordered, and calls [~f accum
-      elm0_opt elm1_opt] once for each element in the union such that if the
-      element is absent from one of the input sets, the corresponding parameter
-      is [None]. Folding terminates early if [~f] returns [(_, true)]. O(m+n)
-      time complexity, where m and n are the input set lengths. *)
+    ('k key * 'v value) option -> 'accum * bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> 'accum
+  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to right if
+      ordered, or arbitrarily if unordered, and calls [~f accum elm0_opt elm1_opt] once for each
+      element in the union such that if the element is absent from one of the input sets, the
+      corresponding parameter is [None]. Folding terminates early if [~f] returns [(_, true)].
+      O(m+n) time complexity, where m and n are the input set lengths. *)
 
-  val fold2: init:'accum -> f:('accum -> ('k key * 'v value) option ->
-    ('k key * 'v value) option -> 'accum) -> ('k, 'v, 'cmp) t ->
-    ('k, 'v, 'cmp) t -> 'accum
-  (** [fold2 ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to
-      right if ordered, or arbitrarily if unordered, and calls [~f accum
-      elm0_opt elm1_opt] once for each element in the union such that if the
-      element is absent from one of the input sets, the corresponding parameter
-      is [None]. Θ(m+n) time complexity, where m and n are the input set
-      lengths. *)
+  val fold2: init:'accum -> f:('accum -> ('k key * 'v value) option -> ('k key * 'v value) option
+    -> 'accum) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> 'accum
+  (** [fold2 ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to right if ordered, or
+      arbitrarily if unordered, and calls [~f accum elm0_opt elm1_opt] once for each element in the
+      union such that if the element is absent from one of the input sets, the corresponding
+      parameter is [None]. Θ(m+n) time complexity, where m and n are the input set lengths. *)
 
-  val iter2: f:(('k key * 'v value) option -> ('k key * 'v value) option ->
-    unit) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> unit
-  (** [iter2 ~f t0 t1] iterates over the union of [t0] and [t1] from left to
-      right if ordered, or arbitrarily if unordered, and calls [~f elm0_opt
-      elm1_opt] once for each element in the union, such that if the element is
-      absent from one of the input sets, the corresponding parameter is [None].
-      Θ(m+n) time complexity, where m and n are the input set lengths. *)
+  val iter2: f:(('k key * 'v value) option -> ('k key * 'v value) option -> unit) ->
+    ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> unit
+  (** [iter2 ~f t0 t1] iterates over the union of [t0] and [t1] from left to right if ordered, or
+      arbitrarily if unordered, and calls [~f elm0_opt elm1_opt] once for each element in the union,
+      such that if the element is absent from one of the input sets, the corresponding parameter is
+      [None]. Θ(m+n) time complexity, where m and n are the input set lengths. *)
 end

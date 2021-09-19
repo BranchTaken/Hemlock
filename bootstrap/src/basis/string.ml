@@ -304,8 +304,8 @@ module Cursori = struct
     Cursor.bindex t.cursor
 
   let seek coffset t =
-    (* coffset may be negative, but it's okay to convert blindly to uns
-     * because 2s complement addition does the right thing. *)
+    (* coffset may be negative, but it's okay to convert blindly to uns because 2s complement
+     * addition does the right thing. *)
     {cursor=(Cursor.seek coffset t.cursor);
       cindex=Uns.(t.cindex + (of_sint coffset))}
 
@@ -391,15 +391,15 @@ module Seq = struct
         match len with
         | 0 -> ""
         | _ -> begin
-            (* Stdlib.String.init_rev doesn't exist, so accumulate the
-             * codepoints in order to manually reverse them. *)
+            (* Stdlib.String.init_rev doesn't exist, so accumulate the codepoints in order to
+             * manually reverse them. *)
             let rec fn t cps = begin
               match T.length t with
               | 0 -> cps
               | _ -> begin
                   let cp, t' = T.next t in
-                  assert (Uns.((Codepoint.Utf8.length_of_codepoint cp) +
-                      (T.length t') = (T.length t)));
+                  assert (Uns.((Codepoint.Utf8.length_of_codepoint cp) + (T.length t') =
+                    (T.length t)));
                   let cps' = cp :: cps in
                   fn t' cps'
                 end
@@ -451,10 +451,8 @@ module Seq = struct
                 | true -> begin
                     let slice, t' = T.next !tmut in
                     let slice_base' = Cursor.bindex (SlicePre.base slice) in
-                    let slice_len' =
-                      (Cursor.bindex (SlicePre.past slice)) - slice_base' in
-                    assert (Uns.(slice_len' + (T.length t') =
-                      (T.length !tmut)));
+                    let slice_len' = (Cursor.bindex (SlicePre.past slice)) - slice_base' in
+                    assert (Uns.(slice_len' + (T.length t') = (T.length !tmut)));
                     tmut := t';
 
                     slice_str := Cursor.string (SlicePre.base slice);
@@ -483,8 +481,8 @@ module Seq = struct
         match len with
         | 0 -> ""
         | _ -> begin
-            (* Stdlib.String.init_rev doesn't exist, so accumulate the strings
-             * in order to manually reverse them. *)
+            (* Stdlib.String.init_rev doesn't exist, so accumulate the strings in order to manually
+             * reverse them. *)
             let rec fn t slices = begin
               match T.length t with
               | 0 -> slices
@@ -509,8 +507,7 @@ module Seq = struct
                       | [] -> not_reached ()
                     in
                     let slice_base' = Cursor.bindex (SlicePre.base slice) in
-                    let slice_len' =
-                      (Cursor.bindex (SlicePre.past slice)) - slice_base' in
+                    let slice_len' = (Cursor.bindex (SlicePre.past slice)) - slice_base' in
                     slices := slices';
                     slice_str := Cursor.string (SlicePre.base slice);
                     slice_base := slice_base';
@@ -581,8 +578,7 @@ module Slice = struct
       match Cursor.cmp (base t0) (base t1) with
       | Lt -> Cmp.Lt
       | Eq -> begin
-          (* Consider contained slices to come after their containers in the
-           * total order. *)
+          (* Consider contained slices to come after their containers in the total order. *)
           match Cursor.cmp (past t0) (past t1) with
           | Lt -> Cmp.Gt
           | Eq -> Cmp.Eq
@@ -657,10 +653,9 @@ module Slice = struct
   let get bindex t =
     match Uns.(bindex > (blength t)) with
     | true -> halt "Out of bounds"
-    | false -> begin
-        Byte.of_uns_hlt (Stdlib.Char.code (Stdlib.String.unsafe_get (string t)
-          ((Cursor.bindex (base t)) + bindex)))
-      end
+    | false ->
+      Byte.of_uns_hlt (Stdlib.Char.code (Stdlib.String.unsafe_get (string t) ((Cursor.bindex (base
+          t)) + bindex)))
 
   module StringOfIndexed = struct
     module T = struct
@@ -680,8 +675,7 @@ module Slice = struct
         let codepoint = t.f t.cindex in
         let cp_nbytes = Codepoint.Utf8.length_of_codepoint codepoint in
         let blength' = t.blength - cp_nbytes in
-        let t' = {t with cindex=(Uns.succ t.cindex);
-             blength=blength'} in
+        let t' = {t with cindex=(Uns.succ t.cindex); blength=blength'} in
         codepoint, t'
     end
     include T
@@ -848,9 +842,7 @@ module Slice = struct
         let cursor' = Cursor.succ t.cursor in
         let cindex' = Uns.succ t.cindex in
         let blength' = t.blength - utf8_length in
-        let t' = {t with cursor=cursor';
-                         cindex=cindex';
-                         blength=blength'} in
+        let t' = {t with cursor=cursor'; cindex=cindex'; blength=blength'} in
         codepoint', t'
     end
     include T
@@ -958,8 +950,7 @@ module Slice = struct
     match (length sep), (List.length slices) with
     | _, 0 -> of_string ""
     | 0, 1 -> List.hd slices
-    | _ -> of_string (StringConcat.to_string
-        (StringConcat.init sep slices blength))
+    | _ -> of_string (StringConcat.to_string (StringConcat.init sep slices blength))
 
   let concat_rev ?(sep=(of_string "")) slices_rev =
     let slices, blength = List.fold slices_rev ~init:([], 0)
@@ -979,14 +970,12 @@ module Slice = struct
         (StringConcat.init sep slices blength))
 
   let concat_map ?sep ~f t =
-    (* Iterate in reverse order to generate a list of slices that can then be
-     * passed to concat. *)
+    (* Iterate in reverse order to generate a list of slices that can then be passed to concat. *)
     let modified, slices = fold_right t ~init:(false, [])
       ~f:(fun cp (modified, slices) ->
         let slice = f cp in
         let modified' = modified
-                        || Uns.((blength slice)
-                          <> (Codepoint.Utf8.length_of_codepoint cp))
+                        || Uns.((blength slice) <> (Codepoint.Utf8.length_of_codepoint cp))
                         || Codepoint.(Cursor.(rget (base slice)) <> cp) in
         let slices' = slice :: slices in
         modified', slices'
@@ -996,8 +985,7 @@ module Slice = struct
     | _ -> concat ?sep slices
 
   let escaped t =
-    concat_map t ~f:(fun cp ->
-      of_string Codepoint.Utf8.(escape (of_codepoint cp)))
+    concat_map t ~f:(fun cp -> of_string Codepoint.Utf8.(escape (of_codepoint cp)))
 
   module StringRev = struct
     module T = struct
@@ -1073,11 +1061,10 @@ module Slice = struct
     type t = {
       (* Pattern slice. *)
       p: outer_string;
-      (* Auxilliary data structure that enables Knuth-Morris-Pratt (KMP) pattern
-       * matching. The cursors correspond to the codepoints of p. Each cursor
-       * points to the end of the longest pattern prefix that has an equivalent
-       * suffix in the substring ending just prior to the corresponding
-       * codepoint index. *)
+      (* Auxilliary data structure that enables Knuth-Morris-Pratt (KMP) pattern matching. The
+       * cursors correspond to the codepoints of p. Each cursor points to the end of the longest
+       * pattern prefix that has an equivalent suffix in the substring ending just prior to the
+       * corresponding codepoint index. *)
       pi: cursori array;
     }
 
@@ -1133,15 +1120,13 @@ module Slice = struct
         match max_matches, Cursori.(q = m) with
         | Some n, _ when Uns.(nmatches = n) -> List.rev matches
         | _, true -> begin
-            let cursor = (Cursor.at (string in_)
-              ~bindex:((Cursor.bindex (base in_))
-                + (Cursor.bindex i) - (Cursori.bindex m))) in
+            let cursor = (Cursor.at (string in_) ~bindex:((Cursor.bindex (base in_)) +
+                (Cursor.bindex i) - (Cursori.bindex m))) in
             let matches' = cursor :: matches in
             let nmatches' = Uns.succ nmatches in
-            match may_overlap, Uns.((Cursori.bindex m) = 0),
-              Cursor.(i = past) with
-            (* Empty pattern; terminate scanning or advance i to avoid multiple
-             * matches at the same position. *)
+            match may_overlap, Uns.((Cursori.bindex m) = 0), Cursor.(i = past) with
+            (* Empty pattern; terminate scanning or advance i to avoid multiple matches at the same
+             * position. *)
             | _, true, true -> List.rev matches'
             | _, true, false -> begin
                 let q' = Cursori.hd t.p in
@@ -1150,8 +1135,7 @@ module Slice = struct
               end
             (* Attempt overlapping match. *)
             | true, false, _ -> begin
-                let q' =
-                  Array.get (Uns.pred (Cursori.cindex q)) t.pi in
+                let q' = Array.get (Uns.pred (Cursori.cindex q)) t.pi in
                 fn ~q:q' ~i matches' nmatches'
               end
             (* Discard lookbehind to avoid overlapping matches. *)
@@ -1167,11 +1151,9 @@ module Slice = struct
                 let q_eq_i ~q ~i =
                   Codepoint.((Cursori.rget q) = (Cursor.rget i))
                 in
-                match (not (q_eq_i ~q ~i)) &&
-                      (Uns.is_positive (Cursori.cindex q)) with
+                match (not (q_eq_i ~q ~i)) && (Uns.is_positive (Cursori.cindex q)) with
                 | true -> begin
-                    let q' =
-                      Array.get (Uns.pred (Cursori.cindex q)) t.pi in
+                    let q' = Array.get (Uns.pred (Cursori.cindex q)) t.pi in
                     fn ~q:q' ~i matches nmatches
                   end
                 | false -> begin
@@ -1190,8 +1172,7 @@ module Slice = struct
       fn ~q ~i [] 0
 
     let find ~in_ t =
-      let cursors =
-        find_impl ~max_matches:1 ~may_overlap:false ~in_ t in
+      let cursors = find_impl ~max_matches:1 ~may_overlap:false ~in_ t in
       match cursors with
       | [] -> None
       | cursor :: [] -> Some cursor
@@ -1225,8 +1206,8 @@ module Slice = struct
           let in_cursor, slice, at', source = match at with
             | [] -> base in_, in_, at, In
             | cursor :: at' when Cursor.(cursor = base in_) ->
-              let in_cursor = (Cursor.at cursor.string ~bindex:(
-                cursor.bindex + (string_blength pattern))) in
+              let in_cursor = (Cursor.at cursor.string ~bindex:( cursor.bindex + (string_blength
+                  pattern))) in
               let slice = with_ in
               in_cursor, slice, at', With
             | cursor :: _ -> begin
@@ -1235,47 +1216,37 @@ module Slice = struct
               end
           in
           let ncursors = List.length at in
-          let blength = ((blength in_) +
-              (ncursors * ((blength with_) - (string_blength pattern)))) in
+          let blength = ((blength in_) + (ncursors * ((blength with_) - (string_blength
+              pattern)))) in
           {in_; pattern; with_; at=at'; in_cursor; slice; source; blength}
 
         let length t =
           t.blength
 
         let next t =
-          let blength' = (t.blength - Cursor.((bindex (past t.slice)) -
-              bindex (base t.slice))) in
+          let blength' = (t.blength - Cursor.((bindex (past t.slice)) - bindex (base t.slice))) in
           let t' = match t.source with
             | In -> begin
                 let in_cursor', slice', at' = match t.at with
                   | [] -> begin
-                      let slice' = of_cursors ~base:(past t.in_)
-                        ~past:(past t.in_) in
+                      let slice' = of_cursors ~base:(past t.in_) ~past:(past t.in_) in
                       past t.in_, slice', []
                     end
                   | cursor :: at' -> begin
-                      let in_cursor' = Cursor.seek
-                          (Uns.to_sint (string_clength t.pattern)) cursor in
+                      let in_cursor' = Cursor.seek (Uns.to_sint (string_clength t.pattern))
+                        cursor in
                       let slice' = t.with_ in
                       in_cursor', slice', at'
                     end
                 in
-                {t with at=at';
-                        in_cursor=in_cursor';
-                        slice=slice';
-                        source=With;
-                        blength=blength'}
+                {t with at=at'; in_cursor=in_cursor'; slice=slice'; source=With; blength=blength'}
               end
             | With -> begin
                 let slice' = match t.at with
-                  | [] ->
-                    of_cursors ~base:t.in_cursor ~past:(past t.in_)
-                  | cursor :: _ ->
-                    of_cursors ~base:t.in_cursor ~past:cursor
+                  | [] -> of_cursors ~base:t.in_cursor ~past:(past t.in_)
+                  | cursor :: _ -> of_cursors ~base:t.in_cursor ~past:cursor
                 in
-                {t with slice=slice';
-                        source=In;
-                        blength=blength'}
+                {t with slice=slice'; source=In; blength=blength'}
               end
           in t.slice, t'
       end
@@ -1286,14 +1257,14 @@ module Slice = struct
     let replace_first ~in_ ~with_ t =
       match find t ~in_ with
       | None -> in_
-      | Some cursor -> of_string (StringPatternReplace.(to_string
-          (init ~pattern:t.p ~in_ ~with_ ~at:[cursor])))
+      | Some cursor ->
+        of_string (StringPatternReplace.(to_string (init ~pattern:t.p ~in_ ~with_ ~at:[cursor])))
 
     let replace_all ~in_ ~with_ t =
       match find_all t ~may_overlap:false ~in_ with
       | [] -> in_
-      | cursors -> of_string (StringPatternReplace.(to_string
-          (init ~pattern:t.p ~in_ ~with_ ~at:cursors)))
+      | cursors ->
+        of_string (StringPatternReplace.(to_string (init ~pattern:t.p ~in_ ~with_ ~at:cursors)))
   end
 
   let prefix_tl ~prefix t =
@@ -1304,8 +1275,7 @@ module Slice = struct
       | true, false -> None
       | _, true -> Some t_cursor
       | false, false -> begin
-          match Codepoint.((Cursor.rget t_cursor)
-            = (Cursor.rget prefix_cursor)) with
+          match Codepoint.((Cursor.rget t_cursor) = (Cursor.rget prefix_cursor)) with
           | false -> None
           | true -> fn (Cursor.succ t_cursor) (Cursor.succ prefix_cursor)
         end
@@ -1325,8 +1295,7 @@ module Slice = struct
       | true, false -> None
       | _, true -> Some t_cursor
       | false, false -> begin
-          match Codepoint.((Cursor.lget t_cursor)
-            = (Cursor.lget suffix_cursor)) with
+          match Codepoint.((Cursor.lget t_cursor) = (Cursor.lget suffix_cursor)) with
           | false -> None
           | true -> fn (Cursor.pred t_cursor) (Cursor.pred suffix_cursor)
         end
@@ -1475,8 +1444,7 @@ module Slice = struct
     fn (past t) (past t) init
 
   let split_fold_right ~init ~on ~f t =
-    split_fold_right_until ~init ~on
-      ~f:(fun slice accum -> (f slice accum), false) t
+    split_fold_right_until ~init ~on ~f:(fun slice accum -> (f slice accum), false) t
 
   let lines_fold ~init ~f t =
     let rec fn base past cr_seen accum = begin
@@ -1528,8 +1496,7 @@ module Slice = struct
           | true -> begin
               let base', past', nl_seen' = match Cursor.lget base with
                 | cp when Codepoint.(cp = nl) -> (Cursor.pred base), base, true
-                | cp when Codepoint.(cp = cr) ->
-                  (Cursor.pred base), (Cursor.pred base), false
+                | cp when Codepoint.(cp = cr) -> (Cursor.pred base), (Cursor.pred base), false
                 | _ -> base, base, false
               in
               let slice = of_cursors ~base:(Cursor.succ base) ~past in
@@ -1735,8 +1702,7 @@ let is_suffix ~suffix t =
   Slice.is_suffix ~suffix:(Slice.of_string suffix) (Slice.of_string t)
 
 let pare ~base ~past =
-  match Cursor.(base = (hd (container base)))
-        && Cursor.(past = (tl (container past))) with
+  match Cursor.(base = (hd (container base))) && Cursor.(past = (tl (container past))) with
   | true -> Cursor.container base
   | false -> Slice.to_string (Slice.of_cursors ~base ~past)
 
@@ -1747,26 +1713,22 @@ let suffix n t =
   Slice.(to_string (suffix n (of_string t)))
 
 let chop_prefix ~prefix t =
-  let slice_opt = Slice.chop_prefix ~prefix:(Slice.of_string prefix)
-    (Slice.of_string t) in
+  let slice_opt = Slice.chop_prefix ~prefix:(Slice.of_string prefix) (Slice.of_string t) in
   match slice_opt with
   | None -> None
   | Some slice -> Some (Slice.to_string slice)
 
 let chop_prefix_hlt ~prefix t =
-  Slice.to_string (Slice.chop_prefix_hlt ~prefix:(Slice.of_string prefix)
-    (Slice.of_string t))
+  Slice.to_string (Slice.chop_prefix_hlt ~prefix:(Slice.of_string prefix) (Slice.of_string t))
 
 let chop_suffix ~suffix t =
-  let slice_opt = Slice.chop_suffix ~suffix:(Slice.of_string suffix)
-    (Slice.of_string t) in
+  let slice_opt = Slice.chop_suffix ~suffix:(Slice.of_string suffix) (Slice.of_string t) in
   match slice_opt with
   | None -> None
   | Some slice -> Some (Slice.to_string slice)
 
 let chop_suffix_hlt ~suffix t =
-  Slice.to_string (Slice.chop_suffix_hlt ~suffix:(Slice.of_string suffix)
-    (Slice.of_string t))
+  Slice.to_string (Slice.chop_suffix_hlt ~suffix:(Slice.of_string suffix) (Slice.of_string t))
 
 let lstrip ?drop t =
   Slice.(to_string (lstrip ?drop (of_string t)))
@@ -1778,13 +1740,11 @@ let strip ?drop t =
   Slice.(to_string (strip ?drop (of_string t)))
 
 let split ~f t =
-  Slice.split_fold_right ~init:[] ~on:f
-    ~f:(fun slice strings -> (Slice.to_string slice) :: strings)
+  Slice.split_fold_right ~init:[] ~on:f ~f:(fun slice strings -> (Slice.to_string slice) :: strings)
     (Slice.of_string t)
 
 let split_rev ~f t =
-  Slice.split_fold ~init:[] ~on:f
-    ~f:(fun strings slice -> (Slice.to_string slice) :: strings)
+  Slice.split_fold ~init:[] ~on:f ~f:(fun strings slice -> (Slice.to_string slice) :: strings)
     (Slice.of_string t)
 
 let split_lines t =
@@ -1800,8 +1760,7 @@ let split_lines_rev t =
 let lsplit2 ~on t =
   match Slice.lsplit2 ~on (Slice.of_string t) with
   | None -> None
-  | Some (slice, slice2) ->
-    Some ((Slice.to_string slice), (Slice.to_string slice2))
+  | Some (slice, slice2) -> Some ((Slice.to_string slice), (Slice.to_string slice2))
 
 let lsplit2_hlt ~on t =
   let slice, slice2 = Slice.lsplit2_hlt ~on (Slice.of_string t) in
@@ -1810,8 +1769,7 @@ let lsplit2_hlt ~on t =
 let rsplit2 ~on t =
   match Slice.rsplit2 ~on (Slice.of_string t) with
   | None -> None
-  | Some (slice, slice2) ->
-    Some ((Slice.to_string slice), (Slice.to_string slice2))
+  | Some (slice, slice2) -> Some ((Slice.to_string slice), (Slice.to_string slice2))
 
 let rsplit2_hlt ~on t =
   let slice, slice2 = Slice.rsplit2_hlt ~on (Slice.of_string t) in

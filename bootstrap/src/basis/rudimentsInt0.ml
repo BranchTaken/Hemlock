@@ -43,8 +43,7 @@ let u128_pp_x ppf t =
     | _ -> begin
         if shift < 64 then Format.fprintf ppf "_";
         let shift' = shift - 16 in
-        Format.fprintf ppf "%04Lx"
-          Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
+        Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
         fn x shift'
       end
   end in
@@ -84,8 +83,7 @@ let u128_bit_sl ~shift t =
   let hi = begin
     if i >= 64 then Int64.shift_left t_lo (i - 64)
     else if i > 0 then
-      Int64.logor (Int64.shift_left t_hi i)
-        (Int64.shift_right_logical t_lo (64 - i))
+      Int64.logor (Int64.shift_left t_hi i) (Int64.shift_right_logical t_lo (64 - i))
     else t_hi
   end in
   let lo = begin
@@ -106,8 +104,7 @@ let u128_bit_usr ~shift t =
   let lo = begin
     if i >= 64 then Int64.shift_right_logical t_hi (i - 64)
     else if i > 0 then
-      Int64.logor (Int64.shift_left t_hi (64 - i))
-        (Int64.shift_right_logical t_lo i)
+      Int64.logor (Int64.shift_left t_hi (64 - i)) (Int64.shift_right_logical t_lo i)
     else t_lo
   end in
   u128_of_tup (lo, hi)
@@ -124,25 +121,22 @@ let u128_add t0 t1 =
   u128_of_tup (lo, hi)
 
 let u128_mul t0 t1 =
-  (* Decompose inputs into arrays of 32-bit half-words, then use the standard
-   * paper method of multi-digit multiplication, but in base 2^32. The full
-   * result requires m + n digits, where m and n are the number of input digits
-   * in the multiplier and multiplicand. For this function, ndigits=m=n=4, and
-   * we only calculate/preserve the lowest ndigits digits.
+  (* Decompose inputs into arrays of 32-bit half-words, then use the standard paper method of
+   * multi-digit multiplication, but in base 2^32. The full result requires m + n digits, where m
+   * and n are the number of input digits in the multiplier and multiplicand. For this function,
+   * ndigits=m=n=4, and we only calculate/preserve the lowest ndigits digits.
    *
-   * The digit arrays are encoded as (u32 array), which assures that only
-   * significant bits are stored. The intermediate computations use 64-bit math
-   * so that two digits fit. *)
+   * The digit arrays are encoded as (u32 array), which assures that only significant bits are
+   * stored. The intermediate computations use 64-bit math so that two digits fit. *)
   let hi32 x = Int64.shift_right_logical x 32 in
   let lo32 x = Int64.(logand x (of_int 0xffff_ffff)) in
   let digits32 x = hi32 x, lo32 x in
   let get arr i = Caml.Array.get arr i in
-  let set arr i x =
-    Caml.Array.set arr i Int64.(logand x (of_int 0xffff_ffff)) in
-  let to_arr u =
+  let set arr i x = Caml.Array.set arr i Int64.(logand x (of_int 0xffff_ffff)) in
+  let to_arr u = begin
     let u_lo, u_hi = u128_to_tup u in
     [|lo32 u_lo; hi32 u_lo; lo32 u_hi; hi32 u_hi;|]
-  in
+  end in
   let of_arr arr = begin
     let hi = Int64.(logor (shift_left (get arr 3) 32) (get arr 2)) in
     let lo = Int64.(logor (shift_left (get arr 1) 32) (get arr 0)) in
@@ -156,8 +150,8 @@ let u128_mul t0 t1 =
     match i + j = ndigits with
     | true -> ()
     | false -> begin
-        let x', d = digits32 Int64.(add (mul (get t0_arr i) (get t1_arr j))
-          (add (get product (i + j)) x)) in
+        let x', d = digits32 Int64.(add (mul (get t0_arr i) (get t1_arr j)) (add (get product (i +
+            j)) x)) in
         set product (i + j) d;
         fn_i (i + 1) j x'
       end

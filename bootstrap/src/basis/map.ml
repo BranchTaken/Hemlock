@@ -1,38 +1,34 @@
-(* Hash array mapped trie (HAMT) implementation of maps. See the following for
- * background information:
+(* Hash array mapped trie (HAMT) implementation of maps. See the following for background
+ * information:
  *
- * - [Ideal Hash
- *   Trees](http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf)
+ * - [Ideal Hash Trees](http://infoscience.epfl.ch/record/64398/files/idealhashtrees.pdf)
  * - [Optimizing Hash-Array Mapped Tries for Fast and Lean Immutable JVM
  *   Collections](http://michael.steindorfer.name/publications/oopsla15.pdf)
  *
- * This implementation uses a canonical representation that results in stable
- * (but arbitrary) key ordering. The canonical representation differs slightly
- * from that described in the referenced papers with regard to collisions.
- * Following is an informal description of canonical representation.
+ * This implementation uses a canonical representation that results in stable (but arbitrary) key
+ * ordering. The canonical representation differs slightly from that described in the referenced
+ * papers with regard to collisions. Following is an informal description of canonical
+ * representation.
  *
- * - No subtree is empty, with the single exception of a root node representing
- *   an empty map.
- * - No subtree contains a single key, with the single exception of a root node
- *   representing a singleton.
- * - Collisions are always stored as children (specially interpreted nodes) of
- *   maximal-depth leaf nodes; their depth uniquely defines them as collisions,
- *   as does their present_{kv,child} bitmaps. Collisions could in principle be
- *   stored closer to the root, but assuming a well defined hash function, doing
- *   so would increase common-case complexity for the sake of an edge condition
- *   that is already degenerate performance-wise.
- * - Collisions are stored in sorted order within each collision node. This has
- *   the side benefit of making key lookup degrade from O(1) to O(lg n) in the
- *   presence of collisions (rather than O(n)), but the primary benefit is that
- *   it improves coupled iteration performance. *)
+ * - No subtree is empty, with the single exception of a root node representing an empty map.
+ * - No subtree contains a single key, with the single exception of a root node representing a
+ *   singleton.
+ * - Collisions are always stored as children (specially interpreted nodes) of maximal-depth leaf
+ *   nodes; their depth uniquely defines them as collisions, as does their present_{kv,child}
+ *   bitmaps. Collisions could in principle be stored closer to the root, but assuming a well
+ *   defined hash function, doing so would increase common-case complexity for the sake of an edge
+ *   condition that is already degenerate performance-wise.
+ * - Collisions are stored in sorted order within each collision node. This has the side benefit of
+ *   making key lookup degrade from O(1) to O(lg n) in the presence of collisions (rather than
+ *   O(n)), but the primary benefit is that it improves coupled iteration performance. *)
 
 open Rudiments0
 
 (* Module for type used to encode node's present_{kv,child} bit sets. *)
 module Bitset = U63
 
-(* Number of bits per HAMT level. Bitset.t, which is used for node's
- * present_{kv,child} fields must have at least elms_per_level bits. *)
+(* Number of bits per HAMT level. Bitset.t, which is used for node's present_{kv,child} fields must
+ * have at least elms_per_level bits. *)
 let bits_per_level = 5
 let elms_per_level = bit_sl ~shift:bits_per_level 1
 
@@ -43,22 +39,21 @@ let bits_per_hash = 128
 let max_height = bits_per_hash / bits_per_level
 
 type ('k, 'v) node = {
-  (* The present_{kv,child} bitmaps encode which node elements are non-empty.
-   * Each node logically has elms_per_level elements, but only the non-empty
-   * ones are stored in elms_{kv,child}. The two bitmaps are non-intersecting
-   * because each node element can only be a child *or* a key-value binding.
+  (* The present_{kv,child} bitmaps encode which node elements are non-empty. Each node logically
+   * has elms_per_level elements, but only the non-empty ones are stored in elms_{kv,child}. The two
+   * bitmaps are non-intersecting because each node element can only be a child *or* a key-value
+   * binding.
    *
-   * The tree is limited to max_height levels, but leaves may need to store
-   * collisions. Collisions are stored as nodes at depth max_height, but they
-   * must be interpreted specially. We set all bits in both bitmaps for
-   * collision nodes so that code which does not track recursion depth can still
-   * recognize collision nodes. *)
+   * The tree is limited to max_height levels, but leaves may need to store collisions. Collisions
+   * are stored as nodes at depth max_height, but they must be interpreted specially. We set all
+   * bits in both bitmaps for collision nodes so that code which does not track recursion depth can
+   * still recognize collision nodes. *)
   present_kv: Bitset.t;
   present_child: Bitset.t;
-  (* Independent variable-length compressed element arrays, where the summed
-   * length of the arrays is in [0..elms_per_level]. For example, if the least
-   * significant bit of the present_kv bitmap is 1, then the corresponding
-   * element of present_kv is at index 0, regardless of {present,elms}_child. *)
+  (* Independent variable-length compressed element arrays, where the summed length of the arrays is
+   * in [0..elms_per_level]. For example, if the least significant bit of the present_kv bitmap is
+   * 1, then the corresponding element of present_kv is at index 0, regardless of
+   * {present,elms}_child. *)
   elms_kv: ('k * 'v) array;
   elms_child: ('k, 'v) node array;
 }
@@ -74,8 +69,7 @@ type ('k, 'v, 'cmp) t = {
   root: ('k, 'v) node;
 }
 
-type ('k, 'cmp) cmper =
-  (module Cmper.SMono with type t = 'k and type cmper_witness = 'cmp)
+type ('k, 'cmp) cmper = (module Cmper.SMono with type t = 'k and type cmper_witness = 'cmp)
 
 let cmper_m (type k cmp) t : (k, cmp) cmper =
   (module struct
@@ -88,8 +82,8 @@ let cmper_m (type k cmp) t : (k, cmp) cmper =
 let m_cmper (type k cmp) ((module M) : (k, cmp) cmper) =
   M.cmper
 
-(* Given a key and a non-empty array of key-value pairs, synthesize a pair of
- * the form (k, _) to be used with k_cmp. *)
+(* Given a key and a non-empty array of key-value pairs, synthesize a pair of the form (k, _) to be
+ * used with k_cmp. *)
 let k__of_k_kvs k kvs =
   let _, v = Array.get 0 kvs in
   k, v
@@ -125,8 +119,7 @@ let elm_index_of_bit present present_bit =
 
 let empty m =
   {cmper=m_cmper m; length=0;
-    root={present_kv=Bitset.zero; present_child=Bitset.zero;
-      elms_kv=[||]; elms_child=[||]}}
+    root={present_kv=Bitset.zero; present_child=Bitset.zero; elms_kv=[||]; elms_child=[||]}}
 
 let singleton m ~k ~v =
   let cmper = m_cmper m in
@@ -134,8 +127,7 @@ let singleton m ~k ~v =
   let present_index = present_index_at_level k_hash 0 in
   let present_kv = present_bit_of_index present_index in
   {cmper; length=1;
-    root={present_kv; present_child=Bitset.zero;
-      elms_kv=[|(k, v)|]; elms_child=[||]}}
+    root={present_kv; present_child=Bitset.zero; elms_kv=[|(k, v)|]; elms_child=[||]}}
 
 let length t =
   t.length
@@ -155,15 +147,13 @@ let get a t =
             match Bitset.((bit_and present_bit node.present_child) = zero) with
             | true -> None
             | false -> begin
-                let elms_child_index =
-                  elm_index_of_bit node.present_child present_bit in
+                let elms_child_index = elm_index_of_bit node.present_child present_bit in
                 let child = Array.get elms_child_index node.elms_child in
                 fn a a_hash cmper child (succ level)
               end
           end
         | false -> begin
-            let elms_kv_index =
-              elm_index_of_bit node.present_kv present_bit in
+            let elms_kv_index = elm_index_of_bit node.present_kv present_bit in
             let k, v = Array.get elms_kv_index node.elms_kv in
             match Cmp.is_eq (cmper.cmp a k) with
             | true -> Some v
@@ -215,8 +205,8 @@ let insert_impl k ~f t =
       | Eq -> not_reached ()
       | Gt -> (k1, v1), (k0, v0)
     in
-    {present_kv=Bitset.max_value; present_child=Bitset.max_value;
-      elms_kv=[|kv0; kv1|]; elms_child=[||]}
+    {present_kv=Bitset.max_value; present_child=Bitset.max_value; elms_kv=[|kv0; kv1|];
+      elms_child=[||]}
   end in
   (* Create a disambiguating subtree for a and b. *)
   let rec disambiguate (k0, v0) k0_hash (k1, v1) k1_hash cmper level = begin
@@ -240,8 +230,7 @@ let insert_impl k ~f t =
         let present_child = present_bit_of_index k0_present_index in
         let child = match level + 1 < max_height with
           | false -> node_of_collision cmper (k0, v0) (k1, v1)
-          | true ->
-            disambiguate (k0, v0) k0_hash (k1, v1) k1_hash cmper (succ level)
+          | true -> disambiguate (k0, v0) k0_hash (k1, v1) k1_hash cmper (succ level)
         in
         let elms_child = [|child|] in
         {present_kv=Bitset.zero; present_child; elms_kv=[||]; elms_child}
@@ -259,8 +248,7 @@ let insert_impl k ~f t =
             match f None with
             | Some v -> begin
                 (* Insert. *)
-                let elms_kv_index =
-                  elm_index_of_bit node.present_kv present_bit in
+                let elms_kv_index = elm_index_of_bit node.present_kv present_bit in
                 let present_kv' = Bitset.bit_or present_bit node.present_kv in
                 let elms_kv' = Array.insert elms_kv_index (k, v) node.elms_kv in
                 Some {node with present_kv=present_kv'; elms_kv=elms_kv'}, 1
@@ -268,16 +256,14 @@ let insert_impl k ~f t =
             | None -> None, 0
           end
         | false -> begin
-            let elms_child_index =
-              elm_index_of_bit node.present_child present_bit in
+            let elms_child_index = elm_index_of_bit node.present_child present_bit in
             let child = Array.get elms_child_index node.elms_child in
             match level + 1 < max_height with
             | true -> begin
                 match fn k f k_hash cmper child (succ level) with
                 | None, delta -> None, delta
                 | Some child', delta -> begin
-                    let elms_child' =
-                      Array.set elms_child_index child' node.elms_child in
+                    let elms_child' = Array.set elms_child_index child' node.elms_child in
                     Some {node with elms_child=elms_child'}, delta
                   end
               end
@@ -286,39 +272,32 @@ let insert_impl k ~f t =
                 let collision_insert i kv child elms_child_index node = begin
                   let child_elms_kv' = Array.insert i kv child.elms_kv in
                   let child' = {child with elms_kv=child_elms_kv'} in
-                  let elms_child' =
-                    Array.set elms_child_index child' node.elms_child in
+                  let elms_child' = Array.set elms_child_index child' node.elms_child in
                   Some {node with elms_child=elms_child'}
                 end in
                 let collision_replace i kv child elms_child_index node = begin
                   let child_elms_kv' = Array.set i kv child.elms_kv in
                   let child' = {child with elms_kv=child_elms_kv'} in
-                  let elms_child' =
-                    Array.set elms_child_index child' node.elms_child in
+                  let elms_child' = Array.set elms_child_index child' node.elms_child in
                   Some {node with elms_child=elms_child'}
                 end in
                 let k_ = k__of_k_kvs k child.elms_kv in
                 match Array.nsearch k_ ~cmp:(k_cmp cmper.cmp) child.elms_kv with
                 | Some (Lt, _) -> begin
                     match f None with
-                    | Some v ->
-                      (collision_insert 0 (k, v) child elms_child_index node), 1
+                    | Some v -> (collision_insert 0 (k, v) child elms_child_index node), 1
                     | None -> None, 0
                   end
                 | Some (Eq, i) -> begin
                     (* Key already in collision node. *)
                     let _, v = Array.get i child.elms_kv in
                     match f (Some v) with
-                    | Some v' ->
-                      (collision_replace i (k, v') child elms_child_index node),
-                      0
+                    | Some v' -> (collision_replace i (k, v') child elms_child_index node), 0
                     | None -> None, 0
                   end
                 | Some (Gt, i) -> begin
                     match f None with
-                    | Some v ->
-                      (collision_insert (succ i) (k, v) child elms_child_index
-                          node), 1
+                    | Some v -> (collision_insert (succ i) (k, v) child elms_child_index node), 1
                     | None -> None, 0
                   end
                 | None -> not_reached ()
@@ -333,29 +312,23 @@ let insert_impl k ~f t =
             (* Unequal key already present. *)
             match f None with
             | Some v -> begin
-                let elms_child_index =
-                  elm_index_of_bit node.present_child present_bit in
+                let elms_child_index = elm_index_of_bit node.present_child present_bit in
                 let child = match level + 1 < max_height with
                   | false -> node_of_collision cmper (k, v) (kx, vx)
                   | true -> begin
-                      (* Create a subtree which tries to disambiguate the two
-                       * keys. In the worst case, this creates a chain of nodes
-                       * linking to a leaf of maximal depth containing a
-                       * collision. *)
-                      let kx_hash = Hash.State.seed |> cmper.hash_fold kx
-                                    |> Hash.t_of_state in
-                      disambiguate (k, v) k_hash (kx, vx) kx_hash cmper
-                        (succ level)
+                      (* Create a subtree which tries to disambiguate the two keys. In the worst
+                       * case, this creates a chain of nodes linking to a leaf of maximal depth
+                       * containing a collision. *)
+                      let kx_hash = Hash.State.seed |> cmper.hash_fold kx |> Hash.t_of_state in
+                      disambiguate (k, v) k_hash (kx, vx) kx_hash cmper (succ level)
                     end
                 in
                 let present_kv' = Bitset.bit_xor present_bit node.present_kv in
-                let present_child' =
-                  Bitset.bit_xor present_bit node.present_child in
+                let present_child' = Bitset.bit_xor present_bit node.present_child in
                 let elms_kv' = Array.remove elms_kv_index node.elms_kv in
-                let elms_child' =
-                  Array.insert elms_child_index child node.elms_child in
-                Some {present_kv=present_kv'; present_child=present_child';
-                  elms_kv=elms_kv'; elms_child=elms_child'}, 1
+                let elms_child' = Array.insert elms_child_index child node.elms_child in
+                Some {present_kv=present_kv'; present_child=present_child'; elms_kv=elms_kv';
+                  elms_child=elms_child'}, 1
               end
             | None -> None, 0
           end
@@ -426,13 +399,12 @@ let remove_impl a ~f t =
         let present_child' = Bitset.bit_xor present_bit node.present_child in
         let elms_kv' = Array.insert elms_kv_index kv node.elms_kv in
         let elms_child' = Array.remove elms_child_index node.elms_child in
-        let node' = {present_kv=present_kv'; present_child=present_child';
-          elms_kv=elms_kv'; elms_child=elms_child'} in
+        let node' = {present_kv=present_kv'; present_child=present_child'; elms_kv=elms_kv';
+          elms_child=elms_child'} in
         Some (Child node')
       end
   end in
-  (* Remove binding from node; remove node if no children and one binding
-   * remaining. *)
+  (* Remove binding from node; remove node if no children and one binding remaining. *)
   let remove_kv present_bit elms_kv_index node = begin
     match node.elms_kv, node.elms_child with
     | [|_; _|], [||] -> begin
@@ -459,20 +431,17 @@ let remove_impl a ~f t =
         match Bitset.((bit_and present_bit node.present_child) = zero) with
         | true -> (f None), None (* Key not bound; no-op. *)
         | false -> begin
-            let elms_child_index =
-              elm_index_of_bit node.present_child present_bit in
+            let elms_child_index = elm_index_of_bit node.present_child present_bit in
             let child = Array.get elms_child_index node.elms_child in
             match level + 1 < max_height with
             | true -> begin
                 match fn a a_hash ~f cmper child (succ level) with
                 | false, _ -> false, None
                 | true, Some (Child child') -> begin
-                    let elms_child' =
-                      Array.set elms_child_index child' node.elms_child in
+                    let elms_child' = Array.set elms_child_index child' node.elms_child in
                     true, Some (Child {node with elms_child=elms_child'})
                   end
-                | true, Some (Kv kv) ->
-                  true, collapse_child kv present_bit elms_child_index node
+                | true, Some (Kv kv) -> true, collapse_child kv present_bit elms_child_index node
                 | true, None -> not_reached ()
               end
             | false -> begin
@@ -486,24 +455,20 @@ let remove_impl a ~f t =
                     | true -> begin
                         match child.elms_kv with
                         | [|_; _|] -> begin
-                            (* No remaining collisions (single remaining
-                             * binding). *)
+                            (* No remaining collisions (single remaining binding). *)
                             let kv_index = match found_index with
                               | 0 -> 1
                               | 1 -> 0
                               | _ -> not_reached ()
                             in
                             let kv = Array.get kv_index child.elms_kv in
-                            true,
-                            collapse_child kv present_bit elms_child_index node
+                            true, collapse_child kv present_bit elms_child_index node
                           end
                         | _ -> begin
                             (* Remaining collisions. *)
-                            let child_elms_kv' =
-                              Array.remove found_index child.elms_kv in
+                            let child_elms_kv' = Array.remove found_index child.elms_kv in
                             let child' = {child with elms_kv=child_elms_kv'} in
-                            let elms_child' = Array.set elms_child_index child'
-                                node.elms_child in
+                            let elms_child' = Array.set elms_child_index child' node.elms_child in
                             true,
                             Some (Child {node with elms_child=elms_child'})
                           end
@@ -534,14 +499,13 @@ let remove_impl a ~f t =
       let k_hash = Hash.State.seed |> t.cmper.hash_fold k |> Hash.t_of_state in
       let present_index = present_index_at_level k_hash 0 in
       let present_kv = present_bit_of_index present_index in
-      let root' = {present_kv; present_child=Bitset.zero;
-        elms_kv=[|(k, v)|]; elms_child=[||]} in
+      let root' = {present_kv; present_child=Bitset.zero; elms_kv=[|(k, v)|]; elms_child=[||]} in
       {t with length=1; root=root'}
     end
   | true, None -> begin
       (* Empty. *)
-      let root' = {present_kv=Bitset.zero; present_child=Bitset.zero;
-        elms_kv=[||]; elms_child=[||]} in
+      let root' = {present_kv=Bitset.zero; present_child=Bitset.zero; elms_kv=[||];
+        elms_child=[||]} in
       {t with length=0; root=root'}
     end
 
@@ -593,9 +557,8 @@ let iter ~f t =
   fold ~init:() ~f:(fun _ a -> f a) t
 
 let hash_fold hash_fold_v t state =
-  (* Fold ordering is not stable for unequal maps, but order permutation does
-   * increase risk of accidental collision for maps, because each key occurs
-   * precisely once regardless of order. *)
+  (* Fold ordering is not stable for unequal maps, but order permutation does increase risk of
+   * accidental collision for maps, because each key occurs precisely once regardless of order. *)
   let n, state' = fold t ~init:(0, state) ~f:(fun (i, state) (k, v) ->
     (succ i),
     (
@@ -607,10 +570,9 @@ let hash_fold hash_fold_v t state =
   ) in
   state' |> Uns.hash_fold n
 
-(* Seq. Note that internal iteration via fold* traverses bindings, then
- * children, but that ordering is not stable, and cannot be used here. External
- * iteration must do a stable in-order traversal, so that the orderings of
- * unequal maps are monotonic relative to their union. *)
+(* Seq. Note that internal iteration via fold* traverses bindings, then children, but that ordering
+ * is not stable, and cannot be used here. External iteration must do a stable in-order traversal,
+ * so that the orderings of unequal maps are monotonic relative to their union. *)
 module SeqPoly3Fold2 = struct
   type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
   type 'k key = 'k
@@ -642,15 +604,13 @@ module SeqPoly3Fold2 = struct
         | false -> begin
             let kv_present_index = Bitset.bit_ctz node.present_kv in
             let child_present_index = Bitset.bit_ctz node.present_child in
-            match kv_present_index < elms_per_level &&
-                  (kv_present_index < child_present_index) with
+            match kv_present_index < elms_per_level && (kv_present_index < child_present_index) with
             | true -> begin
                 let kv_present_bit = present_bit_of_index kv_present_index in
                 {node; present_bit=kv_present_bit} :: path
               end
             | false -> begin
-                let child_present_bit =
-                  present_bit_of_index child_present_index in
+                let child_present_bit = present_bit_of_index child_present_index in
                 let node_pos = {node; present_bit=child_present_bit} in
                 let child = Array.get 0 node.elms_child in
                 leftmost_path child (node_pos :: path)
@@ -665,8 +625,7 @@ module SeqPoly3Fold2 = struct
   let kv_of_path = function
     | [] -> not_reached ()
     | node_pos :: _ ->
-      let elm_ind =
-        elm_index_of_bit node_pos.node.present_kv node_pos.present_bit in
+      let elm_ind = elm_index_of_bit node_pos.node.present_kv node_pos.present_bit in
       Array.get elm_ind node_pos.node.elms_kv
 
   let rec next_path = function
@@ -674,30 +633,24 @@ module SeqPoly3Fold2 = struct
     | node_pos :: path_tl -> begin
         match is_collision_node node_pos.node with
         | false -> begin
-            let mask =
-              Bitset.(bit_not ((bit_sl ~shift:1 node_pos.present_bit) - one)) in
-            let kv_present_index' =
-              Bitset.(bit_ctz (bit_and mask node_pos.node.present_kv)) in
-            let child_present_index' =
-              Bitset.(bit_ctz (bit_and mask node_pos.node.present_child)) in
-            match (kv_present_index' < elms_per_level) &&
-                  (kv_present_index' < child_present_index') with
+            let mask = Bitset.(bit_not ((bit_sl ~shift:1 node_pos.present_bit) - one)) in
+            let kv_present_index' = Bitset.(bit_ctz (bit_and mask node_pos.node.present_kv)) in
+            let child_present_index' = Bitset.(bit_ctz (bit_and mask
+                node_pos.node.present_child)) in
+            match (kv_present_index' < elms_per_level) && (kv_present_index' < child_present_index')
+            with
             | true -> begin
-                let kv_present_bit' =
-                  present_bit_of_index kv_present_index' in
+                let kv_present_bit' = present_bit_of_index kv_present_index' in
                 {node_pos with present_bit=kv_present_bit'} :: path_tl
               end
             | false -> begin
                 match child_present_index' >= elms_per_level with
                 | true -> next_path path_tl
                 | false -> begin
-                    let child_present_bit' =
-                      present_bit_of_index child_present_index' in
-                    let node_pos' =
-                      {node_pos with present_bit=child_present_bit'} in
+                    let child_present_bit' = present_bit_of_index child_present_index' in
+                    let node_pos' = {node_pos with present_bit=child_present_bit'} in
                     let path' = node_pos' :: path_tl in
-                    let elm_ind = elm_index_of_bit node_pos.node.present_child
-                        child_present_bit' in
+                    let elm_ind = elm_index_of_bit node_pos.node.present_child child_present_bit' in
                     let child = Array.get elm_ind node_pos.node.elms_child in
                     leftmost_path child path'
                   end
@@ -797,8 +750,8 @@ let disjoint t0 t1 =
   ) small
 
 let union ~f t0 t1 =
-  (* Initialize the union with the larger of the two input maps, in order to
-   * minimize number of insertions. *)
+  (* Initialize the union with the larger of the two input maps, in order to minimize number of
+   * insertions. *)
   let small, big = match Cmp.is_le (cmp (length t0) (length t1)) with
     | true -> t0, t1
     | false -> t1, t0
@@ -906,8 +859,8 @@ let kreduce ~f t =
     match Array.reduce_hlt ~f:(fun elm0 elm1 ->
       Kv (
         match elm0, elm1 with
-        | Child child0, Child child1 -> reduce2 (reduce_node ~reduce2 child0)
-          (reduce_node ~reduce2 child1)
+        | Child child0, Child child1 ->
+          reduce2 (reduce_node ~reduce2 child0) (reduce_node ~reduce2 child1)
         | Child child, Kv kv
         | Kv kv, Child child -> reduce2 (reduce_node ~reduce2 child) kv
         | Kv kv0, Kv kv1 -> reduce2 kv0 kv1
@@ -921,8 +874,7 @@ let kreduce ~f t =
     | [||], [||] -> not_reached ()
     | _, [||] -> reduce_kvs ~reduce2 node.elms_kv
     | [||], _ -> reduce_children ~reduce2 node.elms_child
-    | _ -> reduce2 (reduce_kvs ~reduce2 node.elms_kv)
-      (reduce_children ~reduce2 node.elms_child)
+    | _ -> reduce2 (reduce_kvs ~reduce2 node.elms_kv) (reduce_children ~reduce2 node.elms_child)
   end in
   match t.length with
   | 0 -> None
@@ -947,8 +899,8 @@ let reduce ~f t =
     match Array.reduce_hlt ~f:(fun elm0 elm1 ->
       Kv (
         match elm0, elm1 with
-        | Child child0, Child child1 -> reduce2 (reduce_node ~reduce2 child0)
-          (reduce_node ~reduce2 child1)
+        | Child child0, Child child1 ->
+          reduce2 (reduce_node ~reduce2 child0) (reduce_node ~reduce2 child1)
         | Child child, Kv kv
         | Kv kv, Child child -> reduce2 (reduce_node ~reduce2 child) kv
         | Kv kv0, Kv kv1 -> reduce2 kv0 kv1
@@ -962,8 +914,7 @@ let reduce ~f t =
     | [||], [||] -> not_reached ()
     | _, [||] -> reduce_kvs ~reduce2 node.elms_kv
     | [||], _ -> reduce_children ~reduce2 node.elms_child
-    | _ -> reduce2 (reduce_kvs ~reduce2 node.elms_kv)
-      (reduce_children ~reduce2 node.elms_child)
+    | _ -> reduce2 (reduce_kvs ~reduce2 node.elms_kv) (reduce_children ~reduce2 node.elms_child)
   end in
   match t.length with
   | 0 -> None

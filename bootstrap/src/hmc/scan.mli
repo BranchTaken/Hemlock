@@ -25,9 +25,8 @@ module Source : sig
   end
 
   val line_context: t -> Slice.t * t
-  (** [line_context t] creates an expanded source which contains the entirety of
-      the line(s) on which [t] resides, as well as a slice of the expanded
-      source which corresponds to [t]. *)
+  (** [line_context t] creates an expanded source which contains the entirety of the line(s) on
+      which [t] resides, as well as a slice of the expanded source which corresponds to [t]. *)
 end
 
 module AbstractToken : sig
@@ -182,7 +181,6 @@ val text: t -> Text.t
 (** [text t] returns the source text for [t]. *)
 
 val next: t -> t * ConcreteToken.t
-(** [next t] scans the next token past the tokens scanned by [t]'s predecessor
-    state(s) and returns the scanner's successor state along with a token. If
-    [t] is at the end of input, there is no successor state, and [t, EndOfInput]
-    is returned. *)
+(** [next t] scans the next token past the tokens scanned by [t]'s predecessor state(s) and returns
+    the scanner's successor state along with a token. If [t] is at the end of input, there is no
+    successor state, and [t, EndOfInput] is returned. *)

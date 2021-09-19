@@ -11,12 +11,10 @@ val to_sint: t -> sint
 (** Convert to a default-width signed integer, with possible loss. *)
 
 val to_sint_opt: t -> sint option
-(** Convert to a default-width signed integer, or return [None] if conversion
-    would be lossy. *)
+(** Convert to a default-width signed integer, or return [None] if conversion would be lossy. *)
 
 val to_sint_hlt: t -> sint
-(** Convert to a default-width signed integer, or halt if conversion would be
-    lossy. *)
+(** Convert to a default-width signed integer, or halt if conversion would be lossy. *)
 
 val of_sint: sint -> t
 (** Initialize from a default-width signed integer. *)

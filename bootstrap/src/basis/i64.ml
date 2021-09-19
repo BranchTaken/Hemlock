@@ -48,8 +48,7 @@ let pp_x ppf t =
     | _ -> begin
         if Uns.(shift < 64) then Format.fprintf ppf "_";
         let shift' = shift - 16 in
-        Format.fprintf ppf "%04Lx"
-          Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
+        Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
         fn x shift'
       end
   end in
@@ -64,8 +63,8 @@ let to_string t =
   Format.asprintf "%a" pp t
 
 let of_real r =
-  (* OCaml handles overflow poorly, but this deficiency has no anticipated
-   * impact on bootstrapping. *)
+  (* OCaml handles overflow poorly, but this deficiency has no anticipated impact on bootstrapping.
+  *)
   Int64.of_float r
 
 let to_real t =
@@ -77,9 +76,7 @@ let of_uns u =
   | true -> Int64.of_int u
   | false -> begin
       let sint_sign_bit = Uns.of_sint Sint.min_value in
-      Int64.(add (of_int u)
-        (add (of_int sint_sign_bit)
-            (of_int sint_sign_bit)))
+      Int64.(add (of_int u) (add (of_int sint_sign_bit) (of_int sint_sign_bit)))
     end
 
 let min_value = Int64.min_int

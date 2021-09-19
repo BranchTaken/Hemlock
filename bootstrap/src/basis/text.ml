@@ -2,14 +2,14 @@ open Rudiments
 
 let default_tabwidth = 8
 
-(* Line/column position independent of previous lines' contents, with signed
- * column number to facilitate backward cursoring. *)
+(* Line/column position independent of previous lines' contents, with signed column number to
+ * facilitate backward cursoring. *)
 module Spos = struct
   type t = {
     line: uns;
-    (* Column number if non-negative, in which case conversion to t is trivial.
-     * If negative, the column number for the equivalent t must be calculated
-     * via two-pass (backward, then forward) scanning. *)
+    (* Column number if non-negative, in which case conversion to t is trivial. If negative, the
+     * column number for the equivalent t must be calculated via two-pass (backward, then forward)
+     * scanning. *)
     scol: sint;
   }
 
@@ -165,8 +165,8 @@ type t = {
   path: string option;
   (* Tab width. *)
   tabwidth: uns;
-  (* Excerpts already forced into text. The map is initialized with a base
-   * excerpt, which simplifies various logic. *)
+  (* Excerpts already forced into text. The map is initialized with a base excerpt, which simplifies
+   * various logic. *)
   excerpts: (uns, Excerpt.t, Uns.cmper_witness) Map.t;
   (* Lazy suspension which produces extended text. *)
   extend: t option Lazy.t;
@@ -179,16 +179,14 @@ let of_bytes_stream ?path ?(tabwidth=default_tabwidth) stream =
     | false -> begin
         let bytes, stream' = Stream.pop stream in
         let excerpt = Excerpt.of_bytes_slice pred_excerpt bytes in
-        let excerpts' =
-          Map.insert ~k:(Excerpt.eind excerpt) ~v:excerpt excerpts in
+        let excerpts' = Map.insert ~k:(Excerpt.eind excerpt) ~v:excerpt excerpts in
         let extend' = susp_extend path excerpt excerpts' stream' in
         let t' = {path; tabwidth; excerpts=excerpts'; extend=extend'} in
         Some t'
       end
   end in
   let excerpt = Excerpt.base in
-  let excerpts =
-    Map.singleton (module Uns) ~k:(Excerpt.eind excerpt) ~v:excerpt in
+  let excerpts = Map.singleton (module Uns) ~k:(Excerpt.eind excerpt) ~v:excerpt in
   let extend = susp_extend path excerpt excerpts stream in
   {path; tabwidth; excerpts; extend}
 
@@ -217,13 +215,12 @@ module Cursor = struct
       vind: Vind.t;
       (* Line/column. *)
       spos: Spos.t;
-      (* Excerpt cursor, used for iterating over bytes within a single excerpt.
-       * Note that for the positions between excerpts, there are two logically
-       * equivalent text cursors, one of which can only handle lget, and the
-       * other of which can only handle rget. We make no effort to amortize
-       * repeated conversions between equivalent text cursors to transparently
-       * support lget/rget, under the assumption that no reasonable use case
-       * suffers more than constant additional overhead. *)
+      (* Excerpt cursor, used for iterating over bytes within a single excerpt. Note that for the
+       * positions between excerpts, there are two logically equivalent text cursors, one of which
+       * can only handle lget, and the other of which can only handle rget. We make no effort to
+       * amortize repeated conversions between equivalent text cursors to transparently support
+       * lget/rget, under the assumption that no reasonable use case suffers more than constant
+       * additional overhead. *)
       ecursor: Excerpt.Cursor.t;
     }
 
@@ -259,11 +256,10 @@ module Cursor = struct
               Some (b, {t with ecursor=ecursor'})
             end
           | false -> begin
-              match (Uns.succ Excerpt.(eind (Cursor.container t.ecursor))) <
-                (Map.length t.text.excerpts) with
+              match (Uns.succ Excerpt.(eind (Cursor.container t.ecursor))) < (Map.length
+                  t.text.excerpts) with
               | true -> begin
-                  let excerpt' = Map.get_hlt (Uns.succ t.ecursor.excerpt.eind)
-                    t.text.excerpts in
+                  let excerpt' = Map.get_hlt (Uns.succ t.ecursor.excerpt.eind) t.text.excerpts in
                   let ecursor' = Excerpt.Cursor.hd excerpt' in
                   next {t with ecursor=ecursor'}
                 end
@@ -363,8 +359,7 @@ module Cursor = struct
           | false -> begin
               match (Excerpt.eind t.ecursor.excerpt) > 0 with
               | true -> begin
-                  let excerpt' = Map.get_hlt (Uns.pred t.ecursor.excerpt.eind)
-                    t.text.excerpts in
+                  let excerpt' = Map.get_hlt (Uns.pred t.ecursor.excerpt.eind) t.text.excerpts in
                   let ecursor' = Excerpt.Cursor.tl excerpt' in
                   next {t with ecursor=ecursor'}
                 end

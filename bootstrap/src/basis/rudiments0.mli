@@ -10,10 +10,9 @@ type i64 = RudimentsInt0.i64
 type u64 = RudimentsInt0.u64
 
 type sint = RudimentsInt0.sint
-(** {!type:sint} would ideally be named {!type:int}, but it is important that
-    {!type:sint} be incompatible with {!type:uns}, and it would be difficult to
-    maintain this incompatibility with {!type:int} because {!type:uns} must be
-    visibly equivalent to OCaml's built-in {!type:int}.  *)
+(** {!type:sint} would ideally be named {!type:int}, but it is important that {!type:sint} be
+    incompatible with {!type:uns}, and it would be difficult to maintain this incompatibility with
+    {!type:int} because {!type:uns} must be visibly equivalent to OCaml's built-in {!type:int}. *)
 
 type uns = RudimentsInt0.uns
 (** {!type:uns} is the default numerical type. *)

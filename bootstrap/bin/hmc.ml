@@ -8,10 +8,7 @@ let scan_file path =
     let scanner', ctoken = Scan.next scanner in
     let atoken = Scan.ConcreteToken.atoken ctoken in
     let source = Scan.ConcreteToken.source ctoken in
-    printf "  %a : %s\n"
-      Scan.Source.pp_loc source
-      (Scan.AbstractToken.to_string atoken)
-    ;
+    printf "  %a : %s\n" Scan.Source.pp_loc source (Scan.AbstractToken.to_string atoken);
     match atoken with
     | Scan.AbstractToken.Tok_end_of_input -> ()
     | _ -> fn scanner'
@@ -25,9 +22,7 @@ let scan_file path =
         let scanner = Scan.init text in
         fn scanner
       end
-    | Error err -> begin
-        halt (asprintf "File.of_path error: %s\n" (File.Error.to_string err))
-      end
+    | Error err -> halt (asprintf "File.of_path error: %s\n" (File.Error.to_string err))
   in
   printf "@]"
 

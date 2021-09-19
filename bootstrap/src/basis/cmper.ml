@@ -1,6 +1,6 @@
-(* The redundancy between the .mli and .ml files cannot be extracted into an
-   interface file, apparently because the phantom witness type somehow causes
-   two incompatible-but-identical comparator types to exist. *)
+(* The redundancy between the .mli and .ml files cannot be extracted into an interface file,
+ * apparently because the phantom witness type somehow causes two incompatible-but-identical
+ * comparator types to exist. *)
 
 type ('a, 'witness) t = {
   hash_fold: 'a -> Hash.State.t -> Hash.State.t;

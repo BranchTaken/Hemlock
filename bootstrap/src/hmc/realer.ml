@@ -36,8 +36,7 @@ module T = struct
 
   let is_norm = function
     | N {sign=_; mag=Fin {exponent; mantissa}} -> begin
-        Nat.bit_ctz mantissa = 0
-        && (Nat.(mantissa <> zero) || Zint.(exponent = zero))
+        Nat.bit_ctz mantissa = 0 && (Nat.(mantissa <> zero) || Zint.(exponent = zero))
       end
     | N {sign=_; mag=Inf} -> true
     | Nan -> true
@@ -48,20 +47,15 @@ module T = struct
     | N {sign; mag=Fin {exponent; mantissa}} -> begin
         match Nat.bit_ctz mantissa, Nat.(mantissa = zero) with
         | 0, false -> t
-        | tz, false -> begin
-            N {sign; mag=Fin {
-              exponent;
-              mantissa=Nat.(bit_usr ~shift:tz mantissa)
-            }}
-          end
+        | tz, false -> N {sign; mag=Fin {exponent; mantissa=Nat.(bit_usr ~shift:tz mantissa)}}
         | _, true -> N {sign; mag=Fin {exponent=Zint.zero; mantissa=Nat.zero}}
       end
     | N {sign=_; mag=Inf} -> t
     | Nan -> t
 
-  (* Denormalize the inputs such that their binary points are aligned, by
-   * padding at most one of the mantissas with trailing 0 digits. This enables
-   * digit-aligned operations (comparison, addition, subtraction). *)
+  (* Denormalize the inputs such that their binary points are aligned, by * padding at most one of
+   * the mantissas with trailing 0 digits. This enables * digit-aligned operations (comparison,
+   * addition, subtraction). *)
   let denorm t0 t1 =
     match t0, t1 with
     | N {sign=s0; mag=Fin {exponent=e0; mantissa=m0}},
@@ -77,17 +71,13 @@ module T = struct
             let min_fixed_frac_ndigits1 = Zint.(of_uns frac_ndigits1 - e1) in
             match Zint.cmp min_fixed_frac_ndigits0 min_fixed_frac_ndigits1 with
             | Lt -> begin
-                let shift = Zint.(to_uns_hlt
-                    (min_fixed_frac_ndigits1 - min_fixed_frac_ndigits0)) in
-                N {sign=s0; mag=Fin {exponent=e0;
-                  mantissa=Nat.bit_sl ~shift m0}}, t1
+                let shift = Zint.(to_uns_hlt (min_fixed_frac_ndigits1 - min_fixed_frac_ndigits0)) in
+                N {sign=s0; mag=Fin {exponent=e0; mantissa=Nat.bit_sl ~shift m0}}, t1
               end
             | Eq -> t0, t1
             | Gt -> begin
-                let shift = Zint.(to_uns_hlt
-                    (min_fixed_frac_ndigits0 - min_fixed_frac_ndigits1)) in
-                t0, N {sign=s1; mag=Fin {exponent=e1;
-                  mantissa=Nat.bit_sl ~shift m1}}
+                let shift = Zint.(to_uns_hlt (min_fixed_frac_ndigits0 - min_fixed_frac_ndigits1)) in
+                t0, N {sign=s1; mag=Fin {exponent=e1; mantissa=Nat.bit_sl ~shift m1}}
               end
           end
       end
@@ -137,14 +127,13 @@ module T = struct
       (N {sign=Pos; mag=(Fin {exponent=e1; mantissa=_})} as n1)
     | (N {sign=Neg; mag=(Fin {exponent=e1; mantissa=_})} as n1),
       (N {sign=Neg; mag=(Fin {exponent=e0; mantissa=_})} as n0) -> begin
-        (* If exponents are unequal, the larger exponent corresponds to the
-         * larger/smaller value, for Pos/Neg respectively. *)
+        (* If exponents are unequal, the larger exponent corresponds to the * larger/smaller value,
+         * for Pos/Neg respectively. *)
         match Zint.cmp e0 e1 with
         | Lt -> Lt
         | Eq -> begin
-            (* Denormalize, such that the values have the same number of
-             * significant binary digits. This requires padding one of the
-             * mantissas with trailing zeros. *)
+            (* Denormalize, such that the values have the same number of * significant binary
+             * digits. This requires padding one of the * mantissas with trailing zeros. *)
             match denorm n0 n1 with
             | N {sign=_; mag=(Fin {exponent=_; mantissa=m0})},
               N {sign=_; mag=(Fin {exponent=_; mantissa=m1})} -> Nat.cmp m0 m1
@@ -206,8 +195,7 @@ module T = struct
         match Nat.(mantissa = zero) with
         | true -> fprintf ppf "%a0x0p0" pp_sign sign
         | false -> begin
-            let sig_digits = Uns.( - )
-                (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
+            let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
             let shift = pred sig_digits in
             let frac_mask = Nat.((bit_sl ~shift one) - one) in
             let frac = Nat.bit_and mantissa frac_mask in
@@ -340,8 +328,7 @@ let ( * ) t0 t1 =
   match t0, t1 with
   | N {sign=s0; mag=Fin {exponent=e0; mantissa=m0}},
     N {sign=s1; mag=Fin {exponent=e1; mantissa=m1}} -> begin
-      norm (N {sign=sign_mul s0 s1; mag=Fin {
-        exponent=Zint.(e0 + e1); mantissa=Nat.(m0 * m1)}})
+      norm (N {sign=sign_mul s0 s1; mag=Fin {exponent=Zint.(e0 + e1); mantissa=Nat.(m0 * m1)}})
     end
 
   | N {sign=s0; mag=Inf}, N {sign=s1; mag=Fin {exponent=_; mantissa}}
@@ -397,8 +384,7 @@ let to_r_impl emin emax mbits t =
                     | Neg -> true
                     | Pos -> false
                   in
-                  let sig_digits = Uns.( - )
-                      (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
+                  let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
                   let max_mbits, mask = match mbits with
                     | Mbits_53 -> 53, 0xf_ffff_ffff_ffff
                     | Mbits_24 -> 24, 0xf_ffff_e000_0000

@@ -29,8 +29,7 @@ module T = struct
 
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
-        assert ((t0.option == t1.option)
-                || (Stdlib.( = ) t0.option t1.option));
+        assert ((t0.option == t1.option) || (Stdlib.( = ) t0.option t1.option));
         Uns.cmp t0.index t1.index
 
       let hd option =

@@ -24,8 +24,7 @@ module T = struct
 
       let cmp t0 t1 =
         (* == is excessively vague in OCaml. *)
-        assert ((t0.array == t1.array)
-                || (Stdlib.( = ) t0.array t1.array));
+        assert ((t0.array == t1.array) || (Stdlib.( = ) t0.array t1.array));
         Uns.cmp t0.index t1.index
 
       let hd array =
@@ -300,12 +299,10 @@ module Seq = struct
   module MakePoly4Fold2Map (T : sig
       type ('a, 'b, 'accum, 'c) t
       val length: ('a,'b,'accum,'c) t -> uns
-      val next: ('a,'b,'accum,'c) t -> 'accum
-        -> 'c * ('a,'b,'accum,'c) t * 'accum
+      val next: ('a,'b,'accum,'c) t -> 'accum -> 'c * ('a,'b,'accum,'c) t * 'accum
     end) : sig
     type ('a, 'b, 'accum, 'c) t
-    val to_accum_array: ('a,'b,'accum,'c) t -> init:'accum
-      -> 'accum * 'c outer
+    val to_accum_array: ('a,'b,'accum,'c) t -> init:'accum -> 'accum * 'c outer
   end with type ('a,'b,'accum,'c) t := ('a,'b,'accum,'c) T.t = struct
     let to_accum_array t ~init =
       match T.length t with
@@ -521,8 +518,7 @@ let join ?sep tlist =
     | None -> [||], 0
     | Some sep -> sep, length sep
   in
-  let _, tlist_length = List.fold tlist ~init:(0, 0)
-    ~f:(fun (i, accum) list ->
+  let _, tlist_length = List.fold tlist ~init:(0, 0) ~f:(fun (i, accum) list ->
       let i' = Uns.succ i in
       let sep_len' = match i with
         | 0 -> 0
@@ -677,8 +673,8 @@ type run = {
   past: uns;
 }
 let sort_impl ?(stable=false) ~cmp ~inplace t =
-  (* Merge a pair of adjacent runs. Input runs may be in increasing or
-   * decreasing order; the output is always in increasing order. *)
+  (* Merge a pair of adjacent runs. Input runs may be in increasing or decreasing order; the output
+   * is always in increasing order. *)
   let merge_pair ~cmp src run0 order0 run1 order1 dst = begin
     assert (run0.past = run1.base);
     let rblit len i0 t0 i1 t1 = begin
@@ -792,16 +788,13 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
           let i' = Uns.succ i in
           match cmp elm elm', order, stable with
           | Cmp.Lt, Either, _ ->
-            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
-              runs
+            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
           | Cmp.Gt, Either, _ ->
-            select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst
-              runs
+            select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst runs
           | Cmp.Lt, Increasing, _
           | Cmp.Eq, Increasing, true
           | Cmp.Eq, Either, true ->
-            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst
-              runs
+            select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
           | Cmp.Eq, _, false
           | Cmp.Gt, Decreasing, _ ->
             select ~stable ~cmp elm' base i' order run0_opt order0 src dst runs
@@ -828,9 +821,9 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
       Either None Either t aux []
   in
 
-  (* Repeatedly sweep through runs and merge pairs until only one run remains.
-   * Take care to read/write linearly up/down based on the sweep direction, in
-   * order to improve cache locality. *)
+  (* Repeatedly sweep through runs and merge pairs until only one run remains. Take care to
+   * read/write linearly up/down based on the sweep direction, in order to improve cache locality.
+  *)
   let rec merge ~cmp ~inplace src to_merge up dst merged = begin
     match to_merge, up, merged with
     | run0 :: run1 :: to_merge', true, _
@@ -898,17 +891,13 @@ let search_impl ?base ?past key ~cmp mode t =
                 match cmp key (get base t) with
                 | Cmp.Lt -> begin (* At successor. *)
                     match base = 0 with
-                    | true ->
-                      Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
-                    | false ->
-                      Some (Cmp.Gt, (Uns.pred base)) (* In interior; key >
-                                                        * predecessor. *)
+                    | true -> Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
+                    | false -> Some (Cmp.Gt, (Uns.pred base)) (* In interior; key > predecessor. *)
                   end
                 | Cmp.Eq -> Some (Cmp.Eq, base) (* base at leftmost match. *)
                 | Cmp.Gt -> not_reached ()
               end
-            | false, true ->
-              Some (Cmp.Gt, (Uns.pred base)) (* Past end; key > elms. *)
+            | false, true -> Some (Cmp.Gt, (Uns.pred base)) (* Past end; key > elms. *)
           end
         | Cmp.Eq -> None (* No match. *)
         | Cmp.Gt -> begin
@@ -923,8 +912,7 @@ let search_impl ?base ?past key ~cmp mode t =
                 | Cmp.Eq -> Some (Cmp.Eq, probe) (* probe at rightmost match. *)
                 | Cmp.Gt -> begin
                     match (base = (length t)) with
-                    | false -> Some (Cmp.Lt, base) (* In interior; key <
-                                                    * successor. *)
+                    | false -> Some (Cmp.Lt, base) (* In interior; key < successor. *)
                     | true -> Some (Cmp.Gt, probe) (* Past end; key > elms. *)
                   end
               end
@@ -985,8 +973,7 @@ module ArrayFoldiMap = struct
 end
 
 let fold_map ~init ~f t =
-  ArrayFoldiMap.to_accum_array
-    (ArrayFoldiMap.init t ~f:(fun _ accum elm -> f accum elm) (length t))
+  ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t ~f:(fun _ accum elm -> f accum elm) (length t))
     ~init
 
 let foldi_map ~init ~f t =
@@ -1085,8 +1072,7 @@ module ArrayFoldi2Map = struct
       length t.arr0
 
     let next t accum =
-      let accum', elm' =
-        t.f t.index accum (get t.index t.arr0) (get t.index t.arr1) in
+      let accum', elm' = t.f t.index accum (get t.index t.arr0) (get t.index t.arr1) in
       let t' = {t with index=Uns.succ t.index} in
       elm', t', accum'
   end
@@ -1095,8 +1081,8 @@ module ArrayFoldi2Map = struct
 end
 
 let fold2_map ~init ~f t0 t1 =
-  ArrayFoldi2Map.to_accum_array
-    (ArrayFoldi2Map.init t0 t1 ~f:(fun _ accum elm -> f accum elm)) ~init
+  ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f:(fun _ accum elm -> f accum elm))
+    ~init
 
 let foldi2_map ~init ~f t0 t1 =
   ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f) ~init

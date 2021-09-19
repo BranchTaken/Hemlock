@@ -111,23 +111,20 @@ module Source = struct
 
       let pos t =
         let text_pos = Text.Cursor.pos t.text_cursor in
-        let line = Uns.of_sint (Sint.((Uns.to_sint (Text.Pos.line text_pos)) +
-            t.source.bias)) in
+        let line = Uns.of_sint (Sint.((Uns.to_sint (Text.Pos.line text_pos)) + t.source.bias)) in
         Text.Pos.init ~line ~col:(Text.Pos.col text_pos)
 
       let seek_rev offset t =
         match offset > index t with
         | true -> halt "Out of bounds"
         | false ->
-          {t with text_cursor=Text.Cursor.seek (Sint.neg (Uns.to_sint offset))
-              t.text_cursor}
+          {t with text_cursor=Text.Cursor.seek (Sint.neg (Uns.to_sint offset)) t.text_cursor}
 
       let seek_fwd offset t =
         match (index t) + offset > (Text.Cursor.index t.source.past) with
         | true -> halt "Out of bounds"
         | false ->
-          {t with text_cursor=Text.Cursor.seek (Uns.to_sint offset)
-              t.text_cursor}
+          {t with text_cursor=Text.Cursor.seek (Uns.to_sint offset) t.text_cursor}
 
       let seek offset t =
         match Sint.(offset < kv 0) with
@@ -174,8 +171,7 @@ module Source = struct
       Text.Pos.pp (Cursor.(pos (tl t)))
 
   let pp ppf t =
-    Format.fprintf ppf "%s"
-      (Text.Slice.(to_string (of_cursors ~base:t.base ~past:t.past)))
+    Format.fprintf ppf "%s" (Text.Slice.(to_string (of_cursors ~base:t.base ~past:t.past)))
 end
 
 module AbstractToken = struct
@@ -206,8 +202,8 @@ module AbstractToken = struct
 
     let pp pp_a ppf = function
       | Constant a -> Format.fprintf ppf "Constant %a" pp_a a
-      | Malformed malformations -> Format.fprintf ppf "Malformed %a"
-          (List.pp Malformation.pp) malformations
+      | Malformed malformations -> Format.fprintf ppf "Malformed %a" (List.pp Malformation.pp)
+        malformations
   end
   type t =
     (* Keywords. *)
@@ -366,8 +362,7 @@ module AbstractToken = struct
     (* Operators. *)
     | Tok_tilde_op op -> asprintf "@[<h><Tok_tilde_op=%a>@]" String.pp op
     | Tok_qmark_op op -> asprintf "@[<h><Tok_qmark_op=%a>@]" String.pp op
-    | Tok_star_star_op op ->
-      asprintf "@[<h><Tok_star_star_op=%a>@]" String.pp op
+    | Tok_star_star_op op -> asprintf "@[<h><Tok_star_star_op=%a>@]" String.pp op
     | Tok_star_op op -> asprintf "@[<h><Tok_star_op=%a>@]" String.pp op
     | Tok_slash_op op -> asprintf "@[<h><Tok_slash_op=%a>@]" String.pp op
     | Tok_pct_op op -> asprintf "@[<h><Tok_pct_op=%a>@]" String.pp op
@@ -411,71 +406,45 @@ module AbstractToken = struct
     | Tok_indent rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_indent>"
-        | Malformed _ ->
-          asprintf "@[<h><Tok_indent=%a>@]"
-            (Rendition.pp Unit.pp) rendition
+        | Malformed _ -> asprintf "@[<h><Tok_indent=%a>@]" (Rendition.pp Unit.pp) rendition
       end
     | Tok_line_delim -> "<Tok_line_delim>"
     | Tok_dedent rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_dedent>"
-        | Malformed _ ->
-          asprintf "@[<h><Tok_dedent=%a>@]"
-            (Rendition.pp Unit.pp) rendition
+        | Malformed _ -> asprintf "@[<h><Tok_dedent=%a>@]" (Rendition.pp Unit.pp) rendition
       end
     | Tok_whitespace -> "<Tok_whitespace>"
     | Tok_hash_comment -> "<Tok_hash_comment>"
     | Tok_paren_comment rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_paren_comment>"
-        | Malformed _ ->
-          asprintf "@[<h><Tok_paren_comment=%a>@]"
-            (Rendition.pp Unit.pp) rendition
+        | Malformed _ -> asprintf "@[<h><Tok_paren_comment=%a>@]" (Rendition.pp Unit.pp) rendition
       end
     | Tok_uscore -> "<Tok_uscore>"
-    | Tok_uident rendition ->
-      asprintf "@[<h><Tok_uident=%a>@]" (Rendition.pp String.pp) rendition
+    | Tok_uident rendition -> asprintf "@[<h><Tok_uident=%a>@]" (Rendition.pp String.pp) rendition
     | Tok_cident cident -> asprintf "@[<h><Tok_cident=%a>@]" String.pp cident
     | Tok_codepoint rendition ->
       asprintf "@[<h><Tok_codepoint=%a>@]" (Rendition.pp Codepoint.pp) rendition
-    | Tok_istring rendition ->
-      asprintf "@[<h><Tok_istring=%a>@]" (Rendition.pp String.pp) rendition
-    | Tok_rstring rendition ->
-      asprintf "@[<h><Tok_rstring=%a>@]" (Rendition.pp String.pp) rendition
-    | Tok_bstring rendition ->
-      asprintf "@[<h><Tok_bstring=%a>@]" (Rendition.pp String.pp) rendition
-    | Tok_r32 rendition ->
-      asprintf "@[<h><Tok_r32=%a>@]" (Rendition.pp Real.pp) rendition
-    | Tok_r64 rendition ->
-      asprintf "@[<h><Tok_r64=%a>@]" (Rendition.pp Real.pp) rendition
-    | Tok_u8 rendition ->
-      asprintf "@[<h><Tok_u8=%a>@]" (Rendition.pp U8.pp) rendition
-    | Tok_i8 rendition ->
-      asprintf "@[<h><Tok_i8=%a>@]" (Rendition.pp I8.pp) rendition
-    | Tok_u16 rendition ->
-      asprintf "@[<h><Tok_u16=%a>@]" (Rendition.pp U16.pp) rendition
-    | Tok_i16 rendition ->
-      asprintf "@[<h><Tok_i16=%a>@]" (Rendition.pp I16.pp) rendition
-    | Tok_u32 rendition ->
-      asprintf "@[<h><Tok_u32=%a>@]" (Rendition.pp U32.pp) rendition
-    | Tok_i32 rendition ->
-      asprintf "@[<h><Tok_i32=%a>@]" (Rendition.pp I32.pp) rendition
-    | Tok_u64 rendition ->
-      asprintf "@[<h><Tok_u64=%a>@]" (Rendition.pp U64.pp) rendition
-    | Tok_i64 rendition ->
-      asprintf "@[<h><Tok_i64=%a>@]" (Rendition.pp I64.pp) rendition
-    | Tok_u128 rendition ->
-      asprintf "@[<h><Tok_u128=%a>@]" (Rendition.pp U128.pp) rendition
-    | Tok_i128 rendition ->
-      asprintf "@[<h><Tok_i128=%a>@]" (Rendition.pp I128.pp) rendition
-    | Tok_u256 rendition ->
-      asprintf "@[<h><Tok_u256=%a>@]" (Rendition.pp U256.pp) rendition
-    | Tok_i256 rendition ->
-      asprintf "@[<h><Tok_i256=%a>@]" (Rendition.pp I256.pp) rendition
-    | Tok_u512 rendition ->
-      asprintf "@[<h><Tok_u512=%a>@]" (Rendition.pp U512.pp) rendition
-    | Tok_i512 rendition ->
-      asprintf "@[<h><Tok_i512=%a>@]" (Rendition.pp I512.pp) rendition
+    | Tok_istring rendition -> asprintf "@[<h><Tok_istring=%a>@]" (Rendition.pp String.pp) rendition
+    | Tok_rstring rendition -> asprintf "@[<h><Tok_rstring=%a>@]" (Rendition.pp String.pp) rendition
+    | Tok_bstring rendition -> asprintf "@[<h><Tok_bstring=%a>@]" (Rendition.pp String.pp) rendition
+    | Tok_r32 rendition -> asprintf "@[<h><Tok_r32=%a>@]" (Rendition.pp Real.pp) rendition
+    | Tok_r64 rendition -> asprintf "@[<h><Tok_r64=%a>@]" (Rendition.pp Real.pp) rendition
+    | Tok_u8 rendition -> asprintf "@[<h><Tok_u8=%a>@]" (Rendition.pp U8.pp) rendition
+    | Tok_i8 rendition -> asprintf "@[<h><Tok_i8=%a>@]" (Rendition.pp I8.pp) rendition
+    | Tok_u16 rendition -> asprintf "@[<h><Tok_u16=%a>@]" (Rendition.pp U16.pp) rendition
+    | Tok_i16 rendition -> asprintf "@[<h><Tok_i16=%a>@]" (Rendition.pp I16.pp) rendition
+    | Tok_u32 rendition -> asprintf "@[<h><Tok_u32=%a>@]" (Rendition.pp U32.pp) rendition
+    | Tok_i32 rendition -> asprintf "@[<h><Tok_i32=%a>@]" (Rendition.pp I32.pp) rendition
+    | Tok_u64 rendition -> asprintf "@[<h><Tok_u64=%a>@]" (Rendition.pp U64.pp) rendition
+    | Tok_i64 rendition -> asprintf "@[<h><Tok_i64=%a>@]" (Rendition.pp I64.pp) rendition
+    | Tok_u128 rendition -> asprintf "@[<h><Tok_u128=%a>@]" (Rendition.pp U128.pp) rendition
+    | Tok_i128 rendition -> asprintf "@[<h><Tok_i128=%a>@]" (Rendition.pp I128.pp) rendition
+    | Tok_u256 rendition -> asprintf "@[<h><Tok_u256=%a>@]" (Rendition.pp U256.pp) rendition
+    | Tok_i256 rendition -> asprintf "@[<h><Tok_i256=%a>@]" (Rendition.pp I256.pp) rendition
+    | Tok_u512 rendition -> asprintf "@[<h><Tok_u512=%a>@]" (Rendition.pp U512.pp) rendition
+    | Tok_i512 rendition -> asprintf "@[<h><Tok_i512=%a>@]" (Rendition.pp I512.pp) rendition
     | Tok_end_of_input -> "<Tok_end_of_input>"
     | Tok_misaligned -> "<Tok_misaligned>"
     | Tok_error -> "<Tok_error>"
@@ -601,8 +570,7 @@ let accept_delim_incl atoken _pcursor cursor t =
  * Convenience routines for reporting malformations. *)
 
 let malformation ~base ~past description t =
-  AbstractToken.Rendition.Malformation.init
-    t.path t.bias ~base ~past description
+  AbstractToken.Rendition.Malformation.init t.path t.bias ~base ~past description
 
 let malformed malformation =
   AbstractToken.Rendition.Malformed [malformation]
@@ -662,8 +630,7 @@ let out_of_range_int radix limit base past t =
   malformation ~base ~past description t
 
 let out_of_range_real base past t =
-  malformation ~base ~past "Numerical constant cannot be precisely represented"
-    t
+  malformation ~base ~past "Numerical constant cannot be precisely represented" t
 
 (******************************************************************************)
 
@@ -716,10 +683,8 @@ let paren_comment _pcursor cursor t =
 
   let rec fn_wrapper ~f nesting cursor t = begin
     match Text.Cursor.next_opt cursor with
-    | None -> begin
-        accept (Tok_paren_comment (malformed (unterminated_comment t.cursor
-            cursor t))) cursor t
-      end
+    | None ->
+      accept (Tok_paren_comment (malformed (unterminated_comment t.cursor cursor t))) cursor t
     | Some (cp, cursor') -> f cp nesting cursor' t
   end
   and fn nesting cursor t = begin
@@ -809,8 +774,7 @@ let malformed_uident _pcursor cursor t =
   ident ~f_accept:(fun cursor t ->
     let ident_str = str_of_cursor cursor t in
     let mal = (malformed (malformation ~base:t.cursor ~past:cursor
-        (Format.asprintf "@[<h>Identifier %s lacks _*[A-Za-z] prefix" ident_str)
-        t)) in
+        (Format.asprintf "@[<h>Identifier %s lacks _*[A-Za-z] prefix" ident_str) t)) in
     accept (Tok_uident mal) cursor t
   ) cursor t
 
@@ -930,13 +894,12 @@ end = struct
       match accum with
       | Empty -> not_reached ()
       | Cp cp -> accept (Tok_codepoint (Constant cp)) cursor t
-      | Malformations mals ->
-        accept (Tok_codepoint (Malformed (List.rev mals))) cursor t
+      | Malformations mals -> accept (Tok_codepoint (Malformed (List.rev mals))) cursor t
     end in
 
-    (* The callers of fn_wrapper have varying scanner state they're carrying as
-     * call parameters, so in most cases they have to allocate a closure. This
-     * isn't ideal performance-wise, but it reduces boilerplate. *)
+    (* The callers of fn_wrapper have varying scanner state they're carrying as * call parameters,
+     * so in most cases they have to allocate a closure. This * isn't ideal performance-wise, but it
+     * reduces boilerplate. *)
     let fn_wrapper ~f accum cursor t = begin
       match Text.Cursor.next_opt cursor with
       | None -> begin
@@ -958,23 +921,20 @@ end = struct
     end in
     let fn_lookahead accum pcursor cursor t = begin
       match Text.Cursor.next_opt cursor with
-      | Some (cp, cursor') when Codepoint.(cp = of_char '\'') ->
-        accept_codepoint accum cursor' t
+      | Some (cp, cursor') when Codepoint.(cp = of_char '\'') -> accept_codepoint accum cursor' t
       | Some (_, _)
       | None -> accept Tok_tick pcursor t
     end in
     let rec fn_bslash_u_lcurly nat bslash_cursor accum cursor t = begin
       fn_wrapper ~f:(fun cp cursor' accum cursor t ->
         match Map.get cp u_map with
-        | Some UMapUscore ->
-          fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
+        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
         | Some UMapDigit -> begin
-            fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex)
-              bslash_cursor accum cursor' t
+            fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor'
+              t
           end
         | Some UMapRcurly -> begin
-            let accum' = accum_cp_of_nat ~accum_cp ~accum_mal nat accum
-                bslash_cursor cursor' t in
+            let accum' = accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor' t in
             fn_cp accum' cursor' t
           end
         | Some UMapTick -> begin
@@ -1062,10 +1022,8 @@ end = struct
   let istring _pcursor cursor t =
     let accept_istring accum cursor t = begin
       match accum with
-      | Codepoints cps ->
-        accept (Tok_istring (Constant (String.of_list_rev cps))) cursor t
-      | Malformations mals ->
-        accept (Tok_istring (Malformed (List.rev mals))) cursor t
+      | Codepoints cps -> accept (Tok_istring (Constant (String.of_list_rev cps))) cursor t
+      | Malformations mals -> accept (Tok_istring (Malformed (List.rev mals))) cursor t
     end in
 
     let rec fn_wrapper ~f accum cursor t = begin
@@ -1083,16 +1041,11 @@ end = struct
     and fn_bslash_u_lcurly nat bslash_cursor accum cursor t = begin
       fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match Map.get cp Codepoint_.u_map with
-        | Some UMapUscore ->
-          fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
-        | Some UMapDigit -> begin
-            fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex)
-              bslash_cursor accum cursor' t
-          end
-        | Some UMapRcurly -> begin
-            fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor
-                cursor t) cursor' t
-          end
+        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
+        | Some UMapDigit ->
+          fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor' t
+        | Some UMapRcurly ->
+          fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor t) cursor' t
         | Some UMapDitto -> begin
             let mal = partial_unicode bslash_cursor cursor t in
             accept_istring (accum_mal mal accum) cursor' t
@@ -1122,18 +1075,12 @@ end = struct
     and fn_bslash bslash_cursor accum cursor t = begin
       fn_wrapper accum cursor t ~f:(fun accum _cursor cp cursor' t ->
         match cp with
-        | cp when Codepoint.(cp = of_char 'u') ->
-          fn_bslash_u bslash_cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char 't') ->
-          fn (accum_cp Codepoint.ht accum) cursor' t
-        | cp when Codepoint.(cp = of_char 'n') ->
-          fn (accum_cp Codepoint.nl accum) cursor' t
-        | cp when Codepoint.(cp = of_char 'r') ->
-          fn (accum_cp Codepoint.cr accum) cursor' t
-        | cp when Codepoint.(cp = of_char '"') ->
-          fn (accum_cp cp accum) cursor' t
-        | cp when Codepoint.(cp = of_char '\\') ->
-          fn (accum_cp cp accum) cursor' t
+        | cp when Codepoint.(cp = of_char 'u') -> fn_bslash_u bslash_cursor accum cursor' t
+        | cp when Codepoint.(cp = of_char 't') -> fn (accum_cp Codepoint.ht accum) cursor' t
+        | cp when Codepoint.(cp = of_char 'n') -> fn (accum_cp Codepoint.nl accum) cursor' t
+        | cp when Codepoint.(cp = of_char 'r') -> fn (accum_cp Codepoint.cr accum) cursor' t
+        | cp when Codepoint.(cp = of_char '"') -> fn (accum_cp cp accum) cursor' t
+        | cp when Codepoint.(cp = of_char '\\') -> fn (accum_cp cp accum) cursor' t
         | _ -> begin
             let mal = illegal_backslash bslash_cursor cursor' t in
             fn (accum_mal mal accum) cursor' t
@@ -1144,8 +1091,7 @@ end = struct
       fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '"') -> accept_istring accum cursor' t
-        | cp when Codepoint.(cp = of_char '\\') ->
-          fn_bslash cursor accum cursor' t
+        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
         | _ -> fn (accum_cp cp accum) cursor' t
       )
     end in
@@ -1178,8 +1124,7 @@ end = struct
     }
 
   let accept_unterminated_rstring cursor t =
-    accept (Tok_rstring (malformed (unterminated_string t.cursor cursor t)))
-      cursor t
+    accept (Tok_rstring (malformed (unterminated_string t.cursor cursor t))) cursor t
 
   (* Raw string: ``...`` *)
   let rstring pcursor _cursor t =
@@ -1203,14 +1148,12 @@ end = struct
           accept (Tok_rstring (Malformed mals)) cursor t
         end
       | _, Malformations body_mals, _ -> begin
-          let mals = List.(rev_concat ltag.mals (rev_concat body_mals
-              (rev rtag.mals))) in
+          let mals = List.(rev_concat ltag.mals (rev_concat body_mals (rev rtag.mals))) in
           accept (Tok_rstring (Malformed mals)) cursor t
         end
     end in
 
-    let rec fn_rtag rtag_accum ltag_cursor body_accum saved_body_accum ltag
-        cursor t = begin
+    let rec fn_rtag rtag_accum ltag_cursor body_accum saved_body_accum ltag cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
           let mal = unterminated_string t.cursor cursor t in
@@ -1225,28 +1168,25 @@ end = struct
               let ltag_cp, ltag_cursor' = String.Cursor.next ltag_cursor in
               match Codepoint.(replacement = ltag_cp) with
               | true ->
-                fn_rtag (tag_accum_cp Codepoint.replacement rtag_accum)
-                  ltag_cursor' (accum_mal mal body_accum)
-                  saved_body_accum ltag cursor' t
+                fn_rtag (tag_accum_cp Codepoint.replacement rtag_accum) ltag_cursor' (accum_mal mal
+                    body_accum) saved_body_accum ltag cursor' t
               | false -> fn (accum_mal mal body_accum) ltag cursor' t
             end
         end
       | Some (cp, true, cursor') -> begin
-          match cp, String.Cursor.(ltag_cursor = (tl (container ltag_cursor)))
-          with
+          match cp, String.Cursor.(ltag_cursor = (tl (container ltag_cursor))) with
           | cp, true when Codepoint.(cp = of_char '`') ->
-            accept_rstring (tag_of_accum rtag_accum) saved_body_accum ltag
-              cursor' t
+            accept_rstring (tag_of_accum rtag_accum) saved_body_accum ltag cursor' t
           | cp, false when Codepoint.(cp = of_char '`') ->
-            fn_rtag tag_accum_empty (String.Cursor.hd ltag.tag)
-              (accum_cp cp body_accum) body_accum ltag cursor' t
+            fn_rtag tag_accum_empty (String.Cursor.hd ltag.tag) (accum_cp cp body_accum) body_accum
+              ltag cursor' t
           | _, true -> fn (accum_cp cp body_accum) ltag cursor' t
           | _, false -> begin
               let ltag_cp, ltag_cursor' = String.Cursor.next ltag_cursor in
               match Codepoint.(cp = ltag_cp) with
               | true ->
-                fn_rtag (tag_accum_cp cp rtag_accum) ltag_cursor'
-                  (accum_cp cp body_accum) saved_body_accum ltag cursor' t
+                fn_rtag (tag_accum_cp cp rtag_accum) ltag_cursor' (accum_cp cp body_accum)
+                  saved_body_accum ltag cursor' t
               | false -> fn (accum_cp cp body_accum) ltag cursor' t
             end
         end
@@ -1266,8 +1206,8 @@ end = struct
       | Some (cp, true, cursor') -> begin
           match cp with
           | cp when Codepoint.(cp = of_char '`') ->
-            fn_rtag tag_accum_empty (String.Cursor.hd ltag.tag)
-              (accum_cp cp body_accum) body_accum ltag cursor' t
+            fn_rtag tag_accum_empty (String.Cursor.hd ltag.tag) (accum_cp cp body_accum) body_accum
+              ltag cursor' t
           | _ -> fn (accum_cp cp body_accum) ltag cursor' t
         end
     end
@@ -1303,8 +1243,7 @@ end = struct
       | Codepoints (_ :: cps) ->
         accept (Tok_bstring (Constant (String.of_list_rev cps))) cursor t
       | Codepoints [] -> not_reached () (* There's always a '\n'. *)
-      | Malformations mals ->
-        accept (Tok_bstring (Malformed (List.rev mals))) cursor t
+      | Malformations mals -> accept (Tok_bstring (Malformed (List.rev mals))) cursor t
     end in
 
     let rec fn_lpad c0_cursor accum lmargin cursor t = begin
@@ -1319,8 +1258,7 @@ end = struct
         end
       | Some (cp, true, cursor') -> begin
           match cp with
-          | cp when Codepoint.(cp = of_char ' ') ->
-            fn_lpad c0_cursor accum lmargin cursor' t
+          | cp when Codepoint.(cp = of_char ' ') -> fn_lpad c0_cursor accum lmargin cursor' t
           | cp when Codepoint.(cp = of_char '|') -> begin
               match Text.(Pos.col (Cursor.pos cursor')) = lmargin with
               | true -> fn accum lmargin cursor' t
@@ -1329,8 +1267,7 @@ end = struct
                   fn (accum_mal mal accum) lmargin cursor' t
                 end
             end
-          | cp when Codepoint.(cp = of_char '`') ->
-            accept_bstring accum cursor' t
+          | cp when Codepoint.(cp = of_char '`') -> accept_bstring accum cursor' t
           | cp when Codepoint.(cp = nl) -> begin
               let mal = invalid_bar_indent c0_cursor cursor t in
               fn_lpad cursor' (accum_mal mal accum) lmargin cursor' t
@@ -1354,8 +1291,7 @@ end = struct
       | Some (cp, true, cursor') -> begin
           let accum' = accum_cp cp accum in
           match cp with
-          | cp when Codepoint.(cp = nl) ->
-            fn_lpad cursor' accum' lmargin cursor' t
+          | cp when Codepoint.(cp = nl) -> fn_lpad cursor' accum' lmargin cursor' t
           | _ -> fn accum' lmargin cursor' t
         end
     end in
@@ -1377,18 +1313,12 @@ module Real : sig
   type t
   val of_whole: Nat.t -> Radix.t -> t
   val of_mals: AbstractToken.Rendition.Malformation.t list -> t
-  val r_suffix: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer
-    -> outer * ConcreteToken.t
-  val exp: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer
-    -> outer * ConcreteToken.t
-  val dot: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer
-    -> outer * ConcreteToken.t
-  val zero_r_suffix: Text.Cursor.t -> Text.Cursor.t -> outer
-    -> outer * ConcreteToken.t
-  val zero_frac: Text.Cursor.t -> Text.Cursor.t -> outer
-    -> outer * ConcreteToken.t
-  val zero_exp: Text.Cursor.t -> Text.Cursor.t -> outer
-    -> outer * ConcreteToken.t
+  val r_suffix: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
+  val exp: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
+  val dot: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
+  val zero_r_suffix: Text.Cursor.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
+  val zero_frac: Text.Cursor.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
+  val zero_exp: Text.Cursor.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
 end = struct
   type outer = t
   type exp_sign =
@@ -1398,9 +1328,8 @@ end = struct
     | Subtype_r32
     | Subtype_r64
   type t =
-    (* exp is always non-negative; exp_sign tracks the exponent's sign because
-     * the sign is scanned before there is a non-zero magnitude in which to
-     * incorporate the sign. *)
+    (* exp is always non-negative; exp_sign tracks the exponent's sign because the sign is scanned
+     * before there is a non-zero magnitude in which to incorporate the sign. *)
     (* frac, point_shift, exp_sign, exp *)
     | R of Realer.t * sint * exp_sign * Zint.t
     | R_dec
@@ -1415,8 +1344,7 @@ end = struct
     | Malformations _ as mals -> mals
 
   let accum_exp_sign exp_sign = function
-    | R (frac, point_shift, _exp_sign, exp) ->
-      R (frac, point_shift, exp_sign, exp)
+    | R (frac, point_shift, _exp_sign, exp) -> R (frac, point_shift, exp_sign, exp)
     | R_dec -> R_dec
     | Malformations _ as mals -> mals
 
@@ -1439,8 +1367,7 @@ end = struct
           | Hex -> Sint.kv 4
         in
         let sig_bits = (Nat.bit_length cp_nat) - (Nat.bit_clz cp_nat) in
-        let nonfrac_shift =
-          Sint.(bits_per_digit - (pred (Uns.to_sint sig_bits))) in
+        let nonfrac_shift = Sint.(bits_per_digit - (pred (Uns.to_sint sig_bits))) in
         let exponent = Zint.((of_sint point_shift) - (of_sint nonfrac_shift)) in
         let digit = Realer.create ~sign:Pos ~exponent ~mantissa:cp_nat in
         let frac' = Realer.(frac + digit) in
@@ -1659,8 +1586,7 @@ end = struct
     ("01", FMapDigit);
     ("p", FMapExp);
     ("r", FMapRealSuffix);
-    ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoqstuvwxyz23456789'",
-      FMapMalIdent);
+    ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoqstuvwxyz23456789'", FMapMalIdent);
   ]
 
   let oct_frac_map = map_of_cps_alist [
@@ -1692,15 +1618,13 @@ end = struct
     | None -> accept None cursor accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp frac_map with
-        | Some FMapUscore ->
-          next_frac accum mantissa_cursor frac_map radix cursor' t
+        | Some FMapUscore -> next_frac accum mantissa_cursor frac_map radix cursor' t
         | Some FMapDigit -> begin
             let accum' = accum_frac_digit cp radix accum in
             next_frac accum' mantissa_cursor frac_map radix cursor' t
           end
         | Some FMapExp -> first_exp accum cursor radix cursor' t
-        | Some FMapRealSuffix ->
-          next_suffix Nat.k_0 cursor accum radix cursor' t
+        | Some FMapRealSuffix -> next_suffix Nat.k_0 cursor accum radix cursor' t
         | Some FMapMalIdent -> begin
             let mal = invalid_numerical cursor cursor' t in
             let accum' = accum_mal mal accum in
@@ -1760,8 +1684,8 @@ end = struct
     | Unsigned
     | Signed
 
-  (* Full enumeration of integer types is a bit unwieldy, but it's more robust
-   * and doesn't actually cause much code bloat. *)
+  (* Full enumeration of integer types is a bit unwieldy, but it's more robust and doesn't actually
+   * cause much code bloat. *)
   type subtype =
     | Subtype_u8
     | Subtype_i8
@@ -1790,20 +1714,17 @@ end = struct
     | N _ -> Malformations [mal]
     | Malformations mals -> Malformations (mal :: mals)
 
-  (* Prefix signs are scanned as separate tokens, and there is no way to
-   * distinguish them from infix operators until parsing is complete. Therefore
-   * the scanner accepts min_value (e.g. 0x80i8) regardless of whether it's
-   * negative. Thanks to 2s complement representation, both 0x80i8 and -0x80i8
-   * encode min_value, and no correctness issues arise from allowing 0x80i8.
+  (* Prefix signs are scanned as separate tokens, and there is no way to distinguish them from infix
+   * operators until parsing is complete. Therefore the scanner accepts min_value (e.g. 0x80i8)
+   * regardless of whether it's negative. Thanks to 2s complement representation, both 0x80i8 and
+   * -0x80i8 encode min_value, and no correctness issues arise from allowing 0x80i8.
    *
-   * It would be possible to disallow this edge case during an AST optimization
-   * pass which combines constants and their prefix signs; if the compiler does
-   * so, it should take care to emit error messages formatted the same as those
-   * emitted by the scanner. Although it would be possible to push the limit
-   * checking into the post-parsing optimization, doing so would make the
-   * optimization mandatory, as well as making it more likely for the programmer
-   * to not see such errors unless there are no parse errors which prevent code
-   * generation. *)
+   * It would be possible to disallow this edge case during an AST optimization pass which combines
+   * constants and their prefix signs; if the compiler does so, it should take care to emit error
+   * messages formatted the same as those emitted by the scanner. Although it would be possible to
+   * push the limit checking into the post-parsing optimization, doing so would make the
+   * optimization mandatory, as well as making it more likely for the programmer to not see such
+   * errors unless there are no parse errors which prevent code generation. *)
   let limit_of_subtype subtype =
     let open Nat in
     match subtype with
@@ -1925,8 +1846,7 @@ end = struct
       accept subtype_opt accum' radix cursor t
     end in
     match Text.Cursor.next_opt cursor with
-    | None ->
-      accept_subtype bitwidth signedness suffix_cursor accum radix cursor t
+    | None -> accept_subtype bitwidth signedness suffix_cursor accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp num_suffix_map with
         | Some NSMapDigit -> begin
@@ -1935,13 +1855,11 @@ end = struct
             | true -> begin
                 let mal = invalid_type_suffix_leading_zero cursor cursor' t in
                 let accum' = accum_mal mal accum in
-                next_suffix bitwidth signedness suffix_cursor accum' radix
-                  cursor' t
+                next_suffix bitwidth signedness suffix_cursor accum' radix cursor' t
               end
             | false -> begin
                 let bitwidth' = Radix.(nat_accum digit bitwidth Dec) in
-                next_suffix bitwidth' signedness suffix_cursor accum radix
-                  cursor' t
+                next_suffix bitwidth' signedness suffix_cursor accum radix cursor' t
               end
           end
         | Some NSMapIdent -> begin
@@ -2017,21 +1935,15 @@ end = struct
     | None -> accept None accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp whole_map with
-        | Some WMapUscore ->
-          next_whole accum whole_cursor whole_map radix cursor' t
+        | Some WMapUscore -> next_whole accum whole_cursor whole_map radix cursor' t
         | Some WMapDigit -> begin
             let accum' = accum_whole_digit cp radix accum in
             next_whole accum' whole_cursor whole_map radix cursor' t
           end
-        | Some WMapDot ->
-          Real.dot (real_accum_of_accum radix accum) whole_cursor radix cursor'
-            t
-        | Some WMapExp ->
-          Real.exp (real_accum_of_accum radix accum) cursor radix cursor' t
-        | Some WMapUnsSuffix ->
-          next_suffix Nat.k_0 Unsigned cursor accum radix cursor' t
-        | Some WMapIntSuffix ->
-          next_suffix Nat.k_0 Signed cursor accum radix cursor' t
+        | Some WMapDot -> Real.dot (real_accum_of_accum radix accum) whole_cursor radix cursor' t
+        | Some WMapExp -> Real.exp (real_accum_of_accum radix accum) cursor radix cursor' t
+        | Some WMapUnsSuffix -> next_suffix Nat.k_0 Unsigned cursor accum radix cursor' t
+        | Some WMapIntSuffix -> next_suffix Nat.k_0 Signed cursor accum radix cursor' t
         | Some WMapRealSuffix ->
           Real.r_suffix (real_accum_of_accum radix accum) cursor radix cursor' t
         | Some WMapMalIdent -> begin
@@ -2080,14 +1992,11 @@ let end_of_input cursor t =
   match t.line_state, t.level with
   | LineDelim, 0 -> accept_dentation Tok_line_delim cursor t
   | _, 0 -> accept Tok_end_of_input cursor t
-  | _ -> begin
-      accept_dentation (Tok_dedent (Constant ())) cursor
-        {t with level=Uns.pred t.level}
-    end
+  | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
 
 module Dag = struct
-  (* The scanner's directed acyclic subgraph is expressed as a DAG of states
-   * with a unified state transition driver. *)
+  (* The scanner's directed acyclic subgraph is expressed as a DAG of states with a unified state
+   * transition driver. *)
   type action = Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   type eoi_action = Text.Cursor.t -> t -> t * ConcreteToken.t
   type state = {
@@ -2119,22 +2028,21 @@ module Dag = struct
         }));
       (";", (accept_incl Tok_semi));
       ("(", (act {
-          edges=Map.singleton (module Codepoint)
-            ~k:(Codepoint.of_char '*') ~v:paren_comment;
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '*') ~v:paren_comment;
           eoi=(accept Tok_lparen);
           default=(accept_excl Tok_lparen);
         }));
       (")", (accept_incl Tok_rparen));
       ("[", (act {
-          edges=Map.singleton (module Codepoint)
-            ~k:(Codepoint.of_char '|') ~v:(accept_incl Tok_larray);
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
+              Tok_larray);
           eoi=(accept Tok_lbrack);
           default=(accept_excl Tok_lbrack);
         }));
       ("]", (accept_incl Tok_rbrack));
       ("{", (act {
-          edges=Map.singleton (module Codepoint)
-            ~k:(Codepoint.of_char '|') ~v:(accept_incl Tok_lmodule);
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
+              Tok_lmodule);
           eoi=(accept Tok_lcurly);
           default=(accept_excl Tok_lcurly);
         }));
@@ -2206,8 +2114,7 @@ module Dag = struct
       ("'", Codepoint_.codepoint);
       ("\"", String_.istring);
       ("`", (act {
-          edges=Map.singleton (module Codepoint)
-            ~k:(Codepoint.of_char '|') ~v:String_.bstring;
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
           eoi=String_.accept_unterminated_rstring;
           default=String_.rstring;
         }));
@@ -2231,8 +2138,7 @@ module Dag = struct
             ("r", Real.zero_r_suffix);
             (".", Real.zero_frac);
             ("e", Real.zero_exp);
-            ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'",
-              Integer.mal_ident);
+            ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", Integer.mal_ident);
           ]);
           eoi=(accept Integer.zero);
           default=(accept_excl Integer.zero);
@@ -2288,8 +2194,7 @@ end = struct
           | None -> t.path
           | Some _ -> path
         in
-        let bias = Sint.(ni - (Uns.to_sint (Text.(Pos.line (Cursor.pos
-            cursor))))) in
+        let bias = Sint.(ni - (Uns.to_sint (Text.(Pos.line (Cursor.pos cursor))))) in
         {t with path; bias; cursor}, None
       end
     | None -> accept_error cursor t
@@ -2297,8 +2202,7 @@ end = struct
   let path_finish path n cursor t =
     match Text.Cursor.next_opt cursor with
     | None -> accept_error cursor t
-    | Some (cp, cursor') when Codepoint.(cp = nl) ->
-      accept_directive ~path n cursor' t
+    | Some (cp, cursor') when Codepoint.(cp = nl) -> accept_directive ~path n cursor' t
     | Some (_, cursor') -> error cursor' t
 
   let path_start n cursor t =
@@ -2345,8 +2249,7 @@ end = struct
   let tok_indent = Tok_indent (Constant ())
   let tok_dedent = Tok_dedent (Constant ())
   let tok_indent_absent t =
-    Tok_indent (malformed (
-      malformation ~base:t.cursor ~past:t.cursor "Indent absent" t))
+    Tok_indent (malformed (malformation ~base:t.cursor ~past:t.cursor "Indent absent" t))
   let tok_dedent_absent t =
     Tok_dedent (malformed (
       malformation ~base:t.cursor ~past:t.cursor "Dedent absent" t))
@@ -2367,10 +2270,9 @@ end = struct
             let col = Text.(Pos.col (Cursor.pos cursor)) in
             let level = col / 4 in
             let rem = col % 4 in
-            (* The following patterns incrementally handle all
-             * dentation/alignment cases. Malformed tokens are synthesized in
-             * error cases such that the cursor does not advance, but the level
-             * is incrementally adjusted to converge. The overall result is that
+            (* The following patterns incrementally handle all dentation/alignment cases. Malformed
+             * tokens are synthesized in error cases such that the cursor does not advance, but the
+             * level is incrementally adjusted to converge. The overall result is that
              * Tok_indent/Tok_dedent nesting is always well formed. *)
             match rem, t.level, level with
             (* New expression at same level. *)
@@ -2430,15 +2332,13 @@ end = struct
           end
       end
 
-  (* Lines comprising only whitespace and/or comments are ignored with regard to
-   * indentation. Leading paren comments are problematic in that we must look
-   * ahead far enough to determine whether the line contains an expression.
-   * While this could require looking ahead an arbitrary number of tokens, in
-   * the overwhelmingly common case the leading paren comment is immediately
-   * followed by line-delimiting whitespace. In the LineNoop case the leading
-   * paren comment only gets scanned once, and therefore the line-delimiting
-   * whitespace token is the only token to be scanned twice in the common case.
-  *)
+  (* Lines comprising only whitespace and/or comments are ignored with regard to indentation.
+   * Leading paren comments are problematic in that we must look ahead far enough to determine
+   * whether the line contains an expression. While this could require looking ahead an arbitrary
+   * number of tokens, in the overwhelmingly common case the leading paren comment is immediately
+   * followed by line-delimiting whitespace. In the LineNoop case the leading paren comment only
+   * gets scanned once, and therefore the line-delimiting whitespace token is the only token to be
+   * scanned twice in the common case. *)
   let paren_comment_lookahead pcursor cursor t =
     let rec fn t = begin
       let t', ctoken = Dag.start t in

@@ -11,8 +11,8 @@ module type I = sig
   (** Number of bits in integer representation. *)
 end
 
-(** Functor input interface required to derive functions on an integer type with
-    a specific bitwidth. *)
+(** Functor input interface required to derive functions on an integer type with a specific
+    bitwidth. *)
 module type IDerived = sig
   type t
 
@@ -48,20 +48,20 @@ module type SDerived = sig
   (** [is_pow2 t] returns [true] if [t] is a power of 2, [false] otherwise. *)
 
   val floor_pow2: t -> t
-  (** [floor_pow2 t] returns the largest power of 2 less than or equal to [t],
-      or halts if [t] is less than 1. *)
+  (** [floor_pow2 t] returns the largest power of 2 less than or equal to [t], or halts if [t] is
+      less than 1. *)
 
   val ceil_pow2: t -> t
-  (** [ceil_pow2 t] returns the smallest power of 2 greater than or equal to
-      [t], or halts if [t] is less than 1. *)
+  (** [ceil_pow2 t] returns the smallest power of 2 greater than or equal to [t], or halts if [t] is
+      less than 1. *)
 
   val floor_lg: t -> t
-  (** [floor_lg t] returns the base 2 logarithm of [t], rounded down to the
-      nearest integer, or halts if [t] less than 1. *)
+  (** [floor_lg t] returns the base 2 logarithm of [t], rounded down to the nearest integer, or
+      halts if [t] less than 1. *)
 
   val ceil_lg: t -> t
-  (** [ceil_lg t] returns the base 2 logarithm of [t], rounded up to the nearest
-      integer, or halts if [t] is less than 1. *)
+  (** [ceil_lg t] returns the base 2 logarithm of [t], rounded up to the nearest integer, or halts
+      if [t] is less than 1. *)
 
   val min: t -> t -> t
   (** [min a b] returns the minimum of [a] and [b]. *)
@@ -70,9 +70,8 @@ module type SDerived = sig
   (** [max a b] returns the maximum of [a] and [b]. *)
 end
 
-(** Common subset of functor output signatures for unsigned and signed integer
-    types, but without [min_value] and [max_value], which are not always usable
-    with variable-bitwidth types. *)
+(** Common subset of functor output signatures for unsigned and signed integer types, but without
+    [min_value] and [max_value], which are not always usable with variable-bitwidth types. *)
 module type SLimitless = sig
   type t
 
@@ -82,19 +81,16 @@ module type SLimitless = sig
   include RealableIntf.S with type t := t
 
   val pp_b: Format.formatter -> t -> unit
-  (** [pp_b ppf t] prints a binary representation of [t] to the pretty printing
-      formatter, [ppf]. This function is intended for use with the [%a] format
-      specifier to {!Format.printf}.*)
+  (** [pp_b ppf t] prints a binary representation of [t] to the pretty printing formatter, [ppf].
+      This function is intended for use with the [%a] format specifier to {!Format.printf}.*)
 
   val pp_o: Format.formatter -> t -> unit
-  (** [pp_o ppf t] prints an octal representation of [t] to the pretty printing
-      formatter, [ppf]. This function is intended for use with the [%a] format
-      specifier to {!Format.printf}.*)
+  (** [pp_o ppf t] prints an octal representation of [t] to the pretty printing formatter, [ppf].
+      This function is intended for use with the [%a] format specifier to {!Format.printf}.*)
 
   val pp_x: Format.formatter -> t -> unit
-  (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty
-      printing formatter, [ppf]. This function is intended for use with the [%a]
-      format specifier to {!Format.printf}.*)
+  (** [pp_x ppf t] prints a hexadecimal representation of [t] to the pretty printing formatter,
+      [ppf]. This function is intended for use with the [%a] format specifier to {!Format.printf}.*)
 
   val one: t
   (** Constant value 1. *)
@@ -159,8 +155,8 @@ module type SLimitless = sig
   include SDerived with type t := t
 end
 
-(** Common subset of functor output signatures for unsigned and signed integer
-    types with specific bitwidths. *)
+(** Common subset of functor output signatures for unsigned and signed integer types with specific
+    bitwidths. *)
 module type S = sig
   include SLimitless
 
@@ -171,23 +167,19 @@ module type S = sig
   (** Maximum representable value. *)
 end
 
-(** Functor output signature for narrowing functions. These functions are only
-    needed by integer types based on the default integer types, and are a
-    bootstrapping artifact. *)
+(** Functor output signature for narrowing functions. These functions are only needed by integer
+    types based on the default integer types, and are a bootstrapping artifact. *)
 module type SNarrow = sig
   type t
 
   val narrow_of_signed: sint -> t
-  (** Narrow full-width signed integer. Sign is preserved, but precision may be
-      silently lost. *)
+  (** Narrow full-width signed integer. Sign is preserved, but precision may be silently lost. *)
 
   val narrow_of_unsigned: uns -> t
-  (** Narrow full-width unsigned integer. Sign is preserved, but precision may
-      be silently lost. *)
+  (** Narrow full-width unsigned integer. Sign is preserved, but precision may be silently lost. *)
 end
 
-(** Functor output signature for an unsigned integer type with a specific
-    bitwidth. *)
+(** Functor output signature for an unsigned integer type with a specific bitwidth. *)
 module type SU = sig
   type t
 
@@ -195,8 +187,7 @@ module type SU = sig
   include SNarrow with type t := t
 end
 
-(** Functor output signature for functions that exist only for signed integers.
-*)
+(** Functor output signature for functions that exist only for signed integers. *)
 module type SSigned = sig
   type t
 
@@ -216,8 +207,7 @@ module type SSigned = sig
   (** Absolute value. *)
 end
 
-(** Functor output signature for a signed integer type with a specific bitwidth.
-*)
+(** Functor output signature for a signed integer type with a specific bitwidth. *)
 module type SI = sig
   type t
 

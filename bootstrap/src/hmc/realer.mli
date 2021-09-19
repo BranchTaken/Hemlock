@@ -1,7 +1,6 @@
-(** Arbitrary-precision binary floating point number. Trailing 0 binary digits
-    in the mantissa are normalized away; this preserves accuracy but not
-    explicit precision. Only operations which can be performed without loss of
-    precision are supported; e.g. division is intintionally omitted. *)
+(** Arbitrary-precision binary floating point number. Trailing 0 binary digits in the mantissa are
+    normalized away; this preserves accuracy but not explicit precision. Only operations which can
+    be performed without loss of precision are supported; e.g. division is intintionally omitted. *)
 
 open Basis
 open Basis.Rudiments
@@ -14,11 +13,10 @@ type t
 include IdentifiableIntf.S with type t := t
 
 val create: sign:sign -> exponent:Zint.t -> mantissa:Nat.t -> t
-(** [create ~sign ~exponent:(exp_sign, exp) ~mantissa] creates a finite value,
-    where [~sign] is the sign, [(exp_sign, exp)] is the exponent sign and
-    magnitude, and [mantissa] is the significant binary digits, where for
-    non-zero values the binary point is normalized to immediately follow the
-    most significant non-zero bit. *)
+(** [create ~sign ~exponent:(exp_sign, exp) ~mantissa] creates a finite value, where [~sign] is the
+    sign, [(exp_sign, exp)] is the exponent sign and magnitude, and [mantissa] is the significant
+    binary digits, where for non-zero values the binary point is normalized to immediately follow
+    the most significant non-zero bit. *)
 
 val zero: t
 (** Constant value [0.]. *)

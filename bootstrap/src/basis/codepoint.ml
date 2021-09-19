@@ -113,17 +113,14 @@ module Utf8 = struct
     | 3 ->
       Three (
         Byte.of_uns Uns.(bit_or 0b1110_0000 (bit_usr ~shift:12 u)),
-        Byte.of_uns Uns.(bit_or 0b10_000000
-            (bit_and (bit_usr ~shift:6 u) 0x3f)),
+        Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and (bit_usr ~shift:6 u) 0x3f)),
         Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and u 0x3f))
       )
     | 4 ->
       Four (
         Byte.of_uns Uns.(bit_or 0b11110_000 (bit_usr ~shift:18 u)),
-        Byte.of_uns Uns.(bit_or 0b10_000000
-            (bit_and (bit_usr ~shift:12 u) 0x3f)),
-        Byte.of_uns Uns.(bit_or 0b10_000000
-            (bit_and (bit_usr ~shift:6 u) 0x3f)),
+        Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and (bit_usr ~shift:12 u) 0x3f)),
+        Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and (bit_usr ~shift:6 u) 0x3f)),
         Byte.of_uns Uns.(bit_or 0b10_000000 (bit_and u 0x3f))
       )
     | _ -> not_reached ()
@@ -280,12 +277,10 @@ module Seq = struct
       nrem: uns;
     }
 
-    (* It should be equivalent to write t vs T.t , but the compiler gets
-     * confused unless we write T.t here. An alternative is to explicitly define
-     * outer and t as:
+    (* It should be equivalent to write t vs T.t , but the compiler gets confused unless we write
+     * T.t here. An alternative is to explicitly define outer and t as:
      *
-     *   type nonrec outer = outer
-     *   type t = T.t *)
+     *   type nonrec outer = outer type t = T.t *)
     type decoded =
       | Valid    of outer * T.t
       | Invalid  of T.t
@@ -301,9 +296,7 @@ module Seq = struct
       | _ -> begin
           match T.next t with
           | None -> Invalid t
-          | Some (b, _)
-            when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) ->
-            Invalid t
+          | Some (b, _) when Byte.((bit_and b (kv 0b11_000000)) <> (kv 0b10_000000)) -> Invalid t
           | Some (b, t') -> begin
               let u' = bit_or (bit_sl ~shift:6 fragment.u)
                 (bit_and 0x3f (Byte.to_uns b)) in
@@ -322,18 +315,15 @@ module Seq = struct
             end
           | 2 -> begin
               (* 110xxxxx *)
-              Some (to_codepoint_cont
-                  {u=(bit_and 0x1f (Byte.to_uns b)); n=2; nrem=1} t')
+              Some (to_codepoint_cont {u=(bit_and 0x1f (Byte.to_uns b)); n=2; nrem=1} t')
             end
           | 3 -> begin
               (* 1110xxxx *)
-              Some (to_codepoint_cont
-                  {u=(bit_and 0x0f (Byte.to_uns b)); n=3; nrem=2} t')
+              Some (to_codepoint_cont {u=(bit_and 0x0f (Byte.to_uns b)); n=3; nrem=2} t')
             end
           | 4 -> begin
               (* 11110xxx *)
-              Some (to_codepoint_cont
-                  {u=(bit_and 0x07 (Byte.to_uns b)); n=4; nrem=3} t')
+              Some (to_codepoint_cont {u=(bit_and 0x07 (Byte.to_uns b)); n=4; nrem=3} t')
             end
           | _ -> Some (Invalid t')
         end
