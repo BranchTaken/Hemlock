@@ -1,4 +1,0 @@
-S bin/**
-S src/**
-
-B _build/**
