@@ -28,6 +28,9 @@ deflate_bytes(size_t n, size_t * inflated_bytes) {
     for (size_t i = 0; i < n; i++) {
         deflated_bytes[i] = Int_val(inflated_bytes[i]);
     }
+    if (n > 0) {
+        deflated_bytes[n] = '\0';
+    }
     return deflated_bytes;
 }
 
