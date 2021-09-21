@@ -5,8 +5,18 @@ include ContainerCommonIntf.SPolyFold with type 'a t := 'a t
 
 include FormattableIntf.SPoly with type 'a t := 'a t
 
+(* Seeming excess verbosity is necessary for destructive type substitution. *)
 (** Cursor that supports arbitrary array element access. All operations are O(1). *)
-module Cursor : CursorIntf.SPoly
+module Cursor : sig
+  type 'a container = 'a t
+  type 'a elm = 'a
+  type 'a t
+
+  include CursorIntf.SPoly
+    with type 'a container := 'a container
+    with type 'a elm := 'a
+    with type 'a t := 'a t
+end
 
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t -> Hash.State.t
 (** [hash_fold hash_fold_a t state] incorporates the hash of [t] into [state] and returns the
