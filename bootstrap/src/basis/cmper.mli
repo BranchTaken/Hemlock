@@ -37,7 +37,7 @@ module type SMono = sig
 end
 
 (** Functor for monomorphic comparator types, e.g. {!type:string}. The resulting module contains a
-    comparator that can be used in conjunction with e.g. {!type:OrdMap}. The comparator witness
+    comparator that can be used in conjunction with e.g. {!type:Ordmap}. The comparator witness
     assures that multi-container operations can only be performed on containers with compatible
     comparison functions. *)
 module MakeMono (T : IMono) : SMono with type t := T.t
@@ -77,7 +77,7 @@ module type SPoly = sig
 end
 
 (** Functor for polymorphic comparator types, e.g. {!type:'a list}. The resulting module contains a
-    comparator that can be used in conjunction with e.g. {!type:OrdMap}. The comparator witness
+    comparator that can be used in conjunction with e.g. {!type:Ordmap}. The comparator witness
     assures that multi-container operations can only be performed on containers with compatible
     comparison functions. This functor is unusual in that it creates a monomorphic wrapper around a
     specific actualization of a polymorphic type, so that comparators are always in effect
