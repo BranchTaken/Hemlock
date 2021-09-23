@@ -526,7 +526,7 @@ generational GC. The major heap is collected using the
 minor heap is collected using [Cheney](https://dl.acm.org/doi/10.1145/362790.362798)-style atomic
 single-pass semispace copying, with cohort aging to delay promotion from the minor heap.
 
-Each heap comprises nine virtual memory regions, each of which has size equal to the heap size
+Each heap comprises seven virtual memory regions, each of which has size equal to the heap size
 limit. This layout ensures that once the local heap is initialized, given enough physical memory the
 heap size limit can be reliably reached (or exceeded by a constant factor of less than six)
 regardless of the memory usage ratio between major/minor heaps, execution stack, and mailbox. The
