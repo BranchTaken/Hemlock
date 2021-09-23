@@ -10,13 +10,13 @@ let test () =
     | either :: eithers' -> begin
         printf "map %a -> %a@\n"
           (pp Uns.pp Uns.pp) either (pp Uns.pp Uns.pp)
-          (map ~first:(fun x -> x + 2) ~second:(fun x -> x + 4) either);
+          (map ~first:(fun x -> x + 2L) ~second:(fun x -> x + 4L) either);
         fn eithers'
       end
   in
   let eithers = [
-    First 1;
-    Second 2;
+    First 1L;
+    Second 2L;
   ] in
   fn eithers;
   printf "@]"

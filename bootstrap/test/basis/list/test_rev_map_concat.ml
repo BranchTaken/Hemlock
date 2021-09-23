@@ -6,27 +6,27 @@ open Format
 let test () =
   let list_pairs = [
     ([], []);
-    ([0; 1], []);
-    ([0], [1]);
-    ([], [0; 1]);
+    ([0L; 1L], []);
+    ([0L], [1L]);
+    ([], [0L; 1L]);
 
-    ([0; 1; 2], []);
-    ([0; 1], [2]);
-    ([0], [1; 2]);
-    ([], [1; 2; 3]);
+    ([0L; 1L; 2L], []);
+    ([0L; 1L], [2L]);
+    ([0L], [1L; 2L]);
+    ([], [1L; 2L; 3L]);
 
-    ([0; 1; 2; 3], []);
-    ([0; 1; 2], [3]);
-    ([0; 1], [2; 3]);
-    ([0], [1; 2; 3]);
-    ([], [0; 1; 2; 3])
+    ([0L; 1L; 2L; 3L], []);
+    ([0L; 1L; 2L], [3L]);
+    ([0L; 1L], [2L; 3L]);
+    ([0L], [1L; 2L; 3L]);
+    ([], [0L; 1L; 2L; 3L])
   ] in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "rev_map_concat %a %a -> %a\n"
       (pp Uns.pp) a
       (pp Uns.pp) b
-      (pp Uns.pp) (rev_map_concat a b ~f:(fun elm -> elm + 10))
+      (pp Uns.pp) (rev_map_concat a b ~f:(fun elm -> elm + 10L))
   );
   printf "@]"
 

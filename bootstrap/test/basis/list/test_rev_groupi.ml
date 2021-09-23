@@ -6,14 +6,14 @@ open Format
 let test () =
   let lists = [
     [];
-    [9];
-    [9; 9];
+    [9L];
+    [9L; 9L];
 
-    [0; 1];
-    [9; 1; 2; 9];
+    [0L; 1L];
+    [9L; 1L; 2L; 9L];
 
-    [0; 1; 2];
-    [9; 1; 2; 9; 4; 5; 9];
+    [0L; 1L; 2L];
+    [9L; 1L; 2L; 9L; 4L; 5L; 9L];
   ] in
   let inds i x0 x1 = (i = x1) && (i = succ x0) in
   printf "@[<h>";

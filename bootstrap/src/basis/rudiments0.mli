@@ -17,10 +17,6 @@ type sint = RudimentsInt0.sint
 type uns = RudimentsInt0.uns
 (** {!type:uns} is the default numerical type. *)
 
-type i63 = I63.t
-
-type u63 = U63.t
-
 type i32 = I32.t
 
 type u32 = U32.t
@@ -59,12 +55,12 @@ val sint_of_uns: uns -> sint
 (** Convert an unsigned integer to a bitwise identical signed integer. *)
 
 val int_of_sint: sint -> int
-(** Convert a signed integer to a bitwise identical OCaml integer. *)
+(** Convert a signed integer to a narrowed OCaml integer. *)
 
 val sint_of_int: int -> sint
-(** Convert an OCaml integer to a bitwise identical signed integer. *)
+(** Convert an OCaml integer to a widened signed integer. *)
 
-include IntnbIntf.SU with type t := uns
+include IntnbIntf.S with type t := uns
 
 val not: bool -> bool
 (** [not t] returns the logical negation of [t]. *)

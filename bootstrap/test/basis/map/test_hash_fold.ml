@@ -21,10 +21,10 @@ let test () =
    * output; the hashing results from all but the last binding hashed are discarded. *)
   let lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 2];
-    [2; 3]
+    [0L];
+    [0L; 1L];
+    [0L; 2L];
+    [2L; 3L]
   ] in
   fn lists;
   printf "@]"

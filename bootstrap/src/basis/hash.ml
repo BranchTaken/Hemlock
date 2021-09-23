@@ -32,17 +32,16 @@ module State = struct
     let init state =
       {
         state;
-        nfolded=0;
+        nfolded=0L;
         rem=u128_zero;
-        nrem=0;
+        nrem=0L;
       }
 
     let rotl x r =
-      Int64.logor (Int64.shift_left x r)
-        (Int64.shift_right_logical x (64 - r))
+      Int64.logor (Int64.shift_left x r) (Int64.shift_right_logical x (64 - r))
 
-    let fmix_c1 = Int64.of_string "0xff51afd7ed558ccd"
-    let fmix_c2 = Int64.of_string "0xc4ceb9fe1a85ec53"
+    let fmix_c1 = 0xff51afd7ed558ccdL
+    let fmix_c2 = 0xc4ceb9fe1a85ec53L
 
     let fmix k =
       let k = Int64.(logxor k (shift_right_logical k 33)) in
@@ -52,8 +51,8 @@ module State = struct
       let k = Int64.(logxor k (shift_right_logical k 33)) in
       k
 
-    let hash_c1 = Int64.of_string "0x87c37b91114253d5"
-    let hash_c2 = Int64.of_string "0x4cf5ad432745937f"
+    let hash_c1 = 0x87c37b91114253d5L
+    let hash_c2 = 0x4cf5ad432745937fL
 
     let hash u t =
       let h1, h2 = u128_to_tup t.state in
@@ -66,7 +65,7 @@ module State = struct
 
       let h1 = rotl h1 27 in
       let h1 = Int64.add h1 h2 in
-      let h1 = Int64.(add (mul h1 (of_int 5)) (of_int 0x52dce729)) in
+      let h1 = Int64.(add (mul h1 5L) 0x52dce729L) in
 
       let k2 = Int64.mul k2 hash_c2 in
       let k2 = rotl k2 33 in
@@ -75,18 +74,18 @@ module State = struct
 
       let h2 = rotl h2 31 in
       let h2 = Int64.add h2 h1 in
-      let h2 = Int64.(add (mul h2 (of_int 5)) (of_int 0x38495ab5)) in
+      let h2 = Int64.(add (mul h2 5L) 0x38495ab5L) in
 
       let state = u128_of_tup (h1, h2) in
-      {t with state; nfolded=succ t.nfolded}
+      {t with state; nfolded=Int64.(succ t.nfolded)}
 
     let fold_u128 n ~f t =
       let feed u t = begin
-        match t.nrem = 0 with
+        match t.nrem = 0L with
         | true -> hash u t
         | false -> begin
             let u' = u128_bit_or t.rem (u128_bit_sl ~shift:t.nrem u) in
-            let rem = u128_bit_usr ~shift:(16 - t.nrem) u in
+            let rem = u128_bit_usr ~shift:Int64.(sub 16L t.nrem) u in
             let t' = {t with rem} in
             hash u' t'
           end
@@ -94,59 +93,59 @@ module State = struct
       let rec fn i n ~f t = begin
         match i = n with
         | true -> t
-        | false -> fn (succ i) n ~f (feed (f i) t)
+        | false -> fn Int64.(succ i) n ~f (feed (f i) t)
       end in
-      fn 0 n ~f t
+      fn 0L n ~f t
 
     let fold_u64 n ~f t =
       let feed w t = begin
         let u = u128_of_tup (w, Int64.zero) in
-        match t.nrem >= 8 with
+        match t.nrem >= 8L with
         | true -> begin
-            let u' = u128_bit_or t.rem (u128_bit_sl ~shift:(t.nrem * 8) u) in
+            let u' = u128_bit_or t.rem (u128_bit_sl ~shift:Int64.(mul t.nrem 8L) u) in
             let t' = {t with
-              rem=u128_bit_usr ~shift:((16 - t.nrem) * 8) u;
-              nrem=t.nrem mod 8
+              rem=u128_bit_usr ~shift:Int64.(mul (sub 16L t.nrem) 8L) u;
+              nrem=Int64.(rem t.nrem 8L)
             } in
             hash u' t'
           end
         | false -> begin
-            let rem = u128_bit_or t.rem (u128_bit_sl ~shift:(t.nrem * 8) u) in
-            {t with rem; nrem=t.nrem + 8}
+            let rem = u128_bit_or t.rem (u128_bit_sl ~shift:Int64.(mul t.nrem 8L) u) in
+            {t with rem; nrem=Int64.(add t.nrem 8L)}
           end
       end in
       let rec fn i n ~f t = begin
         match i = n with
         | true -> t
-        | false -> fn (succ i) n ~f (feed (f i) t)
+        | false -> fn Int64.(succ i) n ~f (feed (f i) t)
       end in
-      fn 0 n ~f t
+      fn 0L n ~f t
 
     let fold_u8 n ~f t =
       let feed b t = begin
-        let u = u128_of_tup (Int64.of_int b, Int64.zero) in
-        match t.nrem = 15 with
+        let u = u128_of_tup Int64.(b, zero) in
+        match t.nrem = 15L with
         | true -> begin
-            let u' = u128_bit_or t.rem (u128_bit_sl ~shift:120 u) in
-            let t' = {t with rem=u128_zero; nrem=0} in
+            let u' = u128_bit_or t.rem (u128_bit_sl ~shift:120L u) in
+            let t' = {t with rem=u128_zero; nrem=0L} in
             hash u' t'
           end
         | false -> begin
-            let rem = u128_bit_or t.rem (u128_bit_sl ~shift:(t.nrem * 8) u) in
-            {t with rem; nrem=succ t.nrem}
+            let rem = u128_bit_or t.rem (u128_bit_sl ~shift:Int64.(mul t.nrem 8L) u) in
+            {t with rem; nrem=Int64.(succ t.nrem)}
           end
       end in
       let rec fn i n ~f t = begin
         match i = n with
         | true -> t
-        | false -> fn (succ i) n ~f (feed (Int.logand (f i) 0xff) t)
+        | false -> fn Int64.(succ i) n ~f (feed (Int64.logand (f i) 0xffL) t)
       end in
-      fn 0 n ~f t
+      fn 0L n ~f t
 
     let fini t =
       let fold_rem t = begin
-        let len = t.nfolded * 16 + t.nrem in
-        match t.nrem > 0 with
+        let len = Int64.(add (mul t.nfolded 16L) t.nrem) in
+        match t.nrem > 0L with
         | false -> t, len
         | true -> begin
             let h1, h2 = u128_to_tup t.state in
@@ -163,14 +162,14 @@ module State = struct
             let h1 = Int64.logxor h1 k1 in
 
             let state = u128_of_tup (h1, h2) in
-            {t with state; rem=u128_zero; nrem=0}, len
+            {t with state; rem=u128_zero; nrem=0L}, len
           end
       end in
       let t', len = fold_rem t in
       let h1, h2 = u128_to_tup t'.state in
 
-      let h1 = Int64.logxor h1 (Int64.of_int len) in
-      let h2 = Int64.logxor h2 (Int64.of_int len) in
+      let h1 = Int64.(logxor h1 len) in
+      let h2 = Int64.(logxor h2 len) in
 
       let h1 = Int64.add h1 h2 in
       let h2 = Int64.add h2 h1 in

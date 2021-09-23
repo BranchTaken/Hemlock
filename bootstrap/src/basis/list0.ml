@@ -11,7 +11,7 @@ module T = struct
       | [] -> i
       | _ :: tl -> fn tl (Uns.succ i)
     in
-    fn t 0
+    fn t 0L
 
   let rev t =
     let rec fn l r =
@@ -37,7 +37,7 @@ module T = struct
         Uns.cmp t0.index t1.index
 
       let hd list =
-        {list; left_rev=[]; right=list; index=0}
+        {list; left_rev=[]; right=list; index=0L}
 
       let tl list =
         let rec fn l r len = begin
@@ -45,7 +45,7 @@ module T = struct
           | [] -> l, len
           | hd :: tl -> fn (hd :: l) tl (succ len)
         end in
-        let left_rev, len = fn [] list 0 in
+        let left_rev, len = fn [] list 0L in
         {list; left_rev; right=[]; index=len}
 
       let pred t =
@@ -86,54 +86,58 @@ module T = struct
 
       let seek i t =
         let rec seek_rev i t = begin
-          match Sint.(i = (kv 0)) with
+          match Sint.(i = 0L) with
           | true -> t
           | false -> seek_rev Sint.(succ i) (pred t)
         end in
         let rec seek_fwd i t = begin
-          match Sint.(i = (kv 0)) with
+          match Sint.(i = 0L) with
           | true -> t
           | false -> seek_fwd Sint.(pred i) (succ t)
         end in
-        match Sint.(cmp i (kv 0)) with
-        | Cmp.Lt -> seek_rev i t
-        | Cmp.Eq -> t
-        | Cmp.Gt -> seek_fwd i t
+        let open Cmp in
+        match Sint.(cmp i 0L) with
+        | Lt -> seek_rev i t
+        | Eq -> t
+        | Gt -> seek_fwd i t
     end
     include T
     include Cmpable.MakePoly(T)
   end
 
   let cmp cmp_elm t0 t1 =
+    let open Cmp in
     let rec fn t0 t1 = begin
       match t0, t1 with
-      | [], [] -> Cmp.Eq
-      | [], _ -> Cmp.Lt
-      | _, [] -> Cmp.Gt
+      | [], [] -> Eq
+      | [], _ -> Lt
+      | _, [] -> Gt
       | elm0 :: t0', elm1 :: t1' -> begin
           match cmp_elm elm0 elm1 with
-          | Cmp.Eq -> fn t0' t1'
+          | Eq -> fn t0' t1'
           | cmp_result -> cmp_result
         end
     end in
     fn t0 t1
 
   let cmp_length t0 t1 =
+    let open Cmp in
     let rec fn t0 t1 = begin
       match t0, t1 with
-      | [], [] -> Cmp.Eq
-      | [], _ -> Cmp.Lt
-      | _, [] -> Cmp.Gt
+      | [], [] -> Eq
+      | [], _ -> Lt
+      | _, [] -> Gt
       | _ :: t0', _ :: t1' -> fn t0' t1'
     end in
     fn t0 t1
 
   let cmp_length_with t limit =
+    let open Cmp in
     let rec fn t limit = begin
       match t, limit with
-      | [], 0 -> Cmp.Eq
-      | [], _ -> Cmp.Lt
-      | _ :: _, 0 -> Cmp.Gt
+      | [], 0L -> Eq
+      | [], _ -> Lt
+      | _ :: _, 0L -> Gt
       | _ :: t', _ -> fn t' (pred limit)
     end in
     fn t limit
@@ -152,7 +156,7 @@ let hash_fold hash_fold_a t state =
 let init n ~f =
   let rec fn t rem = begin
     match rem with
-    | 0 -> t
+    | 0L -> t
     | _ -> begin
         let i = pred rem in
         let t' = (f i) :: t in
@@ -162,7 +166,7 @@ let init n ~f =
   fn [] n
 
 let is_empty t =
-  (length t) = 0
+  (length t) = 0L
 
 let hd t =
   match t with
@@ -178,7 +182,7 @@ let nth_opt i t =
   let rec fn t i = begin
     match t, i with
     | [], _ -> None
-    | hd :: _, 0 -> Some hd
+    | hd :: _, 0L -> Some hd
     | _ :: t', _ -> fn t' (pred i)
   end in
   fn t i
@@ -262,7 +266,7 @@ let unzip t =
 let split i t =
   let rec fn t i = begin
     match t, i with
-    | _, 0 -> [], t
+    | _, 0L -> [], t
     | [], _ -> halt "Out of bounds"
     | (e :: t'), _ -> begin
         let t0, t1 = fn t' (pred i) in
@@ -274,7 +278,7 @@ let split i t =
 let rev_split i t =
   let rec fn t0 t1 i = begin
     match t1, i with
-    | _, 0 -> t0, t1
+    | _, 0L -> t0, t1
     | [], _ -> halt "Out of bounds"
     | (e :: t1'), _ -> fn (e :: t0) t1' (pred i)
   end in
@@ -320,7 +324,7 @@ let rev_take_until ~f t =
 let drop i t =
   let rec fn t1 i = begin
     match t1, i with
-    | _, 0 -> t1
+    | _, 0L -> t1
     | [], _ -> halt "Out of bounds"
     | (_ :: t1'), _ -> fn t1' (pred i)
   end in
@@ -379,7 +383,7 @@ let groupi ~break t =
       g :: (fn_group t'' i' break)
     end
 end in
-  fn_group t 0 break
+  fn_group t 0L break
 
 let group ~break t =
   groupi t ~break:(fun _ elm0 elm1 -> break elm0 elm1)
@@ -396,7 +400,7 @@ let rev_groupi ~break t =
         else fn gs (elm_right :: g) t' i'
       end
   end in
-  fn [] [] t 0
+  fn [] [] t 0L
 
 let rev_group ~break t =
   rev_groupi t ~break:(fun _ elm0 elm1 -> break elm0 elm1)
@@ -407,7 +411,7 @@ let mapi ~f t =
     | [] -> []
     | elm :: t' -> (f i elm) :: fn t' (Uns.succ i) f
   end in
-  fn t 0 f
+  fn t 0L f
 
 let map ~f t =
   mapi t ~f:(fun _ elm -> f elm)
@@ -418,7 +422,7 @@ let rev_mapi ~f t =
     | [] -> accum
     | elm :: t' -> fn t' (Uns.succ i) f ((f i elm) :: accum)
   end in
-  fn t 0 f []
+  fn t 0L f []
 
 let rev_map ~f t =
   rev_mapi t ~f:(fun _ elm -> f elm)
@@ -442,7 +446,7 @@ let foldi_map ~init ~f t =
         accum'', (b_elm :: b_list)
       end
   end in
-  fn t 0 f init
+  fn t 0L f init
 
 let fold_map ~init ~f t =
   foldi_map t ~init ~f:(fun _ accum a -> f accum a)
@@ -458,7 +462,7 @@ let rev_foldi_map ~init ~f t =
         fn a_list' i' f accum' b_list'
       end
   end in
-  fn t 0 f init []
+  fn t 0L f init []
 
 let rev_fold_map ~init ~f t =
   rev_foldi_map t ~init ~f:(fun _ accum a -> f accum a)
@@ -476,7 +480,7 @@ let filteri ~f t =
         | true -> elm :: accum
       end
   end in
-  fn t 0 f
+  fn t 0L f
 
 let filter ~f t =
   filteri t ~f:(fun _ elm -> f elm)
@@ -492,7 +496,7 @@ let rev_filteri ~f t =
         | true -> fn t' i' f (elm :: accum)
       end
   end in
-  fn t 0 f []
+  fn t 0L f []
 
 let rev_filter ~f t =
   rev_filteri t ~f:(fun _ elm -> f elm)
@@ -511,7 +515,7 @@ let foldi2_until ~init ~f t0 t1 =
         | false -> fn t0' t1' i' f accum'
       end
   end in
-  fn t0 t1 0 f init
+  fn t0 t1 0L f init
 
 let fold2_until ~init ~f t0 t1 =
   foldi2_until t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
@@ -534,7 +538,7 @@ let iteri2 ~f t0 t1 =
         fn t0' t1' (Uns.succ i) f
       end
   end in
-  fn t0 t1 0 f
+  fn t0 t1 0L f
 
 let iter2 ~f t0 t1 =
   iteri2 t0 t1 ~f:(fun _ a b -> f a b)
@@ -550,7 +554,7 @@ let mapi2 ~f t0 t1 =
         (f i elm0 elm1) :: (fn t0' t1' i' f)
       end
   end in
-  fn t0 t1 0 f
+  fn t0 t1 0L f
 
 let map2 ~f t0 t1 =
   mapi2 t0 t1 ~f:(fun _ a b -> f a b)
@@ -567,7 +571,7 @@ let rev_mapi2 ~f t0 t1 =
         fn t0' t1' i' f accum'
       end
   end in
-  fn t0 t1 0 f []
+  fn t0 t1 0L f []
 
 let rev_map2 ~f t0 t1 =
   rev_mapi2 t0 t1 ~f:(fun _ a b -> f a b)
@@ -585,7 +589,7 @@ let foldi2_map ~init ~f t0 t1 =
         accum'', (elm :: map)
       end
   end in
-  fn t0 t1 0 f init
+  fn t0 t1 0L f init
 
 let fold2_map ~init ~f t0 t1 =
   foldi2_map t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
@@ -603,7 +607,7 @@ let rev_foldi2_map ~init ~f t0 t1 =
         fn t0' t1' i' f accum' map'
       end
   end in
-  fn t0 t1 0 f init []
+  fn t0 t1 0L f init []
 
 let rev_fold2_map ~init ~f t0 t1 =
   rev_foldi2_map t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
@@ -627,14 +631,15 @@ module Assoc = struct
     (a, b) :: t
 
   let find a ~cmp t =
+    let open Cmp in
     let rec fn t a cmp = begin
       match t with
       | [] -> None
       | (k, v) :: t' -> begin
           match cmp a k with
-          | Cmp.Eq -> Some v
-          | Cmp.Lt
-          | Cmp.Gt -> fn t' a cmp
+          | Eq -> Some v
+          | Lt
+          | Gt -> fn t' a cmp
         end
     end in
     fn t a cmp
@@ -650,15 +655,16 @@ module Assoc = struct
     | Some _ -> true
 
   let remove_impl a ~cmp t =
+    let open Cmp in
     let rec fn t a cmp = begin
       match t with
       | [] -> None
       | elm :: t' -> begin
           let k, _ = elm in
           match cmp a k with
-          | Cmp.Eq -> Some t'
-          | Cmp.Lt
-          | Cmp.Gt -> begin
+          | Eq -> Some t'
+          | Lt
+          | Gt -> begin
               match fn t' a cmp with
               | None -> None
               | Some t'' -> Some (elm :: t'')

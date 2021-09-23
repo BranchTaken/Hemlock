@@ -13,10 +13,10 @@ let test () =
   end in
   let lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 2; 3];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 2L; 3L];
   ] in
   List.iter lists ~f:test;
   printf "@]"

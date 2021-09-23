@@ -11,13 +11,13 @@ module ArraySeq = struct
     type elm = byte
 
     let init t =
-      {slice=t; bindex=0}
+      {slice=t; bindex=0L}
 
     let length t =
       String.Slice.blength t.slice - t.bindex
 
     let next t =
-      assert (length t > 0);
+      assert (length t > 0L);
       let b = String.Slice.get t.bindex t.slice in
       let t' = {t with bindex=Uns.succ t.bindex} in
       b, t'
@@ -41,17 +41,17 @@ module Cursor = struct
       Uns.cmp t0.index t1.index
 
     let hd array =
-      {array; index=0}
+      {array; index=0L}
 
     let tl array =
       {array; index=(Array.length array)}
 
     let seek i t =
-      match Sint.(i < (kv 0)) with
+      match Sint.(i < (kv 0L)) with
       | true -> begin
-          match (Uns.of_sint Sint.(neg i)) > t.index with
+          match Sint.(neg i) > t.index with
           | true -> halt "Cannot seek before beginning of array"
-          | false -> {t with index=(t.index - Uns.of_sint (Sint.neg i))}
+          | false -> {t with index=(t.index - Uns.(of_sint (Sint.neg i)))}
         end
       | false -> begin
           match (t.index + (Uns.of_sint i)) > (Array.length t.array) with
@@ -60,10 +60,10 @@ module Cursor = struct
         end
 
     let pred t =
-      seek (Sint.kv (-1)) t
+      seek (Sint.kv (-1L)) t
 
     let succ t =
-      seek (Sint.kv 1) t
+      seek (Sint.kv 1L) t
 
     let lget t =
       Array.get (Uns.pred t.index) t.array
@@ -101,7 +101,7 @@ module CodepointSeq = struct
       (Cursor.index t.past) - (Cursor.index t.cursor)
 
     let next t =
-      match (length t) = 0 with
+      match (length t) = 0L with
       | true -> None
       | false -> begin
           let b, cursor' = Cursor.next t.cursor in
@@ -149,8 +149,8 @@ module StringSeq = struct
 
     let init ~on_invalid ~cursor ~past =
       let seq = CodepointSeq.init ~cursor ~past in
-      match vlength ~on_invalid seq 0 with
-      | Some vlength -> Some {on_invalid; seq; vlength; vindex=0}
+      match vlength ~on_invalid seq 0L with
+      | Some vlength -> Some {on_invalid; seq; vlength; vindex=0L}
       | None -> None
 
     let length t =

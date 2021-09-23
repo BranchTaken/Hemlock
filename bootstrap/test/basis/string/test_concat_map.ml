@@ -9,8 +9,8 @@ let test () =
   printf "%s" (concat_map s ~f:(fun cp -> of_codepoint cp));
   printf "%s" (concat_map s ~f:(fun cp ->
     match cp with
-    | cp when Codepoint.(cp = (kv 0x61)) -> "hello "
-    | cp when Codepoint.(cp = (kv 0x64)) -> " there "
+    | cp when Codepoint.(cp = (kv 0x61L)) -> "hello "
+    | cp when Codepoint.(cp = (kv 0x64L)) -> " there "
     | _ -> of_codepoint cp
   ))
 

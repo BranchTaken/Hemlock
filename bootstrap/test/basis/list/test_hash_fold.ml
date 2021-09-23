@@ -18,9 +18,9 @@ let test () =
   end in
   let lists = [
     [];
-    [0];
-    [0; 0];
-    [0; 1]
+    [0L];
+    [0L; 0L];
+    [0L; 1L]
   ] in
   fn lists;
   printf "@]"

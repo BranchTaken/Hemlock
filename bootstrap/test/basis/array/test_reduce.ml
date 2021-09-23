@@ -13,7 +13,7 @@ let test () =
   let f a b = (a + b) in
   printf "@[<h>";
   test_reduce [||] ~f;
-  test_reduce [|0; 1; 2; 3; 4|] ~f;
+  test_reduce [|0L; 1L; 2L; 3L; 4L|] ~f;
   printf "@]"
 
 let _ = test ()

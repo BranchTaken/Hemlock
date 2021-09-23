@@ -1,6 +1,6 @@
 open Rudiments
 
-let default_tabwidth = 8
+let default_tabwidth = 8L
 
 (* Line/column position independent of previous lines' contents, with signed column number to
  * facilitate backward cursoring. *)
@@ -24,7 +24,7 @@ module Spos = struct
 
   let succ tabwidth cp t =
     match cp with
-    | cp when Codepoint.(cp = nl) -> {line=Uns.succ t.line; scol=Sint.kv 0}
+    | cp when Codepoint.(cp = nl) -> {line=Uns.succ t.line; scol=Sint.kv 0L}
     | cp when Codepoint.(cp = ht) ->
       {t with scol=Sint.(t.scol + (kv tabwidth) - (t.scol % (kv tabwidth)))}
     | _ -> {t with scol=Sint.succ t.scol}
@@ -91,7 +91,7 @@ module Excerpt = struct
   }
 
   (* Base excerpt, always hd of excerpts maps. *)
-  let base = {eind=0; bytes=Bytes.Slice.of_container [||]}
+  let base = {eind=0L; bytes=Bytes.Slice.of_container [||]}
 
   (* val of_bytes_slice: t -> Bytes.Slice.t -> t *)
   let of_bytes_slice pred bytes =
@@ -125,13 +125,13 @@ module Excerpt = struct
         Uns.cmp t0.index t1.index
 
       let hd excerpt =
-        {excerpt; index=0}
+        {excerpt; index=0L}
 
       let tl excerpt =
         {excerpt; index=Bytes.Slice.length excerpt.bytes}
 
       let pred t =
-        match t.index = 0 with
+        match t.index = 0L with
         | true -> halt "Cannot seek before beginning of excerpt"
         | false -> {t with index=Uns.pred t.index}
 
@@ -234,11 +234,11 @@ module Cursor = struct
       Vind.index t.vind
 
     let hd text =
-      let excerpt = Map.get_hlt 0 text.excerpts in
+      let excerpt = Map.get_hlt 0L text.excerpts in
       {
         text;
-        vind=Vind.init 0;
-        spos=Spos.init ~line:1 ~scol:(Sint.kv 0);
+        vind=Vind.init 0L;
+        spos=Spos.init ~line:1L ~scol:(Sint.kv 0L);
         ecursor=Excerpt.Cursor.hd excerpt;
       }
 
@@ -330,7 +330,7 @@ module Cursor = struct
     let seek_fwd offset t =
       let rec fn offset t = begin
         match offset with
-        | 0 -> t
+        | 0L -> t
         | _ -> fn (Uns.pred offset) (succ t)
       end in
       fn offset t
@@ -357,7 +357,7 @@ module Cursor = struct
               Some (b, {t with ecursor=ecursor'})
             end
           | false -> begin
-              match (Excerpt.eind t.ecursor.excerpt) > 0 with
+              match (Excerpt.eind t.ecursor.excerpt) > 0L with
               | true -> begin
                   let excerpt' = Map.get_hlt (Uns.pred t.ecursor.excerpt.eind) t.text.excerpts in
                   let ecursor' = Excerpt.Cursor.tl excerpt' in
@@ -405,19 +405,19 @@ module Cursor = struct
     let seek_rev offset t =
       let rec fn offset t = begin
         match offset with
-        | 0 -> t
+        | 0L -> t
         | _ -> fn (Uns.pred offset) (pred t)
       end in
       fn offset t
 
     let seek offset t =
-      if Sint.(offset < kv 0) then seek_rev (Uns.of_sint (Sint.neg offset)) t
+      if Sint.(offset < 0L) then seek_rev (Uns.of_sint (Sint.neg offset)) t
       else seek_fwd (Uns.of_sint offset) t
 
     let pos t =
       let col0_delta t = begin
         let rec seek_col0 t = begin
-          match t.vind = 0 with
+          match t.vind = 0L with
           | true -> t
           | false -> begin
               let cp, t' = prev t in
@@ -438,7 +438,7 @@ module Cursor = struct
           | Eq -> i
           | Gt -> not_reached ()
         end in
-        col_delta (tabwidth (container t)) (seek_col0 t) t 0
+        col_delta (tabwidth (container t)) (seek_col0 t) t 0L
       end in
       let col = match Sint.is_negative (Spos.scol t.spos) with
         | false -> Uns.of_sint (Spos.scol t.spos)

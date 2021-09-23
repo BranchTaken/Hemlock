@@ -1,4 +1,0 @@
-bit_{pop,clz,ctz} 0x0000000000000000i -> 0, 63, 63
-bit_{pop,clz,ctz} 0x0000000000000001i -> 1, 62, 0
-bit_{pop,clz,ctz} 0x4000000000000000i -> 1, 0, 62
-bit_{pop,clz,ctz} 0x7fffffffffffffffi -> 63, 0, 0

@@ -28,9 +28,9 @@ let scan_file path =
 
 let _ =
   match Array.length Sys.argv with
-  | 0 | 1 -> halt "hmc usage: hmc <path>"
+  | 0L | 1L -> halt "hmc usage: hmc <path>"
   | _ -> begin
-      let path_str = Array.get 1 Sys.argv in
+      let path_str = Array.get 1L Sys.argv in
       let path_slice = String.Slice.of_string path_str in
       let path = Bytes.Slice.of_string_slice path_slice in
       scan_file path

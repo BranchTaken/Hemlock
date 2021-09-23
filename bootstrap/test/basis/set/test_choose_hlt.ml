@@ -14,12 +14,12 @@ let test () =
         let set' = test n (succ i) (insert i set) in
         let m = choose_hlt set' in
         let set'' = remove m set' in
-        assert ((length set') = (length set'') + 1);
+        assert ((length set') = (length set'') + 1L);
         set''
       end
   end in
   let e = empty (module Uns) in
-  let _ = test 100 0 e in
+  let _ = test 100L 0L e in
   printf "@]"
 
 let _ = test ()

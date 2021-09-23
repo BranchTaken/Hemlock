@@ -15,7 +15,7 @@ let test () =
         test_init_up_to (succ i) n
       end
   end in
-  test_init_up_to 0 3;
+  test_init_up_to 0L 3L;
   printf "@]"
 
 let _ = test ()

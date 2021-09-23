@@ -4,8 +4,8 @@ type ('a, 'b) t =
 
 let hash_fold hash_fold_a hash_fold_b t state =
   match t with
-  | First a -> state |> Uns.hash_fold 0 |> hash_fold_a a
-  | Second b -> state |> Uns.hash_fold 1 |> hash_fold_b b
+  | First a -> state |> Uns.hash_fold 0L |> hash_fold_a a
+  | Second b -> state |> Uns.hash_fold 1L |> hash_fold_b b
 
 let cmp cmp_a cmp_b t0 t1 =
   let open Cmp in

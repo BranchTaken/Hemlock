@@ -127,7 +127,7 @@ module Source = struct
           {t with text_cursor=Text.Cursor.seek (Uns.to_sint offset) t.text_cursor}
 
       let seek offset t =
-        match Sint.(offset < kv 0) with
+        match Sint.(offset < 0L) with
         | true -> seek_rev (Uns.of_sint (Sint.neg offset)) t
         | false -> seek_fwd (Uns.of_sint offset) t
     end
@@ -142,7 +142,7 @@ module Source = struct
   let line_context t =
     let rec bol text_cursor = begin
       match Text.Cursor.index text_cursor with
-      | 0 -> text_cursor
+      | 0L -> text_cursor
       | _ -> begin
           match Text.Cursor.prev text_cursor with
           | cp, _ when Codepoint.(cp = nl) -> text_cursor
@@ -531,7 +531,7 @@ let init text =
     bias=Sint.zero;
     cursor=Text.Cursor.hd text;
     line_state=LineDentation;
-    level=0;
+    level=0L;
   }
 
 let text t =
@@ -706,7 +706,7 @@ let paren_comment _pcursor cursor t =
       | cp when Codepoint.(cp = of_char '(') -> fn_lparen nesting cursor t
       | cp when Codepoint.(cp = of_char ')') -> begin
           match nesting with
-          | 1 -> accept_paren_comment cursor t
+          | 1L -> accept_paren_comment cursor t
           | _ -> fn (Uns.pred nesting) cursor t
         end
       | _ -> fn nesting cursor t
@@ -720,7 +720,7 @@ let paren_comment _pcursor cursor t =
       | _ -> fn nesting cursor t
     ) nesting cursor t
   end in
-  fn 1 cursor t
+  fn 1L cursor t
 
 let operator_cps = "-+*/%@$<=>|:.~?"
 let operator_set = set_of_cps operator_cps
@@ -1356,7 +1356,7 @@ end = struct
   let realer_of_nat nat =
     let sig_bits = (Nat.bit_length nat) - (Nat.bit_clz nat) in
     let exponent = match sig_bits with
-      | 0 -> Zint.zero
+      | 0L -> Zint.zero
       | _ -> Zint.of_uns (pred sig_bits)
     in
     Realer.create ~sign:Realer.Pos ~exponent ~mantissa:nat
@@ -1366,10 +1366,10 @@ end = struct
         let cp_nat = nat_of_cp cp in
         let open Radix in
         let bits_per_digit = match radix with
-          | Bin -> Sint.kv 1
-          | Oct -> Sint.kv 3
+          | Bin -> Sint.kv 1L
+          | Oct -> Sint.kv 3L
           | Dec -> not_reached ()
-          | Hex -> Sint.kv 4
+          | Hex -> Sint.kv 4L
         in
         let sig_bits = (Nat.bit_length cp_nat) - (Nat.bit_clz cp_nat) in
         let nonfrac_shift = Sint.(bits_per_digit - (pred (Uns.to_sint sig_bits))) in
@@ -1450,9 +1450,9 @@ end = struct
       let subtype_opt = match Nat.to_uns_opt bitwidth with
         | Some bit_length -> begin
             match bit_length with
-            | 32 -> Some Subtype_r32
-            | 64 -> Some Subtype_r64
-            | 0 -> begin
+            | 32L -> Some Subtype_r32
+            | 64L -> Some Subtype_r64
+            | 0L -> begin
                 let _cp, digits_cursor = Text.Cursor.next suffix_cursor in
                 match Text.Cursor.(digits_cursor = cursor) with
                 | true -> Some Subtype_r64 (* "r" suffix. *)
@@ -1643,7 +1643,7 @@ end = struct
   let of_whole whole radix =
     let open Radix in
     match radix with
-    | Bin | Oct | Hex -> R (realer_of_nat whole, Sint.kv 0, ExpPos, Zint.zero)
+    | Bin | Oct | Hex -> R (realer_of_nat whole, Sint.kv 0L, ExpPos, Zint.zero)
     | Dec -> R_dec
 
   let of_mals mals =
@@ -1811,27 +1811,27 @@ end = struct
       let subtype_opt = match Nat.to_uns_opt bitwidth with
         | Some bit_length -> begin
             match signedness, bit_length with
-            | Unsigned, 8 -> Some Subtype_u8
-            | Signed, 8 -> Some Subtype_i8
-            | Unsigned, 16 -> Some Subtype_u16
-            | Signed, 16 -> Some Subtype_i16
-            | Unsigned, 32 -> Some Subtype_u32
-            | Signed, 32 -> Some Subtype_i32
-            | Unsigned, 64 -> Some Subtype_u64
-            | Signed, 64 -> Some Subtype_i64
-            | Unsigned, 128 -> Some Subtype_u128
-            | Signed, 128 -> Some Subtype_i128
-            | Unsigned, 256 -> Some Subtype_u256
-            | Signed, 256 -> Some Subtype_i256
-            | Unsigned, 512 -> Some Subtype_u512
-            | Signed, 512 -> Some Subtype_i512
-            | Unsigned, 0 -> begin
+            | Unsigned, 8L -> Some Subtype_u8
+            | Signed, 8L -> Some Subtype_i8
+            | Unsigned, 16L -> Some Subtype_u16
+            | Signed, 16L -> Some Subtype_i16
+            | Unsigned, 32L -> Some Subtype_u32
+            | Signed, 32L -> Some Subtype_i32
+            | Unsigned, 64L -> Some Subtype_u64
+            | Signed, 64L -> Some Subtype_i64
+            | Unsigned, 128L -> Some Subtype_u128
+            | Signed, 128L -> Some Subtype_i128
+            | Unsigned, 256L -> Some Subtype_u256
+            | Signed, 256L -> Some Subtype_i256
+            | Unsigned, 512L -> Some Subtype_u512
+            | Signed, 512L -> Some Subtype_i512
+            | Unsigned, 0L -> begin
                 let _cp, digits_cursor = Text.Cursor.next suffix_cursor in
                 match Text.Cursor.(digits_cursor = cursor) with
                 | true -> Some Subtype_u64 (* "u" suffix. *)
                 | false -> None
               end
-            | Signed, 0 -> begin
+            | Signed, 0L -> begin
                 let _cp, digits_cursor = Text.Cursor.next suffix_cursor in
                 match Text.Cursor.(digits_cursor = cursor) with
                 | true -> Some Subtype_i64 (* "i" suffix. *)
@@ -1995,8 +1995,8 @@ end
 
 let end_of_input cursor t =
   match t.line_state, t.level with
-  | LineDelim, 0 -> accept_dentation Tok_line_delim cursor t
-  | _, 0 -> accept Tok_end_of_input cursor t
+  | LineDelim, 0L -> accept_dentation Tok_line_delim cursor t
+  | _, 0L -> accept Tok_end_of_input cursor t
   | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
 
 module Dag = struct
@@ -2279,15 +2279,15 @@ end = struct
         | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
         | _ -> begin
             let col = Text.(Pos.col (Cursor.pos cursor)) in
-            let level = col / 4 in
-            let rem = col % 4 in
+            let level = col / 4L in
+            let rem = col % 4L in
             (* The following patterns incrementally handle all dentation/alignment cases. Malformed
              * tokens are synthesized in error cases such that the cursor does not advance, but the
              * level is incrementally adjusted to converge. The overall result is that
              * Tok_indent/Tok_dedent nesting is always well formed. *)
             match rem, t.level, level with
             (* New expression at same level. *)
-            | 0, t_level, level when t_level = level -> begin
+            | 0L, t_level, level when t_level = level -> begin
                 match t.line_state with
                 | LineDentation -> Dag.start {t with line_state=LineBody}
                 | LineDelim -> accept_dentation Tok_line_delim cursor t
@@ -2295,48 +2295,48 @@ end = struct
               end
 
             (* Continuation of expression at current level. *)
-            | 2, t_level, level when t_level = level ->
+            | 2L, t_level, level when t_level = level ->
               accept_dentation Tok_whitespace cursor t
 
             (* New expression at higher level. *)
-            | 0, t_level, level when succ t_level = level ->
+            | 0L, t_level, level when succ t_level = level ->
               accept_dentation tok_indent cursor {t with level}
 
             (* Continuation of expression at lower level. *)
-            | 2, t_level, level when t_level > succ level ->
+            | 2L, t_level, level when t_level > succ level ->
               accept tok_dedent t.cursor {t with level=pred t_level}
-            | 2, t_level, level when t_level = succ level ->
+            | 2L, t_level, level when t_level = succ level ->
               accept_dentation tok_dedent cursor {t with level}
 
             (* New expression at lower level. *)
-            | 0, t_level, level when t_level > succ level ->
+            | 0L, t_level, level when t_level > succ level ->
               accept tok_dedent t.cursor {t with level=pred t_level}
-            | 0, t_level, level when t_level = succ level ->
+            | 0L, t_level, level when t_level = succ level ->
               accept_dentation tok_dedent cursor {t with level}
 
             (* Off by one column at lower level. *)
-            | 3, t_level, level when t_level > succ level ->
+            | 3L, t_level, level when t_level > succ level ->
               accept (tok_dedent_absent t) t.cursor {t with level=pred t_level}
-            | 1, t_level, level when t_level > level ->
+            | 1L, t_level, level when t_level > level ->
               accept (tok_dedent_absent t) t.cursor {t with level=pred t_level}
 
             (* Off by one column at current level. *)
-            | 3, t_level, level when t_level = succ level ->
+            | 3L, t_level, level when t_level = succ level ->
               accept_dentation Tok_misaligned cursor t
-            | 1, t_level, level when t_level = level ->
+            | 1L, t_level, level when t_level = level ->
               accept_dentation Tok_misaligned cursor t
 
             (* Excess aligned indentation. *)
-            | 0, t_level, level when succ t_level < level ->
+            | 0L, t_level, level when succ t_level < level ->
               accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
             (* Off by one column at higher level. *)
-            | 3, t_level, level when t_level < succ level ->
+            | 3L, t_level, level when t_level < succ level ->
               accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
-            | 1, t_level, level when t_level < level ->
+            | 1L, t_level, level when t_level < level ->
               accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
 
             (* Continuation of expression at higher level. *)
-            | 2, t_level, level when t_level < level ->
+            | 2L, t_level, level when t_level < level ->
               accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
 
             | _ -> not_reached ()
@@ -2371,13 +2371,13 @@ end = struct
 
   let other cursor t =
     match t.level with
-    | 0 -> begin
+    | 0L -> begin
         match t.line_state with
         | LineDentation -> Dag.start {t with line_state=LineBody}
         | LineDelim -> accept_dentation Tok_line_delim cursor t
         | LineBody -> not_reached ()
       end
-    | 1 -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=0}
+    | 1L -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=0L}
     | _ -> accept (Tok_dedent (Constant ())) cursor {t with level=pred t.level}
 
   let rec start cursor t =

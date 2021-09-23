@@ -16,23 +16,23 @@ let test () =
     let set0 = of_list (module Uns) ms0 in
     let set1 = of_list (module Uns) ms1 in
     let set = inter set0 set1 in
-    assert ((length set) = 0);
+    assert ((length set) = 0L);
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   let test_disjoint_list_pairs = [
-    ([], [0]);
-    ([0], [1]);
-    ([0], [1; 2]);
-    ([0; 1], [2; 3]);
-    ([0; 1], [2; 3; 4]);
-    ([0; 1; 2], [3; 4; 5])
+    ([], [0L]);
+    ([0L], [1L]);
+    ([0L], [1L; 2L]);
+    ([0L; 1L], [2L; 3L]);
+    ([0L; 1L], [2L; 3L; 4L]);
+    ([0L; 1L; 2L], [3L; 4L; 5L])
   ] in
   List.iteri test_lists ~f:(fun i ms0 ->
     List.iteri test_lists ~f:(fun j ms1 ->

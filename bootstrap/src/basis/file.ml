@@ -14,7 +14,7 @@ module Error = struct
 
   let to_string t =
     let n = to_string_get_length t in
-    let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0) in
+    let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0L) in
     let () = to_string_inner n bytes t in
     Bytes.to_string_hlt bytes
 end
@@ -37,14 +37,14 @@ end
 
 type t = uns
 
-(* external of_path_inner: t -> uns -> uns -> uns -> byte /_ array $-> sint *)
+(* external of_path_inner: Flag.t -> uns -> uns -> uns -> byte /_ array $-> sint *)
 external of_path_inner: Flag.t -> uns -> uns -> uns -> Bytes.t -> sint =
   "hemlock_file_of_path_inner"
 
-let of_path ?(flag=Flag.RW) ?(mode=0o660) path =
+let of_path ?(flag=Flag.RW) ?(mode=0o660L) path =
   let value = of_path_inner flag mode (Bytes.Cursor.index (Bytes.Slice.base path))
     (Bytes.Cursor.index (Bytes.Slice.past path)) (Bytes.Slice.container path) in
-  match Sint.(value < kv 0) with
+  match Sint.(value < kv 0L) with
   | false -> Ok (Uns.of_sint value)
   | true -> Error (Uns.of_sint Sint.(-value))
 
@@ -76,7 +76,7 @@ external close_inner: t -> sint = "hemlock_file_close_inner"
 
 let close t =
   let value = close_inner t in
-  match Sint.(value < kv 0) with
+  match Sint.(value < kv 0L) with
   | false -> None
   | true -> Some (Error.of_value value)
 
@@ -85,12 +85,12 @@ let close_hlt t =
   | None -> ()
   | Some error -> halt (Error.to_string error)
 
-let read_n = 1024
+let read_n = 1024L
 
 let read_base inner buffer t =
   let value = inner (Bytes.Cursor.index (Bytes.Slice.base buffer)) (Bytes.Cursor.index
       (Bytes.Slice.past buffer)) (Bytes.Slice.container buffer) t in
-  match Sint.(value < kv 0) with
+  match Sint.(value < kv 0L) with
   | true -> Error (Uns.of_sint Sint.(-value))
   | false ->
     Ok (Bytes.Slice.of_cursors ~base:(Bytes.Slice.base buffer) ~past:(Bytes.Cursor.seek value
@@ -101,7 +101,7 @@ let read_base inner buffer t =
 external read_inner: uns -> uns -> Bytes.t -> t -> sint = "hemlock_file_read_inner"
 
 let read ?(n=read_n) t =
-  let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0) in
+  let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0L) in
   let buffer = Bytes.Slice.of_container bytes in
   read_base read_inner buffer t
 
@@ -136,7 +136,7 @@ let rec write buffer t =
   | true -> begin
       let value = write_inner (Bytes.Cursor.index (Bytes.Slice.base buffer)) (Bytes.Cursor.index
           (Bytes.Slice.past buffer)) (Bytes.Slice.container buffer) t in
-      match Sint.(value < kv 0) with
+      match Sint.(value < kv 0L) with
       | true -> Some (Error.of_value value)
       | false ->
         write (
@@ -155,7 +155,7 @@ let write_hlt buffer t =
 
 let seek_base inner rel_off t =
   let value = inner rel_off t in
-  match Sint.(value < kv 0) with
+  match Sint.(value < kv 0L) with
   | false -> Ok (Uns.of_sint value)
   | true -> Error (Error.of_value value)
 

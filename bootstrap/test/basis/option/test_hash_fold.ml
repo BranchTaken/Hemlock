@@ -17,8 +17,8 @@ let test () =
   in
   let options = [
     None;
-    (Some 0);
-    (Some 1)
+    (Some 0L);
+    (Some 1L)
   ] in
   fn options;
   printf "@]"

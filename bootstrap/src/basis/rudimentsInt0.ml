@@ -2,9 +2,9 @@ open RudimentsFunctions
 
 type i64 = int64
 type u64 = int64
+type sint = int64
+type uns = int64
 type u128 = {w0: u64; w1: u64}
-type sint = int
-type uns = int
 
 let uns_of_sint t =
   t
@@ -13,18 +13,19 @@ let sint_of_uns t =
   t
 
 let int_of_sint t =
-  t
+  if (t <> Int64.(of_int (to_int t))) then halt "Lossy conversion";
+  Int64.to_int t
 
 let sint_of_int t =
-  t
+  Int64.of_int t
 
 let u128_init ~f =
-  {w0=f 0; w1=f 1}
+  {w0=f 0L; w1=f 1L}
 
 let u128_get i t =
   match i, t with
-  | 0, {w0; w1=_} -> w0
-  | 1, {w0=_; w1} -> w1
+  | 0L, {w0; w1=_} -> w0
+  | 1L, {w0=_; w1} -> w1
   | _ -> not_reached ()
 
 let u128_of_tup (w0, w1) =
@@ -34,77 +35,77 @@ let u128_to_tup = function
   | {w0; w1} -> (w0, w1)
 
 let u128_of_uns u =
-  u128_of_tup (Int64.of_int u, Int64.zero)
+  u128_of_tup (u, Int64.zero)
 
 let u128_pp_x ppf t =
   let rec fn x shift = begin
     match shift with
-    | 0 -> ()
+    | 0L -> ()
     | _ -> begin
-        if shift < 64 then Format.fprintf ppf "_";
-        let shift' = shift - 16 in
-        Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x shift') (of_int 0xffff));
+        if Stdlib.(Int64.(compare shift 64L) < 0) then Format.fprintf ppf "_";
+        let shift' = Int64.(sub shift 16L) in
+        Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x (to_int shift')) 0xffffL);
         fn x shift'
       end
   end in
   let t_lo, t_hi = u128_to_tup t in
   Format.fprintf ppf "0x";
-  fn t_hi 64;
+  fn t_hi 64L;
   Format.fprintf ppf "_";
-  fn t_lo 64;
+  fn t_lo 64L;
   Format.fprintf ppf "u128"
 
 let u128_compare t0 t1 =
   let t0_lo, t0_hi = u128_to_tup t0 in
   let t1_lo, t1_hi = u128_to_tup t1 in
   sint_of_uns (
-    match (Int64.unsigned_compare t0_hi t1_hi),
-      (Int64.unsigned_compare t0_lo t1_lo) with
+    match (Int64.unsigned_compare t0_hi t1_hi), (Int64.unsigned_compare t0_lo t1_lo) with
     | -1, _
-    | 0, -1 -> -1
-    | 0, 0 -> 0
+    | 0, -1 -> -1L
+    | 0, 0 -> 0L
     | 1, _
-    | 0, 1 -> 1
+    | 0, 1 -> 1L
     | _ -> not_reached ()
   )
 
-let u128_zero = u128_of_tup (Int64.zero, Int64.zero)
+let u128_zero = u128_of_tup Int64.(zero, zero)
 
-let u128_one = u128_of_tup (Int64.one, Int64.zero)
+let u128_one = u128_of_tup Int64.(one, zero)
 
 let u128_bit_or t0 t1 =
   let t0_lo, t0_hi = u128_to_tup t0 in
   let t1_lo, t1_hi = u128_to_tup t1 in
-  u128_of_tup (Int64.logor t0_lo t1_lo, Int64.logor t0_hi t1_hi)
+  u128_of_tup Int64.(logor t0_lo t1_lo, logor t0_hi t1_hi)
 
 let u128_bit_sl ~shift t =
   let t_lo, t_hi = u128_to_tup t in
-  let i = shift mod 128 in
+  let i = Int64.(rem shift 128L) in
   let hi = begin
-    if i >= 64 then Int64.shift_left t_lo (i - 64)
-    else if i > 0 then
-      Int64.logor (Int64.shift_left t_hi i) (Int64.shift_right_logical t_lo (64 - i))
+    if Stdlib.(Int64.(compare i 64L) >= 0) then Int64.(shift_left t_lo (to_int (sub i 64L)))
+    else if Stdlib.(Int64.(compare i 0L) > 0) then
+      Int64.(logor (shift_left t_hi (to_int i)) (shift_right_logical t_lo (to_int (sub 64L i))))
     else t_hi
   end in
   let lo = begin
-    if i >= 64 then Int64.zero
-    else if i > 0 then Int64.shift_left t_lo i
+    if Stdlib.(Int64.(compare i 64L) >= 0) then Int64.zero
+    else if Stdlib.(Int64.(compare i 0L) > 0) then Int64.(shift_left t_lo (to_int i))
     else t_lo
   end in
   u128_of_tup (lo, hi)
 
 let u128_bit_usr ~shift t =
   let t_lo, t_hi = u128_to_tup t in
-  let i = shift mod 128 in
+  let i = Int64.(rem shift 128L) in
   let hi = begin
-    if i >= 64 then Int64.zero
-    else if i > 0 then Int64.shift_right_logical t_hi i
+    if Stdlib.(Int64.(compare i 64L) >= 0) then Int64.zero
+    else if Stdlib.(Int64.(compare i 0L) > 0) then Int64.(shift_right_logical t_hi (to_int i))
     else t_hi
   end in
   let lo = begin
-    if i >= 64 then Int64.shift_right_logical t_hi (i - 64)
-    else if i > 0 then
-      Int64.logor (Int64.shift_left t_hi (64 - i)) (Int64.shift_right_logical t_lo i)
+    if Stdlib.(Int64.(compare i 64L) >= 0) then
+      Int64.(shift_right_logical t_hi (to_int (sub i 64L)))
+    else if Stdlib.(Int64.(compare i 0L) > 0) then
+      Int64.(logor (shift_left t_hi (to_int (sub 64L i))) (shift_right_logical t_lo (to_int i)))
     else t_lo
   end in
   u128_of_tup (lo, hi)
@@ -181,9 +182,9 @@ let u128_of_string s =
   let d_of_c c = begin
     match c with
     | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
-      u128_of_uns ((Stdlib.Char.code c) - (Stdlib.Char.code '0'))
+      u128_of_uns Stdlib.(Int64.of_int (Char.(code c - code '0')))
     | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' ->
-      u128_of_uns (10 + (Stdlib.Char.code c) - (Stdlib.Char.code 'a'))
+      u128_of_uns Stdlib.(Int64.of_int (10 + (Char.(code c - code 'a'))))
     | _ -> not_reached ()
   end in
   let rec suffix s i j len = begin
@@ -213,7 +214,7 @@ let u128_of_string s =
             let ndigits' = ndigits + 1 in
             let accum, mult = hexadecimal s i' ndigits' len in
             let accum' = u128_add accum (u128_mul mult (d_of_c c)) in
-            let mult' = u128_mul mult (u128_of_uns 16) in
+            let mult' = u128_mul mult (u128_of_uns 16L) in
             accum', mult'
           end
         | 'u' -> begin
@@ -232,7 +233,7 @@ let u128_of_string s =
         | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> begin
             let accum, mult = decimal s i' len in
             let accum' = u128_add accum (u128_mul mult (d_of_c c)) in
-            let mult' = u128_mul mult (u128_of_uns 10) in
+            let mult' = u128_mul mult (u128_of_uns 10L) in
             accum', mult'
           end
         | 'u' -> begin
@@ -256,7 +257,7 @@ let u128_of_string s =
             let ndigits' = ndigits + 1 in
             let accum, mult = binary s i' ndigits' len in
             let accum' = u128_add accum (u128_mul mult (d_of_c c)) in
-            let mult' = u128_mul mult (u128_of_uns 2) in
+            let mult' = u128_mul mult (u128_of_uns 2L) in
             accum', mult'
           end
         | 'u' -> begin

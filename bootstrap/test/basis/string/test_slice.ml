@@ -15,7 +15,7 @@ let test () =
     printf "%a |slice| -> %a\n"
       pp s pp (pare ~base:(Cursor.hd s) ~past:(Cursor.tl s));
     let () = match clength s with
-      | 0 -> ()
+      | 0L -> ()
       | _ -> begin
           printf "%a .|slice| -> %a\n"
             pp s pp (pare ~base:Cursor.(succ (hd s)) ~past:Cursor.(tl s));
@@ -24,8 +24,8 @@ let test () =
         end
     in
     let () = match clength s with
-      | 0 -> ()
-      | 1 -> ()
+      | 0L -> ()
+      | 1L -> ()
       | _ ->
         printf "%a .|slice|. -> %a\n"
           pp s pp (pare ~base:Cursor.(succ (hd s)) ~past:Cursor.(pred (tl s)))

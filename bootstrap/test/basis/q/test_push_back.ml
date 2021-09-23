@@ -15,7 +15,7 @@ let test () =
         fn (succ i) n t'
       end
   end in
-  fn 0 3 empty;
+  fn 0L 3L empty;
   printf "@]"
 
 let _ = test ()

@@ -16,6 +16,6 @@ let test () =
         test_length_up_to (succ i) n
       end
   end in
-  test_length_up_to 0 3
+  test_length_up_to 0L 3L
 
 let _ = test ()

@@ -2,7 +2,7 @@ open Rudiments0
 
 type 'a t = uns * 'a Stream.t * 'a list * 'a Stream.t
 
-let empty = (0, lazy Stream.Nil, [], lazy Stream.Nil)
+let empty = (0L, lazy Stream.Nil, [], lazy Stream.Nil)
 
 let exec (l, f, r, s) =
   let rec rotate (l, f, r, s) = lazy begin
@@ -26,7 +26,7 @@ let length (l, _, _, _) =
   l
 
 let is_empty (l, _, _, _) =
-  l = 0
+  l = 0L
 
 let hd (_, f, _, _) =
   match f with

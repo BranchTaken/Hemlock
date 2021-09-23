@@ -1,4 +1,4 @@
-bit_{pop,clz,ctz} 0x0000_0000_0000_0000i64 -> 0, 64, 64
-bit_{pop,clz,ctz} 0x0000_0000_0000_0001i64 -> 1, 63, 0
-bit_{pop,clz,ctz} 0x8000_0000_0000_0000i64 -> 1, 0, 63
-bit_{pop,clz,ctz} 0xffff_ffff_ffff_ffffi64 -> 64, 0, 0
+bit_{pop,clz,ctz} 0x0000_0000_0000_0000i -> 0, 64, 64
+bit_{pop,clz,ctz} 0x0000_0000_0000_0001i -> 1, 63, 0
+bit_{pop,clz,ctz} 0x8000_0000_0000_0000i -> 1, 0, 63
+bit_{pop,clz,ctz} 0xffff_ffff_ffff_ffffi -> 64, 0, 0

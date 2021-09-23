@@ -24,14 +24,14 @@ let test () =
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
-    [42; 420];
-    [42; 420; 421];
-    [42; 420; 4200];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
+    [42L; 420L];
+    [42L; 420L; 421L];
+    [42L; 420L; 4200L];
   ] in
   List.iteri test_lists ~f:(fun i ks0 ->
     List.iteri test_lists ~f:(fun j ks1 ->

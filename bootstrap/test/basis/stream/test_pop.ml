@@ -15,7 +15,7 @@ let test () =
         test_pop t'
       end
   end in
-  test_pop (init 3 ~f:(fun i -> i));
+  test_pop (init 3L ~f:(fun i -> i));
   printf "@]"
 
 let _ = test ()

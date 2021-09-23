@@ -9,7 +9,7 @@ let test () =
   let rec test_concat_up_to i l n = begin
     match i <= l, l <= n with
     | _, false -> ()
-    | false, _ -> test_concat_up_to 0 (succ l) n
+    | false, _ -> test_concat_up_to 0L (succ l) n
     | true, true -> begin
         let t0 = init ~f:(fun i -> i) i in
         let t1 = init ~f:(fun j -> i + j) (l - i) in
@@ -18,7 +18,7 @@ let test () =
         test_concat_up_to (succ i) l n
       end
   end in
-  test_concat_up_to 0 0 3;
+  test_concat_up_to 0L 0L 3L;
   printf "@]"
 
 let _ = test ()

@@ -17,7 +17,7 @@ let init n ~f =
         Cons(elm, t)
       end
   end in
-  fn 0 n f
+  fn 0L n f
 
 let rec init_indef ~f state =
   lazy begin
@@ -35,7 +35,7 @@ let length t =
     | lazy Nil -> i
     | lazy (Cons(_, t')) -> fn t' (succ i)
   end in
-  fn t 0
+  fn t 0L
 
 let is_empty = function
   | lazy Nil -> true
@@ -70,7 +70,7 @@ end
 let rec take n t =
   lazy begin
     match t, n with
-    | _, 0 -> Nil
+    | _, 0L -> Nil
     | lazy Nil, _ -> Lazy.force t
     | lazy (Cons(elm, t')), _ -> push' elm (take (pred n) t')
   end
@@ -78,7 +78,7 @@ let rec take n t =
 let drop n t =
   let rec drop' n t = begin
     match t, n with
-    | _, 0 -> Lazy.force t
+    | _, 0L -> Lazy.force t
     | lazy Nil, _ -> Lazy.force t
     | lazy (Cons(_, t')), _ -> drop' (pred n) t'
   end in

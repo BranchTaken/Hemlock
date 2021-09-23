@@ -38,10 +38,10 @@ let test () =
               | Some c -> Uns.((Cursor.bindex c) < (Cursor.bindex cursor))
             );
             let offset = match prev with
-              | None -> (Cursor.bindex cursor) + 2
+              | None -> (Cursor.bindex cursor) + 2L
               | Some c -> (Cursor.bindex cursor) - (Cursor.bindex c)
             in
-            printf "%*s" offset "|";
+            printf "%*s" (Int64.to_int offset) "|";
             Some cursor
           ) in
           ()
@@ -60,7 +60,7 @@ let test () =
     let () = match substr_find s ~pattern with
       | None -> ()
       | Some cursor ->
-        printf " %*s" (succ (Cursor.bindex cursor)) "|";
+        printf " %*s" (Int64.to_int (succ (Cursor.bindex cursor))) "|";
     in
     printf "@\n";
     printf "@\n";

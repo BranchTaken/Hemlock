@@ -8,8 +8,8 @@ module T = struct
 
   let hash_fold hash_fold_a t state =
     match t with
-    | None -> state |> Uns.hash_fold 0
-    | Some a -> state |> Uns.hash_fold 1 |> hash_fold_a a
+    | None -> state |> Uns.hash_fold 0L
+    | Some a -> state |> Uns.hash_fold 1L |> hash_fold_a a
 
   let cmp cmp_a t0 t1 =
     let open Cmp in
@@ -33,46 +33,46 @@ module T = struct
         Uns.cmp t0.index t1.index
 
       let hd option =
-        {option; index=0}
+        {option; index=0L}
 
       let tl option =
         match option with
-        | None -> {option; index=0}
-        | Some _ -> {option; index=1}
+        | None -> {option; index=0L}
+        | Some _ -> {option; index=1L}
 
       let pred t =
         match t.option, t.index with
         | None, _ -> halt "At beginning of option"
-        | Some _, 0 -> halt "At beginning of option"
+        | Some _, 0L -> halt "At beginning of option"
         | Some _, _ -> begin
-            assert (t.index = 1);
-            {t with index=0}
+            assert (t.index = 1L);
+            {t with index=0L}
           end
 
       let succ t =
         match t.option, t.index with
         | None, _ -> halt "At end of option"
-        | Some _, 1 -> halt "At end of option"
+        | Some _, 1L -> halt "At end of option"
         | Some _, _ -> begin
-            assert (t.index = 0);
-            {t with index=1}
+            assert (t.index = 0L);
+            {t with index=1L}
           end
 
       let lget t =
         match t.option, t.index with
         | None, _ -> halt "At beginning of option"
-        | Some _, 0 -> halt "At beginning of option"
+        | Some _, 0L -> halt "At beginning of option"
         | Some v, _ -> begin
-            assert (t.index = 1);
+            assert (t.index = 1L);
             v
           end
 
       let rget t =
         match t.option, t.index with
         | None, _ -> halt "At end of option"
-        | Some _, 1 -> halt "At end of option"
+        | Some _, 1L -> halt "At end of option"
         | Some v, _ -> begin
-            assert (t.index = 0);
+            assert (t.index = 0L);
             v
           end
 
@@ -89,10 +89,10 @@ module T = struct
         t.index
 
       let seek i t =
-        match int_of_sint i with
-        | -1 -> pred t
-        | 0 -> t
-        | 1 -> succ t
+        match i with
+        | -1L -> pred t
+        | 0L -> t
+        | 1L -> succ t
         | _ -> halt "Out of bounds"
     end
     include T
@@ -100,11 +100,11 @@ module T = struct
   end
 
   let length = function
-    | None -> 0
-    | Some _ -> 1
+    | None -> 0L
+    | Some _ -> 1L
 
   let is_empty t =
-    (length t) = 0
+    (length t) = 0L
 end
 include T
 include ContainerCommon.MakePolyFold(T)

@@ -11,7 +11,7 @@ let test () =
     match i < n with
     | false -> ordmap
     | true -> begin
-        let ordmap' = remove_hlt i (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100) ordmap)) in
+        let ordmap' = remove_hlt i (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100L) ordmap)) in
         assert (equal veq ordmap ordmap');
         assert (equal veq ordmap (union ~f:merge ordmap ordmap'));
         assert (equal veq ordmap (inter ~f:merge ordmap ordmap'));
@@ -21,7 +21,7 @@ let test () =
       end
   end in
   let e = empty (module Uns) in
-  let _ = test 100 0 e e in
+  let _ = test 100L 0L e e in
   printf "@]"
 
 let _ = test ()

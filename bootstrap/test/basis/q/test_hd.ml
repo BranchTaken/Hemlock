@@ -16,7 +16,7 @@ let test () =
       end
   end in
   (* halts if we start with empty *)
-  fn 1 4 (push_back 0 empty);
+  fn 1L 4L (push_back 0L empty);
   printf "@]"
 
 let _ = test ()

@@ -6,11 +6,11 @@ open Format
 let test () =
   let arrs = [
     [||];
-    [|0|];
-    [|0; 0|];
-    [|0; 1|];
-    [|0; 0|];
-    [|0|];
+    [|0L|];
+    [|0L; 0L|];
+    [|0L; 1L|];
+    [|0L; 0L|];
+    [|0L|];
     [||];
   ] in
   let rec fn arr arrs = begin

@@ -1,8 +1,8 @@
 type i64 = int64
 type u64 = int64
+type sint = int64
+type uns = int64
 type u128
-type sint
-type uns = int
 
 val uns_of_sint: sint -> uns
 (** Convert a signed integer to a bitwise identical unsigned integer. *)
@@ -11,10 +11,10 @@ val sint_of_uns: uns -> sint
 (** Convert an unsigned integer to a bitwise identical unsigned integer. *)
 
 val int_of_sint: sint -> int
-(** Convert a signed integer to a bitwise identical OCaml integer. *)
+(** Convert a signed integer to a narrowed OCaml integer. *)
 
 val sint_of_int: int -> sint
-(** Convert an OCaml integer to a bitwise identical signed integer. *)
+(** Convert an OCaml integer to a widened signed integer. *)
 
 val u128_init: f:(uns -> u64) -> u128
 (** [init ~f] initializes a {!type:u128}, where [f] provides the value for each element at given
@@ -23,7 +23,7 @@ val u128_init: f:(uns -> u64) -> u128
 val u128_get: uns -> u128 -> u64
 (** Get word at given little-endian index. *)
 
-val u128_of_tup: u64 * u64-> u128
+val u128_of_tup: u64 * u64 -> u128
 (** Initialize from a little-endian tuple of words (first word is least significant). *)
 
 val u128_to_tup: u128 -> u64 * u64

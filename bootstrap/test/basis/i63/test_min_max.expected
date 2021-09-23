@@ -1,8 +1,0 @@
-min -1i 0i -> -1i
-max -1i 0i -> 0i
-
-min 0i 0i -> 0i
-max 0i 0i -> 0i
-
-min 1i 0i -> 0i
-max 1i 0i -> 1i

@@ -6,22 +6,35 @@ open Format
 let test () =
   let test arr = begin
     printf "pare %a ->" (pp Uns.pp) arr;
-    for i = 0 to length arr do
-      for j = i to length arr do
-        let arr' = pare arr ~base:i ~past:j in
-        printf " [%a,%a)=%a"
-          Uns.pp i
-          Uns.pp j
-          (pp Uns.pp) arr'
-      done
-    done;
+    let rec fni i n = begin
+      match i > n with
+      | true -> ()
+      | false -> begin
+          let rec fnj j n = begin
+            match j > n with
+            | true -> ()
+            | false -> begin
+                let arr' = pare arr ~base:i ~past:j in
+                printf " [%a,%a)=%a"
+                  Uns.pp i
+                  Uns.pp j
+                  (pp Uns.pp) arr'
+                ;
+                fnj (succ j) n
+              end
+          end in
+          fnj i n;
+          fni (succ i) n
+        end
+    end in
+    fni 0L (length arr);
     printf "\n"
   end in
   printf "@[<h>";
   test [||];
-  test [|0|];
-  test [|0; 1|];
-  test [|0; 1; 2|];
+  test [|0L|];
+  test [|0L; 1L|];
+  test [|0L; 1L; 2L|];
   printf "@]"
 
 let _ = test ()

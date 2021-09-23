@@ -12,9 +12,9 @@ let test () =
   end in
   printf "@[<h>";
   test_length [||];
-  test_length [|0|];
-  test_length [|0; 1|];
-  test_length [|0; 1; 2|];
+  test_length [|0L|];
+  test_length [|0L; 1L|];
+  test_length [|0L; 1L; 2L|];
   printf "@]"
 
 let _ = test ()

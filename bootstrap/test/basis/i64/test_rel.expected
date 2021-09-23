@@ -1,44 +1,44 @@
-cmp 0x0000_0000_0000_0000i64 0x8000_0000_0000_0000i64 -> Gt
-0x0000_0000_0000_0000i64 >= 0x8000_0000_0000_0000i64 -> true
-0x0000_0000_0000_0000i64 <= 0x8000_0000_0000_0000i64 -> false
-0x0000_0000_0000_0000i64 = 0x8000_0000_0000_0000i64 -> false
-0x0000_0000_0000_0000i64 > 0x8000_0000_0000_0000i64 -> true
-0x0000_0000_0000_0000i64 < 0x8000_0000_0000_0000i64 -> false
-0x0000_0000_0000_0000i64 <> 0x8000_0000_0000_0000i64 -> true
-ascending 0x0000_0000_0000_0000i64 0x8000_0000_0000_0000i64 -> Gt
-descending 0x0000_0000_0000_0000i64 0x8000_0000_0000_0000i64 -> Lt
+cmp 0x0000_0000_0000_0000i 0x8000_0000_0000_0000i -> Gt
+0x0000_0000_0000_0000i >= 0x8000_0000_0000_0000i -> true
+0x0000_0000_0000_0000i <= 0x8000_0000_0000_0000i -> false
+0x0000_0000_0000_0000i = 0x8000_0000_0000_0000i -> false
+0x0000_0000_0000_0000i > 0x8000_0000_0000_0000i -> true
+0x0000_0000_0000_0000i < 0x8000_0000_0000_0000i -> false
+0x0000_0000_0000_0000i <> 0x8000_0000_0000_0000i -> true
+ascending 0x0000_0000_0000_0000i 0x8000_0000_0000_0000i -> Gt
+descending 0x0000_0000_0000_0000i 0x8000_0000_0000_0000i -> Lt
 
-cmp 0x0000_0000_0000_0000i64 0xffff_ffff_ffff_ffffi64 -> Gt
-0x0000_0000_0000_0000i64 >= 0xffff_ffff_ffff_ffffi64 -> true
-0x0000_0000_0000_0000i64 <= 0xffff_ffff_ffff_ffffi64 -> false
-0x0000_0000_0000_0000i64 = 0xffff_ffff_ffff_ffffi64 -> false
-0x0000_0000_0000_0000i64 > 0xffff_ffff_ffff_ffffi64 -> true
-0x0000_0000_0000_0000i64 < 0xffff_ffff_ffff_ffffi64 -> false
-0x0000_0000_0000_0000i64 <> 0xffff_ffff_ffff_ffffi64 -> true
-ascending 0x0000_0000_0000_0000i64 0xffff_ffff_ffff_ffffi64 -> Gt
-descending 0x0000_0000_0000_0000i64 0xffff_ffff_ffff_ffffi64 -> Lt
+cmp 0x0000_0000_0000_0000i 0xffff_ffff_ffff_ffffi -> Gt
+0x0000_0000_0000_0000i >= 0xffff_ffff_ffff_ffffi -> true
+0x0000_0000_0000_0000i <= 0xffff_ffff_ffff_ffffi -> false
+0x0000_0000_0000_0000i = 0xffff_ffff_ffff_ffffi -> false
+0x0000_0000_0000_0000i > 0xffff_ffff_ffff_ffffi -> true
+0x0000_0000_0000_0000i < 0xffff_ffff_ffff_ffffi -> false
+0x0000_0000_0000_0000i <> 0xffff_ffff_ffff_ffffi -> true
+ascending 0x0000_0000_0000_0000i 0xffff_ffff_ffff_ffffi -> Gt
+descending 0x0000_0000_0000_0000i 0xffff_ffff_ffff_ffffi -> Lt
 
-cmp 0x8000_0000_0000_0000i64 0x7fff_ffff_ffff_ffffi64 -> Lt
-0x8000_0000_0000_0000i64 >= 0x7fff_ffff_ffff_ffffi64 -> false
-0x8000_0000_0000_0000i64 <= 0x7fff_ffff_ffff_ffffi64 -> true
-0x8000_0000_0000_0000i64 = 0x7fff_ffff_ffff_ffffi64 -> false
-0x8000_0000_0000_0000i64 > 0x7fff_ffff_ffff_ffffi64 -> false
-0x8000_0000_0000_0000i64 < 0x7fff_ffff_ffff_ffffi64 -> true
-0x8000_0000_0000_0000i64 <> 0x7fff_ffff_ffff_ffffi64 -> true
-ascending 0x8000_0000_0000_0000i64 0x7fff_ffff_ffff_ffffi64 -> Lt
-descending 0x8000_0000_0000_0000i64 0x7fff_ffff_ffff_ffffi64 -> Gt
+cmp 0x8000_0000_0000_0000i 0x7fff_ffff_ffff_ffffi -> Lt
+0x8000_0000_0000_0000i >= 0x7fff_ffff_ffff_ffffi -> false
+0x8000_0000_0000_0000i <= 0x7fff_ffff_ffff_ffffi -> true
+0x8000_0000_0000_0000i = 0x7fff_ffff_ffff_ffffi -> false
+0x8000_0000_0000_0000i > 0x7fff_ffff_ffff_ffffi -> false
+0x8000_0000_0000_0000i < 0x7fff_ffff_ffff_ffffi -> true
+0x8000_0000_0000_0000i <> 0x7fff_ffff_ffff_ffffi -> true
+ascending 0x8000_0000_0000_0000i 0x7fff_ffff_ffff_ffffi -> Lt
+descending 0x8000_0000_0000_0000i 0x7fff_ffff_ffff_ffffi -> Gt
 
-clamp ~min:-1i64 ~max:1i64 -2i64 -> -1i64
-between ~low:-2i64 ~high:-1i64 1i64 -> false
+clamp ~min:-1i ~max:1i -2i -> -1i
+between ~low:-2i ~high:-1i 1i -> false
 
-clamp ~min:-1i64 ~max:1i64 -1i64 -> -1i64
-between ~low:-1i64 ~high:-1i64 1i64 -> true
+clamp ~min:-1i ~max:1i -1i -> -1i
+between ~low:-1i ~high:-1i 1i -> true
 
-clamp ~min:-1i64 ~max:1i64 0i64 -> 0i64
-between ~low:0i64 ~high:-1i64 1i64 -> true
+clamp ~min:-1i ~max:1i 0i -> 0i
+between ~low:0i ~high:-1i 1i -> true
 
-clamp ~min:-1i64 ~max:1i64 1i64 -> 1i64
-between ~low:1i64 ~high:-1i64 1i64 -> true
+clamp ~min:-1i ~max:1i 1i -> 1i
+between ~low:1i ~high:-1i 1i -> true
 
-clamp ~min:-1i64 ~max:1i64 2i64 -> 1i64
-between ~low:2i64 ~high:-1i64 1i64 -> false
+clamp ~min:-1i ~max:1i 2i -> 1i
+between ~low:2i ~high:-1i 1i -> false

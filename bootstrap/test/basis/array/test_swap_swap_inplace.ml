@@ -1,12 +1,13 @@
 open! Basis.Rudiments
 open! Basis
+open! ArrayTest
 open Array
 open Format
 
 let test () =
   let test_swap arr = begin
-    for i = 0 to pred (length arr) do
-      for j = i to pred (length arr) do
+    iter_oc 0L (length arr) (fun i ->
+      iter_oc i (length arr) (fun j ->
         let arr' = copy arr in
         printf "%a %a: swap %a -> %a -> swap_inplace %a -> "
           Uns.pp i
@@ -17,14 +18,14 @@ let test () =
         ;
         swap_inplace i j arr';
         printf "%a\n" (pp Uns.pp) arr'
-      done
-    done
+      )
+    )
   end in
   printf "@[<h>";
-  test_swap [|0|];
-  test_swap [|0; 1|];
-  test_swap [|0; 1; 2|];
-  test_swap [|0; 1; 2; 3|];
+  test_swap [|0L|];
+  test_swap [|0L; 1L|];
+  test_swap [|0L; 1L; 2L|];
+  test_swap [|0L; 1L; 2L; 3L|];
   printf "@]"
 
 let _ = test ()

@@ -23,11 +23,11 @@ let test () =
   end in
   let lists = [
     [];
-    [0];
-    [1];
-    [0; 1];
-    [0; 2];
-    [1; 2]
+    [0L];
+    [1L];
+    [0L; 1L];
+    [0L; 2L];
+    [1L; 2L]
   ] in
   printf "@[<h>";
   test_with_lists lists lists lists;

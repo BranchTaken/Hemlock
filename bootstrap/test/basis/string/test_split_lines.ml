@@ -7,14 +7,14 @@ let test () =
   let test_split_lines s = begin
     printf "split_lines %S -> [" s;
     List.iteri (split_lines s)~f:(fun i substr ->
-      if Uns.(i > 0) then printf "; ";
+      if Uns.(i > 0L) then printf "; ";
       printf "%S" substr
     );
     printf "]\n";
 
     printf "split_lines_rev %S -> [" s;
     List.iteri (split_lines_rev s)~f:(fun i substr ->
-      if Uns.(i > 0) then printf "; ";
+      if Uns.(i > 0L) then printf "; ";
       printf "%S" substr
     );
     printf "]\n";

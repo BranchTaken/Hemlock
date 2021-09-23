@@ -17,7 +17,7 @@ let test () =
       end
   end in
   (* halts if we start at 0 *)
-  test_tl_up_to 1 4;
+  test_tl_up_to 1L 4L;
   printf "@]"
 
 let _ = test ()

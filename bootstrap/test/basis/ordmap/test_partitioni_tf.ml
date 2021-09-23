@@ -8,7 +8,7 @@ let test () =
   printf "@[<h>";
   let test arr = begin
     let ordmap = of_karray arr in
-    let t_ordmap, f_ordmap = partitioni_tf ordmap ~f:(fun i _kv -> i % 2 = 0) in
+    let t_ordmap, f_ordmap = partitioni_tf ordmap ~f:(fun i _kv -> i % 2L = 0L) in
     let t_arr = to_array t_ordmap in
     let f_arr = to_array f_ordmap in
     printf "%a -> %a / %a@\n"
@@ -16,10 +16,10 @@ let test () =
       (Array.pp (pp_kv Uns.pp)) t_arr
       (Array.pp (pp_kv Uns.pp)) f_arr
   end in
-  for n = 0 to 6 do
-    let arr = Array.init n ~f:(fun i -> i * 10) in
+  iter_oc 0L 7L (fun n ->
+    let arr = Array.init n ~f:(fun i -> i * 10L) in
     test arr
-  done;
+  );
   printf "@]"
 
 let _ = test ()

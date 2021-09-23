@@ -16,6 +16,6 @@ let test () =
         fn (succ i) n (push_back i t)
       end
   end in
-  fn 0 1 empty
+  fn 0L 1L empty
 
 let _ = test ()

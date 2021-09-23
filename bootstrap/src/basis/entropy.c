@@ -32,7 +32,7 @@ value_of_result(const char *arg) {
 // val hemlock_entropy_nbits:   uns -> Int64.t array
 CAMLprim value
 hemlock_entropy_nbits(value a_nbits) {
-    size_t nbits_in = Unsigned_long_val(a_nbits);
+    size_t nbits_in = Int64_val(a_nbits);
     size_t nbytes_in = (nbits_in + 7) / 8;
     size_t nuint64s = (nbytes_in + 7) / 8;
     uint64_t entropy[nuint64s];

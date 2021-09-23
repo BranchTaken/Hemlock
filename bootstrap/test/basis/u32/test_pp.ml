@@ -12,7 +12,7 @@ let test () =
       end
   in
   printf "@[<h>";
-  fn [kv 0; kv 1; kv 42; kv 0x1_ffff_ffff];
+  fn [kv 0L; kv 1L; kv 42L; kv 0x1_ffff_ffffL];
   printf "@]"
 
 let _ = test ()

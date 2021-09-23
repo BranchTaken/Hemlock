@@ -15,11 +15,11 @@ let test () =
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   List.iter test_lists ~f:(fun ms ->
     test ms

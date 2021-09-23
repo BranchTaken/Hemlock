@@ -14,10 +14,10 @@ module MakePolyLength (T : IPoly) : SPolyLengthGen
       | true -> index
       | false -> fn (Uns.succ index) (T.Cursor.succ cursor)
     end in
-    fn 0 (T.Cursor.hd t)
+    fn 0L (T.Cursor.hd t)
 
   let is_empty t =
-    (length t) = 0
+    (length t) = 0L
 end
 
 module MakePolyFold (T : IPoly) : SPolyFoldGen
@@ -52,7 +52,7 @@ module MakePolyFold (T : IPoly) : SPolyFoldGen
     fn t ~f init (T.Cursor.tl t)
 
   let foldi_until ~init ~f t =
-    let _, accum = fold_until t ~init:(0, init)
+    let _, accum = fold_until t ~init:(0L, init)
       ~f:(fun (i, accum) elm ->
         let i' = (Uns.succ i) in
         let accum', until = f i accum elm in
@@ -76,7 +76,7 @@ module MakePolyFold (T : IPoly) : SPolyFoldGen
     foldi t ~init:() ~f:(fun i _ elm -> f i elm)
 
   let count ~f t =
-    fold t ~init:0 ~f:(fun accum elm ->
+    fold t ~init:0L ~f:(fun accum elm ->
       match f elm with
       | false -> accum
       | true -> (Uns.succ accum)

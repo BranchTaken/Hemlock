@@ -1,17 +1,18 @@
 open! Basis.Rudiments
 open! Basis
+open! ListTest
 open List
 open Format
 
 let test () =
   let lists = [
     [];
-    [0];
-    [0; 1]
+    [0L];
+    [0L; 1L]
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    for i = 0 to length l do
+    iter_oc 0L (succ (length l)) (fun i ->
       let a, b = split i l in
       printf "split/take,drop %a %a -> %a, %a / %a, %a\n"
         Uns.pp i
@@ -30,7 +31,7 @@ let test () =
         (pp Uns.pp) b
         (pp Uns.pp) (rev_take i l)
         (pp Uns.pp) (drop i l)
-    done
+    )
   );
   printf "@]"
 

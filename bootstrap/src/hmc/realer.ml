@@ -36,7 +36,7 @@ module T = struct
 
   let is_norm = function
     | N {sign=_; mag=Fin {exponent; mantissa}} -> begin
-        Nat.bit_ctz mantissa = 0 && (Nat.(mantissa <> zero) || Zint.(exponent = zero))
+        Nat.bit_ctz mantissa = 0L && (Nat.(mantissa <> zero) || Zint.(exponent = zero))
       end
     | N {sign=_; mag=Inf} -> true
     | Nan -> true
@@ -46,7 +46,7 @@ module T = struct
     match t with
     | N {sign; mag=Fin {exponent; mantissa}} -> begin
         match Nat.bit_ctz mantissa, Nat.(mantissa = zero) with
-        | 0, false -> t
+        | 0L, false -> t
         | tz, false -> N {sign; mag=Fin {exponent; mantissa=Nat.(bit_usr ~shift:tz mantissa)}}
         | _, true -> N {sign; mag=Fin {exponent=Zint.zero; mantissa=Nat.zero}}
       end
@@ -91,16 +91,16 @@ module T = struct
     let open Hash.State.Gen in
     let hash_fold_sign t state = begin
       state
-      |> Hash.State.Gen.fold_u64 1 ~f:(fun _ ->
-        U64.of_uns (match t with
-          | Neg -> 0
-          | Pos -> 2
-        ))
+      |> Hash.State.Gen.fold_u64 1L ~f:(fun _ ->
+        match t with
+        | Neg -> 0L
+        | Pos -> 2L
+      )
     end in
     match t with
     | N {sign; mag=Fin {exponent; mantissa}} -> begin
         init state
-        |> fold_u64 1 ~f:(fun _ -> U64.of_uns 0)
+        |> fold_u64 1L ~f:(fun _ -> 0L)
         |> hash_fold_sign sign
         |> fini
         |> Zint.hash_fold exponent
@@ -108,13 +108,13 @@ module T = struct
       end
     | N {sign; mag=Inf} -> begin
         init state
-        |> fold_u64 1 ~f:(fun _ -> U64.of_uns 1)
+        |> fold_u64 1L ~f:(fun _ -> 1L)
         |> hash_fold_sign sign
         |> fini
       end
     | Nan -> begin
         init state
-        |> fold_u64 1 ~f:(fun _ -> U64.of_uns 2)
+        |> fold_u64 1L ~f:(fun _ -> 2L)
         |> fini
       end
 
@@ -178,14 +178,14 @@ module T = struct
     in
     let rec pp_frac hex_digits ppf frac = begin
       match hex_digits with
-      | 0 -> ()
+      | 0L -> ()
       | _ -> begin
           let digit = Nat.(bit_and frac k_f) in
           let int64_digit = match Nat.(digit = zero) with
             | true -> Int64.zero
-            | false -> Nat.get 0 digit
+            | false -> Nat.get 0L digit
           in
-          let frac' = Nat.bit_usr ~shift:4 frac in
+          let frac' = Nat.bit_usr ~shift:4L frac in
           pp_frac (pred hex_digits) ppf frac';
           fprintf ppf "%Lx" int64_digit
         end
@@ -202,11 +202,11 @@ module T = struct
             match Nat.(frac = zero) with
             | true -> fprintf ppf "%a0x1p%a" pp_sign sign Zint.pp exponent
             | false -> begin
-                let rem = shift % 4 in
-                let hex_digits = shift / 4 in
-                let hex_digits', frac' = match rem = 0 with
+                let rem = shift % 4L in
+                let hex_digits = shift / 4L in
+                let hex_digits', frac' = match rem = 0L with
                   | true -> hex_digits, frac
-                  | false -> (succ hex_digits), Nat.bit_sl ~shift:(4 - rem) frac
+                  | false -> (succ hex_digits), Nat.bit_sl ~shift:(4L - rem) frac
                 in
                 fprintf ppf "%a0x1.%ap%a"
                   pp_sign sign
@@ -386,21 +386,21 @@ let to_r_impl emin emax mbits t =
                   in
                   let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
                   let max_mbits, mask = match mbits with
-                    | Mbits_53 -> 53, 0xf_ffff_ffff_ffff
-                    | Mbits_24 -> 24, 0xf_ffff_e000_0000
+                    | Mbits_53 -> 53L, 0xf_ffff_ffff_ffffL
+                    | Mbits_24 -> 24L, 0xf_ffff_e000_0000L
                   in
                   let precision = match Uns.(sig_digits <= max_mbits) with
                     | true -> Precise
                     | false -> Rounded
                   in
-                  let m = Uns.bit_and mask (match Uns.cmp sig_digits 53 with
+                  let m = Uns.bit_and mask (match Uns.cmp sig_digits 53L with
                     | Lt -> begin
-                        let shift = Uns.(53 - sig_digits) in
+                        let shift = Uns.(53L - sig_digits) in
                         Nat.(to_uns (bit_sl ~shift mantissa))
                       end
                     | Eq -> Nat.to_uns mantissa
                     | Gt -> begin
-                        let shift = Uns.(sig_digits - 53) in
+                        let shift = Uns.(sig_digits - 53L) in
                         Nat.(to_uns (bit_usr ~shift mantissa))
                       end
                   ) in
@@ -415,7 +415,7 @@ let to_r_impl emin emax mbits t =
 
   | Nan -> Precise, Real.nan
 
-let z_1023 = Zint.(pred (bit_sl ~shift:10 one))
+let z_1023 = Zint.(pred (bit_sl ~shift:10L one))
 let z_neg_1022 = Zint.(neg (pred z_1023))
 
 let to_r64_impl t =
@@ -434,7 +434,7 @@ let to_r64_hlt t =
   | Precise, r64 -> r64
   | Rounded, _ -> halt "Inexact conversion"
 
-let z_127 = Zint.(pred (bit_sl ~shift:7 one))
+let z_127 = Zint.(pred (bit_sl ~shift:7L one))
 let z_neg_126 = Zint.(neg (pred z_127))
 
 let to_r32_impl t =

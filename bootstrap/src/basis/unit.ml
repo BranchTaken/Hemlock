@@ -6,7 +6,7 @@ module T = struct
   let hash_fold _t state =
     (* The hash of unit is constant, but it still needs to be folded. *)
     state
-    |> Uns.hash_fold 0
+    |> Uns.hash_fold 0L
 
   let cmp _ _ =
     Cmp.Eq

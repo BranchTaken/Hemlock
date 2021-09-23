@@ -14,8 +14,8 @@ let test () =
      * order. *)
     assert ((List.length kvs) = (length ordmap));
     let n = length ordmap in
-    let triangle_sum = List.fold kvs ~init:0 ~f:(fun accum (k, _) ->
-      accum + fold2_until ordmap0 ordmap1 ~init:0
+    let triangle_sum = List.fold kvs ~init:0L ~f:(fun accum (k, _) ->
+      accum + fold2_until ordmap0 ordmap1 ~init:0L
           ~f:(fun accum kv0_opt kv1_opt ->
             match kv0_opt, kv1_opt with
             | Some (kx, _), Some _
@@ -24,15 +24,15 @@ let test () =
             | None, None -> not_reached ()
           )
     ) in
-    assert (triangle_sum = (n + 1) * n / 2);
+    assert (triangle_sum = (n + 1L) * n / 2L);
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   List.iteri test_lists ~f:(fun i ks0 ->
     List.iteri test_lists ~f:(fun j ks1 ->

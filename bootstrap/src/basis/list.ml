@@ -23,14 +23,15 @@ let is_sorted ?strict ~cmp t =
     | Some b -> b
   in
   let rec fn elm t = begin
+    let open Cmp in
     match t with
     | [] -> true
     | elm' :: t' -> begin
         match (cmp elm elm'), strict with
-        | Cmp.Lt, _
-        | Cmp.Eq, false -> fn elm' t'
-        | Cmp.Eq, true
-        | Cmp.Gt, _ -> false
+        | Lt, _
+        | Eq, false -> fn elm' t'
+        | Eq, true
+        | Gt, _ -> false
       end
   end in
   match t with
@@ -44,11 +45,12 @@ let sort ?length ?stable ~cmp t =
 
 let dedup ?length ~cmp t =
   let rec fn member t arr i = begin
+    let open Cmp in
     let elm = Array.get i arr in
     let member', t' = match cmp elm member with
-      | Cmp.Lt -> elm, (member :: t)
-      | Cmp.Eq -> elm, t
-      | Cmp.Gt -> not_reached ()
+      | Lt -> elm, (member :: t)
+      | Eq -> elm, t
+      | Gt -> not_reached ()
     in
     if i = zero then member' :: t'
     else fn member' t' arr (Uns.pred i)
@@ -65,11 +67,12 @@ let dedup ?length ~cmp t =
 
 let rev_dedup ?length ~cmp t =
   let rec fn member t arr i = begin
+    let open Cmp in
     let elm = Array.get i arr in
     let member', t' = match cmp elm member with
-      | Cmp.Lt -> not_reached ()
-      | Cmp.Eq -> member, t
-      | Cmp.Gt -> elm, (member :: t)
+      | Lt -> not_reached ()
+      | Eq -> member, t
+      | Gt -> elm, (member :: t)
     in
     let i' = Uns.succ i in
     if i' = (Array.length arr) then member' :: t'
@@ -81,19 +84,20 @@ let rev_dedup ?length ~cmp t =
   | _ :: _ -> begin
       let arr = Array.of_list ?length t in
       Array.sort_inplace ~stable:true arr ~cmp;
-      let i = 0 in
+      let i = 0L in
       fn (Array.get i arr) [] arr (Uns.succ i)
     end
 
 let dedup_sorted ~cmp t =
   let rec fn member t = begin
+    let open Cmp in
     match t with
     | [] -> [member]
     | elm :: t' -> begin
         match cmp member elm with
-        | Cmp.Lt -> member :: (fn elm t')
-        | Cmp.Eq -> fn member t'
-        | Cmp.Gt -> not_reached ()
+        | Lt -> member :: (fn elm t')
+        | Eq -> fn member t'
+        | Gt -> not_reached ()
       end
   end in
   match t with
@@ -103,13 +107,14 @@ let dedup_sorted ~cmp t =
 
 let rev_dedup_sorted ~cmp t =
   let rec fn member t accum = begin
+    let open Cmp in
     match t with
     | [] -> member :: accum
     | elm :: t' -> begin
         match cmp member elm with
-        | Cmp.Lt -> fn elm t' (member :: accum)
-        | Cmp.Eq -> fn member t' accum
-        | Cmp.Gt -> not_reached ()
+        | Lt -> fn elm t' (member :: accum)
+        | Eq -> fn member t' accum
+        | Gt -> not_reached ()
       end
   end in
   match t with
@@ -139,15 +144,16 @@ let merge ~cmp t0 t1 =
 
 let rev_merge ~cmp t0 t1 =
   let rec fn elm0 t0 elm1 t1 accum = begin
+    let open Cmp in
     match cmp elm0 elm1 with
-    | Cmp.Lt
-    | Cmp.Eq -> begin
+    | Lt
+    | Eq -> begin
         let accum' = elm0 :: accum in
         match t0 with
         | [] -> rev_concat t1 (elm1 :: accum')
         | elm0' :: t0' -> fn elm0' t0' elm1 t1 accum'
       end
-    | Cmp.Gt -> begin
+    | Gt -> begin
         let accum' = elm1 :: accum in
         match t1 with
         | [] -> rev_concat t0 (elm0 :: accum')

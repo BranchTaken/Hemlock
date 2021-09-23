@@ -11,7 +11,7 @@ let test () =
   end in
   test_strip "  a b c  ";
   test_strip ~drop:(fun codepoint ->
-    Codepoint.(codepoint = (kv 0x5f) (* '_' *))
+    Codepoint.(codepoint = (kv 0x5fL) (* '_' *))
   ) "_ a_b_c _"
 
 let _ = test ()

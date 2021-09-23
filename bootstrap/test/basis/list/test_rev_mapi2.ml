@@ -6,11 +6,11 @@ open Format
 let test () =
   let list_pairs = [
     ([], []);
-    ([10], [100]);
-    ([10; 20], [100; 200]);
-    ([10; 20; 30], [100; 200; 300]);
+    ([10L], [100L]);
+    ([10L; 20L], [100L; 200L]);
+    ([10L; 20L; 30L], [100L; 200L; 300L]);
   ] in
-  let f i a b = (b + a + i + 1) in
+  let f i a b = (b + a + i + 1L) in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "    mapi2 %a %a -> %a\n"

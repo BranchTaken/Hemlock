@@ -1,2 +1,2 @@
-min_value=0x8000_0000_0000_0000i64
-max_value=0x7fff_ffff_ffff_ffffi64
+min_value=0x8000_0000_0000_0000i
+max_value=0x7fff_ffff_ffff_ffffi

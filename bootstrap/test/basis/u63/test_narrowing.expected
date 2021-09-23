@@ -1,3 +1,0 @@
-max_value + 1 -> 0x0000000000000000
-min_value - 1 -> 0x7fffffffffffffff
-max_value * 15 -> 0x7ffffffffffffff1

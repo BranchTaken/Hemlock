@@ -1,3 +1,3 @@
-max_value + 1i64 -> 0x8000_0000_0000_0000i64
-min_value - 1i64 -> 0x7fff_ffff_ffff_ffffi64
-max_value * 15i64 -> 0x7fff_ffff_ffff_fff1i64
+max_value + 1i -> 0x8000_0000_0000_0000i
+min_value - 1i -> 0x7fff_ffff_ffff_ffffi
+max_value * 15i -> 0x7fff_ffff_ffff_fff1i

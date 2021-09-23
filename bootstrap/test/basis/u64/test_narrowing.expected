@@ -1,3 +1,3 @@
-max_value + 1u64 -> 0x0000_0000_0000_0000u64
-min_value - 1u64 -> 0xffff_ffff_ffff_ffffu64
-max_value * 15u64 -> 0xffff_ffff_ffff_fff1u64
+max_value + 1 -> 0x0000_0000_0000_0000
+min_value - 1 -> 0xffff_ffff_ffff_ffff
+max_value * 15 -> 0xffff_ffff_ffff_fff1

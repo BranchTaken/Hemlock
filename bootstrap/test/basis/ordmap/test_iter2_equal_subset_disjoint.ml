@@ -12,7 +12,7 @@ let test () =
     assert (equal veq ordmap0 ordmap1);
     assert (subset veq ordmap0 ordmap1);
     assert (subset veq ordmap1 ordmap0);
-    assert ((length ordmap0 = 0) || (not (disjoint ordmap0 ordmap1)));
+    assert ((length ordmap0 = 0L) || (not (disjoint ordmap0 ordmap1)));
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> ()
@@ -30,7 +30,7 @@ let test () =
     let ordmap1 = of_klist ks1 in
     assert (not (equal veq ordmap0 ordmap1));
     assert (not (subset veq ordmap0 ordmap1));
-    assert ((length ordmap0 = 0) || (not (subset veq ordmap1 ordmap0)));
+    assert ((length ordmap0 = 0L) || (not (subset veq ordmap1 ordmap0)));
     assert (disjoint ordmap0 ordmap1);
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
@@ -46,19 +46,19 @@ let test () =
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   let test_disjoint_list_pairs = [
-    ([], [0]);
-    ([0], [1]);
-    ([0], [1; 2]);
-    ([0; 1], [2; 3]);
-    ([0; 1], [2; 3; 4]);
-    ([0; 1; 2], [3; 4; 5])
+    ([], [0L]);
+    ([0L], [1L]);
+    ([0L], [1L; 2L]);
+    ([0L; 1L], [2L; 3L]);
+    ([0L; 1L], [2L; 3L; 4L]);
+    ([0L; 1L; 2L], [3L; 4L; 5L])
   ] in
   List.iter test_lists ~f:(fun ks ->
     test_equal ks ks;

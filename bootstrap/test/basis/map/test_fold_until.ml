@@ -11,23 +11,23 @@ let test () =
      * order. *)
     assert ((List.length ks) = (length map));
     let n = length map in
-    let triangle_sum = List.fold ks ~init:0 ~f:(fun accum k ->
-      accum + fold_until map ~init:0 ~f:(fun accum (k1, _) ->
+    let triangle_sum = List.fold ks ~init:0L ~f:(fun accum k ->
+      accum + fold_until map ~init:0L ~f:(fun accum (k1, _) ->
         (succ accum), (k = k1)
       )
     ) in
-    assert (triangle_sum = (n + 1) * n / 2);
+    assert (triangle_sum = (n + 1L) * n / 2L);
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
-    [42; 420];
-    [42; 420; 421];
-    [42; 420; 4200];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
+    [42L; 420L];
+    [42L; 420L; 421L];
+    [42L; 420L; 4200L];
   ] in
   List.iter test_lists ~f:(fun ks ->
     test ks

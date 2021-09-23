@@ -17,34 +17,34 @@ let test () =
   end in
   fn [
     (* Infinite. *)
-    (true, Sint.kv 1024, 0);
-    (false, Sint.kv 1024, 0);
+    (true, Sint.kv 1024L, 0L);
+    (false, Sint.kv 1024L, 0L);
 
     (* Nan. *)
-    (false, Sint.kv 1024, 1);
-    (false, Sint.kv 1024, 0x8_0000_0000_0001);
-    (false, Sint.kv 1024, 0xf_ffff_ffff_ffff);
+    (false, Sint.kv 1024L, 1L);
+    (false, Sint.kv 1024L, 0x8_0000_0000_0001L);
+    (false, Sint.kv 1024L, 0xf_ffff_ffff_ffffL);
 
     (* Normal. *)
-    (true, Sint.kv 0, 0);
-    (false, Sint.kv (-1022), 0);
-    (false, Sint.kv (-52), 1);
-    (false, Sint.kv (-51), 1);
-    (false, Sint.kv (-1), 0);
-    (false, Sint.kv 0, 0);
-    (false, Sint.kv 1, 0);
-    (false, Sint.kv 1, 0x8_0000_0000_0000);
-    (false, Sint.kv 2, 0);
-    (false, Sint.kv 2, 0x4_0000_0000_0000);
-    (false, Sint.kv 1023, 0xf_ffff_ffff_ffff);
+    (true, Sint.kv 0L, 0L);
+    (false, Sint.kv (-1022L), 0L);
+    (false, Sint.kv (-52L), 1L);
+    (false, Sint.kv (-51L), 1L);
+    (false, Sint.kv (-1L), 0L);
+    (false, Sint.kv 0L, 0L);
+    (false, Sint.kv 1L, 0L);
+    (false, Sint.kv 1L, 0x8_0000_0000_0000L);
+    (false, Sint.kv 2L, 0L);
+    (false, Sint.kv 2L, 0x4_0000_0000_0000L);
+    (false, Sint.kv 1023L, 0xf_ffff_ffff_ffffL);
 
     (* Subnormal. *)
-    (false, Sint.kv (-1023), 1);
-    (false, Sint.kv (-1023), 0xf_ffff_ffff_ffff);
+    (false, Sint.kv (-1023L), 1L);
+    (false, Sint.kv (-1023L), 0xf_ffff_ffff_ffffL);
 
     (* Zero. *)
-    (true, Sint.kv (-1023), 0);
-    (false, Sint.kv (-1023), 0);
+    (true, Sint.kv (-1023L), 0L);
+    (false, Sint.kv (-1023L), 0L);
   ];
   printf "@]"
 

@@ -18,9 +18,9 @@ let test () =
   in
   let arrs = [
     [||];
-    [|0|];
-    [|0; 1|];
-    [|0; 2|]
+    [|0L|];
+    [|0L; 1L|];
+    [|0L; 2L|]
   ] in
   fn arrs;
   printf "@]"

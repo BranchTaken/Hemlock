@@ -14,13 +14,13 @@ let test () =
       Uns.pp m pp set pp (remove m set)
   end in
   let test_tuples = [
-    ([0; 1], 2,          "Not member, elm empty.");
-    ([1], 91,            "Not member, elm of different value.");
-    ([0], 0,             "Member, length 1 -> 0.");
-    ([0; 1], 1,          "Member, length 2 -> 1.");
-    ([0; 1; 2], 2,       "Member, length 3 -> 2.");
-    ([0; 1; 66], 66,     "Member, subnode elms 2 -> 1.");
-    ([0; 1; 66; 91], 91, "Member, subnode elms 3 -> 2.");
+    ([0L; 1L], 2L,            "Not member, elm empty.");
+    ([1L], 91L,               "Not member, elm of different value.");
+    ([0L], 0L,                "Member, length 1 -> 0.");
+    ([0L; 1L], 1L,            "Member, length 2 -> 1.");
+    ([0L; 1L; 2L], 2L,        "Member, length 3 -> 2.");
+    ([0L; 1L; 66L], 66L,      "Member, subnode elms 2 -> 1.");
+    ([0L; 1L; 66L; 91L], 91L, "Member, subnode elms 3 -> 2.");
   ] in
   List.iter test_tuples ~f:(fun (ms, m, descr) ->
     let set = of_list (module Uns) ms in
