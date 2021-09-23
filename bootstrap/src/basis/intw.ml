@@ -507,7 +507,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       let getc_opt s i len = begin
         match i < len with
         | false -> None
-        | true -> Some ((Caml.String.get s i), Uns.(i + 1))
+        | true -> Some ((Stdlib.String.get s i), Uns.(i + 1))
       end in
       let getc s i len = begin
         match getc_opt s i len with
@@ -517,9 +517,9 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       let d_of_c c = begin
         match c with
         | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
-          of_uns Uns.((Caml.Char.code c) - (Caml.Char.code '0'))
+          of_uns Uns.((Stdlib.Char.code c) - (Stdlib.Char.code '0'))
         | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' ->
-          of_uns Uns.(10 + (Caml.Char.code c) - (Caml.Char.code 'a'))
+          of_uns Uns.(10 + (Stdlib.Char.code c) - (Stdlib.Char.code 'a'))
         | _ -> not_reached ()
       end in
       let suffix s i len = begin
@@ -530,7 +530,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
               match j' < len with
               | true -> fn s i j' len
               | false -> begin
-                  let suf = Caml.String.sub s i RudimentsInt.(j' - i) in
+                  let suf = Stdlib.String.sub s i RudimentsInt.(j' - i) in
                   let nbits = int_of_string suf in
                   match T.min_word_length = T.max_word_length && nbits = Uns.(T.min_word_length *
                       64) with
@@ -673,7 +673,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
           end
         | _ -> halt "Malformed string"
       end in
-      prefix0 s 0 (Caml.String.length s)
+      prefix0 s 0 (Stdlib.String.length s)
 
     let to_string t =
       Format.asprintf "%a" pp t

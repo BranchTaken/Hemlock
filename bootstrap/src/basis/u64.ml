@@ -57,7 +57,7 @@ let pp_x ppf t =
   Format.fprintf ppf "u64"
 
 let of_string s =
-  match Caml.String.split_on_char 'x' s with
+  match Stdlib.String.split_on_char 'x' s with
   | "0" :: _ -> Int64.of_string s (* Has 0x prefix. *)
   | _ -> begin
       (* Prefix with "0u" so that the string is interpreted as unsigned. *)

@@ -131,8 +131,8 @@ let u128_mul t0 t1 =
   let hi32 x = Int64.shift_right_logical x 32 in
   let lo32 x = Int64.(logand x (of_int 0xffff_ffff)) in
   let digits32 x = hi32 x, lo32 x in
-  let get arr i = Caml.Array.get arr i in
-  let set arr i x = Caml.Array.set arr i Int64.(logand x (of_int 0xffff_ffff)) in
+  let get arr i = Stdlib.Array.get arr i in
+  let set arr i x = Stdlib.Array.set arr i Int64.(logand x (of_int 0xffff_ffff)) in
   let to_arr u = begin
     let u_lo, u_hi = u128_to_tup u in
     [|lo32 u_lo; hi32 u_lo; lo32 u_hi; hi32 u_hi;|]
@@ -171,7 +171,7 @@ let u128_of_string s =
   let getc_opt s i len = begin
     match i < len with
     | false -> None
-    | true -> Some ((Caml.String.get s i), (i + 1))
+    | true -> Some ((Stdlib.String.get s i), (i + 1))
   end in
   let getc s i len = begin
     match getc_opt s i len with
@@ -181,9 +181,9 @@ let u128_of_string s =
   let d_of_c c = begin
     match c with
     | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
-      u128_of_uns ((Caml.Char.code c) - (Caml.Char.code '0'))
+      u128_of_uns ((Stdlib.Char.code c) - (Stdlib.Char.code '0'))
     | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' ->
-      u128_of_uns (10 + (Caml.Char.code c) - (Caml.Char.code 'a'))
+      u128_of_uns (10 + (Stdlib.Char.code c) - (Stdlib.Char.code 'a'))
     | _ -> not_reached ()
   end in
   let rec suffix s i j len = begin
@@ -303,4 +303,4 @@ let u128_of_string s =
       end
     | _ -> halt "Malformed string"
   end in
-  prefix0 s 0 (Caml.String.length s)
+  prefix0 s 0 (Stdlib.String.length s)

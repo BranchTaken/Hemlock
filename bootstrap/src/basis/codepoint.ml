@@ -93,7 +93,7 @@ module Utf8 = struct
     assert (cp <= max_codepoint);
     let lz = bit_clz cp in
     let sigbits = 21 - lz in
-    Caml.Array.get [|
+    Stdlib.Array.get [|
       1; 1; 1; 1; 1; 1; 1; 1; (* [0..7] *)
       2; 2; 2; 2;             (* [8..11] *)
       3; 3; 3; 3; 3;          (* [12..16] *)

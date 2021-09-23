@@ -9,8 +9,8 @@ module T = struct
   let hash_fold t state =
     state
     |> Hash.State.Gen.init
-    |> Hash.State.Gen.fold_u8 (Caml.String.length t) ~f:(fun i ->
-      Caml.Char.code (Caml.String.get t i)
+    |> Hash.State.Gen.fold_u8 (Stdlib.String.length t) ~f:(fun i ->
+      Stdlib.Char.code (Stdlib.String.get t i)
     )
     |> Hash.State.Gen.fini
     |> Uns.hash_fold (blength t)
