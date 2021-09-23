@@ -7,7 +7,7 @@ module MakeDef (T : IMonoDef) : SMonoDef
 
   let next_opt t =
     match length t with
-    | 0 -> None
+    | 0L -> None
     | _ -> Some (next t)
 end
 

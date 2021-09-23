@@ -12,7 +12,7 @@ let test () =
     | false -> map
     | true -> begin
         let map' = remove_hlt i
-            (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100) map)) in
+            (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100L) map)) in
         assert (equal veq map map');
         assert (equal veq map (union ~f:merge map map'));
         assert (equal veq map (inter ~f:merge map map'));
@@ -22,7 +22,7 @@ let test () =
       end
   end in
   let e = empty (module UnsTestCmper) in
-  let _ = test 100 0 e e in
+  let _ = test 100L 0L e e in
   printf "@]"
 
 let _ = test ()

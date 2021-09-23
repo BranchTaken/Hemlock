@@ -6,7 +6,7 @@ open Format
 let test () =
   printf "@[<h>";
   List.iter [false; true] ~f:(fun b ->
-    List.iter [Some 42; None] ~f:(fun o ->
+    List.iter [Some 42L; None] ~f:(fun o ->
       printf "filter %a ~f:(fun _ -> %b) -> %a\n"
         (pp Uns.pp) o
         b

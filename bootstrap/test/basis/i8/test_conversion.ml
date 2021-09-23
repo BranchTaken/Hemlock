@@ -7,7 +7,7 @@ let test () =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        let i = sint_of_int x in
+        let i = x in
         let t = of_sint i in
         let i' = to_sint t in
         let t' = of_sint i' in
@@ -21,6 +21,6 @@ let test () =
         fn xs'
       end
   in
-  fn [Uns.max_value; (-2); (-1); 0; 1; 2; Uns.of_sint Sint.max_value]
+  fn [Uns.max_value; (-2L); (-1L); 0L; 1L; 2L; Uns.of_sint Sint.max_value]
 
 let _ = test ()

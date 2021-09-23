@@ -6,15 +6,15 @@ open Format
 let test () =
   let lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 2; 3];
-    [0; 1; 2; 3; 4];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 2L; 3L];
+    [0L; 1L; 2L; 3L; 4L];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    let f i _ = (i % 2 = 0) in
+    let f i _ = (i % 2L = 0L) in
     printf "[rev_]filteri %a -> %a / %a\n"
       (pp Uns.pp) l
       (pp Uns.pp) (filteri l ~f)

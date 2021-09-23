@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include <caml/mlvalues.h>
+#include <caml/alloc.h>
 
 int flags_of_hemlock_file_flag[] = {
     /* R_O   */ O_RDONLY,
@@ -26,7 +27,7 @@ static uint8_t *
 deflate_bytes(size_t n, size_t * inflated_bytes) {
     uint8_t * deflated_bytes = (uint8_t *) inflated_bytes;
     for (size_t i = 0; i < n; i++) {
-        deflated_bytes[i] = Int_val(inflated_bytes[i]);
+        deflated_bytes[i] = Int64_val(inflated_bytes[i]);
     }
     if (n > 0) {
         deflated_bytes[n] = '\0';
@@ -38,25 +39,25 @@ static size_t *
 inflate_bytes(size_t n, uint8_t * deflated_bytes) {
     size_t * inflated_bytes = (size_t *) deflated_bytes;
     for (size_t i = n; i-- > 0;) {
-        inflated_bytes[i] = (size_t) Val_int(deflated_bytes[i]);
+        inflated_bytes[i] = (size_t) caml_copy_int64(deflated_bytes[i]);
     }
     return inflated_bytes;
 }
 
 CAMLprim value
 hemlock_file_error_to_string_get_length(value a_error) {
-    int error = Int_val(a_error);
+    int error = Int64_val(a_error);
 
     int length = strlen(strerror(error));
 
-    return Val_int(length);
+    return caml_copy_int64(length);
 }
 
 CAMLprim value
 hemlock_file_error_to_string_inner(value a_n, value a_bytes, value a_error) {
-    size_t n = Long_val(a_n);
+    size_t n = Int64_val(a_n);
     size_t * bytes = (size_t *) String_val(a_bytes);
-    int error = Int_val(a_error);
+    int error = Int64_val(a_error);
 
     uint8_t * cbytes = (uint8_t *) bytes;
     strncpy(cbytes, strerror(error), n);
@@ -71,15 +72,15 @@ hemlock_file_finalize_result(int result) {
         result = -errno;
     }
 
-    return Val_int(result);
+    return caml_copy_int64(result);
 }
 
 CAMLprim value
 hemlock_file_of_path_inner(value a_flag, value a_mode, value a_i, value a_j, value a_bytes) {
     size_t flag = Long_val(a_flag);
-    size_t mode = Long_val(a_mode);
-    size_t i = Long_val(a_i);
-    size_t j = Long_val(a_j);
+    size_t mode = Int64_val(a_mode);
+    size_t i = Int64_val(a_i);
+    size_t j = Int64_val(a_j);
     size_t * bytes = (size_t *) String_val(a_bytes);
 
     int flags = flags_of_hemlock_file_flag[flag];
@@ -95,32 +96,32 @@ hemlock_file_of_path_inner(value a_flag, value a_mode, value a_i, value a_j, val
 
 CAMLprim value
 hemlock_file_stdin_inner(value a_unit) {
-    return Val_int(STDIN_FILENO);
+    return caml_copy_int64(STDIN_FILENO);
 }
 
 CAMLprim value
 hemlock_file_stdout_inner(value a_unit) {
-    return Val_int(STDOUT_FILENO);
+    return caml_copy_int64(STDOUT_FILENO);
 }
 
 CAMLprim value
 hemlock_file_stderr_inner(value a_unit) {
-    return Val_int(STDERR_FILENO);
+    return caml_copy_int64(STDERR_FILENO);
 }
 
 CAMLprim value
 hemlock_file_close_inner(value a_fd) {
-    int fd = Int_val(a_fd);
+    int fd = Int64_val(a_fd);
 
     return hemlock_file_finalize_result(close(fd));
 }
 
 CAMLprim value
 hemlock_file_read_inner(value a_i, value a_j, value a_bytes, value a_fd) {
-    size_t i = Long_val(a_i);
-    size_t j = Long_val(a_j);
+    size_t i = Int64_val(a_i);
+    size_t j = Int64_val(a_j);
     size_t * bytes = (size_t *) String_val(a_bytes);
-    int fd = Int_val(a_fd);
+    int fd = Int64_val(a_fd);
 
     size_t n = j - i;
     bytes = &bytes[i];
@@ -140,10 +141,10 @@ hemlock_file_read_into_inner(value a_i, value a_j, value a_bytes, value a_fd) {
 
 CAMLprim value
 hemlock_file_write_inner(value a_i, value a_j, value a_bytes, value a_fd) {
-    size_t i = Long_val(a_i);
-    size_t j = Long_val(a_j);
+    size_t i = Int64_val(a_i);
+    size_t j = Int64_val(a_j);
     size_t * bytes = (size_t *) String_val(a_bytes);
-    int fd = Int_val(a_fd);
+    int fd = Int64_val(a_fd);
 
     size_t n = j - i;
     bytes = &bytes[i];
@@ -156,24 +157,24 @@ hemlock_file_write_inner(value a_i, value a_j, value a_bytes, value a_fd) {
 
 CAMLprim value
 hemlock_file_seek_inner(value a_i, value a_fd) {
-    size_t i = Long_val(a_i);
-    int fd = Int_val(a_fd);
+    size_t i = Int64_val(a_i);
+    int fd = Int64_val(a_fd);
 
     return hemlock_file_finalize_result(lseek(fd, i, SEEK_CUR));
 }
 
 CAMLprim value
 hemlock_file_seek_hd_inner(value a_i, value a_fd) {
-    size_t i = Long_val(a_i);
-    int fd = Int_val(a_fd);
+    size_t i = Int64_val(a_i);
+    int fd = Int64_val(a_fd);
 
     return hemlock_file_finalize_result(lseek(fd, i, SEEK_SET));
 }
 
 CAMLprim value
 hemlock_file_seek_tl_inner(value a_i, value a_fd) {
-    size_t i = Long_val(a_i);
-    int fd = Int_val(a_fd);
+    size_t i = Int64_val(a_i);
+    int fd = Int64_val(a_fd);
 
     return hemlock_file_finalize_result(lseek(fd, i, SEEK_END));
 }

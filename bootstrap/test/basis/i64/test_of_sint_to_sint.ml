@@ -9,9 +9,9 @@ let test () =
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        let sx = to_sint x in
+        let sx = x in
         printf "to_sint %a -> %a; of_sint -> %a\n"
-          pp_x x Sint.pp_x sx pp_x (of_sint sx);
+          pp_x x Sint.pp_x sx pp_x sx;
         test_xs xs'
       end
   end in
@@ -19,8 +19,8 @@ let test () =
     zero;
     one;
     neg_one;
-    of_sint Sint.min_value;
-    of_sint Sint.max_value;
+    Sint.min_value;
+    Sint.max_value;
     min_value;
     max_value;
   ] in

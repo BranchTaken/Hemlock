@@ -12,7 +12,7 @@ let test () =
     assert (equal ordset0 ordset1);
     assert (subset ordset0 ordset1);
     assert (subset ordset1 ordset0);
-    assert ((length ordset0 = 0) || (not (disjoint ordset0 ordset1)));
+    assert ((length ordset0 = 0L) || (not (disjoint ordset0 ordset1)));
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> ()
@@ -29,7 +29,7 @@ let test () =
     let ordset1 = of_list (module Uns) ms1 in
     assert (not (equal ordset0 ordset1));
     assert (not (subset ordset0 ordset1));
-    assert ((length ordset0 = 0) || (not (subset ordset1 ordset0)));
+    assert ((length ordset0 = 0L) || (not (subset ordset1 ordset0)));
     assert (disjoint ordset0 ordset1);
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
@@ -44,19 +44,19 @@ let test () =
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   let test_disjoint_list_pairs = [
-    ([], [0]);
-    ([0], [1]);
-    ([0], [1; 2]);
-    ([0; 1], [2; 3]);
-    ([0; 1], [2; 3; 4]);
-    ([0; 1; 2], [3; 4; 5])
+    ([], [0L]);
+    ([0L], [1L]);
+    ([0L], [1L; 2L]);
+    ([0L; 1L], [2L; 3L]);
+    ([0L; 1L], [2L; 3L; 4L]);
+    ([0L; 1L; 2L], [3L; 4L; 5L])
   ] in
   List.iter test_lists ~f:(fun ms ->
     test_equal ms ms;

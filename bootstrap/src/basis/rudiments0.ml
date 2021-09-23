@@ -1,9 +1,5 @@
 (* Types. *)
 
-type i63 = I63.t
-
-type u63 = U63.t
-
 type i32 = I32.t
 
 type u32 = U32.t

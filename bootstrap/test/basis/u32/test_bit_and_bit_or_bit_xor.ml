@@ -17,10 +17,10 @@ let test () =
       end
   in
   let pairs = [
-    (kv 0, kv 0);
-    (kv 0xffff_ffff, kv 0);
-    (kv 0, kv 0xffff_ffff);
-    (kv 0xffff_ffff, kv 0xffff_ffff);
+    (kv 0L, kv 0L);
+    (kv 0xffff_ffffL, kv 0L);
+    (kv 0L, kv 0xffff_ffffL);
+    (kv 0xffff_ffffL, kv 0xffff_ffffL);
   ] in
   test_pairs pairs;
   printf "@]"

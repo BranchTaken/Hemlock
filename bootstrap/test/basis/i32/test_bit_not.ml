@@ -14,8 +14,8 @@ let test () =
       end
   in
   let xs = [
-    kv 0;
-    kv 0xffff_ffff
+    kv 0L;
+    kv 0xffff_ffffL
   ] in
   test xs;
   printf "@]"

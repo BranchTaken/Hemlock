@@ -4,13 +4,13 @@ open RudimentsFunctions
 
 module T = struct
   type t = uns
-  let bit_length = 16
+  let bit_length = 16L
 end
 include T
 include Intnb.MakeU(T)
 
 let to_sint t =
-  Uns.to_sint t
+  t
 
 let of_sint x =
   narrow_of_signed x
@@ -18,7 +18,7 @@ let of_sint x =
 let of_sint_opt x =
   let t = of_sint x in
   let x' = to_sint t in
-  match Sint.(x' = x) with
+  match Stdlib.(Int64.(compare x' x) = 0) with
   | false -> None
   | true -> Some t
 
@@ -39,7 +39,7 @@ let of_uns x =
 let of_uns_opt x =
   let t = of_uns x in
   let x' = to_uns t in
-  match Uns.(x' = x) with
+  match Stdlib.(Int64.(unsigned_compare x' x) = 0) with
   | false -> None
   | true -> Some t
 

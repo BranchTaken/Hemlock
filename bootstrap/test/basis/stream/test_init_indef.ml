@@ -15,12 +15,12 @@ let test () =
           | false -> None
           | true -> Some(state, succ state)
         end in
-        let t = init_indef ~f 0 in
+        let t = init_indef ~f 0L in
         printf "init_indef until %a = %a\n" Uns.pp i ppt t;
         test_init_indef_up_to (succ i) n
       end
   end in
-  test_init_indef_up_to 0 3;
+  test_init_indef_up_to 0L 3L;
   printf "@]"
 
 let _ = test ()

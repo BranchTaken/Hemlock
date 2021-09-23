@@ -10,7 +10,7 @@ let test () =
     | k :: ks' -> begin
         assert (not (mem k map));
         assert (Option.is_none (get k map));
-        let v = k * 100 in
+        let v = k * 100L in
         let map' = amend k ~f:(function
           | None -> Some v
           | Some _ -> not_reached ()
@@ -18,7 +18,7 @@ let test () =
         assert (mem k map');
         assert ((get_hlt k map') = v);
         validate map';
-        let v' = k * 10000 in
+        let v' = k * 10000L in
         let map'' = amend k ~f:(function
           | Some vx -> begin
               assert (vx = v);
@@ -32,7 +32,7 @@ let test () =
         test ks' map''
       end
   end in
-  let ks = [1; 3; 2; 42; 44; 45; 56; 60; 66; 75; 81; 91; 420; 421; 4200] in
+  let ks = [1L; 3L; 2L; 42L; 44L; 45L; 56L; 60L; 66L; 75L; 81L; 91L; 420L; 421L; 4200L] in
   test ks (empty (module UnsTestCmper))
 
 let _ = test ()

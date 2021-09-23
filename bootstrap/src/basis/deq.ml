@@ -5,18 +5,18 @@ type 'a t =
 
 (* Increment size for rebuilding; must be either 2 or 3. Reference: Double-ended queues section in
  * Purely Functional Data Structures by Chris Okasaki. *)
-let c = 2
+let c = 2L
 
 let empty = (
-  0, lazy Stream.Nil, lazy Stream.Nil,
-  0, lazy Stream.Nil, lazy Stream.Nil
+  0L, lazy Stream.Nil, lazy Stream.Nil,
+  0L, lazy Stream.Nil, lazy Stream.Nil
 )
 
 let length (lf, _, _, lr, _, _) =
   lf + lr
 
 let is_empty (lf, _, _, lr, _, _) =
-  lf + lr = 0
+  lf + lr = 0L
 
 let exec1 = function
   | lazy (Stream.Cons(_, s')) -> s'
@@ -47,14 +47,14 @@ let rec rotate_drop f j r =
 
 let check t =
   let lf, f, _, lr, r, _ = t in
-  if lf > (c * lr) + 1 then
-    let i = (lf + lr) / 2 in
+  if lf > (c * lr) + 1L then
+    let i = (lf + lr) / 2L in
     let j = lf + lr - i in
     let f' = Stream.take i f in
     let r' = rotate_drop r i f in
     (i, f', f', j, r', r')
-  else if lr > (c * lf) + 1 then
-    let j = (lf + lr) / 2 in
+  else if lr > (c * lf) + 1L then
+    let j = (lf + lr) / 2L in
     let i = lf + lr - j in
     let r' = Stream.take j r in
     let f' = rotate_drop f j r in
@@ -73,7 +73,7 @@ let tl (lf, f, sf, lr, r, sr) =
   | lazy Stream.Nil, lazy Stream.Nil -> not_reached ()
   | lazy Stream.Nil, lazy (Stream.Cons(_, _)) -> empty
   | lazy (Stream.Cons(_, f')), _ -> begin
-      let lf' = lf - 1 in
+      let lf' = lf - 1L in
       let sf' = exec2 sf in
       let sr' = exec2 sr in
       check (lf', f', sf', lr, r, sr')
@@ -89,7 +89,7 @@ let front t =
   rev (tl (rev t))
 
 let push elm (lf, f, sf, lr, r, sr) =
-  let lf' = lf + 1 in
+  let lf' = lf + 1L in
   let f' = Stream.push elm f in
   let sf' = exec1 sf in
   let sr' = exec1 sr in

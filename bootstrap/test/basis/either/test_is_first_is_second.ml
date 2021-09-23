@@ -16,8 +16,8 @@ let test () =
       end
   in
   let eithers = [
-    First 0;
-    Second 0;
+    First 0L;
+    Second 0L;
   ] in
   fn eithers;
   printf "@]"

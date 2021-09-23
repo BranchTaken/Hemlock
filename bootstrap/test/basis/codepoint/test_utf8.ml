@@ -20,23 +20,23 @@ let test () =
         let rec bytes_iteri i = function
           | [] -> ()
           | b :: bytes' -> begin
-              let space = if Uns.(i = 0) then "" else " " in
+              let space = if Uns.(i = 0L) then "" else " " in
               let sep = if Uns.(succ i < length) then ";" else "" in
               printf "%s%a%s" space Byte.pp_x b sep;
               bytes_iteri (succ i) bytes'
             end
         in
-        bytes_iteri 0 bytes;
+        bytes_iteri 0L bytes;
         printf "], length=%a\n" Uns.pp length;
         test_codepoints codepoints'
       end
   in
   let codepoints =
     [
-      (kv 0x3c); (* < *)
-      (kv 0xab); (* « *)
-      (kv 0x2021); (* ‡ *)
-      (kv 0x10197); (* 𐆗 *)
+      (kv 0x3cL); (* < *)
+      (kv 0xabL); (* « *)
+      (kv 0x2021L); (* ‡ *)
+      (kv 0x10197L); (* 𐆗 *)
     ]
   in
   test_codepoints codepoints

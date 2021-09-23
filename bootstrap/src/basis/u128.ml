@@ -3,7 +3,7 @@ open RudimentsInt
 module T = struct
   module U = struct
     type t = u128
-    let word_length = 2
+    let word_length = 2L
 
     let init ~f =
       u128_init ~f

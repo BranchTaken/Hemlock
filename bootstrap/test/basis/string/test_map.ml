@@ -6,11 +6,11 @@ open Format
 let test () =
   let s = "abcde" in
   printf "map: %a -> %a\n" pp s pp (map s ~f:(fun cp ->
-    Codepoint.of_uns ((Codepoint.to_uns cp) - 32)));
+    Codepoint.of_uns ((Codepoint.to_uns cp) - 32L)));
   printf "mapi: %a -> %a\n" pp s pp (mapi s ~f:(fun i cp ->
-    match (bit_and i 0x1) with
-    | 0 -> cp
-    | 1 -> Codepoint.of_uns ((Codepoint.to_uns cp) - 32)
+    match (bit_and i 0x1L) with
+    | 0L -> cp
+    | 1L -> Codepoint.of_uns ((Codepoint.to_uns cp) - 32L)
     | _ -> not_reached ()
   ));
   let s = "a:b:cd:e" in

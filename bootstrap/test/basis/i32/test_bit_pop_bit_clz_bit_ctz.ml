@@ -8,16 +8,16 @@ let test () =
   let rec test = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_{pop,clz,ctz} %a -> %u, %u, %u\n"
+        printf "bit_{pop,clz,ctz} %a -> %Lu, %Lu, %Lu\n"
           pp_x x (bit_pop x) (bit_clz x) (bit_ctz x);
         test xs'
       end
   in
   let xs = [
-    kv (-0x8000_0000);
-    kv (-1);
-    kv 0;
-    kv 1;
+    kv (-0x8000_0000L);
+    kv (-1L);
+    kv 0L;
+    kv 1L;
   ] in
   test xs;
   printf "@]"

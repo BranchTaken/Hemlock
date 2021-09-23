@@ -3,8 +3,8 @@ remove 2
   Map {
     length=2;
     root={
-      present_kv=   0x0000000040000080;
-      present_child=0x0000000000000000;
+      present_kv=   0x1000_0000_0000_8000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[|
         (1, "1");
         (0, "0")
@@ -15,8 +15,8 @@ remove 2
   Map {
     length=2;
     root={
-      present_kv=   0x0000000040000080;
-      present_child=0x0000000000000000;
+      present_kv=   0x1000_0000_0000_8000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[|
         (1, "1");
         (0, "0")
@@ -29,8 +29,8 @@ remove 0
   Map {
     length=1;
     root={
-      present_kv=   0x0000000040000000;
-      present_child=0x0000000000000000;
+      present_kv=   0x1000_0000_0000_0000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[|
         (0, "0")
       |];
@@ -40,8 +40,8 @@ remove 0
   Map {
     length=0;
     root={
-      present_kv=   0x0000000000000000;
-      present_child=0x0000000000000000;
+      present_kv=   0x0000_0000_0000_0000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[||];
       elms_child=[||]
     }
@@ -51,8 +51,8 @@ remove 1
   Map {
     length=2;
     root={
-      present_kv=   0x0000000040000080;
-      present_child=0x0000000000000000;
+      present_kv=   0x1000_0000_0000_8000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[|
         (1, "1");
         (0, "0")
@@ -63,8 +63,8 @@ remove 1
   Map {
     length=1;
     root={
-      present_kv=   0x0000000040000000;
-      present_child=0x0000000000000000;
+      present_kv=   0x1000_0000_0000_0000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[|
         (0, "0")
       |];
@@ -76,8 +76,8 @@ remove 2
   Map {
     length=3;
     root={
-      present_kv=   0x0000000050000080;
-      present_child=0x0000000000000000;
+      present_kv=   0x1200_0000_0000_8000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[|
         (1, "1");
         (2, "2");
@@ -89,8 +89,8 @@ remove 2
   Map {
     length=2;
     root={
-      present_kv=   0x0000000040000080;
-      present_child=0x0000000000000000;
+      present_kv=   0x1000_0000_0000_8000;
+      present_child=0x0000_0000_0000_0000;
       elms_kv=[|
         (1, "1");
         (0, "0")

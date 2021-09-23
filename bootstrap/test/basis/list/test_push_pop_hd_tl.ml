@@ -19,9 +19,9 @@ let test () =
       (pp Uns.pp) (hd_ :: tl_)
   end in
   let lists = [
-    [0];
-    [0; 1];
-    [0; 1; 2];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
   ] in
   printf "@[<h>";
   iter lists ~f:(fun lst -> test_pop_push lst);

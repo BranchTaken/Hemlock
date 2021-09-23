@@ -19,7 +19,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
     | Gt -> begin
         let nb = T.bit_length in
         let lz = T.bit_clz t in
-        T.bit_sl ~shift:(nb - 1 - lz) T.one
+        T.bit_sl ~shift:Int64.(sub (pred nb) lz) T.one
       end
 
   let ceil_pow2 t =
@@ -29,8 +29,8 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
     | Gt -> begin
         let nb = T.bit_length in
         match T.bit_clz T.(t - one) with
-        | 0 -> T.zero
-        | lz -> T.bit_sl ~shift:(nb - lz) T.one
+        | 0L -> T.zero
+        | lz -> T.bit_sl ~shift:Int64.(sub nb lz) T.one
       end
 
   let floor_lg_opt t =
@@ -39,7 +39,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
     | Gt -> begin
         let nb = T.bit_length in
         let lz = T.bit_clz t in
-        Some (T.of_uns (nb - 1 - lz))
+        Some (T.of_uns Int64.(sub (pred nb) lz))
       end
 
   let floor_lg t =
@@ -70,44 +70,44 @@ module type SCommon = sig
   include S with type t := t
   include SNarrow with type t := t
 
-  val narrow: t -> int
+  val narrow: t -> int64
 end
 
 module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
   module U = struct
-    type t = int
+    type t = int64
 
     let hash_fold t state =
       Hash.State.Gen.init state
-      |> Hash.State.Gen.fold_u64 1 ~f:(fun _ -> Int64.of_int t)
+      |> Hash.State.Gen.fold_u64 1L ~f:(fun _ -> t)
       |> Hash.State.Gen.fini
 
     let extend t =
-      let nlb = Sys.int_size - T.bit_length in
+      let nlb = Int64.(sub 64L T.bit_length) in
       match nlb with
-      | 0 -> t
+      | 0L -> t
       | _ -> begin
           match T.signed with
-          | false -> ((1 lsl T.bit_length) - 1) land t
-          | true -> (t lsl nlb) asr nlb
+          | false -> Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t)
+          | true -> Int64.(shift_right (shift_left t (to_int nlb)) (to_int nlb))
         end
 
     let narrow t =
-      let nlb = Sys.int_size - T.bit_length in
+      let nlb = Int64.(sub 64L T.bit_length) in
       match nlb with
-      | 0 ->  t
+      | 0L ->  t
       | _ -> begin
           match T.signed with
-          | false -> ((1 lsl T.bit_length) - 1) land t
+          | false -> Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t)
           | true ->
-            ((t asr (Sys.int_size - 1)) lsl (T.bit_length - 1)) lor (((1 lsl (T.bit_length - 1)) -
-                1) land t)
+            Int64.(logor (shift_left (shift_right t 63) (to_int (pred T.bit_length))) (logand (pred
+                (shift_left 1L (to_int (pred T.bit_length)))) t))
         end
 
     let cmp t0 t1 =
-      assert (narrow t0 = t0);
-      assert (narrow t1 = t1);
-      match T.signed || (Sys.int_size > T.bit_length) with
+      assert (Int64.(compare (narrow t0) t0) = 0);
+      assert (Int64.(compare (narrow t1) t1) = 0);
+      match T.signed || Stdlib.(Int64.(compare 64L T.bit_length) > 0) with
       | true -> intnb_icmp t0 t1
       | false -> intnb_ucmp t0 t1
 
@@ -115,47 +115,47 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       match T.signed with
       | true -> narrow (uns_of_sint s)
       | false -> begin
-          let nlb = Sys.int_size - T.bit_length in
+          let nlb = Int64.(sub 64L T.bit_length) in
           (match nlb with
-            | 0 -> uns_of_sint s
-            | _ -> ((1 lsl T.bit_length) - 1) land (uns_of_sint s)
+            | 0L -> uns_of_sint s
+            | _ -> Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) (uns_of_sint s))
           )
         end
 
     let narrow_of_unsigned u =
       match T.signed with
       | true -> begin
-          let nlb = Sys.int_size - T.bit_length in
+          let nlb = Int64.(sub 64L T.bit_length) in
           match nlb with
-          | 0 -> u
-          | _ -> ((1 lsl (T.bit_length - 1)) - 1) land u
+          | 0L -> u
+          | _ -> Int64.(logand (pred (shift_left 1L (to_int (pred T.bit_length)))) u)
         end
       | false -> narrow u
 
     let lbfill t =
-      let nlb = Sys.int_size - T.bit_length in
+      let nlb = Int64.(sub 64L T.bit_length) in
       match nlb with
-      | 0 -> t
+      | 0L -> t
       | _ -> begin
-          let mask = ((1 lsl T.bit_length) - 1) in
-          let lb = lnot mask in
-          lb lor t
+          let mask = Int64.(pred (shift_left 1L (to_int T.bit_length))) in
+          let lb = Int64.(lognot mask) in
+          Int64.(logor lb t)
         end
 
     let lbclear t =
       match T.signed with
       | false -> t
       | true -> begin
-          let nlb = Sys.int_size - T.bit_length in
+          let nlb = Int64.(sub 64L T.bit_length) in
           match nlb with
-          | 0 -> begin
+          | 0L -> begin
               (* Leading bits are already zeros. *)
-              assert (narrow t = t);
+              assert Stdlib.(Int64.(compare (narrow t) t) = 0);
               t
             end
           | _ -> begin
-              let mask = ((1 lsl T.bit_length) - 1) in
-              t land mask
+              let mask = Int64.(pred (shift_left 1L (to_int T.bit_length))) in
+              Int64.(logand t mask)
             end
         end
 
@@ -163,180 +163,183 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       (* OCaml handles overflow poorly, but this deficiency has no anticipated impact on
        * bootstrapping. *)
       match T.signed || (r >= 0.) with
-      | true -> narrow (int_of_float r)
-      | false -> 0
+      | true -> narrow (Int64.of_float r)
+      | false -> 0L
 
     let to_real t =
-      assert (narrow t = t);
+      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
       match T.signed with
-      | true -> float_of_int t
-      | false -> (float_of_int (t lsr 1)) *. 2. +. (float_of_int (t land 1))
+      | true -> Int64.to_float t
+      | false -> Int64.(to_float (shift_right_logical t 1)) *. 2. +. Int64.(to_float (logand t 1L))
 
     let pp ppf t =
-      assert (narrow t = t);
-      let nlb = Sys.int_size - T.bit_length in
+      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
+      let nlb = Int64.(sub 64L T.bit_length) in
       match T.signed, nlb with
-      | false, 0 -> Format.fprintf ppf "%u" t
-      | true, 0 -> Format.fprintf ppf "%di" t
-      | false, _ -> Format.fprintf ppf "%uu%u" t T.bit_length
-      | true, _ -> Format.fprintf ppf "%di%u" t T.bit_length
+      | false, 0L -> Format.fprintf ppf "%Lu" t
+      | true, 0L -> Format.fprintf ppf "%Ldi" t
+      | false, _ -> Format.fprintf ppf "%Luu%Lu" t T.bit_length
+      | true, _ -> Format.fprintf ppf "%Ldi%Lu" t T.bit_length
 
     let pp_b ppf t =
-      assert (narrow t = t);
-      let nlb = Sys.int_size - T.bit_length in
-      let tbits = ((1 lsl T.bit_length) - 1) land t in (* Mask leading ones. *)
+      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
+      let nlb = Int64.(sub 64L T.bit_length) in
+      let tbits =
+        Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t) in (* Mask leading ones. *)
       let rec string_of_bits bits i accum = begin
         match i = T.bit_length with
         | true -> Stdlib.String.concat "" accum
         | false -> begin
-            let bits' = bits lsr 1 in
-            let i' = i + 1 in
-            let accum' = (string_of_int (bits land 1)) :: accum in
+            let bits' = Int64.shift_right_logical bits 1 in
+            let i' = Int64.succ i in
+            let accum' = Int64.(to_string (logand bits 1L)) :: accum in
             string_of_bits bits' i' accum'
           end
       end in
-      let bits_string = string_of_bits tbits 0 [] in
+      let bits_string = string_of_bits tbits 0L [] in
       match T.signed, nlb with
-      | false, 0 -> Format.fprintf ppf "0b%s" bits_string
-      | true, 0 -> Format.fprintf ppf "0b%si" bits_string
-      | false, _ -> Format.fprintf ppf "0b%su%u" bits_string T.bit_length
-      | true, _ -> Format.fprintf ppf "0b%si%u" bits_string T.bit_length
+      | false, 0L -> Format.fprintf ppf "0b%s" bits_string
+      | true, 0L -> Format.fprintf ppf "0b%si" bits_string
+      | false, _ -> Format.fprintf ppf "0b%su%Lu" bits_string T.bit_length
+      | true, _ -> Format.fprintf ppf "0b%si%Lu" bits_string T.bit_length
 
     let pp_o ppf t =
-      assert (narrow t = t);
-      let nlb = Sys.int_size - T.bit_length in
-      let oct_digits = (T.bit_length + 2) / 3 in
-      let tbits = ((1 lsl T.bit_length) - 1) land t in (* Mask leading ones. *)
+      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
+      let nlb = Int64.(sub 64L T.bit_length) in
+      let oct_digits = ((Int64.to_int T.bit_length) + 2) / 3 in
+      let tbits =
+        Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t) in (* Mask leading ones. *)
       match T.signed, nlb with
-      | false, 0 -> Format.fprintf ppf "0o%0*o" oct_digits tbits
-      | true, 0 -> Format.fprintf ppf "0o%0*oi" oct_digits tbits
-      | false, _ -> Format.fprintf ppf "0o%0*ou%u" oct_digits tbits T.bit_length
-      | true, _ -> Format.fprintf ppf "0o%0*oi%u" oct_digits tbits T.bit_length
+      | false, 0L -> Format.fprintf ppf "0o%0*Lo" oct_digits tbits
+      | true, 0L -> Format.fprintf ppf "0o%0*Loi" oct_digits tbits
+      | false, _ -> Format.fprintf ppf "0o%0*Lou%Lu" oct_digits tbits T.bit_length
+      | true, _ -> Format.fprintf ppf "0o%0*Loi%Lu" oct_digits tbits T.bit_length
 
     let pp_x ppf t =
-      assert (narrow t = t);
-      let nlb = Sys.int_size - T.bit_length in
-      let hex_digits = (T.bit_length + 3) / 4 in
-      let tbits = ((1 lsl T.bit_length) - 1) land t in (* Mask leading ones. *)
+      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
+      let nlb = Int64.(sub 64L T.bit_length) in
+      let hex_digits = ((Int64.to_int T.bit_length) + 3) / 4 in
+      let tbits =
+        Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t) in (* Mask leading ones. *)
       match T.signed, nlb with
-      | false, 0 -> Format.fprintf ppf "0x%0*x" hex_digits tbits
-      | true, 0 -> Format.fprintf ppf "0x%0*xi" hex_digits tbits
-      | false, _ -> Format.fprintf ppf "0x%0*xu%u" hex_digits tbits T.bit_length
-      | true, _ -> Format.fprintf ppf "0x%0*xi%u" hex_digits tbits T.bit_length
+      | false, 0L -> Format.fprintf ppf "0x%0*Lx" hex_digits tbits
+      | true, 0L -> Format.fprintf ppf "0x%0*Lxi" hex_digits tbits
+      | false, _ -> Format.fprintf ppf "0x%0*Lxu%Lu" hex_digits tbits T.bit_length
+      | true, _ -> Format.fprintf ppf "0x%0*Lxi%Lu" hex_digits tbits T.bit_length
 
     let of_string s =
-      narrow (int_of_string s)
+      narrow (Int64.of_string s)
 
     let to_string t =
-      assert (narrow t = t);
+      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
       Format.asprintf "%a" pp t
 
-    let zero = 0
+    let zero = 0L
 
-    let one = 1
+    let one = 1L
 
     let min_value = zero
 
-    let max_value = narrow (zero - one)
+    let max_value = narrow Int64.(sub zero one)
 
     let succ t =
-      extend (t + 1)
+      extend Int64.(succ t)
 
     let pred t =
-      extend (t - 1)
+      extend Int64.(pred t)
 
     let bit_and t0 t1 =
-      extend (t0 land t1)
+      extend Int64.(logand t0 t1)
 
     let bit_or t0 t1 =
-      extend (t0 lor t1)
+      extend Int64.(logor t0 t1)
 
     let bit_xor t0 t1 =
-      extend (t0 lxor t1)
+      extend Int64.(logxor t0 t1)
 
     let bit_not t =
-      extend (lnot t)
+      extend Int64.(lognot t)
 
     let bit_sl ~shift t =
-      extend (t lsl shift)
+      extend Int64.(shift_left t (to_int shift))
 
     let bit_usr ~shift t =
-      extend (t lsr shift)
+      extend Int64.(shift_right_logical t (to_int shift))
 
     let bit_ssr ~shift t =
-      extend (t asr shift)
+      extend Int64.(shift_right t (to_int shift))
 
     let bit_pop t =
       let x = lbclear t in
-      let x = x - ((x lsr 1) land 0x5555_5555_5555_5555) in
-      let c3s = 0x3333_3333_3333_3333 in
-      let x = (x land c3s) + ((x lsr 2) land c3s) in
-      let x = (x + (x lsr 4)) land 0x0f0f_0f0f_0f0f_0f0f in
-      let x = x + (x lsr 8) in
-      let x = x + (x lsr 16) in
-      let x = x + (x lsr 32) in
-      x land 0x3f
+      let x = Int64.(sub x (logand (shift_right x 1) 0x5555_5555_5555_5555L)) in
+      let c3s = 0x3333_3333_3333_3333L in
+      let x = Int64.(add (logand x c3s) (logand (shift_right_logical x 2) c3s)) in
+      let x = Int64.(logand (add x (shift_right_logical x 4)) 0x0f0f_0f0f_0f0f_0f0fL) in
+      let x = Int64.(add x (shift_right_logical x 8)) in
+      let x = Int64.(add x (shift_right_logical x 16)) in
+      let x = Int64.(add x (shift_right_logical x 32)) in
+      Int64.(logand x 0x3fL)
 
     let bit_clz t =
       let x = lbclear t in
-      let x = x lor (x lsr 1) in
-      let x = x lor (x lsr 2) in
-      let x = x lor (x lsr 4) in
-      let x = x lor (x lsr 8) in
-      let x = x lor (x lsr 16) in
-      let x = x lor (x lsr 32) in
+      let x = Int64.(logor x (shift_right_logical x 1)) in
+      let x = Int64.(logor x (shift_right_logical x 2)) in
+      let x = Int64.(logor x (shift_right_logical x 4)) in
+      let x = Int64.(logor x (shift_right_logical x 8)) in
+      let x = Int64.(logor x (shift_right_logical x 16)) in
+      let x = Int64.(logor x (shift_right_logical x 32)) in
       bit_pop (bit_not x)
 
     let bit_ctz t =
       let t' = lbfill t in
-      bit_pop (bit_and (bit_not t') (t' - 1))
+      bit_pop (bit_and (bit_not t') Int64.(pred t'))
 
     let ( + ) t0 t1 =
-      extend (t0 + t1)
+      extend Int64.(add t0 t1)
 
     let ( - ) t0 t1 =
-      extend (t0 - t1)
+      extend Int64.(sub t0 t1)
 
     let ( * ) t0 t1 =
-      extend (t0 * t1)
+      extend Int64.(mul t0 t1)
 
     let ( / ) t0 t1 =
-      extend (t0 / t1)
+      extend Int64.(div t0 t1)
 
     let ( % ) t0 t1 =
-      extend (t0 mod t1)
+      extend Int64.(rem t0 t1)
 
     let ( ** ) t0 t1 =
       (* Decompose the exponent to limit algorithmic complexity. *)
-      let neg, n = if T.signed && t1 < 0 then
-          true, -t1
+      let neg, n = if T.signed && Stdlib.(Int64.(compare t1 0L) < 0) then
+          true, Int64.(neg t1)
         else
           false, t1
       in
       let rec fn r p n = begin
         match n with
-        | 0 -> r
+        | 0L -> r
         | _ -> begin
-            let r' = match bit_and n 1 with
-              | 0 -> r
-              | 1 -> r * p
+            let r' = match bit_and n 1L with
+              | 0L -> r
+              | 1L -> r * p
               | _ -> assert false
             in
-            let p' = p * p in
-            let n' = bit_usr ~shift:1 n in
+            let p' = Int64.(mul p p) in
+            let n' = bit_usr ~shift:1L n in
             fn r' p' n'
           end
       end in
-      let r = fn 1 t0 n in
+      let r = fn 1L t0 n in
       narrow (
         match neg with
         | false -> r
-        | true -> 1 / r
+        | true -> Int64.(div 1L r)
       )
 
     let ( // ) t0 t1 =
-      assert (narrow t0 = t0);
-      assert (narrow t1 = t1);
+      assert Stdlib.(Int64.(compare (narrow t0) t0) = 0);
+      assert Stdlib.(Int64.(compare (narrow t1) t1) = 0);
       (to_real t0) /. (to_real t1)
   end
   include U
@@ -374,16 +377,16 @@ module MakeI (T : I) : SI with type t := sint = struct
       V.cmp (uns_of_sint t0) (uns_of_sint t1)
 
     let narrow_of_signed x =
-      sint_of_int (V.narrow_of_signed x)
+      sint_of_uns (V.narrow_of_signed x)
 
     let narrow_of_unsigned x =
-      sint_of_int (V.narrow_of_unsigned x)
+      sint_of_uns (V.narrow_of_unsigned x)
 
     let of_real r =
-      sint_of_int (V.of_real r)
+      sint_of_uns (V.of_real r)
 
     let to_real t =
-      V.to_real (int_of_sint t)
+      V.to_real t
 
     let of_string s =
       sint_of_uns (V.of_string s)
@@ -407,9 +410,9 @@ module MakeI (T : I) : SI with type t := sint = struct
 
     let one = sint_of_uns V.one
 
-    let min_value = sint_of_int (V.narrow min_int)
+    let min_value = sint_of_uns (V.narrow Int64.min_int)
 
-    let max_value = sint_of_int (V.narrow max_int)
+    let max_value = sint_of_uns (V.narrow Int64.max_int)
 
     let succ t =
       sint_of_uns (V.succ (uns_of_sint t))
@@ -489,23 +492,24 @@ module MakeI (T : I) : SI with type t := sint = struct
     let max t0 t1 =
       sint_of_uns (V.max (uns_of_sint t0) (uns_of_sint t1))
 
-    let neg_one = sint_of_uns (V.narrow (-1))
+    let neg_one =
+      V.(narrow (zero - one))
 
     let ( ~- ) t =
-      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
-      sint_of_uns (-(int_of_sint t))
+      assert (Int64.(compare (V.narrow t) t) = 0);
+      sint_of_uns Int64.(neg t)
 
     let ( ~+) t =
-      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
+      assert (Int64.(compare (V.narrow t) t) = 0);
       t
 
     let neg t =
-      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
+      assert (Int64.(compare (V.narrow t) t) = 0);
       -t
 
     let abs t =
-      assert (sint_of_int (V.narrow (int_of_sint t)) = t);
-      sint_of_int (abs (int_of_sint t))
+      assert (Int64.(compare (V.narrow t) t) = 0);
+      V.narrow Int64.(abs t)
   end
   include U
   include Identifiable.Make(U)

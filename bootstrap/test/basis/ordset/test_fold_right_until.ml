@@ -10,20 +10,20 @@ let test () =
      * to fold order. *)
     assert ((List.length ms) = (length ordset));
     let n = length ordset in
-    let triangle_sum = List.fold ms ~init:0 ~f:(fun accum m ->
-      accum + fold_right_until ordset ~init:0 ~f:(fun a accum ->
+    let triangle_sum = List.fold ms ~init:0L ~f:(fun accum m ->
+      accum + fold_right_until ordset ~init:0L ~f:(fun a accum ->
         (succ accum), (m = a)
       )
     ) in
-    assert (triangle_sum = (n + 1) * n / 2);
+    assert (triangle_sum = (n + 1L) * n / 2L);
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   List.iter test_lists ~f:(fun ms ->
     test ms

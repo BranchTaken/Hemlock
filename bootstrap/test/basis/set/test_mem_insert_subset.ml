@@ -18,7 +18,7 @@ let test () =
         test ms' set'
       end
   end in
-  let ms = [1; 3; 2; 44; 45; 56; 60; 66; 75; 81; 91] in
+  let ms = [1L; 3L; 2L; 44L; 45L; 56L; 60L; 66L; 75L; 81L; 91L] in
   test ms (empty (module Uns));
   printf "@]"
 

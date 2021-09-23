@@ -28,13 +28,13 @@ let test () =
           let () = match cp with
             | cp when Codepoint.(cp = nl) -> begin
                 assert (Pos.line pos = Uns.succ line);
-                assert (Pos.col pos = 0)
+                assert (Pos.col pos = 0L)
               end
             | cp when Codepoint.(cp = ht) -> begin
                 let tabwidth = tabwidth (Cursor.container cursor) in
                 assert (Pos.line pos = line);
                 assert ((Pos.col pos) / tabwidth = Uns.succ (col / tabwidth));
-                assert (Pos.col pos % tabwidth = 0);
+                assert (Pos.col pos % tabwidth = 0L);
               end
             | _ -> begin
                 assert (Pos.line pos = line);
@@ -45,12 +45,12 @@ let test () =
           fwd_iter ~line:line' ~col:col' cursor'
         end
     end in
-    let tl = fwd_iter ~line:1 ~col:0 (Cursor.hd text) in
+    let tl = fwd_iter ~line:1L ~col:0L (Cursor.hd text) in
     let pos = Cursor.pos tl in
-    printf "  pos tl = %u:%u\n" (Pos.line pos) (Pos.col pos);
+    printf "  pos tl = %Lu:%Lu\n" (Pos.line pos) (Pos.col pos);
 
     let rec rev_iter ~line ~col cursor = begin
-      match Cursor.index cursor > 0 with
+      match Cursor.index cursor > 0L with
       | false -> cursor
       | true -> begin
           let cp, cursor' = Cursor.prev cursor in
@@ -62,7 +62,7 @@ let test () =
             | cp when Codepoint.(cp = ht) -> begin
                 let tabwidth = tabwidth (Cursor.container cursor) in
                 assert (Pos.line pos = line);
-                assert ((Pos.col (Cursor.pos cursor)) % tabwidth = 0)
+                assert ((Pos.col (Cursor.pos cursor)) % tabwidth = 0L)
               end
             | _ -> begin
                 assert (Pos.line pos = line);
@@ -74,7 +74,7 @@ let test () =
         end
     end in
     let hd' = rev_iter ~line:(Pos.line pos) ~col:(Pos.col pos) tl in
-    printf "  pos hd = %u:%u\n"
+    printf "  pos hd = %Lu:%Lu\n"
       (Pos.line (Cursor.pos hd'))
       (Pos.col (Cursor.pos hd'));
     assert Cursor.(hd text = hd');

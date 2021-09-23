@@ -51,9 +51,9 @@ let rec fn arr hd cursor tl =
 let test () =
   let arrs = [
     [||];
-    [|0|];
-    [|0; 1|];
-    [|0; 1; 2|];
+    [|0L|];
+    [|0L; 1L|];
+    [|0L; 1L; 2L|];
   ] in
   printf "@[<h>";
   List.iter arrs ~f:(fun arr ->

@@ -6,8 +6,8 @@ open Format
 let test () =
   let hash_fold u64s t = begin
     State.Gen.init t
-    |> State.Gen.fold_u64 (Stdlib.Array.length u64s) ~f:(fun i ->
-      Stdlib.Array.get u64s i
+    |> State.Gen.fold_u64 Stdlib.(Int64.of_int (Array.length u64s)) ~f:(fun i ->
+      Stdlib.(Array.get u64s Int64.(to_int i))
     )
     |> State.Gen.fini
   end in
@@ -16,13 +16,13 @@ let test () =
       match i = len with
       | true -> ()
       | false -> begin
-          if i > 0 then fprintf ppf ";@ ";
-          fprintf ppf "%a" pp_elm (Stdlib.Array.get arr i);
+          if i > 0L then fprintf ppf ";@ ";
+          fprintf ppf "%a" pp_elm Stdlib.(Array.get arr (Int64.to_int i));
           fn arr (succ i) len
         end
     end in
     fprintf ppf "@[<h>[|";
-    fn arr 0 (Stdlib.Array.length arr);
+    fn arr 0L Stdlib.(Int64.of_int (Array.length arr));
     fprintf ppf "|]@]"
   end in
   let pp_u64 ppf u = begin

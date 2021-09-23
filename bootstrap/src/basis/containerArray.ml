@@ -24,7 +24,7 @@ module MakePolyArray (T : IPolyArray) : SPolyArrayGen
         t.length
 
       let next t =
-        assert (length t > 0);
+        assert (length t > 0L);
         let elm = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
         let length' = (Uns.pred t.length) in
@@ -77,7 +77,7 @@ module MakePoly2Array (T : IPoly2Array) : SPoly2ArrayGen
         t.length
 
       let next t =
-        assert (length t > 0);
+        assert (length t > 0L);
         let elm = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
         let length' = (Uns.pred t.length) in
@@ -117,7 +117,7 @@ module MakePoly3Array (T : IPoly3Array) : SPoly3ArrayGen
         t.length
 
       let next t =
-        assert (length t > 0);
+        assert (length t > 0L);
         let (k, v) = T.Cursor.rget t.cursor in
         let cursor' = T.Cursor.succ t.cursor in
         let length' = (Uns.pred t.length) in

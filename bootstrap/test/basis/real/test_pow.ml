@@ -16,19 +16,19 @@ let test () =
       end
   end in
   fn [
-    (3., Sint.kv (-3));
-    (-1., Sint.kv 61);
-    (1., Sint.kv 61);
-    (2., Sint.kv (-1));
-    (2., Sint.kv 0);
-    (2., Sint.kv 1);
-    (2., Sint.kv 2);
-    (2., Sint.kv 61);
-    (10., Sint.kv 7);
-    ((ex 1.), Sint.kv (-1));
-    ((ex 1.), Sint.kv 0);
-    ((ex 1.), Sint.kv 1);
-    ((ex 1.), Sint.kv 2);
+    (3., Sint.kv (-3L));
+    (-1., Sint.kv 61L);
+    (1., Sint.kv 61L);
+    (2., Sint.kv (-1L));
+    (2., Sint.kv 0L);
+    (2., Sint.kv 1L);
+    (2., Sint.kv 2L);
+    (2., Sint.kv 61L);
+    (10., Sint.kv 7L);
+    ((ex 1.), Sint.kv (-1L));
+    ((ex 1.), Sint.kv 0L);
+    ((ex 1.), Sint.kv 1L);
+    ((ex 1.), Sint.kv 2L);
   ];
   printf "@]"
 

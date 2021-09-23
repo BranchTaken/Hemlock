@@ -48,7 +48,7 @@ let test () =
   end in
   let test_arrays = [
     [||];
-    [|0; 1; 4; 5; 3; 2|];
+    [|0L; 1L; 4L; 5L; 3L; 2L|];
   ] in
   List.iter test_arrays ~f:(fun ms ->
     test ms

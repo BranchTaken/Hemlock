@@ -30,7 +30,7 @@ let test () =
       end
   end in
   let e = empty (module U128) in
-  let _ = test 100 0 e e in
+  let _ = test 100L 0L e e in
   printf "@]"
 
 let _ = test ()

@@ -15,7 +15,7 @@ let test () =
         test_push_up_to t' (succ i) n
       end
   end in
-  test_push_up_to empty 0 3;
+  test_push_up_to empty 0L 3L;
   printf "@]"
 
 let _ = test ()

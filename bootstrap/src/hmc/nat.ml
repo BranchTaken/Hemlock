@@ -3,8 +3,8 @@ open Basis.Rudiments
 
 module T = struct
   type t = u64 array
-  let min_word_length = 0
-  let max_word_length = Uns.(2 ** 26) (* 2**32 bits. *)
+  let min_word_length = 0L
+  let max_word_length = Uns.(2L ** 26L) (* 2**32 bits. *)
   let init = Array.init
   let word_length = Array.length
   let get = Array.get
@@ -12,54 +12,54 @@ end
 include T
 include Intw.MakeVU(T)
 
-let k_0 = of_uns 0x0
-let k_1 = of_uns 0x1
-let k_2 = of_uns 0x2
-let k_3 = of_uns 0x3
-let k_4 = of_uns 0x4
-let k_5 = of_uns 0x5
-let k_6 = of_uns 0x6
-let k_7 = of_uns 0x7
-let k_8 = of_uns 0x8
-let k_9 = of_uns 0x9
-let k_a = of_uns 0xa
-let k_b = of_uns 0xb
-let k_c = of_uns 0xc
-let k_d = of_uns 0xd
-let k_e = of_uns 0xe
-let k_f = of_uns 0xf
-let k_g = of_uns 0x10
+let k_0 = of_uns 0x0L
+let k_1 = of_uns 0x1L
+let k_2 = of_uns 0x2L
+let k_3 = of_uns 0x3L
+let k_4 = of_uns 0x4L
+let k_5 = of_uns 0x5L
+let k_6 = of_uns 0x6L
+let k_7 = of_uns 0x7L
+let k_8 = of_uns 0x8L
+let k_9 = of_uns 0x9L
+let k_a = of_uns 0xaL
+let k_b = of_uns 0xbL
+let k_c = of_uns 0xcL
+let k_d = of_uns 0xdL
+let k_e = of_uns 0xeL
+let k_f = of_uns 0xfL
+let k_g = of_uns 0x10L
 
-let max_u8 = (bit_sl ~shift:8 k_1) - k_1
-let max_abs_i8 = bit_sl ~shift:7 k_1
+let max_u8 = (bit_sl ~shift:8L k_1) - k_1
+let max_abs_i8 = bit_sl ~shift:7L k_1
 let max_i8 = max_abs_i8 - k_1
 
-let max_u16 = (bit_sl ~shift:16 k_1) - k_1
-let max_abs_i16 = bit_sl ~shift:15 k_1
+let max_u16 = (bit_sl ~shift:16L k_1) - k_1
+let max_abs_i16 = bit_sl ~shift:15L k_1
 let max_i16 = max_abs_i16 - k_1
 
-let max_u32 = (bit_sl ~shift:32 k_1) - k_1
-let max_abs_i32 = bit_sl ~shift:31 k_1
+let max_u32 = (bit_sl ~shift:32L k_1) - k_1
+let max_abs_i32 = bit_sl ~shift:31L k_1
 let max_i32 = max_abs_i32 - k_1
 
-let max_uns = (bit_sl ~shift:63 k_1) - k_1
-let max_abs_int = bit_sl ~shift:62 k_1
+let max_uns = (bit_sl ~shift:64L k_1) - k_1
+let max_abs_int = bit_sl ~shift:63L k_1
 let max_int = max_abs_int - k_1
 
-let max_u64 = (bit_sl ~shift:64 k_1) - k_1
-let max_abs_i64 = bit_sl ~shift:63 k_1
+let max_u64 = (bit_sl ~shift:64L k_1) - k_1
+let max_abs_i64 = bit_sl ~shift:63L k_1
 let max_i64 = max_abs_i64 - k_1
 
-let max_u128 = (bit_sl ~shift:128 k_1) - k_1
-let max_abs_i128 = bit_sl ~shift:127 k_1
+let max_u128 = (bit_sl ~shift:128L k_1) - k_1
+let max_abs_i128 = bit_sl ~shift:127L k_1
 let max_i128 = max_abs_i128 - k_1
 
-let max_u256 = (bit_sl ~shift:256 k_1) - k_1
-let max_abs_i256 = bit_sl ~shift:255 k_1
+let max_u256 = (bit_sl ~shift:256L k_1) - k_1
+let max_abs_i256 = bit_sl ~shift:255L k_1
 let max_i256 = max_abs_i256 - k_1
 
-let max_u512 = (bit_sl ~shift:512 k_1) - k_1
-let max_abs_i512 = bit_sl ~shift:511 k_1
+let max_u512 = (bit_sl ~shift:512L k_1) - k_1
+let max_abs_i512 = bit_sl ~shift:511L k_1
 let max_i512 = max_abs_i512 - k_1
 
 let to_u8_opt t =

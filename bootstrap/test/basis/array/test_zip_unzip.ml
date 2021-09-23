@@ -12,9 +12,9 @@ let test () =
   end in
   printf "@[<h>";
   test_zip [||] [||];
-  test_zip [|0|] [|1|];
-  test_zip [|0; 1|] [|2; 3|];
-  test_zip [|0; 1; 2|] [|3; 4; 5|];
+  test_zip [|0L|] [|1L|];
+  test_zip [|0L; 1L|] [|2L; 3L|];
+  test_zip [|0L; 1L; 2L|] [|3L; 4L; 5L|];
   printf "@]"
 
 let _ = test ()

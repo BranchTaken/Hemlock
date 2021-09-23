@@ -6,9 +6,9 @@ open Format
 let test () =
   let list_pairs = [
     ([], []);
-    ([0; 1], []);
-    ([0; 1], [2; 3]);
-    ([], [2; 3]);
+    ([0L; 1L], []);
+    ([0L; 1L], [2L; 3L]);
+    ([], [2L; 3L]);
   ] in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->

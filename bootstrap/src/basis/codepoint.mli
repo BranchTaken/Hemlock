@@ -8,7 +8,7 @@ type t
 include IdentifiableIntf.S with type t := t
 include CmpableIntf.SMono with type t := t
 
-val kv: int -> t
+val kv: uns -> t
 (** Create constant value. This is a stopgap solution for the lack of codepoint literals. *)
 
 val to_uns: t -> uns

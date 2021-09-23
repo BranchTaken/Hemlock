@@ -5,19 +5,20 @@ module T = struct
 
   let to_uns t =
     match t with
-    | false -> 0
-    | true -> 1
+    | false -> 0L
+    | true -> 1L
 
   let hash_fold t state =
     state
     |> Uns.hash_fold (to_uns t)
 
   let cmp t0 t1 =
+    let open Cmp in
     match t0, t1 with
-    | false, true -> Cmp.Lt
+    | false, true -> Lt
     | false, false
-    | true, true -> Cmp.Eq
-    | true, false -> Cmp.Gt
+    | true, true -> Eq
+    | true, false -> Gt
 
   let pp ppf t =
     Format.fprintf ppf (
@@ -42,7 +43,7 @@ include Identifiable.Make(T)
 
 let of_uns x =
   match x with
-  | 0 -> false
+  | 0L -> false
   | _ -> true
 
 let not = not

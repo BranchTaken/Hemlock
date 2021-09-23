@@ -64,13 +64,13 @@ module T = struct
     (module Cmper.SMono with type t = 'k and type cmper_witness = 'cmp)
 
   let nnodes = function
-    | Empty -> 0
-    | Leaf _ -> 1
+    | Empty -> 0L
+    | Leaf _ -> 1L
     | Node {l=_; k=_; v=_; n; h=_; r=_} -> n
 
   let height = function
-    | Empty -> 0
-    | Leaf _ -> 1
+    | Empty -> 0L
+    | Leaf _ -> 1L
     | Node {l=_; k=_; v=_; n=_; h; r=_} -> h
 
   let leaf_init (k, v) =
@@ -80,7 +80,7 @@ module T = struct
     match l, r with
     | Empty, Empty -> leaf_init (k, v)
     | _, _ -> begin
-        let n = (nnodes l) + 1 + (nnodes r) in
+        let n = (nnodes l) + 1L + (nnodes r) in
         let h = succ (max (height l) (height r)) in
         Node {l; k; v; n; h; r}
       end
@@ -89,7 +89,7 @@ module T = struct
     nnodes t.root
 
   let is_empty t =
-    (length t) = 0
+    (length t) = 0L
 
   (* Path to node. Incapable of expressing "no path". Seek operations are incremental, such that
    * complete tree traversal is ϴ(n). *)
@@ -132,7 +132,7 @@ module T = struct
       | Empty -> not_reached ()
 
     let init index ordmap =
-      descend ~index 0 ordmap.root []
+      descend ~index 0L ordmap.root []
 
     let index = function
       | [] -> not_reached ()
@@ -176,10 +176,10 @@ module T = struct
       seek_nth ((index t) + offset) t
 
     let pred t =
-      seek_left 1 t
+      seek_left 1L t
 
     let succ t =
-      seek_right 1 t
+      seek_right 1L t
 
     let kv = function
       | [] -> not_reached ()
@@ -218,28 +218,28 @@ module T = struct
 
       let hd ordmap =
         let rpath_opt = match length ordmap with
-          | 0 -> None
-          | _ -> Some (Path.init 0 ordmap)
+          | 0L -> None
+          | _ -> Some (Path.init 0L ordmap)
         in
-        {ordmap; index=0; lpath_opt=None; rpath_opt}
+        {ordmap; index=0L; lpath_opt=None; rpath_opt}
 
       let tl ordmap =
         let index = length ordmap in
         let lpath_opt = match index with
-          | 0 -> None
+          | 0L -> None
           | _ -> Some (Path.init (pred index) ordmap)
         in
         {ordmap; index; lpath_opt; rpath_opt=None}
 
       let seek i t =
-        match Sint.cmp i (Sint.kv 0) with
+        match Sint.cmp i (Sint.kv 0L) with
         | Lt -> begin
             let u = (Uns.of_sint Sint.(neg i)) in
             match Uns.cmp t.index u with
             | Lt -> halt "Cannot seek before beginning of ordered map"
             | Eq -> begin
                 {t with
-                  index=0;
+                  index=0L;
                   lpath_opt=None;
                   rpath_opt=Some (Path.seek_left (pred u) (Option.value_hlt t.lpath_opt))
                 }
@@ -352,7 +352,7 @@ let fold_right_until ~init ~f t =
   accum
 
 let foldi_until ~init ~f t =
-  let _, accum = fold_until t ~init:(0, init)
+  let _, accum = fold_until t ~init:(0L, init)
     ~f:(fun (i, accum) (k, v) ->
       let i' = (Uns.succ i) in
       let accum', until = f i accum (k, v) in
@@ -376,7 +376,7 @@ let iteri ~f t =
   foldi t ~init:() ~f:(fun i _ (k, v) -> f i (k, v))
 
 let count ~f t =
-  fold t ~init:0 ~f:(fun accum (k, v) ->
+  fold t ~init:0L ~f:(fun accum (k, v) ->
     match f (k, v) with
     | false -> accum
     | true -> (Uns.succ accum)
@@ -524,10 +524,10 @@ let nth_opt i t =
     | Empty -> None
     | Leaf {k; v} -> Some (k, v)
     | Node {l=Empty; k; v; n=_; h=_; r} -> begin
-        match Uns.cmp i 0 with
+        match Uns.cmp i 0L with
         | Lt -> not_reached ()
         | Eq -> Some (k, v)
-        | Gt -> fn (i - 1) r
+        | Gt -> fn (i - 1L) r
       end
     | Node {l; k; v; n=_; h=_; r=Empty} -> begin
         let l_n = nnodes l in
@@ -541,7 +541,7 @@ let nth_opt i t =
         match Uns.cmp i l_n with
         | Lt -> fn i l
         | Eq -> Some (k, v)
-        | Gt -> fn (i - l_n - 1) r
+        | Gt -> fn (i - l_n - 1L) r
       end
   in
   fn i t.root
@@ -558,7 +558,7 @@ let search_impl a cmper mode node =
     match mode with
     | Lt -> begin
         match base with
-        | 0 -> Some (Lt, 0)
+        | 0L -> Some (Lt, 0L)
         | _ -> Some (Gt, pred index)
       end
     | Eq -> None
@@ -570,7 +570,7 @@ let search_impl a cmper mode node =
     | Eq -> None
     | Gt -> begin
         match past - index with
-        | 1 -> Some (Gt, index)
+        | 1L -> Some (Gt, index)
         | _ -> Some (Lt, succ index)
       end
   end in
@@ -586,7 +586,7 @@ let search_impl a cmper mode node =
     | Node {l; k; v=_; n=_; h=_; r} -> begin
         let index = match l with
           | Empty -> base
-          | Leaf _ -> base + 1
+          | Leaf _ -> base + 1L
           | Node {l=_; k=_; v=_; n; h=_; r=_} -> base + n
         in
         match cmper.cmp a k with
@@ -603,7 +603,7 @@ let search_impl a cmper mode node =
           end
       end
   in
-  fn a cmper mode ~base:0 ~past:(nnodes node) node
+  fn a cmper mode ~base:0L ~past:(nnodes node) node
 
 let psearch a t =
   search_impl a t.cmper Cmp.Lt t.root
@@ -627,17 +627,17 @@ module SeqPoly3Fold2 = struct
 
   let init ordmap =
     match length ordmap with
-    | 0 -> {cursor_opt=None}
+    | 0L -> {cursor_opt=None}
     | _ -> {cursor_opt=Some (Cursor.hd ordmap)}
 
   let index t =
     match t.cursor_opt with
-    | None -> 0
+    | None -> 0L
     | Some cursor -> Cursor.index cursor
 
   let length t =
     match t.cursor_opt with
-    | None -> 0
+    | None -> 0L
     | Some cursor -> length (Cursor.container cursor)
 
   let next t =
@@ -701,7 +701,7 @@ let expose = function
 let join l kv r =
   let rec join_left_tall l kv r = begin
     let ll, l_kv, lr = expose l in
-    match (height lr) <= (height r) + 1 with
+    match (height lr) <= (height r) + 1L with
     | true -> begin
         match (max (height lr) (height r)) <= (height ll) with
         | true -> node_init ll l_kv (node_init lr kv r)
@@ -712,7 +712,7 @@ let join l kv r =
       end
     | false -> begin
         let lr' = join_left_tall lr kv r in
-        match (height lr') <= (height ll) + 1 with
+        match (height lr') <= (height ll) + 1L with
         | true -> node_init ll l_kv lr'
         | false -> begin
             let n0, lr_kv', n1 = expose lr' in
@@ -722,7 +722,7 @@ let join l kv r =
   end in
   let rec join_right_tall l kv r = begin
     let rl, r_kv, rr = expose r in
-    match (height rl) <= (height l) + 1 with
+    match (height rl) <= (height l) + 1L with
     | true -> begin
         match (max (height l) (height rl)) <= (height rr) with
         | true -> node_init (node_init l kv rl) r_kv rr
@@ -733,7 +733,7 @@ let join l kv r =
       end
     | false -> begin
         let rl' = join_right_tall l kv rl in
-        match (height rl') <= (height rr) + 1 with
+        match (height rl') <= (height rr) + 1L with
         | true -> node_init rl' r_kv rr
         | false -> begin
             let n0, rl_kv', n1 = expose rl' in
@@ -743,7 +743,7 @@ let join l kv r =
   end in
   let lh = height l in
   let rh = height r in
-  match (lh > rh + 1), (lh + 1 < rh) with
+  match (lh > rh + 1L), (lh + 1L < rh) with
   | true, _ -> join_left_tall l kv r
   | _, true -> join_right_tall l kv r
   | false, false -> node_init l kv r
@@ -1212,7 +1212,7 @@ let filteri ~f t =
         | false -> join2 l' r'
       end
   end in
-  {t with root=fn ~f 0 t.root}
+  {t with root=fn ~f 0L t.root}
 
 let filteri_map ~f t =
   let rec fn ~f base = function
@@ -1231,7 +1231,7 @@ let filteri_map ~f t =
         | None -> join2 l' r'
       end
   in
-  {t with root=fn ~f 0 t.root}
+  {t with root=fn ~f 0L t.root}
 
 let partition_tf ~f t =
   let rec fn ~f node = begin
@@ -1271,7 +1271,7 @@ let partitioni_tf ~f t =
         | false -> (join2 t_l' t_r'), (join f_l' (k, v) f_r')
       end
   end in
-  let t_root, f_root = fn ~f 0 t.root in
+  let t_root, f_root = fn ~f 0L t.root in
   {t with root=t_root}, {t with root=f_root}
 
 let partition_map ~f t =
@@ -1312,7 +1312,7 @@ let partitioni_map ~f t =
         | Second v3 -> (join2 a_l' a_r'), (join b_l' (k, v3) b_r')
       end
   in
-  let a_root, b_root = fn ~f 0 t.root in
+  let a_root, b_root = fn ~f 0L t.root in
   {t with root=a_root}, {t with root=b_root}
 
 let kreduce ~f t =
@@ -1396,11 +1396,11 @@ let validate t =
               assert (Cmp.is_lt (t.cmper.cmp k r_k));
             end
         in
-        assert (n = (nnodes l) + 1 + (nnodes r));
+        assert (n = (nnodes l) + 1L + (nnodes r));
         let lh = height l in
         let rh = height r in
         assert (h = succ (max lh rh));
-        assert ((max lh rh) - (min lh rh) < 2);
+        assert ((max lh rh) - (min lh rh) < 2L);
       end
   in
   fn t.root

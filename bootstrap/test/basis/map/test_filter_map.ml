@@ -9,7 +9,7 @@ let test () =
   let test ks = begin
     let map = of_klist ks in
     let map' = filter_map map ~f:(fun (k, v) ->
-      match k % 2 = 0 with
+      match k % 2L = 0L with
       | true -> Some (Uns.to_string v)
       | false -> None
     ) in
@@ -18,10 +18,10 @@ let test () =
       (List.pp Uns.pp) ks
       (List.pp (pp_kv String.pp)) kvs
   end in
-  for n = 0 to 6 do
+  iter_oc 0L 7L (fun n ->
     let ks = Array.(to_list (init n ~f:(fun i -> i))) in
     test ks
-  done;
+  );
   printf "@]"
 
 let _ = test ()

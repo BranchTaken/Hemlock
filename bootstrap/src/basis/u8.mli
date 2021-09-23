@@ -18,7 +18,7 @@ val of_sint_opt: sint -> t option
 val of_sint_hlt: sint -> t
 (** Initialize from full-width signed integer, or halt if conversion would be lossy. *)
 
-val kv: int -> t
+val kv: uns -> t
 (** Create constant value. This is a stopgap solution for the lack of bitwidth-specific literals. *)
 
 val to_uns: t -> uns

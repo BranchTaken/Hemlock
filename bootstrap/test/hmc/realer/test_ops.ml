@@ -73,10 +73,10 @@ let test () =
     (inf, nan);
     (nan, inf);
 
-    (create ~sign:Neg ~exponent:(Zint.of_uns 0) ~mantissa:(Nat.of_uns 0x1f0f),
-      create ~sign:Neg ~exponent:(Zint.of_uns 8) ~mantissa:(Nat.of_uns 0x1f0f));
-    (create ~sign:Neg ~exponent:(Zint.of_uns 0) ~mantissa:(Nat.of_uns 0x1f0f),
-      create ~sign:Neg ~exponent:(Zint.of_uns 7) ~mantissa:(Nat.of_uns 0x1f0f));
+    (create ~sign:Neg ~exponent:(Zint.of_uns 0L) ~mantissa:(Nat.of_uns 0x1f0fL),
+      create ~sign:Neg ~exponent:(Zint.of_uns 8L) ~mantissa:(Nat.of_uns 0x1f0fL));
+    (create ~sign:Neg ~exponent:(Zint.of_uns 0L) ~mantissa:(Nat.of_uns 0x1f0fL),
+      create ~sign:Neg ~exponent:(Zint.of_uns 7L) ~mantissa:(Nat.of_uns 0x1f0fL));
   ];
   printf "@]"
 

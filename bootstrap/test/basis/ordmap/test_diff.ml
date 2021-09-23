@@ -22,19 +22,19 @@ let test () =
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   let test_disjoint_list_pairs = [
-    ([], [0]);
-    ([0], [1]);
-    ([0], [1; 2]);
-    ([0; 1], [2; 3]);
-    ([0; 1], [2; 3; 4]);
-    ([0; 1; 2], [3; 4; 5])
+    ([], [0L]);
+    ([0L], [1L]);
+    ([0L], [1L; 2L]);
+    ([0L; 1L], [2L; 3L]);
+    ([0L; 1L], [2L; 3L; 4L]);
+    ([0L; 1L; 2L], [3L; 4L; 5L])
   ] in
   List.iteri test_lists ~f:(fun i ks0 ->
     List.iteri test_lists ~f:(fun j ks1 ->

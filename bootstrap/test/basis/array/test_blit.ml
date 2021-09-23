@@ -16,13 +16,13 @@ let test () =
     printf "%a\n" (pp Uns.pp) arr1
   end in
   printf "@[<h>";
-  test_blit 0 0 [||] 0 [||];
-  test_blit 1 0 [|0|] 0 [|1|];
-  test_blit 1 1 [|0; 1|] 0 [|2|];
-  test_blit 1 0 [|0|] 1 [|1; 2|];
-  test_blit 2 0 [|0; 1|] 0 [|2; 3|];
-  test_blit 2 1 [|0; 1; 2|] 0 [|3; 4; 5|];
-  test_blit 3 0 [|0; 1; 2|] 0 [|3; 4; 5|];
+  test_blit 0L 0L [||] 0L [||];
+  test_blit 1L 0L [|0L|] 0L [|1L|];
+  test_blit 1L 1L [|0L; 1L|] 0L [|2L|];
+  test_blit 1L 0L [|0L|] 1L [|1L; 2L|];
+  test_blit 2L 0L [|0L; 1L|] 0L [|2L; 3L|];
+  test_blit 2L 1L [|0L; 1L; 2L|] 0L [|3L; 4L; 5L|];
+  test_blit 3L 0L [|0L; 1L; 2L|] 0L [|3L; 4L; 5L|];
   printf "@]"
 
 let _ = test ()

@@ -14,10 +14,10 @@ let test () =
     printf "%a\n" (pp Uns.pp) arr
   end in
   printf "@[<h>";
-  test_rev [|0|];
-  test_rev [|0; 1|];
-  test_rev [|0; 1; 2|];
-  test_rev [|0; 1; 2; 3|];
+  test_rev [|0L|];
+  test_rev [|0L; 1L|];
+  test_rev [|0L; 1L; 2L|];
+  test_rev [|0L; 1L; 2L; 3L|];
   printf "@]"
 
 let _ = test ()

@@ -14,7 +14,7 @@ let test () =
         test_hash_fold cps'
       end
   end in
-  let cps = [nul; soh; del; replacement; kv 0x10_ffff] in
+  let cps = [nul; soh; del; replacement; kv 0x10_ffffL] in
   test_hash_fold cps;
   printf "@]"
 

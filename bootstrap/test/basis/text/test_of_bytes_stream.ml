@@ -29,12 +29,12 @@ let test () =
         end
     end in
     let hd = Cursor.hd text in
-    printf "  fwd   -> index=%u \"" (Cursor.index hd);
+    printf "  fwd   -> index=%Lu \"" (Cursor.index hd);
     let tl = fwd_iter hd in
     printf "\"\n";
 
     let rec rev_iter cursor = begin
-      match Cursor.index cursor > 0 with
+      match Cursor.index cursor > 0L with
       | false -> cursor
       | true -> begin
           let cp, cursor' = Cursor.prev cursor in
@@ -42,7 +42,7 @@ let test () =
           rev_iter cursor'
         end
     end in
-    printf "  rev   -> index=%u \"" (Cursor.index tl);
+    printf "  rev   -> index=%Lu \"" (Cursor.index tl);
     let hd' = rev_iter tl in
     printf "\"\n";
     assert Cursor.(hd text = hd');

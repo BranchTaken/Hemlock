@@ -49,7 +49,7 @@ let test () =
   end in
   let test_arrays = [
     [||];
-    [|(0, "0"); (1, "1"); (4, "4"); (5, "5"); (3, "3"); (2, "2")|];
+    [|(0L, "0"); (1L, "1"); (4L, "4"); (5L, "5"); (3L, "3"); (2L, "2")|];
   ] in
   List.iter test_arrays ~f:(fun kvs ->
     test kvs

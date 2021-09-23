@@ -14,10 +14,10 @@ let test () =
       (pp Uns.pp) x_arr
   end in
   printf "@[<h>";
-  test [||] 0;
-  test [|0|] 1;
-  test [|0; 1|] 2;
-  test [|0; 1; 2|] 3;
+  test [||] 0L;
+  test [|0L|] 1L;
+  test [|0L; 1L|] 2L;
+  test [|0L; 1L; 2L|] 3L;
   printf "@]"
 
 let _ = test ()

@@ -276,7 +276,7 @@ module type SOrd = sig
   (** {1 Mapping operations} *)
 
   val nth_opt: uns -> ('k, 'v, 'cmp) t -> ('k * 'v) option
-  (** [nth i t] returns the nth map mapping (0-indexed), or [None] if [i] is out of bounds. *)
+  (** [nth_opt i t] returns the nth map mapping (0-indexed), or [None] if [i] is out of bounds. *)
 
   val nth: uns -> ('k, 'v, 'cmp) t -> ('k * 'v)
   (** [nth i t] returns the nth map mapping (0-indexed), or halts if [i] is out of bounds. *)

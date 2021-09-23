@@ -21,17 +21,17 @@ let test () =
     neg zero;
     neg one;
     neg inf;
-    create ~sign:Neg ~exponent:(Zint.of_uns 0) ~mantissa:(Nat.of_uns 0x1f0f);
-    create ~sign:Neg ~exponent:(Zint.of_uns 42) ~mantissa:(Nat.of_uns 0x1f0f);
+    create ~sign:Neg ~exponent:(Zint.of_uns 0L) ~mantissa:(Nat.of_uns 0x1f0fL);
+    create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x1f0fL);
 
     (* Denormalized mantissas. *)
-    create ~sign:Neg ~exponent:(Zint.of_uns 42) ~mantissa:(Nat.of_uns 0x1f0e);
-    create ~sign:Neg ~exponent:(Zint.of_uns 42) ~mantissa:(Nat.of_uns 0x1f0c);
-    create ~sign:Neg ~exponent:(Zint.of_uns 42) ~mantissa:(Nat.of_uns 0x1f08);
+    create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x1f0eL);
+    create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x1f0cL);
+    create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x1f08L);
     (* Same as above, but with normalized mantissas. *)
-    create ~sign:Neg ~exponent:(Zint.of_uns 42) ~mantissa:(Nat.of_uns 0xf87);
-    create ~sign:Neg ~exponent:(Zint.of_uns 42) ~mantissa:(Nat.of_uns 0x7c3);
-    create ~sign:Neg ~exponent:(Zint.of_uns 42) ~mantissa:(Nat.of_uns 0x3e1);
+    create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0xf87L);
+    create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x7c3L);
+    create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x3e1L);
   ];
   printf "@]"
 

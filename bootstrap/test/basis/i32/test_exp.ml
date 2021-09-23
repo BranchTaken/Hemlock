@@ -13,25 +13,25 @@ let test () =
       end
   in
   let pairs = [
-    (kv 0, kv 0);
-    (kv 0, kv 1);
-    (kv 1, kv 0);
-    (kv 1, kv 1);
+    (kv 0L, kv 0L);
+    (kv 0L, kv 1L);
+    (kv 1L, kv 0L);
+    (kv 1L, kv 1L);
 
-    (kv (-1), kv 0);
-    (kv (-1), kv 1);
+    (kv (-1L), kv 0L);
+    (kv (-1L), kv 1L);
 
-    (kv 2, kv 15);
-    (kv 2, kv 16);
-    (kv 2, kv 31);
-    (kv 2, kv 32);
+    (kv 2L, kv 15L);
+    (kv 2L, kv 16L);
+    (kv 2L, kv 31L);
+    (kv 2L, kv 32L);
 
-    (kv 0xf, kv 0xf);
-    (kv 0xff, kv 0xff);
+    (kv 0xfL, kv 0xfL);
+    (kv 0xffL, kv 0xffL);
 
-    (kv 1, kv (-1));
+    (kv 1L, kv (-1L));
 
-    (kv (-1), kv (-1));
+    (kv (-1L), kv (-1L));
 
   ] in
   test_pairs pairs;

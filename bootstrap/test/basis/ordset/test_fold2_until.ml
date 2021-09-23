@@ -13,8 +13,8 @@ let test () =
      * to fold order. *)
     assert ((List.length ms) = (length ordset));
     let n = length ordset in
-    let triangle_sum = List.fold ms ~init:0 ~f:(fun accum m ->
-      accum + fold2_until ordset0 ordset1 ~init:0 ~f:(fun accum a0_opt a1_opt ->
+    let triangle_sum = List.fold ms ~init:0L ~f:(fun accum m ->
+      accum + fold2_until ordset0 ordset1 ~init:0L ~f:(fun accum a0_opt a1_opt ->
         match a0_opt, a1_opt with
         | Some a, Some _
         | Some a, None
@@ -22,15 +22,15 @@ let test () =
         | None, None -> not_reached ()
       )
     ) in
-    assert (triangle_sum = (n + 1) * n / 2);
+    assert (triangle_sum = (n + 1L) * n / 2L);
   end in
   let test_lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 66];
-    [0; 1; 66; 91];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 66L];
+    [0L; 1L; 66L; 91L];
   ] in
   List.iteri test_lists ~f:(fun i ms0 ->
     List.iteri test_lists ~f:(fun j ms1 ->

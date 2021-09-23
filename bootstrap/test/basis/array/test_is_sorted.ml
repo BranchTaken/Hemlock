@@ -12,13 +12,13 @@ let test () =
   end in
   printf "@[<h>";
   test_is_sorted [||];
-  test_is_sorted [|0|];
-  test_is_sorted [|0; 0|];
-  test_is_sorted [|0; 1|];
-  test_is_sorted [|1; 0|];
-  test_is_sorted [|0; 1; 1|];
-  test_is_sorted [|0; 1; 2|];
-  test_is_sorted [|0; 2; 1|];
+  test_is_sorted [|0L|];
+  test_is_sorted [|0L; 0L|];
+  test_is_sorted [|0L; 1L|];
+  test_is_sorted [|1L; 0L|];
+  test_is_sorted [|0L; 1L; 1L|];
+  test_is_sorted [|0L; 1L; 2L|];
+  test_is_sorted [|0L; 2L; 1L|];
   printf "@]"
 
 let _ = test ()

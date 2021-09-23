@@ -15,7 +15,7 @@ let test () =
   end in
   print_xs [
     min_value;
-    kv 42;
+    kv 42L;
     max_value;
   ];
   printf "@]"
@@ -29,7 +29,7 @@ let test2 () =
       end
   in
   printf "@[<h>";
-  fn [kv 0; kv 1; kv 42; kv 255];
+  fn [kv 0L; kv 1L; kv 42L; kv 255L];
   printf "@]"
 
 let _ = test ()

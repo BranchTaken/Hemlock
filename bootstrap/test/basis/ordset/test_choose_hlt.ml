@@ -14,12 +14,12 @@ let test () =
         let ordset' = test n (succ i) (insert i ordset) in
         let m = choose_hlt ordset' in
         let ordset'' = remove m ordset' in
-        assert ((length ordset') = (length ordset'') + 1);
+        assert ((length ordset') = (length ordset'') + 1L);
         ordset''
       end
   end in
   let e = empty (module Uns) in
-  let _ = test 100 0 e in
+  let _ = test 100L 0L e in
   printf "@]"
 
 let _ = test ()

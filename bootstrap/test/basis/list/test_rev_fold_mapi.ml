@@ -6,13 +6,13 @@ open Format
 let test () =
   let lists = [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 2; 3];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 2L; 3L];
   ] in
   printf "@[<h>";
-  let f i accum elm = (elm :: accum), (elm + i * 10) in
+  let f i accum elm = (elm :: accum), (elm + i * 10L) in
   iter lists ~f:(fun l ->
     let accum, b_list = foldi_map l ~init:[] ~f in
     printf "    fold_mapi %a -> accum=%a, b_list=%a\n"

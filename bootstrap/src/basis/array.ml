@@ -8,10 +8,10 @@ module T = struct
   type 'a elm = 'a
 
   let get i t =
-    Stdlib.Array.get t i
+    Stdlib.Array.get t Uns.(to_int i)
 
   let length t =
-    Stdlib.Array.length t
+    Uns.of_int (Stdlib.Array.length t)
 
   module Cursor = struct
     module T = struct
@@ -28,13 +28,13 @@ module T = struct
         Uns.cmp t0.index t1.index
 
       let hd array =
-        {array; index=0}
+        {array; index=0L}
 
       let tl array =
         {array; index=(length array)}
 
       let seek i t =
-        match Sint.(i < (kv 0)) with
+        match Sint.(i < 0L) with
         | true -> begin
             match (Uns.of_sint Sint.(neg i)) > t.index with
             | true -> halt "Cannot seek before beginning of array"
@@ -47,10 +47,10 @@ module T = struct
           end
 
       let pred t =
-        seek (Sint.kv (-1)) t
+        seek (-1L) t
 
       let succ t =
-        seek (Sint.kv 1) t
+        seek 1L t
 
       let lget t =
         get (Uns.pred t.index) t.array
@@ -76,15 +76,16 @@ module T = struct
 
   let cmp cmp_elm t0 t1 =
     let rec fn cursor0 cursor1 = begin
+      let open Cmp in
       match Cursor.(cursor0 = (tl t0)), Cursor.(cursor1 = (tl t1)) with
-      | true, true -> Cmp.Eq
-      | true, false -> Cmp.Lt
-      | false, true -> Cmp.Gt
+      | true, true -> Eq
+      | true, false -> Lt
+      | false, true -> Gt
       | false, false -> begin
           match cmp_elm (Cursor.rget cursor0) (Cursor.rget cursor1) with
-          | Cmp.Lt -> Cmp.Lt
-          | Cmp.Eq -> fn (Cursor.succ cursor0) (Cursor.succ cursor1)
-          | Cmp.Gt -> Cmp.Gt
+          | Lt -> Lt
+          | Eq -> fn (Cursor.succ cursor0) (Cursor.succ cursor1)
+          | Gt -> Gt
         end
     end in
     fn (Cursor.hd t0) (Cursor.hd t1)
@@ -130,21 +131,21 @@ module Seq = struct
   struct
     let to_array t =
       match T.length t with
-      | 0 -> [||]
+      | 0L -> [||]
       | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a i elm in
+                let () = Stdlib.Array.set a (Uns.to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make l elm0 in
-          fn t' a 1
+          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          fn t' a 1L
         end
   end
 
@@ -153,20 +154,20 @@ module Seq = struct
     with type elm := T.elm = struct
     let to_array t =
       match T.length t with
-      | 0 -> [||]
+      | 0L -> [||]
       | l -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
-            let () = Stdlib.Array.set a i elm in
+            let () = Stdlib.Array.set a (Uns.to_int i) elm in
             match i with
-            | 0 -> a
+            | 0L -> a
             | _ -> begin
                 let i' = Uns.pred i in
                 fn t' a i'
               end
           end in
           let elm, t' = T.next t in
-          let a = Stdlib.Array.make l elm in
+          let a = Stdlib.Array.make (Uns.to_int l) elm in
           fn t' a (Uns.pred l)
         end
   end
@@ -176,21 +177,21 @@ module Seq = struct
     with type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
-      | 0 -> [||]
+      | 0L -> [||]
       | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a i elm in
+                let () = Stdlib.Array.set a (Uns.to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make l elm0 in
-          fn t' a 1
+          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          fn t' a 1L
         end
   end
 
@@ -199,23 +200,23 @@ module Seq = struct
     with type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
-      | 0 -> [||]
+      | 0L -> [||]
       | l -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
-            let () = Stdlib.Array.set a i elm in
+            let () = Stdlib.Array.set a (Uns.to_int i) elm in
             match i with
-            | 0 -> a
+            | 0L -> a
             | _ -> begin
                 let i' = Uns.pred i in
                 fn t' a i'
               end
           end in
           let elm, t' = T.next t in
-          let a = Stdlib.Array.make l elm in
+          let a = Stdlib.Array.make (Uns.to_int l) elm in
           match l with
-          | 1 -> a
-          | _ -> fn t' a Uns.(l - 2)
+          | 1L -> a
+          | _ -> fn t' a Uns.(l - 2L)
         end
   end
 
@@ -224,21 +225,21 @@ module Seq = struct
     with type 'a elm := 'a T.elm = struct
     let to_array t =
       match T.length t with
-      | 0 -> [||]
+      | 0L -> [||]
       | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a i elm in
+                let () = Stdlib.Array.set a (Uns.to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make l elm0 in
-          fn t' a 1
+          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          fn t' a 1L
         end
   end
 
@@ -248,21 +249,21 @@ module Seq = struct
     with type 'k value := 'k T.value = struct
     let to_array t =
       match T.length t with
-      | 0 -> [||]
+      | 0L -> [||]
       | l -> begin
           let rec fn t a i = begin
             match i = l with
             | true -> a
             | false -> begin
                 let kv, t' = T.next t in
-                let () = Stdlib.Array.set a i kv in
+                let () = Stdlib.Array.set a (Uns.to_int i) kv in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let kv0, t' = T.next t in
-          let a = Stdlib.Array.make l kv0 in
-          fn t' a 1
+          let a = Stdlib.Array.make (Uns.to_int l) kv0 in
+          fn t' a 1L
         end
   end
 
@@ -277,21 +278,21 @@ module Seq = struct
   end with type ('a,'accum,'b) t := ('a,'accum,'b) T.t = struct
     let to_accum_array t ~init =
       match T.length t with
-      | 0 -> init, [||]
+      | 0L -> init, [||]
       | l -> begin
           let rec fn t accum a i = begin
             match i = l with
             | true -> accum, a
             | false -> begin
                 let elm, t', accum' = T.next t accum in
-                let () = Stdlib.Array.set a i elm in
+                let () = Stdlib.Array.set a (Uns.to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' accum' a i'
               end
           end in
           let elm0, t', accum = T.next t init in
-          let a = Stdlib.Array.make l elm0 in
-          fn t' accum a 1
+          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          fn t' accum a 1L
         end
   end
 
@@ -306,21 +307,21 @@ module Seq = struct
   end with type ('a,'b,'accum,'c) t := ('a,'b,'accum,'c) T.t = struct
     let to_accum_array t ~init =
       match T.length t with
-      | 0 -> init, [||]
+      | 0L -> init, [||]
       | l -> begin
           let rec fn t accum a i = begin
             match i = l with
             | true -> accum, a
             | false -> begin
                 let elm, t', accum' = T.next t accum in
-                let () = Stdlib.Array.set a i elm in
+                let () = Stdlib.Array.set a (Uns.to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' accum' a i'
               end
           end in
           let elm0, t', accum = T.next t init in
-          let a = Stdlib.Array.make l elm0 in
-          fn t' accum a 1
+          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          fn t' accum a 1L
         end
   end
 end
@@ -339,7 +340,7 @@ module ArrayInit = struct
     type 'a elm = 'a
 
     let init length ~f =
-      {f; index=0; length}
+      {f; index=0L; length}
 
     let length t =
       t.length
@@ -449,10 +450,10 @@ let of_stream_rev ?length stream =
   ArrayOfStreamRev.to_array (ArrayOfStreamRev.init length stream)
 
 let is_empty t =
-  (length t) = 0
+  (length t) = 0L
 
 let set_inplace i elm t =
-  Stdlib.Array.set t i elm
+  Stdlib.Array.set t (Uns.to_int i) elm
 
 let copy t =
   init (length t) ~f:(fun i -> get i t)
@@ -479,7 +480,7 @@ module ArrayJoin = struct
     type 'a elm = 'a
 
     let init length sep arrays =
-      {sep; arrays; length; in_sep=false; index=0}
+      {sep; arrays; length; in_sep=false; index=0L}
 
     let next t =
       let rec fn t = begin
@@ -492,7 +493,7 @@ module ArrayJoin = struct
                 let t' = {t with index=succ t.index} in
                 elm, t'
               end
-            | false -> fn {t with arrays=List.tl t.arrays; in_sep=true; index=0}
+            | false -> fn {t with arrays=List.tl t.arrays; in_sep=true; index=0L}
           end
         | true -> begin
             match t.index < length t.sep with
@@ -501,7 +502,7 @@ module ArrayJoin = struct
                 let t' = {t with index=succ t.index} in
                 elm, t'
               end
-            | false -> fn {t with in_sep=false; index=0}
+            | false -> fn {t with in_sep=false; index=0L}
           end
       end in
       fn t
@@ -515,13 +516,13 @@ end
 
 let join ?sep tlist =
   let sep, sep_len = match sep with
-    | None -> [||], 0
+    | None -> [||], 0L
     | Some sep -> sep, length sep
   in
-  let _, tlist_length = List.fold tlist ~init:(0, 0) ~f:(fun (i, accum) list ->
+  let _, tlist_length = List.fold tlist ~init:(0L, 0L) ~f:(fun (i, accum) list ->
       let i' = Uns.succ i in
       let sep_len' = match i with
-        | 0 -> 0
+        | 0L -> 0L
         | _ -> sep_len
       in
       let accum' = accum + sep_len' + (length list) in
@@ -547,12 +548,12 @@ let append elm t =
 
 let prepend elm t =
   init (succ (length t)) ~f:(fun i ->
-    if i = 0 then elm
+    if i = 0L then elm
     else get (pred i) t
   )
 
 let insert i elm t =
-  if i = 0 then
+  if i = 0L then
     prepend elm t
   else begin
     let len = length t in
@@ -569,21 +570,21 @@ let insert i elm t =
 
 let remove i t =
   let len = length t in
-  assert (len > 0);
+  assert (len > 0L);
   match len with
-  | 1 ->
-    assert (i = 0);
+  | 1L ->
+    assert (i = 0L);
     [||]
   | _ -> begin
-      if i = 0 then
-        pare ~base:1 ~past:len t
+      if i = 0L then
+        pare ~base:1L ~past:len t
       else if i < len then
         init (pred len) ~f:(fun index ->
           if index < i then get index t
           else get (succ index) t
         )
       else
-        pare ~base:0 ~past:(Uns.pred len) t
+        pare ~base:0L ~past:(Uns.pred len) t
     end
 
 let reduce ~f t =
@@ -594,7 +595,7 @@ let reduce ~f t =
   end in
   match t with
   | [||] -> None
-  | _ -> Some (fn 1 (get 0 t))
+  | _ -> Some (fn 1L (get 0L t))
 
 let reduce_hlt ~f t =
   match reduce ~f t with
@@ -623,22 +624,34 @@ let rev_inplace t =
   end in
   let len = length t in
   match len with
-  | 0 -> ()
-  | _ -> fn 0 (pred len)
+  | 0L -> ()
+  | _ -> fn 0L (pred len)
 
 let rev t =
   let l = length t in
-  init l ~f:(fun i -> get (l - i - 1) t)
+  init l ~f:(fun i -> get (l - i - 1L) t)
 
 (* Used directly for non-overlapping blits. *)
 let blit_ascending len i0 t0 i1 t1 =
-  for i = 0 to pred len do
-    set_inplace (i1 + i) (get (i0 + i) t0) t1
-  done
+  let rec fn i n = begin
+    match i = n with
+    | true -> ()
+    | false -> begin
+        set_inplace (i1 + i) (get (i0 + i) t0) t1;
+        fn (succ i) n
+      end
+  end in
+  fn 0L len
 let blit_descending len i0 t0 i1 t1 =
-  for i = pred len downto 0 do
-    set_inplace (i1 + i) (get (i0 + i) t0) t1
-  done
+  let rec fn i = begin
+    set_inplace (i1 + i) (get (i0 + i) t0) t1;
+    match i = 0L with
+    | true -> ()
+    | false -> fn (pred i)
+  end in
+  match len = 0L with
+  | true -> ()
+  | false -> fn (pred len)
 
 let blit len i0 t0 i1 t1 =
   (* Choose direction such that overlapping ranges don't corrupt the source. *)
@@ -647,6 +660,7 @@ let blit len i0 t0 i1 t1 =
   | false -> blit_ascending len i0 t0 i1 t1
 
 let is_sorted ?(strict=false) ~cmp t =
+  let open Cmp in
   let len = length t in
   let rec fn elm i = begin
     match i = len with
@@ -654,15 +668,15 @@ let is_sorted ?(strict=false) ~cmp t =
     | false -> begin
         let elm' = get i t in
         match (cmp elm elm'), strict with
-        | Cmp.Lt, _
-        | Cmp.Eq, false -> fn elm' (Uns.succ i)
-        | Cmp.Eq, true
-        | Cmp.Gt, _ -> false
+        | Lt, _
+        | Eq, false -> fn elm' (Uns.succ i)
+        | Eq, true
+        | Gt, _ -> false
       end
   end in
   match len with
-  | 0 -> true
-  | _ -> fn (get 0 t) 1
+  | 0L -> true
+  | _ -> fn (get 0L t) 1L
 
 type order =
   | Increasing
@@ -673,14 +687,21 @@ type run = {
   past: uns;
 }
 let sort_impl ?(stable=false) ~cmp ~inplace t =
+  let open Cmp in
   (* Merge a pair of adjacent runs. Input runs may be in increasing or decreasing order; the output
    * is always in increasing order. *)
   let merge_pair ~cmp src run0 order0 run1 order1 dst = begin
     assert (run0.past = run1.base);
     let rblit len i0 t0 i1 t1 = begin
-      for i = 0 to pred len do
-        set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
-      done
+      let rec fn i n = begin
+        match i = n with
+        | true -> ()
+        | false -> begin
+            set_inplace (i1 + i) (get (i0 + len - (i + 1L)) t0) t1;
+            fn (succ i) n
+          end
+      end in
+      fn 0L len
     end in
     let merge_pair_oo ~cmp src run0 order0 run1 order1 dst = begin
       let rec fn ~cmp src run0 order0 run1 order1 dst run = begin
@@ -697,8 +718,8 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
               | Either -> not_reached ()
             in
             match cmp elm0 elm1 with
-            | Cmp.Lt
-            | Cmp.Eq -> begin
+            | Lt
+            | Eq -> begin
                 match order0 with
                 | Increasing -> begin
                     set_inplace run.past elm0 dst;
@@ -714,7 +735,7 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
                   end
                 | Either -> not_reached ()
               end
-            | Cmp.Gt -> begin
+            | Gt -> begin
                 match order1 with
                 | Increasing -> begin
                     set_inplace run.past elm1 dst;
@@ -787,20 +808,20 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
           let elm' = get i src in
           let i' = Uns.succ i in
           match cmp elm elm', order, stable with
-          | Cmp.Lt, Either, _ ->
+          | Lt, Either, _ ->
             select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
-          | Cmp.Gt, Either, _ ->
+          | Gt, Either, _ ->
             select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst runs
-          | Cmp.Lt, Increasing, _
-          | Cmp.Eq, Increasing, true
-          | Cmp.Eq, Either, true ->
+          | Lt, Increasing, _
+          | Eq, Increasing, true
+          | Eq, Either, true ->
             select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
-          | Cmp.Eq, _, false
-          | Cmp.Gt, Decreasing, _ ->
+          | Eq, _, false
+          | Gt, Decreasing, _ ->
             select ~stable ~cmp elm' base i' order run0_opt order0 src dst runs
-          | Cmp.Lt, Decreasing, _
-          | Cmp.Eq, Decreasing, true
-          | Cmp.Gt, Increasing, _ -> begin
+          | Lt, Decreasing, _
+          | Eq, Decreasing, true
+          | Gt, Increasing, _ -> begin
               let run0_opt', order0', runs' = match run0_opt with
                 | None -> Some {base; past=i}, order, runs
                 | Some run0 -> begin
@@ -809,15 +830,14 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
                     None, Either, (run :: runs)
                   end
               in
-              select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst
-                runs'
+              select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst runs'
             end
         end
     end in
   let aux = copy t in
   let runs = match t with
-    | [||] -> [{base=0; past=0}]
-    | _ -> select ~stable ~cmp (get 0 t) 0 1
+    | [||] -> [{base=0L; past=0L}]
+    | _ -> select ~stable ~cmp (get 0L t) 0L 1L
       Either None Either t aux []
   in
 
@@ -850,7 +870,7 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
         match inplace with
         | true -> begin
             (* Odd number of sweeps performed; copy result back into t. *)
-            blit_ascending (length dst) 0 dst 0 src;
+            blit_ascending (length dst) 0L dst 0L src;
             src
           end
         | false -> dst
@@ -868,8 +888,9 @@ let sort ?stable ~cmp t =
   sort_impl ?stable ~cmp ~inplace:false (copy t)
 
 let search_impl ?base ?past key ~cmp mode t =
+  let open Cmp in
   let base = match base with
-    | None -> 0
+    | None -> 0L
     | Some base -> base
   in
   let past = match past with
@@ -884,48 +905,48 @@ let search_impl ?base ?past key ~cmp mode t =
     | true -> begin
         (* Empty range. *)
         match mode with
-        | Cmp.Lt -> begin
-            match (base = 0), (base = (length t)) with
+        | Lt -> begin
+            match (base = 0L), (base = (length t)) with
             | true, true -> None (* Empty; key < elms. *)
             | _, false -> begin (* At beginning, or interior. *)
                 match cmp key (get base t) with
-                | Cmp.Lt -> begin (* At successor. *)
-                    match base = 0 with
-                    | true -> Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
-                    | false -> Some (Cmp.Gt, (Uns.pred base)) (* In interior; key > predecessor. *)
+                | Lt -> begin (* At successor. *)
+                    match base = 0L with
+                    | true -> Some (Lt, 0L) (* At beginning; key < elms. *)
+                    | false -> Some (Gt, (Uns.pred base)) (* In interior; key > predecessor. *)
                   end
-                | Cmp.Eq -> Some (Cmp.Eq, base) (* base at leftmost match. *)
-                | Cmp.Gt -> not_reached ()
+                | Eq -> Some (Eq, base) (* base at leftmost match. *)
+                | Gt -> not_reached ()
               end
-            | false, true -> Some (Cmp.Gt, (Uns.pred base)) (* Past end; key > elms. *)
+            | false, true -> Some (Gt, (Uns.pred base)) (* Past end; key > elms. *)
           end
-        | Cmp.Eq -> None (* No match. *)
-        | Cmp.Gt -> begin
-            match (base = 0), (base = (length t)) with
+        | Eq -> None (* No match. *)
+        | Gt -> begin
+            match (base = 0L), (base = (length t)) with
             | true, true -> None (* Empty; key > elms. *)
             | true, false ->
-              Some (Cmp.Lt, 0) (* At beginning; key < elms. *)
+              Some (Lt, 0L) (* At beginning; key < elms. *)
             | false, _ -> begin (* In interior, or past end. *)
                 let probe = Uns.pred base in
                 match cmp key (get probe t) with
-                | Cmp.Lt -> not_reached ()
-                | Cmp.Eq -> Some (Cmp.Eq, probe) (* probe at rightmost match. *)
-                | Cmp.Gt -> begin
+                | Lt -> not_reached ()
+                | Eq -> Some (Eq, probe) (* probe at rightmost match. *)
+                | Gt -> begin
                     match (base = (length t)) with
-                    | false -> Some (Cmp.Lt, base) (* In interior; key < successor. *)
-                    | true -> Some (Cmp.Gt, probe) (* Past end; key > elms. *)
+                    | false -> Some (Lt, base) (* In interior; key < successor. *)
+                    | true -> Some (Gt, probe) (* Past end; key > elms. *)
                   end
               end
           end
       end
     | false -> begin
-        let mid = (base + past) / 2 in
+        let mid = (base + past) / 2L in
         match (cmp key (get mid t)), mode with
-        | Cmp.Lt, _
-        | Cmp.Eq, Cmp.Lt -> fn ~base ~past:mid
-        | Cmp.Eq, Cmp.Eq -> Some (Cmp.Eq, mid)
-        | Cmp.Eq, Cmp.Gt
-        | Cmp.Gt, _ -> fn ~base:(Uns.succ mid) ~past
+        | Lt, _
+        | Eq, Lt -> fn ~base ~past:mid
+        | Eq, Eq -> Some (Eq, mid)
+        | Eq, Gt
+        | Gt, _ -> fn ~base:(Uns.succ mid) ~past
       end
   end in
   fn ~base ~past
@@ -958,7 +979,7 @@ module ArrayFoldiMap = struct
     }
 
     let init arr ~f length =
-      {arr; f; length; index=0}
+      {arr; f; length; index=0L}
 
     let length t =
       t.length
@@ -989,11 +1010,11 @@ let filter ~f t =
             | false -> fn i' (get i' t)
           end in
           fn i (get i t)
-        ) (count ~f t)) ~init:0 in
+        ) (count ~f t)) ~init:0L in
   t'
 
 let filteri ~f t =
-  let n = foldi t ~init:0 ~f:(fun i accum elm ->
+  let n = foldi t ~init:0L ~f:(fun i accum elm ->
     match f i elm with
     | false -> accum
     | true -> Uns.succ accum
@@ -1008,7 +1029,7 @@ let filteri ~f t =
           end in
           fn i (get i t)
         ) n)
-      ~init:0 in
+      ~init:0L in
   t'
 
 let foldi2_until ~init ~f t0 t1 =
@@ -1024,7 +1045,7 @@ let foldi2_until ~init ~f t0 t1 =
         | false -> fn (Uns.succ i) accum'
       end
   end in
-  fn 0 init
+  fn 0L init
 
 let fold2_until ~init ~f t0 t1 =
   foldi2_until ~init ~f:(fun _ accum a b -> f accum a b) t0 t1
@@ -1037,15 +1058,27 @@ let foldi2 ~init ~f t0 t1 =
 
 let iter2 ~f t0 t1 =
   assert ((length t0) = (length t1));
-  for i = 0 to pred (length t0) do
-    f (get i t0) (get i t1)
-  done
+  let rec fn i n = begin
+    match i = n with
+    | true -> ()
+    | false -> begin
+        f (get i t0) (get i t1);
+        fn (succ i) n
+      end
+  end in
+  fn 0L (length t0)
 
 let iteri2 ~f t0 t1 =
   assert ((length t0) = (length t1));
-  for i = 0 to pred (length t0) do
-    f i (get i t0) (get i t1)
-  done
+  let rec fn i n = begin
+    match i = n with
+    | true -> ()
+    | false -> begin
+        f i (get i t0) (get i t1);
+        fn (succ i) n
+      end
+  end in
+  fn 0L (length t0)
 
 let map2 ~f t0 t1 =
   assert ((length t0) = (length t1));
@@ -1066,7 +1099,7 @@ module ArrayFoldi2Map = struct
     }
 
     let init arr0 arr1 ~f =
-      {arr0; arr1; f; index=0}
+      {arr0; arr1; f; index=0L}
 
     let length t =
       length t.arr0
@@ -1099,7 +1132,7 @@ let pp pp_elm ppf t =
   let open Format in
   fprintf ppf "@[<h>[|";
   iteri t ~f:(fun i elm ->
-    if i > 0 then fprintf ppf ";@ ";
+    if i > 0L then fprintf ppf ";@ ";
     fprintf ppf "%a" pp_elm elm
   );
   fprintf ppf "|]@]"

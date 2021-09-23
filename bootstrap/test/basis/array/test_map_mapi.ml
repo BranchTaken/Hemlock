@@ -17,9 +17,9 @@ let test () =
   end in
   printf "@[<h>";
   test_map [||];
-  test_map [|0|];
-  test_map [|1; 0|];
-  test_map [|2; 1; 0|];
+  test_map [|0L|];
+  test_map [|1L; 0L|];
+  test_map [|2L; 1L; 0L|];
   printf "@]"
 
 let _ = test ()

@@ -306,25 +306,23 @@ oarray_of_uarray(bool signed_, const hm_word_t *a, size_t anw, size_t min_anw, s
 }
 
 static size_t
-length_cb(value a_length_cb, value a_a) {
-    return Unsigned_long_val(caml_callback(a_length_cb, a_a));
+oarray_length(value a_a) {
+    return (size_t)caml_array_length(a_a);
 }
 
 static hm_word_t
-get_cb(value a_get_cb, value a_a, size_t a_i) {
-    return (hm_word_t)Int64_val(caml_callback2(a_get_cb, Val_long(a_i), a_a));
+oarray_get(value a_a, size_t a_i) {
+    return (hm_word_t)Int64_val(Field(a_a, a_i));
 }
 
 static void
-uarray_of_cbs(bool signed_, value a_length_cb, value a_get_cb, value a_a, hm_word_t *r,
-  size_t rnw) {
-    size_t anw = length_cb(a_length_cb, a_a);
+uarray_of_cbs(bool signed_, value a_a, hm_word_t *r, size_t rnw) {
+    size_t anw = oarray_length(a_a);
     for (size_t i = 0; i < zu_min(anw, rnw); i++) {
-        r[i] = get_cb(a_get_cb, a_a, i);
+        r[i] = oarray_get(a_a, i);
     }
     if (anw < rnw) {
-        hm_word_t pad = (signed_ && is_neg(r, anw)) ? 0xffffffffffffffffLU :
-          0LU;
+        hm_word_t pad = (signed_ && is_neg(r, anw)) ? 0xffffffffffffffffLU : 0LU;
         for (size_t i = anw; i < rnw; i++) {
             r[i] = pad;
         }
@@ -332,8 +330,8 @@ uarray_of_cbs(bool signed_, value a_length_cb, value a_get_cb, value a_a, hm_wor
 }
 
 static void
-iarray_of_cbs(value a_length_cb, value a_get_cb, value a_a, hm_iword_t *r, size_t rnw) {
-    return uarray_of_cbs(true, a_length_cb, a_get_cb, a_a, r, rnw);
+iarray_of_cbs(value a_a, hm_iword_t *r, size_t rnw) {
+    return uarray_of_cbs(true, a_a, r, rnw);
 }
 
 static int
@@ -364,15 +362,15 @@ icmp(const hm_iword_t *a, size_t anw, const hm_iword_t *b, size_t bnw) {
     }
 }
 
-// val intw_i_cmp: t -> t -> (t -> uns) -> (uns -> t -> int64) -> Cmp.t
+// val intw_icmp: int64 array -> int64 array -> Cmp.t
 CAMLprim value
-hm_basis_intw_i_cmp(value a_a, value a_b, value a_length_cb, value a_get_cb) {
-    size_t anw = length_cb(a_length_cb, a_a);
-    size_t bnw = length_cb(a_length_cb, a_b);
+hm_basis_intw_icmp(value a_a, value a_b) {
+    size_t anw = oarray_length(a_a);
+    size_t bnw = oarray_length(a_b);
     hm_iword_t a[anw];
     hm_iword_t b[bnw];
-    iarray_of_cbs(a_length_cb, a_get_cb, a_a, a, anw);
-    iarray_of_cbs(a_length_cb, a_get_cb, a_b, b, bnw);
+    iarray_of_cbs(a_a, a, anw);
+    iarray_of_cbs(a_b, b, bnw);
 
     int rel = icmp(a, anw, b, bnw);
     // Cmp.t is {Lt,Eq,Gt} = {0,1,2}.
@@ -399,15 +397,15 @@ ucmp(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw) {
     }
 }
 
-// val intw_u_cmp: t -> t -> (t -> uns) -> (uns -> t -> int64) -> Cmp.t
+// val intw_ucmp: int64 array -> int64 array -> Cmp.t
 CAMLprim value
-hm_basis_intw_u_cmp(value a_a, value a_b, value a_length_cb, value a_get_cb) {
-    size_t anw = length_cb(a_length_cb, a_a);
-    size_t bnw = length_cb(a_length_cb, a_b);
+hm_basis_intw_ucmp(value a_a, value a_b) {
+    size_t anw = oarray_length(a_a);
+    size_t bnw = oarray_length(a_b);
     hm_word_t a[anw];
     hm_word_t b[bnw];
-    uarray_of_cbs(false, a_length_cb, a_get_cb, a_a, a, anw);
-    uarray_of_cbs(false, a_length_cb, a_get_cb, a_b, b, bnw);
+    uarray_of_cbs(false, a_a, a, anw);
+    uarray_of_cbs(false, a_b, b, bnw);
 
     int rel = ucmp(a, anw, b, bnw);
     // Cmp.t is {Lt,Eq,Gt} = {0,1,2}.
@@ -417,18 +415,18 @@ hm_basis_intw_u_cmp(value a_a, value a_b, value a_length_cb, value a_get_cb) {
 static value
 binary_op_pad(bool signed_, bool pad, size_t (*rnw_of_anw_bnw)(size_t, size_t),
   void (*op)(const hm_word_t *, size_t, const hm_word_t *, size_t, hm_word_t *, size_t), value a_a,
-  value a_b, value a_length_cb, value a_get_cb, value a_min_rnw, value a_max_rnw) {
-    size_t anw = length_cb(a_length_cb, a_a);
-    size_t bnw = length_cb(a_length_cb, a_b);
+  value a_b, value a_min_rnw, value a_max_rnw) {
+    size_t anw = oarray_length(a_a);
+    size_t bnw = oarray_length(a_b);
     if (pad) {
         anw = bnw = zu_max(anw, bnw);
     }
     size_t rnw = rnw_of_anw_bnw(anw, bnw);
-    size_t min_rnw = Unsigned_long_val(a_min_rnw);
-    size_t max_rnw = zu_min(rnw, Unsigned_long_val(a_max_rnw));
+    size_t min_rnw = Int64_val(a_min_rnw);
+    size_t max_rnw = zu_min(rnw, Int64_val(a_max_rnw));
 
-    hm_word_t a[anw]; uarray_of_cbs(signed_, a_length_cb, a_get_cb, a_a, a, anw);
-    hm_word_t b[bnw]; uarray_of_cbs(signed_, a_length_cb, a_get_cb, a_b, b, bnw);
+    hm_word_t a[anw]; uarray_of_cbs(signed_, a_a, a, anw);
+    hm_word_t b[bnw]; uarray_of_cbs(signed_, a_b, b, bnw);
     hm_word_t r[rnw]; op(a, anw, b, bnw, r, rnw);
 
     return oarray_of_uarray(signed_, r, rnw, min_rnw, max_rnw);
@@ -437,21 +435,20 @@ binary_op_pad(bool signed_, bool pad, size_t (*rnw_of_anw_bnw)(size_t, size_t),
 static value
 binary_op(bool signed_, size_t (*rnw_of_anw_bnw)(size_t, size_t),
   void (*op)(const hm_word_t *, size_t, const hm_word_t *, size_t, hm_word_t *, size_t), value a_a,
-  value a_b, value a_length_cb, value a_get_cb, value a_min_rnw, value a_max_rnw) {
-    return binary_op_pad(signed_, false, rnw_of_anw_bnw, op, a_a, a_b, a_length_cb, a_get_cb,
-      a_min_rnw, a_max_rnw);
+  value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op_pad(signed_, false, rnw_of_anw_bnw, op, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static value
 unary_op(bool signed_, size_t (*rnw_of_anw)(size_t),
-  void (*op)(const hm_word_t *, size_t, hm_word_t *, size_t), value a_a, value a_length_cb,
-  value a_get_cb, value a_min_rnw, value a_max_rnw) {
-    size_t anw = length_cb(a_length_cb, a_a);
+  void (*op)(const hm_word_t *, size_t, hm_word_t *, size_t), value a_a, value a_min_rnw,
+  value a_max_rnw) {
+    size_t anw = oarray_length(a_a);
     size_t rnw = rnw_of_anw(anw);
-    size_t min_rnw = Unsigned_long_val(a_min_rnw);
-    size_t max_rnw = Unsigned_long_val(a_max_rnw);
+    size_t min_rnw = Int64_val(a_min_rnw);
+    size_t max_rnw = Int64_val(a_max_rnw);
 
-    hm_word_t a[anw]; uarray_of_cbs(signed_, a_length_cb, a_get_cb, a_a, a, anw);
+    hm_word_t a[anw]; uarray_of_cbs(signed_, a_a, a, anw);
     hm_word_t r[rnw]; op(a, anw, r, rnw);
 
     return oarray_of_uarray(signed_, r, rnw, min_rnw, max_rnw);
@@ -459,13 +456,12 @@ unary_op(bool signed_, size_t (*rnw_of_anw)(size_t),
 
 static value
 bit_shift_op(bool signed_, size_t (*rnw_of_shift_anw)(unsigned, size_t),
-  void (*op)(unsigned, const hm_word_t *, size_t, hm_word_t *, size_t),
-  value a_shift, value a_a, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    unsigned shift = Unsigned_long_val(a_shift);
-    size_t anw = length_cb(a_length_cb, a_a);
-    size_t min_rnw = Unsigned_long_val(a_min_rnw);
-    size_t max_rnw = Unsigned_long_val(a_max_rnw);
+  void (*op)(unsigned, const hm_word_t *, size_t, hm_word_t *, size_t), value a_shift, value a_a,
+  value a_min_rnw, value a_max_rnw) {
+    unsigned shift = Int64_val(a_shift);
+    size_t anw = oarray_length(a_a);
+    size_t min_rnw = Int64_val(a_min_rnw);
+    size_t max_rnw = Int64_val(a_max_rnw);
     if (min_rnw == max_rnw) {
         assert(anw == min_rnw);
         size_t nbits = anw * hm_bpw;
@@ -473,20 +469,19 @@ bit_shift_op(bool signed_, size_t (*rnw_of_shift_anw)(unsigned, size_t),
     }
     size_t rnw = zu_min(rnw_of_shift_anw(shift, anw), max_rnw);
 
-    hm_word_t a[anw]; uarray_of_cbs(signed_, a_length_cb, a_get_cb, a_a, a, anw);
+    hm_word_t a[anw]; uarray_of_cbs(signed_, a_a, a, anw);
     hm_word_t r[rnw]; if (rnw != 0) op(shift, a, anw, r, rnw);
 
     return oarray_of_uarray(signed_, r, rnw, min_rnw, max_rnw);
 }
 
 static value
-bit_count_op(unsigned (*op)(const hm_word_t *, size_t), value a_a, value a_length_cb,
-  value a_get_cb) {
-    size_t nw = length_cb(a_length_cb, a_a);
+bit_count_op(unsigned (*op)(const hm_word_t *, size_t), value a_a) {
+    size_t nw = oarray_length(a_a);
     hm_word_t a[nw];
-    uarray_of_cbs(false, a_length_cb, a_get_cb, a_a, a, nw);
+    uarray_of_cbs(false, a_a, a, nw);
 
-    return Val_long(op(a, nw));
+    return caml_copy_int64(op(a, nw));
 }
 
 static void
@@ -502,16 +497,10 @@ u_bit_and(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_wor
     }
 }
 
-// val intw_u_bit_and: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ubit_and: int64 array -> int64 array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_bit_and_native(value a_a, value a_b, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return binary_op(false, zu_max, u_bit_and, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_bit_and_bytecode(value *argv, int argn) {
-    return hm_basis_intw_u_bit_and_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_bit_and(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(false, zu_max, u_bit_and, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -538,16 +527,10 @@ i_bit_and(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_wor
     i_bit_op(u_bit_and, a, anw, b, bnw, r, rnw);
 }
 
-// val intw_i_bit_and: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ibit_and: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_bit_and_native(value a_a, value a_b, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return binary_op(true, zu_max, i_bit_and, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_bit_and_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_bit_and_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_bit_and(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(true, zu_max, i_bit_and, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -572,16 +555,10 @@ u_bit_or(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_word
     }
 }
 
-// val intw_u_bit_or: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ubit_or: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_bit_or_native(value a_a, value a_b, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return binary_op(false, zu_max, u_bit_or, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_bit_or_bytecode(value *argv, int argn) {
-    return hm_basis_intw_u_bit_or_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_bit_or(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(false, zu_max, u_bit_or, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -589,15 +566,10 @@ i_bit_or(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_word
     i_bit_op(u_bit_or, a, anw, b, bnw, r, rnw);
 }
 
-// val intw_i_bit_or: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ibit_or: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_bit_or_native(value a_a, value a_b, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return binary_op(true, zu_max, i_bit_or, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_bit_or_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_bit_or_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_bit_or(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(true, zu_max, i_bit_or, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -623,16 +595,10 @@ u_bit_xor(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_wor
     }
 }
 
-// val intw_u_bit_xor: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ubit_xor: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_bit_xor_native(value a_a, value a_b, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return binary_op(false, zu_max, u_bit_xor, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_bit_xor_bytecode(value *argv, int argn) {
-  return hm_basis_intw_u_bit_xor_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_bit_xor(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(false, zu_max, u_bit_xor, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -641,30 +607,22 @@ i_bit_xor(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_wor
     i_bit_op(u_bit_xor, a, anw, b, bnw, r, rnw);
 }
 
-// val intw_i_bit_xor: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ibit_xor: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_bit_xor_native(value a_a, value a_b, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return binary_op(true, zu_max, i_bit_xor, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_bit_xor_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_bit_xor_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_bit_xor(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(true, zu_max, i_bit_xor, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
-// val intw_u_bit_not: t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ubit_not: int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_bit_not(value a_a, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return unary_op(false, zu_id, bit_not, a_a, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
+hm_basis_intw_u_bit_not(value a_a, value a_min_rnw, value a_max_rnw) {
+    return unary_op(false, zu_id, bit_not, a_a, a_min_rnw, a_max_rnw);
 }
 
-// val intw_i_bit_not: t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ibit_not: int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_bit_not(value a_a, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return unary_op(true, zu_id, bit_not, a_a, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
+hm_basis_intw_i_bit_not(value a_a, value a_min_rnw, value a_max_rnw) {
+    return unary_op(true, zu_id, bit_not, a_a, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -715,28 +673,16 @@ bit_sl_rnw(unsigned shift, size_t anw) {
     return ((shift + hm_bpw - 1) / hm_bpw) + anw;
 }
 
-// val intw_u_bit_sl: uns -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_bit_usl: uns -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_bit_sl_native(value a_shift, value a_a, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return bit_shift_op(false, bit_sl_rnw, bit_sl, a_shift, a_a, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_bit_sl_bytecode(value *argv, int argn) {
-  return hm_basis_intw_u_bit_sl_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_bit_sl(value a_shift, value a_a, value a_min_rnw, value a_max_rnw) {
+    return bit_shift_op(false, bit_sl_rnw, bit_sl, a_shift, a_a, a_min_rnw, a_max_rnw);
 }
 
-// val intw_i_bit_sl: uns -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_bit_isl: uns -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_bit_sl_native(value a_shift, value a_a, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return bit_shift_op(true, bit_sl_rnw, bit_sl, a_shift, a_a, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_bit_sl_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_bit_sl_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_bit_sl(value a_shift, value a_a, value a_min_rnw, value a_max_rnw) {
+    return bit_shift_op(true, bit_sl_rnw, bit_sl, a_shift, a_a, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -774,16 +720,10 @@ bit_sr_rnw(unsigned shift, size_t anw) {
     return anw;
 }
 
-// val intw_bit_usr: uns -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_bit_usr: uns -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_bit_usr_native(value a_shift, value a_a, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return bit_shift_op(false, bit_sr_rnw, bit_usr, a_shift, a_a, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_bit_usr_bytecode(value *argv, int argn) {
-  return hm_basis_intw_bit_usr_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_bit_usr(value a_shift, value a_a, value a_min_rnw, value a_max_rnw) {
+    return bit_shift_op(false, bit_sr_rnw, bit_usr, a_shift, a_a, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -817,16 +757,10 @@ bit_ssr(unsigned shift, const hm_word_t *a, size_t nw, hm_word_t *r, size_t rnw)
     }
 }
 
-// val intw_bit_ssr: uns -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_bit_ssr: uns -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_bit_ssr_native(value a_shift, value a_a, value a_length_cb, value a_get_cb,
-  value a_min_rnw, value a_max_rnw) {
-    return bit_shift_op(true, bit_sr_rnw, bit_ssr, a_shift, a_a, a_length_cb, a_get_cb, a_min_rnw,
-      a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_bit_ssr_bytecode(value *argv, int argn) {
-  return hm_basis_intw_bit_ssr_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_bit_ssr(value a_shift, value a_a, value a_min_rnw, value a_max_rnw) {
+    return bit_shift_op(true, bit_sr_rnw, bit_ssr, a_shift, a_a, a_min_rnw, a_max_rnw);
 }
 
 static unsigned
@@ -838,10 +772,10 @@ bit_pop(const hm_word_t *a, size_t nw) {
     return pop;
 }
 
-// val intw_bit_pop: t -> (t -> uns) -> (uns -> t -> int64) -> uns
+// val intw_bit_pop: int array -> uns
 CAMLprim value
-hm_basis_intw_bit_pop(value a_a, value a_length_cb, value a_get_cb) {
-    return bit_count_op(bit_pop, a_a, a_length_cb, a_get_cb);
+hm_basis_intw_bit_pop(value a_a) {
+    return bit_count_op(bit_pop, a_a);
 }
 
 static unsigned
@@ -857,10 +791,10 @@ bit_clz(const hm_word_t *a, size_t nw) {
     return lz;
 }
 
-// val intw_bit_clz: t -> (t -> uns) -> (uns -> t -> int64) -> uns
+// val intw_bit_clz: int array -> uns
 CAMLprim value
-hm_basis_intw_bit_clz(value a_a, value a_length_cb, value a_get_cb) {
-    return bit_count_op(bit_clz, a_a, a_length_cb, a_get_cb);
+hm_basis_intw_bit_clz(value a_a) {
+    return bit_count_op(bit_clz, a_a);
 }
 
 static unsigned
@@ -876,10 +810,10 @@ bit_ctz(const hm_word_t *a, size_t nw) {
     return tz;
 }
 
-// val intw_bit_ctz: t -> (t -> uns) -> (uns -> t -> int64) -> uns
+// val intw_bit_ctz: int array -> uns
 CAMLprim value
-hm_basis_intw_bit_ctz(value a_a, value a_length_cb, value a_get_cb) {
-    return bit_count_op(bit_ctz, a_a, a_length_cb, a_get_cb);
+hm_basis_intw_bit_ctz(value a_a) {
+    return bit_count_op(bit_ctz, a_a);
 }
 
 static size_t
@@ -888,32 +822,21 @@ add_sub_rnw(size_t anw, size_t bnw) {
 }
 
 static value
-nz_add(bool signed_, value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return binary_op_pad(signed_, signed_, add_sub_rnw, signed_ ? iadd : uadd, a_a, a_b,
-      a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
+nz_add(bool signed_, value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op_pad(signed_, signed_, add_sub_rnw, signed_ ? iadd : uadd, a_a, a_b, a_min_rnw,
+      a_max_rnw);
 }
 
-// val intw_u_add: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_uadd: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_add_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return nz_add(false, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_add_bytecode(value *argv, int argn) {
-  return hm_basis_intw_u_add_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_add(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return nz_add(false, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
-// val intw_i_add: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_iadd: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_add_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return nz_add(true, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_add_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_add_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_add(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return nz_add(true, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 // 2's complement only works for equal [ab]nw; pad for signed subtraction.
@@ -958,32 +881,21 @@ isub(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_word_t *
 }
 
 static value
-nz_sub(bool signed_, value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return binary_op_pad(signed_, signed_, add_sub_rnw, signed_ ? isub : usub, a_a, a_b,
-      a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
+nz_sub(bool signed_, value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op_pad(signed_, signed_, add_sub_rnw, signed_ ? isub : usub, a_a, a_b, a_min_rnw,
+      a_max_rnw);
 }
 
-// val intw_u_sub: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_usub: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_sub_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return nz_sub(false, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_sub_bytecode(value *argv, int argn) {
-  return hm_basis_intw_u_sub_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_sub(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return nz_sub(false, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
-// val intw_i_sub: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_isub: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_sub_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return nz_sub(true, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_sub_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_sub_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_sub(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return nz_sub(true, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 /* Compute the number of significant digits in a digit array, i.e. subtract high-order zeros from
@@ -1079,32 +991,20 @@ z_mul_rnw(size_t anw, size_t bnw) {
 }
 
 static value
-nz_mul(bool signed_, value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return binary_op(signed_, signed_ ? z_mul_rnw : n_mul_rnw, mul, a_a, a_b, a_length_cb, a_get_cb,
-      a_min_rnw, a_max_rnw);
+nz_mul(bool signed_, value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(signed_, signed_ ? z_mul_rnw : n_mul_rnw, mul, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
-// val intw_u_mul: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_umul: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_mul_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return nz_mul(false, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_mul_bytecode(value *argv, int argn) {
-  return hm_basis_intw_u_mul_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_mul(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return nz_mul(false, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
-// val intw_i_mul: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_imul: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_mul_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return nz_mul(true, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_mul_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_mul_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_mul(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return nz_mul(true, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -1253,15 +1153,10 @@ udiv(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_word_t *
     u_div_mod(a, anw, b, bnw, q, qnw, NULL, 0);
 }
 
-// val intw_u_div: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_udiv: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_div_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return binary_op(false, div_rnw, udiv, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_div_bytecode(value *argv, int argn) {
-  return hm_basis_intw_u_div_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_div(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(false, div_rnw, udiv, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static size_t
@@ -1274,15 +1169,10 @@ umod(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_word_t *
     u_div_mod(a, anw, b, bnw, NULL, 0, r, rnw);
 }
 
-// val intw_u_mod: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_umod: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_u_mod_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return binary_op(false, mod_rnw, umod, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_u_mod_bytecode(value *argv, int argn) {
-  return hm_basis_intw_u_mod_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_u_mod(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(false, mod_rnw, umod, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -1310,15 +1200,10 @@ idiv(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_word_t *
     i_div_mod(a, anw, b, bnw, q, qnw, NULL, 0);
 }
 
-// val intw_i_div: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_idiv: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_div_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return binary_op(true, div_rnw, idiv, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_div_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_div_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_div(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(true, div_rnw, idiv, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -1326,22 +1211,16 @@ imod(const hm_word_t *a, size_t anw, const hm_word_t *b, size_t bnw, hm_word_t *
     i_div_mod(a, anw, b, bnw, NULL, 0, r, rnw);
 }
 
-// val intw_i_mod: t -> t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_imod: int array -> int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_mod_native(value a_a, value a_b, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return binary_op(true, mod_rnw, imod, a_a, a_b, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
-}
-CAMLprim value
-hm_basis_intw_i_mod_bytecode(value *argv, int argn) {
-  return hm_basis_intw_i_mod_native(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+hm_basis_intw_i_mod(value a_a, value a_b, value a_min_rnw, value a_max_rnw) {
+    return binary_op(true, mod_rnw, imod, a_a, a_b, a_min_rnw, a_max_rnw);
 }
 
-// val intw_i_neg: t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_ineg: int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_neg(value a_a, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return unary_op(true, zu_succ, neg, a_a, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
+hm_basis_intw_i_neg(value a_a, value a_min_rnw, value a_max_rnw) {
+    return unary_op(true, zu_succ, neg, a_a, a_min_rnw, a_max_rnw);
 }
 
 static void
@@ -1349,18 +1228,17 @@ abs_(const hm_word_t *a, size_t anw, hm_word_t *r, size_t rnw) {
     is_neg_abs(a, anw, r, rnw);
 }
 
-// val intw_i_abs: t -> (t -> uns) -> (uns -> t -> int64) -> uns -> uns -> int64 array
+// val intw_iabs: int array -> uns -> uns -> int64 array
 CAMLprim value
-hm_basis_intw_i_abs(value a_a, value a_length_cb, value a_get_cb, value a_min_rnw,
-  value a_max_rnw) {
-    return unary_op(true, zu_succ, abs_, a_a, a_length_cb, a_get_cb, a_min_rnw, a_max_rnw);
+hm_basis_intw_i_abs(value a_a, value a_min_rnw, value a_max_rnw) {
+    return unary_op(true, zu_succ, abs_, a_a, a_min_rnw, a_max_rnw);
 }
 
 static value
 of_real(bool signed_, value a_r, value a_min_rnw, value a_max_rnw) {
-    size_t min_rnw = Unsigned_long_val(a_min_rnw);
+    size_t min_rnw = Int64_val(a_min_rnw);
     // Results never need more than 1+1024 bits. Limit max_rnw as such to avoid stack overflow.
-    size_t max_rnw = zu_min(Unsigned_long_val(a_max_rnw), 1 + (1024 / hm_bpw));
+    size_t max_rnw = zu_min(Int64_val(a_max_rnw), 1 + (1024 / hm_bpw));
     size_t rnw = max_rnw;
     size_t nbits = rnw * hm_bpw;
     size_t sig_bits = rnw * hm_bpw - (signed_ ? 1 : 0);
@@ -1456,11 +1334,11 @@ real_of_parts(bool negative, unsigned exponent, uint64_t mantissa) {
 }
 
 static value
-to_real(bool signed_, value a_a, value a_length_cb, value a_get_cb) {
-    size_t anw = length_cb(a_length_cb, a_a);
+to_real(bool signed_, value a_a) {
+    size_t anw = oarray_length(a_a);
     size_t nbits = anw * hm_bpw;
     hm_word_t a[anw];
-    uarray_of_cbs(signed_, a_length_cb, a_get_cb, a_a, a, anw);
+    uarray_of_cbs(signed_, a_a, a, anw);
     bool negative = (signed_ && is_neg(a, anw));
     if (negative) {
         if (is_signed_min_value(a, anw)) {
@@ -1487,14 +1365,14 @@ to_real(bool signed_, value a_a, value a_length_cb, value a_get_cb) {
     return real_of_parts(negative, exponent, mantissa);
 }
 
-// val intw_i_to_real: t -> (t -> uns) -> (uns -> t -> int64) -> real
+// val intw_i_to_real: int array -> real
 CAMLprim value
-hm_basis_intw_i_to_real(value a_a, value a_length_cb, value a_get_cb) {
-    return to_real(true, a_a, a_length_cb, a_get_cb);
+hm_basis_intw_i_to_real(value a_a) {
+    return to_real(true, a_a);
 }
 
-// val intw_u_to_real: t -> (t -> uns) -> (uns -> t -> int64) -> real
+// val intw_u_to_real: int array -> real
 CAMLprim value
-hm_basis_intw_u_to_real(value a_a, value a_length_cb, value a_get_cb) {
-    return to_real(false, a_a, a_length_cb, a_get_cb);
+hm_basis_intw_u_to_real(value a_a) {
+    return to_real(false, a_a);
 }

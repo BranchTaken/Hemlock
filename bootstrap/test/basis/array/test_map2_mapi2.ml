@@ -20,9 +20,9 @@ let test () =
   end in
   printf "@[<h>";
   test_map2 [||] [||];
-  test_map2 [|1|] [|0|];
-  test_map2 [|3; 2|] [|1; 0|];
-  test_map2 [|5; 4; 3|] [|2; 1; 0|];
+  test_map2 [|1L|] [|0L|];
+  test_map2 [|3L; 2L|] [|1L; 0L|];
+  test_map2 [|5L; 4L; 3L|] [|2L; 1L; 0L|];
   printf "@]"
 
 let _ = test ()

@@ -3,15 +3,15 @@ open RudimentsFunctions
 
 module T = struct
   type t = {w0: u64; w1: u64}
-  let word_length = 2
+  let word_length = 2L
 
   let init ~f =
-    {w0=f 0; w1=f 1}
+    {w0=f 0L; w1=f 1L}
 
   let get i t =
     match i with
-    | 0 -> t.w0
-    | 1 -> t.w1
+    | 0L -> t.w0
+    | 1L -> t.w1
     | _ -> not_reached ()
 end
 include T

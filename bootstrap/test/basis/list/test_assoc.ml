@@ -6,16 +6,16 @@ open Format
 let test () =
   let assocs = [
     [];
-    [(0, 10)];
-    [(0, 10); (1, 11)];
+    [(0L, 10L)];
+    [(0L, 10L); (1L, 11L)];
 
-    [(0, 10); (0, 11); (1, 12)];
-    [(0, 10); (1, 11); (0, 12)];
-    [(1, 10); (0, 11); (0, 12)];
-    [(0, 10); (1, 11); (1, 12); (2, 13)];
+    [(0L, 10L); (0L, 11L); (1L, 12L)];
+    [(0L, 10L); (1L, 11L); (0L, 12L)];
+    [(1L, 10L); (0L, 11L); (0L, 12L)];
+    [(0L, 10L); (1L, 11L); (1L, 12L); (2L, 13L)];
   ] in
   let pp_assoc ppf (a, b) = fprintf ppf "(%a,@ %a)" Uns.pp a Uns.pp b in
-  let missing = 3 in
+  let missing = 3L in
   let cmp = Uns.cmp in
   printf "@[<h>";
   iter assocs ~f:(fun assoc ->
@@ -47,7 +47,7 @@ let test () =
       (pp pp_assoc) (Assoc.remove missing ~cmp assoc)
     ;
     printf "map -> %a\n"
-      (pp pp_assoc) (Assoc.map assoc ~f:(fun v -> v * 2))
+      (pp pp_assoc) (Assoc.map assoc ~f:(fun v -> v * 2L))
     ;
 
     printf "inverse -> %a\n"

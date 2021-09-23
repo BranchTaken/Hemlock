@@ -18,10 +18,10 @@ let test () =
   end in
   let streams = List.map ~f:(Stream.init_indef ~f) [
     [];
-    [0];
-    [0; 1];
-    [0; 1; 2];
-    [0; 1; 2; 3];
+    [0L];
+    [0L; 1L];
+    [0L; 1L; 2L];
+    [0L; 1L; 2L; 3L];
   ] in
   List.iter streams ~f:test;
   printf "@]"

@@ -21,7 +21,7 @@ let test () =
         end
     end in
     printf "s=%a:" pp s;
-    fn 0;
+    fn 0L;
     printf "\n";
   )
 

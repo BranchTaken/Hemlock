@@ -1,4 +1,4 @@
-bit_{and,or,xor} 0x0000_0000_0000_0000u64 0x0000_0000_0000_0000u64 -> 0x0000_0000_0000_0000u64, 0x0000_0000_0000_0000u64, 0x0000_0000_0000_0000u64
-bit_{and,or,xor} 0xffff_ffff_ffff_ffffu64 0x0000_0000_0000_0000u64 -> 0x0000_0000_0000_0000u64, 0xffff_ffff_ffff_ffffu64, 0xffff_ffff_ffff_ffffu64
-bit_{and,or,xor} 0x0000_0000_0000_0000u64 0xffff_ffff_ffff_ffffu64 -> 0x0000_0000_0000_0000u64, 0xffff_ffff_ffff_ffffu64, 0xffff_ffff_ffff_ffffu64
-bit_{and,or,xor} 0xffff_ffff_ffff_ffffu64 0xffff_ffff_ffff_ffffu64 -> 0xffff_ffff_ffff_ffffu64, 0xffff_ffff_ffff_ffffu64, 0x0000_0000_0000_0000u64
+bit_{and,or,xor} 0x0000_0000_0000_0000 0x0000_0000_0000_0000 -> 0x0000_0000_0000_0000, 0x0000_0000_0000_0000, 0x0000_0000_0000_0000
+bit_{and,or,xor} 0xffff_ffff_ffff_ffff 0x0000_0000_0000_0000 -> 0x0000_0000_0000_0000, 0xffff_ffff_ffff_ffff, 0xffff_ffff_ffff_ffff
+bit_{and,or,xor} 0x0000_0000_0000_0000 0xffff_ffff_ffff_ffff -> 0x0000_0000_0000_0000, 0xffff_ffff_ffff_ffff, 0xffff_ffff_ffff_ffff
+bit_{and,or,xor} 0xffff_ffff_ffff_ffff 0xffff_ffff_ffff_ffff -> 0xffff_ffff_ffff_ffff, 0xffff_ffff_ffff_ffff, 0x0000_0000_0000_0000

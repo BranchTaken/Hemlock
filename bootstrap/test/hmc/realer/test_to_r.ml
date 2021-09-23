@@ -41,13 +41,13 @@ let test () =
     nan;
     neg zero; neg one; neg inf;
     create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.one;
-    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x3);
-    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x1f);
-    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0xffff_ff);
-    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x1_ffff_ff);
-    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x1_ffff_ffff_fffff);
-    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x3_ffff_ffffff_fff);
-    create ~sign:Pos ~exponent:Zint.(one + one) ~mantissa:Nat.(of_uns 0x156);
+    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x3L);
+    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x1fL);
+    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0xffff_ffL);
+    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x1_ffff_ffL);
+    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x1_ffff_ffff_fffffL);
+    create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x3_ffff_ffffff_fffL);
+    create ~sign:Pos ~exponent:Zint.(one + one) ~mantissa:Nat.(of_uns 0x156L);
   ] in
   test_hash_fold rs;
   printf "@]"

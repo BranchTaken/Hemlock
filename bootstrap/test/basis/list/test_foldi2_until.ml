@@ -7,15 +7,15 @@ let test () =
   let list_pairs = [
     ([], []);
 
-    ([100], [200]);
-    ([100; 110], [200; 210]);
-    ([100; 110; 120], [200; 210; 220]);
+    ([100L], [200L]);
+    ([100L; 110L], [200L; 210L]);
+    ([100L; 110L; 120L], [200L; 210L; 220L]);
   ] in
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     let f i accum a_elm b_elm = begin
       let len = length a in
-      let limit = len - 2 in
+      let limit = len - 2L in
       ((i + a_elm + b_elm) :: accum), (i = limit)
     end in
     printf "foldi2 %a %a -> %a\n"

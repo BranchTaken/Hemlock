@@ -5,14 +5,14 @@ module T = struct
 
   let hash_fold t state =
     Hash.State.Gen.init state
-    |> Hash.State.Gen.fold_u64 1 ~f:(fun _ -> Int64.bits_of_float t)
+    |> Hash.State.Gen.fold_u64 1L ~f:(fun _ -> Int64.bits_of_float t)
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
     let rel = Sint.of_int (compare t0 t1) in
-    if Sint.(rel < (kv 0)) then
+    if Sint.(rel < 0L) then
       Cmp.Lt
-    else if Sint.(rel = (kv 0)) then
+    else if Sint.(rel = 0L) then
       Cmp.Eq
     else
       Cmp.Gt
@@ -91,19 +91,18 @@ module Parts = struct
 end
 
 let create ~neg ~exponent ~mantissa =
-  assert Sint.(exponent >= (kv (-1023)));
-  assert Sint.(exponent <= (kv 1024));
-  assert Uns.(mantissa <= 0xf_ffff_ffff_ffff);
+  assert Sint.(exponent >= (-1023L));
+  assert Sint.(exponent <= 1024L);
+  assert Uns.(mantissa <= 0xf_ffff_ffff_ffffL);
   let sign = match neg with
     | false -> Int64.zero
     | true -> Int64.one
   in
   let biased_exponent =
-    Int64.of_int (int_of_sint Sint.(exponent + (kv 1023))) in
+    Int64.of_int (int_of_sint Sint.(exponent + 1023L)) in
   let bits =
     Int64.logor (Int64.shift_left sign 63)
-      (Int64.logor (Int64.shift_left biased_exponent 52)
-          (Int64.of_int mantissa))
+      (Int64.logor (Int64.shift_left biased_exponent 52) mantissa)
   in
   Int64.float_of_bits bits
 
@@ -115,13 +114,12 @@ let is_neg t =
 let exponent t =
   let bits = Int64.bits_of_float t in
   let biased_exponent = sint_of_int (Int64.to_int (
-    Int64.logand (Int64.shift_right_logical bits 52)
-      (Int64.of_int 0x7ff))) in
-  Sint.(biased_exponent - (kv 1023))
+    Int64.logand (Int64.shift_right_logical bits 52) 0x7ffL)) in
+  Sint.(biased_exponent - 1023L)
 
 let mantissa t =
   let bits = Int64.bits_of_float t in
-  Int64.to_int (Int64.logand bits (Int64.of_int 0xf_ffff_ffff_ffff))
+  Int64.logand bits (Int64.of_int 0xf_ffff_ffff_ffff)
 
 let m2x t =
   let f, x = frexp t in
@@ -262,15 +260,15 @@ let int_pow ~p t =
   in
   let rec fn r p n = begin
     match n with
-    | 0 -> r
+    | 0L -> r
     | _ -> begin
-        let r' = match Uns.bit_and n 1 with
-          | 0 -> r
-          | 1 -> r * p
+        let r' = match Uns.bit_and n 1L with
+          | 0L -> r
+          | 1L -> r * p
           | _ -> not_reached ()
         in
         let p' = p * p in
-        let n' = Uns.bit_usr ~shift:1 n in
+        let n' = Uns.bit_usr ~shift:1L n in
         fn r' p' n'
       end
   end in

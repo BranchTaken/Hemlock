@@ -5,8 +5,8 @@ open Format
 
 let test () =
   printf "@[<h>";
-  List.iter [Some 42; None] ~f:(fun o0 ->
-    List.iter [Some 13; None] ~f:(fun o1 ->
+  List.iter [Some 42L; None] ~f:(fun o0 ->
+    List.iter [Some 13L; None] ~f:(fun o1 ->
       printf "first_some (%a) (%a) -> %a\n"
         (pp Uns.pp) o0
         (pp Uns.pp) o1

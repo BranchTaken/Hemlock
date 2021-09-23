@@ -6,7 +6,7 @@ open RudimentsFunctions
 external entropy_nbits: uns -> Int64.t array = "hemlock_entropy_nbits"
 
 let get () =
-  match entropy_nbits 128 with
+  match entropy_nbits 128L with
   | [|lo; hi|] -> u128_of_tup (lo, hi)
   | _ -> halt "Entropy.get error: Entropy acquisition failure"
 
