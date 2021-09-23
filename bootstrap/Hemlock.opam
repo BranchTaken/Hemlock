@@ -22,7 +22,6 @@ depends: [
   "dune" {>= "2.9.0"}
   "odoc" {build}
   "topkg" {build}
-  "ppx_expect"
 ]
 build: [
   ["dune" "subst"] {pinned}
