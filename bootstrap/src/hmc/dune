@@ -1,8 +1,6 @@
 (library
  (name Hmc)
  (public_name Hemlock.Hmc)
- (inline_tests)
  (libraries Basis)
- (preprocess (pps ppx_expect))
  (synopsis "Hemlock bootstrap compiler library")
  )
