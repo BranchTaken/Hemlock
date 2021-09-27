@@ -9,6 +9,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         ca-certificates \
+        git \
         m4 \
         opam \
         sudo \
@@ -46,7 +47,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-        git \
         meson \
         python3 \
         openssh-client \
