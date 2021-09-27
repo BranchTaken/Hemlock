@@ -18,7 +18,7 @@ bug-reports: "https://github.com/BranchTaken/Hemlock/issues"
 dev-repo: "git+https://github.com/BranchTaken/Hemlock"
 tags: [ "languages" "org:BranchTaken" ]
 depends: [
-  "ocaml" {>= "4.12.0"}
+  "ocaml" {>= "4.13.0"}
   "dune" {>= "2.9.0"}
   "odoc" {build}
   "topkg" {build}
