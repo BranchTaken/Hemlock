@@ -14,7 +14,7 @@ let scan_file path =
     | _ -> fn scanner'
   end in
   printf "@[<h>";
-  let () = match File.of_path ~flag:File.Flag.R_O path with
+  let () = match File.of_path path with
     | Ok f -> begin
         let stream = File.Stream.of_file f in
         let path_str = Bytes.Slice.to_string_hlt path in
