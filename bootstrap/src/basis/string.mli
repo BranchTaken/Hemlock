@@ -85,54 +85,11 @@ module Slice : sig
     with type elm := codepoint
   include IdentifiableIntf.S with type t := t
 
-  (*
-  val of_cursors: base:Cursor.t -> past:Cursor.t -> t
-  (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)]. *)
-
-  val to_cursors: t -> Cursor.t * Cursor.t
-  (** Return the cursors comprising the slice. *)
-
-  val string: t -> outer
-  (** [string t] returns the unsliced string underlying [t]. *)
-
-  val base: t -> Cursor.t
-  (** Return the cursor at the base of the slice. *)
-
-  val past: t -> Cursor.t
-  (** Return the cursor past the end of the slice. *)
-  *)
-
   val of_string: outer -> t
   (** [of_string s] returns a slice enclosing the entirety of [s]. *)
 
   val to_string: t -> outer
   (** Return a string with contents equivalent to those of the slice. *)
-
-  (*
-  val base_seek: sint -> t -> t
-  (** [base_seek i t] returns a derivative slice with its [base] cursor initialized by seeking [t]'s
-      [base] cursor [i] codepoints forward/backward. *)
-
-  val base_succ: t -> t
-  (** [base_succ t] returns a derivative slice with its [base] cursor initialized to the successor
-      of [t]'s [base] cursor. *)
-
-  val base_pred: t -> t
-  (** [base_pred t] returns a derivative slice with its [base] cursor initialized to the predecessor
-      of [t]'s [base] cursor. *)
-
-  val past_seek: sint -> t -> t
-  (** [past_seek i t] returns a derivative slice with its [past] cursor initialized by seeking [t]'s
-      [past] cursor [i] codepoints forward/backward. *)
-
-  val past_succ: t -> t
-  (** [past_succ t] returns a derivative slice with its [past] cursor initialized to the successor
-      of [t]'s [past] cursor. *)
-
-  val past_pred: t -> t
-  (** [past_pred t] returns a derivative slice with its [past] cursor initialized to the predecessor
-      of [t]'s [past] cursor. *)
-  *)
 
   val blength: t -> uns
   (** Length of the slice in bytes. *)
