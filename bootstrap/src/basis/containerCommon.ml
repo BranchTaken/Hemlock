@@ -71,6 +71,9 @@ module MakePolyFold (T : IPoly) : SPolyFoldGen
   let iter ~f t =
     fold t ~init:() ~f:(fun _ elm -> f elm)
 
+  let iter_right ~f t =
+    fold_right t ~init:() ~f:(fun elm _ -> f elm)
+
   let iteri ~f t =
     foldi t ~init:() ~f:(fun i _ elm -> f i elm)
 
