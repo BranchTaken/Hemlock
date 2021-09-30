@@ -72,8 +72,11 @@ module type SMonoFold = sig
   val iter: f:(elm -> unit) -> t -> unit
   (** [iter ~f t] iterates from left to right over [t]. *)
 
+  val iter_right: f:(elm -> unit) -> t -> unit
+  (** [iter_right ~f t] iterates from right to left over [t]. *)
+
   val iteri: f:(uns -> elm -> unit) -> t -> unit
-  (** [iter ~f t] iterates with index provided from left to right over [t]. *)
+  (** [iteri ~f t] iterates with index provided from left to right over [t]. *)
 
   val count: f:(elm -> bool) -> t -> uns
   (** [count ~f t] iterates over [t] and returns the number of times [f] returns [true]. *)
@@ -211,8 +214,11 @@ module type SPolyFold = sig
   val iter: f:('a -> unit) -> 'a t -> unit
   (** [iter ~f t] iterates from left to right over [t]. *)
 
+  val iter_right: f:('a -> unit) -> 'a t -> unit
+  (** [iter_right ~f t] iterates from right to left over [t]. *)
+
   val iteri: f:(uns -> 'a -> unit) -> 'a t -> unit
-  (** [iter ~f t] iterates with index provided from left to right over [t]. *)
+  (** [iteri ~f t] iterates with index provided from left to right over [t]. *)
 
   val count: f:('a -> bool) -> 'a t -> uns
   (** [count ~f t] iterates over [t] and returns the number of times [f] returns [true]. *)
@@ -268,6 +274,7 @@ module type SPolyFoldGen = sig
   val fold_right: init:'accum -> f:('a elm -> 'accum -> 'accum) -> 'a t -> 'accum
   val foldi: init:'accum -> f:(uns -> 'accum -> 'a elm -> 'accum) -> 'a t -> 'accum
   val iter: f:('a elm -> unit) -> 'a t -> unit
+  val iter_right: f:('a elm -> unit) -> 'a t -> unit
   val iteri: f:(uns -> 'a elm -> unit) -> 'a t -> unit
   val count: f:('a elm -> bool) -> 'a t -> uns
   val for_any: f:('a elm -> bool) -> 'a t -> bool

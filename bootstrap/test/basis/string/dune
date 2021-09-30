@@ -21,6 +21,7 @@
   test_hash_fold_empty
   test_init
   test_iter
+  test_iter_right
   test_iteri
   test_length
   test_lfind_rfind

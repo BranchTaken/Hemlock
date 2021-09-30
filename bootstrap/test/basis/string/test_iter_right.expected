@@ -1,0 +1,2 @@
+iter_right "" ->
+iter_right "abcde" -> e d c b a
