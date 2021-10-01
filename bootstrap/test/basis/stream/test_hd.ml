@@ -10,7 +10,7 @@ let test () =
     match i <= n with
     | false -> ()
     | true -> begin
-        let t = init ~f:(fun i -> i) i in
+        let t = init (0L =:< i) ~f:(fun i -> i) in
         let elm = hd t in
         printf "hd %a = %a\n" ppt t Uns.pp elm;
         test_hd_up_to (succ i) n

@@ -18,8 +18,8 @@ let test () =
       (Array.pp Uns.pp) arr
       (Array.pp (pp_kv String.pp)) arr'
   end in
-  iter_oc 0L 7L (fun n ->
-    let arr = Array.init n ~f:(fun i -> i * 10L) in
+  Range.iter (0L =:< 7L) ~f:(fun n ->
+    let arr = Array.init (0L =:< n) ~f:(fun i -> i * 10L) in
     test arr
   );
   printf "@]"

@@ -12,7 +12,7 @@ let test () =
     | _, false -> ()
     | false, _ -> test_drop_up_to 0L (succ l) n
     | true, true -> begin
-        let t = init l ~f:(fun i -> i) in
+        let t = init (0L =:< l) ~f:(fun i -> i) in
         let t' = drop i t in
         printf "drop %a %a = %a\n" Uns.pp i ppt t ppt t';
         test_drop_up_to (succ i) l n

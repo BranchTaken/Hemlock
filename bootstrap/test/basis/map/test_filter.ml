@@ -8,16 +8,16 @@ let test () =
   printf "@[<h>";
   let test ks = begin
     let map = of_klist ks in
-    let map' = filter map ~f:(fun (k, _) -> k % 2 = 0) in
+    let map' = filter map ~f:(fun (k, _) -> k % 2L = 0L) in
     let kvs = to_alist map' in
     printf "%a -> %a@\n"
       (List.pp Uns.pp) ks
       (List.pp (pp_kv Uns.pp)) kvs
   end in
-  for n = 0 to 6 do
-    let ks = Array.(to_list (init n ~f:(fun i -> i))) in
+  Range.iter (0L =:< 7L) ~f:(fun n ->
+    let ks = Array.(to_list (init (0L =:< n) ~f:(fun i -> i))) in
     test ks
-  done;
+  );
   printf "@]"
 
 let _ = test ()

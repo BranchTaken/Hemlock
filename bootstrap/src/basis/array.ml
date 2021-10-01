@@ -338,8 +338,8 @@ module ArrayInit = struct
     }
     type 'a elm = 'a
 
-    let init length ~f =
-      {f; index=0L; length}
+    let init base length ~f =
+      {f; index=base; length}
 
     let length t =
       t.length
@@ -353,8 +353,8 @@ module ArrayInit = struct
   include Seq.MakePoly(T)
 end
 
-let init n ~f =
-  ArrayInit.(to_array (init n ~f))
+let init range ~f =
+  ArrayInit.(to_array (init (Range.base range) (Range.length range) ~f))
 
 module ArrayOfListCommon = struct
   type 'a t = {
@@ -455,11 +455,10 @@ let set_inplace i elm t =
   Stdlib.Array.set t (Uns.trunc_to_int i) elm
 
 let copy t =
-  init (length t) ~f:(fun i -> get i t)
+  init (0L =:< (length t)) ~f:(fun i -> get i t)
 
-let pare ~base ~past t =
-  assert (base <= past);
-  init (past - base) ~f:(fun i -> get (base + i) t)
+let pare range t =
+  init range ~f:(fun i -> get i t)
 
 let set i elm t =
   let t' = copy t in
@@ -533,20 +532,20 @@ let concat t0 t1 =
   let length_t0 = length t0 in
   let length_t1 = length t1 in
   let length = length_t0 + length_t1 in
-  init length ~f:(fun i ->
+  init (0L =:< length) ~f:(fun i ->
     if i < length_t0 then get i t0
     else get (i - length_t0) t1
   )
 
 let append elm t =
   let tlen = length t in
-  init (succ tlen) ~f:(fun i ->
+  init (0L =:< (succ tlen)) ~f:(fun i ->
     if i < tlen then get i t
     else elm
   )
 
 let prepend elm t =
-  init (succ (length t)) ~f:(fun i ->
+  init (0L =:< (succ (length t))) ~f:(fun i ->
     if i = 0L then elm
     else get (pred i) t
   )
@@ -557,7 +556,7 @@ let insert i elm t =
   else begin
     let len = length t in
     if i < len then
-      init (succ len) ~f:(fun index ->
+      init (0L =:< (succ len)) ~f:(fun index ->
         match Uns.cmp index i with
         | Lt -> get index t
         | Eq -> elm
@@ -576,14 +575,14 @@ let remove i t =
     [||]
   | _ -> begin
       if i = 0L then
-        pare ~base:1L ~past:len t
+        pare (1L =:< len) t
       else if i < len then
-        init (pred len) ~f:(fun index ->
+        init (0L =:< (pred len)) ~f:(fun index ->
           if index < i then get index t
           else get (succ index) t
         )
       else
-        pare ~base:0L ~past:(Uns.pred len) t
+        pare (0L =:< (pred len)) t
     end
 
 let reduce ~f t =
@@ -628,7 +627,7 @@ let rev_inplace t =
 
 let rev t =
   let l = length t in
-  init l ~f:(fun i -> get (l - i - 1L) t)
+  init (0L =:< l) ~f:(fun i -> get (l - i - 1L) t)
 
 (* Used directly for non-overlapping blits. *)
 let blit_ascending len i0 t0 i1 t1 =
@@ -652,11 +651,13 @@ let blit_descending len i0 t0 i1 t1 =
   | true -> ()
   | false -> fn (pred len)
 
-let blit len i0 t0 i1 t1 =
+let blit r0 t0 r1 t1 =
+  assert (Range.length r0 = Range.length r1);
+  let len = Range.length r0 in
   (* Choose direction such that overlapping ranges don't corrupt the source. *)
-  match i0 < i1 with
-  | true -> blit_descending len i0 t0 i1 t1
-  | false -> blit_ascending len i0 t0 i1 t1
+  match Range.(base r0 < base r1) with
+  | true -> blit_descending len (Range.base r0) t0 (Range.base r1) t1
+  | false -> blit_ascending len (Range.base r0) t0 (Range.base r1) t1
 
 let is_sorted ?(strict=false) ~cmp t =
   let open Cmp in
@@ -886,15 +887,11 @@ let sort_inplace ?stable ~cmp t =
 let sort ?stable ~cmp t =
   sort_impl ?stable ~cmp ~inplace:false (copy t)
 
-let search_impl ?base ?past key ~cmp mode t =
+let search_impl ?range key ~cmp mode t =
   let open Cmp in
-  let base = match base with
-    | None -> 0L
-    | Some base -> base
-  in
-  let past = match past with
-    | None -> length t
-    | Some past -> past
+  let base, past = match range with
+    | None -> 0L, length t
+    | Some range -> Range.base range, Range.past range
   in
   assert (base <= past);
   assert (past <= length t);
@@ -950,22 +947,22 @@ let search_impl ?base ?past key ~cmp mode t =
   end in
   fn ~base ~past
 
-let psearch ?base ?past key ~cmp t =
-  search_impl ?base ?past key ~cmp Cmp.Lt t
+let psearch ?range key ~cmp t =
+  search_impl ?range key ~cmp Cmp.Lt t
 
-let search ?base ?past key ~cmp t =
-  match search_impl ?base ?past key ~cmp Cmp.Eq t with
+let search ?range key ~cmp t =
+  match search_impl ?range key ~cmp Cmp.Eq t with
   | Some (_, i) -> Some i
   | _ -> None
 
-let nsearch ?base ?past key ~cmp t =
-  search_impl ?base ?past key ~cmp Cmp.Gt t
+let nsearch ?range key ~cmp t =
+  search_impl ?range key ~cmp Cmp.Gt t
 
 let map ~f t =
-  init (length t) ~f:(fun i -> f (get i t))
+  init (0L =:< (length t)) ~f:(fun i -> f (get i t))
 
 let mapi ~f t =
-  init (length t) ~f:(fun i -> f i (get i t))
+  init (0L =:< (length t)) ~f:(fun i -> f i (get i t))
 
 module ArrayFoldiMap = struct
   module T = struct
@@ -1081,11 +1078,11 @@ let iteri2 ~f t0 t1 =
 
 let map2 ~f t0 t1 =
   assert ((length t0) = (length t1));
-  init (length t0) ~f:(fun i -> f (get i t0) (get i t1))
+  init (0L =:< (length t0)) ~f:(fun i -> f (get i t0) (get i t1))
 
 let mapi2 ~f t0 t1 =
   assert ((length t0) = (length t1));
-  init (length t0) ~f:(fun i -> f i (get i t0) (get i t1))
+  init (0L =:< (length t0)) ~f:(fun i -> f i (get i t0) (get i t1))
 
 module ArrayFoldi2Map = struct
   module T = struct

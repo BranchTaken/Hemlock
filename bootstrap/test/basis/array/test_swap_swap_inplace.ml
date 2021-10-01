@@ -1,13 +1,12 @@
 open! Basis.Rudiments
 open! Basis
-open! ArrayTest
 open Array
 open Format
 
 let test () =
   let test_swap arr = begin
-    iter_oc 0L (length arr) (fun i ->
-      iter_oc i (length arr) (fun j ->
+    Range.iter (0L =:< (length arr)) ~f:(fun i ->
+      Range.iter (i =:< (length arr)) ~f:(fun j ->
         let arr' = copy arr in
         printf "%a %a: swap %a -> %a -> swap_inplace %a -> "
           Uns.pp i

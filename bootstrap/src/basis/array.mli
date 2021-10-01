@@ -90,9 +90,9 @@ module Slice : sig
     with type 'a elm := 'a
 end
 
-val init: uns -> f:(uns -> 'a) -> 'a t
-(** Initialize array. [init len ~f:(fun i -> ...)] initializes an array of given length, where [f]
-    provides the value for each element at given index. *)
+val init: range -> f:(uns -> 'a) -> 'a t
+(** Initialize array. [init range ~f:(fun i -> ...)] creates an array of length [Range.length range]
+    using [~f] to map range elements to array elements. *)
 
 val of_list: ?length:uns -> 'a list -> 'a t
 (** Initialize array using contents of list. If specified, [?length] must equal [(List.length
@@ -130,8 +130,8 @@ val set: uns -> 'a -> 'a t -> 'a t
 val copy: 'a t -> 'a t
 (** Create a copy of an array. *)
 
-val pare: base:uns -> past:uns -> 'a t -> 'a t
-(** Create an array with contents initialized to equal the \[[~base]..[~past]) input subarray. *)
+val pare: range -> 'a t -> 'a t
+(** Create an array with contents initialized to equal the specified [range] of the input array. *)
 
 val join: ?sep:'a t -> 'a t list -> 'a t
 (** Concatenate a list of arrays, with optional separator. *)
@@ -173,11 +173,11 @@ val rev_inplace: 'a t -> unit
 val rev: 'a t -> 'a t
 (** Create an array with contents reversed relative to the input array. *)
 
-val blit: uns -> uns -> 'a t -> uns -> 'a t -> unit
-(** Set a range of elements in place (mutate). [blit len i0 t0 i1 t1] sets the elements of [t1] at
-    [\[i1..i1+len)] to equal the elements of [t0] at [\[i0..i0+len)]. Overlapping ranges are
-    supported: [t0] and [t1] may refer to the same or different arrays; [i0] and [i1] may have
-    arbitrary relationship. *)
+val blit: range -> 'a t -> range -> 'a t -> unit
+(** Set a range of elements in place (mutate). [blit r0 t0 11 t1] sets the elements of [t1] in the
+    range [r0] to equal the elements of [t0] in the range [r1]. Overlapping ranges are supported:
+    [t0] and [t1] may refer to the same or different arrays; [r0] and [r1] must have equal length,
+    but they may otherwise have arbitrary relationship. *)
 
 val is_sorted: ?strict:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> bool
 (** Return true if array is sorted (strictly if [?strict] is [true]) according to the comparison
@@ -191,7 +191,7 @@ val sort: ?stable:bool -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 'a t
 (** Create an array with sorted contents of the input array according to the comparison function.
     Preserve order of equivalent elements if [?stable] is [true]. *)
 
-val psearch: ?base:uns -> ?past:uns -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> (Cmp.t * uns) option
+val psearch: ?range:range -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> (Cmp.t * uns) option
 (** Binary search for key in array, selecting the leftmost match, and falling back to the nearest
     present predecessor in the case of no match.
     @return {ul
@@ -201,11 +201,11 @@ val psearch: ?base:uns -> ?past:uns -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> 
       {- Empty array: [None]}
     } *)
 
-val search: ?base:uns -> ?past:uns -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> uns option
+val search: ?range:range -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> uns option
 (** Binary search for key in array. If key is found, return [(Some index)], otherwise return [None].
     Note that if more than one element matches key, an arbitrary match is returned. *)
 
-val nsearch: ?base:uns -> ?past:uns -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> (Cmp.t * uns) option
+val nsearch: ?range:range -> 'a -> cmp:('a -> 'a -> Cmp.t) -> 'a t -> (Cmp.t * uns) option
 (** Binary search for key in array, selecting the rightmost match, and falling back to the nearest
     present successor in the case of no match.
     @return {ul
@@ -223,8 +223,7 @@ val mapi: f:(uns -> 'a -> 'b) -> 'a t -> 'b t
 (** Create an array with elements mapped from the input array, according to the indexed element
     mapping function. *)
 
-val fold_map: init:'accum -> f:('accum -> 'a -> 'accum * 'b) -> 'a t
-  -> 'accum * 'b t
+val fold_map: init:'accum -> f:('accum -> 'a -> 'accum * 'b) -> 'a t -> 'accum * 'b t
 (** Create an array and accumulated result with elements mapped from the input array, according to
     the folding mapping function. *)
 

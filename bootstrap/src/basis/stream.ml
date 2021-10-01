@@ -7,17 +7,17 @@ and 'a t = 'a elm lazy_t
 
 let empty = lazy Nil
 
-let init n ~f =
-  let rec fn i n f = lazy begin
-    match i < n with
+let init range ~f =
+  let rec fn i past f = lazy begin
+    match i < past with
     | false -> Nil
     | true -> begin
         let elm = f i in
-        let t = fn (succ i) n f in
+        let t = fn (succ i) past f in
         Cons(elm, t)
       end
   end in
-  fn 0L n f
+  fn (Range.base range) (Range.past range) f
 
 let rec init_indef ~f state =
   lazy begin

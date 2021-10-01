@@ -1,6 +1,5 @@
 open! Basis.Rudiments
 open! Basis
-open! ArrayTest
 open Array
 
 type sort_elm = {
@@ -14,7 +13,7 @@ let test () =
       if len > 0L then len
       else 1L
     in
-    init len ~f:(fun i ->
+    init (0L =:< len) ~f:(fun i ->
       {key=Uns.extend_of_int (Stdlib.Random.int (Int64.to_int key_limit)); sn=i})
   end in
   let cmp elm0 elm1 =
@@ -34,8 +33,8 @@ let test () =
     ));
   end in
   Stdlib.Random.init 0;
-  iter_oc 0L 258L (fun len ->
-    iter_oc 1L 11L (fun _ ->
+  Range.iter (0L =:< 258L) ~f:(fun len ->
+    Range.iter (1L =:< 11L) ~f:(fun _ ->
       test_sort (gen_array len)
     )
   )

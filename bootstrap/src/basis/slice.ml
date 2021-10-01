@@ -25,10 +25,17 @@ module MakeMono (Cursor : CursorIntf.SMono) :
   let past t =
     t.past
 
-  let of_container container =
-    let base = Cursor.hd container in
-    let past = Cursor.tl container in
-    of_cursors ~base ~past
+  let range t =
+    Range.(Cursor.index t.base =:< Cursor.index t.past)
+
+  let of_container ?range container =
+    match range with
+    | None -> of_cursors ~base:(Cursor.hd container) ~past:(Cursor.tl container)
+    | Some r -> begin
+        let base = Cursor.seek (Uns.bits_to_sint (Range.base r)) (Cursor.hd container) in
+        let past = Cursor.seek (Uns.bits_to_sint (Range.length r)) base in
+        of_cursors ~base ~past
+      end
 
   let to_container t =
     Cursor.container t.base
@@ -83,10 +90,17 @@ module MakePoly (Cursor : CursorIntf.SPoly) :
   let past t =
     t.past
 
-  let of_container container =
-    let base = Cursor.hd container in
-    let past = Cursor.tl container in
-    of_cursors ~base ~past
+  let range t =
+    Range.(Cursor.index t.base =:< Cursor.index t.past)
+
+  let of_container ?range container =
+    match range with
+    | None -> of_cursors ~base:(Cursor.hd container) ~past:(Cursor.tl container)
+    | Some r -> begin
+        let base = Cursor.seek (Uns.bits_to_sint (Range.base r)) (Cursor.hd container) in
+        let past = Cursor.seek (Uns.bits_to_sint (Range.length r)) base in
+        of_cursors ~base ~past
+      end
 
   let to_container t =
     Cursor.container t.base

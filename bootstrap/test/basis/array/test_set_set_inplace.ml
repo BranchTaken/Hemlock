@@ -9,7 +9,7 @@ let test () =
       match i < n with
       | false -> ()
       | true -> begin
-          let arr = init len ~f:(fun _ -> 0L) in
+          let arr = init (0L =:< len) ~f:(fun _ -> 0L) in
           let arr' = set i 1L arr in
           printf "set %a: %a -> %a"
             Uns.pp i

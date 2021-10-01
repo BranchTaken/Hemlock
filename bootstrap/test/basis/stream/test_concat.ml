@@ -11,8 +11,8 @@ let test () =
     | _, false -> ()
     | false, _ -> test_concat_up_to 0L (succ l) n
     | true, true -> begin
-        let t0 = init ~f:(fun i -> i) i in
-        let t1 = init ~f:(fun j -> i + j) (l - i) in
+        let t0 = init (0L =:< i) ~f:(fun i -> i) in
+        let t1 = init (i =:< l) ~f:(fun j -> j) in
         let t = concat t0 t1 in
         printf "concat %a %a = %a\n" ppt t0 ppt t1 ppt t;
         test_concat_up_to (succ i) l n

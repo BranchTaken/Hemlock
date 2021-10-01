@@ -14,7 +14,7 @@ let test () =
             match j > n with
             | true -> ()
             | false -> begin
-                let arr' = pare arr ~base:i ~past:j in
+                let arr' = pare (i =:< j) arr in
                 printf " [%a,%a)=%a"
                   Uns.pp i
                   Uns.pp j

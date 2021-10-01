@@ -1,2 +1,3 @@
 init -> "abcde"
+init (1 .. 3) -> "bc"
 of_codepoint -> "a"

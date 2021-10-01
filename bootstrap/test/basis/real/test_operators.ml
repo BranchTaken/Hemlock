@@ -6,20 +6,18 @@ open Format
 let test () =
   printf "@[<h>";
   let norm_nan t = if (is_nan t) then nan else t in
-  for i = -1 to 2 do
-    let i = Sint.extend_of_int i in
+  RangeF.Sint.(iter Sint.(kv (-1L) =:= kv 2L)) ~f:(fun i ->
     let t0 = of_sint i in
-    for j = -1 to 2 do
-      let j = Sint.extend_of_int j in
+    RangeF.Sint.(iter Sint.(kv (-1L) =:= kv 2L)) ~f:(fun j ->
       let t1 = of_sint j in
       printf ("+ - * / %% ** copysign %.1f ~sign:%.1f -> " ^^
           "%.1f %.1f %.1f %.1f %.1f %.1f %.1f\n")
         t0 t1 (t0 + t1) (t0 - t1) (t0 * t1) (norm_nan (t0 / t1))
         (norm_nan (t0 % t1)) (t0 ** t1) (copysign ~sign:t1 t0);
-    done;
+    );
     printf "~- ~+ neg abs %.1f -> %.1f %.1f %.1f %.1f\n"
       t0 (~- t0) (~+ t0) (neg t0) (abs t0);
-  done;
+  );
   printf "@]"
 
 let _ = test ()
