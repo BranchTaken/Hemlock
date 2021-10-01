@@ -1,13 +1,12 @@
 open! Basis.Rudiments
 open! Basis
-open! ListTest
 open List
 open Format
 
 let test () =
   let test_length lst = begin
     printf "[";
-    iter_oc 0L (length lst) (fun i ->
+    Range.iter (0L =:< (length lst)) ~f:(fun i ->
       if i > 0L then printf "; ";
       printf "%a" Uns.pp (nth i lst);
     );

@@ -3,6 +3,7 @@
   test_choose_hlt
   test_diff
   test_empty_cmper_m_singleton_length
+  test_filter
   test_filter_map
   test_fold2
   test_fold_until

@@ -1,6 +1,5 @@
 open! Basis.Rudiments
 open! Basis
-open! ListTest
 open List
 open Format
 
@@ -12,7 +11,7 @@ let test () =
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    iter_oc 0L (succ (length l)) (fun i ->
+    Range.iter (0L =:< (succ (length l))) ~f:(fun i ->
       let a, b = split i l in
       printf "split/take,drop %a %a -> %a, %a / %a, %a\n"
         Uns.pp i

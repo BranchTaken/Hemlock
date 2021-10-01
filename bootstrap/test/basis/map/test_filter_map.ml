@@ -18,8 +18,8 @@ let test () =
       (List.pp Uns.pp) ks
       (List.pp (pp_kv String.pp)) kvs
   end in
-  iter_oc 0L 7L (fun n ->
-    let ks = Array.(to_list (init n ~f:(fun i -> i))) in
+  Range.iter (0L =:< 7L) ~f:(fun n ->
+    let ks = Array.(to_list (init (0L =:< n) ~f:(fun i -> i))) in
     test ks
   );
   printf "@]"

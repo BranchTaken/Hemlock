@@ -271,8 +271,8 @@ let ArrayInit = {|
         type elm 'a: elm a = a
 
         (* val init 'a >e: uns -> f:(uns >e-> a) >e-> t e *)
-        let init length ~f =
-            {f; index=0; length}
+        let init base length ~f =
+            {f; index=base; length}
 
         (* val length: t _ -> uns *)
         let length t =
@@ -289,8 +289,8 @@ let ArrayInit = {|
     (* val to_array 'a ^outer >e: t e >e-> ^&outer a *)
   |}
 
-let init n ~f =
-    ArrayInit.(to_array (init n ~f))
+let init range ~f =
+    ArrayInit.(to_array (init (Range.base range) (Range.length range) ~f))
 
 let ArrayOfListCommon = {|
     type t 'a: t a =
@@ -340,11 +340,10 @@ let is_empty t =
 external set_inplace 'a: uns -> a -> !&t a -> unit = "hm_basis_array_set_inplace"
 
 let copy t =
-    init (length t) ~f:(fun i -> get i t)
+    init (0 .. (length t)) ~f:(fun i -> get i t)
 
-let pare ~base ~past t =
-    assert (base <= past)
-    init (past - base) ~f:(fun i -> get (base + i) t)
+let pare range t =
+    init range ~f:(fun i -> get i t)
 
 let set i elm t =
     let t' = copy t
@@ -418,20 +417,20 @@ let concat t0 t1 =
     let length_t0 = length t0
     let length_t1 = length t1
     let length = length_t0 + length_t1
-    init length ~f:(fun i ->
+    init (0 .. length) ~f:(fun i ->
         if i < length_t0 then get i t0
         else get (i - length_t0) t1
       )
 
 let append elm t =
     let tlen = length t
-    init (succ tlen) ~f:(fun i ->
+    init (0 .. (succ tlen)) ~f:(fun i ->
         if i < tlen then get i t
         else elm
       )
 
 let prepend elm t =
-    init (succ (length t)) ~f:(fun i ->
+    init (0 .. (succ (length t))) ~f:(fun i ->
         if i = 0 then elm
         else get (pred i) t
       )
@@ -442,7 +441,7 @@ let insert i elm t =
     else
         let len = length t
         if i < len then
-            init (succ len) ~f:(fun index ->
+            init (0 .. (succ len)) ~f:(fun index ->
                 match Uns.cmp index i with
                 | Lt -> get index t
                 | Eq -> elm
@@ -460,14 +459,14 @@ let remove i t =
         [||]
     | _ ->
         if i = 0 then
-            pare ~base:1 ~past:len t
+            pare (1 .. len) t
         else if i < len then
-            init (pred len) ~f:(fun index ->
+            init (0 .. (pred len)) ~f:(fun index ->
                 if index < i then get index t
                 else get (succ index) t
               )
         else
-            pare ~base:0 ~past:(pred len) t
+            pare (0 .. (pred len)) t
 
 let reduce ~f t =
     let rec fn i accum =
@@ -480,7 +479,7 @@ let reduce ~f t =
 
 let reduce_hlt ~f t =
     match reduce ~f t with
-    | None -> conceal (halt "Empty array")
+    | None -> halt "Empty array"
     | Some x -> x
 
 let swap_inplace i0 i1 t =
@@ -508,7 +507,7 @@ let rev_inplace t =
 
 let rev t =
     let l = length t
-    init l ~f:(fun i -> get (l - i - 1) t)
+    init (0 .. l) ~f:(fun i -> get (l - i - 1) t)
 
 (* Used directly for non-overlapping blits. *)
 let blit_ascending len i0 t0 i1 t1 =
@@ -519,10 +518,11 @@ let blit_descending len i0 t0 i1 t1 =
         set_inplace (i1 + i) (get (i0 + i) t0) t1
 
 let blit len i0 t0 i1 t1 =
+    assert (Range.length r0 = Range.length r1)
     (* Choose direction such that overlapping ranges don't corrupt the source. *)
-    match i0 < i1 with
-    | true -> blit_descending len i0 t0 i1 t1
-    | false -> blit_ascending len i0 t0 i1 t1
+    match Range.(base r0 < base r1) with
+    | true -> blit_descending len (Range.base r0) t0 (Range.base r1) t1
+    | false -> blit_ascending len (Range.base r0) t0 (Range.base r1) t1
 
 let is_sorted ?(strict=false) ~cmp t =
     let len = length t
@@ -705,13 +705,11 @@ let sort_inplace ?stable ~cmp t =
 let sort ?stable ~cmp t =
     sort_impl ?stable ~cmp ~inplace:false (copy t)
 
-let search_impl ?base ?past key ~cmp mode t =
-    let base = match base with
-        | None -> 0
-        | Some base -> base
-    let past = match past with
-        | None -> length t
-        | Some past -> past
+let search_impl ?range key ~cmp mode t =
+    let base, past = match range with
+      | None -> 0L, length t
+      | Some range -> Range.base range, Range.past range
+    in
     assert (base <= past)
     assert (past <= length t)
     let rec fn ~base ~past =
@@ -757,22 +755,22 @@ let search_impl ?base ?past key ~cmp mode t =
             | Cmp.Gt, _ -> fn ~base:(succ mid) ~past
     fn ~base ~past
 
-let psearch ?base ?past key ~cmp t =
-    search_impl ?base ?past key ~cmp Cmp.Lt t
+let psearch ?range key ~cmp t =
+    search_impl ?range key ~cmp Cmp.Lt t
 
-let search ?base ?past key ~cmp t =
-    match search_impl ?base ?past key ~cmp Cmp.Eq t with
+let search ?range key ~cmp t =
+    match search_impl ?range key ~cmp Cmp.Eq t with
     | Some (_, i) -> Some i
     | _ -> None
 
-let nsearch ?base ?past key ~cmp t =
-    search_impl ?base ?past key ~cmp Cmp.Gt t
+let nsearch ?range key ~cmp t =
+    search_impl ?range key ~cmp Cmp.Gt t
 
 let map ~f t =
-    init (length t) ~f:(fun i -> f (get i t))
+    init (0 .. (length t)) ~f:(fun i -> f (get i t))
 
 let mapi ~f t =
-    init (length t) ~f:(fun i -> f i (get i t))
+    init (0 .. (length t)) ~f:(fun i -> f i (get i t))
 
 let ArrayFoldiMap = {|
     let T = {|
@@ -840,7 +838,7 @@ let filteri ~f t =
     t'
 
 let foldi2_until ~init ~f t0 t1 =
-    conceal (assert ((length t0) = (length t1)))
+    assert ((length t0) = (length t1))
     let len = length t0
     let rec fn i accum =
         match i = len with
@@ -862,22 +860,22 @@ let foldi2 ~init ~f t0 t1 =
     foldi2_until ~init ~f:(fun i accum a b -> (f i accum a b), false) t0 t1
 
 let iter2 ~f t0 t1 =
-    conceal (assert ((length t0) = (length t1)))
+    assert ((length t0) = (length t1))
     for i = 0 to pred (length t0) do
         f (get i t0) (get i t1)
 
 let iteri2 ~f t0 t1 =
-    conceal (assert ((length t0) = (length t1)))
+    assert ((length t0) = (length t1))
     for i = 0 to pred (length t0) do
         f i (get i t0) (get i t1)
 
 let map2 ~f t0 t1 =
-    conceal (assert ((length t0) = (length t1)))
-    init (length t0) ~f:(fun i -> f (get i t0) (get i t1))
+    assert ((length t0) = (length t1))
+    init (0 .. (length t0)) ~f:(fun i -> f (get i t0) (get i t1))
 
 let mapi2 ~f t0 t1 =
-    conceal (assert ((length t0) = (length t1)))
-    init (length t0) ~f:(fun i -> f i (get i t0) (get i t1))
+    assert ((length t0) = (length t1))
+    init (0 .. (length t0)) ~f:(fun i -> f i (get i t0) (get i t1))
 
 let ArrayFoldi2Map = {|
     let T = {|
@@ -1097,7 +1095,7 @@ let%expect_test "set,set_inplace" =
     let open Format
     let test_set len =
         for i = 0 to pred len do
-            let arr = init len ~f:(fun _ -> 0)
+            let arr = init (0 .. len) ~f:(fun _ -> 0)
             let arr' = set i 1 arr
             printf "set %a: %a -> %a" Uns.pp i \
                                       (pp Uns.pp) arr \
@@ -1129,7 +1127,7 @@ let%expect_test "pare" =
         printf "pare %a ->" (pp Uns.pp) arr
         for i = 0 to length arr do
             for j = i to length arr do
-                let arr' = pare arr ~base:i ~past:j
+                let arr' = pare arr (i .. j)
                 printf " [%a,%a)=%a" Uns.pp i Uns.pp j (pp Uns.pp) arr'
         printf "\n"
     printf "@[<h>"
@@ -1384,28 +1382,32 @@ let%expect_test "rev,rev_inplace" =
 
 let%expect_test "blit" =
     let open Format
-    let test_blit len i0 arr0 i1 arr1 =
-        printf "blit %a %a %a %a %a -> " Uns.pp len Uns.pp i0 (pp Uns.pp) arr0
-          Uns.pp i1 (pp Uns.pp) arr1
-        blit len i0 arr0 i1 arr1
+    let range_pp ppf r =
+        Format.fprintf ppf "(%u .. %u)" (Range.base r) (Range.past r)
+
+
+    let test_blit r0 arr0 r1 arr1 =
+        printf "blit %a %a %a %a -> " range_pp r0 (pp Uns.pp) arr0
+          range_pp r1 (pp Uns.pp) arr1
+        blit r0 arr0 r1 arr1
         printf "%a\n" (pp Uns.pp) arr1
     printf "@[<h>"
-    test_blit 0 0 [||] 0 [||]
-    test_blit 1 0 [|0|] 0 [|1|]
-    test_blit 1 1 [|0; 1|] 0 [|2|]
-    test_blit 1 0 [|0|] 1 [|1; 2|]
-    test_blit 2 0 [|0; 1|] 0 [|2; 3|]
-    test_blit 2 1 [|0; 1; 2|] 0 [|3; 4; 5|]
-    test_blit 3 0 [|0; 1; 2|] 0 [|3; 4; 5|]
+    test_blit (0 .. 0) [||] (0 .. 0) [||]
+    test_blit (0 .. 1) [|0|] (0 .. 1) [|1|]
+    test_blit (1 .. 2) [|0; 1|] (0 .. 1) [|2|]
+    test_blit (0 .. 1) [|0|] (1 .. 2) [|1; 2|]
+    test_blit (0 .. 2) [|0; 1|] (0 .. 2) [|2; 3|]
+    test_blit (1 .. 3) [|0; 1; 2|] (0 .. 2) [|3; 4; 5|]
+    test_blit (0 .. 3) [|0; 1; 2|] (0 .. 3) [|3; 4; 5|]
     printf "@]"
 
-    [%expect`|blit 0 0 [||] 0 [||] -> [||]
-             |blit 1 0 [|0|] 0 [|1|] -> [|0|]
-             |blit 1 1 [|0; 1|] 0 [|2|] -> [|1|]
-             |blit 1 0 [|0|] 1 [|1; 2|] -> [|1; 0|]
-             |blit 2 0 [|0; 1|] 0 [|2; 3|] -> [|0; 1|]
-             |blit 2 1 [|0; 1; 2|] 0 [|3; 4; 5|] -> [|1; 2; 5|]
-             |blit 3 0 [|0; 1; 2|] 0 [|3; 4; 5|] -> [|0; 1; 2|]
+    [%expect`|blit (0 .. 0) [||] (0 .. 0) [||] -> [||]
+             |blit (0 .. 1) [|0|] (0 .. 1) [|1|] -> [|0|]
+             |blit (1 .. 2) [|0; 1|] (0 .. 1) [|2|] -> [|1|]
+             |blit (0 .. 1) [|0|] (1 .. 2) [|1; 2|] -> [|1; 0|]
+             |blit (0 .. 2) [|0; 1|] (0 .. 2) [|2; 3|] -> [|0; 1|]
+             |blit (1 .. 3) [|0; 1; 2|] (0 .. 2) [|3; 4; 5|] -> [|1; 2; 5|]
+             |blit (0 .. 3) [|0; 1; 2|] (0 .. 3) [|3; 4; 5|] -> [|0; 1; 2|]
             `]
 
 let%expect_test "is_sorted" =
@@ -1442,7 +1444,7 @@ let%expect_test "sort" =
         let key_limit =
             if len > 0 then len
             else 1
-        init len ~f:(fun i -> {key=Random.int key_limit; sn=i})
+        init (0 .. len) ~f:(fun i -> {key=Random.int key_limit; sn=i})
     let cmp elm0 elm1 =
         Uns.cmp elm0.key elm1.key
     let test_sort arr =
@@ -1491,12 +1493,12 @@ let%expect_test "search" =
               )
     printf "@[<h>"
     for len = 0 to 3 do
-        let arr = init len ~f:(fun i -> i * 2 + 1)
+        let arr = init (0 .. len) ~f:(fun i -> i * 2 + 1)
         let key_max = len * 2
         test_search arr key_max
     for hlen = 1 to 3 do
         let len = hlen * 2
-        let arr = init len ~f:(fun i -> i + ((i + 1) % 2))
+        let arr = init (0 .. len) ~f:(fun i -> i + ((i + 1) % 2))
         let key_max = len
         test_search arr key_max
     printf "@]"

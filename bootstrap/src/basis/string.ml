@@ -666,8 +666,8 @@ module Slice = struct
         cindex: uns;
       }
 
-      let init ~f blength =
-        {f; blength; cindex=0L}
+      let init ~f blength cindex =
+        {f; blength; cindex}
 
       let length t =
         t.blength
@@ -683,9 +683,9 @@ module Slice = struct
     include Seq.Codepoint.Make(T)
   end
 
-  let blength_of_seq clength ~seq ~f =
+  let blength_of_seq crange ~seq ~f =
     let rec fn ~seq cindex nbytes = begin
-      match Uns.(cindex = clength) with
+      match Uns.(cindex = Range.past crange) with
       | true -> nbytes
       | false -> begin
           let codepoint, seq' = f seq in
@@ -694,20 +694,20 @@ module Slice = struct
           fn ~seq:seq' (Uns.succ cindex) nbytes'
         end
     end in
-    fn ~seq 0L 0L
+    fn ~seq (Range.base crange) 0L
 
-  let init ?blength clength ~f =
+  let init ?blength crange ~f =
     let blength = match blength with
-      | None -> blength_of_seq clength ~seq:0L
+      | None -> blength_of_seq crange ~seq:(Range.base crange)
           ~f:(fun seq ->
             (f seq), (Uns.succ seq)
           )
       | Some blength -> blength
     in
-    of_string StringOfIndexed.(to_string (init ~f blength))
+    of_string StringOfIndexed.(to_string (init ~f blength (Range.base crange)))
 
   let of_codepoint codepoint =
-    init 1L ~f:(fun _ -> codepoint)
+    init (0L =:< 1L) ~f:(fun _ -> codepoint)
 
   module StringOfListCommon = struct
     type t = {
@@ -742,7 +742,7 @@ module Slice = struct
   end
 
   let blength_of_list clength codepoints =
-    blength_of_seq clength ~seq:codepoints ~f:(fun seq ->
+    blength_of_seq (0L =:< clength) ~seq:codepoints ~f:(fun seq ->
       match seq with
       | cp :: seq' -> cp, seq'
       | [] -> not_reached ()
@@ -771,7 +771,7 @@ module Slice = struct
     of_string StringOfListRev.(to_string (init codepoints_rev blength))
 
   let of_array ?blength codepoints =
-    init ?blength (Array.length codepoints) ~f:(fun i ->
+    init ?blength (0L =:< (Array.length codepoints)) ~f:(fun i ->
       Array.get i codepoints
     )
 
@@ -1100,7 +1100,7 @@ module Slice = struct
         | _ -> begin
             let k = Cursori.hd s in
             let q = Cursori.succ k in
-            let pi = Array.init (Cursori.cindex m) ~f:(fun _ -> k) in
+            let pi = Array.init (0L =:< (Cursori.cindex m)) ~f:(fun _ -> k) in
             compute_pi ~p:s ~k ~q ~pi
           end
       in
@@ -1550,8 +1550,8 @@ end
 
 let slice_pattern_pp = Slice.Pattern.pp
 
-let init ?blength clength ~f =
-  Slice.to_string (Slice.init ?blength clength ~f)
+let init ?blength crange ~f =
+  Slice.to_string (Slice.init ?blength crange ~f)
 
 let of_codepoint codepoint =
   Slice.(to_string (of_codepoint codepoint))

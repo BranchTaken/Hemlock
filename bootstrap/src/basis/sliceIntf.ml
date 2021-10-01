@@ -21,8 +21,12 @@ module type SMono = sig
   val past: t -> cursor
   (** Return the cursor past the end of the slice. *)
 
-  val of_container: container -> t
-  (** [of_container c] returns a slice enclosing the entirety of [c]. *)
+  val range: t -> range
+  (** Return the range of indices contained in the slice. *)
+
+  val of_container: ?range:range -> container -> t
+  (** [of_container c] returns a slice enclosing the entirety of [c], or enclosing the [range] if
+      given. *)
 
   val to_container: t -> container
   (** Return a container with contents equivalent to those of the slice. *)
@@ -73,8 +77,12 @@ module type SPoly = sig
   val past: 'a t -> 'a cursor
   (** Return the cursor past the end of the slice. *)
 
-  val of_container: 'a container -> 'a t
-  (** [of_container c] returns a slice enclosing the entirety of [c]. *)
+  val range: 'a t -> range
+  (** Return the range of indices contained in the slice. *)
+
+  val of_container: ?range:range -> 'a container -> 'a t
+  (** [of_container c] returns a slice enclosing the entirety of [c], or enclosing the [range] if
+      given. *)
 
   val to_container: 'a t -> 'a container
   (** Return a container with contents equivalent to those of the slice. *)

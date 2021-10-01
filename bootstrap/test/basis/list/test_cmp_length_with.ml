@@ -1,6 +1,5 @@
 open! Basis.Rudiments
 open! Basis
-open! ListTest
 open List
 open Format
 
@@ -18,7 +17,7 @@ let test () =
     | [] -> ()
     | list :: lists' -> begin
         printf "cmp_length_with %a" (pp Uns.pp) list;
-        iter_oc 0L 4L (fun limit ->
+        Range.iter (0L =:< 4L) ~f:(fun limit ->
           printf "%s" (if limit = 0L then ": " else ", ");
           test_cmp_length_with list limit;
         );

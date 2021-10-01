@@ -7,7 +7,7 @@ open Format
 let test () =
   let test_search ordset key_max = begin
     printf "%a@\n" pp ordset;
-    for probe = 0 to key_max do
+    RangeF.Uns.(iter (0L =:= key_max)) ~f:(fun probe ->
       printf "  %a -> %s, %s, %s@\n" Uns.pp probe
         (match psearch probe ordset with
           | None -> "<"
@@ -31,15 +31,15 @@ let test () =
               Uns.pp i Uns.pp (nth i ordset)
           | None -> ">"
         );
-    done
+    )
   end in
   printf "@[";
-  for len = 0 to 3 do
+  Range.iter (0L =:< 4L) ~f:(fun len ->
     let ordset = of_array (module Uns)
-      (Array.init len ~f:(fun i -> i * 2 + 1)) in
-    let key_max = len * 2 in
+      (Array.init (0L =:< len) ~f:(fun i -> i * 2L + 1L)) in
+    let key_max = len * 2L in
     test_search ordset key_max
-  done;
+  );
   printf "@]"
 
 let _ = test ()

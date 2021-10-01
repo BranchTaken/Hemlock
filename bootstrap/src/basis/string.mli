@@ -100,10 +100,10 @@ module Slice : sig
   val get: uns -> t -> byte
   (** [get i t] returns the byte at offset [i] from the [base] of the slice. *)
 
-  val init: ?blength:uns -> uns -> f:(uns -> codepoint) -> t
-  (** [init ~blength clength ~f] creates a slice of given byte length and codepoint length using ~f
-      to determine the values of the codepoints at each index. [blength] must be accurate if
-      specified. *)
+  val init: ?blength:uns -> range -> f:(uns -> codepoint) -> t
+  (** [init ~blength crange ~f:(fun i -> ...)] creates a slice of given byte length [~blength] and
+      codepoint length [Range.length crange] using [~f] to map range elements to codepoints.
+      [blength] must be accurate if specified. *)
 
   val of_codepoint: codepoint -> t
   (** Create a slice containing a single codepoint. *)
@@ -361,10 +361,10 @@ val clength: t -> uns
 val get: uns -> t -> byte
 (** Get byte at index. *)
 
-val init: ?blength:uns -> uns -> f:(uns -> codepoint) -> t
-(** [init ~blength clength ~f] creates a string of given byte length and codepoint length using ~f
-    to determine the values of the codepoints at each index. [blength] must be accurate if
-    specified. *)
+val init: ?blength:uns -> range -> f:(uns -> codepoint) -> t
+(** [init ~blength crange ~f:(fun i -> ...)] creates a string of given byte length [~blength] and
+    codepoint length [Range.length crange] using [~f] to map range elements to codepoints. [blength]
+    must be accurate if specified. *)
 
 val of_codepoint: codepoint -> t
 (** Create a string containing a single codepoint. *)

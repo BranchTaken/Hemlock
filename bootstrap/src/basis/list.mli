@@ -50,9 +50,9 @@ val cmp_length_with: 'a t -> uns -> Cmp.t
 
 (** {1 Creation} *)
 
-val init: uns -> f:(uns -> 'a) -> 'a t
-(** Initialize list. [init len ~f:(fun i -> ...)] initializes a list of given length, where [f]
-    provides the value for each element at given index. *)
+val init: range -> f:(uns -> 'a) -> 'a t
+(** Initialize list. [init range ~f:(fun i -> ...)] creates a list of length [Range.length range]
+    using [~f] to map range elements to list elements. *)
 
 (** {1 Length} *)
 
@@ -270,8 +270,7 @@ val rev_filteri: f:(uns -> 'a -> bool) -> 'a t -> 'a t
 (** Create a reversed list with contents filtered by the given function. Only elements for which the
     indexed filter function returns true are incorporated in the result. *)
 
-val fold2_until: init:'accum -> f:('accum -> 'a -> 'b -> 'accum * bool) -> 'a t
-  -> 'b t -> 'accum
+val fold2_until: init:'accum -> f:('accum -> 'a -> 'b -> 'accum * bool) -> 'a t -> 'b t -> 'accum
 (** Create an accumulated result for the paired elements of two lists, calling the element folding
     function in increasing index order, and terminate folding early if the folding function returns
     true. *)

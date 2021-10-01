@@ -10,7 +10,7 @@ let test () =
     match i <= n with
     | false -> ()
     | true -> begin
-        let t = init ~f:(fun i -> i) i in
+        let t = init (0L =:< i) ~f:(fun i -> i) in
         let t' = tl t in
         printf "tl %a = %a\n" ppt t ppt t';
         test_tl_up_to (succ i) n

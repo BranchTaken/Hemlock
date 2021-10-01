@@ -153,17 +153,17 @@ let hash_fold hash_fold_a t state =
   )
   |> Uns.hash_fold (length t)
 
-let init n ~f =
-  let rec fn t rem = begin
-    match rem with
-    | 0L -> t
-    | _ -> begin
-        let i = pred rem in
-        let t' = (f i) :: t in
-        fn t' i
+let init range ~f =
+  let rec fn t base i = begin
+    match i = base with
+    | true -> t
+    | false -> begin
+        let i' = pred i in
+        let t' = (f i') :: t in
+        fn t' base i'
       end
   end in
-  fn [] n
+  fn [] (Range.base range) (Range.past range)
 
 let is_empty t =
   (length t) = 0L

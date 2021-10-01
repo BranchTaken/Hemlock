@@ -14,7 +14,7 @@ module Error = struct
 
   let to_string t =
     let n = to_string_get_length t in
-    let bytes = Array.init n ~f:(fun _ -> Byte.kv 0L) in
+    let bytes = Array.init (0L =:< n) ~f:(fun _ -> Byte.kv 0L) in
     let () = to_string_inner n bytes t in
     Bytes.to_string_hlt bytes
 end
@@ -101,7 +101,7 @@ let read_base inner buffer t =
 external read_inner: uns -> uns -> Bytes.t -> t -> sint = "hemlock_file_read_inner"
 
 let read ?(n=read_n) t =
-  let bytes = Array.init n ~f:(fun _ -> Byte.kv 0L) in
+  let bytes = Array.init (0L =:< n) ~f:(fun _ -> Byte.kv 0L) in
   let buffer = Bytes.Slice.of_container bytes in
   read_base read_inner buffer t
 

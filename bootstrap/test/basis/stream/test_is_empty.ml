@@ -10,7 +10,7 @@ let test () =
     match i <= n with
     | false -> ()
     | true -> begin
-        let t = init i ~f:(fun i -> i) in
+        let t = init (0L =:< i) ~f:(fun i -> i) in
         let e = is_empty t in
         printf "is_empty %a = %b\n" ppt t e;
         test_is_empty_up_to (succ i) n

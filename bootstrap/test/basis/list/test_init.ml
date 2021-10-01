@@ -1,12 +1,13 @@
 open! Basis.Rudiments
 open! Basis
-open! ListTest
 open List
 open Format
 
 let test () =
-  iter_oc 0L 4L (fun i ->
-    printf "%a\n" (pp Uns.pp) (init i ~f:(fun j -> j));
+  Range.iter (0L =:< 4L) ~f:(fun i ->
+    Range.iter (0L =:< i) ~f:(fun j ->
+      printf "@[<h>(%Lu .. %Lu) -> %a@\n@]" j i (pp Uns.pp) (init (j =:< i) ~f:(fun k -> k));
+    )
   )
 
 let _ = test ()

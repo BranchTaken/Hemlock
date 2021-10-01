@@ -1,6 +1,5 @@
 open! Basis.Rudiments
 open! Basis
-open StringTest
 open String
 open Format
 
@@ -13,7 +12,7 @@ let test () =
           let i = Cursor.bindex cursor in
           assert Cursor.((at s ~bindex:i) = cursor);
           let () = if Uns.(i_prev <> max_value) then
-              iter_oc 0L (i - i_prev) (fun j ->
+              Range.iter (0L =:< (i - i_prev)) ~f:(fun j ->
                 assert Cursor.((near s ~bindex:(i_prev + j))
                   = (at s ~bindex:i_prev));
               )
@@ -37,7 +36,7 @@ let test () =
           let i = Cursor.bindex cursor in
           assert Cursor.((at s ~bindex:i) = cursor);
           let () = if Uns.(i_prev <> max_value) then
-              iter_oc 0L (i_prev - i) (fun j ->
+              Range.iter (0L =:< (i_prev - i)) ~f:(fun j ->
                 assert Cursor.((near s ~bindex:(i + j)) = (at s ~bindex:i));
               )
           in

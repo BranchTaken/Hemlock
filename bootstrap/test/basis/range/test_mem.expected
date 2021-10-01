@@ -1,0 +1,25 @@
+mem 0 (1 .. 3) -> false
+mem 1 (1 .. 3) -> true
+mem 2 (1 .. 3) -> true
+mem 3 (1 .. 3) -> false
+
+mem 0 (3 .. 1) -> true
+mem 1 (3 .. 1) -> false
+mem 2 (3 .. 1) -> false
+mem 3 (3 .. 1) -> true
+
+mem 0 (1 ..= 3) -> false
+mem 1 (1 ..= 3) -> true
+mem 2 (1 ..= 3) -> true
+mem 3 (1 ..= 3) -> true
+mem 4 (1 ..= 3) -> false
+
+mem 0 (1 ..= 1) -> false
+mem 1 (1 ..= 1) -> true
+mem 2 (1 ..= 1) -> false
+
+mem 0 (3 ..= 1) -> true
+mem 1 (3 ..= 1) -> true
+mem 2 (3 ..= 1) -> false
+mem 3 (3 ..= 1) -> true
+mem 4 (3 ..= 1) -> true

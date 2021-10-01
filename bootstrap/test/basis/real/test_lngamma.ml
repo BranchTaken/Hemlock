@@ -5,11 +5,10 @@ open Format
 
 let test () =
   printf "@[<h>";
-  for n = 1 to 40 do
-    let n = Sint.extend_of_int n in
+  RangeF.Sint.(iter Sint.(kv 1L =:= kv 40L)) ~f:(fun n ->
     let x = (of_sint n) / 4. in
     printf "lngamma %.2f -> %.9f\n" x (lngamma x);
-  done;
+  );
 
   let rec fn xs = begin
     match xs with
