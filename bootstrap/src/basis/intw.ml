@@ -2,6 +2,11 @@ open RudimentsFunctions
 open IntwIntf
 type real = float
 
+let uns_max a b =
+  match Stdlib.(Int64.(unsigned_compare a b) >= 0) with
+  | true -> a
+  | false -> b
+
 module type IVCommon = sig
   include IV
   val signed: bool
@@ -32,7 +37,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       Int64.(mul (T.word_length t) 64L)
 
     let of_arr a =
-      init (Array.length a) ~f:(fun i -> Array.get i a)
+      init (Stdlib.(Int64.of_int (Stdlib.Array.length a))) ~f:(fun i ->
+        Stdlib.Array.get a (Int64.to_int i))
 
     let to_arr t =
       Stdlib.Array.init (Stdlib.Int64.to_int (word_length t)) (fun i ->
@@ -56,30 +62,31 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       init T.min_word_length ~f:(fun _ -> Int64.zero)
 
     let one =
-      init (Uns.max T.min_word_length 1L) ~f:(fun i -> match i with
+      init (uns_max T.min_word_length 1L) ~f:(fun i -> match i with
         | 0L -> Int64.one
         | _ -> Int64.zero
       )
 
     let neg_one =
-      init (Uns.max T.min_word_length 1L) ~f:(fun _ -> Int64.minus_one)
+      init (uns_max T.min_word_length 1L) ~f:(fun _ -> Int64.minus_one)
 
     let is_neg t =
       T.signed && (Int64.(compare (get (sub (word_length t) 1L) t) zero)) < 0
 
     let to_u64 t =
       match word_length t with
-      | 0L -> U64.zero
+      | 0L -> Int64.zero
       | _ -> get 0L t
 
     let to_u64_opt t =
       let rec fn i t = begin
-        match Uns.(i < (word_length t)) with
+        match Stdlib.(Int64.(unsigned_compare i (word_length t)) < 0) with
         | false -> false
         | true -> begin
-            match U64.((get i t) <> zero) with
+            let u = get i t in
+            match Stdlib.(Int64.(unsigned_compare u zero) <> 0) with
             | true -> true
-            | false -> fn (Uns.succ i) t
+            | false -> fn (Int64.succ i) t
           end
       end in
       match fn 1L t with
@@ -92,14 +99,15 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       | Some u -> u
 
     let of_u64 u =
-      match U64.(u = zero), T.min_word_length with
+      match Stdlib.(Int64.(unsigned_compare u zero) = 0), T.min_word_length with
       | true, 0L -> init 0L ~f:(fun _ -> Int64.zero)
       | _ -> begin
-          let n = match T.signed && U64.(u >= 0x8000_0000_0000_0000L) with
+          let n = match T.signed && Stdlib.(Int64.(unsigned_compare u 0x8000_0000_0000_0000L) >= 0)
+            with
             | true -> 2L
             | false -> 1L
           in
-          init (Uns.max T.min_word_length n) ~f:(fun i -> match i with
+          init (uns_max T.min_word_length n) ~f:(fun i -> match i with
             | 0L -> u
             | _ -> Int64.zero
           )
@@ -312,7 +320,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     let to_i64 t =
       assert T.signed;
       match word_length t with
-      | 0L -> I64.zero
+      | 0L -> Int64.zero
       | _ -> get 0L t
 
     let min_i64 = bit_sl ~shift:63L one
@@ -330,14 +338,18 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       | None -> halt "Lossy conversion"
       | Some u -> u
 
-    let of_i64 u =
+    let of_i64 x =
       assert T.signed;
-      match I64.(u = zero), T.min_word_length with
+      match Stdlib.(Int64.(compare x zero) = 0), T.min_word_length with
       | true, 0L -> init 0L ~f:(fun _ -> Int64.zero)
       | _ -> begin
-          init (Uns.max T.min_word_length 1L) ~f:(fun i -> match i with
-            | 0L -> u
-            | _ -> Int64.zero
+          let ws = match Stdlib.(Int64.(compare x 0L) < 0) with
+            | true -> 0xffff_ffff_ffff_ffffL
+            | false -> 0L
+          in
+          init (uns_max T.min_word_length 1L) ~f:(fun i -> match i with
+            | 0L -> x
+            | _ -> ws
           )
         end
 
@@ -353,7 +365,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     external intw_u_of_real: real -> uns -> uns -> int64 array = "hm_basis_intw_u_of_real"
 
     let of_real r =
-      match Real.is_nan r with
+      match Float.is_nan r with
       | true -> halt "Not a number"
       | false -> begin
           of_arr (
@@ -375,12 +387,12 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       (to_real t0) /. (to_real t1)
 
     let pp_suffix ppf t =
-      match Uns.(T.min_word_length = T.max_word_length) with
+      match Stdlib.(Int64.(unsigned_compare T.min_word_length T.max_word_length) = 0) with
       | false -> ()
       | true -> begin
           Format.fprintf ppf "%s%u"
             (if T.signed then "i" else "u")
-            Uns.(to_int (T.word_length t * 64L))
+            (Int64.(to_int (mul (T.word_length t) 64L)))
         end
 
     let pp ppf t =
@@ -390,18 +402,19 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         | Cmp.Eq -> ()
         | Cmp.Lt | Cmp.Gt -> begin
             let t' = t / ten in
-            let () = fn t' (Uns.succ i) in
+            let () = fn t' (Int64.succ i) in
 
             let digit = match is_neg t with
               | true -> neg (t % ten)
               | false -> t % ten
             in
             let digit_w0 = match Cmp.is_eq (cmp digit zero) with
-              | true -> U64.zero
+              | true -> Int64.zero
               | false -> get 0L digit
             in
             Format.fprintf ppf "%Lu" digit_w0;
-            if Uns.(i % 3L = 0L) && Uns.(i > 0L) then
+            if Stdlib.(Int64.(unsigned_compare (unsigned_rem i 3L) 0L) = 0) &&
+               Stdlib.(Int64.(unsigned_compare i 0L) > 0) then
               Format.fprintf ppf "_";
             ()
           end
@@ -419,8 +432,9 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         match shift with
         | 0L -> ()
         | _ -> begin
-            if Uns.(shift % 8L = 0L && shift < 64L) then Format.fprintf ppf "_";
-            let shift' = Uns.pred shift in
+            if Stdlib.(Int64.(unsigned_compare (unsigned_rem shift 8L) 0L) = 0 &&
+                       Int64.(unsigned_compare shift 64L) < 0) then Format.fprintf ppf "_";
+            let shift' = Int64.pred shift in
             let bit = Int64.(logand (shift_right_logical x (to_int shift')) 0x1L) in
             Format.fprintf ppf "%Ld" bit;
             fn x shift'
@@ -432,24 +446,25 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         | _ -> begin
             let rec fn2 i = begin
               let elm = get i t in
-              if Uns.(i < pred (word_length t)) then Format.fprintf ppf "_";
+              if Stdlib.(Int64.(unsigned_compare i (pred (word_length t))) < 0) then
+                Format.fprintf ppf "_";
               fn elm 64L;
               match i with
               | 0L -> ()
-              | _ -> fn2 (Uns.pred i)
+              | _ -> fn2 (Int64.pred i)
             end in
-            fn2 (Uns.pred (word_length t))
+            fn2 (Int64.pred (word_length t))
           end
       in
       Format.fprintf ppf "%a" pp_suffix t
 
     let pp_o ppf t =
       let rec fn x shift = begin
-        assert Uns.(shift % 3L = 0L);
+        assert Stdlib.(Int64.(unsigned_compare (unsigned_rem shift 3L) 0L) = 0);
         match shift with
         | 0L -> ()
         | _ -> begin
-            let shift' = Uns.(shift - 3L) in
+            let shift' = Int64.(sub shift 3L) in
             let digit = bit_and (bit_usr ~shift:shift' x) (of_uns 0x7L) in
             Format.fprintf ppf "%a" pp digit;
             fn x shift'
@@ -459,8 +474,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       let () = match word_length t with
         | 0L -> Format.fprintf ppf "0"
         | _ -> begin
-            let padded_shift = Uns.((bit_length t) + 2L) in
-            let shift = Uns.(padded_shift - (padded_shift % 3L)) in
+            let padded_shift = Int64.(add (bit_length t) 2L) in
+            let shift = Int64.(sub padded_shift (unsigned_rem padded_shift 3L)) in
             fn t shift
           end
       in
@@ -471,8 +486,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         match shift with
         | 0L -> ()
         | _ -> begin
-            if Uns.(shift < 64L) then Format.fprintf ppf "_";
-            let shift' = Uns.(shift - 16L) in
+            if Stdlib.(Int64.(unsigned_compare shift 64L) < 0) then Format.fprintf ppf "_";
+            let shift' = Int64.sub shift 16L in
             Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x (to_int shift'))
               0xffffL);
             fn x shift'
@@ -484,13 +499,14 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         | _ -> begin
             let rec fn2 i = begin
               let elm = get i t in
-              if Uns.(i < pred (word_length t)) then Format.fprintf ppf "_";
+              if Stdlib.(Int64.(unsigned_compare i (pred (word_length t))) < 0) then
+                Format.fprintf ppf "_";
               fn elm 64L;
               match i with
               | 0L -> ()
-              | _ -> fn2 (Uns.pred i)
+              | _ -> fn2 (Int64.pred i)
             end in
-            fn2 (Uns.pred (word_length t))
+            fn2 (Int64.pred (word_length t))
           end
       in
       Format.fprintf ppf "%a" pp_suffix t
@@ -499,7 +515,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       let getc_opt s i len = begin
         match i < len with
         | false -> None
-        | true -> Some ((Stdlib.String.get s (Uns.to_int i)), Uns.(i + 1L))
+        | true -> Some ((Stdlib.String.get s (Int64.to_int i)), Int64.(succ i))
       end in
       let getc s i len = begin
         match getc_opt s i len with
@@ -509,9 +525,9 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       let d_of_c c = begin
         match c with
         | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
-          of_uns Uns.(of_int Stdlib.(Char.(code c - code '0')))
+          of_uns Int64.(of_int Stdlib.(Char.(code c - code '0')))
         | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' ->
-          of_uns Uns.(of_int Stdlib.(10 + Char.(code c - code 'a')))
+          of_uns Int64.(of_int Stdlib.(10 + Char.(code c - code 'a')))
         | _ -> not_reached ()
       end in
       let suffix s i len = begin
@@ -522,10 +538,10 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
               match j' < len with
               | true -> fn s i j' len
               | false -> begin
-                  let suf = Stdlib.String.sub s Uns.(to_int i) Uns.(to_int (j' - i)) in
-                  let nbits = Uns.of_int (int_of_string suf) in
-                  match T.min_word_length = T.max_word_length && nbits = Uns.(T.min_word_length *
-                      64L) with
+                  let suf = Stdlib.String.sub s Int64.(to_int i) Int64.(to_int (sub j' i)) in
+                  let nbits = Int64.of_int (int_of_string suf) in
+                  match Stdlib.(Int64.(unsigned_compare T.min_word_length T.max_word_length) = 0 &&
+                                Int64.(unsigned_compare nbits (mul T.min_word_length 64L)) = 0) with
                   | false -> halt "Malformed string"
                   | true -> j'
                 end
@@ -546,7 +562,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
             | '_' -> hexadecimal s i' ndigits len
             | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
             | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' -> begin
-                let ndigits' = Uns.succ ndigits in
+                let ndigits' = Int64.succ ndigits in
                 let accum, mult = hexadecimal s i' ndigits' len in
                 let accum' = accum + mult * (d_of_c c) in
                 let mult' = mult * (of_uns 16L) in
@@ -597,7 +613,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
             match c with
             | '_' -> binary s i' ndigits len
             | '0' | '1' -> begin
-                let ndigits' = Uns.succ ndigits in
+                let ndigits' = Int64.succ ndigits in
                 let accum, mult = binary s i' ndigits' len in
                 let accum' = accum + mult * (d_of_c c) in
                 let mult' = mult * (of_uns 2L) in
@@ -665,7 +681,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
           end
         | _ -> halt "Malformed string"
       end in
-      prefix0 s 0L (Uns.of_int (Stdlib.String.length s))
+      prefix0 s 0L (Int64.of_int (Stdlib.String.length s))
 
     let to_string t =
       Format.asprintf "%a" pp t
@@ -682,7 +698,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
   let is_pow2 t =
     match t > zero with
     | false -> false
-    | true -> Uns.( = ) (bit_pop t) 1L
+    | true -> Stdlib.(Int64.(unsigned_compare (bit_pop t) 1L) = 0)
 
   let floor_pow2 t =
     match cmp t one with
@@ -690,7 +706,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     | Eq -> t
     | Gt -> begin
         let nb = bit_length t in let lz = bit_clz t in
-        bit_sl ~shift:Uns.(nb - 1L - lz) one
+        bit_sl ~shift:Int64.(pred (sub nb lz)) one
       end
 
   let ceil_pow2 t =
@@ -699,9 +715,10 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     | Eq -> t
     | Gt -> begin
         let pred_t = t - one in
-        match Uns.(T.min_word_length = T.max_word_length), bit_clz pred_t with
+        match Stdlib.(Int64.(unsigned_compare T.min_word_length T.max_word_length) = 0),
+          bit_clz pred_t with
         | true, 0L -> zero
-        | _, lz -> bit_sl ~shift:Uns.((bit_length pred_t) - lz) one
+        | _, lz -> bit_sl ~shift:Int64.(sub (bit_length pred_t) lz) one
       end
 
   let floor_lg_opt t =
@@ -710,7 +727,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     | Gt -> begin
         let nb = bit_length t in
         let lz = bit_clz t in
-        Some (of_uns Uns.(nb - 1L - lz))
+        Some (of_uns Int64.(pred (sub nb lz)))
       end
 
   let floor_lg t =
@@ -773,7 +790,7 @@ module MakeFCommon (T : IFCommon) : SFI with type t := T.t = struct
 
   let init = T.init
   let word_length = T.word_length
-  let bit_length = Uns.(word_length * 64L)
+  let bit_length = Int64.mul word_length 64L
 
   let max_value =
     match T.signed with
@@ -782,7 +799,7 @@ module MakeFCommon (T : IFCommon) : SFI with type t := T.t = struct
 
   let min_value =
     match T.signed with
-    | true -> bit_sl ~shift:Uns.((word_length * 64L) - 1L) one
+    | true -> bit_sl ~shift:Int64.(pred (mul word_length 64L)) one
     | false -> zero
 end
 

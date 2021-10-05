@@ -6,7 +6,7 @@ open Format
 let test () =
   printf "@[<h>";
   for n = 1 to 40 do
-    let n = Sint.of_int n in
+    let n = Sint.extend_of_int n in
     let x = (of_sint n) / 4. in
     printf "lngamma %.2f -> %.9f\n" x (lngamma x);
   done;

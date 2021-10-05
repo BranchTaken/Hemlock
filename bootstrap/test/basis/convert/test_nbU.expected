@@ -1,0 +1,24 @@
+extend_to_uns 0u8 -> 0
+extend_to_uns 1u8 -> 1
+extend_to_uns 127u8 -> 127
+extend_to_uns 128u8 -> 128
+extend_to_uns 255u8 -> 255
+
+trunc_of_uns/narrow_of_uns_opt 0 -> 0u8/Some 0u8
+trunc_of_uns/narrow_of_uns_opt 1 -> 1u8/Some 1u8
+trunc_of_uns/narrow_of_uns_opt 255 -> 255u8/Some 255u8
+trunc_of_uns/narrow_of_uns_opt 256 -> 0u8/None
+trunc_of_uns/narrow_of_uns_opt 511 -> 255u8/None
+
+extend_to_sint 0u8 -> 0i
+extend_to_sint 1u8 -> 1i
+extend_to_sint 127u8 -> 127i
+extend_to_sint 128u8 -> 128i
+extend_to_sint 255u8 -> 255i
+
+trunc_of_sint/narrow_of_sint_opt -1i -> 255u8/None
+trunc_of_sint/narrow_of_sint_opt 0i -> 0u8/Some 0u8
+trunc_of_sint/narrow_of_sint_opt 1i -> 1u8/Some 1u8
+trunc_of_sint/narrow_of_sint_opt 255i -> 255u8/Some 255u8
+trunc_of_sint/narrow_of_sint_opt 256i -> 0u8/None
+trunc_of_sint/narrow_of_sint_opt 511i -> 255u8/None

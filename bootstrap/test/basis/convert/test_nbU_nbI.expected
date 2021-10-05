@@ -1,0 +1,11 @@
+bits_to_i8/like_to_i8_opt 0u8 -> 0i8/Some 0i8
+bits_to_i8/like_to_i8_opt 1u8 -> 1i8/Some 1i8
+bits_to_i8/like_to_i8_opt 127u8 -> 127i8/Some 127i8
+bits_to_i8/like_to_i8_opt 128u8 -> -128i8/None
+bits_to_i8/like_to_i8_opt 255u8 -> -1i8/None
+
+bits_of_i8/like_of_i8_opt -128i8 -> 128u8/None
+bits_of_i8/like_of_i8_opt -1i8 -> 255u8/None
+bits_of_i8/like_of_i8_opt 0i8 -> 0u8/Some 0u8
+bits_of_i8/like_of_i8_opt 1i8 -> 1u8/Some 1u8
+bits_of_i8/like_of_i8_opt 127i8 -> 127u8/Some 127u8

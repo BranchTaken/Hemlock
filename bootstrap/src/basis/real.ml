@@ -9,7 +9,7 @@ module T = struct
     |> Hash.State.Gen.fini
 
   let cmp t0 t1 =
-    let rel = Sint.of_int (compare t0 t1) in
+    let rel = Sint.extend_of_int (compare t0 t1) in
     if Sint.(rel < 0L) then
       Cmp.Lt
     else if Sint.(rel = 0L) then
@@ -272,7 +272,7 @@ let int_pow ~p t =
         fn r' p' n'
       end
   end in
-  let r = fn 1. t (Uns.of_sint n) in
+  let r = fn 1. t (Uns.bits_of_sint n) in
   match neg with
   | false -> r
   | true -> 1. / r

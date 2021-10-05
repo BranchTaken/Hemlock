@@ -60,7 +60,7 @@ val int_of_sint: sint -> int
 val sint_of_int: int -> sint
 (** Convert an OCaml integer to a widened signed integer. *)
 
-include IntnbIntf.S with type t := uns
+include (module type of Uns)
 
 val not: bool -> bool
 (** [not t] returns the logical negation of [t]. *)

@@ -1,47 +1,30 @@
 (* Partial Rudiments. *)
-open RudimentsInt
+open RudimentsInt0
 open RudimentsFunctions
 type byte = Byte.t
 
 module T = struct
-  type t = uns
-  let bit_length = 21L
+  module U = struct
+    type t = uns
+    let bit_length = 21L
+  end
+  include U
+  include Intnb.MakeU(U)
+
+  let max_codepoint = narrow_of_unsigned 0x10ffffL
+  let replacement = 0xfffdL
+
+  let is_surrogate t =
+    t >= 0xd800L && t < 0xe000L
+
+  let narrow_of_unsigned u =
+    let t = narrow_of_unsigned u in
+    match t > max_codepoint || is_surrogate t with
+    | true -> replacement
+    | false -> t
 end
 include T
-include Intnb.MakeU(T)
-
-let max_codepoint = narrow_of_unsigned 0x10ffffL
-let replacement = 0xfffdL
-
-let is_surrogate t =
-  t >= 0xd800L && t < 0xe000L
-
-let narrow_of_unsigned u =
-  let t = narrow_of_unsigned u in
-  match t > max_codepoint || is_surrogate t with
-  | true -> replacement
-  | false -> t
-
-let kv x =
-  narrow_of_unsigned x
-
-let to_uns t =
-  t
-
-let of_uns x =
-  narrow_of_unsigned x
-
-let of_uns_opt x =
-  let t = of_uns x in
-  let x' = to_uns t in
-  match Uns.(x' = x) with
-  | false -> None
-  | true -> Some t
-
-let of_uns_hlt x =
-  match of_uns_opt x with
-  | None -> halt "Lossy conversion"
-  | Some t -> t
+include Convert.Make_nbU(T)
 
 let of_char c =
   Int64.of_int (Stdlib.Char.code c)
@@ -102,46 +85,46 @@ module Utf8 = struct
 
   let of_codepoint cp =
     assert (cp <= max_codepoint);
-    let u = to_uns cp in
+    let u = extend_to_uns cp in
     match length_of_codepoint cp with
-    | 1L -> One (Byte.of_uns u)
+    | 1L -> One (Byte.trunc_of_uns u)
     | 2L ->
       Two (
-        Byte.of_uns Uns.(bit_or 0b110_00000L (bit_usr ~shift:6L u)),
-        Byte.of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
+        Byte.trunc_of_uns Uns.(bit_or 0b110_00000L (bit_usr ~shift:6L u)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
       )
     | 3L ->
       Three (
-        Byte.of_uns Uns.(bit_or 0b1110_0000L (bit_usr ~shift:12L u)),
-        Byte.of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:6L u) 0x3fL)),
-        Byte.of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
+        Byte.trunc_of_uns Uns.(bit_or 0b1110_0000L (bit_usr ~shift:12L u)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:6L u) 0x3fL)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
       )
     | 4L ->
       Four (
-        Byte.of_uns Uns.(bit_or 0b11110_000L (bit_usr ~shift:18L u)),
-        Byte.of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:12L u) 0x3fL)),
-        Byte.of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:6L u) 0x3fL)),
-        Byte.of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
+        Byte.trunc_of_uns Uns.(bit_or 0b11110_000L (bit_usr ~shift:18L u)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:12L u) 0x3fL)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:6L u) 0x3fL)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
       )
     | _ -> not_reached ()
 
   let to_codepoint = function
-    | One b0 -> of_uns (Byte.to_uns b0)
+    | One b0 -> trunc_of_uns (Byte.extend_to_uns b0)
     | Two (b0, b1) ->
-      of_uns Uns.(bit_or
-          (bit_sl ~shift:6L (bit_and (Byte.to_uns b0) 0x1fL))
-          (bit_and (Byte.to_uns b1) 0x3fL))
+      trunc_of_uns Uns.(bit_or
+          (bit_sl ~shift:6L (bit_and (Byte.extend_to_uns b0) 0x1fL))
+          (bit_and (Byte.extend_to_uns b1) 0x3fL))
     | Three (b0, b1, b2) ->
-      of_uns Uns.(bit_or (bit_or
-          (bit_sl ~shift:12L (bit_and (Byte.to_uns b0) 0xfL))
-          (bit_sl ~shift:6L (bit_and (Byte.to_uns b1) 0x3fL)))
-        (bit_and (Byte.to_uns b2) 0x3fL))
+      trunc_of_uns Uns.(bit_or (bit_or
+          (bit_sl ~shift:12L (bit_and (Byte.extend_to_uns b0) 0xfL))
+          (bit_sl ~shift:6L (bit_and (Byte.extend_to_uns b1) 0x3fL)))
+        (bit_and (Byte.extend_to_uns b2) 0x3fL))
     | Four (b0, b1, b2, b3) ->
-      of_uns Uns.(bit_or (bit_or (bit_or
-          (bit_sl ~shift:18L (bit_and (Byte.to_uns b0) 0x7L))
-          (bit_sl ~shift:12L (bit_and (Byte.to_uns b1) 0x3fL)))
-        (bit_sl ~shift:6L (bit_and (Byte.to_uns b2) 0x3fL)))
-        (bit_and (Byte.to_uns b3) 0x3fL))
+      trunc_of_uns Uns.(bit_or (bit_or (bit_or
+          (bit_sl ~shift:18L (bit_and (Byte.extend_to_uns b0) 0x7L))
+          (bit_sl ~shift:12L (bit_and (Byte.extend_to_uns b1) 0x3fL)))
+        (bit_sl ~shift:6L (bit_and (Byte.extend_to_uns b2) 0x3fL)))
+        (bit_and (Byte.extend_to_uns b3) 0x3fL))
 
   let to_bytes = function
     | One b0 -> [b0]
@@ -157,17 +140,17 @@ module Utf8 = struct
 
   let to_string = function
     | One b0 -> Stdlib.String.init 1 (fun _ ->
-      Stdlib.Char.chr (int_of_sint (Byte.to_sint b0))
+      Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint b0))
     )
     | Two (b0, b1) -> Stdlib.String.init 2 (fun i ->
-      Stdlib.Char.chr (int_of_sint (Byte.to_sint (
+      Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint (
         match i with
         | 0 -> b0
         | 1 -> b1
         | _ -> not_reached ()
       ))))
     | Three (b0, b1, b2) -> Stdlib.String.init 3 (fun i ->
-      Stdlib.Char.chr (int_of_sint (Byte.to_sint (
+      Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint (
         match i with
         | 0 -> b0
         | 1 -> b1
@@ -175,7 +158,7 @@ module Utf8 = struct
         | _ -> not_reached ()
       ))))
     | Four (b0, b1, b2, b3) -> Stdlib.String.init 4 (fun i ->
-      Stdlib.Char.chr (int_of_sint (Byte.to_sint (
+      Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint (
         match i with
         | 0 -> b0
         | 1 -> b1
@@ -187,7 +170,7 @@ module Utf8 = struct
   let escape t =
     match t with
     | One b0 -> begin
-        match of_uns (Byte.to_uns b0) with
+        match trunc_of_uns (Byte.extend_to_uns b0) with
         | cp when (cp = nul) -> "\\u{0}"
         | cp when (cp = soh) -> "\\u{1}"
         | cp when (cp = stx) -> "\\u{2}"
@@ -285,7 +268,7 @@ module Seq = struct
     let rec to_codepoint_cont fragment t =
       match fragment.nrem with
       | 0L -> begin
-          let cp = of_uns fragment.u in
+          let cp = trunc_of_uns fragment.u in
           match Uns.((Utf8.length_of_codepoint cp) = fragment.n) with
           | true -> Valid (cp, t)
           | false -> Invalid t
@@ -296,7 +279,7 @@ module Seq = struct
           | Some (b, _) when Byte.((bit_and b (kv 0b11_000000L)) <> (kv 0b10_000000L)) -> Invalid t
           | Some (b, t') -> begin
               let u' = bit_or (bit_sl ~shift:6L fragment.u)
-                (bit_and 0x3fL (Byte.to_uns b)) in
+                (bit_and 0x3fL (Byte.extend_to_uns b)) in
               to_codepoint_cont {fragment with u=u'; nrem=pred fragment.nrem} t'
             end
         end
@@ -308,19 +291,19 @@ module Seq = struct
           match Byte.(bit_clz (bit_not b)) with
           | 0L -> begin
               (* 0xxxxxxx *)
-              Some (to_codepoint_cont {u=(Byte.to_uns b); n=1L; nrem=0L} t')
+              Some (to_codepoint_cont {u=(Byte.extend_to_uns b); n=1L; nrem=0L} t')
             end
           | 2L -> begin
               (* 110xxxxx *)
-              Some (to_codepoint_cont {u=(bit_and 0x1fL (Byte.to_uns b)); n=2L; nrem=1L} t')
+              Some (to_codepoint_cont {u=(bit_and 0x1fL (Byte.extend_to_uns b)); n=2L; nrem=1L} t')
             end
           | 3L -> begin
               (* 1110xxxx *)
-              Some (to_codepoint_cont {u=(bit_and 0x0fL (Byte.to_uns b)); n=3L; nrem=2L} t')
+              Some (to_codepoint_cont {u=(bit_and 0x0fL (Byte.extend_to_uns b)); n=3L; nrem=2L} t')
             end
           | 4L -> begin
               (* 11110xxx *)
-              Some (to_codepoint_cont {u=(bit_and 0x07L (Byte.to_uns b)); n=4L; nrem=3L} t')
+              Some (to_codepoint_cont {u=(bit_and 0x07L (Byte.extend_to_uns b)); n=4L; nrem=3L} t')
             end
           | _ -> Some (Invalid t')
         end
@@ -344,7 +327,7 @@ module Seq = struct
       {fragment with u=u'; n=n'}
 
     let validate fragment t =
-      let cp = of_uns fragment.u in
+      let cp = trunc_of_uns fragment.u in
       match Uns.((Utf8.length_of_codepoint cp) = fragment.n) with
       | true -> Valid (cp, t)
       | false -> Invalid t (* Overlong. *)
@@ -356,7 +339,7 @@ module Seq = struct
           match Byte.(bit_clz (bit_not b)), fragment.n with
           | 0L, 0L -> begin
               (* 0xxxxxxx *)
-              let u' = Byte.to_uns b in
+              let u' = Byte.extend_to_uns b in
               let fragment' = {fragment with u=u'; n=succ fragment.n} in
               validate fragment' t'
             end
@@ -364,22 +347,22 @@ module Seq = struct
           | 1L, 1L
           | 1L, 2L -> begin
               (* 10xxxxxx *)
-              let fragment' = merge (bit_and 0x3fL (Byte.to_uns b)) fragment in
+              let fragment' = merge (bit_and 0x3fL (Byte.extend_to_uns b)) fragment in
               to_codepoint_impl fragment' (T.next t')
             end
           | 2L, 1L -> begin
               (* 110xxxxx *)
-              let fragment' = merge (bit_and 0x1fL (Byte.to_uns b)) fragment in
+              let fragment' = merge (bit_and 0x1fL (Byte.extend_to_uns b)) fragment in
               validate fragment' t'
             end
           | 3L, 2L -> begin
               (* 1110xxxx *)
-              let fragment' = merge (bit_and 0x0fL (Byte.to_uns b)) fragment in
+              let fragment' = merge (bit_and 0x0fL (Byte.extend_to_uns b)) fragment in
               validate fragment' t'
             end
           | 4L, 3L -> begin
               (* 11110xxx *)
-              let fragment' = merge (bit_and 0x07L (Byte.to_uns b)) fragment in
+              let fragment' = merge (bit_and 0x07L (Byte.extend_to_uns b)) fragment in
               validate fragment' t'
             end
           | lz, ncont when (lz >= ncont + 2L) -> Invalid t'

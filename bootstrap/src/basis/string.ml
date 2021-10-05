@@ -17,7 +17,7 @@ module T = struct
 
   let cmp t0 t1 =
     let open Cmp in
-    let rel = Sint.of_int (compare t0 t1) in
+    let rel = Sint.extend_of_int (compare t0 t1) in
     if Sint.(rel < 0L) then
       Lt
     else if Sint.(rel = 0L) then
@@ -82,7 +82,7 @@ let is_empty t =
   Uns.((blength t) = 0L)
 
 let get bindex t =
-  Byte.of_sint_hlt (sint_of_int Stdlib.(Char.code (String.get t (Int64.to_int bindex))))
+  Byte.narrow_of_sint_hlt (sint_of_int Stdlib.(Char.code (String.get t (Int64.to_int bindex))))
 
 module Cursor = struct
   module T = struct
@@ -194,17 +194,17 @@ module Cursor = struct
 
   let prev t =
     let bindex = Uns.pred t.bindex in
-    let b = Byte.to_uns (get bindex t.string) in
-    if Uns.(b <= 0b0111_1111L) then (Codepoint.of_uns b), {t with bindex}
+    let b = Byte.extend_to_uns (get bindex t.string) in
+    if Uns.(b <= 0b0111_1111L) then (Codepoint.trunc_of_uns b), {t with bindex}
     else begin
       let rec fn string bindex u nbits = begin
-        let b = Byte.to_uns (get bindex string) in
+        let b = Byte.extend_to_uns (get bindex string) in
         match Uns.((bit_and b 0b11_000000L) <> 0b10_000000L) with
         | true -> begin
             let mask = bit_usr ~shift:(nbits/6L) 0x3fL in
             let bits = bit_and b mask in
             let u' = bit_or u (bit_sl ~shift:nbits bits) in
-            (Codepoint.of_uns u'), {string; bindex}
+            (Codepoint.trunc_of_uns u'), {string; bindex}
           end
         | false -> begin
             let bindex' = Uns.pred bindex in
@@ -221,22 +221,22 @@ module Cursor = struct
     end
 
   let next t =
-    let b = Byte.to_uns (get t.bindex t.string) in
+    let b = Byte.extend_to_uns (get t.bindex t.string) in
     let bindex' = Uns.succ t.bindex in
-    if Uns.(b <= 0b0111_1111L) then (Codepoint.of_uns b), {t with bindex=bindex'}
+    if Uns.(b <= 0b0111_1111L) then (Codepoint.trunc_of_uns b), {t with bindex=bindex'}
     else begin
       let rec fn u string bindex rem_bytes = begin
         match rem_bytes with
-        | 0L -> (Codepoint.of_uns u), {string; bindex}
+        | 0L -> (Codepoint.trunc_of_uns u), {string; bindex}
         | _ -> begin
-            let b = Byte.to_uns (get bindex string) in
+            let b = Byte.extend_to_uns (get bindex string) in
             let bits = bit_and b 0b00_111111L in
             let u' = bit_or (bit_sl ~shift:6L u) bits in
             let bindex' = Uns.succ bindex in
             fn u' string bindex' (Uns.pred rem_bytes)
           end
       end in
-      let nbytes = Byte.(bit_clz (bit_not (of_uns b))) in
+      let nbytes = Byte.(bit_clz (bit_not (trunc_of_uns b))) in
       let b0_nbits = 7L - nbytes in
       let b0_mask = (bit_sl ~shift:b0_nbits 1L) - 1L in
       let u = bit_and b b0_mask in
@@ -307,7 +307,7 @@ module Cursori = struct
     (* coffset may be negative, but it's okay to convert blindly to uns because 2s complement
      * addition does the right thing. *)
     {cursor=(Cursor.seek coffset t.cursor);
-      cindex=Uns.(t.cindex + (of_sint coffset))}
+      cindex=Uns.(t.cindex + (bits_of_sint coffset))}
 
   let pred t =
     {cursor=(Cursor.pred t.cursor); cindex=(Uns.pred t.cindex)}
@@ -334,7 +334,7 @@ module Cursori = struct
     t.cindex
 
   let at ~cindex s =
-    {cursor=(Cursor.seek (Uns.to_sint cindex) (Cursor.hd s)); cindex}
+    {cursor=(Cursor.seek (Uns.bits_to_sint cindex) (Cursor.hd s)); cindex}
 end
 type cursori = Cursori.t
 
@@ -359,7 +359,7 @@ module Seq = struct
         | _ -> begin
             let tmut = ref t in
             let rem_bytes = ref [] in
-            let s = Stdlib.String.init (Uns.to_int len) (fun _ ->
+            let s = Stdlib.String.init (Uns.trunc_to_int len) (fun _ ->
               match !rem_bytes with
               | [] -> begin
                   let cp, t' = T.next !tmut in
@@ -371,11 +371,11 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
+                  Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint b))
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
+                  Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint b))
                 end
             ) in
             assert (Uns.((List.length !rem_bytes) = 0L));
@@ -405,7 +405,7 @@ module Seq = struct
             end in
             let cps = ref (fn t []) in
             let rem_bytes = ref [] in
-            let s = Stdlib.String.init (Uns.to_int len) (fun _ ->
+            let s = Stdlib.String.init (Uns.trunc_to_int len) (fun _ ->
               match !rem_bytes with
               | [] -> begin
                   let cp, cps' = match !cps with
@@ -418,11 +418,11 @@ module Seq = struct
                     | [] -> not_reached ()
                   in
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
+                  Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint b))
                 end
               | b :: tl -> begin
                   rem_bytes := tl;
-                  Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
+                  Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint b))
                 end
             ) in
             assert (Uns.((List.length !rem_bytes) = 0L));
@@ -444,7 +444,7 @@ module Seq = struct
             let slice_base = ref 0L in
             let slice_ind = ref 0L in
             let slice_len = ref 0L in
-            let s = Stdlib.String.init (Uns.to_int len) (fun _ ->
+            let s = Stdlib.String.init (Uns.trunc_to_int len) (fun _ ->
               let rec fn () = begin
                 match Uns.(!slice_ind = !slice_len) with
                 | true -> begin
@@ -463,7 +463,7 @@ module Seq = struct
                 | false -> begin
                     let b = get (!slice_base + !slice_ind) !slice_str in
                     slice_ind := Uns.succ !slice_ind;
-                    Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
+                    Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint b))
                   end
               end in
               fn ()
@@ -497,7 +497,7 @@ module Seq = struct
             let slice_base = ref 0L in
             let slice_ind = ref 0L in
             let slice_len = ref 0L in
-            let s = Stdlib.String.init (Uns.to_int len) (fun _ ->
+            let s = Stdlib.String.init (Uns.trunc_to_int len) (fun _ ->
               let rec fn () = begin
                 match Uns.(!slice_ind = !slice_len) with
                 | true -> begin
@@ -517,7 +517,7 @@ module Seq = struct
                 | false -> begin
                     let b = get (!slice_base + !slice_ind) !slice_str in
                     slice_ind := Uns.succ !slice_ind;
-                    Stdlib.Char.chr (int_of_sint (Byte.to_sint b))
+                    Stdlib.Char.chr (int_of_sint (Byte.extend_to_sint b))
                   end
               end in
               fn ()
@@ -654,7 +654,7 @@ module Slice = struct
     | true -> halt "Out of bounds"
     | false -> begin
         let bind = ((Cursor.bindex (base t)) + bindex) in
-        Byte.of_uns_hlt (Uns.of_int Stdlib.(Char.code (String.unsafe_get (string t)
+        Byte.narrow_of_uns_hlt (Uns.extend_of_int Stdlib.(Char.code (String.unsafe_get (string t)
           (Int64.to_int bind))))
       end
 
@@ -1234,7 +1234,7 @@ module Slice = struct
                       past t.in_, slice', []
                     end
                   | cursor :: at' -> begin
-                      let in_cursor' = Cursor.seek (Uns.to_sint (string_clength t.pattern))
+                      let in_cursor' = Cursor.seek (Uns.bits_to_sint (string_clength t.pattern))
                         cursor in
                       let slice' = t.with_ in
                       in_cursor', slice', at'
@@ -1312,7 +1312,7 @@ module Slice = struct
     let base = base t in
     let past = match Uns.((clength t) < n) with
       | true -> past t
-      | false -> Cursor.(seek (Uns.to_sint n) base)
+      | false -> Cursor.(seek (Uns.bits_to_sint n) base)
     in
     of_cursors ~base ~past
 
@@ -1320,7 +1320,7 @@ module Slice = struct
     let past = past t in
     let base = match Uns.((clength t) < n) with
       | true -> base t
-      | false -> Cursor.(seek Sint.(neg (Uns.to_sint n)) past)
+      | false -> Cursor.(seek Sint.(neg (Uns.bits_to_sint n)) past)
     in
     of_cursors ~base ~past
 

@@ -4,17 +4,17 @@ open Codepoint
 open Format
 
 let pp_x ppf cp =
-  Format.fprintf ppf "%a" Uns.pp_x (to_uns cp)
+  Format.fprintf ppf "%a" Uns.pp_x (extend_to_uns cp)
 
 let test () =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
         let i = x in
-        let t = of_uns (Uns.of_sint i) in
-        let u = to_uns t in
-        let t' = of_uns u in
-        printf "of_uns %a -> to_uns %a -> of_uns %a -> %a\n"
+        let t = trunc_of_uns (Uns.bits_of_sint i) in
+        let u = extend_to_uns t in
+        let t' = trunc_of_uns u in
+        printf "trunc_of_uns %a -> extend_to_uns %a -> trunc_of_uns %a -> %a\n"
           Uns.pp_x x pp_x t Uns.pp_x u pp_x t';
         fn xs'
       end

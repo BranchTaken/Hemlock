@@ -10,11 +10,11 @@ module Error = struct
   external to_string_inner: uns -> Bytes.t -> t -> unit = "hemlock_file_error_to_string_inner"
 
   let of_value value =
-    Uns.of_sint Sint.(-value)
+    Uns.bits_of_sint Sint.(neg value)
 
   let to_string t =
     let n = to_string_get_length t in
-    let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0L) in
+    let bytes = Array.init n ~f:(fun _ -> Byte.kv 0L) in
     let () = to_string_inner n bytes t in
     Bytes.to_string_hlt bytes
 end
@@ -45,8 +45,8 @@ let of_path ?(flag=Flag.R_O) ?(mode=0o660L) path =
   let value = of_path_inner flag mode (Bytes.Cursor.index (Bytes.Slice.base path))
     (Bytes.Cursor.index (Bytes.Slice.past path)) (Bytes.Slice.container path) in
   match Sint.(value < kv 0L) with
-  | false -> Ok (Uns.of_sint value)
-  | true -> Error (Uns.of_sint Sint.(-value))
+  | false -> Ok (Uns.bits_of_sint value)
+  | true -> Error (Uns.bits_of_sint Sint.(neg value))
 
 let of_path_hlt ?flag ?mode path =
   match of_path ?flag ?mode path with
@@ -91,7 +91,7 @@ let read_base inner buffer t =
   let value = inner (Bytes.Cursor.index (Bytes.Slice.base buffer)) (Bytes.Cursor.index
       (Bytes.Slice.past buffer)) (Bytes.Slice.container buffer) t in
   match Sint.(value < kv 0L) with
-  | true -> Error (Uns.of_sint Sint.(-value))
+  | true -> Error (Uns.bits_of_sint Sint.(neg value))
   | false ->
     Ok (Bytes.Slice.of_cursors ~base:(Bytes.Slice.base buffer) ~past:(Bytes.Cursor.seek value
         (Bytes.Slice.base buffer))
@@ -101,7 +101,7 @@ let read_base inner buffer t =
 external read_inner: uns -> uns -> Bytes.t -> t -> sint = "hemlock_file_read_inner"
 
 let read ?(n=read_n) t =
-  let bytes = Array.init n ~f:(fun _ -> Byte.of_uns 0L) in
+  let bytes = Array.init n ~f:(fun _ -> Byte.kv 0L) in
   let buffer = Bytes.Slice.of_container bytes in
   read_base read_inner buffer t
 
@@ -156,7 +156,7 @@ let write_hlt buffer t =
 let seek_base inner rel_off t =
   let value = inner rel_off t in
   match Sint.(value < kv 0L) with
-  | false -> Ok (Uns.of_sint value)
+  | false -> Ok (Uns.bits_of_sint value)
   | true -> Error (Error.of_value value)
 
 let seek_hlt_base inner rel_off t =

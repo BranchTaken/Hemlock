@@ -1,0 +1,11 @@
+extend_to_u512 0u8 -> 0u512
+extend_to_u512 1u8 -> 1u512
+extend_to_u512 127u8 -> 127u512
+extend_to_u512 128u8 -> 128u512
+extend_to_u512 255u8 -> 255u512
+
+trunc_of_u512/narrow_of_u512_opt 0u512 -> 0u8/Some 0u8
+trunc_of_u512/narrow_of_u512_opt 1u512 -> 1u8/Some 1u8
+trunc_of_u512/narrow_of_u512_opt 255u512 -> 255u8/Some 255u8
+trunc_of_u512/narrow_of_u512_opt 256u512 -> 0u8/None
+trunc_of_u512/narrow_of_u512_opt 511u512 -> 255u8/None

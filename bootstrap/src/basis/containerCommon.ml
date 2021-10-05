@@ -1,4 +1,3 @@
-open Rudiments0
 open ContainerCommonIntf
 
 (* Polymorphic. *)
@@ -12,7 +11,7 @@ module MakePolyLength (T : IPoly) : SPolyLengthGen
     let rec fn index cursor = begin
       match T.Cursor.(cursor = (tl t)) with
       | true -> index
-      | false -> fn (Uns.succ index) (T.Cursor.succ cursor)
+      | false -> fn (Int64.succ index) (T.Cursor.succ cursor)
     end in
     fn 0L (T.Cursor.hd t)
 
@@ -54,7 +53,7 @@ module MakePolyFold (T : IPoly) : SPolyFoldGen
   let foldi_until ~init ~f t =
     let _, accum = fold_until t ~init:(0L, init)
       ~f:(fun (i, accum) elm ->
-        let i' = (Uns.succ i) in
+        let i' = (Int64.succ i) in
         let accum', until = f i accum elm in
         (i', accum'), until
       ) in
@@ -79,7 +78,7 @@ module MakePolyFold (T : IPoly) : SPolyFoldGen
     fold t ~init:0L ~f:(fun accum elm ->
       match f elm with
       | false -> accum
-      | true -> (Uns.succ accum)
+      | true -> (Int64.succ accum)
     )
 
   let for_any ~f t =

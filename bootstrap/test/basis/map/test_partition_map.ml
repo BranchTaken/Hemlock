@@ -11,7 +11,7 @@ let test () =
     let a_map, b_map = partition_map map ~f:(fun (k, v) ->
       match k % 2L = 0L with
       | true -> First (Uns.to_string v)
-      | false -> Second (Uns.to_sint v)
+      | false -> Second (Uns.bits_to_sint v)
     ) in
     let a_kvs = to_alist a_map in
     let b_kvs = to_alist b_map in

@@ -1,33 +1,18 @@
 (** Unicode code point. *)
 
-open RudimentsInt
+open RudimentsInt0
 type byte = U8.t
 
 type t
-
 include IdentifiableIntf.S with type t := t
 include CmpableIntf.SMono with type t := t
-
-val kv: uns -> t
-(** Create constant value. This is a stopgap solution for the lack of codepoint literals. *)
-
-val to_uns: t -> uns
-(** Convert to full-width unsigned integer. *)
-
-val of_uns: uns -> t
-(** Initialize from full-width unsigned integer, with possible loss. *)
-
-val of_uns_opt: uns -> t option
-(** Initialize from full-width unsigned integer, or return [None] if conversion would be lossy. *)
-
-val of_uns_hlt: uns -> t
-(** Initialize from full-width unsigned integer, or halt if conversion would be lossy. *)
-
-val to_bytes: t -> byte list
-(** Convert to a UTF-8-encoded byte list. *)
+include ConvertIntf.Nb with type t := t
 
 val of_char: char -> t
 (** Initialize from character literal. This is a stopgap for the lack of codepoint literals. *)
+
+val to_bytes: t -> byte list
+(** Convert to a UTF-8-encoded byte list. *)
 
 val to_string: t -> string
 (** [to_string t] returns a UTF-8-encoded string representation of [t]. *)

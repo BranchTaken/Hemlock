@@ -186,6 +186,10 @@ module type SU = sig
 
   include S with type t := t
   include SNarrow with type t := t
+
+  val widen: t -> uns
+  (** Widen to full-width unsigned integer. This function is only needed by integer types based on
+      the default integer type, and is a bootstrapping artifact. *)
 end
 
 (** Functor output signature for functions that exist only for signed integers. *)
@@ -215,4 +219,8 @@ module type SI = sig
   include S with type t := t
   include SNarrow with type t := t
   include SSigned with type t := t
+
+  val widen: t -> sint
+  (** Widen to full-width signed integer. This function is only needed by integer types based on
+      the default integer type, and is a bootstrapping artifact. *)
 end

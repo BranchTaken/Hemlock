@@ -1,5 +1,4 @@
 open Rudiments0
-open RudimentsInt
 
 module List = List0
 
@@ -8,10 +7,10 @@ module T = struct
   type 'a elm = 'a
 
   let get i t =
-    Stdlib.Array.get t Uns.(to_int i)
+    Stdlib.Array.get t Uns.(trunc_to_int i)
 
   let length t =
-    Uns.of_int (Stdlib.Array.length t)
+    Uns.extend_of_int (Stdlib.Array.length t)
 
   module Cursor = struct
     module T = struct
@@ -36,14 +35,14 @@ module T = struct
       let seek i t =
         match Sint.(i < 0L) with
         | true -> begin
-            match (Uns.of_sint Sint.(neg i)) > t.index with
+            match (Uns.bits_of_sint Sint.(neg i)) > t.index with
             | true -> halt "Cannot seek before beginning of array"
-            | false -> {t with index=(t.index - Uns.of_sint (Sint.neg i))}
+            | false -> {t with index=(t.index - Uns.bits_of_sint (Sint.neg i))}
           end
         | false -> begin
-            match (t.index + (Uns.of_sint i)) > (length t.array) with
+            match (t.index + (Uns.bits_of_sint i)) > (length t.array) with
             | true -> halt "Cannot seek past end of array"
-            | false -> {t with index=(t.index + (Uns.of_sint i))}
+            | false -> {t with index=(t.index + (Uns.bits_of_sint i))}
           end
 
       let pred t =
@@ -138,13 +137,13 @@ module Seq = struct
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a (Uns.to_int i) elm in
+                let () = Stdlib.Array.set a (Uns.trunc_to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) elm0 in
           fn t' a 1L
         end
   end
@@ -158,7 +157,7 @@ module Seq = struct
       | l -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
-            let () = Stdlib.Array.set a (Uns.to_int i) elm in
+            let () = Stdlib.Array.set a (Uns.trunc_to_int i) elm in
             match i with
             | 0L -> a
             | _ -> begin
@@ -167,7 +166,7 @@ module Seq = struct
               end
           end in
           let elm, t' = T.next t in
-          let a = Stdlib.Array.make (Uns.to_int l) elm in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) elm in
           fn t' a (Uns.pred l)
         end
   end
@@ -184,13 +183,13 @@ module Seq = struct
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a (Uns.to_int i) elm in
+                let () = Stdlib.Array.set a (Uns.trunc_to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) elm0 in
           fn t' a 1L
         end
   end
@@ -204,7 +203,7 @@ module Seq = struct
       | l -> begin
           let rec fn t a i = begin
             let elm, t' = T.next t in
-            let () = Stdlib.Array.set a (Uns.to_int i) elm in
+            let () = Stdlib.Array.set a (Uns.trunc_to_int i) elm in
             match i with
             | 0L -> a
             | _ -> begin
@@ -213,7 +212,7 @@ module Seq = struct
               end
           end in
           let elm, t' = T.next t in
-          let a = Stdlib.Array.make (Uns.to_int l) elm in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) elm in
           match l with
           | 1L -> a
           | _ -> fn t' a Uns.(l - 2L)
@@ -232,13 +231,13 @@ module Seq = struct
             | true -> a
             | false -> begin
                 let elm, t' = T.next t in
-                let () = Stdlib.Array.set a (Uns.to_int i) elm in
+                let () = Stdlib.Array.set a (Uns.trunc_to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let elm0, t' = T.next t in
-          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) elm0 in
           fn t' a 1L
         end
   end
@@ -256,13 +255,13 @@ module Seq = struct
             | true -> a
             | false -> begin
                 let kv, t' = T.next t in
-                let () = Stdlib.Array.set a (Uns.to_int i) kv in
+                let () = Stdlib.Array.set a (Uns.trunc_to_int i) kv in
                 let i' = Uns.succ i in
                 fn t' a i'
               end
           end in
           let kv0, t' = T.next t in
-          let a = Stdlib.Array.make (Uns.to_int l) kv0 in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) kv0 in
           fn t' a 1L
         end
   end
@@ -285,13 +284,13 @@ module Seq = struct
             | true -> accum, a
             | false -> begin
                 let elm, t', accum' = T.next t accum in
-                let () = Stdlib.Array.set a (Uns.to_int i) elm in
+                let () = Stdlib.Array.set a (Uns.trunc_to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' accum' a i'
               end
           end in
           let elm0, t', accum = T.next t init in
-          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) elm0 in
           fn t' accum a 1L
         end
   end
@@ -314,13 +313,13 @@ module Seq = struct
             | true -> accum, a
             | false -> begin
                 let elm, t', accum' = T.next t accum in
-                let () = Stdlib.Array.set a (Uns.to_int i) elm in
+                let () = Stdlib.Array.set a (Uns.trunc_to_int i) elm in
                 let i' = Uns.succ i in
                 fn t' accum' a i'
               end
           end in
           let elm0, t', accum = T.next t init in
-          let a = Stdlib.Array.make (Uns.to_int l) elm0 in
+          let a = Stdlib.Array.make (Uns.trunc_to_int l) elm0 in
           fn t' accum a 1L
         end
   end
@@ -453,7 +452,7 @@ let is_empty t =
   (length t) = 0L
 
 let set_inplace i elm t =
-  Stdlib.Array.set t (Uns.to_int i) elm
+  Stdlib.Array.set t (Uns.trunc_to_int i) elm
 
 let copy t =
   init (length t) ~f:(fun i -> get i t)

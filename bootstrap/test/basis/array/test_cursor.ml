@@ -25,19 +25,19 @@ let rec fn arr hd cursor tl =
 
   let length = length arr in
   assert (Cursor.(=)
-      (Cursor.seek (Uns.to_sint index) hd)
+      (Cursor.seek (Uns.bits_to_sint index) hd)
       cursor);
   assert (Cursor.(=)
       hd
-      (Cursor.seek (Sint.neg (Uns.to_sint index)) cursor)
+      (Cursor.seek (Sint.neg (Uns.bits_to_sint index)) cursor)
   );
   assert (Cursor.(=)
-      (Cursor.seek (Uns.to_sint (length - index)) cursor)
+      (Cursor.seek (Uns.bits_to_sint (length - index)) cursor)
       tl
   );
   assert (Cursor.(=)
       cursor
-      (Cursor.seek (Sint.neg (Uns.to_sint (length - index))) tl)
+      (Cursor.seek (Sint.neg (Uns.bits_to_sint (length - index))) tl)
   );
 
   match cursor_tl with

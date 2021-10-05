@@ -14,7 +14,8 @@ let test () =
       if len > 0L then len
       else 1L
     in
-    init len ~f:(fun i -> {key=Uns.of_int (Stdlib.Random.int (Int64.to_int key_limit)); sn=i})
+    init len ~f:(fun i ->
+      {key=Uns.extend_of_int (Stdlib.Random.int (Int64.to_int key_limit)); sn=i})
   end in
   let cmp elm0 elm1 =
     Uns.cmp elm0.key elm1.key

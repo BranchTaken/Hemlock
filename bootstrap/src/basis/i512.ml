@@ -1,4 +1,4 @@
-open RudimentsInt
+open RudimentsInt0
 open RudimentsFunctions
 
 module T = struct
@@ -22,6 +22,3 @@ module T = struct
 end
 include T
 include Intw.MakeFI(T)
-
-let to_tup = function
-  | {w0; w1; w2; w3; w4; w5; w6; w7} -> (w0, w1, w2, w3, w4, w5, w6, w7)

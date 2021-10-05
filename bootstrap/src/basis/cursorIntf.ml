@@ -1,6 +1,6 @@
 (** Cursor interfaces. *)
 
-open Rudiments0
+open RudimentsInt0
 
 (** Cursor iterator functor output signature for monomorphic types, e.g. [string]. *)
 module type SMonoIter = sig
