@@ -4,7 +4,7 @@ open Codepoint
 open Format
 
 let pp_x ppf cp =
-  Format.fprintf ppf "%a" Uns.pp_x (to_uns cp)
+  Format.fprintf ppf "%a" Uns.pp_x (extend_to_uns cp)
 
 let test () =
   let open Utf8 in

@@ -234,7 +234,7 @@ module T = struct
       let seek i t =
         match Sint.cmp i (Sint.kv 0L) with
         | Lt -> begin
-            let u = (Uns.of_sint Sint.(neg i)) in
+            let u = (Uns.bits_of_sint Sint.(neg i)) in
             match Uns.cmp t.index u with
             | Lt -> halt "Cannot seek before beginning of ordered map"
             | Eq -> begin
@@ -252,7 +252,7 @@ module T = struct
           end
         | Eq -> t
         | Gt -> begin
-            let u = Uns.of_sint i in
+            let u = Uns.bits_of_sint i in
             let index' = t.index + u in
             match Uns.cmp index' (length t.ordmap) with
             | Lt -> begin

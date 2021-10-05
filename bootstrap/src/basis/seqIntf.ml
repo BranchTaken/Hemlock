@@ -1,6 +1,6 @@
 (** Sequence functor interfaces and signatures. *)
 
-open RudimentsInt
+open RudimentsInt0
 
 (** Definite sequence functor input interface for monomorphic containers, e.g. {!type:string}. *)
 module type IMonoDef = sig

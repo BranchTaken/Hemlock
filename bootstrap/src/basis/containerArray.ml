@@ -1,4 +1,4 @@
-open Rudiments0
+open RudimentsInt0
 open ContainerArrayIntf
 
 (* Polymorphic (poly[1]). *)
@@ -104,7 +104,7 @@ module MakePoly3Array (T : IPoly3Array) : SPoly3ArrayGen
         cursor: ('k, 'v, 'cmp) T.Cursor.t;
         length: uns;
       }
-      type 'k key= 'k T.key
+      type 'k key = 'k T.key
       type 'v value = 'v T.value
 
       let init container =

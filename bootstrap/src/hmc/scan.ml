@@ -111,25 +111,26 @@ module Source = struct
 
       let pos t =
         let text_pos = Text.Cursor.pos t.text_cursor in
-        let line = Uns.of_sint (Sint.((Uns.to_sint (Text.Pos.line text_pos)) + t.source.bias)) in
+        let line = Uns.bits_of_sint
+            (Sint.((Uns.bits_to_sint (Text.Pos.line text_pos)) + t.source.bias)) in
         Text.Pos.init ~line ~col:(Text.Pos.col text_pos)
 
       let seek_rev offset t =
         match offset > index t with
         | true -> halt "Out of bounds"
         | false ->
-          {t with text_cursor=Text.Cursor.seek (Sint.neg (Uns.to_sint offset)) t.text_cursor}
+          {t with text_cursor=Text.Cursor.seek (Sint.neg (Uns.bits_to_sint offset)) t.text_cursor}
 
       let seek_fwd offset t =
         match (index t) + offset > (Text.Cursor.index t.source.past) with
         | true -> halt "Out of bounds"
         | false ->
-          {t with text_cursor=Text.Cursor.seek (Uns.to_sint offset) t.text_cursor}
+          {t with text_cursor=Text.Cursor.seek (Uns.bits_to_sint offset) t.text_cursor}
 
       let seek offset t =
         match Sint.(offset < 0L) with
-        | true -> seek_rev (Uns.of_sint (Sint.neg offset)) t
-        | false -> seek_fwd (Uns.of_sint offset) t
+        | true -> seek_rev (Uns.bits_of_sint (Sint.neg offset)) t
+        | false -> seek_fwd (Uns.bits_of_sint offset) t
     end
     include T
     include Cmpable.Make(T)
@@ -815,7 +816,7 @@ let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past t =
   let nat_to_cp_opt nat = begin
     match Nat.to_uns_opt nat with
     | None -> None
-    | Some u -> Codepoint.of_uns_opt u
+    | Some u -> Codepoint.narrow_of_uns_opt u
   end in
   match nat_to_cp_opt nat with
   | None -> accum_mal (invalid_unicode base past t) accum
@@ -1372,7 +1373,7 @@ end = struct
           | Hex -> Sint.kv 4L
         in
         let sig_bits = (Nat.bit_length cp_nat) - (Nat.bit_clz cp_nat) in
-        let nonfrac_shift = Sint.(bits_per_digit - (pred (Uns.to_sint sig_bits))) in
+        let nonfrac_shift = Sint.(bits_per_digit - (pred (Uns.bits_to_sint sig_bits))) in
         let exponent = Zint.((of_sint point_shift) - (of_sint nonfrac_shift)) in
         let digit = Realer.create ~sign:Pos ~exponent ~mantissa:cp_nat in
         let frac' = Realer.(frac + digit) in
@@ -2205,7 +2206,7 @@ end = struct
           | None -> t.path
           | Some _ -> path
         in
-        let bias = Sint.(ni - (Uns.to_sint (Text.(Pos.line (Cursor.pos cursor))))) in
+        let bias = Sint.(ni - (Uns.bits_to_sint (Text.(Pos.line (Cursor.pos cursor))))) in
         {t with path; bias; cursor}, None
       end
     | None -> accept_error cursor t

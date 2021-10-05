@@ -12,7 +12,7 @@ let test () =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Uns.to_sint i) (hd ordmap)) = cursor);
+          assert Cursor.((seek (Uns.bits_to_sint i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
             cursor_pp cursor
             (pp_kv String.pp) (Cursor.rget cursor);
@@ -28,7 +28,7 @@ let test () =
       | true -> printf "@\n"
       | false -> begin
           let i = Cursor.index cursor in
-          assert Cursor.((seek (Uns.to_sint i) (hd ordmap)) = cursor);
+          assert Cursor.((seek (Uns.bits_to_sint i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
             cursor_pp cursor
             (pp_kv String.pp) (Cursor.lget cursor);

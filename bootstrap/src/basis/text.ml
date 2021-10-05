@@ -411,8 +411,8 @@ module Cursor = struct
       fn offset t
 
     let seek offset t =
-      if Sint.(offset < 0L) then seek_rev (Uns.of_sint (Sint.neg offset)) t
-      else seek_fwd (Uns.of_sint offset) t
+      if Sint.(offset < 0L) then seek_rev (Uns.bits_of_sint (Sint.neg offset)) t
+      else seek_fwd (Uns.bits_of_sint offset) t
 
     let pos t =
       let col0_delta t = begin
@@ -441,7 +441,7 @@ module Cursor = struct
         col_delta (tabwidth (container t)) (seek_col0 t) t 0L
       end in
       let col = match Sint.is_negative (Spos.scol t.spos) with
-        | false -> Uns.of_sint (Spos.scol t.spos)
+        | false -> Uns.bits_of_sint (Spos.scol t.spos)
         | true -> col0_delta t
       in
       {Pos.line=Spos.line t.spos; col}

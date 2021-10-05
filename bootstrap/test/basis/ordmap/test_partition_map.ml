@@ -11,7 +11,7 @@ let test () =
     let a_ordmap, b_ordmap = partition_map ordmap ~f:(fun (k, v) ->
       match k % 2L = 0L with
       | true -> First (Uns.to_string v)
-      | false -> Second (Uns.to_sint v)
+      | false -> Second (Uns.bits_to_sint v)
     ) in
     let a_arr = to_array a_ordmap in
     let b_arr = to_array b_ordmap in

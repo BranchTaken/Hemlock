@@ -47,16 +47,16 @@ module Cursor = struct
       {array; index=(Array.length array)}
 
     let seek i t =
-      match Sint.(i < (kv 0L)) with
+      match Sint.(i < 0L) with
       | true -> begin
-          match Sint.(neg i) > t.index with
+          match (Uns.bits_of_sint Sint.(neg i)) > t.index with
           | true -> halt "Cannot seek before beginning of array"
-          | false -> {t with index=(t.index - Uns.(of_sint (Sint.neg i)))}
+          | false -> {t with index=(t.index - Uns.(bits_of_sint (Sint.neg i)))}
         end
       | false -> begin
-          match (t.index + (Uns.of_sint i)) > (Array.length t.array) with
+          match (t.index + (Uns.bits_of_sint i)) > (Array.length t.array) with
           | true -> halt "Cannot seek past end of array"
-          | false -> {t with index=(t.index + (Uns.of_sint i))}
+          | false -> {t with index=(t.index + (Uns.bits_of_sint i))}
         end
 
     let pred t =
@@ -215,7 +215,7 @@ module Slice = struct
   let hash_fold t state =
     Hash.State.Gen.init state
     |> Hash.State.Gen.fold_u8 (length t) ~f:(fun i ->
-      (Byte.to_uns (Cursor.(rget (seek (Uns.to_sint i) (base t))))))
+      (Byte.extend_to_uns (Cursor.(rget (seek (Uns.bits_to_sint i) (base t))))))
     |> Hash.State.Gen.fini
     |> Uns.hash_fold (length t)
 

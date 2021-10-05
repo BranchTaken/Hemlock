@@ -4,7 +4,7 @@ open Codepoint
 open Format
 
 let pp_x ppf cp =
-  Format.fprintf ppf "%a" Uns.pp_x (to_uns cp)
+  Format.fprintf ppf "%a" Uns.pp_x (extend_to_uns cp)
 
 let utf8_pp ppf t =
   Format.fprintf ppf "%s" (Utf8.escape t)
@@ -14,7 +14,7 @@ let test () =
     match i with
     | 0x80L -> ()
     | _ -> begin
-        let cp = of_uns i in
+        let cp = trunc_of_uns i in
         let utf8 = Utf8.of_codepoint cp in
         printf "%a -> %a {|%s|} \"%a\"\n"
           Uns.pp_x i

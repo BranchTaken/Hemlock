@@ -71,6 +71,7 @@ module type SCommon = sig
   include SNarrow with type t := t
 
   val narrow: t -> int64
+  val widen: t -> int64
 end
 
 module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
@@ -82,7 +83,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       |> Hash.State.Gen.fold_u64 1L ~f:(fun _ -> t)
       |> Hash.State.Gen.fini
 
-    let extend t =
+    let widen t =
       let nlb = Int64.(sub 64L T.bit_length) in
       match nlb with
       | 0L -> t
@@ -95,7 +96,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
     let narrow t =
       let nlb = Int64.(sub 64L T.bit_length) in
       match nlb with
-      | 0L ->  t
+      | 0L -> t
       | _ -> begin
           match T.signed with
           | false -> Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t)
@@ -116,10 +117,9 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       | true -> narrow (uns_of_sint s)
       | false -> begin
           let nlb = Int64.(sub 64L T.bit_length) in
-          (match nlb with
-            | 0L -> uns_of_sint s
-            | _ -> Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) (uns_of_sint s))
-          )
+          match nlb with
+          | 0L -> uns_of_sint s
+          | _ -> Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) (uns_of_sint s))
         end
 
     let narrow_of_unsigned u =
@@ -128,7 +128,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
           let nlb = Int64.(sub 64L T.bit_length) in
           match nlb with
           | 0L -> u
-          | _ -> Int64.(logand (pred (shift_left 1L (to_int (pred T.bit_length)))) u)
+          | _ -> Int64.(shift_right (shift_left u (to_int nlb)) (to_int nlb))
         end
       | false -> narrow u
 
@@ -243,31 +243,31 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
     let max_value = narrow Int64.(sub zero one)
 
     let succ t =
-      extend Int64.(succ t)
+      widen Int64.(succ t)
 
     let pred t =
-      extend Int64.(pred t)
+      widen Int64.(pred t)
 
     let bit_and t0 t1 =
-      extend Int64.(logand t0 t1)
+      widen Int64.(logand t0 t1)
 
     let bit_or t0 t1 =
-      extend Int64.(logor t0 t1)
+      widen Int64.(logor t0 t1)
 
     let bit_xor t0 t1 =
-      extend Int64.(logxor t0 t1)
+      widen Int64.(logxor t0 t1)
 
     let bit_not t =
-      extend Int64.(lognot t)
+      widen Int64.(lognot t)
 
     let bit_sl ~shift t =
-      extend Int64.(shift_left t (to_int shift))
+      widen Int64.(shift_left t (to_int shift))
 
     let bit_usr ~shift t =
-      extend Int64.(shift_right_logical t (to_int shift))
+      widen Int64.(shift_right_logical t (to_int shift))
 
     let bit_ssr ~shift t =
-      extend Int64.(shift_right t (to_int shift))
+      widen Int64.(shift_right t (to_int shift))
 
     let bit_pop t =
       let x = lbclear t in
@@ -295,19 +295,19 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       bit_pop (bit_and (bit_not t') Int64.(pred t'))
 
     let ( + ) t0 t1 =
-      extend Int64.(add t0 t1)
+      widen Int64.(add t0 t1)
 
     let ( - ) t0 t1 =
-      extend Int64.(sub t0 t1)
+      widen Int64.(sub t0 t1)
 
     let ( * ) t0 t1 =
-      extend Int64.(mul t0 t1)
+      widen Int64.(mul t0 t1)
 
     let ( / ) t0 t1 =
-      extend Int64.(div t0 t1)
+      widen Int64.(div t0 t1)
 
     let ( % ) t0 t1 =
-      extend Int64.(rem t0 t1)
+      widen Int64.(rem t0 t1)
 
     let ( ** ) t0 t1 =
       (* Decompose the exponent to limit algorithmic complexity. *)
@@ -381,6 +381,9 @@ module MakeI (T : I) : SI with type t := sint = struct
 
     let narrow_of_unsigned x =
       sint_of_uns (V.narrow_of_unsigned x)
+
+    let widen t =
+      V.widen t
 
     let of_real r =
       sint_of_uns (V.of_real r)

@@ -1,0 +1,13 @@
+extend_to_i32 -32768i16 -> -32768i32
+extend_to_i32 -1i16 -> -1i32
+extend_to_i32 0i16 -> 0i32
+extend_to_i32 1i16 -> 1i32
+extend_to_i32 32767i16 -> 32767i32
+
+trunc_of_i32/narrow_of_i32_opt -32769i32 -> -1i16/None
+trunc_of_i32/narrow_of_i32_opt -32768i32 -> -32768i16/Some -32768i16
+trunc_of_i32/narrow_of_i32_opt -1i32 -> -1i16/Some -1i16
+trunc_of_i32/narrow_of_i32_opt 0i32 -> 0i16/Some 0i16
+trunc_of_i32/narrow_of_i32_opt 1i32 -> 1i16/Some 1i16
+trunc_of_i32/narrow_of_i32_opt 32767i32 -> 32767i16/Some 32767i16
+trunc_of_i32/narrow_of_i32_opt 32768i32 -> 0i16/None

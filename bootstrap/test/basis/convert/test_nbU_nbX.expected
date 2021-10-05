@@ -1,0 +1,11 @@
+extend_to_i32 0u8 -> 0i32
+extend_to_i32 1u8 -> 1i32
+extend_to_i32 127u8 -> 127i32
+extend_to_i32 128u8 -> 128i32
+extend_to_i32 255u8 -> 255i32
+
+trunc_of_i32/narrow_of_i32_opt -1i32 -> 255u8/None
+trunc_of_i32/narrow_of_i32_opt 0i32 -> 0u8/Some 0u8
+trunc_of_i32/narrow_of_i32_opt 1i32 -> 1u8/Some 1u8
+trunc_of_i32/narrow_of_i32_opt 255i32 -> 255u8/Some 255u8
+trunc_of_i32/narrow_of_i32_opt 256i32 -> 0u8/None

@@ -1,0 +1,19 @@
+(tests
+ (names
+  test_nbI
+  test_nbI_nbU
+  test_nbI_nbX
+  test_nbI_wU
+  test_nbI_wX
+  test_nbU
+  test_nbU_nbI
+  test_nbU_nbU
+  test_nbU_nbX
+  test_nbU_wU
+  test_nbU_wX
+  test_wI_wU
+  test_wI_wX
+  test_wU_wI
+  test_wU_wU
+  test_wU_wX)
+ (libraries Basis))

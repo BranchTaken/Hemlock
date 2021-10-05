@@ -1,9 +1,13 @@
-(* 512-bit unsigned integer. *)
+(* 512-bit unsigned integer.
 
-open RudimentsInt
+    See {!module:ConvertIntf} for documentation on conversion functions. *)
 
 type t
 include IntwIntf.SFU with type t := t
 
-val to_tup: t -> u64 * u64 * u64 * u64 * u64 * u64 * u64 * u64
-(** Convert to a little-endian tuple of words (first word is least significant). *)
+val bits_of_i512: I512.t -> t
+val bits_to_i512: t -> I512.t
+val like_of_i512_opt: I512.t -> t option
+val like_to_i512_opt: t -> I512.t option
+val like_of_i512_hlt: I512.t -> t
+val like_to_i512_hlt: t -> I512.t

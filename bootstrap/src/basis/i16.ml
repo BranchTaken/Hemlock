@@ -1,49 +1,66 @@
 (* Partial Rudiments. *)
-open RudimentsInt
-open RudimentsFunctions
+open RudimentsInt0
 
 module T = struct
-  type t = sint
-  let bit_length = 16L
+  module U = struct
+    type t = sint
+    let bit_length = 16L
+  end
+  include U
+  include Intnb.MakeI(U)
 end
 include T
-include Intnb.MakeI(T)
 
-let to_sint t =
-  t
+module IX512 = Convert.Make_nbI_wX(T)(I512)
+let trunc_of_i512 = IX512.trunc_of_x
+let extend_to_i512 = IX512.extend_to_x
+let narrow_of_i512_opt = IX512.narrow_of_x_opt
+let narrow_of_i512_hlt = IX512.narrow_of_x_hlt
 
-let of_sint x =
-  narrow_of_signed x
+module IU512 = Convert.Make_nbI_wU(T)(U512)
+let trunc_of_u512 = IU512.trunc_of_u
+let narrow_of_u512_opt = IU512.narrow_of_u_opt
+let widen_to_u512_opt = IU512.widen_to_u_opt
+let narrow_of_u512_hlt = IU512.narrow_of_u_hlt
+let widen_to_u512_hlt = IU512.widen_to_u_hlt
 
-let of_sint_opt x =
-  let t = of_sint x in
-  let x' = to_sint t in
-  match Stdlib.(Int64.(compare x' x) = 0) with
-  | false -> None
-  | true -> Some t
+module IX256 = Convert.Make_nbI_wX(T)(I256)
+let trunc_of_i256 = IX256.trunc_of_x
+let extend_to_i256 = IX256.extend_to_x
+let narrow_of_i256_opt = IX256.narrow_of_x_opt
+let narrow_of_i256_hlt = IX256.narrow_of_x_hlt
 
-let of_sint_hlt x =
-  match of_sint_opt x with
-  | None -> halt "Lossy conversion"
-  | Some t -> t
+module IU256 = Convert.Make_nbI_wU(T)(U256)
+let trunc_of_u256 = IU256.trunc_of_u
+let narrow_of_u256_opt = IU256.narrow_of_u_opt
+let widen_to_u256_opt = IU256.widen_to_u_opt
+let narrow_of_u256_hlt = IU256.narrow_of_u_hlt
+let widen_to_u256_hlt = IU256.widen_to_u_hlt
 
-let kv x =
-  narrow_of_signed x
+module IX128 = Convert.Make_nbI_wX(T)(I128)
+let trunc_of_i128 = IX128.trunc_of_x
+let extend_to_i128 = IX128.extend_to_x
+let narrow_of_i128_opt = IX128.narrow_of_x_opt
+let narrow_of_i128_hlt = IX128.narrow_of_x_hlt
 
-let to_uns t =
-  uns_of_sint t
+module IU128 = Convert.Make_nbI_wU(T)(U128)
+let trunc_of_u128 = IU128.trunc_of_u
+let narrow_of_u128_opt = IU128.narrow_of_u_opt
+let widen_to_u128_opt = IU128.widen_to_u_opt
+let narrow_of_u128_hlt = IU128.narrow_of_u_hlt
+let widen_to_u128_hlt = IU128.widen_to_u_hlt
 
-let of_uns x =
-  narrow_of_unsigned x
+include Convert.Make_nbI(T)
 
-let of_uns_opt x =
-  let t = of_uns x in
-  let x' = to_uns t in
-  match Stdlib.(Int64.(unsigned_compare x' x) = 0) with
-  | false -> None
-  | true -> Some t
+module IX32 = Convert.Make_nbI_nbX(T)(I32)
+let trunc_of_i32 = IX32.trunc_of_x
+let extend_to_i32 = IX32.extend_to_x
+let narrow_of_i32_opt = IX32.narrow_of_x_opt
+let narrow_of_i32_hlt = IX32.narrow_of_x_hlt
 
-let of_uns_hlt x =
-  match of_uns_opt x with
-  | None -> halt "Lossy conversion"
-  | Some t -> t
+module IU32 = Convert.Make_nbI_nbU(T)(U32)
+let trunc_of_u32 = IU32.trunc_of_u
+let narrow_of_u32_opt = IU32.narrow_of_u_opt
+let widen_to_u32_opt = IU32.widen_to_u_opt
+let narrow_of_u32_hlt = IU32.narrow_of_u_hlt
+let widen_to_u32_hlt = IU32.widen_to_u_hlt

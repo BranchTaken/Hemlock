@@ -30,7 +30,7 @@ let test () =
   test_split ":a::bc;de:" (fun cp -> Codepoint.(cp = (kv (Int64.of_int (Char.code ':')))))
     (Codepoint.kv 0x3bL);
   test_split ":a::bc;de;" (fun cp ->
-    match Codepoint.to_uns cp with
+    match Codepoint.extend_to_uns cp with
     | 0x3aL (* : *)
     | 0x3bL (* ; *) -> true
     | _ -> false

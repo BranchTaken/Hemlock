@@ -1,6 +1,7 @@
 (library
  (name Basis)
  (public_name Hemlock.Basis)
+ (private_modules convert convertIntf)
  (foreign_stubs
   (language c)
   (names entropy file intnb intw u64))
