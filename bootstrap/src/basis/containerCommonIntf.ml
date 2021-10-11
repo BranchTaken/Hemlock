@@ -2,8 +2,8 @@ open RudimentsInt0
 
 (* Monomorphic, e.g. string. *)
 
-(** General functor input interface for monomorphic containers, e.g. {!type:string}. *)
-module type IMono = sig
+(** Common functor input interface for monomorphic containers, e.g. {!type:string}. *)
+module type IMonoCommon = sig
   type t
   (** Container type. *)
 
@@ -122,7 +122,7 @@ end
 
 (** Membership-related functor input interface for monomorphic containers, e.g. {!type:string}. *)
 module type IMonoMem = sig
-  include IMono
+  include IMonoCommon
 
   val cmp_elm: elm -> elm -> Cmp.t
   (** Compare two elements. *)
@@ -141,8 +141,8 @@ end
 
 (* Polymorphic container, e.g. ('a list). *)
 
-(** General functor input interface for polymorphic containers, e.g. {!type:'a list}. *)
-module type IPoly = sig
+(** Common functor input interface for polymorphic containers, e.g. {!type:'a list}. *)
+module type IPolyCommon = sig
   type 'a t
   (** Container type. *)
 
@@ -291,7 +291,7 @@ end
 
 (** Membership-related functor input interface for polymorphic containers, e.g. {!type:'a list}. *)
 module type IPolyMem = sig
-  include IPoly
+  include IPolyCommon
 
   val cmp_elm: 'a elm -> 'a elm -> Cmp.t
   (** Compare two elements. *)

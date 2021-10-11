@@ -1,11 +1,11 @@
-open Rudiments0
+open RudimentsInt0
 open ContainerCommonIntf
 
 (* Monomorphic, e.g. string. *)
 
 (** Array-related functor input interface for monomorphic containers, e.g. {!type:string}. *)
 module type IMonoArray = sig
-  include IMono
+  include IMonoCommon
 
   val length: t -> uns
   (** Container length. *)
@@ -27,7 +27,7 @@ end
 
 (** Array-related functor input interface for polymorphic containers, e.g. {!type:'a list}. *)
 module type IPolyArray = sig
-  include IPoly
+  include IPolyCommon
 
   val length: 'a t -> uns
   (** Container length. *)

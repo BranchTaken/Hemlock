@@ -6,7 +6,7 @@ open RudimentsInt0
 
 type t = sint
 
-include IntnbIntf.S with type t := t
+include IntnbIntf.SI with type t := t
 include IntnbIntf.SSigned with type t := t
 
 val trunc_of_i512: I512.t -> t

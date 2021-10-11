@@ -6,7 +6,7 @@ open RudimentsInt0
 
 type t = uns
 
-include IntnbIntf.S with type t := t
+include IntnbIntf.SU with type t := t
 
 val trunc_of_i512: I512.t -> t
 val extend_to_i512: t -> I512.t

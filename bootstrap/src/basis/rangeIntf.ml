@@ -29,11 +29,10 @@ module type SRangeH = sig
   val past: t -> elm
   (** Element immediately past last element in range. *)
 
+  include ContainerIntf.SMono with type t := t with type elm := elm
+
   val length: t -> l
   (** Number of elements in range. *)
-
-  include ContainerCommonIntf.SMonoFold with type t := t with type elm := elm
-  include ContainerCommonIntf.SMonoMem with type t := t with type elm := elm
 end
 
 (** Functor output signature for full-open ranges. *)
@@ -58,9 +57,8 @@ module type SRangeF = sig
   val last: t -> elm
   (** Last element in range. *)
 
+  include ContainerIntf.SMono with type t := t with type elm := elm
+
   val length: t -> l
   (** Number of elements in range. *)
-
-  include ContainerCommonIntf.SMonoFold with type t := t with type elm := elm
-  include ContainerCommonIntf.SMonoMem with type t := t with type elm := elm
 end
