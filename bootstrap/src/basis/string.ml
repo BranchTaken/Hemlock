@@ -78,9 +78,6 @@ end
 include T
 include Identifiable.Make(T)
 
-let is_empty t =
-  Uns.((blength t) = 0L)
-
 let get bindex t =
   Byte.narrow_of_sint_hlt (sint_of_int Stdlib.(Char.code (String.get t (Int64.to_int bindex))))
 
@@ -259,8 +256,6 @@ let clength t =
     | false -> fn (Cursor.succ cursor) (Uns.succ cindex)
   end in
   fn (Cursor.hd t) 0L
-
-let length = clength
 
 module Cursori = struct
   module T = struct
@@ -625,9 +620,6 @@ module Slice = struct
   let blength t =
     (Cursor.bindex (past t)) - (Cursor.bindex (base t))
 
-  let is_empty t =
-    Uns.((blength t) = 0L)
-
   let string_clength = clength
 
   let clength t =
@@ -646,8 +638,6 @@ module Slice = struct
             fn (base t) 0L
           end
       end
-
-  let length = clength
 
   let get bindex t =
     match Uns.(bindex > (blength t)) with
@@ -812,9 +802,7 @@ module Slice = struct
 
     let length = clength
   end
-  include ContainerCommon.MakeMonoFold(U)
-  include ContainerCommon.MakeMonoMem(U)
-  include ContainerArray.MakeMonoArray(U)
+  include Container.MakeMono(U)
 
   module StringMapi = struct
     module T = struct
@@ -1578,9 +1566,7 @@ module U = struct
 
   let length = clength
 end
-include ContainerCommon.MakeMonoFold(U)
-include ContainerCommon.MakeMonoMem(U)
-include ContainerArray.MakeMonoArray(U)
+include Container.MakeMono(U)
 
 let map ~f t =
   Slice.(to_string (map ~f (of_string t)))

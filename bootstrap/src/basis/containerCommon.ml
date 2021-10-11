@@ -4,7 +4,7 @@ open ContainerCommonIntf
 
 (* poly[1]. *)
 
-module MakePolyLength (T : IPoly) : SPolyLengthGen
+module MakePolyLength (T : IPolyCommon) : SPolyLengthGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
   let length t =
@@ -19,7 +19,7 @@ module MakePolyLength (T : IPoly) : SPolyLengthGen
     (length t) = 0L
 end
 
-module MakePolyFold (T : IPoly) : SPolyFoldGen
+module MakePolyFold (T : IPolyCommon) : SPolyFoldGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
   let fold_until ~init ~f t =
@@ -173,7 +173,7 @@ module MakePolyMem (T : IPolyMem) : SPolyMemGen
     fn (T.Cursor.hd t)
 end
 
-module MakeIPoly (T : IMono) : IPoly
+module MakeIPolyCommon (T : IMonoCommon) : IPolyCommon
   with type 'a t = T.t
   with type 'a elm = T.elm = struct
   type 'a t = T.t
@@ -201,22 +201,22 @@ end
 
 (* Monomorphic. *)
 
-module MakeMonoLength (T : IMono) : SMonoLength
+module MakeMonoLength (T : IMonoCommon) : SMonoLength
   with type t := T.t
   with type elm := T.elm = struct
-  include MakePolyLength(MakeIPoly(T))
+  include MakePolyLength(MakeIPolyCommon(T))
 end
 
-module MakeMonoFold (T : IMono) : SMonoFold
+module MakeMonoFold (T : IMonoCommon) : SMonoFold
   with type t := T.t
   with type elm := T.elm = struct
-  include MakePolyFold(MakeIPoly(T))
+  include MakePolyFold(MakeIPolyCommon(T))
 end
 
 module MakeIPolyMem (T : IMonoMem) : IPolyMem
   with type 'a t = T.t
   with type 'a elm = T.elm = struct
-  include MakeIPoly(T)
+  include MakeIPolyCommon(T)
   let cmp_elm = T.cmp_elm
 end
 
