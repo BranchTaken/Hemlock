@@ -24,7 +24,7 @@ module Cursor : sig
   type 'a container = 'a t
   type 'a t
 
-  include CursorIntf.SPoly
+  include CursorIntf.SPolyIndex
     with type 'a container := 'a container
     with type 'a elm := 'a
     with type 'a t := 'a t

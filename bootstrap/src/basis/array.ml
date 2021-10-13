@@ -326,7 +326,7 @@ module Seq = struct
 end
 
 module Slice = struct
-  include Slice.MakePoly(Cursor)
+  include Slice.MakePolyIter(Cursor)
 end
 
 module ArrayInit = struct

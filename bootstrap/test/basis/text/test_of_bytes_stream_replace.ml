@@ -55,7 +55,7 @@ let test () =
     printf "\"\n";
     assert Cursor.(hd text = hd');
 
-    let slice = Slice.of_cursors ~base:(Cursor.hd text) ~past:(Cursor.tl text) in
+    let slice = Slice.init text in
     let s' = Slice.to_string slice in
     printf "  slice -> %a\n" String.pp s'
   end in

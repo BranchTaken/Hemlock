@@ -53,7 +53,7 @@ end
     efficiency is a concern. Prefer [rget_opt]/[next_opt] over their halting [rget]/[next]
     counterparts to avoid the need for [tl] calls. *)
 module Cursor : sig
-  include CursorIntf.SMono
+  include CursorIntf.SMonoIndex
     with type container := t
     with type elm := codepoint
 
@@ -102,7 +102,7 @@ end
 
 (** Text slice. *)
 module Slice : sig
-  include SliceIntf.SMono
+  include SliceIntf.SMonoIter
     with type container := t
     with type cursor := Cursor.t
     with type elm := codepoint

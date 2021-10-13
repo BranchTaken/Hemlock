@@ -7,13 +7,13 @@ open Rudiments0
 type t = byte array
 
 module Cursor : sig
-  include CursorIntf.SMono
+  include CursorIntf.SMonoIndex
     with type container := byte array
     with type elm := byte
 end
 
 module Slice : sig
-  include SliceIntf.SMono
+  include SliceIntf.SMonoIndex
     with type container := byte array
     with type cursor := Cursor.t
     with type elm := byte
@@ -28,6 +28,9 @@ module Slice : sig
 
   val get: uns -> t -> byte
   (** [get i t] returns the byte at index [i] within [t]. *)
+
+  val to_bytes: t -> byte array
+  (** [to_bytes t] creates a new byte array containing the contents enclosed by [t]. *)
 
   val of_codepoint: codepoint -> t
   (** [of_codepoint codepoint] creates a slice of bytes corresponding to the UTF-8 encoding of

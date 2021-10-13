@@ -91,7 +91,7 @@ module Excerpt = struct
   }
 
   (* Base excerpt, always hd of excerpts maps. *)
-  let base = {eind=0L; bytes=Bytes.Slice.of_container [||]}
+  let base = {eind=0L; bytes=Bytes.Slice.init [||]}
 
   (* val of_bytes_slice: t -> Bytes.Slice.t -> t *)
   let of_bytes_slice pred bytes =
@@ -451,7 +451,7 @@ module Cursor = struct
 end
 
 module Slice = struct
-  include Slice.MakeMono(Cursor)
+  include Slice.MakeMonoIter(Cursor)
 
   module StringSeq = struct
     module T = struct
@@ -461,7 +461,7 @@ module Slice = struct
       }
 
       let init slice =
-        let base, past = to_cursors slice in
+        let base, past = cursors slice in
         {base; past}
 
       let length t =

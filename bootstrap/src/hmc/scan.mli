@@ -10,7 +10,7 @@ module Source : sig
   val path: t -> string option
 
   module Cursor : sig
-    include CursorIntf.SMono
+    include CursorIntf.SMonoIndex
       with type container := t
       with type elm := codepoint
 
@@ -18,7 +18,7 @@ module Source : sig
   end
 
   module Slice : sig
-    include SliceIntf.SMono
+    include SliceIntf.SMonoIndex
       with type container := t
       with type cursor := Cursor.t
       with type elm := codepoint

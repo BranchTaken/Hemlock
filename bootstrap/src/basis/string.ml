@@ -119,8 +119,8 @@ module Cursor = struct
 
   let container = string
 
-  let index _ =
-    not_reached ()
+  let index t =
+    t.bindex
 
   let bindex t =
     t.bindex
@@ -292,8 +292,8 @@ module Cursori = struct
 
   let container = string
 
-  let index _ =
-    not_reached ()
+  let index t =
+    Cursor.index t.cursor
 
   let bindex t =
     Cursor.bindex t.cursor
@@ -334,7 +334,7 @@ end
 type cursori = Cursori.t
 
 module SlicePre = struct
-  include Slice.MakeMono(Cursor)
+  include Slice.MakeMonoIter(Cursor)
 end
 
 module Seq = struct
@@ -533,7 +533,7 @@ module Seq = struct
 
         let next t =
           let str, t' = T.next t in
-          let slice = SlicePre.of_container str in
+          let slice = SlicePre.init str in
           slice, t'
       end
       include U
@@ -549,7 +549,7 @@ module Seq = struct
 
         let next t =
           let str, t' = T.next t in
-          let slice = SlicePre.of_container str in
+          let slice = SlicePre.init str in
           slice, t'
       end
       include U
@@ -591,8 +591,8 @@ module Slice = struct
   let string t =
     SlicePre.container t
 
-  let of_string s =
-    SlicePre.of_container s
+  let of_string ?base ?past s =
+    SlicePre.init ?base ?past s
 
   module StringSlice = struct
     module T = struct
@@ -673,25 +673,16 @@ module Slice = struct
     include Seq.Codepoint.Make(T)
   end
 
-  let blength_of_seq crange ~seq ~f =
-    let rec fn ~seq cindex nbytes = begin
-      match Uns.(cindex = Range.past crange) with
-      | true -> nbytes
-      | false -> begin
-          let codepoint, seq' = f seq in
-          let cp_nbytes = Codepoint.Utf8.length_of_codepoint codepoint in
-          let nbytes' = nbytes + cp_nbytes in
-          fn ~seq:seq' (Uns.succ cindex) nbytes'
-        end
-    end in
-    fn ~seq (Range.base crange) 0L
+  let blength_of_crange crange ~f =
+    Range.fold crange ~init:0L ~f:(fun nbytes cindex ->
+      let codepoint = f cindex in
+      let cp_nbytes = Codepoint.Utf8.length_of_codepoint codepoint in
+      nbytes + cp_nbytes
+    )
 
   let init ?blength crange ~f =
     let blength = match blength with
-      | None -> blength_of_seq crange ~seq:(Range.base crange)
-          ~f:(fun seq ->
-            (f seq), (Uns.succ seq)
-          )
+      | None -> blength_of_crange crange ~f
       | Some blength -> blength
     in
     of_string StringOfIndexed.(to_string (init ~f blength (Range.base crange)))
@@ -731,31 +722,22 @@ module Slice = struct
     include Seq.Codepoint.MakeRev(StringOfListCommon)
   end
 
-  let blength_of_list clength codepoints =
-    blength_of_seq (0L =:< clength) ~seq:codepoints ~f:(fun seq ->
-      match seq with
-      | cp :: seq' -> cp, seq'
-      | [] -> not_reached ()
+  let blength_of_list codepoints =
+    List.fold codepoints ~init:0L ~f:(fun nbytes cp ->
+      let cp_nbytes = Codepoint.Utf8.length_of_codepoint cp in
+      nbytes + cp_nbytes
     )
 
-  let of_list ?blength ?clength codepoints =
-    let clength = match clength with
-      | None -> List.length codepoints
-      | Some clength -> clength
-    in
+  let of_list ?blength codepoints =
     let blength = match blength with
-      | None -> blength_of_list clength codepoints
+      | None -> blength_of_list codepoints
       | Some blength -> blength
     in
     of_string StringOfList.(to_string (init codepoints blength))
 
-  let of_list_rev ?blength ?clength codepoints_rev =
-    let clength = match clength with
-      | None -> List.length codepoints_rev
-      | Some clength -> clength
-    in
+  let of_list_rev ?blength codepoints_rev =
     let blength = match blength with
-      | None -> blength_of_list clength codepoints_rev
+      | None -> blength_of_list codepoints_rev
       | Some blength -> blength
     in
     of_string StringOfListRev.(to_string (init codepoints_rev blength))
@@ -1200,7 +1182,7 @@ module Slice = struct
               let slice = with_ in
               in_cursor, slice, at', With
             | cursor :: _ -> begin
-                let slice = of_cursors ~base:(base in_) ~past:cursor in
+                let slice = of_string ~base:(base in_) ~past:cursor (Cursor.container cursor) in
                 past in_, slice, at, In
               end
           in
@@ -1218,7 +1200,8 @@ module Slice = struct
             | In -> begin
                 let in_cursor', slice', at' = match t.at with
                   | [] -> begin
-                      let slice' = of_cursors ~base:(past t.in_) ~past:(past t.in_) in
+                      let slice' = of_string ~base:(past t.in_) ~past:(past t.in_) (container t.in_)
+                      in
                       past t.in_, slice', []
                     end
                   | cursor :: at' -> begin
@@ -1232,8 +1215,8 @@ module Slice = struct
               end
             | With -> begin
                 let slice' = match t.at with
-                  | [] -> of_cursors ~base:t.in_cursor ~past:(past t.in_)
-                  | cursor :: _ -> of_cursors ~base:t.in_cursor ~past:cursor
+                  | [] -> of_string ~base:t.in_cursor ~past:(past t.in_) (container t.in_)
+                  | cursor :: _ -> of_string ~base:t.in_cursor ~past:cursor (container t.in_)
                 in
                 {t with slice=slice'; source=In; blength=blength'}
               end
@@ -1302,7 +1285,7 @@ module Slice = struct
       | true -> past t
       | false -> Cursor.(seek (Uns.bits_to_sint n) base)
     in
-    of_cursors ~base ~past
+    of_string ~base ~past (container t)
 
   let suffix n t =
     let past = past t in
@@ -1310,12 +1293,12 @@ module Slice = struct
       | true -> base t
       | false -> Cursor.(seek Sint.(neg (Uns.bits_to_sint n)) past)
     in
-    of_cursors ~base ~past
+    of_string ~base ~past (container t)
 
   let chop_prefix ~prefix t =
     match prefix_tl ~prefix t with
     | None -> None
-    | Some base -> Some (of_cursors ~base ~past:(past t))
+    | Some base -> Some (of_string ~base ~past:(past t) (container t))
 
   let chop_prefix_hlt ~prefix t =
     match chop_prefix ~prefix t with
@@ -1325,7 +1308,7 @@ module Slice = struct
   let chop_suffix ~suffix t =
     match suffix_hd ~suffix t with
     | None -> None
-    | Some past -> Some (of_cursors ~base:(base t) ~past)
+    | Some past -> Some (of_string ~base:(base t) ~past (container t))
 
   let chop_suffix_hlt ~suffix t =
     match chop_suffix ~suffix t with
@@ -1362,7 +1345,7 @@ module Slice = struct
       | Some drop -> drop
     in
     let base = strip_base drop t in
-    of_cursors ~base ~past:(past t)
+    of_string ~base ~past:(past t) (container t)
 
   let rstrip ?drop t =
     let drop = match drop with
@@ -1370,7 +1353,7 @@ module Slice = struct
       | Some drop -> drop
     in
     let past = strip_past drop t in
-    of_cursors ~base:(base t) ~past
+    of_string ~base:(base t) ~past (container t)
 
   let strip ?drop t =
     let drop = match drop with
@@ -1379,13 +1362,13 @@ module Slice = struct
     in
     let base = strip_base drop t in
     let past = strip_past drop t in
-    of_cursors ~base ~past
+    of_string ~base ~past (container t)
 
   let split_fold_until ~init ~on ~f t =
     let rec fn base past accum = begin
       match Cursor.(past = SlicePre.past t) with
       | true -> begin
-          let slice = of_cursors ~base ~past in
+          let slice = of_string ~base ~past (container t) in
           let accum', _ = f accum slice in
           accum'
         end
@@ -1394,7 +1377,7 @@ module Slice = struct
           | true -> begin
               let base' = Cursor.succ past in
               let past' = base' in
-              let slice = of_cursors ~base ~past in
+              let slice = of_string ~base ~past (container t) in
               let accum', until = f accum slice in
               match until with
               | true -> accum'
@@ -1412,7 +1395,7 @@ module Slice = struct
     let rec fn base past accum = begin
       match Cursor.(base = SlicePre.base t) with
       | true -> begin
-          let slice = of_cursors ~base ~past in
+          let slice = of_string ~base ~past (container t) in
           let accum', _ = f slice accum in
           accum'
         end
@@ -1421,7 +1404,7 @@ module Slice = struct
           | true -> begin
               let base' = Cursor.pred base in
               let past' = base' in
-              let slice = of_cursors ~base ~past in
+              let slice = of_string ~base ~past (container t) in
               let accum', until = f slice accum in
               match until with
               | true -> accum'
@@ -1439,7 +1422,7 @@ module Slice = struct
     let rec fn base past cr_seen accum = begin
       match Cursor.(past = SlicePre.past t) with
       | true -> begin
-          let slice = of_cursors ~base ~past in
+          let slice = of_string ~base ~past (container t) in
           f accum slice
         end
       | false -> begin
@@ -1448,8 +1431,8 @@ module Slice = struct
               let base' = Cursor.succ past in
               let past' = base' in
               let slice = match cr_seen with
-                | false -> of_cursors ~base ~past
-                | true -> of_cursors ~base ~past:(Cursor.pred past)
+                | false -> of_string ~base ~past (container t)
+                | true -> of_string ~base ~past:(Cursor.pred past) (container t)
               in
               let accum' = f accum slice in
               fn base' past' false accum'
@@ -1466,13 +1449,13 @@ module Slice = struct
       | true -> begin
           match nl_seen with
           | false -> begin
-              let slice = of_cursors ~base ~past in
+              let slice = of_string ~base ~past (container t) in
               f slice accum
             end
           | true -> begin
-              let slice = of_cursors ~base:(Cursor.succ base) ~past in
+              let slice = of_string ~base:(Cursor.succ base) ~past (container t) in
               let accum' = f slice accum in
-              let empty_slice = of_cursors ~base ~past:base in
+              let empty_slice = of_string ~base ~past:base (container t) in
               f empty_slice accum'
             end
         end
@@ -1488,7 +1471,7 @@ module Slice = struct
                 | cp when Codepoint.(cp = cr) -> (Cursor.pred base), (Cursor.pred base), false
                 | _ -> base, base, false
               in
-              let slice = of_cursors ~base:(Cursor.succ base) ~past in
+              let slice = of_string ~base:(Cursor.succ base) ~past (container t) in
               let accum' = f slice accum in
               fn base' past' nl_seen' accum'
             end
@@ -1502,7 +1485,7 @@ module Slice = struct
     ) ~f:(fun _ slice ->
       let base = Cursor.succ (past slice) in
       let past = past t in
-      let slice2 = of_cursors ~base ~past in
+      let slice2 = of_string ~base ~past (container t) in
       (Some (slice, slice2)), true
     ) t
 
@@ -1516,7 +1499,7 @@ module Slice = struct
       Codepoint.(codepoint = on)
     ) ~f:(fun slice _ ->
       let base, past = (base t), (Cursor.pred (base slice)) in
-      let slice0 = of_cursors ~base ~past in
+      let slice0 = of_string ~base ~past (container t) in
       (Some (slice0, slice)), true
     ) t
 
@@ -1544,11 +1527,11 @@ let init ?blength crange ~f =
 let of_codepoint codepoint =
   Slice.(to_string (of_codepoint codepoint))
 
-let of_list ?blength ?clength codepoints =
-  Slice.to_string (Slice.of_list ?blength ?clength codepoints)
+let of_list ?blength codepoints =
+  Slice.to_string (Slice.of_list ?blength codepoints)
 
-let of_list_rev ?blength ?clength codepoints_rev =
-  Slice.to_string (Slice.of_list_rev ?blength ?clength codepoints_rev)
+let of_list_rev ?blength codepoints_rev =
+  Slice.to_string (Slice.of_list_rev ?blength codepoints_rev)
 
 let of_array ?blength codepoints =
   Slice.to_string (Slice.of_array ?blength codepoints)
@@ -1615,7 +1598,7 @@ let lfind ?base ?past codepoint t =
     | None -> Cursor.tl t
     | Some cursor -> cursor
   in
-  Slice.lfind codepoint (Slice.of_cursors ~base ~past)
+  Slice.lfind codepoint (Slice.of_string ~base ~past t)
 
 let lfind_hlt ?base ?past codepoint t =
   match lfind ?base ?past codepoint t with
@@ -1636,7 +1619,7 @@ let rfind ?base ?past codepoint t =
     | None -> Cursor.tl t
     | Some cursor -> cursor
   in
-  Slice.rfind codepoint (Slice.of_cursors ~base ~past)
+  Slice.rfind codepoint (Slice.of_string ~base ~past t)
 
 let rfind_hlt ?base ?past codepoint t =
   match rfind ?base ?past codepoint t with
@@ -1650,7 +1633,7 @@ let substr_find ?base ~pattern t =
     | Some cursor -> cursor
   in
   let past = Cursor.tl t in
-  let in_ = Slice.of_cursors ~base ~past in
+  let in_ = Slice.of_string ~base ~past t in
   Slice.Pattern.find ~in_ p
 
 let substr_find_hlt ?base ~pattern t =
@@ -1660,7 +1643,7 @@ let substr_find_hlt ?base ~pattern t =
     | Some cursor -> cursor
   in
   let past = Cursor.tl t in
-  let in_ = Slice.of_cursors ~base ~past in
+  let in_ = Slice.of_string ~base ~past t in
   Slice.Pattern.find_hlt ~in_ p
 
 let substr_find_all ~may_overlap ~pattern t =
@@ -1674,7 +1657,7 @@ let substr_replace_first ?base ~pattern ~with_ t =
     | Some cursor -> cursor
   in
   let past = Cursor.tl t in
-  let in_ = Slice.of_cursors ~base ~past in
+  let in_ = Slice.of_string ~base ~past t in
   let with_ = Slice.of_string with_ in
   Slice.(to_string (Pattern.replace_first ~in_ ~with_ p))
 
@@ -1690,10 +1673,10 @@ let is_prefix ~prefix t =
 let is_suffix ~suffix t =
   Slice.is_suffix ~suffix:(Slice.of_string suffix) (Slice.of_string t)
 
-let pare ~base ~past =
-  match Cursor.(base = (hd (container base))) && Cursor.(past = (tl (container past))) with
+let pare ~base ~past t =
+  match Cursor.(base = (hd t)) && Cursor.(past = (tl t)) with
   | true -> Cursor.container base
-  | false -> Slice.to_string (Slice.of_cursors ~base ~past)
+  | false -> Slice.to_string (Slice.of_string ~base ~past t)
 
 let prefix n t =
   Slice.(to_string (prefix n (of_string t)))

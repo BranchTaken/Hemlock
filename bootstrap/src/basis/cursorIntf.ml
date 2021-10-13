@@ -42,7 +42,7 @@ module type SMonoIter = sig
 end
 
 (** Cursor functor output signature for monomorphic types, e.g. [string]. *)
-module type SMono = sig
+module type SMonoIndex = sig
   include SMonoIter
 
   val container: t -> container
@@ -94,7 +94,7 @@ module type SPolyIter = sig
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('a array)]. *)
-module type SPoly = sig
+module type SPolyIndex = sig
   include SPolyIter
 
   val container: 'a t -> 'a container
@@ -146,7 +146,7 @@ module type SPoly2Iter = sig
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('a, 'cmp) Ordset)]. *)
-module type SPoly2 = sig
+module type SPoly2Index = sig
   include SPoly2Iter
 
   val container: ('a, 'cmp) t -> ('a, 'cmp) container
@@ -202,7 +202,7 @@ module type SPoly3Iter = sig
 end
 
 (** Cursor functor output signature for polymorphic types, e.g. [('k, 'v, 'cmp) Ordmap)]. *)
-module type SPoly3 = sig
+module type SPoly3Index = sig
   include SPoly3Iter
 
   val container: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) container

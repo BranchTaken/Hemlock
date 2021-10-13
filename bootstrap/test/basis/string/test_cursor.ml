@@ -26,7 +26,7 @@ let test () =
         end
     end in
     printf "cursor fwd:\n";
-    fn (Cursor.hd s);
+    fn (Cursor.hd s) Uns.max_value
   end in
   let test_rev s = begin
     let rec fn cursor i_prev = begin
@@ -49,7 +49,7 @@ let test () =
         end
     end in
     printf "cursor rev:\n";
-    fn (Cursor.tl s);
+    fn (Cursor.tl s) Uns.max_value
   end in
   let strs = [
     "";
@@ -57,8 +57,8 @@ let test () =
   ] in
   printf "@[<h>";
   List.iter strs ~f:(fun s ->
-    test_fwd s Uns.max_value;
-    test_rev s Uns.max_value;
+    test_fwd s;
+    test_rev s;
   );
   printf "@]"
 

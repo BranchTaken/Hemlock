@@ -1,16 +1,14 @@
 open Rudiments0
 
-module type SMono = sig
+module type SMonoIter = sig
   type container
   type cursor
   type elm
   type t
 
-  val of_cursors: base:cursor -> past:cursor -> t
-  (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)]. *)
-
-  val to_cursors: t -> cursor * cursor
-  (** Return the cursors comprising the slice. *)
+  val init: ?base:cursor -> ?past:cursor -> container -> t
+  (** [init ~base ~past container] creates a slice enclosing \[[base .. past)] of [container].
+      \[[base .. past)] defaults to the full range of [container]. *)
 
   val container: t -> container
   (** [container t] returns the unsliced container underlying [t]. *)
@@ -21,52 +19,51 @@ module type SMono = sig
   val past: t -> cursor
   (** Return the cursor past the end of the slice. *)
 
+  val cursors: t -> cursor * cursor
+  (** Return the cursors enclosing the slice. *)
+end
+
+module type SMonoIndex = sig
+  type container
+  type cursor
+  type elm
+  type t
+
+  val init: ?range:range -> container -> t
+  (** [init ~range container] returns a slice enclosing [range] of [container]. [range] defaults to
+      the full range of [container]. *)
+
+  val of_cursors: base:cursor -> past:cursor -> t
+  (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)]. *)
+
+  val container: t -> container
+  (** [container t] returns the unsliced container underlying [t]. *)
+
   val range: t -> range
   (** Return the range of indices contained in the slice. *)
 
-  val of_container: ?range:range -> container -> t
-  (** [of_container c] returns a slice enclosing the entirety of [c], or enclosing the [range] if
-      given. *)
+  val length: t -> uns
+  (** [length t] returns the length of the slice, equivalent to [Range.length (range t)]. *)
 
-  val to_container: t -> container
-  (** Return a container with contents equivalent to those of the slice. *)
+  val base: t -> cursor
+  (** Return the cursor at the base of the slice. *)
 
-  val base_seek: sint -> t -> t
-  (** [base_seek i t] returns a derivative slice with its [base] cursor initialized by seeking [t]'s
-      [base] cursor [i] elements forward/backward. *)
+  val past: t -> cursor
+  (** Return the cursor past the end of the slice. *)
 
-  val base_succ: t -> t
-  (** [base_succ t] returns a derivative slice with its [base] cursor initialized to the successor
-      of [t]'s [base] cursor. *)
-
-  val base_pred: t -> t
-  (** [base_pred t] returns a derivative slice with its [base] cursor initialized to the predecessor
-      of [t]'s [base] cursor. *)
-
-  val past_seek: sint -> t -> t
-  (** [past_seek i t] returns a derivative slice with its [past] cursor initialized by seeking [t]'s
-      [past] cursor [i] elements forward/backward. *)
-
-  val past_succ: t -> t
-  (** [past_succ t] returns a derivative slice with its [past] cursor initialized to the successor
-      of [t]'s [past] cursor. *)
-
-  val past_pred: t -> t
-  (** [past_pred t] returns a derivative slice with its [past] cursor initialized to the predecessor
-      of [t]'s [past] cursor. *)
+  val cursors: t -> cursor * cursor
+  (** Return the cursors enclosing the slice. *)
 end
 
-module type SPoly = sig
+module type SPolyIter = sig
   type 'a container
   type 'a cursor
   type 'a elm
   type 'a t
 
-  val of_cursors: base:'a cursor -> past:'a cursor -> 'a t
-  (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)]. *)
-
-  val to_cursors: 'a t -> 'a cursor * 'a cursor
-  (** Return the cursors comprising the slice. *)
+  val init: ?base:'a cursor -> ?past:'a cursor -> 'a container -> 'a t
+  (** [init ~base ~past container] creates a slice enclosing \[[base .. past)] of [container].
+      \[[base .. past)] defaults to the full range of [container]. *)
 
   val container: 'a t -> 'a container
   (** [container t] returns the unsliced container underlying [t]. *)
@@ -77,37 +74,38 @@ module type SPoly = sig
   val past: 'a t -> 'a cursor
   (** Return the cursor past the end of the slice. *)
 
+  val cursors: 'a t -> 'a cursor * 'a cursor
+  (** Return the cursors enclosing the slice. *)
+end
+
+module type SPolyIndex = sig
+  type 'a container
+  type 'a cursor
+  type 'a elm
+  type 'a t
+
+  val init: ?range:range -> 'a container -> 'a t
+  (** [init ~range container] returns a slice enclosing [range] of [container]. [range] defaults to
+      the full range of [container]. *)
+
+  val of_cursors: base:'a cursor -> past:'a cursor -> 'a t
+  (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)]. *)
+
+  val container: 'a t -> 'a container
+  (** [container t] returns the unsliced container underlying [t]. *)
+
   val range: 'a t -> range
   (** Return the range of indices contained in the slice. *)
 
-  val of_container: ?range:range -> 'a container -> 'a t
-  (** [of_container c] returns a slice enclosing the entirety of [c], or enclosing the [range] if
-      given. *)
+  val length: 'a t -> uns
+  (** [length t] returns the length of the slice, equivalent to [Range.length (range t)]. *)
 
-  val to_container: 'a t -> 'a container
-  (** Return a container with contents equivalent to those of the slice. *)
+  val base: 'a t -> 'a cursor
+  (** Return the cursor at the base of the slice. *)
 
-  val base_seek: sint -> 'a t -> 'a t
-  (** [base_seek i t] returns a derivative slice with its [base] cursor initialized by seeking [t]'s
-      [base] cursor [i] elements forward/backward. *)
+  val past: 'a t -> 'a cursor
+  (** Return the cursor past the end of the slice. *)
 
-  val base_succ: 'a t -> 'a t
-  (** [base_succ t] returns a derivative slice with its [base] cursor initialized to the successor
-      of [t]'s [base] cursor. *)
-
-  val base_pred: 'a t -> 'a t
-  (** [base_pred t] returns a derivative slice with its [base] cursor initialized to the predecessor
-      of [t]'s [base] cursor. *)
-
-  val past_seek: sint -> 'a t -> 'a t
-  (** [past_seek i t] returns a derivative slice with its [past] cursor initialized by seeking [t]'s
-      [past] cursor [i] elements forward/backward. *)
-
-  val past_succ: 'a t -> 'a t
-  (** [past_succ t] returns a derivative slice with its [past] cursor initialized to the successor
-      of [t]'s [past] cursor. *)
-
-  val past_pred: 'a t -> 'a t
-  (** [past_pred t] returns a derivative slice with its [past] cursor initialized to the predecessor
-      of [t]'s [past] cursor. *)
+  val cursors: 'a t -> 'a cursor * 'a cursor
+  (** Return the cursors enclosing the slice. *)
 end

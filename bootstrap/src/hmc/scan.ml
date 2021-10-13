@@ -137,7 +137,7 @@ module Source = struct
   end
 
   module Slice = struct
-    include Slice.MakeMono(Cursor)
+    include Slice.MakeMonoIndex(Cursor)
   end
 
   let line_context t =
@@ -172,7 +172,8 @@ module Source = struct
       Text.Pos.pp (Cursor.(pos (tl t)))
 
   let pp ppf t =
-    Format.fprintf ppf "%s" (Text.Slice.(to_string (of_cursors ~base:t.base ~past:t.past)))
+    Format.fprintf ppf "%s" (Text.Slice.(to_string (init ~base:t.base ~past:t.past
+        (Text.Cursor.container t.base))))
 end
 
 module AbstractToken = struct
@@ -551,7 +552,7 @@ let map_of_cps_alist alist =
   ) alist
 
 let str_of_cursor cursor t =
-  let slice = Text.Slice.of_cursors ~base:t.cursor ~past:cursor in
+  let slice = Text.Slice.init ~base:t.cursor ~past:cursor (Text.Cursor.container cursor) in
   Text.Slice.to_string slice
 
 let accept atoken cursor t =
@@ -1433,8 +1434,8 @@ end = struct
       end
     | R _, Dec -> not_reached ()
     | R_dec, Dec -> begin
-        let r = Real.of_string Text.Slice.(to_string (of_cursors ~base:t.cursor
-            ~past:suffix_cursor)) in
+        let r = Real.of_string Text.Slice.(to_string (init ~base:t.cursor
+            ~past:suffix_cursor (Text.Cursor.container t.cursor))) in
         let tok = match subtype with
           | Subtype_r32 -> Tok_r32 (Constant r)
           | Subtype_r64 -> Tok_r64 (Constant r)
