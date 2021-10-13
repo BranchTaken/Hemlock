@@ -24,14 +24,13 @@ module Cursor : sig
   type elm = codepoint
   type t
   include IdentifiableIntf.S with type t := t
-  include CursorIntf.SMono
+  include CursorIntf.SMonoIndex
     with type container := container
     with type elm := elm
     with type t := t
 
-  val index: t -> uns [@@ocaml.deprecated "Use bindex instead"]
-  (** @deprecated Use {!bindex} instead.
-      @raise halt Not implemented. *)
+  val index: t -> uns
+  (** Return current {!type:byte} index. *)
 
   val bindex: t -> uns
   (** Return current {!type:byte} index. *)
@@ -54,14 +53,13 @@ module Cursori : sig
 
   type t
   include IdentifiableIntf.S with type t := t
-  include CursorIntf.SMono
+  include CursorIntf.SMonoIndex
     with type container := outer
     with type elm := codepoint
     with type t := t
 
-  val index: t -> uns [@@ocaml.deprecated "Use [bc]index instead"]
-  (** @deprecated Use {!bindex} or {!cindex} instead.
-      @raise halt Not implemented. *)
+  val index: t -> uns
+  (** Return current {!type:byte} index. *)
 
   val bindex: t -> uns
   (** Return current {!type:byte} index. *)
@@ -79,14 +77,15 @@ end
 module Slice : sig
   type outer = t
 
-  include SliceIntf.SMono
+  include SliceIntf.SMonoIter
     with type container := outer
     with type cursor := Cursor.t
     with type elm := codepoint
   include IdentifiableIntf.S with type t := t
 
-  val of_string: outer -> t
-  (** [of_string s] returns a slice enclosing the entirety of [s]. *)
+  val of_string: ?base:Cursor.t -> ?past:Cursor.t -> outer -> t
+  (** [of_string ~base ~past s] creates a slice enclosing the codepoints in \[[base .. past)] of
+      [s]. \[[base .. past)] defaults to the full range of [s]. *)
 
   val to_string: t -> outer
   (** Return a string with contents equivalent to those of the slice. *)
@@ -108,25 +107,19 @@ module Slice : sig
   val of_codepoint: codepoint -> t
   (** Create a slice containing a single codepoint. *)
 
-  val of_list: ?blength:uns -> ?clength:uns -> codepoint list -> t
-  (** [of_list ~blength ~clength codepoints] creates a slice of given byte length and codepoint
-      length containing the ordered [codepoints]. [blength]/[clength] must be accurate if specified.
-  *)
+  val of_list: ?blength:uns -> codepoint list -> t
+  (** [of_list ~blength codepoints] creates a slice of given byte length containing the ordered
+      [codepoints]. [blength] must be accurate if specified. *)
 
-  val of_list_rev: ?blength:uns -> ?clength:uns -> codepoint list -> t
-  (** [of_list_rev ~blength ~clength codepoints] creates a slice of given byte length and codepoint
-      length containing the reverse-ordered [codepoints]. [blength]/[clength] must be accurate if
-      specified. *)
+  val of_list_rev: ?blength:uns -> codepoint list -> t
+  (** [of_list_rev ~blength codepoints] creates a slice of given byte length containing the
+      reverse-ordered [codepoints]. [blength] must be accurate if specified. *)
 
   val of_array: ?blength:uns -> codepoint array -> t
   (** [of_array ~blength codepoints] creates a slice of given byte length containing the ordered
       [codepoints]. [blength] must be accurate if specified. *)
 
   include ContainerIntf.SMono with type t := t with type elm := codepoint
-
-  val length: t -> uns [@@ocaml.deprecated "Use blength instead"]
-  (** Use {!blength} instead of [length], to keep the difference between byte length and codepoint
-      length explicit. *)
 
   val map: f:(codepoint -> codepoint) -> t -> t
   (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints. *)
@@ -369,15 +362,13 @@ val init: ?blength:uns -> range -> f:(uns -> codepoint) -> t
 val of_codepoint: codepoint -> t
 (** Create a string containing a single codepoint. *)
 
-val of_list: ?blength:uns -> ?clength:uns -> codepoint list -> t
-(** [of_list ~blength ~clength codepoints] creates a string of given byte length and codepoint
-    length containing the ordered [codepoints]. [blength]/[clength] must be accurate if specified.
-*)
+val of_list: ?blength:uns -> codepoint list -> t
+(** [of_list ~blength codepoints] creates a string of given byte length containing the ordered
+    [codepoints]. [blength] must be accurate if specified. *)
 
-val of_list_rev: ?blength:uns -> ?clength:uns -> codepoint list -> t
-(** [of_list_rev ~blength ~clength codepoints] creates a string of given byte length and codepoint
-    length containing the reverse-ordered [codepoints]. [blength]/[clength] must be accurate if
-    specified. *)
+val of_list_rev: ?blength:uns -> codepoint list -> t
+(** [of_list_rev ~blength codepoints] creates a string of given byte length containing the
+    reverse-ordered [codepoints]. [blength] must be accurate if specified. *)
 
 val of_array: ?blength:uns -> codepoint array -> t
 (** [of_array ~blength codepoints] creates a string of given byte length containing the ordered
@@ -474,8 +465,9 @@ val is_prefix: prefix:t -> t -> bool
 val is_suffix: suffix:t -> t -> bool
 (** [is_suffix ~suffix t] returns true if [suffix] is a suffix of [t]. *)
 
-val pare: base:Cursor.t -> past:Cursor.t -> t
-(** [pare ~base ~past] returns a string comprised of the codepoint sequence in [\[base .. past)]. *)
+val pare: base:Cursor.t -> past:Cursor.t -> t -> t
+(** [pare ~base ~past t] returns a string comprised of the codepoint sequence in [\[base .. past)]
+    of [t]. *)
 
 val prefix: uns -> t -> t
 (** [prefix i t] returns the prefix of [t] comprising [i] codepoints. *)

@@ -12,7 +12,7 @@ module Cursor : sig
   type 'a elm = 'a
   type 'a t
 
-  include CursorIntf.SPoly
+  include CursorIntf.SPolyIndex
     with type 'a container := 'a container
     with type 'a elm := 'a
     with type 'a t := 'a t
@@ -84,7 +84,7 @@ module Seq : sig
 end
 
 module Slice : sig
-  include SliceIntf.SPoly
+  include SliceIntf.SPolyIter
     with type 'a container := 'a t
     with type 'a cursor := 'a Cursor.t
     with type 'a elm := 'a

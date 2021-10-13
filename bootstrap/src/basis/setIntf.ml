@@ -181,7 +181,7 @@ module type SOrd = sig
     type ('a, 'cmp) container = ('a, 'cmp) t
     type ('a, 'cmp) t
 
-    include CursorIntf.SPoly2
+    include CursorIntf.SPoly2Index
       with type ('a, 'cmp) container := ('a, 'cmp) container
       with type 'a elm := 'a
       with type ('a, 'cmp) t := ('a, 'cmp) t

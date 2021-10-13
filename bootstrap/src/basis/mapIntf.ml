@@ -266,7 +266,7 @@ module type SOrd = sig
     type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
     type ('k, 'v, 'cmp) t
 
-    include CursorIntf.SPoly3
+    include CursorIntf.SPoly3Index
       with type ('k, 'v, 'cmp) container := ('k, 'v, 'cmp) container
       with type 'k key := 'k
       with type 'v value := 'v

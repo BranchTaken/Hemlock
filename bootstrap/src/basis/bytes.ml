@@ -180,7 +180,7 @@ module StringSeq = struct
 end
 
 module Slice = struct
-  include Slice.MakeMono(Cursor)
+  include Slice.MakeMonoIndex(Cursor)
 
   let length t =
     (Cursor.index (past t)) - (Cursor.index (base t))
@@ -200,7 +200,7 @@ module Slice = struct
         end
       | false -> ()
     end in
-    let cursor, past = to_cursors t in
+    let cursor, past = cursors t in
     begin
       match Cursor.(cursor < past) with
       | true -> begin
@@ -219,14 +219,18 @@ module Slice = struct
     |> Hash.State.Gen.fini
     |> Uns.hash_fold (length t)
 
+  let to_bytes slice =
+    let bytes = container slice in
+    Array.init (range slice) ~f:(fun i -> Array.get i bytes)
+
   let of_codepoint cp =
-    of_container (Array.of_list (Codepoint.to_bytes cp))
+    init (Array.of_list (Codepoint.to_bytes cp))
 
   let of_string_slice slice =
-    of_container (ArraySeq.to_array (ArraySeq.init slice))
+    init (ArraySeq.to_array (ArraySeq.init slice))
 
   let transcode ?(on_invalid=Error) t =
-    let cursor, past = to_cursors t in
+    let cursor, past = cursors t in
     match StringSeq.init ~on_invalid ~cursor ~past with
     | Some seq -> Some (StringSeq.to_string seq)
     | None -> None
@@ -246,28 +250,28 @@ module Slice = struct
 end
 
 let pp ppf t =
-  Slice.(pp ppf (of_container t))
+  Slice.(pp ppf (init t))
 
 let hash_fold t state =
-  Slice.(hash_fold (of_container t) state)
+  Slice.(hash_fold (init t) state)
 
 let length t =
-  Slice.(length (of_container t))
+  Slice.(length (init t))
 
 let get i t =
-  Slice.(get i (of_container t))
+  Slice.(get i (init t))
 
 let of_codepoint cp =
-  Slice.(to_container (of_codepoint cp))
+  Slice.(to_bytes (of_codepoint cp))
 
 let of_string_slice slice =
-  Slice.(to_container (of_string_slice slice))
+  Slice.(to_bytes (of_string_slice slice))
 
 let to_string t =
-  Slice.(to_string (of_container t))
+  Slice.(to_string (init t))
 
 let to_string_replace t =
-  Slice.(to_string_replace (of_container t))
+  Slice.(to_string_replace (init t))
 
 let to_string_hlt t =
-  Slice.(to_string_hlt (of_container t))
+  Slice.(to_string_hlt (init t))
