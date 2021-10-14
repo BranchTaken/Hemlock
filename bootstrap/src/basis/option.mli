@@ -26,9 +26,7 @@ include FormattableIntf.SPoly with type 'a t := 'a t
 
 (** {1 Container} *)
 
-include ContainerCommonIntf.SPolyLength with type 'a t := 'a t
-include ContainerCommonIntf.SPolyFold with type 'a t := 'a t
-include ContainerArrayIntf.SPolyArray with type 'a t := 'a t
+include ContainerIntf.SPolyIndex with type 'a t := 'a t
 
 (** {1 Cursor} *)
 

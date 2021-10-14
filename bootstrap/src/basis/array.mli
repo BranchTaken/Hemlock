@@ -1,7 +1,7 @@
 open Rudiments0
 
 type 'a t = 'a array
-include ContainerCommonIntf.SPolyFold with type 'a t := 'a t
+include ContainerIntf.SPolyIter with type 'a t := 'a t
 
 include FormattableIntf.SPoly with type 'a t := 'a t
 

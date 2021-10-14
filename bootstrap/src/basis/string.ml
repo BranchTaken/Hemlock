@@ -241,7 +241,8 @@ module B = struct
       let cmp_elm = Byte.cmp
       let length = U.length
     end
-    include Container.MakeMono(V)
+    include Container.MakeMonoIndex(V)
+    include Container.MakeMonoMem(V)
 
     let get i t =
       get ((Cursor.index (base t)) + i) (container t)
@@ -452,12 +453,12 @@ module CPre = struct
         let cmp_elm = Codepoint.cmp
       end
       include W
-      include ContainerCommon.MakeMonoFold(W)
-      include ContainerCommon.MakeMonoMem(W)
-      include ContainerCommon.MakeMonoLength(W)
+      include Container.MakeMonoIter(W)
+      include Container.MakeMonoMem(W)
+      include Container.MakeMonoLength(W)
     end
     include V
-    include ContainerArray.MakeMonoArray(V)
+    include Container.MakeMonoArray(V)
   end
 
   let length t =
@@ -1609,7 +1610,8 @@ module U = struct
 
   let length = C.length
 end
-include Container.MakeMono(U)
+include Container.MakeMonoIndex(U)
+include Container.MakeMonoMem(U)
 
 let map ~f t =
   C.Slice.(to_string (map ~f (of_string t)))

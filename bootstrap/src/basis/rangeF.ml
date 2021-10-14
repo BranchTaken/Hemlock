@@ -64,7 +64,7 @@ module Make_w (T : IntwIntf.SFCommon) (L : IntwIntf.SFU)
             (L.succ (TL.to_l t.last)))
   end
   include U
-  include ContainerCommon.MakeMonoFold(U)
+  include Container.MakeMonoIter(U)
 
   module V = struct
     module W = struct
@@ -80,8 +80,8 @@ module Make_w (T : IntwIntf.SFCommon) (L : IntwIntf.SFU)
           end
     end
 
-    include ContainerCommon.MakeMonoLength(W)
-    include ContainerArray.MakeMonoArray(W)
+    include Container.MakeMonoLength(W)
+    include Container.MakeMonoArray(W)
   end
   let is_empty = V.is_empty
   let to_array = V.to_array
@@ -156,7 +156,7 @@ module Make (T : IntnbIntf.S) (L : IntnbIntf.SU) (TL : ToL with type t := T.t wi
             (L.succ (TL.to_l t.last)))
   end
   include U
-  include ContainerCommon.MakeMonoFold(U)
+  include Container.MakeMonoIter(U)
 
   module V = struct
     module W = struct
@@ -168,8 +168,8 @@ module Make (T : IntnbIntf.S) (L : IntnbIntf.SU) (TL : ToL with type t := T.t wi
         | RangeIntf.Length l -> L.widen l
     end
 
-    include ContainerCommon.MakeMonoLength(W)
-    include ContainerArray.MakeMonoArray(W)
+    include Container.MakeMonoLength(W)
+    include Container.MakeMonoArray(W)
   end
   let is_empty = V.is_empty
   let to_array = V.to_array
@@ -244,7 +244,7 @@ module Make_nb (T : IntnbIntf.S) (L : IntnbIntf.SU) (TL : ToL with type t := T.t
             (L.succ (TL.to_l t.last)))
   end
   include U
-  include ContainerCommon.MakeMonoFold(U)
+  include Container.MakeMonoIter(U)
 
   module V = struct
     module W = struct
@@ -256,8 +256,8 @@ module Make_nb (T : IntnbIntf.S) (L : IntnbIntf.SU) (TL : ToL with type t := T.t
         | RangeIntf.Length l -> L.widen l
     end
 
-    include ContainerCommon.MakeMonoLength(W)
-    include ContainerArray.MakeMonoArray(W)
+    include Container.MakeMonoLength(W)
+    include Container.MakeMonoArray(W)
   end
   let is_empty = V.is_empty
   let to_array = V.to_array
