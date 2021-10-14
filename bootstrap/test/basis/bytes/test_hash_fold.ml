@@ -9,7 +9,7 @@ let test () =
     match strs with
     | [] -> ()
     | s :: strs' -> begin
-        let bytes = of_string_slice (String.Slice.of_string s) in
+        let bytes = of_string_slice (String.C.Slice.of_string s) in
         printf "hash_fold %a (%a) -> %a\n"
           pp bytes
           String.pp s

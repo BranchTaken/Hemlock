@@ -24,7 +24,7 @@ let test () =
   let s = concat patterns in
   printf "@[";
   List.iter patterns ~f:(fun pattern ->
-    let p = Slice.Pattern.create (Slice.of_string pattern) in
+    let p = C.Slice.Pattern.create (C.Slice.of_string pattern) in
     printf "%a@\n" slice_pattern_pp p;
     printf "     in_:%a@\n" pp s;
 
@@ -35,11 +35,11 @@ let test () =
           let _ = List.fold matches ~init:None ~f:(fun prev cursor ->
             assert (match prev with
               | None -> true
-              | Some c -> Uns.((Cursor.bindex c) < (Cursor.bindex cursor))
+              | Some c -> Uns.((C.Cursor.bindex c) < (C.Cursor.bindex cursor))
             );
             let offset = match prev with
-              | None -> (Cursor.bindex cursor) + 2L
-              | Some c -> (Cursor.bindex cursor) - (Cursor.bindex c)
+              | None -> (C.Cursor.bindex cursor) + 2L
+              | Some c -> (C.Cursor.bindex cursor) - (C.Cursor.bindex c)
             in
             printf "%*s" (Int64.to_int offset) "|";
             Some cursor
@@ -59,8 +59,7 @@ let test () =
     printf "   first:";
     let () = match substr_find s ~pattern with
       | None -> ()
-      | Some cursor ->
-        printf " %*s" (Int64.to_int (succ (Cursor.bindex cursor))) "|";
+      | Some cursor -> printf " %*s" (Int64.to_int (succ (C.Cursor.bindex cursor))) "|";
     in
     printf "@\n";
     printf "@\n";

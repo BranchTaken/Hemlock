@@ -7,7 +7,7 @@ let test () =
   printf "@[<h>";
   let text_path = path in
   let test_path ?path s = begin
-    let text = of_string_slice ?path (String.Slice.of_string s) in
+    let text = of_string_slice ?path (String.C.Slice.of_string s) in
     printf "%a -> %a\n"
       (Option.pp String.pp) path
       (Option.pp String.pp) (text_path text)

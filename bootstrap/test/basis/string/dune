@@ -5,7 +5,6 @@
   test_concat
   test_concat_map
   test_cursor
-  test_cursori
   test_escaped
   test_find
   test_find_map

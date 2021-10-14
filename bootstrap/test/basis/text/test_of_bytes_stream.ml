@@ -12,7 +12,7 @@ let stream_of_bytes_list bl =
 
 let stream_of_string_list sl =
   stream_of_bytes_list (List.map sl ~f:(fun s ->
-    Bytes.Slice.of_string_slice (String.Slice.of_string s)))
+    Bytes.Slice.of_string_slice (String.C.Slice.of_string s)))
 
 let test () =
   printf "@[<h>";

@@ -5,20 +5,20 @@ type t = byte array
 module ArraySeq = struct
   module T = struct
     type t = {
-      slice: String.Slice.t;
+      slice: String.B.Slice.t;
       bindex: uns;
     }
     type elm = byte
 
-    let init t =
-      {slice=t; bindex=0L}
+    let init slice =
+      {slice=String.C.Slice.to_bslice slice; bindex=0L}
 
     let length t =
-      String.Slice.blength t.slice - t.bindex
+      String.B.Slice.length t.slice - t.bindex
 
     let next t =
       assert (length t > 0L);
-      let b = String.Slice.get t.bindex t.slice in
+      let b = String.B.Slice.get t.bindex t.slice in
       let t' = {t with bindex=Uns.succ t.bindex} in
       b, t'
   end

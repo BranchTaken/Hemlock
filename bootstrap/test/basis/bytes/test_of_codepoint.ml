@@ -11,7 +11,7 @@ let test () =
     "𐆗";
   ] in
   let cps = List.fold_right strs ~init:[] ~f:(fun s cps ->
-    String.Cursor.(rget (hd s)) :: cps
+    String.C.Cursor.(rget (hd s)) :: cps
   ) in
   printf "@[<h>";
   List.iter cps ~f:(fun cp ->
