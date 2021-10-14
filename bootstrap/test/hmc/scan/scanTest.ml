@@ -18,5 +18,5 @@ let scan_str s =
     | _ -> fn t'
   end in
   printf "{|%s|}\n" s;
-  let t = init (Text.of_string_slice (String.Slice.of_string s)) in
+  let t = init (Text.of_string_slice (String.C.Slice.of_string s)) in
   fn t

@@ -17,7 +17,7 @@ val of_bytes_stream: ?path:string -> ?tabwidth:uns -> Bytes.Slice.t Stream.t -> 
 (** [of_string_stream ~path ~tabwidth stream] returns a text which streams from [stream].
     [~tabwidth] defaults to 8. *)
 
-val of_string_slice: ?path:string -> ?tabwidth:uns -> String.Slice.t -> t
+val of_string_slice: ?path:string -> ?tabwidth:uns -> String.C.Slice.t -> t
 (** [of_string_slice ~path slice] returns an eagerly initialized text. [~tabwidth] defaults to 8. *)
 
 val path: t -> string option

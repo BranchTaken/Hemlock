@@ -1,14 +1,17 @@
 (** UTF-8-encoded immutable {!type:string}.
 
     A {!type:string} is an immutable {!type:byte} sequence that is restricted to contain a
-    well-formed concatenation of UTF-8-encoded {!type:codepoint} values. Indexed {!type:byte} access
-    is O(1), but indexed {!type:codepoint} access is O(n). The {!String.Cursor} module provides
-    {!type:codepoint} access without tracking {!type:codepoint} index; for atypical cases that
-    actually require {!type:codepoint} indexing, use the {!String.Cursori} module instead.
+    well-formed concatenation of UTF-8-encoded {!type:codepoint} values. The {!String.B} module
+    provides O(1) {!type:byte}-indexed functionality. The {!String.C} module provides O(n)
+    {!type:codepoint} iteration functionality. Note that {!type:codepoint} cursor index is
+    intentionally not tracked for performance reasons, but in practice this does not cause problems
+    for typical string manipulation. Note that {!String.C.Slice} provides indexing during iteration,
+    and {!type:codepoint} length is available via {!String.C.length}/{!String.C.Slice.length}, but
+    at O(n) time complexity.
 
-    The {!String.Slice} module provides an API similar to that of the {!String} module, but it
-    applies to a narrowed view -- {!type:slice} -- of the containing {!type:string}. Slices avoid
-    copying, which makes them both convenient and efficient. *)
+    The {!String.C.Slice} module provides an API similar to that of the {!String} module, but it
+    applies to a narrowed view -- {!type:String.Slice.t} -- of the contained {!type:string}. Slices
+    avoid copying, which makes them both convenient and efficient. *)
 
 open Rudiments0
 
@@ -17,292 +20,321 @@ type t = string
 include IdentifiableIntf.S with type t := t
 include StringableIntf.S with type t := t
 
-(** Cursor that supports O(1) arbitrary access to codepoints, given byte index. The codepoint index
-    is not tracked. *)
-module Cursor : sig
-  type container = t
-  type elm = codepoint
-  type t
-  include IdentifiableIntf.S with type t := t
-  include CursorIntf.SMonoIndex
-    with type container := container
-    with type elm := elm
-    with type t := t
-
-  val index: t -> uns
-  (** Return current {!type:byte} index. *)
-
-  val bindex: t -> uns
-  (** Return current {!type:byte} index. *)
-
-  val cindex: t -> uns [@@ocaml.deprecated "Do not use; O(n)"]
-  (** @deprecated Use {!Cursori.cindex} instead.
-      @raise halt Not implemented. *)
-
-  val at: bindex:uns -> container -> t
-  (** Return {!type:Cursor.t} at [bindex], or halt if not at {!type:codepoint} boundary. *)
-
-  val near: bindex:uns -> container -> t
-  (** Return {!type:Cursor.t} at or before [bindex]. *)
-end
-
-(** Cursor that tracks codepoint index. Arbitrary codepoint access via [at] is O(n), unlike
-    [Cursor.at]. Prefer [Cursor] unless {!type:codepoint} index is needed. *)
-module Cursori : sig
-  type outer = t
-
-  type t
-  include IdentifiableIntf.S with type t := t
-  include CursorIntf.SMonoIndex
-    with type container := outer
-    with type elm := codepoint
-    with type t := t
-
-  val index: t -> uns
-  (** Return current {!type:byte} index. *)
-
-  val bindex: t -> uns
-  (** Return current {!type:byte} index. *)
-
-  val cindex: t -> uns
-  (** Return Current {!type:codepoint} index. *)
-
-  val cursor: t -> Cursor.t
-  (** Return encapsulated {!type:Cursor.t}. *)
-
-  val at: cindex:uns -> outer -> t
-  (** Return {!type:Cursori.t} at {!type:codepoint} index [cindex]. *)
-end
-
-module Slice : sig
-  type outer = t
-
-  include SliceIntf.SMonoIter
-    with type container := outer
-    with type cursor := Cursor.t
-    with type elm := codepoint
-  include IdentifiableIntf.S with type t := t
-
-  val of_string: ?base:Cursor.t -> ?past:Cursor.t -> outer -> t
-  (** [of_string ~base ~past s] creates a slice enclosing the codepoints in \[[base .. past)] of
-      [s]. \[[base .. past)] defaults to the full range of [s]. *)
-
-  val to_string: t -> outer
-  (** Return a string with contents equivalent to those of the slice. *)
-
-  val blength: t -> uns
-  (** Length of the slice in bytes. *)
-
-  val clength: t -> uns
-  (** Length of the slice in codepoints. O(n) time complexity. *)
+(** Byte-addressed string manipulation. *)
+module B : sig
+  val length: t -> uns
+  (** Byte length. *)
 
   val get: uns -> t -> byte
-  (** [get i t] returns the byte at offset [i] from the [base] of the slice. *)
+  (** Get byte at index. *)
 
-  val init: ?blength:uns -> range -> f:(uns -> codepoint) -> t
-  (** [init ~blength crange ~f:(fun i -> ...)] creates a slice of given byte length [~blength] and
-      codepoint length [Range.length crange] using [~f] to map range elements to codepoints.
-      [blength] must be accurate if specified. *)
-
-  val of_codepoint: codepoint -> t
-  (** Create a slice containing a single codepoint. *)
-
-  val of_list: ?blength:uns -> codepoint list -> t
-  (** [of_list ~blength codepoints] creates a slice of given byte length containing the ordered
-      [codepoints]. [blength] must be accurate if specified. *)
-
-  val of_list_rev: ?blength:uns -> codepoint list -> t
-  (** [of_list_rev ~blength codepoints] creates a slice of given byte length containing the
-      reverse-ordered [codepoints]. [blength] must be accurate if specified. *)
-
-  val of_array: ?blength:uns -> codepoint array -> t
-  (** [of_array ~blength codepoints] creates a slice of given byte length containing the ordered
-      [codepoints]. [blength] must be accurate if specified. *)
-
-  include ContainerIntf.SMono with type t := t with type elm := codepoint
-
-  val map: f:(codepoint -> codepoint) -> t -> t
-  (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints. *)
-
-  val mapi: f:(uns -> codepoint -> codepoint) -> t -> t
-  (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints. Codepoint index
-      within [t] is provided to [f]. *)
-
-  val tr: target:codepoint -> replacement:codepoint -> t -> t
-  (** [tr ~target ~replacement t] creates a slice with select codepoints translated from [t]'s
-      codepoints. [target] is translated to [replacement]; all other codepoints are copied without
-      translation. *)
-
-  val filter: f:(codepoint -> bool) -> t -> t
-  (** [filter ~f t] creates a slice from [t]'s codepoints filtered by [f]. Only codepoints for which
-      [f] returns [true] are incorporated into the result. *)
-
-  val concat: ?sep:t -> t list -> t
-  (** [concat ~sep slices] creates a slice comprised of the concatenation of the [slices] list, with
-      [sep] interposed between the inputs. *)
-
-  val concat_rev: ?sep:t -> t list -> t
-  (** [concat_rev ~sep slices] creates a slice comprised of the concatenation of reversed [slices]
-      list, with [sep] interposed between the inputs. *)
-
-  val concat_map: ?sep:t -> f:(codepoint -> t) -> t -> t
-  (** [concat_map ~sep ~f t] creates a slice which is the concatenation of applying [f] to convert
-      each codepoint to a slice. This is more general (and more expensive) than {!map}, because each
-      input codepoint can be mapped to any length of output. *)
-
-  val escaped: t -> t
-  (** Convert all unprintable or special ASCII characters to their backslash-escaped forms, such
-      that the result represents a syntactically valid source code string. *)
-
-  val rev: t -> t
-  (** [rev t] creates a slice with the codepoint ordering reversed relative to [t]. *)
-
-  val lfind: codepoint -> t -> Cursor.t option
-  (** [lfind cp t] returns a cursor to the leftmost instance of [cp] in [t], or [None] if [cp] is
-      absent. *)
-
-  val lfind_hlt: codepoint -> t -> Cursor.t
-  (** [lfind_hlt cp t] returns a cursor to the leftmost instance of [cp] in [t], or halts if [cp] is
-      absent. *)
-
-  val contains: codepoint -> t -> bool
-  (** [contains cp t] returns [true] if [t] contains [cp], [false] otherwise. *)
-
-  val rfind: codepoint -> t -> Cursor.t option
-  (** [rfind cp t] returns a cursor to the rightmost instance of [cp] in [t], or [None] if [cp] is
-      absent. *)
-
-  val rfind_hlt: codepoint -> t -> Cursor.t
-  (** [rfind_hlt cp t] returns a cursor to the rightmost instance of [cp] in [t], or halts if [cp]
-      is absent. *)
-
-  (** Simple but efficient pattern matching, based on the {{:
-      https://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm} Knuth-Morris-Pratt algorithm}.
-      Patterns are uninterpreted codepoint sequences. Searches require at most a single pass over
-      the input, regardless of whether finding one or more (optionally overlapping) matches. *)
-  module Pattern : sig
-    type outer = t
-
+  (** Cursor that supports O(1) arbitrary access to bytes. *)
+  module Cursor : sig
+    type container = t
+    type elm = byte
     type t
-    (** Compiled pattern. *)
+    include IdentifiableIntf.S with type t := t
+    include CursorIntf.SMonoIndex
+      with type container := container
+      with type elm := elm
+      with type t := t
 
-    val create: outer -> t
-    (** [create s] creates a compiled pattern corresponding to [s]. *)
+    val string: t -> container
+    (** Return string associated with cursor. *)
 
-    val find: in_:outer -> t -> Cursor.t option
-    (** [find ~in_ t] returns a cursor to the leftmost match in [in_], or [None] if no match exists.
-    *)
+    val init: uns -> container -> t
+    (** [init index string] returns a cursor at the specified byte [index] of [string]. *)
 
-    val find_hlt: in_:outer -> t -> Cursor.t
-    (** [find_hlt ~in_ t] returns a cursor to the leftmost match in [in_], or halts if no match
-        exists. *)
+    val at: uns -> container -> t
+    (** [at index s] return a {!type:Cursor.t} at [index], or halts if not at a {!type:codepoint}
+        boundary. *)
 
-    val find_all: may_overlap:bool -> in_:outer -> t -> Cursor.t list
-    (** [find_all ~may_overlap ~in_ t] returns a list of cursors to the matches in [in_].
-        Non-leftmost overlapping matches are excluded if [may_overlap] is [false]. *)
-
-    val replace_first: in_:outer -> with_:outer -> t -> outer
-    (** [replace_first ~in_ ~with_ t] returns a slice with the first match in [in_], if any,
-        replaced with [with_] in the result. *)
-
-    val replace_all: in_:outer -> with_:outer -> t -> outer
-    (** [replace_all ~in_ ~with_ t] returns a slice with all matches in [in_], if any, replaced with
-        [with_] in the result. *)
+    val near: uns -> container -> t
+    (** [near index s] returns a {!type:Cursor.t} at or before [index]. *)
   end
 
-  val is_prefix: prefix:t -> t -> bool
-  (** [is_prefix ~prefix t] returns true if [prefix] is a prefix of [t]. *)
+  module Slice : sig
+    include SliceIntf.SMonoIndex
+      with type container := t
+      with type cursor := Cursor.t
+      with type elm := byte
+    include IdentifiableIntf.S with type t := t
+    include ContainerIntf.SMono with type t := t with type elm := byte
 
-  val is_suffix: suffix:t -> t -> bool
-  (** [is_suffix ~suffix t] returns true if [suffix] is a suffix of [t]. *)
+    val get: uns -> t -> byte
+    (** Get byte at index. *)
+  end
+end
 
-  val prefix: uns -> t -> t
-  (** [prefix i t] returns the prefix of [t] comprising [i] codepoints. *)
+(** Codepoint-addressed string manipulation. *)
+module C : sig
+  val length: t -> uns
+  (** Codepoint length. *)
 
-  val suffix: uns -> t -> t
-  (** [suffix i t] returns the suffix of [t] comprising [i] codepoints. *)
+  (** Cursor that supports O(1) codepoint iteration. The codepoint index is not tracked. *)
+  module Cursor : sig
+    type container = t
+    type elm = codepoint
+    type t
+    include IdentifiableIntf.S with type t := t
+    include CursorIntf.SMonoIter
+      with type container := container
+      with type elm := elm
+      with type t := t
 
-  val chop_prefix: prefix:t -> t -> t option
-  (** [chop_prefix ~prefix t] returns [t] absent [prefix], or [None] if [prefix] is not a valid
-      prefix of [t]. *)
+    val bindex: t -> uns
+    (** [bindex t] return the byte index of [t]. Equivalent to [B.Cursor.index (to_bcursor t)]. *)
 
-  val chop_prefix_hlt: prefix:t -> t -> t
-  (** [chop_prefix_hlt ~prefix t] returns [t] absent [prefix], or halts if [prefix] is not a valid
-      prefix of [t]. *)
+    val string: t -> container
+    (** Return string associated with cursor. *)
 
-  val chop_suffix: suffix:t -> t -> t option
-  (** [chop_suffix ~suffix t] returns [t] absent [suffix], or [None] if [suffix] is not a valid
-      suffix of [t]. *)
+    val at: B.Cursor.t -> t
+    (** [at bcursor] returns a cursor at [bcursor], or halts if not at a {!type:codepoint} boundary.
+    *)
 
-  val chop_suffix_hlt: suffix:t -> t -> t
-  (** [chop_suffix_hlt ~suffix t] returns [t] absent [suffix], or halts if [suffix] is not a valid
-      suffix of [t]. *)
+    val near: B.Cursor.t -> t
+    (** [near bcursor] returns a cursor at the nearest {!type:codepoint} boundary at or before
+        [bcursor]. *)
 
-  val lstrip: ?drop:(codepoint -> bool) -> t -> t
-  (** [lstrip ~drop t] returns [t] absent the prefix codepoints for which [drop] returns [true]. The
-      default [drop] strips tab (['\t']), newline (['\n']), carriage return (['\r']), and space
-      ([' ']). *)
+    val to_bcursor: t -> B.Cursor.t
+    (** [to_bcursor t] returns a byte cursor at the same location as [t]. *)
 
-  val rstrip: ?drop:(codepoint -> bool) -> t -> t
-  (** [rstrip ~drop t] returns [t] absent the suffix codepoints for which [drop] returns [true]. The
-      default [drop] strips tab (['\t']), newline (['\n']), carriage return (['\r']), and space
-      ([' ']). *)
+    val seek: sint -> t -> t
+    (** [seek i t] returns a cursor at offset [i] from [t]. *)
+  end
 
-  val strip: ?drop:(codepoint -> bool) -> t -> t
-  (** [strip ~drop t] returns [t] absent the prefix and suffix codepoints for which [drop] returns
-      [true]. The default [drop] strips tab (['\t']), newline (['\n']), carriage return (['\r']),
-      and space ([' ']). *)
+  module Slice : sig
+    include SliceIntf.SMonoIter
+      with type container := t
+      with type cursor := Cursor.t
+      with type elm := codepoint
+    include IdentifiableIntf.S with type t := t
 
-  val split_fold_until: init:'accum -> on:(codepoint -> bool) -> f:('accum -> t -> 'accum * bool)
-    -> t -> 'accum
-  (** [split_fold_until ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in left to
-      right order based on initial value [init], until [f] returns [accum, true], or until all
-      slices have been folded. *)
+    val blength: t -> uns
+    (** [blength t] returns the number of bytes enclosed by [t]. Equivalent to [B.Slice.length
+        (to_bslice t)]. *)
 
-  val split_fold_right_until: init:'accum -> on:(codepoint -> bool)
-    -> f:(t -> 'accum -> 'accum * bool) -> t -> 'accum
-  (** [split_fold_right_until ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in
-      right to left order based on initial value [init], until [f] returns [accum, true], or until
-      all slices have been folded. *)
+    val to_bslice: t -> B.Slice.t
+    (** [to_bslice t] returns a byte slice for the same range as [t]. *)
 
-  val split_fold: init:'accum -> on:(codepoint -> bool) -> f:('accum -> t -> 'accum) -> t -> 'accum
-  (** [split_fold ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in left to right
-      order based on initial value [init]. *)
+    val of_cursors: base:Cursor.t -> past:Cursor.t -> t
+    (** [of_cursors ~base ~past] creates a slice enclosing the codepoints in \[[base .. past)]. *)
 
-  val split_fold_right: init:'accum -> on:(codepoint -> bool) -> f:(t -> 'accum -> 'accum) -> t
-    -> 'accum
-  (** [split_fold_right ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in right to
-      left order based on initial value [init]. *)
+    val of_string: string -> t
+    (** [of_string s] creates a slice enclosing [s]. *)
 
-  val lines_fold: init:'accum -> f:('accum -> t -> 'accum) -> t -> 'accum
-  (** [lines_fold ~init ~f t] splits [t] into lines separated by ["\r\n"] or ["\n"], which [f] folds
-      in left to right order based on initial value [init]. *)
+    val to_string: t -> string
+    (** Return a string with contents equivalent to those of the slice. *)
 
-  val lines_fold_right: init:'accum -> f:(t -> 'accum -> 'accum) -> t -> 'accum
-  (** [lines_fold_right ~init ~f t] splits [t] into lines separated by ["\r\n"] or ["\n"], which [f]
-      folds in right to left order based on initial value [init]. *)
+    val init: ?blength:uns -> range -> f:(uns -> codepoint) -> t
+    (** [init ~blength crange ~f:(fun i -> ...)] creates a slice of given byte length [~blength] and
+        codepoint length [Range.length crange] using [~f] to map range elements to codepoints.
+        [blength] must be accurate if specified. *)
 
-  val lsplit2: on:codepoint -> t -> (t * t) option
-  (** [lsplit2 ~on t] splits [t] into two slices at the leftmost codepoint for which [on] returns
-      [true], or returns [None] if [on] never returns [true]. *)
+    val of_codepoint: codepoint -> t
+    (** Create a slice containing a single codepoint. *)
 
-  val lsplit2_hlt: on:codepoint -> t -> t * t
-  (** [lsplit2_hlt ~on t] splits [t] into two slices at the leftmost codepoint for which [on]
-      returns [true], or halts if [on] never returns [true]. *)
+    val of_list: ?blength:uns -> codepoint list -> t
+    (** [of_list ~blength codepoints] creates a slice of given byte length containing the ordered
+        [codepoints]. [blength] must be accurate if specified. *)
 
-  val rsplit2: on:codepoint -> t -> (t * t) option
-  (** [rsplit2 ~on t] splits [t] into two slices at the rightmost codepoint for which [on] returns
-      [true], or returns [None] if [on] never returns [true]. *)
+    val of_list_rev: ?blength:uns -> codepoint list -> t
+    (** [of_list_rev ~blength codepoints] creates a slice of given byte length containing the
+        reverse-ordered [codepoints]. [blength] must be accurate if specified. *)
 
-  val rsplit2_hlt: on:codepoint -> t -> t * t
-  (** [rsplit2_hlt ~on t] splits [t] into two slices at the rightmost codepoint for which [on]
-      returns [true], or halts if [on] never returns [true]. *)
+    val of_array: ?blength:uns -> codepoint array -> t
+    (** [of_array ~blength codepoints] creates a slice of given byte length containing the ordered
+        [codepoints]. [blength] must be accurate if specified. *)
 
-  (** Slice comparison operators. *)
-  module O : sig
-    type nonrec t = t
+    include ContainerCommonIntf.SMonoFold with type t := t with type elm := codepoint
+    include ContainerCommonIntf.SMonoMem with type t := t with type elm := codepoint
+    include ContainerCommonIntf.SMonoLength with type t := t with type elm := codepoint
+    include ContainerArrayIntf.SMonoArray with type t := t with type elm := codepoint
 
-    include CmpableIntf.SMonoInfix with type t := t
+    val map: f:(codepoint -> codepoint) -> t -> t
+    (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints. *)
+
+    val mapi: f:(uns -> codepoint -> codepoint) -> t -> t
+    (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints. Codepoint index
+        within [t] is provided to [f]. *)
+
+    val tr: target:codepoint -> replacement:codepoint -> t -> t
+    (** [tr ~target ~replacement t] creates a slice with select codepoints translated from [t]'s
+        codepoints. [target] is translated to [replacement]; all other codepoints are copied without
+        translation. *)
+
+    val filter: f:(codepoint -> bool) -> t -> t
+    (** [filter ~f t] creates a slice from [t]'s codepoints filtered by [f]. Only codepoints for
+        which [f] returns [true] are incorporated into the result. *)
+
+    val concat: ?sep:t -> t list -> t
+    (** [concat ~sep slices] creates a slice comprised of the concatenation of the [slices] list,
+        with [sep] interposed between the inputs. *)
+
+    val concat_rev: ?sep:t -> t list -> t
+    (** [concat_rev ~sep slices] creates a slice comprised of the concatenation of reversed [slices]
+        list, with [sep] interposed between the inputs. *)
+
+    val concat_map: ?sep:t -> f:(codepoint -> t) -> t -> t
+    (** [concat_map ~sep ~f t] creates a slice which is the concatenation of applying [f] to convert
+        each codepoint to a slice. This is more general (and more expensive) than {!map}, because
+        each input codepoint can be mapped to any length of output. *)
+
+    val escaped: t -> t
+    (** Convert all unprintable or special ASCII characters to their backslash-escaped forms, such
+        that the result represents a syntactically valid source code string. *)
+
+    val rev: t -> t
+    (** [rev t] creates a slice with the codepoint ordering reversed relative to [t]. *)
+
+    val lfind: codepoint -> t -> Cursor.t option
+    (** [lfind cp t] returns a cursor to the leftmost instance of [cp] in [t], or [None] if [cp] is
+        absent. *)
+
+    val lfind_hlt: codepoint -> t -> Cursor.t
+    (** [lfind_hlt cp t] returns a cursor to the leftmost instance of [cp] in [t], or halts if [cp]
+        is absent. *)
+
+    val contains: codepoint -> t -> bool
+    (** [contains cp t] returns [true] if [t] contains [cp], [false] otherwise. *)
+
+    val rfind: codepoint -> t -> Cursor.t option
+    (** [rfind cp t] returns a cursor to the rightmost instance of [cp] in [t], or [None] if [cp] is
+        absent. *)
+
+    val rfind_hlt: codepoint -> t -> Cursor.t
+    (** [rfind_hlt cp t] returns a cursor to the rightmost instance of [cp] in [t], or halts if [cp]
+        is absent. *)
+
+    (** Simple but efficient pattern matching, based on the {{:
+        https://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm} Knuth-Morris-Pratt algorithm}.
+        Patterns are uninterpreted codepoint sequences. Searches require at most a single pass over
+        the input, regardless of whether finding one or more (optionally overlapping) matches. *)
+    module Pattern : sig
+      type outer = t
+
+      type t
+      (** Compiled pattern. *)
+
+      val create: outer -> t
+      (** [create s] creates a compiled pattern corresponding to [s]. *)
+
+      val find: in_:outer -> t -> Cursor.t option
+      (** [find ~in_ t] returns a cursor to the leftmost match in [in_], or [None] if no match
+          exists. *)
+
+      val find_hlt: in_:outer -> t -> Cursor.t
+      (** [find_hlt ~in_ t] returns a cursor to the leftmost match in [in_], or halts if no match
+          exists. *)
+
+      val find_all: may_overlap:bool -> in_:outer -> t -> Cursor.t list
+      (** [find_all ~may_overlap ~in_ t] returns a list of cursors to the matches in [in_].
+          Non-leftmost overlapping matches are excluded if [may_overlap] is [false]. *)
+
+      val replace_first: in_:outer -> with_:outer -> t -> outer
+      (** [replace_first ~in_ ~with_ t] returns a slice with the first match in [in_], if any,
+          replaced with [with_] in the result. *)
+
+      val replace_all: in_:outer -> with_:outer -> t -> outer
+      (** [replace_all ~in_ ~with_ t] returns a slice with all matches in [in_], if any, replaced
+          with [with_] in the result. *)
+    end
+
+    val is_prefix: prefix:t -> t -> bool
+    (** [is_prefix ~prefix t] returns true if [prefix] is a prefix of [t]. *)
+
+    val is_suffix: suffix:t -> t -> bool
+    (** [is_suffix ~suffix t] returns true if [suffix] is a suffix of [t]. *)
+
+    val prefix: uns -> t -> t
+    (** [prefix i t] returns the prefix of [t] comprising [i] codepoints. *)
+
+    val suffix: uns -> t -> t
+    (** [suffix i t] returns the suffix of [t] comprising [i] codepoints. *)
+
+    val chop_prefix: prefix:t -> t -> t option
+    (** [chop_prefix ~prefix t] returns [t] absent [prefix], or [None] if [prefix] is not a valid
+        prefix of [t]. *)
+
+    val chop_prefix_hlt: prefix:t -> t -> t
+    (** [chop_prefix_hlt ~prefix t] returns [t] absent [prefix], or halts if [prefix] is not a valid
+        prefix of [t]. *)
+
+    val chop_suffix: suffix:t -> t -> t option
+    (** [chop_suffix ~suffix t] returns [t] absent [suffix], or [None] if [suffix] is not a valid
+        suffix of [t]. *)
+
+    val chop_suffix_hlt: suffix:t -> t -> t
+    (** [chop_suffix_hlt ~suffix t] returns [t] absent [suffix], or halts if [suffix] is not a valid
+        suffix of [t]. *)
+
+    val lstrip: ?drop:(codepoint -> bool) -> t -> t
+    (** [lstrip ~drop t] returns [t] absent the prefix codepoints for which [drop] returns [true].
+        The default [drop] strips tab (['\t']), newline (['\n']), carriage return (['\r']), and
+        space ([' ']). *)
+
+    val rstrip: ?drop:(codepoint -> bool) -> t -> t
+    (** [rstrip ~drop t] returns [t] absent the suffix codepoints for which [drop] returns [true].
+        The default [drop] strips tab (['\t']), newline (['\n']), carriage return (['\r']), and
+        space ([' ']). *)
+
+    val strip: ?drop:(codepoint -> bool) -> t -> t
+    (** [strip ~drop t] returns [t] absent the prefix and suffix codepoints for which [drop] returns
+        [true]. The default [drop] strips tab (['\t']), newline (['\n']), carriage return (['\r']),
+        and space ([' ']). *)
+
+    val split_fold_until: init:'accum -> on:(codepoint -> bool) -> f:('accum -> t -> 'accum * bool)
+      -> t -> 'accum
+    (** [split_fold_until ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in left to
+        right order based on initial value [init], until [f] returns [accum, true], or until all
+        slices have been folded. *)
+
+    val split_fold_right_until: init:'accum -> on:(codepoint -> bool)
+      -> f:(t -> 'accum -> 'accum * bool) -> t -> 'accum
+    (** [split_fold_right_until ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in
+        right to left order based on initial value [init], until [f] returns [accum, true], or until
+        all slices have been folded. *)
+
+    val split_fold: init:'accum -> on:(codepoint -> bool) -> f:('accum -> t -> 'accum) -> t
+      -> 'accum
+    (** [split_fold ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in left to right
+        order based on initial value [init]. *)
+
+    val split_fold_right: init:'accum -> on:(codepoint -> bool) -> f:(t -> 'accum -> 'accum) -> t
+      -> 'accum
+    (** [split_fold_right ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in right
+        to left order based on initial value [init]. *)
+
+    val lines_fold: init:'accum -> f:('accum -> t -> 'accum) -> t -> 'accum
+    (** [lines_fold ~init ~f t] splits [t] into lines separated by ["\r\n"] or ["\n"], which [f]
+        folds in left to right order based on initial value [init]. *)
+
+    val lines_fold_right: init:'accum -> f:(t -> 'accum -> 'accum) -> t -> 'accum
+    (** [lines_fold_right ~init ~f t] splits [t] into lines separated by ["\r\n"] or ["\n"], which
+        [f] folds in right to left order based on initial value [init]. *)
+
+    val lsplit2: on:codepoint -> t -> (t * t) option
+    (** [lsplit2 ~on t] splits [t] into two slices at the leftmost codepoint for which [on] returns
+        [true], or returns [None] if [on] never returns [true]. *)
+
+    val lsplit2_hlt: on:codepoint -> t -> t * t
+    (** [lsplit2_hlt ~on t] splits [t] into two slices at the leftmost codepoint for which [on]
+        returns [true], or halts if [on] never returns [true]. *)
+
+    val rsplit2: on:codepoint -> t -> (t * t) option
+    (** [rsplit2 ~on t] splits [t] into two slices at the rightmost codepoint for which [on] returns
+        [true], or returns [None] if [on] never returns [true]. *)
+
+    val rsplit2_hlt: on:codepoint -> t -> t * t
+    (** [rsplit2_hlt ~on t] splits [t] into two slices at the rightmost codepoint for which [on]
+        returns [true], or halts if [on] never returns [true]. *)
+
+    (** Slice comparison operators. *)
+    module O : sig
+      type nonrec t = t
+
+      include CmpableIntf.SMonoInfix with type t := t
+    end
   end
 end
 
@@ -328,9 +360,9 @@ module Seq : sig
       function returns blength of the remaining sequence; the next function returns (base, past)
       cursors for the next string slice which is copied into to_string. *)
   module Slice : sig
-    module Make (T : SeqIntf.IMonoDef with type elm := Slice.t) :
+    module Make (T : SeqIntf.IMonoDef with type elm := C.Slice.t) :
       S with type t := T.t
-    module MakeRev (T : SeqIntf.IMonoDef with type elm := Slice.t) :
+    module MakeRev (T : SeqIntf.IMonoDef with type elm := C.Slice.t) :
       S with type t := T.t
   end
 
@@ -344,15 +376,6 @@ module Seq : sig
       S with type t := T.t
   end
 end
-
-val blength: t -> uns
-(** Byte length. *)
-
-val clength: t -> uns
-(** Codepoint length. *)
-
-val get: uns -> t -> byte
-(** Get byte at index. *)
 
 val init: ?blength:uns -> range -> f:(uns -> codepoint) -> t
 (** [init ~blength crange ~f:(fun i -> ...)] creates a string of given byte length [~blength] and
@@ -419,38 +442,38 @@ val rev: t -> t
 val ( ^ ): t -> t -> t
 (** [s0 ^ s1] is equivalent to [concat [a; b]]. *)
 
-val lfind: ?base:Cursor.t -> ?past:Cursor.t -> codepoint -> t -> Cursor.t option
+val lfind: ?base:C.Cursor.t -> ?past:C.Cursor.t -> codepoint -> t -> C.Cursor.t option
 (** [lfind cp t] returns a cursor to the leftmost instance of [cp] in [t], or [None] if [cp] is
     absent. *)
 
-val lfind_hlt: ?base:Cursor.t -> ?past:Cursor.t -> codepoint -> t -> Cursor.t
+val lfind_hlt: ?base:C.Cursor.t -> ?past:C.Cursor.t -> codepoint -> t -> C.Cursor.t
 (** [lfind_hlt cp t] returns a cursor to the leftmost instance of [cp] in [t], or halts if [cp] is
     absent. *)
 
-val contains: ?base:Cursor.t -> ?past:Cursor.t -> codepoint -> t -> bool
+val contains: ?base:C.Cursor.t -> ?past:C.Cursor.t -> codepoint -> t -> bool
 (** [contains cp t] returns [true] if [t] contains [cp], [false] otherwise. *)
 
-val rfind: ?base:Cursor.t -> ?past:Cursor.t -> codepoint -> t -> Cursor.t option
+val rfind: ?base:C.Cursor.t -> ?past:C.Cursor.t -> codepoint -> t -> C.Cursor.t option
 (** [rfind cp t] returns a cursor to the rightmost instance of [cp] in [t], or [None] if [cp] is
     absent. *)
 
-val rfind_hlt: ?base:Cursor.t -> ?past:Cursor.t -> codepoint -> t -> Cursor.t
+val rfind_hlt: ?base:C.Cursor.t -> ?past:C.Cursor.t -> codepoint -> t -> C.Cursor.t
 (** [rfind_hlt cp t] returns a cursor to the rightmost instance of [cp] in [t], or halts if [cp] is
     absent. *)
 
-val substr_find: ?base:Cursor.t -> pattern:t -> t -> Cursor.t option
+val substr_find: ?base:C.Cursor.t -> pattern:t -> t -> C.Cursor.t option
 (** [substr_find ~base ~pattern t] returns a cursor to the leftmost [pattern] match past [base] in
     [t], or [None] if no match exists. [base] defaults to the beginning of [t]. *)
 
-val substr_find_hlt: ?base:Cursor.t -> pattern:t -> t -> Cursor.t
+val substr_find_hlt: ?base:C.Cursor.t -> pattern:t -> t -> C.Cursor.t
 (** [substr_find_hlt ~base ~pattern t] returns a cursor to the leftmost [pattern] match past [base]
     in [t], or halts if no match exists. [base] defaults to the beginning of [t]. *)
 
-val substr_find_all: may_overlap:bool -> pattern:t -> t -> Cursor.t list
+val substr_find_all: may_overlap:bool -> pattern:t -> t -> C.Cursor.t list
 (** [substr_find_all ~may_overlap ~pattern t] returns a list of cursors to the [pattern] matches in
     [t]. Non-leftmost overlapping matches are excluded if [may_overlap] is [false]. *)
 
-val substr_replace_first: ?base:Cursor.t -> pattern:t -> with_:t -> t -> t
+val substr_replace_first: ?base:C.Cursor.t -> pattern:t -> with_:t -> t -> t
 (** [subst_replace_first ~base ~pattern ~with_ t] returns a string with the first [pattern] match
     past [base] in [t], if any, replaced with [with_] in the result. [base] defaults to the
     beginning of [t]. *)
@@ -465,7 +488,7 @@ val is_prefix: prefix:t -> t -> bool
 val is_suffix: suffix:t -> t -> bool
 (** [is_suffix ~suffix t] returns true if [suffix] is a suffix of [t]. *)
 
-val pare: base:Cursor.t -> past:Cursor.t -> t -> t
+val pare: base:C.Cursor.t -> past:C.Cursor.t -> t -> t
 (** [pare ~base ~past t] returns a string comprised of the codepoint sequence in [\[base .. past)]
     of [t]. *)
 
@@ -543,4 +566,4 @@ module O : sig
 end
 
 (* Exposed for testing purposes only. *)
-val slice_pattern_pp: Format.formatter -> Slice.Pattern.t -> unit
+val slice_pattern_pp: Format.formatter -> C.Slice.Pattern.t -> unit

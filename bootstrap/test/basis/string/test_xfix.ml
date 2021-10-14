@@ -10,7 +10,7 @@ let test () =
     "«»";
   ] in
   List.iter strs ~f:(fun s ->
-    Range.iter (0L =:< (clength s + 2L)) ~f:(fun i ->
+    Range.iter (0L =:< (C.length s + 2L)) ~f:(fun i ->
       printf "prefix %a %a -> %a\n" pp s Uns.pp i pp (prefix i s);
       printf "suffix %a %a -> %a\n" pp s Uns.pp i pp (suffix i s);
     )

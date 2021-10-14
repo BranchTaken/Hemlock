@@ -1169,10 +1169,10 @@ end = struct
         end
       | Some (_, false, cursor') -> begin
           let mal = invalid_utf8 cursor cursor' t in
-          match String.Cursor.(ltag_cursor = (tl (container ltag_cursor))) with
+          match String.C.Cursor.(ltag_cursor = (tl (string ltag_cursor))) with
           | true -> fn (accum_mal mal body_accum) ltag cursor' t
           | false -> begin
-              let ltag_cp, ltag_cursor' = String.Cursor.next ltag_cursor in
+              let ltag_cp, ltag_cursor' = String.C.Cursor.next ltag_cursor in
               match Codepoint.(replacement = ltag_cp) with
               | true ->
                 fn_rtag (tag_accum_cp Codepoint.replacement rtag_accum) ltag_cursor' (accum_mal mal
@@ -1181,15 +1181,15 @@ end = struct
             end
         end
       | Some (cp, true, cursor') -> begin
-          match cp, String.Cursor.(ltag_cursor = (tl (container ltag_cursor))) with
+          match cp, String.C.Cursor.(ltag_cursor = (tl (string ltag_cursor))) with
           | cp, true when Codepoint.(cp = of_char '`') ->
             accept_rstring (tag_of_accum rtag_accum) saved_body_accum ltag cursor' t
           | cp, false when Codepoint.(cp = of_char '`') ->
-            fn_rtag tag_accum_empty (String.Cursor.hd ltag.tag) (accum_cp cp body_accum) body_accum
+            fn_rtag tag_accum_empty (String.C.Cursor.hd ltag.tag) (accum_cp cp body_accum) body_accum
               ltag cursor' t
           | _, true -> fn (accum_cp cp body_accum) ltag cursor' t
           | _, false -> begin
-              let ltag_cp, ltag_cursor' = String.Cursor.next ltag_cursor in
+              let ltag_cp, ltag_cursor' = String.C.Cursor.next ltag_cursor in
               match Codepoint.(cp = ltag_cp) with
               | true ->
                 fn_rtag (tag_accum_cp cp rtag_accum) ltag_cursor' (accum_cp cp body_accum)
@@ -1213,8 +1213,8 @@ end = struct
       | Some (cp, true, cursor') -> begin
           match cp with
           | cp when Codepoint.(cp = of_char '`') ->
-            fn_rtag tag_accum_empty (String.Cursor.hd ltag.tag) (accum_cp cp body_accum) body_accum
-              ltag cursor' t
+            fn_rtag tag_accum_empty (String.C.Cursor.hd ltag.tag) (accum_cp cp body_accum)
+              body_accum ltag cursor' t
           | _ -> fn (accum_cp cp body_accum) ltag cursor' t
         end
     end

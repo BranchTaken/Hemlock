@@ -36,7 +36,7 @@ module Slice : sig
   (** [of_codepoint codepoint] creates a slice of bytes corresponding to the UTF-8 encoding of
       [codepoint]. *)
 
-  val of_string_slice: String.Slice.t -> t
+  val of_string_slice: String.C.Slice.t -> t
   (** [of_string_slice slice] creates a slice of bytes corresponding to the UTF-8 encoding of
       [slice]. *)
 
@@ -69,7 +69,7 @@ val of_codepoint: codepoint -> t
 (** [of_codepoint codepoint] creates an array of bytes corresponding to the UTF-8 encoding of
     [codepoint]. *)
 
-val of_string_slice: String.Slice.t -> t
+val of_string_slice: String.C.Slice.t -> t
 (** [of_string_slice slice] creates a slice of bytes corresponding to the UTF-8 encoding of [slice].
 *)
 

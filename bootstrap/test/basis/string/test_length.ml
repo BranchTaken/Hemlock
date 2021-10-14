@@ -14,8 +14,8 @@ let test () =
   List.iter strs ~f:(fun s ->
     printf "s=%a, blength=%a, clength=%a, is_empty=%B\n"
       pp s
-      Uns.pp (blength s)
-      Uns.pp (clength s)
+      Uns.pp (B.length s)
+      Uns.pp (C.length s)
       (is_empty s)
   )
 

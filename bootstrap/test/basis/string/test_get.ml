@@ -13,10 +13,10 @@ let test () =
   ] in
   List.iter strs ~f:(fun s ->
     let rec fn i = begin
-      match Uns.(i = (blength s)) with
+      match Uns.(i = (B.length s)) with
       | true -> ()
       | false -> begin
-          printf " %a" Byte.pp_x (get i s);
+          printf " %a" Byte.pp_x (B.get i s);
           fn (Uns.succ i)
         end
     end in
