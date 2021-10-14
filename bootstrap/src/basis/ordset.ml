@@ -54,7 +54,7 @@ module T = struct
   let cursor_pp = Cursor.pp
 end
 include T
-include ContainerArray.MakePoly2Array(T)
+include Container.MakePoly2Index(T)
 
 let fold_until ~init ~f t =
   Ordmap.fold_until ~init ~f:(fun accum (k, _) -> f accum k) t

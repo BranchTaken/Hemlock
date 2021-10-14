@@ -143,7 +143,7 @@ module T = struct
     fn t limit
 end
 include T
-include ContainerCommon.MakePolyFold(T)
+include Container.MakePolyIter(T)
 
 let hash_fold hash_fold_a t state =
   foldi t ~init:state ~f:(fun i state elm ->

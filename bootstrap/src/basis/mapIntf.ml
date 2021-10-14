@@ -243,7 +243,7 @@ module type S = sig
   (** [to_alist t] folds [t] from right to left if ordered, or arbitrarily if unordered, as a
       {!type:('k * 'v) list}. *)
 
-  include ContainerArrayIntf.SPoly3Array
+  include ContainerIntf.SPoly3Index
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
 end
 

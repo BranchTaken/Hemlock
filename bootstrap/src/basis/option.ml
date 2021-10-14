@@ -102,13 +102,9 @@ module T = struct
   let length = function
     | None -> 0L
     | Some _ -> 1L
-
-  let is_empty t =
-    (length t) = 0L
 end
 include T
-include ContainerCommon.MakePolyFold(T)
-include ContainerArray.MakePolyArray(T)
+include Container.MakePolyIndex(T)
 
 let pp pp_a ppf = function
   | Some a -> Format.fprintf ppf "@[<h>Some@ %a@]" pp_a a

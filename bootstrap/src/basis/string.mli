@@ -59,7 +59,8 @@ module B : sig
       with type cursor := Cursor.t
       with type elm := byte
     include IdentifiableIntf.S with type t := t
-    include ContainerIntf.SMono with type t := t with type elm := byte
+    include ContainerIntf.SMonoIndex with type t := t with type elm := byte
+    include ContainerIntf.SMonoMem with type t := t with type elm := byte
 
     val get: uns -> t -> byte
     (** Get byte at index. *)
@@ -146,10 +147,8 @@ module C : sig
     (** [of_array ~blength codepoints] creates a slice of given byte length containing the ordered
         [codepoints]. [blength] must be accurate if specified. *)
 
-    include ContainerCommonIntf.SMonoFold with type t := t with type elm := codepoint
-    include ContainerCommonIntf.SMonoMem with type t := t with type elm := codepoint
-    include ContainerCommonIntf.SMonoLength with type t := t with type elm := codepoint
-    include ContainerArrayIntf.SMonoArray with type t := t with type elm := codepoint
+    include ContainerIntf.SMonoIndex with type t := t with type elm := codepoint
+    include ContainerIntf.SMonoMem with type t := t with type elm := codepoint
 
     val map: f:(codepoint -> codepoint) -> t -> t
     (** [map ~f t] creates a slice with codepoints mapped from [t]'s codepoints. *)
@@ -397,7 +396,8 @@ val of_array: ?blength:uns -> codepoint array -> t
 (** [of_array ~blength codepoints] creates a string of given byte length containing the ordered
     [codepoints]. [blength] must be accurate if specified. *)
 
-include ContainerIntf.SMono with type t := t with type elm := codepoint
+include ContainerIntf.SMonoIndex with type t := t with type elm := codepoint
+include ContainerIntf.SMonoMem with type t := t with type elm := codepoint
 
 val length: t -> uns [@@ocaml.deprecated "Use [bc]length instead"]
 (** Use {!blength} instead of [length], to keep the difference between byte length and codepoint

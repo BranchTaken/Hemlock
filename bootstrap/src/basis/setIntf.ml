@@ -159,7 +159,7 @@ module type S = sig
   (** [to_list t] folds [t] from right to left if ordered, or arbitrarily if unordered, as a
       {!type:'a list}. *)
 
-  include ContainerArrayIntf.SPoly2Array
+  include ContainerIntf.SPoly2Index
     with type ('a, 'cmp) t := ('a, 'cmp) t
 end
 

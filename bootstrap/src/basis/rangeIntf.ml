@@ -29,7 +29,8 @@ module type SRangeH = sig
   val past: t -> elm
   (** Element immediately past last element in range. *)
 
-  include ContainerIntf.SMono with type t := t with type elm := elm
+  include ContainerIntf.SMonoIndex with type t := t with type elm := elm
+  include ContainerIntf.SMonoMem with type t := t with type elm := elm
 
   val length: t -> l
   (** Number of elements in range. *)
@@ -57,7 +58,8 @@ module type SRangeF = sig
   val last: t -> elm
   (** Last element in range. *)
 
-  include ContainerIntf.SMono with type t := t with type elm := elm
+  include ContainerIntf.SMonoIndex with type t := t with type elm := elm
+  include ContainerIntf.SMonoMem with type t := t with type elm := elm
 
   val length: t -> l
   (** Number of elements in range. *)

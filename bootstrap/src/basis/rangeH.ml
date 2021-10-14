@@ -62,7 +62,7 @@ module Make_w (T : IntwIntf.SFCommon) (L : IntwIntf.SFU)
       | Cmp.Gt -> L.( - ) (TL.to_l t.base) (TL.to_l t.past)
   end
   include U
-  include ContainerCommon.MakeMonoFold(U)
+  include Container.MakeMonoIter(U)
 
   module V = struct
     module W = struct
@@ -74,8 +74,8 @@ module Make_w (T : IntwIntf.SFCommon) (L : IntwIntf.SFU)
         | Some u -> u
     end
 
-    include ContainerCommon.MakeMonoLength(W)
-    include ContainerArray.MakeMonoArray(W)
+    include Container.MakeMonoLength(W)
+    include Container.MakeMonoArray(W)
   end
   let is_empty = V.is_empty
   let to_array = V.to_array
@@ -144,7 +144,7 @@ module Make_nb (T : IntnbIntf.S) (L : IntnbIntf.SU) (TL : ToL with type t := T.t
       | Cmp.Gt -> L.( - ) (TL.to_l t.base) (TL.to_l t.past)
   end
   include U
-  include ContainerCommon.MakeMonoFold(U)
+  include Container.MakeMonoIter(U)
 
   module V = struct
     module W = struct
@@ -154,8 +154,8 @@ module Make_nb (T : IntnbIntf.S) (L : IntnbIntf.SU) (TL : ToL with type t := T.t
         L.widen (U.length t)
     end
 
-    include ContainerCommon.MakeMonoLength(W)
-    include ContainerArray.MakeMonoArray(W)
+    include Container.MakeMonoLength(W)
+    include Container.MakeMonoArray(W)
   end
   let is_empty = V.is_empty
   let to_array = V.to_array

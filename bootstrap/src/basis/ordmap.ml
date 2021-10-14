@@ -311,7 +311,7 @@ module T = struct
   let cursor_pp = Cursor.pp
 end
 include T
-include ContainerArray.MakePoly3Array(T)
+include Container.MakePoly3Index(T)
 
 let fold_until ~init ~f t =
   let rec fn accum f = function
