@@ -53,14 +53,11 @@ module AbstractToken : sig
     | Tok_as
     | Tok_assert
     | Tok_conceal
-    | Tok_do
-    | Tok_downto
     | Tok_effect
     | Tok_else
     | Tok_expose
     | Tok_external
     | Tok_false
-    | Tok_for
     | Tok_fun
     | Tok_function
     | Tok_if
@@ -75,12 +72,10 @@ module AbstractToken : sig
     | Tok_or
     | Tok_rec
     | Tok_then
-    | Tok_to
     | Tok_true
     | Tok_type
     | Tok_val
     | Tok_when
-    | Tok_while
     | Tok_with
 
     (* Operators. *)
@@ -93,16 +88,24 @@ module AbstractToken : sig
     | Tok_plus_op of string
     | Tok_minus_op of string
     | Tok_at_op of string
+    | Tok_caret_op of string
     | Tok_dollar_op of string
     | Tok_lt_op of string
     | Tok_eq_op of string
     | Tok_gt_op of string
     | Tok_bar_op of string
+    | Tok_colon_op of string
+    | Tok_dot_op of string
 
     (* Punctuation. *)
     | Tok_tilde
     | Tok_qmark
     | Tok_minus
+    | Tok_lt
+    | Tok_lt_eq
+    | Tok_eq
+    | Tok_lt_gt
+    | Tok_gt_eq
     | Tok_gt
     | Tok_comma
     | Tok_dot

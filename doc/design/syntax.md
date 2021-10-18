@@ -96,7 +96,8 @@ Hemlock uses various symbols as punctuation:
 ```hemlock
 . , ; ;; : :: :=
 ( ) [ ] [| |] { } {| |}
-| \ ' ^ & !
+| \ ' ^ < <= = <> >= >
+! &
 ~ ?
 ->
 ```
@@ -106,8 +107,60 @@ Hemlock uses various symbols as punctuation:
 In addition to punctuation, Hemlock supports an extensible set of operators. Operators are either
 prefix or infix, as determined by the leading codepoint.
 
-- Prefix operator: `[~?][-+*/%@$<=>|:.~?]+`
-- Infix operator: `[-+*/%@$<=>|:.][-+*/%@$<=>|:.~?]*` excluding punctuation symbols
+- Prefix operator: `[~?][-+*/%@^$<=>|:.~?]+`
+- Infix operator: `[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*` excluding punctuation symbols
+
+### Prececence and associativity
+
+Precedence and associativity varies somewhat by use for some punctuation. For example, the
+precedence of `>` is not important when used as a prefix for an effect name binding as in `(>e:
+effect)`, because there are no nearby syntactic elements for which precedence can change how valid
+code is parsed.
+
+Type/binding construction:
+
+| Operator      | Associativity |
+| :-----------: | :-----------: |
+| `,`           | —             |
+| `->`          | right         |
+| `as`          | —             |
+| `!`, `&`      | —             |
+| `'`, `^`, `>` | —             |
+
+Pattern construction:
+
+| Operator            | Associativity |
+| :-----------------: | :-----------: |
+| `lazy`              | —             |
+| Variant application | right         |
+| `::`                | right         |
+| `,`                 | —             |
+| `|`                 | left          |
+| `as`                | —             |
+
+Expressions:
+
+| Operator                                               | Associativity |
+| :----------------------------------------------------: | :-----------: |
+| `.`                                                    | —             |
+| Function/variant application, `assert`, `lazy`         | left          |
+| `-` (prefix), `~`..., `?`...                           | —             |
+| `'` (prefix), `^` (prefix), `>` (prefix)               | —             |
+| `**`...                                                | right         |
+| `*`..., `/`..., `%`...                                 | left          |
+| `+`..., `-`...                                         | left          |
+| `::`, `:`...                                           | right         |
+| `@`..., `^`...                                         | right         |
+| `=`..., `<`..., `>`..., `\|`..., `$`..., `.`...        | left          |
+| `and`                                                  | right         |
+| `or`                                                   | right         |
+| `,`                                                    | —             |
+| `:=`                                                   | right         |
+| `if`                                                   | —             |
+| `;`, `;;`                                              | right         |
+| `import`                                               | —             |
+| `open`                                                 | —             |
+| `let`, `match`, `fun`, `function`, `expose`, `conceal` | —             |
 
 ### Keyword
 
@@ -115,16 +168,14 @@ The following words are keywords which are used as syntactic elements, and canno
 purposes.
 
 ```hemlock
-and      external  match       val
-also     false     mutability  when
-as       for       of          while
-assert   fun       open        with
-conceal  function  or
-do       if        rec
-downto   import    then
-effect   include   to
-else     lazy      true
-expose   let       type
+and         external    let         true
+also        false       match       type
+as          fun         mutability  val
+assert      function    of          when
+conceal     if          open        with
+effect      import      or
+else        include     rec
+expose      lazy        then
 ```
 
 ### Identifier
@@ -286,10 +337,10 @@ Examples:
 '\\'
 ```
 
-Note that `'` is also used as the sigil for type parameters, e.g. in `'a t`. Type parameter sigils
-and codepoint literal delimiters never cause grammar ambiguity, but invalid source code may result
-in surprising syntax errors because type parameters and codepoint literals have overlapping valid
-prefixes.
+Note that `'` is also used as the sigil for type parameters, e.g. in `type 'a t:t a`. Type parameter
+sigils and codepoint literal delimiters never cause grammar ambiguity, but invalid source code may
+result in surprising syntax errors because type parameters and codepoint literals have overlapping
+valid prefixes.
 
 ### String
 
