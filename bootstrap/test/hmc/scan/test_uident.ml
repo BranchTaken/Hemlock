@@ -22,14 +22,11 @@ let test () =
   scan_str "as";
   scan_str "assert";
   scan_str "conceal";
-  scan_str "do";
-  scan_str "downto";
   scan_str "effect";
   scan_str "else";
   scan_str "expose";
   scan_str "external";
   scan_str "false";
-  scan_str "for";
   scan_str "fun";
   scan_str "function";
   scan_str "if";
@@ -44,12 +41,10 @@ let test () =
   scan_str "or";
   scan_str "rec";
   scan_str "then";
-  scan_str "to";
   scan_str "true";
   scan_str "type";
   scan_str "val";
   scan_str "when";
-  scan_str "while";
   scan_str "with";
   printf "@]"
 

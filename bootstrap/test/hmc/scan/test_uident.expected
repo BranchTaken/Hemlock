@@ -172,12 +172,6 @@
 {|conceal|}
   [1:0..1:7) : <Tok_conceal>
   [1:7..1:7) : <Tok_end_of_input>
-{|do|}
-  [1:0..1:2) : <Tok_do>
-  [1:2..1:2) : <Tok_end_of_input>
-{|downto|}
-  [1:0..1:6) : <Tok_downto>
-  [1:6..1:6) : <Tok_end_of_input>
 {|effect|}
   [1:0..1:6) : <Tok_effect>
   [1:6..1:6) : <Tok_end_of_input>
@@ -193,9 +187,6 @@
 {|false|}
   [1:0..1:5) : <Tok_false>
   [1:5..1:5) : <Tok_end_of_input>
-{|for|}
-  [1:0..1:3) : <Tok_for>
-  [1:3..1:3) : <Tok_end_of_input>
 {|fun|}
   [1:0..1:3) : <Tok_fun>
   [1:3..1:3) : <Tok_end_of_input>
@@ -238,9 +229,6 @@
 {|then|}
   [1:0..1:4) : <Tok_then>
   [1:4..1:4) : <Tok_end_of_input>
-{|to|}
-  [1:0..1:2) : <Tok_to>
-  [1:2..1:2) : <Tok_end_of_input>
 {|true|}
   [1:0..1:4) : <Tok_true>
   [1:4..1:4) : <Tok_end_of_input>
@@ -253,9 +241,6 @@
 {|when|}
   [1:0..1:4) : <Tok_when>
   [1:4..1:4) : <Tok_end_of_input>
-{|while|}
-  [1:0..1:5) : <Tok_while>
-  [1:5..1:5) : <Tok_end_of_input>
 {|with|}
   [1:0..1:4) : <Tok_with>
   [1:4..1:4) : <Tok_end_of_input>
