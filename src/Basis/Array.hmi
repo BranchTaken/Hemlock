@@ -286,3 +286,11 @@ val zip 'a 'b ^t: _&t a -> _&t b -> ^&t (a, b)
 
 val unzip 'a 'b ^ta ^tb: _&t (a, b) -> (^ta&t a, ^tb&t b)
 ``Create two arrays with the unpaired elements of the input pair array.``
+
+val fmt 'a >e: ?alt:bool -> ?width:uns -> (a -> Fmt.Formatter e -> Fmt.Formatter e) -> _&t a
+  -> Fmt.Formatter e -> Fmt.Formatter e
+`|`fmt ~alt ~width fmt_elm t Formatter` formats the elements of `t` using `fmt_elm` to create a
+ |syntactically valid rendition of `t` (assuming that `fmt_elm` produces syntactically valid
+ |formatting). If `alt=true`, `width` is interpreted as the indentation level for the array, and
+ |each element is printed on a separate line with `width + 4` leading spaces of indentation.
+`
