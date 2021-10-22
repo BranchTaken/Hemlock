@@ -540,7 +540,6 @@ let importM () =
     (lazy (makeM ())) |> Lazy.force
 ```
 
-
 #### `open`, `include`, and `import`
 
 Outside `Tree`, the visible contents can be referred to via dot notation, e.g. `Tree.value`. It is

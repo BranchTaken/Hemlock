@@ -257,7 +257,7 @@ Real numbers use the [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754) binary f
 format. Real number literals are distinct from integer literals in at least one of the following
 ways:
 
-- Decimal point
+- Radix point
 - Exponent
 - Type suffix
 
@@ -278,7 +278,7 @@ or from a decimal mantissa by an `e` codepoint. The optional exponent sign is in
 exponent is always expressed as a decimal value, where digits are in `[0-9]`, but the implicit base
 of the exponent depends on the mantissa's base prefix:
 
-- Binary (`0b<mantissa>p<exponent>`): *mantissa*<sub>2</sub> × 2<sup>*exponent*<sub>10</sub></sup>
+- Binary (`0b<mantissa>p<exponent>`): *mantissa<sub>2</sub>* × 2<sup>*exponent<sub>10</sub>*</sup>
 - Octal (`0o<mantissa>p<exponent>`): *mantissa<sub>8</sub>* × 2<sup>*exponent<sub>10</sub>*</sup>
 - Decimal (`<mantissa>e<exponent>`): *mantissa<sub>10</sub>* × 10<sup>*exponent<sub>10</sub>*</sup>
 - Hexadecimal (`0x<mantissa>p<exponent>`): *mantissa<sub>16</sub>* ×
@@ -347,24 +347,6 @@ valid prefixes.
 String tokens have three distinct syntaxes, all of which are useful depending on contents and
 context:
 
-- **Interpolated** strings are delimited by `"` codepoints, and their contents are interpolated for
-  a limited set of codepoint sequences.
-  ```hemlock
-  "Interpolated string without any interpolated sequences"
-  ```
-  The following codepoint sequences are interpolated as indicated:
-  + `\u{...}`: Hexadecimal-encoded codepoint, e.g. `\u{fffd}` is the `�` replacement codepoint.
-  + `\t`: Tab (`\u{9}`).
-  + `\n`: Newline, aka line feed (`\u{a}`).
-  + `\r`: Return (`\u{d}`).
-  + `\"`: Double quote.
-  + `\\`: Backslash.
-  + `\␤`: Newline omitted. This allows a string literal to be broken across lines without the line
-    breaks becoming part of the string.
-    ```hemlock
-    "Single-line \
-    interpolated string"
-    ```
 - **Raw** strings are delimited by matching `` `([^|`][^`]*)?` `` sequences, where the optional tag
   between the `` ` `` codepoints can be used to distinguish the delimiters from string contents.
   ```hemlock
@@ -404,6 +386,192 @@ context:
   `|Two-line bar-margin string
    |
   `
+  ```
+- **Interpolated** strings are delimited by `"` codepoints, and their contents are interpolated for
+  a limited set of codepoint sequences.
+  ```hemlock
+  "Interpolated string without any interpolated sequences"
+  ```
+  The following codepoint sequences are interpolated as indicated:
+  + `\u{...}`: Hexadecimal-encoded codepoint, e.g. `\u{fffd}` is the `�` replacement codepoint.
+  + `\t`: Tab (`\u{9}`).
+  + `\n`: Newline, aka line feed (`\u{a}`).
+  + `\r`: Return (`\u{d}`).
+  + `\"`: Double quote.
+  + `\\`: Backslash.
+  + `\%`: Percent.
+  + `\␤`: Newline omitted. This allows a string literal to be broken across lines without the line
+    breaks becoming part of the string.
+    ```hemlock
+    "Single-line \
+    interpolated string"
+    ```
+
+  #### Formatting
+
+  Furthermore, interpolated strings provide syntactic sugar for formatting. Format specifiers
+  support unrestricted embedded code expressions, which means that interpolated strings can
+  nest arbitrarily deeply. The delimiters for embedded expressions are unambiguous relative to all
+  other language syntax, which enables tokenization without parser feedback. The format specifiers
+  include enough explicit type information that desugaring requires no type inference. Nonetheless,
+  the scanner requires considerable sophistication to track nesting and state transitions between
+  the tokens which together logically comprise one interpolated string.
+
+  ##### Supported types
+
+  The following types are supported by format specifiers:
+
+  + `bool`
+  + Numeric types (`uns`, `int`, `[ui](8|16|32|64|128|256|512)`, `nat`, `zint`, `real`, `r(32|64)`)
+  + `codepoint`
+  + `string`
+  + Partially applied formatter functions of type `(>e:effect) -> Fmt.Formatter e >e-> Fmt.Formatter
+    e`
+
+  Composite polymorphic types like `type List 'a: List a` provide formatters which can be composed
+  to produce partially applied formatter functions, as shown later.
+
+  ##### Desugaring
+
+  The following example shows how a string containing format specifiers is desugared.
+
+  ```hemlock
+  # Formatted string.
+  "Hello %s(^"Fred"^), this is %b(^true^)ly a list: %f(^List.fmt Uns.fmt [0; 1; 2]^)"
+
+  # Desugared form.
+  Basis.String.Fmt.empty
+    |> Basis.Fmt.fmt "Hello "
+    |> Basis.String.fmt ("Fred")
+    |> Basis.Fmt.fmt ", this is "
+    |> Basis.Bool.fmt (true)
+    |> Basis.Fmt.fmt "ly a list: "
+    |> (List.fmt Uns.fmt [0; 1; 2])
+    |> Basis.Fmt.to_string
+  ```
+
+  Clearly a sufficiently compatible `Basis` module must be linked with the application for
+  compilation to succeed in the presence of format specifiers. Additionally, the embedded code must
+  be properly indented if broken across multiple lines. The outermost indentation level for embedded
+  code is one level deeper than that of the enclosing string. Note that the seemingly superfluous
+  parentheses surrounding the embedded expressions assure that invalid indentation within embedded
+  code will cause a localized syntax error rather than allowing for potentially confusing syntax
+  errors in code that follows.
+
+  ```hemlock
+      # Formatted string.
+      let s = "4-space indentation, %s(^
+          "8-space indentation, %u(^
+              12
+            ^)-space indentation"
+        ^)."
+
+      # Desugared form.
+      let s = Basis.String.Fmt.empty
+        |> Basis.Fmt.fmt "4-space indentation, "
+        |> Basis.String.fmt (
+                Basis.String.Fmt.empty
+                  |> Basis.Fmt.fmt "8-space indentation, "
+                  |> Basis.Uns.fmt (
+                    12
+                  )
+                  |> Basis.Fmt.fmt "-space indentation"
+                  |> Basis.Fmt.to_string
+        )
+        |> Basis.Fmt.fmt "."
+        |> Basis.Fmt.to_string
+  ```
+
+  ##### Syntax
+
+  A format specifier can be embedded in an interpolated string as `%<specifier>(^...^)`. Specifier
+  options are desugared to optional function parameters, e.g. `#` becomes `~alt:true`. Some
+  specifiers are only supported by a subset of types, e.g. zero padding will cause a compilation
+  error if used with a string value (`"%0s(^"hello"^)"`). Formatter functions, whether those
+  implemented in `Basis` or in the application, may implement parameter support for any desired
+  combination of parameters; in all cases specifying parameters which are not supported by the
+  formatter function being called will cause compilation failure.
+
+  Format specifiers are of the form:
+  ```
+  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<base>][<notation>][<pretty>][<type>](^...^)
+  ```
+  + `'<pad>'` (`?pad:codepoint`): Pad with specified codepoint (default: `' '`; complete codepoint
+    literal syntax supported)
+  + `<just>` (`?just:Fmt.just`): Justify (default: `Fmt.Right`)
+    * `<`: Left
+    * `^`: Center
+    * `>`: Right
+  + `<sign>` (`?sign:Fmt.sign`): Sign (default: `Fmt.Implicit`)
+    * `+`: Explicit sign, even when positive
+    * `_`: Space in place of sign if sign is non-negative
+  + `<alt>` (`?alt:bool`): `#` enables alternate formatting (default: `false`)
+    * Numeric types: Prefix with base, separate digit groups with `_`
+      - Binary: `0b` prefix, groups of 8
+      - Octal: `0o` prefix, groups of 3
+      - Decimal: No prefix, groups of 3
+      - Hexadecimal: `0x` prefix, groups of 4
+    * String: ``` ``raw`` ```, with auto-generated ``` `tag`...`tag` ``` as needed
+    * Container types (`list a`, `array a`): Multi-line block-based formatting, where `width` is
+      interpreted as the starting indentation
+  + `<zpad>` (`?zpad:bool)`: `0` enables padding numeric type with leading zeros between sign/prefix
+    and non-zero digits (default: `false`)
+  + `<width>` (`?width:uns`): Minimum width (default: `0`)
+    * `42`: Fixed width in codepoints
+    * `*`: Parametric width in codepoints, e.g. `%*(^width^)u(^some_u^)`
+  + `.=?<precision>` (`?pmode:Fmt.pmode`, `?precision:uns`): Number of digits past the radix point,
+    where `=` enables `pmode=Fmt.Fixed` precision mode, i.e. the potential for trailing zeros (default:
+    `pmode=Fmt.Limited`, `precision`: `52`/`18`/`15`/`13` or `53`/`18`/`3`/`14` for
+    binary/octal/decimal/hexadecimal normalized or radix point form, respectively)
+    * `.=3`: Fixed precision
+    * `.3`: Limited precision
+    * `.*`: Parametric limited precision in digits, e.g. `%*(^width^).*(^precision^)r(^some_r^)`
+  + `<base>` (`?base:Fmt.base`): Numerical base (default: `Fmt.Dec`)
+    * `b`: Binary
+    * `o`: Octal
+    * `d`: Decimal
+    * `x`: Hexadecimal
+  + `<notation>` (`?notation:Fmt.notation`): Real-specific notation (default: `Fmt.Compact`)
+    * `m`: Normalized scientific form, i.e. decimal exponential or binary floating point notation
+      (mnemonic: Mantissa × base <sup>exponent</sup>)
+    * `a`: Radix point form (mnemonic: rAdix point)
+    * `c`: Trailing zeros omitted, and the radix point omitted in normalized form unless followed by
+      non-zero mantissa digits (mnemonic: Compact)
+      - Binary/octal/hexadecimal with unspecified precision: Normalized form
+      - Otherwise: The more compact of normalized vs radix point forms
+  + `<pretty>` (`?pretty:bool`): `p` enables pretty-printing as if a lexical token (default:
+    `false`)
+    * Numeric types: Append type suffix
+    * Codepoint: `'c'`, special codepoints escaped
+    * String: `"some string"`, special codepoints escaped
+  + `<type>`: Type abbreviation
+    * `b`: `bool` (`%b(^...^)` is unambiguous with respect to e.g. binary-formatted `uns` —
+      `%bu(^...^)`)
+    * `[ui](8|16|32|64|128|256|512)?`, `z`, `n`, `r(32|64)?`: Numeric type of corresponding literal
+      suffix
+    * `c`: `codepoint` (`%c(^...^)` is unambiguous with respect to e.g. compact-formatted `real` —
+      `%cr(^...^)`)
+    * `s`: `string`
+    * `f`: Partially applied formatter of type `(>e:effect) -> Fmt.Formatter e >e-> Fmt.Formatter e`
+
+  Examples:
+
+  ```hemlock
+  "%s(^name^)"
+  "%#xu(^age^)"
+  "%u(^succ age^)"
+  "%pz(^x^)"
+  "%^50f(^List.fmt String.fmt children^)"
+  "%^50f(^List.fmt String.fmt (List.mapi children ~f:(fun i child ->
+      "%u(^succ i^):%s(^child^)"
+    ))^)"
+  "%f(^(List.fmt String.fmt) children^)"
+  "%016#xu(^some_uns^)"
+  "%'␠'^*(^page_width^)s(^title^)\n"
+  "%'␠'^s(^title^)\n"
+  "(%'*'98s(^""^))" # Length-100 "(**...**)" string.
+  "%#xu(^x^) > %#xu(^y^) -> %b(^x > y^)"
+  "%#bu(^x^) %#ou(^x^) %#u(^x^) %#xu(^x^)"
   ```
 
 ## Line directives
