@@ -922,6 +922,29 @@ let unzip t =
     let t1 = map ~f:(fun (_, b) -> b) t
     t0, t1
 
+let fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
+  (fmt_a:(a -> Fmt.Formatter e -> Fmt.Formatter e)) t (Formatter:Fmt.Formatter e)
+  : (Fmt.Formatter e) =
+    foldi ~init:
+      (Formatter |> Fmt.fmt "[|")
+      ~f:fun i Formatter elm ->
+        Formatter
+          |> (fun Formatter ->
+            match alt with
+            | false ->
+                match i with
+                | 0 -> Formatter
+                | _ -> Formatter |> Fmt.fmt "; "
+            | true -> Formatter |> Fmt.fmt "\n%*(^width + 4^)s(^""^)"
+          )
+          |> fmt_a elm
+      |> (fun Formatter ->
+        match alt with
+        | false -> Formatter
+        | true -> Formatter |> Fmt.fmt "\n%*(^width + 2^)s(^""^)"
+      )
+      |> Fmt.fmt "|]"
+
 let pp pp_elm ppf t =
     let open Format
     fprintf ppf "@[<h>[|";
@@ -936,26 +959,32 @@ let pp pp_elm ppf t =
  *)
 
 let%expect_test "cursor" =
-    let open Format
     let rec fn arr hd cursor tl =
         let index = Cursor.index cursor
-        printf "index=%a" Uns.pp index
-        printf ", container %a arr"
-          Cmp.pp (cmp Uns.cmp (Cursor.container cursor) arr)
         let hd_cursor = Cursor.cmp hd cursor
-        printf ", hd %a cursor" Cmp.pp hd_cursor
         let cursor_tl = Cursor.cmp cursor tl
-        printf ", cursor %a tl" Cmp.pp cursor_tl
-        let () = match hd_cursor with
-            | Lt -> printf ", lget=%a" Uns.pp (Cursor.lget cursor)
-            | Eq -> printf ", lget=_"
+        File.Fmt.Stdout
+          |> Fmt.fmt
+          "index=%u(^
+            index
+          ^), container %f(^
+            Cmp.fmt (cmp Uns.cmp (Cursor.container cursor))
+          ^) arr, hd %f(^\
+            Cmp.fmt hd_cursor
+          ^) cursor, cursor %f(^
+            Cmp.fmt cursor_tl
+          ^) tl, lget=%s(^
+            match hd_cursor with
+            | Lt -> "%u(^Cursor.lget cursor^)"
+            | Eq -> "_"
             | Gt -> not_reached ()
-        let () = match cursor_tl with
-            | Lt -> printf ", rget=%a" Uns.pp (Cursor.rget cursor)
-            | Eq -> printf ", rget=_"
+          ^), rget=%s(^
+            match cursor_tl with
+            | Lt -> "%u(^Cursor.rget cursor^)"
+            | Eq -> "_"
             | Gt -> not_reached ()
-        printf "\n"
-
+          ^)\n"
+          |> ignore
         let length = length arr
         assert (Cursor.(=) (Cursor.seek (Uns.to_sint index) hd) cursor)
         assert (Cursor.(=) hd (Cursor.seek (-(Uns.to_sint index)) cursor))
@@ -974,13 +1003,12 @@ let%expect_test "cursor" =
         [|0; 1|]
         [|0; 1; 2|]
       ]
-    printf "@[<h>"
     List.iter arrs ~f:(fun arr ->
-        printf "--- %a ---\n" (pp Uns.pp) arr
+        File.Fmt.Stdout |> Fmt.fmt "--- %f(^fmt Uns.fmt arr^) ---" |> ignore
         let hd = Cursor.hd arr
         fn arr hd hd (Cursor.tl arr)
       )
-    printf "@]"
+    let _ = File.Fmt.(flush Stdout)
 
     [%expect``
 --- [||] ---
