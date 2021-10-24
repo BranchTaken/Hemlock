@@ -1,0 +1,13 @@
+-inf
+[_-inf] %r
+[_-inf] %+r
+[_-inf] %_r
+inf
+[__inf] %r
+[_+inf] %+r
+[_ inf] %_r
+nan
+[__nan] %r
+[__nan] %+r
+[__nan] %_r
+0x079b_3659_51c8_8b16_fd32_8259_242f_03a4u128

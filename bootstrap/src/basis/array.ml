@@ -518,14 +518,14 @@ let join ?sep tlist =
     | Some sep -> sep, length sep
   in
   let _, tlist_length = List.fold tlist ~init:(0L, 0L) ~f:(fun (i, accum) list ->
-      let i' = Uns.succ i in
-      let sep_len' = match i with
-        | 0L -> 0L
-        | _ -> sep_len
-      in
-      let accum' = accum + sep_len' + (length list) in
-      i', accum'
-    ) in
+    let i' = Uns.succ i in
+    let sep_len' = match i with
+      | 0L -> 0L
+      | _ -> sep_len
+    in
+    let accum' = accum + sep_len' + (length list) in
+    i', accum'
+  ) in
   ArrayJoin.(to_array (init tlist_length sep tlist))
 
 let concat t0 t1 =
@@ -1123,6 +1123,39 @@ let unzip t =
   let t0 = map ~f:(fun (a, _) -> a) t in
   let t1 = map ~f:(fun (_, b) -> b) t in
   t0, t1
+
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
+  (fmt_a:('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))) t
+  ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+  foldi t
+    ~init:((module Formatter) |> Fmt.fmt "[|")
+    ~f:(fun i formatter elm ->
+      formatter
+      |> (fun formatter ->
+        match alt with
+        | false -> begin
+            match i with
+            | 0L -> formatter
+            | _ -> formatter |> Fmt.fmt "; "
+          end
+        | true -> begin
+            formatter
+            |> Fmt.fmt "\n"
+            |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 4L) ""
+          end
+      )
+      |> fmt_a elm
+    )
+  |> (fun formatter ->
+    match alt with
+    | false -> formatter
+    | true -> begin
+        formatter
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 2L) ""
+      end
+  )
+  |> Fmt.fmt "|]"
 
 let pp pp_elm ppf t =
   let open Format in

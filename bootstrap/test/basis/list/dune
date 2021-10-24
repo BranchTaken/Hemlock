@@ -5,6 +5,7 @@
   test_cmp_length
   test_cmp_length_with
   test_concat_rev_concat
+  test_fmt
   test_foldi2
   test_foldi2_until
   test_hash_fold

@@ -1,23 +1,28 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let test arr x = begin
     let arr_x = append x arr in
     let x_arr = prepend x arr in
-    printf "%a %a: append -> %a, prepend -> %a\n"
-      (pp Uns.pp) arr
-      Uns.pp x
-      (pp Uns.pp) arr_x
-      (pp Uns.pp) x_arr
+    let _ =
+      File.Fmt.stdout
+      |> fmt Uns.fmt arr
+      |> Fmt.fmt " "
+      |> Uns.fmt x
+      |> Fmt.fmt ": append -> "
+      |> fmt Uns.fmt arr_x
+      |> Fmt.fmt ", prepend -> "
+      |> fmt Uns.fmt x_arr
+      |> Fmt.fmt "\n"
+    in
+    ()
+
   end in
-  printf "@[<h>";
   test [||] 0L;
   test [|0L|] 1L;
   test [|0L; 1L|] 2L;
-  test [|0L; 1L; 2L|] 3L;
-  printf "@]"
+  test [|0L; 1L; 2L|] 3L
 
 let _ = test ()

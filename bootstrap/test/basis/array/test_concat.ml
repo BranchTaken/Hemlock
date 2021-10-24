@@ -1,24 +1,27 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let test arr0 arr1 = begin
-    printf "concat %a %a -> %a\n"
-      (pp Uns.pp) arr0
-      (pp Uns.pp) arr1
-      (pp Uns.pp) (concat arr0 arr1)
-    ;
+    let _ =
+      File.Fmt.stdout
+      |> Fmt.fmt "concat "
+      |> (fmt Uns.fmt) arr0
+      |> Fmt.fmt " "
+      |> (fmt Uns.fmt) arr1
+      |> Fmt.fmt " -> "
+      |> (fmt Uns.fmt) (concat arr0 arr1)
+      |> Fmt.fmt "\n"
+    in
+    ()
   end in
-  printf "@[<h>";
   test [||] [||];
   test [|0L|] [||];
   test [||] [|0L|];
   test [|0L|] [|1L|];
   test [|0L; 1L|] [|2L|];
   test [|0L|] [|1L; 2L|];
-  test [|0L; 1L|] [|2L; 3L|];
-  printf "@]"
+  test [|0L; 1L|] [|2L; 3L|]
 
 let _ = test ()

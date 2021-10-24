@@ -6,6 +6,8 @@ type t =
 
 include FormattableIntf.SMono with type t := t
 
+val fmt: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+
 val is_ge: t -> bool
 (** [is_ge t] returns [true] if t is [Gt] or [Eq]; false otherwise. *)
 

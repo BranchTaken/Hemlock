@@ -624,6 +624,39 @@ let pp pp_elm ppf t =
   in
   fprintf ppf "@[<h>[%a]@]" pp_elms t
 
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
+  (fmt_a:('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))) t
+  ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+  foldi t
+    ~init:((module Formatter) |> Fmt.fmt "[")
+    ~f:(fun i formatter elm ->
+      formatter
+      |> (fun formatter ->
+        match alt with
+        | false -> begin
+            match i with
+            | 0L -> formatter
+            | _ -> formatter |> Fmt.fmt "; "
+          end
+        | true -> begin
+            formatter
+            |> Fmt.fmt "\n"
+            |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 4L) ""
+          end
+      )
+      |> fmt_a elm
+    )
+  |> (fun formatter ->
+    match alt with
+    | false -> formatter
+    | true -> begin
+        formatter
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 2L) ""
+      end
+  )
+  |> Fmt.fmt "]"
+
 module Assoc = struct
   type nonrec ('a, 'b) t = ('a * 'b) t
 

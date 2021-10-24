@@ -230,9 +230,57 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
     let of_string s =
       narrow (Int64.of_string s)
 
-    let to_string t =
+    let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
+      ?(width=Fmt.width_default) ?(base=Fmt.base_default) t =
       assert Stdlib.(Int64.(compare (narrow t) t) = 0);
-      Format.asprintf "%a" pp t
+      let rec fn accum ndigits is_neg t = begin
+        match Stdlib.(Int64.(unsigned_compare t 0L) = 0)
+              && Stdlib.(not zpad || (ndigits >= (Int64.to_int width))) with
+        | true -> begin
+            (match sign, is_neg with
+              | Implicit, false -> ""
+              | Explicit, false -> "+"
+              | Space, false -> " "
+              | _, true -> "-"
+            )
+            ^ (match alt with
+              | true -> begin
+                  match base with
+                  | Bin -> "0b"
+                  | Oct -> "0o"
+                  | Dec -> ""
+                  | Hex -> "0x"
+                end
+              | false -> ""
+            )
+            ^ (Stdlib.String.concat "" (match ndigits with 0 -> ["0"] | _ -> accum))
+            ^ (match T.signed with false -> "u" | true -> "i")
+            ^ (Int64.to_string T.bit_length)
+          end
+        | _ -> begin
+            let divisor, group = match base with
+              | Bin -> 2L, 8
+              | Oct -> 8L, 3
+              | Dec -> 10L, 3
+              | Hex -> 16L, 4
+            in
+            let sep = match alt && Stdlib.(ndigits > 0) && Stdlib.((ndigits mod group) = 0) with
+              | true -> ["_"]
+              | false -> []
+            in
+            let digit = Stdlib.String.init 1 (fun _ ->
+              (Stdlib.String.get "0123456789abcdef" Int64.(to_int (unsigned_rem t divisor)))) in
+            let t' = Int64.unsigned_div t divisor in
+            fn (digit :: (sep @ accum)) Stdlib.(succ ndigits) is_neg t'
+          end
+      end in
+      match T.signed && Stdlib.(Int64.(compare t 0L) < 0) with
+      | false -> fn [] 0 false t
+      | true -> fn [] 0 true (Stdlib.Int64.neg t)
+
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t ((module Formatter):(module Fmt.Formatter))
+      : (module Fmt.Formatter) =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) (module Formatter)
 
     let zero = 0L
 
@@ -406,8 +454,12 @@ module MakeI (T : I) : SI with type t := sint = struct
     let pp_x ppf t =
       V.pp_x ppf (uns_of_sint t)
 
-    let to_string t =
-      V.to_string (uns_of_sint t)
+
+    let to_string ?sign ?alt ?zpad ?width ?base t =
+      V.to_string ?sign ?alt ?zpad ?width ?base (uns_of_sint t)
+
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter : (module Fmt.Formatter) =
+      V.fmt ?pad ?just ?sign ?alt ?zpad ?width ?base (uns_of_sint t) formatter
 
     let zero = sint_of_uns V.zero
 
