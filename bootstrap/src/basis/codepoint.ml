@@ -216,9 +216,6 @@ end
 let to_bytes t =
   Utf8.(to_bytes (of_codepoint t))
 
-let to_string t =
-  Utf8.(to_string (of_codepoint t))
-
 let escape t =
   match t with
   | t when (t = (of_char '"')) -> "'\"'"
@@ -233,6 +230,19 @@ let escape t =
           Stdlib.String.get utf8_str Stdlib.(i - 1)
       )
     end
+
+let to_string ?(alt=Fmt.alt_default) t =
+  match alt with
+  | false -> Utf8.(to_string (of_codepoint t))
+  | true -> escape t
+
+let fmt ?pad ?just ?alt ?width t ((module Formatter):(module Fmt.Formatter))
+  : (module Fmt.Formatter) =
+  let pad = match pad with
+    | None -> None
+    | Some c -> Some (to_string c)
+  in
+  Fmt.fmt ?pad ?just ?width (to_string ?alt t) (module Formatter)
 
 let pp ppf t =
   Format.fprintf ppf "%s" (escape t)

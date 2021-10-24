@@ -10,6 +10,13 @@ let pp ppf t =
     | Gt -> "Gt"
   )
 
+let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+  (module Formatter) |> Fmt.fmt (match t with
+    | Lt -> "Lt"
+    | Eq -> "Eq"
+    | Gt -> "Gt"
+  )
+
 let is_ge = function
   | Lt -> false
   | Eq -> true

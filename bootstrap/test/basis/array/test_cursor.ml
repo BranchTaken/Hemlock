@@ -1,28 +1,54 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let rec fn arr hd cursor tl =
   let index = Cursor.index cursor in
-  printf "index=%a" Uns.pp index;
-  printf ", container %a arr" Cmp.pp (cmp Uns.cmp (Cursor.container cursor) arr);
+  let _ =
+    File.Fmt.stdout
+    |> Fmt.fmt "index="
+    |> Uns.fmt index
+    |> Fmt.fmt ", container "
+    |> Cmp.fmt (cmp Uns.cmp (Cursor.container cursor) arr)
+    |> Fmt.fmt " arr"
+  in
   let hd_cursor = Cursor.cmp hd cursor in
-  printf ", hd %a cursor" Cmp.pp hd_cursor;
+  let _ =
+    File.Fmt.stdout
+    |> Fmt.fmt ", hd "
+    |> Cmp.fmt hd_cursor
+    |> Fmt.fmt " cursor"
+  in
   let cursor_tl = Cursor.cmp cursor tl in
-  printf ", cursor %a tl" Cmp.pp cursor_tl;
-  let () = match hd_cursor with
-    | Lt -> printf ", lget=%a" Uns.pp (Cursor.lget cursor)
-    | Eq -> printf ", lget=_"
-    | Gt -> not_reached ()
+  let _ =
+    File.Fmt.stdout
+    |> Fmt.fmt ", cursor "
+    |> Cmp.fmt cursor_tl
+    |> Fmt.fmt " tl"
+    |> (fun formatter ->
+      match hd_cursor with
+      | Lt ->
+        formatter
+        |> Fmt.fmt ", lget="
+        |> Uns.fmt (Cursor.lget cursor)
+      | Eq ->
+        formatter
+        |> Fmt.fmt ", lget=_"
+      | Gt -> not_reached ()
+    )
+    |> (fun formatter ->
+      match cursor_tl with
+      | Lt ->
+        formatter
+        |> Fmt.fmt ", rget="
+        |> Uns.fmt (Cursor.rget cursor)
+      | Eq ->
+        formatter
+        |> Fmt.fmt ", rget=_"
+      | Gt -> not_reached ()
+    )
+    |> Fmt.fmt "\n"
   in
-  let () = match cursor_tl with
-    | Lt -> printf ", rget=%a" Uns.pp (Cursor.rget cursor)
-    | Eq -> printf ", rget=_"
-    | Gt -> not_reached ()
-  in
-  printf "\n";
-
   let length = length arr in
   assert (Cursor.(=)
       (Cursor.seek (Uns.bits_to_sint index) hd)
@@ -55,12 +81,15 @@ let test () =
     [|0L; 1L|];
     [|0L; 1L; 2L|];
   ] in
-  printf "@[<h>";
   List.iter arrs ~f:(fun arr ->
-    printf "--- %a ---\n" (pp Uns.pp) arr;
+    let _ =
+      File.Fmt.stdout
+      |> Fmt.fmt "--- "
+      |> (fmt Uns.fmt) arr
+      |> Fmt.fmt " ---\n"
+    in
     let hd = Cursor.hd arr in
     fn arr hd hd (Cursor.tl arr)
-  );
-  printf "@]"
+  )
 
 let _ = test ()

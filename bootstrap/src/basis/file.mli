@@ -149,3 +149,19 @@ module Stream : sig
   (** [write_hlt file t] takes an open [file] with write permissions and writes, in order, all
       buffers from [t] to it. Halts if not all bytes could be written. *)
 end
+
+(** Formatters. *)
+module Fmt : sig
+  val bufsize_default: uns
+  (** Default buffer size used by formatters created via [of_t]. *)
+
+  val of_t: ?bufsize:uns -> t -> (module Fmt.Formatter)
+  (** [of_t ~bufsize t] returns a buffered formatter which outputs to [t]. To disable buffering,
+      specify [~bufsize:0]. *)
+
+  val stdout: (module Fmt.Formatter)
+  (** Buffered formatter which outputs to [stdout]. *)
+
+  val stderr: (module Fmt.Formatter)
+  (** Unbuffered formatter which outputs to [stderr]. *)
+end

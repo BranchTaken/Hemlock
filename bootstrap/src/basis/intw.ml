@@ -683,8 +683,58 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       end in
       prefix0 s 0L (Int64.of_int (Stdlib.String.length s))
 
-    let to_string t =
-      Format.asprintf "%a" pp t
+    let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
+      ?(width=Fmt.width_default) ?(base=Fmt.base_default) t =
+      let rec fn accum ndigits is_neg t = begin
+        match t = zero && (not zpad || (ndigits >= (Int64.to_int width))) with
+        | true -> begin
+            (match sign, is_neg with
+              | Implicit, false -> ""
+              | Explicit, false -> "+"
+              | Space, false -> " "
+              | _, true -> "-"
+            )
+            ^ (match alt with
+              | true -> begin
+                  match base with
+                  | Bin -> "0b"
+                  | Oct -> "0o"
+                  | Dec -> ""
+                  | Hex -> "0x"
+                end
+              | false -> ""
+            )
+            ^ (Stdlib.String.concat "" (match ndigits with 0 -> ["0"] | _ -> accum))
+            ^ (match T.signed with false -> "u" | true -> "i")
+            ^ (Int64.to_string (bit_length t))
+          end
+        | _ -> begin
+            let divisor, group = match base with
+              | Bin -> of_uns 2L, 8
+              | Oct -> of_uns 8L, 3
+              | Dec -> of_uns 10L, 3
+              | Hex -> of_uns 16L, 4
+            in
+            let sep = match alt && Stdlib.(ndigits > 0) && Stdlib.((ndigits mod group) = 0) with
+              | true -> ["_"]
+              | false -> []
+            in
+            let digit = Stdlib.String.init 1 (fun _ ->
+              (Stdlib.String.get "0123456789abcdef" (Int64.to_int (to_u64_hlt
+                    (of_arr (intw_umod (to_arr t) (to_arr divisor) T.min_word_length
+                        T.max_word_length)))))) in
+            let t' = (of_arr (intw_udiv (to_arr t) (to_arr divisor) T.min_word_length
+              T.max_word_length)) in
+            fn (digit :: (sep @ accum)) Stdlib.(succ ndigits) is_neg t'
+          end
+      end in
+      match T.signed && is_neg t with
+      | false -> fn [] 0 false t
+      | true -> fn [] 0 true (neg t)
+
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t ((module Formatter):(module Fmt.Formatter))
+      : (module Fmt.Formatter) =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) (module Formatter)
   end
   include U
   include Identifiable.Make(U)

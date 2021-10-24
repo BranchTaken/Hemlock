@@ -80,6 +80,17 @@ module type SLimitless = sig
   include CmpableIntf.SMonoZero with type t := t
   include RealableIntf.S with type t := t
 
+  val to_string: ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns -> ?base:Fmt.base -> t
+    -> string
+  (** [to_string ~sign ~alt ~zpad ~width ~base t] creates a base-[~base] representation of [t] with
+      [~sign]-controlled sign representation, [~zpad]-controlled zero padding to [~width] digits,
+      and [~alt]-controlled alternate formatting (base prefix and digits grouped via '_'). *)
+
+  val fmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
+    -> ?base:Fmt.base -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~base t formatter] calls [formatter.fmt ~pad ~just
+      ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~base t]. *)
+
   val pp_b: Format.formatter -> t -> unit
   (** [pp_b ppf t] prints a binary representation of [t] to the pretty printing formatter, [ppf].
       This function is intended for use with the [%a] format specifier to {!Format.printf}. *)

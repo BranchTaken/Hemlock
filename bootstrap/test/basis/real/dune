@@ -4,6 +4,9 @@
   test_constants
   test_create
   test_ex
+  test_fmt
+  test_fmt_a
+  test_fmt_p
   test_gamma
   test_hash_fold
   test_hypot

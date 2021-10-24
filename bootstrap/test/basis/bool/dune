@@ -2,6 +2,7 @@
  (names
   test_and
   test_eq
+  test_fmt
   test_hash_fold
   test_int
   test_not

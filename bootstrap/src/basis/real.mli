@@ -7,6 +7,21 @@ type t = real
 include IdentifiableIntf.S with type t := t
 include StringableIntf.S with type t := t
 
+val to_string: ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns -> ?precision:uns
+  -> ?notation:Fmt.notation -> ?base:Fmt.base -> t -> string
+(** [to_string ~sign ~alt ~zpad ~width ~precision ~notation ~base t] creates a base-[~base]
+    representation of [t] with [~sign]-controlled sign representation, [~zpad]-controlled zero
+    padding to [~width] digits and [~precision] digits past the radix point in the specified
+    [~notation], and [~alt]-controlled alternate formatting (base prefix and digits grouped via
+    '_'). *)
+
+val fmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
+  -> ?precision:uns -> ?notation:Fmt.notation -> ?base:Fmt.base -> t -> (module Fmt.Formatter)
+  -> (module Fmt.Formatter)
+(** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~precision ~notation ~base t formatter] calls
+    [formatter.fmt ~pad ~just ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~precision
+    ~notation ~base t]. *)
+
 (** Rounding direction. *)
 module Dir : sig
   type t =

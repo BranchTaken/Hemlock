@@ -376,6 +376,21 @@ module Seq : sig
   end
 end
 
+val to_string: ?alt:bool -> string -> string
+(** [to_string ~alt s] creates a string based on [s] that is wrapped by ["..."] and special
+    characters escaped if [~alt=true]. *)
+
+val fmt: ?pad:codepoint -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> string
+  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** [fmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
+    of [to_string ~alt s]. *)
+
+(** Formatter. *)
+module Fmt : sig
+  val empty: (module Fmt.Formatter)
+  (** Empty formatter. *)
+end
+
 val init: ?blength:uns -> range -> f:(uns -> codepoint) -> t
 (** [init ~blength crange ~f:(fun i -> ...)] creates a string of given byte length [~blength] and
     codepoint length [Range.length crange] using [~f] to map range elements to codepoints. [blength]

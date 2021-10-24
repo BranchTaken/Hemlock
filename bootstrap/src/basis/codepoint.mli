@@ -14,12 +14,18 @@ val of_char: char -> t
 val to_bytes: t -> byte list
 (** Convert to a UTF-8-encoded byte list. *)
 
-val to_string: t -> string
-(** [to_string t] returns a UTF-8-encoded string representation of [t]. *)
-
 val escape: t -> string
 (** [escape t] returns a syntactically valid UTF-8-encoded codepoint literal representation of [t].
 *)
+
+val to_string: ?alt:bool -> t -> string
+(** [to_string ~alt t] returns a UTF-8-encoded string representation of [t] that is wrapped by
+    ['...'] and special characters escaped if [~alt=true]. *)
+
+val fmt: ?pad:t -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> t
+  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** [fmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
+    of [to_string ~alt s]. *)
 
 val replacement: t
 (** Replacement character '�', [0xfffd]. *)
