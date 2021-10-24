@@ -27,7 +27,7 @@
   test_list
   test_map
   test_min_elm_max_elm
-  test_of_string_to_string
+  test_of_string_to_string_fmt
   test_prefix
   test_rev
   test_slice

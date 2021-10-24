@@ -7,6 +7,7 @@
   test_constants
   test_div_mod
   test_exp
+  test_fmt
   test_floor_lg_ceil_lg
   test_floor_pow2_ceil_pow2
   test_hash_fold

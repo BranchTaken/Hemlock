@@ -68,9 +68,6 @@ module T = struct
 
   let of_string s =
     s
-
-  let to_string t =
-    t
 end
 include T
 include Identifiable.Make(T)
@@ -1820,4 +1817,29 @@ module O = struct
   end
   include T
   include Cmpable.Make(T)
+end
+
+let to_string ?(alt=Fmt.alt_default) s =
+  match alt with
+  | false -> s
+  | true -> "\"" ^ escaped s ^ "\""
+
+let fmt ?pad ?just ?alt ?width s ((module Formatter):(module Fmt.Formatter))
+  : (module Fmt.Formatter) =
+  let pad = match pad with
+    | None -> None
+    | Some c -> Some (Codepoint.to_string c)
+  in
+  Fmt.fmt ?pad ?just ?width (to_string ?alt s) (module Formatter)
+
+module Fmt = struct
+  let empty : (module Fmt.Formatter) =
+    (module struct
+      type t = string list
+      let state = []
+      let fmt s t =
+        s :: t
+      let sync t =
+        Fmt.To_string (concat_rev t)
+    end)
 end

@@ -1,0 +1,6 @@
+(tests
+ (names
+  test_buffering
+  test_fmt
+  test_stdout)
+ (libraries Basis))

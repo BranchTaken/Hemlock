@@ -240,3 +240,101 @@ module Stream = struct
     end in
     fn file t
 end
+
+module Fmt = struct
+  let bufsize_default = 4096L
+
+  let of_t ?(bufsize=bufsize_default) t : (module Fmt.Formatter) =
+    (module struct
+      type nonrec t = {
+        file: t;
+        bufsize: uns;
+        mutable buf: Bytes.t option;
+        mutable pos: Bytes.Cursor.t option;
+      }
+
+      let state = {
+        file=t;
+        bufsize;
+        buf=None;
+        pos=None;
+      }
+
+      let fmt s t =
+        let slice = Bytes.Slice.of_string_slice (String.C.Slice.of_string s) in
+        match Bytes.Slice.length slice, t.bufsize with
+        | 0L, _ -> t (* No-op. *)
+        | _, 0L -> begin
+            (* Unbuffered. *)
+            write_hlt slice t.file;
+            t
+          end
+        | _ -> begin
+            (* Initialize buf/pos if this is the first write. *)
+            let () = match t.buf with
+              | None -> begin
+                  let buf = Array.init (0L =:< bufsize) ~f:(fun _ -> U8.zero) in
+                  t.buf <- Some buf;
+                  t.pos <- Some (Bytes.Cursor.hd buf)
+                end
+              | Some _ -> ()
+            in
+
+            (* Fill/flush buf repeatedly until it is not full. *)
+            let rec fn t slice = begin
+              match t.buf, t.pos with
+              | Some buf, Some pos -> begin
+                  let pos_index = Bytes.Cursor.index pos in
+                  let buf_avail = t.bufsize - pos_index in
+                  let slice_length = Bytes.Slice.length slice in
+                  match (Bytes.Slice.length slice) < buf_avail with
+                  | true -> begin
+                      (* Partial fill. *)
+                      let buf_range = (pos_index =:< (pos_index + slice_length)) in
+                      Array.blit (Bytes.Slice.range slice) (Bytes.Slice.container slice) buf_range
+                        buf;
+                      t.pos <- Some (Bytes.Cursor.seek (Uns.bits_to_sint slice_length) pos);
+                      t
+                    end
+                  | false -> begin
+                      (* Complete fill. *)
+                      let slice_base = Bytes.Slice.base slice in
+                      let slice_mid = Bytes.Cursor.seek (Uns.bits_to_sint buf_avail) slice_base in
+                      let slice_range =
+                        (Bytes.Cursor.index slice_base =:< Bytes.Cursor.index slice_mid) in
+                      let buf_range = (pos_index =:< t.bufsize) in
+                      Array.blit slice_range (Bytes.Slice.container slice) buf_range buf;
+                      (* Flush. *)
+                      write_hlt (Bytes.Slice.init ~range:(0L =:< t.bufsize) buf) t.file;
+
+                      let slice' = Bytes.Slice.of_cursors ~base:slice_mid
+                          ~past:(Bytes.Slice.past slice) in
+                      t.pos <- Some (Bytes.Cursor.hd buf);
+                      fn t slice'
+                    end
+                end
+              | _ -> not_reached ()
+            end in
+            fn t slice
+          end
+
+      let sync t =
+        let () = match t.buf, t.pos with
+          | Some buf, Some pos -> begin
+              if (Bytes.Cursor.index pos) > 0L then begin
+                write_hlt (Bytes.Slice.init ~range:(0L =:< (Bytes.Cursor.index pos)) buf) t.file;
+                t.pos <- Some (Bytes.Cursor.hd buf);
+              end;
+              ()
+            end
+          | _ -> ()
+        in
+        Fmt.Synced t
+    end)
+
+  let stdout = of_t stdout
+
+  let () = at_exit (fun () -> let _ = Fmt.flush stdout in ())
+
+  let stderr = of_t ~bufsize:0L stderr
+end

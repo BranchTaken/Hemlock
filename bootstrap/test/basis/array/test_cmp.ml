@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let arrs = [
@@ -18,10 +17,17 @@ let test () =
     | [] -> ()
     | hd :: tl -> begin
         let () = List.iter arrs ~f:(fun arr2 ->
-          printf "cmp %a %a -> %a\n"
-            (pp Uns.pp) arr
-            (pp Uns.pp) arr2
-            Cmp.pp (cmp Uns.cmp arr arr2)
+          let _ =
+            File.Fmt.stdout
+            |> Fmt.fmt "cmp "
+            |> (fmt Uns.fmt) arr
+            |> Fmt.fmt " "
+            |> (fmt Uns.fmt) arr2
+            |> Fmt.fmt " -> "
+            |> Cmp.fmt (cmp Uns.cmp arr arr2)
+            |> Fmt.fmt "\n"
+          in
+          ()
         ) in
         fn hd tl
       end
@@ -30,8 +36,6 @@ let test () =
     | hd :: tl -> hd, tl
     | [] -> not_reached ()
   in
-  printf "@[<h>";
-  fn hd tl;
-  printf "@]"
+  fn hd tl
 
 let _ = test ()
