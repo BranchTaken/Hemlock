@@ -72,32 +72,32 @@ module MakePolyIter (T : IPolyIter) : SPolyIterGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
   let fold_until ~init ~f t =
-    let rec fn accum cursor = begin
-      match T.Cursor.(cursor = (tl t)) with
+    let rec fn accum cursor tl = begin
+      match T.Cursor.(=) cursor tl with
       | true -> accum
       | false -> begin
           let elm = T.Cursor.rget cursor in
           let (accum', until) = f accum elm in
           match until with
           | true -> accum'
-          | false -> fn accum' (T.Cursor.succ cursor)
+          | false -> fn accum' (T.Cursor.succ cursor) tl
         end
     end in
-    fn init (T.Cursor.hd t)
+    fn init (T.Cursor.hd t) (T.Cursor.tl t)
 
   let fold_right_until ~init ~f t =
-    let rec fn t ~f accum cursor = begin
-      match T.Cursor.(cursor = (T.Cursor.hd t)) with
+    let rec fn t ~f accum hd cursor = begin
+      match T.Cursor.(=) hd cursor with
       | true -> accum
       | false -> begin
           let elm = T.Cursor.lget cursor in
           let (accum', until) = f elm accum in
           match until with
           | true -> accum'
-          | false -> fn t ~f accum' (T.Cursor.pred cursor)
+          | false -> fn t ~f accum' hd (T.Cursor.pred cursor)
         end
     end in
-    fn t ~f init (T.Cursor.tl t)
+    fn t ~f init (T.Cursor.hd t) (T.Cursor.tl t)
 
   let foldi_until ~init ~f t =
     let _, accum = fold_until t ~init:(0L, init)
