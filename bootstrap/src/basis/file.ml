@@ -4,19 +4,20 @@ module Error = struct
   type t = uns
 
   (* external to_string_get_length: t -> uns *)
-  external to_string_get_length: t -> uns = "hemlock_file_error_to_string_get_length"
+  external to_string_get_length: t -> uns = "hm_basis_file_error_to_string_get_length"
 
-  (* external to_string_inner: uns -> Bytes.t -> t $-> unit *)
-  external to_string_inner: uns -> Bytes.t -> t -> unit = "hemlock_file_error_to_string_inner"
+  (* external to_string_inner: uns -> !&bytes -> t >os-> unit *)
+  external to_string_inner: uns -> Stdlib.Bytes.t -> t -> unit =
+    "hm_basis_file_error_to_string_inner"
 
   let of_value value =
     Uns.bits_of_sint Sint.(neg value)
 
   let to_string t =
     let n = to_string_get_length t in
-    let bytes = Array.init (0L =:< n) ~f:(fun _ -> Byte.kv 0L) in
+    let bytes = Stdlib.Bytes.create (Int64.to_int n) in
     let () = to_string_inner n bytes t in
-    Bytes.to_string_hlt bytes
+    Stdlib.Bytes.to_string bytes
 end
 
 module Flag = struct
@@ -37,13 +38,19 @@ end
 
 type t = uns
 
-(* external of_path_inner: Flag.t -> uns -> uns -> uns -> byte /_ array $-> sint *)
-external of_path_inner: Flag.t -> uns -> uns -> uns -> Bytes.t -> sint =
-  "hemlock_file_of_path_inner"
+let bytes_of_slice slice =
+  let base = (Bytes.Cursor.index (Bytes.Slice.base slice)) in
+  let container = (Bytes.Slice.container slice) in
+  Stdlib.Bytes.init (Int64.to_int (Bytes.Slice.length slice)) (fun i ->
+    Char.chr (Uns.trunc_to_int (U8.extend_to_uns (Array.get (base + (Int64.of_int i)) container)))
+  )
+
+(* external of_path_inner: Flag.t -> uns -> _?bytes >os-> int *)
+external of_path_inner: Flag.t -> uns -> Stdlib.Bytes.t -> sint = "hm_basis_file_of_path_inner"
 
 let of_path ?(flag=Flag.R_O) ?(mode=0o660L) path =
-  let value = of_path_inner flag mode (Bytes.Cursor.index (Bytes.Slice.base path))
-    (Bytes.Cursor.index (Bytes.Slice.past path)) (Bytes.Slice.container path) in
+  let path_bytes = bytes_of_slice path in
+  let value = of_path_inner flag mode path_bytes in
   match Sint.(value < kv 0L) with
   | false -> Ok (Uns.bits_of_sint value)
   | true -> Error (Uns.bits_of_sint Sint.(neg value))
@@ -53,26 +60,26 @@ let of_path_hlt ?flag ?mode path =
   | Ok t -> t
   | Error error -> halt (Error.to_string error)
 
-(* external stdin_inner: unit $-> uns *)
-external stdin_inner: unit -> t = "hemlock_file_stdin_inner"
+(* external stdin_inner: uns *)
+external stdin_inner: unit -> t = "hm_basis_file_stdin_inner"
 
 let stdin =
   stdin_inner ()
 
-(* external stdout_inner: unit $-> uns *)
-external stdout_inner: unit -> t = "hemlock_file_stdout_inner"
+(* external stdout_inner: uns *)
+external stdout_inner: unit -> t = "hm_basis_file_stdout_inner"
 
 let stdout =
   stdout_inner ()
 
-(* external stderr_inner: unit $-> uns *)
-external stderr_inner: unit -> t = "hemlock_file_stderr_inner"
+(* external stderr_inner: uns *)
+external stderr_inner: unit -> t = "hm_basis_file_stderr_inner"
 
 let stderr =
   stderr_inner ()
 
-(* external close_inner: t $-> sint *)
-external close_inner: t -> sint = "hemlock_file_close_inner"
+(* external close_inner: t >os-> int *)
+external close_inner: t -> sint = "hm_basis_file_close_inner"
 
 let close t =
   let value = close_inner t in
@@ -87,35 +94,37 @@ let close_hlt t =
 
 let read_n = 1024L
 
-let read_base inner buffer t =
-  let range = Bytes.Slice.range buffer in
-  let base = Range.base range in
-  let past = Range.past range in
-  let value = inner base past (Bytes.Slice.container buffer) t in
+(* external read_inner: !&bytes -> t >os-> int *)
+external read_inner: Stdlib.Bytes.t -> t -> sint = "hm_basis_file_read_inner"
+
+let read_impl buffer t =
+  let base = Bytes.(Cursor.index (Slice.base buffer)) in
+  let bytes = Stdlib.Bytes.create (Int64.to_int (Bytes.Slice.length buffer)) in
+  let value = read_inner bytes t in
   match Sint.(value < kv 0L) with
   | true -> Error (Uns.bits_of_sint Sint.(neg value))
-  | false ->
-    Ok (Bytes.Slice.init ~range:(base =:< (base + (Uns.bits_of_sint value)))
-      (Bytes.Slice.container buffer))
-
-(* external read_inner: uns -> uns -> byte array -> t $-> sint *)
-external read_inner: uns -> uns -> Bytes.t -> t -> sint = "hemlock_file_read_inner"
+  | false -> begin
+      let range = (base =:< (base + (Uns.bits_of_sint value))) in
+      let container = Bytes.Slice.container buffer in
+      Range.iter range ~f:(fun i ->
+        Array.set_inplace i (U8.of_char (Stdlib.Bytes.get bytes (Int64.to_int (i - base))))
+          container
+      );
+      Ok (Bytes.Slice.init ~range (Bytes.Slice.container buffer))
+    end
 
 let read ?(n=read_n) t =
   let bytes = Array.init (0L =:< n) ~f:(fun _ -> Byte.kv 0L) in
   let buffer = Bytes.Slice.init bytes in
-  read_base read_inner buffer t
+  read_impl buffer t
 
 let read_hlt ?n t =
   match read ?n t with
   | Ok buffer -> buffer
   | Error error -> let _ = close_hlt t in halt (Error.to_string error)
 
-(* external read_into_inner: uns -> uns -> byte !&array -> t $-> sint *)
-external read_into_inner: uns -> uns -> Bytes.t -> t -> sint = "hemlock_file_read_into_inner"
-
 let read_into buffer t =
-  match read_base read_into_inner buffer t with
+  match read_impl buffer t with
   | Ok _ -> None
   | Error error -> Some error
 
@@ -127,16 +136,16 @@ let read_into_hlt buffer t =
       halt (Error.to_string error)
     end
 
-(* external write_inner: uns -> uns -> bytes -> t $-> sint *)
-external write_inner: uns -> uns -> Bytes.t -> t -> sint = "hemlock_file_write_inner"
+(* external write_inner: _?bytes -> t >os-> sint *)
+external write_inner: Stdlib.Bytes.t -> t -> sint = "hm_basis_file_write_inner"
 
 let rec write buffer t =
   match Bytes.Cursor.index (Bytes.Slice.base buffer) < Bytes.Cursor.index (Bytes.Slice.past buffer)
   with
   | false -> None
   | true -> begin
-      let value = write_inner (Bytes.Cursor.index (Bytes.Slice.base buffer)) (Bytes.Cursor.index
-          (Bytes.Slice.past buffer)) (Bytes.Slice.container buffer) t in
+      let bytes = bytes_of_slice buffer in
+      let value = write_inner bytes t in
       match Sint.(value < kv 0L) with
       | true -> Some (Error.of_value value)
       | false ->
@@ -168,22 +177,22 @@ let seek_hlt_base inner rel_off t =
       halt (Error.to_string error)
     end
 
-(* external seek_inner: sint -> t $-> sint *)
-external seek_inner: sint -> t -> sint = "hemlock_file_seek_inner"
+(* external seek_inner: int -> t >os-> int *)
+external seek_inner: sint -> t -> sint = "hm_basis_file_seek_inner"
 
 let seek = seek_base seek_inner
 
 let seek_hlt = seek_hlt_base seek_inner
 
-(* external seek_hd_inner: sint -> t $-> sint *)
-external seek_hd_inner: sint -> t -> sint = "hemlock_file_seek_hd_inner"
+(* external seek_hd_inner: int -> t >os-> int *)
+external seek_hd_inner: sint -> t -> sint = "hm_basis_file_seek_hd_inner"
 
 let seek_hd = seek_base seek_hd_inner
 
 let seek_hd_hlt = seek_hlt_base seek_hd_inner
 
-(* external seek_tl_inner: sint -> t $-> sint *)
-external seek_tl_inner: sint -> t -> sint = "hemlock_file_seek_tl_inner"
+(* external seek_tl_inner: int -> t >os-> int *)
+external seek_tl_inner: sint -> t -> sint = "hm_basis_file_seek_tl_inner"
 
 let seek_tl = seek_base seek_tl_inner
 
