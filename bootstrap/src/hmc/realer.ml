@@ -53,9 +53,9 @@ module T = struct
     | N {sign=_; mag=Inf} -> t
     | Nan -> t
 
-  (* Denormalize the inputs such that their binary points are aligned, by * padding at most one of
-   * the mantissas with trailing 0 digits. This enables * digit-aligned operations (comparison,
-   * addition, subtraction). *)
+  (* Denormalize the inputs such that their binary points are aligned, by padding at most one of the
+   * mantissas with trailing 0 digits. This enables digit-aligned operations (comparison, addition,
+   * subtraction). *)
   let denorm t0 t1 =
     match t0, t1 with
     | N {sign=s0; mag=Fin {exponent=e0; mantissa=m0}},
