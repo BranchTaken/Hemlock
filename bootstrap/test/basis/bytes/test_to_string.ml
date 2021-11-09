@@ -90,7 +90,7 @@ let test () =
   let test_to_string (bytes_list:byte list) = begin
     let bytes = Array.of_list bytes_list in
     printf "to_string %a -> %s, \"%s\", \"%s\"\n"
-      pp bytes
+      xpp bytes
       (match to_string bytes with
         | None -> "None"
         | Some s -> "\"" ^ s ^ "\""

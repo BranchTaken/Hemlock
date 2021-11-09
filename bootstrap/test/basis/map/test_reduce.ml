@@ -10,8 +10,8 @@ let test () =
     let map = of_klist ks in
     let sum = reduce ~f:( + ) map in
     printf "reduce ~f:( + ) %a -> %a\n"
-      (List.pp Uns.pp) ks
-      (Option.pp Uns.pp) sum
+      (List.xpp Uns.xpp) ks
+      (Option.xpp Uns.xpp) sum
   end in
   let test_lists = [
     [];

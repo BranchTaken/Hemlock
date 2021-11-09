@@ -24,9 +24,9 @@ let test () =
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "rev_map_concat %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (rev_map_concat a b ~f:(fun elm -> elm + 10L))
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (rev_map_concat a b ~f:(fun elm -> elm + 10L))
   );
   printf "@]"
 

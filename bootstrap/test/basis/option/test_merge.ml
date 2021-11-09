@@ -9,10 +9,10 @@ let test () =
   List.iter [Some 42L; None] ~f:(fun o0 ->
     List.iter [Some 43L; None] ~f:(fun o1 ->
       printf "merge (%a) (%a) ~f:(fun _ _ -> %a) -> %a\n"
-        (pp Uns.pp) o0
-        (pp Uns.pp) o1
-        Uns.pp replacement
-        (pp Uns.pp) (merge o0 o1 ~f:(fun _ _ -> replacement))
+        (xpp Uns.xpp) o0
+        (xpp Uns.xpp) o1
+        Uns.xpp replacement
+        (xpp Uns.xpp) (merge o0 o1 ~f:(fun _ _ -> replacement))
     )
   );
   printf "@]"

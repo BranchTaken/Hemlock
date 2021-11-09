@@ -12,7 +12,7 @@ let test () =
     let map' = remove k map in
     validate map';
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.pp k (pp String.pp) map (pp String.pp) map'
+      Uns.xpp k (xpp String.xpp) map (xpp String.xpp) map'
   end in
   let test_tuples = [
     ([(0L, "0"); (1L, "1")], 2L,            "Not member.");

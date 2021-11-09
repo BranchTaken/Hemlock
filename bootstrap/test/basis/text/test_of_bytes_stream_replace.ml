@@ -19,7 +19,7 @@ let stream_of_byte_list bl =
 let test () =
   printf "@[<h>";
   let fn bl = begin
-    printf "%a\n" (List.pp Byte.pp_x) bl;
+    printf "%a\n" (List.xpp Byte.xpp_x) bl;
     let text = of_bytes_stream (stream_of_byte_list bl) in
 
     let rec fwd_iter cursor = begin
@@ -57,7 +57,7 @@ let test () =
 
     let slice = Slice.init text in
     let s' = Slice.to_string slice in
-    printf "  slice -> %a\n" String.pp s'
+    printf "  slice -> %a\n" String.xpp s'
   end in
   begin
     let open Byte in

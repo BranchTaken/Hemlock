@@ -4,8 +4,8 @@ open List
 open Format
 
 let test () =
-  let pp_pair ppf (a, b) =
-    Format.fprintf ppf "(%a, %a)" Uns.pp a Uns.pp b
+  let xpp_pair xppf (a, b) =
+    Format.fprintf xppf "(%a, %a)" Uns.xpp a Uns.xpp b
   in
   let pair_lists = [
     [];
@@ -22,9 +22,9 @@ let test () =
     let cmp (a, _) (b, _) = Uns.cmp a b in
     assert (is_sorted pl ~cmp);
     printf "[rev_]dedup_sorted %a -> %a / %a\n"
-      (pp pp_pair) pl
-      (pp pp_pair) (dedup_sorted pl ~cmp)
-      (pp pp_pair) (rev_dedup_sorted pl ~cmp)
+      (xpp xpp_pair) pl
+      (xpp xpp_pair) (dedup_sorted pl ~cmp)
+      (xpp xpp_pair) (rev_dedup_sorted pl ~cmp)
     ;
   );
   printf "@]"

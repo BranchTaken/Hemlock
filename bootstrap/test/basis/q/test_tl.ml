@@ -4,14 +4,14 @@ open Q
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let t' = tl t in
-        printf "tl %a = %a\n" ppt t ppt t';
+        printf "tl %a = %a\n" xppt t xppt t';
         fn (succ i) n (push_back i t)
       end
   end in

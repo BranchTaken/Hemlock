@@ -10,7 +10,7 @@ let test () =
     printf "--- %s ---@\n" descr;
     let ordset' = remove m ordset in
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.pp m pp ordset pp ordset'
+      Uns.xpp m xpp ordset xpp ordset'
   end in
   let test_tuples = [
     ([0L; 1L], 2L,             "Not member.");

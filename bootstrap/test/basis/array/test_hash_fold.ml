@@ -10,8 +10,8 @@ let test () =
     | [] -> ()
     | arr :: arrs' -> begin
         printf "hash_fold %a -> %a\n"
-          (pp Uns.pp) arr
-          Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold arr Hash.State.empty));
+          (xpp Uns.xpp) arr
+          Hash.xpp (Hash.t_of_state (hash_fold Uns.hash_fold arr Hash.State.empty));
         fn arrs'
       end
   end in

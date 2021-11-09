@@ -1,24 +1,24 @@
 (** Formattable type functor signature. *)
 
-(** Monomorphic Format pretty printing conversion functions. *)
+(** Monomorphic Fmt pretty printing conversion functions. *)
 module type SMono = sig
   type t
 
-  val pp: Format.formatter -> t -> unit
-  (** [pp ppf t] prints a representation of [t] to the pretty printing formatter, [ppf]. This
+  val xpp: Format.formatter -> t -> unit
+  (** [xpp xppf t] prints a representation of [t] to the pretty printing formatter, [xppf]. This
       function is intended for use with the [%a] format specifier to {!Format.printf}.*)
 
   val fmt: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
   (** [fmt t formatter] applies a formatted representation of [t] to the [formatter]. *)
 end
 
-(** Polymorphic Format pretty printing conversion functions. *)
+(** Polymorphic Fmt pretty printing conversion functions. *)
 module type SPoly = sig
   type 'a t
 
-  val pp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
-  (** [pp pp_a ppf t] prints a syntactic representation of [t] to the pretty printing formatter,
-      [ppf], using the [pp_a] printer for the parametric type value [a]. This function is intended
+  val xpp: (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+  (** [xpp xpp_a xppf t] prints a syntactic representation of [t] to the pretty printing formatter,
+      [xppf], using the [xpp_a] printer for the parametric type value [a]. This function is intended
       for use with the [%a] format specifier to {!Format.printf}. *)
 
   val fmt: ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter)) -> 'a t
@@ -27,14 +27,14 @@ module type SPoly = sig
         [fmt_a] for the parametric type value [a]. *)
 end
 
-(** Polymorphic Format pretty printing conversion functions. *)
+(** Polymorphic Fmt pretty printing conversion functions. *)
 module type SPoly2 = sig
   type ('a, 'b) t
 
-  val pp: (Format.formatter -> 'a -> unit) -> (Format.formatter -> 'b -> unit) ->
+  val xpp: (Format.formatter -> 'a -> unit) -> (Format.formatter -> 'b -> unit) ->
     Format.formatter -> ('a, 'b) t -> unit
-  (** [pp pp_a pp_b ppf t] prints a syntactic representation of [t] to the pretty printing
-      formatter, [ppf], using the [pp_a] printer for the parametric type value [a], and [pp_b] for
+  (** [xpp xpp_a xpp_b xppf t] prints a syntactic representation of [t] to the pretty printing
+      formatter, [xppf], using the [xpp_a] printer for the parametric type value [a], and [xpp_b] for
       the parametric type value [b]. This function is intended for use with the [%a] format
       specifier to {!Format.printf}. *)
 

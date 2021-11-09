@@ -8,7 +8,7 @@ let test () =
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "%h -> %a\n" t Class.pp (classify t);
+        printf "%h -> %a\n" t Class.xpp (classify t);
         fn ts'
       end
   end in

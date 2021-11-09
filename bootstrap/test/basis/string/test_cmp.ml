@@ -18,7 +18,7 @@ let test () =
     | [] -> ()
     | hd :: tl -> begin
         let () = List.iter strs ~f:(fun s2 ->
-          printf "cmp %a %a -> %a\n" pp s pp s2 Cmp.pp (cmp s s2)
+          printf "cmp %a %a -> %a\n" xpp s xpp s2 Cmp.xpp (cmp s s2)
         ) in
         fn hd tl
       end

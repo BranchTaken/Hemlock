@@ -18,18 +18,18 @@ let test () =
   iter list_pairs ~f:(fun (a, b) ->
     let accum, c = foldi2_map a b ~init:0L ~f in
     printf "    foldi2_map %a %a -> %a, %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      Uns.pp accum
-      (pp Uns.pp) c
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      Uns.xpp accum
+      (xpp Uns.xpp) c
     ;
 
     let accum, c = rev_foldi2_map a b ~init:0L ~f in
     printf "rev_foldi2_map %a %a -> %a, %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      Uns.pp accum
-      (pp Uns.pp) c
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      Uns.xpp accum
+      (xpp Uns.xpp) c
   );
   printf "@]"
 

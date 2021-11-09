@@ -5,24 +5,24 @@ open Format
 
 let test () =
   let test_search arr key_max = begin
-    printf "%a\n" (pp Uns.pp) arr;
+    printf "%a\n" (xpp Uns.xpp) arr;
     Range.iter (0L =:< (succ key_max)) ~f:(fun probe ->
       let open Cmp in
-      printf "  %a -> %s, %s, %s\n" Uns.pp probe
+      printf "  %a -> %s, %s, %s\n" Uns.xpp probe
         (match psearch probe ~cmp:Uns.cmp arr with
           | None -> "<"
-          | Some (Lt, i) -> asprintf "<[%a]=%a" Uns.pp i Uns.pp (get i arr)
-          | Some (Eq, i) -> asprintf "=[%a]=%a" Uns.pp i Uns.pp (get i arr)
-          | Some (Gt, i) -> asprintf ">[%a]=%a" Uns.pp i Uns.pp (get i arr)
+          | Some (Lt, i) -> asprintf "<[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
+          | Some (Eq, i) -> asprintf "=[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
+          | Some (Gt, i) -> asprintf ">[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
         )
         (match search probe ~cmp:Uns.cmp arr with
           | None -> "<>"
-          | Some i -> asprintf "=%a" Uns.pp (get i arr)
+          | Some i -> asprintf "=%a" Uns.xpp (get i arr)
         )
         (match nsearch probe ~cmp:Uns.cmp arr with
-          | Some (Lt, i) -> asprintf "<[%a]=%a" Uns.pp i Uns.pp (get i arr)
-          | Some (Eq, i) -> asprintf "=[%a]=%a" Uns.pp i Uns.pp (get i arr)
-          | Some (Gt, i) -> asprintf ">[%a]=%a" Uns.pp i Uns.pp (get i arr)
+          | Some (Lt, i) -> asprintf "<[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
+          | Some (Eq, i) -> asprintf "=[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
+          | Some (Gt, i) -> asprintf ">[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
           | None -> ">"
         )
     )

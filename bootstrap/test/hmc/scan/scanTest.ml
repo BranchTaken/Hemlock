@@ -10,7 +10,7 @@ let scan_str s =
     let atoken = ConcreteToken.atoken ctoken in
     let source = ConcreteToken.source ctoken in
     printf "  %a : %s\n"
-      Source.pp_loc source
+      Source.xpp_loc source
       (AbstractToken.to_string atoken)
     ;
     match atoken with

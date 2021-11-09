@@ -4,14 +4,14 @@ open Deq
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let l = length t in
-        printf "length %a = %a\n" ppt t Uns.pp l;
+        printf "length %a = %a\n" xppt t Uns.xpp l;
         fn (succ i) n (push i t)
       end
   end in

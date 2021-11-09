@@ -15,8 +15,8 @@ let test () =
     ) in
     let kvs = to_alist map' in
     printf "%a -> %a@\n"
-      (List.pp Uns.pp) ks
-      (List.pp (pp_kv String.pp)) kvs
+      (List.xpp Uns.xpp) ks
+      (List.xpp (xpp_kv String.xpp)) kvs
   end in
   Range.iter (0L =:< 7L) ~f:(fun n ->
     let ks = Array.(to_list (init (0L =:< n) ~f:(fun i -> i))) in

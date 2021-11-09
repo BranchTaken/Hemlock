@@ -386,16 +386,16 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     let ( // ) t0 t1 =
       (to_real t0) /. (to_real t1)
 
-    let pp_suffix ppf t =
+    let xpp_suffix xppf t =
       match Stdlib.(Int64.(unsigned_compare T.min_word_length T.max_word_length) = 0) with
       | false -> ()
       | true -> begin
-          Format.fprintf ppf "%s%u"
+          Format.fprintf xppf "%s%u"
             (if T.signed then "i" else "u")
             (Int64.(to_int (mul (T.word_length t) 64L)))
         end
 
-    let pp ppf t =
+    let xpp xppf t =
       let ten = of_uns 10L in
       let rec fn t i = begin
         match cmp t zero with
@@ -412,42 +412,42 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
               | true -> Int64.zero
               | false -> get 0L digit
             in
-            Format.fprintf ppf "%Lu" digit_w0;
+            Format.fprintf xppf "%Lu" digit_w0;
             if Stdlib.(Int64.(unsigned_compare (unsigned_rem i 3L) 0L) = 0) &&
                Stdlib.(Int64.(unsigned_compare i 0L) > 0) then
-              Format.fprintf ppf "_";
+              Format.fprintf xppf "_";
             ()
           end
       end in
       match Cmp.is_eq (cmp t zero) with
-      | true -> Format.fprintf ppf "0%a" pp_suffix t
+      | true -> Format.fprintf xppf "0%a" xpp_suffix t
       | false -> begin
-          let () = Format.fprintf ppf "%s" (if is_neg t then "-" else "") in
+          let () = Format.fprintf xppf "%s" (if is_neg t then "-" else "") in
           let _ = fn t 0L in
-          Format.fprintf ppf "%a" pp_suffix t
+          Format.fprintf xppf "%a" xpp_suffix t
         end
 
-    let pp_b ppf t =
+    let xpp_b xppf t =
       let rec fn x shift = begin
         match shift with
         | 0L -> ()
         | _ -> begin
             if Stdlib.(Int64.(unsigned_compare (unsigned_rem shift 8L) 0L) = 0 &&
-                       Int64.(unsigned_compare shift 64L) < 0) then Format.fprintf ppf "_";
+                       Int64.(unsigned_compare shift 64L) < 0) then Format.fprintf xppf "_";
             let shift' = Int64.pred shift in
             let bit = Int64.(logand (shift_right_logical x (to_int shift')) 0x1L) in
-            Format.fprintf ppf "%Ld" bit;
+            Format.fprintf xppf "%Ld" bit;
             fn x shift'
           end
       end in
-      Format.fprintf ppf "0b";
+      Format.fprintf xppf "0b";
       let () = match word_length t with
         | 0L -> fn Int64.zero 64L
         | _ -> begin
             let rec fn2 i = begin
               let elm = get i t in
               if Stdlib.(Int64.(unsigned_compare i (pred (word_length t))) < 0) then
-                Format.fprintf ppf "_";
+                Format.fprintf xppf "_";
               fn elm 64L;
               match i with
               | 0L -> ()
@@ -456,9 +456,9 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
             fn2 (Int64.pred (word_length t))
           end
       in
-      Format.fprintf ppf "%a" pp_suffix t
+      Format.fprintf xppf "%a" xpp_suffix t
 
-    let pp_o ppf t =
+    let xpp_o xppf t =
       let rec fn x shift = begin
         assert Stdlib.(Int64.(unsigned_compare (unsigned_rem shift 3L) 0L) = 0);
         match shift with
@@ -466,41 +466,41 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         | _ -> begin
             let shift' = Int64.(sub shift 3L) in
             let digit = bit_and (bit_usr ~shift:shift' x) (of_uns 0x7L) in
-            Format.fprintf ppf "%a" pp digit;
+            Format.fprintf xppf "%a" xpp digit;
             fn x shift'
           end
       end in
-      Format.fprintf ppf "0o";
+      Format.fprintf xppf "0o";
       let () = match word_length t with
-        | 0L -> Format.fprintf ppf "0"
+        | 0L -> Format.fprintf xppf "0"
         | _ -> begin
             let padded_shift = Int64.(add (bit_length t) 2L) in
             let shift = Int64.(sub padded_shift (unsigned_rem padded_shift 3L)) in
             fn t shift
           end
       in
-      Format.fprintf ppf "%a" pp_suffix t
+      Format.fprintf xppf "%a" xpp_suffix t
 
-    let pp_x ppf t =
+    let xpp_x xppf t =
       let rec fn x shift = begin
         match shift with
         | 0L -> ()
         | _ -> begin
-            if Stdlib.(Int64.(unsigned_compare shift 64L) < 0) then Format.fprintf ppf "_";
+            if Stdlib.(Int64.(unsigned_compare shift 64L) < 0) then Format.fprintf xppf "_";
             let shift' = Int64.sub shift 16L in
-            Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x (to_int shift'))
+            Format.fprintf xppf "%04Lx" Int64.(logand (shift_right_logical x (to_int shift'))
               0xffffL);
             fn x shift'
           end
       end in
-      Format.fprintf ppf "0x";
+      Format.fprintf xppf "0x";
       let () = match word_length t with
-        | 0L -> Format.fprintf ppf "0000_0000_0000_0000"
+        | 0L -> Format.fprintf xppf "0000_0000_0000_0000"
         | _ -> begin
             let rec fn2 i = begin
               let elm = get i t in
               if Stdlib.(Int64.(unsigned_compare i (pred (word_length t))) < 0) then
-                Format.fprintf ppf "_";
+                Format.fprintf xppf "_";
               fn elm 64L;
               match i with
               | 0L -> ()
@@ -509,7 +509,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
             fn2 (Int64.pred (word_length t))
           end
       in
-      Format.fprintf ppf "%a" pp_suffix t
+      Format.fprintf xppf "%a" xpp_suffix t
 
     let of_string s =
       let getc_opt s i len = begin

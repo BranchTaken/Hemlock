@@ -5,9 +5,9 @@ open Format
 
 let test () =
   let test_foldi s = begin
-    printf "foldi %a ->" pp s;
+    printf "foldi %a ->" xpp s;
     let () = foldi s ~init:() ~f:(fun i _ cp ->
-      printf " %a:%s" Uns.pp i (of_codepoint cp)) in
+      printf " %a:%s" Uns.xpp i (of_codepoint cp)) in
     printf "\n"
   end in
   let strs = [

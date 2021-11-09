@@ -612,17 +612,17 @@ let rev_foldi2_map ~init ~f t0 t1 =
 let rev_fold2_map ~init ~f t0 t1 =
   rev_foldi2_map t0 t1 ~init ~f:(fun _ accum a b -> f accum a b)
 
-let pp pp_elm ppf t =
+let xpp xpp_elm xppf t =
   let open Format in
-  let rec pp_elms ppf = function
+  let rec xpp_elms xppf = function
     | [] -> ()
-    | elm :: [] -> fprintf ppf "%a" pp_elm elm
+    | elm :: [] -> fprintf xppf "%a" xpp_elm elm
     | elm :: t' -> begin
-        fprintf ppf "%a;@ " pp_elm elm;
-        pp_elms ppf t'
+        fprintf xppf "%a;@ " xpp_elm elm;
+        xpp_elms xppf t'
       end
   in
-  fprintf ppf "@[<h>[%a]@]" pp_elms t
+  fprintf xppf "@[<h>[%a]@]" xpp_elms t
 
 let xfmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_a t formatter =
   foldi t

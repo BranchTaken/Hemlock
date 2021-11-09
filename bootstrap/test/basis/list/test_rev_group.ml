@@ -22,9 +22,9 @@ let test () =
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "[rev_]group %a ~break:eq -> %a / %a\n"
-      (pp Uns.pp) l
-      (pp (pp Uns.pp)) (group l ~break:eq)
-      (pp (pp Uns.pp)) (rev_group l ~break:eq)
+      (xpp Uns.xpp) l
+      (xpp (xpp Uns.xpp)) (group l ~break:eq)
+      (xpp (xpp Uns.xpp)) (rev_group l ~break:eq)
   );
   printf "@]"
 

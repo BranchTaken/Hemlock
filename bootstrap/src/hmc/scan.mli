@@ -5,7 +5,7 @@ module Source : sig
   type t
 
   include FormattableIntf.SMono with type t := t
-  val pp_loc: Format.formatter -> t -> unit
+  val xpp_loc: Format.formatter -> t -> unit
 
   val path: t -> string option
 

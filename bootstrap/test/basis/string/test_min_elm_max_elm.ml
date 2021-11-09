@@ -5,11 +5,11 @@ open Format
 
 let test () =
   let test_elm s ~cmp = begin
-    printf "min_elm %a -> %s\n" pp s (match min_elm s ~cmp with
+    printf "min_elm %a -> %s\n" xpp s (match min_elm s ~cmp with
       | None -> "None"
       | Some cp -> "'" ^ (of_codepoint cp) ^ "'"
     );
-    printf "max_elm %a -> %s\n" pp s (match max_elm s ~cmp with
+    printf "max_elm %a -> %s\n" xpp s (match max_elm s ~cmp with
       | None -> "None"
       | Some cp -> "'" ^ (of_codepoint cp) ^ "'"
     );

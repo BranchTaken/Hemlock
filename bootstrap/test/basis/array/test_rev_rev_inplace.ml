@@ -6,12 +6,12 @@ open Format
 let test () =
   let test_rev arr = begin
     printf "rev %a -> %a -> rev_inplace %a -> "
-      (pp Uns.pp) arr
-      (pp Uns.pp) (rev arr)
-      (pp Uns.pp) arr
+      (xpp Uns.xpp) arr
+      (xpp Uns.xpp) (rev arr)
+      (xpp Uns.xpp) arr
     ;
     rev_inplace arr;
-    printf "%a\n" (pp Uns.pp) arr
+    printf "%a\n" (xpp Uns.xpp) arr
   end in
   printf "@[<h>";
   test_rev [|0L|];

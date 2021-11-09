@@ -9,14 +9,14 @@ let test () =
       Range.iter (i =:< (length arr)) ~f:(fun j ->
         let arr' = copy arr in
         printf "%a %a: swap %a -> %a -> swap_inplace %a -> "
-          Uns.pp i
-          Uns.pp j
-          (pp Uns.pp) arr'
-          (pp Uns.pp) (swap i j arr')
-          (pp Uns.pp) arr'
+          Uns.xpp i
+          Uns.xpp j
+          (xpp Uns.xpp) arr'
+          (xpp Uns.xpp) (swap i j arr')
+          (xpp Uns.xpp) arr'
         ;
         swap_inplace i j arr';
-        printf "%a\n" (pp Uns.pp) arr'
+        printf "%a\n" (xpp Uns.xpp) arr'
       )
     )
   end in

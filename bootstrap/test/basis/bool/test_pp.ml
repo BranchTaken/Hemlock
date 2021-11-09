@@ -7,7 +7,7 @@ let test () =
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-        printf "pp %b -> %a\n" t pp t;
+        printf "pp %b -> %a\n" t xpp t;
         fn ts'
       end
   in

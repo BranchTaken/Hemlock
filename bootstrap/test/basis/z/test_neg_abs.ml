@@ -10,9 +10,9 @@ let test () =
     | u :: us' -> begin
         let fn u = begin
           printf "neg,abs %a -> %a, %a\n"
-            pp_x u
-            pp_x (neg u)
-            pp_x (abs u)
+            xpp_x u
+            xpp_x (neg u)
+            xpp_x (abs u)
         end in
         fn u;
         fn (neg u);

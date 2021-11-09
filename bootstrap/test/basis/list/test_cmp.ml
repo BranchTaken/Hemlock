@@ -16,7 +16,7 @@ let test () =
     | [], _ -> ()
     | _ :: lists0', [] -> test_with_lists lists lists0' lists
     | list0 :: _, list1 :: lists1' -> begin
-        printf "cmp %a %a -> " (pp Uns.pp) list0 (pp Uns.pp) list1;
+        printf "cmp %a %a -> " (xpp Uns.xpp) list0 (xpp Uns.xpp) list1;
         test_cmp list0 list1;
         test_with_lists lists lists0 lists1'
       end

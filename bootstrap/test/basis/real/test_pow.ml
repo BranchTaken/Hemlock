@@ -11,7 +11,7 @@ let test () =
     | (b, x) :: pairs' -> begin
         let xf = of_sint x in
         printf "** pow int_pow %h ~p:%a -> %h %h %h\n"
-          b Sint.pp x (b ** xf) (pow b ~p:xf) (int_pow b ~p:x);
+          b Sint.xpp x (b ** xf) (pow b ~p:xf) (int_pow b ~p:x);
         fn pairs'
       end
   end in

@@ -101,20 +101,20 @@ let rev_take n t =
 let rev_split n t =
   rev_take n t, drop n t
 
-let pp pp_elm ppf t =
+let xpp xpp_elm xppf t =
   let open Format in
-  fprintf ppf "@[<h>";
+  fprintf xppf "@[<h>";
   let rec fn t = begin
     match t with
-    | lazy Nil -> fprintf ppf "Nil"
+    | lazy Nil -> fprintf xppf "Nil"
     | lazy (Cons(elm, t')) -> begin
-        fprintf ppf "(%a@ " pp_elm elm;
+        fprintf xppf "(%a@ " xpp_elm elm;
         fn t';
-        fprintf ppf ")"
+        fprintf xppf ")"
       end
   end in
   fn t;
-  fprintf ppf "@]"
+  fprintf xppf "@]"
 
 let fmt fmt_elm t formatter =
   let rec fn t formatter = begin

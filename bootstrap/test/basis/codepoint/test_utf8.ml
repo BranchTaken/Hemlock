@@ -3,8 +3,8 @@ open! Basis
 open Codepoint
 open Format
 
-let pp_x ppf cp =
-  Format.fprintf ppf "%a" Uns.pp_x (extend_to_uns cp)
+let xpp_x xppf cp =
+  Format.fprintf xppf "%a" Uns.xpp_x (extend_to_uns cp)
 
 let test () =
   let open Utf8 in
@@ -16,18 +16,18 @@ let test () =
         let bytes = to_bytes utf8 in
         let length = length utf8 in
         printf "codepoint=%a, codepoint'=%a, bytes=["
-          pp_x codepoint pp_x codepoint';
+          xpp_x codepoint xpp_x codepoint';
         let rec bytes_iteri i = function
           | [] -> ()
           | b :: bytes' -> begin
               let space = if Uns.(i = 0L) then "" else " " in
               let sep = if Uns.(succ i < length) then ";" else "" in
-              printf "%s%a%s" space Byte.pp_x b sep;
+              printf "%s%a%s" space Byte.xpp_x b sep;
               bytes_iteri (succ i) bytes'
             end
         in
         bytes_iteri 0L bytes;
-        printf "], length=%a\n" Uns.pp length;
+        printf "], length=%a\n" Uns.xpp length;
         test_codepoints codepoints'
       end
   in

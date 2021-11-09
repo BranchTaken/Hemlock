@@ -17,7 +17,7 @@ let test () =
               )
           in
           printf "            %a=%s\n"
-            C.Cursor.pp cursor (of_codepoint (C.Cursor.rget cursor));
+            C.Cursor.xpp cursor (of_codepoint (C.Cursor.rget cursor));
           let cp, cursor' = C.Cursor.next cursor in
           assert Codepoint.(cp = C.Cursor.rget cursor);
           assert C.Cursor.(pred cursor' = cursor);
@@ -40,7 +40,7 @@ let test () =
               )
           in
           printf "            %a=%s\n"
-            C.Cursor.pp cursor (of_codepoint (C.Cursor.lget cursor));
+            C.Cursor.xpp cursor (of_codepoint (C.Cursor.lget cursor));
           let cp, cursor' = C.Cursor.prev cursor in
           assert Codepoint.(cp = C.Cursor.lget cursor);
           assert C.Cursor.(succ cursor' = cursor);

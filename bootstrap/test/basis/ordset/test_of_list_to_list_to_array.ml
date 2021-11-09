@@ -9,9 +9,9 @@ let test () =
   let test ms = begin
     let ordset = of_list (module Uns) ms in
     printf "of_list %a; to_list -> %a; to_array -> %a\n"
-      (List.pp Uns.pp) ms
-      (List.pp Uns.pp) (to_list ordset)
-      (Array.pp Uns.pp) (to_array ordset)
+      (List.xpp Uns.xpp) ms
+      (List.xpp Uns.xpp) (to_list ordset)
+      (Array.xpp Uns.xpp) (to_array ordset)
   end in
   let test_lists = [
     [];

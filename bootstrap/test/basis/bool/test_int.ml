@@ -8,8 +8,8 @@ let test () =
     | [] -> ()
     | t :: ts' -> begin
         let x = to_uns t in
-        printf "to_uns %b -> %a ; " t Uns.pp x;
-        printf "of_uns %a -> %b\n" Uns.pp x (of_uns x);
+        printf "to_uns %b -> %a ; " t Uns.xpp x;
+        printf "of_uns %a -> %b\n" Uns.xpp x (of_uns x);
         fn ts'
       end
   in

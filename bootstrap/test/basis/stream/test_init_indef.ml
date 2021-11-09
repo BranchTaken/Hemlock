@@ -4,7 +4,7 @@ open Stream
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec test_init_indef_up_to i n = begin
     match i <= n with
@@ -16,7 +16,7 @@ let test () =
           | true -> Some(state, succ state)
         end in
         let t = init_indef ~f 0L in
-        printf "init_indef until %a = %a\n" Uns.pp i ppt t;
+        printf "init_indef until %a = %a\n" Uns.xpp i xppt t;
         test_init_indef_up_to (succ i) n
       end
   end in

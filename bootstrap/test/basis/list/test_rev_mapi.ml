@@ -15,9 +15,9 @@ let test () =
   iter lists ~f:(fun l ->
     let f i elm = elm + i * 10L in
     printf "[rev_]mapi %a -> %a / %a\n"
-      (pp Uns.pp) l
-      (pp Uns.pp) (mapi l ~f)
-      (pp Uns.pp) (rev_mapi l ~f)
+      (xpp Uns.xpp) l
+      (xpp Uns.xpp) (mapi l ~f)
+      (xpp Uns.xpp) (rev_mapi l ~f)
   );
   printf "@]"
 

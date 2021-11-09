@@ -9,7 +9,7 @@ let test () =
     | [] -> ()
     | (x, y) :: pairs' -> begin
         let z = x * y in
-        printf "%a * %a -> %a\n" pp_x x pp_x y pp_x z;
+        printf "%a * %a -> %a\n" xpp_x x xpp_x y xpp_x z;
         test_pairs pairs'
       end
   in

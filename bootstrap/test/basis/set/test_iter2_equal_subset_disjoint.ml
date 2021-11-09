@@ -18,7 +18,7 @@ let test () =
       | Some _, Some _ -> ()
       | None, Some _
       | Some _, None -> begin
-          printf "Should be equal:@,%a@,%a@\n" pp set0 pp set1;
+          printf "Should be equal:@,%a@,%a@\n" xpp set0 xpp set1;
           assert false;
         end
       | None, None -> not_reached ()
@@ -34,7 +34,7 @@ let test () =
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> begin
-          printf "Should be disjoint:@,%a@,%a@\n" pp set0 pp set1;
+          printf "Should be disjoint:@,%a@,%a@\n" xpp set0 xpp set1;
           assert false;
         end
       | None, Some _

@@ -11,9 +11,9 @@ let test () =
     | s :: strs' -> begin
         let bytes = of_string_slice (String.C.Slice.of_string s) in
         printf "hash_fold %a (%a) -> %a\n"
-          pp bytes
-          String.pp s
-          Hash.pp (Hash.t_of_state
+          xpp bytes
+          String.xpp s
+          Hash.xpp (Hash.t_of_state
             (hash_fold bytes Hash.State.empty));
         fn strs'
       end

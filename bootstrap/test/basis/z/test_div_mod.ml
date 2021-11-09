@@ -11,7 +11,7 @@ let test () =
         let quotient = x / y in
         let remainder = x % y in
         printf "%a /,%% %a -> %a, %a\n"
-          pp_x x pp_x y pp_x quotient pp_x remainder;
+          xpp_x x xpp_x y xpp_x quotient xpp_x remainder;
         assert (x = (y * quotient + remainder));
         assert (x >= y || remainder = x);
         test_pairs pairs'

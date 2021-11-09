@@ -942,42 +942,42 @@ let to_array t =
 (**************************************************************************************************)
 (* Begin test support. *)
 
-let pp pp_v ppf t =
+let xpp xpp_v xppf t =
   let open Format in
-  let rec pp_kvs ppf kvs = begin
-    fprintf ppf "@[<v>elms_kv=[|";
-    if Array.length kvs > 0L then fprintf ppf "@;<0 2>@[<v>";
+  let rec xpp_kvs xppf kvs = begin
+    fprintf xppf "@[<v>elms_kv=[|";
+    if Array.length kvs > 0L then fprintf xppf "@;<0 2>@[<v>";
     Array.iteri kvs ~f:(fun i (k, v) ->
-      if i > 0L then fprintf ppf ";@,";
-      fprintf ppf "@[<h>(%a,@ %a)@]" t.cmper.pp k pp_v v
+      if i > 0L then fprintf xppf ";@,";
+      fprintf xppf "@[<h>(%a,@ %a)@]" t.cmper.xpp k xpp_v v
     );
-    if Array.length kvs > 0L then fprintf ppf "@]@,";
-    fprintf ppf "|]@]"
+    if Array.length kvs > 0L then fprintf xppf "@]@,";
+    fprintf xppf "|]@]"
   end
-  and pp_children ppf children = begin
-    fprintf ppf "@[<v>elms_child=[|";
-    if Array.length children > 0L then fprintf ppf "@;<0 2>@[<v>";
+  and xpp_children xppf children = begin
+    fprintf xppf "@[<v>elms_child=[|";
+    if Array.length children > 0L then fprintf xppf "@;<0 2>@[<v>";
     Array.iteri children ~f:(fun i child ->
-      if i > 0L then fprintf ppf ";@,";
-      fprintf ppf "%a" pp_node child
+      if i > 0L then fprintf xppf ";@,";
+      fprintf xppf "%a" xpp_node child
     );
-    if Array.length children > 0L then fprintf ppf "@]@,";
-    fprintf ppf "|]@]"
+    if Array.length children > 0L then fprintf xppf "@]@,";
+    fprintf xppf "|]@]"
   end
-  and pp_node ppf node = begin
-    fprintf ppf "@[<v>present_kv=   %a;@,present_child=%a;@,%a;@,%a@]"
-      Bitset.pp_x node.present_kv
-      Bitset.pp_x node.present_child
-      pp_kvs node.elms_kv
-      pp_children node.elms_child
+  and xpp_node xppf node = begin
+    fprintf xppf "@[<v>present_kv=   %a;@,present_child=%a;@,%a;@,%a@]"
+      Bitset.xpp_x node.present_kv
+      Bitset.xpp_x node.present_child
+      xpp_kvs node.elms_kv
+      xpp_children node.elms_child
   end
-  and pp_root ppf root = begin
-    fprintf ppf "@[<v>root={@;<0 2>%a@,}@]" pp_node root
+  and xpp_root xppf root = begin
+    fprintf xppf "@[<v>root={@;<0 2>%a@,}@]" xpp_node root
   end
   in
-  fprintf ppf "@[<v>Map {@;<0 2>@[<v>length=%a;@,%a@]@,}@]"
-    Uns.pp t.length
-    pp_root t.root
+  fprintf xppf "@[<v>Map {@;<0 2>@[<v>length=%a;@,%a@]@,}@]"
+    Uns.xpp t.length
+    xpp_root t.root
 
 let fmt fmt_v t formatter =
   let fmt_kv (k, v) formatter = begin
@@ -1022,8 +1022,8 @@ let fmt fmt_v t formatter =
   |> fmt_root t.root
   |> Fmt.fmt "}"
 
-let pp_kv pp_v ppf (k, v) =
-  Format.fprintf ppf "(%a,@ %a)" Uns.pp k pp_v v
+let xpp_kv xpp_v xppf (k, v) =
+  Format.fprintf xppf "(%a,@ %a)" Uns.xpp k xpp_v v
 
 let fmt_kv fmt_v (k, v) formatter =
   formatter

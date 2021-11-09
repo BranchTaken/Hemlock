@@ -9,7 +9,7 @@ let test () =
     | 0x80L -> ()
     | _ -> begin
         printf "%a -> \"%s\"\n"
-          Uns.pp_x i (escaped (of_codepoint Codepoint.(trunc_of_uns i)));
+          Uns.xpp_x i (escaped (of_codepoint Codepoint.(trunc_of_uns i)));
         fn (Uns.succ i)
       end
   end in

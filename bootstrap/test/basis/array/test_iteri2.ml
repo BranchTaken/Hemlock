@@ -8,7 +8,7 @@ let test () =
     printf "[|";
     iteri2 arr0 arr1 ~f:(fun i elm0 elm1 ->
       if i > 0L then printf "; ";
-      printf "(%a, %a)" Uns.pp elm0 Uns.pp elm1
+      printf "(%a, %a)" Uns.xpp elm0 Uns.xpp elm1
     );
     printf "|]"
   end in

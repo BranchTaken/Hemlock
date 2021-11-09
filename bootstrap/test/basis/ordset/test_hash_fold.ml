@@ -11,8 +11,8 @@ let test () =
     | arr :: arrs' -> begin
         let ordset = of_array (module Uns) arr in
         printf "hash_fold (of_array (module Uns) %a) -> %a@\n"
-          (Array.pp Uns.pp) arr
-          Hash.pp (Hash.t_of_state (hash_fold ordset Hash.State.empty));
+          (Array.xpp Uns.xpp) arr
+          Hash.xpp (Hash.t_of_state (hash_fold ordset Hash.State.empty));
         fn arrs'
       end
   in

@@ -17,9 +17,9 @@ let test () =
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "foldi2 %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (foldi2 a b ~init:[] ~f)
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (foldi2 a b ~init:[] ~f)
     ;
   );
   printf "@]"

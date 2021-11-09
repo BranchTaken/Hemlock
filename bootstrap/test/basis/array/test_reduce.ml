@@ -5,10 +5,10 @@ open Format
 
 let test () =
   let test_reduce arr ~f = begin
-    printf "reduce %a" (pp Uns.pp) arr;
+    printf "reduce %a" (xpp Uns.xpp) arr;
     match reduce arr ~f with
     | None -> printf " -> None\n"
-    | Some x -> printf " -> %a\n" Uns.pp x
+    | Some x -> printf " -> %a\n" Uns.xpp x
   end in
   let f a b = (a + b) in
   printf "@[<h>";

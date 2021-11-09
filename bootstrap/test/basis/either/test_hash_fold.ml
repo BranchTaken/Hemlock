@@ -9,8 +9,8 @@ let test () =
     | [] -> ()
     | either :: eithers' -> begin
         printf "hash_fold %a -> %a\n"
-          (pp Uns.pp Uns.pp) either
-          Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold Uns.hash_fold
+          (xpp Uns.xpp Uns.xpp) either
+          Hash.xpp (Hash.t_of_state (hash_fold Uns.hash_fold Uns.hash_fold
               either Hash.State.empty));
         fn eithers'
       end

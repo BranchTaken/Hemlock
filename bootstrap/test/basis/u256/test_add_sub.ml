@@ -8,7 +8,7 @@ let test () =
   let rec test_pairs = function
     | [] -> ()
     | (x, y) :: pairs' -> begin
-        printf "%a +,- %a -> %a, %a\n" pp_x x pp_x y pp_x (x + y) pp_x (x - y);
+        printf "%a +,- %a -> %a, %a\n" xpp_x x xpp_x y xpp_x (x + y) xpp_x (x - y);
         test_pairs pairs'
       end
   in

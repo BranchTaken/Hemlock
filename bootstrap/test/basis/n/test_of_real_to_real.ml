@@ -11,7 +11,7 @@ let test () =
     | r :: rs' -> begin
         let x = of_real r in
         printf "of_real %h -> %a; to_real -> %h\n"
-          r pp_x x (to_real x);
+          r xpp_x x (to_real x);
         test_rs rs'
       end
   end in
@@ -46,7 +46,7 @@ let test () =
     | x :: xs' -> begin
         let r = to_real x in
         printf "to_real %a -> %h; of_real -> %a\n"
-          pp_x x r pp_x (of_real r);
+          xpp_x x r xpp_x (of_real r);
         test_xs xs'
       end
   end in

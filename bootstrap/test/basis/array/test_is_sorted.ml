@@ -6,7 +6,7 @@ open Format
 let test () =
   let test_is_sorted arr = begin
     printf "is_sorted %a: not strict -> %B, strict -> %B\n"
-      (pp Uns.pp) arr
+      (xpp Uns.xpp) arr
       (is_sorted arr ~cmp:Uns.cmp)
       (is_sorted ~strict:true arr ~cmp:Uns.cmp)
   end in

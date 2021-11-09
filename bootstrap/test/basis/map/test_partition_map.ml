@@ -16,9 +16,9 @@ let test () =
     let a_kvs = to_alist a_map in
     let b_kvs = to_alist b_map in
     printf "%a -> %a / %a@\n"
-      (List.pp Uns.pp) ks
-      (List.pp (pp_kv String.pp)) a_kvs
-      (List.pp (pp_kv Sint.pp)) b_kvs
+      (List.xpp Uns.xpp) ks
+      (List.xpp (xpp_kv String.xpp)) a_kvs
+      (List.xpp (xpp_kv Sint.xpp)) b_kvs
   end in
   Range.iter (0L =:< 7L) ~f:(fun n ->
     let ks = Array.(to_list (init (0L =:< n) ~f:(fun i -> i))) in

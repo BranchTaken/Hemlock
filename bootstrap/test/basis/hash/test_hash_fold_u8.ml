@@ -11,20 +11,20 @@ let test () =
     )
     |> State.Gen.fini
   end in
-  let pp_u8 ppf u = Format.fprintf ppf "0x%02Lx" u in
-  let pp_arr pp_elm ppf arr = begin
+  let xpp_u8 xppf u = Format.fprintf xppf "0x%02Lx" u in
+  let xpp_arr xpp_elm xppf arr = begin
     let rec fn arr i len = begin
       match i = len with
       | true -> ()
       | false -> begin
-          if i > 0L then fprintf ppf ";@ ";
-          fprintf ppf "%a" pp_elm Stdlib.(Array.get arr Int64.(to_int i));
+          if i > 0L then fprintf xppf ";@ ";
+          fprintf xppf "%a" xpp_elm Stdlib.(Array.get arr Int64.(to_int i));
           fn arr (succ i) len
         end
     end in
-    fprintf ppf "@[<h>[|";
+    fprintf xppf "@[<h>[|";
     fn arr 0L Stdlib.(Int64.of_int (Array.length arr));
-    fprintf ppf "|]@]"
+    fprintf xppf "|]@]"
   end in
   printf "@[<h>";
   let rec test_hash_fold u8s_list = begin
@@ -32,7 +32,7 @@ let test () =
     | [] -> ()
     | u8s :: u8s_list' -> begin
         printf "hash_fold %a -> %a\n"
-          (pp_arr pp_u8) u8s pp (t_of_state State.(hash_fold u8s empty));
+          (xpp_arr xpp_u8) u8s xpp (t_of_state State.(hash_fold u8s empty));
         test_hash_fold u8s_list'
       end
   end in

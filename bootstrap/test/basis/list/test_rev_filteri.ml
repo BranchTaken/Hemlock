@@ -16,9 +16,9 @@ let test () =
   iter lists ~f:(fun l ->
     let f i _ = (i % 2L = 0L) in
     printf "[rev_]filteri %a -> %a / %a\n"
-      (pp Uns.pp) l
-      (pp Uns.pp) (filteri l ~f)
-      (pp Uns.pp) (rev_filteri l ~f)
+      (xpp Uns.xpp) l
+      (xpp Uns.xpp) (filteri l ~f)
+      (xpp Uns.xpp) (rev_filteri l ~f)
   );
   printf "@]"
 

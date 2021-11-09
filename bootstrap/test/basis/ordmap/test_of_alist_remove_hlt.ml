@@ -12,7 +12,7 @@ let test () =
     let ordmap' = remove_hlt k ordmap in
     validate ordmap';
     printf "@[<v>remove_hlt %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.pp k (pp String.pp) ordmap (pp String.pp) ordmap'
+      Uns.xpp k (xpp String.xpp) ordmap (xpp String.xpp) ordmap'
   end in
   let test_tuples = [
     ([(0L, "0")], 0L,                       "Member, length 1 -> 0.");

@@ -12,9 +12,9 @@ let test () =
     let t_arr = to_array t_ordmap in
     let f_arr = to_array f_ordmap in
     printf "%a -> %a / %a@\n"
-      (Array.pp Uns.pp) arr
-      (Array.pp (pp_kv Uns.pp)) t_arr
-      (Array.pp (pp_kv Uns.pp)) f_arr
+      (Array.xpp Uns.xpp) arr
+      (Array.xpp (xpp_kv Uns.xpp)) t_arr
+      (Array.xpp (xpp_kv Uns.xpp)) f_arr
   end in
   Range.iter (0L =:< 7L) ~f:(fun n ->
     let arr = Array.init (0L =:< n) ~f:(fun i -> i * 10L) in
