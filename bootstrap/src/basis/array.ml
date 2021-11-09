@@ -1124,11 +1124,9 @@ let unzip t =
   let t1 = map ~f:(fun (_, b) -> b) t in
   t0, t1
 
-let xfmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
-  (fmt_a:('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))) t
-  ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+let xfmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_a t formatter =
   foldi t
-    ~init:((module Formatter) |> Fmt.fmt "[|")
+    ~init:(formatter |> Fmt.fmt "[|")
     ~f:(fun i formatter elm ->
       formatter
       |> (fun formatter ->

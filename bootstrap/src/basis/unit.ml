@@ -23,8 +23,8 @@ module T = struct
   let to_string _ =
     "()"
 
-  let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
-    (module Formatter) |> Fmt.fmt (to_string t)
+  let fmt t formatter =
+    formatter |> Fmt.fmt (to_string t)
 end
 include T
 include Identifiable.Make(T)

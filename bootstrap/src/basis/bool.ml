@@ -38,13 +38,12 @@ module T = struct
     | false -> "false"
     | true -> "true"
 
-  let xfmt ?pad ?just ?width t ((module Formatter):(module Fmt.Formatter))
-    : (module Fmt.Formatter) =
+  let xfmt ?pad ?just ?width t formatter =
     let pad = match pad with
       | None -> None
       | Some c -> Some (Codepoint.to_string c)
     in
-    Fmt.xfmt ?pad ?just ?width (to_string t) (module Formatter)
+    Fmt.xfmt ?pad ?just ?width (to_string t) formatter
 
   let fmt t formatter =
     xfmt t formatter

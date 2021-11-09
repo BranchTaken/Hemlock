@@ -1872,13 +1872,12 @@ let to_string ?(alt=Fmt.alt_default) s =
   | false -> s
   | true -> "\"" ^ escaped s ^ "\""
 
-let xfmt ?pad ?just ?alt ?width s ((module Formatter):(module Fmt.Formatter))
-  : (module Fmt.Formatter) =
+let xfmt ?pad ?just ?alt ?width s formatter =
   let pad = match pad with
     | None -> None
     | Some c -> Some (Codepoint.to_string c)
   in
-  Fmt.xfmt ?pad ?just ?width (to_string ?alt s) (module Formatter)
+  Fmt.xfmt ?pad ?just ?width (to_string ?alt s) formatter
 
 module Fmt = struct
   let empty : (module Fmt.Formatter) =

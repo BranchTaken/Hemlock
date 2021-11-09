@@ -3,8 +3,8 @@ open! Basis
 open Array
 
 let test () =
-  let range_fmt r ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
-    (module Formatter)
+  let range_fmt r formatter =
+    formatter
     |> Fmt.fmt "("
     |> Uns.fmt (Range.base r)
     |> Fmt.fmt " .. "
