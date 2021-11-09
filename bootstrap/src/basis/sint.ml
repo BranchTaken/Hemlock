@@ -23,6 +23,59 @@ module T = struct
 
     let pp ppf t =
       Format.fprintf ppf "%Ldi" t
+
+    let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
+      ?(width=Fmt.width_default) ?(base=Fmt.base_default) t =
+      let rec fn accum ndigits is_neg t = begin
+        match Stdlib.(Int64.(unsigned_compare t 0L) = 0)
+              && Stdlib.(not zpad || (ndigits >= (Int64.to_int width))) with
+        | true -> begin
+            (match sign, is_neg with
+              | Implicit, false -> ""
+              | Explicit, false -> "+"
+              | Space, false -> " "
+              | _, true -> "-"
+            )
+            ^ (match alt with
+              | true -> begin
+                  match base with
+                  | Bin -> "0b"
+                  | Oct -> "0o"
+                  | Dec -> ""
+                  | Hex -> "0x"
+                end
+              | false -> ""
+            )
+            ^ (Stdlib.String.concat "" (match ndigits with 0 -> ["0"] | _ -> accum))
+            ^ "i"
+          end
+        | _ -> begin
+            let divisor, group = match base with
+              | Bin -> 2L, 8
+              | Oct -> 8L, 3
+              | Dec -> 10L, 3
+              | Hex -> 16L, 4
+            in
+            let sep = match alt && Stdlib.(ndigits > 0) && Stdlib.((ndigits mod group) = 0) with
+              | true -> ["_"]
+              | false -> []
+            in
+            let digit = Stdlib.String.init 1 (fun _ ->
+              (Stdlib.String.get "0123456789abcdef" Int64.(to_int (unsigned_rem t divisor)))) in
+            let t' = Int64.unsigned_div t divisor in
+            fn (digit :: (sep @ accum)) Stdlib.(succ ndigits) is_neg t'
+          end
+      end in
+      match Stdlib.((Int64.compare t 0L) <= 0) with
+      | false -> fn [] 0 false t
+      | true -> fn [] 0 true (Int64.neg t)
+
+    let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base t ((module Formatter):(module Fmt.Formatter))
+      : (module Fmt.Formatter) =
+      Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) (module Formatter)
+
+    let fmt t formatter =
+      xfmt t formatter
   end
   include U
   include Identifiable.Make(U)
@@ -64,56 +117,6 @@ module T = struct
 
   let of_string s =
     Int64.of_string s
-
-  let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
-    ?(width=Fmt.width_default) ?(base=Fmt.base_default) t =
-    let rec fn accum ndigits is_neg t = begin
-      match Stdlib.(Int64.(unsigned_compare t 0L) = 0)
-            && Stdlib.(not zpad || (ndigits >= (Int64.to_int width))) with
-      | true -> begin
-          (match sign, is_neg with
-            | Implicit, false -> ""
-            | Explicit, false -> "+"
-            | Space, false -> " "
-            | _, true -> "-"
-          )
-          ^ (match alt with
-            | true -> begin
-                match base with
-                | Bin -> "0b"
-                | Oct -> "0o"
-                | Dec -> ""
-                | Hex -> "0x"
-              end
-            | false -> ""
-          )
-          ^ (Stdlib.String.concat "" (match ndigits with 0 -> ["0"] | _ -> accum))
-          ^ "i"
-        end
-      | _ -> begin
-          let divisor, group = match base with
-            | Bin -> 2L, 8
-            | Oct -> 8L, 3
-            | Dec -> 10L, 3
-            | Hex -> 16L, 4
-          in
-          let sep = match alt && Stdlib.(ndigits > 0) && Stdlib.((ndigits mod group) = 0) with
-            | true -> ["_"]
-            | false -> []
-          in
-          let digit = Stdlib.String.init 1 (fun _ ->
-            (Stdlib.String.get "0123456789abcdef" Int64.(to_int (unsigned_rem t divisor)))) in
-          let t' = Int64.unsigned_div t divisor in
-          fn (digit :: (sep @ accum)) Stdlib.(succ ndigits) is_neg t'
-        end
-    end in
-    match is_negative t with
-    | false -> fn [] 0 false t
-    | true -> fn [] 0 true (Int64.neg t)
-
-  let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t ((module Formatter):(module Fmt.Formatter))
-    : (module Fmt.Formatter) =
-    Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) (module Formatter)
 
   let of_real r =
     (* OCaml handles overflow poorly, but this deficiency has no anticipated impact on bootstrapping.

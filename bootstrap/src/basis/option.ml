@@ -110,6 +110,11 @@ let pp pp_a ppf = function
   | Some a -> Format.fprintf ppf "@[<h>Some@ %a@]" pp_a a
   | None -> Format.fprintf ppf "None"
 
+let fmt fmt_a t formatter =
+  match t with
+  | Some a -> formatter |> Fmt.fmt "Some " |> fmt_a a
+  | None -> formatter |> Fmt.fmt "None"
+
 let is_some = function
   | Some _ -> true
   | None -> false

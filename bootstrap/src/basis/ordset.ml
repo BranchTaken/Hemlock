@@ -46,12 +46,20 @@ module T = struct
       let pp ppf t =
         Format.fprintf ppf "@[<h>{index=%a}@]"
           Uns.pp (index t)
+
+      let fmt t formatter =
+        formatter
+        |> Fmt.fmt "{index="
+        |> Uns.fmt (index t)
+        |> Fmt.fmt "}"
     end
     include T
     include Cmpable.MakePoly2(T)
   end
 
   let cursor_pp = Cursor.pp
+
+  let cursor_fmt = Cursor.fmt
 end
 include T
 include Container.MakePoly2Index(T)

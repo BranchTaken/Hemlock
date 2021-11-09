@@ -24,11 +24,11 @@ let test () =
       |> Fmt.fmt " -> fold2_map "
       |> Uns.fmt accum
       |> Fmt.fmt " "
-      |> (fmt (String.fmt ~alt:true)) sarr
+      |> (fmt (String.xfmt ~alt:true)) sarr
       |> Fmt.fmt " -> foldi2_map "
       |> Uns.fmt accum2
       |> Fmt.fmt " "
-      |> (fmt (String.fmt ~alt:true)) sarr2
+      |> (fmt (String.xfmt ~alt:true)) sarr2
       |> Fmt.fmt "\n"
     in
     ()

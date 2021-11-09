@@ -11,7 +11,7 @@ let test () =
   List.fold [false; true] ~init:File.Fmt.stdout ~f:(fun formatter alt ->
     formatter
     |> Fmt.fmt "l = "
-    |> fmt ~alt (fmt ~alt ~width:4L Uns.fmt) l
+    |> xfmt ~alt (xfmt ~alt ~width:4L Uns.fmt) l
     |> Fmt.fmt "\n"
   )
 

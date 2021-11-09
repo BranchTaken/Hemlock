@@ -17,6 +17,14 @@ module T = struct
         | Nearest -> "Nearest"
         | Zero -> "Zero"
       )
+
+    let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+      (module Formatter) |> Fmt.fmt (match t with
+        | Down -> "Down"
+        | Up -> "Up"
+        | Nearest -> "Nearest"
+        | Zero -> "Zero"
+      )
   end
 
   module Class = struct
@@ -35,24 +43,15 @@ module T = struct
         | Subnormal -> "Subnormal"
         | Zero -> "Zero"
       )
-  end
 
-  module Parts = struct
-    type outer = t
-    type t = {
-      fractional: outer;
-      integral: outer;
-    }
-
-    let fractional t =
-      t.fractional
-
-    let integral t =
-      t.integral
-
-    let pp ppf t =
-      Format.fprintf ppf "@[<h>{fractional:@ %h,@ integral:@ %h}@]"
-        t.fractional t.integral
+    let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+      (module Formatter) |> Fmt.fmt (match t with
+        | Infinite -> "Infinite"
+        | Nan -> "Nan"
+        | Normal -> "Normal"
+        | Subnormal -> "Subnormal"
+        | Zero -> "Zero"
+      )
   end
 
   let hash_fold t state =
@@ -112,10 +111,6 @@ module T = struct
 
   let f2x ~p t =
     ldexp t (int_of_sint p)
-
-  let modf t =
-    let fractional, integral = modf t in
-    {Parts. fractional; integral}
 
   let min_value = neg_infinity
   let max_value = infinity
@@ -188,21 +183,6 @@ module T = struct
     | Normal
     | Subnormal
     | Zero -> true
-
-  let round ?(dir=Dir.Nearest) t =
-    match dir with
-    | Down -> floor t
-    | Up -> ceil t
-    | Nearest -> begin
-        let lb = -0x1p52 in
-        let ub = 0x1p52 in
-        if Cmp.is_ge (cmp t lb) && Cmp.is_le (cmp t ub) then
-          if is_neg t then ceil (t - 0.5)
-          else floor (t + 0.5)
-        else
-          t
-      end
-    | Zero -> Parts.integral (modf t)
 
   let min t0 t1 =
     match cmp t0 t1 with
@@ -441,7 +421,7 @@ module T = struct
         Uns.of_real (match classify digit with
           | Zero
           | Normal
-          | Subnormal -> round ~dir:Down digit
+          | Subnormal -> floor digit
           | Infinite
           | Nan -> 0.
         )
@@ -460,7 +440,7 @@ module T = struct
             (digit' :: dl'), e
           end
       end in
-      let e = Sint.of_real (round ~dir:Down (log abs_t)) in
+      let e = Sint.of_real (floor (log abs_t)) in
       let max_digit = match notation with
         | Fmt.Normalized -> succ precision
         | Fmt.RadixPoint -> Uns.bits_of_sint Sint.(max 0L (e + (succ (Uns.bits_to_sint precision))))
@@ -525,7 +505,7 @@ module T = struct
         | Class.Subnormal -> (fun formatter ->
           formatter
           |> fmt_sign Sint.(e < 0L) ~sign true
-          |> Uns.fmt ~alt  (Uns.bits_of_sint (Sint.abs e))
+          |> Uns.xfmt ~alt  (Uns.bits_of_sint (Sint.abs e))
         )
         | Class.Infinite
         | Class.Nan -> not_reached ()
@@ -670,7 +650,7 @@ module T = struct
         | Class.Subnormal -> (fun formatter ->
           formatter
           |> fmt_sign Sint.(e < 0L) ~sign true
-          |> Uns.fmt ~alt (Uns.bits_of_sint (Sint.abs e))
+          |> Uns.xfmt ~alt (Uns.bits_of_sint (Sint.abs e))
         )
         | Class.Infinite
         | Class.Nan -> not_reached ()
@@ -896,10 +876,59 @@ module T = struct
     | _, Fmt.Oct
     | _, Fmt.Hex -> to_string_p ~sign ~alt ~zpad ~width ~precision ~notation ~base t
 
-  let fmt ?pad ?just ?sign ?alt ?zpad ?width ?precision ?notation ?base t
+  let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?precision ?notation ?base t
       ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
-    Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?precision ?notation ?base t)
+    Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?precision ?notation ?base t)
       (module Formatter)
+
+  let fmt t formatter =
+    xfmt t formatter
+
+  module Parts = struct
+    type outer = t
+    type t = {
+      fractional: outer;
+      integral: outer;
+    }
+
+    let fractional t =
+      t.fractional
+
+    let integral t =
+      t.integral
+
+    let pp ppf t =
+      Format.fprintf ppf "@[<h>{fractional:@ %h,@ integral:@ %h}@]"
+        t.fractional t.integral
+
+    let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+      (module Formatter)
+      |> Fmt.fmt "{fractional: "
+      |> xfmt ~base:Fmt.Hex t.fractional
+      |> Fmt.fmt ", integral: "
+      |> xfmt ~base:Fmt.Hex t.integral
+      |> Fmt.fmt "}"
+  end
+
+  let modf t =
+    let fractional, integral = modf t in
+    {Parts. fractional; integral}
+
+  let round ?(dir=Dir.Nearest) t =
+    match dir with
+    | Down -> floor t
+    | Up -> ceil t
+    | Nearest -> begin
+        let lb = -0x1p52 in
+        let ub = 0x1p52 in
+        if Cmp.is_ge (cmp t lb) && Cmp.is_le (cmp t ub) then
+          if is_neg t then ceil (t - 0.5)
+          else floor (t + 0.5)
+        else
+          t
+      end
+    | Zero -> Parts.integral (modf t)
+
 end
 include T
 include Identifiable.Make(T)

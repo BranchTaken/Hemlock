@@ -36,6 +36,9 @@ val u128_pp_x: Format.formatter -> u128 -> unit
 (** [u128_pp_x ppf u] prints a hexadecimal representation of [u] to the pretty printing formatter,
     [ppf]. This function is intended for use with the [%a] format specifier to {!Format.printf}.*)
 
+val u128_fmt_x: u128 -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** [u128_fmt_x u formatter] applies a hexadecimal representation of [u] to [formatter]. *)
+
 val u128_compare: u128 -> u128 -> sint
 (** [u128_compare a b] returns [{-1, 0, 1}] if [a {<,=,>} b], respectively. *)
 

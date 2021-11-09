@@ -979,8 +979,59 @@ let pp pp_v ppf t =
     Uns.pp t.length
     pp_root t.root
 
+let fmt fmt_v t formatter =
+  let fmt_kv (k, v) formatter = begin
+    formatter
+    |> Fmt.fmt "("
+    |> t.cmper.fmt k
+    |> Fmt.fmt ", "
+    |> fmt_v v
+    |> Fmt.fmt ")"
+  end in
+  let rec fmt_kvs kvs formatter = begin
+    formatter
+    |> Fmt.fmt "elms_kv="
+    |> (Array.fmt fmt_kv) kvs
+  end
+  and fmt_children children formatter = begin
+    formatter
+    |> Fmt.fmt "elms_child="
+    |> (Array.fmt fmt_node) children
+  end
+  and fmt_node node formatter = begin
+    formatter
+    |> Fmt.fmt "present_kv="
+    |> Bitset.xfmt ~alt:true ~base:Fmt.Hex node.present_kv
+    |> Fmt.fmt "; present_child="
+    |> Bitset.xfmt ~alt:true ~base:Fmt.Hex node.present_child
+    |> Fmt.fmt "; "
+    |> fmt_kvs node.elms_kv
+    |> Fmt.fmt "; "
+    |> fmt_children node.elms_child
+  end in
+  let fmt_root root formatter = begin
+    formatter
+    |> Fmt.fmt "root={"
+    |> fmt_node root
+    |> Fmt.fmt "}"
+  end in
+  formatter
+  |> Fmt.fmt "Map {length="
+  |> Uns.fmt t.length
+  |> Fmt.fmt "; "
+  |> fmt_root t.root
+  |> Fmt.fmt "}"
+
 let pp_kv pp_v ppf (k, v) =
   Format.fprintf ppf "(%a,@ %a)" Uns.pp k pp_v v
+
+let fmt_kv fmt_v (k, v) formatter =
+  formatter
+  |> Fmt.fmt "("
+  |> Uns.fmt k
+  |> Fmt.fmt ", "
+  |> fmt_v v
+  |> Fmt.fmt ")"
 
 let validate t =
   let open Cmper in

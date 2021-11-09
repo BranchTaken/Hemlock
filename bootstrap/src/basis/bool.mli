@@ -23,7 +23,7 @@ val ( && ): t -> t -> t
 val ( || ): t -> t -> t
 *)
 
-val fmt: ?pad:codepoint -> ?just:Fmt.just -> ?width:uns -> t
+val xfmt: ?pad:codepoint -> ?just:Fmt.just -> ?width:uns -> t
   -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [fmt ~pad ~just ~width s formatter] calls [formatter.fmt] on the result of [to_string ~pad ~just
-    ~width s]. *)
+(** [xfmt ~pad ~just ~width s formatter] calls [formatter.fmt] on the result of [to_string ~pad
+    ~just ~width s]. *)

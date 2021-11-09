@@ -6,7 +6,6 @@
   test_concat
   test_cursor
   test_filter_filteri
-  test_fmt
   test_fold_map_foldi_map
   test_fold2_foldi2
   test_fold2_map_foldi2_map
@@ -30,5 +29,6 @@
   test_set_set_inplace
   test_sort
   test_swap_swap_inplace
+  test_xfmt
   test_zip_unzip)
  (libraries Basis))

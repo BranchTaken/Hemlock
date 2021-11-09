@@ -50,3 +50,15 @@ let pp pp_elm ppf (l, f, r, s) =
   fprintf ppf "(len=%a,@ f=%a,@ r=%a,@ s=%a)"
     Uns.pp l (Stream.pp pp_elm) f (List.pp pp_elm) r (Stream.pp pp_elm) s;
   fprintf ppf "@]"
+
+let fmt fmt_elm (l, f, r, s) formatter =
+  formatter
+  |> Fmt.fmt "(len="
+  |> Uns.fmt l
+  |> Fmt.fmt ", f="
+  |> (Stream.fmt fmt_elm) f
+  |> Fmt.fmt ", r="
+  |> (List.fmt fmt_elm) r
+  |> Fmt.fmt ", s="
+  |> (Stream.fmt fmt_elm) s
+  |> Fmt.fmt ")"

@@ -122,3 +122,21 @@ let pp pp_elm ppf (_lf, f, _sf, _lr, r, _sr) =
   fn (Stream.rev r);
   fprintf ppf ")";
   fprintf ppf "@]"
+
+let fmt fmt_elm (_lf, f, _sf, _lr, r, _sr) formatter =
+  let rec fn s formatter = begin
+    match s with
+    | lazy Stream.Nil -> formatter
+    | lazy (Cons(elm, lazy Stream.Nil)) -> formatter |> fmt_elm elm
+    | lazy (Cons(elm, s')) ->
+      formatter
+      |> fmt_elm elm
+      |> Fmt.fmt ", "
+      |> fn s'
+  end in
+  formatter
+  |> Fmt.fmt "("
+  |> fn f
+  |> Fmt.fmt " | "
+  |> fn (Stream.rev r)
+  |> Fmt.fmt ")"
