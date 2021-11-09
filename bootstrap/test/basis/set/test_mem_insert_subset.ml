@@ -8,7 +8,7 @@ let test () =
   printf "@[";
   let rec test ms set = begin
     match ms with
-    | [] -> printf "%a@\n" pp set
+    | [] -> printf "%a@\n" xpp set
     | m :: ms' -> begin
         assert (not (mem m set));
         let set' = insert m set in

@@ -1,5 +1,5 @@
 open Basis
 
 let () = Format.printf "HEMLOCK_ENTROPY=%a -> seed=%a\n"
-    String.pp (Sys.getenv "HEMLOCK_ENTROPY")
-    Hash.State.pp Hash.State.seed
+    String.xpp (Sys.getenv "HEMLOCK_ENTROPY")
+    Hash.State.xpp Hash.State.seed

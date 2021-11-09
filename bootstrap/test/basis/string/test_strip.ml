@@ -5,9 +5,9 @@ open Format
 
 let test () =
   let test_strip ?drop s = begin
-    printf "lstrip %a -> %a\n" pp s pp (lstrip ?drop s);
-    printf "rstrip %a -> %a\n" pp s pp (rstrip ?drop s);
-    printf "strip %a -> %a\n" pp s pp (strip ?drop s);
+    printf "lstrip %a -> %a\n" xpp s xpp (lstrip ?drop s);
+    printf "rstrip %a -> %a\n" xpp s xpp (rstrip ?drop s);
+    printf "strip %a -> %a\n" xpp s xpp (strip ?drop s);
   end in
   test_strip "  a b c  ";
   test_strip ~drop:(fun codepoint ->

@@ -10,8 +10,8 @@ module T = struct
       | Nearest
       | Zero
 
-    let pp ppf t =
-      Format.fprintf ppf (match t with
+    let xpp xppf t =
+      Format.fprintf xppf (match t with
         | Down -> "Down"
         | Up -> "Up"
         | Nearest -> "Nearest"
@@ -35,8 +35,8 @@ module T = struct
       | Subnormal
       | Zero
 
-    let pp ppf t =
-      Format.fprintf ppf (match t with
+    let xpp xppf t =
+      Format.fprintf xppf (match t with
         | Infinite -> "Infinite"
         | Nan -> "Nan"
         | Normal -> "Normal"
@@ -338,8 +338,8 @@ module T = struct
   let tanh t =
     tanh t
 
-  let pp ppf t =
-    Format.fprintf ppf "%h" t
+  let xpp xppf t =
+    Format.fprintf xppf "%h" t
 
   let of_string s =
     float_of_string s
@@ -896,8 +896,8 @@ module T = struct
     let integral t =
       t.integral
 
-    let pp ppf t =
-      Format.fprintf ppf "@[<h>{fractional:@ %h,@ integral:@ %h}@]"
+    let xpp xppf t =
+      Format.fprintf xppf "@[<h>{fractional:@ %h,@ integral:@ %h}@]"
         t.fractional t.integral
 
     let fmt t formatter =

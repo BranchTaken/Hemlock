@@ -9,8 +9,8 @@ let test () =
   let test kvs = begin
     let map = of_alist (module UnsTestCmper) kvs in
     printf "of_alist %a; to_alist -> %a\n"
-      (List.pp (pp_kv String.pp)) kvs
-      (List.pp (pp_kv String.pp)) (to_alist map)
+      (List.xpp (xpp_kv String.xpp)) kvs
+      (List.xpp (xpp_kv String.xpp)) (to_alist map)
   end in
   let test_alists = [
     [];

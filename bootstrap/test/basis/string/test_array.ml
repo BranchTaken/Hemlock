@@ -8,7 +8,7 @@ let test () =
     let s = of_array a in
     let a' = to_array s in
     let s' = of_array a' in
-    printf "array: %a -> ... -> %a\n" pp s pp s';
+    printf "array: %a -> ... -> %a\n" xpp s xpp s';
   end in
   test_array [||];
   test_array (Array.of_list [

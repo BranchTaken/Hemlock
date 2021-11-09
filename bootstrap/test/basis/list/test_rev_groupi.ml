@@ -19,9 +19,9 @@ let test () =
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "[rev_]groupi %a ~break:inds -> %a / %a\n"
-      (pp Uns.pp) l
-      (pp (pp Uns.pp)) (groupi l ~break:inds)
-      (pp (pp Uns.pp)) (rev_groupi l ~break:inds)
+      (xpp Uns.xpp) l
+      (xpp (xpp Uns.xpp)) (groupi l ~break:inds)
+      (xpp (xpp Uns.xpp)) (rev_groupi l ~break:inds)
   );
   printf "@]"
 

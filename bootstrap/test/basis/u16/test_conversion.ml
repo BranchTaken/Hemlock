@@ -12,12 +12,12 @@ let test () =
         let i' = extend_to_sint t in
         let t' = trunc_of_sint i' in
         printf "trunc_of_sint %a -> extend_to_sint %a -> trunc_of_sint %a -> %a\n"
-          Sint.pp_x i pp_x t Sint.pp_x i' pp_x t';
+          Sint.xpp_x i xpp_x t Sint.xpp_x i' xpp_x t';
         let t = trunc_of_uns (Uns.bits_of_sint i) in
         let u = extend_to_uns t in
         let t' = trunc_of_uns u in
         printf "trunc_of_uns %a -> extend_to_uns %a -> trunc_of_uns %a -> %a\n"
-          Uns.pp_x x pp_x t Uns.pp_x u pp_x t';
+          Uns.xpp_x x xpp_x t Uns.xpp_x u xpp_x t';
         fn xs'
       end
   in

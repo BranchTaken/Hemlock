@@ -19,9 +19,9 @@ let test () =
       ((i + a_elm + b_elm) :: accum), (i = limit)
     end in
     printf "foldi2 %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (foldi2_until a b ~init:[] ~f)
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (foldi2_until a b ~init:[] ~f)
   );
   printf "@]"
 

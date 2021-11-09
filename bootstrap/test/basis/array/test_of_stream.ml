@@ -7,9 +7,9 @@ let test () =
   printf "@[<h>";
   let test stream = begin
     printf "of_stream[_rev] %a -> %a / %a\n"
-      (Stream.pp Uns.pp) stream
-      (pp Uns.pp) (of_stream stream)
-      (pp Uns.pp) (of_stream_rev stream);
+      (Stream.xpp Uns.xpp) stream
+      (xpp Uns.xpp) (of_stream stream)
+      (xpp Uns.xpp) (of_stream_rev stream);
   end in
   let f list = begin
     match list with

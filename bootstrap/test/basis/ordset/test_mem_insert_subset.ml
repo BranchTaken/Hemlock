@@ -8,7 +8,7 @@ let test () =
   printf "@[";
   let rec test ms ordset = begin
     match ms with
-    | [] -> printf "%a@\n" pp ordset
+    | [] -> printf "%a@\n" xpp ordset
     | m :: ms' -> begin
         assert (not (mem m ordset));
         let ordset' = insert m ordset in

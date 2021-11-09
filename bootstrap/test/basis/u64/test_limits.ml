@@ -4,7 +4,7 @@ open U64
 open Format
 
 let test () =
-  printf "min_value=%a\n" pp_x min_value;
-  printf "max_value=%a\n" pp_x max_value
+  printf "min_value=%a\n" xpp_x min_value;
+  printf "max_value=%a\n" xpp_x max_value
 
 let _ = test ()

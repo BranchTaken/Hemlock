@@ -246,8 +246,8 @@ let xfmt ?pad ?just ?alt ?width t formatter =
 let fmt t formatter =
   xfmt t formatter
 
-let pp ppf t =
-  Format.fprintf ppf "%s" (escape t)
+let xpp xppf t =
+  Format.fprintf xppf "%s" (escape t)
 
 module Seq = struct
   type outer = t

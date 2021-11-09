@@ -7,9 +7,9 @@ let test () =
   printf "@[<h>";
   let test list = begin
     printf "of_list[_rev] %a -> %a / %a\n"
-      (List.pp Uns.pp) list
-      (pp Uns.pp) (of_list list)
-      (pp Uns.pp) (of_list_rev list);
+      (List.xpp Uns.xpp) list
+      (xpp Uns.xpp) (of_list list)
+      (xpp Uns.xpp) (of_list_rev list);
   end in
   let lists = [
     [];

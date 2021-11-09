@@ -11,8 +11,8 @@ let test () =
   printf "@[<h>";
   List.iter results_lists ~f:(fun results ->
     printf "all %a -> %a\n"
-      (List.pp (pp String.pp String.pp)) results
-      (pp (List.pp String.pp) (List.pp String.pp)) (all results)
+      (List.xpp (xpp String.xpp String.xpp)) results
+      (xpp (List.xpp String.xpp) (List.xpp String.xpp)) (all results)
   );
   printf "@]"
 

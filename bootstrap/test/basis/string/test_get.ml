@@ -16,11 +16,11 @@ let test () =
       match Uns.(i = (B.length s)) with
       | true -> ()
       | false -> begin
-          printf " %a" Byte.pp_x (B.get i s);
+          printf " %a" Byte.xpp_x (B.get i s);
           fn (Uns.succ i)
         end
     end in
-    printf "s=%a:" pp s;
+    printf "s=%a:" xpp s;
     fn 0L;
     printf "\n";
   )

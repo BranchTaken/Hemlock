@@ -4,9 +4,9 @@ type ('a, 'b) t =
   | Ok of 'a
   | Error of 'b
 
-let pp pp_a pp_b ppf = function
-  | Ok a -> Format.fprintf ppf "@[<h>Ok@ %a@]" pp_a a
-  | Error b -> Format.fprintf ppf "@[<h>Error@ %a@]" pp_b b
+let xpp xpp_a xpp_b xppf = function
+  | Ok a -> Format.fprintf xppf "@[<h>Ok@ %a@]" xpp_a a
+  | Error b -> Format.fprintf xppf "@[<h>Error@ %a@]" xpp_b b
 
 let fmt fmt_a fmt_b t formatter =
   match t with

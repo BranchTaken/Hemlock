@@ -15,9 +15,9 @@ let cmp cmp_a cmp_b t0 t1 =
   | Second _, First _ -> Gt
   | Second b0, Second b1 -> cmp_b b0 b1
 
-let pp pp_a pp_b ppf = function
-  | First a -> Format.fprintf ppf "@[<h>First %a@]" pp_a a
-  | Second b -> Format.fprintf ppf "@[<h>Second %a@]" pp_b b
+let xpp xpp_a xpp_b xppf = function
+  | First a -> Format.fprintf xppf "@[<h>First %a@]" xpp_a a
+  | Second b -> Format.fprintf xppf "@[<h>Second %a@]" xpp_b b
 
 let fmt fmt_a fmt_b t formatter =
   match t with

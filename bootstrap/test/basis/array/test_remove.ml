@@ -5,13 +5,13 @@ open Format
 
 let test () =
   let test arr = begin
-    printf "remove %a ->" (pp Uns.pp) arr;
+    printf "remove %a ->" (xpp Uns.xpp) arr;
     let rec fn i n = begin
       match i >= n with
       | true -> ()
       | false -> begin
           let arr' = remove i arr in
-          printf " %a" (pp Uns.pp) arr';
+          printf " %a" (xpp Uns.xpp) arr';
           fn (succ i) n
         end
     end in

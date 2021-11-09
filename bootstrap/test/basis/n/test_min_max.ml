@@ -9,7 +9,7 @@ let test () =
     | [] -> ()
     | (x, y) :: pairs' -> begin
         printf "min,max %a %a -> %a, %a\n"
-          pp_x x pp_x y pp_x (min x y) pp_x (max x y);
+          xpp_x x xpp_x y xpp_x (min x y) xpp_x (max x y);
         test_pairs pairs'
       end
   in

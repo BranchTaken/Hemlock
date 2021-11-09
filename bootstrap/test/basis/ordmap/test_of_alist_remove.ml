@@ -12,7 +12,7 @@ let test () =
     let ordmap' = remove k ordmap in
     validate ordmap';
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.pp k (pp String.pp) ordmap (pp String.pp) ordmap'
+      Uns.xpp k (xpp String.xpp) ordmap (xpp String.xpp) ordmap'
   end in
   let test_tuples = [
     ([(0L, "0"); (1L, "1")], 2L,            "Not member.");

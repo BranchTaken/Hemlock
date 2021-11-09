@@ -6,7 +6,7 @@ open Format
 
 let test () =
   printf "@[";
-  printf "%a@\n" pp (of_list (module Uns) [0L; 0L]);
+  printf "%a@\n" xpp (of_list (module Uns) [0L; 0L]);
   printf "@]"
 
 let _ = test ()

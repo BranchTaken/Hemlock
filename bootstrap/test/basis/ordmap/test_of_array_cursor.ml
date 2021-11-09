@@ -14,8 +14,8 @@ let test () =
           let i = Cursor.index cursor in
           assert Cursor.((seek (Uns.bits_to_sint i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
-            cursor_pp cursor
-            (pp_kv String.pp) (Cursor.rget cursor);
+            cursor_xpp cursor
+            (xpp_kv String.xpp) (Cursor.rget cursor);
           fn (Cursor.succ cursor)
         end
     end in
@@ -30,8 +30,8 @@ let test () =
           let i = Cursor.index cursor in
           assert Cursor.((seek (Uns.bits_to_sint i) (hd ordmap)) = cursor);
           printf "            %a=%a@\n"
-            cursor_pp cursor
-            (pp_kv String.pp) (Cursor.lget cursor);
+            cursor_xpp cursor
+            (xpp_kv String.xpp) (Cursor.lget cursor);
           fn (Cursor.pred cursor)
         end
     end in
@@ -41,8 +41,8 @@ let test () =
   let test kvs = begin
     let ordmap = of_array (module Uns) kvs in
     printf "of_array %a ->@,%a@\n"
-      (Array.pp (pp_kv String.pp)) kvs
-      (pp String.pp) ordmap;
+      (Array.xpp (xpp_kv String.xpp)) kvs
+      (xpp String.xpp) ordmap;
     validate ordmap;
     test_fwd ordmap;
     test_rev ordmap

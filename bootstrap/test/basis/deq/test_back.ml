@@ -4,7 +4,7 @@ open Deq
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
@@ -12,7 +12,7 @@ let test () =
     | true -> begin
         let t' = push i t in
         let elm = back t' in
-        printf "back %a = %a\n" ppt t' Uns.pp elm;
+        printf "back %a = %a\n" xppt t' Uns.xpp elm;
         fn (succ i) n t'
       end
   end in

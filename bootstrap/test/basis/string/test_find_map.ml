@@ -5,7 +5,7 @@ open Format
 
 let test () =
   let test_find_map s ~f = begin
-    printf "find_map %a -> %s\n" pp s (match find_map s ~f with
+    printf "find_map %a -> %s\n" xpp s (match find_map s ~f with
       | None -> "None"
       | Some s -> s
     );

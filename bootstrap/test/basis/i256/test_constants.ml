@@ -4,9 +4,9 @@ open I256
 open Format
 
 let test () =
-  printf "zero=%a %a\n" pp_x zero pp zero;
-  printf "one=%a %a\n" pp_x one pp one;
-  printf "min_value=%a %a\n" pp_x min_value pp min_value;
-  printf "max_value=%a %a\n" pp_x max_value pp max_value
+  printf "zero=%a %a\n" xpp_x zero xpp zero;
+  printf "one=%a %a\n" xpp_x one xpp one;
+  printf "min_value=%a %a\n" xpp_x min_value xpp min_value;
+  printf "max_value=%a %a\n" xpp_x max_value xpp max_value
 
 let _ = test ()

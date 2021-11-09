@@ -5,9 +5,9 @@ open Format
 
 let test () =
   let test_suffix s ~suffix = begin
-    printf "is_suffix %a ~suffix:%a -> %B\n" pp s pp suffix
+    printf "is_suffix %a ~suffix:%a -> %B\n" xpp s xpp suffix
       (is_suffix s ~suffix);
-    printf "chop_suffix %a ~suffix:%a -> %s\n" pp s pp suffix
+    printf "chop_suffix %a ~suffix:%a -> %s\n" xpp s xpp suffix
       (match chop_suffix s ~suffix with
         | None -> "None"
         | Some s' -> "\"" ^ s' ^ "\""

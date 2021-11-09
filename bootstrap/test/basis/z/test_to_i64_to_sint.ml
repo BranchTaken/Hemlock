@@ -10,9 +10,9 @@ let test () =
     | u :: us' -> begin
         let fn u = begin
           printf "to_i64,to_sint %a -> %a, %a\n"
-            pp_x u
-            I64.pp_x (to_i64 u)
-            Sint.pp_x (to_sint u)
+            xpp_x u
+            I64.xpp_x (to_i64 u)
+            Sint.xpp_x (to_sint u)
         end in
         fn u;
         fn (neg u);

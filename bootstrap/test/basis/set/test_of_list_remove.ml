@@ -11,7 +11,7 @@ let test () =
   let test m set descr = begin
     printf "--- %s ---@\n" descr;
     printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.pp m pp set pp (remove m set)
+      Uns.xpp m xpp set xpp (remove m set)
   end in
   let test_tuples = [
     ([0L; 1L], 2L,            "Not member, elm empty.");

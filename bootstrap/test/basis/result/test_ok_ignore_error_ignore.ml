@@ -11,11 +11,11 @@ let test () =
   printf "@[<h>";
   List.iter results_lists ~f:(fun results ->
     printf "ok_ignore %a -> %a\n"
-      (List.pp (pp String.pp String.pp)) results
-      (pp Unit.pp (List.pp String.pp)) (ok_ignore results);
+      (List.xpp (xpp String.xpp String.xpp)) results
+      (xpp Unit.xpp (List.xpp String.xpp)) (ok_ignore results);
     printf "error_ignore %a -> %a\n"
-      (List.pp (pp String.pp String.pp)) results
-      (pp (List.pp String.pp) Unit.pp) (error_ignore results)
+      (List.xpp (xpp String.xpp String.xpp)) results
+      (xpp (List.xpp String.xpp) Unit.xpp) (error_ignore results)
   );
   printf "@]"
 

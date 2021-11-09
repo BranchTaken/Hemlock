@@ -14,10 +14,10 @@ let test () =
   ] in
   printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "reduce %a" (pp Uns.pp) l;
+    printf "reduce %a" (xpp Uns.xpp) l;
     match (reduce l ~f:(fun a b -> a + b)) with
     | None -> printf "-> None\n"
-    | Some result -> printf " -> %a\n" Uns.pp result
+    | Some result -> printf " -> %a\n" Uns.xpp result
   );
   printf "@]"
 

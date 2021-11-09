@@ -8,10 +8,10 @@ let test () =
     printf "[";
     Range.iter (0L =:< (length lst)) ~f:(fun i ->
       if i > 0L then printf "; ";
-      printf "%a" Uns.pp (nth i lst);
+      printf "%a" Uns.xpp (nth i lst);
     );
     printf "]: length=%a, is_empty=%B\n"
-      Uns.pp (length lst) (is_empty lst)
+      Uns.xpp (length lst) (is_empty lst)
   end in
   test_length [];
   test_length [0L];

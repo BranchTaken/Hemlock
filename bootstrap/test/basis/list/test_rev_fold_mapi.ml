@@ -16,16 +16,16 @@ let test () =
   iter lists ~f:(fun l ->
     let accum, b_list = foldi_map l ~init:[] ~f in
     printf "    fold_mapi %a -> accum=%a, b_list=%a\n"
-      (pp Uns.pp) l
-      (pp Uns.pp) accum
-      (pp Uns.pp) b_list
+      (xpp Uns.xpp) l
+      (xpp Uns.xpp) accum
+      (xpp Uns.xpp) b_list
     ;
 
     let accum, b_list = rev_foldi_map l ~init:[] ~f in
     printf "rev_fold_mapi %a -> accum=%a, b_list=%a\n"
-      (pp Uns.pp) l
-      (pp Uns.pp) accum
-      (pp Uns.pp) b_list
+      (xpp Uns.xpp) l
+      (xpp Uns.xpp) accum
+      (xpp Uns.xpp) b_list
   );
   printf "@]"
 

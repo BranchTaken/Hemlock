@@ -5,7 +5,7 @@ open Format
 
 let test () =
   let test_fold_right s = begin
-    printf "fold_right %a ->" pp s;
+    printf "fold_right %a ->" xpp s;
     let () = fold_right s ~init:() ~f:(fun cp _ ->
       printf " %s" (of_codepoint cp)
     ) in

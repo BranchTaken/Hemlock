@@ -9,7 +9,7 @@ let test () =
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        printf "%a, %a, %a, %a\n" pp_b x pp_o x pp x pp_x x;
+        printf "%a, %a, %a, %a\n" xpp_b x xpp_o x xpp x xpp_x x;
         print_xs xs'
       end
   end in
@@ -24,7 +24,7 @@ let test2 () =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "%a %a\n" pp x pp_x x;
+        printf "%a %a\n" xpp x xpp_x x;
         fn xs'
       end
   in

@@ -14,15 +14,15 @@ let test () =
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "    mapi2 %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (mapi2 a b ~f)
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (mapi2 a b ~f)
     ;
 
     printf "rev_mapi2 %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (rev_mapi2 a b ~f)
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (rev_mapi2 a b ~f)
   );
   printf "@]"
 

@@ -12,7 +12,7 @@ let test () =
         let f = create ~neg:n ~exponent:e ~mantissa:m in
         let m, x = m2x f in
         let f' = f2x m ~p:x in
-        printf "m2x %h -> f2x %h ~p:%a -> %h\n" f m Sint.pp x f';
+        printf "m2x %h -> f2x %h ~p:%a -> %h\n" f m Sint.xpp x f';
         fn tups'
       end
   end in

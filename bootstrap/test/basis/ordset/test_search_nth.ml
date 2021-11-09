@@ -6,29 +6,29 @@ open Format
 
 let test () =
   let test_search ordset key_max = begin
-    printf "%a@\n" pp ordset;
+    printf "%a@\n" xpp ordset;
     RangeF.Uns.(iter (0L =:= key_max)) ~f:(fun probe ->
-      printf "  %a -> %s, %s, %s@\n" Uns.pp probe
+      printf "  %a -> %s, %s, %s@\n" Uns.xpp probe
         (match psearch probe ordset with
           | None -> "<"
           | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Uns.pp i Uns.pp (nth i ordset)
+              Uns.xpp i Uns.xpp (nth i ordset)
           | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Uns.pp i Uns.pp (nth i ordset)
+              Uns.xpp i Uns.xpp (nth i ordset)
           | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Uns.pp i Uns.pp (nth i ordset)
+              Uns.xpp i Uns.xpp (nth i ordset)
         )
         (match search probe ordset with
           | None -> "<>"
-          | Some i -> asprintf "=%a" Uns.pp (nth i ordset)
+          | Some i -> asprintf "=%a" Uns.xpp (nth i ordset)
         )
         (match nsearch probe ordset with
           | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Uns.pp i Uns.pp (nth i ordset)
+              Uns.xpp i Uns.xpp (nth i ordset)
           | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Uns.pp i Uns.pp (nth i ordset)
+              Uns.xpp i Uns.xpp (nth i ordset)
           | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Uns.pp i Uns.pp (nth i ordset)
+              Uns.xpp i Uns.xpp (nth i ordset)
           | None -> ">"
         );
     )

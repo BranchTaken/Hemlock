@@ -5,7 +5,7 @@
 type ('a, 'witness) t = {
   hash_fold: 'a -> Hash.State.t -> Hash.State.t;
   cmp: 'a -> 'a -> Cmp.t;
-  pp: Format.formatter -> 'a -> unit;
+  xpp: Format.formatter -> 'a -> unit;
   fmt: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 }
 
@@ -25,7 +25,7 @@ end
 
 module MakeMono (T : IMono) : SMono with type t := T.t = struct
   type cmper_witness
-  let cmper = T.{hash_fold; cmp; pp; fmt}
+  let cmper = T.{hash_fold; cmp; xpp; fmt}
 end
 
 module type IPoly = sig
@@ -35,7 +35,7 @@ module type IPoly = sig
   val hash_fold_a: 'a -> Hash.State.t -> Hash.State.t
   include CmpableIntf.IPoly with type 'a t := 'a t
   include FormattableIntf.SPoly with type 'a t := 'a t
-  val pp_a: Format.formatter -> 'a -> unit
+  val xpp_a: Format.formatter -> 'a -> unit
   val fmt_a: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 end
 
@@ -51,11 +51,11 @@ module MakePoly (T : IPoly) : SPoly with type 'a t := 'a T.t = struct
   let hash_fold t state =
     T.hash_fold T.hash_fold_a t state
 
-  let pp ppf t =
-    T.pp T.pp_a ppf t
+  let xpp xppf t =
+    T.xpp T.xpp_a xppf t
 
   let fmt t formatter =
     formatter |> T.(fmt fmt_a) t
 
-  let cmper = {hash_fold; cmp=T.cmp; pp; fmt}
+  let cmper = {hash_fold; cmp=T.cmp; xpp; fmt}
 end

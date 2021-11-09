@@ -16,9 +16,9 @@ let test () =
     let a_arr = to_array a_ordmap in
     let b_arr = to_array b_ordmap in
     printf "%a -> %a / %a@\n"
-      (Array.pp Uns.pp) arr
-      (Array.pp (pp_kv String.pp)) a_arr
-      (Array.pp (pp_kv Sint.pp)) b_arr
+      (Array.xpp Uns.xpp) arr
+      (Array.xpp (xpp_kv String.xpp)) a_arr
+      (Array.xpp (xpp_kv Sint.xpp)) b_arr
   end in
   Range.iter (0L =:< 7L) ~f:(fun n ->
     let arr = Array.init (0L =:< n) ~f:(fun i -> i) in

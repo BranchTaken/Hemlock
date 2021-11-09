@@ -37,23 +37,23 @@ let u128_to_tup = function
 let u128_of_uns u =
   u128_of_tup (u, Int64.zero)
 
-let u128_pp_x ppf t =
+let u128_xpp_x xppf t =
   let rec fn x shift = begin
     match shift with
     | 0L -> ()
     | _ -> begin
-        if Stdlib.(Int64.(compare shift 64L) < 0) then Format.fprintf ppf "_";
+        if Stdlib.(Int64.(compare shift 64L) < 0) then Format.fprintf xppf "_";
         let shift' = Int64.(sub shift 16L) in
-        Format.fprintf ppf "%04Lx" Int64.(logand (shift_right_logical x (to_int shift')) 0xffffL);
+        Format.fprintf xppf "%04Lx" Int64.(logand (shift_right_logical x (to_int shift')) 0xffffL);
         fn x shift'
       end
   end in
   let t_lo, t_hi = u128_to_tup t in
-  Format.fprintf ppf "0x";
+  Format.fprintf xppf "0x";
   fn t_hi 64L;
-  Format.fprintf ppf "_";
+  Format.fprintf xppf "_";
   fn t_lo 64L;
-  Format.fprintf ppf "u128"
+  Format.fprintf xppf "u128"
 
 let u128_fmt_x t formatter =
   let rec fn x shift formatter = begin

@@ -52,19 +52,19 @@ module T = struct
     include Codepoint.Seq.Make(T)
   end
 
-  let pp ppf t =
+  let xpp xppf t =
     let rec fn seq = begin
       match CodepointSeq.to_codepoint seq with
       | Some (Valid (cp, seq')) -> begin
-          Format.fprintf ppf "%s" Codepoint.Utf8.(escape (of_codepoint cp));
+          Format.fprintf xppf "%s" Codepoint.Utf8.(escape (of_codepoint cp));
           fn seq'
         end
       | Some (Invalid _) -> not_reached ()
       | None -> ()
     end in
-    Format.fprintf ppf "\"";
+    Format.fprintf xppf "\"";
     fn (CodepointSeq.init t);
-    Format.fprintf ppf "\""
+    Format.fprintf xppf "\""
 
   let fmt t formatter =
     let rec fn seq formatter = begin
@@ -114,10 +114,10 @@ module B = struct
         assert ((t0.string == t1.string) || (t0.string = t1.string));
         Uns.cmp t0.index t1.index
 
-      let pp ppf t =
-        Format.fprintf ppf "@[<h>{string=%a,@ index=%a}@]"
-          pp t.string
-          Uns.pp t.index
+      let xpp xppf t =
+        Format.fprintf xppf "@[<h>{string=%a,@ index=%a}@]"
+          xpp t.string
+          Uns.xpp t.index
 
       let fmt t formatter =
         formatter
@@ -235,10 +235,10 @@ module B = struct
           end
         | Gt -> Cmp.Gt
 
-      let pp ppf t =
-        Format.fprintf ppf "@[<h>{base=%a,@ past=%a}@]"
-          Cursor.pp (base t)
-          Cursor.pp (past t)
+      let xpp xppf t =
+        Format.fprintf xppf "@[<h>{base=%a,@ past=%a}@]"
+          Cursor.xpp (base t)
+          Cursor.xpp (past t)
 
       let fmt t formatter =
         formatter
@@ -298,10 +298,10 @@ module CPre = struct
         assert ((t0.string == t1.string) || (t0.string = t1.string));
         Uns.cmp t0.bindex t1.bindex
 
-      let pp ppf t =
-        Format.fprintf ppf "@[<h>{string=%a,@ bindex=%a}@]"
-          pp t.string
-          Uns.pp t.bindex
+      let xpp xppf t =
+        Format.fprintf xppf "@[<h>{string=%a,@ bindex=%a}@]"
+          xpp t.string
+          Uns.xpp t.bindex
 
       let fmt t formatter =
         formatter
@@ -455,10 +455,10 @@ module CPre = struct
           end
         | Gt -> Cmp.Gt
 
-      let pp ppf t =
-        Format.fprintf ppf "@[<h>{base=%a,@ past=%a}@]"
-          Cursor.pp (base t)
-          Cursor.pp (past t)
+      let xpp xppf t =
+        Format.fprintf xppf "@[<h>{base=%a,@ past=%a}@]"
+          Cursor.xpp (base t)
+          Cursor.xpp (past t)
 
       let fmt t formatter =
         formatter
@@ -1177,13 +1177,13 @@ module C = struct
         in
         {p=slice; pi}
 
-      let pp ppf t =
+      let xpp xppf t =
         let open Format in
-        fprintf ppf "@[<v> p=%a@,pi=[" pp t.p;
+        fprintf xppf "@[<v> p=%a@,pi=[" xpp t.p;
         Array.iter t.pi ~f:(fun elm ->
-          fprintf ppf "%a" Uns.pp elm.index
+          fprintf xppf "%a" Uns.xpp elm.index
         );
-        Format.fprintf ppf "]@]"
+        Format.fprintf xppf "]@]"
 
       let find_impl ?max_matches ~may_overlap ~in_ t =
         let past = past in_ in
@@ -1625,7 +1625,7 @@ module C = struct
   end
 end
 
-let slice_pattern_pp = C.Slice.Pattern.pp
+let slice_pattern_xpp = C.Slice.Pattern.xpp
 
 let init ?blength crange ~f =
   C.Slice.to_string (C.Slice.init ?blength crange ~f)

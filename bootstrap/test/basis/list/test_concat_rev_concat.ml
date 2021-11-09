@@ -13,22 +13,22 @@ let test () =
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "concat %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (concat a b);
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (concat a b);
     printf "       %a %@ %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (a @ b);
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (a @ b);
     printf "rev_concat %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (rev_concat a b);
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (rev_concat a b);
     (* Brittle test; change in conjunction with implementation. *)
     printf "concat_unordered %a %a -> %a\n"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
-      (pp Uns.pp) (concat_unordered a b)
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
+      (xpp Uns.xpp) (concat_unordered a b)
   );
   printf "@]"
 

@@ -2,14 +2,14 @@ open RudimentsInt0
 
 type t = u128
 
-let pp = u128_pp_x
+let xpp = u128_xpp_x
 
 let fmt = u128_fmt_x
 
 module State = struct
   type t = u128
 
-  let pp = u128_pp_x
+  let xpp = u128_xpp_x
 
   let fmt = u128_fmt_x
 

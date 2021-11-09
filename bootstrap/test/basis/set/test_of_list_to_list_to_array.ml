@@ -11,9 +11,9 @@ let test () =
     let list_sorted = List.sort ~cmp:Uns.cmp (to_list set) in
     let array_sorted = Array.sort ~cmp:Uns.cmp (to_array set) in
     printf "of_list %a; to_list -> %a; to_array -> %a\n"
-      (List.pp Uns.pp) ms
-      (List.pp Uns.pp) list_sorted
-      (Array.pp Uns.pp) array_sorted
+      (List.xpp Uns.xpp) ms
+      (List.xpp Uns.xpp) list_sorted
+      (Array.xpp Uns.xpp) array_sorted
   end in
   let test_lists = [
     [];

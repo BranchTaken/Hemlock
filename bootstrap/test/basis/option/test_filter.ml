@@ -8,9 +8,9 @@ let test () =
   List.iter [false; true] ~f:(fun b ->
     List.iter [Some 42L; None] ~f:(fun o ->
       printf "filter %a ~f:(fun _ -> %b) -> %a\n"
-        (pp Uns.pp) o
+        (xpp Uns.xpp) o
         b
-        (pp Uns.pp) (filter o ~f:(fun _ -> b))
+        (xpp Uns.xpp) (filter o ~f:(fun _ -> b))
     )
   );
   printf "@]"

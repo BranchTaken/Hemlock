@@ -6,10 +6,10 @@ open Format
 
 let test () =
   printf "@[";
-  let pp_pair ppf (a0_opt, a1_opt) = begin
-    fprintf ppf "(%a, %a)"
-      (Option.pp Uns.pp) a0_opt
-      (Option.pp Uns.pp) a1_opt
+  let xpp_pair xppf (a0_opt, a1_opt) = begin
+    fprintf xppf "(%a, %a)"
+      (Option.xpp Uns.xpp) a0_opt
+      (Option.xpp Uns.xpp) a1_opt
   end in
   let test ms0 ms1 = begin
     let set0 = of_list (module Uns) ms0 in
@@ -28,9 +28,9 @@ let test () =
       Uns.cmp a0 a1
     ) pairs in
     printf "fold2 %a %a -> %a@\n"
-      (List.pp Uns.pp) ms0
-      (List.pp Uns.pp) ms1
-      (List.pp pp_pair) pairs_sorted
+      (List.xpp Uns.xpp) ms0
+      (List.xpp Uns.xpp) ms1
+      (List.xpp xpp_pair) pairs_sorted
   end in
   let test_lists = [
     [];

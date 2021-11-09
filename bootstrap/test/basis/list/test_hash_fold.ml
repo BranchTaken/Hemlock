@@ -10,8 +10,8 @@ let test () =
     | [] -> ()
     | l :: lists' -> begin
         printf "hash_fold %a -> %a\n"
-          (pp Uns.pp) l
-          Hash.pp (Hash.t_of_state
+          (xpp Uns.xpp) l
+          Hash.xpp (Hash.t_of_state
             (hash_fold Uns.hash_fold l Hash.State.empty));
         fn lists'
       end

@@ -4,7 +4,7 @@ open Stream
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec test_drop_up_to i l n =
     (* l + 1 so that we test dropping one more than the stream contains *)
@@ -14,7 +14,7 @@ let test () =
     | true, true -> begin
         let t = init (0L =:< l) ~f:(fun i -> i) in
         let t' = drop i t in
-        printf "drop %a %a = %a\n" Uns.pp i ppt t ppt t';
+        printf "drop %a %a = %a\n" Uns.xpp i xppt t xppt t';
         test_drop_up_to (succ i) l n
       end in
   test_drop_up_to 0L 0L 3L;

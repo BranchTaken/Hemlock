@@ -12,9 +12,9 @@ let test () =
     let t_arr = to_array t_ordset in
     let f_arr = to_array f_ordset in
     printf "%a -> %a / %a@\n"
-      (Array.pp Uns.pp) arr
-      (Array.pp Uns.pp) t_arr
-      (Array.pp Uns.pp) f_arr
+      (Array.xpp Uns.xpp) arr
+      (Array.xpp Uns.xpp) t_arr
+      (Array.xpp Uns.xpp) f_arr
   end in
   Range.iter (0L =:< 7L) ~f:(fun n ->
     let arr = Array.init (0L =:< n) ~f:(fun i -> i * 10L) in

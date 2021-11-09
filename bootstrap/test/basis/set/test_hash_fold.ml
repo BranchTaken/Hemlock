@@ -11,8 +11,8 @@ let test () =
     | l :: lists' -> begin
         let set = of_list (module Uns) l in
         printf "hash_fold (of_list (module Uns) %a) -> %a@\n"
-          (List.pp Uns.pp) l
-          Hash.pp (Hash.t_of_state (hash_fold set Hash.State.empty));
+          (List.xpp Uns.xpp) l
+          Hash.xpp (Hash.t_of_state (hash_fold set Hash.State.empty));
         fn lists'
       end
   in

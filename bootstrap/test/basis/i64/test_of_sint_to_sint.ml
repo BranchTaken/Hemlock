@@ -11,7 +11,7 @@ let test () =
     | x :: xs' -> begin
         let sx = x in
         printf "to_sint %a -> %a; of_sint -> %a\n"
-          pp_x x Sint.pp_x sx pp_x sx;
+          xpp_x x Sint.xpp_x sx xpp_x sx;
         test_xs xs'
       end
   end in

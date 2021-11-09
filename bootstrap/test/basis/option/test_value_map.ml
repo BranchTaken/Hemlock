@@ -9,10 +9,10 @@ let test () =
   let replacement = 43L in
   List.iter [Some 42L; None] ~f:(fun o ->
     printf "value_map %a ~default:%a ~f:(fun _ -> %a) -> %a\n"
-      (pp Uns.pp) o
-      Uns.pp default
-      Uns.pp replacement
-      Uns.pp (value_map o ~default ~f:(fun _ -> replacement))
+      (xpp Uns.xpp) o
+      Uns.xpp default
+      Uns.xpp replacement
+      Uns.xpp (value_map o ~default ~f:(fun _ -> replacement))
   );
   printf "@]"
 

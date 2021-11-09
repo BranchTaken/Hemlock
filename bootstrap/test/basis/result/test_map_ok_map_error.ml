@@ -8,11 +8,11 @@ let test () =
   printf "@[<h>";
   List.iter [Ok "ok"; Error "error"] ~f:(fun result ->
     printf "map_ok %a -> %a\n"
-      (pp String.pp String.pp) result
-      (pp String.pp String.pp) (map_ok result ~f);
+      (xpp String.xpp String.xpp) result
+      (xpp String.xpp String.xpp) (map_ok result ~f);
     printf "map_error %a -> %a\n"
-      (pp String.pp String.pp) result
-      (pp String.pp String.pp) (map_error result ~f);
+      (xpp String.xpp String.xpp) result
+      (xpp String.xpp String.xpp) (map_error result ~f);
   );
   printf "@]"
 

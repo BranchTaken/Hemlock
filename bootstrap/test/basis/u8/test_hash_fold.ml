@@ -10,7 +10,7 @@ let test () =
     | [] -> ()
     | u :: us' -> begin
         printf "hash_fold %a -> %a\n"
-          pp_x u Hash.pp (Hash.t_of_state (hash_fold u Hash.State.empty));
+          xpp_x u Hash.xpp (Hash.t_of_state (hash_fold u Hash.State.empty));
         test_hash_fold us'
       end
   end in

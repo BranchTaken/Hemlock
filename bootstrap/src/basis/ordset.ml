@@ -43,9 +43,9 @@ module T = struct
 
       let index = Ordmap.Cursor.index
 
-      let pp ppf t =
-        Format.fprintf ppf "@[<h>{index=%a}@]"
-          Uns.pp (index t)
+      let xpp xppf t =
+        Format.fprintf xppf "@[<h>{index=%a}@]"
+          Uns.xpp (index t)
 
       let fmt t formatter =
         formatter
@@ -57,7 +57,7 @@ module T = struct
     include Cmpable.MakePoly2(T)
   end
 
-  let cursor_pp = Cursor.pp
+  let cursor_xpp = Cursor.xpp
 
   let cursor_fmt = Cursor.fmt
 end

@@ -9,7 +9,7 @@ let test () =
     | [] -> ()
     | either :: eithers' -> begin
         printf "value %a -> %a@\n"
-          (pp Uns.pp Uns.pp) either Uns.pp (value either);
+          (xpp Uns.xpp Uns.xpp) either Uns.xpp (value either);
         fn eithers'
       end
   in

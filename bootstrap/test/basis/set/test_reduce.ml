@@ -10,8 +10,8 @@ let test () =
     let set = of_list (module Uns) ms in
     let sum = reduce ~f:( + ) set in
     printf "reduce ~f:( + ) %a -> %a\n"
-      (List.pp Uns.pp) ms
-      (Option.pp Uns.pp) sum
+      (List.xpp Uns.xpp) ms
+      (Option.xpp Uns.xpp) sum
   end in
   let test_lists = [
     [];

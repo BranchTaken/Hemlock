@@ -6,15 +6,15 @@ open Format
 let test () =
   let test arr x = begin
     printf "insert %a %a ->"
-      (pp Uns.pp) arr
-      Uns.pp x
+      (xpp Uns.xpp) arr
+      Uns.xpp x
     ;
     let rec fn i n = begin
       match i > n with
       | true -> ()
       | false -> begin
           let arr' = insert i x arr in
-          printf " %a" (pp Uns.pp) arr';
+          printf " %a" (xpp Uns.xpp) arr';
           fn (succ i) n
         end
     end in

@@ -9,7 +9,7 @@ let test () =
     | [] -> ()
     | x :: xs' -> begin
         printf "bit_not %a -> %a\n"
-          pp_x x pp_x (bit_not x);
+          xpp_x x xpp_x (bit_not x);
         test xs'
       end
   in

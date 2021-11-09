@@ -9,7 +9,7 @@ let test () =
     | [] -> ()
     | u :: us' -> begin
         printf "is_pow2 %a -> %b\n"
-          pp_x u
+          xpp_x u
           (is_pow2 u);
         test us'
       end

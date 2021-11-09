@@ -3,8 +3,8 @@ open! Basis
 open Codepoint
 open Format
 
-let pp_x ppf cp =
-  Format.fprintf ppf "%a" Uns.pp_x (extend_to_uns cp)
+let xpp_x xppf cp =
+  Format.fprintf xppf "%a" Uns.xpp_x (extend_to_uns cp)
 
 let test () =
   let rec fn = function
@@ -15,7 +15,7 @@ let test () =
         let u = extend_to_uns t in
         let t' = trunc_of_uns u in
         printf "trunc_of_uns %a -> extend_to_uns %a -> trunc_of_uns %a -> %a\n"
-          Uns.pp_x x pp_x t Uns.pp_x u pp_x t';
+          Uns.xpp_x x xpp_x t Uns.xpp_x u xpp_x t';
         fn xs'
       end
   in

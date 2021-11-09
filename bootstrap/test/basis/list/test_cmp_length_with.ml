@@ -6,7 +6,7 @@ open Format
 let test () =
   let test_cmp_length_with lst limit = begin
     printf " (limit=%a -> %s)"
-      Uns.pp limit (match cmp_length_with lst limit with
+      Uns.xpp limit (match cmp_length_with lst limit with
       | Cmp.Lt -> "Lt"
       | Cmp.Eq -> "Eq"
       | Cmp.Gt -> "Gt"
@@ -16,7 +16,7 @@ let test () =
     match lists with
     | [] -> ()
     | list :: lists' -> begin
-        printf "cmp_length_with %a" (pp Uns.pp) list;
+        printf "cmp_length_with %a" (xpp Uns.xpp) list;
         Range.iter (0L =:< 4L) ~f:(fun limit ->
           printf "%s" (if limit = 0L then ": " else ", ");
           test_cmp_length_with list limit;

@@ -9,8 +9,8 @@ let test () =
     let a = 42L in
     printf "some_if %b %a -> %a\n"
       b
-      Uns.pp a
-      (pp Uns.pp) (some_if b a)
+      Uns.xpp a
+      (xpp Uns.xpp) (some_if b a)
   );
   printf "@]"
 

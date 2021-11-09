@@ -5,15 +5,15 @@ open Format
 
 let test () =
   let fn x y = begin
-    printf "cmp %a %a -> %a\n" pp_x x pp_x y Cmp.pp (cmp x y);
-    printf "%a >= %a -> %b\n" pp_x x pp_x y (x >= y);
-    printf "%a <= %a -> %b\n" pp_x x pp_x y (x <= y);
-    printf "%a = %a -> %b\n" pp_x x pp_x y (x = y);
-    printf "%a > %a -> %b\n" pp_x x pp_x y (x > y);
-    printf "%a < %a -> %b\n" pp_x x pp_x y (x < y);
-    printf "%a <> %a -> %b\n" pp_x x pp_x y (x <> y);
-    printf "ascending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (ascending x y);
-    printf "descending %a %a -> %a\n" pp_x x pp_x y Cmp.pp (descending x y);
+    printf "cmp %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (cmp x y);
+    printf "%a >= %a -> %b\n" xpp_x x xpp_x y (x >= y);
+    printf "%a <= %a -> %b\n" xpp_x x xpp_x y (x <= y);
+    printf "%a = %a -> %b\n" xpp_x x xpp_x y (x = y);
+    printf "%a > %a -> %b\n" xpp_x x xpp_x y (x > y);
+    printf "%a < %a -> %b\n" xpp_x x xpp_x y (x < y);
+    printf "%a <> %a -> %b\n" xpp_x x xpp_x y (x <> y);
+    printf "ascending %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (ascending x y);
+    printf "descending %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (descending x y);
   end in
   fn zero (of_string "0x8000_0000_0000_0000");
   printf "\n";
@@ -23,9 +23,9 @@ let test () =
   let fn2 t min max = begin
     printf "\n";
     printf "clamp ~min:%a ~max:%a %a -> %a\n"
-      pp min pp max pp t pp (clamp ~min ~max t);
+      xpp min xpp max xpp t xpp (clamp ~min ~max t);
     printf "between ~low:%a ~high:%a %a -> %b\n"
-      pp t pp min pp max (between ~low:min ~high:max t);
+      xpp t xpp min xpp max (between ~low:min ~high:max t);
   end in
   fn2 (of_string "-2") (of_string "-1") (of_string "1");
   fn2 (of_string "-1") (of_string "-1") (of_string "1");

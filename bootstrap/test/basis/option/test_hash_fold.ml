@@ -9,8 +9,8 @@ let test () =
     | [] -> ()
     | option :: options' -> begin
         printf "hash_fold %a -> %a\n"
-          (pp Uns.pp) option
-          Hash.pp (Hash.t_of_state
+          (xpp Uns.xpp) option
+          Hash.xpp (Hash.t_of_state
             (hash_fold Uns.hash_fold option Hash.State.empty));
         fn options'
       end

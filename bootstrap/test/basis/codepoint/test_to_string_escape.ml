@@ -3,11 +3,11 @@ open! Basis
 open Codepoint
 open Format
 
-let pp_x ppf cp =
-  Format.fprintf ppf "%a" Uns.pp_x (extend_to_uns cp)
+let xpp_x xppf cp =
+  Format.fprintf xppf "%a" Uns.xpp_x (extend_to_uns cp)
 
-let utf8_pp ppf t =
-  Format.fprintf ppf "%s" (Utf8.escape t)
+let utf8_xpp xppf t =
+  Format.fprintf xppf "%s" (Utf8.escape t)
 
 let test () =
   let rec fn i = begin
@@ -17,10 +17,10 @@ let test () =
         let cp = trunc_of_uns i in
         let utf8 = Utf8.of_codepoint cp in
         printf "%a -> %a {|%s|} \"%a\"\n"
-          Uns.pp_x i
-          pp cp
+          Uns.xpp_x i
+          xpp cp
           (if Uns.(i > 0x1fL && i < 0x7fL) then (to_string cp) else "�")
-          utf8_pp utf8;
+          utf8_xpp utf8;
         fn (Uns.succ i)
       end
   end in

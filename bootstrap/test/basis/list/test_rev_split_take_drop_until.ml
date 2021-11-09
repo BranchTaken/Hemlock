@@ -16,23 +16,23 @@ let test () =
       let l0, l1 = split_until ~f l in
       printf ("split_until/take_until,drop_until %a " ^^
           "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
-        (pp Uns.pp) l
-        Uns.pp i
-        (pp Uns.pp) l0
-        (pp Uns.pp) l1
-        (pp Uns.pp) (take_until ~f l)
-        (pp Uns.pp) (drop_until ~f l)
+        (xpp Uns.xpp) l
+        Uns.xpp i
+        (xpp Uns.xpp) l0
+        (xpp Uns.xpp) l1
+        (xpp Uns.xpp) (take_until ~f l)
+        (xpp Uns.xpp) (drop_until ~f l)
       ;
 
       let rl0, rl1 = rev_split_until ~f l in
       printf ("rev_split_until/rev_take_until,drop_until %a " ^^
           "~f:(fun elm -> elm >= %a) -> %a %a / %a %a\n")
-        (pp Uns.pp) l
-        Uns.pp i
-        (pp Uns.pp) rl0
-        (pp Uns.pp) rl1
-        (pp Uns.pp) (rev_take_until ~f l)
-        (pp Uns.pp) (drop_until ~f l)
+        (xpp Uns.xpp) l
+        Uns.xpp i
+        (xpp Uns.xpp) rl0
+        (xpp Uns.xpp) rl1
+        (xpp Uns.xpp) (rev_take_until ~f l)
+        (xpp Uns.xpp) (drop_until ~f l)
     )
   );
   printf "@]"

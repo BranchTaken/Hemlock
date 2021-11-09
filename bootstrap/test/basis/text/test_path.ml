@@ -9,8 +9,8 @@ let test () =
   let test_path ?path s = begin
     let text = of_string_slice ?path (String.C.Slice.of_string s) in
     printf "%a -> %a\n"
-      (Option.pp String.pp) path
-      (Option.pp String.pp) (text_path text)
+      (Option.xpp String.xpp) path
+      (Option.xpp String.xpp) (text_path text)
   end in
   test_path "";
   test_path ~path:"/foo/bar" "";
