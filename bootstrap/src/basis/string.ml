@@ -66,6 +66,22 @@ module T = struct
     fn (CodepointSeq.init t);
     Format.fprintf ppf "\""
 
+  let fmt t formatter =
+    let rec fn seq formatter = begin
+      match CodepointSeq.to_codepoint seq with
+      | Some (Valid (cp, seq')) -> begin
+          formatter
+          |> Fmt.fmt Codepoint.Utf8.(escape (of_codepoint cp))
+          |> fn seq'
+        end
+      | Some (Invalid _) -> not_reached ()
+      | None -> formatter
+    end in
+    formatter
+    |> Fmt.fmt "\""
+    |> fn (CodepointSeq.init t)
+    |> Fmt.fmt "\""
+
   let of_string s =
     s
 end
@@ -102,6 +118,14 @@ module B = struct
         Format.fprintf ppf "@[<h>{string=%a,@ index=%a}@]"
           pp t.string
           Uns.pp t.index
+
+      let fmt t formatter =
+        formatter
+        |> Fmt.fmt "{string="
+        |> fmt t.string
+        |> Fmt.fmt ", index="
+        |> Uns.fmt t.index
+        |> Fmt.fmt "}"
     end
     include T
     include Identifiable.Make(T)
@@ -215,6 +239,14 @@ module B = struct
         Format.fprintf ppf "@[<h>{base=%a,@ past=%a}@]"
           Cursor.pp (base t)
           Cursor.pp (past t)
+
+      let fmt t formatter =
+        formatter
+        |> Fmt.fmt "{base="
+        |> Cursor.fmt (base t)
+        |> Fmt.fmt ", past="
+        |> Cursor.fmt (past t)
+        |> Fmt.fmt "}"
     end
     include U
     include Identifiable.Make(U)
@@ -270,6 +302,14 @@ module CPre = struct
         Format.fprintf ppf "@[<h>{string=%a,@ bindex=%a}@]"
           pp t.string
           Uns.pp t.bindex
+
+      let fmt t formatter =
+        formatter
+        |> Fmt.fmt "{string="
+        |> fmt t.string
+        |> Fmt.fmt ", bindex="
+        |> Uns.fmt t.bindex
+        |> Fmt.fmt "}"
     end
     include T
     include Identifiable.Make(T)
@@ -419,6 +459,14 @@ module CPre = struct
         Format.fprintf ppf "@[<h>{base=%a,@ past=%a}@]"
           Cursor.pp (base t)
           Cursor.pp (past t)
+
+      let fmt t formatter =
+        formatter
+        |> Fmt.fmt "{base="
+        |> Cursor.fmt (base t)
+        |> Fmt.fmt ", past="
+        |> Cursor.fmt (past t)
+        |> Fmt.fmt "}"
     end
     include U
     include Identifiable.Make(U)
@@ -1824,13 +1872,13 @@ let to_string ?(alt=Fmt.alt_default) s =
   | false -> s
   | true -> "\"" ^ escaped s ^ "\""
 
-let fmt ?pad ?just ?alt ?width s ((module Formatter):(module Fmt.Formatter))
+let xfmt ?pad ?just ?alt ?width s ((module Formatter):(module Fmt.Formatter))
   : (module Fmt.Formatter) =
   let pad = match pad with
     | None -> None
     | Some c -> Some (Codepoint.to_string c)
   in
-  Fmt.fmt ?pad ?just ?width (to_string ?alt s) (module Formatter)
+  Fmt.xfmt ?pad ?just ?width (to_string ?alt s) (module Formatter)
 
 module Fmt = struct
   let empty : (module Fmt.Formatter) =

@@ -10,9 +10,9 @@ let test () =
         let cp = trunc_of_uns i in
         let _ =
           File.Fmt.stdout
-          |> Uns.fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex i
+          |> Uns.xfmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex i
           |> Fmt.fmt " -> "
-          |> fmt ~alt:true cp
+          |> xfmt ~alt:true cp
           |> Fmt.fmt " "
           |> Fmt.fmt (match Uns.(i > 0x1fL && i < 0x7fL) with
             | true -> (String.Fmt.empty |> Fmt.fmt "'" |> fmt cp |> Fmt.fmt "'" |> Fmt.to_string)

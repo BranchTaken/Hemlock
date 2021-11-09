@@ -732,9 +732,12 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       | false -> fn [] 0 false t
       | true -> fn [] 0 true (neg t)
 
-    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t ((module Formatter):(module Fmt.Formatter))
+    let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base t ((module Formatter):(module Fmt.Formatter))
       : (module Fmt.Formatter) =
-      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) (module Formatter)
+      Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) (module Formatter)
+
+    let fmt t formatter =
+      xfmt t formatter
   end
   include U
   include Identifiable.Make(U)

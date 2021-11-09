@@ -1,7 +1,5 @@
 (** Formatted string/file output. *)
 
-open RudimentsInt0
-
 (** Output type for [sync]. *)
 type 'a synced =
   | To_string of string (** [sync] produced a string. *)
@@ -61,10 +59,10 @@ val alt_default: bool
 val zpad_default: bool
 (** Default zero-padding ([false]). *)
 
-val width_default: uns
+val width_default: int64
 (** Default width ([0]). *)
 
-val precision_default: uns
+val precision_default: int64
 (** Default digits of precision to right of point ([2]). *)
 
 val base_default: base
@@ -73,9 +71,12 @@ val base_default: base
 val notation_default: notation
 (** Default notation ([Compact]). *)
 
-val fmt: ?pad:string -> ?just:just -> ?width:uns -> string -> (module Formatter)
+val fmt: string -> (module Formatter) -> (module Formatter)
+(** [fmt s formatter] applies [s] to [formatter]. *)
+
+val xfmt: ?pad:string -> ?just:just -> ?width:int64 -> string -> (module Formatter)
   -> (module Formatter)
-(** [fmt ~pad ~just ~width s formatter] creates a string based on [s] that is [~just]-justified
+(** [xfmt ~pad ~just ~width s formatter] creates a string based on [s] that is [~just]-justified
     with minimum [~pad]-padded [~width] and applies the result to [formatter]. *)
 
 val sync: (module Formatter) -> (module Formatter) synced

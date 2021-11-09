@@ -8,6 +8,11 @@ let pp pp_a pp_b ppf = function
   | Ok a -> Format.fprintf ppf "@[<h>Ok@ %a@]" pp_a a
   | Error b -> Format.fprintf ppf "@[<h>Error@ %a@]" pp_b b
 
+let fmt fmt_a fmt_b t formatter =
+  match t with
+  | Ok a -> formatter |> Fmt.fmt "Ok " |> fmt_a a
+  | Error b -> formatter |> Fmt.fmt "Error " |> fmt_b b
+
 let ok_if b ~error =
   match b with
   | false -> Error error

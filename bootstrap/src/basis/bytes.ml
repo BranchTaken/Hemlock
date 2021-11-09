@@ -212,6 +212,34 @@ module Slice = struct
     end;
     fprintf ppf "|]@]"
 
+  (* XXX Use Array.Slice.xfmt. *)
+  let fmt t formatter =
+    let rec fn cursor past formatter = begin
+      match Cursor.(cursor < past) with
+      | true -> begin
+          let elm, cursor' = Cursor.next cursor in
+          formatter
+          |> Fmt.fmt "; "
+          |> Byte.xfmt ~base:Fmt.Hex elm
+          |> fn cursor' past
+        end
+      | false -> formatter
+    end in
+    formatter
+    |> Fmt.fmt "[|"
+    |> (fun formatter ->
+      let cursor, past = cursors t in
+      match Cursor.(cursor < past) with
+      | true -> begin
+          let elm, cursor' = Cursor.next cursor in
+          formatter
+          |> Byte.xfmt ~base:Fmt.Hex elm
+          |> fn cursor' past
+        end
+      | false -> formatter
+    )
+    |> Fmt.fmt "|]"
+
   let hash_fold t state =
     Hash.State.Gen.init state
     |> Hash.State.Gen.fold_u8 (length t) ~f:(fun i ->
@@ -251,6 +279,9 @@ end
 
 let pp ppf t =
   Slice.(pp ppf (init t))
+
+let fmt t formatter =
+  formatter |> Slice.(fmt (init t))
 
 let hash_fold t state =
   Slice.(hash_fold (init t) state)

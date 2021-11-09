@@ -1,6 +1,6 @@
 open! Basis.Rudiments
 open! Basis
-open I8
+open I16
 
 let test () =
   let rec fn = function
@@ -10,7 +10,7 @@ let test () =
           File.Fmt.stdout
           |> fmt x
           |> Fmt.fmt " "
-          |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex x
+          |> xfmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex x
           |> Fmt.fmt "\n"
         in
         fn xs'

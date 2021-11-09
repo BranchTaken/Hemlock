@@ -55,6 +55,27 @@ let u128_pp_x ppf t =
   fn t_lo 64L;
   Format.fprintf ppf "u128"
 
+let u128_fmt_x t formatter =
+  let rec fn x shift formatter = begin
+    match shift with
+    | 0L -> formatter
+    | _ -> begin
+        let shift' = Int64.(sub shift 16L) in
+        formatter
+        |> Fmt.fmt (if Stdlib.(Int64.(compare shift 64L) < 0) then "_" else "")
+        |> Fmt.fmt (Printf.sprintf "%04Lx" Int64.(logand (shift_right_logical x (to_int shift'))
+          0xffffL))
+        |> fn x shift'
+      end
+  end in
+  let t_lo, t_hi = u128_to_tup t in
+  formatter
+  |> Fmt.fmt "0x"
+  |> fn t_hi 64L
+  |> Fmt.fmt "_"
+  |> fn t_lo 64L
+  |> Fmt.fmt "u128"
+
 let u128_compare t0 t1 =
   let t0_lo, t0_hi = u128_to_tup t0 in
   let t1_lo, t1_hi = u128_to_tup t1 in

@@ -1,6 +1,6 @@
 open! Basis.Rudiments
 open! Basis
-open U64
+open I64
 
 (* The test output is quite large, so only its hash is printed by default. Set verbose to true
  * while modifying the test or diagnosing regressions. *)
@@ -13,8 +13,8 @@ let test () =
     | x :: xs' -> begin
         List.fold ~init:(
           formatter
-          |> fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex x
-          |> String.fmt "\n"
+          |> xfmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex x
+          |> Fmt.fmt "\n"
         ) [Fmt.Bin; Fmt.Oct; Fmt.Dec; Fmt.Hex] ~f:(fun formatter base ->
           List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space]
             ~f:(fun formatter sign ->
@@ -24,36 +24,36 @@ let test () =
                     List.fold ~init:formatter [Fmt.Left; Fmt.Center; Fmt.Right]
                       ~f:(fun formatter just ->
                         formatter
-                        |> String.fmt "["
-                        |> String.fmt ~pad:(Codepoint.of_char '_') ~width:74L (
+                        |> Fmt.fmt "["
+                        |> String.xfmt ~pad:(Codepoint.of_char '_') ~width:75L (
                           String.Fmt.empty
-                          |> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~base x
+                          |> xfmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~base x
                           |> Fmt.to_string
                         )
-                        |> String.fmt "] %'·'"
-                        |> String.fmt (
+                        |> Fmt.fmt "] %'·'"
+                        |> Fmt.fmt (
                           match just with
-                          | Fmt.Left -> "["
-                          | Fmt.Center -> "]["
-                          | Fmt.Right -> "]"
+                          | Fmt.Left -> "<"
+                          | Fmt.Center -> "^"
+                          | Fmt.Right -> ">"
                         )
-                        |> String.fmt (
+                        |> Fmt.fmt (
                           match sign with
                           | Fmt.Implicit -> ""
                           | Fmt.Explicit -> "+"
                           | Fmt.Space -> "_"
                         )
-                        |> String.fmt (match alt with false -> "" | true -> "#")
-                        |> String.fmt (match zpad with false -> "" | true -> "0")
-                        |> (match width with 0L -> String.fmt "" | _ -> fmt width)
-                        |> String.fmt (
+                        |> Fmt.fmt (match alt with false -> "" | true -> "#")
+                        |> Fmt.fmt (match zpad with false -> "" | true -> "0")
+                        |> (match width with 0L -> Fmt.fmt "" | _ -> Uns.fmt width)
+                        |> Fmt.fmt (
                           match base with
                           | Fmt.Bin -> "b"
                           | Fmt.Oct -> "o"
                           | Fmt.Dec -> "d"
                           | Fmt.Hex -> "h"
                         )
-                        |> String.fmt "\n"
+                        |> Fmt.fmt "i\n"
                       )
                   )
                 )
@@ -66,6 +66,8 @@ let test () =
   let output =
     String.Fmt.empty |>
     fn [
+      min_value;
+      neg_one;
       zero;
       one;
       42L;
@@ -76,7 +78,7 @@ let test () =
   in
   File.Fmt.stdout
   |> Fmt.fmt (match verbose with true -> output | false -> "")
-  |> String.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex
+  |> Fmt.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex
       (Hash.State.empty |> String.hash_fold output |> Hash.t_of_state))
 
 let _ = test ()

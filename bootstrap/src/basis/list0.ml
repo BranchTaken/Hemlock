@@ -624,7 +624,7 @@ let pp pp_elm ppf t =
   in
   fprintf ppf "@[<h>[%a]@]" pp_elms t
 
-let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
+let xfmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
   (fmt_a:('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))) t
   ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
   foldi t
@@ -641,7 +641,7 @@ let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
         | true -> begin
             formatter
             |> Fmt.fmt "\n"
-            |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 4L) ""
+            |> Fmt.xfmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 4L) ""
           end
       )
       |> fmt_a elm
@@ -652,10 +652,13 @@ let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
     | true -> begin
         formatter
         |> Fmt.fmt "\n"
-        |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 2L) ""
+        |> Fmt.xfmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 2L) ""
       end
   )
   |> Fmt.fmt "]"
+
+let fmt fmt_a t formatter =
+  xfmt fmt_a t formatter
 
 module Assoc = struct
   type nonrec ('a, 'b) t = ('a * 'b) t
