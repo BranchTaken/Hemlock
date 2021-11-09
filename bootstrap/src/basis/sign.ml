@@ -11,8 +11,8 @@ let pp ppf t =
     | Zero -> "Zero"
     | Pos -> "Pos")
 
-let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
-  (module Formatter) |> Fmt.fmt (match t with
+let fmt t formatter =
+  formatter |> Fmt.fmt (match t with
     | Neg -> "Neg"
     | Zero -> "Zero"
     | Pos -> "Pos"
