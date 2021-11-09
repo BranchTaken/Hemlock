@@ -236,13 +236,12 @@ let to_string ?(alt=Fmt.alt_default) t =
   | false -> Utf8.(to_string (of_codepoint t))
   | true -> escape t
 
-let xfmt ?pad ?just ?alt ?width t ((module Formatter):(module Fmt.Formatter))
-  : (module Fmt.Formatter) =
+let xfmt ?pad ?just ?alt ?width t formatter =
   let pad = match pad with
     | None -> None
     | Some c -> Some (to_string c)
   in
-  Fmt.xfmt ?pad ?just ?width (to_string ?alt t) (module Formatter)
+  Fmt.xfmt ?pad ?just ?width (to_string ?alt t) formatter
 
 let fmt t formatter =
   xfmt t formatter

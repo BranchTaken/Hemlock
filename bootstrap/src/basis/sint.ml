@@ -70,9 +70,8 @@ module T = struct
       | false -> fn [] 0 false t
       | true -> fn [] 0 true (Int64.neg t)
 
-    let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base t ((module Formatter):(module Fmt.Formatter))
-      : (module Fmt.Formatter) =
-      Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) (module Formatter)
+    let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
+      Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
 
     let fmt t formatter =
       xfmt t formatter

@@ -18,8 +18,8 @@ module T = struct
         | Zero -> "Zero"
       )
 
-    let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
-      (module Formatter) |> Fmt.fmt (match t with
+    let fmt t formatter =
+      formatter |> Fmt.fmt (match t with
         | Down -> "Down"
         | Up -> "Up"
         | Nearest -> "Nearest"
@@ -44,8 +44,8 @@ module T = struct
         | Zero -> "Zero"
       )
 
-    let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
-      (module Formatter) |> Fmt.fmt (match t with
+    let fmt t formatter =
+      formatter |> Fmt.fmt (match t with
         | Infinite -> "Infinite"
         | Nan -> "Nan"
         | Normal -> "Normal"
@@ -876,10 +876,9 @@ module T = struct
     | _, Fmt.Oct
     | _, Fmt.Hex -> to_string_p ~sign ~alt ~zpad ~width ~precision ~notation ~base t
 
-  let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?precision ?notation ?base t
-      ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+  let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?precision ?notation ?base t formatter =
     Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?precision ?notation ?base t)
-      (module Formatter)
+      formatter
 
   let fmt t formatter =
     xfmt t formatter
@@ -901,8 +900,8 @@ module T = struct
       Format.fprintf ppf "@[<h>{fractional:@ %h,@ integral:@ %h}@]"
         t.fractional t.integral
 
-    let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
-      (module Formatter)
+    let fmt t formatter =
+      formatter
       |> Fmt.fmt "{fractional: "
       |> xfmt ~base:Fmt.Hex t.fractional
       |> Fmt.fmt ", integral: "
