@@ -9,7 +9,7 @@ let test () =
     | [] -> ()
     | either :: eithers' -> begin
         printf "map %a -> %a@\n"
-          (pp Uns.pp Uns.pp) either (pp Uns.pp Uns.pp)
+          (xpp Uns.xpp Uns.xpp) either (xpp Uns.xpp Uns.xpp)
           (map ~first:(fun x -> x + 2L) ~second:(fun x -> x + 4L) either);
         fn eithers'
       end

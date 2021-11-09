@@ -190,12 +190,12 @@ module T = struct
           | Empty -> not_reached ()
         end
 
-    let pp ppf t =
+    let xpp xppf t =
       let open Format in
-      let pp_elm ppf elm = begin
-        fprintf ppf "%a" Uns.pp elm.index
+      let xpp_elm xppf elm = begin
+        fprintf xppf "%a" Uns.xpp elm.index
       end in
-      fprintf ppf "@[<h>%a@]" (List.pp pp_elm) t
+      fprintf xppf "@[<h>%a@]" (List.xpp xpp_elm) t
 
     let fmt t formatter =
       let fmt_elm elm formatter = begin
@@ -305,11 +305,11 @@ module T = struct
       let index t =
         t.index
 
-      let pp ppf t =
-        Format.fprintf ppf "@[<h>{index=%a;@ lpath_opt=%a;@ rpath_opt=%a}@]"
-          Uns.pp t.index
-          (Option.pp Path.pp) t.lpath_opt
-          (Option.pp Path.pp) t.rpath_opt
+      let xpp xppf t =
+        Format.fprintf xppf "@[<h>{index=%a;@ lpath_opt=%a;@ rpath_opt=%a}@]"
+          Uns.xpp t.index
+          (Option.xpp Path.xpp) t.lpath_opt
+          (Option.xpp Path.xpp) t.rpath_opt
 
       let fmt t formatter =
         formatter
@@ -325,7 +325,7 @@ module T = struct
     include Cmpable.MakePoly3(T)
   end
 
-  let cursor_pp = Cursor.pp
+  let cursor_xpp = Cursor.xpp
 
   let cursor_fmt = Cursor.fmt
 end
@@ -1373,23 +1373,23 @@ let reduce_hlt ~f t =
 (**************************************************************************************************)
 (* Begin test support. *)
 
-let pp pp_v ppf t =
+let xpp xpp_v xppf t =
   let open Format in
-  let rec pp_node ppf = function
-    | Empty -> fprintf ppf "Empty"
-    | Leaf {k; v} -> fprintf ppf "@[<h>Leaf {k=%a;@ v=%a}@]" t.cmper.pp k pp_v v
-    | Node {l; k; v; n; h; r} -> fprintf ppf
+  let rec xpp_node xppf = function
+    | Empty -> fprintf xppf "Empty"
+    | Leaf {k; v} -> fprintf xppf "@[<h>Leaf {k=%a;@ v=%a}@]" t.cmper.xpp k xpp_v v
+    | Node {l; k; v; n; h; r} -> fprintf xppf
         ("@;<0 2>@[<v>Node {@;<0 2>@[<v>l=%a;@,k=%a;@,v=%a;@,n=%a;@,h=%a;@," ^^
             "r=%a@]@,}@]")
-        pp_node l
-        t.cmper.pp k
-        pp_v v
-        Uns.pp n
-        Uns.pp h
-        pp_node r
+        xpp_node l
+        t.cmper.xpp k
+        xpp_v v
+        Uns.xpp n
+        Uns.xpp h
+        xpp_node r
   in
-  fprintf ppf "@[<v>Ordmap {@;<0 2>@[<v>root=%a@]@,}@]"
-    pp_node t.root
+  fprintf xppf "@[<v>Ordmap {@;<0 2>@[<v>root=%a@]@,}@]"
+    xpp_node t.root
 
 let fmt fmt_v t formatter =
   let rec fmt_node node formatter = begin
@@ -1425,8 +1425,8 @@ let fmt fmt_v t formatter =
   |> fmt_node t.root
   |> Fmt.fmt "}"
 
-let pp_kv pp_v ppf (k, v) =
-  Format.fprintf ppf "(%a, %a)" Uns.pp k pp_v v
+let xpp_kv xpp_v xppf (k, v) =
+  Format.fprintf xppf "(%a, %a)" Uns.xpp k xpp_v v
 
 let fmt_kv fmt_v (k, v) formatter =
   formatter

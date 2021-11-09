@@ -13,8 +13,8 @@ let test () =
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "rev %a -> %a\n"
-      (pp Uns.pp) l
-      (pp Uns.pp) (rev l)
+      (xpp Uns.xpp) l
+      (xpp Uns.xpp) (rev l)
   );
   printf "@]"
 

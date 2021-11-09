@@ -8,11 +8,11 @@ let test () =
     printf "join";
     let () = match sep with
       | None -> ()
-      | Some sep -> printf " ~sep:%a" (pp Uns.pp) sep;
+      | Some sep -> printf " ~sep:%a" (xpp Uns.xpp) sep;
     in
     printf " %a -> %a\n"
-      (List.pp (pp Uns.pp)) arrs
-      (pp Uns.pp) (join ?sep arrs)
+      (List.xpp (xpp Uns.xpp)) arrs
+      (xpp Uns.xpp) (join ?sep arrs)
   end in
   printf "@[<h>";
   test [];

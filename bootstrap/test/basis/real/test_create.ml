@@ -11,7 +11,7 @@ let test () =
     | (n, e, m) :: tups' -> begin
         let f = create ~neg:n ~exponent:e ~mantissa:m in
         printf "n=%b, e=%a, m=%a -> %h -> n=%b, e=%a, m=%a\n"
-          n Sint.pp e Uns.pp_x m f n Sint.pp e Uns.pp_x m;
+          n Sint.xpp e Uns.xpp_x m f n Sint.xpp e Uns.xpp_x m;
         fn tups'
       end
   end in

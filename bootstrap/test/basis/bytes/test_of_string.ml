@@ -12,9 +12,9 @@ let test () =
   List.iter strs ~f:(fun s ->
     let bytes = of_string_slice (String.C.Slice.of_string s) in
     printf "%a -> %a -> %a\n"
-      String.pp s
-      pp bytes
-      String.pp (to_string_hlt bytes)
+      String.xpp s
+      xpp bytes
+      String.xpp (to_string_hlt bytes)
   );
   printf "@]"
 

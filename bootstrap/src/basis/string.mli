@@ -581,4 +581,4 @@ module O : sig
 end
 
 (* Exposed for testing purposes only. *)
-val slice_pattern_pp: Format.formatter -> C.Slice.Pattern.t -> unit
+val slice_pattern_xpp: Format.formatter -> C.Slice.Pattern.t -> unit

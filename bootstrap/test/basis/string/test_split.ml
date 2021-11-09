@@ -5,25 +5,25 @@ open Format
 
 let test () =
   let test_split s f cp = begin
-    printf "split %a -> [" pp s;
+    printf "split %a -> [" xpp s;
     List.iteri (split s ~f) ~f:(fun i substr ->
       if Uns.(i > 0L) then printf "; ";
-      printf "%a" pp substr
+      printf "%a" xpp substr
     );
     printf "]\n";
 
-    printf "split_rev %a -> [" pp s;
+    printf "split_rev %a -> [" xpp s;
     List.iteri (split_rev s ~f)~f:(fun i substr ->
       if Uns.(i > 0L) then printf "; ";
-      printf "%a" pp substr
+      printf "%a" xpp substr
     );
     printf "]\n";
 
     let s1, s2 = lsplit2_hlt s ~on:cp in
-    printf "lsplit2_hlt %a -> (%a, %a)\n" pp s pp s1 pp s2;
+    printf "lsplit2_hlt %a -> (%a, %a)\n" xpp s xpp s1 xpp s2;
 
     let s1, s2 = rsplit2_hlt s ~on:cp in
-    printf "rsplit2_hlt %a -> (%a, %a)\n" pp s pp s1 pp s2;
+    printf "rsplit2_hlt %a -> (%a, %a)\n" xpp s xpp s1 xpp s2;
   end in
   test_split ";a::bc;de;" (fun cp -> Codepoint.(cp = (kv (Int64.of_int (Char.code ':')))))
     (Codepoint.kv 0x3aL);

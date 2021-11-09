@@ -25,8 +25,8 @@ let test () =
   printf "@[";
   List.iter patterns ~f:(fun pattern ->
     let p = C.Slice.Pattern.create (C.Slice.of_string pattern) in
-    printf "%a@\n" slice_pattern_pp p;
-    printf "     in_:%a@\n" pp s;
+    printf "%a@\n" slice_pattern_xpp p;
+    printf "     in_:%a@\n" xpp s;
 
     let print_matches matches = begin
       match matches with

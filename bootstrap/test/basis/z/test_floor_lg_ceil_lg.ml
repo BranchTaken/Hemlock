@@ -9,9 +9,9 @@ let test () =
     | [] -> ()
     | u :: us' -> begin
         printf "floor_lg,ceil_lg %a -> %a, %a\n"
-          pp_x u
-          pp (floor_lg u)
-          pp (ceil_lg u);
+          xpp_x u
+          xpp (floor_lg u)
+          xpp (ceil_lg u);
         test us'
       end
   in

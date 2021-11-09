@@ -9,9 +9,9 @@ let test () =
     | [] -> ()
     | either :: eithers' -> begin
         printf "is_first %a -> %b@\n"
-          (pp Uns.pp Uns.pp) either (is_first either);
+          (xpp Uns.xpp Uns.xpp) either (is_first either);
         printf "is_second %a -> %b@\n"
-          (pp Uns.pp Uns.pp) either (is_second either);
+          (xpp Uns.xpp Uns.xpp) either (is_second either);
         fn eithers'
       end
   in

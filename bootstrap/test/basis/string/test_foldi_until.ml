@@ -5,10 +5,10 @@ open Format
 
 let test () =
   let test_foldi_until s = begin
-    printf "foldi_until %a ->" pp s;
+    printf "foldi_until %a ->" xpp s;
     let () = foldi_until s ~init:() ~f:(fun i _ cp ->
       let until = Codepoint.(cp = (of_char 'c')) in
-      printf " %a:%s" Uns.pp i (of_codepoint cp);
+      printf " %a:%s" Uns.xpp i (of_codepoint cp);
       (), until
     ) in
     printf "\n"

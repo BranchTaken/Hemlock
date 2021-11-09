@@ -5,7 +5,7 @@ open Format
 
 let test () =
   let test_fold s = begin
-    printf "fold %a ->" pp s;
+    printf "fold %a ->" xpp s;
     let () = fold s ~init:() ~f:(fun _ cp -> printf " %s" (of_codepoint cp)) in
     printf "\n"
   end in

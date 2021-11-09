@@ -38,9 +38,9 @@ let test () =
   ] in
   List.iter replacements ~f:(fun (pattern, with_, in_) ->
     printf "s/%s/%s/ %a -> %a\n"
-      pattern with_ pp in_ pp (substr_replace_first in_ ~pattern ~with_);
+      pattern with_ xpp in_ xpp (substr_replace_first in_ ~pattern ~with_);
     printf "s/%s/%s/g %a -> %a\n"
-      pattern with_ pp in_ pp (substr_replace_all in_ ~pattern ~with_);
+      pattern with_ xpp in_ xpp (substr_replace_all in_ ~pattern ~with_);
     printf "\n"
   )
 

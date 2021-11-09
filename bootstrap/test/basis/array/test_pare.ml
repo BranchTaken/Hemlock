@@ -5,7 +5,7 @@ open Format
 
 let test () =
   let test arr = begin
-    printf "pare %a ->" (pp Uns.pp) arr;
+    printf "pare %a ->" (xpp Uns.xpp) arr;
     let rec fni i n = begin
       match i > n with
       | true -> ()
@@ -16,9 +16,9 @@ let test () =
             | false -> begin
                 let arr' = pare (i =:< j) arr in
                 printf " [%a,%a)=%a"
-                  Uns.pp i
-                  Uns.pp j
-                  (pp Uns.pp) arr'
+                  Uns.xpp i
+                  Uns.xpp j
+                  (xpp Uns.xpp) arr'
                 ;
                 fnj (succ j) n
               end

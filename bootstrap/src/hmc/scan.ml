@@ -162,14 +162,14 @@ module Source = struct
     let slice = Slice.of_cursors ~base:hd' ~past:tl' in
     slice, t'
 
-  let pp_loc ppf t =
-    Format.fprintf ppf "%s[%a..%a)"
+  let xpp_loc xppf t =
+    Format.fprintf xppf "%s[%a..%a)"
       (match t.path with
         | None -> ""
         | Some path -> Format.asprintf "%s:" path
       )
-      Text.Pos.pp (Cursor.(pos (hd t)))
-      Text.Pos.pp (Cursor.(pos (tl t)))
+      Text.Pos.xpp (Cursor.(pos (hd t)))
+      Text.Pos.xpp (Cursor.(pos (tl t)))
 
   let fmt_loc t formatter =
     formatter
@@ -185,8 +185,8 @@ module Source = struct
     |> Text.Pos.fmt (Cursor.(pos (tl t)))
     |> Fmt.fmt ")"
 
-  let pp ppf t =
-    Format.fprintf ppf "%s" (Text.Slice.(to_string (init ~base:t.base ~past:t.past
+  let xpp xppf t =
+    Format.fprintf xppf "%s" (Text.Slice.(to_string (init ~base:t.base ~past:t.past
         (Text.Cursor.container t.base))))
 
   let fmt t formatter =
@@ -212,8 +212,8 @@ module AbstractToken = struct
       let description t =
         t.description
 
-      let pp ppf t =
-        Format.fprintf ppf "\"%a: %s\"" Source.pp_loc t.source t.description
+      let xpp xppf t =
+        Format.fprintf xppf "\"%a: %s\"" Source.xpp_loc t.source t.description
 
       let fmt t formatter =
         formatter
@@ -228,9 +228,9 @@ module AbstractToken = struct
       | Constant of 'a
       | Malformed of Malformation.t list
 
-    let pp pp_a ppf = function
-      | Constant a -> Format.fprintf ppf "Constant %a" pp_a a
-      | Malformed malformations -> Format.fprintf ppf "Malformed %a" (List.pp Malformation.pp)
+    let xpp xpp_a xppf = function
+      | Constant a -> Format.fprintf xppf "Constant %a" xpp_a a
+      | Malformed malformations -> Format.fprintf xppf "Malformed %a" (List.xpp Malformation.xpp)
         malformations
 
     let fmt fmt_a t formatter =
@@ -399,23 +399,23 @@ module AbstractToken = struct
     | Tok_with -> "<Tok_with>"
 
     (* Operators. *)
-    | Tok_tilde_op op -> asprintf "@[<h><Tok_tilde_op=%a>@]" String.pp op
-    | Tok_qmark_op op -> asprintf "@[<h><Tok_qmark_op=%a>@]" String.pp op
-    | Tok_star_star_op op -> asprintf "@[<h><Tok_star_star_op=%a>@]" String.pp op
-    | Tok_star_op op -> asprintf "@[<h><Tok_star_op=%a>@]" String.pp op
-    | Tok_slash_op op -> asprintf "@[<h><Tok_slash_op=%a>@]" String.pp op
-    | Tok_pct_op op -> asprintf "@[<h><Tok_pct_op=%a>@]" String.pp op
-    | Tok_plus_op op -> asprintf "@[<h><Tok_plus_op=%a>@]" String.pp op
-    | Tok_minus_op op -> asprintf "@[<h><Tok_minus_op=%a>@]" String.pp op
-    | Tok_at_op op -> asprintf "@[<h><Tok_at_op=%a>@]" String.pp op
-    | Tok_caret_op op -> asprintf "@[<h><Tok_caret_op=%a>@]" String.pp op
-    | Tok_dollar_op op -> asprintf "@[<h><Tok_dollar_op=%a>@]" String.pp op
-    | Tok_lt_op op -> asprintf "@[<h><Tok_lt_op=%a>@]" String.pp op
-    | Tok_eq_op op -> asprintf "@[<h><Tok_eq_op=%a>@]" String.pp op
-    | Tok_gt_op op -> asprintf "@[<h><Tok_gt_op=%a>@]" String.pp op
-    | Tok_bar_op op -> asprintf "@[<h><Tok_bar_op=%a>@]" String.pp op
-    | Tok_colon_op op -> asprintf "@[<h><Tok_colon_op=%a>@]" String.pp op
-    | Tok_dot_op op -> asprintf "@[<h><Tok_dot_op=%a>@]" String.pp op
+    | Tok_tilde_op op -> asprintf "@[<h><Tok_tilde_op=%a>@]" String.xpp op
+    | Tok_qmark_op op -> asprintf "@[<h><Tok_qmark_op=%a>@]" String.xpp op
+    | Tok_star_star_op op -> asprintf "@[<h><Tok_star_star_op=%a>@]" String.xpp op
+    | Tok_star_op op -> asprintf "@[<h><Tok_star_op=%a>@]" String.xpp op
+    | Tok_slash_op op -> asprintf "@[<h><Tok_slash_op=%a>@]" String.xpp op
+    | Tok_pct_op op -> asprintf "@[<h><Tok_pct_op=%a>@]" String.xpp op
+    | Tok_plus_op op -> asprintf "@[<h><Tok_plus_op=%a>@]" String.xpp op
+    | Tok_minus_op op -> asprintf "@[<h><Tok_minus_op=%a>@]" String.xpp op
+    | Tok_at_op op -> asprintf "@[<h><Tok_at_op=%a>@]" String.xpp op
+    | Tok_caret_op op -> asprintf "@[<h><Tok_caret_op=%a>@]" String.xpp op
+    | Tok_dollar_op op -> asprintf "@[<h><Tok_dollar_op=%a>@]" String.xpp op
+    | Tok_lt_op op -> asprintf "@[<h><Tok_lt_op=%a>@]" String.xpp op
+    | Tok_eq_op op -> asprintf "@[<h><Tok_eq_op=%a>@]" String.xpp op
+    | Tok_gt_op op -> asprintf "@[<h><Tok_gt_op=%a>@]" String.xpp op
+    | Tok_bar_op op -> asprintf "@[<h><Tok_bar_op=%a>@]" String.xpp op
+    | Tok_colon_op op -> asprintf "@[<h><Tok_colon_op=%a>@]" String.xpp op
+    | Tok_dot_op op -> asprintf "@[<h><Tok_dot_op=%a>@]" String.xpp op
 
     (* Punctuation. *)
     | Tok_tilde -> "<Tok_tilde>"
@@ -455,45 +455,45 @@ module AbstractToken = struct
     | Tok_indent rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_indent>"
-        | Malformed _ -> asprintf "@[<h><Tok_indent=%a>@]" (Rendition.pp Unit.pp) rendition
+        | Malformed _ -> asprintf "@[<h><Tok_indent=%a>@]" (Rendition.xpp Unit.xpp) rendition
       end
     | Tok_line_delim -> "<Tok_line_delim>"
     | Tok_dedent rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_dedent>"
-        | Malformed _ -> asprintf "@[<h><Tok_dedent=%a>@]" (Rendition.pp Unit.pp) rendition
+        | Malformed _ -> asprintf "@[<h><Tok_dedent=%a>@]" (Rendition.xpp Unit.xpp) rendition
       end
     | Tok_whitespace -> "<Tok_whitespace>"
     | Tok_hash_comment -> "<Tok_hash_comment>"
     | Tok_paren_comment rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_paren_comment>"
-        | Malformed _ -> asprintf "@[<h><Tok_paren_comment=%a>@]" (Rendition.pp Unit.pp) rendition
+        | Malformed _ -> asprintf "@[<h><Tok_paren_comment=%a>@]" (Rendition.xpp Unit.xpp) rendition
       end
     | Tok_uscore -> "<Tok_uscore>"
-    | Tok_uident rendition -> asprintf "@[<h><Tok_uident=%a>@]" (Rendition.pp String.pp) rendition
-    | Tok_cident cident -> asprintf "@[<h><Tok_cident=%a>@]" String.pp cident
+    | Tok_uident rendition -> asprintf "@[<h><Tok_uident=%a>@]" (Rendition.xpp String.xpp) rendition
+    | Tok_cident cident -> asprintf "@[<h><Tok_cident=%a>@]" String.xpp cident
     | Tok_codepoint rendition ->
-      asprintf "@[<h><Tok_codepoint=%a>@]" (Rendition.pp Codepoint.pp) rendition
-    | Tok_istring rendition -> asprintf "@[<h><Tok_istring=%a>@]" (Rendition.pp String.pp) rendition
-    | Tok_rstring rendition -> asprintf "@[<h><Tok_rstring=%a>@]" (Rendition.pp String.pp) rendition
-    | Tok_bstring rendition -> asprintf "@[<h><Tok_bstring=%a>@]" (Rendition.pp String.pp) rendition
-    | Tok_r32 rendition -> asprintf "@[<h><Tok_r32=%a>@]" (Rendition.pp Real.pp) rendition
-    | Tok_r64 rendition -> asprintf "@[<h><Tok_r64=%a>@]" (Rendition.pp Real.pp) rendition
-    | Tok_u8 rendition -> asprintf "@[<h><Tok_u8=%a>@]" (Rendition.pp U8.pp) rendition
-    | Tok_i8 rendition -> asprintf "@[<h><Tok_i8=%a>@]" (Rendition.pp I8.pp) rendition
-    | Tok_u16 rendition -> asprintf "@[<h><Tok_u16=%a>@]" (Rendition.pp U16.pp) rendition
-    | Tok_i16 rendition -> asprintf "@[<h><Tok_i16=%a>@]" (Rendition.pp I16.pp) rendition
-    | Tok_u32 rendition -> asprintf "@[<h><Tok_u32=%a>@]" (Rendition.pp U32.pp) rendition
-    | Tok_i32 rendition -> asprintf "@[<h><Tok_i32=%a>@]" (Rendition.pp I32.pp) rendition
-    | Tok_u64 rendition -> asprintf "@[<h><Tok_u64=%a>@]" (Rendition.pp U64.pp) rendition
-    | Tok_i64 rendition -> asprintf "@[<h><Tok_i64=%a>@]" (Rendition.pp I64.pp) rendition
-    | Tok_u128 rendition -> asprintf "@[<h><Tok_u128=%a>@]" (Rendition.pp U128.pp) rendition
-    | Tok_i128 rendition -> asprintf "@[<h><Tok_i128=%a>@]" (Rendition.pp I128.pp) rendition
-    | Tok_u256 rendition -> asprintf "@[<h><Tok_u256=%a>@]" (Rendition.pp U256.pp) rendition
-    | Tok_i256 rendition -> asprintf "@[<h><Tok_i256=%a>@]" (Rendition.pp I256.pp) rendition
-    | Tok_u512 rendition -> asprintf "@[<h><Tok_u512=%a>@]" (Rendition.pp U512.pp) rendition
-    | Tok_i512 rendition -> asprintf "@[<h><Tok_i512=%a>@]" (Rendition.pp I512.pp) rendition
+      asprintf "@[<h><Tok_codepoint=%a>@]" (Rendition.xpp Codepoint.xpp) rendition
+    | Tok_istring rendition -> asprintf "@[<h><Tok_istring=%a>@]" (Rendition.xpp String.xpp) rendition
+    | Tok_rstring rendition -> asprintf "@[<h><Tok_rstring=%a>@]" (Rendition.xpp String.xpp) rendition
+    | Tok_bstring rendition -> asprintf "@[<h><Tok_bstring=%a>@]" (Rendition.xpp String.xpp) rendition
+    | Tok_r32 rendition -> asprintf "@[<h><Tok_r32=%a>@]" (Rendition.xpp Real.xpp) rendition
+    | Tok_r64 rendition -> asprintf "@[<h><Tok_r64=%a>@]" (Rendition.xpp Real.xpp) rendition
+    | Tok_u8 rendition -> asprintf "@[<h><Tok_u8=%a>@]" (Rendition.xpp U8.xpp) rendition
+    | Tok_i8 rendition -> asprintf "@[<h><Tok_i8=%a>@]" (Rendition.xpp I8.xpp) rendition
+    | Tok_u16 rendition -> asprintf "@[<h><Tok_u16=%a>@]" (Rendition.xpp U16.xpp) rendition
+    | Tok_i16 rendition -> asprintf "@[<h><Tok_i16=%a>@]" (Rendition.xpp I16.xpp) rendition
+    | Tok_u32 rendition -> asprintf "@[<h><Tok_u32=%a>@]" (Rendition.xpp U32.xpp) rendition
+    | Tok_i32 rendition -> asprintf "@[<h><Tok_i32=%a>@]" (Rendition.xpp I32.xpp) rendition
+    | Tok_u64 rendition -> asprintf "@[<h><Tok_u64=%a>@]" (Rendition.xpp U64.xpp) rendition
+    | Tok_i64 rendition -> asprintf "@[<h><Tok_i64=%a>@]" (Rendition.xpp I64.xpp) rendition
+    | Tok_u128 rendition -> asprintf "@[<h><Tok_u128=%a>@]" (Rendition.xpp U128.xpp) rendition
+    | Tok_i128 rendition -> asprintf "@[<h><Tok_i128=%a>@]" (Rendition.xpp I128.xpp) rendition
+    | Tok_u256 rendition -> asprintf "@[<h><Tok_u256=%a>@]" (Rendition.xpp U256.xpp) rendition
+    | Tok_i256 rendition -> asprintf "@[<h><Tok_i256=%a>@]" (Rendition.xpp I256.xpp) rendition
+    | Tok_u512 rendition -> asprintf "@[<h><Tok_u512=%a>@]" (Rendition.xpp U512.xpp) rendition
+    | Tok_i512 rendition -> asprintf "@[<h><Tok_i512=%a>@]" (Rendition.xpp I512.xpp) rendition
     | Tok_end_of_input -> "<Tok_end_of_input>"
     | Tok_misaligned -> "<Tok_misaligned>"
     | Tok_error -> "<Tok_error>"
@@ -669,10 +669,10 @@ let out_of_range_int radix limit base past t =
     let open Radix in
     let open Nat in
     match radix with
-    | Bin -> pp_b
-    | Oct -> pp_o
-    | Dec -> pp
-    | Hex -> pp_x
+    | Bin -> xpp_b
+    | Oct -> xpp_o
+    | Dec -> xpp
+    | Hex -> xpp_x
   ) limit in
   malformation ~base ~past description t
 

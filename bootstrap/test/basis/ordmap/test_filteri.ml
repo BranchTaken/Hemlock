@@ -11,8 +11,8 @@ let test () =
     let ordmap' = filteri ordmap ~f:(fun i _kv -> i % 2L = 0L) in
     let arr' = to_array ordmap' in
     printf "%a -> %a@\n"
-      (Array.pp Uns.pp) arr
-      (Array.pp (pp_kv Uns.pp)) arr'
+      (Array.xpp Uns.xpp) arr
+      (Array.xpp (xpp_kv Uns.xpp)) arr'
   end in
   Range.iter (0L =:< 7L) ~f:(fun n ->
     let arr = Array.init (0L =:< n) ~f:(fun i -> i * 10L) in

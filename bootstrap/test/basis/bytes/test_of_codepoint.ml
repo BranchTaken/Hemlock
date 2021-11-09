@@ -18,8 +18,8 @@ let test () =
     let bytes = of_codepoint cp in
     printf "'%s' -> %a -> %a\n"
       (String.of_codepoint cp)
-      pp bytes
-      String.pp (to_string_hlt bytes)
+      xpp bytes
+      String.xpp (to_string_hlt bytes)
   );
   printf "@]"
 

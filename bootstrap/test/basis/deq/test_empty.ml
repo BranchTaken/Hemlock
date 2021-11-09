@@ -4,10 +4,10 @@ open Deq
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let t = empty in
-  printf "empty = %a\n" ppt t;
+  printf "empty = %a\n" xppt t;
   printf "@]"
 
 let _ = test ()

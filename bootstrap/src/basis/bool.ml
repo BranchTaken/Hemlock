@@ -20,8 +20,8 @@ module T = struct
     | true, true -> Eq
     | true, false -> Gt
 
-  let pp ppf t =
-    Format.fprintf ppf (
+  let xpp xppf t =
+    Format.fprintf xppf (
       match t with
       | false -> "false"
       | true -> "true"

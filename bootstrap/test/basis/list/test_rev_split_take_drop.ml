@@ -14,22 +14,22 @@ let test () =
     Range.iter (0L =:< (succ (length l))) ~f:(fun i ->
       let a, b = split i l in
       printf "split/take,drop %a %a -> %a, %a / %a, %a\n"
-        Uns.pp i
-        (pp Uns.pp) l
-        (pp Uns.pp) a
-        (pp Uns.pp) b
-        (pp Uns.pp) (take i l)
-        (pp Uns.pp) (drop i l)
+        Uns.xpp i
+        (xpp Uns.xpp) l
+        (xpp Uns.xpp) a
+        (xpp Uns.xpp) b
+        (xpp Uns.xpp) (take i l)
+        (xpp Uns.xpp) (drop i l)
       ;
 
       let a, b = rev_split i l in
       printf "rev_split/rev_take,drop %a %a -> %a, %a / %a, %a\n"
-        Uns.pp i
-        (pp Uns.pp) l
-        (pp Uns.pp) a
-        (pp Uns.pp) b
-        (pp Uns.pp) (rev_take i l)
-        (pp Uns.pp) (drop i l)
+        Uns.xpp i
+        (xpp Uns.xpp) l
+        (xpp Uns.xpp) a
+        (xpp Uns.xpp) b
+        (xpp Uns.xpp) (rev_take i l)
+        (xpp Uns.xpp) (drop i l)
     )
   );
   printf "@]"

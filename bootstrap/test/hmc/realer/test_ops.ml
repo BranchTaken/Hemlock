@@ -5,10 +5,10 @@ open Realer
 open Format
 
 let test () =
-  let cmp_opt_pp ppf cmp_opt = begin
+  let cmp_opt_xpp xppf cmp_opt = begin
     match cmp_opt with
-    | None -> Format.fprintf ppf "NA"
-    | Some rel -> Cmp.pp ppf rel
+    | None -> Format.fprintf xppf "NA"
+    | Some rel -> Cmp.xpp xppf rel
   end in
   let cmp_opt t0 t1 = begin
     match is_nan t0 || (is_nan t1) with
@@ -19,12 +19,12 @@ let test () =
     | [] -> ()
     | (t0, t1) :: tups' -> begin
         printf "+,-,*,cmp %a %a\n  -> %a\t%a\t%a\t%a\n"
-          pp t0
-          pp t1
-          pp (t0 + t1)
-          pp (t0 - t1)
-          pp (t0 * t1)
-          cmp_opt_pp (cmp_opt t0 t1);
+          xpp t0
+          xpp t1
+          xpp (t0 + t1)
+          xpp (t0 - t1)
+          xpp (t0 * t1)
+          cmp_opt_xpp (cmp_opt t0 t1);
         fn tups'
       end
   in

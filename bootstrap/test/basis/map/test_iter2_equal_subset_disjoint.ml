@@ -19,7 +19,7 @@ let test () =
       | None, Some _
       | Some _, None -> begin
           printf "Should be equal:@,%a@,%a@\n"
-            (pp Uns.pp) map0 (pp Uns.pp) map1;
+            (xpp Uns.xpp) map0 (xpp Uns.xpp) map1;
           assert false;
         end
       | None, None -> not_reached ()
@@ -36,7 +36,7 @@ let test () =
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin
           printf "Should be disjoint:@,%a@,%a@\n"
-            (pp Uns.pp) map0 (pp Uns.pp) map1;
+            (xpp Uns.xpp) map0 (xpp Uns.xpp) map1;
           assert false;
         end
       | None, Some _

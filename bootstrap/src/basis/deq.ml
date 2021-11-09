@@ -104,24 +104,24 @@ let pop t =
 let pop_back t =
   back t, front t
 
-let pp pp_elm ppf (_lf, f, _sf, _lr, r, _sr) =
+let xpp xpp_elm xppf (_lf, f, _sf, _lr, r, _sr) =
   let open Format in
-  fprintf ppf "@[<h>";
+  fprintf xppf "@[<h>";
   let rec fn s = begin
     match s with
     | lazy Stream.Nil -> ()
-    | lazy (Cons(elm, lazy Stream.Nil)) -> fprintf ppf "%a" pp_elm elm;
+    | lazy (Cons(elm, lazy Stream.Nil)) -> fprintf xppf "%a" xpp_elm elm;
     | lazy (Cons(elm, s')) -> begin
-        fprintf ppf "%a,@ " pp_elm elm;
+        fprintf xppf "%a,@ " xpp_elm elm;
         fn s'
       end
   end in
-  fprintf ppf "(";
+  fprintf xppf "(";
   fn f;
-  fprintf ppf "@ |@ ";
+  fprintf xppf "@ |@ ";
   fn (Stream.rev r);
-  fprintf ppf ")";
-  fprintf ppf "@]"
+  fprintf xppf ")";
+  fprintf xppf "@]"
 
 let fmt fmt_elm (_lf, f, _sf, _lr, r, _sr) formatter =
   let rec fn s formatter = begin

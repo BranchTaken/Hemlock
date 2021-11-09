@@ -7,7 +7,7 @@ type ('a, 'witness) t = private {
   cmp: 'a -> 'a -> Cmp.t;
   (** Comparison function. *)
 
-  pp: Format.formatter -> 'a -> unit;
+  xpp: Format.formatter -> 'a -> unit;
   (** Pretty printer function. *)
 
   fmt: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter);
@@ -62,8 +62,8 @@ module type IPoly = sig
   include CmpableIntf.IPoly with type 'a t := 'a t
   include FormattableIntf.SPoly with type 'a t := 'a t
 
-  val pp_a: Format.formatter -> 'a -> unit
-  (** {!MakePoly} synthesizes a monomorphic [pp] from the composition of [pp] and [pp_a]. [pp_a] is
+  val xpp_a: Format.formatter -> 'a -> unit
+  (** {!MakePoly} synthesizes a monomorphic [xpp] from the composition of [xpp] and [xpp_a]. [xpp_a] is
       the pretty printer for {!type:'a}. *)
 
   val fmt_a: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter)

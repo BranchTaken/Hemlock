@@ -9,9 +9,9 @@ let test () =
   let test kvs = begin
     let ordmap = of_alist (module Uns) kvs in
     printf "of_alist %a; to_alist -> %a; to_array -> %a\n"
-      (List.pp (pp_kv String.pp)) kvs
-      (List.pp (pp_kv String.pp)) (to_alist ordmap)
-      (Array.pp (pp_kv String.pp)) (to_array ordmap)
+      (List.xpp (xpp_kv String.xpp)) kvs
+      (List.xpp (xpp_kv String.xpp)) (to_alist ordmap)
+      (Array.xpp (xpp_kv String.xpp)) (to_array ordmap)
   end in
   let test_alists = [
     [];

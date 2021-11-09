@@ -3,8 +3,8 @@ type t =
   | Eq
   | Gt
 
-let pp ppf t =
-  Format.fprintf ppf (match t with
+let xpp xppf t =
+  Format.fprintf xppf (match t with
     | Lt -> "Lt"
     | Eq -> "Eq"
     | Gt -> "Gt"

@@ -5,7 +5,7 @@ open Format
 
 let test () =
   let test_iter s = begin
-    printf "iter %a ->" pp s;
+    printf "iter %a ->" xpp s;
     let () = iter s ~f:(fun cp -> printf " %s" (of_codepoint cp)) in
     printf "\n"
   end in

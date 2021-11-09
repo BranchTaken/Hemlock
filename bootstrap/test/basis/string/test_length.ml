@@ -13,9 +13,9 @@ let test () =
   ] in
   List.iter strs ~f:(fun s ->
     printf "s=%a, blength=%a, clength=%a, is_empty=%B\n"
-      pp s
-      Uns.pp (B.length s)
-      Uns.pp (C.length s)
+      xpp s
+      Uns.xpp (B.length s)
+      Uns.xpp (C.length s)
       (is_empty s)
   )
 

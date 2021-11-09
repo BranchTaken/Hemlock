@@ -17,7 +17,7 @@ let stream_of_string_list sl =
 let test () =
   printf "@[<h>";
   let fn sl = begin
-    printf "%a\n" (List.pp String.pp) sl;
+    printf "%a\n" (List.xpp String.xpp) sl;
     let text = of_bytes_stream (stream_of_string_list sl) in
 
     let rec fwd_iter cursor = begin
@@ -50,7 +50,7 @@ let test () =
     let slice =
       Slice.init ~base:(Cursor.hd text) ~past:(Cursor.tl text) text in
     let s' = Slice.to_string slice in
-    printf "  slice -> %a\n" String.pp s'
+    printf "  slice -> %a\n" String.xpp s'
   end in
   fn [];
   fn [""];

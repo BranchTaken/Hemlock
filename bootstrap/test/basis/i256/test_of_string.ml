@@ -8,7 +8,7 @@ let test () =
   let rec test_strs = function
     | [] -> ()
     | s :: strs' -> begin
-        printf "of_string %S -> %a %a\n" s pp (of_string s) pp_x (of_string s);
+        printf "of_string %S -> %a %a\n" s xpp (of_string s) xpp_x (of_string s);
         test_strs strs'
       end
   in

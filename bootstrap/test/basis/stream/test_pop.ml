@@ -4,14 +4,14 @@ open Stream
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec test_pop t = begin
     match t with
     | lazy Nil -> ()
     | _ -> begin
         let elm, t' = pop t in
-        printf "pop %a = %a %a\n" ppt t Uns.pp elm ppt t';
+        printf "pop %a = %a %a\n" xppt t Uns.xpp elm xppt t';
         test_pop t'
       end
   end in

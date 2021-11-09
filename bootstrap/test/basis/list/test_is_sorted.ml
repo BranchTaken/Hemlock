@@ -20,15 +20,15 @@ let test () =
   printf "@[<h>";
   iter lists ~f:(fun l ->
     printf "is_sorted               %a -> %b\n"
-      (pp Uns.pp) l
+      (xpp Uns.xpp) l
       (is_sorted l ~cmp:Uns.cmp)
     ;
     printf "is_sorted ~strict:false %a -> %b\n"
-      (pp Uns.pp) l
+      (xpp Uns.xpp) l
       (is_sorted ~strict:false l ~cmp:Uns.cmp)
     ;
     printf "is_sorted ~strict:true  %a -> %b\n"
-      (pp Uns.pp) l
+      (xpp Uns.xpp) l
       (is_sorted ~strict:true l ~cmp:Uns.cmp)
   );
   printf "@]"

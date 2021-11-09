@@ -5,7 +5,7 @@ open Format
 
 let test () =
   let fn t0 t1 = begin
-    printf "cmp %b %b -> %a\n" t0 t1 Cmp.pp (cmp t0 t1);
+    printf "cmp %b %b -> %a\n" t0 t1 Cmp.xpp (cmp t0 t1);
     printf "%b = %b -> %b\n" t0 t1 (t0 = t1);
     printf "%b <> %b -> %b\n" t0 t1 (t0 <> t1);
   end in

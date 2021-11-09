@@ -4,14 +4,14 @@ open Deq
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let t' = push i t in
-        printf "push %a %a = %a\n" Uns.pp i ppt t ppt t';
+        printf "push %a %a = %a\n" Uns.xpp i xppt t xppt t';
         fn (succ i) n t'
       end
   end in

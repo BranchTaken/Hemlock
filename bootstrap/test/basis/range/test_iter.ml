@@ -9,11 +9,11 @@ let test () =
   printf "iter_right (0 .. 3) ->"; Range.iter_right (0L =:< 3L) ~f:(fun i -> printf " %Lu" i);
   printf "\n";
   printf "iter (253u8 .. 2u8) ->"; RangeH.U8.(iter (U8.kv 253L =:< U8.kv 2L)) ~f:(fun i ->
-    printf " %a" U8.pp i
+    printf " %a" U8.xpp i
   );
   printf "\n";
   printf "iter (-2i .. 2i) ->"; RangeH.Sint.(iter (Sint.kv (-2L) =:< Sint.kv 2L)) ~f:(fun i ->
-    printf " %a" Sint.pp i
+    printf " %a" Sint.xpp i
   );
   printf "\n";
   printf "iter (0 ..= 0) ->"; RangeF.Uns.(iter (0L =:= 0L)) ~f:(fun i -> printf " %Lu" i);
@@ -22,7 +22,7 @@ let test () =
   printf "\n";
 
   printf "iter (253u8 ..= 2u8) ->"; RangeF.U8.(iter (U8.kv 253L =:= U8.kv 2L)) ~f:(fun i ->
-    printf " %a" U8.pp i
+    printf " %a" U8.xpp i
   );
   printf "\n";
 

@@ -17,7 +17,7 @@ let stream_of_string_list sl =
 let test () =
   printf "@[<h>";
   let fn sl = begin
-    printf "%a\n" (List.pp String.pp) sl;
+    printf "%a\n" (List.xpp String.xpp) sl;
     let text = of_bytes_stream (stream_of_string_list sl) in
 
     let rec fwd_iter ~line ~col cursor = begin

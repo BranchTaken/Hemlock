@@ -4,7 +4,7 @@ open Stream
 open Format
 
 let test () =
-  let ppt = (pp Uns.pp) in
+  let xppt = (xpp Uns.xpp) in
   printf "@[<h>";
   let rec test_tl_up_to i n = begin
     match i <= n with
@@ -12,7 +12,7 @@ let test () =
     | true -> begin
         let t = init (0L =:< i) ~f:(fun i -> i) in
         let t' = tl t in
-        printf "tl %a = %a\n" ppt t ppt t';
+        printf "tl %a = %a\n" xppt t xppt t';
         test_tl_up_to (succ i) n
       end
   end in

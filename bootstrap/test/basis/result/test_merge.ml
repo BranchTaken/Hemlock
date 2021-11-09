@@ -14,9 +14,9 @@ let test () =
   List.iter result_pairs ~f:(fun (a, b) ->
     let f a b = asprintf "%s + %s" a b in
     printf "merge (%a) (%a) -> (%a)\n"
-      (pp String.pp String.pp) a
-      (pp String.pp String.pp) b
-      (pp String.pp String.pp) (merge a b ~ok:f ~error:f)
+      (xpp String.xpp String.xpp) a
+      (xpp String.xpp String.xpp) b
+      (xpp String.xpp String.xpp) (merge a b ~ok:f ~error:f)
   );
   printf "@]"
 

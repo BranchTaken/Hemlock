@@ -11,8 +11,8 @@ let test () =
     let ordset' = filteri ordset ~f:(fun i _mem -> i % 2L = 0L) in
     let arr' = to_array ordset' in
     printf "%a -> %a@\n"
-      (Array.pp Uns.pp) arr
-      (Array.pp Uns.pp) arr'
+      (Array.xpp Uns.xpp) arr
+      (Array.xpp Uns.xpp) arr'
   end in
   Range.iter (0L =:< 7L) ~f:(fun n ->
     let arr = Array.init (0L =:< n) ~f:(fun i -> i * 10L) in

@@ -9,7 +9,7 @@ let test () =
     | [] -> ()
     | u :: us' -> begin
         printf "bit_{pop,clz,ctz} %a -> %Lu, %Lu, %Lu\n"
-          pp_x u (bit_pop u) (bit_clz u) (bit_ctz u);
+          xpp_x u (bit_pop u) (bit_clz u) (bit_ctz u);
         test_u64s us'
       end
   in

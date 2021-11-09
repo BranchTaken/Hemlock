@@ -6,8 +6,8 @@ open Format
 let test () =
   let test_length arr = begin
     printf "%a: length=%a, is_empty=%B\n"
-      (pp Uns.pp) arr
-      Uns.pp (length arr)
+      (xpp Uns.xpp) arr
+      Uns.xpp (length arr)
       (is_empty arr)
   end in
   printf "@[<h>";

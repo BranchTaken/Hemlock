@@ -28,11 +28,11 @@ let test () =
           | Precise -> "Precise"
           | Rounded -> "Rounded"
         in
-        printf "%a\n" pp r;
+        printf "%a\n" xpp r;
         let prec64, r64 = to_precision_r64 r in
-        printf "  to_r64 -> %s %a\n" (prec_s prec64) Real.pp r64;
+        printf "  to_r64 -> %s %a\n" (prec_s prec64) Real.xpp r64;
         let prec32, r32 = to_precision_r32 r in
-        printf "  to_r32 -> %s %a\n" (prec_s prec32) Real.pp r32;
+        printf "  to_r32 -> %s %a\n" (prec_s prec32) Real.xpp r32;
         test_hash_fold rs'
       end
   end in

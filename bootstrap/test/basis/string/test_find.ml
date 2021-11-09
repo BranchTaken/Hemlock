@@ -5,7 +5,7 @@ open Format
 
 let test () =
   let test_find s ~f = begin
-    printf "find %a -> %s\n" pp s (match find s ~f with
+    printf "find %a -> %s\n" xpp s (match find s ~f with
       | None -> "None"
       | Some cp -> "'" ^ (of_codepoint cp) ^ "'"
     );

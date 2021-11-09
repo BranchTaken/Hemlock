@@ -19,17 +19,17 @@ let test () =
   printf "@[<h>";
   iter list_lists ~f:(fun lists ->
     printf "join";
-    iter lists ~f:(fun l -> printf " %a" (pp Uns.pp) l);
-    printf " -> %a\n" (pp Uns.pp) (join lists);
+    iter lists ~f:(fun l -> printf " %a" (xpp Uns.xpp) l);
+    printf " -> %a\n" (xpp Uns.xpp) (join lists);
 
     printf "join ~sep:[6; 7]";
-    iter lists ~f:(fun l -> printf " %a" (pp Uns.pp) l);
-    printf " -> %a\n" (pp Uns.pp) (join ~sep:[6L; 7L] lists);
+    iter lists ~f:(fun l -> printf " %a" (xpp Uns.xpp) l);
+    printf " -> %a\n" (xpp Uns.xpp) (join ~sep:[6L; 7L] lists);
 
     (* Brittle test; change in conjunction with implementation. *)
     printf "join_unordered ~sep:[6; 7]";
-    iter lists ~f:(fun l -> printf " %a" (pp Uns.pp) l);
-    printf " -> %a\n" (pp Uns.pp) (join_unordered ~sep:[6L; 7L] lists);
+    iter lists ~f:(fun l -> printf " %a" (xpp Uns.xpp) l);
+    printf " -> %a\n" (xpp Uns.xpp) (join_unordered ~sep:[6L; 7L] lists);
   );
   printf "@]"
 

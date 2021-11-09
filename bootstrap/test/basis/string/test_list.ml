@@ -8,12 +8,12 @@ let test () =
     let s = of_list l in
     let l' = to_list s in
     let s' = of_list l' in
-    printf "list: %a -> ... -> %a\n" pp s pp s';
+    printf "list: %a -> ... -> %a\n" xpp s xpp s';
 
     let s = of_list_rev l in
     let l' = to_list_rev s in
     let s' = of_list_rev l' in
-    printf "list_rev: %a -> ... -> %a\n" pp s pp s';
+    printf "list_rev: %a -> ... -> %a\n" xpp s xpp s';
   end in
   test_list [];
   test_list [

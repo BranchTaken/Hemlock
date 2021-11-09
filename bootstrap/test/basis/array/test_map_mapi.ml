@@ -4,16 +4,16 @@ open Array
 open Format
 
 let test () =
-  let pp_str ppf t = Format.fprintf ppf "%S" t in
+  let xpp_str xppf t = Format.fprintf xppf "%S" t in
   let test_map uarr = begin
-    printf "%a -> map " (pp Uns.pp) uarr;
-    let sarr = map uarr ~f:(fun elm -> asprintf "%a" Uns.pp elm) in
-    printf "%a" (pp pp_str) sarr;
+    printf "%a -> map " (xpp Uns.xpp) uarr;
+    let sarr = map uarr ~f:(fun elm -> asprintf "%a" Uns.xpp elm) in
+    printf "%a" (xpp xpp_str) sarr;
     printf " -> mapi ";
     let sarr = mapi uarr ~f:(fun i elm ->
-      asprintf "[%a]=%a" Uns.pp i Uns.pp elm
+      asprintf "[%a]=%a" Uns.xpp i Uns.xpp elm
     ) in
-    printf "%a\n" (pp pp_str) sarr
+    printf "%a\n" (xpp xpp_str) sarr
   end in
   printf "@[<h>";
   test_map [||];

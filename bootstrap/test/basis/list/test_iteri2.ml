@@ -13,11 +13,11 @@ let test () =
   printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     printf "iter2 %a %a ->"
-      (pp Uns.pp) a
-      (pp Uns.pp) b
+      (xpp Uns.xpp) a
+      (xpp Uns.xpp) b
     ;
     let f i a b = begin
-      printf " (i=%a, a=%a, b=%a)" Uns.pp i Uns.pp a Uns.pp b
+      printf " (i=%a, a=%a, b=%a)" Uns.xpp i Uns.xpp a Uns.xpp b
     end in
     iteri2 a b ~f;
     printf "\n"
