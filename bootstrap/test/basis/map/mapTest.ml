@@ -17,6 +17,7 @@ module UnsTestCmper = struct
       | _ -> Uns.hash_fold a Hash.State.empty
     let cmp = Uns.cmp
     let pp = Uns.pp
+    let fmt = Uns.fmt
   end
   include Cmper.MakeMono(T)
 end

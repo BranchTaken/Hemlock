@@ -7,8 +7,11 @@ type ('a, 'witness) t = private {
   cmp: 'a -> 'a -> Cmp.t;
   (** Comparison function. *)
 
-  pp: Format.formatter -> 'a -> unit
+  pp: Format.formatter -> 'a -> unit;
   (** Pretty printer function. *)
+
+  fmt: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter);
+  (** Formatter function. *)
 }
 (** Comparator type, with phantom type that acts as a witness which helps assure that
     multi-container operations can only be performed on containers with compatible comparison
@@ -62,6 +65,10 @@ module type IPoly = sig
   val pp_a: Format.formatter -> 'a -> unit
   (** {!MakePoly} synthesizes a monomorphic [pp] from the composition of [pp] and [pp_a]. [pp_a] is
       the pretty printer for {!type:'a}. *)
+
+  val fmt_a: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** {!MakePoly} synthesizes a monomorphic [fmt] from the composition of [fmt] and [fmt_a]. [fmt_a]
+      is the formatter for {!type:'a}. *)
 end
 
 (** Functor output signature for polymorphic comparator types, e.g. {!type:'a list}. *)

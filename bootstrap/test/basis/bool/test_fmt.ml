@@ -6,7 +6,7 @@ let test () =
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-        let _ = File.Fmt.stdout |> fmt t |> String.fmt "\n" in
+        let _ = File.Fmt.stdout |> fmt t |> Fmt.fmt "\n" in
         fn ts'
       end
   in

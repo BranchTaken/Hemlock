@@ -7,7 +7,6 @@
   test_constants
   test_div_mod
   test_exp
-  test_fmt
   test_floor_lg_ceil_lg
   test_floor_pow2_ceil_pow2
   test_hash_fold
@@ -18,5 +17,6 @@
   test_of_real_to_real
   test_of_string
   test_pp
-  test_rel)
+  test_rel
+  test_xfmt)
  (libraries Basis))

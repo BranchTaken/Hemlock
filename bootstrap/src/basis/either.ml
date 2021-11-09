@@ -19,6 +19,11 @@ let pp pp_a pp_b ppf = function
   | First a -> Format.fprintf ppf "@[<h>First %a@]" pp_a a
   | Second b -> Format.fprintf ppf "@[<h>Second %a@]" pp_b b
 
+let fmt fmt_a fmt_b t formatter =
+  match t with
+  | First a -> formatter |> Fmt.fmt "First " |> fmt_a a
+  | Second b -> formatter |> Fmt.fmt "Second " |> fmt_b b
+
 let is_first = function
   | First _ -> true
   | Second _ -> false

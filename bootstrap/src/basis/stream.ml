@@ -115,3 +115,17 @@ let pp pp_elm ppf t =
   end in
   fn t;
   fprintf ppf "@]"
+
+let fmt fmt_elm t formatter =
+  let rec fn t formatter = begin
+    match t with
+    | lazy Nil -> formatter |> Fmt.fmt "Nil"
+    | lazy (Cons (elm, t')) ->
+      formatter
+      |> Fmt.fmt "("
+      |> fmt_elm elm
+      |> Fmt.fmt " "
+      |> fn t'
+      |> Fmt.fmt ")"
+  end in
+  formatter |> fn t

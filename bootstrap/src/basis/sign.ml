@@ -11,6 +11,13 @@ let pp ppf t =
     | Zero -> "Zero"
     | Pos -> "Pos")
 
+let fmt t ((module Formatter):(module Fmt.Formatter)) : (module Fmt.Formatter) =
+  (module Formatter) |> Fmt.fmt (match t with
+    | Neg -> "Neg"
+    | Zero -> "Zero"
+    | Pos -> "Pos"
+  )
+
 let of_sint x =
   match x with
   | -1 -> Neg

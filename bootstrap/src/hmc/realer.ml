@@ -217,6 +217,67 @@ module T = struct
       end
     | N {sign; mag=Inf} -> fprintf ppf "%ainf" pp_sign sign
     | Nan -> fprintf ppf "nan"
+
+  let fmt t formatter =
+    assert (is_norm t);
+    let fmt_sign sign formatter = begin
+      formatter
+      |> Fmt.fmt (match sign with
+        | Neg -> "-"
+        | Pos -> ""
+      )
+    end in
+    let rec fmt_frac hex_digits frac formatter = begin
+      match hex_digits with
+      | 0L -> formatter
+      | _ -> begin
+          let digit = Nat.(bit_and frac k_f) in
+          let int64_digit = match Nat.(digit = zero) with
+            | true -> Int64.zero
+            | false -> Nat.get 0L digit
+          in
+          let frac' = Nat.bit_usr ~shift:4L frac in
+          formatter
+          |> fmt_frac (pred hex_digits) frac';
+          |> Uns.xfmt ~base:Fmt.Hex int64_digit
+        end
+    end in
+    match t with
+    | N {sign; mag=Fin {exponent; mantissa}} -> begin
+        match Nat.(mantissa = zero) with
+        | true ->
+          formatter
+          |> fmt_sign sign
+          |> Fmt.fmt "0x0p0"
+        | false -> begin
+            let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
+            let shift = pred sig_digits in
+            let frac_mask = Nat.((bit_sl ~shift one) - one) in
+            let frac = Nat.bit_and mantissa frac_mask in
+            match Nat.(frac = zero) with
+            | true ->
+              formatter
+              |> fmt_sign sign
+              |> Fmt.fmt "0x1p"
+              |> Zint.fmt exponent
+            | false -> begin
+                let rem = shift % 4L in
+                let hex_digits = shift / 4L in
+                let hex_digits', frac' = match rem = 0L with
+                  | true -> hex_digits, frac
+                  | false -> (succ hex_digits), Nat.bit_sl ~shift:(4L - rem) frac
+                in
+                formatter
+                |> fmt_sign sign
+                |> Fmt.fmt "0x1."
+                |> (fmt_frac hex_digits') frac'
+                |> Fmt.fmt "p"
+                |> Zint.fmt exponent
+              end
+          end
+      end
+    | N {sign; mag=Inf} -> formatter |> fmt_sign sign |> Fmt.fmt "inf"
+    | Nan -> formatter |> Fmt.fmt "nan"
 end
 include T
 include Identifiable.Make(T)

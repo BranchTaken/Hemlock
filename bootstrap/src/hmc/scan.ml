@@ -171,8 +171,26 @@ module Source = struct
       Text.Pos.pp (Cursor.(pos (hd t)))
       Text.Pos.pp (Cursor.(pos (tl t)))
 
+  let fmt_loc t formatter =
+    formatter
+    |> (fun formatter -> (match t.path with
+      | None -> formatter
+      | Some path ->
+        formatter
+        |> Fmt.fmt path
+        |> Fmt.fmt ":"
+    ))
+    |> Text.Pos.fmt (Cursor.(pos (hd t)))
+    |> Fmt.fmt ".."
+    |> Text.Pos.fmt (Cursor.(pos (tl t)))
+    |> Fmt.fmt ")"
+
   let pp ppf t =
     Format.fprintf ppf "%s" (Text.Slice.(to_string (init ~base:t.base ~past:t.past
+        (Text.Cursor.container t.base))))
+
+  let fmt t formatter =
+    formatter |> Fmt.fmt (Text.Slice.(to_string (init ~base:t.base ~past:t.past
         (Text.Cursor.container t.base))))
 end
 
@@ -196,6 +214,14 @@ module AbstractToken = struct
 
       let pp ppf t =
         Format.fprintf ppf "\"%a: %s\"" Source.pp_loc t.source t.description
+
+      let fmt t formatter =
+        formatter
+        |> Fmt.fmt "\""
+        |> Source.fmt_loc t.source
+        |> Fmt.fmt ": "
+        |> Fmt.fmt t.description
+        |> Fmt.fmt "\""
     end
 
     type 'a t =
@@ -206,6 +232,17 @@ module AbstractToken = struct
       | Constant a -> Format.fprintf ppf "Constant %a" pp_a a
       | Malformed malformations -> Format.fprintf ppf "Malformed %a" (List.pp Malformation.pp)
         malformations
+
+    let fmt fmt_a t formatter =
+      match t with
+      | Constant a ->
+        formatter
+        |> Fmt.fmt "Constant "
+        |> fmt_a a
+      | Malformed malformations ->
+        formatter
+        |> Fmt.fmt "Malformed "
+        |> (List.fmt Malformation.fmt) malformations
   end
   type t =
     (* Keywords. *)

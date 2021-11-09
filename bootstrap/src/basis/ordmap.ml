@@ -196,6 +196,13 @@ module T = struct
         fprintf ppf "%a" Uns.pp elm.index
       end in
       fprintf ppf "@[<h>%a@]" (List.pp pp_elm) t
+
+    let fmt t formatter =
+      let fmt_elm elm formatter = begin
+        formatter |> Uns.fmt elm.index
+      end in
+      formatter
+      |> (List.fmt fmt_elm) t
   end
 
   (* Path-based cursor. If this were based on just index and calls to nth, complete traversals would
@@ -303,12 +310,24 @@ module T = struct
           Uns.pp t.index
           (Option.pp Path.pp) t.lpath_opt
           (Option.pp Path.pp) t.rpath_opt
+
+      let fmt t formatter =
+        formatter
+        |> Fmt.fmt "{index="
+        |> Uns.fmt t.index
+        |> Fmt.fmt "; lpath_opt="
+        |> (Option.fmt Path.fmt) t.lpath_opt
+        |> Fmt.fmt "; rpath_opt="
+        |> (Option.fmt Path.fmt) t.rpath_opt
+        |> Fmt.fmt "}"
     end
     include T
     include Cmpable.MakePoly3(T)
   end
 
   let cursor_pp = Cursor.pp
+
+  let cursor_fmt = Cursor.fmt
 end
 include T
 include Container.MakePoly3Index(T)
@@ -1372,8 +1391,50 @@ let pp pp_v ppf t =
   fprintf ppf "@[<v>Ordmap {@;<0 2>@[<v>root=%a@]@,}@]"
     pp_node t.root
 
+let fmt fmt_v t formatter =
+  let rec fmt_node node formatter = begin
+    match node with
+    | Empty ->
+      formatter
+      |> Fmt.fmt "Empty"
+    | Leaf {k; v} ->
+      formatter
+      |> Fmt.fmt "Leaf {k="
+      |> t.cmper.fmt k
+      |> Fmt.fmt " v="
+      |> fmt_v v
+      |> Fmt.fmt "}"
+    | Node {l; k; v; n; h; r} ->
+      formatter
+      |> Fmt.fmt "Node {l="
+      |> fmt_node l
+      |> Fmt.fmt ",k="
+      |> t.cmper.fmt k
+      |> Fmt.fmt ",v="
+      |> fmt_v v
+      |> Fmt.fmt ",n="
+      |> Uns.fmt n
+      |> Fmt.fmt ",h="
+      |> Uns.fmt h
+      |> Fmt.fmt ",r="
+      |> fmt_node r
+      |> Fmt.fmt "}"
+  end in
+  formatter
+  |> Fmt.fmt "{root="
+  |> fmt_node t.root
+  |> Fmt.fmt "}"
+
 let pp_kv pp_v ppf (k, v) =
   Format.fprintf ppf "(%a, %a)" Uns.pp k pp_v v
+
+let fmt_kv fmt_v (k, v) formatter =
+  formatter
+  |> Fmt.fmt "("
+  |> Uns.fmt k
+  |> Fmt.fmt ", "
+  |> fmt_v v
+  |> Fmt.fmt ")"
 
 let validate t =
   let rec fn = function
