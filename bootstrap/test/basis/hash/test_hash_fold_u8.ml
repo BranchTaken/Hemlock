@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open Hash
-open Format
 
 let test () =
   let hash_fold u8s t = begin
@@ -11,28 +10,17 @@ let test () =
     )
     |> State.Gen.fini
   end in
-  let xpp_u8 xppf u = Format.fprintf xppf "0x%02Lx" u in
-  let xpp_arr xpp_elm xppf arr = begin
-    let rec fn arr i len = begin
-      match i = len with
-      | true -> ()
-      | false -> begin
-          if i > 0L then fprintf xppf ";@ ";
-          fprintf xppf "%a" xpp_elm Stdlib.(Array.get arr Int64.(to_int i));
-          fn arr (succ i) len
-        end
-    end in
-    fprintf xppf "@[<h>[|";
-    fn arr 0L Stdlib.(Int64.of_int (Array.length arr));
-    fprintf xppf "|]@]"
-  end in
-  printf "@[<h>";
   let rec test_hash_fold u8s_list = begin
     match u8s_list with
     | [] -> ()
     | u8s :: u8s_list' -> begin
-        printf "hash_fold %a -> %a\n"
-          (xpp_arr xpp_u8) u8s xpp (t_of_state State.(hash_fold u8s empty));
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold "
+        |> (Array.pp (Uns.fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex)) u8s
+        |> Fmt.fmt " -> "
+        |> pp (t_of_state State.(hash_fold u8s empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_hash_fold u8s_list'
       end
   end in
@@ -60,7 +48,6 @@ let test () =
       0x10L; 0x32L; 0x54L; 0x76L; 0x98L; 0xbaL; 0xdcL; 0xfeL;
       0xefL; 0xcdL; 0xabL; 0x89L; 0x67L; 0x45L; 0x23L; 0x01L|]
   ] in
-  test_hash_fold u8s_list;
-  printf "@]"
+  test_hash_fold u8s_list
 
 let _ = test ()
