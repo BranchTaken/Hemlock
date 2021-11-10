@@ -8,10 +8,10 @@ let xpp xpp_a xpp_b xppf = function
   | Ok a -> Format.fprintf xppf "@[<h>Ok@ %a@]" xpp_a a
   | Error b -> Format.fprintf xppf "@[<h>Error@ %a@]" xpp_b b
 
-let fmt fmt_a fmt_b t formatter =
+let pp pp_a pp_b t formatter =
   match t with
-  | Ok a -> formatter |> Fmt.fmt "Ok " |> fmt_a a
-  | Error b -> formatter |> Fmt.fmt "Error " |> fmt_b b
+  | Ok a -> formatter |> Fmt.fmt "Ok " |> pp_a a
+  | Error b -> formatter |> Fmt.fmt "Error " |> pp_b b
 
 let ok_if b ~error =
   match b with

@@ -8,9 +8,9 @@ let test () =
     | x :: xs' -> begin
         let _ =
           File.Fmt.stdout
-          |> fmt x
+          |> pp x
           |> Fmt.fmt " "
-          |> xfmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex x
+          |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex x
           |> Fmt.fmt "\n"
         in
         fn xs'

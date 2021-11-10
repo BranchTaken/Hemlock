@@ -63,11 +63,11 @@ module Pos = struct
     let xpp xppf t =
       Format.fprintf xppf "@[<h>%a:%a@]" Uns.xpp t.line Uns.xpp t.col
 
-    let fmt t formatter =
+    let pp t formatter =
       formatter
-      |> Uns.fmt t.line
+      |> Uns.pp t.line
       |> Fmt.fmt ":"
-      |> Uns.fmt t.col
+      |> Uns.pp t.col
   end
   include T
   include Cmpable.Make(T)

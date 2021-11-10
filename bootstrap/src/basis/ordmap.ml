@@ -197,12 +197,12 @@ module T = struct
       end in
       fprintf xppf "@[<h>%a@]" (List.xpp xpp_elm) t
 
-    let fmt t formatter =
-      let fmt_elm elm formatter = begin
-        formatter |> Uns.fmt elm.index
+    let pp t formatter =
+      let pp_elm elm formatter = begin
+        formatter |> Uns.pp elm.index
       end in
       formatter
-      |> (List.fmt fmt_elm) t
+      |> (List.pp pp_elm) t
   end
 
   (* Path-based cursor. If this were based on just index and calls to nth, complete traversals would
@@ -311,14 +311,14 @@ module T = struct
           (Option.xpp Path.xpp) t.lpath_opt
           (Option.xpp Path.xpp) t.rpath_opt
 
-      let fmt t formatter =
+      let pp t formatter =
         formatter
         |> Fmt.fmt "{index="
-        |> Uns.fmt t.index
+        |> Uns.pp t.index
         |> Fmt.fmt "; lpath_opt="
-        |> (Option.fmt Path.fmt) t.lpath_opt
+        |> (Option.pp Path.pp) t.lpath_opt
         |> Fmt.fmt "; rpath_opt="
-        |> (Option.fmt Path.fmt) t.rpath_opt
+        |> (Option.pp Path.pp) t.rpath_opt
         |> Fmt.fmt "}"
     end
     include T
@@ -327,7 +327,7 @@ module T = struct
 
   let cursor_xpp = Cursor.xpp
 
-  let cursor_fmt = Cursor.fmt
+  let cursor_pp = Cursor.pp
 end
 include T
 include Container.MakePoly3Index(T)
@@ -1391,8 +1391,8 @@ let xpp xpp_v xppf t =
   fprintf xppf "@[<v>Ordmap {@;<0 2>@[<v>root=%a@]@,}@]"
     xpp_node t.root
 
-let fmt fmt_v t formatter =
-  let rec fmt_node node formatter = begin
+let pp pp_v t formatter =
+  let rec pp_node node formatter = begin
     match node with
     | Empty ->
       formatter
@@ -1400,40 +1400,40 @@ let fmt fmt_v t formatter =
     | Leaf {k; v} ->
       formatter
       |> Fmt.fmt "Leaf {k="
-      |> t.cmper.fmt k
+      |> t.cmper.pp k
       |> Fmt.fmt " v="
-      |> fmt_v v
+      |> pp_v v
       |> Fmt.fmt "}"
     | Node {l; k; v; n; h; r} ->
       formatter
       |> Fmt.fmt "Node {l="
-      |> fmt_node l
+      |> pp_node l
       |> Fmt.fmt ",k="
-      |> t.cmper.fmt k
+      |> t.cmper.pp k
       |> Fmt.fmt ",v="
-      |> fmt_v v
+      |> pp_v v
       |> Fmt.fmt ",n="
-      |> Uns.fmt n
+      |> Uns.pp n
       |> Fmt.fmt ",h="
-      |> Uns.fmt h
+      |> Uns.pp h
       |> Fmt.fmt ",r="
-      |> fmt_node r
+      |> pp_node r
       |> Fmt.fmt "}"
   end in
   formatter
   |> Fmt.fmt "{root="
-  |> fmt_node t.root
+  |> pp_node t.root
   |> Fmt.fmt "}"
 
 let xpp_kv xpp_v xppf (k, v) =
   Format.fprintf xppf "(%a, %a)" Uns.xpp k xpp_v v
 
-let fmt_kv fmt_v (k, v) formatter =
+let pp_kv pp_v (k, v) formatter =
   formatter
   |> Fmt.fmt "("
-  |> Uns.fmt k
+  |> Uns.pp k
   |> Fmt.fmt ", "
-  |> fmt_v v
+  |> pp_v v
   |> Fmt.fmt ")"
 
 let validate t =

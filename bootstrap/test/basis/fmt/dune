@@ -1,6 +1,6 @@
 (tests
  (names
   test_buffering
-  test_stdout
-  test_xfmt)
+  test_fmt
+  test_stdout)
  (libraries Basis))

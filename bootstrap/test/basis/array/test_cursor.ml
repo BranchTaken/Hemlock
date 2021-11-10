@@ -7,30 +7,30 @@ let rec fn arr hd cursor tl =
   let _ =
     File.Fmt.stdout
     |> Fmt.fmt "index="
-    |> Uns.fmt index
+    |> Uns.pp index
     |> Fmt.fmt ", container "
-    |> Cmp.fmt (cmp Uns.cmp (Cursor.container cursor) arr)
+    |> Cmp.pp (cmp Uns.cmp (Cursor.container cursor) arr)
     |> Fmt.fmt " arr"
   in
   let hd_cursor = Cursor.cmp hd cursor in
   let _ =
     File.Fmt.stdout
     |> Fmt.fmt ", hd "
-    |> Cmp.fmt hd_cursor
+    |> Cmp.pp hd_cursor
     |> Fmt.fmt " cursor"
   in
   let cursor_tl = Cursor.cmp cursor tl in
   let _ =
     File.Fmt.stdout
     |> Fmt.fmt ", cursor "
-    |> Cmp.fmt cursor_tl
+    |> Cmp.pp cursor_tl
     |> Fmt.fmt " tl"
     |> (fun formatter ->
       match hd_cursor with
       | Lt ->
         formatter
         |> Fmt.fmt ", lget="
-        |> Uns.fmt (Cursor.lget cursor)
+        |> Uns.pp (Cursor.lget cursor)
       | Eq ->
         formatter
         |> Fmt.fmt ", lget=_"
@@ -41,7 +41,7 @@ let rec fn arr hd cursor tl =
       | Lt ->
         formatter
         |> Fmt.fmt ", rget="
-        |> Uns.fmt (Cursor.rget cursor)
+        |> Uns.pp (Cursor.rget cursor)
       | Eq ->
         formatter
         |> Fmt.fmt ", rget=_"
@@ -85,7 +85,7 @@ let test () =
     let _ =
       File.Fmt.stdout
       |> Fmt.fmt "--- "
-      |> (fmt Uns.fmt) arr
+      |> (pp Uns.pp) arr
       |> Fmt.fmt " ---\n"
     in
     let hd = Cursor.hd arr in

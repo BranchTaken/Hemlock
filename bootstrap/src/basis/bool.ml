@@ -38,15 +38,15 @@ module T = struct
     | false -> "false"
     | true -> "true"
 
-  let xfmt ?pad ?just ?width t formatter =
+  let fmt ?pad ?just ?width t formatter =
     let pad = match pad with
       | None -> None
       | Some c -> Some (Codepoint.to_string c)
     in
-    Fmt.xfmt ?pad ?just ?width (to_string t) formatter
+    Fmt.fmt ?pad ?just ?width (to_string t) formatter
 
-  let fmt t formatter =
-    xfmt t formatter
+  let pp t formatter =
+    fmt t formatter
 end
 include T
 include Identifiable.Make(T)

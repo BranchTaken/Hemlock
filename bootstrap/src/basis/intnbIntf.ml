@@ -86,9 +86,9 @@ module type SLimitless = sig
       [~sign]-controlled sign representation, [~zpad]-controlled zero padding to [~width] digits,
       and [~alt]-controlled alternate formatting (base prefix and digits grouped via '_'). *)
 
-  val xfmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
+  val fmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
     -> ?base:Fmt.base -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** [xfmt ~pad ~just ~sign ~alt ~zpad ~width ~base t formatter] calls [formatter.fmt ~pad ~just
+  (** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~base t formatter] calls [formatter.fmt ~pad ~just
       ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~base t]. *)
 
   val xpp_b: Format.formatter -> t -> unit

@@ -123,14 +123,14 @@ let xpp xpp_elm xppf (_lf, f, _sf, _lr, r, _sr) =
   fprintf xppf ")";
   fprintf xppf "@]"
 
-let fmt fmt_elm (_lf, f, _sf, _lr, r, _sr) formatter =
+let pp pp_elm (_lf, f, _sf, _lr, r, _sr) formatter =
   let rec fn s formatter = begin
     match s with
     | lazy Stream.Nil -> formatter
-    | lazy (Cons(elm, lazy Stream.Nil)) -> formatter |> fmt_elm elm
+    | lazy (Cons(elm, lazy Stream.Nil)) -> formatter |> pp_elm elm
     | lazy (Cons(elm, s')) ->
       formatter
-      |> fmt_elm elm
+      |> pp_elm elm
       |> Fmt.fmt ", "
       |> fn s'
   end in

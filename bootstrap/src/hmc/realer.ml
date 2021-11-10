@@ -218,16 +218,16 @@ module T = struct
     | N {sign; mag=Inf} -> fprintf xppf "%ainf" xpp_sign sign
     | Nan -> fprintf xppf "nan"
 
-  let fmt t formatter =
+  let pp t formatter =
     assert (is_norm t);
-    let fmt_sign sign formatter = begin
+    let pp_sign sign formatter = begin
       formatter
       |> Fmt.fmt (match sign with
         | Neg -> "-"
         | Pos -> ""
       )
     end in
-    let rec fmt_frac hex_digits frac formatter = begin
+    let rec pp_frac hex_digits frac formatter = begin
       match hex_digits with
       | 0L -> formatter
       | _ -> begin
@@ -238,8 +238,8 @@ module T = struct
           in
           let frac' = Nat.bit_usr ~shift:4L frac in
           formatter
-          |> fmt_frac (pred hex_digits) frac';
-          |> Uns.xfmt ~base:Fmt.Hex int64_digit
+          |> pp_frac (pred hex_digits) frac';
+          |> Uns.fmt ~base:Fmt.Hex int64_digit
         end
     end in
     match t with
@@ -247,7 +247,7 @@ module T = struct
         match Nat.(mantissa = zero) with
         | true ->
           formatter
-          |> fmt_sign sign
+          |> pp_sign sign
           |> Fmt.fmt "0x0p0"
         | false -> begin
             let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
@@ -257,9 +257,9 @@ module T = struct
             match Nat.(frac = zero) with
             | true ->
               formatter
-              |> fmt_sign sign
+              |> pp_sign sign
               |> Fmt.fmt "0x1p"
-              |> Zint.fmt exponent
+              |> Zint.pp exponent
             | false -> begin
                 let rem = shift % 4L in
                 let hex_digits = shift / 4L in
@@ -268,15 +268,15 @@ module T = struct
                   | false -> (succ hex_digits), Nat.bit_sl ~shift:(4L - rem) frac
                 in
                 formatter
-                |> fmt_sign sign
+                |> pp_sign sign
                 |> Fmt.fmt "0x1."
-                |> (fmt_frac hex_digits') frac'
+                |> (pp_frac hex_digits') frac'
                 |> Fmt.fmt "p"
-                |> Zint.fmt exponent
+                |> Zint.pp exponent
               end
           end
       end
-    | N {sign; mag=Inf} -> formatter |> fmt_sign sign |> Fmt.fmt "inf"
+    | N {sign; mag=Inf} -> formatter |> pp_sign sign |> Fmt.fmt "inf"
     | Nan -> formatter |> Fmt.fmt "nan"
 end
 include T

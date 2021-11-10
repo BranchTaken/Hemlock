@@ -54,7 +54,7 @@ let padding n pad =
   let padlen = Stdlib.String.length pad in
   Stdlib.String.init (n * padlen) (fun i -> Stdlib.String.get pad (i mod padlen))
 
-let xfmt ?(pad=pad_default) ?(just=just_default) ?(width=width_default) s
+let fmt ?(pad=pad_default) ?(just=just_default) ?(width=width_default) s
   ((module T): (module Formatter)) : (module Formatter) =
   (module struct
     type t = T.t
@@ -76,9 +76,6 @@ let xfmt ?(pad=pad_default) ?(just=just_default) ?(width=width_default) s
     let fmt = T.fmt
     let sync = T.sync
   end)
-
-let fmt s formatter =
-  xfmt s formatter
 
 let sync ((module T): (module Formatter)) : (module Formatter) synced =
   match T.sync T.state with

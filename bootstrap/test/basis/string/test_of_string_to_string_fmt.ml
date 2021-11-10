@@ -8,7 +8,7 @@ let test () =
   let s3 = to_string s2 in
 
   File.Fmt.stdout
-  |> xfmt "s=" |> xfmt ~alt:true s |> xfmt ", s2=" |> xfmt ~alt:true s2 |> xfmt ", s3="
-  |> xfmt ~pad:(Codepoint.of_char '_') ~just:Basis.Fmt.Center ~width:12L ~alt:true s3 |> xfmt "\n"
+  |> fmt "s=" |> pp s |> fmt ", s2=" |> pp s2 |> fmt ", s3="
+  |> fmt ~pad:(Codepoint.of_char '_') ~just:Basis.Fmt.Center ~width:12L ~alt:true s3 |> fmt "\n"
 
 let _ = test ()

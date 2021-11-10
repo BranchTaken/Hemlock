@@ -71,13 +71,10 @@ val base_default: base
 val notation_default: notation
 (** Default notation ([Compact]). *)
 
-val fmt: string -> (module Formatter) -> (module Formatter)
-(** [fmt s formatter] applies [s] to [formatter]. *)
-
-val xfmt: ?pad:string -> ?just:just -> ?width:int64 -> string -> (module Formatter)
+val fmt: ?pad:string -> ?just:just -> ?width:int64 -> string -> (module Formatter)
   -> (module Formatter)
-(** [xfmt ~pad ~just ~width s formatter] creates a string based on [s] that is [~just]-justified
-    with minimum [~pad]-padded [~width] and applies the result to [formatter]. *)
+(** [fmt ~pad ~just ~width s formatter] creates a string based on [s] that is [~just]-justified with
+    minimum [~pad]-padded [~width] and applies the result to [formatter]. *)
 
 val sync: (module Formatter) -> (module Formatter) synced
 (** [sync formatter] calls [formatter]'s [sync] function and returns the result. A string formatter

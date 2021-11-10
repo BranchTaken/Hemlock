@@ -1,9 +1,9 @@
 (tests
  (names
   test_conversion
+  test_fmt
   test_hash_fold
   test_rel
   test_to_string_escape
-  test_utf8
-  test_xfmt)
+  test_utf8)
  (libraries Basis))

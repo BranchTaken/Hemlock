@@ -22,9 +22,9 @@ val to_string: ?alt:bool -> t -> string
 (** [to_string ~alt t] returns a UTF-8-encoded string representation of [t] that is wrapped by
     ['...'] and special characters escaped if [~alt=true]. *)
 
-val xfmt: ?pad:t -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> t
-  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [xfmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
+val fmt: ?pad:t -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter)
+  -> (module Fmt.Formatter)
+(** [fmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
     of [to_string ~alt s]. *)
 
 val replacement: t
