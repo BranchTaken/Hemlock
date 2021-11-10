@@ -17,17 +17,15 @@ let test () =
     | [] -> ()
     | hd :: tl -> begin
         let () = List.iter arrs ~f:(fun arr2 ->
-          let _ =
-            File.Fmt.stdout
-            |> Fmt.fmt "cmp "
-            |> (pp Uns.pp) arr
-            |> Fmt.fmt " "
-            |> (pp Uns.pp) arr2
-            |> Fmt.fmt " -> "
-            |> Cmp.pp (cmp Uns.cmp arr arr2)
-            |> Fmt.fmt "\n"
-          in
-          ()
+          File.Fmt.stdout
+          |> Fmt.fmt "cmp "
+          |> (pp Uns.pp) arr
+          |> Fmt.fmt " "
+          |> (pp Uns.pp) arr2
+          |> Fmt.fmt " -> "
+          |> Cmp.pp (cmp Uns.cmp arr arr2)
+          |> Fmt.fmt "\n"
+          |> ignore
         ) in
         fn hd tl
       end
