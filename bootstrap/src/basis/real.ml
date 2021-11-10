@@ -18,7 +18,7 @@ module T = struct
         | Zero -> "Zero"
       )
 
-    let fmt t formatter =
+    let pp t formatter =
       formatter |> Fmt.fmt (match t with
         | Down -> "Down"
         | Up -> "Up"
@@ -44,7 +44,7 @@ module T = struct
         | Zero -> "Zero"
       )
 
-    let fmt t formatter =
+    let pp t formatter =
       formatter |> Fmt.fmt (match t with
         | Infinite -> "Infinite"
         | Nan -> "Nan"
@@ -505,7 +505,7 @@ module T = struct
         | Class.Subnormal -> (fun formatter ->
           formatter
           |> fmt_sign Sint.(e < 0L) ~sign true
-          |> Uns.xfmt ~alt  (Uns.bits_of_sint (Sint.abs e))
+          |> Uns.fmt ~alt (Uns.bits_of_sint (Sint.abs e))
         )
         | Class.Infinite
         | Class.Nan -> not_reached ()
@@ -650,7 +650,7 @@ module T = struct
         | Class.Subnormal -> (fun formatter ->
           formatter
           |> fmt_sign Sint.(e < 0L) ~sign true
-          |> Uns.xfmt ~alt (Uns.bits_of_sint (Sint.abs e))
+          |> Uns.fmt ~alt (Uns.bits_of_sint (Sint.abs e))
         )
         | Class.Infinite
         | Class.Nan -> not_reached ()
@@ -876,12 +876,12 @@ module T = struct
     | _, Fmt.Oct
     | _, Fmt.Hex -> to_string_p ~sign ~alt ~zpad ~width ~precision ~notation ~base t
 
-  let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?precision ?notation ?base t formatter =
-    Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?precision ?notation ?base t)
+  let fmt ?pad ?just ?sign ?alt ?zpad ?width ?precision ?notation ?base t formatter =
+    Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?precision ?notation ?base t)
       formatter
 
-  let fmt t formatter =
-    xfmt t formatter
+  let pp t formatter =
+    fmt t formatter
 
   module Parts = struct
     type outer = t
@@ -900,12 +900,12 @@ module T = struct
       Format.fprintf xppf "@[<h>{fractional:@ %h,@ integral:@ %h}@]"
         t.fractional t.integral
 
-    let fmt t formatter =
+    let pp t formatter =
       formatter
       |> Fmt.fmt "{fractional: "
-      |> xfmt ~base:Fmt.Hex t.fractional
+      |> fmt ~base:Fmt.Hex t.fractional
       |> Fmt.fmt ", integral: "
-      |> xfmt ~base:Fmt.Hex t.integral
+      |> fmt ~base:Fmt.Hex t.integral
       |> Fmt.fmt "}"
   end
 

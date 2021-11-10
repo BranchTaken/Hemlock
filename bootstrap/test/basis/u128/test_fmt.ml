@@ -1,6 +1,6 @@
 open! Basis.Rudiments
 open! Basis
-open I16
+open U128
 
 let test () =
   let rec fn = function
@@ -8,14 +8,20 @@ let test () =
     | x :: xs' -> begin
         let _ =
           File.Fmt.stdout
-          |> fmt x
+          |> pp x
           |> Fmt.fmt " "
-          |> xfmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex x
+          |> fmt ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex x
           |> Fmt.fmt "\n"
         in
         fn xs'
       end
   in
-  fn [min_value; neg_one; zero; one; max_value]
+  fn [
+    zero;
+    one;
+    of_string "42";
+    min_value;
+    max_value
+  ]
 
 let _ = test ()

@@ -55,7 +55,7 @@ let u128_xpp_x xppf t =
   fn t_lo 64L;
   Format.fprintf xppf "u128"
 
-let u128_fmt_x t formatter =
+let u128_pp_x t formatter =
   let rec fn x shift formatter = begin
     match shift with
     | 0L -> formatter

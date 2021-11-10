@@ -4,6 +4,9 @@
   test_constants
   test_create
   test_ex
+  test_fmt
+  test_fmt_a
+  test_fmt_p
   test_gamma
   test_hash_fold
   test_hypot
@@ -20,8 +23,5 @@
   test_round
   test_rt
   test_trig
-  test_trigh
-  test_xfmt
-  test_xfmt_a
-  test_xfmt_p)
+  test_trigh)
  (libraries Basis))

@@ -13,7 +13,7 @@ let test () =
     | x :: xs' -> begin
         List.fold ~init:(
           formatter
-          |> xfmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex x
+          |> fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex x
           |> Fmt.fmt "\n"
         ) [Fmt.Bin; Fmt.Oct; Fmt.Dec; Fmt.Hex] ~f:(fun formatter base ->
           List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space]
@@ -25,9 +25,9 @@ let test () =
                       ~f:(fun formatter just ->
                         formatter
                         |> Fmt.fmt "["
-                        |> Fmt.xfmt ~pad:"_" ~width:74L (
+                        |> Fmt.fmt ~pad:"_" ~width:74L (
                           String.Fmt.empty
-                          |> xfmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~base x
+                          |> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~base x
                           |> Fmt.to_string
                         )
                         |> Fmt.fmt "] %'·'"

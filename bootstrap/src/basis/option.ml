@@ -110,9 +110,9 @@ let xpp xpp_a xppf = function
   | Some a -> Format.fprintf xppf "@[<h>Some@ %a@]" xpp_a a
   | None -> Format.fprintf xppf "None"
 
-let fmt fmt_a t formatter =
+let pp pp_a t formatter =
   match t with
-  | Some a -> formatter |> Fmt.fmt "Some " |> fmt_a a
+  | Some a -> formatter |> Fmt.fmt "Some " |> pp_a a
   | None -> formatter |> Fmt.fmt "None"
 
 let is_some = function

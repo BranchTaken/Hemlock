@@ -14,14 +14,14 @@ let test () =
     | x :: xs' ->
       List.fold ~init:(
         formatter
-        |> xfmt ~alt:true ~precision:13L ~notation:Fmt.Normalized ~base:Fmt.Hex x
+        |> fmt ~alt:true ~precision:13L ~notation:Fmt.Normalized ~base:Fmt.Hex x
         |> Fmt.fmt "\n"
       ) [Fmt.Implicit; Fmt.Explicit; Fmt.Space] ~f:(fun formatter sign ->
         formatter
         |> Fmt.fmt "["
-        |> Fmt.xfmt ~pad:"_" ~width:5L (
+        |> Fmt.fmt ~pad:"_" ~width:5L (
           String.Fmt.empty
-          |> xfmt ~sign ~notation:Fmt.Normalized ~base:Fmt.Hex x (* XXX Test all notations/bases. *)
+          |> fmt ~sign ~notation:Fmt.Normalized ~base:Fmt.Hex x (* XXX Test all notations/bases. *)
           |> Fmt.to_string
         )
         |> Fmt.fmt "] %"

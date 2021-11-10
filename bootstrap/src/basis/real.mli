@@ -15,10 +15,10 @@ val to_string: ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns -> ?preci
     [~notation], and [~alt]-controlled alternate formatting (base prefix and digits grouped via
     '_'). *)
 
-val xfmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
+val fmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
   -> ?precision:uns -> ?notation:Fmt.notation -> ?base:Fmt.base -> t -> (module Fmt.Formatter)
   -> (module Fmt.Formatter)
-(** [xfmt ~pad ~just ~sign ~alt ~zpad ~width ~precision ~notation ~base t formatter] calls
+(** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~precision ~notation ~base t formatter] calls
     [formatter.fmt ~pad ~just ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~precision
     ~notation ~base t]. *)
 

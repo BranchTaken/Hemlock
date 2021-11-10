@@ -1124,7 +1124,7 @@ let unzip t =
   let t1 = map ~f:(fun (_, b) -> b) t in
   t0, t1
 
-let xfmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_a t formatter =
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_a t formatter =
   foldi t
     ~init:(formatter |> Fmt.fmt "[|")
     ~f:(fun i formatter elm ->
@@ -1139,7 +1139,7 @@ let xfmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_a t formatter =
         | true -> begin
             formatter
             |> Fmt.fmt "\n"
-            |> Fmt.xfmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 4L) ""
+            |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 4L) ""
           end
       )
       |> fmt_a elm
@@ -1150,13 +1150,13 @@ let xfmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_a t formatter =
     | true -> begin
         formatter
         |> Fmt.fmt "\n"
-        |> Fmt.xfmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 2L) ""
+        |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:Uns.(width + 2L) ""
       end
   )
   |> Fmt.fmt "|]"
 
-let fmt fmt_a t formatter =
-  xfmt fmt_a t formatter
+let pp pp_a t formatter =
+  fmt pp_a t formatter
 
 let xpp xpp_elm xppf t =
   let open Format in

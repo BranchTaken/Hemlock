@@ -23,7 +23,7 @@ module T = struct
   let to_string _ =
     "()"
 
-  let fmt t formatter =
+  let pp t formatter =
     formatter |> Fmt.fmt (to_string t)
 end
 include T

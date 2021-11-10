@@ -11,7 +11,7 @@ let xpp xppf t =
     | Zero -> "Zero"
     | Pos -> "Pos")
 
-let fmt t formatter =
+let pp t formatter =
   formatter |> Fmt.fmt (match t with
     | Neg -> "Neg"
     | Zero -> "Zero"

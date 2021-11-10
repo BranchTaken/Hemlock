@@ -20,11 +20,11 @@ let test () =
           let _ =
             File.Fmt.stdout
             |> Fmt.fmt "cmp "
-            |> (fmt Uns.fmt) arr
+            |> (pp Uns.pp) arr
             |> Fmt.fmt " "
-            |> (fmt Uns.fmt) arr2
+            |> (pp Uns.pp) arr2
             |> Fmt.fmt " -> "
-            |> Cmp.fmt (cmp Uns.cmp arr arr2)
+            |> Cmp.pp (cmp Uns.cmp arr arr2)
             |> Fmt.fmt "\n"
           in
           ()

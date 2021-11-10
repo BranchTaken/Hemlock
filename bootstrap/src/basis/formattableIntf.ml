@@ -8,8 +8,8 @@ module type SMono = sig
   (** [xpp xppf t] prints a representation of [t] to the pretty printing formatter, [xppf]. This
       function is intended for use with the [%a] format specifier to {!Format.printf}.*)
 
-  val fmt: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** [fmt t formatter] applies a formatted representation of [t] to the [formatter]. *)
+  val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [pp t formatter] applies a formatted representation of [t] to the [formatter]. *)
 end
 
 (** Polymorphic Fmt pretty printing conversion functions. *)
@@ -21,10 +21,10 @@ module type SPoly = sig
       [xppf], using the [xpp_a] printer for the parametric type value [a]. This function is intended
       for use with the [%a] format specifier to {!Format.printf}. *)
 
-  val fmt: ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter)) -> 'a t
+  val pp: ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter)) -> 'a t
     -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-    (** [fmt fmt_a t formatter] applies a formatted representation of [t] to the [formatter] using
-        [fmt_a] for the parametric type value [a]. *)
+    (** [pp pp_a t formatter] applies a formatted representation of [t] to the [formatter] using
+        [pp_a] for the parametric type value [a]. *)
 end
 
 (** Polymorphic Fmt pretty printing conversion functions. *)
@@ -38,10 +38,10 @@ module type SPoly2 = sig
       the parametric type value [b]. This function is intended for use with the [%a] format
       specifier to {!Format.printf}. *)
 
-  val fmt: ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
+  val pp: ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
     -> ('b -> (module Fmt.Formatter) -> (module Fmt.Formatter)) -> ('a, 'b) t ->
     (module Fmt.Formatter) -> (module Fmt.Formatter)
-    (** [fmt fmt_a fmt_b t formatter] applies a formatted representation of [t] to the [formatter]
-        using [fmt_a] for the parametric type value [a], and [fmt_b] for the parametric type value
+    (** [pp pp_a pp_b t formatter] applies a formatted representation of [t] to the [formatter]
+        using [pp_a] for the parametric type value [a], and [pp_b] for the parametric type value
         [b]. *)
 end

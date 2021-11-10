@@ -278,11 +278,11 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       | false -> fn [] 0 false t
       | true -> fn [] 0 true (Stdlib.Int64.neg t)
 
-    let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
-      Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
 
-    let fmt t formatter =
-      xfmt t formatter
+    let pp t formatter =
+      fmt ~alt:true t formatter
 
     let zero = 0L
 
@@ -460,11 +460,11 @@ module MakeI (T : I) : SI with type t := sint = struct
     let to_string ?sign ?alt ?zpad ?width ?base t =
       V.to_string ?sign ?alt ?zpad ?width ?base (uns_of_sint t)
 
-    let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
-      V.xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base (uns_of_sint t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
+      V.fmt ?pad ?just ?sign ?alt ?zpad ?width ?base (uns_of_sint t) formatter
 
-    let fmt t formatter =
-      xfmt t formatter
+    let pp t formatter =
+      fmt ~alt:true t formatter
 
     let zero = sint_of_uns V.zero
 

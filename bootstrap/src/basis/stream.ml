@@ -116,14 +116,14 @@ let xpp xpp_elm xppf t =
   fn t;
   fprintf xppf "@]"
 
-let fmt fmt_elm t formatter =
+let pp pp_elm t formatter =
   let rec fn t formatter = begin
     match t with
     | lazy Nil -> formatter |> Fmt.fmt "Nil"
     | lazy (Cons (elm, t')) ->
       formatter
       |> Fmt.fmt "("
-      |> fmt_elm elm
+      |> pp_elm elm
       |> Fmt.fmt " "
       |> fn t'
       |> Fmt.fmt ")"

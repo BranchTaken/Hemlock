@@ -66,7 +66,7 @@ module T = struct
     fn (CodepointSeq.init t);
     Format.fprintf xppf "\""
 
-  let fmt t formatter =
+  let pp t formatter =
     let rec fn seq formatter = begin
       match CodepointSeq.to_codepoint seq with
       | Some (Valid (cp, seq')) -> begin
@@ -119,12 +119,12 @@ module B = struct
           xpp t.string
           Uns.xpp t.index
 
-      let fmt t formatter =
+      let pp t formatter =
         formatter
         |> Fmt.fmt "{string="
-        |> fmt t.string
+        |> pp t.string
         |> Fmt.fmt ", index="
-        |> Uns.fmt t.index
+        |> Uns.pp t.index
         |> Fmt.fmt "}"
     end
     include T
@@ -240,12 +240,12 @@ module B = struct
           Cursor.xpp (base t)
           Cursor.xpp (past t)
 
-      let fmt t formatter =
+      let pp t formatter =
         formatter
         |> Fmt.fmt "{base="
-        |> Cursor.fmt (base t)
+        |> Cursor.pp (base t)
         |> Fmt.fmt ", past="
-        |> Cursor.fmt (past t)
+        |> Cursor.pp (past t)
         |> Fmt.fmt "}"
     end
     include U
@@ -303,12 +303,12 @@ module CPre = struct
           xpp t.string
           Uns.xpp t.bindex
 
-      let fmt t formatter =
+      let pp t formatter =
         formatter
         |> Fmt.fmt "{string="
-        |> fmt t.string
+        |> pp t.string
         |> Fmt.fmt ", bindex="
-        |> Uns.fmt t.bindex
+        |> Uns.pp t.bindex
         |> Fmt.fmt "}"
     end
     include T
@@ -460,12 +460,12 @@ module CPre = struct
           Cursor.xpp (base t)
           Cursor.xpp (past t)
 
-      let fmt t formatter =
+      let pp t formatter =
         formatter
         |> Fmt.fmt "{base="
-        |> Cursor.fmt (base t)
+        |> Cursor.pp (base t)
         |> Fmt.fmt ", past="
-        |> Cursor.fmt (past t)
+        |> Cursor.pp (past t)
         |> Fmt.fmt "}"
     end
     include U
@@ -1872,12 +1872,12 @@ let to_string ?(alt=Fmt.alt_default) s =
   | false -> s
   | true -> "\"" ^ escaped s ^ "\""
 
-let xfmt ?pad ?just ?alt ?width s formatter =
+let fmt ?pad ?just ?alt ?width s formatter =
   let pad = match pad with
     | None -> None
     | Some c -> Some (Codepoint.to_string c)
   in
-  Fmt.xfmt ?pad ?just ?width (to_string ?alt s) formatter
+  Fmt.fmt ?pad ?just ?width (to_string ?alt s) formatter
 
 module Fmt = struct
   let empty : (module Fmt.Formatter) =

@@ -380,9 +380,9 @@ val to_string: ?alt:bool -> string -> string
 (** [to_string ~alt s] creates a string based on [s] that is wrapped by ["..."] and special
     characters escaped if [~alt=true]. *)
 
-val xfmt: ?pad:codepoint -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> string
+val fmt: ?pad:codepoint -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> string
   -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [xfmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
+(** [fmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
     of [to_string ~alt s]. *)
 
 (** Formatter. *)

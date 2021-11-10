@@ -5,9 +5,9 @@ include ContainerIntf.SPolyIter with type 'a t := 'a t
 
 include FormattableIntf.SPoly with type 'a t := 'a t
 
-val xfmt: ?alt:bool -> ?width:uns -> ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
+val fmt: ?alt:bool -> ?width:uns -> ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
   -> 'a t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [xfmt ~alt ~width fmt_a t] formats uses the element formatter [fmt_a] to format a syntactically
+(** [fmt ~alt ~width fmt_a t] formats uses the element formatter [fmt_a] to format a syntactically
     valid array representation of [t]. If [~alt=true], the output is broken across multiple lines
     with outermost indentation [~width] (elements are indented to [~width + 4]). *)
 
