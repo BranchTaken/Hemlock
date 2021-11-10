@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open Text
-open Format
 
 let stream_of_bytes_list bl =
   Stream.init_indef bl ~f:(fun bl ->
@@ -15,9 +14,8 @@ let stream_of_string_list sl =
     Bytes.Slice.of_string_slice (String.C.Slice.of_string s)))
 
 let test () =
-  printf "@[<h>";
   let fn sl = begin
-    printf "%a\n" (List.xpp String.xpp) sl;
+    File.Fmt.stdout |> (List.pp String.pp) sl |> Fmt.fmt "\n" |> ignore;
     let text = of_bytes_stream (stream_of_string_list sl) in
 
     let rec fwd_iter ~line ~col cursor = begin
@@ -47,7 +45,8 @@ let test () =
     end in
     let tl = fwd_iter ~line:1L ~col:0L (Cursor.hd text) in
     let pos = Cursor.pos tl in
-    printf "  pos tl = %Lu:%Lu\n" (Pos.line pos) (Pos.col pos);
+    File.Fmt.stdout |> Fmt.fmt "  pos tl = " |> Uns.pp (Pos.line pos) |> Fmt.fmt ":"
+    |> Uns.fmt (Pos.col pos) |> Fmt.fmt "\n" |> ignore;
 
     let rec rev_iter ~line ~col cursor = begin
       match Cursor.index cursor > 0L with
@@ -74,9 +73,9 @@ let test () =
         end
     end in
     let hd' = rev_iter ~line:(Pos.line pos) ~col:(Pos.col pos) tl in
-    printf "  pos hd = %Lu:%Lu\n"
-      (Pos.line (Cursor.pos hd'))
-      (Pos.col (Cursor.pos hd'));
+    File.Fmt.stdout
+    |> Fmt.fmt "  pos hd = " |> Uns.fmt (Pos.line (Cursor.pos hd')) |> Fmt.fmt ":"
+    |> Uns.fmt (Pos.col (Cursor.pos hd')) |> Fmt.fmt "\n" |> ignore;
     assert Cursor.(hd text = hd');
   end in
   fn [""];
@@ -92,7 +91,6 @@ let test () =
   fn ["A"; "\t"; "\t"; "B"];
   fn ["A"; "\n"; "\t"; "B"];
   fn ["A"; "\t"; "\n"; "B"];
-  fn ["A"; "\t"; "B"; "\t"; "C"];
-  printf "@]"
+  fn ["A"; "\t"; "B"; "\t"; "C"]
 
 let _ = test ()

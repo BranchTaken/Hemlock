@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open Text
-open Format
 
 let stream_of_bytes_list bl =
   Stream.init_indef bl ~f:(fun bl ->
@@ -17,47 +16,54 @@ let stream_of_byte_list bl =
   ))
 
 let test () =
-  printf "@[<h>";
   let fn bl = begin
-    printf "%a\n" (List.xpp Byte.xpp_x) bl;
+    File.Fmt.stdout
+    |> (List.pp (Byte.fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true)) bl
+    |> Fmt.fmt "\n" |> ignore;
     let text = of_bytes_stream (stream_of_byte_list bl) in
 
     let rec fwd_iter cursor = begin
       match Cursor.next_opt cursor with
       | None -> cursor
       | Some (cp, cursor') -> begin
-          let () = match Cursor.rvalid cursor with
-            | true -> printf "%s" (Codepoint.to_string cp)
-            | false -> printf "%s" "«�»"
-          in
+          File.Fmt.stdout
+          |> Fmt.fmt (match Cursor.rvalid cursor with
+            | true ->  Codepoint.to_string cp
+            | false -> "«�»"
+          )
+          |> ignore;
           fwd_iter cursor'
         end
     end in
     let hd = Cursor.hd text in
-    printf "  fwd   -> index=%Lu \"" (Cursor.index hd);
+    File.Fmt.stdout |> Fmt.fmt "  fwd   -> index=" |> Uns.pp (Cursor.index hd) |> Fmt.fmt " \""
+    |> ignore;
     let tl = fwd_iter hd in
-    printf "\"\n";
+    File.Fmt.stdout |> Fmt.fmt "\"\n" |> ignore;
 
     let rec rev_iter cursor = begin
       match Cursor.index cursor > 0L with
       | false -> cursor
       | true -> begin
           let cp, cursor' = Cursor.prev cursor in
-          let () = match Cursor.lvalid cursor with
-            | true -> printf "%s" (Codepoint.to_string cp)
-            | false -> printf "%s" "«�»"
-          in
+          File.Fmt.stdout
+          |> Fmt.fmt (match Cursor.lvalid cursor with
+            | true -> Codepoint.to_string cp
+            | false -> "«�»"
+          )
+          |> ignore;
           rev_iter cursor'
         end
     end in
-    printf "  rev   -> index=%Lu \"" (Cursor.index tl);
+    File.Fmt.stdout |> Fmt.fmt "  rev   -> index=" |> Uns.pp (Cursor.index tl) |> Fmt.fmt " \""
+    |> ignore;
     let hd' = rev_iter tl in
-    printf "\"\n";
+    File.Fmt.stdout |> Fmt.fmt "\"\n" |> ignore;
     assert Cursor.(hd text = hd');
 
     let slice = Slice.init text in
     let s' = Slice.to_string slice in
-    printf "  slice -> %a\n" String.xpp s'
+    File.Fmt.stdout |> Fmt.fmt "  slice -> " |> String.pp s' |> Fmt.fmt "\n" |> ignore
   end in
   begin
     let open Byte in
@@ -112,7 +118,6 @@ let test () =
     (* "‡b" *)
     fn [kv 0xe2L; kv 0x80L; kv 0xa1L; kv 0x62L];
     fn [kv 0xf0L; kv 0x82L; kv 0x80L; kv 0xa1L; kv 0x62L];
-  end;
-  printf "@]"
+  end
 
 let _ = test ()
