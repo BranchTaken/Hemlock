@@ -66,7 +66,7 @@ module T = struct
             fn (digit :: (sep @ accum)) Stdlib.(succ ndigits) is_neg t'
           end
       end in
-      match Stdlib.((Int64.compare t 0L) <= 0) with
+      match Stdlib.((Int64.compare t 0L) < 0) with
       | false -> fn [] 0 false t
       | true -> fn [] 0 true (Int64.neg t)
 
