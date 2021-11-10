@@ -4,29 +4,25 @@ open Array
 
 let test () =
   let test_fold2 uarr0 uarr1 = begin
-    let _ =
-      File.Fmt.stdout
-      |> (fmt Uns.fmt) uarr0
-      |> Fmt.fmt " "
-      |> (fmt Uns.fmt) uarr1
-    in
+    File.Fmt.stdout
+    |> (fmt Uns.fmt) uarr0
+    |> Fmt.fmt " "
+    |> (fmt Uns.fmt) uarr1
+    |> ignore;
     let accum = fold2 uarr0 uarr1 ~init:0L ~f:(fun accum elm0 elm1 ->
       accum + elm0 + elm1
     ) in
-    let _ =
-      File.Fmt.stdout
-      |> Fmt.fmt " -> fold2 "
-      |> Uns.fmt accum
-    in
+    File.Fmt.stdout
+    |> Fmt.fmt " -> fold2 "
+    |> Uns.fmt accum
+    |> ignore;
     let accum = foldi2 uarr0 uarr1 ~init:0L
         ~f:(fun i accum elm0 elm1 -> accum + i + elm0 + elm1 ) in
-    let _ =
-      File.Fmt.stdout
-      |> Fmt.fmt " -> foldi2 "
-      |> Uns.fmt accum
-      |> Fmt.fmt "\n"
-    in
-    ()
+    File.Fmt.stdout
+    |> Fmt.fmt " -> foldi2 "
+    |> Uns.fmt accum
+    |> Fmt.fmt "\n"
+    |> ignore;
   end in
   test_fold2 [||] [||];
   test_fold2 [|1L|] [|0L|];

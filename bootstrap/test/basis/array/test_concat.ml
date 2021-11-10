@@ -4,17 +4,15 @@ open Array
 
 let test () =
   let test arr0 arr1 = begin
-    let _ =
-      File.Fmt.stdout
-      |> Fmt.fmt "concat "
-      |> (fmt Uns.fmt) arr0
-      |> Fmt.fmt " "
-      |> (fmt Uns.fmt) arr1
-      |> Fmt.fmt " -> "
-      |> (fmt Uns.fmt) (concat arr0 arr1)
-      |> Fmt.fmt "\n"
-    in
-    ()
+    File.Fmt.stdout
+    |> Fmt.fmt "concat "
+    |> (fmt Uns.fmt) arr0
+    |> Fmt.fmt " "
+    |> (fmt Uns.fmt) arr1
+    |> Fmt.fmt " -> "
+    |> (fmt Uns.fmt) (concat arr0 arr1)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   test [||] [||];
   test [|0L|] [||];
