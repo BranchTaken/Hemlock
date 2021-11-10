@@ -10,7 +10,7 @@ let xpp xppf t =
     | Gt -> "Gt"
   )
 
-let fmt t formatter =
+let pp t formatter =
   formatter |> Fmt.fmt (match t with
     | Lt -> "Lt"
     | Eq -> "Eq"

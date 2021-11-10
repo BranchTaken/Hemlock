@@ -236,15 +236,15 @@ let to_string ?(alt=Fmt.alt_default) t =
   | false -> Utf8.(to_string (of_codepoint t))
   | true -> escape t
 
-let xfmt ?pad ?just ?alt ?width t formatter =
+let fmt ?pad ?just ?alt ?width t formatter =
   let pad = match pad with
     | None -> None
     | Some c -> Some (to_string c)
   in
-  Fmt.xfmt ?pad ?just ?width (to_string ?alt t) formatter
+  Fmt.fmt ?pad ?just ?width (to_string ?alt t) formatter
 
-let fmt t formatter =
-  xfmt t formatter
+let pp t formatter =
+  fmt ~alt:true t formatter
 
 let xpp xppf t =
   Format.fprintf xppf "%s" (escape t)

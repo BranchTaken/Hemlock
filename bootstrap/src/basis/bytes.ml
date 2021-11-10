@@ -212,15 +212,15 @@ module Slice = struct
     end;
     fprintf xppf "|]@]"
 
-  (* XXX Use Array.Slice.xfmt. *)
-  let fmt t formatter =
+  (* XXX Use Array.Slice.fmt. *)
+  let pp t formatter =
     let rec fn cursor past formatter = begin
       match Cursor.(cursor < past) with
       | true -> begin
           let elm, cursor' = Cursor.next cursor in
           formatter
           |> Fmt.fmt "; "
-          |> Byte.xfmt ~base:Fmt.Hex elm
+          |> Byte.fmt ~base:Fmt.Hex elm
           |> fn cursor' past
         end
       | false -> formatter
@@ -233,7 +233,7 @@ module Slice = struct
       | true -> begin
           let elm, cursor' = Cursor.next cursor in
           formatter
-          |> Byte.xfmt ~base:Fmt.Hex elm
+          |> Byte.fmt ~base:Fmt.Hex elm
           |> fn cursor' past
         end
       | false -> formatter
@@ -280,8 +280,8 @@ end
 let xpp xppf t =
   Slice.(xpp xppf (init t))
 
-let fmt t formatter =
-  formatter |> Slice.(fmt (init t))
+let pp t formatter =
+  formatter |> Slice.(pp (init t))
 
 let hash_fold t state =
   Slice.(hash_fold (init t) state)

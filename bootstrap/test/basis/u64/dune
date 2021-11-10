@@ -4,11 +4,11 @@
   test_bit_not
   test_bit_pop_bit_clz_bit_ctz
   test_exp
+  test_fmt
   test_hash_fold
   test_limits
   test_narrowing
   test_of_real_to_real
   test_pp
-  test_rel
-  test_xfmt)
+  test_rel)
  (libraries Basis))

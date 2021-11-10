@@ -62,11 +62,11 @@ module T = struct
       end in
       fn [] 0 t
 
-    let xfmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
-      Fmt.xfmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
 
-    let fmt t formatter =
-      xfmt t formatter
+    let pp t formatter =
+      fmt t formatter
   end
   include U
   include Cmpable.MakeZero(U)

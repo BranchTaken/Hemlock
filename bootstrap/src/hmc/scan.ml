@@ -171,7 +171,7 @@ module Source = struct
       Text.Pos.xpp (Cursor.(pos (hd t)))
       Text.Pos.xpp (Cursor.(pos (tl t)))
 
-  let fmt_loc t formatter =
+  let pp_loc t formatter =
     formatter
     |> (fun formatter -> (match t.path with
       | None -> formatter
@@ -180,16 +180,16 @@ module Source = struct
         |> Fmt.fmt path
         |> Fmt.fmt ":"
     ))
-    |> Text.Pos.fmt (Cursor.(pos (hd t)))
+    |> Text.Pos.pp (Cursor.(pos (hd t)))
     |> Fmt.fmt ".."
-    |> Text.Pos.fmt (Cursor.(pos (tl t)))
+    |> Text.Pos.pp (Cursor.(pos (tl t)))
     |> Fmt.fmt ")"
 
   let xpp xppf t =
     Format.fprintf xppf "%s" (Text.Slice.(to_string (init ~base:t.base ~past:t.past
         (Text.Cursor.container t.base))))
 
-  let fmt t formatter =
+  let pp t formatter =
     formatter |> Fmt.fmt (Text.Slice.(to_string (init ~base:t.base ~past:t.past
         (Text.Cursor.container t.base))))
 end
@@ -215,10 +215,10 @@ module AbstractToken = struct
       let xpp xppf t =
         Format.fprintf xppf "\"%a: %s\"" Source.xpp_loc t.source t.description
 
-      let fmt t formatter =
+      let pp t formatter =
         formatter
         |> Fmt.fmt "\""
-        |> Source.fmt_loc t.source
+        |> Source.pp_loc t.source
         |> Fmt.fmt ": "
         |> Fmt.fmt t.description
         |> Fmt.fmt "\""
@@ -233,16 +233,16 @@ module AbstractToken = struct
       | Malformed malformations -> Format.fprintf xppf "Malformed %a" (List.xpp Malformation.xpp)
         malformations
 
-    let fmt fmt_a t formatter =
+    let pp pp_a t formatter =
       match t with
       | Constant a ->
         formatter
         |> Fmt.fmt "Constant "
-        |> fmt_a a
+        |> pp_a a
       | Malformed malformations ->
         formatter
         |> Fmt.fmt "Malformed "
-        |> (List.fmt Malformation.fmt) malformations
+        |> (List.pp Malformation.pp) malformations
   end
   type t =
     (* Keywords. *)

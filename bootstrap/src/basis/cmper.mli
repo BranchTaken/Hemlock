@@ -10,7 +10,7 @@ type ('a, 'witness) t = private {
   xpp: Format.formatter -> 'a -> unit;
   (** Pretty printer function. *)
 
-  fmt: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter);
+  pp: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter);
   (** Formatter function. *)
 }
 (** Comparator type, with phantom type that acts as a witness which helps assure that
@@ -66,9 +66,9 @@ module type IPoly = sig
   (** {!MakePoly} synthesizes a monomorphic [xpp] from the composition of [xpp] and [xpp_a]. [xpp_a] is
       the pretty printer for {!type:'a}. *)
 
-  val fmt_a: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** {!MakePoly} synthesizes a monomorphic [fmt] from the composition of [fmt] and [fmt_a]. [fmt_a]
-      is the formatter for {!type:'a}. *)
+  val pp_a: 'a -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** {!MakePoly} synthesizes a monomorphic [pp] from the composition of [pp] and [pp_a]. [pp_a] is
+      the formatter for {!type:'a}. *)
 end
 
 (** Functor output signature for polymorphic comparator types, e.g. {!type:'a list}. *)

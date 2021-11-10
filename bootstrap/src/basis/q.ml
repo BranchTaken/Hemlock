@@ -51,14 +51,14 @@ let xpp xpp_elm xppf (l, f, r, s) =
     Uns.xpp l (Stream.xpp xpp_elm) f (List.xpp xpp_elm) r (Stream.xpp xpp_elm) s;
   fprintf xppf "@]"
 
-let fmt fmt_elm (l, f, r, s) formatter =
+let pp pp_elm (l, f, r, s) formatter =
   formatter
   |> Fmt.fmt "(len="
-  |> Uns.fmt l
+  |> Uns.pp l
   |> Fmt.fmt ", f="
-  |> (Stream.fmt fmt_elm) f
+  |> (Stream.pp pp_elm) f
   |> Fmt.fmt ", r="
-  |> (List.fmt fmt_elm) r
+  |> (List.pp pp_elm) r
   |> Fmt.fmt ", s="
-  |> (Stream.fmt fmt_elm) s
+  |> (Stream.pp pp_elm) s
   |> Fmt.fmt ")"

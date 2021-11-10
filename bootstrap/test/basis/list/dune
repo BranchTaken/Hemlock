@@ -5,6 +5,7 @@
   test_cmp_length
   test_cmp_length_with
   test_concat_rev_concat
+  test_fmt
   test_foldi2
   test_foldi2_until
   test_hash_fold
@@ -32,6 +33,5 @@
   test_rev_partition_tf
   test_rev_split_take_drop
   test_rev_split_take_drop_until
-  test_xfmt
   test_zip_unzip)
  (libraries Basis))
