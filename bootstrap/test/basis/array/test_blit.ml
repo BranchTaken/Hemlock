@@ -25,12 +25,10 @@ let test () =
       |> Fmt.fmt " -> "
     in
     blit r0 arr0 r1 arr1;
-    let _ =
-      File.Fmt.stdout
-      |> (fmt Uns.fmt) arr1
-      |> Fmt.fmt "\n"
-    in
-    ()
+    File.Fmt.stdout
+    |> (fmt Uns.fmt) arr1
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   test_blit (0L =:< 0L) [||] (0L =:< 0L) [||];
   test_blit (0L =:< 1L) [|0L|] (0L =:< 1L) [|1L|];
