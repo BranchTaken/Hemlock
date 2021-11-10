@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open Hash
-open Format
 
 let u128_of_tup = RudimentsInt0.u128_of_tup
 
@@ -13,27 +12,17 @@ let test () =
     )
     |> State.Gen.fini
   end in
-  let xpp_arr xpp_elm xppf arr = begin
-    let rec fn arr i len = begin
-      match i = len with
-      | true -> ()
-      | false -> begin
-          if i > 0L then fprintf xppf ";@ ";
-          fprintf xppf "%a" xpp_elm Stdlib.(Array.get arr Int64.(to_int i));
-          fn arr (succ i) len
-        end
-    end in
-    fprintf xppf "@[<h>[|";
-    fn arr 0L Stdlib.(Int64.of_int (Array.length arr));
-    fprintf xppf "|]@]"
-  end in
-  printf "@[<h>";
   let rec test_hash_fold u128s_list = begin
     match u128s_list with
     | [] -> ()
     | u128s :: u128s_list' -> begin
-        printf "hash_fold %a -> %a\n"
-          (xpp_arr xpp) u128s xpp (t_of_state State.(hash_fold u128s empty));
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold "
+        |> (Array.pp pp) u128s
+        |> Fmt.fmt " -> "
+        |> pp (t_of_state State.(hash_fold u128s empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_hash_fold u128s_list'
       end
   end in
@@ -51,7 +40,6 @@ let test () =
       U128.zero;
       u128_of_tup (0xfedcba9876543210L, 0x0123456789abcdefL)|]
   ] in
-  test_hash_fold u128s_list;
-  printf "@]"
+  test_hash_fold u128s_list
 
 let _ = test ()
