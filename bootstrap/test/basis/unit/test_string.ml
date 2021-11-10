@@ -1,11 +1,12 @@
 open! Basis.Rudiments
 open! Basis
 open Unit
-open Format
 
 let test () =
-  printf "to_string () -> %s\n" (to_string ());
-  printf "of_string unit -> %s\n" (to_string (of_string "unit"));
-  printf "of_string () -> %s\n" (to_string (of_string "()"))
+  File.Fmt.stdout
+  |> Fmt.fmt "to_string () -> " |> Fmt.fmt (to_string ()) |> Fmt.fmt "\n"
+  |> Fmt.fmt "of_string unit -> " |> Fmt.fmt (to_string (of_string "unit")) |> Fmt.fmt "\n"
+  |> Fmt.fmt "of_string () -> " |> Fmt.fmt (to_string (of_string "()")) |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()
