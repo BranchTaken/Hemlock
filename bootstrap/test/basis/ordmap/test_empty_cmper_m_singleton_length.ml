@@ -2,19 +2,16 @@ open! Basis.Rudiments
 open! Basis
 open! OrdmapTest
 open Ordmap
-open Format
 
 let test () =
-  printf "@[";
   let e = empty (module Uns) in
   validate e;
   assert (length e = 0L);
-  printf "%a@\n" (xpp Unit.xpp) e;
+  File.Fmt.stdout |> (fmt Unit.pp) e |> Fmt.fmt "\n" |> ignore;
 
   let s = singleton (cmper_m e) ~k:0L ~v:"zero" in
   validate s;
   assert (length s = 1L);
-  printf "%a@\n" (xpp String.xpp) s;
-  printf "@]"
+  File.Fmt.stdout |> (fmt String.pp) s |> Fmt.fmt "\n" |> ignore
 
 let _ = test ()

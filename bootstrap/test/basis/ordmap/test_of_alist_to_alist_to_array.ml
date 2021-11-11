@@ -2,16 +2,19 @@ open! Basis.Rudiments
 open! Basis
 open! OrdmapTest
 open Ordmap
-open Format
 
 let test () =
-  printf "@[<h>";
   let test kvs = begin
     let ordmap = of_alist (module Uns) kvs in
-    printf "of_alist %a; to_alist -> %a; to_array -> %a\n"
-      (List.xpp (xpp_kv String.xpp)) kvs
-      (List.xpp (xpp_kv String.xpp)) (to_alist ordmap)
-      (Array.xpp (xpp_kv String.xpp)) (to_array ordmap)
+    File.Fmt.stdout
+    |> Fmt.fmt "of_alist "
+    |> (List.pp (pp_kv_pair String.pp)) kvs
+    |> Fmt.fmt "; to_alist -> "
+    |> (List.pp (pp_kv_pair String.pp)) (to_alist ordmap)
+    |> Fmt.fmt "; to_array -> "
+    |> (Array.pp (pp_kv_pair String.pp)) (to_array ordmap)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_alists = [
     [];
@@ -23,7 +26,6 @@ let test () =
   ] in
   List.iter test_alists ~f:(fun kvs ->
     test kvs
-  );
-  printf "@]"
+  )
 
 let _ = test ()

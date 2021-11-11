@@ -190,13 +190,6 @@ module T = struct
           | Empty -> not_reached ()
         end
 
-    let xpp xppf t =
-      let open Format in
-      let xpp_elm xppf elm = begin
-        fprintf xppf "%a" Uns.xpp elm.index
-      end in
-      fprintf xppf "@[<h>%a@]" (List.xpp xpp_elm) t
-
     let pp t formatter =
       let pp_elm elm formatter = begin
         formatter |> Uns.pp elm.index
@@ -305,12 +298,6 @@ module T = struct
       let index t =
         t.index
 
-      let xpp xppf t =
-        Format.fprintf xppf "@[<h>{index=%a;@ lpath_opt=%a;@ rpath_opt=%a}@]"
-          Uns.xpp t.index
-          (Option.xpp Path.xpp) t.lpath_opt
-          (Option.xpp Path.xpp) t.rpath_opt
-
       let pp t formatter =
         formatter
         |> Fmt.fmt "{index="
@@ -324,8 +311,6 @@ module T = struct
     include T
     include Cmpable.MakePoly3(T)
   end
-
-  let cursor_xpp = Cursor.xpp
 
   let cursor_pp = Cursor.pp
 end
@@ -1373,68 +1358,48 @@ let reduce_hlt ~f t =
 (**************************************************************************************************)
 (* Begin test support. *)
 
-let xpp xpp_v xppf t =
-  let open Format in
-  let rec xpp_node xppf = function
-    | Empty -> fprintf xppf "Empty"
-    | Leaf {k; v} -> fprintf xppf "@[<h>Leaf {k=%a;@ v=%a}@]" t.cmper.xpp k xpp_v v
-    | Node {l; k; v; n; h; r} -> fprintf xppf
-        ("@;<0 2>@[<v>Node {@;<0 2>@[<v>l=%a;@,k=%a;@,v=%a;@,n=%a;@,h=%a;@," ^^
-            "r=%a@]@,}@]")
-        xpp_node l
-        t.cmper.xpp k
-        xpp_v v
-        Uns.xpp n
-        Uns.xpp h
-        xpp_node r
-  in
-  fprintf xppf "@[<v>Ordmap {@;<0 2>@[<v>root=%a@]@,}@]"
-    xpp_node t.root
-
-let pp pp_v t formatter =
-  let rec pp_node node formatter = begin
-    match node with
-    | Empty ->
-      formatter
-      |> Fmt.fmt "Empty"
-    | Leaf {k; v} ->
-      formatter
-      |> Fmt.fmt "Leaf {k="
-      |> t.cmper.pp k
-      |> Fmt.fmt " v="
-      |> pp_v v
-      |> Fmt.fmt "}"
-    | Node {l; k; v; n; h; r} ->
-      formatter
-      |> Fmt.fmt "Node {l="
-      |> pp_node l
-      |> Fmt.fmt ",k="
-      |> t.cmper.pp k
-      |> Fmt.fmt ",v="
-      |> pp_v v
-      |> Fmt.fmt ",n="
-      |> Uns.pp n
-      |> Fmt.fmt ",h="
-      |> Uns.pp h
-      |> Fmt.fmt ",r="
-      |> pp_node r
-      |> Fmt.fmt "}"
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_v t formatter =
+  let fmt_sep ~alt ~width ?(edge=false) formatter = begin
+    formatter
+    |> Fmt.fmt (match alt, edge with true, _ -> "\n" | false, false -> "; " | false, true -> "")
+    |> Fmt.fmt ~width:(match alt with true -> width | false -> 0L) ""
   end in
+  let indent = 4L in
+  let rec fmt_node ~alt ~width node formatter = begin
+    let width' = width + indent in
+    formatter
+    |> (fun formatter ->
+      match node with
+      | Empty ->
+        formatter
+        |> Fmt.fmt "Empty"
+      | Leaf {k; v} ->
+        formatter
+        |> Fmt.fmt "Leaf {k=" |> t.cmper.pp k
+        |> Fmt.fmt "; v=" |> fmt_v v
+        |> Fmt.fmt "}"
+      | Node {l; k; v; n; h; r} ->
+        let width'' = width' + indent in
+        formatter
+        |> Fmt.fmt "Node {"
+        |> fmt_sep ~alt ~width:width'' ~edge:true
+        |> Fmt.fmt "l=" |> fmt_node ~alt ~width:width'' l |> fmt_sep ~alt ~width:width''
+        |> Fmt.fmt "k=" |> t.cmper.pp k |> fmt_sep ~alt ~width:width''
+        |> Fmt.fmt "v=" |> fmt_v v |> fmt_sep ~alt ~width:width''
+        |> Fmt.fmt "n=" |> Uns.pp n |> fmt_sep ~alt ~width:width''
+        |> Fmt.fmt "h=" |> Uns.pp h |> fmt_sep ~alt ~width:width''
+        |> Fmt.fmt "r=" |> fmt_node ~alt ~width:width'' r
+        |> fmt_sep ~alt ~width:(width' + (indent / 2L)) ~edge:true
+        |> Fmt.fmt "}"
+    )
+  end in
+  let width' = width + indent in
   formatter
-  |> Fmt.fmt "{root="
-  |> pp_node t.root
+  |> Fmt.fmt "Ordmap {"
+  |> fmt_sep ~alt ~width:width' ~edge:true
+  |> Fmt.fmt "root=" |> fmt_node ~alt ~width t.root
+  |> fmt_sep ~alt ~width:(width + (indent / 2L)) ~edge:true
   |> Fmt.fmt "}"
-
-let xpp_kv xpp_v xppf (k, v) =
-  Format.fprintf xppf "(%a, %a)" Uns.xpp k xpp_v v
-
-let pp_kv pp_v (k, v) formatter =
-  formatter
-  |> Fmt.fmt "("
-  |> Uns.pp k
-  |> Fmt.fmt ", "
-  |> pp_v v
-  |> Fmt.fmt ")"
 
 let validate t =
   let rec fn = function
