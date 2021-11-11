@@ -2,10 +2,8 @@ open! Basis.Rudiments
 open! Basis
 open OrdsetTest
 open Ordset
-open Format
 
 let test () =
-  printf "@[";
   let test_equal ms0 ms1 = begin
     let ordset0 = of_list (module Uns) ms0 in
     let ordset1 = of_list (module Uns) ms1 in
@@ -18,7 +16,13 @@ let test () =
       | Some _, Some _ -> ()
       | None, Some _
       | Some _, None -> begin
-          printf "Should be equal:@,%a@,%a@\n" xpp ordset0 xpp ordset1;
+          File.Fmt.stdout
+          |> Fmt.fmt "Should be equal: "
+          |> fmt ordset0
+          |> Fmt.fmt " "
+          |> fmt ordset1
+          |> Fmt.fmt "\n"
+          |> ignore;
           assert false;
         end
       | None, None -> not_reached ()
@@ -34,7 +38,13 @@ let test () =
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> begin
-          printf "Should be disjoint:@,%a@,%a@\n" xpp ordset0 xpp ordset1;
+          File.Fmt.stdout
+          |> Fmt.fmt "Should be disjoint: "
+          |> fmt ordset0
+          |> Fmt.fmt " "
+          |> fmt ordset1
+          |> Fmt.fmt "\n"
+          |> ignore;
           assert false;
         end
       | None, Some _
@@ -69,7 +79,6 @@ let test () =
     test_disjoint ms0 (List.rev ms1);
     test_disjoint (List.rev ms0) ms1;
     test_disjoint (List.rev ms0) (List.rev ms1);
-  );
-  printf "@]"
+  )
 
 let _ = test ()

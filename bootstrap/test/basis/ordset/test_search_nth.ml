@@ -2,44 +2,55 @@ open! Basis.Rudiments
 open! Basis
 open OrdsetTest
 open Ordset
-open Format
 
 let test () =
   let test_search ordset key_max = begin
-    printf "%a@\n" xpp ordset;
+    File.Fmt.stdout
+    |> fmt ordset
+    |> Fmt.fmt "\n"
+    |> ignore;
     RangeF.Uns.(iter (0L =:= key_max)) ~f:(fun probe ->
-      printf "  %a -> %s, %s, %s@\n" Uns.xpp probe
-        (match psearch probe ordset with
-          | None -> "<"
-          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Uns.xpp i Uns.xpp (nth i ordset)
-          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Uns.xpp i Uns.xpp (nth i ordset)
-          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Uns.xpp i Uns.xpp (nth i ordset)
-        )
+      File.Fmt.stdout
+      |> Fmt.fmt "  "
+      |> Uns.pp probe
+      |> Fmt.fmt " -> "
+      |> (fun formatter ->
+        match psearch probe ordset with
+        | None -> formatter |> Fmt.fmt "<"
+        | Some (Lt, i) ->
+          formatter |> Fmt.fmt "<[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (nth i ordset)
+        | Some (Eq, i) ->
+          formatter |> Fmt.fmt "=[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (nth i ordset)
+        | Some (Gt, i) ->
+          formatter |> Fmt.fmt ">[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (nth i ordset)
+      )
+      |> Fmt.fmt ", "
+      |> (fun formatter ->
         (match search probe ordset with
-          | None -> "<>"
-          | Some i -> asprintf "=%a" Uns.xpp (nth i ordset)
+          | None -> formatter |> Fmt.fmt "<>"
+          | Some i -> formatter |> Fmt.fmt "=" |> Uns.pp (nth i ordset)
         )
-        (match nsearch probe ordset with
-          | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-              Uns.xpp i Uns.xpp (nth i ordset)
-          | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-              Uns.xpp i Uns.xpp (nth i ordset)
-          | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-              Uns.xpp i Uns.xpp (nth i ordset)
-          | None -> ">"
-        );
+      )
+      |> Fmt.fmt ", "
+      |> (fun formatter ->
+        match nsearch probe ordset with
+        | Some (Lt, i) ->
+          formatter |> Fmt.fmt "<[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (nth i ordset)
+        | Some (Eq, i) ->
+          formatter |> Fmt.fmt "=[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (nth i ordset)
+        | Some (Gt, i) ->
+          formatter |> Fmt.fmt ">[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (nth i ordset)
+        | None -> formatter |> Fmt.fmt ">"
+      )
+      |> Fmt.fmt "\n"
+      |> ignore
     )
   end in
-  printf "@[";
   Range.iter (0L =:< 4L) ~f:(fun len ->
     let ordset = of_array (module Uns)
       (Array.init (0L =:< len) ~f:(fun i -> i * 2L + 1L)) in
     let key_max = len * 2L in
     test_search ordset key_max
-  );
-  printf "@]"
+  )
 
 let _ = test ()
