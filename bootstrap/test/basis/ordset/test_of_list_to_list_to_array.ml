@@ -2,16 +2,19 @@ open! Basis.Rudiments
 open! Basis
 open! OrdsetTest
 open Ordset
-open Format
 
 let test () =
-  printf "@[<h>";
   let test ms = begin
     let ordset = of_list (module Uns) ms in
-    printf "of_list %a; to_list -> %a; to_array -> %a\n"
-      (List.xpp Uns.xpp) ms
-      (List.xpp Uns.xpp) (to_list ordset)
-      (Array.xpp Uns.xpp) (to_array ordset)
+    File.Fmt.stdout
+    |> Fmt.fmt "of_list "
+    |> (List.pp Uns.pp) ms
+    |> Fmt.fmt "; to_list -> "
+    |> (List.pp Uns.pp) (to_list ordset)
+    |> Fmt.fmt "; to_array -> "
+    |> (Array.pp Uns.pp) (to_array ordset)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_lists = [
     [];
@@ -23,7 +26,6 @@ let test () =
   ] in
   List.iter test_lists ~f:(fun ms ->
     test ms
-  );
-  printf "@]"
+  )
 
 let _ = test ()

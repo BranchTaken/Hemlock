@@ -2,15 +2,21 @@ open! Basis.Rudiments
 open! Basis
 open OrdsetTest
 open Ordset
-open Format
 
 let test () =
-  printf "@[";
   let test m ordset descr = begin
-    printf "--- %s ---@\n" descr;
     let ordset' = remove m ordset in
-    printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.xpp m xpp ordset xpp ordset'
+    File.Fmt.stdout
+    |> Fmt.fmt "--- "
+    |> Fmt.fmt descr
+    |> Fmt.fmt " ---\nremove "
+    |> Uns.pp m
+    |> Fmt.fmt "\n"
+    |> fmt ordset
+    |> Fmt.fmt " -> "
+    |> fmt ordset'
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_tuples = [
     ([0L; 1L], 2L,             "Not member.");
@@ -21,7 +27,6 @@ let test () =
   List.iter test_tuples ~f:(fun (ms, m, descr) ->
     let ordset = of_list (module Uns) ms in
     test m ordset descr
-  );
-  printf "@]"
+  )
 
 let _ = test ()
