@@ -1,6 +1,2 @@
-Ordmap {
-  root=Empty
-}
-Ordmap {
-  root=Leaf {k=0; v="zero"}
-}
+Ordmap {root=Empty}
+Ordmap {root=Leaf {k=0; v="zero"}}

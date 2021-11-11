@@ -19,3 +19,19 @@ let merge k v0 v1 =
   assert Uns.(k * 100L = v0);
   assert (veq v0 v1);
   v0
+
+let pp_kv_pair pp_v (k, v) formatter =
+  formatter
+  |> Fmt.fmt "("
+  |> Uns.pp k
+  |> Fmt.fmt ", "
+  |> pp_v v
+  |> Fmt.fmt ")"
+
+let pp_kv_opt_pair (kv0_opt, kv1_opt) formatter =
+  formatter
+  |> Fmt.fmt "("
+  |> Option.fmt (pp_kv_pair Uns.pp) kv0_opt
+  |> Fmt.fmt ", "
+  |> Option.fmt (pp_kv_pair Uns.pp) kv1_opt
+  |> Fmt.fmt ")"

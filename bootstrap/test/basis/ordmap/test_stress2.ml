@@ -2,10 +2,8 @@ open! Basis.Rudiments
 open! Basis
 open! OrdmapTest
 open Ordmap
-open Format
 
 let test () =
-  printf "@[";
   (* test is n^2 time complexity, so keep n small. *)
   let veq_u128 v0 v1 = Cmp.is_eq (U128.cmp v0 v1) in
   let merge_u128 k v0 v1 = begin
@@ -31,6 +29,6 @@ let test () =
   end in
   let e = empty (module U128) in
   let _ = test 100L 0L e e in
-  printf "@]"
+  ()
 
 let _ = test ()

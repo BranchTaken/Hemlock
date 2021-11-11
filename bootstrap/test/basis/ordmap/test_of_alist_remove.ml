@@ -2,17 +2,26 @@ open! Basis.Rudiments
 open! Basis
 open! OrdmapTest
 open Ordmap
-open Format
 
 let test () =
-  printf "@[";
   let test k ordmap descr = begin
     validate ordmap;
-    printf "--- %s ---@\n" descr;
+    File.Fmt.stdout
+    |> Fmt.fmt "--- "
+    |> Fmt.fmt descr
+    |> Fmt.fmt " ---\n"
+    |> ignore;
     let ordmap' = remove k ordmap in
     validate ordmap';
-    printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.xpp k (xpp String.xpp) ordmap (xpp String.xpp) ordmap'
+    File.Fmt.stdout
+    |> Fmt.fmt "remove "
+    |> Uns.pp k
+    |> Fmt.fmt "\n    "
+    |> (fmt ~alt:true ~width:4L String.pp) ordmap
+    |> Fmt.fmt " ->\n    "
+    |> (fmt ~alt:true ~width:4L String.pp) ordmap'
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_tuples = [
     ([(0L, "0"); (1L, "1")], 2L,            "Not member.");
@@ -23,7 +32,6 @@ let test () =
   List.iter test_tuples ~f:(fun (kvs, k, descr) ->
     let ordmap = of_alist (module Uns) kvs in
     test k ordmap descr
-  );
-  printf "@]"
+  )
 
 let _ = test ()

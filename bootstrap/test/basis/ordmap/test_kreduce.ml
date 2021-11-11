@@ -2,16 +2,18 @@ open! Basis.Rudiments
 open! Basis
 open! OrdmapTest
 open Ordmap
-open Format
 
 let test () =
-  printf "@[<h>";
   let test ks = begin
     let ordmap = of_klist ks in
     let sum = kreduce ~f:( + ) ordmap in
-    printf "kreduce ~f:( + ) %a -> %a\n"
-      (List.xpp Uns.xpp) ks
-      (Option.xpp Uns.xpp) sum
+    File.Fmt.stdout
+    |> Fmt.fmt "kreduce ~f:( + ) "
+    |> (List.pp Uns.pp) ks
+    |> Fmt.fmt " -> "
+    |> (Option.fmt Uns.pp) sum
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_lists = [
     [];
@@ -23,7 +25,6 @@ let test () =
   ] in
   List.iter test_lists ~f:(fun ks ->
     test ks
-  );
-  printf "@]"
+  )
 
 let _ = test ()
