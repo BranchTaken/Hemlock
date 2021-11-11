@@ -1,39 +1,64 @@
 open! Basis.Rudiments
 open! Basis
 open Codepoint
-open Format
 
-let xpp_x xppf cp =
-  Format.fprintf xppf "%a" Uns.xpp_x (extend_to_uns cp)
+let pp_uns_x u formatter =
+  formatter |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex u
+
+let pp_x cp formatter =
+  formatter |> pp_uns_x (extend_to_uns cp)
 
 let test () =
-  let fn x y = begin
-    printf "cmp %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (cmp x y);
-    printf "%a >= %a -> %b\n" xpp_x x xpp_x y (x >= y);
-    printf "%a <= %a -> %b\n" xpp_x x xpp_x y (x <= y);
-    printf "%a = %a -> %b\n" xpp_x x xpp_x y (x = y);
-    printf "%a > %a -> %b\n" xpp_x x xpp_x y (x > y);
-    printf "%a < %a -> %b\n" xpp_x x xpp_x y (x < y);
-    printf "%a <> %a -> %b\n" xpp_x x xpp_x y (x <> y);
-    printf "ascending %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (ascending x y);
-    printf "descending %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (descending x y);
+  let fn x y formatter = begin
+    let f_cmp cmp_s x y cmp formatter = begin
+      formatter |> Fmt.fmt cmp_s |> Fmt.fmt " " |> pp_x x |> Fmt.fmt " " |> pp_x y |> Fmt.fmt " -> "
+      |> Cmp.pp cmp |> Fmt.fmt "\n"
+    end in
+    let f_rel x rel_s y rel formatter = begin
+      formatter |> pp_x x |> Fmt.fmt " " |> Fmt.fmt rel_s |> Fmt.fmt " " |> pp_x y |> Fmt.fmt " -> "
+      |> Bool.pp rel |> Fmt.fmt "\n"
+    end in
+    formatter
+    |> f_cmp "cmp" x y (cmp x y)
+    |> f_rel x ">=" y (x >= y)
+    |> f_rel x "<=" y (x <= y)
+    |> f_rel x "=" y (x = y)
+    |> f_rel x ">" y (x > y)
+    |> f_rel x "<" y (x < y)
+    |> f_rel x "<>" y (x <> y)
+    |> f_cmp "ascending" x y (ascending x y)
+    |> f_cmp "descending" x y (descending x y)
   end in
-  fn (kv 0L) (kv 0x10_0000L);
-  printf "\n";
-  fn (kv 0L) (kv 0x10_ffffL);
-  printf "\n";
-  fn (kv 0x10_0000L) (kv 0x10_ffffL);
-  let fn2 t min max = begin
-    printf "\n";
-    printf "clamp ~min:%a ~max:%a %a -> %a\n"
-      xpp_x min xpp_x max xpp_x t xpp_x (clamp ~min ~max t);
-    printf "between ~low:%a ~high:%a %a -> %b\n"
-      xpp_x min xpp_x max xpp_x t (between ~low:min ~high:max t);
+  let fn2 t min max formatter = begin
+    formatter
+    |> Fmt.fmt "\nclamp ~min:"
+    |> pp_x min
+    |> Fmt.fmt " ~max:"
+    |> pp_x max
+    |> Fmt.fmt " "
+    |> pp_x t
+    |> Fmt.fmt " -> "
+    |> pp_x (clamp ~min ~max t)
+    |> Fmt.fmt "\nbetween ~low:"
+    |> pp_x min
+    |> Fmt.fmt " ~high:"
+    |> pp_x max
+    |> Fmt.fmt " "
+    |> pp_x t
+    |> Fmt.fmt " -> "
+    |> Bool.pp (between ~low:min ~high:max t)
+    |> Fmt.fmt "\n"
   end in
-  fn2 (kv 0x0f_fffeL) (kv 0x0f_ffffL) (kv 0x10_0001L);
-  fn2 (kv 0x0f_ffffL) (kv 0x0f_ffffL) (kv 0x10_0001L);
-  fn2 (kv 0x10_0000L) (kv 0x0f_ffffL) (kv 0x10_0001L);
-  fn2 (kv 0x10_0001L) (kv 0x0f_ffffL) (kv 0x10_0001L);
-  fn2 (kv 0x10_0002L) (kv 0x0f_ffffL) (kv 0x10_0001L)
+  File.Fmt.stdout
+  |> fn (kv 0L) (kv 0x10_0000L)
+  |> Fmt.fmt "\n"
+  |> fn (kv 0L) (kv 0x10_ffffL)
+  |> Fmt.fmt "\n"
+  |> fn (kv 0x10_0000L) (kv 0x10_ffffL)
+  |> fn2 (kv 0x0f_fffeL) (kv 0x0f_ffffL) (kv 0x10_0001L)
+  |> fn2 (kv 0x0f_ffffL) (kv 0x0f_ffffL) (kv 0x10_0001L)
+  |> fn2 (kv 0x10_0000L) (kv 0x0f_ffffL) (kv 0x10_0001L)
+  |> fn2 (kv 0x10_0001L) (kv 0x0f_ffffL) (kv 0x10_0001L)
+  |> fn2 (kv 0x10_0002L) (kv 0x0f_ffffL) (kv 0x10_0001L)
 
 let _ = test ()

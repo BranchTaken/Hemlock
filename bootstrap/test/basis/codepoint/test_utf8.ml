@@ -1,10 +1,12 @@
 open! Basis.Rudiments
 open! Basis
 open Codepoint
-open Format
 
-let xpp_x xppf cp =
-  Format.fprintf xppf "%a" Uns.xpp_x (extend_to_uns cp)
+let pp_uns_x u formatter =
+  formatter |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex u
+
+let pp_x cp formatter =
+  formatter |> pp_uns_x (extend_to_uns cp)
 
 let test () =
   let open Utf8 in
@@ -15,19 +17,17 @@ let test () =
         let codepoint' = to_codepoint utf8 in
         let bytes = to_bytes utf8 in
         let length = length utf8 in
-        printf "codepoint=%a, codepoint'=%a, bytes=["
-          xpp_x codepoint xpp_x codepoint';
-        let rec bytes_iteri i = function
-          | [] -> ()
-          | b :: bytes' -> begin
-              let space = if Uns.(i = 0L) then "" else " " in
-              let sep = if Uns.(succ i < length) then ";" else "" in
-              printf "%s%a%s" space Byte.xpp_x b sep;
-              bytes_iteri (succ i) bytes'
-            end
-        in
-        bytes_iteri 0L bytes;
-        printf "], length=%a\n" Uns.xpp length;
+        File.Fmt.stdout
+        |> Fmt.fmt "codepoint="
+        |> pp_x codepoint
+        |> Fmt.fmt ", codepoint'="
+        |> pp_x codepoint'
+        |> Fmt.fmt ", bytes="
+        |> List.pp (Byte.fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true) bytes
+        |> Fmt.fmt ", length="
+        |> Uns.pp length
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_codepoints codepoints'
       end
   in
