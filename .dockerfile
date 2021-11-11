@@ -1,17 +1,13 @@
 ARG HEMLOCK_PLATFORM=$BUILDPLATFORM
 ARG HEMLOCK_UBUNTU_TAG
 FROM --platform=${HEMLOCK_PLATFORM} ubuntu:${HEMLOCK_UBUNTU_TAG} AS base
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    rm /etc/apt/apt.conf.d/docker-clean \
-    && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' \
-        > /etc/apt/apt.conf.d/keep-cache \
-    && apt-get update \
+RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         ca-certificates \
         git \
         m4 \
         opam \
+        python3 \
         sudo \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -l -m -U -G sudo -s /bin/bash hemlock \
@@ -23,10 +19,7 @@ ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION
 USER hemlock
 WORKDIR /home/hemlock
 COPY --chown=hemlock:hemlock bootstrap/Hemlock.opam .
-RUN --mount=type=cache,target=/home/hemlock/.opam/download-cache,uid=1000,gid=1000 \
-    --mount=type=cache,target=/home/hemlock/.opam/repo,uid=1000,gid=1000 \
-    sudo chown hemlock:hemlock .opam \
-    && opam init \
+RUN opam init \
         --bare \
         --disable-sandboxing \
         --dot-profile /home/hemlock/.bashrc \
@@ -41,14 +34,24 @@ RUN --mount=type=cache,target=/home/hemlock/.opam/download-cache,uid=1000,gid=10
     && opam install -y --deps-only . \
     && rm Hemlock.opam
 
+FROM --platform=${HEMLOCK_PLATFORM} prod AS pre-push
+ARG HEMLOCK_PRE_PUSH_CLONE_PATH
+ARG HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT
+USER hemlock
+WORKDIR /home/hemlock/origin
+COPY --chown=hemlock:hemlock ${HEMLOCK_PRE_PUSH_CLONE_PATH:?arg-is-required} .
+WORKDIR /home/hemlock/Hemlock
+RUN git clone ~/origin . \
+    && opam exec -- dune build \
+    && opam exec -- dune runtest \
+    && HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT=${HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT:?arg-is-required} \
+        python3 .github/scripts/check_ocp_indent.py
+
 FROM --platform=${HEMLOCK_PLATFORM} base AS dev
 USER root
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    apt-get update \
+RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         meson \
-        python3 \
         openssh-client \
     && rm -rf /var/lib/apt/lists/*
 ARG DOTFILES_URL

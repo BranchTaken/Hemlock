@@ -5,6 +5,7 @@ from asyncio import gather, run
 from asyncio.subprocess import create_subprocess_exec, PIPE, STDOUT
 from dataclasses import dataclass
 import logging
+import os
 from pathlib import Path
 import re
 import sys
@@ -59,12 +60,12 @@ class Hunk:
     _header_pattern: Pattern = re.compile(r'^@@.*\+(?P<start>\d+)(,(?P<delta>[1-9]\d*))? @@.*$')
 
     @staticmethod
-    async def from_path(path: Path, /) -> Tuple[Hunk]:
+    async def from_path(path: Path, /, base_commit: str='remotes/origin/main') -> Tuple[Hunk]:
         """Return Tuple[Hunk] of with start/stop of each hunk changed since repo's main branch."""
 
         # For each hunk header in git diff, extract start/stop of changed lines, and create Hunk.
         hunks: List[Hunk] = []
-        for line in await get_lines(f'git diff remotes/origin/main -U0 {path}'):
+        for line in await get_lines(f'git diff {base_commit} -U0 {path}'):
             if match := Hunk._header_pattern.match(line):
                 start = int(match.groupdict()['start'])
                 stop = start + int(match.groupdict()['delta'] or '0')
@@ -79,7 +80,7 @@ class FileDiff:
     text: Text
 
     @staticmethod
-    async def from_path(path: Path, /) -> FileDiff:
+    async def from_path(path: Path, /, base_commit: str='remotes/origin/main') -> FileDiff:
         """Return File with diff-text suggested by ocp-indent."""
 
         if not path.is_file():
@@ -89,7 +90,7 @@ class FileDiff:
             # Update file contents by running ocp-indent on every hunk of code changed since main.
             text = path.read_text()
 
-            hunks = await Hunk.from_path(path)
+            hunks = await Hunk.from_path(path, base_commit=base_commit)
             for hunk in hunks:
                 text = await get_text(
                     f'opam exec -- ocp-indent --lines={hunk.start}-{hunk.stop}', stdin=text,
@@ -113,21 +114,26 @@ class CommitDiff:
         # Repo path is needed to construct absolute paths for changed OCaml files.
         repo_path = Path((await get_text('git rev-parse --show-toplevel')).strip())
 
-        # Ensure main is checked out for comparison.
-        lines = tuple(line.strip() for line in await get_lines('git branch -a'))
-        assert 'remotes/origin/main' in lines, 'local checkout of origin/main is required'
+        base_commit = os.environ.get('HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT')
+        if base_commit is None:
+            # Ensure main is checked out for comparison.
+            base_commit = 'remotes/origin/main'
+            lines = tuple(line.strip() for line in await get_lines('git branch -a'))
+            assert base_commit in lines, 'local checkout of origin/main is required'
 
-        # Names of files changed since main.
-        lines = await get_lines('git diff --name-only remotes/origin/main')
+        # Names of files changed since base commit.
+        lines = await get_lines(f'git diff --name-only {base_commit}')
 
-        # Absolute paths of all OCaml files changed since main.
+        # Absolute paths of all OCaml files changed since base commit.
         paths = tuple(
             path for path in [repo_path / Path(line) for line in lines]
             if path.suffix in {'.ml', '.mli'}
         )
 
         # OCaml files with diff text as suggested by ocp-indent. These are calculated in parallel.
-        file_diffs = tuple(await gather(*[FileDiff.from_path(path) for path in paths]))
+        file_diffs = tuple(
+            await gather(*[FileDiff.from_path(path, base_commit=base_commit) for path in paths])
+        )
 
         # Combined diff text of all changed OCaml files.
         text = '\n\n'.join(file_diff.text for file_diff in file_diffs if file_diff.text)
