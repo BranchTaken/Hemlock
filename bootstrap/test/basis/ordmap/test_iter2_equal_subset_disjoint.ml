@@ -2,10 +2,8 @@ open! Basis.Rudiments
 open! Basis
 open! OrdmapTest
 open Ordmap
-open Format
 
 let test () =
-  printf "@[";
   let test_equal ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
@@ -18,8 +16,13 @@ let test () =
       | Some _, Some _ -> ()
       | None, Some _
       | Some _, None -> begin
-          printf "Should be equal:@,%a@,%a@\n"
-            (xpp Uns.xpp) ordmap0 (xpp Uns.xpp) ordmap1;
+          File.Fmt.stdout
+          |> Fmt.fmt "Should be equal: "
+          |> (fmt Uns.pp) ordmap0
+          |> Fmt.fmt ", "
+          |> (fmt Uns.pp) ordmap1
+          |> Fmt.fmt "\n"
+          |> ignore;
           assert false;
         end
       | None, None -> not_reached ()
@@ -35,8 +38,13 @@ let test () =
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin
-          printf "Should be disjoint:@,%a@,%a@\n"
-            (xpp Uns.xpp) ordmap0 (xpp Uns.xpp) ordmap1;
+          File.Fmt.stdout
+          |> Fmt.fmt "Should be disjoint: "
+          |> (fmt Uns.pp) ordmap0
+          |> Fmt.fmt ", "
+          |> (fmt Uns.pp) ordmap1
+          |> Fmt.fmt "\n"
+          |> ignore;
           assert false;
         end
       | None, Some _
@@ -71,7 +79,6 @@ let test () =
     test_disjoint ks0 (List.rev ks1);
     test_disjoint (List.rev ks0) ks1;
     test_disjoint (List.rev ks0) (List.rev ks1);
-  );
-  printf "@]"
+  )
 
 let _ = test ()

@@ -2,47 +2,61 @@ open! Basis.Rudiments
 open! Basis
 open! OrdmapTest
 open Ordmap
-open Format
 
 let test () =
-  printf "@[";
   let test_fwd ordmap = begin
     let rec fn cursor = begin
       match Cursor.(cursor = (tl ordmap)) with
-      | true -> printf "@\n"
+      | true -> File.Fmt.stdout |> Fmt.fmt "\n" |> ignore
       | false -> begin
           let i = Cursor.index cursor in
           assert Cursor.((seek (Uns.bits_to_sint i) (hd ordmap)) = cursor);
-          printf "            %a=%a@\n"
-            cursor_xpp cursor
-            (xpp_kv String.xpp) (Cursor.rget cursor);
+          File.Fmt.stdout
+          |> Fmt.fmt "            "
+          |> cursor_pp cursor
+          |> Fmt.fmt "="
+          |> (pp_kv_pair String.pp) (Cursor.rget cursor)
+          |> Fmt.fmt "\n"
+          |> ignore;
           fn (Cursor.succ cursor)
         end
     end in
-    printf "cursor fwd:@\n";
+    File.Fmt.stdout
+    |> Fmt.fmt "cursor fwd:\n"
+    |> ignore;
     fn (Cursor.hd ordmap);
   end in
   let test_rev ordmap = begin
     let rec fn cursor = begin
       match Cursor.(cursor = (hd ordmap)) with
-      | true -> printf "@\n"
+      | true -> File.Fmt.stdout |> Fmt.fmt "\n" |> ignore
       | false -> begin
           let i = Cursor.index cursor in
           assert Cursor.((seek (Uns.bits_to_sint i) (hd ordmap)) = cursor);
-          printf "            %a=%a@\n"
-            cursor_xpp cursor
-            (xpp_kv String.xpp) (Cursor.lget cursor);
+          File.Fmt.stdout
+          |> Fmt.fmt "            "
+          |> cursor_pp cursor
+          |> Fmt.fmt "="
+          |> (pp_kv_pair String.pp) (Cursor.lget cursor)
+          |> Fmt.fmt "\n"
+          |> ignore;
           fn (Cursor.pred cursor)
         end
     end in
-    printf "cursor rev:@\n";
+    File.Fmt.stdout
+    |> Fmt.fmt "cursor rev:\n"
+    |> ignore;
     fn (Cursor.tl ordmap);
   end in
   let test kvs = begin
     let ordmap = of_array (module Uns) kvs in
-    printf "of_array %a ->@,%a@\n"
-      (Array.xpp (xpp_kv String.xpp)) kvs
-      (xpp String.xpp) ordmap;
+    File.Fmt.stdout
+    |> Fmt.fmt "of_array "
+    |> (Array.pp (pp_kv_pair String.pp)) kvs
+    |> Fmt.fmt " -> "
+    |> (fmt ~alt:true String.pp) ordmap
+    |> Fmt.fmt "\n"
+    |> ignore;
     validate ordmap;
     test_fwd ordmap;
     test_rev ordmap
@@ -53,7 +67,6 @@ let test () =
   ] in
   List.iter test_arrays ~f:(fun kvs ->
     test kvs
-  );
-  printf "@]"
+  )
 
 let _ = test ()
