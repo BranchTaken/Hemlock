@@ -1,11 +1,9 @@
-of_array [||] ->
-Ordset {}
+of_array [||] -> Ordset [||]
 cursor fwd:
 
 cursor rev:
 
-of_array [|0; 1; 4; 5; 3; 2|] ->
-Ordset {0; 1; 2; 3; 4; 5}
+of_array [|0; 1; 4; 5; 3; 2|] -> Ordset [|0; 1; 2; 3; 4; 5|]
 cursor fwd:
             {index=0}=0
             {index=1}=1

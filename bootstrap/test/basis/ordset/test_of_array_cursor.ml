@@ -2,47 +2,61 @@ open! Basis.Rudiments
 open! Basis
 open OrdsetTest
 open Ordset
-open Format
 
 let test () =
-  printf "@[";
   let test_fwd ordset = begin
     let rec fn cursor = begin
       match Cursor.(cursor = (tl ordset)) with
-      | true -> printf "@\n"
+      | true -> File.Fmt.stdout |> Fmt.fmt "\n" |> ignore
       | false -> begin
           let i = Cursor.index cursor in
           assert Cursor.((seek (Uns.bits_to_sint i) (hd ordset)) = cursor);
-          printf "            %a=%a@\n"
-            cursor_xpp cursor
-            Uns.xpp (Cursor.rget cursor);
+          File.Fmt.stdout
+          |> Fmt.fmt "            "
+          |> cursor_pp cursor
+          |> Fmt.fmt "="
+          |> Uns.pp (Cursor.rget cursor)
+          |> Fmt.fmt "\n"
+          |> ignore;
           fn (Cursor.succ cursor)
         end
     end in
-    printf "cursor fwd:@\n";
+    File.Fmt.stdout
+    |> Fmt.fmt "cursor fwd:\n"
+    |> ignore;
     fn (Cursor.hd ordset);
   end in
   let test_rev ordset = begin
     let rec fn cursor = begin
       match Cursor.(cursor = (hd ordset)) with
-      | true -> printf "@\n"
+      | true -> File.Fmt.stdout |> Fmt.fmt "\n" |> ignore
       | false -> begin
           let i = Cursor.index cursor in
           assert Cursor.((seek (Uns.bits_to_sint i) (hd ordset)) = cursor);
-          printf "            %a=%a@\n"
-            cursor_xpp cursor
-            Uns.xpp (Cursor.lget cursor);
+          File.Fmt.stdout
+          |> Fmt.fmt "            "
+          |> cursor_pp cursor
+          |> Fmt.fmt "="
+          |> Uns.pp (Cursor.lget cursor)
+          |> Fmt.fmt "\n"
+          |> ignore;
           fn (Cursor.pred cursor)
         end
     end in
-    printf "cursor rev:@\n";
+    File.Fmt.stdout
+    |> Fmt.fmt "cursor rev:\n"
+    |> ignore;
     fn (Cursor.tl ordset);
   end in
   let test ms = begin
     let ordset = of_array (module Uns) ms in
-    printf "of_array %a ->@,%a@\n"
-      (Array.xpp Uns.xpp) ms
-      xpp ordset;
+    File.Fmt.stdout
+    |> Fmt.fmt "of_array "
+    |> (Array.pp Uns.pp) ms
+    |> Fmt.fmt " -> "
+    |> fmt ordset
+    |> Fmt.fmt "\n"
+    |> ignore;
     test_fwd ordset;
     test_rev ordset
   end in
@@ -52,7 +66,6 @@ let test () =
   ] in
   List.iter test_arrays ~f:(fun ms ->
     test ms
-  );
-  printf "@]"
+  )
 
 let _ = test ()
