@@ -1,24 +1,37 @@
 open! Basis.Rudiments
 open! Basis
 open Codepoint
-open Format
 
-let xpp_x xppf cp =
-  Format.fprintf xppf "%a" Uns.xpp_x (extend_to_uns cp)
+let pp_uns_x u formatter =
+  formatter |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex u
+
+let pp_x cp formatter =
+  formatter |> pp_uns_x (extend_to_uns cp)
 
 let test () =
-  let rec fn = function
+  let rec fn xs formatter =
+    match xs with
     | [] -> ()
     | x :: xs' -> begin
         let i = x in
         let t = trunc_of_uns (Uns.bits_of_sint i) in
         let u = extend_to_uns t in
         let t' = trunc_of_uns u in
-        printf "trunc_of_uns %a -> extend_to_uns %a -> trunc_of_uns %a -> %a\n"
-          Uns.xpp_x x xpp_x t Uns.xpp_x u xpp_x t';
-        fn xs'
+        formatter
+        |> Fmt.fmt "trunc_of_uns "
+        |> pp_uns_x x
+        |> Fmt.fmt " -> extend_to_uns "
+        |> pp_x t
+        |> Fmt.fmt " -> trunc_of_uns "
+        |> pp_uns_x u
+        |> Fmt.fmt " -> "
+        |> pp_x t'
+        |> Fmt.fmt "\n"
+        |> fn xs'
       end
   in
-  fn [Uns.max_value; 0L; 42L; 0xd800L; 0xdfffL; 0x10_ffffL; 0x11_0000L; 0x20_0000L; 0x20_0001L]
+  File.Fmt.stdout
+  |> fn [Uns.max_value; 0L; 42L; 0xd800L; 0xdfffL; 0x10_ffffL; 0x11_0000L; 0x20_0000L; 0x20_0001L]
+  |> ignore
 
 let _ = test ()
