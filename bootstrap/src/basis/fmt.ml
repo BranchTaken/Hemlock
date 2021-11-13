@@ -42,6 +42,7 @@ let width_default = 0L
 let precision_default = 2L
 let base_default = Dec
 let notation_default = Compact
+let pretty_default = false
 
 let clength s =
   Stdlib.String.fold_left (fun n c ->

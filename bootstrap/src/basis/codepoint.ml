@@ -231,20 +231,20 @@ let escape t =
       )
     end
 
-let to_string ?(alt=Fmt.alt_default) t =
-  match alt with
+let to_string ?(pretty=Fmt.pretty_default) t =
+  match pretty with
   | false -> Utf8.(to_string (of_codepoint t))
   | true -> escape t
 
-let fmt ?pad ?just ?alt ?width t formatter =
+let fmt ?pad ?just ?width ?pretty t formatter =
   let pad = match pad with
     | None -> None
     | Some c -> Some (to_string c)
   in
-  Fmt.fmt ?pad ?just ?width (to_string ?alt t) formatter
+  Fmt.fmt ?pad ?just ?width (to_string ?pretty t) formatter
 
 let pp t formatter =
-  fmt ~alt:true t formatter
+  fmt ~pretty:true t formatter
 
 let xpp xppf t =
   Format.fprintf xppf "%s" (escape t)

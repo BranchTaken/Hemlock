@@ -71,6 +71,9 @@ val base_default: base
 val notation_default: notation
 (** Default notation ([Compact]). *)
 
+val pretty_default: bool
+(** Default pretty ([false]). *)
+
 val fmt: ?pad:string -> ?just:just -> ?width:int64 -> string -> (module Formatter)
   -> (module Formatter)
 (** [fmt ~pad ~just ~width s formatter] creates a string based on [s] that is [~just]-justified with

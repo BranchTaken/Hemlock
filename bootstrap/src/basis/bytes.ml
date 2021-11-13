@@ -220,7 +220,7 @@ module Slice = struct
           let elm, cursor' = Cursor.next cursor in
           formatter
           |> Fmt.fmt "; "
-          |> Byte.fmt ~base:Fmt.Hex elm
+          |> Byte.fmt ~alt:true ~base:Fmt.Hex ~pretty:true elm
           |> fn cursor' past
         end
       | false -> formatter
@@ -233,7 +233,7 @@ module Slice = struct
       | true -> begin
           let elm, cursor' = Cursor.next cursor in
           formatter
-          |> Byte.fmt ~base:Fmt.Hex elm
+          |> Byte.fmt ~alt:true ~base:Fmt.Hex ~pretty:true elm
           |> fn cursor' past
         end
       | false -> formatter

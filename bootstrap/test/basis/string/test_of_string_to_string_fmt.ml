@@ -9,6 +9,6 @@ let test () =
 
   File.Fmt.stdout
   |> fmt "s=" |> pp s |> fmt ", s2=" |> pp s2 |> fmt ", s3="
-  |> fmt ~pad:(Codepoint.of_char '_') ~just:Basis.Fmt.Center ~width:12L ~alt:true s3 |> fmt "\n"
+  |> fmt ~pad:(Codepoint.of_char '_') ~just:Basis.Fmt.Center ~width:12L ~pretty:true s3 |> fmt "\n"
 
 let _ = test ()

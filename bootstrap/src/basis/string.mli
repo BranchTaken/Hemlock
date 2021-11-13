@@ -376,14 +376,15 @@ module Seq : sig
   end
 end
 
-val to_string: ?alt:bool -> string -> string
-(** [to_string ~alt s] creates a string based on [s] that is wrapped by ["..."] and special
-    characters escaped if [~alt=true]. *)
+val to_string: ?alt:bool -> ?pretty:bool -> string -> string
+(** [to_string ~alt ~pretty s] returns [s] if [~pretty=false], or creates a string based on [s] that
+    is a syntactically valid string token if [~pretty=true]. The output is wrapped by ["..."] and
+    special characters escaped if [~alt=false], or wrapped by [``...``] if [~alt=true]. *)
 
-val fmt: ?pad:codepoint -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> string
+val fmt: ?pad:codepoint -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> ?pretty:bool -> string
   -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** [fmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
-    of [to_string ~alt s]. *)
+    of [to_string ~alt ~pretty s]. *)
 
 (** Formatter. *)
 module Fmt : sig

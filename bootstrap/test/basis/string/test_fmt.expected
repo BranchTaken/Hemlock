@@ -1,0 +1,28 @@
+fmt
+"pp"
+"pp \n escaped"
+"fmt pretty"
+``fmt alt pretty``
+``fmt alt pretty
+ not escaped``
+``
+
+fmt alt pretty multi-line
+
+``
+fmt alt pretty "\n":
+``
+
+
+``
+fmt alt pretty "\n\n":
+``
+
+
+
+``
+``...``
+`_`...`...`_`
+`__`...`_...`__`
+`_e_`...`__...`_e_`
+`_dd_`...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_...`_dd_`

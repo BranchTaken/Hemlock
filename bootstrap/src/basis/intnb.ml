@@ -231,7 +231,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       narrow (Int64.of_string s)
 
     let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
-      ?(width=Fmt.width_default) ?(base=Fmt.base_default) t =
+      ?(width=Fmt.width_default) ?(base=Fmt.base_default) ?(pretty=Fmt.pretty_default) t =
       assert Stdlib.(Int64.(compare (narrow t) t) = 0);
       let rec fn accum ndigits is_neg t = begin
         match Stdlib.(Int64.(unsigned_compare t 0L) = 0)
@@ -254,8 +254,11 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
               | false -> ""
             )
             ^ (Stdlib.String.concat "" (match ndigits with 0 -> ["0"] | _ -> accum))
-            ^ (match T.signed with false -> "u" | true -> "i")
-            ^ (Int64.to_string T.bit_length)
+            ^ (match pretty with
+              | false -> ""
+              | true ->
+                (match T.signed with false -> "u" | true -> "i") ^ (Int64.to_string T.bit_length)
+            )
           end
         | _ -> begin
             let divisor, group = match base with
@@ -278,11 +281,11 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       | false -> fn [] 0 false t
       | true -> fn [] 0 true (Stdlib.Int64.neg t)
 
-    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
-      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base ?pretty t formatter =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base ?pretty t) formatter
 
     let pp t formatter =
-      fmt ~alt:true t formatter
+      fmt ~alt:true ~pretty:true t formatter
 
     let zero = 0L
 
@@ -457,14 +460,14 @@ module MakeI (T : I) : SI with type t := sint = struct
       V.xpp_x xppf (uns_of_sint t)
 
 
-    let to_string ?sign ?alt ?zpad ?width ?base t =
-      V.to_string ?sign ?alt ?zpad ?width ?base (uns_of_sint t)
+    let to_string ?sign ?alt ?zpad ?width ?base ?pretty t =
+      V.to_string ?sign ?alt ?zpad ?width ?base ?pretty (uns_of_sint t)
 
-    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
-      V.fmt ?pad ?just ?sign ?alt ?zpad ?width ?base (uns_of_sint t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base ?pretty t formatter =
+      V.fmt ?pad ?just ?sign ?alt ?zpad ?width ?base ?pretty (uns_of_sint t) formatter
 
     let pp t formatter =
-      fmt ~alt:true t formatter
+      fmt ~alt:true ~pretty:true t formatter
 
     let zero = sint_of_uns V.zero
 
