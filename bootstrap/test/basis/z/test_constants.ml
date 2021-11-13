@@ -1,11 +1,16 @@
 open! Basis.Rudiments
 open! Basis
 open Z
-open Format
 
 let test () =
-  printf "zero=%a\n" xpp_x zero;
-  printf "one=%a\n" xpp_x one;
-  printf "neg_one=%a\n" xpp_x neg_one
+  File.Fmt.stdout
+  |> Fmt.fmt "zero="
+  |> pp zero
+  |> Fmt.fmt "\none="
+  |> pp one
+  |> Fmt.fmt "\nneg_one="
+  |> pp neg_one
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()

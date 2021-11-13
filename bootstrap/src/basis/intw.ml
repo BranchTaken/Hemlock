@@ -71,7 +71,9 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       init (uns_max T.min_word_length 1L) ~f:(fun _ -> Int64.minus_one)
 
     let is_neg t =
-      T.signed && (Int64.(compare (get (sub (word_length t) 1L) t) zero)) < 0
+      match word_length t with
+      | 0L -> false
+      | _ -> T.signed && (Int64.(compare (get (sub (word_length t) 1L) t) zero)) < 0
 
     let to_u64 t =
       match word_length t with

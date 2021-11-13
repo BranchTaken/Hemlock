@@ -1,14 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open Z
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test_strs = function
     | [] -> ()
     | s :: strs' -> begin
-        printf "of_string %S -> %a\n" s xpp_x (of_string s);
+        File.Fmt.stdout
+        |> Fmt.fmt "of_string "
+        |> String.pp s
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex (of_string s)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_strs strs'
       end
   in
@@ -45,7 +49,6 @@ let test () =
     "0x_f";
     "0x_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff";
   ] in
-  test_strs strs;
-  printf "@]"
+  test_strs strs
 
 let _ = test ()
