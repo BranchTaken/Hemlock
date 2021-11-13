@@ -18,14 +18,14 @@ val escape: t -> string
 (** [escape t] returns a syntactically valid UTF-8-encoded codepoint literal representation of [t].
 *)
 
-val to_string: ?alt:bool -> t -> string
-(** [to_string ~alt t] returns a UTF-8-encoded string representation of [t] that is wrapped by
-    ['...'] and special characters escaped if [~alt=true]. *)
+val to_string: ?pretty:bool -> t -> string
+(** [to_string ~pretty t] returns a UTF-8-encoded string representation of [t] that is wrapped by
+    ['...'] and special characters escaped if [~pretty=true]. *)
 
-val fmt: ?pad:t -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter)
-  -> (module Fmt.Formatter)
-(** [fmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
-    of [to_string ~alt s]. *)
+val fmt: ?pad:t -> ?just:Fmt.just -> ?width:uns -> ?pretty:bool -> t
+  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** [fmt ~pad ~just ~width ~pretty s formatter] calls [formatter.fmt ~pad ~just ~width] on the
+    result of [to_string ~pretty s]. *)
 
 val replacement: t
 (** Replacement character '�', [0xfffd]. *)

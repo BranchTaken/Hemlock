@@ -1867,17 +1867,55 @@ module O = struct
   include Cmpable.Make(T)
 end
 
-let to_string ?(alt=Fmt.alt_default) s =
-  match alt with
-  | false -> s
-  | true -> "\"" ^ escaped s ^ "\""
+let to_string ?(alt=Fmt.alt_default) ?(pretty=Fmt.pretty_default) s =
+  match alt, pretty with
+  | _, false -> s
+  | false, true -> "\"" ^ escaped s ^ "\""
+  | true, true -> begin
+      let pad_nl_pre s = begin
+        match length s with
+        | 0L -> ""
+        | _ -> begin
+            match C.Cursor.(rget (hd s)) with
+            | cp when Codepoint.(cp = of_char '\n') -> "\n"
+            | _ -> ""
+          end
+      end in
+      let pad_nl_suf s = begin
+        match length s with
+        | 0L -> ""
+        | _ -> begin
+            match C.Cursor.(lget (tl s)) with
+            | cp when Codepoint.(cp = of_char '\n') -> "\n"
+            | _ -> ""
+          end
+      end in
+      match substr_find ~pattern:"`" s, substr_find ~pattern:"`_" s,
+        substr_find ~pattern:"`__" s with
+      | None, _, _ -> "``" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "``"
+      | Some _, None, _ -> "`_`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "`_`"
+      | Some _, Some _, None -> "`__`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "`__`"
+      | Some _, Some _, Some _ -> begin
+          let rec fn h_hd h_right s = begin
+            let btick_tag =
+              "`_" ^ C.Slice.(to_string (of_cursors ~base:h_hd ~past:h_right)) ^ "_" in
+            match substr_find ~pattern:btick_tag s with
+            | None -> btick_tag ^ "`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ btick_tag ^ "`"
+            | Some _ -> fn h_hd (C.Cursor.succ h_right) s
+          end in
+          let h =
+            Hash.State.empty |> hash_fold s |> Hash.t_of_state |> U128.to_string ~base:Fmt.Hex in
+          let h_hd = C.Cursor.hd h in
+          fn h_hd h_hd s
+        end
+    end
 
-let fmt ?pad ?just ?alt ?width s formatter =
+let fmt ?pad ?just ?alt ?width ?pretty s formatter =
   let pad = match pad with
     | None -> None
     | Some c -> Some (Codepoint.to_string c)
   in
-  Fmt.fmt ?pad ?just ?width (to_string ?alt s) formatter
+  Fmt.fmt ?pad ?just ?width (to_string ?alt ?pretty s) formatter
 
 module Fmt = struct
   let empty : (module Fmt.Formatter) =

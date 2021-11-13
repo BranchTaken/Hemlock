@@ -8,6 +8,7 @@
   test_escaped
   test_find
   test_find_map
+  test_fmt
   test_fold
   test_foldi
   test_fold_right

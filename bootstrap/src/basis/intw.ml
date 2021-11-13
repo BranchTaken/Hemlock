@@ -684,7 +684,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       prefix0 s 0L (Int64.of_int (Stdlib.String.length s))
 
     let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
-      ?(width=Fmt.width_default) ?(base=Fmt.base_default) t =
+      ?(width=Fmt.width_default) ?(base=Fmt.base_default) ?(pretty=Fmt.pretty_default) t =
       let rec fn accum ndigits is_neg t = begin
         match t = zero && (not zpad || (ndigits >= (Int64.to_int width))) with
         | true -> begin
@@ -705,8 +705,17 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
               | false -> ""
             )
             ^ (Stdlib.String.concat "" (match ndigits with 0 -> ["0"] | _ -> accum))
-            ^ (match T.signed with false -> "u" | true -> "i")
-            ^ (Int64.to_string (bit_length t))
+            ^ (match pretty,
+                Stdlib.(Int64.(unsigned_compare T.min_word_length T.max_word_length) = 0) with
+            | false, _ -> ""
+            | true, true -> begin
+                (match T.signed with false -> "u" | true -> "i")
+                ^ (Int64.to_string (bit_length t))
+              end
+            | true, false -> begin
+                (match T.signed with false -> "n" | true -> "z")
+              end
+            )
           end
         | _ -> begin
             let divisor, group = match base with
@@ -732,11 +741,11 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
       | false -> fn [] 0 false t
       | true -> fn [] 0 true (neg t)
 
-    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
-      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base ?pretty t formatter =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base ?pretty t) formatter
 
     let pp t formatter =
-      fmt ~alt:true t formatter
+      fmt ~alt:true ~pretty:true t formatter
   end
   include U
   include Identifiable.Make(U)
