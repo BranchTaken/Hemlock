@@ -1,15 +1,22 @@
 open! Basis.Rudiments
 open! Basis
 open Z
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test_pairs = function
     | [] -> ()
     | (x, y) :: pairs' -> begin
-        printf "min,max %a %a -> %a, %a\n"
-          xpp_x x xpp_x y xpp_x (min x y) xpp_x (max x y);
+        File.Fmt.stdout
+        |> Fmt.fmt "min,max "
+        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~base:Fmt.Hex y
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex (min x y)
+        |> Fmt.fmt ", "
+        |> fmt ~alt:true ~base:Fmt.Hex (max x y)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_pairs pairs'
       end
   in
@@ -21,7 +28,6 @@ let test () =
     (of_string "0", of_string
         "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff");
   ] in
-  test_pairs pairs;
-  printf "@]"
+  test_pairs pairs
 
 let _ = test ()

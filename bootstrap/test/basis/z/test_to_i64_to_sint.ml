@@ -1,18 +1,21 @@
 open! Basis.Rudiments
 open! Basis
 open Z
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test = function
     | [] -> ()
     | u :: us' -> begin
         let fn u = begin
-          printf "to_i64,to_sint %a -> %a, %a\n"
-            xpp_x u
-            I64.xpp_x (to_i64 u)
-            Sint.xpp_x (to_sint u)
+          File.Fmt.stdout
+          |> Fmt.fmt "to_i64,to_sint "
+          |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+          |> Fmt.fmt " -> "
+          |> I64.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true (to_i64 u)
+          |> Fmt.fmt ", "
+          |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true (to_sint u)
+          |> Fmt.fmt "\n"
+          |> ignore
         end in
         fn u;
         fn (neg u);
@@ -27,7 +30,6 @@ let test () =
     of_string "0x8000_0000_0000_0000";
     of_string "0xffff_ffff_ffff_ffff"
   ] in
-  test us;
-  printf "@]"
+  test us
 
 let _ = test ()

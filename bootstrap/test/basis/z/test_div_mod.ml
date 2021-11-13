@@ -1,17 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open Z
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test_pairs = function
     | [] -> ()
     | (x, y) :: pairs' -> begin
         let quotient = x / y in
         let remainder = x % y in
-        printf "%a /,%% %a -> %a, %a\n"
-          xpp_x x xpp_x y xpp_x quotient xpp_x remainder;
+        File.Fmt.stdout
+        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> Fmt.fmt " /,% "
+        |> fmt ~alt:true ~base:Fmt.Hex y
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex quotient
+        |> Fmt.fmt ", "
+        |> fmt ~alt:true ~base:Fmt.Hex remainder
+        |> Fmt.fmt "\n"
+        |> ignore;
         assert (x = (y * quotient + remainder));
         assert (x >= y || remainder = x);
         test_pairs pairs'
@@ -73,7 +79,6 @@ let test () =
         "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff",
       of_string "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff");
   ] in
-  test_pairs pairs;
-  printf "@]"
+  test_pairs pairs
 
 let _ = test ()

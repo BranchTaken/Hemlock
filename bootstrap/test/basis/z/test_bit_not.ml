@@ -1,15 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open Z
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_not %a -> %a\n"
-          xpp_x x xpp_x (bit_not x);
+        File.Fmt.stdout
+        |> Fmt.fmt "bit_not "
+        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex (bit_not x)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test xs'
       end
   in
@@ -18,7 +21,6 @@ let test () =
     one;
     (neg one)
   ] in
-  test xs;
-  printf "@]"
+  test xs
 
 let _ = test ()
