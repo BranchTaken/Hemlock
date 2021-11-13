@@ -259,7 +259,7 @@ module T = struct
               formatter
               |> pp_sign sign
               |> Fmt.fmt "0x1p"
-              |> Zint.pp exponent
+              |> Zint.fmt exponent
             | false -> begin
                 let rem = shift % 4L in
                 let hex_digits = shift / 4L in
@@ -272,7 +272,7 @@ module T = struct
                 |> Fmt.fmt "0x1."
                 |> (pp_frac hex_digits') frac'
                 |> Fmt.fmt "p"
-                |> Zint.pp exponent
+                |> Zint.fmt exponent
               end
           end
       end

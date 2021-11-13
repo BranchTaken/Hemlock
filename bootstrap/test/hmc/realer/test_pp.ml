@@ -2,17 +2,18 @@ open! Basis.Rudiments
 open! Basis
 open! Hmc
 open Hmc.Realer
-open Format
 
 let test () =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "%a\n" xpp x;
+        File.Fmt.stdout
+        |> pp x
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn xs'
       end
   in
-  printf "@[<h>";
   fn [
     zero;
     one;
@@ -32,7 +33,6 @@ let test () =
     create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0xf87L);
     create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x7c3L);
     create ~sign:Neg ~exponent:(Zint.of_uns 42L) ~mantissa:(Nat.of_uns 0x3e1L);
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()
