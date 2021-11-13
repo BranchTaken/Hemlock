@@ -25,7 +25,7 @@ module T = struct
       Format.fprintf xppf "%Lu" t
 
     let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
-      ?(width=Fmt.width_default) ?(base=Fmt.base_default) t =
+      ?(width=Fmt.width_default) ?(base=Fmt.base_default) ?(pretty=Fmt.pretty_default) t =
       let rec fn accum ndigits t = begin
         match Stdlib.(Int64.(unsigned_compare t 0L) = 0)
               && Stdlib.(not zpad || (ndigits >= (Int64.to_int width))) with
@@ -42,6 +42,7 @@ module T = struct
               | false -> ""
             )
             ^ (Stdlib.String.concat "" (match ndigits with 0 -> ["0"] | _ -> accum))
+            ^ (match pretty with false -> "" | true -> "u")
           end
         | _ -> begin
             let divisor, group = match base with
@@ -62,11 +63,11 @@ module T = struct
       end in
       fn [] 0 t
 
-    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base t formatter =
-      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base ?pretty t formatter =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base ?pretty t) formatter
 
     let pp t formatter =
-      fmt t formatter
+      fmt ~alt:true t formatter
   end
   include U
   include Cmpable.MakeZero(U)

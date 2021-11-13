@@ -46,7 +46,7 @@ let test () =
   in
   File.Fmt.stdout
   |> Fmt.fmt (match verbose with true -> output | false -> "")
-  |> Fmt.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex
+  |> Fmt.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true
       (Hash.State.empty |> String.hash_fold output |> Hash.t_of_state))
 
 let _ = test ()
