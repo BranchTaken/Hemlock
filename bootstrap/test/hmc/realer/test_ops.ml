@@ -2,13 +2,12 @@ open! Basis.Rudiments
 open! Basis
 open! Hmc
 open Realer
-open Format
 
 let test () =
-  let cmp_opt_xpp xppf cmp_opt = begin
+  let cmp_opt_pp cmp_opt formatter = begin
     match cmp_opt with
-    | None -> Format.fprintf xppf "NA"
-    | Some rel -> Cmp.xpp xppf rel
+    | None -> formatter |> Fmt.fmt "NA"
+    | Some rel -> formatter |> Cmp.pp rel
   end in
   let cmp_opt t0 t1 = begin
     match is_nan t0 || (is_nan t1) with
@@ -18,17 +17,24 @@ let test () =
   let rec fn = function
     | [] -> ()
     | (t0, t1) :: tups' -> begin
-        printf "+,-,*,cmp %a %a\n  -> %a\t%a\t%a\t%a\n"
-          xpp t0
-          xpp t1
-          xpp (t0 + t1)
-          xpp (t0 - t1)
-          xpp (t0 * t1)
-          cmp_opt_xpp (cmp_opt t0 t1);
+        File.Fmt.stdout
+        |> Fmt.fmt "+,-,*,cmp "
+        |> pp t0
+        |> Fmt.fmt " "
+        |> pp t1
+        |> Fmt.fmt "\n  -> "
+        |> pp (t0 + t1)
+        |> Fmt.fmt "\t"
+        |> pp (t0 - t1)
+        |> Fmt.fmt "\t"
+        |> pp (t0 * t1)
+        |> Fmt.fmt "\t"
+        |> cmp_opt_pp (cmp_opt t0 t1)
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn tups'
       end
   in
-  printf "@[<h>";
   fn [
     (zero, zero);
     (zero, one);
@@ -77,7 +83,6 @@ let test () =
       create ~sign:Neg ~exponent:(Zint.of_uns 8L) ~mantissa:(Nat.of_uns 0x1f0fL));
     (create ~sign:Neg ~exponent:(Zint.of_uns 0L) ~mantissa:(Nat.of_uns 0x1f0fL),
       create ~sign:Neg ~exponent:(Zint.of_uns 7L) ~mantissa:(Nat.of_uns 0x1f0fL));
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()
