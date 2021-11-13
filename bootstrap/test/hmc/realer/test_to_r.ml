@@ -2,7 +2,6 @@ open! Basis.Rudiments
 open! Basis
 open! Hmc
 open Hmc.Realer
-open Format
 
 type precision =
   | Precise
@@ -19,7 +18,6 @@ let to_precision_r32 r =
   | None -> Rounded, to_r32 r
 
 let test () =
-  printf "@[<h>";
   let rec test_hash_fold rs = begin
     match rs with
     | [] -> ()
@@ -28,11 +26,21 @@ let test () =
           | Precise -> "Precise"
           | Rounded -> "Rounded"
         in
-        printf "%a\n" xpp r;
         let prec64, r64 = to_precision_r64 r in
-        printf "  to_r64 -> %s %a\n" (prec_s prec64) Real.xpp r64;
         let prec32, r32 = to_precision_r32 r in
-        printf "  to_r32 -> %s %a\n" (prec_s prec32) Real.xpp r32;
+        File.Fmt.stdout
+        |> pp r
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt "  to_r64 -> "
+        |> Fmt.fmt (prec_s prec64)
+        |> Fmt.fmt " "
+        |> Real.fmt ~precision:13L ~notation:Fmt.Normalized ~base:Fmt.Hex r64
+        |> Fmt.fmt "\n  to_r32 -> "
+        |> Fmt.fmt (prec_s prec32)
+        |> Fmt.fmt " "
+        |> Real.fmt ~precision:6L ~notation:Fmt.Normalized ~base:Fmt.Hex r32
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_hash_fold rs'
       end
   end in
@@ -49,7 +57,6 @@ let test () =
     create ~sign:Pos ~exponent:Zint.zero ~mantissa:Nat.(of_uns 0x3_ffff_ffffff_fffL);
     create ~sign:Pos ~exponent:Zint.(one + one) ~mantissa:Nat.(of_uns 0x156L);
   ] in
-  test_hash_fold rs;
-  printf "@]"
+  test_hash_fold rs
 
 let _ = test ()
