@@ -1,4 +1,4 @@
-bit_length, bit_{pop,clz,ctz} 0x0000_0000_0000_0000 -> 0, 0, 0, 0
-bit_length, bit_{pop,clz,ctz} 0x0000_0000_0000_0001 -> 64, 1, 63, 0
-bit_length, bit_{pop,clz,ctz} 0x0000_0000_0000_0000_8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000 -> 320, 1, 64, 255
-bit_length, bit_{pop,clz,ctz} 0x0000_0000_0000_0000_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff -> 320, 256, 64, 0
+bit_length, bit_{pop,clz,ctz} 0x0 -> 0, 0, 0, 0
+bit_length, bit_{pop,clz,ctz} 0x1 -> 64, 1, 63, 0
+bit_length, bit_{pop,clz,ctz} 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000 -> 320, 1, 64, 255
+bit_length, bit_{pop,clz,ctz} 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff -> 320, 256, 64, 0
