@@ -1,65 +1,65 @@
-{|""|}
+``""``
   [1:0..1:2) : <Tok_istring=Constant "">
   [1:2..1:2) : <Tok_end_of_input>
-{|````|}
+`_``````_`
   [1:0..1:4) : <Tok_rstring=Constant "">
   [1:4..1:4) : <Tok_end_of_input>
-{|``
-``|}
+`_```
+```_`
   [1:0..2:2) : <Tok_rstring=Constant "">
   [2:2..2:2) : <Tok_end_of_input>
-{|``
+`_```
 
-``|}
+```_`
   [1:0..3:2) : <Tok_rstring=Constant "">
   [3:2..3:2) : <Tok_end_of_input>
-{|``
+`_```
 
 
-``|}
+```_`
   [1:0..4:2) : <Tok_rstring=Constant "\n">
   [4:2..4:2) : <Tok_end_of_input>
-{|``a
-b``|}
+`_```a
+b```_`
   [1:0..2:3) : <Tok_rstring=Constant "a\nb">
   [2:3..2:3) : <Tok_end_of_input>
-{|``
+`_```
 a
 b
-``|}
+```_`
   [1:0..4:2) : <Tok_rstring=Constant "a\nb">
   [4:2..4:2) : <Tok_end_of_input>
-{|``a``|}
+`_```a```_`
   [1:0..1:5) : <Tok_rstring=Constant "a">
   [1:5..1:5) : <Tok_end_of_input>
-{|`aoeu_``htns`gcrl`htns``aoeu_`|}
+`_``aoeu_``htns`gcrl`htns``aoeu_``_`
   [1:0..1:30) : <Tok_rstring=Constant "`htns`gcrl`htns`">
   [1:30..1:30) : <Tok_end_of_input>
-{|``a\u{0}\t\n\r\"\\\
-b``|}
+`_```a\u{0}\t\n\r\"\\\
+b```_`
   [1:0..2:3) : <Tok_rstring=Constant "a\\u{0}\\t\\n\\r\\\"\\\\\\\nb">
   [2:3..2:3) : <Tok_end_of_input>
-{|`|}
+`_```_`
   [1:0..1:1) : <Tok_rstring=Malformed ["[1:0..1:1): Unterminated string literal"]>
   [1:1..1:1) : <Tok_end_of_input>
-{|``|}
+`_````_`
   [1:0..1:2) : <Tok_rstring=Malformed ["[1:0..1:2): Unterminated string literal"]>
   [1:2..1:2) : <Tok_end_of_input>
-{|```|}
+`_`````_`
   [1:0..1:3) : <Tok_rstring=Malformed ["[1:0..1:3): Unterminated string literal"]>
   [1:3..1:3) : <Tok_end_of_input>
-{|`tag``tag|}
+`_``tag``tag`_`
   [1:0..1:9) : <Tok_rstring=Malformed ["[1:0..1:9): Unterminated string literal"]>
   [1:9..1:9) : <Tok_end_of_input>
-{|`tag``ta|}
+`_``tag``ta`_`
   [1:0..1:8) : <Tok_rstring=Malformed ["[1:0..1:8): Unterminated string literal"]>
   [1:8..1:8) : <Tok_end_of_input>
-{|`tag``|}
+`_``tag```_`
   [1:0..1:6) : <Tok_rstring=Malformed ["[1:0..1:6): Unterminated string literal"]>
   [1:6..1:6) : <Tok_end_of_input>
-{|`tag`|}
+`_``tag``_`
   [1:0..1:5) : <Tok_rstring=Malformed ["[1:0..1:5): Unterminated string literal"]>
   [1:5..1:5) : <Tok_end_of_input>
-{|`tag|}
+`_``tag`_`
   [1:0..1:4) : <Tok_rstring=Malformed ["[1:0..1:4): Unterminated string literal"]>
   [1:4..1:4) : <Tok_end_of_input>

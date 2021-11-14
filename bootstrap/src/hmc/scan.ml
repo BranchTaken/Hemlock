@@ -180,6 +180,7 @@ module Source = struct
         |> Fmt.fmt path
         |> Fmt.fmt ":"
     ))
+    |> Fmt.fmt "["
     |> Text.Pos.pp (Cursor.(pos (hd t)))
     |> Fmt.fmt ".."
     |> Text.Pos.pp (Cursor.(pos (tl t)))
@@ -365,7 +366,6 @@ module AbstractToken = struct
     | Tok_error
 
   let to_string t =
-    let open Format in
     match t with
     (* Keywords. *)
     | Tok_and -> "<Tok_and>"
@@ -399,23 +399,41 @@ module AbstractToken = struct
     | Tok_with -> "<Tok_with>"
 
     (* Operators. *)
-    | Tok_tilde_op op -> asprintf "@[<h><Tok_tilde_op=%a>@]" String.xpp op
-    | Tok_qmark_op op -> asprintf "@[<h><Tok_qmark_op=%a>@]" String.xpp op
-    | Tok_star_star_op op -> asprintf "@[<h><Tok_star_star_op=%a>@]" String.xpp op
-    | Tok_star_op op -> asprintf "@[<h><Tok_star_op=%a>@]" String.xpp op
-    | Tok_slash_op op -> asprintf "@[<h><Tok_slash_op=%a>@]" String.xpp op
-    | Tok_pct_op op -> asprintf "@[<h><Tok_pct_op=%a>@]" String.xpp op
-    | Tok_plus_op op -> asprintf "@[<h><Tok_plus_op=%a>@]" String.xpp op
-    | Tok_minus_op op -> asprintf "@[<h><Tok_minus_op=%a>@]" String.xpp op
-    | Tok_at_op op -> asprintf "@[<h><Tok_at_op=%a>@]" String.xpp op
-    | Tok_caret_op op -> asprintf "@[<h><Tok_caret_op=%a>@]" String.xpp op
-    | Tok_dollar_op op -> asprintf "@[<h><Tok_dollar_op=%a>@]" String.xpp op
-    | Tok_lt_op op -> asprintf "@[<h><Tok_lt_op=%a>@]" String.xpp op
-    | Tok_eq_op op -> asprintf "@[<h><Tok_eq_op=%a>@]" String.xpp op
-    | Tok_gt_op op -> asprintf "@[<h><Tok_gt_op=%a>@]" String.xpp op
-    | Tok_bar_op op -> asprintf "@[<h><Tok_bar_op=%a>@]" String.xpp op
-    | Tok_colon_op op -> asprintf "@[<h><Tok_colon_op=%a>@]" String.xpp op
-    | Tok_dot_op op -> asprintf "@[<h><Tok_dot_op=%a>@]" String.xpp op
+    | Tok_tilde_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_tilde_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_qmark_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_qmark_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_star_star_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_star_star_op=" |> String.pp op |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_star_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_star_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_slash_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_slash_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_pct_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_pct_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_plus_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_plus_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_minus_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_minus_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_at_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_at_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_caret_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_caret_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_dollar_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_dollar_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_lt_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_lt_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_eq_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_eq_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_gt_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_gt_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_bar_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_bar_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_colon_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_colon_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_dot_op op ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_dot_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
 
     (* Punctuation. *)
     | Tok_tilde -> "<Tok_tilde>"
@@ -455,45 +473,91 @@ module AbstractToken = struct
     | Tok_indent rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_indent>"
-        | Malformed _ -> asprintf "@[<h><Tok_indent=%a>@]" (Rendition.xpp Unit.xpp) rendition
+        | Malformed _ -> String.Fmt.empty |> Fmt.fmt "<Tok_indent="
+                         |> (Rendition.pp Unit.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
       end
     | Tok_line_delim -> "<Tok_line_delim>"
     | Tok_dedent rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_dedent>"
-        | Malformed _ -> asprintf "@[<h><Tok_dedent=%a>@]" (Rendition.xpp Unit.xpp) rendition
+        | Malformed _ -> String.Fmt.empty |> Fmt.fmt "<Tok_dedent="
+                         |> (Rendition.pp Unit.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
       end
     | Tok_whitespace -> "<Tok_whitespace>"
     | Tok_hash_comment -> "<Tok_hash_comment>"
     | Tok_paren_comment rendition -> begin
         match rendition with
         | Constant _ -> "<Tok_paren_comment>"
-        | Malformed _ -> asprintf "@[<h><Tok_paren_comment=%a>@]" (Rendition.xpp Unit.xpp) rendition
+        | Malformed _ -> String.Fmt.empty |> Fmt.fmt "<Tok_paren_comment="
+                         |> (Rendition.pp Unit.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
       end
     | Tok_uscore -> "<Tok_uscore>"
-    | Tok_uident rendition -> asprintf "@[<h><Tok_uident=%a>@]" (Rendition.xpp String.xpp) rendition
-    | Tok_cident cident -> asprintf "@[<h><Tok_cident=%a>@]" String.xpp cident
+    | Tok_uident rendition -> String.Fmt.empty |> Fmt.fmt "<Tok_uident="
+                              |> (Rendition.pp String.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_cident cident -> String.Fmt.empty |> Fmt.fmt "<Tok_cident=" |> String.pp cident
+                           |> Fmt.fmt ">" |> Fmt.to_string
     | Tok_codepoint rendition ->
-      asprintf "@[<h><Tok_codepoint=%a>@]" (Rendition.xpp Codepoint.xpp) rendition
-    | Tok_istring rendition -> asprintf "@[<h><Tok_istring=%a>@]" (Rendition.xpp String.xpp) rendition
-    | Tok_rstring rendition -> asprintf "@[<h><Tok_rstring=%a>@]" (Rendition.xpp String.xpp) rendition
-    | Tok_bstring rendition -> asprintf "@[<h><Tok_bstring=%a>@]" (Rendition.xpp String.xpp) rendition
-    | Tok_r32 rendition -> asprintf "@[<h><Tok_r32=%a>@]" (Rendition.xpp Real.xpp) rendition
-    | Tok_r64 rendition -> asprintf "@[<h><Tok_r64=%a>@]" (Rendition.xpp Real.xpp) rendition
-    | Tok_u8 rendition -> asprintf "@[<h><Tok_u8=%a>@]" (Rendition.xpp U8.xpp) rendition
-    | Tok_i8 rendition -> asprintf "@[<h><Tok_i8=%a>@]" (Rendition.xpp I8.xpp) rendition
-    | Tok_u16 rendition -> asprintf "@[<h><Tok_u16=%a>@]" (Rendition.xpp U16.xpp) rendition
-    | Tok_i16 rendition -> asprintf "@[<h><Tok_i16=%a>@]" (Rendition.xpp I16.xpp) rendition
-    | Tok_u32 rendition -> asprintf "@[<h><Tok_u32=%a>@]" (Rendition.xpp U32.xpp) rendition
-    | Tok_i32 rendition -> asprintf "@[<h><Tok_i32=%a>@]" (Rendition.xpp I32.xpp) rendition
-    | Tok_u64 rendition -> asprintf "@[<h><Tok_u64=%a>@]" (Rendition.xpp U64.xpp) rendition
-    | Tok_i64 rendition -> asprintf "@[<h><Tok_i64=%a>@]" (Rendition.xpp I64.xpp) rendition
-    | Tok_u128 rendition -> asprintf "@[<h><Tok_u128=%a>@]" (Rendition.xpp U128.xpp) rendition
-    | Tok_i128 rendition -> asprintf "@[<h><Tok_i128=%a>@]" (Rendition.xpp I128.xpp) rendition
-    | Tok_u256 rendition -> asprintf "@[<h><Tok_u256=%a>@]" (Rendition.xpp U256.xpp) rendition
-    | Tok_i256 rendition -> asprintf "@[<h><Tok_i256=%a>@]" (Rendition.xpp I256.xpp) rendition
-    | Tok_u512 rendition -> asprintf "@[<h><Tok_u512=%a>@]" (Rendition.xpp U512.xpp) rendition
-    | Tok_i512 rendition -> asprintf "@[<h><Tok_i512=%a>@]" (Rendition.xpp I512.xpp) rendition
+      String.Fmt.empty |> Fmt.fmt "<Tok_codepoint=" |> (Rendition.pp Codepoint.pp) rendition
+      |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_istring rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_istring=" |> (Rendition.pp String.pp) rendition
+      |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_rstring rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_rstring=" |> (Rendition.pp String.pp) rendition
+      |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_bstring rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_bstring=" |> (Rendition.pp String.pp) rendition
+      |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_r32 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_r32="
+      |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:6L ~notation:Fmt.Normalized))
+        rendition |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_r64 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_r64="
+      |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:13L ~notation:Fmt.Normalized))
+        rendition |> Fmt.fmt ">" |> Fmt.to_string
+    | Tok_u8 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_u8=" |> (Rendition.pp U8.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_i8 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_i8=" |> (Rendition.pp I8.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_u16 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_u16=" |> (Rendition.pp U16.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_i16 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_i16=" |> (Rendition.pp I16.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_u32 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_u32=" |> (Rendition.pp U32.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_i32 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_i32=" |> (Rendition.pp I32.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_u64 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_u64=" |> (Rendition.pp U64.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_i64 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_i64=" |> (Rendition.pp I64.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_u128 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_u128=" |> (Rendition.pp U128.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_i128 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_i128=" |> (Rendition.pp I128.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_u256 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_u256=" |> (Rendition.pp U256.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_i256 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_i256=" |> (Rendition.pp I256.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_u512 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_u512=" |> (Rendition.pp U512.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
+    | Tok_i512 rendition ->
+      String.Fmt.empty |> Fmt.fmt "<Tok_i512=" |> (Rendition.pp I512.pp) rendition |> Fmt.fmt ">"
+      |> Fmt.to_string
     | Tok_end_of_input -> "<Tok_end_of_input>"
     | Tok_misaligned -> "<Tok_misaligned>"
     | Tok_error -> "<Tok_error>"
@@ -665,15 +729,20 @@ let unsupported_bitwidth base past t =
   malformation ~base ~past "Unsupported bitwidth in numerical constant" t
 
 let out_of_range_int radix limit base past t =
-  let description = Format.asprintf "@[<h>Numerical constant exceeds %a@]" (
-    let open Radix in
-    let open Nat in
-    match radix with
-    | Bin -> xpp_b
-    | Oct -> xpp_o
-    | Dec -> xpp
-    | Hex -> xpp_x
-  ) limit in
+  let description =
+    String.Fmt.empty
+    |> Fmt.fmt "Numerical constant exceeds "
+    |> (
+      let base = match radix with
+        | Radix.Bin -> Fmt.Bin
+        | Radix.Oct -> Fmt.Oct
+        | Radix.Dec -> Fmt.Dec
+        | Radix.Hex -> Fmt.Hex
+      in
+      Nat.fmt ~alt:true ~base
+    ) limit
+    |> Fmt.to_string
+  in
   malformation ~base ~past description t
 
 let out_of_range_real base past t =
@@ -822,8 +891,8 @@ let ident ~f_accept cursor t =
   fn cursor t
 
 let accept_uident cursor t =
-    let uident_str = str_of_cursor cursor t in
-    accept (AbstractToken.of_uident_str uident_str) cursor t
+  let uident_str = str_of_cursor cursor t in
+  accept (AbstractToken.of_uident_str uident_str) cursor t
 
 let uident _ppcursor _pcursor cursor t =
   ident ~f_accept:accept_uident cursor t
