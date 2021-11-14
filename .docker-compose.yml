@@ -22,13 +22,6 @@ services:
       - .:/home/hemlock/Hemlock
       - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
     working_dir: /home/hemlock/Hemlock
-  pre-push:
-    build:
-      args:
-        - HEMLOCK_PRE_PUSH_CLONE_PATH
-      target: pre-push
-    extends: prod
-    image: branchtaken/hemlock:pre-push
   dev:
     build:
       args:
