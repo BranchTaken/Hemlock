@@ -2,11 +2,8 @@ open! Basis.Rudiments
 open! Basis
 open! Hmc
 open! ScanTest
-open Format
 
 let test () =
-  printf "@[<h>";
-
   (* Valid. *)
   scan_str "0";
   scan_str "00_";
@@ -68,8 +65,6 @@ let test () =
   scan_str "0x___1_fffd";
   scan_str "17i64";
   scan_str "0x_ab__c_i";
-  scan_str "0o777";
-
-  printf "@]"
+  scan_str "0o777"
 
 let _ = test ()

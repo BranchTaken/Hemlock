@@ -2,10 +2,8 @@ open! Basis.Rudiments
 open! Basis
 open! Hmc
 open! ScanTest
-open Format
 
 let test () =
-  printf "@[<h>";
   scan_str "'a' '\n'";
   scan_str "'\\t' '\\n' '\\r' '\\'' '\\\\'";
   scan_str "'\\u{41}'";
@@ -39,7 +37,6 @@ let test () =
   scan_str "'\\x'";
   scan_str "'\\";
   scan_str "'''";
-  scan_str "''";
-  printf "@]"
+  scan_str "''"
 
 let _ = test ()
