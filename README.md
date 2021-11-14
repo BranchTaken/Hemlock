@@ -104,13 +104,6 @@ dune build @doc
 
 Use a web browser to open the documentation at `_build/default/_doc/_html/index.html`.
 
-### Pull Requests
-
-Pull requests are required to pass tests before being merged to `main`. Pull request CI checks that
-tests passed as part of Hemlock's custom `gh push` process. Use our custom
-[gh](https://github.com/cli/cli) CLI [extension](https://github.com/BranchTaken/gh-push) to push,
-test, and record the test result status of branches.
-
 ### License
 
 This project is licensed under the MIT license; see the [LICENSE.md](LICENSE.md) file for details.
