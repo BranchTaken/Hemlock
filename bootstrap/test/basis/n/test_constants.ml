@@ -1,10 +1,14 @@
 open! Basis.Rudiments
 open! Basis
 open N
-open Format
 
 let test () =
-  printf "zero=%a\n" xpp_x zero;
-  printf "one=%a\n" xpp_x one
+  File.Fmt.stdout
+  |> Fmt.fmt "zero="
+  |> fmt ~alt:true ~base:Fmt.Hex zero
+  |> Fmt.fmt "\none="
+  |> fmt ~alt:true ~base:Fmt.Hex one
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()

@@ -1,22 +1,28 @@
 open! Basis.Rudiments
 open! Basis
 open N
-open Format
 
 let test () =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "%a %a %a %a\n" xpp_b x xpp_o x xpp x xpp_x x;
+        File.Fmt.stdout
+        |> fmt ~alt:true ~base:Fmt.Bin ~pretty:true x
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~base:Fmt.Oct ~pretty:true x
+        |> Fmt.fmt " "
+        |> pp x
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn xs'
       end
   in
-  printf "@[<h>";
   fn [
     zero;
     one;
     of_string "42";
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()
