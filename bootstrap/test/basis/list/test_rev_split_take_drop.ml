@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let lists = [
@@ -9,29 +8,42 @@ let test () =
     [0L];
     [0L; 1L]
   ] in
-  printf "@[<h>";
   iter lists ~f:(fun l ->
     Range.iter (0L =:< (succ (length l))) ~f:(fun i ->
       let a, b = split i l in
-      printf "split/take,drop %a %a -> %a, %a / %a, %a\n"
-        Uns.xpp i
-        (xpp Uns.xpp) l
-        (xpp Uns.xpp) a
-        (xpp Uns.xpp) b
-        (xpp Uns.xpp) (take i l)
-        (xpp Uns.xpp) (drop i l)
-      ;
+      File.Fmt.stdout
+      |> Fmt.fmt "split/take,drop "
+      |> Uns.pp i
+      |> Fmt.fmt " "
+      |> (pp Uns.pp) l
+      |> Fmt.fmt " -> "
+      |> (pp Uns.pp) a
+      |> Fmt.fmt ", "
+      |> (pp Uns.pp) b
+      |> Fmt.fmt " / "
+      |> (pp Uns.pp) (take i l)
+      |> Fmt.fmt ", "
+      |> (pp Uns.pp) (drop i l)
+      |> Fmt.fmt "\n"
+      |> ignore;
 
       let a, b = rev_split i l in
-      printf "rev_split/rev_take,drop %a %a -> %a, %a / %a, %a\n"
-        Uns.xpp i
-        (xpp Uns.xpp) l
-        (xpp Uns.xpp) a
-        (xpp Uns.xpp) b
-        (xpp Uns.xpp) (rev_take i l)
-        (xpp Uns.xpp) (drop i l)
+      File.Fmt.stdout
+      |> Fmt.fmt "rev_split/rev_take,drop "
+      |> Uns.pp i
+      |> Fmt.fmt " "
+      |> (pp Uns.pp) l
+      |> Fmt.fmt " -> "
+      |> (pp Uns.pp) a
+      |> Fmt.fmt ", "
+      |> (pp Uns.pp) b
+      |> Fmt.fmt " / "
+      |> (pp Uns.pp) (rev_take i l)
+      |> Fmt.fmt ", "
+      |> (pp Uns.pp) (drop i l)
+      |> Fmt.fmt "\n"
+      |> ignore
     )
-  );
-  printf "@]"
+  )
 
 let _ = test ()

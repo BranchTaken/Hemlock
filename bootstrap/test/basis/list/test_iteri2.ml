@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let list_pairs = [
@@ -10,18 +9,27 @@ let test () =
     ([0L; 1L], [2L; 3L]);
     ([0L; 1L; 2L], [3L; 4L; 5L]);
   ] in
-  printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
-    printf "iter2 %a %a ->"
-      (xpp Uns.xpp) a
-      (xpp Uns.xpp) b
-    ;
+    File.Fmt.stdout
+    |> Fmt.fmt "iter2 "
+    |> (pp Uns.pp) a
+    |> Fmt.fmt " "
+    |> (pp Uns.pp) b
+    |> Fmt.fmt " ->"
+    |> ignore;
     let f i a b = begin
-      printf " (i=%a, a=%a, b=%a)" Uns.xpp i Uns.xpp a Uns.xpp b
+      File.Fmt.stdout
+      |> Fmt.fmt " (i="
+      |> Uns.pp i
+      |> Fmt.fmt ", a="
+      |> Uns.pp a
+      |> Fmt.fmt ", b="
+      |> Uns.pp b
+      |> Fmt.fmt ")"
+      |> ignore
     end in
     iteri2 a b ~f;
-    printf "\n"
-  );
-  printf "@]"
+    File.Fmt.stdout |> Fmt.fmt "\n" |> ignore
+  )
 
 let _ = test ()
