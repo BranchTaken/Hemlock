@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let list_pairs = [
@@ -11,18 +10,21 @@ let test () =
     ([100L; 110L], [200L; 210L]);
     ([100L; 110L; 120L], [200L; 210L; 220L]);
   ] in
-  printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
     let f i accum a_elm b_elm = begin
       let len = length a in
       let limit = len - 2L in
       ((i + a_elm + b_elm) :: accum), (i = limit)
     end in
-    printf "foldi2 %a %a -> %a\n"
-      (xpp Uns.xpp) a
-      (xpp Uns.xpp) b
-      (xpp Uns.xpp) (foldi2_until a b ~init:[] ~f)
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "foldi2_until "
+    |> (pp Uns.pp) a
+    |> Fmt.fmt " "
+    |> (pp Uns.pp) b
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) (foldi2_until a b ~init:[] ~f)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

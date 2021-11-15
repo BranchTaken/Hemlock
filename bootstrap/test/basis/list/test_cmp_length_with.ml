@@ -1,27 +1,32 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let test_cmp_length_with lst limit = begin
-    printf " (limit=%a -> %s)"
-      Uns.xpp limit (match cmp_length_with lst limit with
-      | Cmp.Lt -> "Lt"
-      | Cmp.Eq -> "Eq"
-      | Cmp.Gt -> "Gt"
-    )
+    File.Fmt.stdout
+    |> Fmt.fmt " (limit="
+    |> Uns.pp limit
+    |> Fmt.fmt " -> "
+    |> Cmp.pp (cmp_length_with lst limit)
+    |> Fmt.fmt ")"
+    |> ignore
   end in
   let rec test_with_lists lists = begin
     match lists with
     | [] -> ()
     | list :: lists' -> begin
-        printf "cmp_length_with %a" (xpp Uns.xpp) list;
+        File.Fmt.stdout
+        |> Fmt.fmt "cmp_length_with "
+        |> (pp Uns.pp) list
+        |> ignore;
         Range.iter (0L =:< 4L) ~f:(fun limit ->
-          printf "%s" (if limit = 0L then ": " else ", ");
+          File.Fmt.stdout
+          |> Fmt.fmt (if limit = 0L then ": " else ", ")
+          |> ignore;
           test_cmp_length_with list limit;
         );
-        printf "\n";
+        File.Fmt.stdout |> Fmt.fmt "\n" |> ignore;
         test_with_lists lists'
       end
   end in
@@ -31,8 +36,6 @@ let test () =
     [0L; 1L];
     [0L; 1L; 2L]
   ] in
-  printf "@[<h>";
-  test_with_lists lists;
-  printf "@]"
+  test_with_lists lists
 
 let _ = test ()

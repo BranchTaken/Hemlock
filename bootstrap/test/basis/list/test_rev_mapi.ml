@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let lists = [
@@ -11,14 +10,17 @@ let test () =
     [0L; 1L; 2L];
     [0L; 1L; 2L; 3L];
   ] in
-  printf "@[<h>";
   iter lists ~f:(fun l ->
     let f i elm = elm + i * 10L in
-    printf "[rev_]mapi %a -> %a / %a\n"
-      (xpp Uns.xpp) l
-      (xpp Uns.xpp) (mapi l ~f)
-      (xpp Uns.xpp) (rev_mapi l ~f)
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "[rev_]mapi "
+    |> (pp Uns.pp) l
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) (mapi l ~f)
+    |> Fmt.fmt " / "
+    |> (pp Uns.pp) (rev_mapi l ~f)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

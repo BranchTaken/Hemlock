@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let lists = [
@@ -10,12 +9,14 @@ let test () =
     [0L; 1L];
     [0L; 1L; 2L];
   ] in
-  printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "rev %a -> %a\n"
-      (xpp Uns.xpp) l
-      (xpp Uns.xpp) (rev l)
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "rev "
+    |> (pp Uns.pp) l
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) (rev l)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

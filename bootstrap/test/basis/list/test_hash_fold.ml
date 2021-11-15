@@ -1,18 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn lists = begin
     match lists with
     | [] -> ()
     | l :: lists' -> begin
-        printf "hash_fold %a -> %a\n"
-          (xpp Uns.xpp) l
-          Hash.xpp (Hash.t_of_state
-            (hash_fold Uns.hash_fold l Hash.State.empty));
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold "
+        |> (pp Uns.pp) l
+        |> Fmt.fmt " -> "
+        |> Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold l Hash.State.empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn lists'
       end
   end in
@@ -22,7 +23,6 @@ let test () =
     [0L; 0L];
     [0L; 1L]
   ] in
-  fn lists;
-  printf "@]"
+  fn lists
 
 let _ = test ()
