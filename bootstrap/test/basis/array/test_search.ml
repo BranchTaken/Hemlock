@@ -1,33 +1,51 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let test_search arr key_max = begin
-    printf "%a\n" (xpp Uns.xpp) arr;
+    File.Fmt.stdout
+    |> (pp Uns.pp) arr
+    |> Fmt.fmt "\n"
+    |> ignore;
     Range.iter (0L =:< (succ key_max)) ~f:(fun probe ->
       let open Cmp in
-      printf "  %a -> %s, %s, %s\n" Uns.xpp probe
-        (match psearch probe ~cmp:Uns.cmp arr with
-          | None -> "<"
-          | Some (Lt, i) -> asprintf "<[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
-          | Some (Eq, i) -> asprintf "=[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
-          | Some (Gt, i) -> asprintf ">[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
-        )
+      File.Fmt.stdout
+      |> Fmt.fmt "  "
+      |> Uns.pp probe
+      |> Fmt.fmt " -> "
+      |> (fun formatter ->
+        match psearch probe ~cmp:Uns.cmp arr with
+        | None -> formatter |> Fmt.fmt "<"
+        | Some (Lt, i) ->
+          formatter |> Fmt.fmt "<[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (get i arr)
+        | Some (Eq, i) ->
+          formatter |> Fmt.fmt "=[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (get i arr)
+        | Some (Gt, i) ->
+          formatter |> Fmt.fmt ">[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (get i arr)
+      )
+      |> Fmt.fmt ", "
+      |> (fun formatter ->
         (match search probe ~cmp:Uns.cmp arr with
-          | None -> "<>"
-          | Some i -> asprintf "=%a" Uns.xpp (get i arr)
+          | None -> formatter |> Fmt.fmt "<>"
+          | Some i -> formatter |> Fmt.fmt "=" |> Uns.pp (get i arr)
         )
-        (match nsearch probe ~cmp:Uns.cmp arr with
-          | Some (Lt, i) -> asprintf "<[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
-          | Some (Eq, i) -> asprintf "=[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
-          | Some (Gt, i) -> asprintf ">[%a]=%a" Uns.xpp i Uns.xpp (get i arr)
-          | None -> ">"
-        )
+      )
+      |> Fmt.fmt ", "
+      |> (fun formatter ->
+        match nsearch probe ~cmp:Uns.cmp arr with
+        | Some (Lt, i) ->
+          formatter |> Fmt.fmt "<[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (get i arr)
+        | Some (Eq, i) ->
+          formatter |> Fmt.fmt "=[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (get i arr)
+        | Some (Gt, i) ->
+          formatter |> Fmt.fmt ">[" |> Uns.pp i |> Fmt.fmt "]=" |> Uns.pp (get i arr)
+        | None -> formatter |> Fmt.fmt ">"
+      )
+      |> Fmt.fmt "\n"
+      |> ignore
     )
   end in
-  printf "@[<h>";
   Range.iter (0L =:< 4L) ~f:(fun len ->
     let arr = init (0L =:< len) ~f:(fun i -> i * 2L + 1L) in
     let key_max = len * 2L in
@@ -38,7 +56,6 @@ let test () =
     let arr = init (0L =:< len) ~f:(fun i -> i + ((i + 1L) % 2L)) in
     let key_max = len in
     test_search arr key_max
-  );
-  printf "@]"
+  )
 
 let _ = test ()

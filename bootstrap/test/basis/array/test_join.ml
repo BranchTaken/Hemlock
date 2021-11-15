@@ -1,20 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let test ?sep arrs = begin
-    printf "join";
-    let () = match sep with
-      | None -> ()
-      | Some sep -> printf " ~sep:%a" (xpp Uns.xpp) sep;
-    in
-    printf " %a -> %a\n"
-      (List.xpp (xpp Uns.xpp)) arrs
-      (xpp Uns.xpp) (join ?sep arrs)
+    File.Fmt.stdout
+    |> Fmt.fmt "join"
+    |> (fun formatter ->
+      match sep with
+      | None -> formatter
+      | Some sep -> formatter |> Fmt.fmt " ~sep:" |> (pp Uns.pp) sep
+    )
+    |> Fmt.fmt " "
+    |> (List.pp (pp Uns.pp)) arrs
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) (join ?sep arrs)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
-  printf "@[<h>";
   test [];
   test [[||]];
   test [[||]; [||]];
@@ -49,7 +52,6 @@ let test () =
   test ~sep:[|3L|] [[||]; [||]; [|0L|]];
   test ~sep:[|3L|] [[|0L|]; [|1L|]; [||]];
   test ~sep:[|3L|] [[|0L|]; [||]; [|1L|]];
-  test ~sep:[|3L|] [[|0L|]; [|1L|]; [|2L|]];
-  printf "@]"
+  test ~sep:[|3L|] [[|0L|]; [|1L|]; [|2L|]]
 
 let _ = test ()

@@ -1,17 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open Basis.Array
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn arrs = begin
     match arrs with
     | [] -> ()
     | arr :: arrs' -> begin
-        printf "hash_fold %a -> %a\n"
-          (xpp Uns.xpp) arr
-          Hash.xpp (Hash.t_of_state (hash_fold Uns.hash_fold arr Hash.State.empty));
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold "
+        |> (pp Uns.pp) arr
+        |> Fmt.fmt " -> "
+        |> Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold arr Hash.State.empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn arrs'
       end
   end in
@@ -21,7 +23,6 @@ let test () =
     [|0L; 0L|];
     [|0L; 1L|]
   ] in
-  fn arrs;
-  printf "@]"
+  fn arrs
 
 let _ = test ()

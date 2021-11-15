@@ -1,11 +1,14 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let test arr = begin
-    printf "pare %a ->" (xpp Uns.xpp) arr;
+    File.Fmt.stdout
+    |> Fmt.fmt "pare "
+    |> (pp Uns.pp) arr
+    |> Fmt.fmt " ->"
+    |> ignore;
     let rec fni i n = begin
       match i > n with
       | true -> ()
@@ -15,11 +18,14 @@ let test () =
             | true -> ()
             | false -> begin
                 let arr' = pare (i =:< j) arr in
-                printf " [%a,%a)=%a"
-                  Uns.xpp i
-                  Uns.xpp j
-                  (xpp Uns.xpp) arr'
-                ;
+                File.Fmt.stdout
+                |> Fmt.fmt " ["
+                |> Uns.pp i
+                |> Fmt.fmt ","
+                |> Uns.pp j
+                |> Fmt.fmt ")="
+                |> (pp Uns.pp) arr'
+                |> ignore;
                 fnj (succ j) n
               end
           end in
@@ -28,13 +34,11 @@ let test () =
         end
     end in
     fni 0L (length arr);
-    printf "\n"
+    File.Fmt.stdout |> Fmt.fmt "\n" |> ignore
   end in
-  printf "@[<h>";
   test [||];
   test [|0L|];
   test [|0L; 1L|];
-  test [|0L; 1L; 2L|];
-  printf "@]"
+  test [|0L; 1L; 2L|]
 
 let _ = test ()

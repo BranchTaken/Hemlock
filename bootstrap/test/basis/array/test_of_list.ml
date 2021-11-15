@@ -1,15 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
-  printf "@[<h>";
   let test list = begin
-    printf "of_list[_rev] %a -> %a / %a\n"
-      (List.xpp Uns.xpp) list
-      (xpp Uns.xpp) (of_list list)
-      (xpp Uns.xpp) (of_list_rev list);
+    File.Fmt.stdout
+    |> Fmt.fmt "of_list[_rev] "
+    |> (List.pp Uns.pp) list
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) (of_list list)
+    |> Fmt.fmt " / "
+    |> (pp Uns.pp) (of_list_rev list)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let lists = [
     [];
@@ -18,7 +21,6 @@ let test () =
     [0L; 1L; 2L];
     [0L; 1L; 2L; 3L];
   ] in
-  List.iter lists ~f:test;
-  printf "@]"
+  List.iter lists ~f:test
 
 let _ = test ()

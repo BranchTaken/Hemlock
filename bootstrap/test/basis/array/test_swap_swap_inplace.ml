@@ -1,30 +1,36 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let test_swap arr = begin
     Range.iter (0L =:< (length arr)) ~f:(fun i ->
       Range.iter (i =:< (length arr)) ~f:(fun j ->
         let arr' = copy arr in
-        printf "%a %a: swap %a -> %a -> swap_inplace %a -> "
-          Uns.xpp i
-          Uns.xpp j
-          (xpp Uns.xpp) arr'
-          (xpp Uns.xpp) (swap i j arr')
-          (xpp Uns.xpp) arr'
-        ;
+        File.Fmt.stdout
+        |> Uns.pp i
+        |> Fmt.fmt " "
+        |> Uns.pp j
+        |> Fmt.fmt ": swap "
+        |> (pp Uns.pp) arr'
+        |> Fmt.fmt " -> "
+        |> (pp Uns.pp) (swap i j arr')
+        |> Fmt.fmt " -> swap_inplace "
+        |> (pp Uns.pp) arr'
+        |> Fmt.fmt " -> "
+        |> ignore;
+
         swap_inplace i j arr';
-        printf "%a\n" (xpp Uns.xpp) arr'
+        File.Fmt.stdout
+        |> (pp Uns.pp) arr'
+        |> Fmt.fmt "\n"
+        |> ignore
       )
     )
   end in
-  printf "@[<h>";
   test_swap [|0L|];
   test_swap [|0L; 1L|];
   test_swap [|0L; 1L; 2L|];
-  test_swap [|0L; 1L; 2L; 3L|];
-  printf "@]"
+  test_swap [|0L; 1L; 2L; 3L|]
 
 let _ = test ()
