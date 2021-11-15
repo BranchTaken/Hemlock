@@ -1,18 +1,21 @@
 open! Basis.Rudiments
 open! Basis
 open Bool
-open Format
 
 let test () =
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
-        printf "pp %b -> %a\n" t xpp t;
+        File.Fmt.stdout
+        |> Fmt.fmt "pp "
+        |> pp t
+        |> Fmt.fmt " -> "
+        |> pp t
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn ts'
       end
   in
-  printf "@[<h>";
-  fn [false; true];
-  printf "@]"
+  fn [false; true]
 
 let _ = test ()

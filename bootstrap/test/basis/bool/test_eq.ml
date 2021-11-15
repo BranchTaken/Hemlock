@@ -1,22 +1,37 @@
 open! Basis.Rudiments
 open! Basis
 open Bool
-open Format
 
 let test () =
   let fn t0 t1 = begin
-    printf "cmp %b %b -> %a\n" t0 t1 Cmp.xpp (cmp t0 t1);
-    printf "%b = %b -> %b\n" t0 t1 (t0 = t1);
-    printf "%b <> %b -> %b\n" t0 t1 (t0 <> t1);
+    File.Fmt.stdout
+    |> Fmt.fmt "cmp "
+    |> pp t0
+    |> Fmt.fmt " "
+    |> pp t1
+    |> Fmt.fmt " -> "
+    |> Cmp.pp (cmp t0 t1)
+    |> Fmt.fmt "\n"
+    |> pp t0
+    |> Fmt.fmt " = "
+    |> pp t1
+    |> Fmt.fmt " -> "
+    |> pp (t0 = t1)
+    |> Fmt.fmt "\n"
+    |> pp t0
+    |> Fmt.fmt " <> "
+    |> pp t1
+    |> Fmt.fmt " -> "
+    |> pp (t0 <> t1)
+    |> ignore
   end in
-  printf "@[<h>";
   fn false false;
-  printf "\n";
+  File.Fmt.stdout |> Fmt.fmt "\n\n" |> ignore;
   fn false true;
-  printf "\n";
+  File.Fmt.stdout |> Fmt.fmt "\n\n" |> ignore;
   fn true false;
-  printf "\n";
+  File.Fmt.stdout |> Fmt.fmt "\n\n" |> ignore;
   fn true true;
-  printf "@]"
+  File.Fmt.stdout |> Fmt.fmt "\n" |> ignore
 
 let _ = test ()
