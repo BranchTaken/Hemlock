@@ -1,20 +1,21 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
   let test_length arr = begin
-    printf "%a: length=%a, is_empty=%B\n"
-      (xpp Uns.xpp) arr
-      Uns.xpp (length arr)
-      (is_empty arr)
+    File.Fmt.stdout
+    |> (pp Uns.pp) arr
+    |> Fmt.fmt ": length="
+    |> Uns.pp (length arr)
+    |> Fmt.fmt ", is_empty="
+    |> Bool.pp (is_empty arr)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
-  printf "@[<h>";
   test_length [||];
   test_length [|0L|];
   test_length [|0L; 1L|];
-  test_length [|0L; 1L; 2L|];
-  printf "@]"
+  test_length [|0L; 1L; 2L|]
 
 let _ = test ()

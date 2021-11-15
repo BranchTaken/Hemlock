@@ -1,15 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
-  printf "@[<h>";
   let test stream = begin
-    printf "of_stream[_rev] %a -> %a / %a\n"
-      (Stream.xpp Uns.xpp) stream
-      (xpp Uns.xpp) (of_stream stream)
-      (xpp Uns.xpp) (of_stream_rev stream);
+    File.Fmt.stdout
+    |> Fmt.fmt "of_stream[_rev] "
+    |> (Stream.pp Uns.pp) stream
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) (of_stream stream)
+    |> Fmt.fmt " / "
+    |> (pp Uns.pp) (of_stream_rev stream)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let f list = begin
     match list with
@@ -23,7 +26,6 @@ let test () =
     [0L; 1L; 2L];
     [0L; 1L; 2L; 3L];
   ] in
-  List.iter streams ~f:test;
-  printf "@]"
+  List.iter streams ~f:test
 
 let _ = test ()

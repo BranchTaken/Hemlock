@@ -1,25 +1,30 @@
 open! Basis.Rudiments
 open! Basis
 open Array
-open Format
 
 let test () =
-  let xpp_str xppf t = Format.fprintf xppf "%S" t in
   let test_map uarr = begin
-    printf "%a -> map " (xpp Uns.xpp) uarr;
-    let sarr = map uarr ~f:(fun elm -> asprintf "%a" Uns.xpp elm) in
-    printf "%a" (xpp xpp_str) sarr;
-    printf " -> mapi ";
-    let sarr = mapi uarr ~f:(fun i elm ->
-      asprintf "[%a]=%a" Uns.xpp i Uns.xpp elm
+    let sarr = map uarr ~f:(fun elm -> String.Fmt.empty |> Uns.pp elm |> Fmt.to_string) in
+    let sarr2 = mapi uarr ~f:(fun i elm ->
+      String.Fmt.empty
+      |> Fmt.fmt "["
+      |> Uns.pp i
+      |> Fmt.fmt "]="
+      |> Uns.pp elm
+      |> Fmt.to_string
     ) in
-    printf "%a\n" (xpp xpp_str) sarr
+    File.Fmt.stdout
+    |> (pp Uns.pp) uarr
+    |> Fmt.fmt " -> map "
+    |> (pp String.pp) sarr
+    |> Fmt.fmt " -> mapi "
+    |> (pp String.pp) sarr2
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
-  printf "@[<h>";
   test_map [||];
   test_map [|0L|];
   test_map [|1L; 0L|];
-  test_map [|2L; 1L; 0L|];
-  printf "@]"
+  test_map [|2L; 1L; 0L|]
 
 let _ = test ()
