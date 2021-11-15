@@ -1,14 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open Bool
-open Format
 
 let test () =
   let rec fn bs = begin
     match bs with
     | [] -> ()
     | b :: bs' -> begin
-        printf "not %b -> %b\n" b (not b);
+        File.Fmt.stdout
+        |> Fmt.fmt "not "
+        |> pp b
+        |> Fmt.fmt " -> "
+        |> pp (not b)
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn bs'
       end
   end in

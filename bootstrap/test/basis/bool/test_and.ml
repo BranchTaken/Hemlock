@@ -1,19 +1,30 @@
 open! Basis.Rudiments
 open! Basis
 open! Bool
-open Format
 
 let test () =
   let side_effect b s = begin
-    printf "side effect %s\n" s;
+    File.Fmt.stdout
+    |> Fmt.fmt "side effect "
+    |> Fmt.fmt s
+    |> Fmt.fmt "\n"
+    |> ignore;
     b
   end in
   let rec fn pairs = begin
     match pairs with
     | [] -> ()
     | (a, b) :: pairs' -> begin
-        printf "(%b && %b) -> %b\n"
-          a b ((side_effect a "a") && (side_effect b "b"));
+        let r = ((side_effect a "a") && (side_effect b "b")) in
+        File.Fmt.stdout
+        |> Fmt.fmt "("
+        |> pp a
+        |> Fmt.fmt " && "
+        |> pp b
+        |> Fmt.fmt ") -> "
+        |> pp r
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn pairs'
       end
   end in
