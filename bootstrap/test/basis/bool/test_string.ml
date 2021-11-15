@@ -1,15 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open Bool
-open Format
 
 let test () =
   let rec fn = function
     | [] -> ()
     | t :: ts' -> begin
         let s = to_string t in
-        printf "to_string %b -> %s ; " t s;
-        printf "of_string %s -> %b\n" s (of_string s);
+        File.Fmt.stdout
+        |> Fmt.fmt "to_string "
+        |> pp t
+        |> Fmt.fmt " -> "
+        |> String.pp s
+        |> Fmt.fmt " ; of_string "
+        |> String.pp s
+        |> Fmt.fmt " -> "
+        |> pp (of_string s)
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn ts'
       end
   in

@@ -1,2 +1,2 @@
-to_string false -> false ; of_string false -> false
-to_string true -> true ; of_string true -> true
+to_string false -> "false" ; of_string "false" -> false
+to_string true -> "true" ; of_string "true" -> true
