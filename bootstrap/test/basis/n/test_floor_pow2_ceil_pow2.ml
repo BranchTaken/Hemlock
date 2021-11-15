@@ -1,17 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open N
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test = function
     | [] -> ()
     | u :: us' -> begin
-        printf "floor_pow2,ceil_pow2 %a -> %a, %a\n"
-          xpp_x u
-          xpp_x (floor_pow2 u)
-          xpp_x (ceil_pow2 u);
+        File.Fmt.stdout
+        |> Fmt.fmt "floor_pow2,ceil_pow2 "
+        |> fmt ~alt:true ~base:Fmt.Hex u
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex (floor_pow2 u)
+        |> Fmt.fmt ", "
+        |> fmt ~alt:true ~base:Fmt.Hex (ceil_pow2 u)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test us'
       end
   in
@@ -31,7 +34,6 @@ let test () =
     of_string
       "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff"
   ] in
-  test us;
-  printf "@]"
+  test us
 
 let _ = test ()
