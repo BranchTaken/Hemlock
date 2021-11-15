@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let list_pairs = [
@@ -10,18 +9,30 @@ let test () =
     ([0L; 1L], [2L; 3L]);
     ([0L; 1L; 2L], [3L; 4L; 5L])
   ] in
-  let xpp_pair xppf (a, b) = fprintf xppf "(%a,@ %a)" Uns.xpp a Uns.xpp b in
-  printf "@[<h>";
+  let pp_pair (a, b) formatter = begin
+    formatter
+    |> Fmt.fmt "("
+    |> Uns.pp a
+    |> Fmt.fmt ", "
+    |> Uns.pp b
+    |> Fmt.fmt ")"
+  end in
   iter list_pairs ~f:(fun (t0, t1) ->
     let z = zip t0 t1 in
     let t0', t1' = unzip z in
-    printf "zip/unzip %a %a -> %a -> %a %a\n"
-      (xpp Uns.xpp) t0
-      (xpp Uns.xpp) t1
-      (xpp xpp_pair) z
-      (xpp Uns.xpp) t0'
-      (xpp Uns.xpp) t1'
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "zip/unzip "
+    |> (pp Uns.pp) t0
+    |> Fmt.fmt " "
+    |> (pp Uns.pp) t1
+    |> Fmt.fmt " -> "
+    |> (pp pp_pair) z
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) t0'
+    |> Fmt.fmt " "
+    |> (pp Uns.pp) t1'
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

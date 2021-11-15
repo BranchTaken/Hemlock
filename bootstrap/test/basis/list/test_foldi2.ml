@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let list_pairs = [
@@ -14,14 +13,16 @@ let test () =
   let f i accum a_elm b_elm = begin
     (i + a_elm + b_elm) :: accum
   end in
-  printf "@[<h>";
   iter list_pairs ~f:(fun (a, b) ->
-    printf "foldi2 %a %a -> %a\n"
-      (xpp Uns.xpp) a
-      (xpp Uns.xpp) b
-      (xpp Uns.xpp) (foldi2 a b ~init:[] ~f)
-    ;
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "foldi2 "
+    |> (pp Uns.pp) a
+    |> Fmt.fmt " "
+    |> (pp Uns.pp) b
+    |> Fmt.fmt " -> "
+    |> (pp Uns.pp) (foldi2 a b ~init:[] ~f)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

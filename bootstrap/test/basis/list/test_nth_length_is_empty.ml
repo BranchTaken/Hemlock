@@ -1,17 +1,26 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let test_length lst = begin
-    printf "[";
+    File.Fmt.stdout
+    |> Fmt.fmt "["
+    |> ignore;
     Range.iter (0L =:< (length lst)) ~f:(fun i ->
-      if i > 0L then printf "; ";
-      printf "%a" Uns.xpp (nth i lst);
+      File.Fmt.stdout
+      |> Fmt.fmt (if i > 0L then "; " else "")
+      |> Uns.pp (nth i lst)
+      |> ignore
     );
-    printf "]: length=%a, is_empty=%B\n"
-      Uns.xpp (length lst) (is_empty lst)
+    File.Fmt.stdout
+    |> Fmt.fmt "]: length="
+    |> Uns.pp (length lst)
+    |> Fmt.fmt ", is_empty="
+    |> Bool.pp (is_empty lst)
+    |> Fmt.fmt "\n"
+    |> Fmt.fmt ""
+    |> ignore
   end in
   test_length [];
   test_length [0L];

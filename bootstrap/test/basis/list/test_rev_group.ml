@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let lists = [
@@ -19,13 +18,16 @@ let test () =
     [0L; 0L; 0L; 0L];
   ] in
   let eq x0 x1 = (x0 = x1) in
-  printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "[rev_]group %a ~break:eq -> %a / %a\n"
-      (xpp Uns.xpp) l
-      (xpp (xpp Uns.xpp)) (group l ~break:eq)
-      (xpp (xpp Uns.xpp)) (rev_group l ~break:eq)
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "[rev_]group "
+    |> (pp Uns.pp) l
+    |> Fmt.fmt " ~break:eq -> "
+    |> (pp (pp Uns.pp)) (group l ~break:eq)
+    |> Fmt.fmt " / "
+    |> (pp (pp Uns.pp)) (rev_group l ~break:eq)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

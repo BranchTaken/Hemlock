@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open List
-open Format
 
 let test () =
   let lists = [
@@ -17,20 +16,22 @@ let test () =
     [1L; 0L];
     [0L; 2L; 1L]
   ] in
-  printf "@[<h>";
   iter lists ~f:(fun l ->
-    printf "is_sorted               %a -> %b\n"
-      (xpp Uns.xpp) l
-      (is_sorted l ~cmp:Uns.cmp)
-    ;
-    printf "is_sorted ~strict:false %a -> %b\n"
-      (xpp Uns.xpp) l
-      (is_sorted ~strict:false l ~cmp:Uns.cmp)
-    ;
-    printf "is_sorted ~strict:true  %a -> %b\n"
-      (xpp Uns.xpp) l
-      (is_sorted ~strict:true l ~cmp:Uns.cmp)
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "is_sorted               "
+    |> (pp Uns.pp) l
+    |> Fmt.fmt " -> "
+    |> Bool.pp (is_sorted l ~cmp:Uns.cmp)
+    |> Fmt.fmt "\nis_sorted ~strict:false "
+    |> (pp Uns.pp) l
+    |> Fmt.fmt " -> "
+    |> Bool.pp (is_sorted ~strict:false l ~cmp:Uns.cmp)
+    |> Fmt.fmt "\nis_sorted ~strict:true  "
+    |> (pp Uns.pp) l
+    |> Fmt.fmt " -> "
+    |> Bool.pp (is_sorted ~strict:true l ~cmp:Uns.cmp)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()
