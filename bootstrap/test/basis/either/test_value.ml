@@ -1,15 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open Either
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn = function
     | [] -> ()
     | either :: eithers' -> begin
-        printf "value %a -> %a@\n"
-          (xpp Uns.xpp Uns.xpp) either Uns.xpp (value either);
+        File.Fmt.stdout
+        |> Fmt.fmt "value "
+        |> (pp Uns.pp Uns.pp) either
+        |> Fmt.fmt " -> "
+        |> Uns.pp (value either)
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn eithers'
       end
   in
@@ -17,7 +20,6 @@ let test () =
     First 0L;
     Second 0L;
   ] in
-  fn eithers;
-  printf "@]"
+  fn eithers
 
 let _ = test ()

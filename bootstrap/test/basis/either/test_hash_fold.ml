@@ -1,17 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open Either
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn = function
     | [] -> ()
     | either :: eithers' -> begin
-        printf "hash_fold %a -> %a\n"
-          (xpp Uns.xpp Uns.xpp) either
-          Hash.xpp (Hash.t_of_state (hash_fold Uns.hash_fold Uns.hash_fold
-              either Hash.State.empty));
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold "
+        |> (pp Uns.pp Uns.pp) either
+        |> Fmt.fmt " -> "
+        |> Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold Uns.hash_fold either Hash.State.empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn eithers'
       end
   in
@@ -21,7 +22,6 @@ let test () =
     Second 0L;
     Second 1L;
   ] in
-  fn eithers;
-  printf "@]"
+  fn eithers
 
 let _ = test ()
