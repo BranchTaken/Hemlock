@@ -1,26 +1,26 @@
-extend_to_uns -32768i16 -> 0xffff_ffff_ffff_8000
+extend_to_uns -32_768i16 -> 0xffff_ffff_ffff_8000
 extend_to_uns -1i16 -> 0xffff_ffff_ffff_ffff
 extend_to_uns 0i16 -> 0x0000_0000_0000_0000
 extend_to_uns 1i16 -> 0x0000_0000_0000_0001
-extend_to_uns 32767i16 -> 0x0000_0000_0000_7fff
+extend_to_uns 32_767i16 -> 0x0000_0000_0000_7fff
 
 trunc_of_uns/narrow_of_uns_opt 0 -> 0i16/Some 0i16
 trunc_of_uns/narrow_of_uns_opt 1 -> 1i16/Some 1i16
-trunc_of_uns/narrow_of_uns_opt 32767 -> 32767i16/Some 32767i16
-trunc_of_uns/narrow_of_uns_opt 32768 -> -32768i16/None
-trunc_of_uns/narrow_of_uns_opt 65535 -> -1i16/None
+trunc_of_uns/narrow_of_uns_opt 32_767 -> 32_767i16/Some 32_767i16
+trunc_of_uns/narrow_of_uns_opt 32_768 -> -32_768i16/None
+trunc_of_uns/narrow_of_uns_opt 65_535 -> -1i16/None
 
-extend_to_sint -32768i16 -> -32768i
+extend_to_sint -32_768i16 -> -32_768i
 extend_to_sint -1i16 -> -1i
 extend_to_sint 0i16 -> 0i
 extend_to_sint 1i16 -> 1i
-extend_to_sint 32767i16 -> 32767i
+extend_to_sint 32_767i16 -> 32_767i
 
-trunc_of_sint/narrow_of_sint_opt -32769i -> 32767i16/None
-trunc_of_sint/narrow_of_sint_opt -32768i -> -32768i16/Some -32768i16
+trunc_of_sint/narrow_of_sint_opt -32_769i -> 32_767i16/None
+trunc_of_sint/narrow_of_sint_opt -32_768i -> -32_768i16/Some -32_768i16
 trunc_of_sint/narrow_of_sint_opt -1i -> -1i16/Some -1i16
 trunc_of_sint/narrow_of_sint_opt 0i -> 0i16/Some 0i16
 trunc_of_sint/narrow_of_sint_opt 1i -> 1i16/Some 1i16
-trunc_of_sint/narrow_of_sint_opt 32767i -> 32767i16/Some 32767i16
-trunc_of_sint/narrow_of_sint_opt 32768i -> -32768i16/None
-trunc_of_sint/narrow_of_sint_opt 65535i -> -1i16/None
+trunc_of_sint/narrow_of_sint_opt 32_767i -> 32_767i16/Some 32_767i16
+trunc_of_sint/narrow_of_sint_opt 32_768i -> -32_768i16/None
+trunc_of_sint/narrow_of_sint_opt 65_535i -> -1i16/None
