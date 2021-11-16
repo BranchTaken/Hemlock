@@ -7,10 +7,11 @@ let test () =
     | [] -> ()
     | either :: eithers' -> begin
         File.Fmt.stdout
-        |> Fmt.fmt "is_first " |> (pp Uns.pp Uns.pp) either |> Fmt.fmt " -> "
-        |> Bool.pp (is_first either) |> Fmt.fmt "\n"
-        |> Fmt.fmt "is_first " |> (pp Uns.pp Uns.pp) either |> Fmt.fmt " -> "
-        |> Bool.pp (is_second either) |> Fmt.fmt "\n"
+        |> Fmt.fmt "fmt -> "
+        |> (fmt Uns.pp Uns.pp) either
+        |> Fmt.fmt "\npp -> "
+        |> (pp Uns.pp Uns.pp) either
+        |> Fmt.fmt "\n"
         |> ignore;
         fn eithers'
       end

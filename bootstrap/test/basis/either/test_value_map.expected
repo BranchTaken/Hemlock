@@ -1,2 +1,2 @@
-value_map First 1 -> 3
-value_map Second 2 -> 6
+value_map First (1) -> 3
+value_map Second (2) -> 6

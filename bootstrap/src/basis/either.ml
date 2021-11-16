@@ -19,10 +19,23 @@ let xpp xpp_a xpp_b xppf = function
   | First a -> Format.fprintf xppf "@[<h>First %a@]" xpp_a a
   | Second b -> Format.fprintf xppf "@[<h>Second %a@]" xpp_b b
 
-let pp pp_a pp_b t formatter =
+let fmt ?(alt=Fmt.alt_default) fmt_a fmt_b t formatter =
   match t with
-  | First a -> formatter |> Fmt.fmt "First " |> pp_a a
-  | Second b -> formatter |> Fmt.fmt "Second " |> pp_b b
+  | First a ->
+    formatter
+    |> Fmt.fmt "First "
+    |> Fmt.fmt (if alt then "(" else "")
+    |> fmt_a a
+    |> Fmt.fmt (if alt then ")" else "")
+  | Second b ->
+    formatter
+    |> Fmt.fmt "Second "
+    |> Fmt.fmt (if alt then "(" else "")
+    |> fmt_b b
+    |> Fmt.fmt (if alt then ")" else "")
+
+let pp pp_a pp_b t formatter =
+  fmt ~alt:true pp_a pp_b t formatter
 
 let is_first = function
   | First _ -> true

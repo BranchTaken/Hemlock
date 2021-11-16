@@ -22,6 +22,12 @@ val cmp: ('a -> 'a -> Cmp.t) -> ('b -> 'b -> Cmp.t) -> ('a, 'b) t -> ('a, 'b) t 
 
 include FormattableIntf.SPoly2 with type ('a, 'b) t := ('a, 'b) t
 
+val fmt: ?alt:bool -> ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
+  -> ('b -> (module Fmt.Formatter) -> (module Fmt.Formatter)) -> ('a, 'b) t
+  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** [fmt ~alt fmt_a fmt_b t] uses the formatter [fmt_a] or [fmt_b] to format a syntactically valid
+    representation of [t]. If [~alt=true], the value is enclosed by parentheses. *)
+
 (** {1 Access} *)
 
 val is_first: (_, _) t -> bool
