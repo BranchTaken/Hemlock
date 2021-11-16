@@ -2,17 +2,26 @@ open! Basis.Rudiments
 open! Basis
 open MapTest
 open Map
-open Format
 
 let test () =
-  printf "@[";
   let test k map descr = begin
     validate map;
-    printf "--- %s ---@\n" descr;
+    File.Fmt.stdout
+    |> Fmt.fmt "--- "
+    |> Fmt.fmt descr
+    |> Fmt.fmt " ---\n"
+    |> ignore;
     let map' = remove k map in
     validate map';
-    printf "@[<v>remove %a@;<0 2>@[<v>%a ->@,%a@]@]@\n"
-      Uns.xpp k (xpp String.xpp) map (xpp String.xpp) map'
+    File.Fmt.stdout
+    |> Fmt.fmt "remove "
+    |> Uns.pp k
+    |> Fmt.fmt "\n"
+    |> (fmt ~alt:true String.pp) map
+    |> Fmt.fmt " ->\n"
+    |> (fmt ~alt:true String.pp) map'
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_tuples = [
     ([(0L, "0"); (1L, "1")], 2L,            "Not member.");
@@ -23,7 +32,6 @@ let test () =
   List.iter test_tuples ~f:(fun (kvs, k, descr) ->
     let map = of_alist (module UnsTestCmper) kvs in
     test k map descr
-  );
-  printf "@]"
+  )
 
 let _ = test ()

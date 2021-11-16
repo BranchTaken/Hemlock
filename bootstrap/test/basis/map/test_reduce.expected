@@ -2,5 +2,5 @@ reduce ~f:( + ) [] -> None
 reduce ~f:( + ) [0] -> Some 0
 reduce ~f:( + ) [0; 1] -> Some 100
 reduce ~f:( + ) [0; 1; 2] -> Some 300
-reduce ~f:( + ) [0; 1; 66] -> Some 6700
-reduce ~f:( + ) [0; 1; 66; 91] -> Some 15800
+reduce ~f:( + ) [0; 1; 66] -> Some 6_700
+reduce ~f:( + ) [0; 1; 66; 91] -> Some 15_800

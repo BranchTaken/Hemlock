@@ -942,96 +942,59 @@ let to_array t =
 (**************************************************************************************************)
 (* Begin test support. *)
 
-let xpp xpp_v xppf t =
-  let open Format in
-  let rec xpp_kvs xppf kvs = begin
-    fprintf xppf "@[<v>elms_kv=[|";
-    if Array.length kvs > 0L then fprintf xppf "@;<0 2>@[<v>";
-    Array.iteri kvs ~f:(fun i (k, v) ->
-      if i > 0L then fprintf xppf ";@,";
-      fprintf xppf "@[<h>(%a,@ %a)@]" t.cmper.xpp k xpp_v v
-    );
-    if Array.length kvs > 0L then fprintf xppf "@]@,";
-    fprintf xppf "|]@]"
-  end
-  and xpp_children xppf children = begin
-    fprintf xppf "@[<v>elms_child=[|";
-    if Array.length children > 0L then fprintf xppf "@;<0 2>@[<v>";
-    Array.iteri children ~f:(fun i child ->
-      if i > 0L then fprintf xppf ";@,";
-      fprintf xppf "%a" xpp_node child
-    );
-    if Array.length children > 0L then fprintf xppf "@]@,";
-    fprintf xppf "|]@]"
-  end
-  and xpp_node xppf node = begin
-    fprintf xppf "@[<v>present_kv=   %a;@,present_child=%a;@,%a;@,%a@]"
-      Bitset.xpp_x node.present_kv
-      Bitset.xpp_x node.present_child
-      xpp_kvs node.elms_kv
-      xpp_children node.elms_child
-  end
-  and xpp_root xppf root = begin
-    fprintf xppf "@[<v>root={@;<0 2>%a@,}@]" xpp_node root
-  end
-  in
-  fprintf xppf "@[<v>Map {@;<0 2>@[<v>length=%a;@,%a@]@,}@]"
-    Uns.xpp t.length
-    xpp_root t.root
-
-let pp pp_v t formatter =
-  let pp_kv (k, v) formatter = begin
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_v t formatter =
+  let fmt_sep ~alt ~width ?(edge=false) formatter = begin
+    formatter
+    |> Fmt.fmt (match alt, edge with true, _ -> "\n" | false, false -> "; " | false, true -> "")
+    |> Fmt.fmt ~width:(match alt with true -> width | false -> 0L) ""
+  end in
+  let indent = 4L in
+  let fmt_kv (k, v) formatter = begin
     formatter
     |> Fmt.fmt "("
     |> t.cmper.pp k
     |> Fmt.fmt ", "
-    |> pp_v v
+    |> fmt_v v
     |> Fmt.fmt ")"
   end in
-  let rec pp_kvs kvs formatter = begin
-    formatter
-    |> Fmt.fmt "elms_kv="
-    |> (Array.pp pp_kv) kvs
-  end
-  and pp_children children formatter = begin
+  let rec fmt_children ~alt ~width children formatter = begin
+    let width' = width + indent in
     formatter
     |> Fmt.fmt "elms_child="
-    |> (Array.pp pp_node) children
+    |> (Array.pp (fmt_node ~alt ~width:width')) children
   end
-  and pp_node node formatter = begin
+  and fmt_node ~alt ~width node formatter = begin
+    let width' = width + indent in
     formatter
     |> Fmt.fmt "present_kv="
     |> Bitset.fmt ~alt:true ~base:Fmt.Hex node.present_kv
-    |> Fmt.fmt "; present_child="
+    |> fmt_sep ~alt ~width
+    |> Fmt.fmt "present_child="
     |> Bitset.fmt ~alt:true ~base:Fmt.Hex node.present_child
-    |> Fmt.fmt "; "
-    |> pp_kvs node.elms_kv
-    |> Fmt.fmt "; "
-    |> pp_children node.elms_child
+    |> fmt_sep ~alt ~width
+    |> Fmt.fmt "elms_kv="
+    |> (Array.fmt ~alt ~width fmt_kv) node.elms_kv
+    |> fmt_sep ~alt ~width
+    |> fmt_children ~alt ~width:width' node.elms_child
   end in
-  let pp_root root formatter = begin
+  let fmt_root ~alt ~width root formatter = begin
+    let width' = width + indent in
     formatter
     |> Fmt.fmt "root={"
-    |> pp_node root
+    |> fmt_sep ~alt ~width:width' ~edge:true
+    |> fmt_node ~alt ~width:width' root
+    |> fmt_sep ~alt ~width:(width + (indent / 2L)) ~edge:true
     |> Fmt.fmt "}"
   end in
+  let width' = width + indent in
   formatter
-  |> Fmt.fmt "Map {length="
-  |> Uns.pp t.length
-  |> Fmt.fmt "; "
-  |> pp_root t.root
+  |> Fmt.fmt "Map {"
+  |> fmt_sep ~alt ~width:width' ~edge:true
+  |> Fmt.fmt "length=" |> Uns.pp t.length
+  |> fmt_sep ~alt ~width:width'
+  |> fmt_root ~alt ~width:width' t.root
+  |> fmt_sep ~alt ~width:(width + (indent / 2L)) ~edge:true
   |> Fmt.fmt "}"
-
-let xpp_kv xpp_v xppf (k, v) =
-  Format.fprintf xppf "(%a,@ %a)" Uns.xpp k xpp_v v
-
-let pp_kv pp_v (k, v) formatter =
-  formatter
-  |> Fmt.fmt "("
-  |> Uns.pp k
-  |> Fmt.fmt ", "
-  |> pp_v v
-  |> Fmt.fmt ")"
 
 let validate t =
   let open Cmper in
