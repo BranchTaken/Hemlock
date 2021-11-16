@@ -1,14 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_find s ~f = begin
-    printf "find %a -> %s\n" xpp s (match find s ~f with
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "find "
+    |> pp s
+    |> Basis.Fmt.fmt " -> "
+    |> Basis.Fmt.fmt (match find s ~f with
       | None -> "None"
       | Some cp -> "'" ^ (of_codepoint cp) ^ "'"
-    );
+    )
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
   test_find "" ~f:(fun _ -> not_reached ());
   let f = function

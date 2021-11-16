@@ -1,19 +1,30 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_list l = begin
     let s = of_list l in
     let l' = to_list s in
     let s' = of_list l' in
-    printf "list: %a -> ... -> %a\n" xpp s xpp s';
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "list: "
+    |> pp s
+    |> Basis.Fmt.fmt " -> ... -> "
+    |> pp s'
+    |> Basis.Fmt.fmt "\n"
+    |> ignore;
 
     let s = of_list_rev l in
     let l' = to_list_rev s in
     let s' = of_list_rev l' in
-    printf "list_rev: %a -> ... -> %a\n" xpp s xpp s';
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "list_rev: "
+    |> pp s
+    |> Basis.Fmt.fmt " -> ... -> "
+    |> pp s'
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
   test_list [];
   test_list [

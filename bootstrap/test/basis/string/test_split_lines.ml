@@ -1,23 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_split_lines s = begin
-    printf "split_lines %S -> [" s;
-    List.iteri (split_lines s)~f:(fun i substr ->
-      if Uns.(i > 0L) then printf "; ";
-      printf "%S" substr
-    );
-    printf "]\n";
-
-    printf "split_lines_rev %S -> [" s;
-    List.iteri (split_lines_rev s)~f:(fun i substr ->
-      if Uns.(i > 0L) then printf "; ";
-      printf "%S" substr
-    );
-    printf "]\n";
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "split_lines "
+    |> pp s
+    |> Basis.Fmt.fmt " -> "
+    |> List.pp String.pp (split_lines s)
+    |> Basis.Fmt.fmt "\nsplit_lines_rev "
+    |> pp s
+    |> Basis.Fmt.fmt " -> "
+    |> List.pp String.pp (split_lines_rev s)
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
   test_split_lines "ab";
 

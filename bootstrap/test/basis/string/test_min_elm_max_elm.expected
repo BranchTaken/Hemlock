@@ -1,8 +1,8 @@
 min_elm "" -> None
 max_elm "" -> None
-min_elm "baced" -> 'a'
-max_elm "baced" -> 'e'
+min_elm "baced" -> Some 'a'
+max_elm "baced" -> Some 'e'
 min_elm "" -> None
 max_elm "" -> None
-min_elm "baced" -> 'e'
-max_elm "baced" -> 'a'
+min_elm "baced" -> Some 'e'
+max_elm "baced" -> Some 'a'

@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let strs = [
@@ -12,25 +11,38 @@ let test () =
     "𐆗";
   ] in
   List.iter strs ~f:(fun s ->
-    printf "%a |slice| -> %a\n"
-      xpp s xpp (pare ~base:(C.Cursor.hd s) ~past:(C.Cursor.tl s) s);
-    let () = match C.length s with
-      | 0L -> ()
+    File.Fmt.stdout
+    |> pp s
+    |> Basis.Fmt.fmt " |slice| -> "
+    |> pp (pare ~base:(C.Cursor.hd s) ~past:(C.Cursor.tl s) s)
+    |> Basis.Fmt.fmt "\n"
+    |> (fun formatter ->
+      match C.length s with
+      | 0L -> formatter
       | _ -> begin
-          printf "%a .|slice| -> %a\n"
-            xpp s xpp (pare ~base:C.Cursor.(succ (hd s)) ~past:C.Cursor.(tl s) s);
-          printf "%a |slice|. -> %a\n"
-            xpp s xpp (pare ~base:C.Cursor.(hd s) ~past:C.Cursor.(pred (tl s)) s)
+          formatter
+          |> pp s
+          |> Basis.Fmt.fmt " .|slice| -> "
+          |> pp (pare ~base:C.Cursor.(succ (hd s)) ~past:C.Cursor.(tl s) s)
+          |> Basis.Fmt.fmt "\n"
+          |> pp s
+          |> Basis.Fmt.fmt " |slice|. -> "
+          |> pp (pare ~base:C.Cursor.(hd s) ~past:C.Cursor.(pred (tl s)) s)
+          |> Basis.Fmt.fmt "\n"
         end
-    in
-    let () = match C.length s with
-      | 0L -> ()
-      | 1L -> ()
+    )
+    |> (fun formatter ->
+      match C.length s with
+      | 0L
+      | 1L -> formatter
       | _ ->
-        printf "%a .|slice|. -> %a\n"
-          xpp s xpp (pare ~base:C.Cursor.(succ (hd s)) ~past:C.Cursor.(pred (tl s)) s)
-    in
-    ()
+        formatter
+        |> pp s
+        |> Basis.Fmt.fmt " .|slice|. -> "
+        |> pp (pare ~base:C.Cursor.(succ (hd s)) ~past:C.Cursor.(pred (tl s)) s)
+        |> Basis.Fmt.fmt "\n"
+    )
+    |> ignore
   )
 
 let _ = test ()

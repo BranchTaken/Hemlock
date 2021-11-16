@@ -1,29 +1,34 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_split s f cp = begin
-    printf "split %a -> [" xpp s;
-    List.iteri (split s ~f) ~f:(fun i substr ->
-      if Uns.(i > 0L) then printf "; ";
-      printf "%a" xpp substr
-    );
-    printf "]\n";
-
-    printf "split_rev %a -> [" xpp s;
-    List.iteri (split_rev s ~f)~f:(fun i substr ->
-      if Uns.(i > 0L) then printf "; ";
-      printf "%a" xpp substr
-    );
-    printf "]\n";
-
-    let s1, s2 = lsplit2_hlt s ~on:cp in
-    printf "lsplit2_hlt %a -> (%a, %a)\n" xpp s xpp s1 xpp s2;
-
-    let s1, s2 = rsplit2_hlt s ~on:cp in
-    printf "rsplit2_hlt %a -> (%a, %a)\n" xpp s xpp s1 xpp s2;
+    let ls1, ls2 = lsplit2_hlt s ~on:cp in
+    let rs1, rs2 = rsplit2_hlt s ~on:cp in
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "split "
+    |> pp s
+    |> Basis.Fmt.fmt " -> "
+    |> List.pp String.pp (split s ~f)
+    |> Basis.Fmt.fmt "\nsplit_rev "
+    |> pp s
+    |> Basis.Fmt.fmt " -> "
+    |> List.pp String.pp (split_rev s ~f)
+    |> Basis.Fmt.fmt "\nlsplit2_hlt "
+    |> pp s
+    |> Basis.Fmt.fmt " -> ("
+    |> pp ls1
+    |> Basis.Fmt.fmt ", "
+    |> pp ls2
+    |> Basis.Fmt.fmt ")\nrsplit2_hlt "
+    |> pp s
+    |> Basis.Fmt.fmt " -> ("
+    |> pp rs1
+    |> Basis.Fmt.fmt ", "
+    |> pp rs2
+    |> Basis.Fmt.fmt ")\n"
+    |> ignore
   end in
   test_split ";a::bc;de;" (fun cp -> Codepoint.(cp = (kv (Int64.of_int (Char.code ':')))))
     (Codepoint.kv 0x3aL);

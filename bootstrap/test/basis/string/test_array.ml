@@ -1,14 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_array a = begin
     let s = of_array a in
     let a' = to_array s in
     let s' = of_array a' in
-    printf "array: %a -> ... -> %a\n" xpp s xpp s';
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "array: "
+    |> pp s
+    |> Basis.Fmt.fmt " -> ... -> "
+    |> pp s'
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
   test_array [||];
   test_array (Array.of_list [

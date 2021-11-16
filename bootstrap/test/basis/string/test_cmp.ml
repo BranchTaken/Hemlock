@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let strs = [
@@ -18,7 +17,15 @@ let test () =
     | [] -> ()
     | hd :: tl -> begin
         let () = List.iter strs ~f:(fun s2 ->
-          printf "cmp %a %a -> %a\n" xpp s xpp s2 Cmp.xpp (cmp s s2)
+          File.Fmt.stdout
+          |> Basis.Fmt.fmt "cmp "
+          |> pp s
+          |> Basis.Fmt.fmt " "
+          |> pp s2
+          |> Basis.Fmt.fmt " -> "
+          |> Cmp.pp (cmp s s2)
+          |> Basis.Fmt.fmt "\n"
+          |> ignore
         ) in
         fn hd tl
       end

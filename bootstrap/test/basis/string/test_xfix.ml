@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let strs = [
@@ -11,8 +10,21 @@ let test () =
   ] in
   List.iter strs ~f:(fun s ->
     Range.iter (0L =:< (C.length s + 2L)) ~f:(fun i ->
-      printf "prefix %a %a -> %a\n" xpp s Uns.xpp i xpp (prefix i s);
-      printf "suffix %a %a -> %a\n" xpp s Uns.xpp i xpp (suffix i s);
+      File.Fmt.stdout
+      |> Basis.Fmt.fmt "prefix "
+      |> pp s
+      |> Basis.Fmt.fmt " "
+      |> Uns.pp i
+      |> Basis.Fmt.fmt " -> "
+      |> pp (prefix i s)
+      |> Basis.Fmt.fmt "\nsuffix "
+      |> pp s
+      |> Basis.Fmt.fmt " "
+      |> Uns.pp i
+      |> Basis.Fmt.fmt " -> "
+      |> pp (suffix i s)
+      |> Basis.Fmt.fmt "\n"
+      |> ignore
     )
   )
 
