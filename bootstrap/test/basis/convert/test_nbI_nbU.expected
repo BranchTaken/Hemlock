@@ -1,16 +1,16 @@
-widen_to_u32_opt -32768i16 -> None
+widen_to_u32_opt -32_768i16 -> None
 widen_to_u32_opt -1i16 -> None
 widen_to_u32_opt 0i16 -> Some 0u32
 widen_to_u32_opt 1i16 -> Some 1u32
-widen_to_u32_opt 32767i16 -> Some 32767u32
+widen_to_u32_opt 32_767i16 -> Some 32_767u32
 
-trunc_of_u32/narrow_of_u32_opt 0xffff7fffu32 -> 0x7fffi16/None
-trunc_of_u32/narrow_of_u32_opt 0xffff8000u32 -> 0x8000i16/None
-trunc_of_u32/narrow_of_u32_opt 0xffffffffu32 -> 0xffffi16/None
-trunc_of_u32/narrow_of_u32_opt 0x00000000u32 -> 0x0000i16/Some 0i16
-trunc_of_u32/narrow_of_u32_opt 0x00000001u32 -> 0x0001i16/Some 1i16
-trunc_of_u32/narrow_of_u32_opt 0x00007fffu32 -> 0x7fffi16/Some 32767i16
-trunc_of_u32/narrow_of_u32_opt 0x00008000u32 -> 0x8000i16/None
-trunc_of_u32/narrow_of_u32_opt 0x0000ffffu32 -> 0xffffi16/None
-trunc_of_u32/narrow_of_u32_opt 0x00010000u32 -> 0x0000i16/None
-trunc_of_u32/narrow_of_u32_opt 0x0001ffffu32 -> 0xffffi16/None
+trunc_of_u32/narrow_of_u32_opt 0xffff_7fffu32 -> 0x7fffi16/None
+trunc_of_u32/narrow_of_u32_opt 0xffff_8000u32 -> -0x8000i16/None
+trunc_of_u32/narrow_of_u32_opt 0xffff_ffffu32 -> -0x0001i16/None
+trunc_of_u32/narrow_of_u32_opt 0x0000_0000u32 -> 0x0000i16/Some 0i16
+trunc_of_u32/narrow_of_u32_opt 0x0000_0001u32 -> 0x0001i16/Some 1i16
+trunc_of_u32/narrow_of_u32_opt 0x0000_7fffu32 -> 0x7fffi16/Some 32_767i16
+trunc_of_u32/narrow_of_u32_opt 0x0000_8000u32 -> -0x8000i16/None
+trunc_of_u32/narrow_of_u32_opt 0x0000_ffffu32 -> -0x0001i16/None
+trunc_of_u32/narrow_of_u32_opt 0x0001_0000u32 -> 0x0000i16/None
+trunc_of_u32/narrow_of_u32_opt 0x0001_ffffu32 -> -0x0001i16/None
