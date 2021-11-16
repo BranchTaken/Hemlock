@@ -1,18 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_elm s ~cmp = begin
-    printf "min_elm %a -> %s\n" xpp s (match min_elm s ~cmp with
-      | None -> "None"
-      | Some cp -> "'" ^ (of_codepoint cp) ^ "'"
-    );
-    printf "max_elm %a -> %s\n" xpp s (match max_elm s ~cmp with
-      | None -> "None"
-      | Some cp -> "'" ^ (of_codepoint cp) ^ "'"
-    );
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "min_elm "
+    |> pp s
+    |> Basis.Fmt.fmt " -> "
+    |> Option.fmt Codepoint.pp (min_elm s ~cmp)
+    |> Basis.Fmt.fmt "\nmax_elm "
+    |> pp s
+    |> Basis.Fmt.fmt " -> "
+    |> Option.fmt Codepoint.pp (max_elm s ~cmp)
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
   test_elm "" ~cmp:Codepoint.cmp;
   test_elm "baced" ~cmp:Codepoint.cmp;

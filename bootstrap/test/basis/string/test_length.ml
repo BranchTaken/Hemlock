@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let strs = [
@@ -12,11 +11,17 @@ let test () =
     "𐆗";
   ] in
   List.iter strs ~f:(fun s ->
-    printf "s=%a, blength=%a, clength=%a, is_empty=%B\n"
-      xpp s
-      Uns.xpp (B.length s)
-      Uns.xpp (C.length s)
-      (is_empty s)
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "s="
+    |> pp s
+    |> Basis.Fmt.fmt ", blength="
+    |> Uns.pp (B.length s)
+    |> Basis.Fmt.fmt ", clength="
+    |> Uns.pp (C.length s)
+    |> Basis.Fmt.fmt ", is_empty="
+    |> Bool.pp (is_empty s)
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   )
 
 let _ = test ()

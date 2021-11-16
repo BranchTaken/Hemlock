@@ -1,14 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_foldi s = begin
-    printf "foldi %a ->" xpp s;
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "foldi "
+    |> pp s
+    |> Basis.Fmt.fmt " ->"
+    |> ignore;
     let () = foldi s ~init:() ~f:(fun i _ cp ->
-      printf " %a:%s" Uns.xpp i (of_codepoint cp)) in
-    printf "\n"
+      File.Fmt.stdout
+      |> Basis.Fmt.fmt " "
+      |> Uns.pp i
+      |> Basis.Fmt.fmt ":"
+      |> Basis.Fmt.fmt (of_codepoint cp)
+      |> ignore
+    ) in
+    File.Fmt.stdout |> Basis.Fmt.fmt "\n" |> ignore
   end in
   let strs = [
     "";

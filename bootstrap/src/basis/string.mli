@@ -386,6 +386,9 @@ val fmt: ?pad:codepoint -> ?just:Fmt.just -> ?alt:bool -> ?width:uns -> ?pretty:
 (** [fmt ~pad ~just ~alt ~width s formatter] calls [formatter.fmt ~pad ~just ~width] on the result
     of [to_string ~alt ~pretty s]. *)
 
+(* Exposed for testing purposes only. *)
+val slice_pattern_pp: C.Slice.Pattern.t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+
 (** Formatter. *)
 module Fmt : sig
   val empty: (module Fmt.Formatter)
@@ -580,6 +583,3 @@ module O : sig
 
   include CmpableIntf.SMonoInfix with type t := t
 end
-
-(* Exposed for testing purposes only. *)
-val slice_pattern_xpp: Format.formatter -> C.Slice.Pattern.t -> unit

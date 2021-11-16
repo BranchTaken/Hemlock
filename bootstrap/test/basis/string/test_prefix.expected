@@ -1,11 +1,11 @@
 is_prefix "abc" ~prefix:"" -> true
-chop_prefix "abc" ~prefix:"" -> "abc"
+chop_prefix "abc" ~prefix:"" -> Some "abc"
 is_prefix "abc" ~prefix:"a" -> true
-chop_prefix "abc" ~prefix:"a" -> "bc"
+chop_prefix "abc" ~prefix:"a" -> Some "bc"
 is_prefix "abc" ~prefix:"ab" -> true
-chop_prefix "abc" ~prefix:"ab" -> "c"
+chop_prefix "abc" ~prefix:"ab" -> Some "c"
 is_prefix "abc" ~prefix:"abc" -> true
-chop_prefix "abc" ~prefix:"abc" -> ""
+chop_prefix "abc" ~prefix:"abc" -> Some ""
 is_prefix "abc" ~prefix:"d" -> false
 chop_prefix "abc" ~prefix:"d" -> None
 is_prefix "abc" ~prefix:"ad" -> false

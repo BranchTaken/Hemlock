@@ -1,17 +1,25 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_foldi_until s = begin
-    printf "foldi_until %a ->" xpp s;
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "foldi_until "
+    |> pp s
+    |> Basis.Fmt.fmt " ->"
+    |> ignore;
     let () = foldi_until s ~init:() ~f:(fun i _ cp ->
       let until = Codepoint.(cp = (of_char 'c')) in
-      printf " %a:%s" Uns.xpp i (of_codepoint cp);
+      File.Fmt.stdout
+      |> Basis.Fmt.fmt " "
+      |> Uns.pp i
+      |> Basis.Fmt.fmt ":"
+      |> Basis.Fmt.fmt (of_codepoint cp)
+      |> ignore;
       (), until
     ) in
-    printf "\n"
+    File.Fmt.stdout |> Basis.Fmt.fmt "\n" |> ignore
   end in
   let strs = [
     "";

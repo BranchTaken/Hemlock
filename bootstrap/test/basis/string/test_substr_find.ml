@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let patterns = [
@@ -22,11 +21,15 @@ let test () =
     "abaabaaab";
   ] in
   let s = concat patterns in
-  printf "@[";
   List.iter patterns ~f:(fun pattern ->
     let p = C.Slice.Pattern.create (C.Slice.of_string pattern) in
-    printf "%a@\n" slice_pattern_xpp p;
-    printf "     in_:%a@\n" xpp s;
+    File.Fmt.stdout
+    |> slice_pattern_pp p
+    |> Basis.Fmt.fmt "\n"
+    |> Basis.Fmt.fmt "     in_:"
+    |> pp s
+    |> Basis.Fmt.fmt "\n"
+    |> ignore;
 
     let print_matches matches = begin
       match matches with
@@ -41,30 +44,29 @@ let test () =
               | None -> (C.Cursor.bindex cursor) + 2L
               | Some c -> (C.Cursor.bindex cursor) - (C.Cursor.bindex c)
             in
-            printf "%*s" (Int64.to_int offset) "|";
+            File.Fmt.stdout
+            |> Basis.Fmt.fmt ~width:offset "|"
+            |> ignore;
             Some cursor
           ) in
           ()
         end
     end in
 
-    printf "     all:";
+    File.Fmt.stdout |> Basis.Fmt.fmt "     all:" |> ignore;
     print_matches (substr_find_all s ~may_overlap:true ~pattern);
-    printf "@\n";
-
-    printf "disjoint:";
+    File.Fmt.stdout |> Basis.Fmt.fmt "\ndisjoint:" |> ignore;
     print_matches (substr_find_all s ~may_overlap:false ~pattern);
-    printf "@\n";
-
-    printf "   first:";
+    File.Fmt.stdout |> Basis.Fmt.fmt "\n   first:" |> ignore;
     let () = match substr_find s ~pattern with
       | None -> ()
-      | Some cursor -> printf " %*s" (Int64.to_int (succ (C.Cursor.bindex cursor))) "|";
+      | Some cursor ->
+        File.Fmt.stdout
+        |> Basis.Fmt.fmt " "
+        |> Basis.Fmt.fmt ~width:(succ (C.Cursor.bindex cursor)) "|"
+        |> ignore
     in
-    printf "@\n";
-    printf "@\n";
-    ()
-  );
-  printf "@]"
+    File.Fmt.stdout |> Basis.Fmt.fmt "\n\n" |> ignore
+  )
 
 let _ = test ()

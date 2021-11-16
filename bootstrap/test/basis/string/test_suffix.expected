@@ -1,11 +1,11 @@
 is_suffix "abc" ~suffix:"" -> true
-chop_suffix "abc" ~suffix:"" -> "abc"
+chop_suffix "abc" ~suffix:"" -> Some "abc"
 is_suffix "abc" ~suffix:"c" -> true
-chop_suffix "abc" ~suffix:"c" -> "ab"
+chop_suffix "abc" ~suffix:"c" -> Some "ab"
 is_suffix "abc" ~suffix:"bc" -> true
-chop_suffix "abc" ~suffix:"bc" -> "a"
+chop_suffix "abc" ~suffix:"bc" -> Some "a"
 is_suffix "abc" ~suffix:"abc" -> true
-chop_suffix "abc" ~suffix:"abc" -> ""
+chop_suffix "abc" ~suffix:"abc" -> Some ""
 is_suffix "abc" ~suffix:"d" -> false
 chop_suffix "abc" ~suffix:"d" -> None
 is_suffix "abc" ~suffix:"dc" -> false

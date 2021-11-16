@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let replacements = [
@@ -37,11 +36,25 @@ let test () =
     ("ba", "BA", "ababa");
   ] in
   List.iter replacements ~f:(fun (pattern, with_, in_) ->
-    printf "s/%s/%s/ %a -> %a\n"
-      pattern with_ xpp in_ xpp (substr_replace_first in_ ~pattern ~with_);
-    printf "s/%s/%s/g %a -> %a\n"
-      pattern with_ xpp in_ xpp (substr_replace_all in_ ~pattern ~with_);
-    printf "\n"
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "s/"
+    |> fmt pattern
+    |> Basis.Fmt.fmt "/"
+    |> fmt with_
+    |> Basis.Fmt.fmt "/ "
+    |> pp in_
+    |> Basis.Fmt.fmt " -> "
+    |> pp (substr_replace_first in_ ~pattern ~with_)
+    |> Basis.Fmt.fmt "\ns/"
+    |> fmt pattern
+    |> Basis.Fmt.fmt "/"
+    |> fmt with_
+    |> Basis.Fmt.fmt "/g "
+    |> pp in_
+    |> Basis.Fmt.fmt " -> "
+    |> pp (substr_replace_all in_ ~pattern ~with_)
+    |> Basis.Fmt.fmt "\n\n"
+    |> ignore
   )
 
 let _ = test ()

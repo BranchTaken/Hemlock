@@ -1,17 +1,24 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_suffix s ~suffix = begin
-    printf "is_suffix %a ~suffix:%a -> %B\n" xpp s xpp suffix
-      (is_suffix s ~suffix);
-    printf "chop_suffix %a ~suffix:%a -> %s\n" xpp s xpp suffix
-      (match chop_suffix s ~suffix with
-        | None -> "None"
-        | Some s' -> "\"" ^ s' ^ "\""
-      )
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "is_suffix "
+    |> pp s
+    |> Basis.Fmt.fmt " ~suffix:"
+    |> pp suffix
+    |> Basis.Fmt.fmt " -> "
+    |> Bool.pp (is_suffix s ~suffix)
+    |> Basis.Fmt.fmt "\nchop_suffix "
+    |> pp s
+    |> Basis.Fmt.fmt " ~suffix:"
+    |> pp suffix
+    |> Basis.Fmt.fmt " -> "
+    |> Option.fmt String.pp (chop_suffix s ~suffix)
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
 
   test_suffix "abc" ~suffix:"";
