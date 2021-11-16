@@ -2,10 +2,8 @@ open! Basis.Rudiments
 open! Basis
 open SetTest
 open Set
-open Format
 
 let test () =
-  printf "@[";
   let test_equal ms0 ms1 = begin
     let set0 = of_list (module Uns) ms0 in
     let set1 = of_list (module Uns) ms1 in
@@ -18,7 +16,13 @@ let test () =
       | Some _, Some _ -> ()
       | None, Some _
       | Some _, None -> begin
-          printf "Should be equal:@,%a@,%a@\n" xpp set0 xpp set1;
+          File.Fmt.stdout
+          |> Fmt.fmt "Should be equal: "
+          |> fmt set0
+          |> Fmt.fmt " "
+          |> fmt set1
+          |> Fmt.fmt "\n"
+          |> ignore;
           assert false;
         end
       | None, None -> not_reached ()
@@ -34,7 +38,13 @@ let test () =
     iter2 ~f:(fun a0_opt a1_opt ->
       match a0_opt, a1_opt with
       | Some _, Some _ -> begin
-          printf "Should be disjoint:@,%a@,%a@\n" xpp set0 xpp set1;
+          File.Fmt.stdout
+          |> Fmt.fmt "Should be disjoint: "
+          |> fmt set0
+          |> Fmt.fmt " "
+          |> fmt set1
+          |> Fmt.fmt "\n"
+          |> ignore;
           assert false;
         end
       | None, Some _
@@ -69,7 +79,6 @@ let test () =
     test_disjoint ms0 (List.rev ms1);
     test_disjoint (List.rev ms0) ms1;
     test_disjoint (List.rev ms0) (List.rev ms1);
-  );
-  printf "@]"
+  )
 
 let _ = test ()

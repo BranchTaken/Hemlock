@@ -2,10 +2,8 @@ open! Basis.Rudiments
 open! Basis
 open! SetTest
 open Set
-open Format
 
 let test () =
-  printf "@[";
   (* test is n^2 time complexity, so keep n small. *)
   let rec test n i set = begin
     match i < n with
@@ -20,6 +18,6 @@ let test () =
   end in
   let e = empty (module Uns) in
   let _ = test 100L 0L e in
-  printf "@]"
+  ()
 
 let _ = test ()
