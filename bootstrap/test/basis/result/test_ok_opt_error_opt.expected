@@ -1,4 +1,4 @@
-ok_opt Ok "ok" -> Some "ok"
-error_opt Ok "ok" -> None
-ok_opt Error "error" -> None
-error_opt Error "error" -> Some "error"
+ok_opt Ok ("ok") -> Some "ok"
+error_opt Ok ("ok") -> None
+ok_opt Error ("error") -> None
+error_opt Error ("error") -> Some "error"

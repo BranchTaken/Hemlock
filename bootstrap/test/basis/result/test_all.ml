@@ -1,19 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open Result
-open Format
 
 let test () =
   let results_lists = [
     [ (Ok "ok0"); (Ok "ok1"); (Ok "ok2")];
     [ (Ok "ok0"); (Error "error0"); (Ok "ok1"); (Error "error1"); (Ok "ok2")];
   ] in
-  printf "@[<h>";
   List.iter results_lists ~f:(fun results ->
-    printf "all %a -> %a\n"
-      (List.xpp (xpp String.xpp String.xpp)) results
-      (xpp (List.xpp String.xpp) (List.xpp String.xpp)) (all results)
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "all "
+    |> (List.pp (pp String.pp String.pp)) results
+    |> Fmt.fmt " -> "
+    |> (pp (List.pp String.pp) (List.pp String.pp)) (all results)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()
