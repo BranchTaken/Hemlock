@@ -9,10 +9,6 @@ val bits_per_level: Uns.t
 val bits_per_hash: Uns.t
 val hash_fold: ('v -> Hash.State.t -> Hash.State.t) -> ('k, 'v, 'cmp) t -> Hash.State.t
   -> Hash.State.t
-val xpp: (Format.formatter -> 'v -> unit) -> Format.formatter -> ('k, 'v, 'cmp) t -> unit
-val pp: ('v -> (module Fmt.Formatter) -> (module Fmt.Formatter)) -> ('k, 'v, 'cmp) t
-  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-val xpp_kv: (Format.formatter -> 'v -> unit) -> Format.formatter -> Uns.t * 'v -> unit
-val pp_kv: ('v -> (module Fmt.Formatter) -> (module Fmt.Formatter)) -> Uns.t * 'v
-  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+val fmt: ?alt:bool -> ?width:int64 -> ('v -> (module Fmt.Formatter) -> (module Fmt.Formatter))
+  -> ('k, 'v, 'cmp) t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 val validate: ('k, 'v, 'cmp) t -> unit

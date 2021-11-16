@@ -1,100 +1,101 @@
 --- Not member. ---
 remove 2
-  Map {
-    length=2;
+Map {
+    length=2
     root={
-      present_kv=   0x1000_0000_0000_8000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[|
-        (1, "1");
-        (0, "0")
-      |];
-      elms_child=[||]
-    }
+        present_kv=0x1000_0000_0000_8000
+        present_child=0x0
+        elms_kv=[|
+            (1, "1")
+            (0, "0")
+          |]
+        elms_child=[||]
+      }
   } ->
-  Map {
-    length=2;
+Map {
+    length=2
     root={
-      present_kv=   0x1000_0000_0000_8000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[|
-        (1, "1");
-        (0, "0")
-      |];
-      elms_child=[||]
-    }
+        present_kv=0x1000_0000_0000_8000
+        present_child=0x0
+        elms_kv=[|
+            (1, "1")
+            (0, "0")
+          |]
+        elms_child=[||]
+      }
   }
 --- Member, length 1 -> 0. ---
 remove 0
-  Map {
-    length=1;
+Map {
+    length=1
     root={
-      present_kv=   0x1000_0000_0000_0000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[|
-        (0, "0")
-      |];
-      elms_child=[||]
-    }
+        present_kv=0x1000_0000_0000_0000
+        present_child=0x0
+        elms_kv=[|
+            (0, "0")
+          |]
+        elms_child=[||]
+      }
   } ->
-  Map {
-    length=0;
+Map {
+    length=0
     root={
-      present_kv=   0x0000_0000_0000_0000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[||];
-      elms_child=[||]
-    }
+        present_kv=0x0
+        present_child=0x0
+        elms_kv=[|
+          |]
+        elms_child=[||]
+      }
   }
 --- Member, length 2 -> 1. ---
 remove 1
-  Map {
-    length=2;
+Map {
+    length=2
     root={
-      present_kv=   0x1000_0000_0000_8000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[|
-        (1, "1");
-        (0, "0")
-      |];
-      elms_child=[||]
-    }
+        present_kv=0x1000_0000_0000_8000
+        present_child=0x0
+        elms_kv=[|
+            (1, "1")
+            (0, "0")
+          |]
+        elms_child=[||]
+      }
   } ->
-  Map {
-    length=1;
+Map {
+    length=1
     root={
-      present_kv=   0x1000_0000_0000_0000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[|
-        (0, "0")
-      |];
-      elms_child=[||]
-    }
+        present_kv=0x1000_0000_0000_0000
+        present_child=0x0
+        elms_kv=[|
+            (0, "0")
+          |]
+        elms_child=[||]
+      }
   }
 --- Member, length 3 -> 2. ---
 remove 2
-  Map {
-    length=3;
+Map {
+    length=3
     root={
-      present_kv=   0x1200_0000_0000_8000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[|
-        (1, "1");
-        (2, "2");
-        (0, "0")
-      |];
-      elms_child=[||]
-    }
+        present_kv=0x1200_0000_0000_8000
+        present_child=0x0
+        elms_kv=[|
+            (1, "1")
+            (2, "2")
+            (0, "0")
+          |]
+        elms_child=[||]
+      }
   } ->
-  Map {
-    length=2;
+Map {
+    length=2
     root={
-      present_kv=   0x1000_0000_0000_8000;
-      present_child=0x0000_0000_0000_0000;
-      elms_kv=[|
-        (1, "1");
-        (0, "0")
-      |];
-      elms_child=[||]
-    }
+        present_kv=0x1000_0000_0000_8000
+        present_child=0x0
+        elms_kv=[|
+            (1, "1")
+            (0, "0")
+          |]
+        elms_child=[||]
+      }
   }
