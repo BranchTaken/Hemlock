@@ -1,2 +1,2 @@
-Ok 42 -> Ok 42
-Error "bang" -> Error "bang"
+Ok 42 -> Ok (42)
+Error "bang" -> Error ("bang")

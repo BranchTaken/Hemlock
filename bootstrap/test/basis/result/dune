@@ -1,6 +1,7 @@
 (tests
  (names
   test_all
+  test_fmt
   test_is_ok_is_error
   test_ok_if_error_if
   test_ok_ignore_error_ignore
