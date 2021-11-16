@@ -1,19 +1,21 @@
 open! Basis.Rudiments
 open! Basis
 open Result
-open Format
 
 let test () =
-  let f msg = asprintf "%s'" msg in
-  printf "@[<h>";
+  let f msg = String.Fmt.empty |> Fmt.fmt msg |> Fmt.fmt "'" |> Fmt.to_string in
   List.iter [Ok "ok"; Error "error"] ~f:(fun result ->
-    printf "map_ok %a -> %a\n"
-      (xpp String.xpp String.xpp) result
-      (xpp String.xpp String.xpp) (map_ok result ~f);
-    printf "map_error %a -> %a\n"
-      (xpp String.xpp String.xpp) result
-      (xpp String.xpp String.xpp) (map_error result ~f);
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "map_ok "
+    |> (pp String.pp String.pp) result
+    |> Fmt.fmt " -> "
+    |> (pp String.pp String.pp) (map_ok result ~f)
+    |> Fmt.fmt "\nmap_error "
+    |> (pp String.pp String.pp) result
+    |> Fmt.fmt " -> "
+    |> (pp String.pp String.pp) (map_error result ~f)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

@@ -1,22 +1,24 @@
 open! Basis.Rudiments
 open! Basis
 open Result
-open Format
 
 let test () =
   let results_lists = [
     [ (Ok "ok0"); (Ok "ok1"); (Ok "ok2")];
     [ (Ok "ok0"); (Error "error0"); (Ok "ok1"); (Error "error1"); (Ok "ok2")];
   ] in
-  printf "@[<h>";
   List.iter results_lists ~f:(fun results ->
-    printf "ok_ignore %a -> %a\n"
-      (List.xpp (xpp String.xpp String.xpp)) results
-      (xpp Unit.xpp (List.xpp String.xpp)) (ok_ignore results);
-    printf "error_ignore %a -> %a\n"
-      (List.xpp (xpp String.xpp String.xpp)) results
-      (xpp (List.xpp String.xpp) Unit.xpp) (error_ignore results)
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "ok_ignore "
+    |> (List.pp (pp String.pp String.pp)) results
+    |> Fmt.fmt " -> "
+    |> (pp Unit.pp (List.pp String.pp)) (ok_ignore results)
+    |> Fmt.fmt "\nerror_ignore "
+    |> (List.pp (pp String.pp String.pp)) results
+    |> Fmt.fmt " -> "
+    |> (pp (List.pp String.pp) Unit.pp) (error_ignore results)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()

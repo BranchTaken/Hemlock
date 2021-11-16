@@ -1,0 +1,2 @@
+Ok 42 -> Ok 42
+Error "bang" -> Error "bang"

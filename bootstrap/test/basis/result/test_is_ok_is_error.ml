@@ -1,15 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open Result
-open Format
 
 let test () =
-  printf "@[<h>";
   List.iter [Ok "ok"; Error "error"] ~f:(fun result ->
-    printf "is_ok %a -> %b\n" (xpp String.xpp String.xpp) result (is_ok result);
-    printf "is_error %a -> %b\n"
-      (xpp String.xpp String.xpp) result (is_error result);
-  );
-  printf "@]"
+    File.Fmt.stdout
+    |> Fmt.fmt "is_ok "
+    |> (pp String.pp String.pp) result
+    |> Fmt.fmt " -> "
+    |> Bool.pp (is_ok result)
+    |> Fmt.fmt "\nis_error "
+    |> (pp String.pp String.pp) result
+    |> Fmt.fmt " -> "
+    |> Bool.pp (is_error result)
+    |> Fmt.fmt "\n"
+    |> ignore
+  )
 
 let _ = test ()
