@@ -2,18 +2,21 @@ open! Basis.Rudiments
 open! Basis
 open! SetTest
 open Set
-open Format
 
 let test () =
-  printf "@[<h>";
   let test ms = begin
     let set = of_list (module Uns) ms in
     let list_sorted = List.sort ~cmp:Uns.cmp (to_list set) in
     let array_sorted = Array.sort ~cmp:Uns.cmp (to_array set) in
-    printf "of_list %a; to_list -> %a; to_array -> %a\n"
-      (List.xpp Uns.xpp) ms
-      (List.xpp Uns.xpp) list_sorted
-      (Array.xpp Uns.xpp) array_sorted
+    File.Fmt.stdout
+    |> Fmt.fmt "of_list "
+    |> (List.pp Uns.pp) ms
+    |> Fmt.fmt "; to_list -> "
+    |> (List.pp Uns.pp) list_sorted
+    |> Fmt.fmt "; to_array -> "
+    |> (Array.pp Uns.pp) array_sorted
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_lists = [
     [];
@@ -25,7 +28,6 @@ let test () =
   ] in
   List.iter test_lists ~f:(fun ms ->
     test ms
-  );
-  printf "@]"
+  )
 
 let _ = test ()

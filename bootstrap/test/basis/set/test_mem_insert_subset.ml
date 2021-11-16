@@ -2,13 +2,11 @@ open! Basis.Rudiments
 open! Basis
 open SetTest
 open Set
-open Format
 
 let test () =
-  printf "@[";
   let rec test ms set = begin
     match ms with
-    | [] -> printf "%a@\n" xpp set
+    | [] -> File.Fmt.stdout |> fmt set |> Fmt.fmt "\n" |> ignore
     | m :: ms' -> begin
         assert (not (mem m set));
         let set' = insert m set in
@@ -19,7 +17,6 @@ let test () =
       end
   end in
   let ms = [1L; 3L; 2L; 44L; 45L; 56L; 60L; 66L; 75L; 81L; 91L] in
-  test ms (empty (module Uns));
-  printf "@]"
+  test ms (empty (module Uns))
 
 let _ = test ()

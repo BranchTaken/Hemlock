@@ -2,14 +2,15 @@ open! Basis.Rudiments
 open! Basis
 open! SetTest
 open Set
-open Format
 
 let test () =
-  printf "@[";
-  let xpp_pair xppf (a0_opt, a1_opt) = begin
-    fprintf xppf "(%a, %a)"
-      (Option.xpp Uns.xpp) a0_opt
-      (Option.xpp Uns.xpp) a1_opt
+  let pp_pair (a0_opt, a1_opt) formatter = begin
+    formatter
+    |> Fmt.fmt "("
+    |> (Option.fmt Uns.pp) a0_opt
+    |> Fmt.fmt ", "
+    |> (Option.fmt Uns.pp) a1_opt
+    |> Fmt.fmt ")"
   end in
   let test ms0 ms1 = begin
     let set0 = of_list (module Uns) ms0 in
@@ -27,10 +28,15 @@ let test () =
       let a1 = a_of_pair pair1 in
       Uns.cmp a0 a1
     ) pairs in
-    printf "fold2 %a %a -> %a@\n"
-      (List.xpp Uns.xpp) ms0
-      (List.xpp Uns.xpp) ms1
-      (List.xpp xpp_pair) pairs_sorted
+    File.Fmt.stdout
+    |> Fmt.fmt "fold2 "
+    |> (List.pp Uns.pp) ms0
+    |> Fmt.fmt " "
+    |> (List.pp Uns.pp) ms1
+    |> Fmt.fmt " -> "
+    |> (List.pp pp_pair) pairs_sorted
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let test_lists = [
     [];
@@ -44,7 +50,6 @@ let test () =
     List.iteri test_lists ~f:(fun j ms1 ->
       if i <= j then test ms0 ms1
     )
-  );
-  printf "@]"
+  )
 
 let _ = test ()

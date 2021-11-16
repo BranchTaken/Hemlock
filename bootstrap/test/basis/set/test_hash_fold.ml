@@ -2,24 +2,25 @@ open! Basis.Rudiments
 open! Basis
 open! SetTest
 open Set
-open Format
 
 let test () =
-  printf "@[";
   let rec fn = function
     | [] -> ()
     | l :: lists' -> begin
         let set = of_list (module Uns) l in
-        printf "hash_fold (of_list (module Uns) %a) -> %a@\n"
-          (List.xpp Uns.xpp) l
-          Hash.xpp (Hash.t_of_state (hash_fold set Hash.State.empty));
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold (of_list (module Uns) "
+        |> (List.pp Uns.pp) l
+        |> Fmt.fmt ") -> "
+        |> Hash.pp (Hash.t_of_state (hash_fold set Hash.State.empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn lists'
       end
   in
   let lists = [
     [];
   ] in
-  fn lists;
-  printf "@]"
+  fn lists
 
 let _ = test ()
