@@ -1,17 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_fold_right_until s = begin
-    printf "fold_right_until %a ->" xpp s;
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "fold_right_until "
+    |> pp s
+    |> Basis.Fmt.fmt " ->"
+    |> ignore;
     let () = fold_right_until s ~init:() ~f:(fun cp _ ->
       let until = Codepoint.(cp = (of_char 'c')) in
-      printf " %s" (of_codepoint cp);
+      File.Fmt.stdout
+      |> Basis.Fmt.fmt " "
+      |> Basis.Fmt.fmt (of_codepoint cp)
+      |> ignore;
       (), until
     ) in
-    printf "\n"
+    File.Fmt.stdout |> Basis.Fmt.fmt "\n" |> ignore
   end in
   let strs = [
     "";

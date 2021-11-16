@@ -1,14 +1,31 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_for s cp = begin
     let f codepoint = Codepoint.(codepoint = cp) in
-    printf "for_any %a '%s' -> %B\n" xpp s (of_codepoint cp) (for_any s ~f);
-    printf "for_all %a '%s' -> %B\n" xpp s (of_codepoint cp) (for_all s ~f);
-    printf "mem %a '%s' -> %B\n" xpp s (of_codepoint cp) (mem cp s);
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "for_any "
+    |> pp s
+    |> Basis.Fmt.fmt " "
+    |> Codepoint.pp cp
+    |> Basis.Fmt.fmt " -> "
+    |> Bool.pp (for_any s ~f)
+    |> Basis.Fmt.fmt "\nfor_all "
+    |> pp s
+    |> Basis.Fmt.fmt " "
+    |> Codepoint.pp cp
+    |> Basis.Fmt.fmt " -> "
+    |> Bool.pp (for_all s ~f)
+    |> Basis.Fmt.fmt "\nmem "
+    |> pp s
+    |> Basis.Fmt.fmt " "
+    |> Codepoint.pp cp
+    |> Basis.Fmt.fmt " -> "
+    |> Bool.pp (mem cp s)
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
   test_for "" Codepoint.(of_char 'a');
   test_for "abcde" Codepoint.(of_char 'a');

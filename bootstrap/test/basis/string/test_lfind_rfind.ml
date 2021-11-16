@@ -1,21 +1,36 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_find s cp = begin
-    printf "lfind %a '%s' -> %s\n" xpp s (of_codepoint cp)
-      (match lfind cp s with
-        | None -> "<not found>"
-        | Some cursor -> asprintf "%a" Uns.xpp (C.Cursor.bindex cursor)
-      );
-    printf "contains %a '%s' -> %B\n" xpp s (of_codepoint cp) (contains cp s);
-    printf "rfind %a '%s' -> %s\n" xpp s (of_codepoint cp)
-      (match rfind cp s with
-        | None -> "<not found>"
-        | Some cursor -> asprintf "%a" Uns.xpp (C.Cursor.bindex cursor)
-      )
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "lfind "
+    |> pp s
+    |> Basis.Fmt.fmt " "
+    |> Codepoint.pp cp
+    |> Basis.Fmt.fmt " -> "
+    |> Basis.Fmt.fmt (match lfind cp s with
+      | None -> "<not found>"
+      | Some cursor -> Uns.to_string (C.Cursor.bindex cursor)
+    )
+    |> Basis.Fmt.fmt "\ncontains "
+    |> pp s
+    |> Basis.Fmt.fmt " "
+    |> Codepoint.pp cp
+    |> Basis.Fmt.fmt " -> "
+    |> Bool.pp (contains cp s)
+    |> Basis.Fmt.fmt "\nrfind "
+    |> pp s
+    |> Basis.Fmt.fmt " "
+    |> Codepoint.pp cp
+    |> Basis.Fmt.fmt " -> "
+    |> Basis.Fmt.fmt (match rfind cp s with
+      | None -> "<not found>"
+      | Some cursor -> Uns.to_string (C.Cursor.bindex cursor)
+    )
+    |> Basis.Fmt.fmt "\n"
+    |> ignore
   end in
   test_find "" Codepoint.(of_char 'b');
   test_find "abcba" Codepoint.(of_char 'a');

@@ -1,15 +1,21 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let test_fold_right s = begin
-    printf "fold_right %a ->" xpp s;
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "fold_right "
+    |> pp s
+    |> Basis.Fmt.fmt " ->"
+    |> ignore;
     let () = fold_right s ~init:() ~f:(fun cp _ ->
-      printf " %s" (of_codepoint cp)
+      File.Fmt.stdout
+      |> Basis.Fmt.fmt " "
+      |> Basis.Fmt.fmt (of_codepoint cp)
+      |> ignore
     ) in
-    printf "\n"
+    File.Fmt.stdout |> Basis.Fmt.fmt "\n" |> ignore
   end in
   let strs = [
     "";

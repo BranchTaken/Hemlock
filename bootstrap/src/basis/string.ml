@@ -1177,13 +1177,15 @@ module C = struct
         in
         {p=slice; pi}
 
-      let xpp xppf t =
-        let open Format in
-        fprintf xppf "@[<v> p=%a@,pi=[" xpp t.p;
-        Array.iter t.pi ~f:(fun elm ->
-          fprintf xppf "%a" Uns.xpp elm.index
-        );
-        Format.fprintf xppf "]@]"
+      let pp t formatter =
+        formatter
+        |> Fmt.fmt " p="
+        |> pp t.p
+        |> Fmt.fmt "\npi=["
+        |> (fun formatter ->
+          Array.fold t.pi ~init:formatter ~f:(fun formatter elm -> formatter |> Uns.pp elm.index)
+        )
+        |> Fmt.fmt "]"
 
       let find_impl ?max_matches ~may_overlap ~in_ t =
         let past = past in_ in
@@ -1625,7 +1627,7 @@ module C = struct
   end
 end
 
-let slice_pattern_xpp = C.Slice.Pattern.xpp
+let slice_pattern_pp = C.Slice.Pattern.pp
 
 let init ?blength crange ~f =
   C.Slice.to_string (C.Slice.init ?blength crange ~f)

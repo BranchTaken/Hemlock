@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open String
-open Format
 
 let test () =
   let strs = [
@@ -16,13 +15,20 @@ let test () =
       match Uns.(i = (B.length s)) with
       | true -> ()
       | false -> begin
-          printf " %a" Byte.xpp_x (B.get i s);
+          File.Fmt.stdout
+          |> Basis.Fmt.fmt " "
+          |> Byte.fmt ~alt:true ~base:Basis.Fmt.Hex ~pretty:true (B.get i s)
+          |> ignore;
           fn (Uns.succ i)
         end
     end in
-    printf "s=%a:" xpp s;
+    File.Fmt.stdout
+    |> Basis.Fmt.fmt "s="
+    |> pp s
+    |> Basis.Fmt.fmt ":"
+    |> ignore;
     fn 0L;
-    printf "\n";
+    File.Fmt.stdout |> Basis.Fmt.fmt "\n" |> ignore
   )
 
 let _ = test ()
