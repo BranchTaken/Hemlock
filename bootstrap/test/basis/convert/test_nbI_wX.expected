@@ -1,13 +1,13 @@
-extend_to_i512 -32768i16 -> -32_768i512
+extend_to_i512 -32_768i16 -> -32_768i512
 extend_to_i512 -1i16 -> -1i512
 extend_to_i512 0i16 -> 0i512
 extend_to_i512 1i16 -> 1i512
-extend_to_i512 32767i16 -> 32_767i512
+extend_to_i512 32_767i16 -> 32_767i512
 
-trunc_of_i512/narrow_of_i512_opt -32_769i512 -> 32767i16/None
-trunc_of_i512/narrow_of_i512_opt -32_768i512 -> -32768i16/Some -32768i16
+trunc_of_i512/narrow_of_i512_opt -32_769i512 -> 32_767i16/None
+trunc_of_i512/narrow_of_i512_opt -32_768i512 -> -32_768i16/Some -32_768i16
 trunc_of_i512/narrow_of_i512_opt -1i512 -> -1i16/Some -1i16
 trunc_of_i512/narrow_of_i512_opt 0i512 -> 0i16/Some 0i16
 trunc_of_i512/narrow_of_i512_opt 1i512 -> 1i16/Some 1i16
-trunc_of_i512/narrow_of_i512_opt 32_767i512 -> 32767i16/Some 32767i16
-trunc_of_i512/narrow_of_i512_opt 32_768i512 -> -32768i16/None
+trunc_of_i512/narrow_of_i512_opt 32_767i512 -> 32_767i16/Some 32_767i16
+trunc_of_i512/narrow_of_i512_opt 32_768i512 -> -32_768i16/None

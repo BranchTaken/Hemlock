@@ -1,35 +1,56 @@
 open! Basis.Rudiments
 open! Basis
-open Format
 
 let test () =
-  printf "@[<h>";
-  List.iter U8.([kv 0L; kv 1L; kv 127L; kv 128L; kv 255L]) ~f:(fun u ->
-    printf "extend_to_uns %a -> %a\n"
-      U8.xpp u
-      Uns.xpp (U8.extend_to_uns u)
-  );
-  printf "\n";
-  List.iter [0L; 1L; 255L; 256L; 511L] ~f:(fun u ->
-    printf "trunc_of_uns/narrow_of_uns_opt %a -> %a/%a\n"
-      Uns.xpp u
-      U8.xpp (U8.trunc_of_uns u)
-      (Option.xpp U8.xpp) (U8.narrow_of_uns_opt u)
-  );
-  printf "\n";
-  List.iter U8.([kv 0L; kv 1L; kv 127L; kv 128L; kv 255L]) ~f:(fun u ->
-    printf "extend_to_sint %a -> %a\n"
-      U8.xpp u
-      Sint.xpp (U8.extend_to_sint u)
-  );
-  printf "\n";
-  List.iter Sint.([kv (-1L); kv 0L; kv 1L; kv 255L; kv 256L; kv 511L]) ~f:(fun i ->
-    printf "trunc_of_sint/narrow_of_sint_opt %a -> %a/%a\n"
-      Sint.xpp i
-      U8.xpp (U8.trunc_of_sint i)
-      (Option.xpp U8.xpp) (U8.narrow_of_sint_opt i)
-  );
-
-  printf "@]"
+  File.Fmt.stdout
+  |> (fun formatter ->
+    List.fold U8.([kv 0L; kv 1L; kv 127L; kv 128L; kv 255L]) ~init:formatter ~f:(fun formatter u ->
+      formatter
+      |> Fmt.fmt "extend_to_uns "
+      |> U8.pp u
+      |> Fmt.fmt " -> "
+      |> Uns.pp (U8.extend_to_uns u)
+      |> Fmt.fmt "\n"
+    )
+  )
+  |> Fmt.fmt "\n"
+  |> (fun formatter ->
+    List.fold [0L; 1L; 255L; 256L; 511L] ~init:formatter ~f:(fun formatter u ->
+      formatter
+      |> Fmt.fmt "trunc_of_uns/narrow_of_uns_opt "
+      |> Uns.pp u
+      |> Fmt.fmt " -> "
+      |> U8.pp (U8.trunc_of_uns u)
+      |> Fmt.fmt "/"
+      |> (Option.fmt U8.pp) (U8.narrow_of_uns_opt u)
+      |> Fmt.fmt "\n"
+    )
+  )
+  |> Fmt.fmt "\n"
+  |> (fun formatter ->
+    List.fold U8.([kv 0L; kv 1L; kv 127L; kv 128L; kv 255L]) ~init:formatter ~f:(fun formatter u ->
+      formatter
+      |> Fmt.fmt "extend_to_sint "
+      |> U8.pp u
+      |> Fmt.fmt " -> "
+      |> Sint.pp (U8.extend_to_sint u)
+      |> Fmt.fmt "\n"
+    )
+  )
+  |> Fmt.fmt "\n"
+  |> (fun formatter ->
+    List.fold Sint.([kv (-1L); kv 0L; kv 1L; kv 255L; kv 256L; kv 511L]) ~init:formatter
+      ~f:(fun formatter i ->
+        formatter
+        |> Fmt.fmt "trunc_of_sint/narrow_of_sint_opt "
+        |> Sint.pp i
+        |> Fmt.fmt " -> "
+        |> U8.pp (U8.trunc_of_sint i)
+        |> Fmt.fmt "/"
+        |> (Option.fmt U8.pp) (U8.narrow_of_sint_opt i)
+        |> Fmt.fmt "\n"
+      )
+  )
+  |> ignore
 
 let _ = test ()

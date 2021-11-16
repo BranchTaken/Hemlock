@@ -1,22 +1,34 @@
 open! Basis.Rudiments
 open! Basis
-open Format
 
 let test () =
-  printf "@[<h>";
-  List.iter U8.([kv 0L; kv 1L; kv 127L; kv 128L; kv 255L]) ~f:(fun u ->
-    printf "bits_to_i8/like_to_i8_opt %a -> %a/%a\n"
-      U8.xpp u
-      I8.xpp (U8.bits_to_i8 u)
-      (Option.xpp I8.xpp) (U8.like_to_i8_opt u)
-  );
-  printf "\n";
-  List.iter I8.([kv (-128L); kv (-1L); kv 0L; kv 1L; kv 127L]) ~f:(fun i ->
-    printf "bits_of_i8/like_of_i8_opt %a -> %a/%a\n"
-      I8.xpp i
-      U8.xpp (U8.bits_of_i8 i)
-      (Option.xpp U8.xpp) (U8.like_of_i8_opt i)
-  );
-  printf "@]"
+  File.Fmt.stdout
+  |> (fun formatter ->
+    List.fold U8.([kv 0L; kv 1L; kv 127L; kv 128L; kv 255L]) ~init:formatter ~f:(fun formatter u ->
+      formatter
+      |> Fmt.fmt "bits_to_i8/like_to_i8_opt "
+      |> U8.pp u
+      |> Fmt.fmt " -> "
+      |> I8.pp (U8.bits_to_i8 u)
+      |> Fmt.fmt "/"
+      |> (Option.fmt I8.pp) (U8.like_to_i8_opt u)
+      |> Fmt.fmt "\n"
+    )
+  )
+  |> Fmt.fmt "\n"
+  |> (fun formatter ->
+    List.fold I8.([kv (-128L); kv (-1L); kv 0L; kv 1L; kv 127L]) ~init:formatter
+      ~f:(fun formatter i ->
+        formatter
+        |> Fmt.fmt "bits_of_i8/like_of_i8_opt "
+        |> I8.pp i
+        |> Fmt.fmt " -> "
+        |> U8.pp (U8.bits_of_i8 i)
+        |> Fmt.fmt "/"
+        |> (Option.fmt U8.pp) (U8.like_of_i8_opt i)
+        |> Fmt.fmt "\n"
+      )
+  )
+  |> ignore
 
 let _ = test ()

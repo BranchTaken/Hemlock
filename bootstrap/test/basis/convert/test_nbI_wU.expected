@@ -1,13 +1,13 @@
-widen_to_u512_opt -32768i16 -> None
+widen_to_u512_opt -32_768i16 -> None
 widen_to_u512_opt -1i16 -> None
 widen_to_u512_opt 0i16 -> Some 0u512
 widen_to_u512_opt 1i16 -> Some 1u512
-widen_to_u512_opt 32767i16 -> Some 32_767u512
+widen_to_u512_opt 32_767i16 -> Some 32_767u512
 
 trunc_of_u512/narrow_of_u512_opt 0u512 -> 0x0000i16/Some 0i16
 trunc_of_u512/narrow_of_u512_opt 1u512 -> 0x0001i16/Some 1i16
-trunc_of_u512/narrow_of_u512_opt 32_767u512 -> 0x7fffi16/Some 32767i16
-trunc_of_u512/narrow_of_u512_opt 32_768u512 -> 0x8000i16/None
-trunc_of_u512/narrow_of_u512_opt 65_535u512 -> 0xffffi16/None
+trunc_of_u512/narrow_of_u512_opt 32_767u512 -> 0x7fffi16/Some 32_767i16
+trunc_of_u512/narrow_of_u512_opt 32_768u512 -> -0x8000i16/None
+trunc_of_u512/narrow_of_u512_opt 65_535u512 -> -0x0001i16/None
 trunc_of_u512/narrow_of_u512_opt 65_536u512 -> 0x0000i16/None
-trunc_of_u512/narrow_of_u512_opt 131_071u512 -> 0xffffi16/None
+trunc_of_u512/narrow_of_u512_opt 131_071u512 -> -0x0001i16/None
