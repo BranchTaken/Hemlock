@@ -1,4 +1,4 @@
 hash_fold 0x0000_0000_0000_0000i -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
 hash_fold 0x0000_0000_0000_0001i -> 0x3d8a_cdb4_d36d_9c06_0044_03b7_fb05_c44au128
-hash_fold 0x8000_0000_0000_0000i -> 0x8bde_f8b0_ec4f_e0b6_0115_9dfe_b459_3227u128
+hash_fold -0x8000_0000_0000_0000i -> 0x8bde_f8b0_ec4f_e0b6_0115_9dfe_b459_3227u128
 hash_fold 0x7fff_ffff_ffff_ffffi -> 0x7dfb_92c0_a900_3d9e_6c76_ebcb_dad6_69d4u128

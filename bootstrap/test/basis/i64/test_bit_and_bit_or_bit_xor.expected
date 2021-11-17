@@ -1,4 +1,4 @@
 bit_{and,or,xor} 0x0000_0000_0000_0000i 0x0000_0000_0000_0000i -> 0x0000_0000_0000_0000i, 0x0000_0000_0000_0000i, 0x0000_0000_0000_0000i
-bit_{and,or,xor} 0xffff_ffff_ffff_ffffi 0x0000_0000_0000_0000i -> 0x0000_0000_0000_0000i, 0xffff_ffff_ffff_ffffi, 0xffff_ffff_ffff_ffffi
-bit_{and,or,xor} 0x0000_0000_0000_0000i 0xffff_ffff_ffff_ffffi -> 0x0000_0000_0000_0000i, 0xffff_ffff_ffff_ffffi, 0xffff_ffff_ffff_ffffi
-bit_{and,or,xor} 0xffff_ffff_ffff_ffffi 0xffff_ffff_ffff_ffffi -> 0xffff_ffff_ffff_ffffi, 0xffff_ffff_ffff_ffffi, 0x0000_0000_0000_0000i
+bit_{and,or,xor} -0x0000_0000_0000_0001i 0x0000_0000_0000_0000i -> 0x0000_0000_0000_0000i, -0x0000_0000_0000_0001i, -0x0000_0000_0000_0001i
+bit_{and,or,xor} 0x0000_0000_0000_0000i -0x0000_0000_0000_0001i -> 0x0000_0000_0000_0000i, -0x0000_0000_0000_0001i, -0x0000_0000_0000_0001i
+bit_{and,or,xor} -0x0000_0000_0000_0001i -0x0000_0000_0000_0001i -> -0x0000_0000_0000_0001i, -0x0000_0000_0000_0001i, 0x0000_0000_0000_0000i
