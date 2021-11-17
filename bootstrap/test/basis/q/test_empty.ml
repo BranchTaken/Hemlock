@@ -1,13 +1,13 @@
 open! Basis.Rudiments
 open! Basis
 open Q
-open Format
 
 let test () =
-  let xppt = (xpp Uns.xpp) in
-  printf "@[<h>";
   let t = empty in
-  printf "empty = %a\n" xppt t;
-  printf "@]"
+  File.Fmt.stdout
+  |> Fmt.fmt "empty = "
+  |> (pp Uns.pp) t
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()
