@@ -1,2 +1,2 @@
-bit_not 0x0000_0000_0000_0000i -> 0xffff_ffff_ffff_ffffi
-bit_not 0xffff_ffff_ffff_ffffi -> 0x0000_0000_0000_0000i
+bit_not 0x0000_0000_0000_0000i -> -0x0000_0000_0000_0001i
+bit_not -0x0000_0000_0000_0001i -> 0x0000_0000_0000_0000i
