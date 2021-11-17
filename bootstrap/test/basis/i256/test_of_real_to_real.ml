@@ -1,17 +1,22 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test_rs rs = begin
     match rs with
     | [] -> ()
     | r :: rs' -> begin
         let x = of_real r in
-        printf "of_real %h -> %a; to_real -> %h\n"
-          r xpp_x x (to_real x);
+        File.Fmt.stdout
+        |> Fmt.fmt "of_real "
+        |> Real.fmt ~alt:true ~base:Fmt.Hex r
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt "; to_real -> "
+        |> Real.fmt ~alt:true ~base:Fmt.Hex (to_real x)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_rs rs'
       end
   end in
@@ -39,14 +44,21 @@ let test () =
     0x1p255;
   ] in
   test_rs rs;
-  printf "\n";
+  File.Fmt.stdout |> Fmt.fmt "\n" |> ignore;
   let rec test_xs xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
         let r = to_real x in
-        printf "to_real %a -> %h; of_real -> %a\n"
-          xpp_x x r xpp_x (of_real r);
+        File.Fmt.stdout
+        |> Fmt.fmt "to_real "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " -> "
+        |> Real.fmt ~alt:true ~base:Fmt.Hex r
+        |> Fmt.fmt "; of_real -> "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (of_real r)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_xs xs'
       end
   end in
@@ -59,7 +71,6 @@ let test () =
     min_value;
     max_value;
   ] in
-  test_xs xs;
-  printf "@]"
+  test_xs xs
 
 let _ = test ()

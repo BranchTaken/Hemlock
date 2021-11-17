@@ -1,21 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
-  printf "@[<h>";
-  let rec test_hash_fold us = begin
-    match us with
+  let rec test_hash_fold xs = begin
+    match xs with
     | [] -> ()
-    | u :: us' -> begin
-        printf "hash_fold %a -> %a\n"
-          xpp_x u Hash.xpp (Hash.t_of_state (hash_fold u Hash.State.empty));
-        test_hash_fold us'
+    | x :: xs' -> begin
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " -> "
+        |> Hash.pp (Hash.t_of_state (hash_fold x Hash.State.empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
+        test_hash_fold xs'
       end
   end in
-  let us = [zero; one; min_value; max_value] in
-  test_hash_fold us;
-  printf "@]"
+  let xs = [zero; one; min_value; max_value] in
+  test_hash_fold xs
 
 let _ = test ()
