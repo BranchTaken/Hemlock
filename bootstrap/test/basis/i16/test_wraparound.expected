@@ -1,2 +1,2 @@
-max_value + 1i16 -> 0x8000i16
+max_value + 1i16 -> -0x8000i16
 min_value - 1i16 -> 0x7fffi16
