@@ -1,12 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open U8
-open Format
 
 let test () =
   let fifteen = (kv 15L) in
-  printf "max_value + %a -> %a\n" xpp one xpp_x (max_value + one);
-  printf "min_value - %a -> %a\n" xpp one xpp_x (min_value - one);
-  printf "max_value * %a -> %a\n" xpp fifteen xpp_x (max_value * fifteen)
+  File.Fmt.stdout
+  |> Fmt.fmt "max_value + "
+  |> pp one
+  |> Fmt.fmt " -> "
+  |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true (max_value + one)
+  |> Fmt.fmt "\nmin_value - "
+  |> pp one
+  |> Fmt.fmt " -> "
+  |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true (min_value - one)
+  |> Fmt.fmt "\nmax_value * "
+  |> pp fifteen
+  |> Fmt.fmt " -> "
+  |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true (max_value * fifteen)
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()
