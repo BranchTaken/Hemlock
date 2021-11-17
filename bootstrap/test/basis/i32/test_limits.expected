@@ -1,3 +1,3 @@
 bit_length=32
-min_value=-2147483648i32 0x80000000i32
-max_value=2147483647i32 0x7fffffffi32
+min_value=-2_147_483_648i32 -0x8000_0000i32
+max_value=2_147_483_647i32 0x7fff_ffffi32

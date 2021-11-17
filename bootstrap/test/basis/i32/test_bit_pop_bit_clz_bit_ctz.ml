@@ -1,15 +1,22 @@
 open! Basis.Rudiments
 open! Basis
 open I32
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_{pop,clz,ctz} %a -> %Lu, %Lu, %Lu\n"
-          xpp_x x (bit_pop x) (bit_clz x) (bit_ctz x);
+        File.Fmt.stdout
+        |> Fmt.fmt "bit_{pop,clz,ctz} "
+        |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " -> "
+        |> Uns.pp (bit_pop x)
+        |> Fmt.fmt ", "
+        |> Uns.pp (bit_clz x)
+        |> Fmt.fmt ", "
+        |> Uns.pp (bit_ctz x)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test xs'
       end
   in
@@ -19,7 +26,6 @@ let test () =
     kv 0L;
     kv 1L;
   ] in
-  test xs;
-  printf "@]"
+  test xs
 
 let _ = test ()

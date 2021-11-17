@@ -1,2 +1,2 @@
-max_value + 1i32 -> 0x80000000i32
-min_value - 1i32 -> 0x7fffffffi32
+max_value + 1i32 -> -0x8000_0000i32
+min_value - 1i32 -> 0x7fff_ffffi32

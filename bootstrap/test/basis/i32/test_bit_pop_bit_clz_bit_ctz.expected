@@ -1,4 +1,4 @@
-bit_{pop,clz,ctz} 0x80000000i32 -> 1, 0, 31
-bit_{pop,clz,ctz} 0xffffffffi32 -> 32, 0, 0
-bit_{pop,clz,ctz} 0x00000000i32 -> 0, 32, 32
-bit_{pop,clz,ctz} 0x00000001i32 -> 1, 31, 0
+bit_{pop,clz,ctz} -0x8000_0000i32 -> 1, 0, 31
+bit_{pop,clz,ctz} -0x0000_0001i32 -> 32, 0, 0
+bit_{pop,clz,ctz} 0x0000_0000i32 -> 0, 32, 32
+bit_{pop,clz,ctz} 0x0000_0001i32 -> 1, 31, 0

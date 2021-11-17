@@ -1,35 +1,61 @@
 open! Basis.Rudiments
 open! Basis
 open I32
-open Format
+
+let pp_x x formatter =
+  formatter |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true x
 
 let test () =
-  let fn x y = begin
-    printf "cmp %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (cmp x y);
-    printf "%a >= %a -> %b\n" xpp_x x xpp_x y (x >= y);
-    printf "%a <= %a -> %b\n" xpp_x x xpp_x y (x <= y);
-    printf "%a = %a -> %b\n" xpp_x x xpp_x y (x = y);
-    printf "%a > %a -> %b\n" xpp_x x xpp_x y (x > y);
-    printf "%a < %a -> %b\n" xpp_x x xpp_x y (x < y);
-    printf "%a <> %a -> %b\n" xpp_x x xpp_x y (x <> y);
-    printf "ascending %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (ascending x y);
-    printf "descending %a %a -> %a\n" xpp_x x xpp_x y Cmp.xpp (descending x y);
+  let fn x y formatter = begin
+    let f_cmp cmp_s x y cmp formatter = begin
+      formatter |> Fmt.fmt cmp_s |> Fmt.fmt " " |> pp_x x |> Fmt.fmt " " |> pp_x y |> Fmt.fmt " -> "
+      |> Cmp.pp cmp |> Fmt.fmt "\n"
+    end in
+    let f_rel x rel_s y rel formatter = begin
+      formatter |> pp_x x |> Fmt.fmt " " |> Fmt.fmt rel_s |> Fmt.fmt " " |> pp_x y |> Fmt.fmt " -> "
+      |> Bool.pp rel |> Fmt.fmt "\n"
+    end in
+    formatter
+    |> f_cmp "cmp" x y (cmp x y)
+    |> f_rel x ">=" y (x >= y)
+    |> f_rel x "<=" y (x <= y)
+    |> f_rel x "=" y (x = y)
+    |> f_rel x ">" y (x > y)
+    |> f_rel x "<" y (x < y)
+    |> f_rel x "<>" y (x <> y)
+    |> f_cmp "ascending" x y (ascending x y)
+    |> f_cmp "descending" x y (descending x y)
   end in
-  fn (kv 0L) (kv (-0x8000_0000L));
-  printf "\n";
-  fn (kv 0L) (kv (-1L));
-  printf "\n";
-  fn (kv (-0x8000_0000L)) (kv (-1L));
-  let fn2 t min max = begin
-    printf "\n";
-    printf "clamp ~min:%a ~max:%a %a -> %a\n"
-      xpp_x min xpp_x max xpp_x t xpp_x (clamp ~min ~max t);
-    printf "between ~low:%a ~high:%a %a -> %b\n"
-      xpp_x min xpp_x max xpp_x t (between ~low:min ~high:max t);
+  let fn2 t min max formatter = begin
+    formatter
+    |> Fmt.fmt "\nclamp ~min:"
+    |> pp_x min
+    |> Fmt.fmt " ~max:"
+    |> pp_x max
+    |> Fmt.fmt " "
+    |> pp_x t
+    |> Fmt.fmt " -> "
+    |> pp_x (clamp ~min ~max t)
+    |> Fmt.fmt "\nbetween ~low:"
+    |> pp_x min
+    |> Fmt.fmt " ~high:"
+    |> pp_x max
+    |> Fmt.fmt " "
+    |> pp_x t
+    |> Fmt.fmt " -> "
+    |> Bool.pp (between ~low:min ~high:max t)
+    |> Fmt.fmt "\n"
   end in
-  fn2 (kv (-2L)) (kv (-1L)) (kv 0L);
-  fn2 (kv (-1L)) (kv (-1L)) (kv 0L);
-  fn2 (kv 0L) (kv (-1L)) (kv 0L);
-  fn2 (kv 1L) (kv (-1L)) (kv 0L)
+  File.Fmt.stdout
+  |> fn (kv 0L) (kv (-0x8000_0000L))
+  |> Fmt.fmt "\n"
+  |> fn (kv 0L) (kv (-1L))
+  |> Fmt.fmt "\n"
+  |> fn (kv (-0x8000_0000L)) (kv (-1L))
+  |> fn2 (kv (-2L)) (kv (-1L)) (kv 0L)
+  |> fn2 (kv (-1L)) (kv (-1L)) (kv 0L)
+  |> fn2 (kv 0L) (kv (-1L)) (kv 0L)
+  |> fn2 (kv 1L) (kv (-1L)) (kv 0L)
+  |> ignore
 
 let _ = test ()
