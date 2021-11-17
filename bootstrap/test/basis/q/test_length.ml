@@ -1,17 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open Q
-open Format
 
 let test () =
-  let xppt = (xpp Uns.xpp) in
-  printf "@[<h>";
   let rec fn i n t = begin
     match i <= n with
     | false -> ()
     | true -> begin
         let l = length t in
-        printf "length %a = %a\n" xppt t Uns.xpp l;
+        File.Fmt.stdout
+        |> Fmt.fmt "length "
+        |> (pp Uns.pp) t
+        |> Fmt.fmt " = "
+        |> Uns.pp l
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn (succ i) n (push_back i t)
       end
   end in
