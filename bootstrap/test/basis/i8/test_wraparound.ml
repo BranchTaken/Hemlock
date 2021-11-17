@@ -1,10 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open I8
-open Format
 
 let test () =
-  printf "max_value + %a -> %a\n" xpp one xpp_x (max_value + one);
-  printf "min_value - %a -> %a\n" xpp one xpp_x (min_value - one)
+  File.Fmt.stdout
+  |> Fmt.fmt "max_value + "
+  |> pp one
+  |> Fmt.fmt " -> "
+  |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true (max_value + one)
+  |> Fmt.fmt "\nmin_value - "
+  |> pp one
+  |> Fmt.fmt " -> "
+  |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true (min_value - one)
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()
