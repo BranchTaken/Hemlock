@@ -1,18 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open I16
-open Format
 
 let test () =
   let rec fn = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "%a %a\n" xpp x xpp_x x;
+        File.Fmt.stdout
+        |> pp x
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn xs'
       end
   in
-  printf "@[<h>";
-  fn [min_value; neg_one; zero; one; max_value];
-  printf "@]"
+  fn [min_value; neg_one; zero; one; max_value]
 
 let _ = test ()
