@@ -1,11 +1,8 @@
 open! Basis.Rudiments
 open! Basis
 open Stream
-open Format
 
 let test () =
-  let xppt = (xpp Uns.xpp) in
-  printf "@[<h>";
   let rec test_drop_up_to i l n =
     (* l + 1 so that we test dropping one more than the stream contains *)
     match i <= l + 1L, l <= n with
@@ -14,10 +11,17 @@ let test () =
     | true, true -> begin
         let t = init (0L =:< l) ~f:(fun i -> i) in
         let t' = drop i t in
-        printf "drop %a %a = %a\n" Uns.xpp i xppt t xppt t';
+        File.Fmt.stdout
+        |> Fmt.fmt "drop "
+        |> Uns.pp i
+        |> Fmt.fmt " "
+        |> (pp Uns.pp) t
+        |> Fmt.fmt " = "
+        |> (pp Uns.pp) t'
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_drop_up_to (succ i) l n
       end in
-  test_drop_up_to 0L 0L 3L;
-  printf "@]"
+  test_drop_up_to 0L 0L 3L
 
 let _ = test ()
