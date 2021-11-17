@@ -1,11 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open I32
-open Format
 
 let test () =
-  printf "bit_length=%a\n" Uns.xpp (bit_pop (bit_not zero));
-  printf "min_value=%a %a\n" xpp min_value xpp_x min_value;
-  printf "max_value=%a %a\n" xpp max_value xpp_x max_value
+  File.Fmt.stdout
+  |> Fmt.fmt "bit_length="
+  |> Uns.pp (bit_pop (bit_not zero))
+  |> Fmt.fmt "\nmin_value="
+  |> pp min_value
+  |> Fmt.fmt " "
+  |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true min_value
+  |> Fmt.fmt "\nmax_value="
+  |> pp max_value
+  |> Fmt.fmt " "
+  |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true max_value
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()
