@@ -1,27 +1,29 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test = function
     | [] -> ()
-    | u :: us' -> begin
-        printf "floor_lg,ceil_lg %a -> %a, %a\n"
-          xpp_x u
-          xpp (floor_lg u)
-          xpp (ceil_lg u);
-        test us'
+    | x :: xs' -> begin
+        File.Fmt.stdout
+        |> Fmt.fmt "floor_lg,ceil_lg "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " -> "
+        |> pp (floor_lg x)
+        |> Fmt.fmt ", "
+        |> pp (ceil_lg x)
+        |> Fmt.fmt "\n"
+        |> ignore;
+        test xs'
       end
   in
-  let us = [
+  let xs = [
     of_string "1";
     of_string "2";
     of_string "3";
     max_value;
   ] in
-  test us;
-  printf "@]"
+  test xs
 
 let _ = test ()

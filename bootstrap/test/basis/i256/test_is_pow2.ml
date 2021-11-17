@@ -1,20 +1,22 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test = function
     | [] -> ()
-    | u :: us' -> begin
-        printf "is_pow2 %a -> %b\n"
-          xpp_x u
-          (is_pow2 u);
-        test us'
+    | x :: xs' -> begin
+        File.Fmt.stdout
+        |> Fmt.fmt "is_pow2 "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " -> "
+        |> Bool.pp (is_pow2 x)
+        |> Fmt.fmt "\n"
+        |> ignore;
+        test xs'
       end
   in
-  let us = [
+  let xs = [
     of_string "0";
     of_string "1";
     of_string "2";
@@ -22,7 +24,6 @@ let test () =
     of_string "0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000";
     of_string "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff"
   ] in
-  test us;
-  printf "@]"
+  test xs
 
 let _ = test ()
