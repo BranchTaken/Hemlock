@@ -1,12 +1,26 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
-  printf "zero=%a %a\n" xpp_x zero xpp zero;
-  printf "one=%a %a\n" xpp_x one xpp one;
-  printf "min_value=%a %a\n" xpp_x min_value xpp min_value;
-  printf "max_value=%a %a\n" xpp_x max_value xpp max_value
+  File.Fmt.stdout
+  |> Fmt.fmt "zero="
+  |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true zero
+  |> Fmt.fmt " "
+  |> pp zero
+  |> Fmt.fmt "\none="
+  |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true one
+  |> Fmt.fmt " "
+  |> pp one
+  |> Fmt.fmt "\nmin_value="
+  |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true min_value
+  |> Fmt.fmt " "
+  |> pp min_value
+  |> Fmt.fmt "\nmax_value="
+  |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true max_value
+  |> Fmt.fmt " "
+  |> pp max_value
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()

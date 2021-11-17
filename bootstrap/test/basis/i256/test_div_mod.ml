@@ -1,17 +1,23 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test_pairs = function
     | [] -> ()
     | (x, y) :: pairs' -> begin
         let quotient = x / y in
         let remainder = x % y in
-        printf "%a /,%% %a -> %a, %a\n"
-          xpp x xpp y xpp quotient xpp remainder;
+        File.Fmt.stdout
+        |> pp x
+        |> Fmt.fmt " /,% "
+        |> pp y
+        |> Fmt.fmt " -> "
+        |> pp quotient
+        |> Fmt.fmt ", "
+        |> pp remainder
+        |> Fmt.fmt "\n"
+        |> ignore;
         assert (x = (y * quotient + remainder));
         test_pairs pairs'
       end
@@ -75,7 +81,6 @@ let test () =
       of_string "0xffff_ffff_ffff_ffff");
     (max_value, of_string "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff");
   ] in
-  test_pairs pairs;
-  printf "@]"
+  test_pairs pairs
 
 let _ = test ()

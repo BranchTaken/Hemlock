@@ -1,12 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
   let fifteen = of_string "15" in
-  printf "neg_one + one -> %a\n" xpp_x (neg_one + one);
-  printf "zero - one -> %a\n" xpp_x (zero - one);
-  printf "neg_one * %a -> %a\n" xpp fifteen xpp_x (neg_one * fifteen)
+  File.Fmt.stdout
+  |> Fmt.fmt "neg_one + one -> "
+  |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (neg_one + one)
+  |> Fmt.fmt "\nzero - one -> "
+  |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (zero - one)
+  |> Fmt.fmt "\nneg_one * "
+  |> pp fifteen
+  |> Fmt.fmt " -> "
+  |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (neg_one * fifteen)
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()

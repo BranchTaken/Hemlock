@@ -1,14 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open I256
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test_strs = function
     | [] -> ()
     | s :: strs' -> begin
-        printf "of_string %S -> %a %a\n" s xpp (of_string s) xpp_x (of_string s);
+        File.Fmt.stdout
+        |> Fmt.fmt "of_string "
+        |> String.pp s
+        |> Fmt.fmt " -> "
+        |> pp (of_string s)
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (of_string s)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_strs strs'
       end
   in
@@ -46,7 +52,6 @@ let test () =
     "0x_f_i256";
     "0x_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff";
   ] in
-  test_strs strs;
-  printf "@]"
+  test_strs strs
 
 let _ = test ()
