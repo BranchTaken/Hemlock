@@ -1,7 +1,7 @@
 to_sint 0x0000_0000_0000_0000i -> 0x0000_0000_0000_0000i; of_sint -> 0x0000_0000_0000_0000i
 to_sint 0x0000_0000_0000_0001i -> 0x0000_0000_0000_0001i; of_sint -> 0x0000_0000_0000_0001i
-to_sint 0xffff_ffff_ffff_ffffi -> 0xffff_ffff_ffff_ffffi; of_sint -> 0xffff_ffff_ffff_ffffi
-to_sint 0x8000_0000_0000_0000i -> 0x8000_0000_0000_0000i; of_sint -> 0x8000_0000_0000_0000i
+to_sint -0x0000_0000_0000_0001i -> -0x0000_0000_0000_0001i; of_sint -> -0x0000_0000_0000_0001i
+to_sint -0x8000_0000_0000_0000i -> -0x8000_0000_0000_0000i; of_sint -> -0x8000_0000_0000_0000i
 to_sint 0x7fff_ffff_ffff_ffffi -> 0x7fff_ffff_ffff_ffffi; of_sint -> 0x7fff_ffff_ffff_ffffi
-to_sint 0x8000_0000_0000_0000i -> 0x8000_0000_0000_0000i; of_sint -> 0x8000_0000_0000_0000i
+to_sint -0x8000_0000_0000_0000i -> -0x8000_0000_0000_0000i; of_sint -> -0x8000_0000_0000_0000i
 to_sint 0x7fff_ffff_ffff_ffffi -> 0x7fff_ffff_ffff_ffffi; of_sint -> 0x7fff_ffff_ffff_ffffi
