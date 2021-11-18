@@ -1,44 +1,44 @@
-cmp 0x00000000u32 0x80000000u32 -> Lt
-0x00000000u32 >= 0x80000000u32 -> false
-0x00000000u32 <= 0x80000000u32 -> true
-0x00000000u32 = 0x80000000u32 -> false
-0x00000000u32 > 0x80000000u32 -> false
-0x00000000u32 < 0x80000000u32 -> true
-0x00000000u32 <> 0x80000000u32 -> true
-ascending 0x00000000u32 0x80000000u32 -> Lt
-descending 0x00000000u32 0x80000000u32 -> Gt
+cmp 0x0000_0000u32 0x8000_0000u32 -> Lt
+0x0000_0000u32 >= 0x8000_0000u32 -> false
+0x0000_0000u32 <= 0x8000_0000u32 -> true
+0x0000_0000u32 = 0x8000_0000u32 -> false
+0x0000_0000u32 > 0x8000_0000u32 -> false
+0x0000_0000u32 < 0x8000_0000u32 -> true
+0x0000_0000u32 <> 0x8000_0000u32 -> true
+ascending 0x0000_0000u32 0x8000_0000u32 -> Lt
+descending 0x0000_0000u32 0x8000_0000u32 -> Gt
 
-cmp 0x00000000u32 0xffffffffu32 -> Lt
-0x00000000u32 >= 0xffffffffu32 -> false
-0x00000000u32 <= 0xffffffffu32 -> true
-0x00000000u32 = 0xffffffffu32 -> false
-0x00000000u32 > 0xffffffffu32 -> false
-0x00000000u32 < 0xffffffffu32 -> true
-0x00000000u32 <> 0xffffffffu32 -> true
-ascending 0x00000000u32 0xffffffffu32 -> Lt
-descending 0x00000000u32 0xffffffffu32 -> Gt
+cmp 0x0000_0000u32 0xffff_ffffu32 -> Lt
+0x0000_0000u32 >= 0xffff_ffffu32 -> false
+0x0000_0000u32 <= 0xffff_ffffu32 -> true
+0x0000_0000u32 = 0xffff_ffffu32 -> false
+0x0000_0000u32 > 0xffff_ffffu32 -> false
+0x0000_0000u32 < 0xffff_ffffu32 -> true
+0x0000_0000u32 <> 0xffff_ffffu32 -> true
+ascending 0x0000_0000u32 0xffff_ffffu32 -> Lt
+descending 0x0000_0000u32 0xffff_ffffu32 -> Gt
 
-cmp 0x80000000u32 0xffffffffu32 -> Lt
-0x80000000u32 >= 0xffffffffu32 -> false
-0x80000000u32 <= 0xffffffffu32 -> true
-0x80000000u32 = 0xffffffffu32 -> false
-0x80000000u32 > 0xffffffffu32 -> false
-0x80000000u32 < 0xffffffffu32 -> true
-0x80000000u32 <> 0xffffffffu32 -> true
-ascending 0x80000000u32 0xffffffffu32 -> Lt
-descending 0x80000000u32 0xffffffffu32 -> Gt
+cmp 0x8000_0000u32 0xffff_ffffu32 -> Lt
+0x8000_0000u32 >= 0xffff_ffffu32 -> false
+0x8000_0000u32 <= 0xffff_ffffu32 -> true
+0x8000_0000u32 = 0xffff_ffffu32 -> false
+0x8000_0000u32 > 0xffff_ffffu32 -> false
+0x8000_0000u32 < 0xffff_ffffu32 -> true
+0x8000_0000u32 <> 0xffff_ffffu32 -> true
+ascending 0x8000_0000u32 0xffff_ffffu32 -> Lt
+descending 0x8000_0000u32 0xffff_ffffu32 -> Gt
 
-clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x7ffffffeu32 -> 0x7fffffffu32
-between ~low:0x7fffffffu32 ~high:0x80000001u32 0x7ffffffeu32 -> false
+clamp ~min:0x7fff_ffffu32 ~max:0x8000_0001u32 0x7fff_fffeu32 -> 0x7fff_ffffu32
+between ~low:0x7fff_ffffu32 ~high:0x8000_0001u32 0x7fff_fffeu32 -> false
 
-clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x7fffffffu32 -> 0x7fffffffu32
-between ~low:0x7fffffffu32 ~high:0x80000001u32 0x7fffffffu32 -> true
+clamp ~min:0x7fff_ffffu32 ~max:0x8000_0001u32 0x7fff_ffffu32 -> 0x7fff_ffffu32
+between ~low:0x7fff_ffffu32 ~high:0x8000_0001u32 0x7fff_ffffu32 -> true
 
-clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x80000000u32 -> 0x80000000u32
-between ~low:0x7fffffffu32 ~high:0x80000001u32 0x80000000u32 -> true
+clamp ~min:0x7fff_ffffu32 ~max:0x8000_0001u32 0x8000_0000u32 -> 0x8000_0000u32
+between ~low:0x7fff_ffffu32 ~high:0x8000_0001u32 0x8000_0000u32 -> true
 
-clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x80000001u32 -> 0x80000001u32
-between ~low:0x7fffffffu32 ~high:0x80000001u32 0x80000001u32 -> true
+clamp ~min:0x7fff_ffffu32 ~max:0x8000_0001u32 0x8000_0001u32 -> 0x8000_0001u32
+between ~low:0x7fff_ffffu32 ~high:0x8000_0001u32 0x8000_0001u32 -> true
 
-clamp ~min:0x7fffffffu32 ~max:0x80000001u32 0x80000002u32 -> 0x80000001u32
-between ~low:0x7fffffffu32 ~high:0x80000001u32 0x80000002u32 -> false
+clamp ~min:0x7fff_ffffu32 ~max:0x8000_0001u32 0x8000_0002u32 -> 0x8000_0001u32
+between ~low:0x7fff_ffffu32 ~high:0x8000_0001u32 0x8000_0002u32 -> false
