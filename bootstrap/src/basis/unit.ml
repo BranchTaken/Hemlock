@@ -11,9 +11,6 @@ module T = struct
   let cmp _ _ =
     Cmp.Eq
 
-  let xpp xppf _t =
-    Format.fprintf xppf "()"
-
   let of_string s =
     match s with
     | "unit"

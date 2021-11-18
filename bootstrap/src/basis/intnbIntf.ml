@@ -92,19 +92,6 @@ module type SLimitless = sig
   (** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~base ~pretty t formatter] calls [formatter.fmt ~pad
       ~just ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~base ~pretty t]. *)
 
-  val xpp_b: Format.formatter -> t -> unit
-  (** [xpp_b xppf t] prints a binary representation of [t] to the pretty printing formatter, [xppf].
-      This function is intended for use with the [%a] format specifier to {!Format.printf}. *)
-
-  val xpp_o: Format.formatter -> t -> unit
-  (** [xpp_o xppf t] prints an octal representation of [t] to the pretty printing formatter, [xppf].
-      This function is intended for use with the [%a] format specifier to {!Format.printf}. *)
-
-  val xpp_x: Format.formatter -> t -> unit
-  (** [xpp_x xppf t] prints a hexadecimal representation of [t] to the pretty printing formatter,
-      [xppf]. This function is intended for use with the [%a] format specifier to {!Format.printf}.
-  *)
-
   val one: t
   (** Constant value 1. *)
 

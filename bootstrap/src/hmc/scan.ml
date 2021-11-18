@@ -162,15 +162,6 @@ module Source = struct
     let slice = Slice.of_cursors ~base:hd' ~past:tl' in
     slice, t'
 
-  let xpp_loc xppf t =
-    Format.fprintf xppf "%s[%a..%a)"
-      (match t.path with
-        | None -> ""
-        | Some path -> Format.asprintf "%s:" path
-      )
-      Text.Pos.xpp (Cursor.(pos (hd t)))
-      Text.Pos.xpp (Cursor.(pos (tl t)))
-
   let pp_loc t formatter =
     formatter
     |> (fun formatter -> (match t.path with
@@ -185,10 +176,6 @@ module Source = struct
     |> Fmt.fmt ".."
     |> Text.Pos.pp (Cursor.(pos (tl t)))
     |> Fmt.fmt ")"
-
-  let xpp xppf t =
-    Format.fprintf xppf "%s" (Text.Slice.(to_string (init ~base:t.base ~past:t.past
-        (Text.Cursor.container t.base))))
 
   let pp t formatter =
     formatter |> Fmt.fmt (Text.Slice.(to_string (init ~base:t.base ~past:t.past
@@ -213,9 +200,6 @@ module AbstractToken = struct
       let description t =
         t.description
 
-      let xpp xppf t =
-        Format.fprintf xppf "\"%a: %s\"" Source.xpp_loc t.source t.description
-
       let pp t formatter =
         formatter
         |> Fmt.fmt "\""
@@ -228,11 +212,6 @@ module AbstractToken = struct
     type 'a t =
       | Constant of 'a
       | Malformed of Malformation.t list
-
-    let xpp xpp_a xppf = function
-      | Constant a -> Format.fprintf xppf "Constant %a" xpp_a a
-      | Malformed malformations -> Format.fprintf xppf "Malformed %a" (List.xpp Malformation.xpp)
-        malformations
 
     let pp pp_a t formatter =
       match t with

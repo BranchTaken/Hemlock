@@ -188,30 +188,6 @@ module Slice = struct
   let get i t =
     Array.get (Cursor.index (base t) + i) (container t)
 
-  let xpp xppf t =
-    let open Format in
-    fprintf xppf "@[<h>[|";
-    let rec fn xppf cursor past = begin
-      match Cursor.(cursor < past) with
-      | true -> begin
-          let elm, cursor' = Cursor.next cursor in
-          fprintf xppf ";@ %a" Byte.xpp_x elm;
-          fn xppf cursor' past
-        end
-      | false -> ()
-    end in
-    let cursor, past = cursors t in
-    begin
-      match Cursor.(cursor < past) with
-      | true -> begin
-          let elm, cursor' = Cursor.next cursor in
-          fprintf xppf "%a" Byte.xpp_x elm;
-          fn xppf cursor' past
-        end
-      | false -> ()
-    end;
-    fprintf xppf "|]@]"
-
   (* XXX Use Array.Slice.fmt (#90). *)
   let pp t formatter =
     let rec fn cursor past formatter = begin
@@ -276,9 +252,6 @@ module Slice = struct
     | Some  string -> string
     | None -> not_reached ()
 end
-
-let xpp xppf t =
-  Slice.(xpp xppf (init t))
 
 let pp t formatter =
   formatter |> Slice.(pp (init t))

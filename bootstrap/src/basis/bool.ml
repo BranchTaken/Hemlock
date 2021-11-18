@@ -20,13 +20,6 @@ module T = struct
     | true, true -> Eq
     | true, false -> Gt
 
-  let xpp xppf t =
-    Format.fprintf xppf (
-      match t with
-      | false -> "false"
-      | true -> "true"
-    )
-
   let of_string s =
     match s with
     | "false" -> false
