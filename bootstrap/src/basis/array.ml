@@ -1157,12 +1157,3 @@ let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_a t formatter =
 
 let pp pp_a t formatter =
   fmt pp_a t formatter
-
-let xpp xpp_elm xppf t =
-  let open Format in
-  fprintf xppf "@[<h>[|";
-  iteri t ~f:(fun i elm ->
-    if i > 0L then fprintf xppf ";@ ";
-    fprintf xppf "%a" xpp_elm elm
-  );
-  fprintf xppf "|]@]"

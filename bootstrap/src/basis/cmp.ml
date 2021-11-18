@@ -3,13 +3,6 @@ type t =
   | Eq
   | Gt
 
-let xpp xppf t =
-  Format.fprintf xppf (match t with
-    | Lt -> "Lt"
-    | Eq -> "Eq"
-    | Gt -> "Gt"
-  )
-
 let pp t formatter =
   formatter |> Fmt.fmt (match t with
     | Lt -> "Lt"

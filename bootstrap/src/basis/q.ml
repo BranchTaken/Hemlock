@@ -44,13 +44,6 @@ let push_back elm (l, f, r, s) =
 let pop t =
   hd t, tl t
 
-let xpp xpp_elm xppf (l, f, r, s) =
-  let open Format in
-  fprintf xppf "@[<h>";
-  fprintf xppf "(len=%a,@ f=%a,@ r=%a,@ s=%a)"
-    Uns.xpp l (Stream.xpp xpp_elm) f (List.xpp xpp_elm) r (Stream.xpp xpp_elm) s;
-  fprintf xppf "@]"
-
 let pp pp_elm (l, f, r, s) formatter =
   formatter
   |> Fmt.fmt "(len="

@@ -52,20 +52,6 @@ module T = struct
     include Codepoint.Seq.Make(T)
   end
 
-  let xpp xppf t =
-    let rec fn seq = begin
-      match CodepointSeq.to_codepoint seq with
-      | Some (Valid (cp, seq')) -> begin
-          Format.fprintf xppf "%s" Codepoint.Utf8.(escape (of_codepoint cp));
-          fn seq'
-        end
-      | Some (Invalid _) -> not_reached ()
-      | None -> ()
-    end in
-    Format.fprintf xppf "\"";
-    fn (CodepointSeq.init t);
-    Format.fprintf xppf "\""
-
   let pp t formatter =
     let rec fn seq formatter = begin
       match CodepointSeq.to_codepoint seq with
@@ -113,11 +99,6 @@ module B = struct
         (* == is excessively vague in OCaml. *)
         assert ((t0.string == t1.string) || (t0.string = t1.string));
         Uns.cmp t0.index t1.index
-
-      let xpp xppf t =
-        Format.fprintf xppf "@[<h>{string=%a,@ index=%a}@]"
-          xpp t.string
-          Uns.xpp t.index
 
       let pp t formatter =
         formatter
@@ -235,11 +216,6 @@ module B = struct
           end
         | Gt -> Cmp.Gt
 
-      let xpp xppf t =
-        Format.fprintf xppf "@[<h>{base=%a,@ past=%a}@]"
-          Cursor.xpp (base t)
-          Cursor.xpp (past t)
-
       let pp t formatter =
         formatter
         |> Fmt.fmt "{base="
@@ -297,11 +273,6 @@ module CPre = struct
         (* == is excessively vague in OCaml. *)
         assert ((t0.string == t1.string) || (t0.string = t1.string));
         Uns.cmp t0.bindex t1.bindex
-
-      let xpp xppf t =
-        Format.fprintf xppf "@[<h>{string=%a,@ bindex=%a}@]"
-          xpp t.string
-          Uns.xpp t.bindex
 
       let pp t formatter =
         formatter
@@ -454,11 +425,6 @@ module CPre = struct
             | Gt -> Cmp.Lt
           end
         | Gt -> Cmp.Gt
-
-      let xpp xppf t =
-        Format.fprintf xppf "@[<h>{base=%a,@ past=%a}@]"
-          Cursor.xpp (base t)
-          Cursor.xpp (past t)
 
       let pp t formatter =
         formatter
