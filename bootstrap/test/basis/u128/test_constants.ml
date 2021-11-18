@@ -1,12 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open U128
-open Format
 
 let test () =
-  printf "zero=%a\n" xpp_x zero;
-  printf "one=%a\n" xpp_x one;
-  printf "min_value=%a\n" xpp_x min_value;
-  printf "max_value=%a\n" xpp_x max_value
+  File.Fmt.stdout
+  |> Fmt.fmt "zero="
+  |> fmt ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true zero
+  |> Fmt.fmt "\none="
+  |> fmt ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true one
+  |> Fmt.fmt "\nmin_value="
+  |> fmt ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true min_value
+  |> Fmt.fmt "\nmax_value="
+  |> fmt ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true max_value
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()
