@@ -1,18 +1,24 @@
 open! Basis.Rudiments
 open! Basis
 open U16
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test_pairs = function
     | [] -> ()
     | (x, y) :: pairs' -> begin
-        printf "bit_{and,or,xor} %a %a -> %a, %a, %a\n"
-          xpp_x x xpp_x y
-          xpp_x (bit_and x y)
-          xpp_x (bit_or x y)
-          xpp_x (bit_xor x y);
+        File.Fmt.stdout
+        |> Fmt.fmt "bit_{and,or,xor} "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true y
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true (bit_and x y)
+        |> Fmt.fmt ", "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true (bit_or x y)
+        |> Fmt.fmt ", "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true (bit_xor x y)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test_pairs pairs'
       end
   in
@@ -22,7 +28,6 @@ let test () =
     (kv 0L, kv 0xffffL);
     (kv 0xffffL, kv 0xffffL);
   ] in
-  test_pairs pairs;
-  printf "@]"
+  test_pairs pairs
 
 let _ = test ()
