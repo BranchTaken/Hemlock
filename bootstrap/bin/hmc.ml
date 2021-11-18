@@ -3,17 +3,21 @@ include Basis.Rudiments
 open Hmc
 
 let scan_file path =
-  let open Format in
   let rec fn scanner = begin
     let scanner', ctoken = Scan.next scanner in
     let atoken = Scan.ConcreteToken.atoken ctoken in
     let source = Scan.ConcreteToken.source ctoken in
-    printf "  %a : %s\n" Scan.Source.xpp_loc source (Scan.AbstractToken.to_string atoken);
+    File.Fmt.stdout
+    |> Fmt.fmt "  "
+    |> Scan.Source.pp_loc source
+    |> Fmt.fmt " : "
+    |> Fmt.fmt (Scan.AbstractToken.to_string atoken)
+    |> Fmt.fmt "\n"
+    |> ignore;
     match atoken with
     | Scan.AbstractToken.Tok_end_of_input -> ()
     | _ -> fn scanner'
   end in
-  printf "@[<h>";
   let () = match File.of_path path with
     | Ok f -> begin
         let stream = File.Stream.of_file f in
@@ -22,9 +26,15 @@ let scan_file path =
         let scanner = Scan.init text in
         fn scanner
       end
-    | Error err -> halt (asprintf "File.of_path error: %s\n" (File.Error.to_string err))
+    | Error err -> halt (
+      String.Fmt.empty
+      |> Fmt.fmt "File.of_path error: "
+      |> Fmt.fmt (File.Error.to_string err)
+      |> Fmt.fmt "\n"
+      |> Fmt.to_string
+    )
   in
-  printf "@]"
+  ()
 
 let _ =
   match Array.length Sys.argv with
