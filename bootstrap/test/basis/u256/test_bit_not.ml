@@ -1,15 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open U256
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec test = function
     | [] -> ()
     | x :: xs' -> begin
-        printf "bit_not %a -> %a\n"
-          xpp_x x xpp_x (bit_not x);
+        File.Fmt.stdout
+        |> Fmt.fmt "bit_not "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (bit_not x)
+        |> Fmt.fmt "\n"
+        |> ignore;
         test xs'
       end
   in
@@ -17,7 +20,6 @@ let test () =
     zero;
     max_value;
   ] in
-  test xs;
-  printf "@]"
+  test xs
 
 let _ = test ()
