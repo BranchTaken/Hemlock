@@ -1,14 +1,14 @@
-of_real -0x1p+0 -> 0x00000000u32; to_real -> 0x0p+0
-of_real 0x0p+0 -> 0x00000000u32; to_real -> 0x0p+0
-of_real 0x1.1p-1 -> 0x00000000u32; to_real -> 0x0p+0
-of_real 0x1p+0 -> 0x00000001u32; to_real -> 0x1p+0
-of_real 0x1.fffffffffffffp+48 -> 0xffffffffu32; to_real -> 0x1.fffffffep+31
-of_real 0x1.fffffffffffffp+52 -> 0xffffffffu32; to_real -> 0x1.fffffffep+31
-of_real 0x1.fffffffffffffp+56 -> 0xfffffff0u32; to_real -> 0x1.ffffffep+31
-of_real 0x1.fffffffffffffp+61 -> 0xfffffe00u32; to_real -> 0x1.fffffcp+31
-of_real 0x1p+31 -> 0x80000000u32; to_real -> 0x1p+31
-of_real 0x1p+32 -> 0x00000000u32; to_real -> 0x0p+0
+of_real -0x1. -> 0x0000_0000u32; to_real -> 0x0.
+of_real 0x0. -> 0x0000_0000u32; to_real -> 0x0.
+of_real 0x0.88 -> 0x0000_0000u32; to_real -> 0x0.
+of_real 0x1. -> 0x0000_0001u32; to_real -> 0x1.
+of_real 0x1_ffff_ffff_ffff.f -> 0xffff_ffffu32; to_real -> 0xffff_ffff.
+of_real 0x1f_ffff_ffff_ffff. -> 0xffff_ffffu32; to_real -> 0xffff_ffff.
+of_real 0x1ff_ffff_ffff_fff0. -> 0xffff_fff0u32; to_real -> 0xffff_fff0.
+of_real 0x3fff_ffff_ffff_fe00. -> 0xffff_fe00u32; to_real -> 0xffff_fe00.
+of_real 0x1p31 -> 0x8000_0000u32; to_real -> 0x1p31
+of_real 0x1p32 -> 0x0000_0000u32; to_real -> 0x0.
 
-to_real 0x00000000u32 -> 0x0p+0; of_real -> 0x00000000u32
-to_real 0x00000001u32 -> 0x1p+0; of_real -> 0x00000001u32
-to_real 0xffffffffu32 -> 0x1.fffffffep+31; of_real -> 0xffffffffu32
+to_real 0x0000_0000u32 -> 0x0.; of_real -> 0x0000_0000u32
+to_real 0x0000_0001u32 -> 0x1.; of_real -> 0x0000_0001u32
+to_real 0xffff_ffffu32 -> 0xffff_ffff.; of_real -> 0xffff_ffffu32
