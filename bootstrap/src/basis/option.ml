@@ -106,10 +106,6 @@ end
 include T
 include Container.MakePolyIndex(T)
 
-let xpp xpp_a xppf = function
-  | Some a -> Format.fprintf xppf "@[<h>Some@ %a@]" xpp_a a
-  | None -> Format.fprintf xppf "None"
-
 let fmt ?(alt=Fmt.alt_default) fmt_a t formatter =
   match t with
   | Some a ->

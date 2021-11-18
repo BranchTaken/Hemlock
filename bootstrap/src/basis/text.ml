@@ -60,9 +60,6 @@ module Pos = struct
     let col t =
       t.col
 
-    let xpp xppf t =
-      Format.fprintf xppf "@[<h>%a:%a@]" Uns.xpp t.line Uns.xpp t.col
-
     let pp t formatter =
       formatter
       |> Uns.pp t.line

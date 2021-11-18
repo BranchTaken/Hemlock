@@ -169,55 +169,6 @@ module T = struct
     | Nan, _
     | _, Nan -> halt "Comparison with nan"
 
-  let xpp xppf t =
-    assert (is_norm t);
-    let open Format in
-    let xpp_sign xppf = function
-      | Neg -> fprintf xppf "-"
-      | Pos -> fprintf xppf ""
-    in
-    let rec xpp_frac hex_digits xppf frac = begin
-      match hex_digits with
-      | 0L -> ()
-      | _ -> begin
-          let digit = Nat.(bit_and frac k_f) in
-          let int64_digit = match Nat.(digit = zero) with
-            | true -> Int64.zero
-            | false -> Nat.get 0L digit
-          in
-          let frac' = Nat.bit_usr ~shift:4L frac in
-          xpp_frac (pred hex_digits) xppf frac';
-          fprintf xppf "%Lx" int64_digit
-        end
-    end in
-    match t with
-    | N {sign; mag=Fin {exponent; mantissa}} -> begin
-        match Nat.(mantissa = zero) with
-        | true -> fprintf xppf "%a0x0p0" xpp_sign sign
-        | false -> begin
-            let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
-            let shift = pred sig_digits in
-            let frac_mask = Nat.((bit_sl ~shift one) - one) in
-            let frac = Nat.bit_and mantissa frac_mask in
-            match Nat.(frac = zero) with
-            | true -> fprintf xppf "%a0x1p%a" xpp_sign sign Zint.xpp exponent
-            | false -> begin
-                let rem = shift % 4L in
-                let hex_digits = shift / 4L in
-                let hex_digits', frac' = match rem = 0L with
-                  | true -> hex_digits, frac
-                  | false -> (succ hex_digits), Nat.bit_sl ~shift:(4L - rem) frac
-                in
-                fprintf xppf "%a0x1.%ap%a"
-                  xpp_sign sign
-                  (xpp_frac hex_digits') frac'
-                  Zint.xpp exponent
-              end
-          end
-      end
-    | N {sign; mag=Inf} -> fprintf xppf "%ainf" xpp_sign sign
-    | Nan -> fprintf xppf "nan"
-
   let pp t formatter =
     assert (is_norm t);
     let pp_sign sign formatter = begin

@@ -32,10 +32,6 @@ val u128_to_tup: u128 -> u64 * u64
 val u128_of_uns: uns -> u128
 (** Convert unsigned integer to 128-bit unsigned integer. *)
 
-val u128_xpp_x: Format.formatter -> u128 -> unit
-(** [u128_xpp_x xppf u] prints a hexadecimal representation of [u] to the pretty printing formatter,
-    [xppf]. This function is intended for use with the [%a] format specifier to {!Format.printf}.*)
-
 val u128_pp_x: u128 -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** [u128_pp_x u formatter] applies a hexadecimal representation of [u] to [formatter]. *)
 

@@ -246,9 +246,6 @@ let fmt ?pad ?just ?width ?pretty t formatter =
 let pp t formatter =
   fmt ~pretty:true t formatter
 
-let xpp xppf t =
-  Format.fprintf xppf "%s" (escape t)
-
 module Seq = struct
   type outer = t
   (* Silence ocp-indent. *)

@@ -5,12 +5,6 @@ type t =
   | Zero
   | Pos
 
-let xpp xppf t =
-  Format.fprintf xppf (match t with
-    | Neg -> "Neg"
-    | Zero -> "Zero"
-    | Pos -> "Pos")
-
 let pp t formatter =
   formatter |> Fmt.fmt (match t with
     | Neg -> "Neg"

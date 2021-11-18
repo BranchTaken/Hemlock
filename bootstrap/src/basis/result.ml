@@ -4,10 +4,6 @@ type ('a, 'b) t =
   | Ok of 'a
   | Error of 'b
 
-let xpp xpp_a xpp_b xppf = function
-  | Ok a -> Format.fprintf xppf "@[<h>Ok@ %a@]" xpp_a a
-  | Error b -> Format.fprintf xppf "@[<h>Error@ %a@]" xpp_b b
-
 let fmt ?(alt=Fmt.alt_default) fmt_a fmt_b t formatter =
   match t with
   | Ok a ->

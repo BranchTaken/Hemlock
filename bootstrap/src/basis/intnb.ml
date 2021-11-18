@@ -172,61 +172,6 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
       | true -> Int64.to_float t
       | false -> Int64.(to_float (shift_right_logical t 1)) *. 2. +. Int64.(to_float (logand t 1L))
 
-    let xpp xppf t =
-      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
-      let nlb = Int64.(sub 64L T.bit_length) in
-      match T.signed, nlb with
-      | false, 0L -> Format.fprintf xppf "%Lu" t
-      | true, 0L -> Format.fprintf xppf "%Ldi" t
-      | false, _ -> Format.fprintf xppf "%Luu%Lu" t T.bit_length
-      | true, _ -> Format.fprintf xppf "%Ldi%Lu" t T.bit_length
-
-    let xpp_b xppf t =
-      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
-      let nlb = Int64.(sub 64L T.bit_length) in
-      let tbits =
-        Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t) in (* Mask leading ones. *)
-      let rec string_of_bits bits i accum = begin
-        match i = T.bit_length with
-        | true -> Stdlib.String.concat "" accum
-        | false -> begin
-            let bits' = Int64.shift_right_logical bits 1 in
-            let i' = Int64.succ i in
-            let accum' = Int64.(to_string (logand bits 1L)) :: accum in
-            string_of_bits bits' i' accum'
-          end
-      end in
-      let bits_string = string_of_bits tbits 0L [] in
-      match T.signed, nlb with
-      | false, 0L -> Format.fprintf xppf "0b%s" bits_string
-      | true, 0L -> Format.fprintf xppf "0b%si" bits_string
-      | false, _ -> Format.fprintf xppf "0b%su%Lu" bits_string T.bit_length
-      | true, _ -> Format.fprintf xppf "0b%si%Lu" bits_string T.bit_length
-
-    let xpp_o xppf t =
-      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
-      let nlb = Int64.(sub 64L T.bit_length) in
-      let oct_digits = ((Int64.to_int T.bit_length) + 2) / 3 in
-      let tbits =
-        Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t) in (* Mask leading ones. *)
-      match T.signed, nlb with
-      | false, 0L -> Format.fprintf xppf "0o%0*Lo" oct_digits tbits
-      | true, 0L -> Format.fprintf xppf "0o%0*Loi" oct_digits tbits
-      | false, _ -> Format.fprintf xppf "0o%0*Lou%Lu" oct_digits tbits T.bit_length
-      | true, _ -> Format.fprintf xppf "0o%0*Loi%Lu" oct_digits tbits T.bit_length
-
-    let xpp_x xppf t =
-      assert Stdlib.(Int64.(compare (narrow t) t) = 0);
-      let nlb = Int64.(sub 64L T.bit_length) in
-      let hex_digits = ((Int64.to_int T.bit_length) + 3) / 4 in
-      let tbits =
-        Int64.(logand (pred (shift_left 1L (to_int T.bit_length))) t) in (* Mask leading ones. *)
-      match T.signed, nlb with
-      | false, 0L -> Format.fprintf xppf "0x%0*Lx" hex_digits tbits
-      | true, 0L -> Format.fprintf xppf "0x%0*Lxi" hex_digits tbits
-      | false, _ -> Format.fprintf xppf "0x%0*Lxu%Lu" hex_digits tbits T.bit_length
-      | true, _ -> Format.fprintf xppf "0x%0*Lxi%Lu" hex_digits tbits T.bit_length
-
     let of_string s =
       narrow (Int64.of_string s)
 
@@ -446,19 +391,6 @@ module MakeI (T : I) : SI with type t := sint = struct
 
     let of_string s =
       sint_of_uns (V.of_string s)
-
-    let xpp xppf t =
-      V.xpp xppf (uns_of_sint t)
-
-    let xpp_b xppf t =
-      V.xpp_b xppf (uns_of_sint t)
-
-    let xpp_o xppf t =
-      V.xpp_o xppf (uns_of_sint t)
-
-    let xpp_x xppf t =
-      V.xpp_x xppf (uns_of_sint t)
-
 
     let to_string ?sign ?alt ?zpad ?width ?base ?pretty t =
       V.to_string ?sign ?alt ?zpad ?width ?base ?pretty (uns_of_sint t)

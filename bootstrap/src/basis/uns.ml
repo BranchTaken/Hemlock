@@ -21,9 +21,6 @@ module T = struct
 
     let one = Int64.one
 
-    let xpp xppf t =
-      Format.fprintf xppf "%Lu" t
-
     let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
       ?(width=Fmt.width_default) ?(base=Fmt.base_default) ?(pretty=Fmt.pretty_default) t =
       let rec fn accum ndigits t = begin
@@ -72,38 +69,6 @@ module T = struct
   include U
   include Cmpable.MakeZero(U)
   include Identifiable.Make(U)
-
-  let xpp_b xppf t =
-    let rec fn x shift = begin
-      match shift with
-      | 0 -> ()
-      | _ -> begin
-          if Stdlib.(shift mod 8 = 0 && shift < 64) then Format.fprintf xppf "_";
-          let shift' = Stdlib.(pred shift) in
-          let bit = Int64.(logand (shift_right_logical x shift') 0x1L) in
-          Format.fprintf xppf "%Ld" bit;
-          fn x shift'
-        end
-    end in
-    Format.fprintf xppf "0b";
-    fn t 64
-
-  let xpp_o xppf t =
-    Format.fprintf xppf "0o%Lo" t
-
-  let xpp_x xppf t =
-    let rec fn x shift = begin
-      match shift with
-      | 0 -> ()
-      | _ -> begin
-          if Stdlib.(shift < 64) then Format.fprintf xppf "_";
-          let shift' = Stdlib.(shift - 16) in
-          Format.fprintf xppf "%04Lx" Int64.(logand (shift_right_logical x shift') 0xffffL);
-          fn x shift'
-        end
-    end in
-    Format.fprintf xppf "0x";
-    fn t 64
 
   let of_string s =
     match Stdlib.String.split_on_char 'x' s with

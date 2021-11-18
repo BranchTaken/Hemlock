@@ -16,7 +16,6 @@ module UnsTestCmper = struct
         Hash.State.of_u128 (U128.bit_sl ~shift:(bits_per_hash % bits_per_level) U128.one)
       | _ -> Uns.hash_fold a Hash.State.empty
     let cmp = Uns.cmp
-    let xpp = Uns.xpp
     let pp = Uns.pp
   end
   include Cmper.MakeMono(T)
