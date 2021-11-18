@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open U16
-open Format
 
 let test () =
   let rec fn = function
@@ -11,13 +10,31 @@ let test () =
         let t = trunc_of_sint i in
         let i' = extend_to_sint t in
         let t' = trunc_of_sint i' in
-        printf "trunc_of_sint %a -> extend_to_sint %a -> trunc_of_sint %a -> %a\n"
-          Sint.xpp_x i xpp_x t Sint.xpp_x i' xpp_x t';
+        File.Fmt.stdout
+        |> Fmt.fmt "trunc_of_sint "
+        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true i
+        |> Fmt.fmt " -> extend_to_sint "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true t
+        |> Fmt.fmt " -> trunc_of_sint "
+        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true i'
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true t'
+        |> Fmt.fmt "\n"
+        |> ignore;
         let t = trunc_of_uns (Uns.bits_of_sint i) in
         let u = extend_to_uns t in
         let t' = trunc_of_uns u in
-        printf "trunc_of_uns %a -> extend_to_uns %a -> trunc_of_uns %a -> %a\n"
-          Uns.xpp_x x xpp_x t Uns.xpp_x u xpp_x t';
+        File.Fmt.stdout
+        |> Fmt.fmt "trunc_of_uns "
+        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true x
+        |> Fmt.fmt " -> extend_to_uns "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true t
+        |> Fmt.fmt " -> trunc_of_uns "
+        |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex u
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true t'
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn xs'
       end
   in
