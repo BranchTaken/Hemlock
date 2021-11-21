@@ -5,9 +5,9 @@ open Option
 let test () =
   File.Fmt.stdout
   |> Fmt.fmt "Some 42 -> "
-  |> (pp Uns.pp) (Some 42L)
+  |> (fmt Uns.pp) (Some 42L)
   |> Fmt.fmt "\nNone -> "
-  |> (pp Uns.pp) None
+  |> (fmt Uns.pp) None
   |> Fmt.fmt "\n"
   |> ignore
 

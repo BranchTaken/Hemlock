@@ -1,4 +1,4 @@
-is_some Some 42 -> true
-is_none Some 42 -> false
+is_some Some (42) -> true
+is_none Some (42) -> false
 is_some None -> false
 is_none None -> true

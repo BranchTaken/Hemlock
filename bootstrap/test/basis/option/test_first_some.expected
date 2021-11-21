@@ -1,4 +1,4 @@
-first_some (Some 42) (Some 13) -> Some 42
-first_some (Some 42) (None) -> Some 42
-first_some (None) (Some 13) -> Some 13
+first_some (Some (42)) (Some (13)) -> Some (42)
+first_some (Some (42)) (None) -> Some (42)
+first_some (None) (Some (13)) -> Some (13)
 first_some (None) (None) -> None

@@ -1,4 +1,4 @@
-merge (Some 42) (Some 43) ~f:(fun _ _ -> 77) -> Some 77
-merge (Some 42) (None) ~f:(fun _ _ -> 77) -> Some 42
-merge (None) (Some 43) ~f:(fun _ _ -> 77) -> Some 43
+merge (Some (42)) (Some (43)) ~f:(fun _ _ -> 77) -> Some (77)
+merge (Some (42)) (None) ~f:(fun _ _ -> 77) -> Some (42)
+merge (None) (Some (43)) ~f:(fun _ _ -> 77) -> Some (43)
 merge (None) (None) ~f:(fun _ _ -> 77) -> None
