@@ -212,7 +212,7 @@ module Slice = struct
     end;
     fprintf xppf "|]@]"
 
-  (* XXX Use Array.Slice.fmt. *)
+  (* XXX Use Array.Slice.fmt (#90). *)
   let pp t formatter =
     let rec fn cursor past formatter = begin
       match Cursor.(cursor < past) with

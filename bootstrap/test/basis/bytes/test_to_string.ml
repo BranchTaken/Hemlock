@@ -1,7 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 open Bytes
-open Format
 
 module CodepointSeqRev = struct
   module T = struct
@@ -89,17 +88,20 @@ let rev_to_string_replace bytes =
 let test () =
   let test_to_string (bytes_list:byte list) = begin
     let bytes = Array.of_list bytes_list in
-    printf "to_string %a -> %s, \"%s\", \"%s\"\n"
-      xpp bytes
-      (match to_string bytes with
-        | None -> "None"
-        | Some s -> "\"" ^ s ^ "\""
-      )
-      (to_string_replace bytes)
-      (rev_to_string_replace bytes)
+
+    File.Fmt.stdout
+    |> Fmt.fmt "to_string "
+    |> pp bytes
+    |> Fmt.fmt " -> "
+    |> (Option.fmt String.pp) (to_string bytes)
+    |> Fmt.fmt ", "
+    |> String.pp (to_string_replace bytes)
+    |> Fmt.fmt ", "
+    |> String.pp (rev_to_string_replace bytes)
+    |> Fmt.fmt "\n"
+    |> ignore
   end in
   let open Byte in
-  printf "@[<h>";
   test_to_string [kv 0x61L];
   test_to_string [(kv 0xf0L); (kv 0x80L); (kv 0x80L)];
   test_to_string [(kv 0xe0L); (kv 0x80L)];
@@ -149,7 +151,6 @@ let test () =
   test_to_string [kv 0x61L; kv 0xf0L; kv 0x82L; kv 0x80L; kv 0xa1L];
   (* "‡b" *)
   test_to_string [kv 0xe2L; kv 0x80L; kv 0xa1L; kv 0x62L];
-  test_to_string [kv 0xf0L; kv 0x82L; kv 0x80L; kv 0xa1L; kv 0x62L];
-  printf "@]"
+  test_to_string [kv 0xf0L; kv 0x82L; kv 0x80L; kv 0xa1L; kv 0x62L]
 
 let _ = test ()
