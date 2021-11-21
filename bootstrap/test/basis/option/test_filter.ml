@@ -1,18 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open Option
-open Format
 
 let test () =
-  printf "@[<h>";
   List.iter [false; true] ~f:(fun b ->
     List.iter [Some 42L; None] ~f:(fun o ->
-      printf "filter %a ~f:(fun _ -> %b) -> %a\n"
-        (xpp Uns.xpp) o
-        b
-        (xpp Uns.xpp) (filter o ~f:(fun _ -> b))
+      File.Fmt.stdout
+      |> Fmt.fmt "filter "
+      |> (pp Uns.pp) o
+      |> Fmt.fmt " ~f:(fun _ -> "
+      |> Bool.pp b
+      |> Fmt.fmt ") -> "
+      |> (pp Uns.pp) (filter o ~f:(fun _ -> b))
+      |> Fmt.fmt "\n"
+      |> ignore
     )
-  );
-  printf "@]"
+  )
 
 let _ = test ()

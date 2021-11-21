@@ -110,10 +110,18 @@ let xpp xpp_a xppf = function
   | Some a -> Format.fprintf xppf "@[<h>Some@ %a@]" xpp_a a
   | None -> Format.fprintf xppf "None"
 
-let pp pp_a t formatter =
+let fmt ?(alt=Fmt.alt_default) fmt_a t formatter =
   match t with
-  | Some a -> formatter |> Fmt.fmt "Some " |> pp_a a
+  | Some a ->
+    formatter
+    |> Fmt.fmt "Some "
+    |> Fmt.fmt (if alt then "(" else "")
+    |> fmt_a a
+    |> Fmt.fmt (if alt then ")" else "")
   | None -> formatter |> Fmt.fmt "None"
+
+let pp pp_a t formatter =
+  fmt ~alt:true pp_a t formatter
 
 let is_some = function
   | Some _ -> true

@@ -1,18 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open Option
-open Format
 
 let test () =
-  printf "@[<h>";
   List.iter [Some 42L; None] ~f:(fun o0 ->
     List.iter [Some 13L; None] ~f:(fun o1 ->
-      printf "first_some (%a) (%a) -> %a\n"
-        (xpp Uns.xpp) o0
-        (xpp Uns.xpp) o1
-        (xpp Uns.xpp) (first_some o0 o1)
+      File.Fmt.stdout
+      |> Fmt.fmt "first_some ("
+      |> (pp Uns.pp) o0
+      |> Fmt.fmt ") ("
+      |> (pp Uns.pp) o1
+      |> Fmt.fmt ") -> "
+      |> (pp Uns.pp) (first_some o0 o1)
+      |> Fmt.fmt "\n"
+      |> ignore
     )
-  );
-  printf "@]"
+  )
 
 let _ = test ()

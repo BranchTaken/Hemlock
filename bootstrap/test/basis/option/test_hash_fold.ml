@@ -1,17 +1,18 @@
 open! Basis.Rudiments
 open! Basis
 open Option
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn = function
     | [] -> ()
     | option :: options' -> begin
-        printf "hash_fold %a -> %a\n"
-          (xpp Uns.xpp) option
-          Hash.xpp (Hash.t_of_state
-            (hash_fold Uns.hash_fold option Hash.State.empty));
+        File.Fmt.stdout
+        |> Fmt.fmt "hash_fold "
+        |> (pp Uns.pp) option
+        |> Fmt.fmt " -> "
+        |> Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold option Hash.State.empty))
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn options'
       end
   in
@@ -20,7 +21,6 @@ let test () =
     (Some 0L);
     (Some 1L)
   ] in
-  fn options;
-  printf "@]"
+  fn options
 
 let _ = test ()

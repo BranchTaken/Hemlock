@@ -3,6 +3,7 @@
   test_both
   test_filter
   test_first_some
+  test_fmt
   test_hash_fold
   test_hash_fold_empty
   test_is_some_is_none

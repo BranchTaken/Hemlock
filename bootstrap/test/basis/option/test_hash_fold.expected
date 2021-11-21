@@ -1,3 +1,3 @@
 hash_fold None -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
-hash_fold Some 0 -> 0x03ed_688f_024a_5170_df17_bbe2_160e_8fa0u128
-hash_fold Some 1 -> 0x2c31_1233_8879_fc2a_f407_45af_d2ef_7351u128
+hash_fold Some (0) -> 0x03ed_688f_024a_5170_df17_bbe2_160e_8fa0u128
+hash_fold Some (1) -> 0x2c31_1233_8879_fc2a_f407_45af_d2ef_7351u128
