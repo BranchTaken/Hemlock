@@ -1,16 +1,20 @@
 open! Basis.Rudiments
 open! Basis
 open Real
-open Format
 
 let test () =
-  printf "@[<h>";
   let norm_nan t = if (is_nan t) then nan else t in
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "lg %h -> %h\n" t (norm_nan (lg t));
+        File.Fmt.stdout
+        |> Fmt.fmt "lg "
+        |> pp t
+        |> Fmt.fmt " -> "
+        |> pp (norm_nan (lg t))
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn ts'
       end
   end in
@@ -20,7 +24,6 @@ let test () =
     -1.; 1.;
     2.; 4.;
     -0.; 0.;
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()

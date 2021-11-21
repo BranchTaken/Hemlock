@@ -28,6 +28,10 @@ type base =
   | Dec
   | Hex
 
+type pmode =
+  | Limited
+  | Fixed
+
 type notation =
   | Normalized
   | RadixPoint
@@ -39,7 +43,15 @@ let sign_default = Implicit
 let alt_default = false
 let zpad_default = false
 let width_default = 0L
-let precision_default = 2L
+let pmode_default = Limited
+let precision_bin_m_default = 52L
+let precision_bin_a_default = 53L
+let precision_oct_m_default = 18L
+let precision_oct_a_default = 18L
+let precision_dec_m_default = 15L
+let precision_dec_a_default = 3L
+let precision_hex_m_default = 13L
+let precision_hex_a_default = 14L
 let base_default = Dec
 let notation_default = Compact
 let pretty_default = false

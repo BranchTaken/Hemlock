@@ -39,8 +39,8 @@ lngamma 9.50 -> 11.689333421
 lngamma 9.75 -> 12.242204940
 lngamma 10.00 -> 12.801827480
 lngamma -inf -> inf
-lngamma -1.00 -> inf
-lngamma -0.00 -> inf
-lngamma 0.00 -> inf
+lngamma -1. -> inf
+lngamma -0. -> inf
+lngamma 0. -> inf
 lngamma inf -> inf
 lngamma nan -> nan

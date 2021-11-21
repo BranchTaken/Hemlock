@@ -13,15 +13,19 @@ let test () =
     | x :: xs' ->
       List.fold ~init:(
         formatter
-        |> fmt ~alt:true ~precision:13L ~notation:Fmt.Normalized ~base:Fmt.Hex x
+        |> fmt ~alt:true ~base:Fmt.Hex x
         |> Fmt.fmt "\n"
       ) [Fmt.Bin; Fmt.Oct; Fmt.Hex] ~f:(fun formatter base ->
-        List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space]
-          ~f:(fun formatter sign ->
-            List.fold ~init:formatter [false; true] ~f:(fun formatter alt ->
-              List.fold ~init:formatter [false; true] ~f:(fun formatter zpad ->
-                List.fold ~init:formatter [0L; 20L] ~f:(fun formatter width ->
-                  List.fold ~init:formatter [2L; 3L] ~f:(fun formatter precision ->
+        List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space] ~f:(fun formatter sign ->
+          List.fold ~init:formatter [false; true] ~f:(fun formatter alt ->
+            List.fold ~init:formatter [false; true] ~f:(fun formatter zpad ->
+              List.fold ~init:formatter [0L; 20L] ~f:(fun formatter width ->
+                List.fold ~init:formatter (match base with
+                  | Fmt.Bin -> [(Fmt.Limited, 0L); (Fmt.Limited, 9L); (Fmt.Fixed, 9L)]
+                  | Fmt.Oct -> [(Fmt.Limited, 0L); (Fmt.Limited, 4L); (Fmt.Fixed, 4L)]
+                  | Fmt.Dec -> not_reached ()
+                  | Fmt.Hex -> [(Fmt.Limited, 0L); (Fmt.Limited, 5L); (Fmt.Fixed, 5L)])
+                  ~f:(fun formatter (pmode, precision) ->
                     List.fold ~init:formatter [Fmt.Normalized; Fmt.RadixPoint; Fmt.Compact]
                       ~f:(fun formatter notation ->
                         List.fold ~init:formatter [Fmt.Left; Fmt.Center; Fmt.Right]
@@ -30,16 +34,19 @@ let test () =
                             |> Fmt.fmt "["
                             |> Fmt.fmt ~pad:"_" ~width:21L (
                               String.Fmt.empty
-                              |> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~precision ~notation
-                                ~base x
+                              |> (match precision with
+                                | 0L -> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~notation ~base x
+                                | _ -> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~pmode ~precision
+                                    ~notation ~base x
+                              )
                               |> Fmt.to_string
                             )
                             |> Fmt.fmt "] %'·'"
                             |> Fmt.fmt (
                               match just with
-                              | Fmt.Left -> "["
-                              | Fmt.Center -> "]["
-                              | Fmt.Right -> "]"
+                              | Fmt.Left -> "<"
+                              | Fmt.Center -> "^"
+                              | Fmt.Right -> ">"
                             )
                             |> Fmt.fmt (
                               match sign with
@@ -51,10 +58,14 @@ let test () =
                             |> Fmt.fmt (match zpad with false -> "" | true -> "0")
                             |> (match width with 0L -> Fmt.fmt "" | _ -> Uns.fmt width)
                             |> (match precision with
-                              | 2L -> Fmt.fmt ""
+                              | 0L -> Fmt.fmt ""
                               | _ -> (fun formatter ->
                                 formatter
                                 |> Fmt.fmt "."
+                                |> Fmt.fmt (match pmode with
+                                  | Fmt.Limited -> ""
+                                  | Fmt.Fixed -> "="
+                                )
                                 |> Uns.fmt precision
                               )
                             )
@@ -75,10 +86,10 @@ let test () =
                           )
                       )
                   )
-                )
               )
             )
           )
+        )
       )
       |> fn xs'
   in

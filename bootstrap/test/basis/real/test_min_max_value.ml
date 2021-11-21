@@ -1,12 +1,14 @@
 open! Basis.Rudiments
 open! Basis
 open Real
-open Format
 
 let test () =
-  printf "@[<h>";
-  printf "min_value: %h\n" min_value;
-  printf "max_value: %h\n" max_value;
-  printf "@]"
+  File.Fmt.stdout
+  |> Fmt.fmt "min_value: "
+  |> pp min_value
+  |> Fmt.fmt "\nmax_value: "
+  |> pp max_value
+  |> Fmt.fmt "\n"
+  |> ignore
 
 let _ = test ()

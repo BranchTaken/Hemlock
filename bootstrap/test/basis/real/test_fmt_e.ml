@@ -13,14 +13,14 @@ let test () =
     | x :: xs' ->
       List.fold ~init:(
         formatter
-        |> fmt ~alt:true ~precision:13L ~notation:Fmt.Normalized ~base:Fmt.Hex x
+        |> fmt ~alt:true ~base:Fmt.Hex x
         |> Fmt.fmt "\n"
       ) [Fmt.Dec] ~f:(fun formatter base ->
-        List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space]
-          ~f:(fun formatter sign ->
-            List.fold ~init:formatter [false; true] ~f:(fun formatter alt ->
-              List.fold ~init:formatter [false; true] ~f:(fun formatter zpad ->
-                List.fold ~init:formatter [0L; 40L] ~f:(fun formatter width ->
+        List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space] ~f:(fun formatter sign ->
+          List.fold ~init:formatter [false; true] ~f:(fun formatter alt ->
+            List.fold ~init:formatter [false; true] ~f:(fun formatter zpad ->
+              List.fold ~init:formatter [0L; 40L] ~f:(fun formatter width ->
+                List.fold ~init:formatter [Fmt.Limited; Fmt.Fixed] ~f:(fun formatter pmode ->
                   List.fold ~init:formatter [2L; 12L; 13L] ~f:(fun formatter precision ->
                     List.fold ~init:formatter [Fmt.Normalized; Fmt.RadixPoint; Fmt.Compact]
                       ~f:(fun formatter notation ->
@@ -30,16 +30,16 @@ let test () =
                             |> Fmt.fmt "["
                             |> Fmt.fmt ~pad:"_" ~width:41L (
                               String.Fmt.empty
-                              |> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~precision ~notation
-                                ~base x
+                              |> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~pmode ~precision
+                                ~notation ~base x
                               |> Fmt.to_string
                             )
                             |> Fmt.fmt "] %'·'"
                             |> Fmt.fmt (
                               match just with
-                              | Fmt.Left -> "["
-                              | Fmt.Center -> "]["
-                              | Fmt.Right -> "]"
+                              | Fmt.Left -> "<"
+                              | Fmt.Center -> "^"
+                              | Fmt.Right -> ">"
                             )
                             |> Fmt.fmt (
                               match sign with
@@ -50,11 +50,15 @@ let test () =
                             |> Fmt.fmt (match alt with false -> "" | true -> "#")
                             |> Fmt.fmt (match zpad with false -> "" | true -> "0")
                             |> (match width with 0L -> Fmt.fmt "" | _ -> Uns.fmt width)
-                            |> (match precision with
-                              | 2L -> Fmt.fmt ""
+                            |> (match pmode, precision with
+                              | Fmt.Limited, 3L -> Fmt.fmt ""
                               | _ -> (fun formatter ->
                                 formatter
                                 |> Fmt.fmt "."
+                                |> Fmt.fmt (match pmode with
+                                  | Fmt.Limited -> ""
+                                  | Fmt.Fixed -> "="
+                                )
                                 |> Uns.fmt precision
                               )
                             )
@@ -79,6 +83,7 @@ let test () =
               )
             )
           )
+        )
       )
       |> fn xs'
   in

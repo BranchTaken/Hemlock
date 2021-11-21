@@ -1,17 +1,27 @@
 open! Basis.Rudiments
 open! Basis
 open Real
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf ("round %h -> (Down: %h) (Up: %h) (Nearest: %h) ([default]: %h)"
-          ^^ " (Zero: %h)\n") t (round ~dir:Down t) (round ~dir:Up t)
-          (round ~dir:Nearest t) (round t) (round ~dir:Zero t);
+        File.Fmt.stdout
+        |> Fmt.fmt "round "
+        |> fmt ~alt:true ~base:Fmt.Hex t
+        |> Fmt.fmt " -> (Down: "
+        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Down t)
+        |> Fmt.fmt ") (Up: "
+        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Up t)
+        |> Fmt.fmt ") Nearest: "
+        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Nearest t)
+        |> Fmt.fmt ") ([default]: "
+        |> fmt ~alt:true ~base:Fmt.Hex (round t)
+        |> Fmt.fmt ") (Zero: "
+        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Zero t)
+        |> Fmt.fmt ")\n"
+        |> ignore;
         fn ts'
       end
   end in
@@ -35,7 +45,6 @@ let test () =
     0x1.0;
     0x1.0_0000_0000_0001;
     inf;
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()
