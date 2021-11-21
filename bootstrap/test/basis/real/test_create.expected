@@ -1,20 +1,20 @@
-n=true, e=1024i, m=0x0000_0000_0000_0000 -> -infinity -> n=true, e=1024i, m=0x0000_0000_0000_0000
-n=false, e=1024i, m=0x0000_0000_0000_0000 -> infinity -> n=false, e=1024i, m=0x0000_0000_0000_0000
-n=false, e=1024i, m=0x0000_0000_0000_0001 -> nan -> n=false, e=1024i, m=0x0000_0000_0000_0001
-n=false, e=1024i, m=0x0008_0000_0000_0001 -> nan -> n=false, e=1024i, m=0x0008_0000_0000_0001
-n=false, e=1024i, m=0x000f_ffff_ffff_ffff -> nan -> n=false, e=1024i, m=0x000f_ffff_ffff_ffff
-n=true, e=0i, m=0x0000_0000_0000_0000 -> -0x1p+0 -> n=true, e=0i, m=0x0000_0000_0000_0000
-n=false, e=-1022i, m=0x0000_0000_0000_0000 -> 0x1p-1022 -> n=false, e=-1022i, m=0x0000_0000_0000_0000
-n=false, e=-52i, m=0x0000_0000_0000_0001 -> 0x1.0000000000001p-52 -> n=false, e=-52i, m=0x0000_0000_0000_0001
-n=false, e=-51i, m=0x0000_0000_0000_0001 -> 0x1.0000000000001p-51 -> n=false, e=-51i, m=0x0000_0000_0000_0001
-n=false, e=-1i, m=0x0000_0000_0000_0000 -> 0x1p-1 -> n=false, e=-1i, m=0x0000_0000_0000_0000
-n=false, e=0i, m=0x0000_0000_0000_0000 -> 0x1p+0 -> n=false, e=0i, m=0x0000_0000_0000_0000
-n=false, e=1i, m=0x0000_0000_0000_0000 -> 0x1p+1 -> n=false, e=1i, m=0x0000_0000_0000_0000
-n=false, e=1i, m=0x0008_0000_0000_0000 -> 0x1.8p+1 -> n=false, e=1i, m=0x0008_0000_0000_0000
-n=false, e=2i, m=0x0000_0000_0000_0000 -> 0x1p+2 -> n=false, e=2i, m=0x0000_0000_0000_0000
-n=false, e=2i, m=0x0004_0000_0000_0000 -> 0x1.4p+2 -> n=false, e=2i, m=0x0004_0000_0000_0000
-n=false, e=1023i, m=0x000f_ffff_ffff_ffff -> 0x1.fffffffffffffp+1023 -> n=false, e=1023i, m=0x000f_ffff_ffff_ffff
-n=false, e=-1023i, m=0x0000_0000_0000_0001 -> 0x0.0000000000001p-1022 -> n=false, e=-1023i, m=0x0000_0000_0000_0001
-n=false, e=-1023i, m=0x000f_ffff_ffff_ffff -> 0x0.fffffffffffffp-1022 -> n=false, e=-1023i, m=0x000f_ffff_ffff_ffff
-n=true, e=-1023i, m=0x0000_0000_0000_0000 -> -0x0p+0 -> n=true, e=-1023i, m=0x0000_0000_0000_0000
-n=false, e=-1023i, m=0x0000_0000_0000_0000 -> 0x0p+0 -> n=false, e=-1023i, m=0x0000_0000_0000_0000
+n=true, e=1_024i, m=0x0_0000_0000_0000 -> -inf
+n=false, e=1_024i, m=0x0_0000_0000_0000 -> inf
+n=false, e=1_024i, m=0x0_0000_0000_0001 -> nan
+n=false, e=1_024i, m=0x8_0000_0000_0001 -> nan
+n=false, e=1_024i, m=0xf_ffff_ffff_ffff -> nan
+n=true, e=0i, m=0x0_0000_0000_0000 -> -0x1.
+n=false, e=-1_022i, m=0x0_0000_0000_0000 -> 0x0.
+n=false, e=-52i, m=0x0_0000_0000_0001 -> 0x0.0000_0000_0000_1
+n=false, e=-51i, m=0x0_0000_0000_0001 -> 0x0.0000_0000_0000_2
+n=false, e=-1i, m=0x0_0000_0000_0000 -> 0x0.8
+n=false, e=0i, m=0x0_0000_0000_0000 -> 0x1.
+n=false, e=1i, m=0x0_0000_0000_0000 -> 0x2.
+n=false, e=1i, m=0x8_0000_0000_0000 -> 0x3.
+n=false, e=2i, m=0x0_0000_0000_0000 -> 0x4.
+n=false, e=2i, m=0x4_0000_0000_0000 -> 0x5.
+n=false, e=1_023i, m=0xf_ffff_ffff_ffff -> 0x1.ffff_ffff_ffff_fp1_023
+n=false, e=-1_023i, m=0x0_0000_0000_0001 -> 0x0.
+n=false, e=-1_023i, m=0xf_ffff_ffff_ffff -> 0x0.
+n=true, e=-1_023i, m=0x0_0000_0000_0000 -> -0x0.
+n=false, e=-1_023i, m=0x0_0000_0000_0000 -> 0x0.

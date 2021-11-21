@@ -1,17 +1,24 @@
 open! Basis.Rudiments
 open! Basis
 open Real
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn tups = begin
     match tups with
     | [] -> ()
     | (n, e, m) :: tups' -> begin
         let f = create ~neg:n ~exponent:e ~mantissa:m in
-        printf "n=%b, e=%a, m=%a -> %h -> n=%b, e=%a, m=%a\n"
-          n Sint.xpp e Uns.xpp_x m f n Sint.xpp e Uns.xpp_x m;
+        File.Fmt.stdout
+        |> Fmt.fmt "n="
+        |> Bool.pp n
+        |> Fmt.fmt ", e="
+        |> Sint.pp e
+        |> Fmt.fmt ", m="
+        |> Uns.fmt ~alt:true ~zpad:true ~width:13L ~base:Fmt.Hex m
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex f
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn tups'
       end
   end in
@@ -45,7 +52,6 @@ let test () =
     (* Zero. *)
     (true, Sint.kv (-1023L), 0L);
     (false, Sint.kv (-1023L), 0L);
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()

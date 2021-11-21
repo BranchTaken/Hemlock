@@ -1,17 +1,26 @@
 open! Basis.Rudiments
 open! Basis
 open Real
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn pairs = begin
     match pairs with
     | [] -> ()
     | (b, x) :: pairs' -> begin
         let xf = of_sint x in
-        printf "** pow int_pow %h ~p:%a -> %h %h %h\n"
-          b Sint.xpp x (b ** xf) (pow b ~p:xf) (int_pow b ~p:x);
+        File.Fmt.stdout
+        |> Fmt.fmt "** pow int_pow "
+        |> fmt ~alt:true ~base:Fmt.Hex b
+        |> Fmt.fmt " ~p:"
+        |> Sint.pp x
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex (b ** xf)
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~base:Fmt.Hex (pow b ~p:xf)
+        |> Fmt.fmt " "
+        |> fmt ~alt:true ~base:Fmt.Hex (int_pow b ~p:x)
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn pairs'
       end
   end in
@@ -29,7 +38,6 @@ let test () =
     ((ex 1.), Sint.kv 0L);
     ((ex 1.), Sint.kv 1L);
     ((ex 1.), Sint.kv 2L);
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()

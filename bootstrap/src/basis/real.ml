@@ -396,7 +396,7 @@ module T = struct
       end
 
   (* Accurate to ~15 decimal digits. *)
-  let to_string_e ~sign ~alt ~zpad ~width ~precision ~notation t =
+  let to_string_e ~sign ~alt ~zpad ~width ~pmode ~precision ~notation t =
     (* Digit 0 is to the left of the radix point; fractional digits start at index 1. *)
     let digits ~precision ~notation abs_t = begin
       let compute_digit ~i ~e abs_t = begin
@@ -465,30 +465,45 @@ module T = struct
     let codepoint_of_digit u = begin
       Codepoint.narrow_of_uns_hlt (U8.extend_to_uns (String.B.get u "0123456789"))
     end in
-    let fmt_frac ~alt ~precision ~digits formatter = begin
-      let rec fn ~alt ~digits ~precision ~i formatter = begin
-        match Uns.(i = precision) with
-        | true -> formatter
-        | false -> begin
-            let sep = alt && Uns.(i % 3L = 0L) && Uns.(i > 0L) in
-            let i' = succ i in
-            formatter
-            |> Fmt.fmt (match sep with false -> "" | true -> "_")
-            |> Codepoint.fmt (codepoint_of_digit (digit i' digits))
-            |> fn ~alt ~digits ~precision ~i:i'
-          end
-      end in
-      formatter
-      |> Codepoint.fmt (codepoint_of_digit (digit 0L digits))
-      |> Fmt.fmt "."
-      |> fn ~alt ~digits ~precision ~i:0L
-    end in
-    let fmt_mantissa ~alt ~precision ~class_ ~digits formatter = begin
+    let fmt_mantissa ~alt ~pmode ~precision ~class_ ~digits formatter = begin
       formatter
       |> (match class_ with
-        | Class.Zero -> Fmt.fmt "0"
+        | Class.Zero
         | Class.Normal
-        | Class.Subnormal -> fmt_frac ~alt ~precision ~digits
+        | Class.Subnormal -> (fun formatter ->
+          let rec fn ~alt ~digits ~precision ~i formatter = begin
+            match Uns.(i = precision) with
+            | true -> formatter
+            | false -> begin
+                let sep = alt && Uns.(i % 3L = 0L) && Uns.(i > 0L) in
+                let i' = succ i in
+                formatter
+                |> Fmt.fmt (match sep with false -> "" | true -> "_")
+                |> Codepoint.fmt (codepoint_of_digit (digit i' digits))
+                |> fn ~alt ~digits ~precision ~i:i'
+              end
+          end in
+          (* If using limited precision, reduce precision to omit any trailing zeros. *)
+          let precision = match pmode with
+            | Fmt.Fixed -> precision
+            | Fmt.Limited -> begin
+                let rec compress ~precision ~digits = begin
+                  match precision with
+                  | 0L -> precision
+                  | _ -> begin
+                      match digit precision digits with
+                      | 0L -> compress ~precision:(Uns.pred precision) ~digits
+                      | _ -> precision
+                    end
+                end in
+                compress ~precision ~digits
+              end
+          in
+          formatter
+          |> Codepoint.fmt (codepoint_of_digit (digit 0L digits))
+          |> Fmt.fmt (match precision with 0L -> "" | _ -> ".")
+          |> fn ~alt ~digits ~precision ~i:0L
+        )
         | Class.Infinite
         | Class.Nan -> not_reached ()
       )
@@ -558,7 +573,24 @@ module T = struct
       formatter
       |> fn ~precision ~digits ~e 1L
     end in
-    let fmt_denorm ~alt ~precision ~digits ~e formatter = begin
+    let fmt_denorm ~alt ~pmode ~precision ~digits ~e formatter = begin
+      (* If using limited precision, reduce precision to omit any trailing zeros. *)
+      let precision = match pmode with
+        | Fmt.Fixed -> precision
+        | Fmt.Limited -> begin
+            let rec compress ~precision ~digits = begin
+              match precision with
+              | 0L -> precision
+              | _ -> begin
+                  let digit_i = Sint.(Uns.bits_to_sint precision + e) in
+                  match Sint.(digit_i < 0L) || Uns.(=) (digit digit_i digits) 0L with
+                  | true -> compress ~precision:(Uns.pred precision) ~digits
+                  | false -> precision
+                end
+            end in
+            compress ~precision ~digits
+          end
+      in
       formatter
       |> fmt_whole ~alt ~digits ~e
       |> Fmt.fmt "."
@@ -579,11 +611,11 @@ module T = struct
           |> (match notation with
             | Fmt.Normalized -> (fun formatter ->
               formatter
-              |> fmt_mantissa ~alt ~precision ~class_ ~digits
+              |> fmt_mantissa ~alt ~pmode ~precision ~class_ ~digits
               |> Fmt.fmt "e"
               |> fmt_exponent ~alt ~sign class_ e
             )
-            | Fmt.RadixPoint -> fmt_denorm ~alt ~precision ~digits ~e
+            | Fmt.RadixPoint -> fmt_denorm ~alt ~pmode ~precision ~digits ~e
             | Fmt.Compact -> not_reached ()
           )
           |> Fmt.to_string
@@ -598,46 +630,58 @@ module T = struct
     | Class.Nan -> to_string_nan t
 
   (* Bit-accurate. *)
-  let to_string_p ~sign ~alt ~zpad ~width ~precision ~notation ~base t =
-    let fmt_frac ~alt ~precision ~bits_per_digit ~group ~frac ~sig_bits formatter = begin
-      let rec fn ~alt ~precision ~bits_per_digit ~group ~frac ~sig_bits ~ndigits formatter = begin
-        let sep = alt && Uns.(ndigits % group = 0L) && Uns.(ndigits > 0L) in
-        let ndigits' = succ ndigits in
-        match Uns.(ndigits = precision), Uns.(sig_bits = 0L) with
-        | true, _ -> formatter
-        | false, true -> begin
-            formatter
-            |> Fmt.fmt (match sep with false -> "" | true -> "_")
-            |> Fmt.fmt "0"
-            |> fn ~alt ~precision ~bits_per_digit ~group ~frac ~sig_bits ~ndigits:ndigits'
-          end
-        | false, false -> begin
-            let sig_bits' = Uns.(sig_bits - bits_per_digit) in
-            let digit = Uns.bit_usr ~shift:sig_bits' frac in
-            let mask = pred (bit_sl ~shift:sig_bits' 1L) in
-            let frac' = bit_and frac mask in
-            formatter
-            |> Fmt.fmt (match sep with false -> "" | true -> "_")
-            |> Codepoint.fmt (Codepoint.narrow_of_uns_hlt (U8.extend_to_uns
-                (String.B.get digit "0123456789abcdef")))
-            |> fn ~alt ~precision ~bits_per_digit ~group ~frac:frac' ~sig_bits:sig_bits'
-              ~ndigits:ndigits'
-          end
-      end in
-      formatter
-      |> Fmt.fmt "1."
-      |> fn ~alt ~precision ~bits_per_digit ~group ~frac ~sig_bits ~ndigits:0L
-    end in
-    let fmt_mantissa ~alt ~precision ~class_ ~bits_per_digit ~group ~m ~sig_bits formatter = begin
-      formatter
-      |> (match class_ with
-        | Class.Zero -> Fmt.fmt "0"
+  let to_string_p ~sign ~alt ~zpad ~width ~pmode ~precision ~notation ~base t =
+    let fmt_mantissa ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group ~m ~sig_bits formatter
+      = begin
+        match class_ with
+        | Class.Zero
         | Class.Normal
-        | Class.Subnormal -> fmt_frac ~alt ~precision ~bits_per_digit ~group ~frac:m ~sig_bits
+        | Class.Subnormal -> begin
+            let rec fn ~alt ~plimited ~precision ~bits_per_digit ~group ~frac ~sig_bits ~ndigits
+                formatter = begin
+              let sep = alt && Uns.(ndigits % group = 0L) && Uns.(ndigits > 0L) in
+              let ndigits' = succ ndigits in
+              match Uns.(ndigits = precision) || (plimited && Uns.(frac = 0L)), Uns.(sig_bits = 0L)
+              with
+              | true, _ -> formatter
+              | false, true -> begin
+                  formatter
+                  |> Fmt.fmt (match sep with false -> "" | true -> "_")
+                  |> Fmt.fmt "0"
+                  |> fn ~alt ~plimited ~precision ~bits_per_digit ~group ~frac ~sig_bits
+                    ~ndigits:ndigits'
+                end
+              | false, false -> begin
+                  let sig_bits' = Uns.(sig_bits - bits_per_digit) in
+                  let digit = Uns.bit_usr ~shift:sig_bits' frac in
+                  let mask = pred (bit_sl ~shift:sig_bits' 1L) in
+                  let frac' = bit_and frac mask in
+                  formatter
+                  |> Fmt.fmt (match sep with false -> "" | true -> "_")
+                  |> Codepoint.fmt (Codepoint.narrow_of_uns_hlt (U8.extend_to_uns
+                      (String.B.get digit "0123456789abcdef")))
+                  |> fn ~alt ~plimited ~precision ~bits_per_digit ~group ~frac:frac'
+                    ~sig_bits:sig_bits' ~ndigits:ndigits'
+                end
+            end in
+            let plimited = match pmode with
+              | Fmt.Limited -> true
+              | Fmt.Fixed -> false
+            in
+            formatter
+            |> Fmt.fmt (match class_ with
+              | Class.Zero -> "0"
+              | Class.Normal
+              | Class.Subnormal -> "1"
+              | Class.Infinite
+              | Class.Nan -> not_reached ()
+            )
+            |> Fmt.fmt (match plimited && Uns.(m = 0L) with false -> "." | true -> "")
+            |> fn ~alt ~plimited ~precision ~bits_per_digit ~group ~frac:m ~sig_bits ~ndigits:0L
+          end
         | Class.Infinite
         | Class.Nan -> not_reached ()
-      )
-    end in
+      end in
     let fmt_exponent ~sign ~alt class_ e formatter = begin
       formatter
       |> (match class_ with
@@ -656,33 +700,44 @@ module T = struct
         | Class.Nan -> not_reached ()
       )
     end in
-    let fmt_norm ~sign ~alt ~precision ~class_ ~bits_per_digit ~group ~m_norm ~e_norm ~sig_bits_norm
-        formatter = begin
+    let fmt_norm ~sign ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group ~m_norm ~e_norm
+        ~sig_bits_norm formatter = begin
       (* Round if significant bits will be omitted. *)
-      let m_rounded, e_rounded, sig_bits_rounded =
+      let m_rounded, e_rounded =
         match Uns.(precision * bits_per_digit < sig_bits_norm) with
-        | false -> m_norm, e_norm, sig_bits_norm
+        | false -> m_norm, e_norm
         | true -> begin
-            let half_ulp = (bit_sl ~shift:Uns.(pred ((sig_bits_norm - (precision *
-                bits_per_digit)))) 1L) in
-            let m_rounded = Uns.(m_norm + half_ulp) in
+            (* Mask out trailing bits that won't be used so that in limited precision mode it is
+             * trivial to recognize when no non-zero digits remain. *)
+            let ulp = (bit_sl ~shift:Uns.((sig_bits_norm - (precision * bits_per_digit))) 1L) in
+            let half_ulp = bit_usr ~shift:1L ulp in
+            let rounded_mask = bit_not (pred ulp) in
+            let m_rounded = Uns.(bit_and (m_norm + half_ulp) rounded_mask) in
             (* If rounding overflows, shift one bit out of the mantissa and correspondingly adjust
              * the exponent. *)
             let mask = pred (bit_sl ~shift:sig_bits_norm 1L) in
             match (bit_and m_rounded mask) = m_rounded with
-            | true -> m_rounded, e_norm, sig_bits_norm
-            | false -> m_rounded, (succ e_norm), (succ sig_bits_norm)
+            | true -> m_rounded, e_norm
+            | false -> begin
+                (* Rounding overflowed, so the resulting mantissa is zero because adding half_ulp
+                 * can only overflow if all unrounded mantissa bits were ones. Increment the
+                 * exponent. *)
+                assert Uns.((bit_and m_rounded mask) = 0L);
+                let m_overflowed = 0L in
+                let e_overflowed = succ e_norm in
+                m_overflowed, e_overflowed
+              end
           end
       in
       (* Assure that sig_bits_shifted is evenly divisible by bits_per_digit, so that the least
        * significant digit doesn't require special handling. *)
-      let m_shift = Uns.((bits_per_digit - (sig_bits_rounded % bits_per_digit)) % bits_per_digit) in
+      let m_shift = Uns.((bits_per_digit - (sig_bits_norm % bits_per_digit)) % bits_per_digit) in
       let m_shifted = Uns.bit_sl ~shift:m_shift m_rounded in
       let e_shifted = e_rounded in
-      let sig_bits_shifted = Uns.(sig_bits_rounded + m_shift) in
+      let sig_bits_shifted = Uns.(sig_bits_norm + m_shift) in
       let m, e, sig_bits = m_shifted, e_shifted, sig_bits_shifted in
       formatter
-      |> fmt_mantissa ~alt ~precision ~class_ ~bits_per_digit ~group ~m ~sig_bits
+      |> fmt_mantissa ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group ~m ~sig_bits
       |> Fmt.fmt "p"
       |> fmt_exponent ~sign ~alt class_ e
     end in
@@ -710,13 +765,18 @@ module T = struct
       | Class.Nan, _ -> not_reached ()
     end in
     let digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit = begin
-      let bits = Range.fold (0L =:< bits_per_digit) ~init:0L ~f:(fun accum i ->
+      Range.fold (0L =:< bits_per_digit) ~init:0L ~f:(fun accum i ->
         Uns.(bit_or
             (bit_sl ~shift:1L accum)
             (bit ~class_ ~m ~sig_bits Sint.(msbit + (bits_to_sint i)))
         )
-      ) in
-      Codepoint.narrow_of_uns_hlt (U8.extend_to_uns (String.B.get bits "0123456789abcdef"))
+      )
+    end in
+    let cp_of_digit digit = begin
+      Codepoint.narrow_of_uns_hlt (U8.extend_to_uns (String.B.get digit "0123456789abcdef"))
+    end in
+    let cp_digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit = begin
+      cp_of_digit (digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit)
     end in
     let fmt_whole ~alt ~class_ ~bits_per_digit ~group ~m ~sig_bits ~nwhole ~msbit formatter =
       begin
@@ -732,31 +792,49 @@ module T = struct
                 | false -> ""
                 | true -> "_"
               )
-              |> Codepoint.fmt (digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit)
+              |> Codepoint.fmt (cp_digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit)
             )
           )
         )
       end in
-    let fmt_part ~alt ~precision ~class_ ~bits_per_digit ~group ~m ~sig_bits ~msbit formatter =
+    let fmt_part ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group ~m ~sig_bits ~msbit
+        formatter =
       begin
-        Range.fold (0L =:< precision) ~init:formatter ~f:(fun formatter i ->
+        let dl = Range.fold (0L =:< precision) ~init:[] ~f:(fun digits i ->
           let msbit = Sint.(msbit + (Uns.bits_to_sint (i * bits_per_digit))) in
+          (digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit) :: digits
+        ) in
+        let digits = Array.of_list_rev (match pmode with
+          | Fmt.Fixed -> dl
+          | Fmt.Limited -> begin
+              (* Discard trailing 0 digits. *)
+              let rec fn = function
+                | [] -> []
+                | 0L :: dl' -> fn dl'
+                | dl -> dl
+              in
+              fn dl
+            end
+        ) in
+        Array.foldi digits ~init:formatter ~f:(fun i formatter digit ->
           formatter
           |> Fmt.fmt (
             match alt && Uns.(i > 0L) && Uns.(i % group = 0L) with
             | false -> ""
             | true -> "_"
           )
-          |> Codepoint.fmt (digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit)
+          |> Codepoint.fmt (cp_of_digit digit)
         )
       end in
+    (* Compute the number of whole digits and the index of the most significant bit to be
+     * incorporated into the most significant non-zero digit. *)
     let nwhole_msbit ~class_ ~bits_per_digit ~e = begin
       match class_ with
       | Class.Zero -> 0L, 0L
       | Class.Normal
       | Class.Subnormal -> begin
           match Sint.(e < 0L) with
-          | true -> 0L, e
+          | true -> 0L, (Sint.succ e)
           | false -> begin
               let nwhole = Uns.(((bits_of_sint e) + bits_per_digit) / bits_per_digit) in
               let msbit = Sint.(succ (e - (Uns.bits_to_sint (nwhole * bits_per_digit)))) in
@@ -766,31 +844,36 @@ module T = struct
       | Class.Infinite
       | Class.Nan -> not_reached ()
     end in
-    let fmt_denorm ~alt ~precision ~class_ ~bits_per_digit ~group ~m_norm ~e_norm ~sig_bits_norm
+    let fmt_denorm ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group ~m_norm ~e_norm ~sig_bits
         formatter = begin
       let nwhole_unrounded, msbit_unrounded = nwhole_msbit ~class_ ~bits_per_digit ~e:e_norm in
       (* Round if significant bits will be omitted. *)
-      let m, sig_bits, nwhole, msbit =
-        let bits_avail = Uns.bits_to_sint sig_bits_norm in
-        let bits_used = Sint.(pred msbit_unrounded + Uns.(bits_to_sint ((nwhole_unrounded +
-            precision) * bits_per_digit))) in
-        match Sint.(bits_avail <= bits_used) with
-        | true -> m_norm, sig_bits_norm, nwhole_unrounded, msbit_unrounded
+      let m, nwhole, msbit =
+        let lsbit = Sint.(pred msbit_unrounded + Uns.(bits_to_sint ((nwhole_unrounded + precision) *
+            bits_per_digit))) in
+        let explicit_bits_max = Uns.bits_to_sint sig_bits in
+        match Sint.(lsbit >= explicit_bits_max) with
+        | true -> m_norm, nwhole_unrounded, msbit_unrounded
         | false -> begin
-            let half_ulp = (bit_sl ~shift:Uns.(pred (bits_of_sint Sint.(bits_avail - bits_used)))
-              1L) in
-            let m_rounded = Uns.(m_norm + half_ulp) in
-            (* If rounding overflows, shift one bit out of the mantissa and correspondingly adjust
-             * {nwhole,msbit}. *)
-            let mask = pred (bit_sl ~shift:sig_bits_norm 1L) in
+            (* Mask out trailing bits that won't be used so that in limited precision mode it is
+             * trivial to recognize when no non-zero digits remain. *)
+            let ulp = (bit_sl ~shift:Uns.(bits_of_sint Sint.(explicit_bits_max - lsbit)) 1L) in
+            let half_ulp = bit_usr ~shift:1L ulp in
+            let rounded_mask = bit_not (pred ulp) in
+            let m_rounded = Uns.(bit_and (m_norm + half_ulp) rounded_mask) in
+            let mask = pred (bit_sl ~shift:sig_bits 1L) in
             match (bit_and m_rounded mask) = m_rounded with
-            | true -> m_rounded, sig_bits_norm, nwhole_unrounded, msbit_unrounded
+            | true -> m_rounded, nwhole_unrounded, msbit_unrounded
             | false -> begin
-                let e_rounded = succ e_norm in
-                let sig_bits_rounded = succ sig_bits_norm in
-                let nwhole_rounded, msbit_rounded = nwhole_msbit ~class_ ~bits_per_digit
-                    ~e:e_rounded in
-                m_rounded, sig_bits_rounded, nwhole_rounded, msbit_rounded
+                (* Rounding overflowed, so the resulting mantissa is zero because adding half_ulp
+                 * can only overflow if all unrounded mantissa bits were ones. Increment the
+                 * exponent and recompute whole/fractional digit layout. *)
+                assert Uns.((bit_and m_rounded mask) = 0L);
+                let m_overflowed = 0L in
+                let e_overflowed = succ e_norm in
+                let nwhole_overflowed, msbit_overflowed = nwhole_msbit ~class_ ~bits_per_digit
+                    ~e:e_overflowed in
+                m_overflowed, nwhole_overflowed, msbit_overflowed
               end
           end
       in
@@ -798,7 +881,8 @@ module T = struct
       formatter
       |> fmt_whole ~alt ~class_ ~bits_per_digit ~group ~m ~sig_bits ~nwhole ~msbit
       |> Fmt.fmt "."
-      |> fmt_part ~alt ~precision ~class_ ~bits_per_digit ~group ~m ~msbit:msbit_part ~sig_bits
+      |> fmt_part ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group ~m ~msbit:msbit_part
+        ~sig_bits
     end in
     match classify t with
     | Class.Normal
@@ -843,10 +927,10 @@ module T = struct
         let suffix =
           String.Fmt.empty
           |> (match notation with
-            | Fmt.Normalized -> fmt_norm ~sign ~alt ~precision ~class_ ~bits_per_digit ~group
-                ~m_norm ~e_norm ~sig_bits_norm
-            | Fmt.RadixPoint -> fmt_denorm ~alt ~precision ~class_ ~bits_per_digit ~group ~m_norm
-                ~e_norm ~sig_bits_norm
+            | Fmt.Normalized -> fmt_norm ~sign ~alt ~pmode ~precision ~class_ ~bits_per_digit
+                ~group ~m_norm ~e_norm ~sig_bits_norm
+            | Fmt.RadixPoint -> fmt_denorm ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group
+                ~m_norm ~e_norm ~sig_bits:sig_bits_norm
             | Fmt.Compact -> not_reached ()
           )
           |> Fmt.to_string
@@ -860,25 +944,47 @@ module T = struct
     | Class.Infinite -> to_string_inf ~sign t
     | Class.Nan -> to_string_nan t
 
-  let rec to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
-    ?(width=Fmt.width_default) ?(precision=Fmt.precision_default) ?(notation=Fmt.notation_default)
-    ?(base=Fmt.base_default) t =
-    match notation, base with
-    | Fmt.Compact, _ -> begin
-        let s_m = to_string ~sign ~alt ~zpad ~width ~precision ~notation:Fmt.Normalized ~base t in
-        let s_a = to_string ~sign ~alt ~zpad ~width ~precision ~notation:Fmt.RadixPoint ~base t in
+  let to_string_impl ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
+    ?(width=Fmt.width_default) ?(pmode=Fmt.pmode_default) ?precision ~notation ~base t =
+    let precision = match precision, base, notation with
+      | Some precision, _, Fmt.(Normalized|RadixPoint) -> precision
+      | None, Fmt.Bin, Fmt.Normalized -> Fmt.precision_bin_m_default
+      | None, Fmt.Bin, Fmt.RadixPoint -> Fmt.precision_bin_a_default
+      | None, Fmt.Oct, Fmt.Normalized -> Fmt.precision_oct_m_default
+      | None, Fmt.Oct, Fmt.RadixPoint -> Fmt.precision_oct_a_default
+      | None, Fmt.Dec, Fmt.Normalized -> Fmt.precision_dec_m_default
+      | None, Fmt.Dec, Fmt.RadixPoint -> Fmt.precision_dec_a_default
+      | None, Fmt.Hex, Fmt.Normalized -> Fmt.precision_hex_m_default
+      | None, Fmt.Hex, Fmt.RadixPoint -> Fmt.precision_hex_a_default
+      | _, _, Fmt.Compact -> not_reached ()
+    in
+    match base with
+    | Fmt.Dec -> to_string_e ~sign ~alt ~zpad ~width ~pmode ~precision ~notation t
+    | Fmt.Bin
+    | Fmt.Oct
+    | Fmt.Hex -> to_string_p ~sign ~alt ~zpad ~width ~pmode ~precision ~notation ~base t
+
+  let to_string ?sign ?alt ?zpad ?width ?pmode ?precision ?notation ?(base=Fmt.base_default) t =
+    let notation = match notation with
+      | Some notation -> notation
+      | None -> Fmt.notation_default
+    in
+    match notation with
+    | Fmt.Normalized
+    | Fmt.RadixPoint -> to_string_impl ?sign ?alt ?zpad ?width ?pmode ?precision ~notation ~base t
+    | Fmt.Compact -> begin
+        let s_m = to_string_impl ?sign ?alt ?zpad ?width ?pmode ?precision ~notation:Fmt.Normalized
+            ~base t in
+        let s_a = to_string_impl ?sign ?alt ?zpad ?width ?pmode ?precision ~notation:Fmt.RadixPoint
+            ~base t in
         match Cmp.is_lt (Uns.cmp (String.C.length s_m) (String.C.length s_a)) with
         | true -> s_m
         | false -> s_a
       end
-    | _, Fmt.Dec -> to_string_e ~sign ~alt ~zpad ~width ~precision ~notation t
-    | _, Fmt.Bin
-    | _, Fmt.Oct
-    | _, Fmt.Hex -> to_string_p ~sign ~alt ~zpad ~width ~precision ~notation ~base t
 
-  let fmt ?pad ?just ?sign ?alt ?zpad ?width ?precision ?notation ?base t formatter =
-    Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?precision ?notation ?base t)
-      formatter
+  let fmt ?pad ?just ?sign ?alt ?zpad ?width ?pmode ?precision ?notation ?base t formatter =
+    Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?pmode ?precision ?notation ?base
+        t) formatter
 
   let pp t formatter =
     fmt t formatter
