@@ -1,2 +1,2 @@
-value Some 42 -> 42
+value Some (42) -> 42
 value None -> 13

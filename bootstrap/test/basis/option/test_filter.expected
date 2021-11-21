@@ -1,4 +1,4 @@
-filter Some 42 ~f:(fun _ -> false) -> None
+filter Some (42) ~f:(fun _ -> false) -> None
 filter None ~f:(fun _ -> false) -> None
-filter Some 42 ~f:(fun _ -> true) -> Some 42
+filter Some (42) ~f:(fun _ -> true) -> Some (42)
 filter None ~f:(fun _ -> true) -> None
