@@ -1,15 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open Real
-open Format
 
 let test () =
-  printf "@[<h>";
   let rec fn ts = begin
     match ts with
     | [] -> ()
     | t :: ts' -> begin
-        printf "ex %h -> %h\n" t (ex t);
+        File.Fmt.stdout
+        |> Fmt.fmt "ex "
+        |> fmt ~alt:true ~base:Fmt.Hex t
+        |> Fmt.fmt " -> "
+        |> fmt ~alt:true ~base:Fmt.Hex (ex t)
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn ts'
       end
   end in
@@ -18,7 +22,6 @@ let test () =
     nan;
     -1.; 1.;
     -0.; 0.;
-  ];
-  printf "@]"
+  ]
 
 let _ = test ()

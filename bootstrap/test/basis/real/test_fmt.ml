@@ -2,10 +2,9 @@ open! Basis.Rudiments
 open! Basis
 open Real
 
-(* XXX Remove verbose? *)
 (* The test output is quite large, so only its hash is printed by default. Set verbose to true
  * while modifying the test or diagnosing regressions. *)
-let verbose = true
+let verbose = false
 
 let test () =
   let rec fn xs formatter =
@@ -14,24 +13,45 @@ let test () =
     | x :: xs' ->
       List.fold ~init:(
         formatter
-        |> fmt ~alt:true ~precision:13L ~notation:Fmt.Normalized ~base:Fmt.Hex x
+        |> fmt ~alt:true ~base:Fmt.Hex x
         |> Fmt.fmt "\n"
-      ) [Fmt.Implicit; Fmt.Explicit; Fmt.Space] ~f:(fun formatter sign ->
-        formatter
-        |> Fmt.fmt "["
-        |> Fmt.fmt ~pad:"_" ~width:5L (
-          String.Fmt.empty
-          |> fmt ~sign ~notation:Fmt.Normalized ~base:Fmt.Hex x (* XXX Test all notations/bases. *)
-          |> Fmt.to_string
+      ) [Fmt.Bin; Fmt.Oct; Fmt.Dec; Fmt.Hex] ~f:(fun formatter base ->
+        List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space] ~f:(fun formatter sign ->
+          List.fold ~init:formatter [false; true] ~f:(fun formatter alt ->
+            List.fold ~init:formatter [Fmt.Normalized; Fmt.RadixPoint; Fmt.Compact]
+              ~f:(fun formatter notation ->
+                formatter
+                |> Fmt.fmt "["
+                |> Fmt.fmt ~pad:"_" ~width:5L (
+                  String.Fmt.empty
+                  |> fmt ~alt ~sign ~notation ~base x
+                  |> Fmt.to_string
+                )
+                |> Fmt.fmt "] %"
+                |> Fmt.fmt (
+                  match sign with
+                  | Fmt.Implicit -> ""
+                  | Fmt.Explicit -> "+"
+                  | Fmt.Space -> "_"
+                )
+                |> Fmt.fmt (match alt with false -> "" | true -> "#")
+                |> Fmt.fmt (
+                  match base with
+                  | Fmt.Bin -> "b"
+                  | Fmt.Oct -> "o"
+                  | Fmt.Dec -> "d"
+                  | Fmt.Hex -> "h"
+                )
+                |> Fmt.fmt (
+                  match notation with
+                  | Fmt.Normalized -> "m"
+                  | Fmt.RadixPoint -> "a"
+                  | Fmt.Compact -> "c"
+                )
+                |> Fmt.fmt "r\n"
+              )
+          )
         )
-        |> Fmt.fmt "] %"
-        |> Fmt.fmt (
-          match sign with
-          | Fmt.Implicit -> ""
-          | Fmt.Explicit -> "+"
-          | Fmt.Space -> "_"
-        )
-        |> Fmt.fmt "r\n"
       )
       |> fn xs'
   in

@@ -1,14 +1,19 @@
 open! Basis.Rudiments
 open! Basis
 open Real
-open Format
 
 let test () =
   let rec fn xs = begin
     match xs with
     | [] -> ()
     | x :: xs' -> begin
-        printf "gamma %.2f -> %.5e\n" x (gamma x);
+        File.Fmt.stdout
+        |> Fmt.fmt "gamma "
+        |> fmt ~pmode:Fmt.Fixed ~precision:1L ~notation:Fmt.RadixPoint x
+        |> Fmt.fmt " -> "
+        |> fmt ~pmode:Fmt.Fixed ~precision:5L ~notation:Fmt.Normalized (gamma x)
+        |> Fmt.fmt "\n"
+        |> ignore;
         fn xs'
       end
   end in

@@ -1,9 +1,9 @@
-infinity -> Infinite
--infinity -> Infinite
+inf -> Infinite
+-inf -> Infinite
 nan -> Nan
--0x1p+0 -> Normal
-0x1p+0 -> Normal
-0x0.0000000000001p-1022 -> Subnormal
-0x0.fffffffffffffp-1022 -> Subnormal
--0x0p+0 -> Zero
-0x0p+0 -> Zero
+-0x1. -> Normal
+0x1. -> Normal
+0x0. -> Subnormal
+0x0. -> Subnormal
+-0x0. -> Zero
+0x0. -> Zero

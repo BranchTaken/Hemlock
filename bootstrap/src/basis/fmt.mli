@@ -37,6 +37,10 @@ type base =
   | Dec (** Decimal base (10). *)
   | Hex (** Hexadecimal base (16). *)
 
+type pmode =
+  | Limited (** Limited precision, i.e. trailing zeros omitted. *)
+  | Fixed   (** Fixed precision, i.e. trailing zeros as needed. *)
+
 type notation =
   | Normalized (** Normalized scientific form. *)
   | RadixPoint (** Radix point form. *)
@@ -62,8 +66,32 @@ val zpad_default: bool
 val width_default: int64
 (** Default width ([0]). *)
 
-val precision_default: int64
-(** Default digits of precision to right of point ([2]). *)
+val pmode_default: pmode
+(** Default precision mode ([Limited]). *)
+
+val precision_bin_m_default: int64
+(** Default digits of [Normalized] precision to right of binary radix point ([52]). *)
+
+val precision_bin_a_default: int64
+(** Default digits of [RadixPoint] precision to right of binary radix point ([53]). *)
+
+val precision_oct_m_default: int64
+(** Default digits of [Normalized] precision to right of octal radix point ([18]). *)
+
+val precision_oct_a_default: int64
+(** Default digits of [RadixPoint] precision to right of octal radix point ([18]). *)
+
+val precision_dec_m_default: int64
+(** Default digits of [Normalized] precision to right of decimal radix point ([15]). *)
+
+val precision_dec_a_default: int64
+(** Default digits of [RadixPoint] precision to right of decimal radix point ([3]). *)
+
+val precision_hex_m_default: int64
+(** Default digits of [Normalized] precision to right of hexadecimal radix point ([13]). *)
+
+val precision_hex_a_default: int64
+(** Default digits of [RadixPoint] precision to right of hexadecimal radix point ([14]). *)
 
 val base_default: base
 (** Default numerical base ([Dec]). *)
