@@ -71,6 +71,9 @@ val first_some: 'a t -> 'a t -> 'a t
 (** [first_some t0 t1] returns [Some a0] if [t0 = Some a0], [Some a1] if [t0 = None] and [t1 = Some
     a1], [None] otherwise. *)
 
+val map: f:('a -> 'b) -> 'a t -> 'b t
+(** [map ~f t] uses [f] to map [Some a] to [Some b], [None] otherwise. *)
+
 val filter: f:('a -> bool) -> 'a t -> 'a t
 (** [filter ~f t] returns [Some a] if [t = Some a] and [f a = true], [None] otherwise. *)
 
