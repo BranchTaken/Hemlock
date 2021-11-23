@@ -154,6 +154,11 @@ let first_some t0 t1 =
   | None, Some a -> Some a
   | None, None -> None
 
+let map ~f t =
+  match t with
+  | None -> None
+  | Some t -> Some (f t)
+
 let filter ~f t =
   match t with
   | Some a -> begin

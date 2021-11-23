@@ -1,0 +1,2 @@
+map (Some (42)) ~f:(fun u -> Uns.to_string u) -> Some ("42")
+map (None) ~f:(fun u -> Uns.to_string u) -> None
