@@ -7,6 +7,7 @@
   test_hash_fold
   test_hash_fold_empty
   test_is_some_is_none
+  test_map
   test_map2
   test_merge
   test_pp
