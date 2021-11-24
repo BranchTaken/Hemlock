@@ -188,33 +188,9 @@ module Slice = struct
   let get i t =
     Array.get (Cursor.index (base t) + i) (container t)
 
-  (* XXX Use Array.Slice.fmt (#90). *)
   let pp t formatter =
-    let rec fn cursor past formatter = begin
-      match Cursor.(cursor < past) with
-      | true -> begin
-          let elm, cursor' = Cursor.next cursor in
-          formatter
-          |> Fmt.fmt "; "
-          |> Byte.fmt ~alt:true ~base:Fmt.Hex ~pretty:true elm
-          |> fn cursor' past
-        end
-      | false -> formatter
-    end in
-    formatter
-    |> Fmt.fmt "[|"
-    |> (fun formatter ->
-      let cursor, past = cursors t in
-      match Cursor.(cursor < past) with
-      | true -> begin
-          let elm, cursor' = Cursor.next cursor in
-          formatter
-          |> Byte.fmt ~alt:true ~base:Fmt.Hex ~pretty:true elm
-          |> fn cursor' past
-        end
-      | false -> formatter
-    )
-    |> Fmt.fmt "|]"
+    let slice = Array.Slice.init ~range:(range t) (container t) in
+    Array.Slice.fmt (Byte.fmt ~alt:true ~base:Fmt.Hex ~pretty:true) slice formatter
 
   let hash_fold t state =
     Hash.State.Gen.init state
