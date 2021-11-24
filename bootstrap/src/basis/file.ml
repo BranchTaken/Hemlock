@@ -291,8 +291,8 @@ module Fmt = struct
                   | true -> begin
                       (* Partial fill. *)
                       let buf_range = (pos_index =:< (pos_index + slice_length)) in
-                      Array.blit (Bytes.Slice.range slice) (Bytes.Slice.container slice) buf_range
-                        buf;
+                      Array.Slice.blit (Array.Slice.init ~range:(Bytes.Slice.range slice)
+                        (Bytes.Slice.container slice)) (Array.Slice.init ~range:buf_range buf);
                       t.pos <- Some (Bytes.Cursor.seek (Uns.bits_to_sint slice_length) pos);
                       t
                     end
@@ -303,7 +303,9 @@ module Fmt = struct
                       let slice_range =
                         (Bytes.Cursor.index slice_base =:< Bytes.Cursor.index slice_mid) in
                       let buf_range = (pos_index =:< t.bufsize) in
-                      Array.blit slice_range (Bytes.Slice.container slice) buf_range buf;
+                      Array.Slice.blit
+                        (Array.Slice.init ~range:slice_range (Bytes.Slice.container slice))
+                        (Array.Slice.init ~range:buf_range buf);
                       (* Flush. *)
                       write_hlt (Bytes.Slice.init ~range:(0L =:< t.bufsize) buf) t.file;
 
