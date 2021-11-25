@@ -2,6 +2,25 @@
 
 open RudimentsInt0
 
+(** Folding functor input interface for monomorphic containers, e.g. {!type:string}. *)
+module type IMonoFold = sig
+  type t
+  (** Container type. *)
+
+  type elm
+  (** Element type. *)
+
+  val fold_until: init:'accum -> f:('accum -> elm -> 'accum * bool) -> t -> 'accum
+  (** [fold_until ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
+      value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
+      returns [accum, false]. *)
+
+  val fold_right_until: init:'accum -> f:(elm -> 'accum -> 'accum * bool) -> t -> 'accum
+  (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
+      accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
+      [f] always returns [accum, false]. *)
+end
+
 (** Iterating functor input interface for monomorphic containers, e.g. {!type:string}. *)
 module type IMonoIter = sig
   type t
@@ -164,6 +183,25 @@ module type SMonoMem = sig
 
   val mem: elm -> t -> bool
   (** [mem elm t] returns [true] if [elm] is a member of [t]; [false] otherwise. *)
+end
+
+(** Folding functor input interface for polymorphic containers, e.g. {!type:'a list}. *)
+module type IPolyFold = sig
+  type 'a t
+  (** Container type. *)
+
+  type 'a elm
+  (** Element type. *)
+
+  val fold_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> 'a t -> 'accum
+  (** [fold_until ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
+      value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
+      returns [accum, false]. *)
+
+  val fold_right_until: init:'accum -> f:('a elm -> 'accum -> 'accum * bool) -> 'a t -> 'accum
+  (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
+      accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
+      [f] always returns [accum, false]. *)
 end
 
 (** Iterating functor input interface for polymorphic containers, e.g. {!type:'a list}. *)

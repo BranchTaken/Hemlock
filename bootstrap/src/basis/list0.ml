@@ -141,9 +141,25 @@ module T = struct
       | _ :: t', _ -> fn t' (pred limit)
     end in
     fn t limit
+
+  let fold_until ~init ~f t =
+    let rec fn accum f = function
+      | [] -> accum
+      | elm :: t' -> begin
+          let (accum', until) = f accum elm in
+          match until with
+          | true -> accum'
+          | false -> fn accum' f t'
+        end
+    in
+    fn init f t
+
+  let fold_right_until ~init ~f t =
+    let f = (fun elm accum -> f accum elm) in
+    fold_until ~init ~f (rev t)
 end
 include T
-include Container.MakePolyIter(T)
+include Container.MakePolyFold(T)
 
 let hash_fold hash_fold_a t state =
   foldi t ~init:state ~f:(fun i state elm ->
