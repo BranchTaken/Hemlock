@@ -22,20 +22,6 @@ val fmt: ?alt:bool -> ?width:uns -> ('a -> (module Fmt.Formatter) -> (module Fmt
 
 include ContainerIntf.SPolyIter with type 'a t := 'a t
 
-(** {1 Cursor} *)
-
-(** Cursor that supports arbitrary list element access. [tl] and [seek] are O(n); all other
-    operations are O(1). *)
-module Cursor : sig
-  type 'a container = 'a t
-  type 'a t
-
-  include CursorIntf.SPolyIndex
-    with type 'a container := 'a container
-    with type 'a elm := 'a
-    with type 'a t := 'a t
-end
-
 (** {1 Comparison} *)
 
 val hash_fold: ('a -> Hash.State.t -> Hash.State.t) -> 'a t -> Hash.State.t
