@@ -68,36 +68,11 @@ module MakePolyLength (T : IPolyIter) : SPolyLengthGen
     (length t) = 0L
 end
 
-module MakePolyIter (T : IPolyIter) : SPolyIterGen
+module MakePolyFold (T : IPolyFold) : SPolyIterGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
-  let fold_until ~init ~f t =
-    let rec fn accum cursor tl = begin
-      match T.Cursor.(=) cursor tl with
-      | true -> accum
-      | false -> begin
-          let elm = T.Cursor.rget cursor in
-          let (accum', until) = f accum elm in
-          match until with
-          | true -> accum'
-          | false -> fn accum' (T.Cursor.succ cursor) tl
-        end
-    end in
-    fn init (T.Cursor.hd t) (T.Cursor.tl t)
-
-  let fold_right_until ~init ~f t =
-    let rec fn t ~f accum hd cursor = begin
-      match T.Cursor.(=) hd cursor with
-      | true -> accum
-      | false -> begin
-          let elm = T.Cursor.lget cursor in
-          let (accum', until) = f elm accum in
-          match until with
-          | true -> accum'
-          | false -> fn t ~f accum' hd (T.Cursor.pred cursor)
-        end
-    end in
-    fn t ~f init (T.Cursor.hd t) (T.Cursor.tl t)
+  let fold_until = T.fold_until
+  let fold_right_until = T.fold_right_until
 
   let foldi_until ~init ~f t =
     let _, accum = fold_until t ~init:(0L, init)
@@ -204,6 +179,44 @@ module MakePolyIter (T : IPolyIter) : SPolyIterGen
     fold t ~init:[] ~f:(fun accum elm -> elm :: accum)
 end
 
+module MakePolyIter (T : IPolyIter) : SPolyIterGen
+  with type 'a t := 'a T.t
+  with type 'a elm := 'a T.elm = struct
+  module U = struct
+    type 'a t = 'a T.t
+    type 'a elm = 'a T.elm
+
+    let fold_until ~init ~f t =
+      let rec fn accum cursor tl = begin
+        match T.Cursor.(=) cursor tl with
+        | true -> accum
+        | false -> begin
+            let elm = T.Cursor.rget cursor in
+            let (accum', until) = f accum elm in
+            match until with
+            | true -> accum'
+            | false -> fn accum' (T.Cursor.succ cursor) tl
+          end
+      end in
+      fn init (T.Cursor.hd t) (T.Cursor.tl t)
+
+    let fold_right_until ~init ~f t =
+      let rec fn t ~f accum hd cursor = begin
+        match T.Cursor.(=) hd cursor with
+        | true -> accum
+        | false -> begin
+            let elm = T.Cursor.lget cursor in
+            let (accum', until) = f elm accum in
+            match until with
+            | true -> accum'
+            | false -> fn t ~f accum' hd (T.Cursor.pred cursor)
+          end
+      end in
+      fn t ~f init (T.Cursor.hd t) (T.Cursor.tl t)
+  end
+  include MakePolyFold(U)
+end
+
 module MakePolyArray (T : IPolyIndex) : SPolyArrayGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm = struct
@@ -246,6 +259,16 @@ module MakePolyMem (T : IPolyMem) : SPolyMemGen
         end
     end in
     fn (T.Cursor.hd t)
+end
+
+module MakeIPolyFold (T : IMonoFold) : IPolyFold
+  with type 'a t = T.t
+  with type 'a elm = T.elm = struct
+  type 'a t = T.t
+  type 'a elm = T.elm
+
+  let fold_until = T.fold_until
+  let fold_right_until = T.fold_right_until
 end
 
 module MakeIPolyIter (T : IMonoIter) : IPolyIter
@@ -332,6 +355,12 @@ module MakeMonoLength (T : IMonoIter) : SMonoLength
   with type t := T.t
   with type elm := T.elm = struct
   include MakePolyLength(MakeIPolyIter(T))
+end
+
+module MakeMonoFold (T : IMonoFold) : SMonoIter
+  with type t := T.t
+  with type elm := T.elm = struct
+  include MakePolyFold(MakeIPolyFold(T))
 end
 
 module MakeMonoIter (T : IMonoIter) : SMonoIter
