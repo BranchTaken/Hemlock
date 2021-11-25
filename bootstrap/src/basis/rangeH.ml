@@ -52,7 +52,6 @@ module Make_w (T : IntwIntf.SFCommon) (L : IntwIntf.SFU)
       end
       include V
       include Cmpable.Make(V)
-
     end
 
     let length t =
