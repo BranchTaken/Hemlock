@@ -59,13 +59,24 @@ module MakePolyMem (T : IPolyMem) : SPolyMemGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm
 
-(** Seq-based [to_array] functor for polymorphic types, e.g. [('a, 'cmp) Ordset]. *)
-module MakePoly2Index (T : IPoly2Index) : SPoly2IndexGen
+(** Folding-related functor for polymorphic types, e.g. [('a, 'cmp) Set.t]. *)
+module MakePoly2Fold (T : IPoly2Fold) : SPoly2IterGen
   with type ('a, 'cmp) t := ('a, 'cmp) T.t
   with type 'a elm := 'a T.elm
 
+(** Seq-based [to_array] functor for polymorphic types, e.g. [('a, 'cmp) Ordset]. *)
+module MakePoly2Array (T : IPoly2Index) : SPoly2ArrayGen
+  with type ('a, 'cmp) t := ('a, 'cmp) T.t
+  with type 'a elm := 'a T.elm
+
+(** Folding-related functor for polymorphic types, e.g. [('k, 'v, 'cmp) Map.t]. *)
+module MakePoly3Fold (T : IPoly3Fold) : SPoly3IterGen
+  with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
+  with type 'k key := 'k T.key
+  with type 'v value := 'v T.value
+
 (** Seq-based [to_array] functor for polymorphic types, e.g. [('k, 'v, 'cmp) Ordmap]. *)
-module MakePoly3Index (T : IPoly3Index) : SPoly3IndexGen
+module MakePoly3Array (T : IPoly3Index) : SPoly3ArrayGen
   with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) T.t
   with type 'k key := 'k T.key
   with type 'v value := 'v T.value

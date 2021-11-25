@@ -189,13 +189,6 @@ module T = struct
           | Node {l=_; k; v; n=_; h=_; r=_} -> k, v
           | Empty -> not_reached ()
         end
-
-    let pp t formatter =
-      let pp_elm elm formatter = begin
-        formatter |> Uns.pp elm.index
-      end in
-      formatter
-      |> (List.pp pp_elm) t
   end
 
   (* Path-based cursor. If this were based on just index and calls to nth, complete traversals would
@@ -222,14 +215,6 @@ module T = struct
           | _ -> Some (Path.init 0L ordmap)
         in
         {ordmap; index=0L; lpath_opt=None; rpath_opt}
-
-      let tl ordmap =
-        let index = length ordmap in
-        let lpath_opt = match index with
-          | 0L -> None
-          | _ -> Some (Path.init (pred index) ordmap)
-        in
-        {ordmap; index; lpath_opt; rpath_opt=None}
 
       let seek i t =
         match Sint.cmp i (Sint.kv 0L) with
@@ -270,185 +255,65 @@ module T = struct
             | Gt -> halt "Cannot seek past end of ordered map"
           end
 
-      let pred t =
-        seek Sint.neg_one t
-
       let succ t =
         seek Sint.one t
-
-      let lget t =
-        match t.lpath_opt with
-        | None -> halt "Out of bounds"
-        | Some lpath -> Path.kv lpath
 
       let rget t =
         match t.rpath_opt with
         | None -> halt "Out of bounds"
         | Some rpath -> Path.kv rpath
 
-      let prev t =
-        lget t, pred t
-
-      let next t =
-        rget t, succ t
-
       let container t =
         t.ordmap
 
       let index t =
         t.index
-
-      let pp t formatter =
-        formatter
-        |> Fmt.fmt "{index="
-        |> Uns.pp t.index
-        |> Fmt.fmt "; lpath_opt="
-        |> (Option.pp Path.pp) t.lpath_opt
-        |> Fmt.fmt "; rpath_opt="
-        |> (Option.pp Path.pp) t.rpath_opt
-        |> Fmt.fmt "}"
     end
     include T
     include Cmpable.MakePoly3(T)
   end
 
-  let cursor_pp = Cursor.pp
+  let fold_until ~init ~f t =
+    let rec fn accum f = function
+      | Empty -> accum, false
+      | Leaf {k; v} -> f accum (k, v)
+      | Node {l; k; v; n=_; h=_; r} -> begin
+          let accum', until = fn accum f l in
+          match until with
+          | true -> accum', true
+          | false -> begin
+              let accum'', until = f accum' (k, v) in
+              match until with
+              | true -> accum'', true
+              | false -> fn accum'' f r
+            end
+        end
+    in
+    let accum, _ = fn init f t.root in
+    accum
+
+  let fold_right_until ~init ~f t =
+    let rec fn accum f = function
+      | Empty -> accum, false
+      | Leaf {k; v} -> f (k, v) accum
+      | Node {l; k; v; n=_; h=_; r} -> begin
+          let accum', until = fn accum f r in
+          match until with
+          | true -> accum', true
+          | false -> begin
+              let accum'', until = f (k, v) accum' in
+              match until with
+              | true -> accum'', true
+              | false -> fn accum'' f l
+            end
+        end
+    in
+    let accum, _ = fn init f t.root in
+    accum
 end
 include T
-include Container.MakePoly3Index(T)
-
-let fold_until ~init ~f t =
-  let rec fn accum f = function
-    | Empty -> accum, false
-    | Leaf {k; v} -> f accum (k, v)
-    | Node {l; k; v; n=_; h=_; r} -> begin
-        let accum', until = fn accum f l in
-        match until with
-        | true -> accum', true
-        | false -> begin
-            let accum'', until = f accum' (k, v) in
-            match until with
-            | true -> accum'', true
-            | false -> fn accum'' f r
-          end
-      end
-  in
-  let accum, _ = fn init f t.root in
-  accum
-
-let fold_right_until ~init ~f t =
-  let rec fn accum f = function
-    | Empty -> accum, false
-    | Leaf {k; v} -> f (k, v) accum
-    | Node {l; k; v; n=_; h=_; r} -> begin
-        let accum', until = fn accum f r in
-        match until with
-        | true -> accum', true
-        | false -> begin
-            let accum'', until = f (k, v) accum' in
-            match until with
-            | true -> accum'', true
-            | false -> fn accum'' f l
-          end
-      end
-  in
-  let accum, _ = fn init f t.root in
-  accum
-
-let foldi_until ~init ~f t =
-  let _, accum = fold_until t ~init:(0L, init)
-    ~f:(fun (i, accum) (k, v) ->
-      let i' = (Uns.succ i) in
-      let accum', until = f i accum (k, v) in
-      (i', accum'), until
-    ) in
-  accum
-
-let fold ~init ~f t =
-  fold_until t ~init ~f:(fun accum (k, v) -> (f accum (k, v)), false)
-
-let fold_right ~init ~f t =
-  fold_right_until t ~init ~f:(fun (k, v) accum -> (f (k, v) accum), false)
-
-let foldi ~init ~f t =
-  foldi_until t ~init ~f:(fun i accum (k, v) -> (f i accum (k, v)), false)
-
-let iter ~f t =
-  fold t ~init:() ~f:(fun _ (k, v) -> f (k, v))
-
-let iteri ~f t =
-  foldi t ~init:() ~f:(fun i _ (k, v) -> f i (k, v))
-
-let count ~f t =
-  fold t ~init:0L ~f:(fun accum (k, v) ->
-    match f (k, v) with
-    | false -> accum
-    | true -> (Uns.succ accum)
-  )
-
-let for_any ~f t =
-  fold_until t ~init:false ~f:(fun _ (k, v) ->
-    let any' = f (k, v) in
-    any', any'
-  )
-
-let for_all ~f t =
-  fold_until t ~init:true ~f:(fun _ (k, v) ->
-    let all' = f (k, v) in
-    all', (not all')
-  )
-
-let find ~f t =
-  fold_until t ~init:None ~f:(fun _ (k, v) ->
-    match f (k, v) with
-    | false -> None, false
-    | true -> Some (k, v), true
-  )
-
-let find_map ~f t =
-  fold_until t ~init:None ~f:(fun _ (k, v) ->
-    match f (k, v) with
-    | None -> None, false
-    | Some a -> Some a, true
-  )
-
-let findi ~f t =
-  foldi_until t ~init:None ~f:(fun i _ (k, v) ->
-    match f i (k, v) with
-    | false -> None, false
-    | true -> Some (k, v), true
-  )
-
-let findi_map ~f t =
-  foldi_until t ~init:None ~f:(fun i _ (k, v) ->
-    match f i (k, v) with
-    | None -> None, false
-    | Some a -> Some a, true
-  )
-
-let min_elm ~cmp t =
-  fold t ~init:None ~f:(fun accum (k, v) ->
-    match accum with
-    | None -> Some (k, v)
-    | Some e -> begin
-        match cmp e (k, v) with
-        | Cmp.Lt -> Some e
-        | Cmp.Eq
-        | Cmp.Gt -> Some (k, v)
-      end
-  )
-
-let max_elm ~cmp t =
-  fold t ~init:None ~f:(fun accum (k, v) ->
-    match accum with
-    | None -> Some (k, v)
-    | Some e -> begin
-        match cmp e (k, v) with
-        | Cmp.Lt
-        | Cmp.Eq -> Some (k, v)
-        | Cmp.Gt -> Some e
-      end
-  )
+include Container.MakePoly3Fold(T)
+include Container.MakePoly3Array(T)
 
 let hash_fold hash_fold_v t state =
   foldi t ~init:state ~f:(fun i state (k, v) ->

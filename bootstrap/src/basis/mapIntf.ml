@@ -243,7 +243,7 @@ module type S = sig
   (** [to_alist t] folds [t] from right to left if ordered, or arbitrarily if unordered, as a
       {!type:('k * 'v) list}. *)
 
-  include ContainerIntf.SPoly3Index
+  include ContainerIntf.SPoly3Array
     with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
 end
 
@@ -256,22 +256,6 @@ module type SOrd = sig
   val of_array: ('k, 'cmp) cmper -> ('k * 'v) array -> ('k, 'v, 'cmp) t
   (** [of_array cmper kvpairs] creates a map associated with [cmper] that contains [kvpairs]. Halts
       on duplicate keys. *)
-
-  (** {1 Cursor} *)
-
-  (** Cursor that supports arbitrary map member access. [hd], [tl], [seek], [succ], and [pred] are
-      O(lg n), but complete traversals via [succ] or [pred] are amortized O(1) per call. [lget],
-      [rget], [container], and [index] are O(1). *)
-  module Cursor : sig
-    type ('k, 'v, 'cmp) container = ('k, 'v, 'cmp) t
-    type ('k, 'v, 'cmp) t
-
-    include CursorIntf.SPoly3Index
-      with type ('k, 'v, 'cmp) container := ('k, 'v, 'cmp) container
-      with type 'k key := 'k
-      with type 'v value := 'v
-      with type ('k, 'v, 'cmp) t := ('k, 'v, 'cmp) t
-  end
 
   (** {1 Mapping operations} *)
 

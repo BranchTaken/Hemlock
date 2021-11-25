@@ -14,7 +14,7 @@
   test_inter
   test_iter2_equal_subset_disjoint
   test_mem_insert_subset
-  test_of_array_cursor
+  test_of_array
   test_of_list_duplicate
   test_of_list_remove
   test_of_list_to_list_to_array

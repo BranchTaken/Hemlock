@@ -8,120 +8,15 @@ module T = struct
 
   let is_empty = Ordmap.is_empty
 
-  module Cursor = struct
-    module T = struct
-      type ('a, 'cmp) container = ('a, 'cmp) t
-      type ('a, 'cmp) t = ('a, unit, 'cmp) Ordmap.Cursor.t
+  let fold_until ~init ~f t =
+    Ordmap.fold_until ~init ~f:(fun accum (k, _) -> f accum k) t
 
-      let cmp = Ordmap.Cursor.cmp
-
-      let hd = Ordmap.Cursor.hd
-
-      let tl = Ordmap.Cursor.tl
-
-      let seek = Ordmap.Cursor.seek
-
-      let pred = Ordmap.Cursor.pred
-
-      let succ = Ordmap.Cursor.succ
-
-      let lget t =
-        let (a, _) = Ordmap.Cursor.lget t in
-        a
-
-      let rget t =
-        let (a, _) = Ordmap.Cursor.rget t in
-        a
-
-      let prev t =
-        lget t, pred t
-
-      let next t =
-        rget t, succ t
-
-      let container = Ordmap.Cursor.container
-
-      let index = Ordmap.Cursor.index
-
-      let pp t formatter =
-        formatter
-        |> Fmt.fmt "{index="
-        |> Uns.fmt (index t)
-        |> Fmt.fmt "}"
-    end
-    include T
-    include Cmpable.MakePoly2(T)
-  end
-
-  let cursor_pp = Cursor.pp
+  let fold_right_until ~init ~f t =
+    Ordmap.fold_right_until ~init ~f:(fun (k, _) accum -> f k accum) t
 end
 include T
-include Container.MakePoly2Index(T)
-
-let fold_until ~init ~f t =
-  Ordmap.fold_until ~init ~f:(fun accum (k, _) -> f accum k) t
-
-let fold_right_until ~init ~f t =
-  Ordmap.fold_right_until ~init ~f:(fun (k, _) accum -> f k accum) t
-
-let foldi_until ~init ~f t =
-  Ordmap.foldi_until ~init ~f:(fun i accum (k, _) -> f i accum k) t
-
-let fold ~init ~f t =
-  Ordmap.fold ~init ~f:(fun accum (k, _) -> f accum k) t
-
-let fold_right ~init ~f t =
-  Ordmap.fold_right ~init ~f:(fun (k, _) accum -> f k accum) t
-
-let foldi ~init ~f t =
-  Ordmap.foldi ~init ~f:(fun i accum (k, _) -> f i accum k) t
-
-let iter ~f t =
-  Ordmap.iter ~f:(fun (k, _) -> f k) t
-
-let iteri ~f t =
-  Ordmap.iteri ~f:(fun i (k, _) -> f i k) t
-
-let count ~f t =
-  Ordmap.count ~f:(fun (k, _) -> f k) t
-
-let for_any ~f t =
-  Ordmap.for_any ~f:(fun (k, _) -> f k) t
-
-let for_all ~f t =
-  Ordmap.for_all ~f:(fun (k, _) -> f k) t
-
-let find ~f t =
-  match Ordmap.find ~f:(fun (k, _) -> f k) t with
-  | Some (k, _) -> Some k
-  | None -> None
-
-let find_map ~f t =
-  Ordmap.find_map ~f:(fun (k, _) -> f k) t
-
-let findi ~f t =
-  match Ordmap.findi ~f:(fun i (k, _) -> f i k) t with
-  | Some (k, _) -> Some k
-  | None -> None
-
-let findi_map ~f t =
-  Ordmap.findi_map ~f:(fun i (k, _) -> f i k) t
-
-let min_elm ~cmp t =
-  match Ordmap.min_elm ~cmp:(fun (k0, _) (k1, _) -> cmp k0 k1) t with
-  | Some (k, _) -> Some k
-  | None -> None
-
-let max_elm ~cmp t =
-  match Ordmap.max_elm ~cmp:(fun (k0, _) (k1, _) -> cmp k0 k1) t with
-  | Some (k, _) -> Some k
-  | None -> None
-
-let to_list t =
-  fold_right t ~init:[] ~f:(fun elm accum -> elm :: accum)
-
-let to_list_rev t =
-  fold t ~init:[] ~f:(fun accum elm -> elm :: accum)
+include Container.MakePoly2Fold(T)
+include Container.MakePoly2Array(T)
 
 let hash_fold t state =
   Ordmap.hash_fold Unit.hash_fold t state
@@ -185,6 +80,7 @@ module SeqPoly2Fold2 = struct
   let cmp = Ordmap.Seq.cmp
 end
 include Seq.MakePoly2Fold2(SeqPoly2Fold2)
+module Seq = SeqPoly2Fold2
 
 let cmp t0 t1 =
   Ordmap.cmp Unit.cmp t0 t1

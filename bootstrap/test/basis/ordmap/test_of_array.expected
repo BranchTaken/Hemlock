@@ -1,0 +1,27 @@
+of_array [||] -> Ordmap {
+    root=Empty
+  }
+of_array [|(0, "0"); (1, "1"); (4, "4"); (5, "5"); (3, "3"); (2, "2")|] -> Ordmap {
+    root=Node {
+        l=Node {
+                l=Leaf {k=0; v="0"}
+                k=1
+                v="1"
+                n=3
+                h=2
+                r=Leaf {k=2; v="2"}
+              }
+        k=3
+        v="3"
+        n=6
+        h=3
+        r=Node {
+                l=Empty
+                k=4
+                v="4"
+                n=2
+                h=2
+                r=Leaf {k=5; v="5"}
+              }
+      }
+  }
