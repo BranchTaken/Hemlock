@@ -13,6 +13,19 @@ module type S = sig
   type ('a, 'cmp) cmper = (module Cmper.SMono with type t = 'a and type cmper_witness = 'cmp)
   (** Comparator type. *)
 
+  (** {1 Seq} *)
+
+  (** Seq that supports arbitrarily ordered sequential access. *)
+  module Seq : sig
+    type ('a, 'cmp) container = ('a, 'cmp) t
+    type ('a, 'cmp) t
+
+    include SeqIntf.IPoly2Fold2
+      with type ('a, 'cmp) container := ('a, 'cmp) container
+      with type ('a, 'cmp) t := ('a, 'cmp) t
+      with type 'a elm := 'a
+  end
+
   (** {1 Comparators} *)
 
   val hash_fold: ('a, 'cmp) t -> Hash.State.t -> Hash.State.t
@@ -159,7 +172,7 @@ module type S = sig
   (** [to_list t] folds [t] from right to left if ordered, or arbitrarily if unordered, as a
       {!type:'a list}. *)
 
-  include ContainerIntf.SPoly2Index
+  include ContainerIntf.SPoly2Array
     with type ('a, 'cmp) t := ('a, 'cmp) t
 end
 
@@ -171,21 +184,6 @@ module type SOrd = sig
 
   val of_array: ('a, 'cmp) cmper -> 'a array -> ('a, 'cmp) t
   (** [of_array cmper elms] creates a set associated with [cmper] that contains [elms]. *)
-
-  (** {1 Cursor} *)
-
-  (** Cursor that supports arbitrary set member access. [hd], [tl], [seek], [succ], and [pred] are
-      O(lg n), but complete traversals via [succ] or [pred] are amortized O(1) per call. [lget],
-      [rget], [container], and [index] are O(1). *)
-  module Cursor : sig
-    type ('a, 'cmp) container = ('a, 'cmp) t
-    type ('a, 'cmp) t
-
-    include CursorIntf.SPoly2Index
-      with type ('a, 'cmp) container := ('a, 'cmp) container
-      with type 'a elm := 'a
-      with type ('a, 'cmp) t := ('a, 'cmp) t
-  end
 
   (** {1 Element operations} *)
 
