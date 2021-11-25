@@ -23,7 +23,7 @@
   test_of_alist_remove
   test_of_alist_remove_hlt
   test_of_alist_to_alist_to_array
-  test_of_array_cursor
+  test_of_array
   test_partition_map
   test_partitioni_map
   test_partition_tf
