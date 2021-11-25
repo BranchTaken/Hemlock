@@ -1,5 +1,4 @@
 open Rudiments0
-open RudimentsInt0
 
 module T = struct
   type 'a t = 'a list
@@ -20,90 +19,6 @@ module T = struct
       | hd :: tl -> fn (hd :: l) tl
     in
     fn [] t
-
-  module Cursor = struct
-    module T = struct
-      type 'a container = 'a t
-      type 'a t = {
-        list: 'a container;
-        left_rev: 'a container;
-        right: 'a container;
-        index: uns;
-      }
-
-      let cmp t0 t1 =
-        (* == is excessively vague in OCaml. *)
-        assert ((t0.list == t1.list) || (Stdlib.( = ) t0.list t1.list));
-        Uns.cmp t0.index t1.index
-
-      let hd list =
-        {list; left_rev=[]; right=list; index=0L}
-
-      let tl list =
-        let rec fn l r len = begin
-          match r with
-          | [] -> l, len
-          | hd :: tl -> fn (hd :: l) tl (succ len)
-        end in
-        let left_rev, len = fn [] list 0L in
-        {list; left_rev; right=[]; index=len}
-
-      let pred t =
-        match t.left_rev with
-        | [] -> halt "At beginning of list"
-        | hd :: tl -> {t with left_rev=tl; right=(hd :: t.right); index=(Uns.pred t.index)}
-
-      let succ t =
-        match t.right with
-        | [] -> halt "At end of list"
-        | hd :: tl -> {t with left_rev=(hd :: t.left_rev); right=tl; index=(Uns.succ t.index)}
-
-      let lget t =
-        match t.left_rev with
-        | [] -> halt "At beginning of list"
-        | hd :: _ -> hd
-
-      let rget t =
-        match t.right with
-        | [] -> halt "At end of list"
-        | hd :: _ -> hd
-
-      let prev t =
-        match t.left_rev with
-        | [] -> halt "At beginning of list"
-        | hd :: tl -> hd, {t with left_rev=tl; right=(hd :: t.right); index=(Uns.pred t.index)}
-
-      let next t =
-        match t.right with
-        | [] -> halt "At end of list"
-        | hd :: tl -> hd, {t with left_rev=(hd :: t.left_rev); right=tl; index=(Uns.succ t.index)}
-
-      let container t =
-        t.list
-
-      let index t =
-        t.index
-
-      let seek i t =
-        let rec seek_rev i t = begin
-          match Sint.(i = 0L) with
-          | true -> t
-          | false -> seek_rev Sint.(succ i) (pred t)
-        end in
-        let rec seek_fwd i t = begin
-          match Sint.(i = 0L) with
-          | true -> t
-          | false -> seek_fwd Sint.(pred i) (succ t)
-        end in
-        let open Cmp in
-        match Sint.(cmp i 0L) with
-        | Lt -> seek_rev i t
-        | Eq -> t
-        | Gt -> seek_fwd i t
-    end
-    include T
-    include Cmpable.MakePoly(T)
-  end
 
   let cmp cmp_elm t0 t1 =
     let open Cmp in
