@@ -8,6 +8,11 @@ module MakeMonoLength (T : IMonoIter) : SMonoLength
   with type elm := T.elm
 
 (** Folding-related functor for monomorphic types, e.g. [string]. *)
+module MakeMonoFold (T : IMonoFold) : SMonoIter
+  with type t := T.t
+  with type elm := T.elm
+
+(** Folding-related functor for monomorphic types, e.g. [string]. *)
 module MakeMonoIter (T : IMonoIter) : SMonoIter
   with type t := T.t
   with type elm := T.elm
@@ -27,6 +32,11 @@ module MakeMonoMem (T : IMonoMem) : SMonoMem
 
 (** O(n) [length] functor for polymorphic types, e.g. ['a list]. *)
 module MakePolyLength (T : IPolyIter) : SPolyLengthGen
+  with type 'a t := 'a T.t
+  with type 'a elm := 'a T.elm
+
+(** Folding-related functor for polymorphic types, e.g. ['a list]. *)
+module MakePolyFold (T : IPolyFold) : SPolyIterGen
   with type 'a t := 'a T.t
   with type 'a elm := 'a T.elm
 
