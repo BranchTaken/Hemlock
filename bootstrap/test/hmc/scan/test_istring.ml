@@ -7,8 +7,9 @@ let test () =
   scan_str {|""|};
   scan_str {|"
 "|};
-  scan_str {|"a \n \t \n \r \" \\ \u{41} \u{000_ff_fd}"|};
+  scan_str {|"a \n \t \n \r \" \\ \% \u{41} \u{000_ff_fd}"|};
 
+  scan_str {|"\'"|};
   scan_str {|"\u{110ffff}"|};
   scan_str {|"\u{110000}"|};
   scan_str {|"\u{110000}"|};
