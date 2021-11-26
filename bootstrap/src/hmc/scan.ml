@@ -656,7 +656,7 @@ let accept_delim atoken cursor t =
 let accept_delim_incl atoken _ppcursor _pcursor cursor t =
   accept_delim atoken cursor t
 
-(*******************************************************************************
+(***************************************************************************************************
  * Convenience routines for reporting malformations. *)
 
 let malformation ~base ~past description t =
@@ -727,7 +727,7 @@ let out_of_range_int radix limit base past t =
 let out_of_range_real base past t =
   malformation ~base ~past "Numerical constant cannot be precisely represented" t
 
-(******************************************************************************)
+(**************************************************************************************************)
 
 let accept_dentation atoken cursor t =
   accept atoken cursor {t with line_state=LineBody}
@@ -1003,8 +1003,8 @@ end = struct
       | Malformations mals -> accept (Tok_codepoint (Malformed (List.rev mals))) cursor t
     end in
 
-    (* The callers of fn_wrapper have varying scanner state they're carrying as * call parameters,
-     * so in most cases they have to allocate a closure. This * isn't ideal performance-wise, but it
+    (* The callers of fn_wrapper have varying scanner state they're carrying as call parameters, so
+     * in most cases they have to allocate a closure. This isn't ideal performance-wise, but it
      * reduces boilerplate. *)
     let fn_wrapper ~f accum cursor t = begin
       match Text.Cursor.next_opt cursor with
