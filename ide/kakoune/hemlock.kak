@@ -50,6 +50,7 @@ add-highlighter shared/hemlock/string/inner_precision region \^\)\.=?\*\(\^ () f
 add-highlighter shared/hemlock/string/inner_value region \^\)(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))\(\^ () fill meta
 
 add-highlighter shared/hemlock/string/unprotected region (?<!\\)% () fill Error
+add-highlighter shared/hemlock/string/overprotected region \\(?![utnr"\\%]) () fill Error
 
 # Anchoring to the beginning of the input (\A) doesn't work as expected here. It appears that
 # kakoune is not resetting the input bounds to exclude preceding codepoints on the first line of
