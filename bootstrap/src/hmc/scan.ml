@@ -1187,6 +1187,7 @@ end = struct
         | cp when Codepoint.(cp = of_char 'r') -> fn (accum_cp Codepoint.cr accum) cursor' t
         | cp when Codepoint.(cp = of_char '"') -> fn (accum_cp cp accum) cursor' t
         | cp when Codepoint.(cp = of_char '\\') -> fn (accum_cp cp accum) cursor' t
+        | cp when Codepoint.(cp = of_char '%') -> fn (accum_cp cp accum) cursor' t
         | _ -> begin
             let mal = illegal_backslash bslash_cursor cursor' t in
             fn (accum_mal mal accum) cursor' t
