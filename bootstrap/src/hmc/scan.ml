@@ -596,9 +596,9 @@ module ConcreteToken = struct
 end
 
 type line_state =
-  | LineDentation
-  | LineDelim
-  | LineBody
+  | Line_dentation
+  | Line_delim
+  | Line_body
 
 type t = {
   path: string option;
@@ -613,7 +613,7 @@ let init text =
     path=Text.path text;
     bias=Sint.zero;
     cursor=Text.Cursor.hd text;
-    line_state=LineDentation;
+    line_state=Line_dentation;
     level=0L;
   }
 
@@ -651,7 +651,7 @@ let accept_pexcl atoken ppcursor _pcursor _cursor t =
 
 let accept_delim atoken cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
-  {t with cursor; line_state=LineDelim}, (ConcreteToken.init atoken source)
+  {t with cursor; line_state=Line_delim}, (ConcreteToken.init atoken source)
 
 let accept_delim_incl atoken _ppcursor _pcursor cursor t =
   accept_delim atoken cursor t
@@ -730,7 +730,7 @@ let out_of_range_real base past t =
 (**************************************************************************************************)
 
 let accept_dentation atoken cursor t =
-  accept atoken cursor {t with line_state=LineBody}
+  accept atoken cursor {t with line_state=Line_body}
 
 let whitespace _ppcursor _pcursor cursor t =
   let rec fn cursor t = begin
@@ -2110,7 +2110,7 @@ end
 
 let end_of_input cursor t =
   match t.line_state, t.level with
-  | LineDelim, 0L -> accept_dentation Tok_line_delim cursor t
+  | Line_delim, 0L -> accept_dentation Tok_line_delim cursor t
   | _, 0L -> accept Tok_end_of_input cursor t
   | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
 
@@ -2383,9 +2383,9 @@ end = struct
     match Text.Cursor.next_opt cursor with
     | None -> begin
         match t.line_state with
-        | LineDentation -> accept Tok_whitespace cursor t
-        | LineDelim -> accept_dentation Tok_line_delim cursor t
-        | LineBody -> not_reached ()
+        | Line_dentation -> accept Tok_whitespace cursor t
+        | Line_delim -> accept_dentation Tok_line_delim cursor t
+        | Line_body -> not_reached ()
       end
     | Some (cp, cursor') -> begin
         match cp with
@@ -2403,9 +2403,9 @@ end = struct
             (* New expression at same level. *)
             | 0L, t_level, level when t_level = level -> begin
                 match t.line_state with
-                | LineDentation -> Dag.start {t with line_state=LineBody}
-                | LineDelim -> accept_dentation Tok_line_delim cursor t
-                | LineBody -> not_reached ()
+                | Line_dentation -> Dag.start {t with line_state=Line_body}
+                | Line_delim -> accept_dentation Tok_line_delim cursor t
+                | Line_body -> not_reached ()
               end
 
             (* Continuation of expression at current level. *)
@@ -2470,26 +2470,26 @@ end = struct
       match ctoken.atoken, t'.line_state with
       | Tok_end_of_input, _
       | Tok_hash_comment, _
-      | Tok_whitespace, LineDelim -> true
+      | Tok_whitespace, Line_delim -> true
       | Tok_paren_comment _, _
-      | Tok_whitespace, LineDentation -> fn t'
-      | Tok_whitespace, LineBody -> not_reached ()
+      | Tok_whitespace, Line_dentation -> fn t'
+      | Tok_whitespace, Line_body -> not_reached ()
       | _ -> false
     end in
     match paren_comment ppcursor pcursor cursor t with
     | t', ctoken -> begin
-        match fn {t' with line_state=LineDentation} with
+        match fn {t' with line_state=Line_dentation} with
         | false -> LineExpr
-        | true -> LineNoop ({t' with line_state=LineBody}, ctoken)
+        | true -> LineNoop ({t' with line_state=Line_body}, ctoken)
       end
 
   let other cursor t =
     match t.level with
     | 0L -> begin
         match t.line_state with
-        | LineDentation -> Dag.start {t with line_state=LineBody}
-        | LineDelim -> accept_dentation Tok_line_delim cursor t
-        | LineBody -> not_reached ()
+        | Line_dentation -> Dag.start {t with line_state=Line_body}
+        | Line_delim -> accept_dentation Tok_line_delim cursor t
+        | Line_body -> not_reached ()
       end
     | 1L -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=0L}
     | _ -> accept (Tok_dedent (Constant ())) cursor {t with level=pred t.level}
@@ -2527,6 +2527,6 @@ end
 
 let next t =
   match t.line_state with
-  | LineDentation
-  | LineDelim -> Dentation.start t.cursor t
-  | LineBody -> Dag.start t
+  | Line_dentation
+  | Line_delim -> Dentation.start t.cursor t
+  | Line_body -> Dag.start t
