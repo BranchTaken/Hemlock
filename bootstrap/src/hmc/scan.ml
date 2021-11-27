@@ -600,11 +600,38 @@ type line_state =
   | Line_delim
   | Line_body
 
+(* Interpolated strings may contain format specifiers, which contain nested code, perhaps even
+ * nested interpolated strings. Each interpolated string comprises a complete path through a
+ * discrete finite state automoton (DFA). Following are examples of how these tokens arise.
+ *
+ * "...%*(^width^).*(^precision^)r(^value^)...%*(^width^)r(^value2^)..."
+ * ~~~~~~~~     ~~~~~~         ~~~~~     ~~~~~~~~~     ~~~~~      ~~~~~~
+ * lw           p              v         iw            v          r
+ *
+ * "...%4.*(^precision^)r(^value^)...%6.*(^precision^)r(^value2^)..."
+ * ~~~~~~~~~~         ~~~~~     ~~~~~~~~~           ~~~~~     ~~~~~~~
+ * lp                 v         ip                  v         r
+ *
+ * "...%r(^value^)...%f(^value^)..."
+ * ~~~~~~~~     ~~~~~~~~~     ~~~~~~
+ * lv           iv            r *)
+type istring_state =
+  | Istate_lw (* left width *)
+  | Istate_lp (* left precision *)
+  | Istate_lv (* left value *)
+  | Istate_iw (* inner width *)
+  | Istate_ip (* inner precision *)
+  | Istate_iv (* inner value *)
+  | Istate_p (* precision *)
+  | Istate_v (* value *)
+  | Istate_r (* right *)
+
 type t = {
   path: string option;
   bias: sint;
   cursor: Text.Cursor.t;
   line_state: line_state;
+  istring_state: istring_state list;
   level: uns;
 }
 
@@ -614,8 +641,40 @@ let init text =
     bias=Sint.zero;
     cursor=Text.Cursor.hd text;
     line_state=Line_dentation;
+    istring_state=[];
     level=0L;
   }
+
+let istring_state_transition state t =
+  match state, t.istring_state, t.level with
+  (* (start) {lw, lp, lv} *)
+  | (Istate_lw|Istate_lp|Istate_lv), istring_state, level
+    -> {t with level=succ level; istring_state=state :: istring_state}
+
+  (* {lw, iw} -> {p, v} *)
+  | (Istate_p|Istate_v), (Istate_lw|Istate_iw) :: istring_state', _
+  (* {lp, ip, p} -> {v} *)
+  | Istate_v, (Istate_lp|Istate_ip|Istate_p) :: istring_state', _
+  (* {lv, iv, v} -> {iw, ip, iv} *)
+  | (Istate_iw|Istate_ip|Istate_iv), (Istate_lv|Istate_iv|Istate_v) :: istring_state', _
+    -> {t with istring_state=state :: istring_state'}
+
+  (* {lv, iv, v} -> {r} (accept) *)
+  | Istate_r, (Istate_lv|Istate_iv|Istate_v) :: istring_state', level
+    -> {t with level=pred level; istring_state=istring_state'}
+
+  (* The following transitions indicate syntax errors. The scanner generates valid tokens
+   * nonetheless but such tokens will result in parsing errors. *)
+  | Istate_r, (Istate_lw|Istate_lp|Istate_iw|Istate_ip|Istate_p) :: istring_state', level
+    -> {t with level=pred level; istring_state=istring_state'}
+
+  (* The following transitions cannot occur absent scanner flaws. *)
+  | (Istate_iw|Istate_ip|Istate_iv|Istate_p|Istate_v|Istate_r), [], _
+  | (Istate_iw|Istate_ip|Istate_iv), (Istate_lw|Istate_lp|Istate_iw|Istate_ip|Istate_p) :: _, _
+  | Istate_p, (Istate_lp|Istate_lv|Istate_ip|Istate_iv|Istate_p|Istate_v) :: _, _
+  | Istate_v, (Istate_lv|Istate_iv|Istate_v) :: _, _
+  | _, Istate_r :: _, _
+    -> not_reached ()
 
 let text t =
   Text.Cursor.container t.cursor
