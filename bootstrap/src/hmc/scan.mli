@@ -81,6 +81,7 @@ module AbstractToken : sig
     alt: bool option;
     zpad: bool option;
     width: uns option;
+    pmode: Fmt.pmode option;
     prec: uns option;
     base: Fmt.base option;
     notation: Fmt.notation option;

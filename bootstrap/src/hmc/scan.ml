@@ -292,6 +292,7 @@ module AbstractToken = struct
     alt: bool option;
     zpad: bool option;
     width: uns option;
+    pmode: Fmt.pmode option;
     prec: uns option;
     base: Fmt.base option;
     notation: Fmt.notation option;
@@ -308,6 +309,7 @@ module AbstractToken = struct
     |> Fmt.fmt "; alt=" |> (Option.pp Bool.pp) spec.alt
     |> Fmt.fmt "; zpad=" |> (Option.pp Bool.pp) spec.zpad
     |> Fmt.fmt "; width=" |> (Option.pp Uns.pp) spec.width
+    |> Fmt.fmt "; pmode=" |> (Option.pp Fmt.pp_pmode) spec.pmode
     |> Fmt.fmt "; prec=" |> (Option.pp Uns.pp) spec.prec
     |> Fmt.fmt "; base=" |> (Option.pp Fmt.pp_base) spec.base
     |> Fmt.fmt "; notation=" |> (Option.pp Fmt.pp_notation) spec.notation
@@ -325,6 +327,7 @@ module AbstractToken = struct
       alt=Option.merge ~f a.alt b.alt;
       zpad=Option.merge ~f a.zpad b.zpad;
       width=Option.merge ~f a.width b.width;
+      pmode=Option.merge ~f a.pmode b.pmode;
       prec=Option.merge ~f a.prec b.prec;
       base=Option.merge ~f a.base b.base;
       notation=Option.merge ~f a.notation b.notation;
@@ -832,6 +835,9 @@ let unterminated_comment base past t =
 let unterminated_codepoint base past t =
   malformation ~base ~past "Unterminated codepoint literal" t
 
+let invalid_spec base past t =
+  malformation ~base ~past "Invalid format specifier" t
+
 let unterminated_string base past t =
   malformation ~base ~past "Unterminated string literal" t
 
@@ -1258,59 +1264,6 @@ module String_ : sig
   val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val accept_unterminated_rstring: Text.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
-  type pmap =
-    | PMapTick
-    | PMapLt
-    | PMapCaret
-    | PMapGt
-    | PMapPlus
-    | PMapUscore
-    | PMapHash
-    | PMapZero
-    | PMapDigit
-    | PMapStar
-    | PMapDot
-    | PMapB
-    | PMapO
-    | PMapD
-    | PMapX
-    | PMapM
-    | PMapA
-    | PMapC
-    | PMapP
-    | PMapU
-    | PMapI
-    | PMapS
-    | PMapF
-    | PMapLparen
-
-  let pct_map = map_of_cps_alist [
-    ("'", PMapTick);
-    ("<", PMapLt);
-    ("^", PMapCaret);
-    (">", PMapGt);
-    ("+", PMapPlus);
-    ("_", PMapUscore);
-    ("#", PMapHash);
-    ("0", PMapZero);
-    ("123456789", PMapDigit);
-    ("*", PMapStar);
-    (".", PMapDot);
-    ("b", PMapB);
-    ("o", PMapO);
-    ("d", PMapD);
-    ("x", PMapX);
-    ("m", PMapM);
-    ("a", PMapA);
-    ("c", PMapC);
-    ("p", PMapP);
-    ("u", PMapU);
-    ("i", PMapI);
-    ("s", PMapS);
-    ("f", PMapF);
-    ("(", PMapLparen);
-  ]
-
   type accum =
     | Codepoints of codepoint list
     | Spec of AbstractToken.istring_spec
@@ -1331,6 +1284,7 @@ end = struct
       alt=None;
       zpad=None;
       width=None;
+      pmode=None;
       prec=None;
       base=None;
       notation=None;
@@ -1370,6 +1324,11 @@ end = struct
     | Spec spec -> Spec {spec with width=Some width}
     | (Malformations _) as mals -> mals
 
+  let accum_pmode pmode = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with pmode=Some pmode}
+    | (Malformations _) as mals -> mals
+
   let accum_prec prec = function
     | Codepoints _ -> not_reached ()
     | Spec spec -> Spec {spec with prec=Some prec}
@@ -1401,7 +1360,7 @@ end = struct
     | Malformations mals -> Malformations (mal :: mals)
 
   (* Interpolated string: "..." *)
-  let istring _ppcursor _pcursor cursor t =
+  let istring _ppcursor pcursor cursor t =
     let accept_istring accum cursor t = begin
       match accum with
       | Codepoints cps -> accept (Tok_istring (Constant (String.of_list_rev cps))) cursor t
@@ -1409,7 +1368,20 @@ end = struct
       | Malformations mals -> accept (Tok_istring (Malformed (List.rev mals))) cursor t
     end in
 
-    let rec fn_wrapper ~f accum cursor t = begin
+    let accept_istring_l accum cursor t = begin
+      match accum with
+      | Codepoints _ -> not_reached ()
+      | Spec ({width=None; prec=None; abbr=None; _} as spec) ->
+        accept (Tok_istring_iw (Constant spec)) cursor t
+      | Spec ({width=Some _; prec=None; abbr=None; _} as spec) ->
+        accept (Tok_istring_ip (Constant spec)) cursor t
+      | Spec ({width=Some _; prec=Some _; abbr=Some _; _} as spec) ->
+        accept (Tok_istring_iv (Constant spec)) cursor t
+      | Spec _ -> not_reached ()
+      | Malformations mals -> accept (Tok_istring (Malformed (List.rev mals))) cursor t
+    end in
+
+    let rec fn_wrapper ~f accum pcursor cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
           let mal = unterminated_string t.cursor cursor t in
@@ -1417,18 +1389,259 @@ end = struct
         end
       | Some (_, false, cursor') -> begin
           let mal = invalid_utf8 cursor cursor' t in
-          fn (accum_mal mal accum) cursor' t
+          fn (accum_mal mal accum) cursor cursor' t
         end
-      | Some (cp, true, cursor') -> f accum cursor cp cursor' t
+      | Some (cp, true, cursor') -> f accum pcursor cursor cp cursor' t
     end
-    and fn_bslash_u_lcurly nat bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
+    and fn_lparen accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        match cp with
+        | cp when Codepoint.(cp = of_char '^') -> accept_istring_l accum cursor' t
+        | cp when Codepoint.(cp = of_char '(') -> begin
+            let mal = invalid_spec cursor cursor' t in
+            fn_lparen (accum_mal mal accum) cursor cursor' t
+          end
+        | _ -> begin
+            let mal = invalid_spec cursor cursor' t in
+            fn_abbr (accum_mal mal accum) cursor cursor' t
+          end
+      )
+    end
+    and fn_abbr accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        match cp with
+        | cp when Codepoint.(cp = of_char '(') -> fn_lparen accum cursor cursor' t
+        | _ -> begin
+            let mal = invalid_spec cursor cursor' t in
+            fn_abbr (accum_mal mal accum) cursor cursor' t
+          end
+      )
+    end
+    and fn_ui signed bitwidth accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum _pcursor cursor cp cursor' t ->
+        match cp with
+        | cp when Codepoint.(cp = of_char '0') ->
+          fn_ui signed Nat.(bitwidth * k_a) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '1') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_1) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '2') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_2) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '3') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_3) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '4') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_4) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '5') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_5) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '6') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_6) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '7') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_7) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '8') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_8) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '9') ->
+          fn_ui signed Nat.(bitwidth * k_a + k_9) accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '(') -> begin
+            let accum' = match signed, Nat.to_uns_opt bitwidth with
+              | false, Some 8L -> accum_abbr Abbr_u8 accum
+              | false, Some 16L -> accum_abbr Abbr_u16 accum
+              | false, Some 32L -> accum_abbr Abbr_u32 accum
+              | false, Some 0L -> accum_abbr Abbr_u accum
+              | false, Some 64L -> accum_abbr Abbr_u64 accum
+              | false, Some 128L -> accum_abbr Abbr_u128 accum
+              | false, Some 256L -> accum_abbr Abbr_u256 accum
+              | false, Some 512L -> accum_abbr Abbr_u512 accum
+              | true, Some 8L -> accum_abbr Abbr_i8 accum
+              | true, Some 16L -> accum_abbr Abbr_i16 accum
+              | true, Some 32L -> accum_abbr Abbr_i32 accum
+              | true, Some 0L -> accum_abbr Abbr_i accum
+              | true, Some 64L -> accum_abbr Abbr_i64 accum
+              | true, Some 128L -> accum_abbr Abbr_i128 accum
+              | true, Some 256L -> accum_abbr Abbr_i256 accum
+              | true, Some 512L -> accum_abbr Abbr_i512 accum
+              | _ -> begin
+                  let mal = invalid_spec cursor cursor' t in
+                  accum_mal mal accum
+                end
+            in
+            fn_lparen accum' cursor cursor' t
+          end
+        | _ -> begin
+            let mal = invalid_spec cursor cursor' t in
+            fn_abbr (accum_mal mal accum) cursor cursor' t
+          end
+      )
+    end
+    and fn_pretty accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        match cp with
+        | cp when Codepoint.(cp = of_char '(') -> fn_lparen accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'b') -> fn_abbr (accum_abbr Abbr_b accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'u') -> fn_ui false Nat.k_0 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'i') -> fn_ui true Nat.k_0 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'c') -> fn_abbr (accum_abbr Abbr_c accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 's') -> fn_abbr (accum_abbr Abbr_s accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'f') -> fn_abbr (accum_abbr Abbr_f accum) cursor cursor' t
+        | _ -> begin
+            let mal = invalid_spec cursor cursor' t in
+            fn_abbr (accum_mal mal accum) cursor cursor' t
+          end
+      )
+    end
+    and fn_c accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        match cp with
+        | cp when Codepoint.(cp = of_char 'p') ->
+          fn_pretty (accum_pretty true accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'u') ->
+          fn_ui false Nat.k_0 (accum_notation Fmt.Compact accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'i') ->
+          fn_ui true Nat.k_0 (accum_notation Fmt.Compact accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'n') ->
+          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_n) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'z') ->
+          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_z) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 's') ->
+          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_s) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'f') ->
+          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_f) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '(') ->
+          fn_lparen (accum_abbr Abbr_c accum) cursor cursor' t
+        | _ -> not_implemented "XXX"
+      )
+    end
+    and fn_notation accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_base accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_b accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_prec_dot accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_width_star accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_width width accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_zpad accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_alt accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_sign accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_just accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_pad accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        ((*XXX*))
+      )
+    end
+    and fn_pct accum pcursor cursor t = begin
+      fn_wrapper (accum_interp accum) pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+        match cp with
+        | cp when Codepoint.(cp = of_char '\'') -> begin
+            let open ConcreteToken in
+            let t', tok = Codepoint_.codepoint pcursor cursor cursor' t in
+            let accum' = match tok.atoken with
+              | Tok_codepoint (Constant cp) -> accum_pad cp accum
+              | Tok_codepoint (Malformed mals) ->
+                List.fold ~init:accum ~f:(fun accum mal -> accum_mal mal accum) mals
+              | _ -> not_reached ()
+            in fn_pad accum' (Text.Cursor.pred t'.cursor) t'.cursor t'
+          end
+        | cp when Codepoint.(cp = of_char '<') ->
+          fn_just (accum_just Fmt.Left accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '^') ->
+          fn_just (accum_just Fmt.Center accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '>') ->
+          fn_just (accum_just Fmt.Right accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '+') ->
+          fn_sign (accum_sign Fmt.Explicit accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '_') ->
+          fn_sign (accum_sign Fmt.Space accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '#') -> fn_alt (accum_alt true accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '0') -> fn_zpad (accum_zpad true accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '1') -> fn_width Nat.k_1 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '2') -> fn_width Nat.k_2 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '3') -> fn_width Nat.k_3 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '4') -> fn_width Nat.k_4 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '5') -> fn_width Nat.k_5 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '6') -> fn_width Nat.k_6 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '7') -> fn_width Nat.k_7 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '8') -> fn_width Nat.k_8 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '9') -> fn_width Nat.k_9 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '*') -> fn_width_star accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '.') -> fn_prec_dot accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'b') ->
+          fn_b accum cursor cursor' t (* Lookahead for Bin vs bool. *)
+        | cp when Codepoint.(cp = of_char 'o') ->
+          fn_base (accum_base Fmt.Oct accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'd') ->
+          fn_base (accum_base Fmt.Dec accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'x') ->
+          fn_base (accum_base Fmt.Hex accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'm') ->
+          fn_notation (accum_notation Fmt.Normalized accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'a') ->
+          fn_notation (accum_notation Fmt.RadixPoint accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'c') ->
+          fn_c accum cursor cursor' t (* Lookahead for Compact vs codepoint. *)
+        | cp when Codepoint.(cp = of_char 'p') ->
+          fn_pretty (accum_pretty true accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'u') -> fn_ui false Nat.k_0 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'i') -> fn_ui true Nat.k_0 accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'n') -> fn_abbr (accum_abbr Abbr_n accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'z') -> fn_abbr (accum_abbr Abbr_z accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 's') -> fn_abbr (accum_abbr Abbr_s accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'f') -> fn_abbr (accum_abbr Abbr_f accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '(') -> begin
+            let mal = invalid_spec cursor cursor' t in
+            fn_lparen (accum_mal mal accum) pcursor cursor' t
+          end
+        | _ -> begin
+            let mal = invalid_spec cursor cursor' t in
+            fn_abbr (accum_mal mal accum) pcursor cursor' t
+          end
+      )
+    end
+    and fn_bslash_u_lcurly nat bslash_cursor accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
         match Map.get cp Codepoint_.u_map with
-        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
+        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor cursor' t
         | Some UMapDigit ->
-          fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor' t
+          fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor
+            cursor' t
         | Some UMapRcurly ->
-          fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor t) cursor' t
+          fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor t) cursor cursor'
+            t
         | Some UMapDitto -> begin
             let mal = partial_unicode bslash_cursor cursor t in
             accept_istring (accum_mal mal accum) cursor' t
@@ -1436,96 +1649,51 @@ end = struct
         | Some UMapTick
         | None -> begin
             let mal = partial_unicode bslash_cursor cursor t in
-            fn (accum_mal mal accum) cursor t
+            fn (accum_mal mal accum) pcursor cursor t
           end
       )
     end
-    and fn_bslash_u bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
+    and fn_bslash_u bslash_cursor accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '{') ->
-          fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor' t
+          fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor cursor' t
         | cp when Codepoint.(cp = of_char '"') -> begin
             let mal = illegal_backslash bslash_cursor cursor t in
             accept_istring (accum_mal mal accum) cursor' t
           end
         | _ -> begin
             let mal = illegal_backslash bslash_cursor cursor t in
-            fn (accum_mal mal accum) cursor t
+            fn (accum_mal mal accum) pcursor cursor t
           end
       )
     end
-    and fn_bslash bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum _cursor cp cursor' t ->
+    and fn_bslash bslash_cursor accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum _pcursor cursor cp cursor' t ->
         match cp with
-        | cp when Codepoint.(cp = of_char 'u') -> fn_bslash_u bslash_cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char 't') -> fn (accum_cp Codepoint.ht accum) cursor' t
-        | cp when Codepoint.(cp = of_char 'n') -> fn (accum_cp Codepoint.nl accum) cursor' t
-        | cp when Codepoint.(cp = of_char 'r') -> fn (accum_cp Codepoint.cr accum) cursor' t
-        | cp when Codepoint.(cp = of_char '"') -> fn (accum_cp cp accum) cursor' t
-        | cp when Codepoint.(cp = of_char '\\') -> fn (accum_cp cp accum) cursor' t
-        | cp when Codepoint.(cp = of_char '%') -> fn (accum_cp cp accum) cursor' t
+        | cp when Codepoint.(cp = of_char 'u') -> fn_bslash_u bslash_cursor accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char 't') -> fn (accum_cp Codepoint.ht accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'n') -> fn (accum_cp Codepoint.nl accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'r') -> fn (accum_cp Codepoint.cr accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '"') -> fn (accum_cp cp accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '\\') -> fn (accum_cp cp accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '%') -> fn (accum_cp cp accum) cursor cursor' t
         | _ -> begin
             let mal = illegal_backslash bslash_cursor cursor' t in
-            fn (accum_mal mal accum) cursor' t
+            fn (accum_mal mal accum) cursor cursor' t
           end
       )
     end
-    and fn_pct accum cursor t = begin
-      fn_wrapper (accum_interp accum) cursor t ~f:(fun accum cursor cp cursor' t ->
-        match Map.get cp pct_map with
-        | Some PMapTick -> begin
-            let open ConcreteToken in
-            let t', tok = Codepoint_.codepoint cursor cursor cursor' t in (* XXX Need pcursor. *)
-            let accum' = match tok.atoken with
-              | Tok_codepoint (Constant cp) -> accum_pad cp accum
-              | Tok_codepoint (Malformed mals) ->
-                List.fold ~init:accum ~f:(fun accum mal -> accum_mal mal accum) mals
-              | _ -> not_reached ()
-            in fn_pad accum' t'.cursor t'
-          end
-        | Some PMapLt -> fn_just (accum_just Fmt.Left accum) cursor' t
-        | Some PMapCaret -> fn_just (accum_just Fmt.Center accum) cursor' t
-        | Some PMapGt -> fn_just (accum_just Fmt.Right accum) cursor' t
-        | Some PMapPlus -> fn_sign (accum_sign Fmt.Explicit accum) cursor' t
-        | Some PMapUscore -> fn_sign (accum_sign Fmt.Space accum) cursor' t
-        | Some PMapHash -> fn_alt (accum_alt true accum) cursor' t
-        | Some PMapZero -> fn_zpad (accum_zpad true accum) cursor' t
-        | Some PMapDigit -> fn_width cursor accum cursor' t
-        | Some PMapStar -> fn_width_star accum cursor' t
-        | Some PMapDot -> fn_prec_dot accum cursor' t
-        | Some PMapB -> fn_b accum cursor' t (* XXX lookahead for Bin vs bool. *)
-        | Some PMapO -> fn_base (accum_base Fmt.Oct accum) cursor' t
-        | Some PMapD -> fn_base (accum_base Fmt.Dec accum) cursor' t
-        | Some PMapX -> fn_base (accum_base Fmt.Hex accum) cursor' t
-        | Some PMapM -> fn_notation (accum_notation Fmt.Normalized accum) cursor' t
-        | Some PMapA -> fn_notation (accum_notation Fmt.RadixPoint accum) cursor' t
-        | Some PMapC -> fn_c accum cursor' t (* XXX Lookahead for Compact vs codepoint. *)
-        | Some PMapP -> fn_pretty (accum_pretty true accum) cursor' t
-        | Some PMapU -> fn_u accum cursor' t
-        | Some PMapI -> fn_i accum cursor' t
-        | Some PMapS -> fn_abbr (accum_abbr Abbr_s accum) cursor' t
-        | Some PMapF -> fn_abbr (accum_abbr Abbr_f accum) cursor' t
-        | Some PMapLparen -> begin
-            let mal = xxx in
-            fn_lparen (accum_mal mal accum) cursor' t
-          end
-        | None -> begin
-            let mal = xxx in
-            fn_abbr (accum_mal mal accum) cursor' t
-          end
-      )
-    end
-    and fn accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
+    and fn accum pcursor cursor t = begin
+      fn_wrapper accum pcursor cursor t ~f:(fun accum _pcursor cursor cp cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '"') -> accept_istring accum cursor' t
-        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char '%') -> fn_pct accum cursor' t
-        | _ -> fn (accum_cp cp accum) cursor' t
+        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor cursor' t
+        | cp when Codepoint.(cp = of_char '%') -> fn_pct accum cursor cursor' t
+        | _ -> fn (accum_cp cp accum) cursor cursor' t
       )
     end in
-    fn (Codepoints []) cursor t
+    fn (Codepoints []) pcursor cursor t
 
   type tag_accum =
     {
@@ -1577,6 +1745,7 @@ end = struct
           let mals = List.(rev_concat ltag.mals (rev rtag.mals)) in
           accept (Tok_rstring (Malformed mals)) cursor t
         end
+      | _, Spec _, _ -> not_reached ()
       | _, Malformations body_mals, _ -> begin
           let mals = List.(rev_concat ltag.mals (rev_concat body_mals (rev rtag.mals))) in
           accept (Tok_rstring (Malformed mals)) cursor t
@@ -1673,6 +1842,7 @@ end = struct
       | Codepoints (_ :: cps) ->
         accept (Tok_bstring (Constant (String.of_list_rev cps))) cursor t
       | Codepoints [] -> not_reached () (* There's always a '\n'. *)
+      | Spec _ -> not_reached ()
       | Malformations mals -> accept (Tok_bstring (Malformed (List.rev mals))) cursor t
     end in
 
