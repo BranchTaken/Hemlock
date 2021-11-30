@@ -223,7 +223,115 @@ module AbstractToken = struct
         formatter
         |> Fmt.fmt "Malformed "
         |> (List.pp Malformation.pp) malformations
+
+    let pp_unit tok_name t formatter =
+      formatter
+      |> Fmt.fmt tok_name
+      |> (function formatter -> match t with
+        | Constant _ -> formatter
+        | Malformed _ -> formatter |> Fmt.fmt "=" |> pp Unit.pp t
+      )
   end
+
+  type istring_abbr =
+    | Abbr_b
+    | Abbr_u8
+    | Abbr_u16
+    | Abbr_u32
+    | Abbr_u64 | Abbr_u
+    | Abbr_u128
+    | Abbr_u256
+    | Abbr_u512
+    | Abbr_n
+    | Abbr_i8
+    | Abbr_i16
+    | Abbr_i32
+    | Abbr_i64 | Abbr_i
+    | Abbr_i128
+    | Abbr_i256
+    | Abbr_i512
+    | Abbr_z
+    | Abbr_r32
+    | Abbr_r64 | Abbr_r
+    | Abbr_c
+    | Abbr_s
+    | Abbr_f
+
+  let pp_istring_abbr abbr formatter =
+    formatter |> Fmt.fmt (
+      match abbr with
+      | Abbr_b -> "Abbr_b"
+      | Abbr_u8 -> "Abbr_u8"
+      | Abbr_u16 -> "Abbr_u16"
+      | Abbr_u32 -> "Abbr_u32"
+      | Abbr_u64 | Abbr_u -> "Abbr_u"
+      | Abbr_u128 -> "Abbr_u128"
+      | Abbr_u256 -> "Abbr_u256"
+      | Abbr_u512 -> "Abbr_u512"
+      | Abbr_n -> "Abbr_n"
+      | Abbr_i8 -> "Abbr_i8"
+      | Abbr_i16 -> "Abbr_i16"
+      | Abbr_i32 -> "Abbr_i32"
+      | Abbr_i64 | Abbr_i -> "Abbr_i"
+      | Abbr_i128 -> "Abbr_i128"
+      | Abbr_i256 -> "Abbr_i256"
+      | Abbr_i512 -> "Abbr_i512"
+      | Abbr_z -> "Abbr_z"
+      | Abbr_r32 -> "Abbr_r32"
+      | Abbr_r64 | Abbr_r -> "Abbr_r"
+      | Abbr_c -> "Abbr_c"
+      | Abbr_s -> "Abbr_s"
+      | Abbr_f -> "Abbr_f"
+    )
+
+  type istring_spec = {
+    interp: string option;
+    pad: codepoint option;
+    just: Fmt.just option;
+    sign: Fmt.sign option;
+    alt: bool option;
+    zpad: bool option;
+    width: uns option;
+    prec: uns option;
+    base: Fmt.base option;
+    notation: Fmt.notation option;
+    pretty: bool option;
+    abbr: istring_abbr option;
+  }
+
+  let pp_istring_spec spec formatter =
+    formatter
+    |> Fmt.fmt "{interp=" |> (Option.pp String.pp) spec.interp
+    |> Fmt.fmt "; pad=" |> (Option.pp Codepoint.pp) spec.pad
+    |> Fmt.fmt "; just=" |> (Option.pp Fmt.pp_just) spec.just
+    |> Fmt.fmt "; sign=" |> (Option.pp Fmt.pp_sign) spec.sign
+    |> Fmt.fmt "; alt=" |> (Option.pp Bool.pp) spec.alt
+    |> Fmt.fmt "; zpad=" |> (Option.pp Bool.pp) spec.zpad
+    |> Fmt.fmt "; width=" |> (Option.pp Uns.pp) spec.width
+    |> Fmt.fmt "; prec=" |> (Option.pp Uns.pp) spec.prec
+    |> Fmt.fmt "; base=" |> (Option.pp Fmt.pp_base) spec.base
+    |> Fmt.fmt "; notation=" |> (Option.pp Fmt.pp_notation) spec.notation
+    |> Fmt.fmt "; pretty=" |> (Option.pp Bool.pp) spec.pretty
+    |> Fmt.fmt "; abbr=" |> (Option.pp pp_istring_abbr) spec.abbr
+    |> Fmt.fmt "}"
+
+  let merge_istring_spec a b =
+    let f = (fun _ _ -> not_reached ()) in
+    {
+      interp=Option.merge ~f a.interp b.interp;
+      pad=Option.merge ~f a.pad b.pad;
+      just=Option.merge ~f a.just b.just;
+      sign=Option.merge ~f a.sign b.sign;
+      alt=Option.merge ~f a.alt b.alt;
+      zpad=Option.merge ~f a.zpad b.zpad;
+      width=Option.merge ~f a.width b.width;
+      prec=Option.merge ~f a.prec b.prec;
+      base=Option.merge ~f a.base b.base;
+      notation=Option.merge ~f a.notation b.notation;
+      pretty=Option.merge ~f a.pretty b.pretty;
+      abbr=Option.merge ~f a.abbr b.abbr;
+    }
+
   type t =
     (* Keywords. *)
     | Tok_and
@@ -322,6 +430,15 @@ module AbstractToken = struct
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
     | Tok_istring of string Rendition.t
+    | Tok_istring_lw of istring_spec Rendition.t
+    | Tok_istring_lp of istring_spec Rendition.t
+    | Tok_istring_lv of istring_spec Rendition.t
+    | Tok_istring_iw of istring_spec Rendition.t
+    | Tok_istring_ip of istring_spec Rendition.t
+    | Tok_istring_iv of istring_spec Rendition.t
+    | Tok_istring_p of unit Rendition.t
+    | Tok_istring_v of istring_spec Rendition.t
+    | Tok_istring_r of string Rendition.t
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
     | Tok_r32 of real Rendition.t
@@ -344,202 +461,172 @@ module AbstractToken = struct
     | Tok_misaligned
     | Tok_error
 
-  let to_string t =
-    match t with
-    (* Keywords. *)
-    | Tok_and -> "<Tok_and>"
-    | Tok_also -> "<Tok_also>"
-    | Tok_as -> "<Tok_as>"
-    | Tok_assert -> "<Tok_assert>"
-    | Tok_conceal -> "<Tok_conceal>"
-    | Tok_effect -> "<Tok_effect>"
-    | Tok_else -> "<Tok_else>"
-    | Tok_expose -> "<Tok_expose>"
-    | Tok_external -> "<Tok_external>"
-    | Tok_false -> "<Tok_false>"
-    | Tok_fun -> "<Tok_fun>"
-    | Tok_function -> "<Tok_function>"
-    | Tok_if -> "<Tok_if>"
-    | Tok_import -> "<Tok_import>"
-    | Tok_include -> "<Tok_include>"
-    | Tok_lazy -> "<Tok_lazy>"
-    | Tok_let -> "<Tok_let>"
-    | Tok_match -> "<Tok_match>"
-    | Tok_mutability -> "<Tok_mutability>"
-    | Tok_of -> "<Tok_of>"
-    | Tok_open -> "<Tok_open>"
-    | Tok_or -> "<Tok_or>"
-    | Tok_rec -> "<Tok_rec>"
-    | Tok_then -> "<Tok_then>"
-    | Tok_true -> "<Tok_true>"
-    | Tok_type -> "<Tok_type>"
-    | Tok_val -> "<Tok_val>"
-    | Tok_when -> "<Tok_when>"
-    | Tok_with -> "<Tok_with>"
+  let pp t formatter =
+    formatter
+    |> Fmt.fmt "<"
+    |> (fun formatter ->
+      match t with
+      (* Keywords. *)
+      | Tok_and -> formatter |> Fmt.fmt "Tok_and"
+      | Tok_also -> formatter |> Fmt.fmt "Tok_also"
+      | Tok_as -> formatter |> Fmt.fmt "Tok_as"
+      | Tok_assert -> formatter |> Fmt.fmt "Tok_assert"
+      | Tok_conceal -> formatter |> Fmt.fmt "Tok_conceal"
+      | Tok_effect -> formatter |> Fmt.fmt "Tok_effect"
+      | Tok_else -> formatter |> Fmt.fmt "Tok_else"
+      | Tok_expose -> formatter |> Fmt.fmt "Tok_expose"
+      | Tok_external -> formatter |> Fmt.fmt "Tok_external"
+      | Tok_false -> formatter |> Fmt.fmt "Tok_false"
+      | Tok_fun -> formatter |> Fmt.fmt "Tok_fun"
+      | Tok_function -> formatter |> Fmt.fmt "Tok_function"
+      | Tok_if -> formatter |> Fmt.fmt "Tok_if"
+      | Tok_import -> formatter |> Fmt.fmt "Tok_import"
+      | Tok_include -> formatter |> Fmt.fmt "Tok_include"
+      | Tok_lazy -> formatter |> Fmt.fmt "Tok_lazy"
+      | Tok_let -> formatter |> Fmt.fmt "Tok_let"
+      | Tok_match -> formatter |> Fmt.fmt "Tok_match"
+      | Tok_mutability -> formatter |> Fmt.fmt "Tok_mutability"
+      | Tok_of -> formatter |> Fmt.fmt "Tok_of"
+      | Tok_open -> formatter |> Fmt.fmt "Tok_open"
+      | Tok_or -> formatter |> Fmt.fmt "Tok_or"
+      | Tok_rec -> formatter |> Fmt.fmt "Tok_rec"
+      | Tok_then -> formatter |> Fmt.fmt "Tok_then"
+      | Tok_true -> formatter |> Fmt.fmt "Tok_true"
+      | Tok_type -> formatter |> Fmt.fmt "Tok_type"
+      | Tok_val -> formatter |> Fmt.fmt "Tok_val"
+      | Tok_when -> formatter |> Fmt.fmt "Tok_when"
+      | Tok_with -> formatter |> Fmt.fmt "Tok_with"
 
-    (* Operators. *)
-    | Tok_tilde_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_tilde_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_qmark_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_qmark_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_star_star_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_star_star_op=" |> String.pp op |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_star_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_star_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_slash_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_slash_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_pct_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_pct_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_plus_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_plus_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_minus_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_minus_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_at_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_at_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_caret_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_caret_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_dollar_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_dollar_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_lt_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_lt_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_eq_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_eq_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_gt_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_gt_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_bar_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_bar_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_colon_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_colon_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_dot_op op ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_dot_op=" |> String.pp op |> Fmt.fmt ">" |> Fmt.to_string
+      (* Operators. *)
+      | Tok_tilde_op op -> formatter |> Fmt.fmt "Tok_tilde_op=" |> String.pp op
+      | Tok_qmark_op op -> formatter |> Fmt.fmt "Tok_qmark_op=" |> String.pp op
+      | Tok_star_star_op op -> formatter |> Fmt.fmt "Tok_star_star_op=" |> String.pp op
+      | Tok_star_op op -> formatter |> Fmt.fmt "Tok_star_op=" |> String.pp op
+      | Tok_slash_op op -> formatter |> Fmt.fmt "Tok_slash_op=" |> String.pp op
+      | Tok_pct_op op -> formatter |> Fmt.fmt "Tok_pct_op=" |> String.pp op
+      | Tok_plus_op op -> formatter |> Fmt.fmt "Tok_plus_op=" |> String.pp op
+      | Tok_minus_op op -> formatter |> Fmt.fmt "Tok_minus_op=" |> String.pp op
+      | Tok_at_op op -> formatter |> Fmt.fmt "Tok_at_op=" |> String.pp op
+      | Tok_caret_op op -> formatter |> Fmt.fmt "Tok_caret_op=" |> String.pp op
+      | Tok_dollar_op op -> formatter |> Fmt.fmt "Tok_dollar_op=" |> String.pp op
+      | Tok_lt_op op -> formatter |> Fmt.fmt "Tok_lt_op=" |> String.pp op
+      | Tok_eq_op op -> formatter |> Fmt.fmt "Tok_eq_op=" |> String.pp op
+      | Tok_gt_op op -> formatter |> Fmt.fmt "Tok_gt_op=" |> String.pp op
+      | Tok_bar_op op -> formatter |> Fmt.fmt "Tok_bar_op=" |> String.pp op
+      | Tok_colon_op op -> formatter |> Fmt.fmt "Tok_colon_op=" |> String.pp op
+      | Tok_dot_op op -> formatter |> Fmt.fmt "Tok_dot_op=" |> String.pp op
 
-    (* Punctuation. *)
-    | Tok_tilde -> "<Tok_tilde>"
-    | Tok_qmark -> "<Tok_qmark>"
-    | Tok_minus -> "<Tok_minus>"
-    | Tok_lt -> "<Tok_lt>"
-    | Tok_lt_eq -> "<Tok_lt_eq>"
-    | Tok_eq -> "<Tok_eq>"
-    | Tok_lt_gt -> "<Tok_lt_gt>"
-    | Tok_gt_eq -> "<Tok_gt_eq>"
-    | Tok_gt -> "<Tok_gt>"
-    | Tok_comma -> "<Tok_comma>"
-    | Tok_dot -> "<Tok_dot>"
-    | Tok_semi -> "<Tok_semi>"
-    | Tok_semi_semi -> "<Tok_semi_semi>"
-    | Tok_colon -> "<Tok_colon>"
-    | Tok_colon_colon -> "<Tok_colon_colon>"
-    | Tok_colon_eq -> "<Tok_colon_eq>"
-    | Tok_lparen -> "<Tok_lparen>"
-    | Tok_rparen -> "<Tok_rparen>"
-    | Tok_lbrack -> "<Tok_lbrack>"
-    | Tok_rbrack -> "<Tok_rbrack>"
-    | Tok_lcurly -> "<Tok_lcurly>"
-    | Tok_rcurly -> "<Tok_rcurly>"
-    | Tok_bar -> "<Tok_bar>"
-    | Tok_larray -> "<Tok_larray>"
-    | Tok_rarray -> "<Tok_rarray>"
-    | Tok_lmodule -> "<Tok_lmodule>"
-    | Tok_rmodule -> "<Tok_rmodule>"
-    | Tok_bslash -> "<Tok_bslash>"
-    | Tok_tick -> "<Tok_tick>"
-    | Tok_caret -> "<Tok_caret>"
-    | Tok_amp -> "<Tok_amp>"
-    | Tok_xmark -> "<Tok_xmark>"
-    | Tok_arrow -> "<Tok_arrow>"
-    | Tok_carrow -> "<Tok_carrow>"
-    | Tok_indent rendition -> begin
-        match rendition with
-        | Constant _ -> "<Tok_indent>"
-        | Malformed _ -> String.Fmt.empty |> Fmt.fmt "<Tok_indent="
-                         |> (Rendition.pp Unit.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
-      end
-    | Tok_line_delim -> "<Tok_line_delim>"
-    | Tok_dedent rendition -> begin
-        match rendition with
-        | Constant _ -> "<Tok_dedent>"
-        | Malformed _ -> String.Fmt.empty |> Fmt.fmt "<Tok_dedent="
-                         |> (Rendition.pp Unit.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
-      end
-    | Tok_whitespace -> "<Tok_whitespace>"
-    | Tok_hash_comment -> "<Tok_hash_comment>"
-    | Tok_paren_comment rendition -> begin
-        match rendition with
-        | Constant _ -> "<Tok_paren_comment>"
-        | Malformed _ -> String.Fmt.empty |> Fmt.fmt "<Tok_paren_comment="
-                         |> (Rendition.pp Unit.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
-      end
-    | Tok_uscore -> "<Tok_uscore>"
-    | Tok_uident rendition -> String.Fmt.empty |> Fmt.fmt "<Tok_uident="
-                              |> (Rendition.pp String.pp) rendition |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_cident cident -> String.Fmt.empty |> Fmt.fmt "<Tok_cident=" |> String.pp cident
-                           |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_codepoint rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_codepoint=" |> (Rendition.pp Codepoint.pp) rendition
-      |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_istring rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_istring=" |> (Rendition.pp String.pp) rendition
-      |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_rstring rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_rstring=" |> (Rendition.pp String.pp) rendition
-      |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_bstring rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_bstring=" |> (Rendition.pp String.pp) rendition
-      |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_r32 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_r32="
-      |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:6L ~notation:Fmt.Normalized))
-        rendition |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_r64 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_r64="
-      |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:13L ~notation:Fmt.Normalized))
-        rendition |> Fmt.fmt ">" |> Fmt.to_string
-    | Tok_u8 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_u8=" |> (Rendition.pp U8.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_i8 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_i8=" |> (Rendition.pp I8.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_u16 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_u16=" |> (Rendition.pp U16.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_i16 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_i16=" |> (Rendition.pp I16.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_u32 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_u32=" |> (Rendition.pp U32.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_i32 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_i32=" |> (Rendition.pp I32.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_u64 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_u64=" |> (Rendition.pp U64.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_i64 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_i64=" |> (Rendition.pp I64.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_u128 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_u128=" |> (Rendition.pp U128.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_i128 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_i128=" |> (Rendition.pp I128.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_u256 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_u256=" |> (Rendition.pp U256.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_i256 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_i256=" |> (Rendition.pp I256.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_u512 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_u512=" |> (Rendition.pp U512.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_i512 rendition ->
-      String.Fmt.empty |> Fmt.fmt "<Tok_i512=" |> (Rendition.pp I512.pp) rendition |> Fmt.fmt ">"
-      |> Fmt.to_string
-    | Tok_end_of_input -> "<Tok_end_of_input>"
-    | Tok_misaligned -> "<Tok_misaligned>"
-    | Tok_error -> "<Tok_error>"
+      (* Punctuation. *)
+      | Tok_tilde -> formatter |> Fmt.fmt "Tok_tilde"
+      | Tok_qmark -> formatter |> Fmt.fmt "Tok_qmark"
+      | Tok_minus -> formatter |> Fmt.fmt "Tok_minus"
+      | Tok_lt -> formatter |> Fmt.fmt "Tok_lt"
+      | Tok_lt_eq -> formatter |> Fmt.fmt "Tok_lt_eq"
+      | Tok_eq -> formatter |> Fmt.fmt "Tok_eq"
+      | Tok_lt_gt -> formatter |> Fmt.fmt "Tok_lt_gt"
+      | Tok_gt_eq -> formatter |> Fmt.fmt "Tok_gt_eq"
+      | Tok_gt -> formatter |> Fmt.fmt "Tok_gt"
+      | Tok_comma -> formatter |> Fmt.fmt "Tok_comma"
+      | Tok_dot -> formatter |> Fmt.fmt "Tok_dot"
+      | Tok_semi -> formatter |> Fmt.fmt "Tok_semi"
+      | Tok_semi_semi -> formatter |> Fmt.fmt "Tok_semi_semi"
+      | Tok_colon -> formatter |> Fmt.fmt "Tok_colon"
+      | Tok_colon_colon -> formatter |> Fmt.fmt "Tok_colon_colon"
+      | Tok_colon_eq -> formatter |> Fmt.fmt "Tok_colon_eq"
+      | Tok_lparen -> formatter |> Fmt.fmt "Tok_lparen"
+      | Tok_rparen -> formatter |> Fmt.fmt "Tok_rparen"
+      | Tok_lbrack -> formatter |> Fmt.fmt "Tok_lbrack"
+      | Tok_rbrack -> formatter |> Fmt.fmt "Tok_rbrack"
+      | Tok_lcurly -> formatter |> Fmt.fmt "Tok_lcurly"
+      | Tok_rcurly -> formatter |> Fmt.fmt "Tok_rcurly"
+      | Tok_bar -> formatter |> Fmt.fmt "Tok_bar"
+      | Tok_larray -> formatter |> Fmt.fmt "Tok_larray"
+      | Tok_rarray -> formatter |> Fmt.fmt "Tok_rarray"
+      | Tok_lmodule -> formatter |> Fmt.fmt "Tok_lmodule"
+      | Tok_rmodule -> formatter |> Fmt.fmt "Tok_rmodule"
+      | Tok_bslash -> formatter |> Fmt.fmt "Tok_bslash"
+      | Tok_tick -> formatter |> Fmt.fmt "Tok_tick"
+      | Tok_caret -> formatter |> Fmt.fmt "Tok_caret"
+      | Tok_amp -> formatter |> Fmt.fmt "Tok_amp"
+      | Tok_xmark -> formatter |> Fmt.fmt "Tok_xmark"
+      | Tok_arrow -> formatter |> Fmt.fmt "Tok_arrow"
+      | Tok_carrow -> formatter |> Fmt.fmt "Tok_carrow"
+      | Tok_indent rendition -> formatter |> Rendition.pp_unit "Tok_indent" rendition
+      | Tok_line_delim -> formatter |> Fmt.fmt "Tok_line_delim"
+      | Tok_dedent rendition -> formatter |> Rendition.pp_unit "Tok_dedent" rendition
+      | Tok_whitespace -> formatter |> Fmt.fmt "Tok_whitespace"
+      | Tok_hash_comment -> formatter |> Fmt.fmt "Tok_hash_comment"
+      | Tok_paren_comment rendition -> formatter |> Rendition.pp_unit "Tok_paren_comment" rendition
+      | Tok_uscore -> formatter |> Fmt.fmt "Tok_uscore"
+      | Tok_uident rendition ->
+        formatter |> Fmt.fmt "Tok_uident=" |> (Rendition.pp String.pp) rendition
+      | Tok_cident cident -> formatter |> Fmt.fmt "Tok_cident=" |> String.pp cident
+      | Tok_codepoint rendition ->
+        formatter |> Fmt.fmt "Tok_codepoint=" |> (Rendition.pp Codepoint.pp) rendition
+      | Tok_istring rendition ->
+        formatter |> Fmt.fmt "Tok_istring=" |> (Rendition.pp String.pp) rendition
+      | Tok_istring_lw rendition ->
+        formatter |> Fmt.fmt "Tok_istring_lw=" |> (Rendition.pp pp_istring_spec) rendition
+      | Tok_istring_lp rendition ->
+        formatter |> Fmt.fmt "Tok_istring_lp=" |> (Rendition.pp pp_istring_spec) rendition
+      | Tok_istring_lv rendition ->
+        formatter |> Fmt.fmt "Tok_istring_lv=" |> (Rendition.pp pp_istring_spec) rendition
+      | Tok_istring_iw rendition ->
+        formatter |> Fmt.fmt "Tok_istring_iw=" |> (Rendition.pp pp_istring_spec) rendition
+      | Tok_istring_ip rendition ->
+        formatter |> Fmt.fmt "Tok_istring_ip=" |> (Rendition.pp pp_istring_spec) rendition
+      | Tok_istring_iv rendition ->
+        formatter |> Fmt.fmt "Tok_istring_iv=" |> (Rendition.pp pp_istring_spec) rendition
+      | Tok_istring_p rendition -> formatter |> Rendition.pp_unit "Tok_istring_p" rendition
+      | Tok_istring_v rendition ->
+        formatter |> Fmt.fmt "Tok_istring_v=" |> (Rendition.pp pp_istring_spec) rendition
+      | Tok_istring_r rendition ->
+        formatter |> Fmt.fmt "Tok_istring_r=" |> (Rendition.pp String.pp) rendition
+      | Tok_rstring rendition ->
+        formatter |> Fmt.fmt "Tok_rstring=" |> (Rendition.pp String.pp) rendition
+      | Tok_bstring rendition ->
+        formatter |> Fmt.fmt "Tok_bstring=" |> (Rendition.pp String.pp) rendition
+      | Tok_r32 rendition ->
+        formatter |> Fmt.fmt "Tok_r32="
+        |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:6L ~notation:Fmt.Normalized))
+          rendition
+      | Tok_r64 rendition ->
+        formatter |> Fmt.fmt "Tok_r64="
+        |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:13L ~notation:Fmt.Normalized))
+          rendition
+      | Tok_u8 rendition ->
+        formatter |> Fmt.fmt "Tok_u8=" |> (Rendition.pp U8.pp) rendition
+      | Tok_i8 rendition ->
+        formatter |> Fmt.fmt "Tok_i8=" |> (Rendition.pp I8.pp) rendition
+      | Tok_u16 rendition ->
+        formatter |> Fmt.fmt "Tok_u16=" |> (Rendition.pp U16.pp) rendition
+      | Tok_i16 rendition ->
+        formatter |> Fmt.fmt "Tok_i16=" |> (Rendition.pp I16.pp) rendition
+      | Tok_u32 rendition ->
+        formatter |> Fmt.fmt "Tok_u32=" |> (Rendition.pp U32.pp) rendition
+      | Tok_i32 rendition ->
+        formatter |> Fmt.fmt "Tok_i32=" |> (Rendition.pp I32.pp) rendition
+      | Tok_u64 rendition ->
+        formatter |> Fmt.fmt "Tok_u64=" |> (Rendition.pp U64.pp) rendition
+      | Tok_i64 rendition ->
+        formatter |> Fmt.fmt "Tok_i64=" |> (Rendition.pp I64.pp) rendition
+      | Tok_u128 rendition ->
+        formatter |> Fmt.fmt "Tok_u128=" |> (Rendition.pp U128.pp) rendition
+      | Tok_i128 rendition ->
+        formatter |> Fmt.fmt "Tok_i128=" |> (Rendition.pp I128.pp) rendition
+      | Tok_u256 rendition ->
+        formatter |> Fmt.fmt "Tok_u256=" |> (Rendition.pp U256.pp) rendition
+      | Tok_i256 rendition ->
+        formatter |> Fmt.fmt "Tok_i256=" |> (Rendition.pp I256.pp) rendition
+      | Tok_u512 rendition ->
+        formatter |> Fmt.fmt "Tok_u512=" |> (Rendition.pp U512.pp) rendition
+      | Tok_i512 rendition ->
+        formatter |> Fmt.fmt "Tok_i512=" |> (Rendition.pp I512.pp) rendition
+      | Tok_end_of_input -> formatter |> Fmt.fmt "Tok_end_of_input"
+      | Tok_misaligned -> formatter |> Fmt.fmt "Tok_misaligned"
+      | Tok_error -> formatter |> Fmt.fmt "Tok_error"
+    )
+    |> Fmt.fmt ">"
 
   let keyword_map = Map.of_alist (module String) [
     ("and", Tok_and);
@@ -609,8 +696,8 @@ type line_state =
  * lw           p              v         iw            v          r
  *
  * "...%4.*(^precision^)r(^value^)...%6.*(^precision^)r(^value2^)..."
- * ~~~~~~~~~~         ~~~~~     ~~~~~~~~~           ~~~~~     ~~~~~~~
- * lp                 v         ip                  v         r
+ * ~~~~~~~~~~         ~~~~~     ~~~~~~~~~~~         ~~~~~      ~~~~~~
+ * lp                 v         ip                  v          r
  *
  * "...%r(^value^)...%f(^value^)..."
  * ~~~~~~~~     ~~~~~~~~~     ~~~~~~
@@ -1171,16 +1258,146 @@ module String_ : sig
   val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val accept_unterminated_rstring: Text.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
+  type pmap =
+    | PMapTick
+    | PMapLt
+    | PMapCaret
+    | PMapGt
+    | PMapPlus
+    | PMapUscore
+    | PMapHash
+    | PMapZero
+    | PMapDigit
+    | PMapStar
+    | PMapDot
+    | PMapB
+    | PMapO
+    | PMapD
+    | PMapX
+    | PMapM
+    | PMapA
+    | PMapC
+    | PMapP
+    | PMapU
+    | PMapI
+    | PMapS
+    | PMapF
+    | PMapLparen
+
+  let pct_map = map_of_cps_alist [
+    ("'", PMapTick);
+    ("<", PMapLt);
+    ("^", PMapCaret);
+    (">", PMapGt);
+    ("+", PMapPlus);
+    ("_", PMapUscore);
+    ("#", PMapHash);
+    ("0", PMapZero);
+    ("123456789", PMapDigit);
+    ("*", PMapStar);
+    (".", PMapDot);
+    ("b", PMapB);
+    ("o", PMapO);
+    ("d", PMapD);
+    ("x", PMapX);
+    ("m", PMapM);
+    ("a", PMapA);
+    ("c", PMapC);
+    ("p", PMapP);
+    ("u", PMapU);
+    ("i", PMapI);
+    ("s", PMapS);
+    ("f", PMapF);
+    ("(", PMapLparen);
+  ]
+
   type accum =
     | Codepoints of codepoint list
+    | Spec of AbstractToken.istring_spec
     | Malformations of AbstractToken.Rendition.Malformation.t list
 
   let accum_cp cp = function
     | Codepoints cps -> Codepoints (cp :: cps)
+    | Spec _ -> not_reached ()
+    | (Malformations _) as mals -> mals
+
+  let accum_interp = function
+    | Codepoints cps -> Spec {
+      AbstractToken.
+      interp=Some (String.of_list_rev cps);
+      pad=None;
+      just=None;
+      sign=None;
+      alt=None;
+      zpad=None;
+      width=None;
+      prec=None;
+      base=None;
+      notation=None;
+      pretty=None;
+      abbr=None
+    }
+    | Spec _ -> not_reached ()
+    | (Malformations _) as mals -> mals
+
+  let accum_pad pad = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with pad=Some pad}
+    | (Malformations _) as mals -> mals
+
+  let accum_just just = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with just=Some just}
+    | (Malformations _) as mals -> mals
+
+  let accum_sign sign = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with sign=Some sign}
+    | (Malformations _) as mals -> mals
+
+  let accum_alt alt = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with alt=Some alt}
+    | (Malformations _) as mals -> mals
+
+  let accum_zpad zpad = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with zpad=Some zpad}
+    | (Malformations _) as mals -> mals
+
+  let accum_width width = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with width=Some width}
+    | (Malformations _) as mals -> mals
+
+  let accum_prec prec = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with prec=Some prec}
+    | (Malformations _) as mals -> mals
+
+  let accum_base base = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with base=Some base}
+    | (Malformations _) as mals -> mals
+
+  let accum_notation notation = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with notation=Some notation}
+    | (Malformations _) as mals -> mals
+
+  let accum_pretty pretty = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with pretty=Some pretty}
+    | (Malformations _) as mals -> mals
+
+  let accum_abbr abbr = function
+    | Codepoints _ -> not_reached ()
+    | Spec spec -> Spec {spec with abbr=Some abbr}
     | (Malformations _) as mals -> mals
 
   let accum_mal mal = function
-    | Codepoints _ -> Malformations [mal]
+    | Codepoints _
+    | Spec _ -> Malformations [mal]
     | Malformations mals -> Malformations (mal :: mals)
 
   (* Interpolated string: "..." *)
@@ -1188,6 +1405,7 @@ end = struct
     let accept_istring accum cursor t = begin
       match accum with
       | Codepoints cps -> accept (Tok_istring (Constant (String.of_list_rev cps))) cursor t
+      | Spec _ -> not_reached ()
       | Malformations mals -> accept (Tok_istring (Malformed (List.rev mals))) cursor t
     end in
 
@@ -1253,11 +1471,57 @@ end = struct
           end
       )
     end
+    and fn_pct accum cursor t = begin
+      fn_wrapper (accum_interp accum) cursor t ~f:(fun accum cursor cp cursor' t ->
+        match Map.get cp pct_map with
+        | Some PMapTick -> begin
+            let open ConcreteToken in
+            let t', tok = Codepoint_.codepoint cursor cursor cursor' t in (* XXX Need pcursor. *)
+            let accum' = match tok.atoken with
+              | Tok_codepoint (Constant cp) -> accum_pad cp accum
+              | Tok_codepoint (Malformed mals) ->
+                List.fold ~init:accum ~f:(fun accum mal -> accum_mal mal accum) mals
+              | _ -> not_reached ()
+            in fn_pad accum' t'.cursor t'
+          end
+        | Some PMapLt -> fn_just (accum_just Fmt.Left accum) cursor' t
+        | Some PMapCaret -> fn_just (accum_just Fmt.Center accum) cursor' t
+        | Some PMapGt -> fn_just (accum_just Fmt.Right accum) cursor' t
+        | Some PMapPlus -> fn_sign (accum_sign Fmt.Explicit accum) cursor' t
+        | Some PMapUscore -> fn_sign (accum_sign Fmt.Space accum) cursor' t
+        | Some PMapHash -> fn_alt (accum_alt true accum) cursor' t
+        | Some PMapZero -> fn_zpad (accum_zpad true accum) cursor' t
+        | Some PMapDigit -> fn_width cursor accum cursor' t
+        | Some PMapStar -> fn_width_star accum cursor' t
+        | Some PMapDot -> fn_prec_dot accum cursor' t
+        | Some PMapB -> fn_b accum cursor' t (* XXX lookahead for Bin vs bool. *)
+        | Some PMapO -> fn_base (accum_base Fmt.Oct accum) cursor' t
+        | Some PMapD -> fn_base (accum_base Fmt.Dec accum) cursor' t
+        | Some PMapX -> fn_base (accum_base Fmt.Hex accum) cursor' t
+        | Some PMapM -> fn_notation (accum_notation Fmt.Normalized accum) cursor' t
+        | Some PMapA -> fn_notation (accum_notation Fmt.RadixPoint accum) cursor' t
+        | Some PMapC -> fn_c accum cursor' t (* XXX Lookahead for Compact vs codepoint. *)
+        | Some PMapP -> fn_pretty (accum_pretty true accum) cursor' t
+        | Some PMapU -> fn_u accum cursor' t
+        | Some PMapI -> fn_i accum cursor' t
+        | Some PMapS -> fn_abbr (accum_abbr Abbr_s accum) cursor' t
+        | Some PMapF -> fn_abbr (accum_abbr Abbr_f accum) cursor' t
+        | Some PMapLparen -> begin
+            let mal = xxx in
+            fn_lparen (accum_mal mal accum) cursor' t
+          end
+        | None -> begin
+            let mal = xxx in
+            fn_abbr (accum_mal mal accum) cursor' t
+          end
+      )
+    end
     and fn accum cursor t = begin
       fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '"') -> accept_istring accum cursor' t
         | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
+        | cp when Codepoint.(cp = of_char '%') -> fn_pct accum cursor' t
         | _ -> fn (accum_cp cp accum) cursor' t
       )
     end in

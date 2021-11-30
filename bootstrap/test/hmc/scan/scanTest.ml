@@ -12,7 +12,7 @@ let scan_str s =
     |> Fmt.fmt "  "
     |> Source.pp_loc source
     |> Fmt.fmt " : "
-    |> Fmt.fmt  (AbstractToken.to_string atoken)
+    |> AbstractToken.pp atoken
     |> Fmt.fmt "\n"
     |> ignore;
     match atoken with
