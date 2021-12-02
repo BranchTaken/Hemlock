@@ -57,6 +57,8 @@ module Cursor : sig
     with type container := t
     with type elm := codepoint
 
+  include FormattableIntf.SMono with type t := t
+
   val rget_opt: t -> codepoint option
   (** [rget_opt t] returns [Some codepoint] if [t] is not at the text's tail, [None] otherwise.
       Source data are lazily streamed as needed. *)
@@ -106,6 +108,8 @@ module Slice : sig
     with type container := t
     with type cursor := Cursor.t
     with type elm := codepoint
+
+  include FormattableIntf.SMono with type t := t
 
   val to_string: t -> string
   (** [to_string t] returns a string representation of [t]. *)
