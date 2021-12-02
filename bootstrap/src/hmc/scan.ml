@@ -2170,110 +2170,110 @@ let end_of_input cursor t =
   | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
 
 let start_default = Dag.{
-  edges=(map_of_cps_alist [
-    (",", (accept_incl Tok_comma));
-    (";", (act {
-        edges=(map_of_cps_alist [
-          (";", (accept_incl Tok_semi_semi));
-        ]);
-        eoi=(accept Tok_semi);
-        default=(accept_excl Tok_semi);
-      }));
-    ("(", (act {
+  edges=map_of_cps_alist [
+    (",", accept_incl Tok_comma);
+    (";", act {
+        edges=map_of_cps_alist [
+          (";", accept_incl Tok_semi_semi);
+        ];
+        eoi=accept Tok_semi;
+        default=accept_excl Tok_semi;
+      });
+    ("(", act {
         edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '*') ~v:paren_comment;
-        eoi=(accept Tok_lparen);
-        default=(accept_excl Tok_lparen);
-      }));
-    (")", (accept_incl Tok_rparen));
-    ("[", (act {
+        eoi=accept Tok_lparen;
+        default=accept_excl Tok_lparen;
+      });
+    (")", accept_incl Tok_rparen);
+    ("[", act {
         edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
             Tok_larray);
-        eoi=(accept Tok_lbrack);
-        default=(accept_excl Tok_lbrack);
-      }));
-    ("]", (accept_incl Tok_rbrack));
-    ("{", (act {
+        eoi=accept Tok_lbrack;
+        default=accept_excl Tok_lbrack;
+      });
+    ("]", accept_incl Tok_rbrack);
+    ("{", act {
         edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
             Tok_lmodule);
-        eoi=(accept Tok_lcurly);
-        default=(accept_excl Tok_lcurly);
-      }));
-    ("}", (accept_incl Tok_rcurly));
-    ("\\", (act {
-        edges=(map_of_cps_alist [
+        eoi=accept Tok_lcurly;
+        default=accept_excl Tok_lcurly;
+      });
+    ("}", accept_incl Tok_rcurly);
+    ("\\", act {
+        edges=map_of_cps_alist [
           ("\n", whitespace);
-        ]);
-        eoi=(accept Tok_bslash);
-        default=(accept_excl Tok_bslash);
-      }));
-    ("&", (accept_incl Tok_amp));
-    ("!", (accept_incl Tok_xmark));
-    ("\n", (accept_line_delim_incl Tok_whitespace));
-    ("~", (act {
-        edges=(map_of_cps_alist [
-          (operator_cps, (operator (fun s -> Tok_tilde_op s)));
-        ]);
-        eoi=(accept Tok_tilde);
-        default=(accept_excl Tok_tilde);
-      }));
-    ("?", (act {
-        edges=(map_of_cps_alist [
-          (operator_cps, (operator (fun s -> Tok_qmark_op s)));
-        ]);
-        eoi=(accept Tok_qmark);
-        default=(accept_excl Tok_qmark);
-      }));
-    ("*", (act {
-        edges=(map_of_cps_alist [
-          ("*", (operator (fun s -> Tok_star_star_op s)));
-          ("-+/%@^$<=>|:.~?", (operator (fun s -> Tok_star_op s)));
-        ]);
-        eoi=(accept (Tok_star_op "*"));
-        default=(accept_excl (Tok_star_op "*"));
-      }));
-    ("/", (operator (fun s -> Tok_slash_op s)));
-    ("%", (operator (fun s -> Tok_pct_op s)));
-    ("+", (operator (fun s -> Tok_plus_op s)));
-    ("-", (operator (fun s -> Tok_minus_op s)));
-    ("@", (operator (fun s -> Tok_at_op s)));
-    ("^", (operator (fun s -> Tok_caret_op s)));
-    ("$", (operator (fun s -> Tok_dollar_op s)));
-    ("<", (operator (fun s -> Tok_lt_op s)));
-    ("=", (operator (fun s -> Tok_eq_op s)));
-    (">", (operator (fun s -> Tok_gt_op s)));
-    ("|", (act {
-        edges=(map_of_cps_alist [
-          ("]", (accept_incl Tok_rarray));
-          ("}", (accept_incl Tok_rmodule));
-          (operator_cps, (operator (fun s -> Tok_bar_op s)));
-        ]);
-        eoi=(accept Tok_bar);
-        default=(accept_excl Tok_bar);
-      }));
-    (":", (operator (fun s -> Tok_colon_op s)));
-    (".", (operator (fun s -> Tok_dot_op s)));
+        ];
+        eoi=accept Tok_bslash;
+        default=accept_excl Tok_bslash;
+      });
+    ("&", accept_incl Tok_amp);
+    ("!", accept_incl Tok_xmark);
+    ("\n", accept_line_delim_incl Tok_whitespace);
+    ("~", act {
+        edges=map_of_cps_alist [
+          (operator_cps, operator (fun s -> Tok_tilde_op s));
+        ];
+        eoi=accept Tok_tilde;
+        default=accept_excl Tok_tilde;
+      });
+    ("?", act {
+        edges=map_of_cps_alist [
+          (operator_cps, operator (fun s -> Tok_qmark_op s));
+        ];
+        eoi=accept Tok_qmark;
+        default=accept_excl Tok_qmark;
+      });
+    ("*", act {
+        edges=map_of_cps_alist [
+          ("*", operator (fun s -> Tok_star_star_op s));
+          ("-+/%@^$<=>|:.~?", operator (fun s -> Tok_star_op s));
+        ];
+        eoi=accept (Tok_star_op "*");
+        default=accept_excl (Tok_star_op "*");
+      });
+    ("/", operator (fun s -> Tok_slash_op s));
+    ("%", operator (fun s -> Tok_pct_op s));
+    ("+", operator (fun s -> Tok_plus_op s));
+    ("-", operator (fun s -> Tok_minus_op s));
+    ("@", operator (fun s -> Tok_at_op s));
+    ("^", operator (fun s -> Tok_caret_op s));
+    ("$", operator (fun s -> Tok_dollar_op s));
+    ("<", operator (fun s -> Tok_lt_op s));
+    ("=", operator (fun s -> Tok_eq_op s));
+    (">", operator (fun s -> Tok_gt_op s));
+    ("|", act {
+        edges=map_of_cps_alist [
+          ("]", accept_incl Tok_rarray);
+          ("}", accept_incl Tok_rmodule);
+          (operator_cps, operator (fun s -> Tok_bar_op s));
+        ];
+        eoi=accept Tok_bar;
+        default=accept_excl Tok_bar;
+      });
+    (":", operator (fun s -> Tok_colon_op s));
+    (".", operator (fun s -> Tok_dot_op s));
     (" ", whitespace);
     ("#", hash_comment);
-    ("_", (act {
-        edges=(map_of_cps_alist [
+    ("_", act {
+        edges=map_of_cps_alist [
           ("abcdefghijklmnopqrstuvwxyz0123456789'", uident);
           ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
           ("_", uscore_ident);
-        ]);
-        eoi=(accept Tok_uscore);
-        default=(accept_excl Tok_uscore);
-      }));
+        ];
+        eoi=accept Tok_uscore;
+        default=accept_excl Tok_uscore;
+      });
     ("abcdefghijklmnopqrstuvwxyz", uident);
     ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
     ("'", Codepoint_.codepoint);
     ("\"", accept_istring_lditto);
-    ("`", (act {
+    ("`", act {
         edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
         eoi=String_.accept_unterminated_rstring;
         default=String_.rstring;
-      }));
-    ("0", (act {
-        edges=(map_of_cps_alist [
+      });
+    ("0", act {
+        edges=map_of_cps_alist [
           ("0_", Integer.(dec Nat.k_0));
           ("1", Integer.(dec Nat.k_1));
           ("2", Integer.(dec Nat.k_2));
@@ -2290,19 +2290,19 @@ let start_default = Dag.{
           ("u", Integer.zero_u_suffix);
           ("i", Integer.zero_i_suffix);
           ("r", Real.zero_r_suffix);
-          (".", (act {
-              edges=(map_of_cps_alist [
-                (operator_cps, (accept_pexcl Integer.zero));
-              ]);
-              eoi=(accept Real.zero);
-              default=(Real.zero_frac);
-            }));
+          (".", act {
+              edges=map_of_cps_alist [
+                (operator_cps, accept_pexcl Integer.zero);
+              ];
+              eoi=accept Real.zero;
+              default=Real.zero_frac;
+            });
           ("e", Real.zero_exp);
           ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", Integer.mal_ident);
-        ]);
-        eoi=(accept Integer.zero);
-        default=(accept_excl Integer.zero);
-      }));
+        ];
+        eoi=accept Integer.zero;
+        default=accept_excl Integer.zero;
+      });
     ("1", Integer.(dec Nat.k_1));
     ("2", Integer.(dec Nat.k_2));
     ("3", Integer.(dec Nat.k_3));
@@ -2312,9 +2312,9 @@ let start_default = Dag.{
     ("7", Integer.(dec Nat.k_7));
     ("8", Integer.(dec Nat.k_8));
     ("9", Integer.(dec Nat.k_9));
-  ]);
+  ];
   eoi=end_of_input;
-  default=(accept_incl Tok_error);
+  default=accept_incl Tok_error;
 }
 
 let start t =
