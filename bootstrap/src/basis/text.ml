@@ -34,6 +34,12 @@ module Spos = struct
 
   let scol t =
     t.scol
+
+  let pp t formatter =
+    formatter
+    |> Fmt.fmt "{line=" |> Uns.pp t.line
+    |> Fmt.fmt "; scol=" |> Sint.pp t.scol
+    |> Fmt.fmt "}"
 end
 
 (* Line/column position independent of previous lines' contents. *)
@@ -82,6 +88,8 @@ module Vind = struct
 
   let index t =
     t
+
+  let pp = Uns.pp
 end
 
 (* Text excerpt. *)
@@ -115,6 +123,12 @@ module Excerpt = struct
 
   let get i t =
     Bytes.Slice.get i t.bytes
+
+  let pp t formatter =
+    formatter
+    |> Fmt.fmt "{eind=" |> Uns.pp t.eind
+    |> Fmt.fmt "; bytes=" |> Bytes.Slice.pp t.bytes
+    |> Fmt.fmt "}"
 
   module Cursor = struct
     module T = struct
@@ -157,6 +171,12 @@ module Excerpt = struct
 
       let container t =
         t.excerpt
+
+      let pp t formatter =
+        formatter
+        |> Fmt.fmt "{excerpt=" |> pp t.excerpt
+        |> Fmt.fmt "; index=" |> Uns.pp t.index
+        |> Fmt.fmt "}"
     end
     include T
     include Cmpable.Make(T)
@@ -174,6 +194,12 @@ type t = {
   (* Lazy suspension which produces extended text. *)
   extend: t option Lazy.t;
 }
+
+let pp t formatter =
+  formatter
+  |> Fmt.fmt "{path=" |> (Option.pp String.pp) t.path
+  |> Fmt.fmt "; tabwidth=" |> Uns.pp t.tabwidth
+  |> Fmt.fmt "; ...}"
 
 let of_bytes_stream ?path ?(tabwidth=default_tabwidth) stream =
   let rec susp_extend path pred_excerpt excerpts stream = lazy begin
@@ -244,6 +270,14 @@ module Cursor = struct
         spos=Spos.init ~line:1L ~scol:(Sint.kv 0L);
         ecursor=Excerpt.Cursor.hd excerpt;
       }
+
+    let pp t formatter =
+      formatter
+      |> Fmt.fmt "{text=" |> pp t.text
+      |> Fmt.fmt "; vind=" |> Vind.pp t.vind
+      |> Fmt.fmt "; spos=" |> Spos.pp t.spos
+      |> Fmt.fmt "; ecursor=" |> Excerpt.Cursor.pp t.ecursor
+      |> Fmt.fmt "}"
 
     module CodepointSeq = struct
       module T = struct
@@ -480,4 +514,7 @@ module Slice = struct
 
   let to_string t =
     StringSeq.(to_string (init t))
+
+  let pp t formatter =
+    formatter |> Fmt.fmt (to_string t)
 end
