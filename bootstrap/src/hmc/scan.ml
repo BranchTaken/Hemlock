@@ -233,108 +233,6 @@ module AbstractToken = struct
       )
   end
 
-  type istring_abbr =
-    | Abbr_b
-    | Abbr_u8
-    | Abbr_u16
-    | Abbr_u32
-    | Abbr_u64 | Abbr_u
-    | Abbr_u128
-    | Abbr_u256
-    | Abbr_u512
-    | Abbr_n
-    | Abbr_i8
-    | Abbr_i16
-    | Abbr_i32
-    | Abbr_i64 | Abbr_i
-    | Abbr_i128
-    | Abbr_i256
-    | Abbr_i512
-    | Abbr_z
-    | Abbr_r32
-    | Abbr_r64 | Abbr_r
-    | Abbr_c
-    | Abbr_s
-    | Abbr_f
-
-  let pp_istring_abbr abbr formatter =
-    formatter |> Fmt.fmt (
-      match abbr with
-      | Abbr_b -> "Abbr_b"
-      | Abbr_u8 -> "Abbr_u8"
-      | Abbr_u16 -> "Abbr_u16"
-      | Abbr_u32 -> "Abbr_u32"
-      | Abbr_u64 | Abbr_u -> "Abbr_u"
-      | Abbr_u128 -> "Abbr_u128"
-      | Abbr_u256 -> "Abbr_u256"
-      | Abbr_u512 -> "Abbr_u512"
-      | Abbr_n -> "Abbr_n"
-      | Abbr_i8 -> "Abbr_i8"
-      | Abbr_i16 -> "Abbr_i16"
-      | Abbr_i32 -> "Abbr_i32"
-      | Abbr_i64 | Abbr_i -> "Abbr_i"
-      | Abbr_i128 -> "Abbr_i128"
-      | Abbr_i256 -> "Abbr_i256"
-      | Abbr_i512 -> "Abbr_i512"
-      | Abbr_z -> "Abbr_z"
-      | Abbr_r32 -> "Abbr_r32"
-      | Abbr_r64 | Abbr_r -> "Abbr_r"
-      | Abbr_c -> "Abbr_c"
-      | Abbr_s -> "Abbr_s"
-      | Abbr_f -> "Abbr_f"
-    )
-
-  type istring_spec = {
-    interp: string option;
-    pad: codepoint option;
-    just: Fmt.just option;
-    sign: Fmt.sign option;
-    alt: bool option;
-    zpad: bool option;
-    width: uns option;
-    pmode: Fmt.pmode option;
-    prec: uns option;
-    base: Fmt.base option;
-    notation: Fmt.notation option;
-    pretty: bool option;
-    abbr: istring_abbr option;
-  }
-
-  let pp_istring_spec spec formatter =
-    formatter
-    |> Fmt.fmt "{interp=" |> (Option.pp String.pp) spec.interp
-    |> Fmt.fmt "; pad=" |> (Option.pp Codepoint.pp) spec.pad
-    |> Fmt.fmt "; just=" |> (Option.pp Fmt.pp_just) spec.just
-    |> Fmt.fmt "; sign=" |> (Option.pp Fmt.pp_sign) spec.sign
-    |> Fmt.fmt "; alt=" |> (Option.pp Bool.pp) spec.alt
-    |> Fmt.fmt "; zpad=" |> (Option.pp Bool.pp) spec.zpad
-    |> Fmt.fmt "; width=" |> (Option.pp Uns.pp) spec.width
-    |> Fmt.fmt "; pmode=" |> (Option.pp Fmt.pp_pmode) spec.pmode
-    |> Fmt.fmt "; prec=" |> (Option.pp Uns.pp) spec.prec
-    |> Fmt.fmt "; base=" |> (Option.pp Fmt.pp_base) spec.base
-    |> Fmt.fmt "; notation=" |> (Option.pp Fmt.pp_notation) spec.notation
-    |> Fmt.fmt "; pretty=" |> (Option.pp Bool.pp) spec.pretty
-    |> Fmt.fmt "; abbr=" |> (Option.pp pp_istring_abbr) spec.abbr
-    |> Fmt.fmt "}"
-
-  let merge_istring_spec a b =
-    let f = (fun _ _ -> not_reached ()) in
-    {
-      interp=Option.merge ~f a.interp b.interp;
-      pad=Option.merge ~f a.pad b.pad;
-      just=Option.merge ~f a.just b.just;
-      sign=Option.merge ~f a.sign b.sign;
-      alt=Option.merge ~f a.alt b.alt;
-      zpad=Option.merge ~f a.zpad b.zpad;
-      width=Option.merge ~f a.width b.width;
-      pmode=Option.merge ~f a.pmode b.pmode;
-      prec=Option.merge ~f a.prec b.prec;
-      base=Option.merge ~f a.base b.base;
-      notation=Option.merge ~f a.notation b.notation;
-      pretty=Option.merge ~f a.pretty b.pretty;
-      abbr=Option.merge ~f a.abbr b.abbr;
-    }
-
   type t =
     (* Keywords. *)
     | Tok_and
@@ -433,15 +331,9 @@ module AbstractToken = struct
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
     | Tok_istring of string Rendition.t
-    | Tok_istring_lw of istring_spec Rendition.t
-    | Tok_istring_lp of istring_spec Rendition.t
-    | Tok_istring_lv of istring_spec Rendition.t
-    | Tok_istring_iw of istring_spec Rendition.t
-    | Tok_istring_ip of istring_spec Rendition.t
-    | Tok_istring_iv of istring_spec Rendition.t
-    | Tok_istring_p of unit Rendition.t
-    | Tok_istring_v of istring_spec Rendition.t
-    | Tok_istring_r of string Rendition.t
+    | Tok_isubstring of string Rendition.t
+    | Tok_ditto
+    | Tok_pct
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
     | Tok_r32 of real Rendition.t
@@ -568,23 +460,10 @@ module AbstractToken = struct
         formatter |> Fmt.fmt "Tok_codepoint=" |> (Rendition.pp Codepoint.pp) rendition
       | Tok_istring rendition ->
         formatter |> Fmt.fmt "Tok_istring=" |> (Rendition.pp String.pp) rendition
-      | Tok_istring_lw rendition ->
-        formatter |> Fmt.fmt "Tok_istring_lw=" |> (Rendition.pp pp_istring_spec) rendition
-      | Tok_istring_lp rendition ->
-        formatter |> Fmt.fmt "Tok_istring_lp=" |> (Rendition.pp pp_istring_spec) rendition
-      | Tok_istring_lv rendition ->
-        formatter |> Fmt.fmt "Tok_istring_lv=" |> (Rendition.pp pp_istring_spec) rendition
-      | Tok_istring_iw rendition ->
-        formatter |> Fmt.fmt "Tok_istring_iw=" |> (Rendition.pp pp_istring_spec) rendition
-      | Tok_istring_ip rendition ->
-        formatter |> Fmt.fmt "Tok_istring_ip=" |> (Rendition.pp pp_istring_spec) rendition
-      | Tok_istring_iv rendition ->
-        formatter |> Fmt.fmt "Tok_istring_iv=" |> (Rendition.pp pp_istring_spec) rendition
-      | Tok_istring_p rendition -> formatter |> Rendition.pp_unit "Tok_istring_p" rendition
-      | Tok_istring_v rendition ->
-        formatter |> Fmt.fmt "Tok_istring_v=" |> (Rendition.pp pp_istring_spec) rendition
-      | Tok_istring_r rendition ->
-        formatter |> Fmt.fmt "Tok_istring_r=" |> (Rendition.pp String.pp) rendition
+      | Tok_isubstring rendition ->
+        formatter |> Fmt.fmt "Tok_isubstring=" |> (Rendition.pp String.pp) rendition
+      | Tok_ditto -> formatter |> Fmt.fmt "Tok_ditto"
+      | Tok_pct -> formatter |> Fmt.fmt "Tok_pct"
       | Tok_rstring rendition ->
         formatter |> Fmt.fmt "Tok_rstring=" |> (Rendition.pp String.pp) rendition
       | Tok_bstring rendition ->
@@ -690,31 +569,10 @@ type line_state =
   | Line_delim
   | Line_body
 
-(* Interpolated strings may contain format specifiers, which contain nested code, perhaps even
- * nested interpolated strings. Each interpolated string comprises a complete path through a
- * discrete finite state automoton (DFA). Following are examples of how these tokens arise.
- *
- * "...%*(^width^).*(^precision^)r(^value^)...%*(^width^)r(^value2^)..."
- * ~~~~~~~~     ~~~~~~         ~~~~~     ~~~~~~~~~     ~~~~~      ~~~~~~
- * lw           p              v         iw            v          r
- *
- * "...%4.*(^precision^)r(^value^)...%6.*(^precision^)r(^value2^)..."
- * ~~~~~~~~~~         ~~~~~     ~~~~~~~~~~~         ~~~~~      ~~~~~~
- * lp                 v         ip                  v          r
- *
- * "...%r(^value^)...%f(^value^)..."
- * ~~~~~~~~     ~~~~~~~~~     ~~~~~~
- * lv           iv            r *)
 type istring_state =
-  | Istate_lw (* left width *)
-  | Istate_lp (* left precision *)
-  | Istate_lv (* left value *)
-  | Istate_iw (* inner width *)
-  | Istate_ip (* inner precision *)
-  | Istate_iv (* inner value *)
-  | Istate_p (* precision *)
-  | Istate_v (* value *)
-  | Istate_r (* right *)
+  | Istring_interp (* Scanning interpolated string data. *)
+  | Istring_spec (* Scanning format specifier. *)
+  | Istring_expr (* Inside (^...^)-delimited expression. *)
 
 type t = {
   path: string option;
@@ -734,37 +592,6 @@ let init text =
     istring_state=[];
     level=0L;
   }
-
-let istring_state_transition state t =
-  match state, t.istring_state, t.level with
-  (* (start) {lw, lp, lv} *)
-  | (Istate_lw|Istate_lp|Istate_lv), istring_state, level
-    -> {t with level=succ level; istring_state=state :: istring_state}
-
-  (* {lw, iw} -> {p, v} *)
-  | (Istate_p|Istate_v), (Istate_lw|Istate_iw) :: istring_state', _
-  (* {lp, ip, p} -> {v} *)
-  | Istate_v, (Istate_lp|Istate_ip|Istate_p) :: istring_state', _
-  (* {lv, iv, v} -> {iw, ip, iv} *)
-  | (Istate_iw|Istate_ip|Istate_iv), (Istate_lv|Istate_iv|Istate_v) :: istring_state', _
-    -> {t with istring_state=state :: istring_state'}
-
-  (* {lv, iv, v} -> {r} (accept) *)
-  | Istate_r, (Istate_lv|Istate_iv|Istate_v) :: istring_state', level
-    -> {t with level=pred level; istring_state=istring_state'}
-
-  (* The following transitions indicate syntax errors. The scanner generates valid tokens
-   * nonetheless but such tokens will result in parsing errors. *)
-  | Istate_r, (Istate_lw|Istate_lp|Istate_iw|Istate_ip|Istate_p) :: istring_state', level
-    -> {t with level=pred level; istring_state=istring_state'}
-
-  (* The following transitions cannot occur absent scanner flaws. *)
-  | (Istate_iw|Istate_ip|Istate_iv|Istate_p|Istate_v|Istate_r), [], _
-  | (Istate_iw|Istate_ip|Istate_iv), (Istate_lw|Istate_lp|Istate_iw|Istate_ip|Istate_p) :: _, _
-  | Istate_p, (Istate_lp|Istate_lv|Istate_ip|Istate_iv|Istate_p|Istate_v) :: _, _
-  | Istate_v, (Istate_lv|Istate_iv|Istate_v) :: _, _
-  | _, Istate_r :: _, _
-    -> not_reached ()
 
 let text t =
   Text.Cursor.container t.cursor
@@ -834,9 +661,6 @@ let unterminated_comment base past t =
 
 let unterminated_codepoint base past t =
   malformation ~base ~past "Unterminated codepoint literal" t
-
-let invalid_spec base past t =
-  malformation ~base ~past "Invalid format specifier" t
 
 let unterminated_string base past t =
   malformation ~base ~past "Unterminated string literal" t
@@ -1260,388 +1084,61 @@ end
 
 module String_ : sig
   val istring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
+  val start_istring: t -> t * ConcreteToken.t
   val bstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val accept_unterminated_rstring: Text.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
   type accum =
     | Codepoints of codepoint list
-    | Spec of AbstractToken.istring_spec
     | Malformations of AbstractToken.Rendition.Malformation.t list
 
   let accum_cp cp = function
     | Codepoints cps -> Codepoints (cp :: cps)
-    | Spec _ -> not_reached ()
-    | (Malformations _) as mals -> mals
-
-  let accum_interp = function
-    | Codepoints cps -> Spec {
-      AbstractToken.
-      interp=Some (String.of_list_rev cps);
-      pad=None;
-      just=None;
-      sign=None;
-      alt=None;
-      zpad=None;
-      width=None;
-      pmode=None;
-      prec=None;
-      base=None;
-      notation=None;
-      pretty=None;
-      abbr=None
-    }
-    | Spec _ -> not_reached ()
-    | (Malformations _) as mals -> mals
-
-  let accum_pad pad = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with pad=Some pad}
-    | (Malformations _) as mals -> mals
-
-  let accum_just just = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with just=Some just}
-    | (Malformations _) as mals -> mals
-
-  let accum_sign sign = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with sign=Some sign}
-    | (Malformations _) as mals -> mals
-
-  let accum_alt alt = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with alt=Some alt}
-    | (Malformations _) as mals -> mals
-
-  let accum_zpad zpad = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with zpad=Some zpad}
-    | (Malformations _) as mals -> mals
-
-  let accum_width width = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with width=Some width}
-    | (Malformations _) as mals -> mals
-
-  let accum_pmode pmode = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with pmode=Some pmode}
-    | (Malformations _) as mals -> mals
-
-  let accum_prec prec = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with prec=Some prec}
-    | (Malformations _) as mals -> mals
-
-  let accum_base base = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with base=Some base}
-    | (Malformations _) as mals -> mals
-
-  let accum_notation notation = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with notation=Some notation}
-    | (Malformations _) as mals -> mals
-
-  let accum_pretty pretty = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with pretty=Some pretty}
-    | (Malformations _) as mals -> mals
-
-  let accum_abbr abbr = function
-    | Codepoints _ -> not_reached ()
-    | Spec spec -> Spec {spec with abbr=Some abbr}
     | (Malformations _) as mals -> mals
 
   let accum_mal mal = function
-    | Codepoints _
-    | Spec _ -> Malformations [mal]
+    | Codepoints _ -> Malformations [mal]
     | Malformations mals -> Malformations (mal :: mals)
 
   (* Interpolated string: "..." *)
-  let istring _ppcursor pcursor cursor t =
+  let istring _ppcursor _pcursor cursor t =
+    let accept_isubstring accum cursor t = begin
+      match accum with
+      | Codepoints cps -> accept (Tok_isubstring (Constant (String.of_list_rev cps))) cursor t
+      | Malformations mals -> accept (Tok_isubstring (Malformed (List.rev mals))) cursor t
+    end in
+
     let accept_istring accum cursor t = begin
       match accum with
       | Codepoints cps -> accept (Tok_istring (Constant (String.of_list_rev cps))) cursor t
-      | Spec _ -> not_reached ()
       | Malformations mals -> accept (Tok_istring (Malformed (List.rev mals))) cursor t
     end in
 
-    let accept_istring_l accum cursor t = begin
-      match accum with
-      | Codepoints _ -> not_reached ()
-      | Spec ({width=None; prec=None; abbr=None; _} as spec) ->
-        accept (Tok_istring_iw (Constant spec)) cursor t
-      | Spec ({width=Some _; prec=None; abbr=None; _} as spec) ->
-        accept (Tok_istring_ip (Constant spec)) cursor t
-      | Spec ({width=Some _; prec=Some _; abbr=Some _; _} as spec) ->
-        accept (Tok_istring_iv (Constant spec)) cursor t
-      | Spec _ -> not_reached ()
-      | Malformations mals -> accept (Tok_istring (Malformed (List.rev mals))) cursor t
-    end in
-
-    let rec fn_wrapper ~f accum pcursor cursor t = begin
+    let rec fn_wrapper ~f accum cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
           let mal = unterminated_string t.cursor cursor t in
-          accept_istring (accum_mal mal accum) cursor t
+          let t' = match t.istring_state with
+            | [] -> t
+            | _ :: istring_state -> {t with istring_state}
+          in
+          accept_istring (accum_mal mal accum) cursor t'
         end
       | Some (_, false, cursor') -> begin
           let mal = invalid_utf8 cursor cursor' t in
-          fn (accum_mal mal accum) cursor cursor' t
+          fn (accum_mal mal accum) cursor' t
         end
-      | Some (cp, true, cursor') -> f accum pcursor cursor cp cursor' t
+      | Some (cp, true, cursor') -> f accum cursor cp cursor' t
     end
-    and fn_lparen accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '^') -> accept_istring_l accum cursor' t
-        | cp when Codepoint.(cp = of_char '(') -> begin
-            let mal = invalid_spec cursor cursor' t in
-            fn_lparen (accum_mal mal accum) cursor cursor' t
-          end
-        | _ -> begin
-            let mal = invalid_spec cursor cursor' t in
-            fn_abbr (accum_mal mal accum) cursor cursor' t
-          end
-      )
-    end
-    and fn_abbr accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '(') -> fn_lparen accum cursor cursor' t
-        | _ -> begin
-            let mal = invalid_spec cursor cursor' t in
-            fn_abbr (accum_mal mal accum) cursor cursor' t
-          end
-      )
-    end
-    and fn_ui signed bitwidth accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum _pcursor cursor cp cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '0') ->
-          fn_ui signed Nat.(bitwidth * k_a) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '1') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_1) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '2') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_2) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '3') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_3) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '4') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_4) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '5') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_5) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '6') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_6) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '7') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_7) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '8') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_8) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '9') ->
-          fn_ui signed Nat.(bitwidth * k_a + k_9) accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '(') -> begin
-            let accum' = match signed, Nat.to_uns_opt bitwidth with
-              | false, Some 8L -> accum_abbr Abbr_u8 accum
-              | false, Some 16L -> accum_abbr Abbr_u16 accum
-              | false, Some 32L -> accum_abbr Abbr_u32 accum
-              | false, Some 0L -> accum_abbr Abbr_u accum
-              | false, Some 64L -> accum_abbr Abbr_u64 accum
-              | false, Some 128L -> accum_abbr Abbr_u128 accum
-              | false, Some 256L -> accum_abbr Abbr_u256 accum
-              | false, Some 512L -> accum_abbr Abbr_u512 accum
-              | true, Some 8L -> accum_abbr Abbr_i8 accum
-              | true, Some 16L -> accum_abbr Abbr_i16 accum
-              | true, Some 32L -> accum_abbr Abbr_i32 accum
-              | true, Some 0L -> accum_abbr Abbr_i accum
-              | true, Some 64L -> accum_abbr Abbr_i64 accum
-              | true, Some 128L -> accum_abbr Abbr_i128 accum
-              | true, Some 256L -> accum_abbr Abbr_i256 accum
-              | true, Some 512L -> accum_abbr Abbr_i512 accum
-              | _ -> begin
-                  let mal = invalid_spec cursor cursor' t in
-                  accum_mal mal accum
-                end
-            in
-            fn_lparen accum' cursor cursor' t
-          end
-        | _ -> begin
-            let mal = invalid_spec cursor cursor' t in
-            fn_abbr (accum_mal mal accum) cursor cursor' t
-          end
-      )
-    end
-    and fn_pretty accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '(') -> fn_lparen accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'b') -> fn_abbr (accum_abbr Abbr_b accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'u') -> fn_ui false Nat.k_0 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'i') -> fn_ui true Nat.k_0 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'c') -> fn_abbr (accum_abbr Abbr_c accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 's') -> fn_abbr (accum_abbr Abbr_s accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'f') -> fn_abbr (accum_abbr Abbr_f accum) cursor cursor' t
-        | _ -> begin
-            let mal = invalid_spec cursor cursor' t in
-            fn_abbr (accum_mal mal accum) cursor cursor' t
-          end
-      )
-    end
-    and fn_c accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char 'p') ->
-          fn_pretty (accum_pretty true accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'u') ->
-          fn_ui false Nat.k_0 (accum_notation Fmt.Compact accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'i') ->
-          fn_ui true Nat.k_0 (accum_notation Fmt.Compact accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'n') ->
-          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_n) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'z') ->
-          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_z) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 's') ->
-          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_s) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'f') ->
-          fn_abbr (accum |> accum_notation Fmt.Compact |> accum_abbr Abbr_f) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '(') ->
-          fn_lparen (accum_abbr Abbr_c accum) cursor cursor' t
-        | _ -> not_implemented "XXX"
-      )
-    end
-    and fn_notation accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_base accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_b accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_prec_dot accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_width_star accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_width width accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_zpad accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_alt accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_sign accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_just accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_pad accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        ((*XXX*))
-      )
-    end
-    and fn_pct accum pcursor cursor t = begin
-      fn_wrapper (accum_interp accum) pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '\'') -> begin
-            let open ConcreteToken in
-            let t', tok = Codepoint_.codepoint pcursor cursor cursor' t in
-            let accum' = match tok.atoken with
-              | Tok_codepoint (Constant cp) -> accum_pad cp accum
-              | Tok_codepoint (Malformed mals) ->
-                List.fold ~init:accum ~f:(fun accum mal -> accum_mal mal accum) mals
-              | _ -> not_reached ()
-            in fn_pad accum' (Text.Cursor.pred t'.cursor) t'.cursor t'
-          end
-        | cp when Codepoint.(cp = of_char '<') ->
-          fn_just (accum_just Fmt.Left accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '^') ->
-          fn_just (accum_just Fmt.Center accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '>') ->
-          fn_just (accum_just Fmt.Right accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '+') ->
-          fn_sign (accum_sign Fmt.Explicit accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '_') ->
-          fn_sign (accum_sign Fmt.Space accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '#') -> fn_alt (accum_alt true accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '0') -> fn_zpad (accum_zpad true accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '1') -> fn_width Nat.k_1 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '2') -> fn_width Nat.k_2 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '3') -> fn_width Nat.k_3 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '4') -> fn_width Nat.k_4 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '5') -> fn_width Nat.k_5 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '6') -> fn_width Nat.k_6 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '7') -> fn_width Nat.k_7 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '8') -> fn_width Nat.k_8 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '9') -> fn_width Nat.k_9 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '*') -> fn_width_star accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '.') -> fn_prec_dot accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'b') ->
-          fn_b accum cursor cursor' t (* Lookahead for Bin vs bool. *)
-        | cp when Codepoint.(cp = of_char 'o') ->
-          fn_base (accum_base Fmt.Oct accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'd') ->
-          fn_base (accum_base Fmt.Dec accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'x') ->
-          fn_base (accum_base Fmt.Hex accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'm') ->
-          fn_notation (accum_notation Fmt.Normalized accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'a') ->
-          fn_notation (accum_notation Fmt.RadixPoint accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'c') ->
-          fn_c accum cursor cursor' t (* Lookahead for Compact vs codepoint. *)
-        | cp when Codepoint.(cp = of_char 'p') ->
-          fn_pretty (accum_pretty true accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'u') -> fn_ui false Nat.k_0 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'i') -> fn_ui true Nat.k_0 accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'n') -> fn_abbr (accum_abbr Abbr_n accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'z') -> fn_abbr (accum_abbr Abbr_z accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 's') -> fn_abbr (accum_abbr Abbr_s accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'f') -> fn_abbr (accum_abbr Abbr_f accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '(') -> begin
-            let mal = invalid_spec cursor cursor' t in
-            fn_lparen (accum_mal mal accum) pcursor cursor' t
-          end
-        | _ -> begin
-            let mal = invalid_spec cursor cursor' t in
-            fn_abbr (accum_mal mal accum) pcursor cursor' t
-          end
-      )
-    end
-    and fn_bslash_u_lcurly nat bslash_cursor accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+    and fn_bslash_u_lcurly nat bslash_cursor accum cursor t = begin
+      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match Map.get cp Codepoint_.u_map with
-        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor cursor' t
+        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
         | Some UMapDigit ->
-          fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor
-            cursor' t
+          fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor' t
         | Some UMapRcurly ->
-          fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor t) cursor cursor'
-            t
+          fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor t) cursor' t
         | Some UMapDitto -> begin
             let mal = partial_unicode bslash_cursor cursor t in
             accept_istring (accum_mal mal accum) cursor' t
@@ -1649,51 +1146,76 @@ end = struct
         | Some UMapTick
         | None -> begin
             let mal = partial_unicode bslash_cursor cursor t in
-            fn (accum_mal mal accum) pcursor cursor t
+            fn (accum_mal mal accum) cursor t
           end
       )
     end
-    and fn_bslash_u bslash_cursor accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum pcursor cursor cp cursor' t ->
+    and fn_bslash_u bslash_cursor accum cursor t = begin
+      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '{') ->
-          fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor cursor' t
+          fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor' t
         | cp when Codepoint.(cp = of_char '"') -> begin
             let mal = illegal_backslash bslash_cursor cursor t in
             accept_istring (accum_mal mal accum) cursor' t
           end
         | _ -> begin
             let mal = illegal_backslash bslash_cursor cursor t in
-            fn (accum_mal mal accum) pcursor cursor t
+            fn (accum_mal mal accum) cursor t
           end
       )
     end
-    and fn_bslash bslash_cursor accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum _pcursor cursor cp cursor' t ->
+    and fn_bslash bslash_cursor accum cursor t = begin
+      fn_wrapper accum cursor t ~f:(fun accum _cursor cp cursor' t ->
         match cp with
-        | cp when Codepoint.(cp = of_char 'u') -> fn_bslash_u bslash_cursor accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char 't') -> fn (accum_cp Codepoint.ht accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'n') -> fn (accum_cp Codepoint.nl accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char 'r') -> fn (accum_cp Codepoint.cr accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '"') -> fn (accum_cp cp accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '\\') -> fn (accum_cp cp accum) cursor cursor' t
-        | cp when Codepoint.(cp = of_char '%') -> fn (accum_cp cp accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char 'u') -> fn_bslash_u bslash_cursor accum cursor' t
+        | cp when Codepoint.(cp = of_char 't') -> fn (accum_cp Codepoint.ht accum) cursor' t
+        | cp when Codepoint.(cp = of_char 'n') -> fn (accum_cp Codepoint.nl accum) cursor' t
+        | cp when Codepoint.(cp = of_char 'r') -> fn (accum_cp Codepoint.cr accum) cursor' t
+        | cp when Codepoint.(cp = of_char '"') -> fn (accum_cp cp accum) cursor' t
+        | cp when Codepoint.(cp = of_char '\\') -> fn (accum_cp cp accum) cursor' t
+        | cp when Codepoint.(cp = of_char '%') -> fn (accum_cp cp accum) cursor' t
         | _ -> begin
             let mal = illegal_backslash bslash_cursor cursor' t in
-            fn (accum_mal mal accum) cursor cursor' t
+            fn (accum_mal mal accum) cursor' t
           end
       )
     end
-    and fn accum pcursor cursor t = begin
-      fn_wrapper accum pcursor cursor t ~f:(fun accum _pcursor cursor cp cursor' t ->
+    and fn accum cursor t = begin
+      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match cp with
-        | cp when Codepoint.(cp = of_char '"') -> accept_istring accum cursor' t
-        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor cursor' t
-        | cp when Codepoint.(cp = of_char '%') -> fn_pct accum cursor cursor' t
-        | _ -> fn (accum_cp cp accum) cursor cursor' t
+        | cp when Codepoint.(cp = of_char '"') -> begin
+            match Text.Cursor.(t.cursor = cursor) with
+            | false -> accept_isubstring accum cursor t
+            | true -> begin
+(* XXX Refactor into function. *)
+                let source = Source.init t.path t.bias t.cursor cursor' in
+                {t with cursor=cursor'; istring_state=List.tl t.istring_state},
+                  (ConcreteToken.init Tok_ditto source)
+              end
+          end
+        | cp when Codepoint.(cp = of_char '%') -> begin
+            match Text.Cursor.(t.cursor = cursor) with
+            | false -> accept_isubstring accum cursor t
+            | true -> begin
+(* XXX Refactor into function. *)
+                let source = Source.init t.path t.bias t.cursor cursor' in
+                {t with cursor=cursor'; istring_state=Istring_spec :: (List.tl t.istring_state)},
+                  (ConcreteToken.init Tok_pct source)
+              end
+          end
+        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
+        | _ -> fn (accum_cp cp accum) cursor' t
       )
     end in
-    fn (Codepoints []) pcursor cursor t
+    fn (Codepoints []) cursor t
+
+  let start_istring t =
+    match t.istring_state with
+    | Istring_interp :: _ -> istring t.cursor t.cursor t.cursor t
+    | Istring_spec :: _ -> not_implemented "XXX"
+    | Istring_expr :: _
+    | [] -> not_reached ()
 
   type tag_accum =
     {
@@ -1745,7 +1267,6 @@ end = struct
           let mals = List.(rev_concat ltag.mals (rev rtag.mals)) in
           accept (Tok_rstring (Malformed mals)) cursor t
         end
-      | _, Spec _, _ -> not_reached ()
       | _, Malformations body_mals, _ -> begin
           let mals = List.(rev_concat ltag.mals (rev_concat body_mals (rev rtag.mals))) in
           accept (Tok_rstring (Malformed mals)) cursor t
@@ -1842,7 +1363,6 @@ end = struct
       | Codepoints (_ :: cps) ->
         accept (Tok_bstring (Constant (String.of_list_rev cps))) cursor t
       | Codepoints [] -> not_reached () (* There's always a '\n'. *)
-      | Spec _ -> not_reached ()
       | Malformations mals -> accept (Tok_bstring (Malformed (List.rev mals))) cursor t
     end in
 
@@ -2724,7 +2244,11 @@ module Dag = struct
       ("abcdefghijklmnopqrstuvwxyz", uident);
       ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
       ("'", Codepoint_.codepoint);
-      ("\"", String_.istring);
+      ("\"", (fun _ppcursor _pcursor cursor t -> (* XXX Refactor into function. *)
+           let source = Source.init t.path t.bias t.cursor cursor in
+           {t with cursor; istring_state=(Istring_interp :: t.istring_state)},
+             (ConcreteToken.init Tok_ditto source)
+       ));
       ("`", (act {
           edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
           eoi=String_.accept_unterminated_rstring;
@@ -2776,7 +2300,12 @@ module Dag = struct
   }
 
   let start t =
-    act start_state t.cursor t.cursor t.cursor t
+    assert Stdlib.(match t.istring_state with [] -> true | hd :: _ -> hd <> Istring_spec); (* XXX Remove. *)
+    assert Stdlib.(match t.istring_state with [] -> true | hd :: _ -> hd <> Istring_expr); (* XXX Remove. *)
+    match t.istring_state with
+    | []
+    | Istring_expr :: _ -> act start_state t.cursor t.cursor t.cursor t
+    | (Istring_interp|Istring_spec) :: _ -> String_.start_istring t
 end
 
 module LineDirective : sig
@@ -2827,10 +2356,15 @@ end = struct
     match Text.Cursor.next_opt cursor with
     | None -> accept_error cursor t
     | Some (cp, cursor') when Codepoint.(cp = of_char '"') -> begin
-        let t', path_tok = String_.istring pcursor cursor cursor' t in
+(* XXX Incompatible with istring refactor. *)
+        let t' = {t with cursor=cursor'; istring_state=Istring_interp :: t.istring_state} in
+        let t'', path_tok = String_.istring pcursor cursor cursor' t' in
         match ConcreteToken.atoken path_tok with
-        | Tok_istring (Constant path) -> path_finish path n t'.cursor t
-        | Tok_istring (Malformed _) -> error cursor' t
+        | Tok_isubstring (Constant path) -> begin
+            let t''', _ditto = String_.istring cursor cursor' t''.cursor t'' in
+            path_finish path n t'''.cursor t'''
+          end
+        | Tok_isubstring (Malformed _) -> error cursor' t
         | _ -> not_reached ()
       end
     | Some (_, cursor') -> error cursor' t

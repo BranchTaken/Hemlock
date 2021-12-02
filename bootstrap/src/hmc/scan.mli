@@ -1,3 +1,44 @@
+(** Scanner.
+
+    The following naming convention is used for special codepoints which show up in the language
+    syntax. Token names for other codepoints are e.g. Tok_a and Tok_A; concatenations are e.g.
+    Tok_a_A. The special codepoints are referred to similarly, e.g. Tok_nl and Tok_lbrack_bar.
+
+    - '\n' : nl
+    - ' '  : space
+    - '!'  : xmark
+    - '"'  : ditto
+    - '#'  : hash
+    - '$'  : dollar
+    - '%'  : pct
+    - '&'  : amp
+    - '\'' : tick
+    - '('  : lparen
+    - ')'  : rparen
+    - '*'  : star
+    - '+'  : plus
+    - ','  : comma
+    - '-'  : minus
+    - '.'  : dot
+    - '/'  : slash
+    - ':'  : colon
+    - ';'  : semi
+    - '<'  : lt
+    - '='  : eq
+    - '>'  : gt
+    - '?'  : qmark
+    - '@'  : at
+    - '['  : lbrack
+    - '\\' : bslash
+    - ']'  : rbrack
+    - '^'  : caret
+    - '_'  : uscore
+    - '`'  : btick
+    - '{'  : lcurly
+    - '|'  : bar
+    - '}'  : rcurly
+    - '~'  : tilde
+*)
 open Basis
 open Basis.Rudiments
 
@@ -46,53 +87,6 @@ module AbstractToken : sig
 
     include FormattableIntf.SPoly with type 'a t := 'a t
   end
-
-  type istring_abbr =
-    | Abbr_b
-    | Abbr_u8
-    | Abbr_u16
-    | Abbr_u32
-    | Abbr_u64 | Abbr_u
-    | Abbr_u128
-    | Abbr_u256
-    | Abbr_u512
-    | Abbr_n
-    | Abbr_i8
-    | Abbr_i16
-    | Abbr_i32
-    | Abbr_i64 | Abbr_i
-    | Abbr_i128
-    | Abbr_i256
-    | Abbr_i512
-    | Abbr_z
-    | Abbr_r32
-    | Abbr_r64 | Abbr_r
-    | Abbr_c
-    | Abbr_s
-    | Abbr_f
-
-  val pp_istring_abbr: istring_abbr -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-
-  type istring_spec = {
-    interp: string option;
-    pad: codepoint option;
-    just: Fmt.just option;
-    sign: Fmt.sign option;
-    alt: bool option;
-    zpad: bool option;
-    width: uns option;
-    pmode: Fmt.pmode option;
-    prec: uns option;
-    base: Fmt.base option;
-    notation: Fmt.notation option;
-    pretty: bool option;
-    abbr: istring_abbr option;
-  }
-
-  val pp_istring_spec: istring_spec -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-
-  val merge_istring_spec: istring_spec -> istring_spec -> istring_spec
-  (** [merge_istring_spec a b] merges disjoint specs [a] and [b], or halts if not disjoint. *)
 
   type t =
     (* Keywords. *)
@@ -192,15 +186,9 @@ module AbstractToken : sig
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
     | Tok_istring of string Rendition.t
-    | Tok_istring_lw of istring_spec Rendition.t
-    | Tok_istring_lp of istring_spec Rendition.t
-    | Tok_istring_lv of istring_spec Rendition.t
-    | Tok_istring_iw of istring_spec Rendition.t
-    | Tok_istring_ip of istring_spec Rendition.t
-    | Tok_istring_iv of istring_spec Rendition.t
-    | Tok_istring_p of unit Rendition.t
-    | Tok_istring_v of istring_spec Rendition.t
-    | Tok_istring_r of string Rendition.t
+    | Tok_isubstring of string Rendition.t
+    | Tok_ditto
+    | Tok_pct
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
     | Tok_r32 of real Rendition.t
