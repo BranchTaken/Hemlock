@@ -178,8 +178,14 @@ module Source = struct
     |> Fmt.fmt ")"
 
   let pp t formatter =
-    formatter |> Fmt.fmt (Text.Slice.(to_string (init ~base:t.base ~past:t.past
-        (Text.Cursor.container t.base))))
+    formatter
+    |> Fmt.fmt "{path=" |> (Option.pp String.pp) t.path
+    |> Fmt.fmt "; bias=" |> Sint.pp t.bias
+    |> Fmt.fmt "; base=" |> Text.Cursor.pp t.base
+    |> Fmt.fmt "; past=" |> Text.Cursor.pp t.past
+    |> Fmt.fmt "; [base..past)="
+    |> Text.Slice.(pp (init ~base:t.base ~past:t.past (Text.Cursor.container t.base)))
+    |> Fmt.fmt "}"
 end
 
 module AbstractToken = struct
@@ -331,8 +337,8 @@ module AbstractToken = struct
     | Tok_codepoint of codepoint Rendition.t
     | Tok_istring_lditto
     | Tok_isubstring of string Rendition.t
+    | Tok_istring_pct
     | Tok_istring_rditto
-    | Tok_pct
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
     | Tok_r32 of real Rendition.t
@@ -460,8 +466,8 @@ module AbstractToken = struct
       | Tok_istring_lditto -> formatter |> Fmt.fmt "Tok_istring_lditto"
       | Tok_isubstring rendition ->
         formatter |> Fmt.fmt "Tok_isubstring=" |> (Rendition.pp String.pp) rendition
+      | Tok_istring_pct -> formatter |> Fmt.fmt "Tok_istring_pct"
       | Tok_istring_rditto -> formatter |> Fmt.fmt "Tok_istring_rditto"
-      | Tok_pct -> formatter |> Fmt.fmt "Tok_pct"
       | Tok_rstring rendition ->
         formatter |> Fmt.fmt "Tok_rstring=" |> (Rendition.pp String.pp) rendition
       | Tok_bstring rendition ->
@@ -629,12 +635,27 @@ let accept_excl atoken _ppcursor pcursor _cursor t =
 let accept_pexcl atoken ppcursor _pcursor _cursor t =
   accept atoken ppcursor t
 
-let accept_delim atoken cursor t =
+let accept_istring_lditto _ppcursor _pcursor cursor t =
+  let source = Source.init t.path t.bias t.cursor cursor in
+  {t with cursor; istring_state=(Istring_interp :: t.istring_state)},
+  (ConcreteToken.init Tok_istring_lditto source)
+
+let accept_istring_pct cursor t =
+  let source = Source.init t.path t.bias t.cursor cursor in
+  {t with cursor; istring_state=Istring_spec :: (List.tl t.istring_state)},
+  (ConcreteToken.init Tok_istring_pct source)
+
+let accept_istring_rditto cursor t =
+  let source = Source.init t.path t.bias t.cursor cursor in
+  {t with cursor; istring_state=List.tl t.istring_state},
+  (ConcreteToken.init Tok_istring_rditto source)
+
+let accept_line_delim atoken cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
   {t with cursor; line_state=Line_delim}, (ConcreteToken.init atoken source)
 
-let accept_delim_incl atoken _ppcursor _pcursor cursor t =
-  accept_delim atoken cursor t
+let accept_line_delim_incl atoken _ppcursor _pcursor cursor t =
+  accept_line_delim atoken cursor t
 
 (***************************************************************************************************
  * Convenience routines for reporting malformations. *)
@@ -720,7 +741,7 @@ let whitespace _ppcursor _pcursor cursor t =
         match cp with
         | cp when Codepoint.(cp = of_char ' ') -> fn cursor' t
         | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor cursor' t
-        | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
+        | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
         | _ -> accept Tok_whitespace cursor t
       end
   end
@@ -737,7 +758,7 @@ let whitespace _ppcursor _pcursor cursor t =
 
 let hash_comment _ppcursor _pcursor cursor t =
   let accept_hash_comment cursor t = begin
-    accept_delim Tok_hash_comment cursor t
+    accept_line_delim Tok_hash_comment cursor t
   end in
   let rec fn cursor t = begin
     match Text.Cursor.next_opt cursor with
@@ -1104,8 +1125,8 @@ end = struct
     | Codepoints _ -> Malformations [mal]
     | Malformations mals -> Malformations (mal :: mals)
 
-  (* Interpolated string: "..." *)
-  let istring _ppcursor _pcursor cursor t =
+  (* Interpolated substring: "..." *)
+  let istring_interp _ppcursor _pcursor cursor t =
     let accept_isubstring accum cursor t = begin
       match accum with
       | Codepoints cps -> accept (Tok_isubstring (Constant (String.of_list_rev cps))) cursor t
@@ -1181,27 +1202,17 @@ end = struct
     and fn accum cursor t = begin
       fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match cp with
-        | cp when Codepoint.(cp = of_char '"') -> begin
-            match Text.Cursor.(t.cursor = cursor) with
-            | false -> accept_isubstring accum cursor t
-            | true -> begin
-                (* XXX Refactor into function. *)
-                let source = Source.init t.path t.bias t.cursor cursor' in
-                {t with cursor=cursor'; istring_state=List.tl t.istring_state},
-                (ConcreteToken.init Tok_istring_rditto source)
-              end
-          end
+        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
         | cp when Codepoint.(cp = of_char '%') -> begin
             match Text.Cursor.(t.cursor = cursor) with
             | false -> accept_isubstring accum cursor t
-            | true -> begin
-                (* XXX Refactor into function. *)
-                let source = Source.init t.path t.bias t.cursor cursor' in
-                {t with cursor=cursor'; istring_state=Istring_spec :: (List.tl t.istring_state)},
-                (ConcreteToken.init Tok_pct source)
-              end
+            | true -> accept_istring_pct cursor' t
           end
-        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
+        | cp when Codepoint.(cp = of_char '"') -> begin
+            match Text.Cursor.(t.cursor = cursor) with
+            | false -> accept_isubstring accum cursor t
+            | true -> accept_istring_rditto cursor' t
+          end
         | _ -> fn (accum_cp cp accum) cursor' t
       )
     end in
@@ -1209,7 +1220,7 @@ end = struct
 
   let start_istring t =
     match t.istring_state with
-    | Istring_interp :: _ -> istring t.cursor t.cursor t.cursor t
+    | Istring_interp :: _ -> istring_interp t.cursor t.cursor t.cursor t
     | Istring_spec :: _ -> not_implemented "XXX"
     | Istring_expr :: _
     | [] -> not_reached ()
@@ -2183,7 +2194,7 @@ module Dag = struct
         }));
       ("&", (accept_incl Tok_amp));
       ("!", (accept_incl Tok_xmark));
-      ("\n", (accept_delim_incl Tok_whitespace));
+      ("\n", (accept_line_delim_incl Tok_whitespace));
       ("~", (act {
           edges=(map_of_cps_alist [
             (operator_cps, (operator (fun s -> Tok_tilde_op s)));
@@ -2241,11 +2252,7 @@ module Dag = struct
       ("abcdefghijklmnopqrstuvwxyz", uident);
       ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
       ("'", Codepoint_.codepoint);
-      ("\"", (fun _ppcursor _pcursor cursor t -> (* XXX Refactor into function. *)
-          let source = Source.init t.path t.bias t.cursor cursor in
-          {t with cursor; istring_state=(Istring_interp :: t.istring_state)},
-          (ConcreteToken.init Tok_istring_lditto source)
-        ));
+      ("\"", accept_istring_lditto);
       ("`", (act {
           edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
           eoi=String_.accept_unterminated_rstring;
@@ -2418,7 +2425,7 @@ end = struct
     | Some (cp, cursor') -> begin
         match cp with
         | cp when Codepoint.(cp = of_char ' ') -> next cursor' t
-        | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
+        | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
         | _ -> begin
             let col = Text.(Pos.col (Cursor.pos cursor)) in
             let level = col / 4L in
@@ -2528,7 +2535,7 @@ end = struct
     | Some (cp, cursor') -> begin
         match cp with
         | cp when Codepoint.(cp = of_char ' ') -> next cursor' t
-        | cp when Codepoint.(cp = nl) -> accept_delim Tok_whitespace cursor' t
+        | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
         | cp when Codepoint.(cp = of_char '#') -> hash_comment cursor cursor cursor' t
         | cp when Codepoint.(cp = of_char '(') -> begin
             match Text.Cursor.next_opt cursor' with
