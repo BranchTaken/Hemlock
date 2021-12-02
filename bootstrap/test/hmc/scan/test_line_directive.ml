@@ -16,6 +16,7 @@ let test () =
   scan_str {|:0|};
   scan_str {|:1 |};
   scan_str {|:1"|};
+  scan_str {|:1 "foo.hm|};
   scan_str {|:1 "foo.hm" |};
   scan_str {|:1 "foo.hm"x
 |}

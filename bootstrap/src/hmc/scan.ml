@@ -330,9 +330,9 @@ module AbstractToken = struct
     | Tok_uident of string Rendition.t
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
-    | Tok_istring of string Rendition.t
+    | Tok_istring_lditto
     | Tok_isubstring of string Rendition.t
-    | Tok_ditto
+    | Tok_istring_rditto
     | Tok_pct
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
@@ -458,11 +458,10 @@ module AbstractToken = struct
       | Tok_cident cident -> formatter |> Fmt.fmt "Tok_cident=" |> String.pp cident
       | Tok_codepoint rendition ->
         formatter |> Fmt.fmt "Tok_codepoint=" |> (Rendition.pp Codepoint.pp) rendition
-      | Tok_istring rendition ->
-        formatter |> Fmt.fmt "Tok_istring=" |> (Rendition.pp String.pp) rendition
+      | Tok_istring_lditto -> formatter |> Fmt.fmt "Tok_istring_lditto"
       | Tok_isubstring rendition ->
         formatter |> Fmt.fmt "Tok_isubstring=" |> (Rendition.pp String.pp) rendition
-      | Tok_ditto -> formatter |> Fmt.fmt "Tok_ditto"
+      | Tok_istring_rditto -> formatter |> Fmt.fmt "Tok_istring_rditto"
       | Tok_pct -> formatter |> Fmt.fmt "Tok_pct"
       | Tok_rstring rendition ->
         formatter |> Fmt.fmt "Tok_rstring=" |> (Rendition.pp String.pp) rendition
@@ -562,6 +561,12 @@ module ConcreteToken = struct
 
   let source t =
     t.source
+
+  let pp t formatter =
+    formatter
+    |> Fmt.fmt "{atoken=" |> AbstractToken.pp t.atoken
+    |> Fmt.fmt "; source=" |> Source.pp_loc t.source
+    |> Fmt.fmt "}"
 end
 
 type line_state =
@@ -1083,7 +1088,6 @@ end = struct
 end
 
 module String_ : sig
-  val istring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val start_istring: t -> t * ConcreteToken.t
   val bstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
@@ -1109,12 +1113,6 @@ end = struct
       | Malformations mals -> accept (Tok_isubstring (Malformed (List.rev mals))) cursor t
     end in
 
-    let accept_istring accum cursor t = begin
-      match accum with
-      | Codepoints cps -> accept (Tok_istring (Constant (String.of_list_rev cps))) cursor t
-      | Malformations mals -> accept (Tok_istring (Malformed (List.rev mals))) cursor t
-    end in
-
     let rec fn_wrapper ~f accum cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
@@ -1123,7 +1121,7 @@ end = struct
             | [] -> t
             | _ :: istring_state -> {t with istring_state}
           in
-          accept_istring (accum_mal mal accum) cursor t'
+          accept_isubstring (accum_mal mal accum) cursor t'
         end
       | Some (_, false, cursor') -> begin
           let mal = invalid_utf8 cursor cursor' t in
@@ -1141,7 +1139,7 @@ end = struct
           fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor t) cursor' t
         | Some UMapDitto -> begin
             let mal = partial_unicode bslash_cursor cursor t in
-            accept_istring (accum_mal mal accum) cursor' t
+            accept_isubstring (accum_mal mal accum) cursor t
           end
         | Some UMapTick
         | None -> begin
@@ -1157,7 +1155,7 @@ end = struct
           fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor' t
         | cp when Codepoint.(cp = of_char '"') -> begin
             let mal = illegal_backslash bslash_cursor cursor t in
-            accept_istring (accum_mal mal accum) cursor' t
+            accept_isubstring (accum_mal mal accum) cursor t
           end
         | _ -> begin
             let mal = illegal_backslash bslash_cursor cursor t in
@@ -1188,20 +1186,20 @@ end = struct
             match Text.Cursor.(t.cursor = cursor) with
             | false -> accept_isubstring accum cursor t
             | true -> begin
-(* XXX Refactor into function. *)
+                (* XXX Refactor into function. *)
                 let source = Source.init t.path t.bias t.cursor cursor' in
                 {t with cursor=cursor'; istring_state=List.tl t.istring_state},
-                  (ConcreteToken.init Tok_ditto source)
+                (ConcreteToken.init Tok_istring_rditto source)
               end
           end
         | cp when Codepoint.(cp = of_char '%') -> begin
             match Text.Cursor.(t.cursor = cursor) with
             | false -> accept_isubstring accum cursor t
             | true -> begin
-(* XXX Refactor into function. *)
+                (* XXX Refactor into function. *)
                 let source = Source.init t.path t.bias t.cursor cursor' in
                 {t with cursor=cursor'; istring_state=Istring_spec :: (List.tl t.istring_state)},
-                  (ConcreteToken.init Tok_pct source)
+                (ConcreteToken.init Tok_pct source)
               end
           end
         | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
@@ -2245,10 +2243,10 @@ module Dag = struct
       ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
       ("'", Codepoint_.codepoint);
       ("\"", (fun _ppcursor _pcursor cursor t -> (* XXX Refactor into function. *)
-           let source = Source.init t.path t.bias t.cursor cursor in
-           {t with cursor; istring_state=(Istring_interp :: t.istring_state)},
-             (ConcreteToken.init Tok_ditto source)
-       ));
+          let source = Source.init t.path t.bias t.cursor cursor in
+          {t with cursor; istring_state=(Istring_interp :: t.istring_state)},
+          (ConcreteToken.init Tok_istring_lditto source)
+        ));
       ("`", (act {
           edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
           eoi=String_.accept_unterminated_rstring;
@@ -2352,22 +2350,26 @@ end = struct
     | Some (cp, cursor') when Codepoint.(cp = nl) -> accept_directive ~path n cursor' t
     | Some (_, cursor') -> error cursor' t
 
-  let path_start n pcursor cursor t =
-    match Text.Cursor.next_opt cursor with
-    | None -> accept_error cursor t
-    | Some (cp, cursor') when Codepoint.(cp = of_char '"') -> begin
-(* XXX Incompatible with istring refactor. *)
-        let t' = {t with cursor=cursor'; istring_state=Istring_interp :: t.istring_state} in
-        let t'', path_tok = String_.istring pcursor cursor cursor' t' in
+  let path_start n cursor t =
+    (* Scan using the normal token scanner, and extract the path from the [Tok_istring_lditto;
+     * Tok_isubstring; Tok_istring_rditto] token sequence. If all goes well, path_finish does the
+     * final work of accepting the line directive token; the three tokens accepted while extracting
+     * the path never propagate out of this function. *)
+    let t_space = {t with cursor} in
+    let t_lditto, lditto = Dag.start t_space in
+    match ConcreteToken.atoken lditto with
+    | Tok_istring_lditto -> begin
+        let t_path, path_tok = Dag.start t_lditto in
         match ConcreteToken.atoken path_tok with
         | Tok_isubstring (Constant path) -> begin
-            let t''', _ditto = String_.istring cursor cursor' t''.cursor t'' in
-            path_finish path n t'''.cursor t'''
+            let t_rditto, rditto = Dag.start t_path in
+            match ConcreteToken.atoken rditto with
+            | Tok_istring_rditto -> path_finish path n t_rditto.cursor t
+            | _ -> error cursor t
           end
-        | Tok_isubstring (Malformed _) -> error cursor' t
-        | _ -> not_reached ()
+        | _ -> error cursor t
       end
-    | Some (_, cursor') -> error cursor' t
+    | _ -> error cursor t
 
   let rec n_cont n cursor t =
     match Text.Cursor.next_opt cursor with
@@ -2375,7 +2377,7 @@ end = struct
     | Some (cp, cursor') -> begin
         match Map.get cp trailing_digit_map  with
         | Some LDMapDigit -> n_cont Nat.(n * k_a + (nat_of_cp cp)) cursor' t
-        | Some LDMapSpace -> path_start n cursor cursor' t
+        | Some LDMapSpace -> path_start n cursor' t
         | Some LDMapNewline -> accept_directive n cursor' t
         | None -> error cursor' t
       end

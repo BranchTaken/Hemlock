@@ -185,9 +185,9 @@ module AbstractToken : sig
     | Tok_uident of string Rendition.t
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
-    | Tok_istring of string Rendition.t
+    | Tok_istring_lditto
     | Tok_isubstring of string Rendition.t
-    | Tok_ditto
+    | Tok_istring_rditto
     | Tok_pct
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
@@ -219,6 +219,8 @@ module ConcreteToken : sig
 
   val atoken: t -> AbstractToken.t
   val source: t -> Source.t
+
+  val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 end
 
 type t

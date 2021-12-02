@@ -4,7 +4,6 @@ open! Hmc
 open! ScanTest
 
 let test () =
-  scan_str {|""|};
   scan_str {|````|};
   scan_str {|``
 ``|};
