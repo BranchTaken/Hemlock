@@ -232,7 +232,6 @@ module AbstractToken = struct
         | Malformed _ -> formatter |> Fmt.fmt "=" |> pp Unit.pp t
       )
   end
-
   type t =
     (* Keywords. *)
     | Tok_and

@@ -87,7 +87,6 @@ module AbstractToken : sig
 
     include FormattableIntf.SPoly with type 'a t := 'a t
   end
-
   type t =
     (* Keywords. *)
     | Tok_and
