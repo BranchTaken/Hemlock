@@ -11,7 +11,7 @@ let scan_file path =
     |> Fmt.fmt "  "
     |> Scan.Source.pp_loc source
     |> Fmt.fmt " : "
-    |> Fmt.fmt (Scan.AbstractToken.to_string atoken)
+    |> Scan.AbstractToken.pp atoken
     |> Fmt.fmt "\n"
     |> ignore;
     match atoken with
