@@ -338,6 +338,8 @@ module AbstractToken = struct
     | Tok_istring_lditto
     | Tok_isubstring of string Rendition.t
     | Tok_istring_pct
+    | Tok_istring_lparen_caret
+    | Tok_istring_caret_rparen
     | Tok_istring_rditto
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
@@ -467,6 +469,8 @@ module AbstractToken = struct
       | Tok_isubstring rendition ->
         formatter |> Fmt.fmt "Tok_isubstring=" |> (Rendition.pp String.pp) rendition
       | Tok_istring_pct -> formatter |> Fmt.fmt "Tok_istring_pct"
+      | Tok_istring_lparen_caret -> formatter |> Fmt.fmt "Tok_istring_lparen_caret"
+      | Tok_istring_caret_rparen -> formatter |> Fmt.fmt "Tok_istring_caret_rparen"
       | Tok_istring_rditto -> formatter |> Fmt.fmt "Tok_istring_rditto"
       | Tok_rstring rendition ->
         formatter |> Fmt.fmt "Tok_rstring=" |> (Rendition.pp String.pp) rendition
@@ -635,20 +639,19 @@ let accept_excl atoken _ppcursor pcursor _cursor t =
 let accept_pexcl atoken ppcursor _pcursor _cursor t =
   accept atoken ppcursor t
 
-let accept_istring_lditto _ppcursor _pcursor cursor t =
+let accept_istring_push push tok _ppcursor _pcursor cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
-  {t with cursor; istring_state=(Istring_interp :: t.istring_state)},
-  (ConcreteToken.init Tok_istring_lditto source)
+  {t with cursor; istring_state=push :: t.istring_state}, (ConcreteToken.init tok source)
 
-let accept_istring_pct cursor t =
+let accept_istring_trans trans tok _ppcursor _pcursor cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
-  {t with cursor; istring_state=Istring_spec :: (List.tl t.istring_state)},
-  (ConcreteToken.init Tok_istring_pct source)
+  {t with cursor; istring_state=trans :: (List.tl t.istring_state)},
+  (ConcreteToken.init tok source)
 
-let accept_istring_rditto cursor t =
+let accept_istring_pop tok _ppcursor _pcursor cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
   {t with cursor; istring_state=List.tl t.istring_state},
-  (ConcreteToken.init Tok_istring_rditto source)
+  (ConcreteToken.init tok source)
 
 let accept_line_delim atoken cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
@@ -766,6 +769,12 @@ let out_of_range_real base past t =
 
 let accept_dentation atoken cursor t =
   accept atoken cursor {t with line_state=Line_body}
+
+let end_of_input cursor t =
+  match t.line_state, t.level with
+  | Line_delim, 0L -> accept_dentation Tok_line_delim cursor t
+  | _, 0L -> accept Tok_end_of_input cursor t
+  | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
 
 let whitespace _ppcursor _pcursor cursor t =
   let rec fn cursor t = begin
@@ -1142,7 +1151,8 @@ end = struct
 end
 
 module String_ : sig
-  val start_istring: t -> t * ConcreteToken.t
+  val start_istring_interp: Dag.state
+  val start_istring_spec: Dag.state
   val bstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val accept_unterminated_rstring: Text.Cursor.t -> t -> t * ConcreteToken.t
@@ -1160,7 +1170,7 @@ end = struct
     | Malformations mals -> Malformations (mal :: mals)
 
   (* Interpolated substring: "..." *)
-  let istring_interp _ppcursor _pcursor cursor t =
+  let istring_interp _ppcursor pcursor _cursor t =
     let accept_isubstring accum cursor t = begin
       match accum with
       | Codepoints cps -> accept (Tok_isubstring (Constant (String.of_list_rev cps))) cursor t
@@ -1237,27 +1247,36 @@ end = struct
       fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char '%') -> begin
-            match Text.Cursor.(t.cursor = cursor) with
-            | false -> accept_isubstring accum cursor t
-            | true -> accept_istring_pct cursor' t
-          end
-        | cp when Codepoint.(cp = of_char '"') -> begin
-            match Text.Cursor.(t.cursor = cursor) with
-            | false -> accept_isubstring accum cursor t
-            | true -> accept_istring_rditto cursor' t
-          end
+        | cp when Codepoint.(cp = of_char '%') -> accept_isubstring accum cursor t
+        | cp when Codepoint.(cp = of_char '"') -> accept_isubstring accum cursor t
         | _ -> fn (accum_cp cp accum) cursor' t
       )
     end in
-    fn (Codepoints []) cursor t
+    fn (Codepoints []) pcursor t
 
-  let start_istring t =
-    match t.istring_state with
-    | Istring_interp :: _ -> istring_interp t.cursor t.cursor t.cursor t
-    | Istring_spec :: _ -> not_implemented "XXX"
-    | Istring_expr :: _
-    | [] -> not_reached ()
+  let start_istring_interp = Dag.{
+    edges=map_of_cps_alist [
+      ("%", accept_istring_trans Istring_spec Tok_istring_pct);
+      ("\"", accept_istring_pop Tok_istring_rditto);
+    ];
+    eoi=end_of_input;
+    default=istring_interp;
+  }
+
+  let start_istring_spec = Dag.{
+    edges=map_of_cps_alist [
+      ("'", Codepoint_.codepoint);
+      ("(", act {
+          edges=map_of_cps_alist [
+            ("^", accept_istring_trans Istring_expr Tok_istring_lparen_caret)
+          ];
+          eoi=accept Tok_error;
+          default=accept_excl Tok_error;
+        });
+    ];
+    eoi=end_of_input;
+    default=accept_incl Tok_error;
+  }
 
   type tag_accum =
     {
@@ -2163,12 +2182,6 @@ end = struct
     next_suffix Nat.k_0 Signed pcursor accum Dec cursor t
 end
 
-let end_of_input cursor t =
-  match t.line_state, t.level with
-  | Line_delim, 0L -> accept_dentation Tok_line_delim cursor t
-  | _, 0L -> accept Tok_end_of_input cursor t
-  | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
-
 let start_default = Dag.{
   edges=map_of_cps_alist [
     (",", accept_incl Tok_comma);
@@ -2236,7 +2249,23 @@ let start_default = Dag.{
     ("+", operator (fun s -> Tok_plus_op s));
     ("-", operator (fun s -> Tok_minus_op s));
     ("@", operator (fun s -> Tok_at_op s));
-    ("^", operator (fun s -> Tok_caret_op s));
+    ("^", act {
+        edges=map_of_cps_alist [
+          (")", (fun ppcursor pcursor cursor t ->
+              (* XXX We need to know whether this is the {width,precision,fmt} vs value expression,
+               * so that we can transition to Istring_spec vs Istring_interp. *)
+              match t.istring_state with
+              | Istring_expr :: _ ->
+                accept_istring_trans Istring_interp Tok_istring_caret_rparen ppcursor pcursor cursor
+                  t
+              | _ :: _ -> not_implemented "XXX"
+              | [] -> operator (fun s -> Tok_caret_op s) ppcursor ppcursor pcursor t
+            ));
+          (operator_cps, operator (fun s -> Tok_caret_op s));
+        ];
+        eoi=accept Tok_caret;
+        default=accept_excl Tok_caret;
+      });
     ("$", operator (fun s -> Tok_dollar_op s));
     ("<", operator (fun s -> Tok_lt_op s));
     ("=", operator (fun s -> Tok_eq_op s));
@@ -2266,7 +2295,7 @@ let start_default = Dag.{
     ("abcdefghijklmnopqrstuvwxyz", uident);
     ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
     ("'", Codepoint_.codepoint);
-    ("\"", accept_istring_lditto);
+    ("\"", accept_istring_push Istring_interp Tok_istring_lditto);
     ("`", act {
         edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
         eoi=String_.accept_unterminated_rstring;
@@ -2318,12 +2347,11 @@ let start_default = Dag.{
 }
 
 let start t =
-  assert Stdlib.(match t.istring_state with [] -> true | hd :: _ -> hd <> Istring_spec); (* XXX Remove. *)
-  assert Stdlib.(match t.istring_state with [] -> true | hd :: _ -> hd <> Istring_expr); (* XXX Remove. *)
   match t.istring_state with
-  | []
-  | Istring_expr :: _ -> Dag.start start_default t
-  | (Istring_interp|Istring_spec) :: _ -> String_.start_istring t
+  | Istring_interp :: _ -> Dag.start String_.start_istring_interp t
+  | Istring_spec :: _ -> Dag.start String_.start_istring_spec t
+  | Istring_expr :: _
+  | [] -> Dag.start start_default t
 
 module LineDirective : sig
   val start: Text.Cursor.t -> t -> t * ConcreteToken.t option

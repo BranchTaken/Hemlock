@@ -187,6 +187,8 @@ module AbstractToken : sig
     | Tok_istring_lditto
     | Tok_isubstring of string Rendition.t
     | Tok_istring_pct
+    | Tok_istring_lparen_caret
+    | Tok_istring_caret_rparen
     | Tok_istring_rditto
     | Tok_rstring of string Rendition.t
     | Tok_bstring of string Rendition.t
