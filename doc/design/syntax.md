@@ -425,8 +425,8 @@ context:
   + Numeric types (`uns`, `int`, `[ui](8|16|32|64|128|256|512)`, `nat`, `zint`, `real`, `r(32|64)`)
   + `codepoint`
   + `string`
-  + Partially applied formatter functions of type `(>e:effect) -> Fmt.Formatter e >e-> Fmt.Formatter
-    e`
+  + Partially applied formatter functions of type `(>e:effect) -> t -> Fmt.Formatter e >e->
+    Fmt.Formatter e`, where `t` is the type of the value expression
 
   Composite polymorphic types like `type List 'a: List a` provide formatters which can be composed
   to produce partially applied formatter functions, as shown later.
@@ -436,17 +436,20 @@ context:
   The following example shows how a string containing format specifiers is desugared.
 
   ```hemlock
+  let answer = 42
+
   # Formatted string.
-  "Hello %s(^"Fred"^), this is %b(^true^)ly a list: %f(^List.fmt Uns.fmt [0; 1; 2]^)"
+  "Hello %s(^"Fred"^), %u=(^answer^) and this is a list: %(^List.fmt Uns.fmt^)(^[0; 1; 2]^)"
 
   # Desugared form.
   Basis.String.Fmt.empty
     |> Basis.Fmt.fmt "Hello "
     |> Basis.String.fmt ("Fred")
-    |> Basis.Fmt.fmt ", this is "
-    |> Basis.Bool.fmt (true)
-    |> Basis.Fmt.fmt "ly a list: "
-    |> (List.fmt Uns.fmt [0; 1; 2])
+    |> Basis.Fmt.fmt ", "
+    |> Basis.Fmt.fmt "answer="
+    |> Basis.Uns.fmt (answer)
+    |> Basis.Fmt.fmt " and this is a list: "
+    |> (List.fmt Uns.fmt) ([0; 1; 2])
     |> Basis.Fmt.to_string
   ```
 
@@ -494,7 +497,7 @@ context:
 
   Format specifiers are of the form:
   ```
-  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<base>][<notation>][<pretty>][<type>](^...^)
+  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<base>][<notation>][<pretty>][<fmt>][<sep>](^...^)
   ```
   + `'<pad>'` (`?pad:codepoint`): Pad with specified codepoint (default: `' '`; complete codepoint
     literal syntax supported)
@@ -544,7 +547,7 @@ context:
     * Numeric types: Append type suffix
     * Codepoint: `'c'`, special codepoints escaped
     * String: `"some string"`, special codepoints escaped
-  + `<type>`: Type abbreviation
+  + `<fmt>`: Formatter to use, designated via type abbreviation or nested expression
     * `b`: `bool` (`%b(^...^)` is unambiguous with respect to e.g. binary-formatted `uns` —
       `%bu(^...^)`)
     * `[ui](8|16|32|64|128|256|512)?`, `z`, `n`, `r(32|64)?`: Numeric type of corresponding literal
@@ -552,26 +555,31 @@ context:
     * `c`: `codepoint` (`%c(^...^)` is unambiguous with respect to e.g. compact-formatted `real` —
       `%cr(^...^)`)
     * `s`: `string`
-    * `f`: Partially applied formatter of type `(>e:effect) -> Fmt.Formatter e >e-> Fmt.Formatter e`
+    * `(^...^)`: Partially applied formatter of type `(>e:effect) -> t -> Fmt.Formatter e >e->
+      Fmt.Formatter e`, where `t` is the type of the value expression
+  + `<sep>`: Separator between stringified representation of value and its formatted
+    representation, i.e. `<stringified><sep><repr>`, where `<sep>` matches `[ ]*<infix_op>[ ]*` and
+    `<infix_op>` matches an infix operator
 
   Examples:
 
   ```hemlock
-  "%s(^name^)"
-  "%#xu(^age^)"
-  "%u(^succ age^)"
-  "%pz(^x^)"
-  "%^50f(^List.fmt String.fmt children^)"
-  "%^50f(^List.fmt String.fmt (List.mapi children ~f:(fun i child ->
-      "%u(^succ i^):%s(^child^)"
-    ))^)"
-  "%f(^(List.fmt String.fmt) children^)"
-  "%016#xu(^some_uns^)"
-  "%'␠'^*(^page_width^)s(^title^)\n"
-  "%'␠'^s(^title^)\n"
-  "(%'*'98s(^""^))" # Length-100 "(**...**)" string.
-  "%#xu(^x^) > %#xu(^y^) -> %b(^x > y^)"
-  "%#bu(^x^) %#ou(^x^) %#u(^x^) %#xu(^x^)"
+  "%s(^name^)"                              # "Fred"
+  "%#xu=(^age^)"                            # "age=0x2a"
+  "%u(^succ age^)"                          # "43"
+  "%pz=(^x^)"                               # "x=42z"
+  "%016#xu(^some_uns^)"                     # "000000000000002a"
+  "%'␠'^*(^page_width^)s(^title^)\n"        # "  Some Book Title  "
+  "(%'*'98s(^""^))"                         # Length-100 "(**...**)" string.
+  "%#xu=(^x^) > %#xu=(^y^) -> %b(^x > y^)"  # "x=0x2a > y=0x2b -> false"
+  "%#bu(^x^) %#ou(^x^) %#u(^x^) %#xu(^x^)"  # "0b1111 0o17 15 0xf"
+  "%(^(List.fmt String.fmt)^)=(^children^)" # "children=[\"Alice\"; \"Bob\"]"
+  "%^24(^List.fmt String.fmt^)(^children^)" # "    [\"Alice\"; \"Bob\"]    "
+  "%^24(^List.fmt String.fmt^)(^
+      (List.mapi children ~f:(fun i child ->
+          "%u(^succ i^):%s(^child^)"
+        ))
+    ^)"                                     # "  [\"1:Alice\"; \"2:Bob\"]  "
   ```
 
 ## Line directives
