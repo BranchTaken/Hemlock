@@ -583,10 +583,28 @@ type line_state =
   | Line_delim
   | Line_body
 
+(* Istring_state determines what starting state to feed to Dag.start. States may be skipped, e.g. if
+ * justification is not specified, but ordering through the spec/expr states is strict. Upon
+ * completing specifier scanning the state returns to interp. *)
 type istring_state =
-  | Istring_interp (* Scanning interpolated string data. *)
-  | Istring_spec (* Scanning format specifier. *)
-  | Istring_expr (* Inside (^...^)-delimited expression. *)
+  | Istring_interp
+  | Istring_spec_pct_seen
+  (* XXX | Istring_spec_pad_seen *)
+  (* XXX | Istring_spec_just_seen *)
+  (* XXX | Istring_spec_sign_seen *)
+  (* XXX | Istring_spec_alt_seen *)
+  (* XXX | Istring_spec_zpad_seen *)
+  | Istring_expr_width
+  (* XXX | Istring_spec_width_seen *)
+  (* XXX | Istring_expr_precision *)
+  (* XXX | Istring_spec_precision_seen *)
+  (* XXX | Istring_spec_base_seen *)
+  (* XXX | Istring_spec_notation_seen *)
+  (* XXX | Istring_spec_pretty_seen *)
+  (* XXX | Istring_expr_fmt *)
+  (* XXX | Istring_spec_fmt_seen *)
+  (* XXX | Istring_spec_sep_seen *)
+  | Istring_expr_value of Text.Cursor.t (* Cursor is start of value expression to be stringified. *)
 
 type t = {
   path: string option;
@@ -1151,8 +1169,7 @@ end = struct
 end
 
 module String_ : sig
-  val start_istring_interp: Dag.state
-  val start_istring_spec: Dag.state
+  val start_state_opt: t -> Dag.state option
   val bstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val accept_unterminated_rstring: Text.Cursor.t -> t -> t * ConcreteToken.t
@@ -1256,7 +1273,7 @@ end = struct
 
   let start_istring_interp = Dag.{
     edges=map_of_cps_alist [
-      ("%", accept_istring_trans Istring_spec Tok_istring_pct);
+      ("%", accept_istring_trans Istring_spec_pct_seen Tok_istring_pct);
       ("\"", accept_istring_pop Tok_istring_rditto);
     ];
     eoi=end_of_input;
@@ -1268,7 +1285,7 @@ end = struct
       ("'", Codepoint_.codepoint);
       ("(", act {
           edges=map_of_cps_alist [
-            ("^", accept_istring_trans Istring_expr Tok_istring_lparen_caret)
+            ("^", accept_istring_trans Istring_expr_width Tok_istring_lparen_caret)
           ];
           eoi=accept Tok_error;
           default=accept_excl Tok_error;
@@ -1478,6 +1495,15 @@ end = struct
     end in
     let lmargin = Text.(Pos.col (Cursor.pos cursor)) in
     fn (Codepoints []) lmargin cursor t
+
+  let start_state_opt t =
+    assert (Istring_expr_value t.cursor |> (fun _ -> true)); (* XXX Remove. *)
+    match t.istring_state with
+    | Istring_interp :: _ -> Some start_istring_interp
+    | Istring_spec_pct_seen :: _ -> Some start_istring_spec
+    | Istring_expr_width :: _
+    | _ :: _ -> not_implemented "XXX"
+    | [] -> None
 end
 
 type nsmap =
@@ -2254,8 +2280,10 @@ let start_default = Dag.{
           (")", (fun ppcursor pcursor cursor t ->
               (* XXX We need to know whether this is the {width,precision,fmt} vs value expression,
                * so that we can transition to Istring_spec vs Istring_interp. *)
+              (* XXX This may be better implemented as a `String_.state_next` function based on
+               * current state and token being accepted. *)
               match t.istring_state with
-              | Istring_expr :: _ ->
+              | Istring_expr_value _XXX :: _ ->
                 accept_istring_trans Istring_interp Tok_istring_caret_rparen ppcursor pcursor cursor
                   t
               | _ :: _ -> not_implemented "XXX"
@@ -2347,11 +2375,11 @@ let start_default = Dag.{
 }
 
 let start t =
-  match t.istring_state with
-  | Istring_interp :: _ -> Dag.start String_.start_istring_interp t
-  | Istring_spec :: _ -> Dag.start String_.start_istring_spec t
-  | Istring_expr :: _
-  | [] -> Dag.start start_default t
+  let start_state = match String_.start_state_opt t with
+    | Some state -> state
+    | None -> start_default
+  in
+  Dag.start start_state t
 
 module LineDirective : sig
   val start: Text.Cursor.t -> t -> t * ConcreteToken.t option
