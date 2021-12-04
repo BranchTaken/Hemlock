@@ -678,9 +678,14 @@ let accept_line_delim atoken cursor t =
 let accept_line_delim_incl atoken _ppcursor _pcursor cursor t =
   accept_line_delim atoken cursor t
 
-(* The scanner's directed acyclic subgraphs are expressed as DAGs of states with a unified state
- * transition driver. *)
-module Dag : sig
+module type IDagEngine = sig
+  type t
+
+  val cursor: t -> Text.Cursor.t
+end
+
+module type SDagEngine = sig
+  include IDagEngine
   type action = Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   type eoi_action = Text.Cursor.t -> t -> t * ConcreteToken.t
   type state = {
@@ -688,9 +693,16 @@ module Dag : sig
     eoi: eoi_action;
     default: action;
   }
+
   val act: state -> Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val start: state -> t -> t * ConcreteToken.t
-end = struct
+end
+
+(* The scanner's directed acyclic subgraphs are expressed as DAGs of states with uniform state
+ * transition engines. *)
+module MakeDagEngine (T : IDagEngine) : SDagEngine
+  with type t = T.t
+= struct
+  include T
   type action = Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   type eoi_action = Text.Cursor.t -> t -> t * ConcreteToken.t
   type state = {
@@ -707,9 +719,30 @@ end = struct
         | Some action' -> action' pcursor cursor cursor' t
         | None -> state.default pcursor cursor cursor' t
       end
+end
 
-  let start state t =
-    act state t.cursor t.cursor t.cursor t
+module DagEngineDefault = MakeDagEngine(struct
+  type nonrec t = t
+  let cursor t =
+    t.cursor
+end)
+
+module type IDag = sig
+  include SDagEngine
+  val start_state: state
+end
+
+module type SDag = sig
+  type t
+  val start: t -> t * ConcreteToken.t
+end
+
+module MakeDag (T : IDag) : SDag
+  with type t = T.t
+= struct
+  type t = T.t
+  let start t =
+    T.act T.start_state (T.cursor t) (T.cursor t) (T.cursor t) t
 end
 
 (***************************************************************************************************
@@ -1169,7 +1202,7 @@ end = struct
 end
 
 module String_ : sig
-  val start_state_opt: t -> Dag.state option
+  val start_opt: t -> (t * ConcreteToken.t) option
   val bstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
   val accept_unterminated_rstring: Text.Cursor.t -> t -> t * ConcreteToken.t
@@ -1208,10 +1241,10 @@ end = struct
           let mal = invalid_utf8 cursor cursor' t in
           fn (accum_mal mal accum) cursor' t
         end
-      | Some (cp, true, cursor') -> f accum cursor cp cursor' t
+      | Some (cp, true, cursor') -> f accum cp cursor cursor' t
     end
     and fn_bslash_u_lcurly nat bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
+      fn_wrapper accum cursor t ~f:(fun accum cp cursor cursor' t ->
         match Map.get cp Codepoint_.u_map with
         | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
         | Some UMapDigit ->
@@ -1230,7 +1263,7 @@ end = struct
       )
     end
     and fn_bslash_u bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
+      fn_wrapper accum cursor t ~f:(fun accum cp cursor cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '{') ->
           fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor' t
@@ -1245,7 +1278,7 @@ end = struct
       )
     end
     and fn_bslash bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum _cursor cp cursor' t ->
+      fn_wrapper accum cursor t ~f:(fun accum cp _cursor cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char 'u') -> fn_bslash_u bslash_cursor accum cursor' t
         | cp when Codepoint.(cp = of_char 't') -> fn (accum_cp Codepoint.ht accum) cursor' t
@@ -1261,7 +1294,7 @@ end = struct
       )
     end
     and fn accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cursor cp cursor' t ->
+      fn_wrapper accum cursor t ~f:(fun accum cp cursor cursor' t ->
         match cp with
         | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
         | cp when Codepoint.(cp = of_char '%') -> accept_isubstring accum cursor t
@@ -1271,29 +1304,35 @@ end = struct
     end in
     fn (Codepoints []) pcursor t
 
-  let start_istring_interp = Dag.{
-    edges=map_of_cps_alist [
-      ("%", accept_istring_trans Istring_spec_pct_seen Tok_istring_pct);
-      ("\"", accept_istring_pop Tok_istring_rditto);
-    ];
-    eoi=end_of_input;
-    default=istring_interp;
-  }
+  module DagIstringInterp = MakeDag(struct
+    include DagEngineDefault
+    let start_state = {
+      edges=map_of_cps_alist [
+        ("%", accept_istring_trans Istring_spec_pct_seen Tok_istring_pct);
+        ("\"", accept_istring_pop Tok_istring_rditto);
+      ];
+      eoi=end_of_input;
+      default=istring_interp;
+    }
+  end)
 
-  let start_istring_spec = Dag.{
-    edges=map_of_cps_alist [
-      ("'", Codepoint_.codepoint);
-      ("(", act {
-          edges=map_of_cps_alist [
-            ("^", accept_istring_trans Istring_expr_width Tok_istring_lparen_caret)
-          ];
-          eoi=accept Tok_error;
-          default=accept_excl Tok_error;
-        });
-    ];
-    eoi=end_of_input;
-    default=accept_incl Tok_error;
-  }
+  module DagIstringSpec = MakeDag(struct
+    include DagEngineDefault
+    let start_state = {
+      edges=map_of_cps_alist [
+        ("'", Codepoint_.codepoint);
+        ("(", act {
+            edges=map_of_cps_alist [
+              ("^", accept_istring_trans Istring_expr_width Tok_istring_lparen_caret)
+            ];
+            eoi=accept Tok_error;
+            default=accept_excl Tok_error;
+          });
+      ];
+      eoi=end_of_input;
+      default=accept_incl Tok_error;
+    }
+  end)
 
   type tag_accum =
     {
@@ -1496,11 +1535,11 @@ end = struct
     let lmargin = Text.(Pos.col (Cursor.pos cursor)) in
     fn (Codepoints []) lmargin cursor t
 
-  let start_state_opt t =
+  let start_opt t =
     assert (Istring_expr_value t.cursor |> (fun _ -> true)); (* XXX Remove. *)
     match t.istring_state with
-    | Istring_interp :: _ -> Some start_istring_interp
-    | Istring_spec_pct_seen :: _ -> Some start_istring_spec
+    | Istring_interp :: _ -> Some (DagIstringInterp.start t)
+    | Istring_spec_pct_seen :: _ -> Some (DagIstringSpec.start t)
     | Istring_expr_width :: _
     | _ :: _ -> not_implemented "XXX"
     | [] -> None
@@ -2208,178 +2247,179 @@ end = struct
     next_suffix Nat.k_0 Signed pcursor accum Dec cursor t
 end
 
-let start_default = Dag.{
-  edges=map_of_cps_alist [
-    (",", accept_incl Tok_comma);
-    (";", act {
-        edges=map_of_cps_alist [
-          (";", accept_incl Tok_semi_semi);
-        ];
-        eoi=accept Tok_semi;
-        default=accept_excl Tok_semi;
-      });
-    ("(", act {
-        edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '*') ~v:paren_comment;
-        eoi=accept Tok_lparen;
-        default=accept_excl Tok_lparen;
-      });
-    (")", accept_incl Tok_rparen);
-    ("[", act {
-        edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
-            Tok_larray);
-        eoi=accept Tok_lbrack;
-        default=accept_excl Tok_lbrack;
-      });
-    ("]", accept_incl Tok_rbrack);
-    ("{", act {
-        edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
-            Tok_lmodule);
-        eoi=accept Tok_lcurly;
-        default=accept_excl Tok_lcurly;
-      });
-    ("}", accept_incl Tok_rcurly);
-    ("\\", act {
-        edges=map_of_cps_alist [
-          ("\n", whitespace);
-        ];
-        eoi=accept Tok_bslash;
-        default=accept_excl Tok_bslash;
-      });
-    ("&", accept_incl Tok_amp);
-    ("!", accept_incl Tok_xmark);
-    ("\n", accept_line_delim_incl Tok_whitespace);
-    ("~", act {
-        edges=map_of_cps_alist [
-          (operator_cps, operator (fun s -> Tok_tilde_op s));
-        ];
-        eoi=accept Tok_tilde;
-        default=accept_excl Tok_tilde;
-      });
-    ("?", act {
-        edges=map_of_cps_alist [
-          (operator_cps, operator (fun s -> Tok_qmark_op s));
-        ];
-        eoi=accept Tok_qmark;
-        default=accept_excl Tok_qmark;
-      });
-    ("*", act {
-        edges=map_of_cps_alist [
-          ("*", operator (fun s -> Tok_star_star_op s));
-          ("-+/%@^$<=>|:.~?", operator (fun s -> Tok_star_op s));
-        ];
-        eoi=accept (Tok_star_op "*");
-        default=accept_excl (Tok_star_op "*");
-      });
-    ("/", operator (fun s -> Tok_slash_op s));
-    ("%", operator (fun s -> Tok_pct_op s));
-    ("+", operator (fun s -> Tok_plus_op s));
-    ("-", operator (fun s -> Tok_minus_op s));
-    ("@", operator (fun s -> Tok_at_op s));
-    ("^", act {
-        edges=map_of_cps_alist [
-          (")", (fun ppcursor pcursor cursor t ->
-              (* XXX We need to know whether this is the {width,precision,fmt} vs value expression,
-               * so that we can transition to Istring_spec vs Istring_interp. *)
-              (* XXX This may be better implemented as a `String_.state_next` function based on
-               * current state and token being accepted. *)
-              match t.istring_state with
-              | Istring_expr_value _XXX :: _ ->
-                accept_istring_trans Istring_interp Tok_istring_caret_rparen ppcursor pcursor cursor
-                  t
-              | _ :: _ -> not_implemented "XXX"
-              | [] -> operator (fun s -> Tok_caret_op s) ppcursor ppcursor pcursor t
-            ));
-          (operator_cps, operator (fun s -> Tok_caret_op s));
-        ];
-        eoi=accept Tok_caret;
-        default=accept_excl Tok_caret;
-      });
-    ("$", operator (fun s -> Tok_dollar_op s));
-    ("<", operator (fun s -> Tok_lt_op s));
-    ("=", operator (fun s -> Tok_eq_op s));
-    (">", operator (fun s -> Tok_gt_op s));
-    ("|", act {
-        edges=map_of_cps_alist [
-          ("]", accept_incl Tok_rarray);
-          ("}", accept_incl Tok_rmodule);
-          (operator_cps, operator (fun s -> Tok_bar_op s));
-        ];
-        eoi=accept Tok_bar;
-        default=accept_excl Tok_bar;
-      });
-    (":", operator (fun s -> Tok_colon_op s));
-    (".", operator (fun s -> Tok_dot_op s));
-    (" ", whitespace);
-    ("#", hash_comment);
-    ("_", act {
-        edges=map_of_cps_alist [
-          ("abcdefghijklmnopqrstuvwxyz0123456789'", uident);
-          ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
-          ("_", uscore_ident);
-        ];
-        eoi=accept Tok_uscore;
-        default=accept_excl Tok_uscore;
-      });
-    ("abcdefghijklmnopqrstuvwxyz", uident);
-    ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
-    ("'", Codepoint_.codepoint);
-    ("\"", accept_istring_push Istring_interp Tok_istring_lditto);
-    ("`", act {
-        edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
-        eoi=String_.accept_unterminated_rstring;
-        default=String_.rstring;
-      });
-    ("0", act {
-        edges=map_of_cps_alist [
-          ("0_", Integer.(dec Nat.k_0));
-          ("1", Integer.(dec Nat.k_1));
-          ("2", Integer.(dec Nat.k_2));
-          ("3", Integer.(dec Nat.k_3));
-          ("4", Integer.(dec Nat.k_4));
-          ("5", Integer.(dec Nat.k_5));
-          ("6", Integer.(dec Nat.k_6));
-          ("7", Integer.(dec Nat.k_7));
-          ("8", Integer.(dec Nat.k_8));
-          ("9", Integer.(dec Nat.k_9));
-          ("b", Integer.(bin Nat.k_0));
-          ("o", Integer.(oct Nat.k_0));
-          ("x", Integer.(hex Nat.k_0));
-          ("u", Integer.zero_u_suffix);
-          ("i", Integer.zero_i_suffix);
-          ("r", Real.zero_r_suffix);
-          (".", act {
-              edges=map_of_cps_alist [
-                (operator_cps, accept_pexcl Integer.zero);
-              ];
-              eoi=accept Real.zero;
-              default=Real.zero_frac;
-            });
-          ("e", Real.zero_exp);
-          ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", Integer.mal_ident);
-        ];
-        eoi=accept Integer.zero;
-        default=accept_excl Integer.zero;
-      });
-    ("1", Integer.(dec Nat.k_1));
-    ("2", Integer.(dec Nat.k_2));
-    ("3", Integer.(dec Nat.k_3));
-    ("4", Integer.(dec Nat.k_4));
-    ("5", Integer.(dec Nat.k_5));
-    ("6", Integer.(dec Nat.k_6));
-    ("7", Integer.(dec Nat.k_7));
-    ("8", Integer.(dec Nat.k_8));
-    ("9", Integer.(dec Nat.k_9));
-  ];
-  eoi=end_of_input;
-  default=accept_incl Tok_error;
-}
+module DagDefault = MakeDag(struct
+  include DagEngineDefault
+  let start_state = {
+    edges=map_of_cps_alist [
+      (",", accept_incl Tok_comma);
+      (";", act {
+          edges=map_of_cps_alist [
+            (";", accept_incl Tok_semi_semi);
+          ];
+          eoi=accept Tok_semi;
+          default=accept_excl Tok_semi;
+        });
+      ("(", act {
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '*') ~v:paren_comment;
+          eoi=accept Tok_lparen;
+          default=accept_excl Tok_lparen;
+        });
+      (")", accept_incl Tok_rparen);
+      ("[", act {
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
+              Tok_larray);
+          eoi=accept Tok_lbrack;
+          default=accept_excl Tok_lbrack;
+        });
+      ("]", accept_incl Tok_rbrack);
+      ("{", act {
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
+              Tok_lmodule);
+          eoi=accept Tok_lcurly;
+          default=accept_excl Tok_lcurly;
+        });
+      ("}", accept_incl Tok_rcurly);
+      ("\\", act {
+          edges=map_of_cps_alist [
+            ("\n", whitespace);
+          ];
+          eoi=accept Tok_bslash;
+          default=accept_excl Tok_bslash;
+        });
+      ("&", accept_incl Tok_amp);
+      ("!", accept_incl Tok_xmark);
+      ("\n", accept_line_delim_incl Tok_whitespace);
+      ("~", act {
+          edges=map_of_cps_alist [
+            (operator_cps, operator (fun s -> Tok_tilde_op s));
+          ];
+          eoi=accept Tok_tilde;
+          default=accept_excl Tok_tilde;
+        });
+      ("?", act {
+          edges=map_of_cps_alist [
+            (operator_cps, operator (fun s -> Tok_qmark_op s));
+          ];
+          eoi=accept Tok_qmark;
+          default=accept_excl Tok_qmark;
+        });
+      ("*", act {
+          edges=map_of_cps_alist [
+            ("*", operator (fun s -> Tok_star_star_op s));
+            ("-+/%@^$<=>|:.~?", operator (fun s -> Tok_star_op s));
+          ];
+          eoi=accept (Tok_star_op "*");
+          default=accept_excl (Tok_star_op "*");
+        });
+      ("/", operator (fun s -> Tok_slash_op s));
+      ("%", operator (fun s -> Tok_pct_op s));
+      ("+", operator (fun s -> Tok_plus_op s));
+      ("-", operator (fun s -> Tok_minus_op s));
+      ("@", operator (fun s -> Tok_at_op s));
+      ("^", act {
+          edges=map_of_cps_alist [
+            (")", (fun ppcursor pcursor cursor t ->
+                (* XXX We need to know whether this is the {width,precision,fmt} vs value expression,
+                 * so that we can transition to Istring_spec vs Istring_interp. *)
+                (* XXX This may be better implemented as a `String_.state_next` function based on
+                 * current state and token being accepted. *)
+                match t.istring_state with
+                | Istring_expr_value _XXX :: _ ->
+                  accept_istring_trans Istring_interp Tok_istring_caret_rparen ppcursor pcursor cursor
+                    t
+                | _ :: _ -> not_implemented "XXX"
+                | [] -> operator (fun s -> Tok_caret_op s) ppcursor ppcursor pcursor t
+              ));
+            (operator_cps, operator (fun s -> Tok_caret_op s));
+          ];
+          eoi=accept Tok_caret;
+          default=accept_excl Tok_caret;
+        });
+      ("$", operator (fun s -> Tok_dollar_op s));
+      ("<", operator (fun s -> Tok_lt_op s));
+      ("=", operator (fun s -> Tok_eq_op s));
+      (">", operator (fun s -> Tok_gt_op s));
+      ("|", act {
+          edges=map_of_cps_alist [
+            ("]", accept_incl Tok_rarray);
+            ("}", accept_incl Tok_rmodule);
+            (operator_cps, operator (fun s -> Tok_bar_op s));
+          ];
+          eoi=accept Tok_bar;
+          default=accept_excl Tok_bar;
+        });
+      (":", operator (fun s -> Tok_colon_op s));
+      (".", operator (fun s -> Tok_dot_op s));
+      (" ", whitespace);
+      ("#", hash_comment);
+      ("_", act {
+          edges=map_of_cps_alist [
+            ("abcdefghijklmnopqrstuvwxyz0123456789'", uident);
+            ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
+            ("_", uscore_ident);
+          ];
+          eoi=accept Tok_uscore;
+          default=accept_excl Tok_uscore;
+        });
+      ("abcdefghijklmnopqrstuvwxyz", uident);
+      ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
+      ("'", Codepoint_.codepoint);
+      ("\"", accept_istring_push Istring_interp Tok_istring_lditto);
+      ("`", act {
+          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
+          eoi=String_.accept_unterminated_rstring;
+          default=String_.rstring;
+        });
+      ("0", act {
+          edges=map_of_cps_alist [
+            ("0_", Integer.(dec Nat.k_0));
+            ("1", Integer.(dec Nat.k_1));
+            ("2", Integer.(dec Nat.k_2));
+            ("3", Integer.(dec Nat.k_3));
+            ("4", Integer.(dec Nat.k_4));
+            ("5", Integer.(dec Nat.k_5));
+            ("6", Integer.(dec Nat.k_6));
+            ("7", Integer.(dec Nat.k_7));
+            ("8", Integer.(dec Nat.k_8));
+            ("9", Integer.(dec Nat.k_9));
+            ("b", Integer.(bin Nat.k_0));
+            ("o", Integer.(oct Nat.k_0));
+            ("x", Integer.(hex Nat.k_0));
+            ("u", Integer.zero_u_suffix);
+            ("i", Integer.zero_i_suffix);
+            ("r", Real.zero_r_suffix);
+            (".", act {
+                edges=map_of_cps_alist [
+                  (operator_cps, accept_pexcl Integer.zero);
+                ];
+                eoi=accept Real.zero;
+                default=Real.zero_frac;
+              });
+            ("e", Real.zero_exp);
+            ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", Integer.mal_ident);
+          ];
+          eoi=accept Integer.zero;
+          default=accept_excl Integer.zero;
+        });
+      ("1", Integer.(dec Nat.k_1));
+      ("2", Integer.(dec Nat.k_2));
+      ("3", Integer.(dec Nat.k_3));
+      ("4", Integer.(dec Nat.k_4));
+      ("5", Integer.(dec Nat.k_5));
+      ("6", Integer.(dec Nat.k_6));
+      ("7", Integer.(dec Nat.k_7));
+      ("8", Integer.(dec Nat.k_8));
+      ("9", Integer.(dec Nat.k_9));
+    ];
+    eoi=end_of_input;
+    default=accept_incl Tok_error;
+  }
+end)
 
 let start t =
-  let start_state = match String_.start_state_opt t with
-    | Some state -> state
-    | None -> start_default
-  in
-  Dag.start start_state t
+  match String_.start_opt t with
+  | Some (tok, t') -> tok, t'
+  | None -> DagDefault.start t
 
 module LineDirective : sig
   val start: Text.Cursor.t -> t -> t * ConcreteToken.t option
