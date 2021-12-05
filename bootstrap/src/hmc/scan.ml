@@ -738,9 +738,8 @@ module type SDag = sig
 end
 
 module MakeDag (T : IDag) : SDag
-  with type t = T.t
+  with type t := T.t
 = struct
-  type t = T.t
   let start t =
     T.act T.start_state (T.cursor t) (T.cursor t) (T.cursor t) t
 end
