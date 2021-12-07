@@ -568,7 +568,7 @@ context:
   "%#xu=(^age^)"                            # "age=0x2a"
   "%u(^succ age^)"                          # "43"
   "%pz=(^x^)"                               # "x=42z"
-  "%016#xu(^some_uns^)"                     # "000000000000002a"
+  "%016xu(^some_uns^)"                      # "000000000000002a"
   "%'␠'^*(^page_width^)s(^title^)\n"        # "  Some Book Title  "
   "(%'*'98s(^""^))"                         # Length-100 "(**...**)" string.
   "%#xu=(^x^) > %#xu=(^y^) -> %b(^x > y^)"  # "x=0x2a > y=0x2b -> false"
