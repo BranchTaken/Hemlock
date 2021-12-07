@@ -588,7 +588,7 @@ type line_state =
  * completing specifier scanning the state returns to interp. *)
 type istring_state =
   | Istring_interp
-  | Istring_spec_pct_seen
+  | Istring_spec_pct
   (* XXX | Istring_spec_pad_seen *)
   (* XXX | Istring_spec_just_seen *)
   (* XXX | Istring_spec_sign_seen *)
@@ -605,6 +605,7 @@ type istring_state =
   (* XXX | Istring_spec_fmt_seen *)
   (* XXX | Istring_spec_sep_seen *)
   | Istring_expr_value of Text.Cursor.t (* Cursor is start of value expression to be stringified. *)
+  | Istring_rditto
 
 type t = {
   path: string option;
@@ -666,10 +667,12 @@ let accept_istring_trans trans tok _ppcursor _pcursor cursor t =
   {t with cursor; istring_state=trans :: (List.tl t.istring_state)},
   (ConcreteToken.init tok source)
 
+(* XXX Remove.
 let accept_istring_pop tok _ppcursor _pcursor cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
   {t with cursor; istring_state=List.tl t.istring_state},
   (ConcreteToken.init tok source)
+*)
 
 let accept_line_delim atoken cursor t =
   let source = Source.init t.path t.bias t.cursor cursor in
@@ -747,10 +750,7 @@ end
 module type IDfaEngine = sig
   type t
   type view
-  module State : sig
-    type t
-    include IdentifiableIntf.S with type t := t
-  end
+  type state
 
   val view: t -> view
   val advance: view -> (codepoint * view) option
@@ -759,39 +759,39 @@ end
 module type SDfaEngine = sig
   include IDfaEngine
   type action_result =
-    | Transition of State.t
+    | Transition of state
     | Accept of ConcreteToken.t
-  and action = State.t -> view -> t -> t * action_result
+  and action = state -> view -> t -> t * action_result
   and node = {
     edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
     eoi: action;
     default: action;
   }
-  and node_map = (State.t, node, State.cmper_witness) Map.t
+  and node_of_state = state -> node
 
-  val act: node_map -> State.t -> view -> t -> t * action_result
-  val start: node_map -> State.t -> t -> t * ConcreteToken.t
+  val act: node_of_state -> state -> view -> t -> t * action_result
+  val start: node_of_state -> state -> t -> t * ConcreteToken.t
 end
 
 module MakeDfaEngine (T : IDfaEngine) : SDfaEngine
   with type t = T.t
   with type view = T.view
-  with type State.t = T.State.t
+  with type state = T.state
 = struct
   include T
   type action_result =
-    | Transition of State.t
+    | Transition of state
     | Accept of ConcreteToken.t
-  and action = State.t -> view -> t -> t * action_result
+  and action = state -> view -> t -> t * action_result
   and node = {
     edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
     eoi: action;
     default: action;
   }
-  and node_map = (State.t, node, State.cmper_witness) Map.t
+  and node_of_state = state -> node
 
-  let rec act nodes state_id view t =
-    let node = Map.get_hlt state_id nodes in
+  let rec act node_of_state state view t =
+    let node = node_of_state state in
     let action, view' = match advance view with
       | Some (cp, view') -> begin
           match Map.get cp node.edges with
@@ -800,20 +800,20 @@ module MakeDfaEngine (T : IDfaEngine) : SDfaEngine
         end
       | None -> node.eoi, view
     in
-    match action state_id view' t with
-    | t', Transition state_id' -> act nodes state_id' view' t'
+    match action state view' t with
+    | t', Transition state' -> act node_of_state state' view' t'
     | t', Accept token -> t', Accept token
 
-  let start nodes state_id t =
-    match act nodes state_id (view t) t with
+  let start node_of_state state t =
+    match act node_of_state state (view t) t with
     | _, Transition _ -> not_reached ()
     | t', Accept token -> t', token
 end
 
 module type IDfa = sig
   include SDfaEngine
-  val nodes: (State.t, node, State.cmper_witness) Map.t
-  val start_state: State.t
+  val node_of_state: state -> node
+  val start_state: state
 end
 
 module type SDfa = sig
@@ -825,37 +825,26 @@ module MakeDfa (T : IDfa) : SDfa
   with type t := T.t
 = struct
   let token t =
-    T.start T.nodes T.start_state t
+    T.start T.node_of_state T.start_state t
 end
 
-module MakeEnum (T : sig type t end):
-  IdentifiableIntf.S with type t = T.t
+module MakeDfaEngineDefault(T : sig type state end) : SDfaEngine
+  with type t = t
+  with type view = Text.Cursor.t * Text.Cursor.t * Text.Cursor.t
+  with type state := T.state
 = struct
-  module T = struct
-    type t = T.t
+  include MakeDfaEngine(struct
+      type nonrec t = t
+      type view = Text.Cursor.t * Text.Cursor.t * Text.Cursor.t
+      type state = T.state
 
-    let to_uns t =
-      let r = Obj.repr t in
-      Int64.of_int (
-        match Obj.is_block r with
-        | false -> Obj.magic r (* Simple variant, encoded as an integer. *)
-        | true -> Int.neg (Int.succ (Obj.tag r)) (* Tagged variant. *)
-      )
-
-    let hash_fold t =
-      Uns.hash_fold (to_uns t)
-
-    let cmp t0 t1 =
-      Uns.cmp (to_uns t0) (to_uns t1)
-
-    let to_string t =
-      Uns.to_string (to_uns t)
-
-    let pp t formatter =
-      formatter |> Fmt.fmt (to_string t)
-  end
-  include T
-  include Identifiable.Make(T)
+      let view t =
+        t.cursor, t.cursor, t.cursor
+      let advance (_ppcursor, pcursor, cursor) =
+        match Text.Cursor.next_opt cursor with
+        | None -> None
+        | Some (cp, cursor') -> Some (cp, (pcursor, cursor, cursor'))
+    end)
 end
 
 (***************************************************************************************************
@@ -1121,6 +1110,14 @@ let uscore_ident _ppcursor pcursor cursor t =
   fn cursor t
 
 let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past t =
+  Option.value_map (Nat.to_uns_opt nat)
+    ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
+    ~default:None
+  |> Option.value_map
+    ~f:(fun cp -> accum_cp cp accum)
+    ~default:(accum_mal (invalid_unicode base past t) accum)
+
+(* XXX Remove.
   let nat_to_cp_opt nat = begin
     match Nat.to_uns_opt nat with
     | None -> None
@@ -1129,16 +1126,9 @@ let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past t =
   match nat_to_cp_opt nat with
   | None -> accum_mal (invalid_unicode base past t) accum
   | Some cp -> accum_cp cp accum
+*)
 
 module Codepoint_ : sig
-  type umap =
-    | UMapUscore
-    | UMapDigit
-    | UMapRcurly
-    | UMapDitto
-    | UMapTick
-
-  val u_map: (Codepoint.t, umap, Codepoint.cmper_witness) Map.t
   val codepoint: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
   type umap =
@@ -1333,149 +1323,242 @@ end = struct
     | Malformations mals -> Malformations (mal :: mals)
 
   (* Interpolated substring: "..." *)
-  let istring_interp _ppcursor pcursor _cursor t =
-    let accept_isubstring accum cursor t = begin
-      match accum with
-      | Codepoints cps -> accept (Tok_isubstring (Constant (String.of_list_rev cps))) cursor t
-      | Malformations mals -> accept (Tok_isubstring (Malformed (List.rev mals))) cursor t
-    end in
+  module DfaIstringInterp = MakeDfa(struct
+    type accum =
+      | Codepoints of codepoint list
+      | Malformations of AbstractToken.Rendition.Malformation.t list
+    type state =
+      | State_start of accum
+      | State_bslash of accum * Text.Cursor.t
+      | State_bslash_u of accum * Text.Cursor.t
+      | State_bslash_u_lcurly of accum * Text.Cursor.t * Nat.t
+    include MakeDfaEngineDefault(struct type nonrec state = state end)
 
-    let rec fn_wrapper ~f accum cursor t = begin
-      match Text.Cursor.nextv_opt cursor with
-      | None -> begin
-          let mal = unterminated_string t.cursor cursor t in
-          let t' = match t.istring_state with
-            | [] -> t
-            | _ :: istring_state -> {t with istring_state}
-          in
-          accept_isubstring (accum_mal mal accum) cursor t'
-        end
-      | Some (_, false, cursor') -> begin
-          let mal = invalid_utf8 cursor cursor' t in
-          fn (accum_mal mal accum) cursor' t
-        end
-      | Some (cp, true, cursor') -> f accum cp cursor cursor' t
-    end
-    and fn_bslash_u_lcurly nat bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cp cursor cursor' t ->
-        match Map.get cp Codepoint_.u_map with
-        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
-        | Some UMapDigit ->
-          fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor' t
-        | Some UMapRcurly ->
-          fn (accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor t) cursor' t
-        | Some UMapDitto -> begin
-            let mal = partial_unicode bslash_cursor cursor t in
-            accept_isubstring (accum_mal mal accum) cursor t
-          end
-        | Some UMapTick
-        | None -> begin
-            let mal = partial_unicode bslash_cursor cursor t in
-            fn (accum_mal mal accum) cursor t
-          end
-      )
-    end
-    and fn_bslash_u bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cp cursor cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '{') ->
-          fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char '"') -> begin
-            let mal = illegal_backslash bslash_cursor cursor t in
-            accept_isubstring (accum_mal mal accum) cursor t
-          end
-        | _ -> begin
-            let mal = illegal_backslash bslash_cursor cursor t in
-            fn (accum_mal mal accum) cursor t
-          end
-      )
-    end
-    and fn_bslash bslash_cursor accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cp _cursor cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char 'u') -> fn_bslash_u bslash_cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char 't') -> fn (accum_cp Codepoint.ht accum) cursor' t
-        | cp when Codepoint.(cp = of_char 'n') -> fn (accum_cp Codepoint.nl accum) cursor' t
-        | cp when Codepoint.(cp = of_char 'r') -> fn (accum_cp Codepoint.cr accum) cursor' t
-        | cp when Codepoint.(cp = of_char '"') -> fn (accum_cp cp accum) cursor' t
-        | cp when Codepoint.(cp = of_char '\\') -> fn (accum_cp cp accum) cursor' t
-        | cp when Codepoint.(cp = of_char '%') -> fn (accum_cp cp accum) cursor' t
-        | _ -> begin
-            let mal = illegal_backslash bslash_cursor cursor' t in
-            fn (accum_mal mal accum) cursor' t
-          end
-      )
-    end
-    and fn accum cursor t = begin
-      fn_wrapper accum cursor t ~f:(fun accum cp cursor cursor' t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char '%') -> accept_isubstring accum cursor t
-        | cp when Codepoint.(cp = of_char '"') -> accept_isubstring accum cursor t
-        | _ -> fn (accum_cp cp accum) cursor' t
-      )
-    end in
-    fn (Codepoints []) pcursor t
+    let accum_cp cp = function
+      | Codepoints cps -> Codepoints (cp :: cps)
+      | (Malformations _) as mals -> mals
 
-  module DagIstringInterp = MakeDag(struct
-    include DagEngineDefault
-    let start_state = {
+    let accum_mal mal = function
+      | Codepoints _ -> Malformations [mal]
+      | Malformations mals -> Malformations (mal :: mals)
+
+    let extract_accum = function
+      | State_start accum -> accum
+      | State_bslash (accum, _) -> accum
+      | State_bslash_u (accum, _) -> accum
+      | State_bslash_u_lcurly (accum, _, _) -> accum
+
+    let accept_isubstring_trans trans state (_ppcursor, pcursor, _cursor) t =
+      let source = Source.init t.path t.bias t.cursor pcursor in
+      let tok = match (extract_accum state) with
+        | Codepoints cps -> AbstractToken.Tok_isubstring (Constant (String.of_list_rev cps))
+        | Malformations mals -> AbstractToken.Tok_isubstring (Malformed (List.rev mals))
+      in
+      {t with cursor=pcursor; istring_state=trans :: (List.tl t.istring_state)},
+      Accept (ConcreteToken.init tok source)
+
+    (* XXX This perhaps shouldn't exist. *)
+    let accept_isubstring_pop state (_ppcursor, _pcursor, cursor) t =
+      let source = Source.init t.path t.bias t.cursor cursor in
+      let tok = match (extract_accum state) with
+        | Codepoints cps -> AbstractToken.Tok_isubstring (Constant (String.of_list_rev cps))
+        | Malformations mals -> AbstractToken.Tok_isubstring (Malformed (List.rev mals))
+      in
+      {t with cursor; istring_state=List.tl t.istring_state},
+      Accept (ConcreteToken.init tok source)
+
+    let eoi state (ppcursor, pcursor, cursor) t =
+      let accum = extract_accum state in
+      let mal = unterminated_string t.cursor cursor t in
+      let t' = match t.istring_state with
+        | [] -> t
+        | _ :: istring_state -> {t with istring_state}
+      in
+      accept_isubstring_pop (State_start (accum_mal mal accum)) (ppcursor, pcursor, cursor) t'
+
+    let accum_cp cp state _view t =
+      let accum = extract_accum state in
+      t, Transition (State_start (accum_cp cp accum))
+
+    let accum_raw state (ppcursor, pcursor, cursor) t =
+      let cp = Text.Cursor.rget pcursor in
+      accum_cp cp state (ppcursor, pcursor, cursor) t
+
+    let accum_illegal_backslash accum bslash_cursor cursor t =
+      let mal = illegal_backslash bslash_cursor cursor t in
+      t, Transition (State_start (accum_mal mal accum))
+
+    let accum_invalid_unicode accum bslash_cursor cursor t =
+      let mal = invalid_unicode bslash_cursor cursor t in
+      t, Transition (State_start (accum_mal mal accum))
+
+    let accum_partial_unicode accum bslash_cursor cursor t =
+      let mal = partial_unicode bslash_cursor cursor t in
+      t, Transition (State_start (accum_mal mal accum))
+
+    let noop state _view t =
+      t, Transition state
+
+    let node_start = {
       edges=map_of_cps_alist [
-        ("%", accept_istring_trans Istring_spec_pct_seen Tok_istring_pct);
-        ("\"", accept_istring_pop Tok_istring_rditto);
-      ];
-      eoi=end_of_input;
-      default=istring_interp;
+        ("%", accept_isubstring_trans Istring_spec_pct);
+        ("\"", accept_isubstring_trans Istring_rditto);
+        ("\\", (fun state (_ppcursor, pcursor, _cursor) t ->
+          let accum = extract_accum state in
+          t, Transition (State_bslash (accum, pcursor))))
+      ]; eoi;
+      default=accum_raw;
     }
+
+    let extract_state_bslash = function
+      | State_bslash (accum, bslash_cursor) -> accum, bslash_cursor
+      | _ -> not_reached ()
+
+    let node_bslash = {
+      edges=map_of_cps_alist [
+        ("u", (fun state (_ppcursor, pcursor, _cursor) t ->
+          let accum = extract_accum state in
+          t, Transition (State_bslash_u (accum, pcursor))));
+        ("t", accum_cp Codepoint.ht);
+        ("n", accum_cp Codepoint.nl);
+        ("r", accum_cp Codepoint.cr);
+        ("\"\\%", accum_raw);
+      ]; eoi;
+      default=(fun state (_ppcursor, _pcursor, cursor) t ->
+        let accum, bslash_cursor = extract_state_bslash state in
+        accum_illegal_backslash accum bslash_cursor cursor t
+      );
+    }
+
+    let extract_state_bslash_u = function
+      | State_bslash_u (accum, bslash_cursor) -> accum, bslash_cursor
+      | _ -> not_reached ()
+
+    let node_bslash_u = {
+      edges=map_of_cps_alist [
+        ("{", (fun state _view t ->
+            let accum, bslash_cursor = match state with
+              | State_bslash_u (accum, bslash_cursor) -> accum, bslash_cursor
+              | _ -> not_reached ()
+            in
+            t, Transition (State_bslash_u_lcurly (accum, bslash_cursor, Nat.k_0))
+          ));
+        ("\"", (fun state (ppcursor, pcursor, cursor) t ->
+            let accum, bslash_cursor = extract_state_bslash_u state in
+            let mal = illegal_backslash bslash_cursor cursor t in
+            accept_isubstring_pop (State_start (accum_mal mal accum)) (ppcursor, pcursor, cursor) t
+          ));
+      ]; eoi;
+      default=(fun state (_ppcursor, _pcursor, cursor) t ->
+        let accum, bslash_cursor = extract_state_bslash_u state in
+        accum_illegal_backslash accum bslash_cursor cursor t
+      );
+    }
+
+    let extract_state_u_lcurly = function
+      | State_bslash_u_lcurly (accum, bslash_cursor, nat) -> accum, bslash_cursor, nat
+      | _ -> not_reached ()
+
+    let node_bslash_u_lcurly = {
+      edges=map_of_cps_alist [
+        ("_", noop);
+        ("0123456789abcdef", (fun state (_ppcursor, pcursor, _cursor) t ->
+            let accum, bslash_cursor, nat = extract_state_u_lcurly state in
+            let cp = Text.Cursor.rget pcursor in
+            let nat' = Radix.(nat_accum (nat_of_cp cp) nat Hex) in
+            t, Transition (State_bslash_u_lcurly (accum, bslash_cursor, nat'))
+          ));
+        ("}", (fun state (_ppcursor, _pcursor, cursor) t ->
+            let accum, bslash_cursor, nat = extract_state_u_lcurly state in
+            Option.value_map (Nat.to_uns_opt nat)
+              ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
+              ~default:None
+            |> Option.value_map
+              ~f:(fun cp -> accum_cp cp state (_ppcursor, _pcursor, cursor) t)
+              ~default:(accum_invalid_unicode accum bslash_cursor cursor t)
+          ));
+        ("\"", (fun state (ppcursor, pcursor, cursor) t ->
+            let accum, bslash_cursor = extract_state_bslash_u state in
+            let mal = partial_unicode bslash_cursor cursor t in
+            accept_isubstring_pop (State_start (accum_mal mal accum)) (ppcursor, pcursor, cursor) t
+          ));
+      ]; eoi;
+      default=(fun state (_ppcursor, _pcursor, cursor) t ->
+        let accum, bslash_cursor = extract_state_bslash_u state in
+        accum_partial_unicode accum bslash_cursor cursor t
+      );
+    }
+
+    let node_of_state = function
+      | State_start _ -> node_start
+      | State_bslash _ -> node_bslash
+      | State_bslash_u _ -> node_bslash_u
+      | State_bslash_u_lcurly _ -> node_bslash_u_lcurly
+
+    let start_state = State_start (Codepoints [])
   end)
 
   module DfaIstringSpec = MakeDfa(struct
-    type state_id =
+    type state =
       | Start
       | Lparen
-    include MakeDfaEngine(struct
-        type nonrec t = t
-        type view = Text.Cursor.t * Text.Cursor.t * Text.Cursor.t
-        module State = MakeEnum(struct
-          type t = state_id
-        end)
-        let view t =
-          t.cursor, t.cursor, t.cursor
-        let advance (_ppcursor, pcursor, cursor) =
-          match Text.Cursor.next_opt cursor with
-          | None -> None
-          | Some (cp, cursor') -> Some (cp, (pcursor, cursor, cursor'))
-      end)
+    include MakeDfaEngineDefault(struct type nonrec state = state end)
 
     let wrap_accept (t, tok) =
       t, Accept tok
 
-    let eoi _state (ppcursor, pcursor, cursor) t =
+    let error _state (ppcursor, pcursor, cursor) t =
       wrap_accept (accept_incl Tok_error ppcursor pcursor cursor t)
 
-    let default _state (ppcursor, pcursor, cursor) t =
-      wrap_accept (accept_incl Tok_error ppcursor pcursor cursor t)
+    let eoi = error
 
-    let nodes = Map.of_alist (module State) [
-      (Start, {
+    let default = error
+
+    let transition state' _state _view t =
+      t, Transition state'
+
+    let accept ~f _state (ppcursor, pcursor, cursor) t =
+      wrap_accept (f ppcursor pcursor cursor t)
+
+    let node_of_state = function
+      | Start -> {
           edges=map_of_cps_alist [
-            ("'", (fun _state (ppcursor, pcursor, cursor) t ->
-                wrap_accept (Codepoint_.codepoint ppcursor pcursor cursor t)));
-            ("(", (fun _state (_ppcursor, _pcursor, _cursor) t -> t, (Transition Lparen));)
-          ];
-          eoi;
-          default;
-        });
-      (Lparen, {
+            ("'", accept ~f:Codepoint_.codepoint);
+            ("(", transition Lparen)
+          ]; eoi; default;
+        }
+      | Lparen -> {
           edges=map_of_cps_alist [
-            ("^", (fun _state (ppcursor, pcursor, cursor) t ->
-                wrap_accept (accept_istring_trans Istring_expr_width Tok_istring_lparen_caret
-                    ppcursor pcursor cursor t)));
-          ];
-          eoi;
-          default;
-        });
-    ]
+            ("^", accept ~f:(accept_istring_trans Istring_expr_width Tok_istring_lparen_caret));
+          ]; eoi; default;
+        }
+
+    let start_state = Start
+  end)
+
+  module DfaIstringRditto = MakeDfa(struct
+    type state =
+      | Start
+    include MakeDfaEngineDefault(struct type nonrec state = state end)
+
+    let error _state _view _t =
+      not_reached ()
+
+    let eoi = error
+
+    let default = error
+
+    let accept_isubstring_pop tok _state (_ppcursor, _pcursor, cursor) t =
+      let source = Source.init t.path t.bias t.cursor cursor in
+      {t with cursor; istring_state=List.tl t.istring_state},
+      Accept (ConcreteToken.init tok source)
+
+    let node_of_state = function
+      | Start -> {
+          edges=map_of_cps_alist [
+            ("\"", accept_isubstring_pop Tok_istring_rditto);
+          ]; eoi; default;
+        }
 
     let start_state = Start
   end)
@@ -1684,8 +1767,9 @@ end = struct
   let start_opt t =
     assert (Istring_expr_value t.cursor |> (fun _ -> true)); (* XXX Remove. *)
     match t.istring_state with
-    | Istring_interp :: _ -> Some (DagIstringInterp.start t)
-    | Istring_spec_pct_seen :: _ -> Some (DfaIstringSpec.token t)
+    | Istring_interp :: _ -> Some (DfaIstringInterp.token t)
+    | Istring_spec_pct :: _ -> Some (DfaIstringSpec.token t)
+    | Istring_rditto :: _ -> Some (DfaIstringRditto.token t)
     | Istring_expr_width :: _
     | _ :: _ -> not_implemented "XXX"
     | [] -> None
