@@ -744,6 +744,120 @@ module MakeDag (T : IDag) : SDag
     T.act T.start_state (T.cursor t) (T.cursor t) (T.cursor t) t
 end
 
+module type IDfaEngine = sig
+  type t
+  type view
+  module State : sig
+    type t
+    include IdentifiableIntf.S with type t := t
+  end
+
+  val view: t -> view
+  val advance: view -> (codepoint * view) option
+end
+
+module type SDfaEngine = sig
+  include IDfaEngine
+  type action_result =
+    | Transition of State.t
+    | Accept of ConcreteToken.t
+  and action = State.t -> view -> t -> t * action_result
+  and node = {
+    edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
+    eoi: action;
+    default: action;
+  }
+  and node_map = (State.t, node, State.cmper_witness) Map.t
+
+  val act: node_map -> State.t -> view -> t -> t * action_result
+  val start: node_map -> State.t -> t -> t * ConcreteToken.t
+end
+
+module MakeDfaEngine (T : IDfaEngine) : SDfaEngine
+  with type t = T.t
+  with type view = T.view
+  with type State.t = T.State.t
+= struct
+  include T
+  type action_result =
+    | Transition of State.t
+    | Accept of ConcreteToken.t
+  and action = State.t -> view -> t -> t * action_result
+  and node = {
+    edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
+    eoi: action;
+    default: action;
+  }
+  and node_map = (State.t, node, State.cmper_witness) Map.t
+
+  let rec act nodes state_id view t =
+    let node = Map.get_hlt state_id nodes in
+    let action, view' = match advance view with
+      | Some (cp, view') -> begin
+          match Map.get cp node.edges with
+          | Some action' -> action', view'
+          | None -> node.default, view'
+        end
+      | None -> node.eoi, view
+    in
+    match action state_id view' t with
+    | t', Transition state_id' -> act nodes state_id' view' t'
+    | t', Accept token -> t', Accept token
+
+  let start nodes state_id t =
+    match act nodes state_id (view t) t with
+    | _, Transition _ -> not_reached ()
+    | t', Accept token -> t', token
+end
+
+module type IDfa = sig
+  include SDfaEngine
+  val nodes: (State.t, node, State.cmper_witness) Map.t
+  val start_state: State.t
+end
+
+module type SDfa = sig
+  type t
+  val token: t -> t * ConcreteToken.t
+end
+
+module MakeDfa (T : IDfa) : SDfa
+  with type t := T.t
+= struct
+  let token t =
+    T.start T.nodes T.start_state t
+end
+
+module MakeEnum (T : sig type t end):
+  IdentifiableIntf.S with type t = T.t
+= struct
+  module T = struct
+    type t = T.t
+
+    let to_uns t =
+      let r = Obj.repr t in
+      Int64.of_int (
+        match Obj.is_block r with
+        | false -> Obj.magic r (* Simple variant, encoded as an integer. *)
+        | true -> Int.neg (Int.succ (Obj.tag r)) (* Tagged variant. *)
+      )
+
+    let hash_fold t =
+      Uns.hash_fold (to_uns t)
+
+    let cmp t0 t1 =
+      Uns.cmp (to_uns t0) (to_uns t1)
+
+    let to_string t =
+      Uns.to_string (to_uns t)
+
+    let pp t formatter =
+      formatter |> Fmt.fmt (to_string t)
+  end
+  include T
+  include Identifiable.Make(T)
+end
+
 (***************************************************************************************************
  * Convenience routines for reporting malformations. *)
 
@@ -1315,22 +1429,55 @@ end = struct
     }
   end)
 
-  module DagIstringSpec = MakeDag(struct
-    include DagEngineDefault
-    let start_state = {
-      edges=map_of_cps_alist [
-        ("'", Codepoint_.codepoint);
-        ("(", act {
-            edges=map_of_cps_alist [
-              ("^", accept_istring_trans Istring_expr_width Tok_istring_lparen_caret)
-            ];
-            eoi=accept Tok_error;
-            default=accept_excl Tok_error;
-          });
-      ];
-      eoi=end_of_input;
-      default=accept_incl Tok_error;
-    }
+  module DfaIstringSpec = MakeDfa(struct
+    type state_id =
+      | Start
+      | Lparen
+    include MakeDfaEngine(struct
+        type nonrec t = t
+        type view = Text.Cursor.t * Text.Cursor.t * Text.Cursor.t
+        module State = MakeEnum(struct
+          type t = state_id
+        end)
+        let view t =
+          t.cursor, t.cursor, t.cursor
+        let advance (_ppcursor, pcursor, cursor) =
+          match Text.Cursor.next_opt cursor with
+          | None -> None
+          | Some (cp, cursor') -> Some (cp, (pcursor, cursor, cursor'))
+      end)
+
+    let wrap_accept (t, tok) =
+      t, Accept tok
+
+    let eoi _state (ppcursor, pcursor, cursor) t =
+      wrap_accept (accept_incl Tok_error ppcursor pcursor cursor t)
+
+    let default _state (ppcursor, pcursor, cursor) t =
+      wrap_accept (accept_incl Tok_error ppcursor pcursor cursor t)
+
+    let nodes = Map.of_alist (module State) [
+      (Start, {
+          edges=map_of_cps_alist [
+            ("'", (fun _state (ppcursor, pcursor, cursor) t ->
+                wrap_accept (Codepoint_.codepoint ppcursor pcursor cursor t)));
+            ("(", (fun _state (_ppcursor, _pcursor, _cursor) t -> t, (Transition Lparen));)
+          ];
+          eoi;
+          default;
+        });
+      (Lparen, {
+          edges=map_of_cps_alist [
+            ("^", (fun _state (ppcursor, pcursor, cursor) t ->
+                wrap_accept (accept_istring_trans Istring_expr_width Tok_istring_lparen_caret
+                    ppcursor pcursor cursor t)));
+          ];
+          eoi;
+          default;
+        });
+    ]
+
+    let start_state = Start
   end)
 
   type tag_accum =
@@ -1538,7 +1685,7 @@ end = struct
     assert (Istring_expr_value t.cursor |> (fun _ -> true)); (* XXX Remove. *)
     match t.istring_state with
     | Istring_interp :: _ -> Some (DagIstringInterp.start t)
-    | Istring_spec_pct_seen :: _ -> Some (DagIstringSpec.start t)
+    | Istring_spec_pct_seen :: _ -> Some (DfaIstringSpec.token t)
     | Istring_expr_width :: _
     | _ :: _ -> not_implemented "XXX"
     | [] -> None
