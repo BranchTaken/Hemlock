@@ -45,9 +45,11 @@ add-highlighter shared/hemlock/string/ default-region fill string
 add-highlighter shared/hemlock/string/escape region [\\]([tnr"%\\]|u\{[0-9a-f]{1,6}\}) () fill meta
 add-highlighter shared/hemlock/string/width region \%('.')?[<^>]?(\+|_)?#?0?\*\(\^ () fill meta
 add-highlighter shared/hemlock/string/precision region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?\.=?\*\(\^ () fill meta
-add-highlighter shared/hemlock/string/value region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))\(\^ () fill meta
+add-highlighter shared/hemlock/string/fmt region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?\(\^ () fill meta
+add-highlighter shared/hemlock/string/value region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
 add-highlighter shared/hemlock/string/inner_precision region \^\)\.=?\*\(\^ () fill meta
-add-highlighter shared/hemlock/string/inner_value region \^\)(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))\(\^ () fill meta
+add-highlighter shared/hemlock/string/inner_fmt region \^\)([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
+add-highlighter shared/hemlock/string/inner_value region \^\)(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
 
 add-highlighter shared/hemlock/string/unprotected region (?<!\\)% () fill Error
 add-highlighter shared/hemlock/string/overprotected region \\(?![utnr"\\%]) () fill Error
