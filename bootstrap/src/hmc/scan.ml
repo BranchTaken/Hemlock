@@ -1432,24 +1432,20 @@ end = struct
     end
     include MakeDfaEngineDefault(State)
 
-    let accept_isubstring_trans trans state (_ppcursor, pcursor, _cursor) t =
-      let source = Source.init t.path t.bias t.cursor pcursor in
-      let tok = match State.extract_accum state with
-        | Codepoints cps -> AbstractToken.Tok_isubstring (Constant (String.of_list_rev cps))
-        | Malformations mals -> AbstractToken.Tok_isubstring (Malformed (List.rev mals))
-      in
-      {t with cursor=pcursor; istring_state=trans :: (List.tl t.istring_state)},
-      Accept (ConcreteToken.init tok source)
-
-    (* XXX This perhaps shouldn't exist. *)
-    let accept_isubstring_pop state (_ppcursor, _pcursor, cursor) t =
+    let accept_isubstring_impl trans state cursor t =
       let source = Source.init t.path t.bias t.cursor cursor in
       let tok = match State.extract_accum state with
         | Codepoints cps -> AbstractToken.Tok_isubstring (Constant (String.of_list_rev cps))
         | Malformations mals -> AbstractToken.Tok_isubstring (Malformed (List.rev mals))
       in
-      {t with cursor; istring_state=List.tl t.istring_state},
+      {t with cursor; istring_state=trans :: (List.tl t.istring_state)},
       Accept (ConcreteToken.init tok source)
+
+    let accept_isubstring trans state (_ppcursor, _pcursor, cursor) t =
+      accept_isubstring_impl trans state cursor t
+
+    let accept_isubstring_excl trans state (_ppcursor, pcursor, _cursor) t =
+      accept_isubstring_impl trans state pcursor t
 
     let eoi state (ppcursor, pcursor, cursor) t =
       let accum = State.extract_accum state in
@@ -1458,7 +1454,7 @@ end = struct
         | [] -> t
         | _ :: istring_state -> {t with istring_state}
       in
-      accept_isubstring_pop (State_start (State.Accum.accum_mal mal accum))
+      accept_isubstring Istring_rditto (State_start (State.Accum.accum_mal mal accum))
         (ppcursor, pcursor, cursor) t'
 
     let accum_cp cp state _view t =
@@ -1486,8 +1482,8 @@ end = struct
 
     let node_start = {
       edges=map_of_cps_alist [
-        ("%", accept_isubstring_trans Istring_spec_pct);
-        ("\"", accept_isubstring_trans Istring_rditto);
+        ("%", accept_isubstring_excl Istring_spec_pct);
+        ("\"", accept_isubstring_excl Istring_rditto);
         ("\\", (fun state (_ppcursor, pcursor, _cursor) t ->
             let accum = State.extract_accum state in
             t, Transition (State_bslash (accum, pcursor))))
@@ -1520,7 +1516,7 @@ end = struct
         ("\"", (fun state (ppcursor, pcursor, cursor) t ->
             let accum, bslash_cursor = State.extract_state_bslash_u state in
             let mal = illegal_backslash bslash_cursor cursor t in
-            accept_isubstring_pop (State_start (State.Accum.accum_mal mal accum))
+            accept_isubstring_excl Istring_rditto (State_start (State.Accum.accum_mal mal accum))
               (ppcursor, pcursor, cursor) t
           ));
       ]; eoi;
@@ -1551,7 +1547,7 @@ end = struct
         ("\"", (fun state (ppcursor, pcursor, cursor) t ->
             let accum, bslash_cursor, _ = State.extract_state_bslash_u_lcurly state in
             let mal = partial_unicode bslash_cursor cursor t in
-            accept_isubstring_pop (State_start (State.Accum.accum_mal mal accum))
+            accept_isubstring_excl Istring_rditto (State_start (State.Accum.accum_mal mal accum))
               (ppcursor, pcursor, cursor) t
           ));
       ]; eoi;
@@ -1877,22 +1873,18 @@ end = struct
 
   let start_opt t =
     assert (Istring_expr_value t.cursor |> (fun _ -> true)); (* XXX Remove. *)
+    let trace = Some File.Fmt.stdout in
     match t.istring_state with
-    | Istring_interp :: _ -> begin
-        let t', tok, _trace = DfaIstringInterp.token ~trace:File.Fmt.stdout t in
-        Some (t', tok)
-      end
-    | Istring_spec_pct :: _ -> begin
-        let t', tok, _trace = DfaIstringSpec.token ~trace:File.Fmt.stdout t in
-        Some (t', tok)
-      end
-    | Istring_rditto :: _ -> begin
-        let t', tok, _trace = DfaIstringRditto.token ~trace:File.Fmt.stdout t in
-        Some (t', tok)
-      end
-    | Istring_expr_width :: _
-    | _ :: _ -> not_implemented "XXX"
     | [] -> None
+    | istring_state :: _ -> begin
+        let t', tok, _trace = match istring_state with
+          | Istring_interp -> DfaIstringInterp.token ?trace t
+          | Istring_spec_pct -> DfaIstringSpec.token ?trace t
+          | Istring_rditto -> DfaIstringRditto.token ?trace t
+          | Istring_expr_width
+          | _ -> not_implemented "XXX"
+        in Some (t', tok)
+      end
 end
 
 type nsmap =
