@@ -20,6 +20,8 @@ let test () =
   scan_str {|"\u0"|};
   scan_str {|"\u"|};
   scan_str {|"\x"|};
+  scan_str {|"\"|};
+  scan_str {|"\|};
   scan_str {|"""|};
   scan_str {|"|};
   scan_str {|"\u\v\w"|}
