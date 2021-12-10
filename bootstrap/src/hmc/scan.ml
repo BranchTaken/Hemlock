@@ -626,7 +626,7 @@ let pp_istring_state istring_state formatter =
 type t = {
   path: string option;
   bias: sint;
-  cursor: Text.Cursor.t;
+  tok_base: Text.Cursor.t;
   line_state: line_state;
   istring_state: istring_state list;
   level: uns;
@@ -636,7 +636,7 @@ let init text =
   {
     path=Text.path text;
     bias=Sint.zero;
-    cursor=Text.Cursor.hd text;
+    tok_base=Text.Cursor.hd text;
     line_state=Line_dentation;
     istring_state=[];
     level=0L;
@@ -646,14 +646,14 @@ let pp t formatter =
   formatter
   |> Fmt.fmt "{path=" |> (Option.pp String.pp) t.path
   |> Fmt.fmt "; bias=" |> Sint.pp t.bias
-  |> Fmt.fmt "; cursor=" |> Text.Pos.pp (Text.Cursor.pos t.cursor)
+  |> Fmt.fmt "; tok_base=" |> Text.Pos.pp (Text.Cursor.pos t.tok_base)
   |> Fmt.fmt "; line_state=" |> pp_line_state t.line_state
   |> Fmt.fmt "; istring_state=" |> (List.pp pp_istring_state) t.istring_state
   |> Fmt.fmt "; level=" |> Uns.pp t.level
   |> Fmt.fmt "}"
 
 let text t =
-  Text.Cursor.container t.cursor
+  Text.Cursor.container t.tok_base
 
 let set_of_cps cps =
   String.fold ~init:(Set.empty (module Codepoint)) ~f:(fun set cp ->
@@ -668,12 +668,12 @@ let map_of_cps_alist alist =
   ) alist
 
 let str_of_cursor cursor t =
-  let slice = Text.Slice.init ~base:t.cursor ~past:cursor (Text.Cursor.container cursor) in
+  let slice = Text.Slice.init ~base:t.tok_base ~past:cursor (Text.Cursor.container cursor) in
   Text.Slice.to_string slice
 
 let accept atoken cursor t =
-  let source = Source.init t.path t.bias t.cursor cursor in
-  {t with cursor}, (ConcreteToken.init atoken source)
+  let source = Source.init t.path t.bias t.tok_base cursor in
+  {t with tok_base=cursor}, (ConcreteToken.init atoken source)
 
 let accept_incl atoken _ppcursor _pcursor cursor t =
   accept atoken cursor t
@@ -685,12 +685,12 @@ let accept_pexcl atoken ppcursor _pcursor _cursor t =
   accept atoken ppcursor t
 
 let accept_istring_push push tok _ppcursor _pcursor cursor t =
-  let source = Source.init t.path t.bias t.cursor cursor in
-  {t with cursor; istring_state=push :: t.istring_state}, (ConcreteToken.init tok source)
+  let source = Source.init t.path t.bias t.tok_base cursor in
+  {t with tok_base=cursor; istring_state=push :: t.istring_state}, (ConcreteToken.init tok source)
 
 let accept_istring_trans trans tok _ppcursor _pcursor cursor t =
-  let source = Source.init t.path t.bias t.cursor cursor in
-  {t with cursor; istring_state=trans :: (List.tl t.istring_state)},
+  let source = Source.init t.path t.bias t.tok_base cursor in
+  {t with tok_base=cursor; istring_state=trans :: (List.tl t.istring_state)},
   (ConcreteToken.init tok source)
 
 (* XXX Remove.
@@ -701,8 +701,8 @@ let accept_istring_trans trans tok _ppcursor _pcursor cursor t =
 *)
 
 let accept_line_delim atoken cursor t =
-  let source = Source.init t.path t.bias t.cursor cursor in
-  {t with cursor; line_state=Line_delim}, (ConcreteToken.init atoken source)
+  let source = Source.init t.path t.bias t.tok_base cursor in
+  {t with tok_base=cursor; line_state=Line_delim}, (ConcreteToken.init atoken source)
 
 let accept_line_delim_incl atoken _ppcursor _pcursor cursor t =
   accept_line_delim atoken cursor t
@@ -753,7 +753,7 @@ end
 module DagEngineDefault = MakeDagEngine(struct
   type nonrec t = t
   let cursor t =
-    t.cursor
+    t.tok_base
 end)
 
 module type IDag = sig
@@ -902,7 +902,7 @@ let paren_comment _ppcursor _pcursor cursor t =
   let rec fn_wrapper ~f nesting cursor t = begin
     match Text.Cursor.next_opt cursor with
     | None ->
-      accept (Tok_paren_comment (malformed (unterminated_comment t.cursor cursor t))) cursor t
+      accept (Tok_paren_comment (malformed (unterminated_comment t.tok_base cursor t))) cursor t
     | Some (cp, cursor') -> f cp nesting cursor' t
   end
   and fn nesting cursor t = begin
@@ -1002,7 +1002,7 @@ let uident _ppcursor _pcursor cursor t =
 let malformed_uident _ppcursor _pcursor cursor t =
   ident ~f_accept:(fun cursor t ->
     let ident_str = str_of_cursor cursor t in
-    let mal = (malformed (malformation ~base:t.cursor ~past:cursor
+    let mal = (malformed (malformation ~base:t.tok_base ~past:cursor
         (Format.asprintf "@[<h>Identifier %s lacks _*[A-Za-z] prefix" ident_str) t)) in
     accept (Tok_uident mal) cursor t
   ) cursor t
@@ -1122,7 +1122,7 @@ end = struct
     let fn_wrapper ~f accum cursor t = begin
       match Text.Cursor.next_opt cursor with
       | None -> begin
-          let mal = unterminated_codepoint t.cursor cursor t in
+          let mal = unterminated_codepoint t.tok_base cursor t in
           accept_codepoint (accum_mal mal accum) cursor t
         end
       | Some (cp, cursor') -> f cp cursor' accum cursor t
@@ -1211,7 +1211,7 @@ end = struct
         match Map.get cp lookahead_map with
         | Some LMapLookahead -> fn_lookahead (Cp cp) cursor cursor' t
         | Some LMapTick -> begin
-            let mal = empty_codepoint t.cursor cursor' t in
+            let mal = empty_codepoint t.tok_base cursor' t in
             accept_codepoint (accum_mal mal accum) cursor' t
           end
         | Some LMapBslash -> fn_bslash cursor accum cursor' t
@@ -1264,7 +1264,7 @@ end = struct
     }
 
   let accept_unterminated_rstring cursor t =
-    accept (Tok_rstring (malformed (unterminated_string t.cursor cursor t))) cursor t
+    accept (Tok_rstring (malformed (unterminated_string t.tok_base cursor t))) cursor t
 
   (* Raw string: ``...`` *)
   let rstring _pcursor pcursor _cursor t =
@@ -1296,7 +1296,7 @@ end = struct
     let rec fn_rtag rtag_accum ltag_cursor body_accum saved_body_accum ltag cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.cursor cursor t in
+          let mal = unterminated_string t.tok_base cursor t in
           let rtag = tag_of_accum (tag_accum_mal mal rtag_accum) in
           accept_rstring rtag saved_body_accum ltag cursor t
         end
@@ -1334,7 +1334,7 @@ end = struct
     and fn body_accum ltag cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.cursor cursor t in
+          let mal = unterminated_string t.tok_base cursor t in
           let body_accum' = accum_mal mal body_accum in
           let rtag = tag_of_accum tag_accum_empty in
           accept_rstring rtag body_accum' ltag cursor t
@@ -1354,7 +1354,7 @@ end = struct
     and fn_ltag ltag_accum cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.cursor cursor t in
+          let mal = unterminated_string t.tok_base cursor t in
           let ltag_accum' = tag_accum_mal mal ltag_accum in
           let ltag = tag_of_accum ltag_accum' in
           let body_accum = Codepoints [] in
@@ -1389,7 +1389,7 @@ end = struct
     let rec fn_lpad c0_cursor accum lmargin cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.cursor cursor t in
+          let mal = unterminated_string t.tok_base cursor t in
           accept_bstring (accum_mal mal accum) cursor t
         end
       | Some (_, false, cursor') -> begin
@@ -1421,7 +1421,7 @@ end = struct
     and fn accum lmargin cursor t = begin
       match Text.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.cursor cursor t in
+          let mal = unterminated_string t.tok_base cursor t in
           accept_bstring (accum_mal mal accum) cursor t
         end
       | Some (_, false, cursor') -> begin
@@ -1554,14 +1554,14 @@ end = struct
               Tok_r32 (
                 match Realer.to_r32_opt realer with
                 | Some r -> (Constant r)
-                | None -> malformed (out_of_range_real t.cursor cursor t)
+                | None -> malformed (out_of_range_real t.tok_base cursor t)
               )
             end
           | Subtype_r64 -> begin
               Tok_r64 (
                 match Realer.to_r64_opt realer with
                 | Some r -> (Constant r)
-                | None -> malformed (out_of_range_real t.cursor cursor t)
+                | None -> malformed (out_of_range_real t.tok_base cursor t)
               )
             end
         in
@@ -1569,8 +1569,8 @@ end = struct
       end
     | R _, Dec -> not_reached ()
     | R_dec, Dec -> begin
-        let r = Real.of_string Text.Slice.(to_string (init ~base:t.cursor
-            ~past:suffix_cursor (Text.Cursor.container t.cursor))) in
+        let r = Real.of_string Text.Slice.(to_string (init ~base:t.tok_base
+            ~past:suffix_cursor (Text.Cursor.container t.tok_base))) in
         let tok = match subtype with
           | Subtype_r32 -> Tok_r32 (Constant r)
           | Subtype_r64 -> Tok_r64 (Constant r)
@@ -1808,7 +1808,7 @@ end = struct
     r_suffix R_dec pcursor Dec cursor t
 
   let zero_frac _ppcursor pcursor _cursor t =
-    next_frac R_dec t.cursor dec_frac_map Dec pcursor t
+    next_frac R_dec t.tok_base dec_frac_map Dec pcursor t
 
   let zero_exp _ppcursor pcursor cursor t =
     first_exp R_dec pcursor Dec cursor t
@@ -1918,7 +1918,7 @@ end = struct
         let limit = limit_of_subtype subtype in
         match Nat.(n <= limit) with
         | false -> begin
-            let mal = out_of_range_int radix limit t.cursor cursor t in
+            let mal = out_of_range_int radix limit t.tok_base cursor t in
             match (accum_mal mal accum) with
             | Malformations mals -> accept_mals subtype mals cursor t
             | N _ -> not_reached ()
@@ -2121,7 +2121,7 @@ end = struct
 
   let dec n _ppcursor _pcursor cursor t =
     let accum = N n in
-    next_whole accum t.cursor dec_whole_map Dec cursor t
+    next_whole accum t.tok_base dec_whole_map Dec cursor t
 
   let hex n _ppcursor _pcursor cursor t =
     let accum = N n in
@@ -2130,7 +2130,7 @@ end = struct
   let mal_ident _ppcursor pcursor cursor t =
     let mal = invalid_numerical pcursor cursor t in
     let accum = Malformations [mal] in
-    next_whole accum t.cursor dec_whole_map Dec cursor t
+    next_whole accum t.tok_base dec_whole_map Dec cursor t
 
   let zero_u_suffix _ppcursor pcursor cursor t =
     let accum = N Nat.k_0 in
@@ -2311,7 +2311,7 @@ module DagDefault = MakeDag(struct
 end)
 
 module State = struct
-  module IsubstringAccum = struct
+  module CodepointAccum = struct
     type t =
       | Codepoints of codepoint list
       | Malformations of AbstractToken.Rendition.Malformation.t list
@@ -2334,10 +2334,10 @@ module State = struct
   end
 
   type t =
-    | State_isubstring_start of IsubstringAccum.t
-    | State_isubstring_bslash of IsubstringAccum.t * Text.Cursor.t
-    | State_isubstring_bslash_u of IsubstringAccum.t * Text.Cursor.t
-    | State_isubstring_bslash_u_lcurly of IsubstringAccum.t * Text.Cursor.t * Nat.t
+    | State_isubstring_start of CodepointAccum.t
+    | State_isubstring_bslash of CodepointAccum.t * Text.Cursor.t
+    | State_isubstring_bslash_u of CodepointAccum.t * Text.Cursor.t
+    | State_isubstring_bslash_u_lcurly of CodepointAccum.t * Text.Cursor.t * Nat.t
     | State_spec_start
     | State_spec_lparen
     | State_rditto_start
@@ -2345,16 +2345,16 @@ module State = struct
   let pp t formatter =
     match t with
     | State_isubstring_start accum ->
-      formatter |> Fmt.fmt "State_isubstring_start (" |> IsubstringAccum.pp accum |> Fmt.fmt ")"
+      formatter |> Fmt.fmt "State_isubstring_start (" |> CodepointAccum.pp accum |> Fmt.fmt ")"
     | State_isubstring_bslash (accum, bslash_cursor) ->
-      formatter |> Fmt.fmt "State_isubstring_bslash (" |> IsubstringAccum.pp accum |> Fmt.fmt ", "
+      formatter |> Fmt.fmt "State_isubstring_bslash (" |> CodepointAccum.pp accum |> Fmt.fmt ", "
       |> Text.Pos.pp (Text.Cursor.pos bslash_cursor) |> Fmt.fmt ")"
     | State_isubstring_bslash_u (accum, bslash_cursor) ->
-      formatter |> Fmt.fmt "State_isubstring_bslash_u (" |> IsubstringAccum.pp accum |> Fmt.fmt ", "
+      formatter |> Fmt.fmt "State_isubstring_bslash_u (" |> CodepointAccum.pp accum |> Fmt.fmt ", "
       |> Text.Pos.pp (Text.Cursor.pos bslash_cursor) |> Fmt.fmt ")"
     | State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat) ->
       formatter |> Fmt.fmt "State_isubstring_bslash_u_lcurly ("
-      |> IsubstringAccum.pp accum
+      |> CodepointAccum.pp accum
       |> Fmt.fmt ", " |> Text.Pos.pp (Text.Cursor.pos bslash_cursor)
       |> Fmt.fmt ", " |> Nat.pp nat
       |> Fmt.fmt ")"
@@ -2362,7 +2362,7 @@ module State = struct
     | State_spec_lparen -> formatter |> Fmt.fmt "State_spec_lparen"
     | State_rditto_start -> formatter |> Fmt.fmt "State_rditto_start"
 
-  let start_isubstring = State_isubstring_start (IsubstringAccum.Codepoints [])
+  let start_isubstring = State_isubstring_start (CodepointAccum.Codepoints [])
 
   let start_spec = State_spec_start
 
@@ -2370,10 +2370,14 @@ module State = struct
 end
 
 module Dfa = struct
-  type view = Text.Cursor.t * Text.Cursor.t * Text.Cursor.t
+  type view = {
+    ppcursor: Text.Cursor.t;
+    pcursor: Text.Cursor.t;
+    cursor: Text.Cursor.t;
+  }
 
   let view t =
-    t.cursor, t.cursor, t.cursor
+    {ppcursor=t.tok_base; pcursor=t.tok_base; cursor=t.tok_base}
 
   type result =
     | Advance of view * State.t
@@ -2394,64 +2398,29 @@ module Dfa = struct
     default1: 'a action1;
   }
 
-  let accept_isubstring_impl trans accum cursor t =
-    let source = Source.init t.path t.bias t.cursor cursor in
-    let open State.IsubstringAccum in
-    let tok = match accum with
-      | Codepoints cps -> AbstractToken.Tok_isubstring (Constant (String.of_list_rev cps))
-      | Malformations mals -> AbstractToken.Tok_isubstring (Malformed (List.rev mals))
-    in
-    {t with cursor; istring_state=trans :: (List.tl t.istring_state)},
-    Accept (ConcreteToken.init tok source)
-
-  let accept_isubstring trans accum (_ppcursor, _pcursor, cursor) t =
-    accept_isubstring_impl trans accum cursor t
-
-  let accept_isubstring_excl trans accum (_ppcursor, pcursor, _cursor) t =
-    accept_isubstring_impl trans accum pcursor t
-
-  let accum_cp cp accum view t =
-    t, Advance (view, State_isubstring_start (State.IsubstringAccum.accum_cp cp accum))
-
-  let accum_raw accum (ppcursor, pcursor, cursor) t =
-    let cp = Text.Cursor.rget pcursor in
-    accum_cp cp accum (ppcursor, pcursor, cursor) t
-
-  let accum_illegal_backslash accum bslash_cursor cursor t =
-    let mal = illegal_backslash bslash_cursor cursor t in
-    t, Retry (State_isubstring_start (State.IsubstringAccum.accum_mal mal accum))
-
-  let accum_invalid_unicode accum bslash_cursor cursor t =
-    let mal = invalid_unicode bslash_cursor cursor t in
-    t, Retry (State_isubstring_start (State.IsubstringAccum.accum_mal mal accum))
-
-  let accum_partial_unicode accum bslash_cursor cursor t =
-    let mal = partial_unicode bslash_cursor cursor t in
-    t, Retry (State_isubstring_start (State.IsubstringAccum.accum_mal mal accum))
-
-  let advance (_ppcursor, pcursor, cursor) =
+  let advance {pcursor; cursor; _} =
     match Text.Cursor.next_opt cursor with
     | None -> None
-    | Some (cp, cursor') -> Some (cp, (pcursor, cursor, cursor'))
+    | Some (cp, cursor') -> Some (cp, {ppcursor=pcursor; pcursor=cursor; cursor=cursor'})
 
   let act0 trace node view t =
     let trace', action0, view' = match advance view with
       | Some (cp, view') -> begin
           match Map.get cp node.edges0 with
-          | Some action -> begin
+          | Some action0 -> begin
               let trace' = match trace with
                 | None -> None
                 | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> action"
+                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> action0"
                 )
               in
-              trace', action, view'
+              trace', action0, view'
             end
           | None -> begin
               let trace' = match trace with
                 | None -> None
                 | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> default"
+                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> default0"
                 )
               in
               trace', node.default0, view'
@@ -2461,7 +2430,7 @@ module Dfa = struct
           let trace' = match trace with
             | None -> None
             | Some trace -> Some (
-              trace |> Fmt.fmt "Dfa: eoi"
+              trace |> Fmt.fmt "Dfa: eoi0"
             )
           in
           trace', node.eoi0, view
@@ -2471,23 +2440,23 @@ module Dfa = struct
     t', result, trace'
 
   let act1 trace node state_payload view t =
-    let trace', action, view' = match advance view with
+    let trace', action1, view' = match advance view with
       | Some (cp, view') -> begin
           match Map.get cp node.edges1 with
-          | Some action -> begin
+          | Some action1 -> begin
               let trace' = match trace with
                 | None -> None
                 | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> action"
+                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> action1"
                 )
               in
-              trace', action, view'
+              trace', action1, view'
             end
           | None -> begin
               let trace' = match trace with
                 | None -> None
                 | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> default"
+                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> default1"
                 )
               in
               trace', node.default1, view'
@@ -2497,37 +2466,72 @@ module Dfa = struct
           let trace' = match trace with
             | None -> None
             | Some trace -> Some (
-              trace |> Fmt.fmt "Dfa: eoi"
+              trace |> Fmt.fmt "Dfa: eoi1"
             )
           in
           trace', node.eoi1, view
         end
     in
-    let t', result = action state_payload view' t in
+    let t', result = action1 state_payload view' t in
     t', result, trace'
 
-  let node_isubstring_start = {
+  let accept_isubstring_impl trans accum cursor t =
+    let source = Source.init t.path t.bias t.tok_base cursor in
+    let open State.CodepointAccum in
+    let tok = match accum with
+      | Codepoints cps -> AbstractToken.Tok_isubstring (Constant (String.of_list_rev cps))
+      | Malformations mals -> AbstractToken.Tok_isubstring (Malformed (List.rev mals))
+    in
+    {t with tok_base=cursor; istring_state=trans :: (List.tl t.istring_state)},
+    Accept (ConcreteToken.init tok source)
+
+  let accept_isubstring trans accum {cursor; _} t =
+    accept_isubstring_impl trans accum cursor t
+
+  let accept_isubstring_excl trans accum {pcursor; _} t =
+    accept_isubstring_impl trans accum pcursor t
+
+  let accum_cp cp accum view t =
+    t, Advance (view, State_isubstring_start (State.CodepointAccum.accum_cp cp accum))
+
+  let accum_raw accum ({pcursor; _} as view) t =
+    let cp = Text.Cursor.rget pcursor in
+    accum_cp cp accum view t
+
+  let accum_illegal_backslash accum bslash_cursor cursor t =
+    let mal = illegal_backslash bslash_cursor cursor t in
+    t, Retry (State_isubstring_start (State.CodepointAccum.accum_mal mal accum))
+
+  let accum_invalid_unicode accum bslash_cursor cursor t =
+    let mal = invalid_unicode bslash_cursor cursor t in
+    t, Retry (State_isubstring_start (State.CodepointAccum.accum_mal mal accum))
+
+  let accum_partial_unicode accum bslash_cursor cursor t =
+    let mal = partial_unicode bslash_cursor cursor t in
+    t, Retry (State_isubstring_start (State.CodepointAccum.accum_mal mal accum))
+
+  let node1_isubstring_start = {
     edges1=map_of_cps_alist [
       ("%", (accept_isubstring_excl Istring_spec_pct));
       ("\"", (accept_isubstring_excl Istring_rditto));
-      ("\\", (fun accum (ppcursor, pcursor, cursor) t ->
-          t, Advance ((ppcursor, pcursor, cursor), (State_isubstring_bslash (accum, pcursor))))
+      ("\\", (fun accum ({pcursor; _} as view) t ->
+          t, Advance (view, (State_isubstring_bslash (accum, pcursor))))
       );
     ];
     eoi1=(accept_isubstring Istring_rditto);
     default1=accum_raw;
   }
 
-  let node_isubstring_bslash =
-    let eoi1 (accum, bslash_cursor) (_ppcursor, _pcursor, cursor) t = begin
+  let node1_isubstring_bslash =
+    let eoi1 (accum, bslash_cursor) {cursor; _} t = begin
       accum_illegal_backslash accum bslash_cursor cursor t
     end in
     let accum_cp cp (accum, _bslash_cursor) view t = begin
-      t, Advance (view, (State_isubstring_start (State.IsubstringAccum.accum_cp cp accum)))
+      t, Advance (view, (State_isubstring_start (State.CodepointAccum.accum_cp cp accum)))
     end in
-    let accum_raw (accum, _bslash_cursor) (ppcursor, pcursor, cursor) t = begin
+    let accum_raw (accum, _bslash_cursor) ({pcursor; _} as view) t = begin
       let cp = Text.Cursor.rget pcursor in
-      accum_cp cp (accum, _bslash_cursor) (ppcursor, pcursor, cursor) t
+      accum_cp cp (accum, _bslash_cursor) view t
     end in
     {
       edges1=map_of_cps_alist [
@@ -2543,8 +2547,8 @@ module Dfa = struct
       default1=eoi1;
     }
 
-  let node_isubstring_bslash_u =
-    let eoi1 (accum, bslash_cursor) (_ppcursor, pcursor, _cursor) t = begin
+  let node1_isubstring_bslash_u =
+    let eoi1 (accum, bslash_cursor) {pcursor; _} t = begin
       accum_illegal_backslash accum bslash_cursor pcursor t
     end in
     {
@@ -2552,22 +2556,21 @@ module Dfa = struct
         ("{", (fun (accum, bslash_cursor) view t ->
             t, Advance (view, State_isubstring_bslash_u_lcurly (accum, bslash_cursor, Nat.k_0))
           ));
-        ("\"", (fun (accum, bslash_cursor) (ppcursor, pcursor, cursor) t ->
+        ("\"", (fun (accum, bslash_cursor) ({cursor; _} as view) t ->
             let mal = illegal_backslash bslash_cursor cursor t in
-            accept_isubstring_excl Istring_rditto (State.IsubstringAccum.accum_mal mal accum)
-              (ppcursor, pcursor, cursor) t
+            accept_isubstring_excl Istring_rditto (State.CodepointAccum.accum_mal mal accum) view t
           ));
       ];
       eoi1;
       default1=eoi1;
     }
 
-  let node_isubstring_bslash_u_lcurly =
-    let eoi1 (accum, bslash_cursor, _nat) (_ppcursor, pcursor, _cursor) t = begin
+  let node1_isubstring_bslash_u_lcurly =
+    let eoi1 (accum, bslash_cursor, _nat) {pcursor; _} t = begin
       accum_partial_unicode accum bslash_cursor pcursor t
     end in
     let accum_cp cp (accum, _bslash_cursor, _nat) view t = begin
-      t, Advance (view, State_isubstring_start (State.IsubstringAccum.accum_cp cp accum))
+      t, Advance (view, State_isubstring_start (State.CodepointAccum.accum_cp cp accum))
     end in
     let noop (accum, bslash_cursor, nat) view t = begin
       t, Advance (view, State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat))
@@ -2575,36 +2578,34 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         ("_", noop);
-        ("0123456789abcdef", (fun (accum, bslash_cursor, nat) (ppcursor, pcursor, cursor) t ->
+        ("0123456789abcdef", (fun (accum, bslash_cursor, nat) ({pcursor; _} as view) t ->
             let cp = Text.Cursor.rget pcursor in
             let nat' = Radix.(nat_accum (nat_of_cp cp) nat Hex) in
-            t, Advance ((ppcursor, pcursor, cursor), State_isubstring_bslash_u_lcurly
-                (accum, bslash_cursor, nat'))
+            t, Advance (view, State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat'))
           ));
-        ("}", (fun (accum, bslash_cursor, nat) (ppcursor, pcursor, cursor) t ->
+        ("}", (fun (accum, bslash_cursor, nat) ({cursor; _} as view) t ->
             Option.value_map (Nat.to_uns_opt nat)
               ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
               ~default:None
             |> Option.value_map
-              ~f:(fun cp -> accum_cp cp (accum, bslash_cursor, nat) (ppcursor, pcursor, cursor) t)
+              ~f:(fun cp -> accum_cp cp (accum, bslash_cursor, nat) view t)
               ~default:(accum_invalid_unicode accum bslash_cursor cursor t)
           ));
-        ("\"", (fun (accum, bslash_cursor, _nat) (ppcursor, pcursor, cursor) t ->
+        ("\"", (fun (accum, bslash_cursor, _nat) ({cursor; _} as view) t ->
             let mal = partial_unicode bslash_cursor cursor t in
-            accept_isubstring_excl Istring_rditto (State.IsubstringAccum.accum_mal mal accum)
-              (ppcursor, pcursor, cursor) t
+            accept_isubstring_excl Istring_rditto (State.CodepointAccum.accum_mal mal accum) view t
           ));
       ];
       eoi1;
       default1=eoi1;
     }
 
-  let accept_rditto tok (_ppcursor, _pcursor, cursor) t =
-    let source = Source.init t.path t.bias t.cursor cursor in
-    {t with cursor; istring_state=List.tl t.istring_state},
+  let accept_rditto tok {cursor; _} t =
+    let source = Source.init t.path t.bias t.tok_base cursor in
+    {t with tok_base=cursor; istring_state=List.tl t.istring_state},
     Accept (ConcreteToken.init tok source)
 
-  let node_rditto_start = {
+  let node0_rditto_start = {
     edges0=map_of_cps_alist [
       ("\"", accept_rditto Tok_istring_rditto);
     ];
@@ -2615,7 +2616,7 @@ module Dfa = struct
   let wrap_accept (t, tok) =
     t, Accept tok
 
-  let error (ppcursor, pcursor, cursor) t =
+  let error {ppcursor; pcursor; cursor} t =
     wrap_accept (accept_incl Tok_error ppcursor pcursor cursor t)
 
   let eoi0 = error
@@ -2625,37 +2626,37 @@ module Dfa = struct
   let transition state' view t =
     t, Advance (view, state')
 
-  let accept ~f (ppcursor, pcursor, cursor) t =
+  let accept ~f {ppcursor; pcursor; cursor} t =
     wrap_accept (f ppcursor pcursor cursor t)
 
-  let node_spec_start = {
+  let node0_spec_start = {
     edges0=map_of_cps_alist [
       ("'", accept ~f:Codepoint_.codepoint);
       ("(", transition State_spec_lparen)
     ]; eoi0; default0;
   }
 
-  let node_spec_lparen = {
+  let node0_spec_lparen = {
     edges0=map_of_cps_alist [
       ("^", accept ~f:(accept_istring_trans Istring_expr_width Tok_istring_lparen_caret));
     ]; eoi0; default0;
   }
 
-  let result_of_state trace state view t : (t * result * (module Fmt.Formatter) option) =
+  let result_of_state trace state view t =
     let open State in
     match state with
-    | State_isubstring_start accum -> act1 trace node_isubstring_start accum view t
+    | State_isubstring_start accum -> act1 trace node1_isubstring_start accum view t
     | State_isubstring_bslash (accum, bslash_cursor) ->
-      act1 trace node_isubstring_bslash (accum, bslash_cursor) view t
+      act1 trace node1_isubstring_bslash (accum, bslash_cursor) view t
     | State_isubstring_bslash_u (accum, bslash_cursor) ->
-      act1 trace node_isubstring_bslash_u (accum, bslash_cursor) view t
+      act1 trace node1_isubstring_bslash_u (accum, bslash_cursor) view t
     | State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat) ->
-      act1 trace node_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat) view t
-    | State_rditto_start -> act0 trace node_rditto_start view t
-    | State_spec_start -> act0 trace node_spec_start view t
-    | State_spec_lparen -> act0 trace node_spec_lparen view t
+      act1 trace node1_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat) view t
+    | State_rditto_start -> act0 trace node0_rditto_start view t
+    | State_spec_start -> act0 trace node0_spec_start view t
+    | State_spec_lparen -> act0 trace node0_spec_lparen view t
 
-  let rec act trace state view t =
+  let rec transition trace state view t =
     match result_of_state trace state view t with
     | t', Advance (view', state'), trace' -> begin
         let trace'' = match trace' with
@@ -2665,7 +2666,7 @@ module Dfa = struct
             |> Fmt.fmt "\n"
           )
         in
-        act trace'' state' view' t'
+        transition trace'' state' view' t'
       end
     | t', Retry state', trace' -> begin
         let trace'' = match trace' with
@@ -2675,7 +2676,7 @@ module Dfa = struct
             |> Fmt.fmt "\n"
           )
         in
-        act trace'' state' view t'
+        transition trace'' state' view t'
       end
     | t', Accept token, trace' -> begin
         let trace'' = match trace' with
@@ -2696,13 +2697,13 @@ module Dfa = struct
         |> Fmt.fmt "\n"
       )
     in
-    match act trace' state (view t) t with
+    match transition trace' state (view t) t with
     | _, Advance _, _ -> not_reached ()
     | _, Retry _, _ -> not_reached ()
     | t', Accept token, trace'' -> t', token, trace''
 
   let start_opt t =
-    assert (Istring_expr_value t.cursor |> (fun _ -> true)); (* XXX Remove. *)
+    assert (Istring_expr_value t.tok_base |> (fun _ -> true)); (* XXX Remove. *)
     let _trace = Some File.Fmt.stdout in
     let trace = None in
     match t.istring_state with
@@ -2757,7 +2758,7 @@ end = struct
           | Some _ -> path
         in
         let bias = Sint.(ni - (Uns.bits_to_sint (Text.(Pos.line (Cursor.pos cursor))))) in
-        {t with path; bias; cursor}, None
+        {t with path; bias; tok_base=cursor}, None
       end
     | None -> accept_error cursor t
 
@@ -2772,7 +2773,7 @@ end = struct
      * Tok_isubstring; Tok_istring_rditto] token sequence. If all goes well, path_finish does the
      * final work of accepting the line directive token; the three tokens accepted while extracting
      * the path never propagate out of this function. *)
-    let t_space = {t with cursor} in
+    let t_space = {t with tok_base=cursor} in
     let t_lditto, lditto = start t_space in
     match ConcreteToken.atoken lditto with
     | Tok_istring_lditto -> begin
@@ -2781,7 +2782,7 @@ end = struct
         | Tok_isubstring (Constant path) -> begin
             let t_rditto, rditto = start t_path in
             match ConcreteToken.atoken rditto with
-            | Tok_istring_rditto -> path_finish path n t_rditto.cursor t
+            | Tok_istring_rditto -> path_finish path n t_rditto.tok_base t
             | _ -> error cursor t
           end
         | _ -> error cursor t
@@ -2820,10 +2821,10 @@ end = struct
   let tok_indent = Tok_indent (Constant ())
   let tok_dedent = Tok_dedent (Constant ())
   let tok_indent_absent t =
-    Tok_indent (malformed (malformation ~base:t.cursor ~past:t.cursor "Indent absent" t))
+    Tok_indent (malformed (malformation ~base:t.tok_base ~past:t.tok_base "Indent absent" t))
   let tok_dedent_absent t =
     Tok_dedent (malformed (
-      malformation ~base:t.cursor ~past:t.cursor "Dedent absent" t))
+      malformation ~base:t.tok_base ~past:t.tok_base "Dedent absent" t))
 
   let rec next cursor t =
     match Text.Cursor.next_opt cursor with
@@ -2864,21 +2865,21 @@ end = struct
 
             (* Continuation of expression at lower level. *)
             | 2L, t_level, level when t_level > succ level ->
-              accept tok_dedent t.cursor {t with level=pred t_level}
+              accept tok_dedent t.tok_base {t with level=pred t_level}
             | 2L, t_level, level when t_level = succ level ->
               accept_dentation tok_dedent cursor {t with level}
 
             (* New expression at lower level. *)
             | 0L, t_level, level when t_level > succ level ->
-              accept tok_dedent t.cursor {t with level=pred t_level}
+              accept tok_dedent t.tok_base {t with level=pred t_level}
             | 0L, t_level, level when t_level = succ level ->
               accept_dentation tok_dedent cursor {t with level}
 
             (* Off by one column at lower level. *)
             | 3L, t_level, level when t_level > succ level ->
-              accept (tok_dedent_absent t) t.cursor {t with level=pred t_level}
+              accept (tok_dedent_absent t) t.tok_base {t with level=pred t_level}
             | 1L, t_level, level when t_level > level ->
-              accept (tok_dedent_absent t) t.cursor {t with level=pred t_level}
+              accept (tok_dedent_absent t) t.tok_base {t with level=pred t_level}
 
             (* Off by one column at current level. *)
             | 3L, t_level, level when t_level = succ level ->
@@ -2888,16 +2889,16 @@ end = struct
 
             (* Excess aligned indentation. *)
             | 0L, t_level, level when succ t_level < level ->
-              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
+              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
             (* Off by one column at higher level. *)
             | 3L, t_level, level when t_level < succ level ->
-              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
+              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
             | 1L, t_level, level when t_level < level ->
-              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
+              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
 
             (* Continuation of expression at higher level. *)
             | 2L, t_level, level when t_level < level ->
-              accept (tok_indent_absent t) t.cursor {t with level=succ t_level}
+              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
 
             | _ -> not_reached ()
           end
@@ -2964,7 +2965,7 @@ end = struct
         | cp when Codepoint.(cp = of_char ':') -> begin
             let t', tok_opt = LineDirective.start cursor' t in
             match tok_opt with
-            | None -> start t'.cursor t'
+            | None -> start t'.tok_base t'
             | Some tok -> t', tok
           end
         | _ -> other cursor t
@@ -2974,5 +2975,5 @@ end
 let next t =
   match t.line_state with
   | Line_dentation
-  | Line_delim -> Dentation.start t.cursor t
+  | Line_delim -> Dentation.start t.tok_base t
   | Line_body -> start t
