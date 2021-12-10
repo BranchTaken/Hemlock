@@ -785,26 +785,20 @@ module type IDfaEngine = sig
 
   val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
   val view: t -> view
-  val advance: view -> (codepoint * view) option
 end
 
 module type SDfaEngine = sig
   include IDfaEngine
-  type action_result =
-    | Transition of DfaState.t
+  type result =
+    | Transition of view * DfaState.t
     | Retry of DfaState.t
     | Accept of ConcreteToken.t
-  and action = DfaState.t -> view -> t -> t * action_result
-  and node = {
-    edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
-    eoi: action;
-    default: action;
-  }
-  and node_of_state = DfaState.t -> node
+  and result_of_state = (module Fmt.Formatter) option -> DfaState.t -> view -> t
+    -> t * result * (module Fmt.Formatter) option
 
-  val act: (module Fmt.Formatter) option -> node_of_state -> DfaState.t -> view -> t
-    -> t * action_result * ((module Fmt.Formatter) option)
-  val start: ?trace:(module Fmt.Formatter) -> node_of_state -> DfaState.t -> t
+  val act: (module Fmt.Formatter) option -> result_of_state -> DfaState.t -> view -> t
+    -> t * result * ((module Fmt.Formatter) option)
+  val start: ?trace:(module Fmt.Formatter) -> result_of_state -> DfaState.t -> t
     -> t * ConcreteToken.t * ((module Fmt.Formatter) option)
 end
 
@@ -814,54 +808,16 @@ module MakeDfaEngine (T : IDfaEngine) : SDfaEngine
   with type DfaState.t = T.DfaState.t
 = struct
   include T
-  type action_result =
-    | Transition of DfaState.t
+  type result =
+    | Transition of view * DfaState.t
     | Retry of DfaState.t
     | Accept of ConcreteToken.t
-  and action = DfaState.t -> view -> t -> t * action_result
-  and node = {
-    edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
-    eoi: action;
-    default: action;
-  }
-  and node_of_state = DfaState.t -> node
+  and result_of_state = (module Fmt.Formatter) option -> DfaState.t -> view -> t
+    -> t * result * (module Fmt.Formatter) option
 
-  let rec act trace node_of_state state view t =
-    let node = node_of_state state in
-    let trace', action, view' = match advance view with
-      | Some (cp, view') -> begin
-          match Map.get cp node.edges with
-          | Some action' -> begin
-              let trace' = match trace with
-                | None -> None
-                | Some trace -> Some (
-                  trace |> Fmt.fmt "DfaEngine: " |> Codepoint.pp cp |> Fmt.fmt " -> action"
-                )
-              in
-              trace', action', view'
-            end
-          | None -> begin
-              let trace' = match trace with
-                | None -> None
-                | Some trace -> Some (
-                  trace |> Fmt.fmt "DfaEngine: " |> Codepoint.pp cp |> Fmt.fmt " -> default"
-                )
-              in
-              trace', node.default, view'
-            end
-        end
-      | None -> begin
-          let trace' = match trace with
-            | None -> None
-            | Some trace -> Some (
-              trace |> Fmt.fmt "DfaEngine: eoi"
-            )
-          in
-          trace', node.eoi, view
-        end
-    in
-    match action state view' t with
-    | t', Transition state' -> begin
+  let rec act trace result_of_state state view t =
+    match result_of_state trace state view t with
+    | t', Transition (view', state'), trace' -> begin
         let trace'' = match trace' with
           | None -> None
           | Some trace -> Some (
@@ -869,9 +825,9 @@ module MakeDfaEngine (T : IDfaEngine) : SDfaEngine
             |> Fmt.fmt "\n"
           )
         in
-        act trace'' node_of_state state' view' t'
+        act trace'' result_of_state state' view' t'
       end
-    | t', Retry state' -> begin
+    | t', Retry state', trace' -> begin
         let trace'' = match trace' with
           | None -> None
           | Some trace -> Some (
@@ -879,9 +835,9 @@ module MakeDfaEngine (T : IDfaEngine) : SDfaEngine
             |> Fmt.fmt "\n"
           )
         in
-        act trace'' node_of_state state' view t'
+        act trace'' result_of_state state' view t'
       end
-    | t', Accept token -> begin
+    | t', Accept token, trace' -> begin
         let trace'' = match trace' with
           | None -> None
           | Some trace -> Some (
@@ -892,15 +848,15 @@ module MakeDfaEngine (T : IDfaEngine) : SDfaEngine
         t', Accept token, trace''
       end
 
-  let start ?trace node_of_state state t =
+  let start ?trace result_of_state state t =
     let trace' = match trace with
       | None -> None
       | Some trace -> Some (
-        trace |> Fmt.fmt "DfaEngine: start state=" |> DfaState.pp state |> Fmt.fmt ", t=" |> pp t
+        trace |> Fmt.fmt "Dfa: start state=" |> DfaState.pp state |> Fmt.fmt ", t=" |> pp t
         |> Fmt.fmt "\n"
       )
     in
-    match act trace' node_of_state state (view t) t with
+    match act trace' result_of_state state (view t) t with
     | _, Transition _, _ -> not_reached ()
     | _, Retry _, _ -> not_reached ()
     | t', Accept token, trace'' -> t', token, trace''
@@ -908,7 +864,8 @@ end
 
 module type IDfa = sig
   include SDfaEngine
-  val node_of_state: DfaState.t -> node
+  val result_of_state: (module Fmt.Formatter) option -> DfaState.t -> view -> t
+    -> t * result * (module Fmt.Formatter) option
 end
 
 module type SDfa = sig
@@ -924,7 +881,7 @@ module MakeDfa (T : IDfa) : SDfa
 = struct
   module DfaState = T.DfaState
   let start ?trace state t =
-    T.start ?trace T.node_of_state state t
+    T.start ?trace T.result_of_state state t
 end
 
 module MakeDfaEngineDefault(T : DfaState) : SDfaEngine
@@ -940,10 +897,6 @@ module MakeDfaEngineDefault(T : DfaState) : SDfaEngine
       let pp = pp
       let view t =
         t.cursor, t.cursor, t.cursor
-      let advance (_ppcursor, pcursor, cursor) =
-        match Text.Cursor.next_opt cursor with
-        | None -> None
-        | Some (cp, cursor') -> Some (cp, (pcursor, cursor, cursor'))
     end)
 end
 
@@ -1457,51 +1410,39 @@ end = struct
     let start_spec = State_spec_start
 
     let start_rditto = State_rditto_start
-
-    let extract_isubstring_accum = function
-      | State_isubstring_start accum -> accum
-      | State_isubstring_bslash (accum, _) -> accum
-      | State_isubstring_bslash_u (accum, _) -> accum
-      | State_isubstring_bslash_u_lcurly (accum, _, _) -> accum
-      | _ -> not_reached ()
-
-    let extract_state_isubstring_bslash = function
-      | State_isubstring_bslash (accum, bslash_cursor) -> accum, bslash_cursor
-      | _ -> not_reached ()
-
-    let extract_state_isubstring_bslash_u = function
-      | State_isubstring_bslash_u (accum, bslash_cursor) -> accum, bslash_cursor
-      | _ -> not_reached ()
-
-    let extract_state_isubstring_bslash_u_lcurly = function
-      | State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat) -> accum, bslash_cursor, nat
-      | _ -> not_reached ()
   end
   module DfaIstringInterp = MakeDfa(struct
     include MakeDfaEngineDefault(State)
 
-    let accept_isubstring_impl trans state cursor t =
+    type 'a action = 'a -> view -> t -> t * result
+    and 'a node = {
+      edges: (codepoint, 'a action, Codepoint.cmper_witness) Map.t;
+      eoi: 'a action;
+      default: 'a action;
+    }
+
+    let accept_isubstring_impl trans accum cursor t =
       let source = Source.init t.path t.bias t.cursor cursor in
-      let tok = match State.extract_isubstring_accum state with
+      let open State.IsubstringAccum in
+      let tok = match accum with
         | Codepoints cps -> AbstractToken.Tok_isubstring (Constant (String.of_list_rev cps))
         | Malformations mals -> AbstractToken.Tok_isubstring (Malformed (List.rev mals))
       in
       {t with cursor; istring_state=trans :: (List.tl t.istring_state)},
       Accept (ConcreteToken.init tok source)
 
-    let accept_isubstring trans state (_ppcursor, _pcursor, cursor) t =
-      accept_isubstring_impl trans state cursor t
+    let accept_isubstring trans accum (_ppcursor, _pcursor, cursor) t =
+      accept_isubstring_impl trans accum cursor t
 
-    let accept_isubstring_excl trans state (_ppcursor, pcursor, _cursor) t =
-      accept_isubstring_impl trans state pcursor t
+    let accept_isubstring_excl trans accum (_ppcursor, pcursor, _cursor) t =
+      accept_isubstring_impl trans accum pcursor t
 
-    let accum_cp cp state _view t =
-      let accum = State.extract_isubstring_accum state in
-      t, Transition (State_isubstring_start (State.IsubstringAccum.accum_cp cp accum))
+    let accum_cp cp accum view t =
+      t, Transition (view, State_isubstring_start (State.IsubstringAccum.accum_cp cp accum))
 
-    let accum_raw state (ppcursor, pcursor, cursor) t =
+    let accum_raw accum (ppcursor, pcursor, cursor) t =
       let cp = Text.Cursor.rget pcursor in
-      accum_cp cp state (ppcursor, pcursor, cursor) t
+      accum_cp cp accum (ppcursor, pcursor, cursor) t
 
     let accum_illegal_backslash accum bslash_cursor cursor t =
       let mal = illegal_backslash bslash_cursor cursor t in
@@ -1515,31 +1456,75 @@ end = struct
       let mal = partial_unicode bslash_cursor cursor t in
       t, Retry (State_isubstring_start (State.IsubstringAccum.accum_mal mal accum))
 
-    let noop state _view t =
-      t, Transition state
+    let advance (_ppcursor, pcursor, cursor) =
+      match Text.Cursor.next_opt cursor with
+      | None -> None
+      | Some (cp, cursor') -> Some (cp, (pcursor, cursor, cursor'))
 
-    let node_start = {
+    let action trace node state_payload view t =
+      let trace', action, view' = match advance view with
+        | Some (cp, view') -> begin
+            match Map.get cp node.edges with
+            | Some action -> begin
+                let trace' = match trace with
+                  | None -> None
+                  | Some trace -> Some (
+                    trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> action"
+                  )
+                in
+                trace', action, view'
+              end
+            | None -> begin
+                let trace' = match trace with
+                  | None -> None
+                  | Some trace -> Some (
+                    trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> default"
+                  )
+                in
+                trace', node.default, view'
+              end
+          end
+        | None -> begin
+            let trace' = match trace with
+              | None -> None
+              | Some trace -> Some (
+                trace |> Fmt.fmt "Dfa: eoi"
+              )
+            in
+            trace', node.eoi, view
+          end
+      in
+      let t', result = action state_payload view' t in
+      t', result, trace'
+
+    let node_isubstring_start = {
       edges=map_of_cps_alist [
-        ("%", accept_isubstring_excl Istring_spec_pct);
-        ("\"", accept_isubstring_excl Istring_rditto);
-        ("\\", (fun state (_ppcursor, pcursor, _cursor) t ->
-            let accum = State.extract_isubstring_accum state in
-            t, Transition (State_isubstring_bslash (accum, pcursor))))
+        ("%", (accept_isubstring_excl Istring_spec_pct));
+        ("\"", (accept_isubstring_excl Istring_rditto));
+        ("\\", (fun accum (ppcursor, pcursor, cursor) t ->
+            t, Transition ((ppcursor, pcursor, cursor), (State_isubstring_bslash (accum, pcursor))))
+        );
       ];
       eoi=(accept_isubstring Istring_rditto);
       default=accum_raw;
     }
 
-    let node_bslash =
-      let eoi state (_ppcursor, _pcursor, cursor) t = begin
-        let accum, bslash_cursor = State.extract_state_isubstring_bslash state in
+    let node_isubstring_bslash =
+      let eoi (accum, bslash_cursor) (_ppcursor, _pcursor, cursor) t = begin
         accum_illegal_backslash accum bslash_cursor cursor t
+      end in
+      let accum_cp cp (accum, _bslash_cursor) view t = begin
+        t, Transition (view, (State_isubstring_start (State.IsubstringAccum.accum_cp cp accum)))
+      end in
+      let accum_raw (accum, _bslash_cursor) (ppcursor, pcursor, cursor) t = begin
+        let cp = Text.Cursor.rget pcursor in
+        accum_cp cp (accum, _bslash_cursor) (ppcursor, pcursor, cursor) t
       end in
       {
         edges=map_of_cps_alist [
-          ("u", (fun state _view t ->
-              let accum, bslash_cursor = State.extract_state_isubstring_bslash state in
-              t, Transition (State_isubstring_bslash_u (accum, bslash_cursor))));
+          ("u", (fun (accum, bslash_cursor) view t ->
+              t, Transition (view, (State_isubstring_bslash_u (accum, bslash_cursor))))
+          );
           ("t", accum_cp Codepoint.ht);
           ("n", accum_cp Codepoint.nl);
           ("r", accum_cp Codepoint.cr);
@@ -1549,21 +1534,18 @@ end = struct
         default=eoi;
       }
 
-    let node_bslash_u =
-      let eoi state (_ppcursor, pcursor, _cursor) t = begin
-        let accum, bslash_cursor = State.extract_state_isubstring_bslash_u state in
+    let node_isubstring_bslash_u =
+      let eoi (accum, bslash_cursor) (_ppcursor, pcursor, _cursor) t = begin
         accum_illegal_backslash accum bslash_cursor pcursor t
       end in
       {
         edges=map_of_cps_alist [
-          ("{", (fun state _view t ->
-              let accum, bslash_cursor = State.extract_state_isubstring_bslash_u state in
-              t, Transition (State_isubstring_bslash_u_lcurly (accum, bslash_cursor, Nat.k_0))
+          ("{", (fun (accum, bslash_cursor) view t ->
+              t, Transition (view, State_isubstring_bslash_u_lcurly (accum, bslash_cursor, Nat.k_0))
             ));
-          ("\"", (fun state (ppcursor, pcursor, cursor) t ->
-              let accum, bslash_cursor = State.extract_state_isubstring_bslash_u state in
+          ("\"", (fun (accum, bslash_cursor) (ppcursor, pcursor, cursor) t ->
               let mal = illegal_backslash bslash_cursor cursor t in
-              accept_isubstring_excl Istring_rditto (State_isubstring_start (State.IsubstringAccum.accum_mal mal accum))
+              accept_isubstring_excl Istring_rditto (State.IsubstringAccum.accum_mal mal accum)
                 (ppcursor, pcursor, cursor) t
             ));
         ];
@@ -1571,33 +1553,35 @@ end = struct
         default=eoi;
       }
 
-    let node_bslash_u_lcurly =
-      let eoi state (_ppcursor, pcursor, _cursor) t = begin
-        let accum, bslash_cursor, _ = State.extract_state_isubstring_bslash_u_lcurly state in
+    let node_isubstring_bslash_u_lcurly =
+      let eoi (accum, bslash_cursor, _nat) (_ppcursor, pcursor, _cursor) t = begin
         accum_partial_unicode accum bslash_cursor pcursor t
+      end in
+      let accum_cp cp (accum, _bslash_cursor, _nat) view t = begin
+        t, Transition (view, State_isubstring_start (State.IsubstringAccum.accum_cp cp accum))
+      end in
+      let noop (accum, bslash_cursor, nat) view t = begin
+        t, Transition (view, State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat))
       end in
       {
         edges=map_of_cps_alist [
           ("_", noop);
-          ("0123456789abcdef", (fun state (_ppcursor, pcursor, _cursor) t ->
-              let accum, bslash_cursor, nat = State.extract_state_isubstring_bslash_u_lcurly state in
+          ("0123456789abcdef", (fun (accum, bslash_cursor, nat) (ppcursor, pcursor, cursor) t ->
               let cp = Text.Cursor.rget pcursor in
               let nat' = Radix.(nat_accum (nat_of_cp cp) nat Hex) in
-              t, Transition (State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat'))
+              t, Transition ((ppcursor, pcursor, cursor), State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat'))
             ));
-          ("}", (fun state (ppcursor, pcursor, cursor) t ->
-              let accum, bslash_cursor, nat = State.extract_state_isubstring_bslash_u_lcurly state in
+          ("}", (fun (accum, bslash_cursor, nat) (ppcursor, pcursor, cursor) t ->
               Option.value_map (Nat.to_uns_opt nat)
                 ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
                 ~default:None
               |> Option.value_map
-                ~f:(fun cp -> accum_cp cp state (ppcursor, pcursor, cursor) t)
+                ~f:(fun cp -> accum_cp cp (accum, bslash_cursor, nat) (ppcursor, pcursor, cursor) t)
                 ~default:(accum_invalid_unicode accum bslash_cursor cursor t)
             ));
-          ("\"", (fun state (ppcursor, pcursor, cursor) t ->
-              let accum, bslash_cursor, _ = State.extract_state_isubstring_bslash_u_lcurly state in
+          ("\"", (fun (accum, bslash_cursor, _nat) (ppcursor, pcursor, cursor) t ->
               let mal = partial_unicode bslash_cursor cursor t in
-              accept_isubstring_excl Istring_rditto (State_isubstring_start (State.IsubstringAccum.accum_mal mal accum))
+              accept_isubstring_excl Istring_rditto (State.IsubstringAccum.accum_mal mal accum)
                 (ppcursor, pcursor, cursor) t
             ));
         ];
@@ -1605,8 +1589,7 @@ end = struct
         default=eoi;
       }
 
-(* XXX Refactor out. *)
-    let accept_rditto tok _state (_ppcursor, _pcursor, cursor) t =
+    let accept_rditto tok () (_ppcursor, _pcursor, cursor) t =
       let source = Source.init t.path t.bias t.cursor cursor in
       {t with cursor; istring_state=List.tl t.istring_state},
       Accept (ConcreteToken.init tok source)
@@ -1619,19 +1602,18 @@ end = struct
       default=(fun _ _ _ -> not_reached ());
     }
 
-(* XXX Refactor out. *)
     let wrap_accept (t, tok) =
       t, Accept tok
 
-    let error _state (ppcursor, pcursor, cursor) t =
+    let error () (ppcursor, pcursor, cursor) t =
       wrap_accept (accept_incl Tok_error ppcursor pcursor cursor t)
 
     let eoi = error
 
     let default = error
 
-    let transition state' _state _view t =
-      t, Transition state'
+    let transition state' _state view t =
+      t, Transition (view, state')
 
     let accept ~f _state (ppcursor, pcursor, cursor) t =
       wrap_accept (f ppcursor pcursor cursor t)
@@ -1649,16 +1631,19 @@ end = struct
       ]; eoi; default;
     }
 
-    let node_of_state state =
+    let result_of_state trace state view t : (t * result * (module Fmt.Formatter) option) =
       let open State in
       match state with
-      | State_isubstring_start _ -> node_start
-      | State_isubstring_bslash _ -> node_bslash
-      | State_isubstring_bslash_u _ -> node_bslash_u
-      | State_isubstring_bslash_u_lcurly _ -> node_bslash_u_lcurly
-      | State_rditto_start -> node_rditto_start
-      | State_spec_start -> node_spec_start
-      | State_spec_lparen -> node_spec_lparen
+      | State_isubstring_start accum -> action trace node_isubstring_start accum view t
+      | State_isubstring_bslash (accum, bslash_cursor) ->
+        action trace node_isubstring_bslash (accum, bslash_cursor) view t
+      | State_isubstring_bslash_u (accum, bslash_cursor) ->
+        action trace node_isubstring_bslash_u (accum, bslash_cursor) view t
+      | State_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat) ->
+        action trace node_isubstring_bslash_u_lcurly (accum, bslash_cursor, nat) view t
+      | State_rditto_start -> action trace node_rditto_start () view t
+      | State_spec_start -> action trace node_spec_start () view t
+      | State_spec_lparen -> action trace node_spec_lparen () view t
   end)
 
   type accum =
