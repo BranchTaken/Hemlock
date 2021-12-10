@@ -2376,6 +2376,13 @@ module Dfa = struct
     cursor: Text.Cursor.t;
   }
 
+  let pp_view {ppcursor; pcursor; cursor} formatter =
+    formatter
+    |> Fmt.fmt "{ppcursor=" |> Text.Pos.pp (Text.Cursor.pos ppcursor)
+    |> Fmt.fmt "; pcursor=" |> Text.Pos.pp (Text.Cursor.pos pcursor)
+    |> Fmt.fmt "; cursor=" |> Text.Pos.pp (Text.Cursor.pos cursor)
+    |> Fmt.fmt "}"
+
   let view t =
     {ppcursor=t.tok_base; pcursor=t.tok_base; cursor=t.tok_base}
 
@@ -2404,76 +2411,54 @@ module Dfa = struct
     | Some (cp, cursor') -> Some (cp, {ppcursor=pcursor; pcursor=cursor; cursor=cursor'})
 
   let act0 trace node view t =
-    let trace', action0, view' = match advance view with
+    let action0, view' = match advance view with
       | Some (cp, view') -> begin
           match Map.get cp node.edges0 with
           | Some action0 -> begin
-              let trace' = match trace with
-                | None -> None
-                | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> action0"
-                )
-              in
-              trace', action0, view'
+              if trace then
+                File.Fmt.stdout |> Fmt.fmt "Scan: " |> Codepoint.pp cp |> Fmt.fmt " -> action0"
+                |> ignore;
+              action0, view'
             end
           | None -> begin
-              let trace' = match trace with
-                | None -> None
-                | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> default0"
-                )
-              in
-              trace', node.default0, view'
+              if trace then
+                File.Fmt.stdout |> Fmt.fmt "Scan: " |> Codepoint.pp cp |> Fmt.fmt " -> default0"
+                |> ignore;
+              node.default0, view'
             end
         end
       | None -> begin
-          let trace' = match trace with
-            | None -> None
-            | Some trace -> Some (
-              trace |> Fmt.fmt "Dfa: eoi0"
-            )
-          in
-          trace', node.eoi0, view
+          if trace then File.Fmt.stdout |> Fmt.fmt "Scan: eoi0" |> ignore;
+          node.eoi0, view
         end
     in
     let t', result = action0 view' t in
-    t', result, trace'
+    t', result
 
   let act1 trace node state_payload view t =
-    let trace', action1, view' = match advance view with
+    let action1, view' = match advance view with
       | Some (cp, view') -> begin
           match Map.get cp node.edges1 with
           | Some action1 -> begin
-              let trace' = match trace with
-                | None -> None
-                | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> action1"
-                )
-              in
-              trace', action1, view'
+              if trace then
+                File.Fmt.stdout |> Fmt.fmt "Scan: " |> Codepoint.pp cp |> Fmt.fmt " -> action1"
+                |> ignore;
+              action1, view'
             end
           | None -> begin
-              let trace' = match trace with
-                | None -> None
-                | Some trace -> Some (
-                  trace |> Fmt.fmt "Dfa: " |> Codepoint.pp cp |> Fmt.fmt " -> default1"
-                )
-              in
-              trace', node.default1, view'
+              if trace then
+                File.Fmt.stdout |> Fmt.fmt "Scan: " |> Codepoint.pp cp |> Fmt.fmt " -> default1"
+                |> ignore;
+              node.default1, view'
             end
         end
       | None -> begin
-          let trace' = match trace with
-            | None -> None
-            | Some trace -> Some (
-              trace |> Fmt.fmt "Dfa: eoi1"
-            )
-          in
-          trace', node.eoi1, view
+          if trace then File.Fmt.stdout |> Fmt.fmt "Scan: eoi1" |> ignore;
+          node.eoi1, view
         end
     in
     let t', result = action1 state_payload view' t in
-    t', result, trace'
+    t', result
 
   let accept_isubstring_impl trans accum cursor t =
     let source = Source.init t.path t.bias t.tok_base cursor in
@@ -2658,58 +2643,42 @@ module Dfa = struct
 
   let rec transition trace state view t =
     match result_of_state trace state view t with
-    | t', Advance (view', state'), trace' -> begin
-        let trace'' = match trace' with
-          | None -> None
-          | Some trace -> Some (
-            trace |> Fmt.fmt " -> Advance (" |> State.pp state' |> Fmt.fmt "), t=" |> pp t'
-            |> Fmt.fmt "\n"
-          )
-        in
-        transition trace'' state' view' t'
+    | t', Advance (view', state') -> begin
+        if trace then
+          File.Fmt.stdout |> Fmt.fmt " -> Advance (" |> pp_view view' |> Fmt.fmt ", "
+          |> State.pp state' |> Fmt.fmt "), " |> pp t' |> Fmt.fmt "\n" |> ignore;
+        transition trace state' view' t'
       end
-    | t', Retry state', trace' -> begin
-        let trace'' = match trace' with
-          | None -> None
-          | Some trace -> Some (
-            trace |> Fmt.fmt " -> Retry (" |> State.pp state' |> Fmt.fmt "), t=" |> pp t'
-            |> Fmt.fmt "\n"
-          )
-        in
-        transition trace'' state' view t'
+    | t', Retry state' -> begin
+        if trace then
+          File.Fmt.stdout |> Fmt.fmt " -> Retry (" |> State.pp state' |> Fmt.fmt "), " |> pp t'
+          |> Fmt.fmt "\n" |> ignore;
+        transition trace state' view t'
       end
-    | t', Accept token, trace' -> begin
-        let trace'' = match trace' with
-          | None -> None
-          | Some trace -> Some (
-            trace |> Fmt.fmt " -> Accept (" |> ConcreteToken.pp token |> Fmt.fmt "), t=" |> pp t'
-            |> Fmt.fmt "\n"
-          )
-        in
-        t', Accept token, trace''
+    | t', Accept token -> begin
+        if trace then
+          File.Fmt.stdout |> Fmt.fmt " -> Accept (" |> ConcreteToken.pp token |> Fmt.fmt "), "
+          |> pp t' |> Fmt.fmt "\n" |> ignore;
+        t', Accept token
       end
 
-  let start ?trace state t =
-    let trace' = match trace with
-      | None -> None
-      | Some trace -> Some (
-        trace |> Fmt.fmt "Dfa: start state=" |> State.pp state |> Fmt.fmt ", t=" |> pp t
-        |> Fmt.fmt "\n"
-      )
-    in
-    match transition trace' state (view t) t with
-    | _, Advance _, _ -> not_reached ()
-    | _, Retry _, _ -> not_reached ()
-    | t', Accept token, trace'' -> t', token, trace''
+  let start ?(trace=false) state t =
+    if trace then
+      File.Fmt.stdout |> Fmt.fmt "Scan: start " |> State.pp state |> Fmt.fmt ", " |> pp t
+      |> Fmt.fmt "\n" |> ignore;
+    match transition trace state (view t) t with
+    | _, Advance _ -> not_reached ()
+    | _, Retry _ -> not_reached ()
+    | t', Accept token -> t', token
 
   let start_opt t =
     assert (Istring_expr_value t.tok_base |> (fun _ -> true)); (* XXX Remove. *)
-    let _trace = Some File.Fmt.stdout in
-    let trace = None in
+    let _trace = None in
+    let trace = Some true in
     match t.istring_state with
     | [] -> None
     | istring_state :: _ -> begin
-        let t', tok, _trace = match istring_state with
+        let t', tok = match istring_state with
           | Istring_interp -> start ?trace State.start_isubstring t
           | Istring_spec_pct -> start ?trace State.start_spec t
           | Istring_rditto -> start ?trace State.start_rditto t
