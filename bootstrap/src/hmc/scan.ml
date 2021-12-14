@@ -2172,6 +2172,7 @@ module State = struct
     | State_spec_lparen -> formatter |> Fmt.fmt "State_spec_lparen"
     | State_rditto_start -> formatter |> Fmt.fmt "State_rditto_start"
 
+  let start = State_start
   let isubstring_start = State_isubstring_start {accum=CodepointAccum.Codepoints []}
   let spec_start = State_spec_start
   let rditto_start = State_rditto_start
@@ -2793,7 +2794,7 @@ module Dfa = struct
         t', Accept token
       end
 
-  let start_impl ?(trace=false) state t =
+  let next ?(trace=false) state t =
     if trace then
       File.Fmt.stdout |> Fmt.fmt "Scan: start " |> State.pp state |> Fmt.fmt ", " |> pp t
       |> Fmt.fmt "\n" |> ignore;
@@ -2801,21 +2802,6 @@ module Dfa = struct
     | _, Advance _ -> not_reached ()
     | _, Retry _ -> not_reached ()
     | t', Accept token -> t', token
-
-  let start t =
-    assert (Istring_expr_value t.tok_base |> (fun _ -> true)); (* XXX Remove. *)
-    let trace = None in
-    let _trace = Some true in
-    match t.istring_state with
-    | [] -> start_impl ?trace State_start t
-    | istring_state :: _ -> begin
-        match istring_state with
-        | Istring_interp -> start_impl ?trace State.isubstring_start t
-        | Istring_spec_pct -> start_impl ?trace State.spec_start t
-        | Istring_rditto -> start_impl ?trace State.rditto_start t
-        | Istring_expr_width
-        | _ -> not_implemented "XXX"
-      end
 end
 
 module LineDirective : sig
@@ -2868,13 +2854,13 @@ end = struct
      * final work of accepting the line directive token; the three tokens accepted while extracting
      * the path never propagate out of this function. *)
     let t_space = {t with tok_base=cursor} in
-    let t_lditto, lditto = Dfa.start t_space in
+    let t_lditto, lditto = Dfa.next State.start t_space in
     match ConcreteToken.atoken lditto with
     | Tok_istring_lditto -> begin
-        let t_path, path_tok = Dfa.start t_lditto in
+        let t_path, path_tok = Dfa.next State.isubstring_start t_lditto in
         match ConcreteToken.atoken path_tok with
         | Tok_isubstring (Constant path) -> begin
-            let t_rditto, rditto = Dfa.start t_path in
+            let t_rditto, rditto = Dfa.next State.rditto_start t_path in
             match ConcreteToken.atoken rditto with
             | Tok_istring_rditto -> path_finish path n t_rditto.tok_base t
             | _ -> error cursor t
@@ -2944,7 +2930,7 @@ end = struct
             (* New expression at same level. *)
             | 0L, t_level, level when t_level = level -> begin
                 match t.line_state with
-                | Line_dentation -> Dfa.start {t with line_state=Line_body}
+                | Line_dentation -> Dfa.next State.start {t with line_state=Line_body}
                 | Line_delim -> accept_dentation Tok_line_delim cursor t
                 | Line_body -> not_reached ()
               end
@@ -3007,7 +2993,7 @@ end = struct
    * scanned twice in the common case. *)
   let paren_comment_lookahead ppcursor pcursor cursor t =
     let rec fn t = begin
-      let t', ctoken = Dfa.start t in
+      let t', ctoken = Dfa.next State.start t in
       match ctoken.atoken, t'.line_state with
       | Tok_end_of_input, _
       | Tok_hash_comment, _
@@ -3028,7 +3014,7 @@ end = struct
     match t.level with
     | 0L -> begin
         match t.line_state with
-        | Line_dentation -> Dfa.start {t with line_state=Line_body}
+        | Line_dentation -> Dfa.next State.start {t with line_state=Line_body}
         | Line_delim -> accept_dentation Tok_line_delim cursor t
         | Line_body -> not_reached ()
       end
@@ -3067,7 +3053,18 @@ end = struct
 end
 
 let next t =
-  match t.line_state with
-  | Line_dentation
-  | Line_delim -> Dentation.start t.tok_base t
-  | Line_body -> Dfa.start t
+  assert (Istring_expr_value t.tok_base |> (fun _ -> true)); (* XXX Remove. *)
+  let trace = None in
+  let _trace = Some true in
+  match t.line_state, t.istring_state with
+  | Line_dentation, _
+  | Line_delim, _ -> Dentation.start t.tok_base t
+  | Line_body, [] -> Dfa.next ?trace State.start t
+  | Line_body, istring_state :: _ -> begin
+      match istring_state with
+      | Istring_interp -> Dfa.next ?trace State.isubstring_start t
+      | Istring_spec_pct -> Dfa.next ?trace State.spec_start t
+      | Istring_rditto -> Dfa.next ?trace State.rditto_start t
+      | Istring_expr_width
+      | _ -> not_implemented "XXX"
+    end
