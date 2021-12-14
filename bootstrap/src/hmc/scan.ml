@@ -777,29 +777,6 @@ let end_of_input cursor t =
   | _, 0L -> accept Tok_end_of_input cursor t
   | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
 
-let whitespace _ppcursor _pcursor cursor t =
-  let rec fn cursor t = begin
-    match Text.Cursor.next_opt cursor with
-    | None -> accept Tok_whitespace cursor t
-    | Some (cp, cursor') -> begin
-        match cp with
-        | cp when Codepoint.(cp = of_char ' ') -> fn cursor' t
-        | cp when Codepoint.(cp = of_char '\\') -> fn_bslash cursor cursor' t
-        | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
-        | _ -> accept Tok_whitespace cursor t
-      end
-  end
-  and fn_bslash pcursor cursor t = begin
-    match Text.Cursor.next_opt cursor with
-    | None -> accept Tok_whitespace pcursor t
-    | Some (cp, cursor') -> begin
-        match cp with
-        | cp when Codepoint.(cp = nl) -> fn cursor' t
-        | _ -> accept Tok_whitespace pcursor t
-      end
-  end in
-  fn cursor t
-
 let hash_comment _ppcursor _pcursor cursor t =
   let accept_hash_comment cursor t = begin
     accept_line_delim Tok_hash_comment cursor t
@@ -2152,6 +2129,8 @@ module State = struct
     | State_btick
     | State_0
     | State_0_dot
+    | State_whitespace
+    | State_whitespace_bslash
     | State_isubstring_start of Isubstring_start.t
     | State_isubstring_bslash of Isubstring_bslash.t
     | State_isubstring_bslash_u of Isubstring_bslash_u.t
@@ -2177,6 +2156,8 @@ module State = struct
     | State_btick -> formatter |> Fmt.fmt "State_btick"
     | State_0 -> formatter |> Fmt.fmt "State_0"
     | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
+    | State_whitespace -> formatter |> Fmt.fmt "State_whitespace"
+    | State_whitespace_bslash -> formatter |> Fmt.fmt "State_whitespace_bslash"
     | State_isubstring_start v ->
       formatter |> Fmt.fmt "State_isubstring_start " |> Isubstring_start.pp v
     | State_isubstring_bslash v ->
@@ -2354,7 +2335,7 @@ module Dfa = struct
         ("|", advance State_bar);
         (":", wrap_legacy (operator (fun s -> Tok_colon_op s)));
         (".", wrap_legacy (operator (fun s -> Tok_dot_op s)));
-        (" ", wrap_legacy whitespace);
+        (" ", advance State_whitespace);
         ("#", wrap_legacy hash_comment);
         ("_", advance State_uscore);
         ("abcdefghijklmnopqrstuvwxyz", wrap_legacy uident);
@@ -2411,7 +2392,7 @@ module Dfa = struct
 
   let node0_bslash = {
     edges0=map_of_cps_alist [
-      ("\n", wrap_legacy whitespace);
+      ("\n", advance State_whitespace);
     ];
     eoi0=accept_incl Tok_bslash;
     default0=accept_excl Tok_bslash;
@@ -2525,6 +2506,24 @@ module Dfa = struct
     ];
     eoi0=accept_incl Real.zero;
     default0=wrap_legacy Real.zero_frac;
+  }
+
+  let node0_whitespace = {
+    edges0=map_of_cps_alist [
+      (" ", advance State_whitespace);
+      ("\\", advance State_whitespace_bslash);
+      ("\n", accept_line_delim_incl Tok_whitespace);
+    ];
+    eoi0=accept_incl Tok_whitespace;
+    default0=accept_excl Tok_whitespace;
+  }
+
+  let node0_whitespace_bslash = {
+    edges0=map_of_cps_alist [
+      ("\n", advance State_whitespace);
+    ];
+    eoi0=accept_excl Tok_whitespace;
+    default0=accept_pexcl Tok_whitespace;
   }
 
   let node1_isubstring_start =
@@ -2752,6 +2751,8 @@ module Dfa = struct
     | State_btick -> act0 trace node0_btick view t
     | State_0 -> act0 trace node0_0 view t
     | State_0_dot -> act0 trace node0_0_dot view t
+    | State_whitespace -> act0 trace node0_whitespace view t
+    | State_whitespace_bslash -> act0 trace node0_whitespace_bslash view t
     | State_isubstring_start v -> act1 trace node1_isubstring_start v view t
     | State_isubstring_bslash v -> act1 trace node1_isubstring_bslash v view t
     | State_isubstring_bslash_u v -> act1 trace node1_isubstring_bslash_u v view t
