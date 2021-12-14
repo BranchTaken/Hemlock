@@ -2131,6 +2131,7 @@ module State = struct
     | State_0_dot
     | State_whitespace
     | State_whitespace_bslash
+    | State_hash_comment
     | State_isubstring_start of Isubstring_start.t
     | State_isubstring_bslash of Isubstring_bslash.t
     | State_isubstring_bslash_u of Isubstring_bslash_u.t
@@ -2158,6 +2159,7 @@ module State = struct
     | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
     | State_whitespace -> formatter |> Fmt.fmt "State_whitespace"
     | State_whitespace_bslash -> formatter |> Fmt.fmt "State_whitespace_bslash"
+    | State_hash_comment -> formatter |> Fmt.fmt "State_hash_comment"
     | State_isubstring_start v ->
       formatter |> Fmt.fmt "State_isubstring_start " |> Isubstring_start.pp v
     | State_isubstring_bslash v ->
@@ -2336,7 +2338,7 @@ module Dfa = struct
         (":", wrap_legacy (operator (fun s -> Tok_colon_op s)));
         (".", wrap_legacy (operator (fun s -> Tok_dot_op s)));
         (" ", advance State_whitespace);
-        ("#", wrap_legacy hash_comment);
+        ("#", advance State_hash_comment);
         ("_", advance State_uscore);
         ("abcdefghijklmnopqrstuvwxyz", wrap_legacy uident);
         ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", wrap_legacy cident);
@@ -2524,6 +2526,14 @@ module Dfa = struct
     ];
     eoi0=accept_excl Tok_whitespace;
     default0=accept_pexcl Tok_whitespace;
+  }
+
+  let node0_hash_comment = {
+    edges0=map_of_cps_alist [
+      ("\n", accept_line_delim_incl Tok_hash_comment);
+    ];
+    eoi0=accept_line_delim_incl Tok_hash_comment;
+    default0=advance State_hash_comment;
   }
 
   let node1_isubstring_start =
@@ -2753,6 +2763,7 @@ module Dfa = struct
     | State_0_dot -> act0 trace node0_0_dot view t
     | State_whitespace -> act0 trace node0_whitespace view t
     | State_whitespace_bslash -> act0 trace node0_whitespace_bslash view t
+    | State_hash_comment -> act0 trace node0_hash_comment view t
     | State_isubstring_start v -> act1 trace node1_isubstring_start v view t
     | State_isubstring_bslash v -> act1 trace node1_isubstring_bslash v view t
     | State_isubstring_bslash_u v -> act1 trace node1_isubstring_bslash_u v view t
