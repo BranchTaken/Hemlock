@@ -675,15 +675,6 @@ let accept atoken cursor t =
   let source = Source.init t.path t.bias t.tok_base cursor in
   {t with tok_base=cursor}, (ConcreteToken.init atoken source)
 
-let accept_incl atoken _ppcursor _pcursor cursor t =
-  accept atoken cursor t
-
-let accept_excl atoken _ppcursor pcursor _cursor t =
-  accept atoken pcursor t
-
-let accept_pexcl atoken ppcursor _pcursor _cursor t =
-  accept atoken ppcursor t
-
 let accept_istring_push push tok _ppcursor _pcursor cursor t =
   let source = Source.init t.path t.bias t.tok_base cursor in
   {t with tok_base=cursor; istring_state=push :: t.istring_state}, (ConcreteToken.init tok source)
@@ -703,75 +694,6 @@ let accept_istring_trans trans tok _ppcursor _pcursor cursor t =
 let accept_line_delim atoken cursor t =
   let source = Source.init t.path t.bias t.tok_base cursor in
   {t with tok_base=cursor; line_state=Line_delim}, (ConcreteToken.init atoken source)
-
-let accept_line_delim_incl atoken _ppcursor _pcursor cursor t =
-  accept_line_delim atoken cursor t
-
-module type IDagEngine = sig
-  type t
-
-  val cursor: t -> Text.Cursor.t
-end
-
-module type SDagEngine = sig
-  include IDagEngine
-  type action = Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  type eoi_action = Text.Cursor.t -> t -> t * ConcreteToken.t
-  type state = {
-    edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
-    eoi: eoi_action;
-    default: action;
-  }
-
-  val act: state -> Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-end
-
-(* The scanner's directed acyclic subgraphs are expressed as DAGs of states with uniform state
- * transition engines. *)
-module MakeDagEngine (T : IDagEngine) : SDagEngine
-  with type t = T.t
-= struct
-  include T
-  type action = Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  type eoi_action = Text.Cursor.t -> t -> t * ConcreteToken.t
-  type state = {
-    edges: (codepoint, action, Codepoint.cmper_witness) Map.t;
-    eoi: eoi_action;
-    default: action;
-  }
-
-  let act state _ppcursor pcursor cursor t =
-    match Text.Cursor.next_opt cursor with
-    | None -> state.eoi cursor t
-    | Some (cp, cursor') -> begin
-        match Map.get cp state.edges with
-        | Some action' -> action' pcursor cursor cursor' t
-        | None -> state.default pcursor cursor cursor' t
-      end
-end
-
-module DagEngineDefault = MakeDagEngine(struct
-  type nonrec t = t
-  let cursor t =
-    t.tok_base
-end)
-
-module type IDag = sig
-  include SDagEngine
-  val start_state: state
-end
-
-module type SDag = sig
-  type t
-  val start: t -> t * ConcreteToken.t
-end
-
-module MakeDag (T : IDag) : SDag
-  with type t := T.t
-= struct
-  let start t =
-    T.act T.start_state (T.cursor t) (T.cursor t) (T.cursor t) t
-end
 
 (***************************************************************************************************
  * Convenience routines for reporting malformations. *)
@@ -2141,175 +2063,6 @@ end = struct
     next_suffix Nat.k_0 Signed pcursor accum Dec cursor t
 end
 
-module DagDefault = MakeDag(struct
-  include DagEngineDefault
-  let start_state = {
-    edges=map_of_cps_alist [
-      (",", accept_incl Tok_comma);
-      (";", act {
-          edges=map_of_cps_alist [
-            (";", accept_incl Tok_semi_semi);
-          ];
-          eoi=accept Tok_semi;
-          default=accept_excl Tok_semi;
-        });
-      ("(", act {
-          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '*') ~v:paren_comment;
-          eoi=accept Tok_lparen;
-          default=accept_excl Tok_lparen;
-        });
-      (")", accept_incl Tok_rparen);
-      ("[", act {
-          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
-              Tok_larray);
-          eoi=accept Tok_lbrack;
-          default=accept_excl Tok_lbrack;
-        });
-      ("]", accept_incl Tok_rbrack);
-      ("{", act {
-          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:(accept_incl
-              Tok_lmodule);
-          eoi=accept Tok_lcurly;
-          default=accept_excl Tok_lcurly;
-        });
-      ("}", accept_incl Tok_rcurly);
-      ("\\", act {
-          edges=map_of_cps_alist [
-            ("\n", whitespace);
-          ];
-          eoi=accept Tok_bslash;
-          default=accept_excl Tok_bslash;
-        });
-      ("&", accept_incl Tok_amp);
-      ("!", accept_incl Tok_xmark);
-      ("\n", accept_line_delim_incl Tok_whitespace);
-      ("~", act {
-          edges=map_of_cps_alist [
-            (operator_cps, operator (fun s -> Tok_tilde_op s));
-          ];
-          eoi=accept Tok_tilde;
-          default=accept_excl Tok_tilde;
-        });
-      ("?", act {
-          edges=map_of_cps_alist [
-            (operator_cps, operator (fun s -> Tok_qmark_op s));
-          ];
-          eoi=accept Tok_qmark;
-          default=accept_excl Tok_qmark;
-        });
-      ("*", act {
-          edges=map_of_cps_alist [
-            ("*", operator (fun s -> Tok_star_star_op s));
-            ("-+/%@^$<=>|:.~?", operator (fun s -> Tok_star_op s));
-          ];
-          eoi=accept (Tok_star_op "*");
-          default=accept_excl (Tok_star_op "*");
-        });
-      ("/", operator (fun s -> Tok_slash_op s));
-      ("%", operator (fun s -> Tok_pct_op s));
-      ("+", operator (fun s -> Tok_plus_op s));
-      ("-", operator (fun s -> Tok_minus_op s));
-      ("@", operator (fun s -> Tok_at_op s));
-      ("^", act {
-          edges=map_of_cps_alist [
-            (")", (fun ppcursor pcursor cursor t ->
-                (* XXX We need to know whether this is the {width,precision,fmt} vs value expression,
-                 * so that we can transition to Istring_spec vs Istring_interp. *)
-                (* XXX This may be better implemented as a `String_.state_next` function based on
-                 * current state and token being accepted. *)
-                match t.istring_state with
-                | Istring_expr_value _XXX :: _ ->
-                  accept_istring_trans Istring_interp Tok_istring_caret_rparen ppcursor pcursor cursor
-                    t
-                | _ :: _ -> not_implemented "XXX"
-                | [] -> operator (fun s -> Tok_caret_op s) ppcursor ppcursor pcursor t
-              ));
-            (operator_cps, operator (fun s -> Tok_caret_op s));
-          ];
-          eoi=accept Tok_caret;
-          default=accept_excl Tok_caret;
-        });
-      ("$", operator (fun s -> Tok_dollar_op s));
-      ("<", operator (fun s -> Tok_lt_op s));
-      ("=", operator (fun s -> Tok_eq_op s));
-      (">", operator (fun s -> Tok_gt_op s));
-      ("|", act {
-          edges=map_of_cps_alist [
-            ("]", accept_incl Tok_rarray);
-            ("}", accept_incl Tok_rmodule);
-            (operator_cps, operator (fun s -> Tok_bar_op s));
-          ];
-          eoi=accept Tok_bar;
-          default=accept_excl Tok_bar;
-        });
-      (":", operator (fun s -> Tok_colon_op s));
-      (".", operator (fun s -> Tok_dot_op s));
-      (" ", whitespace);
-      ("#", hash_comment);
-      ("_", act {
-          edges=map_of_cps_alist [
-            ("abcdefghijklmnopqrstuvwxyz0123456789'", uident);
-            ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
-            ("_", uscore_ident);
-          ];
-          eoi=accept Tok_uscore;
-          default=accept_excl Tok_uscore;
-        });
-      ("abcdefghijklmnopqrstuvwxyz", uident);
-      ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
-      ("'", Codepoint_.codepoint);
-      ("\"", accept_istring_push Istring_interp Tok_istring_lditto);
-      ("`", act {
-          edges=Map.singleton (module Codepoint) ~k:(Codepoint.of_char '|') ~v:String_.bstring;
-          eoi=String_.accept_unterminated_rstring;
-          default=String_.rstring;
-        });
-      ("0", act {
-          edges=map_of_cps_alist [
-            ("0_", Integer.(dec Nat.k_0));
-            ("1", Integer.(dec Nat.k_1));
-            ("2", Integer.(dec Nat.k_2));
-            ("3", Integer.(dec Nat.k_3));
-            ("4", Integer.(dec Nat.k_4));
-            ("5", Integer.(dec Nat.k_5));
-            ("6", Integer.(dec Nat.k_6));
-            ("7", Integer.(dec Nat.k_7));
-            ("8", Integer.(dec Nat.k_8));
-            ("9", Integer.(dec Nat.k_9));
-            ("b", Integer.(bin Nat.k_0));
-            ("o", Integer.(oct Nat.k_0));
-            ("x", Integer.(hex Nat.k_0));
-            ("u", Integer.zero_u_suffix);
-            ("i", Integer.zero_i_suffix);
-            ("r", Real.zero_r_suffix);
-            (".", act {
-                edges=map_of_cps_alist [
-                  (operator_cps, accept_pexcl Integer.zero);
-                ];
-                eoi=accept Real.zero;
-                default=Real.zero_frac;
-              });
-            ("e", Real.zero_exp);
-            ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", Integer.mal_ident);
-          ];
-          eoi=accept Integer.zero;
-          default=accept_excl Integer.zero;
-        });
-      ("1", Integer.(dec Nat.k_1));
-      ("2", Integer.(dec Nat.k_2));
-      ("3", Integer.(dec Nat.k_3));
-      ("4", Integer.(dec Nat.k_4));
-      ("5", Integer.(dec Nat.k_5));
-      ("6", Integer.(dec Nat.k_6));
-      ("7", Integer.(dec Nat.k_7));
-      ("8", Integer.(dec Nat.k_8));
-      ("9", Integer.(dec Nat.k_9));
-    ];
-    eoi=end_of_input;
-    default=accept_incl Tok_error;
-  }
-end)
-
 module State = struct
   module CodepointAccum = struct
     type t =
@@ -3028,7 +2781,7 @@ module Dfa = struct
         t', Accept token
       end
 
-  let start ?(trace=false) state t =
+  let start_impl ?(trace=false) state t =
     if trace then
       File.Fmt.stdout |> Fmt.fmt "Scan: start " |> State.pp state |> Fmt.fmt ", " |> pp t
       |> Fmt.fmt "\n" |> ignore;
@@ -3037,27 +2790,21 @@ module Dfa = struct
     | _, Retry _ -> not_reached ()
     | t', Accept token -> t', token
 
-  let start_opt t =
+  let start t =
     assert (Istring_expr_value t.tok_base |> (fun _ -> true)); (* XXX Remove. *)
     let trace = None in
     let _trace = Some true in
     match t.istring_state with
-    | [] -> Some (start ?trace State_start t)
+    | [] -> start_impl ?trace State_start t
     | istring_state :: _ -> begin
-        let t', tok = match istring_state with
-          | Istring_interp -> start ?trace State.isubstring_start t
-          | Istring_spec_pct -> start ?trace State.spec_start t
-          | Istring_rditto -> start ?trace State.rditto_start t
-          | Istring_expr_width
-          | _ -> not_implemented "XXX"
-        in Some (t', tok)
+        match istring_state with
+        | Istring_interp -> start_impl ?trace State.isubstring_start t
+        | Istring_spec_pct -> start_impl ?trace State.spec_start t
+        | Istring_rditto -> start_impl ?trace State.rditto_start t
+        | Istring_expr_width
+        | _ -> not_implemented "XXX"
       end
 end
-
-let start t =
-  match Dfa.start_opt t with
-  | Some (tok, t') -> tok, t'
-  | None -> DagDefault.start t
 
 module LineDirective : sig
   val start: Text.Cursor.t -> t -> t * ConcreteToken.t option
@@ -3109,13 +2856,13 @@ end = struct
      * final work of accepting the line directive token; the three tokens accepted while extracting
      * the path never propagate out of this function. *)
     let t_space = {t with tok_base=cursor} in
-    let t_lditto, lditto = start t_space in
+    let t_lditto, lditto = Dfa.start t_space in
     match ConcreteToken.atoken lditto with
     | Tok_istring_lditto -> begin
-        let t_path, path_tok = start t_lditto in
+        let t_path, path_tok = Dfa.start t_lditto in
         match ConcreteToken.atoken path_tok with
         | Tok_isubstring (Constant path) -> begin
-            let t_rditto, rditto = start t_path in
+            let t_rditto, rditto = Dfa.start t_path in
             match ConcreteToken.atoken rditto with
             | Tok_istring_rditto -> path_finish path n t_rditto.tok_base t
             | _ -> error cursor t
@@ -3185,7 +2932,7 @@ end = struct
             (* New expression at same level. *)
             | 0L, t_level, level when t_level = level -> begin
                 match t.line_state with
-                | Line_dentation -> start {t with line_state=Line_body}
+                | Line_dentation -> Dfa.start {t with line_state=Line_body}
                 | Line_delim -> accept_dentation Tok_line_delim cursor t
                 | Line_body -> not_reached ()
               end
@@ -3248,7 +2995,7 @@ end = struct
    * scanned twice in the common case. *)
   let paren_comment_lookahead ppcursor pcursor cursor t =
     let rec fn t = begin
-      let t', ctoken = start t in
+      let t', ctoken = Dfa.start t in
       match ctoken.atoken, t'.line_state with
       | Tok_end_of_input, _
       | Tok_hash_comment, _
@@ -3269,7 +3016,7 @@ end = struct
     match t.level with
     | 0L -> begin
         match t.line_state with
-        | Line_dentation -> start {t with line_state=Line_body}
+        | Line_dentation -> Dfa.start {t with line_state=Line_body}
         | Line_delim -> accept_dentation Tok_line_delim cursor t
         | Line_body -> not_reached ()
       end
@@ -3311,4 +3058,4 @@ let next t =
   match t.line_state with
   | Line_dentation
   | Line_delim -> Dentation.start t.tok_base t
-  | Line_body -> start t
+  | Line_body -> Dfa.start t
