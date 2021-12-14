@@ -2384,6 +2384,21 @@ module State = struct
   end
 
   type t =
+    | State_start
+    | State_semi
+    | State_lparen
+    | State_lbrack
+    | State_lcurly
+    | State_bslash
+    | State_tilde
+    | State_qmark
+    | State_star
+    | State_caret
+    | State_bar
+    | State_uscore
+    | State_btick
+    | State_0
+    | State_0_dot
     | State_isubstring_start of Isubstring_start.t
     | State_isubstring_bslash of Isubstring_bslash.t
     | State_isubstring_bslash_u of Isubstring_bslash_u.t
@@ -2394,6 +2409,21 @@ module State = struct
 
   let pp t formatter =
     match t with
+    | State_start -> formatter |> Fmt.fmt "State_start"
+    | State_semi -> formatter |> Fmt.fmt "State_semi"
+    | State_lparen -> formatter |> Fmt.fmt "State_lparen"
+    | State_lbrack -> formatter |> Fmt.fmt "State_lbrack"
+    | State_lcurly -> formatter |> Fmt.fmt "State_lcurly"
+    | State_bslash -> formatter |> Fmt.fmt "State_bslash"
+    | State_tilde -> formatter |> Fmt.fmt "State_tilde"
+    | State_qmark -> formatter |> Fmt.fmt "State_qmark"
+    | State_star -> formatter |> Fmt.fmt "State_star"
+    | State_caret -> formatter |> Fmt.fmt "State_caret"
+    | State_bar -> formatter |> Fmt.fmt "State_bar"
+    | State_uscore -> formatter |> Fmt.fmt "State_uscore"
+    | State_btick -> formatter |> Fmt.fmt "State_btick"
+    | State_0 -> formatter |> Fmt.fmt "State_0"
+    | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
     | State_isubstring_start v ->
       formatter |> Fmt.fmt "State_isubstring_start " |> Isubstring_start.pp v
     | State_isubstring_bslash v ->
@@ -2504,8 +2534,249 @@ module Dfa = struct
     let t', transition = action1 state_payload view' t in
     t', transition
 
+  let accept atoken cursor t =
+    let source = Source.init t.path t.bias t.tok_base cursor in
+    {t with tok_base=cursor}, Accept (ConcreteToken.init atoken source)
+
+  let accept_incl atoken View.{cursor; _} t =
+    accept atoken cursor t
+
+  let accept_excl atoken View.{pcursor; _} t =
+    accept atoken pcursor t
+
+  let accept_pexcl atoken View.{ppcursor; _} t =
+    accept atoken ppcursor t
+
+  let accept_line_delim atoken cursor t =
+    let source = Source.init t.path t.bias t.tok_base cursor in
+    {t with tok_base=cursor; line_state=Line_delim}, Accept (ConcreteToken.init atoken source)
+
+  let accept_line_delim_incl atoken View.{cursor; _} t =
+    accept_line_delim atoken cursor t
+
+  let accept_dentation atoken View.{cursor; _} t =
+    accept atoken cursor {t with line_state=Line_body}
+
+  (* XXX Refactor out. *)
+  let wrap_legacy f View.{ppcursor; pcursor; cursor} t =
+    let t', tok = f ppcursor pcursor cursor t in
+    t', Accept tok
+
+  let advance state view t =
+    t, Advance (view, state)
+
+  let node0_start = let eoi0 view t = begin
+    match t.line_state, t.level with
+    | Line_delim, 0L -> accept_dentation Tok_line_delim view t
+    | _, 0L -> accept_incl Tok_end_of_input view t
+    | _ -> accept_dentation (Tok_dedent (Constant ())) view {t with level=Uns.pred t.level}
+  end in
+    {
+      edges0=map_of_cps_alist [
+        (",", accept_incl Tok_comma);
+        (";", advance State_semi);
+        ("(", advance State_lparen);
+        (")", accept_incl Tok_rparen);
+        ("[", advance State_lbrack);
+        ("]", accept_incl Tok_rbrack);
+        ("{", advance State_lcurly);
+        ("}", accept_incl Tok_rcurly);
+        ("\\", advance State_bslash);
+        ("&", accept_incl Tok_amp);
+        ("!", accept_incl Tok_xmark);
+        ("\n", accept_line_delim_incl Tok_whitespace);
+        ("~", advance State_tilde);
+        ("?", advance State_qmark);
+        ("*", advance State_star);
+        ("/", wrap_legacy (operator (fun s -> Tok_slash_op s)));
+        ("%", wrap_legacy (operator (fun s -> Tok_pct_op s)));
+        ("+", wrap_legacy (operator (fun s -> Tok_plus_op s)));
+        ("-", wrap_legacy (operator (fun s -> Tok_minus_op s)));
+        ("@", wrap_legacy (operator (fun s -> Tok_at_op s)));
+        ("^", advance State_caret);
+        ("$", wrap_legacy (operator (fun s -> Tok_dollar_op s)));
+        ("<", wrap_legacy (operator (fun s -> Tok_lt_op s)));
+        ("=", wrap_legacy (operator (fun s -> Tok_eq_op s)));
+        (">", wrap_legacy (operator (fun s -> Tok_gt_op s)));
+        ("|", advance State_bar);
+        (":", wrap_legacy (operator (fun s -> Tok_colon_op s)));
+        (".", wrap_legacy (operator (fun s -> Tok_dot_op s)));
+        (" ", wrap_legacy whitespace);
+        ("#", wrap_legacy hash_comment);
+        ("_", advance State_uscore);
+        ("abcdefghijklmnopqrstuvwxyz", wrap_legacy uident);
+        ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", wrap_legacy cident);
+        ("'", wrap_legacy Codepoint_.codepoint);
+        ("\"", wrap_legacy (accept_istring_push Istring_interp Tok_istring_lditto));
+        ("`", advance State_btick);
+        ("0", advance State_0);
+        ("1", wrap_legacy Integer.(dec Nat.k_1));
+        ("2", wrap_legacy Integer.(dec Nat.k_2));
+        ("3", wrap_legacy Integer.(dec Nat.k_3));
+        ("4", wrap_legacy Integer.(dec Nat.k_4));
+        ("5", wrap_legacy Integer.(dec Nat.k_5));
+        ("6", wrap_legacy Integer.(dec Nat.k_6));
+        ("7", wrap_legacy Integer.(dec Nat.k_7));
+        ("8", wrap_legacy Integer.(dec Nat.k_8));
+        ("9", wrap_legacy Integer.(dec Nat.k_9));
+      ];
+      eoi0;
+      default0=accept_incl Tok_error;
+    }
+
+  let node0_semi = {
+    edges0=map_of_cps_alist [
+      (";", accept_incl Tok_semi_semi);
+    ];
+    eoi0=accept_incl Tok_semi;
+    default0=accept_excl Tok_semi;
+  }
+
+  let node0_lparen = {
+    edges0=map_of_cps_alist [
+      ("*", wrap_legacy paren_comment);
+    ];
+    eoi0=accept_incl Tok_lparen;
+    default0=accept_excl Tok_lparen;
+  }
+
+  let node0_lbrack = {
+    edges0=map_of_cps_alist [
+      ("|", accept_incl Tok_larray);
+    ];
+    eoi0=accept_incl Tok_lbrack;
+    default0=accept_excl Tok_lbrack;
+  }
+
+  let node0_lcurly = {
+    edges0=map_of_cps_alist [
+      ("|", accept_incl Tok_lmodule);
+    ];
+    eoi0=accept_incl Tok_lcurly;
+    default0=accept_excl Tok_lcurly;
+  }
+
+  let node0_bslash = {
+    edges0=map_of_cps_alist [
+      ("\n", wrap_legacy whitespace);
+    ];
+    eoi0=accept_incl Tok_bslash;
+    default0=accept_excl Tok_bslash;
+  }
+
+  let node0_tilde = {
+    edges0=map_of_cps_alist [
+      (operator_cps, wrap_legacy (operator (fun s -> Tok_tilde_op s)));
+    ];
+    eoi0=accept_incl Tok_tilde;
+    default0=accept_excl Tok_tilde;
+  }
+
+  let node0_qmark = {
+    edges0=map_of_cps_alist [
+      (operator_cps, wrap_legacy (operator (fun s -> Tok_qmark_op s)));
+    ];
+    eoi0=accept_incl Tok_qmark;
+    default0=accept_excl Tok_qmark;
+  }
+
+  let node0_star = {
+    edges0=map_of_cps_alist [
+      ("*", wrap_legacy (operator (fun s -> Tok_star_star_op s)));
+      ("-+/%@^$<=>|:.~?", wrap_legacy(operator (fun s -> Tok_star_op s)));
+    ];
+    eoi0=accept_incl (Tok_star_op "*");
+    default0=accept_excl (Tok_star_op "*");
+  }
+
+  let node0_caret = {
+    edges0=map_of_cps_alist [
+      (")", (fun view t ->
+          (* XXX We need to know whether this is the {width,precision,fmt} vs value expression,
+           * so that we can transition to Istring_spec vs Istring_interp. *)
+          (* XXX This may be better implemented as a `String_.state_next` function based on
+           * current state and token being accepted. *)
+          match t.istring_state with
+          | Istring_expr_value _XXX :: _ ->
+            wrap_legacy (accept_istring_trans Istring_interp Tok_istring_caret_rparen) view t
+          | _ :: _ -> not_implemented "XXX"
+          | [] -> accept_excl Tok_caret view t
+        )
+      );
+      (operator_cps, wrap_legacy (operator (fun s -> Tok_caret_op s)));
+    ];
+    eoi0=accept_incl Tok_caret;
+    default0=accept_excl Tok_caret;
+  }
+
+  let node0_bar = {
+    edges0=map_of_cps_alist [
+      ("]", accept_incl Tok_rarray);
+      ("}", accept_incl Tok_rmodule);
+      (operator_cps, wrap_legacy (operator (fun s -> Tok_bar_op s)));
+    ];
+    eoi0=accept_incl Tok_bar;
+    default0=accept_excl Tok_bar;
+  }
+
+  let node0_uscore = {
+    edges0=map_of_cps_alist [
+      ("abcdefghijklmnopqrstuvwxyz0123456789'", wrap_legacy uident);
+      ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", wrap_legacy cident);
+      ("_", wrap_legacy uscore_ident);
+    ];
+    eoi0=accept_incl Tok_uscore;
+    default0=accept_excl Tok_uscore;
+  }
+
+  let node0_btick = {
+    edges0=map_of_cps_alist [
+      ("|", wrap_legacy String_.bstring);
+    ];
+    eoi0=(fun View.{cursor; _} t ->
+      let t', tok = String_.accept_unterminated_rstring cursor t in
+      t', Accept tok
+    );
+    default0=wrap_legacy String_.rstring;
+  }
+
+  let node0_0 = {
+    edges0=map_of_cps_alist [
+      ("0_", wrap_legacy Integer.(dec Nat.k_0));
+      ("1", wrap_legacy Integer.(dec Nat.k_1));
+      ("2", wrap_legacy Integer.(dec Nat.k_2));
+      ("3", wrap_legacy Integer.(dec Nat.k_3));
+      ("4", wrap_legacy Integer.(dec Nat.k_4));
+      ("5", wrap_legacy Integer.(dec Nat.k_5));
+      ("6", wrap_legacy Integer.(dec Nat.k_6));
+      ("7", wrap_legacy Integer.(dec Nat.k_7));
+      ("8", wrap_legacy Integer.(dec Nat.k_8));
+      ("9", wrap_legacy Integer.(dec Nat.k_9));
+      ("b", wrap_legacy Integer.(bin Nat.k_0));
+      ("o", wrap_legacy Integer.(oct Nat.k_0));
+      ("x", wrap_legacy Integer.(hex Nat.k_0));
+      ("u", wrap_legacy Integer.zero_u_suffix);
+      ("i", wrap_legacy Integer.zero_i_suffix);
+      ("r", wrap_legacy Real.zero_r_suffix);
+      (".", advance State_0_dot);
+      ("e", wrap_legacy Real.zero_exp);
+      ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", wrap_legacy Integer.mal_ident);
+    ];
+    eoi0=accept_incl Integer.zero;
+    default0=accept_excl Integer.zero;
+  }
+
+  let node0_0_dot = {
+    edges0=map_of_cps_alist [
+      (operator_cps, accept_pexcl Integer.zero);
+    ];
+    eoi0=accept_incl Real.zero;
+    default0=wrap_legacy Real.zero_frac;
+  }
+
   let node1_isubstring_start =
     let open State.Isubstring_start in
+    let open View in
     let accept_isubstring_impl trans {accum} cursor t = begin
       let source = Source.init t.path t.bias t.tok_base cursor in
       let open State.CodepointAccum in
@@ -2516,16 +2787,16 @@ module Dfa = struct
       {t with tok_base=cursor; istring_state=trans :: (List.tl t.istring_state)},
       Accept (ConcreteToken.init tok source)
     end in
-    let accept_isubstring trans accum View.{cursor; _} t = begin
+    let accept_isubstring trans accum {cursor; _} t = begin
       accept_isubstring_impl trans accum cursor t
     end in
-    let accept_isubstring_excl trans accum View.{pcursor; _} t = begin
+    let accept_isubstring_excl trans accum {pcursor; _} t = begin
       accept_isubstring_impl trans accum pcursor t
     end in
     let accum_cp cp accum view t = begin
       t, Advance (view, State_isubstring_start {accum=State.CodepointAccum.accum_cp cp accum})
     end in
-    let accum_raw {accum} (View.{pcursor; _} as view) t = begin
+    let accum_raw {accum} ({pcursor; _} as view) t = begin
       let cp = Text.Cursor.rget pcursor in
       accum_cp cp accum view t
     end in
@@ -2544,17 +2815,18 @@ module Dfa = struct
   (* XXX Reduce helper duplication among nodes. *)
   let node1_isubstring_bslash =
     let open State.Isubstring_bslash in
+    let open View in
     let accum_illegal_backslash accum bslash_cursor cursor t = begin
       let mal = illegal_backslash bslash_cursor cursor t in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
-    let eoi1 {accum; bslash_cursor} View.{cursor; _} t = begin
+    let eoi1 {accum; bslash_cursor} {cursor; _} t = begin
       accum_illegal_backslash accum bslash_cursor cursor t
     end in
     let accum_cp cp {accum; _} view t = begin
       t, Advance (view, (State_isubstring_start {accum=State.CodepointAccum.accum_cp cp accum}))
     end in
-    let accum_raw state (View.{pcursor; _} as view) t = begin
+    let accum_raw state ({pcursor; _} as view) t = begin
       let cp = Text.Cursor.rget pcursor in
       accum_cp cp state view t
     end in
@@ -2574,11 +2846,12 @@ module Dfa = struct
 
   let node1_isubstring_bslash_u =
     let open State.Isubstring_bslash_u in
+    let open View in
     let accum_illegal_backslash accum bslash_cursor cursor t = begin
       let mal = illegal_backslash bslash_cursor cursor t in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
-    let eoi1 {accum; bslash_cursor} View.{pcursor; _} t = begin
+    let eoi1 {accum; bslash_cursor} {pcursor; _} t = begin
       accum_illegal_backslash accum bslash_cursor pcursor t
     end in
     let accept_isubstring_impl trans accum cursor t = begin
@@ -2591,7 +2864,7 @@ module Dfa = struct
       {t with tok_base=cursor; istring_state=trans :: (List.tl t.istring_state)},
       Accept (ConcreteToken.init tok source)
     end in
-    let accept_isubstring_excl trans accum View.{pcursor; _} t = begin
+    let accept_isubstring_excl trans accum {pcursor; _} t = begin
       accept_isubstring_impl trans accum pcursor t
     end in
     {
@@ -2610,6 +2883,7 @@ module Dfa = struct
 
   let node1_isubstring_bslash_u_lcurly =
     let open State.Isubstring_bslash_u_lcurly in
+    let open View in
     let accum_invalid_unicode accum bslash_cursor cursor t = begin
       let mal = invalid_unicode bslash_cursor cursor t in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
@@ -2618,7 +2892,7 @@ module Dfa = struct
       let mal = partial_unicode bslash_cursor cursor t in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
-    let eoi1 {accum; bslash_cursor; _} View.{pcursor; _} t = begin
+    let eoi1 {accum; bslash_cursor; _} {pcursor; _} t = begin
       accum_partial_unicode accum bslash_cursor pcursor t
     end in
     let accum_cp cp {accum; _} view t = begin
@@ -2637,7 +2911,7 @@ module Dfa = struct
       {t with tok_base=cursor; istring_state=trans :: (List.tl t.istring_state)},
       Accept (ConcreteToken.init tok source)
     end in
-    let accept_isubstring_excl trans accum View.{pcursor; _} t = begin
+    let accept_isubstring_excl trans accum {pcursor; _} t = begin
       accept_isubstring_impl trans accum pcursor t
     end in
     {
@@ -2666,7 +2940,8 @@ module Dfa = struct
     }
 
   let node0_rditto_start =
-    let accept_rditto tok View.{cursor; _} t = begin
+    let open View in
+    let accept_rditto tok {cursor; _} t = begin
       let source = Source.init t.path t.bias t.tok_base cursor in
       {t with tok_base=cursor; istring_state=List.tl t.istring_state},
       Accept (ConcreteToken.init tok source)
@@ -2679,11 +2954,8 @@ module Dfa = struct
       default0=(fun _ _ -> not_reached ());
     }
 
-  let wrap_accept (t, tok) =
-    t, Accept tok
-
-  let error View.{ppcursor; pcursor; cursor} t =
-    wrap_accept (accept_incl Tok_error ppcursor pcursor cursor t)
+  let error view t =
+    accept_incl Tok_error view t
 
   let eoi0 = error
 
@@ -2693,7 +2965,8 @@ module Dfa = struct
     t, Advance (view, state')
 
   let accept ~f View.{ppcursor; pcursor; cursor} t =
-    wrap_accept (f ppcursor pcursor cursor t)
+    let t', tok = f ppcursor pcursor cursor t in
+    t', Accept tok
 
   let node0_spec_start = {
     edges0=map_of_cps_alist [
@@ -2711,6 +2984,21 @@ module Dfa = struct
   let transition_of_state trace state view t =
     let open State in
     match state with
+    | State_start -> act0 trace node0_start view t
+    | State_semi -> act0 trace node0_semi view t
+    | State_lparen -> act0 trace node0_lparen view t
+    | State_lbrack -> act0 trace node0_lbrack view t
+    | State_lcurly -> act0 trace node0_lcurly view t
+    | State_bslash -> act0 trace node0_bslash view t
+    | State_tilde -> act0 trace node0_tilde view t
+    | State_qmark -> act0 trace node0_qmark view t
+    | State_star -> act0 trace node0_star view t
+    | State_caret -> act0 trace node0_caret view t
+    | State_bar -> act0 trace node0_bar view t
+    | State_uscore -> act0 trace node0_uscore view t
+    | State_btick -> act0 trace node0_btick view t
+    | State_0 -> act0 trace node0_0 view t
+    | State_0_dot -> act0 trace node0_0_dot view t
     | State_isubstring_start v -> act1 trace node1_isubstring_start v view t
     | State_isubstring_bslash v -> act1 trace node1_isubstring_bslash v view t
     | State_isubstring_bslash_u v -> act1 trace node1_isubstring_bslash_u v view t
@@ -2754,7 +3042,7 @@ module Dfa = struct
     let trace = None in
     let _trace = Some true in
     match t.istring_state with
-    | [] -> None
+    | [] -> Some (start ?trace State_start t)
     | istring_state :: _ -> begin
         let t', tok = match istring_state with
           | Istring_interp -> start ?trace State.isubstring_start t
