@@ -582,20 +582,39 @@ context:
     ^)"                                     # "  [\"1:Alice\"; \"2:Bob\"]  "
   ```
 
-## Line directives
+## Source directives
 
 Token path/line/column locations are ordinarily a simple function of the source stream from which
 they derive, but if the source stream is generated from another source, e.g. using a parser
-generator, it can be useful to associate tokens with the pre-generated source locations. Line
-directives provide a mechanism for setting the line and path for subsequent source lines. Line
-directives are consumed by the scanner and no tokens result unless there is a syntax error in the
-line directive. As such, the line directive syntax is extremely rigid. Line directives begin with
-`:` at column 0, followed by positive decimal line number (leading zero prohibited), followed by
-optional single space and double-quoted string path, terminated by newline.
+generator, it can be useful to associate tokens with the pre-generated source locations. Source
+directives provide a mechanism for setting the path, line and column for subsequent source. Although
+the scanner accepts source directive tokens much as any other token, the primary purpose of such
+tokens is to affect scanner state, and the parser ignores them.
 
-Examples:
+Source directives match `\[:[<path>:]<line>[:<col>]:\]`:
+
+- `<path>`: `"..."`-delimited interpolated string, minus support for format specifiers, defaults to
+  current source path
+- `<line>`: `[1-9][0-9]*`, constrained to the range of `uns`
+- `<col>`: `[1-9][0-9]*`, constrained to the range of `uns`, defaults to 1
+
+Examples follow.
 
 ```hemlock
-:42␤
-:42 "foo.hm"␤
+[:"Foo.hm":42:13:]
+[:"Foo.hm":42:]
+[:42:13:]
+[:42:]
+```
+
+Unlike line directives, source directives specify the position of the codepoint immediately
+following the directive, even if it is a newline. That means that if the intent is to specify the
+source directive and separate the directive from the source by a newline, the specified line number
+should be one less than that of the following source.
+
+```hemlock
+let x = [:42:]"hello"
+
+let x = [:41:]\
+"hello"
 ```

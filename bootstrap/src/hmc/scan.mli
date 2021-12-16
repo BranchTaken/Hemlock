@@ -87,6 +87,11 @@ module AbstractToken : sig
 
     include FormattableIntf.SPoly with type 'a t := 'a t
   end
+  type source_directive = {
+    path: string option;
+    line: uns;
+    col: uns;
+  }
   type t =
     (* Keywords. *)
     | Tok_and
@@ -174,6 +179,7 @@ module AbstractToken : sig
     | Tok_arrow
     | Tok_carrow
 
+    | Tok_source_directive of source_directive Rendition.t
     | Tok_indent of unit Rendition.t
     | Tok_line_delim
     | Tok_dedent of unit Rendition.t
