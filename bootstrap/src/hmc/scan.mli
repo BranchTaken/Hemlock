@@ -77,7 +77,8 @@ module AbstractToken : sig
 
       include FormattableIntf.SMono with type t := t
 
-      val init: string option -> sint -> base:Text.Cursor.t -> past:Text.Cursor.t -> string -> t
+      val init: path:string option -> line_bias:sint -> col_bias:sint -> base:Text.Cursor.t
+        -> past:Text.Cursor.t -> description:string -> t
       val source: t -> Source.t
       val description: t -> string
     end

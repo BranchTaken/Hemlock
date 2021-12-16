@@ -591,11 +591,12 @@ directives provide a mechanism for setting the path, line and column for subsequ
 the scanner accepts source directive tokens much as any other token, the primary purpose of such
 tokens is to affect scanner state, and the parser ignores them.
 
-Source directives match `\[:[<path>:]<line>[:<col>]:\]`:
+Source directives are delimited by `[:`...`:]` and comprise three optional colon-separated
+parameters, matched by `\[:[<path>:][<line>[:<col>]]:\]`:
 
 - `<path>`: `"..."`-delimited interpolated string, minus support for format specifiers, defaults to
   current source path
-- `<line>`: `[1-9][0-9]*`, constrained to the range of `uns`
+- `<line>`: `[1-9][0-9]*`, constrained to the range of `uns`, defaults to 1
 - `<col>`: `[1-9][0-9]*`, constrained to the range of `uns`, defaults to 1
 
 Examples follow.
@@ -603,14 +604,16 @@ Examples follow.
 ```hemlock
 [:"Foo.hm":42:13:]
 [:"Foo.hm":42:]
+[:"Foo.hm":]
 [:42:13:]
 [:42:]
+[::]
 ```
 
 Unlike line directives, source directives specify the position of the codepoint immediately
-following the directive, even if it is a newline. That means that if the intent is to specify the
-source directive and separate the directive from the source by a newline, the specified line number
-should be one less than that of the following source.
+following the directive, even if it is a newline. If the intent were to specify the source directive
+and separate the directive from the source by a newline, the specified line number would need to be
+one less than that of the following source.
 
 ```hemlock
 let x = [:42:]"hello"
@@ -618,3 +621,6 @@ let x = [:42:]"hello"
 let x = [:41:]\
 "hello"
 ```
+
+However, line numbering starts at 1 and line 0 cannot be specified, so this approach would not work
+in all cases. Therefore source directives should be emitted without emitting extraneous line breaks.
