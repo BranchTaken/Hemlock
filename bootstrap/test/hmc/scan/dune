@@ -12,5 +12,6 @@
   test_punctuation
   test_real
   test_rstring
+  test_source_directive
   test_uident)
  (libraries Basis Hmc))
