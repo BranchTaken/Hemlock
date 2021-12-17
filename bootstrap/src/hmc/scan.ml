@@ -3415,92 +3415,6 @@ module Dfa = struct
     | t', Accept token -> t', token
 end
 
-module LineDirective : sig
-  val start: Text.Cursor.t -> t -> t * ConcreteToken.t option
-end = struct
-  let digits_1_9 = set_of_cps "123456789"
-
-  type trailing_digit_map =
-    | LDMapDigit
-    | LDMapSpace
-    | LDMapNewline
-
-  let trailing_digit_map = map_of_cps_alist [
-    ("0123456789", LDMapDigit);
-    (" ", LDMapSpace);
-    ("\n", LDMapNewline);
-  ]
-
-  let accept_error cursor t =
-    let t', tok = accept Tok_error cursor t in
-    t', Some tok
-
-  let rec error cursor t =
-    match Text.Cursor.next_opt cursor with
-    | None -> accept_error cursor t
-    | Some (cp, cursor') when Codepoint.(cp = nl) -> accept_error cursor' t
-    | Some (_, cursor') -> error cursor' t
-
-  let accept_directive ?path n cursor t =
-    match Nat.to_int_opt n with
-    | Some ni -> begin
-        let path = match path with
-          | None -> t.path
-          | Some _ -> path
-        in
-        let line_bias = Sint.(ni - (Uns.bits_to_sint (Text.(Pos.line (Cursor.pos cursor))))) in
-        {t with path; line_bias; tok_base=cursor}, None
-      end
-    | None -> accept_error cursor t
-
-  let path_finish path n cursor t =
-    match Text.Cursor.next_opt cursor with
-    | None -> accept_error cursor t
-    | Some (cp, cursor') when Codepoint.(cp = nl) -> accept_directive ~path n cursor' t
-    | Some (_, cursor') -> error cursor' t
-
-  let path_start n cursor t =
-    (* Scan using the normal token scanner, and extract the path from the [Tok_istring_lditto;
-     * Tok_isubstring; Tok_istring_rditto] token sequence. If all goes well, path_finish does the
-     * final work of accepting the line directive token; the three tokens accepted while extracting
-     * the path never propagate out of this function. *)
-    let t_space = {t with tok_base=cursor} in
-    let t_lditto, lditto = Dfa.next State.start t_space in
-    match ConcreteToken.atoken lditto with
-    | Tok_istring_lditto -> begin
-        let t_path, path_tok = Dfa.next State.isubstring_start t_lditto in
-        match ConcreteToken.atoken path_tok with
-        | Tok_isubstring (Constant path) -> begin
-            let t_rditto, rditto = Dfa.next State.rditto_start t_path in
-            match ConcreteToken.atoken rditto with
-            | Tok_istring_rditto -> path_finish path n t_rditto.tok_base t
-            | _ -> error cursor t
-          end
-        | _ -> error cursor t
-      end
-    | _ -> error cursor t
-
-  let rec n_cont n cursor t =
-    match Text.Cursor.next_opt cursor with
-    | None -> accept_error cursor t
-    | Some (cp, cursor') -> begin
-        match Map.get cp trailing_digit_map  with
-        | Some LDMapDigit -> n_cont Nat.(n * k_a + (nat_of_cp cp)) cursor' t
-        | Some LDMapSpace -> path_start n cursor' t
-        | Some LDMapNewline -> accept_directive n cursor' t
-        | None -> error cursor' t
-      end
-
-  let start cursor t =
-    match Text.Cursor.next_opt cursor with
-    | None -> accept_error cursor t
-    | Some (cp, cursor') -> begin
-        match Set.mem cp digits_1_9 with
-        | true -> n_cont (nat_of_cp cp) cursor' t
-        | false -> error cursor' t
-      end
-end
-
 module Dentation : sig
   val start: Text.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
@@ -3632,7 +3546,7 @@ end = struct
     | 1L -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=0L}
     | _ -> accept (Tok_dedent (Constant ())) cursor {t with level=pred t.level}
 
-  let rec start cursor t =
+  let start cursor t =
     match Text.Cursor.next_opt cursor with
     | None -> end_of_input cursor t
     | Some (cp, cursor') -> begin
@@ -3652,12 +3566,6 @@ end = struct
                   end
                 | _ -> other cursor t
               end
-          end
-        | cp when Codepoint.(cp = of_char ':') -> begin
-            let t', tok_opt = LineDirective.start cursor' t in
-            match tok_opt with
-            | None -> start t'.tok_base t'
-            | Some tok -> t', tok
           end
         | _ -> other cursor t
       end

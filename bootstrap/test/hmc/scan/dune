@@ -7,7 +7,6 @@
   test_dentation
   test_integer
   test_istring
-  test_line_directive
   test_operators
   test_punctuation
   test_real
