@@ -746,6 +746,12 @@ let malformation ~base ~past description t =
 let malformed malformation =
   AbstractToken.Rendition.of_mals [malformation]
 
+let unexpected_codepoint_source_directive base past t =
+  malformation ~base ~past "Unexpected codepoint in source directive" t
+
+let unterminated_source_directive base past t =
+  malformation ~base ~past "Unterminated source directive" t
+
 let invalid_unicode base past t =
   malformation ~base ~past "Invalid Unicode value" t
 
@@ -2792,19 +2798,17 @@ module Dfa = struct
         )
       );
       ("]", (fun {pcursor; cursor; _} t ->
-          let mal =
-            malformation ~base:pcursor ~past:cursor "Unexpected codepoint in source directive" t in
+          let mal = unexpected_codepoint_source_directive pcursor cursor t in
           accept (Tok_source_directive (AbstractToken.Rendition.of_mals [mal])) cursor t
         )
       );
     ];
     default0=(fun ({pcursor; cursor; _} as view) t ->
-      let mal =
-        malformation ~base:pcursor ~past:cursor "Unexpected codepoint in source directive" t in
+      let mal = unexpected_codepoint_source_directive pcursor cursor t in
       advance (State_src_line (State.Src_line.init ~mals:[mal] ~line_cursor:cursor Nat.k_0)) view t
     );
     eoi0=(fun {cursor; _} t ->
-      let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+      let mal = unterminated_source_directive t.tok_base cursor t in
       accept (Tok_source_directive (AbstractToken.Rendition.of_mals [mal])) cursor t
     );
   }
@@ -2827,7 +2831,7 @@ module Dfa = struct
         advance (State_src_path (state |> path_accum (Text.Cursor.rget pcursor))) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2853,7 +2857,7 @@ module Dfa = struct
         retry (State_src_path (state |> mals_accum mal)) t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2873,8 +2877,7 @@ module Dfa = struct
           )
         );
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = malformation ~base:pcursor ~past:cursor
-              "Unexpected codepoint in source directive" t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor t in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
@@ -2884,7 +2887,7 @@ module Dfa = struct
         advance (State_src_path (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2916,8 +2919,7 @@ module Dfa = struct
           )
         );
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = malformation ~base:pcursor ~past:cursor
-              "Unexpected codepoint in source directive" t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor t in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
@@ -2927,7 +2929,7 @@ module Dfa = struct
         advance (State_src_path (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2938,19 +2940,17 @@ module Dfa = struct
       edges1=map_of_cps_alist [
         (":", (fun state view t -> advance (State_src_path_colon state) view t));
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = malformation ~base:pcursor ~past:cursor
-              "Unexpected codepoint in source directive" t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor t in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal =
-          malformation ~base:pcursor ~past:cursor "Unexpected codepoint in source directive" t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor t in
         advance (State_src_rditto (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2971,12 +2971,11 @@ module Dfa = struct
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal =
-          malformation ~base:pcursor ~past:cursor "Unexpected codepoint in source directive" t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor t in
         advance (State_src_rditto (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -3008,8 +3007,7 @@ module Dfa = struct
           )
         );
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = malformation ~base:pcursor ~past:cursor
-              "Unexpected codepoint in source directive" t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor t in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
@@ -3019,7 +3017,7 @@ module Dfa = struct
         advance (State_src_line (init ~mals:(mal :: mals) ~path ~line_cursor:cursor Nat.k_0)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -3039,12 +3037,11 @@ module Dfa = struct
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal =
-          malformation ~base:pcursor ~past:cursor "Unexpected codepoint in source directive" t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor t in
         advance (State_src_line_colon (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -3076,19 +3073,17 @@ module Dfa = struct
           )
         );
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = malformation ~base:pcursor ~past:cursor
-              "Unexpected codepoint in source directive" t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor t in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal =
-          malformation ~base:pcursor ~past:cursor "Unexpected codepoint in source directive" t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor t in
         advance (State_src_col (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -3105,12 +3100,11 @@ module Dfa = struct
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal =
-          malformation ~base:pcursor ~past:cursor "Unexpected codepoint in source directive" t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor t in
         advance (State_src_rcolon (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unterminated source directive" t in
+        let mal = unterminated_source_directive t.tok_base cursor t in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
