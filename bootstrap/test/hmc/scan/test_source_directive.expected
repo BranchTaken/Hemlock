@@ -1,108 +1,95 @@
-``[:"Foo.hm":42:13:]``
-  [1:0..1:18) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=42; col=13})>
-  Foo.hm:[42:13..42:13) : <Tok_end_of_input>
-``[:"Foo.hm":42:]``
-  [1:0..1:15) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=42; col=1})>
-  Foo.hm:[42:1..42:1) : <Tok_end_of_input>
-``[:"Foo.hm":]``
-  [1:0..1:12) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=1; col=1})>
-  Foo.hm:[1:1..1:1) : <Tok_end_of_input>
-``[:42:13:]``
-  [1:0..1:9) : <Tok_source_directive=Constant {path=None; line=42; col=13})>
-  [42:13..42:13) : <Tok_end_of_input>
-``[:42:]``
-  [1:0..1:6) : <Tok_source_directive=Constant {path=None; line=42; col=1})>
-  [42:1..42:1) : <Tok_end_of_input>
-``[::]``
-  [1:0..1:4) : <Tok_source_directive=Constant {path=None; line=1; col=1})>
-  [1:1..1:1) : <Tok_end_of_input>
-``[:10123456789:]``
-  [1:0..1:15) : <Tok_source_directive=Constant {path=None; line=10_123_456_789; col=1})>
-  [10_123_456_789:1..10_123_456_789:1) : <Tok_end_of_input>
-``[:1:] [:2:]``
-  [1:0..1:5) : <Tok_source_directive=Constant {path=None; line=1; col=1})>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:6..1:11) : <Tok_source_directive=Constant {path=None; line=2; col=1})>
-  [2:1..2:1) : <Tok_end_of_input>
-``[:"Foo.hm":] [::] [:"Bar.hm":]``
-  [1:0..1:12) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=1; col=1})>
-  Foo.hm:[1:1..1:2) : <Tok_whitespace>
-  [1:13..1:17) : <Tok_source_directive=Constant {path=None; line=1; col=1})>
-  Foo.hm:[1:1..1:2) : <Tok_whitespace>
-  [1:18..1:30) : <Tok_source_directive=Constant {path=Some ("Bar.hm"); line=1; col=1})>
-  Bar.hm:[1:1..1:1) : <Tok_end_of_input>
 ``[:"Foo.hm":42:13]``
-  [1:0..1:17) : <Tok_source_directive=Malformed ["[1:16..1:17): Unexpected codepoint in source directive"])>
-  [1:17..1:17) : <Tok_end_of_input>
-``[:"Foo.hm":42::]``
-  [1:0..1:16) : <Tok_source_directive=Malformed ["[1:14..1:15): Unexpected codepoint in source directive"])>
+  [1:0..1:17) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=Some (42); col=Some (13)})>
+  Foo.hm:[42:13..42:13) : <Tok_end_of_input>
+``[:"Foo.hm":42]``
+  [1:0..1:14) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=Some (42); col=None})>
+  Foo.hm:[42:14..42:14) : <Tok_end_of_input>
+``[:"Foo.hm"]``
+  [1:0..1:11) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>
+  Foo.hm:[1:11..1:11) : <Tok_end_of_input>
+``[:42:13]``
+  [1:0..1:8) : <Tok_source_directive=Constant {path=None; line=Some (42); col=Some (13)})>
+  [42:13..42:13) : <Tok_end_of_input>
+``[:42]``
+  [1:0..1:5) : <Tok_source_directive=Constant {path=None; line=Some (42); col=None})>
+  [42:5..42:5) : <Tok_end_of_input>
+``[:]``
+  [1:0..1:3) : <Tok_source_directive=Constant {path=None; line=None; col=None})>
+  [1:3..1:3) : <Tok_end_of_input>
+``[:10123456789]``
+  [1:0..1:14) : <Tok_source_directive=Constant {path=None; line=Some (10_123_456_789); col=None})>
+  [10_123_456_789:14..10_123_456_789:14) : <Tok_end_of_input>
+``[:1] [:2]``
+  [1:0..1:4) : <Tok_source_directive=Constant {path=None; line=Some (1); col=None})>
+  [1:4..1:5) : <Tok_whitespace>
+  [1:5..1:9) : <Tok_source_directive=Constant {path=None; line=Some (2); col=None})>
+  [2:9..2:9) : <Tok_end_of_input>
+``[:"Foo.hm"] [:] [:"Bar.hm"]``
+  [1:0..1:11) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>
+  Foo.hm:[1:11..1:12) : <Tok_whitespace>
+  [1:12..1:15) : <Tok_source_directive=Constant {path=None; line=None; col=None})>
+  [1:15..1:16) : <Tok_whitespace>
+  [1:16..1:27) : <Tok_source_directive=Constant {path=Some ("Bar.hm"); line=None; col=None})>
+  Bar.hm:[1:27..1:27) : <Tok_end_of_input>
+``[:"Foo.hm":1:42]a
+b``
+  [1:0..1:16) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=Some (1); col=Some (42)})>
+  Foo.hm:[1:42..1:43) : <Tok_uident=Constant "a">
+  Foo.hm:[1:43..2:1) : <Tok_whitespace>
+  Foo.hm:[2:1..2:1) : <Tok_line_delim>
+  Foo.hm:[2:1..2:2) : <Tok_uident=Constant "b">
+  Foo.hm:[2:2..2:2) : <Tok_end_of_input>
+``[:"Foo.hm":42:]``
+  [1:0..1:15) : <Tok_source_directive=Malformed ["[1:14..1:15): Unexpected codepoint in source directive"])>
+  [1:15..1:15) : <Tok_end_of_input>
+``[:"Foo.hm"::13]``
+  [1:0..1:15) : <Tok_source_directive=Malformed ["[1:11..1:12): Unexpected codepoint in source directive"; "[1:12..1:13): Unexpected codepoint in source directive"; "[1:13..1:14): Unexpected codepoint in source directive"])>
+  [1:15..1:15) : <Tok_end_of_input>
+``[::42:13]``
+  [1:0..1:9) : <Tok_source_directive=Malformed ["[1:2..1:3): Unexpected codepoint in source directive"])>
+  [1:9..1:9) : <Tok_end_of_input>
+``[:"Foo.hm"42:13]``
+  [1:0..1:16) : <Tok_source_directive=Malformed ["[1:10..1:11): Unexpected codepoint in source directive"; "[1:11..1:12): Unexpected codepoint in source directive"])>
   [1:16..1:16) : <Tok_end_of_input>
-``[:"Foo.hm"::13:]``
-  [1:0..1:16) : <Tok_source_directive=Malformed ["[1:11..1:12): Unexpected codepoint in source directive"; "[1:12..1:13): Unexpected codepoint in source directive"; "[1:13..1:14): Unexpected codepoint in source directive"])>
+``[:"Foo.hm:42:13]``
+  [1:0..1:16) : <Tok_source_directive=Malformed ["[1:0..1:16): Unterminated source directive"])>
   [1:16..1:16) : <Tok_end_of_input>
-``[::42:13:]``
-  [1:0..1:10) : <Tok_source_directive=Malformed ["[1:3..1:4): Unexpected codepoint in source directive"; "[1:4..1:5): Unexpected codepoint in source directive"; "[1:5..1:6): Unexpected codepoint in source directive"; "[1:6..1:7): Unexpected codepoint in source directive"; "[1:7..1:8): Unexpected codepoint in source directive"; "[1:8..1:9): Unexpected codepoint in source directive"])>
+``[:Foo.hm":42:13]``
+  [1:0..1:16) : <Tok_source_directive=Malformed ["[1:2..1:3): Unexpected codepoint in source directive"; "[1:3..1:4): Unexpected codepoint in source directive"; "[1:4..1:5): Unexpected codepoint in source directive"; "[1:5..1:6): Unexpected codepoint in source directive"; "[1:6..1:7): Unexpected codepoint in source directive"; "[1:7..1:8): Unexpected codepoint in source directive"; "[1:8..1:9): Unexpected codepoint in source directive"; "[1:12..1:13): Unexpected codepoint in source directive"])>
+  [1:16..1:16) : <Tok_end_of_input>
+``[:":42:13]``
+  [1:0..1:10) : <Tok_source_directive=Malformed ["[1:0..1:10): Unterminated source directive"])>
   [1:10..1:10) : <Tok_end_of_input>
-``[:"Foo.hm"42:13:]``
-  [1:0..1:17) : <Tok_source_directive=Malformed ["[1:10..1:11): Unexpected codepoint in source directive"; "[1:11..1:12): Unexpected codepoint in source directive"])>
-  [1:17..1:17) : <Tok_end_of_input>
-``[:"Foo.hm:42:13:]``
-  [1:0..1:17) : <Tok_source_directive=Malformed ["[1:0..1:17): Unterminated source directive"])>
-  [1:17..1:17) : <Tok_end_of_input>
-``[:Foo.hm":42:13:]``
-  [1:0..1:17) : <Tok_source_directive=Malformed ["[1:2..1:3): Unexpected codepoint in source directive"; "[1:3..1:4): Invalid decimal digit"; "[1:4..1:5): Invalid decimal digit"; "[1:5..1:6): Invalid decimal digit"; "[1:6..1:7): Invalid decimal digit"; "[1:7..1:8): Invalid decimal digit"; "[1:8..1:9): Invalid decimal digit"; "[1:13..1:14): Unexpected codepoint in source directive"; "[1:14..1:15): Unexpected codepoint in source directive"; "[1:15..1:16): Unexpected codepoint in source directive"])>
-  [1:17..1:17) : <Tok_end_of_input>
-``[:":42:13:]``
-  [1:0..1:11) : <Tok_source_directive=Malformed ["[1:0..1:11): Unterminated source directive"])>
-  [1:11..1:11) : <Tok_end_of_input>
-``["Foo.hm":42:13:]``
-  [1:0..1:1) : <Tok_lbrack>
-  [1:1..1:2) : <Tok_istring_lditto>
-  [1:2..1:8) : <Tok_isubstring=Constant "Foo.hm">
-  [1:8..1:9) : <Tok_istring_rditto>
-  [1:9..1:10) : <Tok_colon>
-  [1:10..1:12) : <Tok_u64=Constant 42>
-  [1:12..1:13) : <Tok_colon>
-  [1:13..1:15) : <Tok_u64=Constant 13>
-  [1:15..1:16) : <Tok_colon>
-  [1:16..1:17) : <Tok_rbrack>
-  [1:17..1:17) : <Tok_end_of_input>
-``[:"Foo.hm":042:13:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:11..1:12): Unexpected codepoint in source directive"; "[1:12..1:13): Unexpected codepoint in source directive"; "[1:13..1:14): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":42:013:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:14..1:15): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":9999999999999999999:]``
-  [1:0..1:32) : <Tok_source_directive=Malformed ["[1:11..1:30): Line exceeds 9_223_372_036_854_775_808"])>
-  [1:32..1:32) : <Tok_end_of_input>
-``[:"Foo.hm":1:9999999999999999999:]``
-  [1:0..1:34) : <Tok_source_directive=Malformed ["[1:13..1:32): Column exceeds 9_223_372_036_854_775_808"])>
-  [1:34..1:34) : <Tok_end_of_input>
-``[:_"Foo.hm":42:13:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:2..1:3): Unexpected codepoint in source directive"; "[1:3..1:4): Invalid decimal digit"; "[1:4..1:5): Invalid decimal digit"; "[1:5..1:6): Invalid decimal digit"; "[1:6..1:7): Invalid decimal digit"; "[1:7..1:8): Invalid decimal digit"; "[1:8..1:9): Invalid decimal digit"; "[1:9..1:10): Invalid decimal digit"; "[1:10..1:11): Invalid decimal digit"; "[1:15..1:16): Unexpected codepoint in source directive"; "[1:16..1:17): Unexpected codepoint in source directive"; "[1:17..1:18): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm"_:42:13:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:10..1:11): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":_42:13:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:11..1:12): Unexpected codepoint in source directive"; "[1:12..1:13): Unexpected codepoint in source directive"; "[1:13..1:14): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":42_:13:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:13..1:14): Invalid decimal digit"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":42:_13:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:14..1:15): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":42:13_:]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:16..1:17): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":42:13:_]``
-  [1:0..1:19) : <Tok_source_directive=Malformed ["[1:17..1:18): Unexpected codepoint in source directive"])>
-  [1:19..1:19) : <Tok_end_of_input>
-``[:"Foo.hm":42:13:``
-  [1:0..1:17) : <Tok_source_directive=Malformed ["[1:0..1:17): Unterminated source directive"])>
-  [1:17..1:17) : <Tok_end_of_input>
+``[:"Foo.hm":042:13]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:11..1:12): Unexpected codepoint in source directive"; "[1:12..1:13): Unexpected codepoint in source directive"; "[1:13..1:14): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
+``[:"Foo.hm":42:013]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:14..1:15): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
+``[:"Foo.hm":9999999999999999999]``
+  [1:0..1:31) : <Tok_source_directive=Malformed ["[1:11..1:30): Line exceeds 9_223_372_036_854_775_808"])>
+  [1:31..1:31) : <Tok_end_of_input>
+``[:"Foo.hm":1:9999999999999999999]``
+  [1:0..1:33) : <Tok_source_directive=Malformed ["[1:13..1:32): Column exceeds 9_223_372_036_854_775_808"])>
+  [1:33..1:33) : <Tok_end_of_input>
+``[:_"Foo.hm":42:13]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:2..1:3): Unexpected codepoint in source directive"; "[1:3..1:4): Unexpected codepoint in source directive"; "[1:4..1:5): Unexpected codepoint in source directive"; "[1:5..1:6): Unexpected codepoint in source directive"; "[1:6..1:7): Unexpected codepoint in source directive"; "[1:7..1:8): Unexpected codepoint in source directive"; "[1:8..1:9): Unexpected codepoint in source directive"; "[1:9..1:10): Unexpected codepoint in source directive"; "[1:10..1:11): Unexpected codepoint in source directive"; "[1:14..1:15): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
+``[:"Foo.hm"_:42:13]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:10..1:11): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
+``[:"Foo.hm":_42:13]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:11..1:12): Unexpected codepoint in source directive"; "[1:12..1:13): Unexpected codepoint in source directive"; "[1:13..1:14): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
+``[:"Foo.hm":42_:13]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:13..1:14): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
+``[:"Foo.hm":42:_13]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:14..1:15): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
+``[:"Foo.hm":42:13_]``
+  [1:0..1:18) : <Tok_source_directive=Malformed ["[1:16..1:17): Unexpected codepoint in source directive"])>
+  [1:18..1:18) : <Tok_end_of_input>
 ``[:"Foo.hm":42:13``
   [1:0..1:16) : <Tok_source_directive=Malformed ["[1:0..1:16): Unterminated source directive"])>
   [1:16..1:16) : <Tok_end_of_input>
@@ -124,9 +111,6 @@
 ``[:"``
   [1:0..1:3) : <Tok_source_directive=Malformed ["[1:0..1:3): Unterminated source directive"])>
   [1:3..1:3) : <Tok_end_of_input>
-``[:":]``
-  [1:0..1:5) : <Tok_source_directive=Malformed ["[1:0..1:5): Unterminated source directive"])>
-  [1:5..1:5) : <Tok_end_of_input>
-``[:]``
-  [1:0..1:3) : <Tok_source_directive=Malformed ["[1:2..1:3): Unexpected codepoint in source directive"])>
-  [1:3..1:3) : <Tok_end_of_input>
+``[:"]``
+  [1:0..1:4) : <Tok_source_directive=Malformed ["[1:0..1:4): Unterminated source directive"])>
+  [1:4..1:4) : <Tok_end_of_input>

@@ -90,8 +90,8 @@ module AbstractToken : sig
   end
   type source_directive = {
     path: string option;
-    line: uns;
-    col: uns;
+    line: uns option;
+    col: uns option;
   }
   type t =
     (* Keywords. *)

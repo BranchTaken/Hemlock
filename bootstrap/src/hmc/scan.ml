@@ -43,7 +43,9 @@ module Radix = struct
     Zint.(zint * (to_zint t) + digit)
 end
 
+(* XXX Refactor to become View.Slice.t ? *)
 module Source = struct
+  (* XXX Refactor to use View.Cursor.t . *)
   type t = {
     path: string option;
     line_bias: sint;
@@ -258,15 +260,15 @@ module AbstractToken = struct
 
   type source_directive = {
     path: string option;
-    line: uns;
-    col: uns;
+    line: uns option;
+    col: uns option;
   }
 
   let pp_source_directive {path; line; col} formatter =
     formatter
     |> Fmt.fmt "{path=" |> (Option.pp String.pp) path
-    |> Fmt.fmt "; line=" |> Uns.pp line
-    |> Fmt.fmt "; col=" |> Uns.pp col
+    |> Fmt.fmt "; line=" |> (Option.pp Uns.pp) line
+    |> Fmt.fmt "; col=" |> (Option.pp Uns.pp) col
     |> Fmt.fmt "}"
 
   type t =
@@ -659,6 +661,8 @@ let pp_istring_state istring_state formatter =
   | Istring_rditto -> formatter |> Fmt.fmt "Istring_rditto"
 
 type t = {
+  (* XXX Refactor path/line_bias/col_bias into View.t, add View.Cursor.t which encapsulates per
+   * cursor path/line_bias/col_bias, and enhance View.next to manage col_bias. *)
   path: string option;
   line_bias: sint;
   col_bias: sint;
@@ -784,9 +788,6 @@ let invalid_utf8 base past t =
 
 let invalid_bar_indent base past t =
   malformation ~base ~past "Invalid bar string indentation" t
-
-let invalid_dec base past t =
-  malformation ~base ~past "Invalid decimal digit" t
 
 let invalid_hex base past t =
   malformation ~base ~past "Invalid hexadecimal digit" t
@@ -2205,7 +2206,7 @@ module State = struct
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
       line_cursor: Text.Cursor.t;
-      line: Nat.t;
+      line: Nat.t option;
     }
 
     let pp {mals; path; line_cursor; line} formatter =
@@ -2213,31 +2214,31 @@ module State = struct
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line_cursor=" |> Text.Pos.pp (Text.Cursor.pos line_cursor)
-      |> Fmt.fmt "; line=" |> Nat.pp line
+      |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "}"
 
-    let init ?(mals=[]) ?(path=None) ~line_cursor line =
+    let init ~mals ~path ~line_cursor ~line =
       {mals; path; line_cursor; line}
 
     let line_accum digit ({line; _} as t) =
-      {t with line=Nat.(line * k_a + digit)}
+      {t with line=match line with None -> None | Some l -> Some Nat.(l * k_a + digit)}
   end
 
   module Src_line_colon = struct
     type t = {
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
-      line: Nat.t;
+      line: Nat.t option;
     }
 
     let pp {mals; path; line} formatter =
       formatter
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
-      |> Fmt.fmt "; line=" |> Nat.pp line
+      |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "}"
 
-    let init ?(mals=[]) ?(path=None) line =
+    let init ~mals ~path ~line =
       {mals; path; line}
 
     let mals_accum mal ({mals; _} as t) =
@@ -2248,7 +2249,7 @@ module State = struct
     type t = {
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
-      line: Nat.t;
+      line: Nat.t option;
       col_cursor: Text.Cursor.t;
       col: Nat.t;
     }
@@ -2257,7 +2258,7 @@ module State = struct
       formatter
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
-      |> Fmt.fmt "; line=" |> Nat.pp line
+      |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "; col_cursor=" |> Text.Pos.pp (Text.Cursor.pos col_cursor)
       |> Fmt.fmt "; col=" |> Nat.pp col
       |> Fmt.fmt "}"
@@ -2272,41 +2273,25 @@ module State = struct
       {t with col=Nat.(col * k_a + digit)}
   end
 
-  module Src_rcolon = struct
-    type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
-      path: codepoint list option;
-      line: Nat.t;
-      col: Nat.t;
-    }
-
-    let pp {mals; path; line; col} formatter =
-      formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
-      |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
-      |> Fmt.fmt "; line=" |> Nat.pp line
-      |> Fmt.fmt "; col=" |> Nat.pp col
-      |> Fmt.fmt "}"
-
-    let init ~mals ~path ~line ~col =
-      {mals; path; line; col}
-
-    let mals_accum mal ({mals; _} as t) =
-      {t with mals=mal :: mals}
-
-    let render {mals; path; line; col} =
-      match mals with
-      | [] -> begin
-          let path = match path with
-            | None -> None
-            | Some cps -> Some (String.of_list_rev cps)
-          in
-          let line = Nat.to_u64_hlt line in
-          let col = Nat.to_u64_hlt col in
-          AbstractToken.Tok_source_directive (Constant {path; line; col})
-        end
-      | _ :: _ -> AbstractToken.Tok_source_directive (AbstractToken.Rendition.of_mals mals)
-  end
+  (* XXX Embed in Src_common module? *)
+  let render_source_directive ~mals ~path ~line ~col =
+    match mals with
+    | [] -> begin
+        let path = match path with
+          | None -> None
+          | Some cps -> Some (String.of_list_rev cps)
+        in
+        let line = match line with
+          | None -> None
+          | Some line -> Some (Nat.to_u64_hlt line)
+        in
+        let col = match col with
+          | None -> None
+          | Some col -> Some (Nat.to_u64_hlt col)
+        in
+        AbstractToken.Tok_source_directive (Constant {path; line; col})
+      end
+    | _ :: _ -> AbstractToken.Tok_source_directive (AbstractToken.Rendition.of_mals mals)
 
   module CodepointAccum = struct
     type t =
@@ -2387,7 +2372,7 @@ module State = struct
     | State_btick
     | State_0
     | State_0_dot
-    | State_src_lcolon
+    | State_src_colon
     | State_src_path of Src_path.t
     | State_src_path_bslash of Src_path_bslash.t
     | State_src_path_bslash_u of Src_path_bslash_u.t
@@ -2397,7 +2382,6 @@ module State = struct
     | State_src_line of Src_line.t
     | State_src_line_colon of Src_line_colon.t
     | State_src_col of Src_col.t
-    | State_src_rcolon of Src_rcolon.t
     | State_whitespace
     | State_whitespace_bslash
     | State_hash_comment
@@ -2426,7 +2410,7 @@ module State = struct
     | State_btick -> formatter |> Fmt.fmt "State_btick"
     | State_0 -> formatter |> Fmt.fmt "State_0"
     | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
-    | State_src_lcolon -> formatter |> Fmt.fmt "State_src_lcolon"
+    | State_src_colon -> formatter |> Fmt.fmt "State_src_colon"
     | State_src_path v -> formatter |> Fmt.fmt "State_path " |> Src_path.pp v
     | State_src_path_bslash v -> formatter |> Fmt.fmt "State_path_bslash " |> Src_path_bslash.pp v
     | State_src_path_bslash_u v ->
@@ -2438,7 +2422,6 @@ module State = struct
     | State_src_line v -> formatter |> Fmt.fmt "State_line " |> Src_line.pp v
     | State_src_line_colon v -> formatter |> Fmt.fmt "State_line_colon " |> Src_line_colon.pp v
     | State_src_col v -> formatter |> Fmt.fmt "State_col " |> Src_col.pp v
-    | State_src_rcolon v -> formatter |> Fmt.fmt "State_rcolon " |> Src_rcolon.pp v
     | State_whitespace -> formatter |> Fmt.fmt "State_whitespace"
     | State_whitespace_bslash -> formatter |> Fmt.fmt "State_whitespace_bslash"
     | State_hash_comment -> formatter |> Fmt.fmt "State_hash_comment"
@@ -2545,18 +2528,32 @@ module Dfa = struct
 
   let accept_source_directive atoken cursor t =
     let t' = match atoken with
+      | AbstractToken.Tok_source_directive Constant {path=None; line=None; col=None} -> begin
+          (* Reset to actual source. *)
+          {t with path=Text.(path (Cursor.container t.tok_base)); line_bias=Sint.zero;
+                 col_bias=Sint.zero}
+        end
       | AbstractToken.Tok_source_directive Constant {path; line; col} -> begin
           let path = match path with
             | None -> t.path
             | Some path -> Some path
           in
-          let line_bias = Sint.((Uns.bits_to_sint line) - (Uns.bits_to_sint (Text.(Pos.line
-              (Cursor.pos cursor))))) in
-          let col_bias = Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col
-              (Cursor.pos cursor))))) in
+          let line_bias = match line with
+            | None -> Sint.zero
+            | Some line ->
+              Sint.((Uns.bits_to_sint line) - (Uns.bits_to_sint (Text.(Pos.line (Cursor.pos
+                  cursor)))))
+          in
+          let col_bias = match col with
+            | None -> Sint.zero
+            | Some col ->
+              Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col (Cursor.pos
+                  cursor)))))
+          in
           {t with path; line_bias; col_bias}
         end
-      | _ -> t
+      | AbstractToken.Tok_source_directive Malformed _ -> t
+      | _ -> not_reached ()
     in
     (* Treat the directive as having come from the actual file being read. *)
     let source = Source.init ~path:Text.(path (Cursor.container t.tok_base)) ~line_bias:Sint.zero
@@ -2658,7 +2655,7 @@ module Dfa = struct
   let node0_lbrack = {
     edges0=map_of_cps_alist [
       ("|", accept_incl Tok_larray);
-      (":", advance State_src_lcolon);
+      (":", advance State_src_colon);
     ];
     default0=accept_excl Tok_lbrack;
     eoi0=accept_incl Tok_lbrack;
@@ -2786,26 +2783,23 @@ module Dfa = struct
     eoi0=accept_incl Real.zero;
   }
 
-  let node0_src_lcolon = {
+  let node0_src_colon = {
     edges0=map_of_cps_alist [
       ("\"", advance (State_src_path State.Src_path.empty));
       ("123456789", (fun ({pcursor; _} as view) t ->
           let digit = nat_of_cp (Text.Cursor.rget pcursor) in
-          advance (State_src_line (State.Src_line.init ~line_cursor:pcursor digit)) view t));
-      (":", (fun view t ->
-          advance (State_src_rcolon (State.Src_rcolon.init ~mals:[] ~path:None ~line:Nat.k_1
-            ~col:Nat.k_1)) view t
-        )
-      );
-      ("]", (fun {pcursor; cursor; _} t ->
-          let mal = unexpected_codepoint_source_directive pcursor cursor t in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals [mal])) cursor t
+          advance (State_src_line (State.Src_line.init ~mals:[] ~path:None ~line_cursor:pcursor
+            ~line:(Some digit))) view t));
+      ("]", (fun {cursor; _} t ->
+          let tok = State.render_source_directive ~mals:[] ~path:None ~line:None ~col:None in
+          accept_source_directive tok cursor t
         )
       );
     ];
     default0=(fun ({pcursor; cursor; _} as view) t ->
       let mal = unexpected_codepoint_source_directive pcursor cursor t in
-      advance (State_src_line (State.Src_line.init ~mals:[mal] ~line_cursor:cursor Nat.k_0)) view t
+      advance (State_src_line (State.Src_line.init ~mals:[mal] ~path:None ~line_cursor:cursor
+        ~line:None)) view t
     );
     eoi0=(fun {cursor; _} t ->
       let mal = unterminated_source_directive t.tok_base cursor t in
@@ -2939,9 +2933,9 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         (":", (fun state view t -> advance (State_src_path_colon state) view t));
-        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor t in
-            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        ("]", (fun {mals; path} {cursor; _} t ->
+            let tok = State.render_source_directive ~mals ~path ~line:None ~col:None in
+            accept_source_directive tok cursor t
           )
         );
       ];
@@ -2962,11 +2956,11 @@ module Dfa = struct
       edges1=map_of_cps_alist [
         ("123456789", (fun {mals; path} ({pcursor; _} as view) t ->
             let digit = nat_of_cp (Text.Cursor.rget pcursor) in
-            advance (State_src_line (State.Src_line.init ~mals ~path ~line_cursor:pcursor digit))
-              view t));
-        ("]", (fun {mals; path} {cursor; _} t ->
-            let tok = State.Src_rcolon.(render (init ~mals ~path ~line:Nat.k_1 ~col:Nat.k_1)) in
-            accept_source_directive tok cursor t
+            advance (State_src_line (State.Src_line.init ~mals ~path ~line_cursor:pcursor
+                ~line:(Some digit))) view t));
+        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+            let mal = unexpected_codepoint_source_directive pcursor cursor t in
+            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
@@ -2982,6 +2976,24 @@ module Dfa = struct
 
   let node1_src_line =
     let open State.Src_line in
+    let validate_line {mals; line_cursor; line; _} View.{pcursor; _} t = begin
+      match line with
+      | Some line -> begin
+          match Nat.(line > max_abs_i64) with
+          | false -> mals, Some line
+          | true -> begin
+              let description =
+                String.Fmt.empty
+                |> Fmt.fmt "Line exceeds "
+                |> Nat.fmt ~alt:true Nat.max_abs_i64
+                |> Fmt.to_string
+              in
+              let mal = malformation ~base:line_cursor ~past:pcursor description t in
+              (mal :: mals), None
+            end
+        end
+      | None -> mals, None
+    end in
     {
       edges1=map_of_cps_alist [
         ("0123456789", (fun state (View.{pcursor; _} as view) t ->
@@ -2989,32 +3001,22 @@ module Dfa = struct
             advance (State_src_line (state |> line_accum digit)) view t
           )
         );
-        (":", (fun {mals; path; line_cursor; line} ({pcursor; _} as view) t ->
-            let mals = match Nat.(line > max_abs_i64) with
-              | false -> mals
-              | true -> begin
-                  let description =
-                    String.Fmt.empty
-                    |> Fmt.fmt "Line exceeds "
-                    |> Nat.fmt ~alt:true Nat.max_abs_i64
-                    |> Fmt.to_string
-                  in
-                  let mal = malformation ~base:line_cursor ~past:pcursor description t in
-                  mal :: mals
-                end
-            in
-            advance (State_src_line_colon (State.Src_line_colon.init ~mals ~path line)) view t
+        (":", (fun ({path; _} as state) view t ->
+            let mals, line = validate_line state view t in
+            advance (State_src_line_colon (State.Src_line_colon.init ~mals ~path ~line)) view t
           )
         );
-        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor t in
-            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        ("]", (fun ({path; _} as state) ({cursor; _} as view) t ->
+            let mals, line = validate_line state view t in
+            let tok = State.render_source_directive ~mals ~path ~line ~col:None in
+            accept_source_directive tok cursor t
           )
         );
       ];
       default1=(fun {mals; path; _} ({pcursor; cursor; _} as view) t ->
-        let mal = invalid_dec pcursor cursor t in
-        advance (State_src_line (init ~mals:(mal :: mals) ~path ~line_cursor:cursor Nat.k_0)) view t
+        let mal = unexpected_codepoint_source_directive pcursor cursor t in
+        advance (State_src_line (init ~mals:(mal :: mals) ~path ~line_cursor:cursor ~line:None))
+          view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
         let mal = unterminated_source_directive t.tok_base cursor t in
@@ -3030,9 +3032,9 @@ module Dfa = struct
             let digit = nat_of_cp (Text.Cursor.rget pcursor) in
             advance (State_src_col (State.Src_col.init ~mals ~path ~line ~col_cursor:pcursor
                 ~col:digit)) view t));
-        ("]", (fun {mals; path; line} {cursor; _} t ->
-            let tok = State.Src_rcolon.(render (init ~mals ~path ~line ~col:Nat.k_1)) in
-            accept_source_directive tok cursor t
+        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+            let mal = unexpected_codepoint_source_directive pcursor cursor t in
+            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
@@ -3055,9 +3057,9 @@ module Dfa = struct
             advance (State_src_col (state |> col_accum digit)) view t
           )
         );
-        (":", (fun {mals; path; col_cursor; line; col} ({pcursor; _} as view) t ->
-            let mals = match Nat.(col > max_abs_i64) with
-              | false -> mals
+        ("]", (fun {mals; path; col_cursor; line; col} {pcursor; cursor; _} t ->
+            let mals, col = match Nat.(col > max_abs_i64) with
+              | false -> mals, Some col
               | true -> begin
                   let description =
                     String.Fmt.empty
@@ -3066,42 +3068,17 @@ module Dfa = struct
                     |> Fmt.to_string
                   in
                   let mal = malformation ~base:col_cursor ~past:pcursor description t in
-                  mal :: mals
+                  (mal :: mals), None
                 end
             in
-            advance (State_src_rcolon (State.Src_rcolon.init ~mals ~path ~line ~col)) view t
-          )
-        );
-        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor t in
-            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-          )
-        );
-      ];
-      default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor t in
-        advance (State_src_col (state |> mals_accum mal)) view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
-
-  let node1_src_rcolon =
-    let open State.Src_rcolon in
-    let open View in
-    {
-      edges1=map_of_cps_alist [
-        ("]", (fun state {cursor; _} t ->
-            let tok = render state in
+            let tok = State.render_source_directive ~mals ~path ~line ~col in
             accept_source_directive tok cursor t
           )
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
         let mal = unexpected_codepoint_source_directive pcursor cursor t in
-        advance (State_src_rcolon (state |> mals_accum mal)) view t
+        advance (State_src_col (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
         let mal = unterminated_source_directive t.tok_base cursor t in
@@ -3356,7 +3333,7 @@ module Dfa = struct
     | State_btick -> act0 trace node0_btick view t
     | State_0 -> act0 trace node0_0 view t
     | State_0_dot -> act0 trace node0_0_dot view t
-    | State_src_lcolon -> act0 trace node0_src_lcolon view t
+    | State_src_colon -> act0 trace node0_src_colon view t
     | State_src_path v -> act1 trace node1_src_path v view t
     | State_src_path_bslash v -> act1 trace node1_src_path_bslash v view t
     | State_src_path_bslash_u v -> act1 trace node1_src_path_bslash_u v view t
@@ -3366,7 +3343,6 @@ module Dfa = struct
     | State_src_line v -> act1 trace node1_src_line v view t
     | State_src_line_colon v -> act1 trace node1_src_line_colon v view t
     | State_src_col v -> act1 trace node1_src_col v view t
-    | State_src_rcolon v -> act1 trace node1_src_rcolon v view t
     | State_whitespace -> act0 trace node0_whitespace view t
     | State_whitespace_bslash -> act0 trace node0_whitespace_bslash view t
     | State_hash_comment -> act0 trace node0_hash_comment view t
