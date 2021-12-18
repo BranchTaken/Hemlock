@@ -42,34 +42,6 @@
 open Basis
 open Basis.Rudiments
 
-module Source : sig
-  type t
-
-  include FormattableIntf.SMono with type t := t
-  val pp_loc: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-
-  val path: t -> string option
-
-  module Cursor : sig
-    include CursorIntf.SMonoIndex
-      with type container := t
-      with type elm := codepoint
-
-    val pos: t -> Text.Pos.t
-  end
-
-  module Slice : sig
-    include SliceIntf.SMonoIndex
-      with type container := t
-      with type cursor := Cursor.t
-      with type elm := codepoint
-  end
-
-  val line_context: t -> Slice.t * t
-  (** [line_context t] creates an expanded source which contains the entirety of the line(s) on
-      which [t] resides, as well as a slice of the expanded source which corresponds to [t]. *)
-end
-
 module AbstractToken : sig
   module Rendition : sig
     module Malformation : sig
@@ -77,9 +49,8 @@ module AbstractToken : sig
 
       include FormattableIntf.SMono with type t := t
 
-      val init: path:string option -> line_bias:sint -> col_bias:sint -> base:Text.Cursor.t
-        -> past:Text.Cursor.t -> description:string -> t
-      val source: t -> Source.t
+      val init: base:Source.Cursor.t -> past:Source.Cursor.t -> description:string -> t
+      val source: t -> Source.Slice.t
       val description: t -> string
     end
     type 'a t =
@@ -226,7 +197,7 @@ module ConcreteToken : sig
   type t
 
   val atoken: t -> AbstractToken.t
-  val source: t -> Source.t
+  val source: t -> Source.Slice.t
 
   val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 end

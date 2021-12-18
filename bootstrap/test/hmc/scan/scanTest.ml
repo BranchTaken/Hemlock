@@ -10,7 +10,7 @@ let scan_str s =
     let source = ConcreteToken.source ctoken in
     File.Fmt.stdout
     |> Fmt.fmt "  "
-    |> Source.pp_loc source
+    |> Source.Slice.pp source
     |> Fmt.fmt " : "
     |> AbstractToken.pp atoken
     |> Fmt.fmt "\n"

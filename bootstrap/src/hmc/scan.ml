@@ -43,178 +43,19 @@ module Radix = struct
     Zint.(zint * (to_zint t) + digit)
 end
 
-(* XXX Refactor to become View.Slice.t ? *)
-module Source = struct
-  (* XXX Refactor to use View.Cursor.t . *)
-  type t = {
-    path: string option;
-    line_bias: sint;
-    col_bias: sint;
-    base: Text.Cursor.t;
-    past: Text.Cursor.t
-  }
-
-  let init ~path ~line_bias ~col_bias ~base ~past =
-    {path; line_bias; col_bias; base; past}
-
-  let path t =
-    t.path
-
-  let cmp t0 t1 =
-    let open Cmp in
-    match Text.Cursor.cmp t0.base t1.base with
-    | Lt -> Lt
-    | Eq -> Text.Cursor.cmp t0.past t1.past
-    | Gt -> Gt
-
-  module Cursor = struct
-    module T = struct
-      type container = t
-      type elm = codepoint
-      type t = {
-        source: container;
-        text_cursor: Text.Cursor.t;
-      }
-
-      let cmp t0 t1 =
-        Text.Cursor.cmp t0.text_cursor t1.text_cursor
-
-      let container t =
-        t.source
-
-      let index t =
-        Text.Cursor.((index t.text_cursor) - (index t.source.base))
-
-      let hd source =
-        {source; text_cursor=source.base}
-
-      let tl source =
-        {source; text_cursor=source.past}
-
-      let prev t =
-        match Text.Cursor.(t.text_cursor = t.source.base) with
-        | true -> halt "Out of bounds"
-        | false -> begin
-            let cp, text_cursor' = Text.Cursor.prev t.text_cursor in
-            cp, {t with text_cursor=text_cursor'}
-          end
-
-      let next t =
-        match Text.Cursor.(t.text_cursor = t.source.past) with
-        | true -> halt "Out of bounds"
-        | false -> begin
-            let cp, text_cursor' = Text.Cursor.next t.text_cursor in
-            cp, {t with text_cursor=text_cursor'}
-          end
-
-      let pred t =
-        match prev t with _, t' -> t'
-
-      let succ t =
-        match next t with _, t' -> t'
-
-      let lget t =
-        match prev t with cp, _ -> cp
-
-      let rget t =
-        match next t with cp, _ -> cp
-
-      let pos t =
-        let text_pos = Text.Cursor.pos t.text_cursor in
-        let line = Uns.bits_of_sint
-            (Sint.((Uns.bits_to_sint (Text.Pos.line text_pos)) + t.source.line_bias)) in
-        let col = Uns.bits_of_sint
-            (Sint.((Uns.bits_to_sint (Text.Pos.col text_pos)) + t.source.col_bias)) in
-        Text.Pos.init ~line ~col
-
-      let seek_rev offset t =
-        match offset > index t with
-        | true -> halt "Out of bounds"
-        | false ->
-          {t with text_cursor=Text.Cursor.seek (Sint.neg (Uns.bits_to_sint offset)) t.text_cursor}
-
-      let seek_fwd offset t =
-        match (index t) + offset > (Text.Cursor.index t.source.past) with
-        | true -> halt "Out of bounds"
-        | false ->
-          {t with text_cursor=Text.Cursor.seek (Uns.bits_to_sint offset) t.text_cursor}
-
-      let seek offset t =
-        match Sint.(offset < 0L) with
-        | true -> seek_rev (Uns.bits_of_sint (Sint.neg offset)) t
-        | false -> seek_fwd (Uns.bits_of_sint offset) t
-    end
-    include T
-    include Cmpable.Make(T)
-  end
-
-  module Slice = struct
-    include Slice.MakeMonoIndex(Cursor)
-  end
-
-  let line_context t =
-    let rec bol text_cursor = begin
-      match Text.Cursor.index text_cursor with
-      | 0L -> text_cursor
-      | _ -> begin
-          match Text.Cursor.prev text_cursor with
-          | cp, _ when Codepoint.(cp = nl) -> text_cursor
-          | _, text_cursor' -> bol text_cursor'
-        end
-    end in
-    let rec eol text_cursor = begin
-      match Text.Cursor.next_opt text_cursor with
-      | None -> text_cursor
-      | Some (cp, _) when Codepoint.(cp = nl) -> text_cursor
-      | Some (_, text_cursor') -> eol text_cursor'
-    end in
-    let t' = {t with base=bol t.base; past=eol t.past} in
-    let hd' = {(Cursor.hd t) with source=t'} in
-    let tl' = {(Cursor.tl t) with source=t'} in
-    let slice = Slice.of_cursors ~base:hd' ~past:tl' in
-    slice, t'
-
-  let pp_loc t formatter =
-    formatter
-    |> (fun formatter -> (match t.path with
-      | None -> formatter
-      | Some path ->
-        formatter
-        |> Fmt.fmt path
-        |> Fmt.fmt ":"
-    ))
-    |> Fmt.fmt "["
-    |> Text.Pos.pp (Cursor.(pos (hd t)))
-    |> Fmt.fmt ".."
-    |> Text.Pos.pp (Cursor.(pos (tl t)))
-    |> Fmt.fmt ")"
-
-  let pp t formatter =
-    formatter
-    |> Fmt.fmt "{path=" |> (Option.pp String.pp) t.path
-    |> Fmt.fmt "; line_bias=" |> Sint.pp t.line_bias
-    |> Fmt.fmt "; col_bias=" |> Sint.pp t.col_bias
-    |> Fmt.fmt "; base=" |> Text.Cursor.pp t.base
-    |> Fmt.fmt "; past=" |> Text.Cursor.pp t.past
-    |> Fmt.fmt "; [base..past)="
-    |> Text.Slice.(pp (init ~base:t.base ~past:t.past (Text.Cursor.container t.base)))
-    |> Fmt.fmt "}"
-end
-
 module AbstractToken = struct
   module Rendition = struct
     module Malformation = struct
       type t = {
-        source: Source.t;
+        source: Source.Slice.t;
         description: string;
       }
 
       let cmp t0 t1 =
-        Source.cmp t0.source t1.source
+        Source.Slice.cmp t0.source t1.source
 
-      let init ~path ~line_bias ~col_bias ~base ~past ~description =
-        let source = Source.init ~path ~line_bias ~col_bias ~base ~past in
-        {source; description}
+      let init ~base ~past ~description =
+        {source=Source.Slice.of_cursors ~base ~past; description}
 
       let source t =
         t.source
@@ -225,7 +66,7 @@ module AbstractToken = struct
       let pp t formatter =
         formatter
         |> Fmt.fmt "\""
-        |> Source.pp_loc t.source
+        |> Source.Slice.pp t.source
         |> Fmt.fmt ": "
         |> Fmt.fmt t.description
         |> Fmt.fmt "\""
@@ -596,7 +437,7 @@ end
 module ConcreteToken = struct
   type t = {
     atoken: AbstractToken.t;
-    source: Source.t;
+    source: Source.Slice.t;
   }
 
   let init atoken source =
@@ -611,8 +452,31 @@ module ConcreteToken = struct
   let pp t formatter =
     formatter
     |> Fmt.fmt "{atoken=" |> AbstractToken.pp t.atoken
-    |> Fmt.fmt "; source=" |> Source.pp_loc t.source
+    |> Fmt.fmt "; source=" |> Source.Slice.pp t.source
     |> Fmt.fmt "}"
+end
+
+module View = struct
+  type t = {
+    ppcursor: Source.Cursor.t;
+    pcursor: Source.Cursor.t;
+    cursor: Source.Cursor.t;
+  }
+
+  let init ~ppcursor ~pcursor ~cursor =
+    {ppcursor; pcursor; cursor}
+
+  let pp {ppcursor; pcursor; cursor} formatter =
+    formatter
+    |> Fmt.fmt "{ppcursor=" |> Text.Pos.pp (Source.Cursor.pos ppcursor)
+    |> Fmt.fmt "; pcursor=" |> Text.Pos.pp (Source.Cursor.pos pcursor)
+    |> Fmt.fmt "; cursor=" |> Text.Pos.pp (Source.Cursor.pos cursor)
+    |> Fmt.fmt "}"
+
+  let next {pcursor; cursor; _} =
+    match Source.Cursor.next_opt cursor with
+    | None -> None
+    | Some (cp, cursor') -> Some (cp, {ppcursor=pcursor; pcursor=cursor; cursor=cursor'})
 end
 
 type line_state =
@@ -649,7 +513,7 @@ type istring_state =
   (* XXX | Istring_expr_fmt *)
   (* XXX | Istring_spec_fmt_seen *)
   (* XXX | Istring_spec_sep_seen *)
-  | Istring_expr_value of Text.Cursor.t (* Cursor is start of value expression to be stringified. *)
+  | Istring_expr_value of Source.Cursor.t (* Cursor is start of value expression to be stringified. *)
   | Istring_rditto
 
 let pp_istring_state istring_state formatter =
@@ -657,16 +521,12 @@ let pp_istring_state istring_state formatter =
   | Istring_interp -> formatter |> Fmt.fmt "Istring_interp"
   | Istring_spec_pct -> formatter |> Fmt.fmt "Istring_spec_pct"
   | Istring_expr_width -> formatter |> Fmt.fmt "Istring_expr_width"
-  | Istring_expr_value cursor -> formatter |> Fmt.fmt "Istring_exp_value " |> Text.Cursor.pp cursor
+  | Istring_expr_value cursor ->
+    formatter |> Fmt.fmt "Istring_exp_value " |> Source.Cursor.pp cursor
   | Istring_rditto -> formatter |> Fmt.fmt "Istring_rditto"
 
 type t = {
-  (* XXX Refactor path/line_bias/col_bias into View.t, add View.Cursor.t which encapsulates per
-   * cursor path/line_bias/col_bias, and enhance View.next to manage col_bias. *)
-  path: string option;
-  line_bias: sint;
-  col_bias: sint;
-  tok_base: Text.Cursor.t;
+  tok_base: Source.Cursor.t;
   line_state: line_state;
   istring_state: istring_state list;
   level: uns;
@@ -674,10 +534,7 @@ type t = {
 
 let init text =
   {
-    path=Text.path text;
-    line_bias=Sint.zero;
-    col_bias=Sint.zero;
-    tok_base=Text.Cursor.hd text;
+    tok_base=Source.Cursor.hd (Source.init text);
     line_state=Line_dentation;
     istring_state=[];
     level=0L;
@@ -685,20 +542,20 @@ let init text =
 
 let pp t formatter =
   formatter
-  |> Fmt.fmt "{path=" |> (Option.pp String.pp) t.path
-  |> Fmt.fmt "; line_bias=" |> Sint.pp t.line_bias
-  |> Fmt.fmt "; col_bias=" |> Sint.pp t.col_bias
-  |> Fmt.fmt "; tok_base=" |> Text.Pos.pp (Text.Cursor.pos t.tok_base)
+  |> Fmt.fmt "{tok_base=" |> Text.Pos.pp (Source.Cursor.pos t.tok_base)
   |> Fmt.fmt "; line_state=" |> pp_line_state t.line_state
   |> Fmt.fmt "; istring_state=" |> (List.pp pp_istring_state) t.istring_state
   |> Fmt.fmt "; level=" |> Uns.pp t.level
   |> Fmt.fmt "}"
 
+let view_of_t t =
+  View.init ~ppcursor:t.tok_base ~pcursor:t.tok_base ~cursor:t.tok_base
+
 let source_at cursor t =
-  Source.init ~path:t.path ~line_bias:t.line_bias ~col_bias:t.col_bias ~base:t.tok_base ~past:cursor
+  Source.Slice.of_cursors ~base:t.tok_base ~past:cursor
 
 let text t =
-  Text.Cursor.container t.tok_base
+  Source.(text (Cursor.container t.tok_base))
 
 let set_of_cps cps =
   String.fold ~init:(Set.empty (module Codepoint)) ~f:(fun set cp ->
@@ -713,8 +570,7 @@ let map_of_cps_alist alist =
   ) alist
 
 let str_of_cursor cursor t =
-  let slice = Text.Slice.init ~base:t.tok_base ~past:cursor (Text.Cursor.container cursor) in
-  Text.Slice.to_string slice
+  Source.Slice.to_string (Source.Slice.of_cursors ~base:t.tok_base ~past:cursor)
 
 let accept atoken cursor t =
   let source = source_at cursor t in
@@ -743,65 +599,64 @@ let accept_line_delim atoken cursor t =
 (***************************************************************************************************
  * Convenience routines for reporting malformations. *)
 
-let malformation ~base ~past description t =
-  AbstractToken.Rendition.Malformation.init ~path:t.path ~line_bias:t.line_bias ~col_bias:t.col_bias
-    ~base ~past ~description
+let malformation ~base ~past description =
+  AbstractToken.Rendition.Malformation.init ~base ~past ~description
 
 let malformed malformation =
   AbstractToken.Rendition.of_mals [malformation]
 
-let unexpected_codepoint_source_directive base past t =
-  malformation ~base ~past "Unexpected codepoint in source directive" t
+let unexpected_codepoint_source_directive base past =
+  malformation ~base ~past "Unexpected codepoint in source directive"
 
-let unterminated_source_directive base past t =
-  malformation ~base ~past "Unterminated source directive" t
+let unterminated_source_directive base past =
+  malformation ~base ~past "Unterminated source directive"
 
-let invalid_unicode base past t =
-  malformation ~base ~past "Invalid Unicode value" t
+let invalid_unicode base past =
+  malformation ~base ~past "Invalid Unicode value"
 
-let illegal_backslash base past t =
-  malformation ~base ~past "Illegal backslash escape" t
+let illegal_backslash base past =
+  malformation ~base ~past "Illegal backslash escape"
 
-let missing_backslash base past t =
-  malformation ~base ~past "Missing backslash escape" t
+let missing_backslash base past =
+  malformation ~base ~past "Missing backslash escape"
 
-let partial_unicode base past t =
-  malformation ~base ~past "Partial \\u{...}" t
+let partial_unicode base past =
+  malformation ~base ~past "Partial \\u{...}"
 
-let empty_codepoint base past t =
-  malformation ~base ~past "Empty codepoint literal" t
+let empty_codepoint base past =
+  malformation ~base ~past "Empty codepoint literal"
 
-let excess_codepoint base past t =
-  malformation ~base ~past "Excess codepoint before terminator" t
+let excess_codepoint base past =
+  malformation ~base ~past "Excess codepoint before terminator"
 
-let unterminated_comment base past t =
-  malformation ~base ~past "Unterminated comment" t
+let unterminated_comment base past =
+  malformation ~base ~past "Unterminated comment"
 
-let unterminated_codepoint base past t =
-  malformation ~base ~past "Unterminated codepoint literal" t
+let unterminated_codepoint base past =
+  malformation ~base ~past "Unterminated codepoint literal"
 
-let unterminated_string base past t =
-  malformation ~base ~past "Unterminated string literal" t
+let unterminated_string base past =
+  malformation ~base ~past "Unterminated string literal"
 
-let invalid_utf8 base past t =
-  malformation ~base ~past "Invalid UTF-8 encoding" t
+let invalid_utf8 base past =
+  malformation ~base ~past "Invalid UTF-8 encoding"
 
-let invalid_bar_indent base past t =
-  malformation ~base ~past "Invalid bar string indentation" t
+let invalid_bar_indent base past =
+  malformation ~base ~past "Invalid bar string indentation"
 
-let invalid_hex base past t =
-  malformation ~base ~past "Invalid hexadecimal digit" t
+let invalid_hex base past =
+  malformation ~base ~past "Invalid hexadecimal digit"
 
-let invalid_numerical base past t =
-  malformation ~base ~past "Invalid codepoint in numerical constant" t
+let invalid_numerical base past =
+  malformation ~base ~past "Invalid codepoint in numerical constant"
 
-let invalid_type_suffix_leading_zero base past t =
-  malformation ~base ~past "Leading zero in numerical constant type suffix" t
+let invalid_type_suffix_leading_zero base past =
+  malformation ~base ~past "Leading zero in numerical constant type suffix"
 
-let unsupported_bitwidth base past t =
-  malformation ~base ~past "Unsupported bitwidth in numerical constant" t
+let unsupported_bitwidth base past =
+  malformation ~base ~past "Unsupported bitwidth in numerical constant"
 
-let out_of_range_int radix limit base past t =
+let out_of_range_int radix limit base past =
   let description =
     String.Fmt.empty
     |> Fmt.fmt "Numerical constant exceeds "
@@ -816,10 +671,10 @@ let out_of_range_int radix limit base past t =
     ) limit
     |> Fmt.to_string
   in
-  malformation ~base ~past description t
+  malformation ~base ~past description
 
-let out_of_range_real base past t =
-  malformation ~base ~past "Numerical constant cannot be precisely represented" t
+let out_of_range_real base past =
+  malformation ~base ~past "Numerical constant cannot be precisely represented"
 
 (**************************************************************************************************)
 
@@ -837,7 +692,7 @@ let hash_comment _ppcursor _pcursor cursor t =
     accept_line_delim Tok_hash_comment cursor t
   end in
   let rec fn cursor t = begin
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept_hash_comment cursor t
     | Some (cp, cursor') -> begin
         match cp with
@@ -854,9 +709,9 @@ let paren_comment _ppcursor _pcursor cursor t =
   end in
 
   let rec fn_wrapper ~f nesting cursor t = begin
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None ->
-      accept (Tok_paren_comment (malformed (unterminated_comment t.tok_base cursor t))) cursor t
+      accept (Tok_paren_comment (malformed (unterminated_comment t.tok_base cursor))) cursor t
     | Some (cp, cursor') -> f cp nesting cursor' t
   end
   and fn nesting cursor t = begin
@@ -921,7 +776,7 @@ let operator fop _ppcursor _pcursor cursor t =
     | None -> accept (fop op) cursor t
   end in
   let rec fn fop cursor t = begin
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept_operator fop cursor t
     | Some (cp, cursor') -> begin
         match Set.mem cp operator_set with
@@ -936,7 +791,7 @@ let ident_set = set_of_cps
 
 let ident ~f_accept cursor t =
   let rec fn cursor t = begin
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> f_accept cursor t
     | Some (cp, cursor') -> begin
         match Set.mem cp ident_set with
@@ -956,8 +811,14 @@ let uident _ppcursor _pcursor cursor t =
 let malformed_uident _ppcursor _pcursor cursor t =
   ident ~f_accept:(fun cursor t ->
     let ident_str = str_of_cursor cursor t in
-    let mal = (malformed (malformation ~base:t.tok_base ~past:cursor
-        (Format.asprintf "@[<h>Identifier %s lacks _*[A-Za-z] prefix" ident_str) t)) in
+    let description =
+      String.Fmt.empty
+      |> Fmt.fmt "Identifier "
+      |> Fmt.fmt ident_str
+      |> Fmt.fmt " lacks _*[A-Za-z] prefix"
+      |> Fmt.to_string
+    in
+    let mal = (malformed (malformation ~base:t.tok_base ~past:cursor description)) in
     accept (Tok_uident mal) cursor t
   ) cursor t
 
@@ -975,7 +836,7 @@ let uscore_ident_map = map_of_cps_alist [
 
 let uscore_ident _ppcursor pcursor cursor t =
   let rec fn cursor t = begin
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept_uident cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp uscore_ident_map with
@@ -989,16 +850,16 @@ let uscore_ident _ppcursor pcursor cursor t =
   end in
   fn cursor t
 
-let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past t =
+let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past =
   Option.value_map (Nat.to_uns_opt nat)
     ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
     ~default:None
   |> Option.value_map
     ~f:(fun cp -> accum_cp cp accum)
-    ~default:(accum_mal (invalid_unicode base past t) accum)
+    ~default:(accum_mal (invalid_unicode base past) accum)
 
 module Codepoint_ : sig
-  val codepoint: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
+  val codepoint: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
   type umap =
     | UMapUscore
@@ -1073,9 +934,9 @@ end = struct
      * in most cases they have to allocate a closure. This isn't ideal performance-wise, but it
      * reduces boilerplate. *)
     let fn_wrapper ~f accum cursor t = begin
-      match Text.Cursor.next_opt cursor with
+      match Source.Cursor.next_opt cursor with
       | None -> begin
-          let mal = unterminated_codepoint t.tok_base cursor t in
+          let mal = unterminated_codepoint t.tok_base cursor in
           accept_codepoint (accum_mal mal accum) cursor t
         end
       | Some (cp, cursor') -> f cp cursor' accum cursor t
@@ -1086,13 +947,13 @@ end = struct
         | cp when Codepoint.(cp = of_char '\'') ->
           accept_codepoint accum cursor' t
         | _ -> begin
-            let mal = excess_codepoint cursor cursor' t in
+            let mal = excess_codepoint cursor cursor' in
             fn_cp (accum_mal mal accum) cursor' t
           end
       ) accum cursor t
     end in
     let fn_lookahead accum pcursor cursor t = begin
-      match Text.Cursor.next_opt cursor with
+      match Source.Cursor.next_opt cursor with
       | Some (cp, cursor') when Codepoint.(cp = of_char '\'') -> accept_codepoint accum cursor' t
       | Some (_, _)
       | None -> accept Tok_tick pcursor t
@@ -1106,16 +967,16 @@ end = struct
               t
           end
         | Some UMapRcurly -> begin
-            let accum' = accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor' t in
+            let accum' = accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor' in
             fn_cp accum' cursor' t
           end
         | Some UMapTick -> begin
-            let mal = malformed (partial_unicode bslash_cursor cursor t) in
+            let mal = malformed (partial_unicode bslash_cursor cursor) in
             accept (Tok_codepoint mal) cursor' t
           end
         | Some UMapDitto
         | None -> begin
-            let mal = invalid_hex cursor cursor' t in
+            let mal = invalid_hex cursor cursor' in
             let accum' = accum_mal mal accum in
             fn_bslash_u_lcurly nat bslash_cursor accum' cursor' t
           end
@@ -1127,11 +988,11 @@ end = struct
         | cp when Codepoint.(cp = of_char '{') ->
           fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor' t
         | cp when Codepoint.(cp = of_char '\'') -> begin
-            let mal = malformed (illegal_backslash bslash_cursor cursor t) in
+            let mal = malformed (illegal_backslash bslash_cursor cursor) in
             accept (Tok_codepoint mal) cursor' t
           end
         | _ -> begin
-            let mal = illegal_backslash bslash_cursor cursor t in
+            let mal = illegal_backslash bslash_cursor cursor in
             let accum = Malformations [mal] in
             fn_cp accum cursor t
           end
@@ -1148,23 +1009,23 @@ end = struct
         | Some BMapBslash -> fn_cp (Cp cp) cursor' t
         | Some BMapNewline -> accept Tok_tick cursor t
         | None -> begin
-            let mal = illegal_backslash bslash_cursor cursor' t in
+            let mal = illegal_backslash bslash_cursor cursor' in
             fn_cp (accum_mal mal accum) cursor' t
           end
       ) accum cursor t
     end in
     let accum = Empty in
-    match Text.Cursor.nextv_opt cursor with
+    match Source.Cursor.nextv_opt cursor with
     | None -> accept Tok_tick cursor t
     | Some (_, false, cursor') -> begin
-        let mal = invalid_utf8 cursor cursor' t in
+        let mal = invalid_utf8 cursor cursor' in
         fn_cp (accum_mal mal accum) cursor' t
       end
     | Some (cp, true, cursor') -> begin
         match Map.get cp lookahead_map with
         | Some LMapLookahead -> fn_lookahead (Cp cp) cursor cursor' t
         | Some LMapTick -> begin
-            let mal = empty_codepoint t.tok_base cursor' t in
+            let mal = empty_codepoint t.tok_base cursor' in
             accept_codepoint (accum_mal mal accum) cursor' t
           end
         | Some LMapBslash -> fn_bslash cursor accum cursor' t
@@ -1173,9 +1034,9 @@ end = struct
 end
 
 module String_ : sig
-  val bstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val rstring: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val accept_unterminated_rstring: Text.Cursor.t -> t -> t * ConcreteToken.t
+  val bstring: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
+  val rstring: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
+  val accept_unterminated_rstring: Source.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
   (* Interpolated substring: "..." *)
   type accum =
@@ -1217,7 +1078,7 @@ end = struct
     }
 
   let accept_unterminated_rstring cursor t =
-    accept (Tok_rstring (malformed (unterminated_string t.tok_base cursor t))) cursor t
+    accept (Tok_rstring (malformed (unterminated_string t.tok_base cursor))) cursor t
 
   (* Raw string: ``...`` *)
   let rstring _pcursor pcursor _cursor t =
@@ -1247,14 +1108,14 @@ end = struct
     end in
 
     let rec fn_rtag rtag_accum ltag_cursor body_accum saved_body_accum ltag cursor t = begin
-      match Text.Cursor.nextv_opt cursor with
+      match Source.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.tok_base cursor t in
+          let mal = unterminated_string t.tok_base cursor in
           let rtag = tag_of_accum (tag_accum_mal mal rtag_accum) in
           accept_rstring rtag saved_body_accum ltag cursor t
         end
       | Some (_, false, cursor') -> begin
-          let mal = invalid_utf8 cursor cursor' t in
+          let mal = invalid_utf8 cursor cursor' in
           match String.C.Cursor.(ltag_cursor = (tl (string ltag_cursor))) with
           | true -> fn (accum_mal mal body_accum) ltag cursor' t
           | false -> begin
@@ -1285,15 +1146,15 @@ end = struct
         end
     end
     and fn body_accum ltag cursor t = begin
-      match Text.Cursor.nextv_opt cursor with
+      match Source.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.tok_base cursor t in
+          let mal = unterminated_string t.tok_base cursor in
           let body_accum' = accum_mal mal body_accum in
           let rtag = tag_of_accum tag_accum_empty in
           accept_rstring rtag body_accum' ltag cursor t
         end
       | Some (_, false, cursor') -> begin
-          let mal = invalid_utf8 cursor cursor' t in
+          let mal = invalid_utf8 cursor cursor' in
           fn (accum_mal mal body_accum) ltag cursor' t
         end
       | Some (cp, true, cursor') -> begin
@@ -1305,9 +1166,9 @@ end = struct
         end
     end
     and fn_ltag ltag_accum cursor t = begin
-      match Text.Cursor.nextv_opt cursor with
+      match Source.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.tok_base cursor t in
+          let mal = unterminated_string t.tok_base cursor in
           let ltag_accum' = tag_accum_mal mal ltag_accum in
           let ltag = tag_of_accum ltag_accum' in
           let body_accum = Codepoints [] in
@@ -1315,7 +1176,7 @@ end = struct
           accept_rstring rtag body_accum ltag cursor t
         end
       | Some (_, false, cursor') -> begin
-          let mal = invalid_utf8 cursor cursor' t in
+          let mal = invalid_utf8 cursor cursor' in
           fn_ltag (tag_accum_mal mal ltag_accum) cursor' t
         end
       | Some (cp, true, cursor') -> begin
@@ -1340,45 +1201,45 @@ end = struct
     end in
 
     let rec fn_lpad c0_cursor accum lmargin cursor t = begin
-      match Text.Cursor.nextv_opt cursor with
+      match Source.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.tok_base cursor t in
+          let mal = unterminated_string t.tok_base cursor in
           accept_bstring (accum_mal mal accum) cursor t
         end
       | Some (_, false, cursor') -> begin
-          let mal = invalid_utf8 cursor cursor' t in
+          let mal = invalid_utf8 cursor cursor' in
           fn (accum_mal mal accum) lmargin cursor' t
         end
       | Some (cp, true, cursor') -> begin
           match cp with
           | cp when Codepoint.(cp = of_char ' ') -> fn_lpad c0_cursor accum lmargin cursor' t
           | cp when Codepoint.(cp = of_char '|') -> begin
-              match Text.(Pos.col (Cursor.pos cursor')) = lmargin with
+              match (Text.Pos.col (Source.Cursor.pos cursor')) = lmargin with
               | true -> fn accum lmargin cursor' t
               | false -> begin
-                  let mal = invalid_bar_indent c0_cursor cursor' t in
+                  let mal = invalid_bar_indent c0_cursor cursor' in
                   fn (accum_mal mal accum) lmargin cursor' t
                 end
             end
           | cp when Codepoint.(cp = of_char '`') -> accept_bstring accum cursor' t
           | cp when Codepoint.(cp = nl) -> begin
-              let mal = invalid_bar_indent c0_cursor cursor t in
+              let mal = invalid_bar_indent c0_cursor cursor in
               fn_lpad cursor' (accum_mal mal accum) lmargin cursor' t
             end
           | _ -> begin
-              let mal = invalid_bar_indent c0_cursor cursor t in
+              let mal = invalid_bar_indent c0_cursor cursor in
               fn (accum_mal mal accum) lmargin cursor' t
             end
         end
     end
     and fn accum lmargin cursor t = begin
-      match Text.Cursor.nextv_opt cursor with
+      match Source.Cursor.nextv_opt cursor with
       | None -> begin
-          let mal = unterminated_string t.tok_base cursor t in
+          let mal = unterminated_string t.tok_base cursor in
           accept_bstring (accum_mal mal accum) cursor t
         end
       | Some (_, false, cursor') -> begin
-          let mal = invalid_utf8 cursor cursor' t in
+          let mal = invalid_utf8 cursor cursor' in
           fn (accum_mal mal accum) lmargin cursor' t
         end
       | Some (cp, true, cursor') -> begin
@@ -1388,7 +1249,7 @@ end = struct
           | _ -> fn accum' lmargin cursor' t
         end
     end in
-    let lmargin = Text.(Pos.col (Cursor.pos cursor)) in
+    let lmargin = Text.Pos.col (Source.Cursor.pos cursor) in
     fn (Codepoints []) lmargin cursor t
 end
 
@@ -1407,13 +1268,16 @@ module Real : sig
   val zero: AbstractToken.t
   val of_whole: Nat.t -> Radix.t -> t
   val of_mals: AbstractToken.Rendition.Malformation.t list -> t
-  val r_suffix: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
-  val exp: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
-  val dot: t -> Text.Cursor.t -> Radix.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
-  val zero_r_suffix: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> outer
+  val r_suffix: t -> Source.Cursor.t -> Radix.t -> Source.Cursor.t -> outer
     -> outer * ConcreteToken.t
-  val zero_frac: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
-  val zero_exp: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> outer -> outer * ConcreteToken.t
+  val exp: t -> Source.Cursor.t -> Radix.t -> Source.Cursor.t -> outer -> outer * ConcreteToken.t
+  val dot: t -> Source.Cursor.t -> Radix.t -> Source.Cursor.t -> outer -> outer * ConcreteToken.t
+  val zero_r_suffix: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> outer
+    -> outer * ConcreteToken.t
+  val zero_frac: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> outer
+    -> outer * ConcreteToken.t
+  val zero_exp: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> outer
+    -> outer * ConcreteToken.t
 end = struct
   type outer = t
   type exp_sign =
@@ -1507,14 +1371,14 @@ end = struct
               Tok_r32 (
                 match Realer.to_r32_opt realer with
                 | Some r -> (Constant r)
-                | None -> malformed (out_of_range_real t.tok_base cursor t)
+                | None -> malformed (out_of_range_real t.tok_base cursor)
               )
             end
           | Subtype_r64 -> begin
               Tok_r64 (
                 match Realer.to_r64_opt realer with
                 | Some r -> (Constant r)
-                | None -> malformed (out_of_range_real t.tok_base cursor t)
+                | None -> malformed (out_of_range_real t.tok_base cursor)
               )
             end
         in
@@ -1522,8 +1386,8 @@ end = struct
       end
     | R _, Dec -> not_reached ()
     | R_dec, Dec -> begin
-        let r = Real.of_string Text.Slice.(to_string (init ~base:t.tok_base
-            ~past:suffix_cursor (Text.Cursor.container t.tok_base))) in
+        let r = Real.of_string Source.Slice.(to_string (of_cursors ~base:t.tok_base
+            ~past:suffix_cursor)) in
         let tok = match subtype with
           | Subtype_r32 -> Tok_r32 (Constant r)
           | Subtype_r64 -> Tok_r64 (Constant r)
@@ -1543,8 +1407,8 @@ end = struct
             | 32L -> Some Subtype_r32
             | 64L -> Some Subtype_r64
             | 0L -> begin
-                let _cp, digits_cursor = Text.Cursor.next suffix_cursor in
-                match Text.Cursor.(digits_cursor = cursor) with
+                let _cp, digits_cursor = Source.Cursor.next suffix_cursor in
+                match Source.Cursor.(digits_cursor = cursor) with
                 | true -> Some Subtype_r64 (* "r" suffix. *)
                 | false -> None
               end
@@ -1554,14 +1418,14 @@ end = struct
       in
       let accum' = match subtype_opt with
         | None -> begin
-            let mal = unsupported_bitwidth suffix_cursor cursor t in
+            let mal = unsupported_bitwidth suffix_cursor cursor in
             accum_mal mal accum
           end
         | Some _ -> accum
       in
       accept subtype_opt suffix_cursor accum' radix cursor t
     end in
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept_subtype bitwidth suffix_cursor accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp num_suffix_map with
@@ -1569,7 +1433,7 @@ end = struct
             let digit = nat_of_cp cp in
             match Nat.(bitwidth = zero && digit = zero) with
             | true -> begin
-                let mal = invalid_type_suffix_leading_zero cursor cursor' t in
+                let mal = invalid_type_suffix_leading_zero cursor cursor' in
                 let accum' = accum_mal mal accum in
                 next_suffix bitwidth suffix_cursor accum' radix cursor' t
               end
@@ -1579,7 +1443,7 @@ end = struct
               end
           end
         | Some NSMapIdent -> begin
-            let mal = invalid_numerical cursor cursor' t in
+            let mal = invalid_numerical cursor cursor' in
             let accum' = accum_mal mal accum in
             next_suffix bitwidth suffix_cursor accum' radix cursor' t
           end
@@ -1613,7 +1477,7 @@ end = struct
   ]
 
   let rec next_exp exp_map accum exp_cursor radix cursor t =
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept None cursor accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp exp_map with
@@ -1627,7 +1491,7 @@ end = struct
         | Some EMapNeg
         | Some EMapPos
         | Some EMapMalIdent -> begin
-            let mal = invalid_numerical cursor cursor' t in
+            let mal = invalid_numerical cursor cursor' in
             let accum' = accum_mal mal accum in
             next_exp exp_map accum' exp_cursor radix cursor' t
           end
@@ -1642,7 +1506,7 @@ end = struct
       | Dec -> dec_exp_map
       | Hex -> hex_exp_map
     in
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept None cursor accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp exp_map with
@@ -1654,7 +1518,7 @@ end = struct
         | Some EMapRealSuffix ->
           next_suffix Nat.k_0 cursor accum radix cursor' t
         | Some EMapMalIdent -> begin
-            let mal = invalid_numerical cursor cursor' t in
+            let mal = invalid_numerical cursor cursor' in
             let accum' = accum_mal mal accum in
             next_exp exp_map accum' exp_cursor radix cursor' t
           end
@@ -1709,7 +1573,7 @@ end = struct
   ]
 
   let rec next_frac accum mantissa_cursor frac_map radix cursor t =
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept None cursor accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp frac_map with
@@ -1721,7 +1585,7 @@ end = struct
         | Some FMapExp -> first_exp accum cursor radix cursor' t
         | Some FMapRealSuffix -> next_suffix Nat.k_0 cursor accum radix cursor' t
         | Some FMapMalIdent -> begin
-            let mal = invalid_numerical cursor cursor' t in
+            let mal = invalid_numerical cursor cursor' in
             let accum' = accum_mal mal accum in
             next_frac accum' mantissa_cursor frac_map radix cursor' t
           end
@@ -1769,13 +1633,19 @@ end
 
 module Integer : sig
   val zero: AbstractToken.t
-  val bin: Nat.t -> Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val oct: Nat.t -> Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val dec: Nat.t -> Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val hex: Nat.t -> Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val mal_ident: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val zero_u_suffix: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
-  val zero_i_suffix: Text.Cursor.t -> Text.Cursor.t -> Text.Cursor.t -> t -> t * ConcreteToken.t
+  val bin: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
+    -> t * ConcreteToken.t
+  val oct: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
+    -> t * ConcreteToken.t
+  val dec: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
+    -> t * ConcreteToken.t
+  val hex: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
+    -> t * ConcreteToken.t
+  val mal_ident: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
+  val zero_u_suffix: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
+    -> t * ConcreteToken.t
+  val zero_i_suffix: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
+    -> t * ConcreteToken.t
 end = struct
   type signedness =
     | Unsigned
@@ -1871,7 +1741,7 @@ end = struct
         let limit = limit_of_subtype subtype in
         match Nat.(n <= limit) with
         | false -> begin
-            let mal = out_of_range_int radix limit t.tok_base cursor t in
+            let mal = out_of_range_int radix limit t.tok_base cursor in
             match (accum_mal mal accum) with
             | Malformations mals -> accept_mals subtype mals cursor t
             | N _ -> not_reached ()
@@ -1918,14 +1788,14 @@ end = struct
             | Unsigned, 512L -> Some Subtype_u512
             | Signed, 512L -> Some Subtype_i512
             | Unsigned, 0L -> begin
-                let _cp, digits_cursor = Text.Cursor.next suffix_cursor in
-                match Text.Cursor.(digits_cursor = cursor) with
+                let _cp, digits_cursor = Source.Cursor.next suffix_cursor in
+                match Source.Cursor.(digits_cursor = cursor) with
                 | true -> Some Subtype_u64 (* "u" suffix. *)
                 | false -> None
               end
             | Signed, 0L -> begin
-                let _cp, digits_cursor = Text.Cursor.next suffix_cursor in
-                match Text.Cursor.(digits_cursor = cursor) with
+                let _cp, digits_cursor = Source.Cursor.next suffix_cursor in
+                match Source.Cursor.(digits_cursor = cursor) with
                 | true -> Some Subtype_i64 (* "i" suffix. *)
                 | false -> None
               end
@@ -1935,14 +1805,14 @@ end = struct
       in
       let accum' = match subtype_opt with
         | None -> begin
-            let mal = unsupported_bitwidth suffix_cursor cursor t in
+            let mal = unsupported_bitwidth suffix_cursor cursor in
             accum_mal mal accum
           end
         | Some _ -> accum
       in
       accept subtype_opt accum' radix cursor t
     end in
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept_subtype bitwidth signedness suffix_cursor accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp num_suffix_map with
@@ -1950,7 +1820,7 @@ end = struct
             let digit = nat_of_cp cp in
             match Nat.(bitwidth = zero && digit = zero) with
             | true -> begin
-                let mal = invalid_type_suffix_leading_zero cursor cursor' t in
+                let mal = invalid_type_suffix_leading_zero cursor cursor' in
                 let accum' = accum_mal mal accum in
                 next_suffix bitwidth signedness suffix_cursor accum' radix cursor' t
               end
@@ -1960,7 +1830,7 @@ end = struct
               end
           end
         | Some NSMapIdent -> begin
-            let mal = invalid_numerical cursor cursor' t in
+            let mal = invalid_numerical cursor cursor' in
             let accum' = accum_mal mal accum in
             next_suffix bitwidth signedness suffix_cursor accum' radix cursor' t
           end
@@ -2028,7 +1898,7 @@ end = struct
     | Malformations mals -> Real.of_mals mals
 
   let next_dot accum whole_cursor radix pcursor cursor t =
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> Real.dot (real_accum_of_accum radix accum) whole_cursor radix cursor t
     | Some (cp, _cursor') -> begin
         match Set.mem cp operator_set with
@@ -2037,7 +1907,7 @@ end = struct
       end
 
   let rec next_whole accum whole_cursor whole_map radix cursor t =
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> accept None accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp whole_map with
@@ -2053,7 +1923,7 @@ end = struct
         | Some WMapRealSuffix ->
           Real.r_suffix (real_accum_of_accum radix accum) cursor radix cursor' t
         | Some WMapMalIdent -> begin
-            let mal = invalid_numerical cursor cursor' t in
+            let mal = invalid_numerical cursor cursor' in
             let accum' = accum_mal mal accum in
             next_whole accum' whole_cursor whole_map radix cursor' t
           end
@@ -2081,7 +1951,7 @@ end = struct
     next_whole accum cursor hex_whole_map Hex cursor t
 
   let mal_ident _ppcursor pcursor cursor t =
-    let mal = invalid_numerical pcursor cursor t in
+    let mal = invalid_numerical pcursor cursor in
     let accum = Malformations [mal] in
     next_whole accum t.tok_base dec_whole_map Dec cursor t
 
@@ -2092,29 +1962,6 @@ end = struct
   let zero_i_suffix _ppcursor pcursor cursor t =
     let accum = N Nat.k_0 in
     next_suffix Nat.k_0 Signed pcursor accum Dec cursor t
-end
-
-module View = struct
-  type t = {
-    ppcursor: Text.Cursor.t;
-    pcursor: Text.Cursor.t;
-    cursor: Text.Cursor.t;
-  }
-
-  let pp {ppcursor; pcursor; cursor} formatter =
-    formatter
-    |> Fmt.fmt "{ppcursor=" |> Text.Pos.pp (Text.Cursor.pos ppcursor)
-    |> Fmt.fmt "; pcursor=" |> Text.Pos.pp (Text.Cursor.pos pcursor)
-    |> Fmt.fmt "; cursor=" |> Text.Pos.pp (Text.Cursor.pos cursor)
-    |> Fmt.fmt "}"
-
-  let of_t t =
-    {ppcursor=t.tok_base; pcursor=t.tok_base; cursor=t.tok_base}
-
-  let next {pcursor; cursor; _} =
-    match Text.Cursor.next_opt cursor with
-    | None -> None
-    | Some (cp, cursor') -> Some (cp, {ppcursor=pcursor; pcursor=cursor; cursor=cursor'})
 end
 
 module State = struct
@@ -2145,14 +1992,14 @@ module State = struct
     type t = {
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
-      bslash_cursor: Text.Cursor.t;
+      bslash_cursor: Source.Cursor.t;
     }
 
     let pp {mals; path; bslash_cursor} formatter =
       formatter
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
-      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Text.Cursor.pos bslash_cursor)
+      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
       |> Fmt.fmt "}"
 
     let mals_accum mal {mals; path; _} =
@@ -2170,7 +2017,7 @@ module State = struct
     type t = {
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
-      bslash_cursor: Text.Cursor.t;
+      bslash_cursor: Source.Cursor.t;
       u: Nat.t;
     }
 
@@ -2178,7 +2025,7 @@ module State = struct
       formatter
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
-      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Text.Cursor.pos bslash_cursor)
+      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
       |> Fmt.fmt "; u=" |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
       |> Fmt.fmt "}"
 
@@ -2205,7 +2052,7 @@ module State = struct
     type t = {
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
-      line_cursor: Text.Cursor.t;
+      line_cursor: Source.Cursor.t;
       line: Nat.t option;
     }
 
@@ -2213,7 +2060,7 @@ module State = struct
       formatter
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
-      |> Fmt.fmt "; line_cursor=" |> Text.Pos.pp (Text.Cursor.pos line_cursor)
+      |> Fmt.fmt "; line_cursor=" |> Text.Pos.pp (Source.Cursor.pos line_cursor)
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "}"
 
@@ -2250,7 +2097,7 @@ module State = struct
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
       line: Nat.t option;
-      col_cursor: Text.Cursor.t;
+      col_cursor: Source.Cursor.t;
       col: Nat.t;
     }
 
@@ -2259,7 +2106,7 @@ module State = struct
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
-      |> Fmt.fmt "; col_cursor=" |> Text.Pos.pp (Text.Cursor.pos col_cursor)
+      |> Fmt.fmt "; col_cursor=" |> Text.Pos.pp (Source.Cursor.pos col_cursor)
       |> Fmt.fmt "; col=" |> Nat.pp col
       |> Fmt.fmt "}"
 
@@ -2329,13 +2176,13 @@ module State = struct
   module Isubstring_bslash = struct
     type t = {
       accum: CodepointAccum.t;
-      bslash_cursor: Text.Cursor.t;
+      bslash_cursor: Source.Cursor.t;
     }
 
     let pp t formatter =
       formatter
       |> Fmt.fmt "{accum=" |> CodepointAccum.pp t.accum
-      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Text.Cursor.pos t.bslash_cursor)
+      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos t.bslash_cursor)
       |> Fmt.fmt "}"
   end
 
@@ -2344,14 +2191,14 @@ module State = struct
   module Isubstring_bslash_u_lcurly = struct
     type t = {
       accum: CodepointAccum.t;
-      bslash_cursor: Text.Cursor.t;
+      bslash_cursor: Source.Cursor.t;
       u: Nat.t;
     }
 
     let pp t formatter =
       formatter
       |> Fmt.fmt "{accum=" |> CodepointAccum.pp t.accum
-      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Text.Cursor.pos t.bslash_cursor)
+      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos t.bslash_cursor)
       |> Fmt.fmt "; u=" |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true t.u
       |> Fmt.fmt "}"
   end
@@ -2526,39 +2373,39 @@ module Dfa = struct
   let accept_pexcl atoken View.{ppcursor; _} t =
     accept atoken ppcursor t
 
-  let accept_source_directive atoken cursor t =
-    let t' = match atoken with
+  let accept_source_directive atoken View.{pcursor; cursor; _} t =
+    let cursor' = match atoken with
       | AbstractToken.Tok_source_directive Constant {path=None; line=None; col=None} -> begin
           (* Reset to actual source. *)
-          {t with path=Text.(path (Cursor.container t.tok_base)); line_bias=Sint.zero;
-                 col_bias=Sint.zero}
+          Source.Cursor.debias cursor
         end
       | AbstractToken.Tok_source_directive Constant {path; line; col} -> begin
+          let source = Source.Cursor.container cursor in
           let path = match path with
-            | None -> t.path
+            | None -> Source.path source
             | Some path -> Some path
           in
           let line_bias = match line with
             | None -> Sint.zero
             | Some line ->
               Sint.((Uns.bits_to_sint line) - (Uns.bits_to_sint (Text.(Pos.line (Cursor.pos
-                  cursor)))))
+                  (Source.Cursor.text_cursor cursor))))))
           in
           let col_bias = match col with
             | None -> Sint.zero
             | Some col ->
               Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col (Cursor.pos
-                  cursor)))))
+                  (Source.Cursor.text_cursor cursor))))))
           in
-          {t with path; line_bias; col_bias}
+          let source' = Source.bias ~path ~line_bias ~col_bias source in
+          Source.Cursor.bias source' pcursor cursor
         end
-      | AbstractToken.Tok_source_directive Malformed _ -> t
+      | AbstractToken.Tok_source_directive Malformed _ -> cursor
       | _ -> not_reached ()
     in
     (* Treat the directive as having come from the actual file being read. *)
-    let source = Source.init ~path:Text.(path (Cursor.container t.tok_base)) ~line_bias:Sint.zero
-      ~col_bias:Sint.zero ~base:t.tok_base ~past:cursor in
-    {t' with tok_base=cursor}, Accept (ConcreteToken.init atoken source)
+    let source = Source.Slice.of_cursors ~base:(Source.Cursor.debias t.tok_base) ~past:cursor in
+    {t with tok_base=cursor'}, Accept (ConcreteToken.init atoken source)
 
   let accept_line_delim atoken cursor t =
     let source = source_at cursor t in
@@ -2622,7 +2469,7 @@ module Dfa = struct
         ("`", advance State_btick);
         ("0", advance State_0);
         ("123456789", (fun (View.{pcursor; _} as view) t ->
-            let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             wrap_legacy Integer.(dec digit) view t
           )
         );
@@ -2757,7 +2604,7 @@ module Dfa = struct
     edges0=map_of_cps_alist [
       ("_", wrap_legacy Integer.(dec Nat.k_0));
       ("0123456789", (fun (View.{pcursor; _} as view) t ->
-          let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+          let digit = nat_of_cp (Source.Cursor.rget pcursor) in
           wrap_legacy Integer.(dec digit) view t
         )
       );
@@ -2787,22 +2634,22 @@ module Dfa = struct
     edges0=map_of_cps_alist [
       ("\"", advance (State_src_path State.Src_path.empty));
       ("123456789", (fun ({pcursor; _} as view) t ->
-          let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+          let digit = nat_of_cp (Source.Cursor.rget pcursor) in
           advance (State_src_line (State.Src_line.init ~mals:[] ~path:None ~line_cursor:pcursor
             ~line:(Some digit))) view t));
-      ("]", (fun {cursor; _} t ->
+      ("]", (fun view t ->
           let tok = State.render_source_directive ~mals:[] ~path:None ~line:None ~col:None in
-          accept_source_directive tok cursor t
+          accept_source_directive tok view t
         )
       );
     ];
     default0=(fun ({pcursor; cursor; _} as view) t ->
-      let mal = unexpected_codepoint_source_directive pcursor cursor t in
+      let mal = unexpected_codepoint_source_directive pcursor cursor in
       advance (State_src_line (State.Src_line.init ~mals:[mal] ~path:None ~line_cursor:cursor
         ~line:None)) view t
     );
     eoi0=(fun {cursor; _} t ->
-      let mal = unterminated_source_directive t.tok_base cursor t in
+      let mal = unterminated_source_directive t.tok_base cursor in
       accept (Tok_source_directive (AbstractToken.Rendition.of_mals [mal])) cursor t
     );
   }
@@ -2813,7 +2660,7 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         ("%", (fun state ({pcursor; cursor; _} as view) t ->
-            let mal = missing_backslash pcursor cursor t in
+            let mal = missing_backslash pcursor cursor in
             advance (State_src_path (state |> mals_accum mal)) view t
           )
         );
@@ -2822,10 +2669,10 @@ module Dfa = struct
             advance (State_src_path_bslash {mals; path; bslash_cursor=pcursor}) view t));
       ];
       default1=(fun state ({pcursor; _} as view) t ->
-        advance (State_src_path (state |> path_accum (Text.Cursor.rget pcursor))) view t
+        advance (State_src_path (state |> path_accum (Source.Cursor.rget pcursor))) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2842,16 +2689,16 @@ module Dfa = struct
         ("r", (fun state view t ->
             advance (State_src_path (state |> path_accum Codepoint.cr)) view t));
         ("\"\\%", (fun state ({pcursor; _} as view) t ->
-            advance (State_src_path (state |> path_accum (Text.Cursor.rget pcursor))) view t
+            advance (State_src_path (state |> path_accum (Source.Cursor.rget pcursor))) view t
           )
         );
       ];
       default1=(fun ({bslash_cursor; _} as state) {cursor; _} t ->
-        let mal = illegal_backslash bslash_cursor cursor t in
+        let mal = illegal_backslash bslash_cursor cursor in
         retry (State_src_path (state |> mals_accum mal)) t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2866,22 +2713,22 @@ module Dfa = struct
           )
         );
         ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-            let mal = illegal_backslash bslash_cursor cursor t in
+            let mal = illegal_backslash bslash_cursor cursor in
             advance (State_src_rditto (state |> mals_accum mal)) view t
           )
         );
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
       default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-        let mal = illegal_backslash bslash_cursor cursor t in
+        let mal = illegal_backslash bslash_cursor cursor in
         advance (State_src_path (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2892,7 +2739,7 @@ module Dfa = struct
       edges1=map_of_cps_alist [
         ("_", (fun state view t -> advance (State_src_path_bslash_u_lcurly state) view t));
         ("0123456789abcdef", (fun state ({pcursor; _} as view) t ->
-            let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_src_path_bslash_u_lcurly (state |> u_accum digit)) view t
           )
         );
@@ -2903,27 +2750,27 @@ module Dfa = struct
                 ~default:None
               |> Option.value_map
                 ~f:(fun cp -> (state |> path_accum cp))
-                ~default:(state |> mals_accum (invalid_unicode bslash_cursor cursor t))
+                ~default:(state |> mals_accum (invalid_unicode bslash_cursor cursor))
             )) view t
           )
         );
         ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-            let mal = illegal_backslash bslash_cursor cursor t in
+            let mal = illegal_backslash bslash_cursor cursor in
             advance (State_src_rditto (state |> mals_accum mal)) view t
           )
         );
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
       default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-        let mal = partial_unicode bslash_cursor cursor t in
+        let mal = partial_unicode bslash_cursor cursor in
         advance (State_src_path (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2933,18 +2780,18 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         (":", (fun state view t -> advance (State_src_path_colon state) view t));
-        ("]", (fun {mals; path} {cursor; _} t ->
+        ("]", (fun {mals; path} view t ->
             let tok = State.render_source_directive ~mals ~path ~line:None ~col:None in
-            accept_source_directive tok cursor t
+            accept_source_directive tok view t
           )
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor in
         advance (State_src_rditto (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -2955,28 +2802,28 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         ("123456789", (fun {mals; path} ({pcursor; _} as view) t ->
-            let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_src_line (State.Src_line.init ~mals ~path ~line_cursor:pcursor
                 ~line:(Some digit))) view t));
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor in
         advance (State_src_rditto (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
 
   let node1_src_line =
     let open State.Src_line in
-    let validate_line {mals; line_cursor; line; _} View.{pcursor; _} t = begin
+    let validate_line {mals; line_cursor; line; _} View.{pcursor; _} = begin
       match line with
       | Some line -> begin
           match Nat.(line > max_abs_i64) with
@@ -2988,7 +2835,7 @@ module Dfa = struct
                 |> Nat.fmt ~alt:true Nat.max_abs_i64
                 |> Fmt.to_string
               in
-              let mal = malformation ~base:line_cursor ~past:pcursor description t in
+              let mal = malformation ~base:line_cursor ~past:pcursor description in
               (mal :: mals), None
             end
         end
@@ -2997,29 +2844,29 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         ("0123456789", (fun state (View.{pcursor; _} as view) t ->
-            let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_src_line (state |> line_accum digit)) view t
           )
         );
         (":", (fun ({path; _} as state) view t ->
-            let mals, line = validate_line state view t in
+            let mals, line = validate_line state view in
             advance (State_src_line_colon (State.Src_line_colon.init ~mals ~path ~line)) view t
           )
         );
-        ("]", (fun ({path; _} as state) ({cursor; _} as view) t ->
-            let mals, line = validate_line state view t in
+        ("]", (fun ({path; _} as state) view t ->
+            let mals, line = validate_line state view in
             let tok = State.render_source_directive ~mals ~path ~line ~col:None in
-            accept_source_directive tok cursor t
+            accept_source_directive tok view t
           )
         );
       ];
       default1=(fun {mals; path; _} ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor in
         advance (State_src_line (init ~mals:(mal :: mals) ~path ~line_cursor:cursor ~line:None))
           view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -3029,21 +2876,21 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         ("123456789", (fun {mals; path; line} (View.{pcursor; _} as view) t ->
-            let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_src_col (State.Src_col.init ~mals ~path ~line ~col_cursor:pcursor
                 ~col:digit)) view t));
         ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor t in
+            let mal = unexpected_codepoint_source_directive pcursor cursor in
             accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
           )
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor in
         advance (State_src_line_colon (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -3053,11 +2900,11 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         ("0123456789", (fun state (View.{pcursor; _} as view) t ->
-            let digit = nat_of_cp (Text.Cursor.rget pcursor) in
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_src_col (state |> col_accum digit)) view t
           )
         );
-        ("]", (fun {mals; path; col_cursor; line; col} {pcursor; cursor; _} t ->
+        ("]", (fun {mals; path; col_cursor; line; col} ({pcursor; _} as view) t ->
             let mals, col = match Nat.(col > max_abs_i64) with
               | false -> mals, Some col
               | true -> begin
@@ -3067,21 +2914,21 @@ module Dfa = struct
                     |> Nat.fmt ~alt:true Nat.max_abs_i64
                     |> Fmt.to_string
                   in
-                  let mal = malformation ~base:col_cursor ~past:pcursor description t in
+                  let mal = malformation ~base:col_cursor ~past:pcursor description in
                   (mal :: mals), None
                 end
             in
             let tok = State.render_source_directive ~mals ~path ~line ~col in
-            accept_source_directive tok cursor t
+            accept_source_directive tok view t
           )
         );
       ];
       default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor t in
+        let mal = unexpected_codepoint_source_directive pcursor cursor in
         advance (State_src_col (state |> mals_accum mal)) view t
       );
       eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor t in
+        let mal = unterminated_source_directive t.tok_base cursor in
         accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
       );
     }
@@ -3135,7 +2982,7 @@ module Dfa = struct
       advance (State_isubstring_start {accum=State.CodepointAccum.accum_cp cp accum}) view t
     end in
     let accum_raw {accum} ({pcursor; _} as view) t = begin
-      let cp = Text.Cursor.rget pcursor in
+      let cp = Source.Cursor.rget pcursor in
       accum_cp cp accum view t
     end in
     {
@@ -3156,7 +3003,7 @@ module Dfa = struct
     let open State.Isubstring_bslash in
     let open View in
     let accum_illegal_backslash accum bslash_cursor cursor t = begin
-      let mal = illegal_backslash bslash_cursor cursor t in
+      let mal = illegal_backslash bslash_cursor cursor in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
     let default1 {accum; bslash_cursor} {cursor; _} t = begin
@@ -3166,7 +3013,7 @@ module Dfa = struct
       advance (State_isubstring_start {accum=State.CodepointAccum.accum_cp cp accum}) view t
     end in
     let accum_raw state ({pcursor; _} as view) t = begin
-      let cp = Text.Cursor.rget pcursor in
+      let cp = Source.Cursor.rget pcursor in
       accum_cp cp state view t
     end in
     {
@@ -3188,7 +3035,7 @@ module Dfa = struct
     let open State.Isubstring_bslash_u in
     let open View in
     let accum_illegal_backslash accum bslash_cursor cursor t = begin
-      let mal = illegal_backslash bslash_cursor cursor t in
+      let mal = illegal_backslash bslash_cursor cursor in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
     let default1 {accum; bslash_cursor} {pcursor; _} t = begin
@@ -3213,7 +3060,7 @@ module Dfa = struct
             advance (State_isubstring_bslash_u_lcurly {accum; bslash_cursor; u=Nat.k_0}) view t
           ));
         ("\"", (fun {accum; bslash_cursor} ({cursor; _} as view) t ->
-            let mal = illegal_backslash bslash_cursor cursor t in
+            let mal = illegal_backslash bslash_cursor cursor in
             accept_isubstring_excl Istring_rditto (State.CodepointAccum.accum_mal mal accum) view t
           ));
       ];
@@ -3225,11 +3072,11 @@ module Dfa = struct
     let open State.Isubstring_bslash_u_lcurly in
     let open View in
     let accum_invalid_unicode accum bslash_cursor cursor t = begin
-      let mal = invalid_unicode bslash_cursor cursor t in
+      let mal = invalid_unicode bslash_cursor cursor in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
     let accum_partial_unicode accum bslash_cursor cursor t = begin
-      let mal = partial_unicode bslash_cursor cursor t in
+      let mal = partial_unicode bslash_cursor cursor in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
     let default1 {accum; bslash_cursor; _} {pcursor; _} t = begin
@@ -3255,7 +3102,7 @@ module Dfa = struct
       edges1=map_of_cps_alist [
         ("_", (fun state view t -> advance (State_isubstring_bslash_u_lcurly state) view t));
         ("0123456789abcdef", (fun {accum; bslash_cursor; u} ({pcursor; _} as view) t ->
-            let cp = Text.Cursor.rget pcursor in
+            let cp = Source.Cursor.rget pcursor in
             let u' = Radix.(nat_accum (nat_of_cp cp) u Hex) in
             advance (State_isubstring_bslash_u_lcurly {accum; bslash_cursor; u=u'}) view t
           ));
@@ -3268,7 +3115,7 @@ module Dfa = struct
               ~default:(accum_invalid_unicode accum bslash_cursor cursor t)
           ));
         ("\"", (fun {accum; bslash_cursor; _} ({cursor; _} as view) t ->
-            let mal = partial_unicode bslash_cursor cursor t in
+            let mal = partial_unicode bslash_cursor cursor in
             accept_isubstring_excl Istring_rditto (State.CodepointAccum.accum_mal mal accum) view t
           ));
       ];
@@ -3379,14 +3226,14 @@ module Dfa = struct
     if trace then
       File.Fmt.stdout |> Fmt.fmt "Scan: start " |> State.pp state |> Fmt.fmt ", " |> pp t
       |> Fmt.fmt "\n" |> ignore;
-    match transition trace state (View.of_t t) t with
+    match transition trace state (view_of_t t) t with
     | _, Advance _ -> not_reached ()
     | _, Retry _ -> not_reached ()
     | t', Accept token -> t', token
 end
 
 module Dentation : sig
-  val start: Text.Cursor.t -> t -> t * ConcreteToken.t
+  val start: Source.Cursor.t -> t -> t * ConcreteToken.t
 end = struct
   type paren_comment_lookahead_result =
     | LineExpr
@@ -3396,13 +3243,12 @@ end = struct
   let tok_indent = Tok_indent (Constant ())
   let tok_dedent = Tok_dedent (Constant ())
   let tok_indent_absent t =
-    Tok_indent (malformed (malformation ~base:t.tok_base ~past:t.tok_base "Indent absent" t))
+    Tok_indent (malformed (malformation ~base:t.tok_base ~past:t.tok_base "Indent absent"))
   let tok_dedent_absent t =
-    Tok_dedent (malformed (
-      malformation ~base:t.tok_base ~past:t.tok_base "Dedent absent" t))
+    Tok_dedent (malformed (malformation ~base:t.tok_base ~past:t.tok_base "Dedent absent"))
 
   let rec next cursor t =
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> begin
         match t.line_state with
         | Line_dentation -> accept Tok_whitespace cursor t
@@ -3414,7 +3260,7 @@ end = struct
         | cp when Codepoint.(cp = of_char ' ') -> next cursor' t
         | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
         | _ -> begin
-            let col = Text.(Pos.col (Cursor.pos cursor)) in
+            let col = Text.Pos.col (Source.Cursor.pos cursor) in
             let level = col / 4L in
             let rem = col % 4L in
             (* The following patterns incrementally handle all dentation/alignment cases. Malformed
@@ -3517,7 +3363,7 @@ end = struct
     | _ -> accept (Tok_dedent (Constant ())) cursor {t with level=pred t.level}
 
   let start cursor t =
-    match Text.Cursor.next_opt cursor with
+    match Source.Cursor.next_opt cursor with
     | None -> end_of_input cursor t
     | Some (cp, cursor') -> begin
         match cp with
@@ -3525,7 +3371,7 @@ end = struct
         | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
         | cp when Codepoint.(cp = of_char '#') -> hash_comment cursor cursor cursor' t
         | cp when Codepoint.(cp = of_char '(') -> begin
-            match Text.Cursor.next_opt cursor' with
+            match Source.Cursor.next_opt cursor' with
             | None -> other cursor t
             | Some (cp, cursor'') -> begin
                 match cp with

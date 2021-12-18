@@ -9,7 +9,7 @@ let scan_file path =
     let source = Scan.ConcreteToken.source ctoken in
     File.Fmt.stdout
     |> Fmt.fmt "  "
-    |> Scan.Source.pp_loc source
+    |> Source.Slice.pp source
     |> Fmt.fmt " : "
     |> Scan.AbstractToken.pp atoken
     |> Fmt.fmt "\n"
