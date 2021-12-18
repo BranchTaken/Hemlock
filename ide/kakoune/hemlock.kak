@@ -46,10 +46,10 @@ add-highlighter shared/hemlock/string/escape region [\\]([tnr"%\\]|u\{[0-9a-f]{1
 add-highlighter shared/hemlock/string/width region \%('.')?[<^>]?(\+|_)?#?0?\*\(\^ () fill meta
 add-highlighter shared/hemlock/string/precision region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?\.=?\*\(\^ () fill meta
 add-highlighter shared/hemlock/string/fmt region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?\(\^ () fill meta
-add-highlighter shared/hemlock/string/value region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
+add-highlighter shared/hemlock/string/value region \%('.')?[<^>]?(\+|_)?#?0?([1-9][0-9]*)?(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcs]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
 add-highlighter shared/hemlock/string/inner_precision region \^\)\.=?\*\(\^ () fill meta
 add-highlighter shared/hemlock/string/inner_fmt region \^\)([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
-add-highlighter shared/hemlock/string/inner_value region \^\)(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
+add-highlighter shared/hemlock/string/inner_value region \^\)(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcs]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))([\ ]*[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*[\ ]*)?\(\^ () fill meta
 
 add-highlighter shared/hemlock/string/unprotected region (?<!\\)% () fill Error
 add-highlighter shared/hemlock/string/overprotected region \\(?![utnr"\\%]) () fill Error
@@ -101,8 +101,8 @@ add-highlighter shared/hemlock/code/real_r regex \b([0-9][0-9_]*)(r(32|64)?)\b 1
 # ‾‾‾‾‾
 
 evaluate-commands %sh{
-  keywords="and|also|as|assert|conceal|effect|else|expose|external|fun|function|if|import|include"
-  keywords="${keywords}|lazy|let|match|mutability|of|open|or|rec|then|type|val|when|with"
+  keywords="and|also|as|conceal|effect|else|expose|external|fn|function|if|import|include|lazy|let"
+  keywords="${keywords}|match|mutability|of|open|or|rec|then|type|val|when|with"
 
   printf %s\\n "declare-option str-list hemlock_static_words ${keywords}" | tr '|' ' '
 

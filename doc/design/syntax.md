@@ -135,7 +135,7 @@ Pattern construction:
 | Variant application | right         |
 | `::`                | right         |
 | `,`                 | —             |
-| `|`                 | left          |
+| `\|`                | left          |
 | `as`                | —             |
 
 Expressions:
@@ -160,7 +160,7 @@ Expressions:
 | `;`, `;;`                                              | right         |
 | `import`                                               | —             |
 | `open`                                                 | —             |
-| `let`, `match`, `fun`, `function`, `expose`, `conceal` | —             |
+| `let`, `match`, `fn`, `function`, `expose`, `conceal`  | —             |
 
 ### Keyword
 
@@ -168,14 +168,14 @@ The following words are keywords which are used as syntactic elements, and canno
 purposes.
 
 ```hemlock
-and         external    let         true
-also        false       match       type
-as          fun         mutability  val
-assert      function    of          when
+and         false       match       type
+also        fn          mutability  val
+as          function    of          when
 conceal     if          open        with
 effect      import      or
 else        include     rec
 expose      lazy        then
+external    let         true
 ```
 
 ### Identifier
@@ -591,23 +591,26 @@ directives provide a mechanism for setting the path, line and column for subsequ
 the scanner accepts source directive tokens much as any other token, the primary purpose of such
 tokens is to affect scanner state, and the parser ignores them.
 
-Source directives are delimited by `[:`...`:]` and comprise three optional colon-separated
-parameters, matched by `\[:[<path>:][<line>[:<col>]]:\]`:
+Source directives are delimited by `[:`...`]` and comprise three optional colon-separated ordered
+parameters, matched by `\[:<path>[:<line>[:<col>]]|:<line>[:<col>]|:\]`:
 
 - `<path>`: `"..."`-delimited interpolated string, minus support for format specifiers, defaults to
   current source path
-- `<line>`: `[1-9][0-9]*`, constrained to the range of `uns`, defaults to 1
-- `<col>`: `[1-9][0-9]*`, constrained to the range of `uns`, defaults to 1
+- `<line>`: `[1-9][0-9]*`, constrained to the range of `int`, defaults to 1
+- `<col>`: `[1-9][0-9]*`, constrained to the range of `int`, defaults to 1
+
+If all parameters are absent (`[:]`), the directive resets the source to the actual source being
+scanned.
 
 Examples follow.
 
 ```hemlock
-[:"Foo.hm":42:13:]
-[:"Foo.hm":42:]
-[:"Foo.hm":]
-[:42:13:]
-[:42:]
-[::]
+[:"Foo.hm":42:13]
+[:"Foo.hm":42]
+[:"Foo.hm"]
+[:42:13]
+[:42]
+[:]
 ```
 
 Unlike line directives, source directives specify the position of the codepoint immediately
@@ -616,9 +619,9 @@ and separate the directive from the source by a newline, the specified line numb
 one less than that of the following source.
 
 ```hemlock
-let x = [:42:]"hello"
+let x = [:42]"hello"
 
-let x = [:41:]\
+let x = [:41]\
 "hello"
 ```
 
