@@ -27,7 +27,7 @@ let init text =
 let bias ~path ~line_bias ~col_bias t =
   {t with path; line_bias; col_bias}
 
-let debias t =
+let unbias t =
   init t.text
 
 let text t =
@@ -47,19 +47,22 @@ module Cursor = struct
     type container = t
     type t = {
       container: container;
-      bias_pred: t option;
+      bias_prior: t option;
       text_cursor: Text.Cursor.t;
     }
 
     let bias container pred t =
       {
         container;
-        bias_pred=Some pred;
+        bias_prior=Some pred;
         text_cursor=t.text_cursor;
       }
 
     let debias t =
-      {t with container=debias t.container; bias_pred=None}
+      {t with container=unbias t.container; bias_prior=Some t}
+
+    let unbias t =
+      {t with container=unbias t.container; bias_prior=None}
 
     let container t =
       t.container
@@ -67,19 +70,31 @@ module Cursor = struct
     let index t =
       Text.Cursor.index t.text_cursor
 
-    let bias_pred t =
-      t.bias_pred
+    let bias_prior t =
+      match t.bias_prior with
+      | None -> t
+      | Some bias_prior -> bias_prior
 
     let text_cursor t =
       t.text_cursor
 
-    let cmp t0 t1 =
-      Text.Cursor.cmp t0.text_cursor t1.text_cursor
+    let rec cmp t0 t1 =
+      let open Cmp in
+      match Text.Cursor.cmp t0.text_cursor t1.text_cursor with
+      | Lt -> Lt
+      | Eq -> begin
+          match t0.bias_prior, t1.bias_prior with
+          | None, None -> Eq
+          | None, Some _ -> Lt
+          | Some bias_prior0, Some bias_prior1 -> cmp bias_prior0 bias_prior1
+          | Some _, None -> Gt
+        end
+      | Gt -> Gt
 
     let hd container =
       {
         container;
-        bias_pred=None;
+        bias_prior=None;
         text_cursor=Text.Cursor.hd container.text;
       }
 
@@ -87,21 +102,21 @@ module Cursor = struct
     let tl container =
       {
         container;
-        bias_pred=None;
+        bias_prior=None;
         text_cursor=Text.Cursor.tl container.text;
       }
 
     let succ t =
       {t with text_cursor=Text.Cursor.succ t.text_cursor}
 
-    let pred t =
+    let rec pred t =
       let text_cursor' = Text.Cursor.pred t.text_cursor in
-      match t.bias_pred with
+      match t.bias_prior with
       | None -> {t with text_cursor=text_cursor'}
-      | Some bias_pred -> begin
-          match Text.Cursor.(bias_pred.text_cursor < text_cursor') with
+      | Some bias_prior -> begin
+          match Text.Cursor.(bias_prior.text_cursor < t.text_cursor) with
           | true -> {t with text_cursor=text_cursor'}
-          | false -> bias_pred
+          | false -> pred bias_prior
         end
 
     let seek_fwd offset t =
@@ -149,10 +164,10 @@ module Cursor = struct
     let pos t =
       let line = Uns.bits_of_sint (Sint.((Uns.bits_to_sint (Text.Pos.line (Text.Cursor.pos
           t.text_cursor)) + t.container.line_bias))) in
-      let col = match t.bias_pred with
+      let col = match t.bias_prior with
         | None -> Text.Pos.col (Text.Cursor.pos t.text_cursor)
-        | Some bias_pred -> begin
-            let first_line = Text.Pos.line (Text.Cursor.pos bias_pred.text_cursor) in
+        | Some bias_prior -> begin
+            let first_line = Text.Pos.line (Text.Cursor.pos bias_prior.text_cursor) in
             let cur_line = Text.Pos.line (Text.Cursor.pos t.text_cursor) in
             match cur_line = first_line with
             | false -> Text.Pos.col (Text.Cursor.pos t.text_cursor)
@@ -241,13 +256,9 @@ module Slice = struct
           match Cursor.prev cursor with
           | cp, _ when Codepoint.(cp = nl) -> cursor
           | _, cursor' -> begin
-              match Cursor.bias_pred cursor with
-              | None -> bol cursor'
-              | Some bp -> begin
-                  match Cursor.(bp < cursor') with
-                  | true -> bol cursor'
-                  | false -> bol (Cursor.debias cursor')
-                end
+              match Cursor.((bias_prior cursor) < cursor) with
+              | true -> bol cursor'
+              | false -> bol (Cursor.unbias cursor')
             end
         end
     end in
@@ -255,9 +266,14 @@ module Slice = struct
       match Cursor.next_opt cursor with
       | None -> cursor
       | Some (cp, _) when Codepoint.(cp = nl) -> cursor
-      | Some (_, cursor') -> eol (Cursor.debias cursor')
+      | Some (_, cursor') -> eol (Cursor.unbias cursor')
     end in
-    {base=bol t.base; past=eol t.past}
+    let base = bol t.base in
+    let past = match Cursor.((bias_prior base) = (bias_prior t.past)) with
+      | true -> eol t.past
+      | false -> eol (Cursor.unbias t.past)
+    in
+    {base; past}
 
   let to_string t =
     let base = t.base.text_cursor in
