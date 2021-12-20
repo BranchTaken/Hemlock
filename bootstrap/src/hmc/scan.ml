@@ -2385,18 +2385,18 @@ module Dfa = struct
             | None -> Source.path source
             | Some path -> Some path
           in
-          let line_bias = match line with
-            | None -> Sint.zero
-            | Some line ->
-              Sint.((Uns.bits_to_sint line) - (Uns.bits_to_sint (Text.(Pos.line (Cursor.pos
-                  (Source.Cursor.text_cursor cursor))))))
+          let line = match line with
+            | None -> Sint.(kv 1L)
+            | Some line -> line
           in
-          let col_bias = match col with
+          let line_bias = Sint.((Uns.bits_to_sint line) - (Uns.bits_to_sint (Text.(Pos.line
+              (Cursor.pos (Source.Cursor.text_cursor cursor)))))) in
+          let col = match col with
             | None -> Sint.zero
-            | Some col ->
-              Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col (Cursor.pos
-                  (Source.Cursor.text_cursor cursor))))))
+            | Some col -> col
           in
+          let col_bias = Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col (Cursor.pos
+              (Source.Cursor.text_cursor cursor)))))) in
           let source' = Source.bias ~path ~line_bias ~col_bias source in
           Source.Cursor.bias source' pcursor cursor
         end

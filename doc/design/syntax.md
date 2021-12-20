@@ -597,7 +597,7 @@ parameters, matched by `\[:<path>[:<line>[:<col>]]|:<line>[:<col>]|:\]`:
 - `<path>`: `"..."`-delimited interpolated string, minus support for format specifiers, defaults to
   current source path
 - `<line>`: `[1-9][0-9]*`, constrained to the range of `int`, defaults to 1
-- `<col>`: `[1-9][0-9]*`, constrained to the range of `int`, defaults to 1
+- `<col>`: `[1-9][0-9]*`, constrained to the range of `int`, defaults to 0
 
 If all parameters are absent (`[:]`), the directive resets the source to the actual source being
 scanned.
