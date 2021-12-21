@@ -117,7 +117,6 @@ module AbstractToken = struct
     | Tok_and
     | Tok_also
     | Tok_as
-    | Tok_assert
     | Tok_conceal
     | Tok_effect
     | Tok_else
@@ -247,7 +246,6 @@ module AbstractToken = struct
       | Tok_and -> formatter |> Fmt.fmt "Tok_and"
       | Tok_also -> formatter |> Fmt.fmt "Tok_also"
       | Tok_as -> formatter |> Fmt.fmt "Tok_as"
-      | Tok_assert -> formatter |> Fmt.fmt "Tok_assert"
       | Tok_conceal -> formatter |> Fmt.fmt "Tok_conceal"
       | Tok_effect -> formatter |> Fmt.fmt "Tok_effect"
       | Tok_else -> formatter |> Fmt.fmt "Tok_else"
@@ -400,7 +398,6 @@ module AbstractToken = struct
     ("and", Tok_and);
     ("also", Tok_also);
     ("as", Tok_as);
-    ("assert", Tok_assert);
     ("conceal", Tok_conceal);
     ("effect", Tok_effect);
     ("else", Tok_else);

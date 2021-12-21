@@ -143,7 +143,7 @@ Expressions:
 | Operator                                               | Associativity |
 | :----------------------------------------------------: | :-----------: |
 | `.`                                                    | —             |
-| Function/variant application, `assert`, `lazy`         | left          |
+| Function/variant application, `lazy`                   | left          |
 | `-` (prefix), `~`..., `?`...                           | —             |
 | `'` (prefix), `^` (prefix), `>` (prefix)               | —             |
 | `**`...                                                | right         |

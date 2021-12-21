@@ -142,20 +142,20 @@
   [1:12..1:13) : <Tok_whitespace>
   [1:13..1:16) : <Tok_uident=Malformed ["[1:13..1:16): Identifier __' lacks _*[A-Za-z] prefix"]>
   [1:16..1:16) : <Tok_end_of_input>
-``a as ass asse asser assert asserts``
-  [1:0..1:1) : <Tok_uident=Constant "a">
+``e ef eff effe effec effect effects``
+  [1:0..1:1) : <Tok_uident=Constant "e">
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_as>
+  [1:2..1:4) : <Tok_uident=Constant "ef">
   [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_uident=Constant "ass">
+  [1:5..1:8) : <Tok_uident=Constant "eff">
   [1:8..1:9) : <Tok_whitespace>
-  [1:9..1:13) : <Tok_uident=Constant "asse">
+  [1:9..1:13) : <Tok_uident=Constant "effe">
   [1:13..1:14) : <Tok_whitespace>
-  [1:14..1:19) : <Tok_uident=Constant "asser">
+  [1:14..1:19) : <Tok_uident=Constant "effec">
   [1:19..1:20) : <Tok_whitespace>
-  [1:20..1:26) : <Tok_assert>
+  [1:20..1:26) : <Tok_effect>
   [1:26..1:27) : <Tok_whitespace>
-  [1:27..1:34) : <Tok_uident=Constant "asserts">
+  [1:27..1:34) : <Tok_uident=Constant "effects">
   [1:34..1:34) : <Tok_end_of_input>
 ``and``
   [1:0..1:3) : <Tok_and>
@@ -166,9 +166,6 @@
 ``as``
   [1:0..1:2) : <Tok_as>
   [1:2..1:2) : <Tok_end_of_input>
-``assert``
-  [1:0..1:6) : <Tok_assert>
-  [1:6..1:6) : <Tok_end_of_input>
 ``conceal``
   [1:0..1:7) : <Tok_conceal>
   [1:7..1:7) : <Tok_end_of_input>

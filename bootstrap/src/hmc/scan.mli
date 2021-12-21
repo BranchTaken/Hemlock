@@ -69,7 +69,6 @@ module AbstractToken : sig
     | Tok_and
     | Tok_also
     | Tok_as
-    | Tok_assert
     | Tok_conceal
     | Tok_effect
     | Tok_else

@@ -13,12 +13,11 @@ let test () =
   scan_str "a _a __a ___a";
   scan_str "__ _0 _' __0 __'";
 
-  scan_str "a as ass asse asser assert asserts";
+  scan_str "e ef eff effe effec effect effects";
 
   scan_str "and";
   scan_str "also";
   scan_str "as";
-  scan_str "assert";
   scan_str "conceal";
   scan_str "effect";
   scan_str "else";

@@ -443,14 +443,14 @@ to avoid an effects constraint on the callback function.
 # val iter2 'a 'b >e: f:(a -> b >e-> unit) -> _&array a -> _&array b >e-> unit
 let iter2 ~f a0 a1 = expose hlt
     let open Array in
-    conceal hlt (assert (length a0 = length a1))
+    conceal hlt (assert (|length a0 = length a1|))
     for i = 0 to pred (length a0) do
         f (get i a0) (get i a1)
 
 let a = [|0; 1; 2|]
 let b = [|3; 4; 5|]
 # ~f's may-halt effect due to calling assert keeps the iter2 call from being optimized out.
-iter2 ~f:(fun elm_a elm_b -> assert (elm_a + 3 = elm_b)) a b
+iter2 ~f:(fun elm_a elm_b -> assert (|elm_a + 3 = elm_b|)) a b
 # ... Dependencies on a and/or b which prevent optimizing them away.
 
 # May-halt effects are prohibited in ~f because of may-halt concealment.

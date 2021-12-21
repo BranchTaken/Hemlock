@@ -452,10 +452,10 @@ let insert i elm t =
 
 let remove i t =
     let len = length t
-    assert (len > 0)
+    assert (|len > 0|)
     match len with
     | 1 ->
-        assert (i = 0)
+        assert (|i = 0|)
         [||]
     | _ ->
         if i = 0 then
@@ -518,7 +518,7 @@ let blit_descending len i0 t0 i1 t1 =
         set_inplace (i1 + i) (get (i0 + i) t0) t1
 
 let blit len i0 t0 i1 t1 =
-    assert (Range.length r0 = Range.length r1)
+    assert (|Range.length r0 = Range.length r1|)
     (* Choose direction such that overlapping ranges don't corrupt the source. *)
     match Range.(base r0 < base r1) with
     | true -> blit_descending len (Range.base r0) t0 (Range.base r1) t1
@@ -551,7 +551,7 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
     (* Merge a pair of adjacent runs. Input runs may be in increasing or decreasing order; the
      * output is always in increasing order. *)
     let merge_pair ~cmp src run0 order0 run1 order1 dst =
-        assert (run0.past = run1.base)
+        assert (|run0.past = run1.base|)
         let rblit len i0 t0 i1 t1 =
             for i = 0 to pred len do
                 set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
@@ -710,10 +710,10 @@ let search_impl ?range key ~cmp mode t =
       | None -> 0L, length t
       | Some range -> Range.base range, Range.past range
     in
-    assert (base <= past)
-    assert (past <= length t)
+    assert (|base <= past|)
+    assert (|past <= length t|)
     let rec fn ~base ~past =
-        assert (base <= past)
+        assert (|base <= past|)
         match (base = past) with
         | true ->
             (* Empty range. *)
@@ -838,7 +838,7 @@ let filteri ~f t =
     t'
 
 let foldi2_until ~init ~f t0 t1 =
-    assert ((length t0) = (length t1))
+    assert (|(length t0) = (length t1)|)
     let len = length t0
     let rec fn i accum =
         match i = len with
@@ -860,21 +860,21 @@ let foldi2 ~init ~f t0 t1 =
     foldi2_until ~init ~f:(fn i accum a b -> (f i accum a b), false) t0 t1
 
 let iter2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+    assert (|(length t0) = (length t1)|)
     for i = 0 to pred (length t0) do
         f (get i t0) (get i t1)
 
 let iteri2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+    assert (|(length t0) = (length t1)|)
     for i = 0 to pred (length t0) do
         f i (get i t0) (get i t1)
 
 let map2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+    assert (|(length t0) = (length t1)|)
     init (0 .. (length t0)) ~f:(fn i -> f (get i t0) (get i t1))
 
 let mapi2 ~f t0 t1 =
-    assert ((length t0) = (length t1))
+    assert (|(length t0) = (length t1)|)
     init (0 .. (length t0)) ~f:(fn i -> f i (get i t0) (get i t1))
 
 let ArrayFoldi2Map = {|
@@ -986,15 +986,15 @@ let%expect_test "cursor" =
           ^)\n"
           |> ignore
         let length = length arr
-        assert (Cursor.(=) (Cursor.seek (Uns.to_sint index) hd) cursor)
-        assert (Cursor.(=) hd (Cursor.seek (-(Uns.to_sint index)) cursor))
-        assert (Cursor.(=) (Cursor.seek (Uns.to_sint (length - index)) cursor) tl)
-        assert (Cursor.(=) cursor (Cursor.seek (-(Uns.to_sint (length - index))) tl))
+        assert (|Cursor.(=) (Cursor.seek (Uns.to_sint index) hd) cursor|)
+        assert (|Cursor.(=) hd (Cursor.seek (-(Uns.to_sint index)) cursor)|)
+        assert (|Cursor.(=) (Cursor.seek (Uns.to_sint (length - index)) cursor) tl|)
+        assert (|Cursor.(=) cursor (Cursor.seek (-(Uns.to_sint (length - index))) tl)|)
 
         match cursor_tl with
         | Lt ->
             let cursor' = Cursor.succ cursor
-            assert Cursor.(cursor = (pred cursor'))
+            assert (|Cursor.(cursor = (pred cursor'))|)
             fn arr hd cursor' tl
         | Eq | Gt -> ()
     let arrs = [
@@ -1477,15 +1477,15 @@ let%expect_test "sort" =
         Uns.cmp elm0.key elm1.key
     let test_sort arr =
         let arr' = sort arr ~cmp
-        assert (is_sorted arr' ~cmp)
+        assert (|is_sorted arr' ~cmp|)
 
         let arr' = sort ~stable:true arr ~cmp
-        assert (is_sorted ~strict:true arr' ~cmp:(fn elm0 elm1 ->
+        assert (|is_sorted ~strict:true arr' ~cmp:(fn elm0 elm1 ->
             match cmp elm0 elm1 with
             | Cmp.Lt -> Cmp.Lt
             | Cmp.Eq -> Uns.cmp elm0.sn elm1.sn
             | Cmp.Gt -> Cmp.Gt
-          ))
+          )|)
     Random.init 0;
     for len = 0 to 257 do
         for _ = 1 to 10 do
