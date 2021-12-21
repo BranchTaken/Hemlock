@@ -124,7 +124,7 @@ module AbstractToken = struct
     | Tok_expose
     | Tok_external
     | Tok_false
-    | Tok_fun
+    | Tok_fn
     | Tok_function
     | Tok_if
     | Tok_import
@@ -254,7 +254,7 @@ module AbstractToken = struct
       | Tok_expose -> formatter |> Fmt.fmt "Tok_expose"
       | Tok_external -> formatter |> Fmt.fmt "Tok_external"
       | Tok_false -> formatter |> Fmt.fmt "Tok_false"
-      | Tok_fun -> formatter |> Fmt.fmt "Tok_fun"
+      | Tok_fn -> formatter |> Fmt.fmt "Tok_fn"
       | Tok_function -> formatter |> Fmt.fmt "Tok_function"
       | Tok_if -> formatter |> Fmt.fmt "Tok_if"
       | Tok_import -> formatter |> Fmt.fmt "Tok_import"
@@ -407,7 +407,7 @@ module AbstractToken = struct
     ("expose", Tok_expose);
     ("external", Tok_external);
     ("false", Tok_false);
-    ("fun", Tok_fun);
+    ("fn", Tok_fn);
     ("function", Tok_function);
     ("if", Tok_if);
     ("import", Tok_import);

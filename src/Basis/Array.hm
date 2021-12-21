@@ -100,7 +100,7 @@ include T
 include ContainerCommon.makePolyFold(T)
 
 let hash_fold hash_fold_a t state =
-    fold t ~init:state ~f:(fun state elm -> state |> hash_fold_a elm)
+    fold t ~init:state ~f:(fn state elm -> state |> hash_fold_a elm)
 
 let Seq = {|
     type outer 'a ^outer: ^&outer a = ^outer&t a
@@ -340,10 +340,10 @@ let is_empty t =
 external set_inplace 'a: uns -> a -> !&t a -> unit = "hm_basis_array_set_inplace"
 
 let copy t =
-    init (0 .. (length t)) ~f:(fun i -> get i t)
+    init (0 .. (length t)) ~f:(fn i -> get i t)
 
 let pare range t =
-    init range ~f:(fun i -> get i t)
+    init range ~f:(fn i -> get i t)
 
 let set i elm t =
     let t' = copy t
@@ -403,7 +403,7 @@ let join ?sep tlist =
         | None -> [||], 0
         | Some sep -> sep, length sep
     let _, tlist_length = List.fold tlist ~init:(0, 0)
-      ~f:(fun (i, accum) list ->
+      ~f:(fn (i, accum) list ->
         let i' = succ i
         let sep_len' = match i with
             | 0 -> 0
@@ -417,20 +417,20 @@ let concat t0 t1 =
     let length_t0 = length t0
     let length_t1 = length t1
     let length = length_t0 + length_t1
-    init (0 .. length) ~f:(fun i ->
+    init (0 .. length) ~f:(fn i ->
         if i < length_t0 then get i t0
         else get (i - length_t0) t1
       )
 
 let append elm t =
     let tlen = length t
-    init (0 .. (succ tlen)) ~f:(fun i ->
+    init (0 .. (succ tlen)) ~f:(fn i ->
         if i < tlen then get i t
         else elm
       )
 
 let prepend elm t =
-    init (0 .. (succ (length t))) ~f:(fun i ->
+    init (0 .. (succ (length t))) ~f:(fn i ->
         if i = 0 then elm
         else get (pred i) t
       )
@@ -441,7 +441,7 @@ let insert i elm t =
     else
         let len = length t
         if i < len then
-            init (0 .. (succ len)) ~f:(fun index ->
+            init (0 .. (succ len)) ~f:(fn index ->
                 match Uns.cmp index i with
                 | Lt -> get index t
                 | Eq -> elm
@@ -461,7 +461,7 @@ let remove i t =
         if i = 0 then
             pare (1 .. len) t
         else if i < len then
-            init (0 .. (pred len)) ~f:(fun index ->
+            init (0 .. (pred len)) ~f:(fn index ->
                 if index < i then get index t
                 else get (succ index) t
               )
@@ -507,7 +507,7 @@ let rev_inplace t =
 
 let rev t =
     let l = length t
-    init (0 .. l) ~f:(fun i -> get (l - i - 1) t)
+    init (0 .. l) ~f:(fn i -> get (l - i - 1) t)
 
 (* Used directly for non-overlapping blits. *)
 let blit_ascending len i0 t0 i1 t1 =
@@ -767,10 +767,10 @@ let nsearch ?range key ~cmp t =
     search_impl ?range key ~cmp Cmp.Gt t
 
 let map ~f t =
-    init (0 .. (length t)) ~f:(fun i -> f (get i t))
+    init (0 .. (length t)) ~f:(fn i -> f (get i t))
 
 let mapi ~f t =
-    init (0 .. (length t)) ~f:(fun i -> f i (get i t))
+    init (0 .. (length t)) ~f:(fn i -> f i (get i t))
 
 let ArrayFoldiMap = {|
     let T = {|
@@ -802,14 +802,14 @@ let ArrayFoldiMap = {|
 
 let fold_map t ~init ~f =
     ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t
-      ~f:(fun _ accum elm -> f accum elm) (length t)) ~init
+      ~f:(fn _ accum elm -> f accum elm) (length t)) ~init
 
 let foldi_map t ~init ~f =
     ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t ~f (length t)) ~init
 
 let filter ~f t =
     let _, t' = ArrayFoldiMap.to_accum_array
-      (ArrayFoldiMap.init t ~f:(fun _ i _ ->
+      (ArrayFoldiMap.init t ~f:(fn _ i _ ->
         let rec fn i elm =
             let i' = succ i
             match f elm with
@@ -820,13 +820,13 @@ let filter ~f t =
     t'
 
 let filteri ~f t =
-    let n = foldi t ~init:0 ~f:(fun i accum elm ->
+    let n = foldi t ~init:0 ~f:(fn i accum elm ->
         match f i elm with
         | false -> accum
         | true -> succ accum
       )
     let _, t' = ArrayFoldiMap.to_accum_array
-      ArrayFoldiMap.init t ~f:(fun _ i _ ->
+      ArrayFoldiMap.init t ~f:(fn _ i _ ->
         let rec fn i elm =
             let i' = succ i
             match f i elm with
@@ -851,13 +851,13 @@ let foldi2_until ~init ~f t0 t1 =
     fn 0 init
 
 let fold2_until ~init ~f t0 t1 =
-    foldi2_until ~init ~f:(fun _ accum a b -> f accum a b) t0 t1
+    foldi2_until ~init ~f:(fn _ accum a b -> f accum a b) t0 t1
 
 let fold2 ~init ~f t0 t1 =
-    fold2_until ~init ~f:(fun accum a b -> (f accum a b), false) t0 t1
+    fold2_until ~init ~f:(fn accum a b -> (f accum a b), false) t0 t1
 
 let foldi2 ~init ~f t0 t1 =
-    foldi2_until ~init ~f:(fun i accum a b -> (f i accum a b), false) t0 t1
+    foldi2_until ~init ~f:(fn i accum a b -> (f i accum a b), false) t0 t1
 
 let iter2 ~f t0 t1 =
     assert ((length t0) = (length t1))
@@ -871,11 +871,11 @@ let iteri2 ~f t0 t1 =
 
 let map2 ~f t0 t1 =
     assert ((length t0) = (length t1))
-    init (0 .. (length t0)) ~f:(fun i -> f (get i t0) (get i t1))
+    init (0 .. (length t0)) ~f:(fn i -> f (get i t0) (get i t1))
 
 let mapi2 ~f t0 t1 =
     assert ((length t0) = (length t1))
-    init (0 .. (length t0)) ~f:(fun i -> f i (get i t0) (get i t1))
+    init (0 .. (length t0)) ~f:(fn i -> f i (get i t0) (get i t1))
 
 let ArrayFoldi2Map = {|
     let T = {|
@@ -908,18 +908,18 @@ let ArrayFoldi2Map = {|
   |}
 
 let fold2_map ~init ~f t0 t1 =
-    ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f:(fun _ accum elm
+    ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f:(fn _ accum elm
       -> f accum elm)) ~init
 
 let foldi2_map ~init ~f t0 t1 =
     ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f) ~init
 
 let zip t0 t1 =
-    map2 ~f:(fun a b -> a, b) t0 t1
+    map2 ~f:(fn a b -> a, b) t0 t1
 
 let unzip t =
-    let t0 = map ~f:(fun (a, _) -> a) t
-    let t1 = map ~f:(fun (_, b) -> b) t
+    let t0 = map ~f:(fn (a, _) -> a) t
+    let t1 = map ~f:(fn (_, b) -> b) t
     t0, t1
 
 let fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
@@ -927,9 +927,9 @@ let fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
   : (Fmt.Formatter e) =
     foldi ~init:
       (Formatter |> Fmt.fmt "[|")
-      ~f:fun i Formatter elm ->
+      ~f:fn i Formatter elm ->
         Formatter
-          |> (fun Formatter ->
+          |> (fn Formatter ->
             match alt with
             | false ->
                 match i with
@@ -938,7 +938,7 @@ let fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
             | true -> Formatter |> Fmt.fmt "\n%*(^width + 4^)s(^""^)"
           )
           |> fmt_a elm
-      |> (fun Formatter ->
+      |> (fn Formatter ->
         match alt with
         | false -> Formatter
         | true -> Formatter |> Fmt.fmt "\n%*(^width + 2^)s(^""^)"
@@ -948,7 +948,7 @@ let fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
 let pp pp_elm ppf t =
     let open Format
     fprintf ppf "@[<h>[|";
-    iteri t ~f:(fun i elm ->
+    iteri t ~f:(fn i elm ->
         if i > 0 then fprintf ppf ";@ "
         fprintf ppf "%a" pp_elm elm
       )
@@ -1003,7 +1003,7 @@ let%expect_test "cursor" =
         [|0; 1|]
         [|0; 1; 2|]
       ]
-    List.iter arrs ~f:(fun arr ->
+    List.iter arrs ~f:(fn arr ->
         File.Fmt.Stdout |> Fmt.fmt "--- %f(^fmt Uns.fmt arr^) ---" |> ignore
         let hd = Cursor.hd arr
         fn arr hd hd (Cursor.tl arr)
@@ -1067,7 +1067,7 @@ let%expect_test "cmp" =
         match arrs with
         | [] -> ()
         | hd :: tl ->
-            let () = List.iter arrs ~f:(fun arr2 ->
+            let () = List.iter arrs ~f:(fn arr2 ->
                 printf "cmp %a %a -> %a\n" (pp Uns.pp) arr (pp Uns.pp) arr2
                   Cmp.pp (cmp Uns.cmp arr arr2)
               )
@@ -1123,7 +1123,7 @@ let%expect_test "set,set_inplace" =
     let open Format
     let test_set len =
         for i = 0 to pred len do
-            let arr = init (0 .. len) ~f:(fun _ -> 0)
+            let arr = init (0 .. len) ~f:(fn _ -> 0)
             let arr' = set i 1 arr
             printf "set %a: %a -> %a" Uns.pp i \
                                       (pp Uns.pp) arr \
@@ -1472,7 +1472,7 @@ let%expect_test "sort" =
         let key_limit =
             if len > 0 then len
             else 1
-        init (0 .. len) ~f:(fun i -> {key=Random.int key_limit; sn=i})
+        init (0 .. len) ~f:(fn i -> {key=Random.int key_limit; sn=i})
     let cmp elm0 elm1 =
         Uns.cmp elm0.key elm1.key
     let test_sort arr =
@@ -1480,7 +1480,7 @@ let%expect_test "sort" =
         assert (is_sorted arr' ~cmp)
 
         let arr' = sort ~stable:true arr ~cmp
-        assert (is_sorted ~strict:true arr' ~cmp:(fun elm0 elm1 ->
+        assert (is_sorted ~strict:true arr' ~cmp:(fn elm0 elm1 ->
             match cmp elm0 elm1 with
             | Cmp.Lt -> Cmp.Lt
             | Cmp.Eq -> Uns.cmp elm0.sn elm1.sn
@@ -1521,12 +1521,12 @@ let%expect_test "search" =
               )
     printf "@[<h>"
     for len = 0 to 3 do
-        let arr = init (0 .. len) ~f:(fun i -> i * 2 + 1)
+        let arr = init (0 .. len) ~f:(fn i -> i * 2 + 1)
         let key_max = len * 2
         test_search arr key_max
     for hlen = 1 to 3 do
         let len = hlen * 2
-        let arr = init (0 .. len) ~f:(fun i -> i + ((i + 1) % 2))
+        let arr = init (0 .. len) ~f:(fn i -> i + ((i + 1) % 2))
         let key_max = len
         test_search arr key_max
     printf "@]"
@@ -1576,10 +1576,10 @@ let%expect_test "map,mapi" =
     let pp_str ppf t = Format.fprintf ppf "%S" t
     let test_map uarr =
         printf "%a -> map " (pp Uns.pp) uarr
-        let sarr = map uarr ~f:(fun elm -> asprintf "%a" Uns.pp elm)
+        let sarr = map uarr ~f:(fn elm -> asprintf "%a" Uns.pp elm)
         printf "%a" (pp pp_str) sarr
         printf " -> mapi "
-        let sarr = mapi uarr ~f:(fun i elm ->
+        let sarr = mapi uarr ~f:(fn i elm ->
             asprintf "[%a]=%a" Uns.pp i Uns.pp elm
           )
         printf "%a\n" (pp pp_str) sarr
@@ -1600,10 +1600,10 @@ let%expect_test "fold_map,foldi_map" =
     let open Format
     let pp_str ppf t = Format.fprintf ppf "%S" t
     let test_fold_map uarr =
-        let accum, sarr = fold_map uarr ~init:0 ~f:(fun accum elm ->
+        let accum, sarr = fold_map uarr ~init:0 ~f:(fn accum elm ->
             (accum + elm), (asprintf "%a" Uns.pp elm)
           )
-        let accum2, sarr2 = foldi_map uarr ~init:0 ~f:(fun i accum elm ->
+        let accum2, sarr2 = foldi_map uarr ~init:0 ~f:(fn i accum elm ->
             (accum + i + elm),
             (asprintf "[%a]=%a" Uns.pp i Uns.pp elm)
           )
@@ -1629,9 +1629,9 @@ let%expect_test "fold_map,foldi_map" =
 let%expect_test "filter,filteri" =
     let open Format
     let test_filter arr =
-        let farr = filter arr ~f:(fun elm -> elm % 2 = 0)
-        let farr2 = filteri arr ~f:(fun _ elm -> elm % 2 = 0)
-        let farr3 = filteri arr ~f:(fun i _ -> i % 2 = 0)
+        let farr = filter arr ~f:(fn elm -> elm % 2 = 0)
+        let farr2 = filteri arr ~f:(fn _ elm -> elm % 2 = 0)
+        let farr3 = filteri arr ~f:(fn i _ -> i % 2 = 0)
         printf "%a -> filter %a -> filteri %a %a\n"
           (pp Uns.pp) arr
           (pp Uns.pp) farr
@@ -1659,12 +1659,12 @@ let%expect_test "fold2_until,foldi2_until" =
           (pp Uns.pp) uarr0
           (pp Uns.pp) uarr1
         let accum = fold2_until uarr0 uarr1 ~init:0
-          ~f:(fun accum elm0 elm1 ->
+          ~f:(fn accum elm0 elm1 ->
             (accum + elm0 + elm1), (accum > 10)
           )
         printf " -> fold2_until %a" Uns.pp accum
         let accum = foldi2_until uarr0 uarr1 ~init:0
-          ~f:(fun i accum elm0 elm1 ->
+          ~f:(fn i accum elm0 elm1 ->
             (accum + i + elm0 + elm1), ((i + 2) >= (length uarr0))
           )
         printf " -> foldi2_until %a\n" Uns.pp accum
@@ -1687,12 +1687,12 @@ let%expect_test "fold2,foldi2" =
         printf "%a %a"
           (pp Uns.pp) uarr0
           (pp Uns.pp) uarr1
-        let accum = fold2 uarr0 uarr1 ~init:0 ~f:(fun accum elm0 elm1 ->
+        let accum = fold2 uarr0 uarr1 ~init:0 ~f:(fn accum elm0 elm1 ->
             accum + elm0 + elm1
           )
         printf " -> fold2 %a" Uns.pp accum
         let accum = foldi2 uarr0 uarr1 ~init:0
-          ~f:(fun i accum elm0 elm1 -> accum + i + elm0 + elm1)
+          ~f:(fn i accum elm0 elm1 -> accum + i + elm0 + elm1)
         printf " -> foldi2 %a\n" Uns.pp accum
     printf "@[<h>"
     test_fold2 [||] [||]
@@ -1711,7 +1711,7 @@ let%expect_test "iteri2" =
     let open Format
     let print_uns_arrays arr0 arr1 =
         printf "[|"
-        iteri2 arr0 arr1 ~f:(fun i elm0 elm1 ->
+        iteri2 arr0 arr1 ~f:(fn i elm0 elm1 ->
             if i > 0 then printf "; "
             printf "(%a, %a)" Uns.pp elm0 Uns.pp elm1
           )
@@ -1734,10 +1734,10 @@ let%expect_test "map2,mapi2" =
     let open Format
     let pp_str ppf t = Format.fprintf ppf "%S" t
     let test_map2 uarr0 uarr1 =
-        let sarr = map2 uarr0 uarr1 ~f:(fun elm0 elm1 ->
+        let sarr = map2 uarr0 uarr1 ~f:(fn elm0 elm1 ->
             asprintf "(%a,%a)" Uns.pp elm0 Uns.pp elm1
           )
-        let sarr2 = mapi2 uarr0 uarr1 ~f:(fun i elm0 elm1 ->
+        let sarr2 = mapi2 uarr0 uarr1 ~f:(fn i elm0 elm1 ->
             asprintf "[%a]=(%a,%a)" Uns.pp i Uns.pp elm0 Uns.pp elm1
           )
         printf "%a %a -> map2 %a -> mapi2 %a\n"
@@ -1763,12 +1763,12 @@ let%expect_test "fold2_map,foldi2_map" =
     let pp_str ppf t = Format.fprintf ppf "%S" t
     let test_fold2_map uarr0 uarr1 =
         let accum, sarr = fold2_map uarr0 uarr1 ~init:0
-          ~f:(fun accum elm0 elm1 ->
+          ~f:(fn accum elm0 elm1 ->
             (accum + elm0 + elm1),
             (asprintf "(%a,%a)" Uns.pp elm0 Uns.pp elm1)
           )
         let accum2, sarr2 = foldi2_map uarr0 uarr1 ~init:0
-          ~f:(fun i accum elm0 elm1 ->
+          ~f:(fn i accum elm0 elm1 ->
             (accum + i + elm0 + elm1),
             (asprintf "[%a]=(%a,%a)" Uns.pp i Uns.pp elm0 Uns.pp elm1)
           )

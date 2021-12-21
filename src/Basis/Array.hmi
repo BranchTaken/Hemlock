@@ -57,7 +57,7 @@ val empty 'a ^t: ^&t a
 `
 
 val init 'a ^t >e: range -> f:(uns >e-> a) >e-> ^&t a
-`|Initialize array. `init range ~f:(fun i -> ...)` initializes an array of length `Range.length
+`|Initialize array. `init range ~f:(fn i -> ...)` initializes an array of length `Range.length
  |range` using `~f` to map range elements to array elements.
 `
 

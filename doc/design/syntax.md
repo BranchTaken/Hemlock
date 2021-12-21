@@ -576,7 +576,7 @@ context:
   "%(^(List.fmt String.fmt)^)=(^children^)" # "children=[\"Alice\"; \"Bob\"]"
   "%^24(^List.fmt String.fmt^)(^children^)" # "    [\"Alice\"; \"Bob\"]    "
   "%^24(^List.fmt String.fmt^)(^
-      (List.mapi children ~f:(fun i child ->
+      (List.mapi children ~f:(fn i child ->
           "%u(^succ i^):%s(^child^)"
         ))
     ^)"                                     # "  [\"1:Alice\"; \"2:Bob\"]  "

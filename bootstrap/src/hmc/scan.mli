@@ -76,7 +76,7 @@ module AbstractToken : sig
     | Tok_expose
     | Tok_external
     | Tok_false
-    | Tok_fun
+    | Tok_fn
     | Tok_function
     | Tok_if
     | Tok_import
