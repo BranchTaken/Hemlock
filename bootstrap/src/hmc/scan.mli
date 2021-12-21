@@ -138,6 +138,8 @@ module AbstractToken : sig
     | Tok_lcurly
     | Tok_rcurly
     | Tok_bar
+    | Tok_lcapture
+    | Tok_rcapture
     | Tok_larray
     | Tok_rarray
     | Tok_lmodule

@@ -186,6 +186,8 @@ module AbstractToken = struct
     | Tok_lcurly
     | Tok_rcurly
     | Tok_bar
+    | Tok_lcapture
+    | Tok_rcapture
     | Tok_larray
     | Tok_rarray
     | Tok_lmodule
@@ -315,6 +317,8 @@ module AbstractToken = struct
       | Tok_lcurly -> formatter |> Fmt.fmt "Tok_lcurly"
       | Tok_rcurly -> formatter |> Fmt.fmt "Tok_rcurly"
       | Tok_bar -> formatter |> Fmt.fmt "Tok_bar"
+      | Tok_lcapture -> formatter |> Fmt.fmt "Tok_lcapture"
+      | Tok_rcapture -> formatter |> Fmt.fmt "Tok_rcapture"
       | Tok_larray -> formatter |> Fmt.fmt "Tok_larray"
       | Tok_rarray -> formatter |> Fmt.fmt "Tok_rarray"
       | Tok_lmodule -> formatter |> Fmt.fmt "Tok_lmodule"
@@ -2501,6 +2505,7 @@ module Dfa = struct
 
   let node0_lparen = {
     edges0=map_of_cps_alist [
+      ("|", accept_incl Tok_lcapture);
       ("*", wrap_legacy paren_comment);
     ];
     default0=accept_excl Tok_lparen;
@@ -2579,6 +2584,7 @@ module Dfa = struct
 
   let node0_bar = {
     edges0=map_of_cps_alist [
+      (")", accept_incl Tok_rcapture);
       ("]", accept_incl Tok_rarray);
       ("}", accept_incl Tok_rmodule);
       (operator_cps, wrap_legacy (operator (fun s -> Tok_bar_op s)));

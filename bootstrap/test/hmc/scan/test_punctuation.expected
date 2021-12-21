@@ -41,6 +41,13 @@
   [1:12..1:13) : <Tok_whitespace>
   [1:13..1:14) : <Tok_gt>
   [1:14..1:14) : <Tok_end_of_input>
+``)|)|(|(``
+  [1:0..1:1) : <Tok_rparen>
+  [1:1..1:3) : <Tok_rcapture>
+  [1:3..1:4) : <Tok_bar>
+  [1:4..1:6) : <Tok_lcapture>
+  [1:6..1:7) : <Tok_lparen>
+  [1:7..1:7) : <Tok_end_of_input>
 ``]|]|[|[``
   [1:0..1:1) : <Tok_rbrack>
   [1:1..1:3) : <Tok_rarray>

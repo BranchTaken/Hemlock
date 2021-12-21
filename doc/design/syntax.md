@@ -95,7 +95,7 @@ Hemlock uses various symbols as punctuation:
 
 ```hemlock
 . , ; ;; : :: :=
-( ) [ ] [| |] { } {| |}
+( ) (| |) [ ] [| |] { } {| |}
 | \ ' ^ < <= = <> >= >
 ! &
 ~ ?
@@ -627,3 +627,13 @@ let x = [:41]\
 
 However, line numbering starts at 1 and line 0 cannot be specified, so this approach would not work
 in all cases. Therefore source directives should be emitted without emitting extraneous line breaks.
+
+## Grammar
+
+<a name="expr">[expr](#expr)</a> ::=
+
+    | ( [expr](#expr) )
+
+    | (| [expr](#expr) |)
+
+    | XXX
