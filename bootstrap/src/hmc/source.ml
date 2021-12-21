@@ -16,6 +16,17 @@ let pp {path; line_bias; col_bias; _} formatter =
   |> Fmt.fmt "; col_bias=" |> Sint.pp col_bias
   |> Fmt.fmt "}"
 
+module O = struct
+  let ( = ) t0 t1 =
+    (* text is assumed to be equivalent. *)
+    match t0.path, t1.path with
+    | None, Some _
+    | Some _, None -> false
+    | Some path0, Some path1 when String.(path0 <> path1) -> false
+    | None, None
+    | Some _, Some _ -> t0.line_bias = t1.line_bias && t0.col_bias = t1.col_bias
+end
+
 let init text =
   {
     text;
@@ -51,15 +62,19 @@ module Cursor = struct
       text_cursor: Text.Cursor.t;
     }
 
-    let bias container pred t =
+    let bias container t =
       {
         container;
-        bias_prior=Some pred;
+        bias_prior=Some t;
         text_cursor=t.text_cursor;
       }
 
     let debias t =
-      {t with container=unbias t.container; bias_prior=Some t}
+      let container, bias_prior = match t.bias_prior with
+        | None -> t.container, None
+        | Some prior -> prior.container, prior.bias_prior
+      in
+      {t with container; bias_prior}
 
     let unbias t =
       {t with container=unbias t.container; bias_prior=None}
@@ -202,6 +217,7 @@ module Slice = struct
 
   let pp {base; past} formatter =
     formatter
+    |> Fmt.fmt "["
     |> (fun formatter -> (match path (Cursor.container base) with
       | None -> formatter
       | Some path ->
@@ -209,9 +225,15 @@ module Slice = struct
         |> Fmt.fmt path
         |> Fmt.fmt ":"
     ))
-    |> Fmt.fmt "["
     |> Text.Pos.pp (Cursor.(pos base))
     |> Fmt.fmt ".."
+    |> (fun formatter -> (match path (Cursor.container past) with
+      | None -> formatter
+      | Some path ->
+        formatter
+        |> Fmt.fmt path
+        |> Fmt.fmt ":"
+    ))
     |> Text.Pos.pp (Cursor.(pos past))
     |> Fmt.fmt ")"
 
@@ -248,32 +270,81 @@ module Slice = struct
   let cursors t =
     t.base, t.past
 
-  let line_context t =
-    let rec bol cursor = begin
-      match Text.Cursor.index (Cursor.text_cursor cursor) with
-      | 0L -> cursor
-      | _ -> begin
-          match Cursor.prev cursor with
-          | cp, _ when Codepoint.(cp = nl) -> cursor
-          | _, cursor' -> begin
-              match Cursor.((bias_prior cursor) < cursor) with
-              | true -> bol cursor'
-              | false -> bol (Cursor.unbias cursor')
-            end
-        end
+  let line_context ?lookahead t =
+    let line_of_cursor cursor = begin
+      Text.Pos.line (Cursor.pos (Cursor.unbias (cursor)))
     end in
-    let rec eol cursor = begin
-      match Cursor.next_opt cursor with
-      | None -> cursor
-      | Some (cp, _) when Codepoint.(cp = nl) -> cursor
-      | Some (_, cursor') -> eol (Cursor.unbias cursor')
+    let start_context last_line start = begin
+      let rec expand_rightwards last_line base cursor = begin
+        let context_of_cursors base past = begin
+          match Cursor.(base < past) with
+          | false -> []
+          | true -> [of_cursors ~base ~past]
+        end in
+        match Cursor.next_opt cursor with
+        | None -> context_of_cursors base cursor
+        | Some (_cp, cursor') -> begin
+            match last_line < (line_of_cursor cursor') with
+            | true -> context_of_cursors base cursor
+            | false -> expand_rightwards last_line base cursor'
+          end
+      end in
+      let rec contract_leftwards last_line cursor = begin
+        match Cursor.index cursor = 0L with
+        | true -> cursor
+        | false -> begin
+            let cursor' = Cursor.pred cursor in
+            match line_of_cursor cursor' > last_line with
+            | false -> cursor'
+            | true -> contract_leftwards last_line cursor'
+          end
+      end in
+      match line_of_cursor start <= last_line with
+      | true -> start, expand_rightwards last_line (Cursor.unbias start) (Cursor.unbias start)
+      | false -> contract_leftwards last_line start, []
     end in
-    let base = bol t.base in
-    let past = match Cursor.((bias_prior base) = (bias_prior t.past)) with
-      | true -> eol t.past
-      | false -> eol (Cursor.unbias t.past)
+    let leftwards first_line right right_context = begin
+      let merge_context base_ past_ context = begin
+        assert O.(Cursor.container base_ = (Cursor.container past_));
+        match Cursor.(base_ = past_) with
+        | true -> context
+        | false -> begin
+            match context with
+            | [] -> [of_cursors ~base:base_ ~past:past_]
+            | slice :: context' -> begin
+                match O.(Cursor.container base_ = (Cursor.container (past slice))) with
+                | true -> of_cursors ~base:base_ ~past:(past slice) :: context'
+                | false -> of_cursors ~base:base_ ~past:past_ :: context
+              end
+          end
+      end in
+      let rec expand_leftwards first_line cursor past context = begin
+        assert O.(Cursor.container cursor = (Cursor.container past));
+        match Cursor.index cursor = 0L with
+        | true -> merge_context cursor past context
+        | false -> begin
+            let cursor' = Cursor.pred cursor in
+            match line_of_cursor cursor' >= first_line with
+            | false -> merge_context cursor past context
+            | true -> begin
+                match O.(Cursor.container cursor' = (Cursor.container past)) with
+                | false ->
+                  let cursor' = Cursor.bias_prior cursor in
+                  expand_leftwards first_line cursor' cursor' (merge_context cursor past context)
+                | true -> expand_leftwards first_line cursor' past context
+              end
+          end
+      end in
+      expand_leftwards first_line right right right_context
+    end in
+    let last_line = line_of_cursor (past t) in
+    let start = match lookahead with
+      | Some lookahead -> lookahead
+      | None -> t.past
     in
-    {base; past}
+    let first_line = line_of_cursor (base t) in
+    let right, right_context = start_context last_line start in
+    leftwards first_line right right_context
 
   let to_string t =
     let base = t.base.text_cursor in

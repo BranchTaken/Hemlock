@@ -1,12 +1,12 @@
 ``[:"Foo.hm":42:13]``
   [1:0..1:17) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=Some (42); col=Some (13)})>
-  Foo.hm:[42:13..42:13) : <Tok_end_of_input>
+  [Foo.hm:42:13..Foo.hm:42:13) : <Tok_end_of_input>
 ``[:"Foo.hm":42]``
   [1:0..1:14) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=Some (42); col=None})>
-  Foo.hm:[42:0..42:0) : <Tok_end_of_input>
+  [Foo.hm:42:0..Foo.hm:42:0) : <Tok_end_of_input>
 ``[:"Foo.hm"]``
   [1:0..1:11) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>
-  Foo.hm:[1:0..1:0) : <Tok_end_of_input>
+  [Foo.hm:1:0..Foo.hm:1:0) : <Tok_end_of_input>
 ``[:42:13]``
   [1:0..1:8) : <Tok_source_directive=Constant {path=None; line=Some (42); col=Some (13)})>
   [42:13..42:13) : <Tok_end_of_input>
@@ -22,23 +22,32 @@
 ``[:1] [:2]``
   [1:0..1:4) : <Tok_source_directive=Constant {path=None; line=Some (1); col=None})>
   [1:0..1:1) : <Tok_whitespace>
-  [1:5..1:5) : <Tok_source_directive=Constant {path=None; line=Some (2); col=None})>
+  [1:5..1:9) : <Tok_source_directive=Constant {path=None; line=Some (2); col=None})>
   [2:0..2:0) : <Tok_end_of_input>
 ``[:"Foo.hm"] [:] [:"Bar.hm"]``
   [1:0..1:11) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>
-  Foo.hm:[1:0..1:1) : <Tok_whitespace>
-  [1:12..1:4) : <Tok_source_directive=Constant {path=None; line=None; col=None})>
+  [Foo.hm:1:0..Foo.hm:1:1) : <Tok_whitespace>
+  [1:12..1:15) : <Tok_source_directive=Constant {path=None; line=None; col=None})>
   [1:15..1:16) : <Tok_whitespace>
   [1:16..1:27) : <Tok_source_directive=Constant {path=Some ("Bar.hm"); line=None; col=None})>
-  Bar.hm:[1:0..1:0) : <Tok_end_of_input>
+  [Bar.hm:1:0..Bar.hm:1:0) : <Tok_end_of_input>
+``[:"Foo.hm"] [:"Bar.hm"] [:] [:"Biz.hm"]``
+  [1:0..1:11) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>
+  [Foo.hm:1:0..Foo.hm:1:1) : <Tok_whitespace>
+  [1:12..1:23) : <Tok_source_directive=Constant {path=Some ("Bar.hm"); line=None; col=None})>
+  [Bar.hm:1:0..Bar.hm:1:1) : <Tok_whitespace>
+  [1:24..1:27) : <Tok_source_directive=Constant {path=None; line=None; col=None})>
+  [1:27..1:28) : <Tok_whitespace>
+  [1:28..1:39) : <Tok_source_directive=Constant {path=Some ("Biz.hm"); line=None; col=None})>
+  [Biz.hm:1:0..Biz.hm:1:0) : <Tok_end_of_input>
 ``[:"Foo.hm":1:42]a
 b``
   [1:0..1:16) : <Tok_source_directive=Constant {path=Some ("Foo.hm"); line=Some (1); col=Some (42)})>
-  Foo.hm:[1:42..1:43) : <Tok_uident=Constant "a">
-  Foo.hm:[1:43..2:0) : <Tok_whitespace>
-  Foo.hm:[2:0..2:0) : <Tok_line_delim>
-  Foo.hm:[2:0..2:1) : <Tok_uident=Constant "b">
-  Foo.hm:[2:1..2:1) : <Tok_end_of_input>
+  [Foo.hm:1:42..Foo.hm:1:43) : <Tok_uident=Constant "a">
+  [Foo.hm:1:43..Foo.hm:2:0) : <Tok_whitespace>
+  [Foo.hm:2:0..Foo.hm:2:0) : <Tok_line_delim>
+  [Foo.hm:2:0..Foo.hm:2:1) : <Tok_uident=Constant "b">
+  [Foo.hm:2:1..Foo.hm:2:1) : <Tok_end_of_input>
 ``[:"Foo.hm":42:]``
   [1:0..1:15) : <Tok_source_directive=Malformed ["[1:14..1:15): Unexpected codepoint in source directive"])>
   [1:15..1:15) : <Tok_end_of_input>

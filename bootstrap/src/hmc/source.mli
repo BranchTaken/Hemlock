@@ -38,25 +38,24 @@ module Cursor : sig
   val pos: t -> Text.Pos.t
   (* [pos t] returns the (potentially biased) cursor position. *)
 
-  val bias: container -> t -> t -> t
-  (** [bias source prior t] creates a biased version of [t] with [source]'s bias, and [prior] as a
-      cursor at the same text position, but with prior bias. When viewing (e.g. [lget]) or moving
-      leftwards (e.g. [pred]) past the location of [prior] the operation is based on [prior] in
-      order to recover its bias. This makes it possible to move leftwards and always recover the
-      bias of predecessor cursors. *)
+  val bias: container -> t -> t
+  (** [bias source t] creates a biased version of [t] at the same text position, but with [source]'s
+      bias. When viewing leftward (e.g. [lget]) or moving leftwards (e.g. [pred]) past the location
+      of [t] the operation is based on [t] in order to recover its bias. This makes it possible to
+      move leftwards and always recover the bias of predecessor cursors. *)
 
   val debias: t -> t
-  (* [debias t] creates a version of [t] with prior bias (if any). *)
+  (** [debias t] creates a version of [t] with prior bias (if any). *)
 
   val unbias: t -> t
-  (* [unbias t] creates a version of [t] with no bias. *)
+  (** [unbias t] creates a version of [t] with no bias. *)
 
   val bias_prior: t -> t
-  (* [bias_prior t] returns the [prior] cursor which was specified in [bias source prior t]. Note
-   * that [t] may be rightward of [bias_prior t]. *)
+  (** [bias_prior t] returns the cursor which was specified to [bias source t]. Note that [t] may be
+      rightward of [bias_prior t]. *)
 
   val text_cursor: t -> Text.Cursor.t
-  (* [text_cursor t] returns the text cursor corresponding to [t]. *)
+  (** [text_cursor t] returns the text cursor corresponding to [t]. *)
 
   val next_opt: t -> (codepoint * t) option
   (** [next_opt t] returns [Some (codepoint, t')] if [t] is not at the text's tail, [None]
@@ -83,14 +82,20 @@ module Slice : sig
   val of_cursors: base:Cursor.t -> past:Cursor.t -> t
   (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)]. *)
 
-  val line_context: t -> t
-  (** [line_context t] creates an expanded slice which contains the entirety of the line(s) on
-      which [t] resides. If the slice spans multiple sources (as specified via source directives)
-      and the beginning line context extends through a source boundary, the base source is reported
-      as being the unbiased source (i.e. source directives are ignored). Similarly, if the ending
-      line context extends past the input slice or the base source is reported as unbiased, the past
-      source is unconditionally reported as being the unbiased source. This behavior avoids false
-      source origin claims. *)
+  val line_context: ?lookahead:Cursor.t -> t -> t list
+  (** [line_context ~lookahead t] returns an expanded context that encompasses the
+      entirety of the line(s) on which [t] resides. The result is a non-empty list of slices, where
+      each slice has a single source. The result typically comprises a single slice, but due to the
+      potential for [t] be split into multiple slices if it crosses source transitions, there is not
+      necessarily a direct correspondence between [t] and one of the resulting slices. If
+      [lookahead] is specified, it must satisfy [Cursor.((past t) <= lookahead], and it is used as
+      the starting position for the result's right bound; otherwise [past t] is used as the starting
+      point. If [lookahead] is not specified or it precedes the end of the line on which [t] ends,
+      all codepoints past the starting position of the right bound search are considered to have
+      unbiased source. Ideally the caller will specify [lookahead] by extracting a cursor from a
+      token far enough to the right of [t] to encompass the remainder of the line on which [t] ends
+      so that the search for the right bound is a leftward search, but during scanning there may not
+      yet be sufficient context to do so. *)
 
   val to_string: t -> string
   (** [to_string t] returns a string representation of [t]. *)

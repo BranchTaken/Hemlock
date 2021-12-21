@@ -14,6 +14,7 @@ let test () =
   scan_str {|[:10123456789]|};
   scan_str {|[:1] [:2]|};
   scan_str {|[:"Foo.hm"] [:] [:"Bar.hm"]|};
+  scan_str {|[:"Foo.hm"] [:"Bar.hm"] [:] [:"Biz.hm"]|};
   scan_str {|[:"Foo.hm":1:42]a
 b|};
 

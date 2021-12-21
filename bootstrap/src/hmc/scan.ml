@@ -2373,14 +2373,26 @@ module Dfa = struct
   let accept_pexcl atoken View.{ppcursor; _} t =
     accept atoken ppcursor t
 
-  let accept_source_directive atoken View.{pcursor; cursor; _} t =
+  let accept_source_directive atoken View.{cursor; _} t =
+    (* Treat the directive as having come from the unbiased source. Rebias the cursors such that
+     * they are unbiased. This is different than unbiasing, in that it preserves the cursors' bias
+     * chain, which enables recovering source bias when moving leftwards. *)
+    let base = Source.Cursor.bias (Source.unbias (Source.Cursor.container t.tok_base)) t.tok_base in
+    let past = begin
+      let rec f cursor cursor_fork = begin
+        match Source.Cursor.(cursor < cursor_fork) with
+        | false -> cursor
+        | true -> f (Source.Cursor.succ cursor) cursor_fork
+      end in
+      f base cursor
+    end in
     let cursor' = match atoken with
       | AbstractToken.Tok_source_directive Constant {path=None; line=None; col=None} -> begin
-          (* Reset to actual source. *)
-          Source.Cursor.debias cursor
+          (* Rebias the source such that it is unbiased. *)
+          past
         end
       | AbstractToken.Tok_source_directive Constant {path; line; col} -> begin
-          let source = Source.Cursor.container cursor in
+          let source = Source.Cursor.container past in
           let path = match path with
             | None -> Source.path source
             | Some path -> Some path
@@ -2390,22 +2402,21 @@ module Dfa = struct
             | Some line -> line
           in
           let line_bias = Sint.((Uns.bits_to_sint line) - (Uns.bits_to_sint (Text.(Pos.line
-              (Cursor.pos (Source.Cursor.text_cursor cursor)))))) in
+              (Cursor.pos (Source.Cursor.text_cursor past)))))) in
           let col = match col with
             | None -> Sint.zero
             | Some col -> col
           in
           let col_bias = Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col (Cursor.pos
-              (Source.Cursor.text_cursor cursor)))))) in
+              (Source.Cursor.text_cursor past)))))) in
           let source' = Source.bias ~path ~line_bias ~col_bias source in
-          Source.Cursor.bias source' pcursor cursor
+          Source.Cursor.bias source' past
         end
-      | AbstractToken.Tok_source_directive Malformed _ -> cursor
+      | AbstractToken.Tok_source_directive Malformed _ -> past
       | _ -> not_reached ()
     in
-    (* Treat the directive as having come from the actual file being read. *)
-    let source = Source.Slice.of_cursors ~base:(Source.Cursor.debias t.tok_base) ~past:cursor in
-    {t with tok_base=cursor'}, Accept (ConcreteToken.init atoken source)
+    let source_slice = Source.Slice.of_cursors ~base ~past in
+    {t with tok_base=cursor'}, Accept (ConcreteToken.init atoken source_slice)
 
   let accept_line_delim atoken cursor t =
     let source = source_at cursor t in
