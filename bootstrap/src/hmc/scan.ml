@@ -787,8 +787,7 @@ let operator fop _ppcursor _pcursor cursor t =
   end in
   fn fop cursor t
 
-let ident_set = set_of_cps
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'"
+let ident_set = set_of_cps "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'"
 
 let ident ~f_accept cursor t =
   let rec fn cursor t = begin
@@ -3253,6 +3252,11 @@ end = struct
     | LineExpr
     | LineNoop of t * ConcreteToken.t
 
+  type alignment =
+    | Aligned
+    | Continued
+    | Misaligned
+
   open AbstractToken
   let tok_indent = Tok_indent (Constant ())
   let tok_dedent = Tok_dedent (Constant ())
@@ -3275,65 +3279,66 @@ end = struct
         | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
         | _ -> begin
             let col = Text.Pos.col (Source.Cursor.pos cursor) in
-            let level = col / 4L in
-            let rem = col % 4L in
+            (* Compute level and alignement such that the misaligned cases rounded to the nearest
+             * level. *)
+            let level, alignment = match col / 4L, col % 4L with
+              | floor_level, 0L -> floor_level, Aligned
+              | floor_level, 1L -> floor_level, Misaligned
+              | floor_level, 2L -> floor_level, Continued
+              | floor_level, 3L -> succ floor_level, Misaligned
+              | _ -> not_reached ()
+            in
             (* The following patterns incrementally handle all dentation/alignment cases. Malformed
              * tokens are synthesized in error cases such that the cursor does not advance, but the
              * level is incrementally adjusted to converge. The overall result is that
              * Tok_indent/Tok_dedent nesting is always well formed. *)
-            match rem, t.level, level with
+            match alignment with
             (* New expression at same level. *)
-            | 0L, t_level, level when t_level = level -> begin
+            | Aligned when t.level = level -> begin
                 match t.line_state with
                 | Line_dentation -> Dfa.next State.start {t with line_state=Line_body}
                 | Line_delim -> accept_dentation Tok_line_delim cursor t
                 | Line_body -> not_reached ()
               end
 
-            (* Continuation of expression at current level. *)
-            | 2L, t_level, level when t_level = level ->
+            (* Continued expression at current level. *)
+            | Continued when t.level = level ->
               accept_dentation Tok_whitespace cursor t
 
             (* New expression at higher level. *)
-            | 0L, t_level, level when succ t_level = level ->
+            | Aligned when succ t.level = level ->
               accept_dentation tok_indent cursor {t with level}
 
-            (* Continuation of expression at lower level. *)
-            | 2L, t_level, level when t_level > succ level ->
-              accept tok_dedent t.tok_base {t with level=pred t_level}
-            | 2L, t_level, level when t_level = succ level ->
+            (* Continued expression at lower level. *)
+            | Continued when t.level > succ level ->
+              accept tok_dedent t.tok_base {t with level=pred t.level}
+            | Continued when t.level = succ level ->
               accept_dentation tok_dedent cursor {t with level}
 
             (* New expression at lower level. *)
-            | 0L, t_level, level when t_level > succ level ->
-              accept tok_dedent t.tok_base {t with level=pred t_level}
-            | 0L, t_level, level when t_level = succ level ->
+            | Aligned when t.level > succ level ->
+              accept tok_dedent t.tok_base {t with level=pred t.level}
+            | Aligned when t.level = succ level ->
               accept_dentation tok_dedent cursor {t with level}
 
-            (* Off by one column at lower level. *)
-            | 3L, t_level, level when t_level > succ level ->
-              accept (tok_dedent_absent t) t.tok_base {t with level=pred t_level}
-            | 1L, t_level, level when t_level > level ->
-              accept (tok_dedent_absent t) t.tok_base {t with level=pred t_level}
+            (* Misaligned at lower level. *)
+            | Misaligned when t.level > level ->
+              accept (tok_dedent_absent t) t.tok_base {t with level=pred t.level}
 
-            (* Off by one column at current level. *)
-            | 3L, t_level, level when t_level = succ level ->
-              accept_dentation Tok_misaligned cursor t
-            | 1L, t_level, level when t_level = level ->
+            (* Misaligned at current level. *)
+            | Misaligned when t.level = level ->
               accept_dentation Tok_misaligned cursor t
 
             (* Excess aligned indentation. *)
-            | 0L, t_level, level when succ t_level < level ->
-              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
-            (* Off by one column at higher level. *)
-            | 3L, t_level, level when t_level < succ level ->
-              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
-            | 1L, t_level, level when t_level < level ->
-              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
+            | Aligned when succ t.level < level ->
+              accept (tok_indent_absent t) t.tok_base {t with level=succ t.level}
+            (* Misaligned at higher level. *)
+            | Misaligned when t.level < level ->
+              accept (tok_indent_absent t) t.tok_base {t with level=succ t.level}
 
-            (* Continuation of expression at higher level. *)
-            | 2L, t_level, level when t_level < level ->
-              accept (tok_indent_absent t) t.tok_base {t with level=succ t_level}
+            (* Continued expression at higher level. *)
+            | Continued when t.level < level ->
+              accept (tok_indent_absent t) t.tok_base {t with level=succ t.level}
 
             | _ -> not_reached ()
           end
