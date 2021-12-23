@@ -50,30 +50,38 @@ considerably. The following languages have particularly interesting takes on the
 Hemlock takes a comparatively simple approach to avoid some of the pitfalls mentioned above:
 
 - Tabs are forbidden in whitespace. (Tabs can be embedded only in string literals and comments.)
-- The first non-whitespace token establishes line indentation.
+- The first non-space codepoint establishes line indentation.
 - Block indentation is four columns.
-- Expression continuation indentation is two colums. One-column and three-column indentation are
+- Expression continuation indentation is two columns. One-column and three-column indentation are
   *always* invalid, which eliminates undetected off-by-one errors.
 - The raw `'\n'` at the end of a line is treated as non-breaking whitespace if immediately preceded
   by a `'\\'`. This acts as an escape hatch which allows arbitrary continuation indentation.
-- Unindented lines comprising only comments and/or whitespace are ignored.
-- Consecutive lines at the same indentation are distinct expressions.
+- Lines comprising only comments and/or whitespace are ignored.
+- Consecutive expressions at the same indentation are distinct expressions.
 
 Automated formatting only needs to perform a few actions:
 
 - Wrap lines that exceed 100 columns if at all possible without changing the token stream.
 - Strip extraneous trailing whitespace, including any `'\n'` codepoints following the last token.
-- Dense wrapping of expressions (as well as removal of `'\\'` continuation) can be used to enforce
-  uniform coding style. This is Hemlock's answer to endless coding style debate, but it is a
-  draconian approach, and therefore opt-in. In the absence of dense wrapping, code formatting style
+- Dense expression wrapping can be used to enforce uniform coding style.
+
+  + Replace multi-space separation between tokens with single spaces.
+  + Remove `'\\'` continuation.
+  + Wrap lines that exceed 100 columns, with the exception that no effort is made to reformat tokens
+    which start a line and exceed 100 columns.
+
+  This is Hemlock's answer to endless coding style debate, but it is a draconian approach, and
+  therefore opt-in. In the absence of automated dense expression wrapping, code formatting style
   guidelines are pretty minimal.
 
   + Wrap expressions such that lines do not exceed 100 columns if possible. (Don't bother with
     heroics such as string literal splitting unless it makes the code more readable.)
   + Prefer to densely wrap long expressions unless sparser wrapping significantly improves
     readability.
+  + Use block indentation of subexpressions for long expressions rather than dense wrapping when
+    doing so improves readability.
   + Use additional inter-token alignment spacing only if it significantly improves readability.
-  + Use `'\\'` continuation sparingly.
+  + Use `'\\'` continuation sparingly, if at all.
 
 ## Tokens
 
@@ -99,7 +107,7 @@ Hemlock uses various symbols as punctuation:
 | \ ' ^ < <= = <> >= >
 ! &
 ~ ?
-->
+-> ~->
 ```
 
 ### Operator

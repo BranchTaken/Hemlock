@@ -203,10 +203,10 @@ discriminator.
 
 ```hemlock
 type color: color =
-    | Red
-    | Green
-    | Blue
-    | RGBA of (u8, u8, u8, u8)
+    Red
+    Green
+    Blue
+    RGBA of (u8, u8, u8, u8)
 ```
 
 The variant discriminator is immutable, but a variant may nonetheless be primarily mutable due to
@@ -215,21 +215,21 @@ transitive non-parametric mutability of variants.
 ```hemlock
 # Non-parametric transitive primary mutability.
 type odd: &odd =
-    | Odd of &array uns
-    | Odder of array unit
+    Odd of &array uns
+    Odder of array unit
 
 # Parametric subsidiary mutability (mutable if 'a is mutable).
 type option 'a: option a =
-    | None
-    | Some of a
+    None
+    Some of a
 ```
 
 Recursive variant types must be explicitly specified as `rec`.
 
 ```hemlock
 type rec node 'a: node a =
-    | Leaf of a
-    | Node of (a, node a)
+    Leaf of a
+    Node of (a, node a)
 
 let leaf = Leaf 2
 let child = Node(1, leaf)
@@ -329,7 +329,7 @@ module type on another.
 
 ```hemlock
 # Empty module.
-type E = ;;
+type E: E = ;;
 
 type M: M =
     type t: t
@@ -358,7 +358,6 @@ val makeMono: (T : SeqIntf.IMonoDef) : SMono
 type Mono = SMono
   with type t ^t: ^&t := SeqIntf.IMonoDef.^&t
   with type elm ^elm: ^&elm := SeqIntf.IMonoDef.^&elm
-  |}
 ```
 
 Module type and value names (lexical bindings) are always capitalized, e.g. `A._B.MType` and
@@ -374,15 +373,13 @@ let A = {|
             ...
         # M, U, and I are in the same namespace; beware module vs variant constructor name
         # collisions.
-        let M = {|
-            ...
-          |}
-        type v =
-            | U of uns
-            | I of int
+        let M = {| ... |}
+        type v: v =
+            U of uns
+            I of int
       |}
 
-    type t =
+    type t: t =
         _u:
             m: A._B.MType
   |}
@@ -393,8 +390,8 @@ Following is a complete example of a module which implements persistent binary t
 ```hemlock
 let Tree = {|
     type rec t 'a: t a =
-        | Empty
-        | Node of
+        Empty
+        Node of
             lchild: t a
             value: a
             rchild: t a
@@ -402,8 +399,8 @@ let Tree = {|
     let empty = Empty
 
     let is_empty = function
-        | Empty -> true
-        | Node _ -> false
+      | Empty -> true
+      | Node _ -> false
 
     let node lchild value rchild =
         {lchild; value; rchild}
@@ -412,23 +409,23 @@ let Tree = {|
         node empty value empty
 
     let lchild = function
-        | Empty -> empty
-        | Node {lchild; value=_; rchild=_} -> lchild
+      | Empty -> empty
+      | Node {lchild; value=_; rchild=_} -> lchild
 
     let root_value_opt = function
-        | Empty -> None
-        | Node {lchild=_; value; rchild=_} -> Some value
+      | Empty -> None
+      | Node {lchild=_; value; rchild=_} -> Some value
 
     let root_value_hlt t =
         match value_opt t with
-        | None -> halt "Empty tree"
-        | Some value -> value
+          | None -> halt "Empty tree"
+          | Some value -> value
 
     let root_value = root_value_hlt
 
     let rchild = function
-        | Empty -> empty
-        | Node {lchild=_; value=_; rchild} -> rchild
+      | Empty -> empty
+      | Node {lchild=_; value=_; rchild} -> rchild
   |}
 ```
 
@@ -437,8 +434,8 @@ let Tree = {|
 ```hemlock
 val Tree :
     type rec t a: t a =
-        | Empty
-        | Node of
+        Empty
+        Node of
             lchild: t a
             value: a
             rchild: t a

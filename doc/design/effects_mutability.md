@@ -155,8 +155,8 @@ val abort 'a: string >hlt-> a
 val finalize 'a >e: (&a >e-> unit) -> &a >e-> unit
 
 type elm 'a >e: elm a e =
-  | Nil
-  | Cons of (a, stream a e)
+    Nil
+    Cons of (a, stream a e)
 also stream 'a >e: stream a e = Lazy.t (elm a e)
 val force 'a >e: lazy_t (elm a e) >e-> a
 ```
@@ -477,7 +477,7 @@ with the interface and a compiler error would result.
 
 ```hemlock
 # Gc.hmi excerpt.
-type t
+type t: t
 
 val collect: t -> t
 ```
@@ -621,7 +621,7 @@ visible outside the module. Therefore module types must explicitly reveal primar
 regardless of whether visible values make the information redundant.
 
 ```hemlock
-type &SX = & val &assign: uns >mut-> unit
+type SX: &SX = & val &assign: uns >mut-> unit
 
 # X's type partially reveals why it is mutable (x and assign are mutable).
 let X

@@ -46,14 +46,14 @@ let T = {|
             (* val seek 'a ^container: sint -> t a container -> t a container *)
             let seek i t =
                 match Sint.(i < 0i) with
-                | true ->
+                  | true ->
                     match Uns.((of_sint Sint.(neg i)) > t.index) with
-                    | true -> halt "Cannot seek before beginning of array"
-                    | false -> {t with index=Uns.(t.index - of_sint (Sint.neg i))}
-                | false ->
+                      | true -> halt "Cannot seek before beginning of array"
+                      | false -> {t with index=Uns.(t.index - of_sint (Sint.neg i))}
+                  | false ->
                     match Uns.((t.index + (of_sint i)) > (length t.array)) with
-                    | true -> halt "Cannot seek past end of array"
-                    | false -> {t with index=t.index + (Uns.of_sint i)}
+                      | true -> halt "Cannot seek past end of array"
+                      | false -> {t with index=t.index + (Uns.of_sint i)}
 
             (* val succ 'a ^container: t a container -> t a container *)
             let succ t =
@@ -84,17 +84,17 @@ let T = {|
       |}
 
     let cmp cmp_elm t0 t1 =
-        let rec fn cursor0 cursor1 =
+        let rec f cursor0 cursor1 =
             match Cursor.(cursor0 = (tl t0)), Cursor.(cursor1 = (tl t1)) with
-            | true, true -> Cmp.Eq
-            | true, false -> Cmp.Lt
-            | false, true -> Cmp.Gt
-            | false, false ->
+              | true, true -> Cmp.Eq
+              | true, false -> Cmp.Lt
+              | false, true -> Cmp.Gt
+              | false, false ->
                 match cmp_elm (Cursor.rget cursor0) (Cursor.rget cursor1) with
-                | Cmp.Lt -> Cmp.Lt
-                | Cmp.Eq -> fn (Cursor.succ cursor0) (Cursor.succ cursor1)
-                | Cmp.Gt -> Cmp.Gt
-        fn (Cursor.hd t0) (Cursor.hd t1)
+                  | Cmp.Lt -> Cmp.Lt
+                  | Cmp.Eq -> f (Cursor.succ cursor0) (Cursor.succ cursor1)
+                  | Cmp.Gt -> Cmp.Gt
+        f (Cursor.hd t0) (Cursor.hd t1)
   |}
 include T
 include ContainerCommon.makePolyFold(T)
@@ -119,17 +119,17 @@ let Seq = {|
       = {|
         let to_array t =
             match T.length t with
-            | 0 -> [||]
-            | l ->
-                let rec fn t i builder =
+              | 0 -> [||]
+              | l ->
+                let rec f t i builder =
                     match i = l with
-                    | true -> Builder.build builder
-                    | false ->
+                      | true -> Builder.build builder
+                      | false ->
                         let elm, t' = T.next t
                         Builder.lput elm builder
-                        fn t' (succ i) builder
+                        f t' (succ i) builder
                 let elm, t' = T.next t
-                fn t' 1 (Builder.alloc_lput l elm)
+                f t' 1 (Builder.alloc_lput l elm)
       |}
 
     let makeMonoRev (T : SeqIntf.IMonoDef) : SMono
@@ -138,17 +138,17 @@ let Seq = {|
       = {|
         let to_array t =
             match T.length t with
-            | 0 -> [||]
-            | l ->
-                let rec fn t i builder =
+              | 0 -> [||]
+              | l ->
+                let rec f t i builder =
                     match i = 0 with
-                    | true -> Builder.build builder
-                    | false ->
+                      | true -> Builder.build builder
+                      | false ->
                         let elm, t' = T.next t
                         Builder.rput elm builder
-                        fn t' (pred i) builder
+                        f t' (pred i) builder
                 let elm, t' = T.next t
-                fn t' (pred l) (Builder.alloc_rput l elm)
+                f t' (pred l) (Builder.alloc_rput l elm)
       |}
 
     let makePoly (T : SeqIntf.IPolyDef) : SPoly
@@ -157,17 +157,17 @@ let Seq = {|
       = {|
         let to_array t =
             match T.length t with
-            | 0 -> [||]
-            | l ->
-                let rec fn t i builder =
+              | 0 -> [||]
+              | l ->
+                let rec f t i builder =
                     match i = l with
-                    | true -> Builder.build builder
-                    | false ->
+                      | true -> Builder.build builder
+                      | false ->
                         let elm, t' = T.next t
                         Builder.lput elm builder
-                        fn t' (succ i) builder
+                        f t' (succ i) builder
                 let elm, t' = T.next t
-                fn t' 1 (Builder.alloc_lput l)
+                f t' 1 (Builder.alloc_lput l)
       |}
 
     let makePolyRev (T : SeqIntf.IPolyDef) : SPoly
@@ -176,17 +176,17 @@ let Seq = {|
       = {|
         let to_array t =
             match T.length t with
-            | 0 -> [||]
-            | l ->
-                let rec fn t i builder =
+              | 0 -> [||]
+              | l ->
+                let rec f t i builder =
                     match i = 0 with
-                    | true -> Builder.build builder
-                    | false ->
+                      | true -> Builder.build builder
+                      | false ->
                         let elm, t' = T.next t
                         Builder.rput elm builder
-                        fn t' (pred i) builder
+                        f t' (pred i) builder
                 let elm, t' = T.next t
-                fn t' (pred l) (Builder.alloc_rput l elm)
+                f t' (pred l) (Builder.alloc_rput l elm)
       |}
 
     (* Special-purpose, for fold[i]_map . *)
@@ -215,15 +215,15 @@ let Seq = {|
             match T.length t with
             | 0 -> init, [||]
             | l ->
-                let rec fn t i accum builder =
+                let rec f t i accum builder =
                     match i = l with
                     | true -> accum, (Builder.build builder)
                     | false ->
                         let elm, t', accum' = T.next t accum
                         Builder.lput elm builder
-                        fn t' (succ i) accum' builder
+                        f t' (succ i) accum' builder
                 let elm, t', accum = T.next t init
-                fn t' 1 accum (Builder.alloc_lput l elm)
+                f t' 1 accum (Builder.alloc_lput l elm)
       |}
 
     (* Special-purpose, for fold[i]2_map . *)
@@ -237,8 +237,7 @@ let Seq = {|
         type 'a 'b ^m ^n >e: t a b m n e := T.t a b m n e
         type accum: accum
         type c: c
-        val to_accum_array 'a 'b ^m ^n ^outer >e: t a b m n e -> init:accum >e->
-          (accum, ^&outer c)
+        val to_accum_array 'a 'b ^m ^n ^outer >e: t a b m n e -> init:accum >e-> (accum, ^&outer c)
       with type t 'a 'b ^m ^n >e: t a b m n e := T.t a b m n e
       with type accum: accum := T.accum
       with type b: b := T.b
@@ -248,17 +247,17 @@ let Seq = {|
         type c: c = T.c
         let to_accum_array t ~init =
             match T.length t with
-            | 0 -> init, [||]
-            | l ->
-                let rec fn t i accum builder =
+              | 0 -> init, [||]
+              | l ->
+                let rec f t i accum builder =
                     match i = l with
-                    | true -> accum, (Builder.build builder)
-                    | false ->
+                      | true -> accum, (Builder.build builder)
+                      | false ->
                         let elm, t', accum' = T.next t accum
                         Builder.lput elm builder
-                        fn t' (succ i) accum' builder
+                        f t' (succ i) accum' builder
                 let elm, t' accum = T.next t init
-                fn t' 1 accum (Builder.alloc_lput l elm)
+                f t' 1 accum (Builder.alloc_lput l elm)
       |}
   |}
 
@@ -306,8 +305,8 @@ let ArrayOfListCommon = {|
 
     let next t =
         match t.list with
-        | [] -> not_reached ()
-        | elm :: list' ->
+          | [] -> not_reached ()
+          | elm :: list' ->
             let t' = {t with list=list'}
             elm, t'
   |}
@@ -324,14 +323,14 @@ let ArrayOfListRev = {|
 
 let of_list ?length list =
     let length = match length with
-        | None -> List.length list
-        | Some length -> length
+      | None -> List.length list
+      | Some length -> length
     ArrayOfList.to_array (ArrayOfList.init length list)
 
 let of_list_rev ?length list =
     let length = match length with
-        | None -> List.length list
-        | Some length -> length
+      | None -> List.length list
+      | Some length -> length
     ArrayOfListRev.to_array (ArrayOfListRev.init length list)
 
 let is_empty t =
@@ -367,28 +366,28 @@ let ArrayJoin = {|
 
         (* val next 'a ^sep ^arrays: t a sep arrays -> (a, t a sep arrays) *)
         let next t =
-            let rec fn t =
+            let rec f t =
                 match t.in_sep with
-                | false ->
+                  | false ->
                     let array = List.hd t.arrays
                     match t.index < length array with
-                    | true ->
+                      | true ->
                         let elm = get t.index array
                         let t' = {t with index=succ t.index}
                         elm, t'
-                    | false -> fn {t with
+                      | false -> f {t with
                         arrays=List.tl t.arrays
                         in_sep=true
                         index=0
                       }
-                | true ->
+                  | true ->
                     match t.index < length t.sep with
-                    | true ->
+                      | true ->
                         let elm = get t.index t.sep
                         let t' = {t with index=succ t.index}
                         elm, t'
-                    | false -> fn {t with in_sep=false; index=0}
-            fn t
+                      | false -> f {t with in_sep=false; index=0}
+            f t
 
         let length t =
             t.length
@@ -400,14 +399,14 @@ let ArrayJoin = {|
 
 let join ?sep tlist =
     let sep, sep_len = match sep with
-        | None -> [||], 0
-        | Some sep -> sep, length sep
+      | None -> [||], 0
+      | Some sep -> sep, length sep
     let _, tlist_length = List.fold tlist ~init:(0, 0)
       ~f:(fn (i, accum) list ->
         let i' = succ i
         let sep_len' = match i with
-            | 0 -> 0
-            | _ -> sep_len
+          | 0 -> 0
+          | _ -> sep_len
         let accum' = accum + sep_len' + (length list)
         i', accum'
       )
@@ -443,9 +442,9 @@ let insert i elm t =
         if i < len then
             init (0 .. (succ len)) ~f:(fn index ->
                 match Uns.cmp index i with
-                | Lt -> get index t
-                | Eq -> elm
-                | Gt -> get (pred index) t
+                  | Lt -> get index t
+                  | Eq -> elm
+                  | Gt -> get (pred index) t
               )
         else
             append elm t
@@ -454,10 +453,10 @@ let remove i t =
     let len = length t
     assert (|len > 0|)
     match len with
-    | 1 ->
+      | 1 ->
         assert (|i = 0|)
         [||]
-    | _ ->
+      | _ ->
         if i = 0 then
             pare (1 .. len) t
         else if i < len then
@@ -469,18 +468,18 @@ let remove i t =
             pare (0 .. (pred len)) t
 
 let reduce ~f t =
-    let rec fn i accum =
+    let rec f i accum =
         match (i = (length t)) with
-        | true -> accum
-        | false -> fn (succ i) (f accum (get i t))
+          | true -> accum
+          | false -> f (succ i) (f accum (get i t))
     match t with
-    | [||] -> None
-    | _ -> Some (fn 1 (get 0 t))
+      | [||] -> None
+      | _ -> Some (f 1 (get 0 t))
 
 let reduce_hlt ~f t =
     match reduce ~f t with
-    | None -> halt "Empty array"
-    | Some x -> x
+      | None -> halt "Empty array"
+      | Some x -> x
 
 let swap_inplace i0 i1 t =
     let elm0 = get i0 t
@@ -494,16 +493,16 @@ let swap i0 i1 t =
     t'
 
 let rev_inplace t =
-    let rec fn i0 i1 =
+    let rec f i0 i1 =
         match (i0 >= i1) with
-        | true -> ()
-        | false ->
+          | true -> ()
+          | false ->
             swap_inplace i0 i1 t
-            fn (succ i0) (pred i1)
+            f (succ i0) (pred i1)
     let len = length t
     match len with
-    | 0 -> ()
-    | _ -> fn 0 (pred len)
+      | 0 -> ()
+      | _ -> f 0 (pred len)
 
 let rev t =
     let l = length t
@@ -521,30 +520,30 @@ let blit len i0 t0 i1 t1 =
     assert (|Range.length r0 = Range.length r1|)
     (* Choose direction such that overlapping ranges don't corrupt the source. *)
     match Range.(base r0 < base r1) with
-    | true -> blit_descending len (Range.base r0) t0 (Range.base r1) t1
-    | false -> blit_ascending len (Range.base r0) t0 (Range.base r1) t1
+      | true -> blit_descending len (Range.base r0) t0 (Range.base r1) t1
+      | false -> blit_ascending len (Range.base r0) t0 (Range.base r1) t1
 
 let is_sorted ?(strict=false) ~cmp t =
     let len = length t
-    let rec fn elm i =
+    let rec f elm i =
         match i = len with
-        | true -> true
-        | false ->
+          | true -> true
+          | false ->
             let elm' = get i t
             match (cmp elm elm'), strict with
-            | Cmp.Lt, _
-            | Cmp.Eq, false -> fn elm' (succ i)
-            | Cmp.Eq, true
-            | Cmp.Gt, _ -> false
+              | Cmp.Lt, _
+              | Cmp.Eq, false -> f elm' (succ i)
+              | Cmp.Eq, true
+              | Cmp.Gt, _ -> false
     match len with
-    | 0 -> true
-    | _ -> fn (get 0 t) 1
+      | 0 -> true
+      | _ -> f (get 0 t) 1
 
-type order =
-    | Increasing
-    | Decreasing
-    | Either
-type run =
+type order: order =
+    Increasing
+    Decreasing
+    Either
+type run: run =
     base: uns
     past: uns
 let sort_impl ?(stable=false) ~cmp ~inplace t =
@@ -556,146 +555,145 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
             for i = 0 to pred len do
                 set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
         let merge_pair_oo ~cmp src run0 order0 run1 order1 dst =
-            let rec fn ~cmp src run0 order0 run1 order1 dst run =
+            let rec f ~cmp src run0 order0 run1 order1 dst run =
                 match (run0.base = run0.past), (run1.base = run1.past) with
-                | false, false ->
+                  | false, false ->
                     let elm0 = match order0 with
-                        | Increasing -> get run0.base src
-                        | Decreasing -> get (pred run0.past) src
-                        | Either -> not_reached ()
+                      | Increasing -> get run0.base src
+                      | Decreasing -> get (pred run0.past) src
+                      | Either -> not_reached ()
                     let elm1 = match order1 with
-                        | Increasing -> get run1.base src
-                        | Decreasing -> get (pred run1.past) src
-                        | Either -> not_reached ()
+                      | Increasing -> get run1.base src
+                      | Decreasing -> get (pred run1.past) src
+                      | Either -> not_reached ()
                     match cmp elm0 elm1 with
-                    | Cmp.Lt
-                    | Cmp.Eq ->
+                      | Cmp.Lt
+                      | Cmp.Eq ->
                         match order0 with
-                        | Increasing ->
+                          | Increasing ->
                             set_inplace run.past elm0 dst
                             let run0' = {run0 with base=succ run0.base}
                             let run' = {run with past=succ run.past}
-                            fn ~cmp src run0' order0 run1 order1 dst run'
-                        | Decreasing ->
+                            f ~cmp src run0' order0 run1 order1 dst run'
+                          | Decreasing ->
                             set_inplace run.past elm0 dst
                             let run0' = {run0 with past=pred run0.past}
                             let run' = {run with past=succ run.past}
-                            fn ~cmp src run0' order0 run1 order1 dst run'
-                        | Either -> not_reached ()
-                    | Cmp.Gt ->
+                            f ~cmp src run0' order0 run1 order1 dst run'
+                          | Either -> not_reached ()
+                      | Cmp.Gt ->
                         match order1 with
-                        | Increasing ->
+                          | Increasing ->
                             set_inplace run.past elm1 dst
                             let run1' = {run1 with base=succ run1.base}
                             let run' = {run with past=succ run.past}
-                            fn ~cmp src run0 order0 run1' order1 dst run'
-                        | Decreasing ->
+                            f ~cmp src run0 order0 run1' order1 dst run'
+                          | Decreasing ->
                             set_inplace run.past elm1 dst
                             let run1' = {run1 with past=pred run1.past}
                             let run' = {run with past=succ run.past}
-                            fn ~cmp src run0 order0 run1' order1 dst run'
-                        | Either -> not_reached ()
-                | true, false ->
+                            f ~cmp src run0 order0 run1' order1 dst run'
+                          | Either -> not_reached ()
+                  | true, false ->
                     let len = run1.past - run1.base
                     let () = match order1 with
-                        | Increasing -> blit_ascending len run1.base src run.past dst
-                        | Decreasing -> rblit len run1.base src run.past dst
-                        | Either -> not_reached ()
+                      | Increasing -> blit_ascending len run1.base src run.past dst
+                      | Decreasing -> rblit len run1.base src run.past dst
+                      | Either -> not_reached ()
                     {run with past=run.past + len}
-                | false, true ->
+                  | false, true ->
                     let len = run0.past - run0.base
                     let () = match order0 with
-                        | Increasing -> blit_ascending len run0.base src run.past dst
-                        | Decreasing -> rblit len run0.base src run.past dst
-                        | Either -> not_reached ()
+                      | Increasing -> blit_ascending len run0.base src run.past dst
+                      | Decreasing -> rblit len run0.base src run.past dst
+                      | Either -> not_reached ()
                     {run with past=run.past + len}
-                | true, true -> not_reached ()
-            fn ~cmp src run0 order0 run1 order1 dst {base=run0.base;
-              past=run0.base}
+                  | true, true -> not_reached ()
+            f ~cmp src run0 order0 run1 order1 dst {base=run0.base; past=run0.base}
         let order0', order1' = match order0, order1 with
-            | Increasing, Increasing
-            | Increasing, Either
-            | Either, Increasing
-            | Either, Either -> Increasing, Increasing
-            | Increasing, Decreasing -> Increasing, Decreasing
-            | Decreasing, Increasing -> Decreasing, Increasing
-            | Decreasing, Decreasing
-            | Decreasing, Either
-            | Either, Decreasing -> Decreasing, Decreasing
+          | Increasing, Increasing
+          | Increasing, Either
+          | Either, Increasing
+          | Either, Either -> Increasing, Increasing
+          | Increasing, Decreasing -> Increasing, Decreasing
+          | Decreasing, Increasing -> Decreasing, Increasing
+          | Decreasing, Decreasing
+          | Decreasing, Either
+          | Either, Decreasing -> Decreasing, Decreasing
         merge_pair_oo ~cmp src run0 order0' run1 order1' dst
     (* Select monotonic runs and merge run pairs. *)
     let rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
         match i = (length src) with
-        | true ->
+          | true ->
             let run0, order0, run1, order1 = match run0_opt with
-                | None ->
-                    (* Copy odd run. *)
-                    let run0 = {base; past=i}
-                    let run1 = {base=i; past=i}
-                    run0, order, run1, Increasing
-                | Some run0 -> run0, order0, {base; past=i}, order
+              | None ->
+                (* Copy odd run. *)
+                let run0 = {base; past=i}
+                let run1 = {base=i; past=i}
+                run0, order, run1, Increasing
+              | Some run0 -> run0, order0, {base; past=i}, order
             let run = merge_pair ~cmp src run0 order0 run1 order1 dst
             run :: runs
-        | false ->
+          | false ->
             let elm' = get i src
             let i' = succ i
             match cmp elm elm', order, stable with
-            | Cmp.Lt, Either, _ -> select ~stable ~cmp elm' base i' Increasing
-              run0_opt order0 src dst runs
-            | Cmp.Gt, Either, _ -> select ~stable ~cmp elm' base i' Decreasing
-              run0_opt order0 src dst runs
-            | Cmp.Lt, Increasing, _
-            | Cmp.Eq, Increasing, true
-            | Cmp.Eq, Either, true -> select ~stable ~cmp elm' base i'
-              Increasing run0_opt order0 src dst runs
-            | Cmp.Eq, _, false
-            | Cmp.Gt, Decreasing, _ -> select ~stable ~cmp elm' base i' order
-              run0_opt order0 src dst runs
-            | Cmp.Lt, Decreasing, _
-            | Cmp.Eq, Decreasing, true
-            | Cmp.Gt, Increasing, _ ->
+              | Cmp.Lt, Either, _ ->
+                select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
+              | Cmp.Gt, Either, _ ->
+                select ~stable ~cmp elm' base i' Decreasing run0_opt order0 src dst runs
+              | Cmp.Lt, Increasing, _
+              | Cmp.Eq, Increasing, true
+              | Cmp.Eq, Either, true ->
+                select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
+              | Cmp.Eq, _, false
+              | Cmp.Gt, Decreasing, _ ->
+                select ~stable ~cmp elm' base i' order run0_opt order0 src dst runs
+              | Cmp.Lt, Decreasing, _
+              | Cmp.Eq, Decreasing, true
+              | Cmp.Gt, Increasing, _ ->
                 let run0_opt', order0', runs' = match run0_opt with
-                    | None -> Some {base; past=i}, order, runs
-                    | Some run0 ->
-                        let run1 = {base; past=i}
-                        let run = merge_pair ~cmp src run0 order0 run1 order dst
-                        None, Either, (run :: runs)
+                  | None -> Some {base; past=i}, order, runs
+                  | Some run0 ->
+                    let run1 = {base; past=i}
+                    let run = merge_pair ~cmp src run0 order0 run1 order dst
+                    None, Either, (run :: runs)
                 select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst runs'
     let aux = copy t
     let runs = match t with
-        | [||] -> [{base=0; past=0}]
-        | _ -> select ~stable ~cmp (get 0 t) 0 1 Either None Either t aux []
+      | [||] -> [{base=0; past=0}]
+      | _ -> select ~stable ~cmp (get 0 t) 0 1 Either None Either t aux []
 
     (* Repeatedly sweep through runs and merge pairs until only one run remains. Take care to
      * read/write linearly up/down based on the sweep direction, in order to improve cache locality.
      *)
     let rec merge ~cmp ~inplace src to_merge up dst merged =
         match to_merge, up, merged with
-        | run0 :: run1 :: to_merge', true, _
-        | run1 :: run0 :: to_merge', false, _ ->
+          | run0 :: run1 :: to_merge', true, _
+          | run1 :: run0 :: to_merge', false, _ ->
             let run = merge_pair ~cmp src run0 Increasing run1 Increasing dst
             merge ~cmp ~inplace src to_merge' up dst (run :: merged)
-        | [], _, _ :: _ :: _ ->
+          | [], _, _ :: _ :: _ ->
             (* Start another sweep. *)
             merge ~cmp ~inplace dst merged (not up) src []
-        | run :: [], false, _ ->
+          | run :: [], false, _ ->
             (* Copy odd run to dst, then start another sweep. *)
             blit_descending (run.past - run.base) run.base src run.base dst
             merge ~cmp ~inplace dst (run :: merged) (not up) src []
-        | run :: [], true, _ :: _ ->
+          | run :: [], true, _ :: _ ->
             (* Copy odd run to dst, then start another sweep. *)
             blit_ascending (run.past - run.base) run.base src run.base dst
             merge ~cmp ~inplace dst (run :: merged) (not up) src []
-        | [], true, _ :: []
-        | _ :: [], true, [] ->
+          | [], true, _ :: []
+          | _ :: [], true, [] ->
             match inplace with
-            | true ->
+              | true ->
                 (* Odd number of sweeps performed; copy result back into t. *)
                 blit_ascending (length dst) 0 dst 0 src
                 src
-            | false -> dst
-        | [], false, _ :: [] -> dst
-        | [], _, [] -> not_reached ()
+              | false -> dst
+          | [], false, _ :: [] -> dst
+          | [], _, [] -> not_reached ()
     merge ~cmp ~inplace aux runs false t []
 
 let sort_inplace ?stable ~cmp t =
@@ -709,59 +707,57 @@ let search_impl ?range key ~cmp mode t =
     let base, past = match range with
       | None -> 0L, length t
       | Some range -> Range.base range, Range.past range
-    in
     assert (|base <= past|)
     assert (|past <= length t|)
-    let rec fn ~base ~past =
+    let rec f ~base ~past =
         assert (|base <= past|)
         match (base = past) with
-        | true ->
+          | true ->
             (* Empty range. *)
             match mode with
-            | Cmp.Lt ->
+              | Cmp.Lt ->
                 match (base = 0), (base = (length t)) with
-                | true, true -> None # Empty; key < elms.
-                | _, false -> # At beginning, or interior.
+                  | true, true -> None # Empty; key < elms.
+                  | _, false -> # At beginning, or interior.
                     match cmp key (get base t) with
-                    | Cmp.Lt -> (* At successor. *)
+                      | Cmp.Lt -> (* At successor. *)
                         match base = 0 with
-                        | true -> Some (Cmp.Lt, 0) # At beginning; key < elms.
-                        | false -> Some (Cmp.Gt, pred base # In interior; key > predecessor.
-                    | Cmp.Eq -> Some (Cmp.Eq, base) # base at leftmost match.
-                    | Cmp.Gt -> not_reached ()
-                | false, true -> Some (Cmp.Gt, pred base) # Past end; key > elms.
-            | Cmp.Eq -> None # No match.
-            | Cmp.Gt ->
+                          | true -> Some (Cmp.Lt, 0) # At beginning; key < elms.
+                          | false -> Some (Cmp.Gt, pred base # In interior; key > predecessor.
+                      | Cmp.Eq -> Some (Cmp.Eq, base) # base at leftmost match.
+                      | Cmp.Gt -> not_reached ()
+                  | false, true -> Some (Cmp.Gt, pred base) # Past end; key > elms.
+              | Cmp.Eq -> None # No match.
+              | Cmp.Gt ->
                 match (base = 0), (base = (length t)) with
-                | true, true -> None # Empty; key > elms.
-                | true, false ->
-                    Some (Cmp.Lt, 0) # At beginning; key < elms.
-                | false, _ -> # In interior, or past end.
+                  | true, true -> None # Empty; key > elms.
+                  | true, false -> Some (Cmp.Lt, 0) # At beginning; key < elms.
+                  | false, _ -> # In interior, or past end.
                     let probe = pred base
                     match cmp key (get probe t) with
-                    | Cmp.Lt -> not_reached ()
-                    | Cmp.Eq -> Some (Cmp.Eq, probe) # probe at rightmost match.
-                    | Cmp.Gt ->
+                      | Cmp.Lt -> not_reached ()
+                      | Cmp.Eq -> Some (Cmp.Eq, probe) # probe at rightmost match.
+                      | Cmp.Gt ->
                         match (base = (length t)) with
-                        | false -> Some (Cmp.Lt, base) # In interior; key < * successor.
-                        | true -> Some (Cmp.Gt, probe) # Past end; key > elms.
-        | false ->
+                          | false -> Some (Cmp.Lt, base) # In interior; key < * successor.
+                          | true -> Some (Cmp.Gt, probe) # Past end; key > elms.
+          | false ->
             let mid = (base + past) / 2
             match (cmp key (get mid t)), mode with
-            | Cmp.Lt, _
-            | Cmp.Eq, Cmp.Lt -> fn ~base ~past:mid
-            | Cmp.Eq, Cmp.Eq -> Some (Cmp.Eq, mid)
-            | Cmp.Eq, Cmp.Gt
-            | Cmp.Gt, _ -> fn ~base:(succ mid) ~past
-    fn ~base ~past
+              | Cmp.Lt, _
+              | Cmp.Eq, Cmp.Lt -> f ~base ~past:mid
+              | Cmp.Eq, Cmp.Eq -> Some (Cmp.Eq, mid)
+              | Cmp.Eq, Cmp.Gt
+              | Cmp.Gt, _ -> f ~base:(succ mid) ~past
+    f ~base ~past
 
 let psearch ?range key ~cmp t =
     search_impl ?range key ~cmp Cmp.Lt t
 
 let search ?range key ~cmp t =
     match search_impl ?range key ~cmp Cmp.Eq t with
-    | Some (_, i) -> Some i
-    | _ -> None
+      | Some (_, i) -> Some i
+      | _ -> None
 
 let nsearch ?range key ~cmp t =
     search_impl ?range key ~cmp Cmp.Gt t
@@ -810,29 +806,29 @@ let foldi_map t ~init ~f =
 let filter ~f t =
     let _, t' = ArrayFoldiMap.to_accum_array
       (ArrayFoldiMap.init t ~f:(fn _ i _ ->
-        let rec fn i elm =
+        let rec f2 i elm =
             let i' = succ i
             match f elm with
-            | true -> i', elm
-            | false -> fn i' (get i' t)
-        fn i (get i t)
+              | true -> i', elm
+              | false -> f2 i' (get i' t)
+        f2 i (get i t)
       ) (count ~f t)) ~init:0
     t'
 
 let filteri ~f t =
     let n = foldi t ~init:0 ~f:(fn i accum elm ->
         match f i elm with
-        | false -> accum
-        | true -> succ accum
+          | false -> accum
+          | true -> succ accum
       )
     let _, t' = ArrayFoldiMap.to_accum_array
       ArrayFoldiMap.init t ~f:(fn _ i _ ->
-        let rec fn i elm =
+        let rec f2 i elm =
             let i' = succ i
             match f i elm with
-            | true -> i', elm
-            | false -> fn i' (get i' t)
-        fn i (get i t)
+              | true -> i', elm
+              | false -> f2 i' (get i' t)
+        f2 i (get i t)
       ) n
       ~init:0
     t'
@@ -840,15 +836,15 @@ let filteri ~f t =
 let foldi2_until ~init ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
     let len = length t0
-    let rec fn i accum =
+    let rec f2 i accum =
         match i = len with
-        | true -> accum
-        | false ->
+          | true -> accum
+          | false ->
             let accum', until = f i accum (get i t0) (get i t1)
             match until with
-            | true -> accum'
-            | false -> fn (succ i) accum'
-    fn 0 init
+              | true -> accum'
+              | false -> f2 (succ i) accum'
+    f2 0 init
 
 let fold2_until ~init ~f t0 t1 =
     foldi2_until ~init ~f:(fn _ accum a b -> f accum a b) t0 t1
@@ -897,8 +893,7 @@ let ArrayFoldi2Map = {|
 
         (* val next 'a 'b 'accum 'c ^m ^n >e: t a b m n e -> accum >e-> (c, t a b m n e, accum) *)
         let next t accum =
-            let accum', elm' = t.f t.index accum (get t.index t.arr0)
-              (get t.index t.arr1)
+            let accum', elm' = t.f t.index accum (get t.index t.arr0) (get t.index t.arr1)
             let t' = {t with index=Uns.succ t.index}
             elm', t', accum'
       |}
@@ -908,8 +903,8 @@ let ArrayFoldi2Map = {|
   |}
 
 let fold2_map ~init ~f t0 t1 =
-    ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f:(fn _ accum elm
-      -> f accum elm)) ~init
+    ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f:(fn _ accum elm -> f accum elm))
+      ~init
 
 let foldi2_map ~init ~f t0 t1 =
     ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f) ~init
@@ -959,7 +954,7 @@ let pp pp_elm ppf t =
  *)
 
 let%expect_test "cursor" =
-    let rec fn arr hd cursor tl =
+    let rec f2 arr hd cursor tl =
         let index = Cursor.index cursor
         let hd_cursor = Cursor.cmp hd cursor
         let cursor_tl = Cursor.cmp cursor tl
@@ -995,7 +990,7 @@ let%expect_test "cursor" =
         | Lt ->
             let cursor' = Cursor.succ cursor
             assert (|Cursor.(cursor = (pred cursor'))|)
-            fn arr hd cursor' tl
+            f2 arr hd cursor' tl
         | Eq | Gt -> ()
     let arrs = [
         [||]
@@ -1006,7 +1001,7 @@ let%expect_test "cursor" =
     List.iter arrs ~f:(fn arr ->
         File.Fmt.Stdout |> Fmt.fmt "--- %f(^fmt Uns.fmt arr^) ---" |> ignore
         let hd = Cursor.hd arr
-        fn arr hd hd (Cursor.tl arr)
+        f2 arr hd hd (Cursor.tl arr)
       )
     let _ = File.Fmt.(flush Stdout)
 
@@ -1030,20 +1025,20 @@ index=3, container Eq arr, hd Lt cursor, cursor Eq tl, lget=2, rget=_
 let%expect_test "hash_fold" =
     let open Format
     printf "@[<h>"
-    let rec fn arrs =
+    let rec f arrs =
         match arrs with
         | [] -> ()
         | arr :: arrs' ->
             printf "hash_fold %a -> %a\n" (pp Uns.pp) arr Hash.pp
               (Hash.t_of_state (hash_fold Uns.hash_fold arr Hash.State.empty))
-            fn arrs'
+            f arrs'
     let arrs = [
         [||]
         [|0|]
         [|0; 0|]
         [|0; 1|]
       ]
-    fn arrs
+    f arrs
     printf "@]"
 
     [%expect`|hash_fold [||] -> 0x0000000000000000
@@ -1063,7 +1058,7 @@ let%expect_test "cmp" =
         [|0|]
         [||]
       ]
-    let rec fn arr arrs =
+    let rec f2 arr arrs =
         match arrs with
         | [] -> ()
         | hd :: tl ->
@@ -1071,12 +1066,12 @@ let%expect_test "cmp" =
                 printf "cmp %a %a -> %a\n" (pp Uns.pp) arr (pp Uns.pp) arr2
                   Cmp.pp (cmp Uns.cmp arr arr2)
               )
-            fn hd tl
+            f2 hd tl
     let hd, tl = match arrs with
         | hd :: tl -> hd, tl
         | [] -> not_reached ()
     printf "@[<h>"
-    fn hd tl
+    f2 hd tl
     printf "@]"
 
     [%expect`|cmp [||] [|0|] -> Lt
