@@ -152,6 +152,28 @@ a
   [5:5..6:0) : <Tok_whitespace>
   [6:0..6:0) : <Tok_dedent>
   [6:0..6:0) : <Tok_end_of_input>
+``  a
+  b
+      c
+      d
+
+``
+  [1:0..1:2) : <Tok_whitespace>
+  [1:2..1:2) : <Tok_misaligned>
+  [1:2..1:3) : <Tok_uident=Constant "a">
+  [1:3..2:0) : <Tok_whitespace>
+  [2:0..2:2) : <Tok_whitespace>
+  [2:2..2:3) : <Tok_uident=Constant "b">
+  [2:3..3:0) : <Tok_whitespace>
+  [3:0..3:6) : <Tok_whitespace>
+  [3:6..3:6) : <Tok_indent=Malformed ["[3:6..3:6): Missing indent"]>
+  [3:6..3:7) : <Tok_uident=Constant "c">
+  [3:7..4:0) : <Tok_whitespace>
+  [4:0..4:6) : <Tok_whitespace>
+  [4:6..4:7) : <Tok_uident=Constant "d">
+  [4:7..5:0) : <Tok_whitespace>
+  [5:0..5:0) : <Tok_dedent>
+  [5:0..5:0) : <Tok_end_of_input>
 ``a
     b
     c
@@ -184,6 +206,21 @@ a
   [7:9..7:9) : <Tok_dedent>
   [7:9..7:9) : <Tok_dedent>
   [7:9..7:9) : <Tok_end_of_input>
+``a
+    \
+b
+    c``
+  [1:0..1:1) : <Tok_uident=Constant "a">
+  [1:1..2:0) : <Tok_whitespace>
+  [2:0..3:0) : <Tok_whitespace>
+  [3:0..3:0) : <Tok_indent>
+  [3:0..3:1) : <Tok_uident=Constant "b">
+  [3:1..4:0) : <Tok_whitespace>
+  [4:0..4:4) : <Tok_whitespace>
+  [4:4..4:4) : <Tok_line_delim>
+  [4:4..4:5) : <Tok_uident=Constant "c">
+  [4:5..4:5) : <Tok_dedent>
+  [4:5..4:5) : <Tok_end_of_input>
 ``\
     a
     \
@@ -311,6 +348,102 @@ b``
   [4:5..5:0) : <Tok_whitespace>
   [5:0..5:0) : <Tok_dedent>
   [5:0..5:0) : <Tok_end_of_input>
+``a
+    b
+(* Ignore. *) (* ... *) # ...
+    c
+ (* Ignore. *) (* ... *) # ...
+    d
+  (* Ignore. *) (* ... *) # ...
+    e
+   (* Ignore. *) (* ... *) # ...
+    f
+    (* Ignore. *) (* ... *) # ...
+    g
+     (* Ignore. *) (* ... *) # ...
+        h
+            (* Ignore. *) (* ... *) # ...
+        i
+
+``
+  [1:0..1:1) : <Tok_uident=Constant "a">
+  [1:1..2:0) : <Tok_whitespace>
+  [2:0..2:4) : <Tok_whitespace>
+  [2:4..2:4) : <Tok_indent>
+  [2:4..2:5) : <Tok_uident=Constant "b">
+  [2:5..3:0) : <Tok_whitespace>
+  [3:0..3:13) : <Tok_paren_comment>
+  [3:13..3:14) : <Tok_whitespace>
+  [3:14..3:23) : <Tok_paren_comment>
+  [3:23..3:24) : <Tok_whitespace>
+  [3:24..4:0) : <Tok_hash_comment>
+  [4:0..4:4) : <Tok_whitespace>
+  [4:4..4:4) : <Tok_line_delim>
+  [4:4..4:5) : <Tok_uident=Constant "c">
+  [4:5..5:0) : <Tok_whitespace>
+  [5:0..5:1) : <Tok_whitespace>
+  [5:1..5:14) : <Tok_paren_comment>
+  [5:14..5:15) : <Tok_whitespace>
+  [5:15..5:24) : <Tok_paren_comment>
+  [5:24..5:25) : <Tok_whitespace>
+  [5:25..6:0) : <Tok_hash_comment>
+  [6:0..6:4) : <Tok_whitespace>
+  [6:4..6:4) : <Tok_line_delim>
+  [6:4..6:5) : <Tok_uident=Constant "d">
+  [6:5..7:0) : <Tok_whitespace>
+  [7:0..7:2) : <Tok_whitespace>
+  [7:2..7:15) : <Tok_paren_comment>
+  [7:15..7:16) : <Tok_whitespace>
+  [7:16..7:25) : <Tok_paren_comment>
+  [7:25..7:26) : <Tok_whitespace>
+  [7:26..8:0) : <Tok_hash_comment>
+  [8:0..8:4) : <Tok_whitespace>
+  [8:4..8:4) : <Tok_line_delim>
+  [8:4..8:5) : <Tok_uident=Constant "e">
+  [8:5..9:0) : <Tok_whitespace>
+  [9:0..9:3) : <Tok_whitespace>
+  [9:3..9:16) : <Tok_paren_comment>
+  [9:16..9:17) : <Tok_whitespace>
+  [9:17..9:26) : <Tok_paren_comment>
+  [9:26..9:27) : <Tok_whitespace>
+  [9:27..10:0) : <Tok_hash_comment>
+  [10:0..10:4) : <Tok_whitespace>
+  [10:4..10:4) : <Tok_line_delim>
+  [10:4..10:5) : <Tok_uident=Constant "f">
+  [10:5..11:0) : <Tok_whitespace>
+  [11:0..11:4) : <Tok_whitespace>
+  [11:4..11:17) : <Tok_paren_comment>
+  [11:17..11:18) : <Tok_whitespace>
+  [11:18..11:27) : <Tok_paren_comment>
+  [11:27..11:28) : <Tok_whitespace>
+  [11:28..12:0) : <Tok_hash_comment>
+  [12:0..12:4) : <Tok_whitespace>
+  [12:4..12:4) : <Tok_line_delim>
+  [12:4..12:5) : <Tok_uident=Constant "g">
+  [12:5..13:0) : <Tok_whitespace>
+  [13:0..13:5) : <Tok_whitespace>
+  [13:5..13:18) : <Tok_paren_comment>
+  [13:18..13:19) : <Tok_whitespace>
+  [13:19..13:28) : <Tok_paren_comment>
+  [13:28..13:29) : <Tok_whitespace>
+  [13:29..14:0) : <Tok_hash_comment>
+  [14:0..14:8) : <Tok_whitespace>
+  [14:8..14:8) : <Tok_indent>
+  [14:8..14:9) : <Tok_uident=Constant "h">
+  [14:9..15:0) : <Tok_whitespace>
+  [15:0..15:12) : <Tok_whitespace>
+  [15:12..15:25) : <Tok_paren_comment>
+  [15:25..15:26) : <Tok_whitespace>
+  [15:26..15:35) : <Tok_paren_comment>
+  [15:35..15:36) : <Tok_whitespace>
+  [15:36..16:0) : <Tok_hash_comment>
+  [16:0..16:8) : <Tok_whitespace>
+  [16:8..16:8) : <Tok_line_delim>
+  [16:8..16:9) : <Tok_uident=Constant "i">
+  [16:9..17:0) : <Tok_whitespace>
+  [17:0..17:0) : <Tok_dedent>
+  [17:0..17:0) : <Tok_dedent>
+  [17:0..17:0) : <Tok_end_of_input>
 ``a
     b
 (* Ignore. *) (* ... *) # ...
@@ -1517,25 +1650,3 @@ a
   [7:0..7:0) : <Tok_dedent>
   [7:0..7:0) : <Tok_dedent>
   [7:0..7:0) : <Tok_end_of_input>
-``  a
-  b
-      c
-      d
-
-``
-  [1:0..1:2) : <Tok_whitespace>
-  [1:2..1:2) : <Tok_misaligned>
-  [1:2..1:3) : <Tok_uident=Constant "a">
-  [1:3..2:0) : <Tok_whitespace>
-  [2:0..2:2) : <Tok_whitespace>
-  [2:2..2:3) : <Tok_uident=Constant "b">
-  [2:3..3:0) : <Tok_whitespace>
-  [3:0..3:6) : <Tok_whitespace>
-  [3:6..3:6) : <Tok_indent=Malformed ["[3:6..3:6): Missing indent"]>
-  [3:6..3:7) : <Tok_uident=Constant "c">
-  [3:7..4:0) : <Tok_whitespace>
-  [4:0..4:6) : <Tok_whitespace>
-  [4:6..4:7) : <Tok_uident=Constant "d">
-  [4:7..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_dedent>
-  [5:0..5:0) : <Tok_end_of_input>

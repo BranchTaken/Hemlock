@@ -35,12 +35,16 @@ b
     c
 d
 |};
-
   scan_str {|
 a
     b
   c
     d
+|};
+  scan_str {|  a
+  b
+      c
+      d
 |};
   scan_str {|a
     b
@@ -49,6 +53,10 @@ a
     d
         e
         f|};
+  scan_str {|a
+    \
+b
+    c|};
   scan_str {|\
     a
     \
@@ -79,6 +87,23 @@ g
     b
 (* Ignore. *)
     c
+|};
+  scan_str {|a
+    b
+(* Ignore. *) (* ... *) # ...
+    c
+ (* Ignore. *) (* ... *) # ...
+    d
+  (* Ignore. *) (* ... *) # ...
+    e
+   (* Ignore. *) (* ... *) # ...
+    f
+    (* Ignore. *) (* ... *) # ...
+    g
+     (* Ignore. *) (* ... *) # ...
+        h
+            (* Ignore. *) (* ... *) # ...
+        i
 |};
   scan_str {|a
     b
@@ -353,11 +378,6 @@ a
     b
             c
                         d
-|};
-  scan_str {|  a
-  b
-      c
-      d
 |}
 
 let _ = test ()

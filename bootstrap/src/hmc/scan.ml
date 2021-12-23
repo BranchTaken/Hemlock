@@ -2995,8 +2995,11 @@ module Dfa = struct
       (* XXX Refactor to be a convenience function? *)
       AbstractToken.Tok_dedent (malformed (malformation ~base:cursor ~past:cursor "Missing dedent"))
 
-    let other ~retry_state cursor t =
+    let accept_dentation atok cursor t =
       assert Source.Cursor.(t.tok_base = cursor);
+      accept atok cursor t
+
+    let other ~retry_state cursor t =
       let col = match t.line_state with
         | Line_begin
         | Line_whitespace -> Text.Pos.col (Source.Cursor.pos cursor)
@@ -3030,52 +3033,54 @@ module Dfa = struct
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
         retry retry_state {t with block_state=Block_nonempty; line_state=Line_body; level}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
-        accept Tok_line_delim cursor {t with line_state=Line_body}
+        accept_dentation Tok_line_delim cursor {t with line_state=Line_body}
 
       (* Continued expression at current level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
-        accept Tok_misaligned cursor {t with block_state=Block_nonempty; line_state=Line_body}
+        accept_dentation Tok_misaligned cursor
+          {t with block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
-        retry retry_state t
+        retry retry_state {t with line_state=Line_body}
 
       (* New expression at higher level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
-        accept (tok_missing_indent cursor) cursor
+        accept_dentation (tok_missing_indent cursor) cursor
           {t with block_state=Block_nonempty; line_state=Line_body; level=succ t.level}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
-        accept tok_indent cursor {t with line_state=Line_body; level}
+        accept_dentation tok_indent cursor {t with line_state=Line_body; level}
 
       (* New/continued expression at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
         (Aligned|Continued) -> not_reached ()
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
         (Aligned|Continued) ->
-        accept tok_dedent cursor {t with level=pred t.level}
+        accept_dentation tok_dedent cursor {t with level=pred t.level}
 
       (* Misaligned at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
         not_reached ()
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
-        accept (tok_missing_dedent cursor) cursor {t with level=pred t.level}
+        accept_dentation (tok_missing_dedent cursor) cursor {t with level=pred t.level}
 
       (* Misaligned at current level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
-        accept Tok_misaligned cursor {t with block_state=Block_nonempty; line_state=Line_body}
+        accept_dentation Tok_misaligned cursor
+          {t with block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
-        accept Tok_misaligned cursor {t with line_state=Line_body}
+        accept_dentation Tok_misaligned cursor {t with line_state=Line_body}
 
       (* Excess indentation. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_excess_indent,
         (Aligned|Continued|Misaligned) ->
-        accept (tok_missing_indent cursor) cursor
+        accept_dentation (tok_missing_indent cursor) cursor
           {t with block_state=Block_nonempty; level=succ t.level}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _),
         Level_excess_indent, (Aligned|Continued|Misaligned) ->
-        accept (tok_missing_indent cursor) cursor {t with level=succ t.level}
+        accept_dentation (tok_missing_indent cursor) cursor {t with level=succ t.level}
 
       | _, Line_body, _, _ -> not_reached ()
 
@@ -3149,7 +3154,7 @@ module Dfa = struct
         )
       );
     ];
-    default0=Dentation.other_excl ~retry_state:State_lparen;
+    default0=Dentation.other_pexcl ~retry_state:State_lparen;
     eoi0=Dentation.other_excl ~retry_state:State_lparen;
   }
 
