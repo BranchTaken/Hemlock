@@ -153,8 +153,8 @@ module AbstractToken : sig
     | Tok_carrow
 
     | Tok_source_directive of source_directive Rendition.t
-    | Tok_indent of unit Rendition.t
     | Tok_line_delim
+    | Tok_indent of unit Rendition.t
     | Tok_dedent of unit Rendition.t
     | Tok_whitespace
     | Tok_hash_comment

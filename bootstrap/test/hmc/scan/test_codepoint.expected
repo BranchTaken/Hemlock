@@ -33,14 +33,12 @@
 ``
   [1:0..1:1) : <Tok_tick>
   [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:0) : <Tok_line_delim>
   [2:0..2:0) : <Tok_end_of_input>
 ``'\
 
 ``
   [1:0..1:2) : <Tok_tick>
   [1:2..2:0) : <Tok_whitespace>
-  [2:0..2:0) : <Tok_line_delim>
   [2:0..2:0) : <Tok_end_of_input>
 ``' a``
   [1:0..1:1) : <Tok_tick>

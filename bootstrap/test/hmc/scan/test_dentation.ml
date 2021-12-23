@@ -13,7 +13,6 @@ let test () =
   scan_str {|    a
 b
 |};
-
   scan_str {|a
 b
 c
@@ -24,14 +23,12 @@ g
 h
 i
 |};
-
   scan_str {|a
     b
       c
     d
 e
 |};
-
   scan_str {|
 a
 b
@@ -52,6 +49,12 @@ a
     d
         e
         f|};
+  scan_str {|\
+    a
+    \
+b
+    c \
+    d|};
   scan_str {|\
     a\
     b \
@@ -343,6 +346,18 @@ a
         c
             d
                         x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+        a
+    b
+            c
+                        d
+|};
+  scan_str {|  a
+  b
+      c
+      d
 |}
 
 let _ = test ()

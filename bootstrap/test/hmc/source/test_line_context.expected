@@ -118,7 +118,8 @@ ctokens=[
     {atoken=<Tok_whitespace>; source=[Foo.hm:2:5..Foo.hm:2:6)}
     {atoken=<Tok_eq>; source=[Foo.hm:2:6..Foo.hm:2:7)}
     {atoken=<Tok_whitespace>; source=[Foo.hm:2:7..Foo.hm:3:0)}
-    {atoken=<Tok_indent>; source=[Foo.hm:3:0..Foo.hm:3:4)}
+    {atoken=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)}
+    {atoken=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)}
     {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:3:4..Foo.hm:3:6)}
     {atoken=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)}
   ]
@@ -145,7 +146,8 @@ ctokens=[
     {atoken=<Tok_whitespace>; source=[Foo.hm:2:5..Foo.hm:2:6)}
     {atoken=<Tok_eq>; source=[Foo.hm:2:6..Foo.hm:2:7)}
     {atoken=<Tok_whitespace>; source=[Foo.hm:2:7..Foo.hm:3:0)}
-    {atoken=<Tok_indent>; source=[Foo.hm:3:0..Foo.hm:3:4)}
+    {atoken=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)}
+    {atoken=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)}
     {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:3:4..Foo.hm:3:6)}
     {atoken=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)}
   ]
@@ -173,7 +175,8 @@ ctokens=[
     {atoken=<Tok_eq>; source=[Foo.hm:2:6..Foo.hm:2:7)}
     {atoken=<Tok_source_directive=Constant {path=Some ("Bar.hm"); line=None; col=None})>; source=[2:7..2:18)}
     {atoken=<Tok_whitespace>; source=[Bar.hm:1:0..Bar.hm:2:0)}
-    {atoken=<Tok_indent>; source=[Bar.hm:2:0..Bar.hm:2:4)}
+    {atoken=<Tok_whitespace>; source=[Bar.hm:2:0..Bar.hm:2:4)}
+    {atoken=<Tok_indent>; source=[Bar.hm:2:4..Bar.hm:2:4)}
     {atoken=<Tok_u64=Constant 42>; source=[Bar.hm:2:4..Bar.hm:2:6)}
     {atoken=<Tok_whitespace>; source=[Bar.hm:2:6..Bar.hm:2:7)}
     {atoken=<Tok_plus_op="+">; source=[Bar.hm:2:7..Bar.hm:2:8)}

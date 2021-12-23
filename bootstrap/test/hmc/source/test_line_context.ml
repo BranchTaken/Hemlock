@@ -81,6 +81,6 @@ let x =
     42|} 4L 7L;
   contextualize {|[:"Foo.hm"]\
 let x =[:"Bar.hm"]
-    42 + 13|} 4L 10L
+    42 + 13|} 4L 11L
 
 let _ = test ()

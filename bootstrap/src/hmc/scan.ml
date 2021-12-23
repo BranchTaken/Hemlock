@@ -201,8 +201,8 @@ module AbstractToken = struct
     | Tok_carrow
 
     | Tok_source_directive of source_directive Rendition.t
-    | Tok_indent of unit Rendition.t
     | Tok_line_delim
+    | Tok_indent of unit Rendition.t
     | Tok_dedent of unit Rendition.t
     | Tok_whitespace
     | Tok_hash_comment
@@ -333,8 +333,8 @@ module AbstractToken = struct
       | Tok_source_directive rendition ->
         formatter |> Fmt.fmt "Tok_source_directive=" |> (Rendition.pp pp_source_directive) rendition
         |> Fmt.fmt ")"
-      | Tok_indent rendition -> formatter |> Rendition.pp_unit "Tok_indent" rendition
       | Tok_line_delim -> formatter |> Fmt.fmt "Tok_line_delim"
+      | Tok_indent rendition -> formatter |> Rendition.pp_unit "Tok_indent" rendition
       | Tok_dedent rendition -> formatter |> Rendition.pp_unit "Tok_dedent" rendition
       | Tok_whitespace -> formatter |> Fmt.fmt "Tok_whitespace"
       | Tok_hash_comment -> formatter |> Fmt.fmt "Tok_hash_comment"
@@ -480,18 +480,40 @@ module View = struct
     | Some (cp, cursor') -> Some (cp, {ppcursor=pcursor; pcursor=cursor; cursor=cursor'})
 end
 
+type block_state =
+  | Block_primal
+  (** At beginning of block, no non-whitespace/comment tokens yet scanned. *)
+
+  | Block_nonempty
+  (** At least one non-whitespace/comment token scanned in block. *)
+
+let pp_block_state block_state formatter =
+  match block_state with
+  | Block_primal -> formatter |> Fmt.fmt "Block_primal"
+  | Block_nonempty -> formatter |> Fmt.fmt "Block_nonempty"
+
 type line_state =
-  | Line_dentation
-  | Line_delim
+  | Line_begin
+  (** At beginning of line (column 0). Dentation adjustment may be required. *)
+
+  | Line_whitespace
+  (** Just after leading whitespace token. Dentation adjustment may be required. *)
+
+  | Line_start_col of uns
+  (** First non-whitspace is a paren comment or bslash-nl continuation starting at specified column;
+      no non-whitespace/comment tokens scanned yet, but subsequent whitespace and/or paren comments
+      may have been scanned. Dentation adjustment may be required, but if so, the specified starting
+      column is used rather than that of the first non-whitespace/comment token. *)
+
   | Line_body
+  (** Normal (non-dentation) scanning mode. *)
 
 let pp_line_state line_state formatter =
-  formatter
-  |> Fmt.fmt (match line_state with
-    | Line_dentation -> "Line_dentation"
-    | Line_delim -> "Line_delim"
-    | Line_body -> "Line_body"
-  )
+  match line_state with
+  | Line_begin -> formatter |> Fmt.fmt "Line_begin"
+  | Line_whitespace -> formatter |> Fmt.fmt "Line_whitespace"
+  | Line_start_col col -> formatter |> Fmt.fmt "Line_start_col " |> Uns.pp col
+  | Line_body -> formatter |> Fmt.fmt "Line_body"
 
 (* Istring_state determines what starting state to feed to Dag.start. States may be skipped, e.g. if
  * justification is not specified, but ordering through the spec/expr states is strict. Upon
@@ -528,6 +550,7 @@ let pp_istring_state istring_state formatter =
 
 type t = {
   tok_base: Source.Cursor.t;
+  block_state: block_state;
   line_state: line_state;
   istring_state: istring_state list;
   level: uns;
@@ -536,7 +559,8 @@ type t = {
 let init text =
   {
     tok_base=Source.Cursor.hd (Source.init text);
-    line_state=Line_dentation;
+    block_state=Block_primal;
+    line_state=Line_begin;
     istring_state=[];
     level=0L;
   }
@@ -544,6 +568,7 @@ let init text =
 let pp t formatter =
   formatter
   |> Fmt.fmt "{tok_base=" |> Text.Pos.pp (Source.Cursor.pos t.tok_base)
+  |> Fmt.fmt "; block_state=" |> pp_block_state t.block_state
   |> Fmt.fmt "; line_state=" |> pp_line_state t.line_state
   |> Fmt.fmt "; istring_state=" |> (List.pp pp_istring_state) t.istring_state
   |> Fmt.fmt "; level=" |> Uns.pp t.level
@@ -593,9 +618,9 @@ let accept_istring_trans trans tok _ppcursor _pcursor cursor t =
    (ConcreteToken.init tok source)
 *)
 
-let accept_line_delim atoken cursor t =
+let accept_line_break atoken cursor t =
   let source = source_at cursor t in
-  {t with tok_base=cursor; line_state=Line_delim}, (ConcreteToken.init atoken source)
+  {t with tok_base=cursor; line_state=Line_begin}, (ConcreteToken.init atoken source)
 
 (***************************************************************************************************
  * Convenience routines for reporting malformations. *)
@@ -679,18 +704,9 @@ let out_of_range_real base past =
 
 (**************************************************************************************************)
 
-let accept_dentation atoken cursor t =
-  accept atoken cursor {t with line_state=Line_body}
-
-let end_of_input cursor t =
-  match t.line_state, t.level with
-  | Line_delim, 0L -> accept_dentation Tok_line_delim cursor t
-  | _, 0L -> accept Tok_end_of_input cursor t
-  | _ -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=Uns.pred t.level}
-
 let hash_comment _ppcursor _pcursor cursor t =
   let accept_hash_comment cursor t = begin
-    accept_line_delim Tok_hash_comment cursor t
+    accept_line_break Tok_hash_comment cursor t
   end in
   let rec fn cursor t = begin
     match Source.Cursor.next_opt cursor with
@@ -2229,6 +2245,10 @@ module State = struct
     | State_src_line of Src_line.t
     | State_src_line_colon of Src_line_colon.t
     | State_src_col of Src_col.t
+    | State_dentation_start
+    | State_dentation_lparen
+    | State_dentation_space
+    | State_dentation_bslash
     | State_whitespace
     | State_whitespace_bslash
     | State_hash_comment
@@ -2269,6 +2289,10 @@ module State = struct
     | State_src_line v -> formatter |> Fmt.fmt "State_line " |> Src_line.pp v
     | State_src_line_colon v -> formatter |> Fmt.fmt "State_line_colon " |> Src_line_colon.pp v
     | State_src_col v -> formatter |> Fmt.fmt "State_col " |> Src_col.pp v
+    | State_dentation_start -> formatter |> Fmt.fmt "State_dentation_start"
+    | State_dentation_lparen -> formatter |> Fmt.fmt "State_dentation_lparen"
+    | State_dentation_space -> formatter |> Fmt.fmt "State_dentation_space"
+    | State_dentation_bslash -> formatter |> Fmt.fmt "State_dentation_bslash"
     | State_whitespace -> formatter |> Fmt.fmt "State_whitespace"
     | State_whitespace_bslash -> formatter |> Fmt.fmt "State_whitespace_bslash"
     | State_hash_comment -> formatter |> Fmt.fmt "State_hash_comment"
@@ -2285,6 +2309,7 @@ module State = struct
     | State_rditto_start -> formatter |> Fmt.fmt "State_rditto_start"
 
   let start = State_start
+  let dentation_start = State_dentation_start
   let isubstring_start = State_isubstring_start {accum=CodepointAccum.empty}
   let spec_start = State_spec_start
   let rditto_start = State_rditto_start
@@ -2418,13 +2443,14 @@ module Dfa = struct
     let source_slice = Source.Slice.of_cursors ~base ~past in
     {t with tok_base=cursor'}, Accept (ConcreteToken.init atoken source_slice)
 
-  let accept_line_delim atoken cursor t =
+  let accept_line_break atoken cursor t =
     let source = source_at cursor t in
-    {t with tok_base=cursor; line_state=Line_delim}, Accept (ConcreteToken.init atoken source)
+    {t with tok_base=cursor; line_state=Line_begin}, Accept (ConcreteToken.init atoken source)
 
-  let accept_line_delim_incl atoken View.{cursor; _} t =
-    accept_line_delim atoken cursor t
+  let accept_line_break_incl atoken View.{cursor; _} t =
+    accept_line_break atoken cursor t
 
+  (* XXX Remove? *)
   let accept_dentation atoken View.{cursor; _} t =
     accept atoken cursor {t with line_state=Line_body}
 
@@ -2453,7 +2479,7 @@ module Dfa = struct
         ("\\", advance State_bslash);
         ("&", accept_incl Tok_amp);
         ("!", accept_incl Tok_xmark);
-        ("\n", accept_line_delim_incl Tok_whitespace);
+        ("\n", accept_line_break_incl Tok_whitespace);
         ("~", advance State_tilde);
         ("?", advance State_qmark);
         ("*", advance State_star);
@@ -2488,9 +2514,9 @@ module Dfa = struct
       default0=accept_incl Tok_error;
       eoi0=(fun view t ->
         match t.line_state, t.level with
-        | Line_delim, 0L -> accept_dentation Tok_line_delim view t
+        | Line_begin, 0L -> accept_dentation Tok_line_delim view t
         | _, 0L -> accept_incl Tok_end_of_input view t
-        | _ -> accept_dentation (Tok_dedent (Constant ())) view {t with level=Uns.pred t.level}
+        | _ -> accept_dentation (Tok_dedent (Constant ())) view {t with level=pred t.level}
       );
     }
 
@@ -2946,11 +2972,220 @@ module Dfa = struct
       );
     }
 
+  module Dentation = struct
+    type alignment =
+      | Aligned
+      | Continued
+      | Misaligned
+
+    type level_change =
+      | Level_dedent
+      | Level_stable
+      | Level_indent
+      | Level_excess_indent
+
+    let tok_indent = AbstractToken.Tok_indent (Constant ())
+    let tok_dedent = AbstractToken.Tok_dedent (Constant ())
+
+    let tok_missing_indent cursor =
+      (* XXX Refactor to be a convenience function? *)
+      AbstractToken.Tok_indent (malformed (malformation ~base:cursor ~past:cursor "Missing indent"))
+
+    let tok_missing_dedent cursor =
+      (* XXX Refactor to be a convenience function? *)
+      AbstractToken.Tok_dedent (malformed (malformation ~base:cursor ~past:cursor "Missing dedent"))
+
+    let other ~retry_state cursor t =
+      assert Source.Cursor.(t.tok_base = cursor);
+      let col = match t.line_state with
+        | Line_begin
+        | Line_whitespace -> Text.Pos.col (Source.Cursor.pos cursor)
+        | Line_start_col col -> col
+        | Line_body -> not_reached ()
+      in
+      (* Compute level an alignement such that the misaligned cases rounded to the nearest level.
+      *)
+      let level, alignment = match col / 4L, col % 4L with
+        | floor_level, 0L -> floor_level, Aligned
+        | floor_level, 1L -> floor_level, Misaligned
+        | floor_level, 2L -> floor_level, Continued
+        | floor_level, 3L -> succ floor_level, Misaligned
+        | _ -> not_reached ()
+      in
+      let level_change = match Uns.cmp t.level level with
+        | Lt -> begin
+            match succ t.level = level with
+            | true -> Level_indent
+            | false -> Level_excess_indent
+          end
+        | Eq -> Level_stable
+        | Gt -> Level_dedent
+      in
+      (* The following patterns incrementally handle all dentation/alignment cases. Malformed tokens
+       * are synthesized in error cases such that the cursor does not advance, but the level is
+       * incrementally adjusted to converge. The overall result is that Tok_indent/Tok_dedent
+       * nesting is always well formed. *)
+      match t.block_state, t.line_state, level_change, alignment with
+      (* New expression at same level. *)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
+        retry retry_state {t with block_state=Block_nonempty; line_state=Line_body; level}
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
+        accept Tok_line_delim cursor {t with line_state=Line_body}
+
+      (* Continued expression at current level. *)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
+        accept Tok_misaligned cursor {t with block_state=Block_nonempty; line_state=Line_body}
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
+        retry retry_state t
+
+      (* New expression at higher level. *)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
+        accept (tok_missing_indent cursor) cursor
+          {t with block_state=Block_nonempty; line_state=Line_body; level=succ t.level}
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
+        accept tok_indent cursor {t with line_state=Line_body; level}
+
+      (* New/continued expression at lower level. *)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
+        (Aligned|Continued) -> not_reached ()
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
+        (Aligned|Continued) ->
+        accept tok_dedent cursor {t with level=pred t.level}
+
+      (* Misaligned at lower level. *)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
+        not_reached ()
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
+        accept (tok_missing_dedent cursor) cursor {t with level=pred t.level}
+
+      (* Misaligned at current level. *)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
+        accept Tok_misaligned cursor {t with block_state=Block_nonempty; line_state=Line_body}
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
+        accept Tok_misaligned cursor {t with line_state=Line_body}
+
+      (* Excess indentation. *)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
+        (Continued|Misaligned)
+      | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_excess_indent,
+        (Aligned|Continued|Misaligned) ->
+        accept (tok_missing_indent cursor) cursor
+          {t with block_state=Block_nonempty; level=succ t.level}
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
+        (Continued|Misaligned)
+      | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _),
+        Level_excess_indent, (Aligned|Continued|Misaligned) ->
+        accept (tok_missing_indent cursor) cursor {t with level=succ t.level}
+
+      | _, Line_body, _, _ -> not_reached ()
+
+    let other_excl ~retry_state View.{pcursor; _} t =
+      other ~retry_state pcursor t
+
+    let other_pexcl ~retry_state View.{ppcursor; _} t =
+      other ~retry_state ppcursor t
+
+    let accept_whitespace cursor t =
+      assert Source.Cursor.(t.tok_base < cursor);
+      match t.line_state with
+      | Line_begin -> accept Tok_whitespace cursor {t with line_state=Line_whitespace}
+      | Line_start_col _ -> accept Tok_whitespace cursor t
+      | Line_whitespace (* Consecutive whitespace tokens is impossible. *)
+      | Line_body -> not_reached ()
+
+    let accept_whitespace_incl View.{cursor; _} t =
+      accept_whitespace cursor t
+
+    let accept_whitespace_excl View.{pcursor; _} t =
+      accept_whitespace pcursor t
+
+    let accept_whitespace_pexcl ~retry_state (View.{ppcursor; _} as view) t =
+      match Source.Cursor.(t.tok_base < ppcursor) with
+      | false -> other_pexcl ~retry_state view t
+      | true -> accept_whitespace ppcursor t
+
+    (* XXX Refactor out. *)
+    let wrap_legacy line_state f View.{ppcursor; pcursor; cursor} t =
+      let t', tok = f ppcursor pcursor cursor {t with line_state} in
+      t', Accept tok
+  end
+
+  let node0_dentation_start = {
+    edges0=map_of_cps_alist [
+      (" ", advance State_dentation_space);
+      ("#", Dentation.wrap_legacy Line_body hash_comment);
+      ("(", advance State_dentation_lparen);
+      ("\\", advance State_dentation_bslash);
+      ("\n", (fun view t ->
+          match t.line_state with
+          | Line_begin -> accept_incl Tok_whitespace view t
+          | Line_whitespace
+          | Line_start_col _ -> accept_line_break_incl Tok_whitespace view t
+          | Line_body -> not_reached ()
+        )
+      );
+    ];
+    default0=Dentation.other_excl ~retry_state:State_start;
+    eoi0=(fun view t ->
+      match t.line_state, t.level with
+      | (Line_begin|Line_whitespace|Line_start_col _), 0L -> accept_incl Tok_end_of_input view t
+      | (Line_begin|Line_whitespace|Line_start_col _), t_level ->
+        accept_incl (Tok_dedent (Constant ())) view {t with level=Uns.pred t_level}
+      | _ -> not_reached ()
+    );
+  }
+
+  let node0_dentation_lparen = {
+    edges0=map_of_cps_alist [
+      ("*", (fun (View.{ppcursor; _} as view) t ->
+          match t.line_state with
+          | Line_begin
+          | Line_whitespace -> begin
+              let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
+              Dentation.wrap_legacy (Line_start_col col) paren_comment view t
+            end
+          | Line_start_col _ -> wrap_legacy paren_comment view t
+          | Line_body -> not_reached ()
+        )
+      );
+    ];
+    default0=Dentation.other_excl ~retry_state:State_lparen;
+    eoi0=Dentation.other_excl ~retry_state:State_lparen;
+  }
+
+  let node0_dentation_space = {
+    edges0=map_of_cps_alist [
+      (" ", advance State_dentation_space);
+      ("\\", advance State_dentation_bslash);
+      ("\n", accept_line_break_incl Tok_whitespace);
+    ];
+    default0=Dentation.accept_whitespace_excl;
+    eoi0=Dentation.accept_whitespace_incl;
+  }
+
+  let node0_dentation_bslash = {
+    edges0=map_of_cps_alist [
+      ("\n", (fun (View.{ppcursor; _} as view) t ->
+          match t.line_state with
+          | Line_begin -> begin
+              let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
+              advance State_dentation_space view {t with line_state=(Line_start_col col)}
+            end
+          | Line_start_col _ -> advance State_dentation_space view t
+          | Line_whitespace
+          | Line_body -> not_reached ()
+        )
+      );
+    ];
+    default0=Dentation.accept_whitespace_pexcl ~retry_state:State_bslash;
+    eoi0=Dentation.accept_whitespace_pexcl ~retry_state:State_bslash;
+  }
+
   let node0_whitespace = {
     edges0=map_of_cps_alist [
       (" ", advance State_whitespace);
       ("\\", advance State_whitespace_bslash);
-      ("\n", accept_line_delim_incl Tok_whitespace);
+      ("\n", accept_line_break_incl Tok_whitespace);
     ];
     default0=accept_excl Tok_whitespace;
     eoi0=accept_incl Tok_whitespace;
@@ -2966,10 +3201,10 @@ module Dfa = struct
 
   let node0_hash_comment = {
     edges0=map_of_cps_alist [
-      ("\n", accept_line_delim_incl Tok_hash_comment);
+      ("\n", accept_line_break_incl Tok_hash_comment);
     ];
     default0=advance State_hash_comment;
-    eoi0=accept_line_delim_incl Tok_hash_comment;
+    eoi0=accept_line_break_incl Tok_hash_comment;
   }
 
   let node1_isubstring_start =
@@ -3203,6 +3438,10 @@ module Dfa = struct
     | State_src_line v -> act1 trace node1_src_line v view t
     | State_src_line_colon v -> act1 trace node1_src_line_colon v view t
     | State_src_col v -> act1 trace node1_src_col v view t
+    | State_dentation_start -> act0 trace node0_dentation_start view t
+    | State_dentation_lparen -> act0 trace node0_dentation_lparen view t
+    | State_dentation_space -> act0 trace node0_dentation_space view t
+    | State_dentation_bslash -> act0 trace node0_dentation_bslash view t
     | State_whitespace -> act0 trace node0_whitespace view t
     | State_whitespace_bslash -> act0 trace node0_whitespace_bslash view t
     | State_hash_comment -> act0 trace node0_hash_comment view t
@@ -3245,174 +3484,14 @@ module Dfa = struct
     | t', Accept token -> t', token
 end
 
-module Dentation : sig
-  val start: Source.Cursor.t -> t -> t * ConcreteToken.t
-end = struct
-  type paren_comment_lookahead_result =
-    | LineExpr
-    | LineNoop of t * ConcreteToken.t
-
-  type alignment =
-    | Aligned
-    | Continued
-    | Misaligned
-
-  open AbstractToken
-  let tok_indent = Tok_indent (Constant ())
-  let tok_dedent = Tok_dedent (Constant ())
-  let tok_indent_absent t =
-    Tok_indent (malformed (malformation ~base:t.tok_base ~past:t.tok_base "Indent absent"))
-  let tok_dedent_absent t =
-    Tok_dedent (malformed (malformation ~base:t.tok_base ~past:t.tok_base "Dedent absent"))
-
-  let rec next cursor t =
-    match Source.Cursor.next_opt cursor with
-    | None -> begin
-        match t.line_state with
-        | Line_dentation -> accept Tok_whitespace cursor t
-        | Line_delim -> accept_dentation Tok_line_delim cursor t
-        | Line_body -> not_reached ()
-      end
-    | Some (cp, cursor') -> begin
-        match cp with
-        | cp when Codepoint.(cp = of_char ' ') -> next cursor' t
-        | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
-        | _ -> begin
-            let col = Text.Pos.col (Source.Cursor.pos cursor) in
-            (* Compute level and alignement such that the misaligned cases rounded to the nearest
-             * level. *)
-            let level, alignment = match col / 4L, col % 4L with
-              | floor_level, 0L -> floor_level, Aligned
-              | floor_level, 1L -> floor_level, Misaligned
-              | floor_level, 2L -> floor_level, Continued
-              | floor_level, 3L -> succ floor_level, Misaligned
-              | _ -> not_reached ()
-            in
-            (* The following patterns incrementally handle all dentation/alignment cases. Malformed
-             * tokens are synthesized in error cases such that the cursor does not advance, but the
-             * level is incrementally adjusted to converge. The overall result is that
-             * Tok_indent/Tok_dedent nesting is always well formed. *)
-            match alignment with
-            (* New expression at same level. *)
-            | Aligned when t.level = level -> begin
-                match t.line_state with
-                | Line_dentation -> Dfa.next State.start {t with line_state=Line_body}
-                | Line_delim -> accept_dentation Tok_line_delim cursor t
-                | Line_body -> not_reached ()
-              end
-
-            (* Continued expression at current level. *)
-            | Continued when t.level = level ->
-              accept_dentation Tok_whitespace cursor t
-
-            (* New expression at higher level. *)
-            | Aligned when succ t.level = level ->
-              accept_dentation tok_indent cursor {t with level}
-
-            (* Continued expression at lower level. *)
-            | Continued when t.level > succ level ->
-              accept tok_dedent t.tok_base {t with level=pred t.level}
-            | Continued when t.level = succ level ->
-              accept_dentation tok_dedent cursor {t with level}
-
-            (* New expression at lower level. *)
-            | Aligned when t.level > succ level ->
-              accept tok_dedent t.tok_base {t with level=pred t.level}
-            | Aligned when t.level = succ level ->
-              accept_dentation tok_dedent cursor {t with level}
-
-            (* Misaligned at lower level. *)
-            | Misaligned when t.level > level ->
-              accept (tok_dedent_absent t) t.tok_base {t with level=pred t.level}
-
-            (* Misaligned at current level. *)
-            | Misaligned when t.level = level ->
-              accept_dentation Tok_misaligned cursor t
-
-            (* Excess aligned indentation. *)
-            | Aligned when succ t.level < level ->
-              accept (tok_indent_absent t) t.tok_base {t with level=succ t.level}
-            (* Misaligned at higher level. *)
-            | Misaligned when t.level < level ->
-              accept (tok_indent_absent t) t.tok_base {t with level=succ t.level}
-
-            (* Continued expression at higher level. *)
-            | Continued when t.level < level ->
-              accept (tok_indent_absent t) t.tok_base {t with level=succ t.level}
-
-            | _ -> not_reached ()
-          end
-      end
-
-  (* Lines comprising only whitespace and/or comments are ignored with regard to indentation.
-   * Leading paren comments are problematic in that we must look ahead far enough to determine
-   * whether the line contains an expression. While this could require looking ahead an arbitrary
-   * number of tokens, in the overwhelmingly common case the leading paren comment is immediately
-   * followed by line-delimiting whitespace. In the LineNoop case the leading paren comment only
-   * gets scanned once, and therefore the line-delimiting whitespace token is the only token to be
-   * scanned twice in the common case. *)
-  let paren_comment_lookahead ppcursor pcursor cursor t =
-    let rec fn t = begin
-      let t', ctoken = Dfa.next State.start t in
-      match ctoken.atoken, t'.line_state with
-      | Tok_end_of_input, _
-      | Tok_hash_comment, _
-      | Tok_whitespace, Line_delim -> true
-      | Tok_paren_comment _, _
-      | Tok_whitespace, Line_dentation -> fn t'
-      | Tok_whitespace, Line_body -> not_reached ()
-      | _ -> false
-    end in
-    match paren_comment ppcursor pcursor cursor t with
-    | t', ctoken -> begin
-        match fn {t' with line_state=Line_dentation} with
-        | false -> LineExpr
-        | true -> LineNoop ({t' with line_state=Line_body}, ctoken)
-      end
-
-  let other cursor t =
-    match t.level with
-    | 0L -> begin
-        match t.line_state with
-        | Line_dentation -> Dfa.next State.start {t with line_state=Line_body}
-        | Line_delim -> accept_dentation Tok_line_delim cursor t
-        | Line_body -> not_reached ()
-      end
-    | 1L -> accept_dentation (Tok_dedent (Constant ())) cursor {t with level=0L}
-    | _ -> accept (Tok_dedent (Constant ())) cursor {t with level=pred t.level}
-
-  let start cursor t =
-    match Source.Cursor.next_opt cursor with
-    | None -> end_of_input cursor t
-    | Some (cp, cursor') -> begin
-        match cp with
-        | cp when Codepoint.(cp = of_char ' ') -> next cursor' t
-        | cp when Codepoint.(cp = nl) -> accept_line_delim Tok_whitespace cursor' t
-        | cp when Codepoint.(cp = of_char '#') -> hash_comment cursor cursor cursor' t
-        | cp when Codepoint.(cp = of_char '(') -> begin
-            match Source.Cursor.next_opt cursor' with
-            | None -> other cursor t
-            | Some (cp, cursor'') -> begin
-                match cp with
-                | cp when Codepoint.(cp = of_char '*') -> begin
-                    match paren_comment_lookahead cursor cursor' cursor'' t with
-                    | LineExpr -> other cursor t
-                    | LineNoop (t', ctoken) -> t', ctoken
-                  end
-                | _ -> other cursor t
-              end
-          end
-        | _ -> other cursor t
-      end
-end
-
 let next t =
   assert (Istring_expr_value t.tok_base |> (fun _ -> true)); (* XXX Remove. *)
   let trace = None in
   let _trace = Some true in
   match t.line_state, t.istring_state with
-  | Line_dentation, _
-  | Line_delim, _ -> Dentation.start t.tok_base t
+  | Line_begin, _
+  | Line_whitespace, _
+  | Line_start_col _, _ -> Dfa.next ?trace State.dentation_start t
   | Line_body, [] -> Dfa.next ?trace State.start t
   | Line_body, istring_state :: _ -> begin
       match istring_state with
