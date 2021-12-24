@@ -397,42 +397,6 @@ module AbstractToken = struct
       | Tok_error -> formatter |> Fmt.fmt "Tok_error"
     )
     |> Fmt.fmt ">"
-
-  let keyword_map = Map.of_alist (module String) [
-    ("and", Tok_and);
-    ("also", Tok_also);
-    ("as", Tok_as);
-    ("conceal", Tok_conceal);
-    ("effect", Tok_effect);
-    ("else", Tok_else);
-    ("expose", Tok_expose);
-    ("external", Tok_external);
-    ("false", Tok_false);
-    ("fn", Tok_fn);
-    ("function", Tok_function);
-    ("if", Tok_if);
-    ("import", Tok_import);
-    ("include", Tok_include);
-    ("lazy", Tok_lazy);
-    ("let", Tok_let);
-    ("match", Tok_match);
-    ("mutability", Tok_mutability);
-    ("of", Tok_of);
-    ("open", Tok_open);
-    ("or", Tok_or);
-    ("rec", Tok_rec);
-    ("then", Tok_then);
-    ("true", Tok_true);
-    ("type", Tok_type);
-    ("val", Tok_val);
-    ("when", Tok_when);
-    ("with", Tok_with);
-  ]
-
-  let of_uident_str uident_str =
-    match Map.get uident_str keyword_map with
-    | Some t -> t
-    | None -> Tok_uident (Constant uident_str)
 end
 
 module ConcreteToken = struct
@@ -708,68 +672,9 @@ let out_of_range_real base past =
 let operator_cps = "-+*/%@^$<=>|:.~?"
 let operator_set = set_of_cps operator_cps
 
-let ident_set = set_of_cps "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'"
-
-let ident ~f_accept cursor t =
-  let rec fn cursor t = begin
-    match Source.Cursor.next_opt cursor with
-    | None -> f_accept cursor t
-    | Some (cp, cursor') -> begin
-        match Set.mem cp ident_set with
-        | true -> fn cursor' t
-        | false -> f_accept cursor t
-      end
-  end in
-  fn cursor t
-
-let accept_uident cursor t =
-  let uident_str = str_of_cursor cursor t in
-  accept (AbstractToken.of_uident_str uident_str) cursor t
-
-let uident _ppcursor _pcursor cursor t =
-  ident ~f_accept:accept_uident cursor t
-
-let malformed_uident _ppcursor _pcursor cursor t =
-  ident ~f_accept:(fun cursor t ->
-    let ident_str = str_of_cursor cursor t in
-    let description =
-      String.Fmt.empty
-      |> Fmt.fmt "Identifier "
-      |> Fmt.fmt ident_str
-      |> Fmt.fmt " lacks _*[A-Za-z] prefix"
-      |> Fmt.to_string
-    in
-    let mal = (malformed (malformation ~base:t.tok_base ~past:cursor description)) in
-    accept (Tok_uident mal) cursor t
-  ) cursor t
-
-let cident _ppcursor _pcursor cursor t =
-  ident ~f_accept:(fun cursor t ->
-    let cident_str = str_of_cursor cursor t in
-    accept (Tok_cident cident_str) cursor t
-  ) cursor t
-
-let uscore_ident_map = map_of_cps_alist [
-  ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", cident);
-  ("abcdefghijklmnopqrstuvwxyz", uident);
-  ("0123456789'", malformed_uident);
-]
-
-let uscore_ident _ppcursor pcursor cursor t =
-  let rec fn cursor t = begin
-    match Source.Cursor.next_opt cursor with
-    | None -> accept_uident cursor t
-    | Some (cp, cursor') -> begin
-        match Map.get cp uscore_ident_map with
-        | Some ident -> ident pcursor cursor cursor' t
-        | None -> begin
-            match cp with
-            | cp when Codepoint.(cp = of_char '_') -> fn cursor' t
-            | _ -> accept_uident cursor t
-          end
-      end
-  end in
-  fn cursor t
+let ident_cident_cps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+let ident_uident_cps = "abcdefghijklmnopqrstuvwxyz"
+let ident_malformed_cps = "0123456789'"
 
 let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past =
   Option.value_map (Nat.to_uns_opt nat)
@@ -2148,6 +2053,10 @@ module State = struct
     | State_btick
     | State_0
     | State_0_dot
+    | State_ident_uscore
+    | State_ident_cident
+    | State_ident_uident
+    | State_ident_mal
     | State_operator of Operator.t
     | State_paren_comment_body of Paren_comment_body.t
     | State_paren_comment_lparen of Paren_comment_lparen.t
@@ -2194,6 +2103,10 @@ module State = struct
     | State_btick -> formatter |> Fmt.fmt "State_btick"
     | State_0 -> formatter |> Fmt.fmt "State_0"
     | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
+    | State_ident_uscore -> formatter |> Fmt.fmt "State_ident_uscore"
+    | State_ident_cident -> formatter |> Fmt.fmt "State_ident_cident"
+    | State_ident_uident -> formatter |> Fmt.fmt "State_ident_uident"
+    | State_ident_mal -> formatter |> Fmt.fmt "State_ident_mal"
     | State_operator v -> formatter |> Fmt.fmt "State_operator " |> Operator.pp v
     | State_paren_comment_body v ->
       formatter |> Fmt.fmt "State_paren_comment_body " |> Paren_comment_body.pp v
@@ -2427,8 +2340,8 @@ module Dfa = struct
         (" ", advance State_whitespace);
         ("#", advance State_hash_comment);
         ("_", advance State_uscore);
-        ("abcdefghijklmnopqrstuvwxyz", wrap_legacy uident);
-        ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", wrap_legacy cident);
+        ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", advance State_ident_cident);
+        ("abcdefghijklmnopqrstuvwxyz", advance State_ident_uident);
         ("'", wrap_legacy Codepoint_.codepoint);
         ("\"", wrap_legacy (accept_istring_push Istring_interp Tok_istring_lditto));
         ("`", advance State_btick);
@@ -2550,9 +2463,10 @@ module Dfa = struct
 
   let node0_uscore = {
     edges0=map_of_cps_alist [
-      ("abcdefghijklmnopqrstuvwxyz0123456789'", wrap_legacy uident);
-      ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", wrap_legacy cident);
-      ("_", wrap_legacy uscore_ident);
+      ("_", advance State_ident_uscore);
+      (ident_cident_cps, advance State_ident_cident);
+      (ident_uident_cps, advance State_ident_uident);
+      (ident_malformed_cps, advance State_ident_mal);
     ];
     default0=accept_excl Tok_uscore;
     eoi0=accept_incl Tok_uscore;
@@ -2598,6 +2512,117 @@ module Dfa = struct
     default0=wrap_legacy Real.zero_frac;
     eoi0=accept_incl Real.zero;
   }
+
+  module Ident = struct
+    let ident_cps = String.concat ["_"; ident_cident_cps; ident_uident_cps; ident_malformed_cps]
+    let keyword_map = Map.of_alist (module String) [
+      ("and", AbstractToken.Tok_and);
+      ("also", Tok_also);
+      ("as", Tok_as);
+      ("conceal", Tok_conceal);
+      ("effect", Tok_effect);
+      ("else", Tok_else);
+      ("expose", Tok_expose);
+      ("external", Tok_external);
+      ("false", Tok_false);
+      ("fn", Tok_fn);
+      ("function", Tok_function);
+      ("if", Tok_if);
+      ("import", Tok_import);
+      ("include", Tok_include);
+      ("lazy", Tok_lazy);
+      ("let", Tok_let);
+      ("match", Tok_match);
+      ("mutability", Tok_mutability);
+      ("of", Tok_of);
+      ("open", Tok_open);
+      ("or", Tok_or);
+      ("rec", Tok_rec);
+      ("then", Tok_then);
+      ("true", Tok_true);
+      ("type", Tok_type);
+      ("val", Tok_val);
+      ("when", Tok_when);
+      ("with", Tok_with);
+    ]
+
+    let accept_uident cursor t =
+      let uident_str = str_of_cursor cursor t in
+      let tok = match Map.get uident_str keyword_map with
+        | Some tok -> tok
+        | None -> Tok_uident (Constant uident_str)
+      in
+      accept tok cursor t
+
+    let accept_uident_incl View.{cursor; _} t =
+      accept_uident cursor t
+
+    let accept_uident_excl View.{pcursor; _} t =
+      accept_uident pcursor t
+
+    let accept_cident cursor t =
+      let cident_str = str_of_cursor cursor t in
+      accept (Tok_cident cident_str) cursor t
+
+    let accept_cident_incl View.{cursor; _} t =
+      accept_cident cursor t
+
+    let accept_cident_excl View.{pcursor; _} t =
+      accept_cident pcursor t
+
+    let accept_mal cursor t =
+      let uident_str = str_of_cursor cursor t in
+      let description =
+        String.Fmt.empty
+        |> Fmt.fmt "Identifier "
+        |> Fmt.fmt uident_str
+        |> Fmt.fmt " lacks _*[A-Za-z] prefix"
+        |> Fmt.to_string
+      in
+      let mal = (malformed (malformation ~base:t.tok_base ~past:cursor description)) in
+      accept (Tok_uident mal) cursor t
+
+    let accept_mal_incl View.{cursor; _} t =
+      accept_mal cursor t
+
+    let accept_mal_excl View.{pcursor; _} t =
+      accept_mal pcursor t
+
+    let node0_uscore = {
+      edges0=map_of_cps_alist [
+        ("_", advance State_ident_uscore);
+        (ident_cident_cps, advance State_ident_cident);
+        (ident_uident_cps, advance State_ident_uident);
+        (ident_malformed_cps, advance State_ident_mal);
+      ];
+      default0=accept_mal_excl;
+      eoi0=accept_mal_incl;
+    }
+
+    let node0_uident = {
+      edges0=map_of_cps_alist [
+        (ident_cps, advance State_ident_uident);
+      ];
+      default0=accept_uident_excl;
+      eoi0=accept_uident_incl;
+    }
+
+    let node0_cident = {
+      edges0=map_of_cps_alist [
+        (ident_cps, advance State_ident_cident);
+      ];
+      default0=accept_cident_excl;
+      eoi0=accept_cident_incl;
+    }
+
+    let node0_mal = {
+      edges0=map_of_cps_alist [
+        (ident_cps, advance State_ident_mal);
+      ];
+      default0=accept_mal_excl;
+      eoi0=accept_mal_incl;
+    }
+  end
 
   module Operator = struct
     let operator_map = (
@@ -3480,6 +3505,10 @@ module Dfa = struct
     | State_btick -> act0 trace node0_btick view t
     | State_0 -> act0 trace node0_0 view t
     | State_0_dot -> act0 trace node0_0_dot view t
+    | State_ident_uscore -> act0 trace Ident.node0_uscore view t
+    | State_ident_uident -> act0 trace Ident.node0_uident view t
+    | State_ident_cident -> act0 trace Ident.node0_cident view t
+    | State_ident_mal -> act0 trace Ident.node0_mal view t
     | State_operator v -> act1 trace Operator.node1 v view t
     | State_paren_comment_body v -> act1 trace ParenComment.node1_body v view t
     | State_paren_comment_lparen v -> act1 trace ParenComment.node1_lparen v view t

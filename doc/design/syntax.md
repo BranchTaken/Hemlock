@@ -118,7 +118,7 @@ prefix or infix, as determined by the leading codepoint.
 - Prefix operator: `[~?][-+*/%@^$<=>|:.~?]+`
 - Infix operator: `[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*` excluding punctuation symbols
 
-### Prececence and associativity
+### Precedence and associativity
 
 Precedence and associativity varies somewhat by use for some punctuation. For example, the
 precedence of `>` is not important when used as a prefix for an effect name binding as in `(>e:
