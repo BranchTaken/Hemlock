@@ -480,33 +480,38 @@ module View = struct
     | Some (cp, cursor') -> Some (cp, {ppcursor=pcursor; pcursor=cursor; cursor=cursor'})
 end
 
+(* Dentation code block state. The scanner needs to track whether any expressions have been scanned
+ * in the current block. *)
 type block_state =
+  (* At beginning of block, no non-whitespace/comment tokens yet scanned. *)
   | Block_primal
-  (** At beginning of block, no non-whitespace/comment tokens yet scanned. *)
 
+  (* At least one non-whitespace/comment token scanned in block. *)
   | Block_nonempty
-  (** At least one non-whitespace/comment token scanned in block. *)
 
 let pp_block_state block_state formatter =
   match block_state with
   | Block_primal -> formatter |> Fmt.fmt "Block_primal"
   | Block_nonempty -> formatter |> Fmt.fmt "Block_nonempty"
 
+(* Dentation line state. The scanner switches to a dentation scanning mode at the beginning of each
+ * line and accepts synthetic tokens while scanning leading whitespace,
+ * Tok_{line_delim,indent,dedent}, as syntactic analogues to Tok_{semi_semi,lparen,rparen}. *)
 type line_state =
+  (* At beginning of line (column 0). Dentation adjustment may be required. *)
   | Line_begin
-  (** At beginning of line (column 0). Dentation adjustment may be required. *)
 
+  (* Just after leading whitespace token. Dentation adjustment may be required. *)
   | Line_whitespace
-  (** Just after leading whitespace token. Dentation adjustment may be required. *)
 
+  (* First non-whitspace is a paren comment or bslash-nl continuation starting at specified column;
+   * no non-whitespace/comment tokens scanned yet, but subsequent whitespace and/or paren comments
+   * may have been scanned. Dentation adjustment may be required, but if so, the specified starting
+   * column is used rather than that of the first non-whitespace/comment token. *)
   | Line_start_col of uns
-  (** First non-whitspace is a paren comment or bslash-nl continuation starting at specified column;
-      no non-whitespace/comment tokens scanned yet, but subsequent whitespace and/or paren comments
-      may have been scanned. Dentation adjustment may be required, but if so, the specified starting
-      column is used rather than that of the first non-whitespace/comment token. *)
 
+  (* Normal (non-dentation) scanning mode. *)
   | Line_body
-  (** Normal (non-dentation) scanning mode. *)
 
 let pp_line_state line_state formatter =
   match line_state with
@@ -515,7 +520,7 @@ let pp_line_state line_state formatter =
   | Line_start_col col -> formatter |> Fmt.fmt "Line_start_col " |> Uns.pp col
   | Line_body -> formatter |> Fmt.fmt "Line_body"
 
-(* Istring_state determines what starting state to feed to Dag.start. States may be skipped, e.g. if
+(* istring_state determines what starting state to feed to Dfa.next. States may be skipped, e.g. if
  * justification is not specified, but ordering through the spec/expr states is strict. Upon
  * completing specifier scanning the state returns to interp. *)
 type istring_state =
@@ -550,28 +555,28 @@ let pp_istring_state istring_state formatter =
 
 type t = {
   tok_base: Source.Cursor.t;
+  level: uns;
   block_state: block_state;
   line_state: line_state;
   istring_state: istring_state list;
-  level: uns;
 }
 
 let init text =
   {
     tok_base=Source.Cursor.hd (Source.init text);
+    level=0L;
     block_state=Block_primal;
     line_state=Line_begin;
     istring_state=[];
-    level=0L;
   }
 
 let pp t formatter =
   formatter
   |> Fmt.fmt "{tok_base=" |> Text.Pos.pp (Source.Cursor.pos t.tok_base)
+  |> Fmt.fmt "; level=" |> Uns.pp t.level
   |> Fmt.fmt "; block_state=" |> pp_block_state t.block_state
   |> Fmt.fmt "; line_state=" |> pp_line_state t.line_state
   |> Fmt.fmt "; istring_state=" |> (List.pp pp_istring_state) t.istring_state
-  |> Fmt.fmt "; level=" |> Uns.pp t.level
   |> Fmt.fmt "}"
 
 let view_of_t t =
@@ -617,10 +622,6 @@ let accept_istring_trans trans tok _ppcursor _pcursor cursor t =
    {t with cursor; istring_state=List.tl t.istring_state},
    (ConcreteToken.init tok source)
 *)
-
-let accept_line_break atoken cursor t =
-  let source = source_at cursor t in
-  {t with tok_base=cursor; line_state=Line_begin}, (ConcreteToken.init atoken source)
 
 (***************************************************************************************************
  * Convenience routines for reporting malformations. *)
@@ -703,21 +704,6 @@ let out_of_range_real base past =
   malformation ~base ~past "Numerical constant cannot be precisely represented"
 
 (**************************************************************************************************)
-
-let hash_comment _ppcursor _pcursor cursor t =
-  let accept_hash_comment cursor t = begin
-    accept_line_break Tok_hash_comment cursor t
-  end in
-  let rec fn cursor t = begin
-    match Source.Cursor.next_opt cursor with
-    | None -> accept_hash_comment cursor t
-    | Some (cp, cursor') -> begin
-        match cp with
-        | cp when Codepoint.(cp = nl) -> accept_hash_comment cursor' t
-        | _ -> fn cursor' t
-      end
-  end in
-  fn cursor t
 
 let paren_comment _ppcursor _pcursor cursor t =
   let accept_paren_comment cursor t = begin
@@ -2235,16 +2221,16 @@ module State = struct
     | State_btick
     | State_0
     | State_0_dot
-    | State_src_colon
-    | State_src_path of Src_path.t
-    | State_src_path_bslash of Src_path_bslash.t
-    | State_src_path_bslash_u of Src_path_bslash_u.t
-    | State_src_path_bslash_u_lcurly of Src_path_bslash_u_lcurly.t
-    | State_src_rditto of Src_rditto.t
-    | State_src_path_colon of Src_path_colon.t
-    | State_src_line of Src_line.t
-    | State_src_line_colon of Src_line_colon.t
-    | State_src_col of Src_col.t
+    | State_src_directive_colon
+    | State_src_directive_path of Src_path.t
+    | State_src_directive_path_bslash of Src_path_bslash.t
+    | State_src_directive_path_bslash_u of Src_path_bslash_u.t
+    | State_src_directive_path_bslash_u_lcurly of Src_path_bslash_u_lcurly.t
+    | State_src_directive_rditto of Src_rditto.t
+    | State_src_directive_path_colon of Src_path_colon.t
+    | State_src_directive_line of Src_line.t
+    | State_src_directive_line_colon of Src_line_colon.t
+    | State_src_directive_col of Src_col.t
     | State_dentation_start
     | State_dentation_lparen
     | State_dentation_space
@@ -2277,18 +2263,21 @@ module State = struct
     | State_btick -> formatter |> Fmt.fmt "State_btick"
     | State_0 -> formatter |> Fmt.fmt "State_0"
     | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
-    | State_src_colon -> formatter |> Fmt.fmt "State_src_colon"
-    | State_src_path v -> formatter |> Fmt.fmt "State_path " |> Src_path.pp v
-    | State_src_path_bslash v -> formatter |> Fmt.fmt "State_path_bslash " |> Src_path_bslash.pp v
-    | State_src_path_bslash_u v ->
+    | State_src_directive_colon -> formatter |> Fmt.fmt "State_src_directive_colon"
+    | State_src_directive_path v -> formatter |> Fmt.fmt "State_path " |> Src_path.pp v
+    | State_src_directive_path_bslash v ->
+      formatter |> Fmt.fmt "State_path_bslash " |> Src_path_bslash.pp v
+    | State_src_directive_path_bslash_u v ->
       formatter |> Fmt.fmt "State_path_bslash_u " |> Src_path_bslash_u.pp v
-    | State_src_path_bslash_u_lcurly v ->
+    | State_src_directive_path_bslash_u_lcurly v ->
       formatter |> Fmt.fmt "State_path_bslash_u_lcurly " |> Src_path_bslash_u_lcurly.pp v
-    | State_src_rditto v -> formatter |> Fmt.fmt "State_rditto " |> Src_rditto.pp v
-    | State_src_path_colon v -> formatter |> Fmt.fmt "State_path_colon " |> Src_path_colon.pp v
-    | State_src_line v -> formatter |> Fmt.fmt "State_line " |> Src_line.pp v
-    | State_src_line_colon v -> formatter |> Fmt.fmt "State_line_colon " |> Src_line_colon.pp v
-    | State_src_col v -> formatter |> Fmt.fmt "State_col " |> Src_col.pp v
+    | State_src_directive_rditto v -> formatter |> Fmt.fmt "State_rditto " |> Src_rditto.pp v
+    | State_src_directive_path_colon v ->
+      formatter |> Fmt.fmt "State_path_colon " |> Src_path_colon.pp v
+    | State_src_directive_line v -> formatter |> Fmt.fmt "State_line " |> Src_line.pp v
+    | State_src_directive_line_colon v ->
+      formatter |> Fmt.fmt "State_line_colon " |> Src_line_colon.pp v
+    | State_src_directive_col v -> formatter |> Fmt.fmt "State_col " |> Src_col.pp v
     | State_dentation_start -> formatter |> Fmt.fmt "State_dentation_start"
     | State_dentation_lparen -> formatter |> Fmt.fmt "State_dentation_lparen"
     | State_dentation_space -> formatter |> Fmt.fmt "State_dentation_space"
@@ -2513,9 +2502,9 @@ module Dfa = struct
       ];
       default0=accept_incl Tok_error;
       eoi0=(fun view t ->
-        match t.line_state, t.level with
-        | Line_begin, 0L -> accept_dentation Tok_line_delim view t
-        | _, 0L -> accept_incl Tok_end_of_input view t
+        match t.level, t.line_state with
+        | 0L, Line_begin -> accept_dentation Tok_line_delim view t
+        | 0L, _ -> accept_incl Tok_end_of_input view t
         | _ -> accept_dentation (Tok_dedent (Constant ())) view {t with level=pred t.level}
       );
     }
@@ -2540,7 +2529,7 @@ module Dfa = struct
   let node0_lbrack = {
     edges0=map_of_cps_alist [
       ("|", accept_incl Tok_larray);
-      (":", advance State_src_colon);
+      (":", advance State_src_directive_colon);
     ];
     default0=accept_excl Tok_lbrack;
     eoi0=accept_incl Tok_lbrack;
@@ -2669,308 +2658,316 @@ module Dfa = struct
     eoi0=accept_incl Real.zero;
   }
 
-  let node0_src_colon = {
-    edges0=map_of_cps_alist [
-      ("\"", advance (State_src_path State.Src_path.empty));
-      ("123456789", (fun ({pcursor; _} as view) t ->
-          let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-          advance (State_src_line (State.Src_line.init ~mals:[] ~path:None ~line_cursor:pcursor
-            ~line:(Some digit))) view t));
-      ("]", (fun view t ->
-          let tok = State.render_source_directive ~mals:[] ~path:None ~line:None ~col:None in
-          accept_source_directive tok view t
-        )
-      );
-    ];
-    default0=(fun ({pcursor; cursor; _} as view) t ->
-      let mal = unexpected_codepoint_source_directive pcursor cursor in
-      advance (State_src_line (State.Src_line.init ~mals:[mal] ~path:None ~line_cursor:cursor
-        ~line:None)) view t
-    );
-    eoi0=(fun {cursor; _} t ->
-      let mal = unterminated_source_directive t.tok_base cursor in
-      accept (Tok_source_directive (AbstractToken.Rendition.of_mals [mal])) cursor t
-    );
-  }
-
-  let node1_src_path =
-    let open State.Src_path in
-    let open View in
-    {
-      edges1=map_of_cps_alist [
-        ("%", (fun state ({pcursor; cursor; _} as view) t ->
-            let mal = missing_backslash pcursor cursor in
-            advance (State_src_path (state |> mals_accum mal)) view t
-          )
-        );
-        ("\"", (fun state view t -> advance (State_src_rditto state) view t));
-        ("\\", (fun {mals; path} ({pcursor; _} as view) t ->
-            advance (State_src_path_bslash {mals; path; bslash_cursor=pcursor}) view t));
-      ];
-      default1=(fun state ({pcursor; _} as view) t ->
-        advance (State_src_path (state |> path_accum (Source.Cursor.rget pcursor))) view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
-
-  let node1_src_path_bslash =
-    let open State.Src_path_bslash in
-    {
-      edges1=map_of_cps_alist [
-        ("u", (fun state view t -> advance (State_src_path_bslash_u state) view t));
-        ("t", (fun state view t ->
-            advance (State_src_path (state |> path_accum Codepoint.ht)) view t));
-        ("n", (fun state view t ->
-            advance (State_src_path (state |> path_accum Codepoint.nl)) view t));
-        ("r", (fun state view t ->
-            advance (State_src_path (state |> path_accum Codepoint.cr)) view t));
-        ("\"\\%", (fun state ({pcursor; _} as view) t ->
-            advance (State_src_path (state |> path_accum (Source.Cursor.rget pcursor))) view t
-          )
-        );
-      ];
-      default1=(fun ({bslash_cursor; _} as state) {cursor; _} t ->
-        let mal = illegal_backslash bslash_cursor cursor in
-        retry (State_src_path (state |> mals_accum mal)) t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
-
-  let node1_src_path_bslash_u =
-    let open State.Src_path_bslash_u in
-    {
-      edges1=map_of_cps_alist [
-        ("{", (fun {mals; path; bslash_cursor} view t ->
-            advance (State_src_path_bslash_u_lcurly (State.Src_path_bslash_u_lcurly.init ~mals ~path
-                ~bslash_cursor)) view t
-          )
-        );
-        ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-            let mal = illegal_backslash bslash_cursor cursor in
-            advance (State_src_rditto (state |> mals_accum mal)) view t
-          )
-        );
-        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor in
-            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-          )
-        );
-      ];
-      default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-        let mal = illegal_backslash bslash_cursor cursor in
-        advance (State_src_path (state |> mals_accum mal)) view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
-
-  let node1_src_path_bslash_u_lcurly =
-    let open State.Src_path_bslash_u_lcurly in
-    {
-      edges1=map_of_cps_alist [
-        ("_", (fun state view t -> advance (State_src_path_bslash_u_lcurly state) view t));
-        ("0123456789abcdef", (fun state ({pcursor; _} as view) t ->
+  module SrcDirective = struct
+    let node0_colon = {
+      edges0=map_of_cps_alist [
+        ("\"", advance (State_src_directive_path State.Src_path.empty));
+        ("123456789", (fun ({pcursor; _} as view) t ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            advance (State_src_path_bslash_u_lcurly (state |> u_accum digit)) view t
-          )
-        );
-        ("}", (fun ({bslash_cursor; u; _} as state) ({cursor; _} as view) t ->
-            advance (State_src_path (
-              Option.value_map (Nat.to_uns_opt u)
-                ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
-                ~default:None
-              |> Option.value_map
-                ~f:(fun cp -> (state |> path_accum cp))
-                ~default:(state |> mals_accum (invalid_unicode bslash_cursor cursor))
-            )) view t
-          )
-        );
-        ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-            let mal = illegal_backslash bslash_cursor cursor in
-            advance (State_src_rditto (state |> mals_accum mal)) view t
-          )
-        );
-        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor in
-            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-          )
-        );
-      ];
-      default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-        let mal = partial_unicode bslash_cursor cursor in
-        advance (State_src_path (state |> mals_accum mal)) view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
-
-  let node1_src_rditto =
-    let open State.Src_rditto in
-    {
-      edges1=map_of_cps_alist [
-        (":", (fun state view t -> advance (State_src_path_colon state) view t));
-        ("]", (fun {mals; path} view t ->
-            let tok = State.render_source_directive ~mals ~path ~line:None ~col:None in
+            advance (State_src_directive_line (State.Src_line.init ~mals:[] ~path:None
+              ~line_cursor:pcursor ~line:(Some digit))) view t));
+        ("]", (fun view t ->
+            let tok = State.render_source_directive ~mals:[] ~path:None ~line:None ~col:None in
             accept_source_directive tok view t
           )
         );
       ];
-      default1=(fun state ({pcursor; cursor; _} as view) t ->
+      default0=(fun ({pcursor; cursor; _} as view) t ->
         let mal = unexpected_codepoint_source_directive pcursor cursor in
-        advance (State_src_rditto (state |> mals_accum mal)) view t
+        advance (State_src_directive_line (State.Src_line.init ~mals:[mal] ~path:None
+          ~line_cursor:cursor ~line:None)) view t
       );
-      eoi1=(fun {mals; _} {cursor; _} t ->
+      eoi0=(fun {cursor; _} t ->
         let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        accept (Tok_source_directive (AbstractToken.Rendition.of_mals [mal])) cursor t
       );
     }
 
-  let node1_src_path_colon =
-    let open State.Src_path_colon in
-    let open View in
-    {
-      edges1=map_of_cps_alist [
-        ("123456789", (fun {mals; path} ({pcursor; _} as view) t ->
-            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            advance (State_src_line (State.Src_line.init ~mals ~path ~line_cursor:pcursor
-                ~line:(Some digit))) view t));
-        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor in
-            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-          )
+    let node1_path =
+      let open State.Src_path in
+      let open View in
+      {
+        edges1=map_of_cps_alist [
+          ("%", (fun state ({pcursor; cursor; _} as view) t ->
+              let mal = missing_backslash pcursor cursor in
+              advance (State_src_directive_path (state |> mals_accum mal)) view t
+            )
+          );
+          ("\"", (fun state view t -> advance (State_src_directive_rditto state) view t));
+          ("\\", (fun {mals; path} ({pcursor; _} as view) t ->
+              advance (State_src_directive_path_bslash {mals; path; bslash_cursor=pcursor}) view t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; _} as view) t ->
+          advance (State_src_directive_path (state |> path_accum (Source.Cursor.rget pcursor))) view
+            t
         );
-      ];
-      default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor in
-        advance (State_src_rditto (state |> mals_accum mal)) view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
 
-  let node1_src_line =
-    let open State.Src_line in
-    let validate_line {mals; line_cursor; line; _} View.{pcursor; _} = begin
-      match line with
-      | Some line -> begin
-          match Nat.(line > max_abs_i64) with
-          | false -> mals, Some line
-          | true -> begin
-              let description =
-                String.Fmt.empty
-                |> Fmt.fmt "Line exceeds "
-                |> Nat.fmt ~alt:true Nat.max_abs_i64
-                |> Fmt.to_string
+    let node1_path_bslash =
+      let open State.Src_path_bslash in
+      {
+        edges1=map_of_cps_alist [
+          ("u", (fun state view t -> advance (State_src_directive_path_bslash_u state) view t));
+          ("t", (fun state view t ->
+              advance (State_src_directive_path (state |> path_accum Codepoint.ht)) view t));
+          ("n", (fun state view t ->
+              advance (State_src_directive_path (state |> path_accum Codepoint.nl)) view t));
+          ("r", (fun state view t ->
+              advance (State_src_directive_path (state |> path_accum Codepoint.cr)) view t));
+          ("\"\\%", (fun state ({pcursor; _} as view) t ->
+              advance (State_src_directive_path (state |> path_accum (Source.Cursor.rget pcursor)))
+                view t
+            )
+          );
+        ];
+        default1=(fun ({bslash_cursor; _} as state) {cursor; _} t ->
+          let mal = illegal_backslash bslash_cursor cursor in
+          retry (State_src_directive_path (state |> mals_accum mal)) t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_path_bslash_u =
+      let open State.Src_path_bslash_u in
+      {
+        edges1=map_of_cps_alist [
+          ("{", (fun {mals; path; bslash_cursor} view t ->
+              advance (State_src_directive_path_bslash_u_lcurly (State.Src_path_bslash_u_lcurly.init
+                  ~mals ~path ~bslash_cursor)) view t
+            )
+          );
+          ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+              let mal = illegal_backslash bslash_cursor cursor in
+              advance (State_src_directive_rditto (state |> mals_accum mal)) view t
+            )
+          );
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+            )
+          );
+        ];
+        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+          let mal = illegal_backslash bslash_cursor cursor in
+          advance (State_src_directive_path (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_path_bslash_u_lcurly =
+      let open State.Src_path_bslash_u_lcurly in
+      {
+        edges1=map_of_cps_alist [
+          ("_", (fun state view t ->
+              advance (State_src_directive_path_bslash_u_lcurly state) view t));
+          ("0123456789abcdef", (fun state ({pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_path_bslash_u_lcurly (state |> u_accum digit)) view t
+            )
+          );
+          ("}", (fun ({bslash_cursor; u; _} as state) ({cursor; _} as view) t ->
+              advance (State_src_directive_path (
+                Option.value_map (Nat.to_uns_opt u)
+                  ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
+                  ~default:None
+                |> Option.value_map
+                  ~f:(fun cp -> (state |> path_accum cp))
+                  ~default:(state |> mals_accum (invalid_unicode bslash_cursor cursor))
+              )) view t
+            )
+          );
+          ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+              let mal = illegal_backslash bslash_cursor cursor in
+              advance (State_src_directive_rditto (state |> mals_accum mal)) view t
+            )
+          );
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+            )
+          );
+        ];
+        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+          let mal = partial_unicode bslash_cursor cursor in
+          advance (State_src_directive_path (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_rditto =
+      let open State.Src_rditto in
+      {
+        edges1=map_of_cps_alist [
+          (":", (fun state view t -> advance (State_src_directive_path_colon state) view t));
+          ("]", (fun {mals; path} view t ->
+              let tok = State.render_source_directive ~mals ~path ~line:None ~col:None in
+              accept_source_directive tok view t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_rditto (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_path_colon =
+      let open State.Src_path_colon in
+      let open View in
+      {
+        edges1=map_of_cps_alist [
+          ("123456789", (fun {mals; path} ({pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_line (State.Src_line.init ~mals ~path
+                  ~line_cursor:pcursor ~line:(Some digit))) view t));
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_rditto (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_line =
+      let open State.Src_line in
+      let validate_line {mals; line_cursor; line; _} View.{pcursor; _} = begin
+        match line with
+        | Some line -> begin
+            match Nat.(line > max_abs_i64) with
+            | false -> mals, Some line
+            | true -> begin
+                let description =
+                  String.Fmt.empty
+                  |> Fmt.fmt "Line exceeds "
+                  |> Nat.fmt ~alt:true Nat.max_abs_i64
+                  |> Fmt.to_string
+                in
+                let mal = malformation ~base:line_cursor ~past:pcursor description in
+                (mal :: mals), None
+              end
+          end
+        | None -> mals, None
+      end in
+      {
+        edges1=map_of_cps_alist [
+          ("0123456789", (fun state (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_line (state |> line_accum digit)) view t
+            )
+          );
+          (":", (fun ({path; _} as state) view t ->
+              let mals, line = validate_line state view in
+              advance (State_src_directive_line_colon (State.Src_line_colon.init ~mals ~path ~line))
+                view t
+            )
+          );
+          ("]", (fun ({path; _} as state) view t ->
+              let mals, line = validate_line state view in
+              let tok = State.render_source_directive ~mals ~path ~line ~col:None in
+              accept_source_directive tok view t
+            )
+          );
+        ];
+        default1=(fun {mals; path; _} ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_line (init ~mals:(mal :: mals) ~path ~line_cursor:cursor
+            ~line:None)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_line_colon =
+      let open State.Src_line_colon in
+      {
+        edges1=map_of_cps_alist [
+          ("123456789", (fun {mals; path; line} (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_col (State.Src_col.init ~mals ~path ~line
+                  ~col_cursor:pcursor ~col:digit)) view t));
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_line_colon (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_col =
+      let open State.Src_col in
+      {
+        edges1=map_of_cps_alist [
+          ("0123456789", (fun state (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_col (state |> col_accum digit)) view t
+            )
+          );
+          ("]", (fun {mals; path; col_cursor; line; col} ({pcursor; _} as view) t ->
+              let mals, col = match Nat.(col > max_abs_i64) with
+                | false -> mals, Some col
+                | true -> begin
+                    let description =
+                      String.Fmt.empty
+                      |> Fmt.fmt "Column exceeds "
+                      |> Nat.fmt ~alt:true Nat.max_abs_i64
+                      |> Fmt.to_string
+                    in
+                    let mal = malformation ~base:col_cursor ~past:pcursor description in
+                    (mal :: mals), None
+                  end
               in
-              let mal = malformation ~base:line_cursor ~past:pcursor description in
-              (mal :: mals), None
-            end
-        end
-      | None -> mals, None
-    end in
-    {
-      edges1=map_of_cps_alist [
-        ("0123456789", (fun state (View.{pcursor; _} as view) t ->
-            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            advance (State_src_line (state |> line_accum digit)) view t
-          )
+              let tok = State.render_source_directive ~mals ~path ~line ~col in
+              accept_source_directive tok view t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_col (state |> mals_accum mal)) view t
         );
-        (":", (fun ({path; _} as state) view t ->
-            let mals, line = validate_line state view in
-            advance (State_src_line_colon (State.Src_line_colon.init ~mals ~path ~line)) view t
-          )
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
         );
-        ("]", (fun ({path; _} as state) view t ->
-            let mals, line = validate_line state view in
-            let tok = State.render_source_directive ~mals ~path ~line ~col:None in
-            accept_source_directive tok view t
-          )
-        );
-      ];
-      default1=(fun {mals; path; _} ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor in
-        advance (State_src_line (init ~mals:(mal :: mals) ~path ~line_cursor:cursor ~line:None))
-          view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
-
-  let node1_src_line_colon =
-    let open State.Src_line_colon in
-    {
-      edges1=map_of_cps_alist [
-        ("123456789", (fun {mals; path; line} (View.{pcursor; _} as view) t ->
-            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            advance (State_src_col (State.Src_col.init ~mals ~path ~line ~col_cursor:pcursor
-                ~col:digit)) view t));
-        ("]", (fun {mals; _} {pcursor; cursor; _} t ->
-            let mal = unexpected_codepoint_source_directive pcursor cursor in
-            accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-          )
-        );
-      ];
-      default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor in
-        advance (State_src_line_colon (state |> mals_accum mal)) view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
-
-  let node1_src_col =
-    let open State.Src_col in
-    {
-      edges1=map_of_cps_alist [
-        ("0123456789", (fun state (View.{pcursor; _} as view) t ->
-            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            advance (State_src_col (state |> col_accum digit)) view t
-          )
-        );
-        ("]", (fun {mals; path; col_cursor; line; col} ({pcursor; _} as view) t ->
-            let mals, col = match Nat.(col > max_abs_i64) with
-              | false -> mals, Some col
-              | true -> begin
-                  let description =
-                    String.Fmt.empty
-                    |> Fmt.fmt "Column exceeds "
-                    |> Nat.fmt ~alt:true Nat.max_abs_i64
-                    |> Fmt.to_string
-                  in
-                  let mal = malformation ~base:col_cursor ~past:pcursor description in
-                  (mal :: mals), None
-                end
-            in
-            let tok = State.render_source_directive ~mals ~path ~line ~col in
-            accept_source_directive tok view t
-          )
-        );
-      ];
-      default1=(fun state ({pcursor; cursor; _} as view) t ->
-        let mal = unexpected_codepoint_source_directive pcursor cursor in
-        advance (State_src_col (state |> mals_accum mal)) view t
-      );
-      eoi1=(fun {mals; _} {cursor; _} t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
-      );
-    }
+      }
+  end
 
   module Dentation = struct
     type alignment =
@@ -2988,11 +2985,9 @@ module Dfa = struct
     let tok_dedent = AbstractToken.Tok_dedent (Constant ())
 
     let tok_missing_indent cursor =
-      (* XXX Refactor to be a convenience function? *)
       AbstractToken.Tok_indent (malformed (malformation ~base:cursor ~past:cursor "Missing indent"))
 
     let tok_missing_dedent cursor =
-      (* XXX Refactor to be a convenience function? *)
       AbstractToken.Tok_dedent (malformed (malformation ~base:cursor ~past:cursor "Missing dedent"))
 
     let accept_dentation atok cursor t =
@@ -3031,7 +3026,7 @@ module Dfa = struct
       match t.block_state, t.line_state, level_change, alignment with
       (* New expression at same level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
-        retry retry_state {t with block_state=Block_nonempty; line_state=Line_body; level}
+        retry retry_state {t with level; block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
         accept_dentation Tok_line_delim cursor {t with line_state=Line_body}
 
@@ -3045,9 +3040,9 @@ module Dfa = struct
       (* New expression at higher level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
         accept_dentation (tok_missing_indent cursor) cursor
-          {t with block_state=Block_nonempty; line_state=Line_body; level=succ t.level}
+          {t with level=succ t.level; block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
-        accept_dentation tok_indent cursor {t with line_state=Line_body; level}
+        accept_dentation tok_indent cursor {t with level; line_state=Line_body}
 
       (* New/continued expression at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
@@ -3075,7 +3070,7 @@ module Dfa = struct
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_excess_indent,
         (Aligned|Continued|Misaligned) ->
         accept_dentation (tok_missing_indent cursor) cursor
-          {t with block_state=Block_nonempty; level=succ t.level}
+          {t with level=succ t.level; block_state=Block_nonempty}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _),
@@ -3109,82 +3104,93 @@ module Dfa = struct
       | false -> other_pexcl ~retry_state view t
       | true -> accept_whitespace ppcursor t
 
+    let advance ?line_state state view t =
+      let t' = match line_state with
+        | None -> t
+        | Some line_state -> {t with line_state}
+      in
+      advance state view t'
+
     (* XXX Refactor out. *)
-    let wrap_legacy line_state f View.{ppcursor; pcursor; cursor} t =
-      let t', tok = f ppcursor pcursor cursor {t with line_state} in
-      t', Accept tok
+    let wrap_legacy ?line_state f View.{ppcursor; pcursor; cursor} t =
+      let t' = match line_state with
+        | None -> t
+        | Some line_state -> {t with line_state}
+      in
+      let t'', tok = f ppcursor pcursor cursor t' in
+      t'', Accept tok
+
+    let node0_start = {
+      edges0=map_of_cps_alist [
+        (" ", advance State_dentation_space);
+        ("#", advance ~line_state:Line_body State_hash_comment);
+        ("(", advance State_dentation_lparen);
+        ("\\", advance State_dentation_bslash);
+        ("\n", (fun view t ->
+            match t.line_state with
+            | Line_begin -> accept_incl Tok_whitespace view t
+            | Line_whitespace
+            | Line_start_col _ -> accept_line_break_incl Tok_whitespace view t
+            | Line_body -> not_reached ()
+          )
+        );
+      ];
+      default0=other_excl ~retry_state:State_start;
+      eoi0=(fun view t ->
+        match t.line_state, t.level with
+        | (Line_begin|Line_whitespace|Line_start_col _), 0L -> accept_incl Tok_end_of_input view t
+        | (Line_begin|Line_whitespace|Line_start_col _), t_level ->
+          accept_incl (Tok_dedent (Constant ())) view {t with level=Uns.pred t_level}
+        | _ -> not_reached ()
+      );
+    }
+
+    let node0_lparen = {
+      edges0=map_of_cps_alist [
+        ("*", (fun (View.{ppcursor; _} as view) t ->
+            match t.line_state with
+            | Line_begin
+            | Line_whitespace -> begin
+                let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
+                wrap_legacy ~line_state:(Line_start_col col) paren_comment view t
+              end
+            | Line_start_col _ -> wrap_legacy paren_comment view t
+            | Line_body -> not_reached ()
+          )
+        );
+      ];
+      default0=other_pexcl ~retry_state:State_lparen;
+      eoi0=other_excl ~retry_state:State_lparen;
+    }
+
+    let node0_space = {
+      edges0=map_of_cps_alist [
+        (" ", advance State_dentation_space);
+        ("\\", advance State_dentation_bslash);
+        ("\n", accept_line_break_incl Tok_whitespace);
+      ];
+      default0=accept_whitespace_excl;
+      eoi0=accept_whitespace_incl;
+    }
+
+    let node0_bslash = {
+      edges0=map_of_cps_alist [
+        ("\n", (fun (View.{ppcursor; _} as view) t ->
+            match t.line_state with
+            | Line_begin -> begin
+                let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
+                advance State_dentation_space view {t with line_state=(Line_start_col col)}
+              end
+            | Line_start_col _ -> advance State_dentation_space view t
+            | Line_whitespace
+            | Line_body -> not_reached ()
+          )
+        );
+      ];
+      default0=accept_whitespace_pexcl ~retry_state:State_bslash;
+      eoi0=accept_whitespace_pexcl ~retry_state:State_bslash;
+    }
   end
-
-  let node0_dentation_start = {
-    edges0=map_of_cps_alist [
-      (" ", advance State_dentation_space);
-      ("#", Dentation.wrap_legacy Line_body hash_comment);
-      ("(", advance State_dentation_lparen);
-      ("\\", advance State_dentation_bslash);
-      ("\n", (fun view t ->
-          match t.line_state with
-          | Line_begin -> accept_incl Tok_whitespace view t
-          | Line_whitespace
-          | Line_start_col _ -> accept_line_break_incl Tok_whitespace view t
-          | Line_body -> not_reached ()
-        )
-      );
-    ];
-    default0=Dentation.other_excl ~retry_state:State_start;
-    eoi0=(fun view t ->
-      match t.line_state, t.level with
-      | (Line_begin|Line_whitespace|Line_start_col _), 0L -> accept_incl Tok_end_of_input view t
-      | (Line_begin|Line_whitespace|Line_start_col _), t_level ->
-        accept_incl (Tok_dedent (Constant ())) view {t with level=Uns.pred t_level}
-      | _ -> not_reached ()
-    );
-  }
-
-  let node0_dentation_lparen = {
-    edges0=map_of_cps_alist [
-      ("*", (fun (View.{ppcursor; _} as view) t ->
-          match t.line_state with
-          | Line_begin
-          | Line_whitespace -> begin
-              let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
-              Dentation.wrap_legacy (Line_start_col col) paren_comment view t
-            end
-          | Line_start_col _ -> wrap_legacy paren_comment view t
-          | Line_body -> not_reached ()
-        )
-      );
-    ];
-    default0=Dentation.other_pexcl ~retry_state:State_lparen;
-    eoi0=Dentation.other_excl ~retry_state:State_lparen;
-  }
-
-  let node0_dentation_space = {
-    edges0=map_of_cps_alist [
-      (" ", advance State_dentation_space);
-      ("\\", advance State_dentation_bslash);
-      ("\n", accept_line_break_incl Tok_whitespace);
-    ];
-    default0=Dentation.accept_whitespace_excl;
-    eoi0=Dentation.accept_whitespace_incl;
-  }
-
-  let node0_dentation_bslash = {
-    edges0=map_of_cps_alist [
-      ("\n", (fun (View.{ppcursor; _} as view) t ->
-          match t.line_state with
-          | Line_begin -> begin
-              let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
-              advance State_dentation_space view {t with line_state=(Line_start_col col)}
-            end
-          | Line_start_col _ -> advance State_dentation_space view t
-          | Line_whitespace
-          | Line_body -> not_reached ()
-        )
-      );
-    ];
-    default0=Dentation.accept_whitespace_pexcl ~retry_state:State_bslash;
-    eoi0=Dentation.accept_whitespace_pexcl ~retry_state:State_bslash;
-  }
 
   let node0_whitespace = {
     edges0=map_of_cps_alist [
@@ -3433,20 +3439,21 @@ module Dfa = struct
     | State_btick -> act0 trace node0_btick view t
     | State_0 -> act0 trace node0_0 view t
     | State_0_dot -> act0 trace node0_0_dot view t
-    | State_src_colon -> act0 trace node0_src_colon view t
-    | State_src_path v -> act1 trace node1_src_path v view t
-    | State_src_path_bslash v -> act1 trace node1_src_path_bslash v view t
-    | State_src_path_bslash_u v -> act1 trace node1_src_path_bslash_u v view t
-    | State_src_path_bslash_u_lcurly v -> act1 trace node1_src_path_bslash_u_lcurly v view t
-    | State_src_rditto v -> act1 trace node1_src_rditto v view t
-    | State_src_path_colon v -> act1 trace node1_src_path_colon v view t
-    | State_src_line v -> act1 trace node1_src_line v view t
-    | State_src_line_colon v -> act1 trace node1_src_line_colon v view t
-    | State_src_col v -> act1 trace node1_src_col v view t
-    | State_dentation_start -> act0 trace node0_dentation_start view t
-    | State_dentation_lparen -> act0 trace node0_dentation_lparen view t
-    | State_dentation_space -> act0 trace node0_dentation_space view t
-    | State_dentation_bslash -> act0 trace node0_dentation_bslash view t
+    | State_src_directive_colon -> act0 trace SrcDirective.node0_colon view t
+    | State_src_directive_path v -> act1 trace SrcDirective.node1_path v view t
+    | State_src_directive_path_bslash v -> act1 trace SrcDirective.node1_path_bslash v view t
+    | State_src_directive_path_bslash_u v -> act1 trace SrcDirective.node1_path_bslash_u v view t
+    | State_src_directive_path_bslash_u_lcurly v ->
+      act1 trace SrcDirective.node1_path_bslash_u_lcurly v view t
+    | State_src_directive_rditto v -> act1 trace SrcDirective.node1_rditto v view t
+    | State_src_directive_path_colon v -> act1 trace SrcDirective.node1_path_colon v view t
+    | State_src_directive_line v -> act1 trace SrcDirective.node1_line v view t
+    | State_src_directive_line_colon v -> act1 trace SrcDirective.node1_line_colon v view t
+    | State_src_directive_col v -> act1 trace SrcDirective.node1_col v view t
+    | State_dentation_start -> act0 trace Dentation.node0_start view t
+    | State_dentation_lparen -> act0 trace Dentation.node0_lparen view t
+    | State_dentation_space -> act0 trace Dentation.node0_space view t
+    | State_dentation_bslash -> act0 trace Dentation.node0_bslash view t
     | State_whitespace -> act0 trace node0_whitespace view t
     | State_whitespace_bslash -> act0 trace node0_whitespace_bslash view t
     | State_hash_comment -> act0 trace node0_hash_comment view t
