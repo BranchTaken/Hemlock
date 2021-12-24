@@ -1791,18 +1791,6 @@ end = struct
 end
 
 module State = struct
-  module Operator = struct
-    type t = {
-      f: string -> AbstractToken.t
-    }
-
-    let pp _t formatter =
-      formatter |> Fmt.fmt "{f=...}"
-
-    let init ~f =
-      {f}
-  end
-
   module Paren_comment_body = struct
     type t = {
       nesting: uns;
@@ -2057,7 +2045,23 @@ module State = struct
     | State_ident_cident
     | State_ident_uident
     | State_ident_mal
-    | State_operator of Operator.t
+    | State_operator_tilde
+    | State_operator_qmark
+    | State_operator_star_star
+    | State_operator_star
+    | State_operator_slash
+    | State_operator_pct
+    | State_operator_plus
+    | State_operator_minus
+    | State_operator_at
+    | State_operator_caret
+    | State_operator_dollar
+    | State_operator_lt
+    | State_operator_eq
+    | State_operator_gt
+    | State_operator_bar
+    | State_operator_colon
+    | State_operator_dot
     | State_paren_comment_body of Paren_comment_body.t
     | State_paren_comment_lparen of Paren_comment_lparen.t
     | State_paren_comment_star of Paren_comment_star.t
@@ -2107,7 +2111,23 @@ module State = struct
     | State_ident_cident -> formatter |> Fmt.fmt "State_ident_cident"
     | State_ident_uident -> formatter |> Fmt.fmt "State_ident_uident"
     | State_ident_mal -> formatter |> Fmt.fmt "State_ident_mal"
-    | State_operator v -> formatter |> Fmt.fmt "State_operator " |> Operator.pp v
+    | State_operator_tilde -> formatter |> Fmt.fmt "State_operator_tilde"
+    | State_operator_qmark -> formatter |> Fmt.fmt "State_operator_qmark"
+    | State_operator_star_star -> formatter |> Fmt.fmt "State_operator_star"
+    | State_operator_star -> formatter |> Fmt.fmt "State_operator_star"
+    | State_operator_slash -> formatter |> Fmt.fmt "State_operator_slash"
+    | State_operator_pct -> formatter |> Fmt.fmt "State_operator_pct"
+    | State_operator_plus -> formatter |> Fmt.fmt "State_operator_plus"
+    | State_operator_minus -> formatter |> Fmt.fmt "State_operator_minus"
+    | State_operator_at -> formatter |> Fmt.fmt "State_operator_at"
+    | State_operator_caret -> formatter |> Fmt.fmt "State_operator_caret"
+    | State_operator_dollar -> formatter |> Fmt.fmt "State_operator_dollar"
+    | State_operator_lt -> formatter |> Fmt.fmt "State_operator_lt"
+    | State_operator_eq -> formatter |> Fmt.fmt "State_operator_eq"
+    | State_operator_gt -> formatter |> Fmt.fmt "State_operator_gt"
+    | State_operator_bar -> formatter |> Fmt.fmt "State_operator_bar"
+    | State_operator_colon -> formatter |> Fmt.fmt "State_operator_colon"
+    | State_operator_dot -> formatter |> Fmt.fmt "State_operator_dot"
     | State_paren_comment_body v ->
       formatter |> Fmt.fmt "State_paren_comment_body " |> Paren_comment_body.pp v
     | State_paren_comment_lparen v ->
@@ -2324,19 +2344,19 @@ module Dfa = struct
         ("~", advance State_tilde);
         ("?", advance State_qmark);
         ("*", advance State_star);
-        ("/", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_slash_op s))));
-        ("%", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_pct_op s))));
-        ("+", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_plus_op s))));
-        ("-", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_minus_op s))));
-        ("@", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_at_op s))));
+        ("/", advance State_operator_slash);
+        ("%", advance State_operator_pct);
+        ("+", advance State_operator_plus);
+        ("-", advance State_operator_minus);
+        ("@", advance State_operator_at);
         ("^", advance State_caret);
-        ("$", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_dollar_op s))));
-        ("<", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_lt_op s))));
-        ("=", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_eq_op s))));
-        (">", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_gt_op s))));
+        ("$", advance State_operator_dollar);
+        ("<", advance State_operator_lt);
+        ("=", advance State_operator_eq);
+        (">", advance State_operator_gt);
         ("|", advance State_bar);
-        (":", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_colon_op s))));
-        (".", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_dot_op s))));
+        (":", advance State_operator_colon);
+        (".", advance State_operator_dot);
         (" ", advance State_whitespace);
         ("#", advance State_hash_comment);
         ("_", advance State_uscore);
@@ -2405,7 +2425,7 @@ module Dfa = struct
 
   let node0_tilde = {
     edges0=map_of_cps_alist [
-      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_tilde_op s))));
+      (operator_cps, advance State_operator_tilde);
     ];
     default0=accept_excl Tok_tilde;
     eoi0=accept_incl Tok_tilde;
@@ -2413,7 +2433,7 @@ module Dfa = struct
 
   let node0_qmark = {
     edges0=map_of_cps_alist [
-      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_qmark_op s))));
+      (operator_cps, advance State_operator_qmark);
     ];
     default0=accept_excl Tok_qmark;
     eoi0=accept_incl Tok_qmark;
@@ -2421,10 +2441,9 @@ module Dfa = struct
 
   let node0_star = {
     edges0=map_of_cps_alist [
-      ("*", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_star_star_op s))));
+      ("*", advance State_operator_star_star);
       (String.filter ~f:(fun cp -> Codepoint.(cp <> of_char '*')) operator_cps,
-        advance (State_operator (State.Operator.init ~f:(fun s ->
-          Tok_star_op s))));
+        advance State_operator_star);
     ];
     default0=accept_excl (Tok_star_op "*");
     eoi0=accept_incl (Tok_star_op "*");
@@ -2444,7 +2463,7 @@ module Dfa = struct
           | [] -> accept_excl Tok_caret view t
         )
       );
-      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_caret_op s))));
+      (operator_cps, advance State_operator_caret);
     ];
     default0=accept_excl Tok_caret;
     eoi0=accept_incl Tok_caret;
@@ -2455,7 +2474,7 @@ module Dfa = struct
       (")", accept_incl Tok_rcapture);
       ("]", accept_incl Tok_rarray);
       ("}", accept_incl Tok_rmodule);
-      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_bar_op s))));
+      (operator_cps, advance State_operator_bar);
     ];
     default0=accept_excl Tok_bar;
     eoi0=accept_incl Tok_bar;
@@ -2645,24 +2664,118 @@ module Dfa = struct
         ("~->", Tok_carrow);
       ])
 
-    let accept_operator State.Operator.{f} cursor t =
+    let accept_operator f cursor t =
       let op = str_of_cursor cursor t in
       match Map.get op operator_map with
       | None -> accept (f op) cursor t
       | Some tok -> accept tok cursor t
 
-    let accept_operator_incl state View.{cursor; _} t =
-      accept_operator state cursor t
+    let accept_operator_incl f View.{cursor; _} t =
+      accept_operator f cursor t
 
-    let accept_operator_excl state View.{pcursor; _} t =
-      accept_operator state pcursor t
+    let accept_operator_excl f View.{pcursor; _} t =
+      accept_operator f pcursor t
 
-    let node1 = {
-      edges1=map_of_cps_alist [
-        (operator_cps, (fun state view t -> advance (State_operator state) view t));
-      ];
-      default1=accept_operator_excl;
-      eoi1=accept_operator_incl;
+    let node0_tilde = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_tilde)];
+      default0=accept_operator_excl (fun s -> Tok_tilde_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_tilde_op s);
+    }
+
+    let node0_qmark = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_qmark)];
+      default0=accept_operator_excl (fun s -> Tok_qmark_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_qmark_op s);
+    }
+
+    let node0_star_star = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_star_star)];
+      default0=accept_operator_excl (fun s -> Tok_star_star_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_star_star_op s);
+    }
+
+    let node0_star = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_star)];
+      default0=accept_operator_excl (fun s -> Tok_star_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_star_op s);
+    }
+
+    let node0_slash = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_slash)];
+      default0=accept_operator_excl (fun s -> Tok_slash_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_slash_op s);
+    }
+
+    let node0_pct = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_pct)];
+      default0=accept_operator_excl (fun s -> Tok_pct_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_pct_op s);
+    }
+
+    let node0_plus = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_plus)];
+      default0=accept_operator_excl (fun s -> Tok_plus_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_plus_op s);
+    }
+
+    let node0_minus = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_minus)];
+      default0=accept_operator_excl (fun s -> Tok_minus_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_minus_op s);
+    }
+
+    let node0_at = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_at)];
+      default0=accept_operator_excl (fun s -> Tok_at_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_at_op s);
+    }
+
+    let node0_caret = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_caret)];
+      default0=accept_operator_excl (fun s -> Tok_caret_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_caret_op s);
+    }
+
+    let node0_dollar = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_dollar)];
+      default0=accept_operator_excl (fun s -> Tok_dollar_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_dollar_op s);
+    }
+
+    let node0_lt = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_lt)];
+      default0=accept_operator_excl (fun s -> Tok_lt_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_lt_op s);
+    }
+
+    let node0_eq = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_eq)];
+      default0=accept_operator_excl (fun s -> Tok_eq_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_eq_op s);
+    }
+
+    let node0_gt = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_gt)];
+      default0=accept_operator_excl (fun s -> Tok_gt_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_gt_op s);
+    }
+
+    let node0_bar = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_bar)];
+      default0=accept_operator_excl (fun s -> Tok_bar_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_bar_op s);
+    }
+
+    let node0_colon = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_colon)];
+      default0=accept_operator_excl (fun s -> Tok_colon_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_colon_op s);
+    }
+
+    let node0_dot = {
+      edges0=map_of_cps_alist [(operator_cps, advance State_operator_dot)];
+      default0=accept_operator_excl (fun s -> Tok_dot_op s);
+      eoi0=accept_operator_incl (fun s -> Tok_dot_op s);
     }
   end
 
@@ -3509,7 +3622,23 @@ module Dfa = struct
     | State_ident_uident -> act0 trace Ident.node0_uident view t
     | State_ident_cident -> act0 trace Ident.node0_cident view t
     | State_ident_mal -> act0 trace Ident.node0_mal view t
-    | State_operator v -> act1 trace Operator.node1 v view t
+    | State_operator_tilde -> act0 trace Operator.node0_tilde view t
+    | State_operator_qmark -> act0 trace Operator.node0_qmark view t
+    | State_operator_star_star -> act0 trace Operator.node0_star_star view t
+    | State_operator_star -> act0 trace Operator.node0_star view t
+    | State_operator_slash -> act0 trace Operator.node0_slash view t
+    | State_operator_pct -> act0 trace Operator.node0_pct view t
+    | State_operator_plus -> act0 trace Operator.node0_plus view t
+    | State_operator_minus -> act0 trace Operator.node0_minus view t
+    | State_operator_at -> act0 trace Operator.node0_at view t
+    | State_operator_caret -> act0 trace Operator.node0_caret view t
+    | State_operator_dollar -> act0 trace Operator.node0_dollar view t
+    | State_operator_lt -> act0 trace Operator.node0_lt view t
+    | State_operator_eq -> act0 trace Operator.node0_eq view t
+    | State_operator_gt -> act0 trace Operator.node0_gt view t
+    | State_operator_bar -> act0 trace Operator.node0_bar view t
+    | State_operator_colon -> act0 trace Operator.node0_colon view t
+    | State_operator_dot -> act0 trace Operator.node0_dot view t
     | State_paren_comment_body v -> act1 trace ParenComment.node1_body v view t
     | State_paren_comment_lparen v -> act1 trace ParenComment.node1_lparen v view t
     | State_paren_comment_star v -> act1 trace ParenComment.node1_star v view t
