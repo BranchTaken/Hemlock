@@ -708,44 +708,6 @@ let out_of_range_real base past =
 let operator_cps = "-+*/%@^$<=>|:.~?"
 let operator_set = set_of_cps operator_cps
 
-let operator_map = (
-  let open AbstractToken in
-  Map.of_alist (module String) [
-    ("|", Tok_bar);
-    (":", Tok_colon);
-    ("::", Tok_colon_colon);
-    (":=", Tok_colon_eq);
-    (".", Tok_dot);
-    ("-", Tok_minus);
-    ("^", Tok_caret);
-    ("<", Tok_lt);
-    ("<=", Tok_lt_eq);
-    ("=", Tok_eq);
-    ("<>", Tok_lt_gt);
-    (">=", Tok_gt_eq);
-    (">", Tok_gt);
-    ("->", Tok_arrow);
-    ("~->", Tok_carrow);
-  ])
-
-let operator fop _ppcursor _pcursor cursor t =
-  let accept_operator fop cursor t = begin
-    let op = str_of_cursor cursor t in
-    match Map.get op operator_map with
-    | Some tok -> accept tok cursor t
-    | None -> accept (fop op) cursor t
-  end in
-  let rec fn fop cursor t = begin
-    match Source.Cursor.next_opt cursor with
-    | None -> accept_operator fop cursor t
-    | Some (cp, cursor') -> begin
-        match Set.mem cp operator_set with
-        | true -> fn fop cursor' t
-        | false -> accept_operator fop cursor t
-      end
-  end in
-  fn fop cursor t
-
 let ident_set = set_of_cps "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'"
 
 let ident ~f_accept cursor t =
@@ -1924,6 +1886,18 @@ end = struct
 end
 
 module State = struct
+  module Operator = struct
+    type t = {
+      f: string -> AbstractToken.t
+    }
+
+    let pp _t formatter =
+      formatter |> Fmt.fmt "{f=...}"
+
+    let init ~f =
+      {f}
+  end
+
   module Paren_comment_body = struct
     type t = {
       nesting: uns;
@@ -2174,6 +2148,7 @@ module State = struct
     | State_btick
     | State_0
     | State_0_dot
+    | State_operator of Operator.t
     | State_paren_comment_body of Paren_comment_body.t
     | State_paren_comment_lparen of Paren_comment_lparen.t
     | State_paren_comment_star of Paren_comment_star.t
@@ -2219,6 +2194,7 @@ module State = struct
     | State_btick -> formatter |> Fmt.fmt "State_btick"
     | State_0 -> formatter |> Fmt.fmt "State_0"
     | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
+    | State_operator v -> formatter |> Fmt.fmt "State_operator " |> Operator.pp v
     | State_paren_comment_body v ->
       formatter |> Fmt.fmt "State_paren_comment_body " |> Paren_comment_body.pp v
     | State_paren_comment_lparen v ->
@@ -2435,19 +2411,19 @@ module Dfa = struct
         ("~", advance State_tilde);
         ("?", advance State_qmark);
         ("*", advance State_star);
-        ("/", wrap_legacy (operator (fun s -> Tok_slash_op s)));
-        ("%", wrap_legacy (operator (fun s -> Tok_pct_op s)));
-        ("+", wrap_legacy (operator (fun s -> Tok_plus_op s)));
-        ("-", wrap_legacy (operator (fun s -> Tok_minus_op s)));
-        ("@", wrap_legacy (operator (fun s -> Tok_at_op s)));
+        ("/", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_slash_op s))));
+        ("%", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_pct_op s))));
+        ("+", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_plus_op s))));
+        ("-", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_minus_op s))));
+        ("@", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_at_op s))));
         ("^", advance State_caret);
-        ("$", wrap_legacy (operator (fun s -> Tok_dollar_op s)));
-        ("<", wrap_legacy (operator (fun s -> Tok_lt_op s)));
-        ("=", wrap_legacy (operator (fun s -> Tok_eq_op s)));
-        (">", wrap_legacy (operator (fun s -> Tok_gt_op s)));
+        ("$", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_dollar_op s))));
+        ("<", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_lt_op s))));
+        ("=", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_eq_op s))));
+        (">", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_gt_op s))));
         ("|", advance State_bar);
-        (":", wrap_legacy (operator (fun s -> Tok_colon_op s)));
-        (".", wrap_legacy (operator (fun s -> Tok_dot_op s)));
+        (":", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_colon_op s))));
+        (".", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_dot_op s))));
         (" ", advance State_whitespace);
         ("#", advance State_hash_comment);
         ("_", advance State_uscore);
@@ -2516,7 +2492,7 @@ module Dfa = struct
 
   let node0_tilde = {
     edges0=map_of_cps_alist [
-      (operator_cps, wrap_legacy (operator (fun s -> Tok_tilde_op s)));
+      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_tilde_op s))));
     ];
     default0=accept_excl Tok_tilde;
     eoi0=accept_incl Tok_tilde;
@@ -2524,7 +2500,7 @@ module Dfa = struct
 
   let node0_qmark = {
     edges0=map_of_cps_alist [
-      (operator_cps, wrap_legacy (operator (fun s -> Tok_qmark_op s)));
+      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_qmark_op s))));
     ];
     default0=accept_excl Tok_qmark;
     eoi0=accept_incl Tok_qmark;
@@ -2532,8 +2508,10 @@ module Dfa = struct
 
   let node0_star = {
     edges0=map_of_cps_alist [
-      ("*", wrap_legacy (operator (fun s -> Tok_star_star_op s)));
-      ("-+/%@^$<=>|:.~?", wrap_legacy(operator (fun s -> Tok_star_op s)));
+      ("*", advance (State_operator (State.Operator.init ~f:(fun s -> Tok_star_star_op s))));
+      (String.filter ~f:(fun cp -> Codepoint.(cp <> of_char '*')) operator_cps,
+        advance (State_operator (State.Operator.init ~f:(fun s ->
+          Tok_star_op s))));
     ];
     default0=accept_excl (Tok_star_op "*");
     eoi0=accept_incl (Tok_star_op "*");
@@ -2553,7 +2531,7 @@ module Dfa = struct
           | [] -> accept_excl Tok_caret view t
         )
       );
-      (operator_cps, wrap_legacy (operator (fun s -> Tok_caret_op s)));
+      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_caret_op s))));
     ];
     default0=accept_excl Tok_caret;
     eoi0=accept_incl Tok_caret;
@@ -2564,7 +2542,7 @@ module Dfa = struct
       (")", accept_incl Tok_rcapture);
       ("]", accept_incl Tok_rarray);
       ("}", accept_incl Tok_rmodule);
-      (operator_cps, wrap_legacy (operator (fun s -> Tok_bar_op s)));
+      (operator_cps, advance (State_operator (State.Operator.init ~f:(fun s -> Tok_bar_op s))));
     ];
     default0=accept_excl Tok_bar;
     eoi0=accept_incl Tok_bar;
@@ -2620,6 +2598,48 @@ module Dfa = struct
     default0=wrap_legacy Real.zero_frac;
     eoi0=accept_incl Real.zero;
   }
+
+  module Operator = struct
+    let operator_map = (
+      let open AbstractToken in
+      Map.of_alist (module String) [
+        ("|", Tok_bar);
+        (":", Tok_colon);
+        ("::", Tok_colon_colon);
+        (":=", Tok_colon_eq);
+        (".", Tok_dot);
+        ("-", Tok_minus);
+        ("^", Tok_caret);
+        ("<", Tok_lt);
+        ("<=", Tok_lt_eq);
+        ("=", Tok_eq);
+        ("<>", Tok_lt_gt);
+        (">=", Tok_gt_eq);
+        (">", Tok_gt);
+        ("->", Tok_arrow);
+        ("~->", Tok_carrow);
+      ])
+
+    let accept_operator State.Operator.{f} cursor t =
+      let op = str_of_cursor cursor t in
+      match Map.get op operator_map with
+      | None -> accept (f op) cursor t
+      | Some tok -> accept tok cursor t
+
+    let accept_operator_incl state View.{cursor; _} t =
+      accept_operator state cursor t
+
+    let accept_operator_excl state View.{pcursor; _} t =
+      accept_operator state pcursor t
+
+    let node1 = {
+      edges1=map_of_cps_alist [
+        (operator_cps, (fun state view t -> advance (State_operator state) view t));
+      ];
+      default1=accept_operator_excl;
+      eoi1=accept_operator_incl;
+    }
+  end
 
   module ParenComment = struct
     let eoi1 _state View.{cursor; _} t =
@@ -3444,9 +3464,8 @@ module Dfa = struct
   }
 
   let transition_of_state trace state view t =
-    let open State in
     match state with
-    | State_start -> act0 trace node0_start view t
+    | State.State_start -> act0 trace node0_start view t
     | State_semi -> act0 trace node0_semi view t
     | State_lparen -> act0 trace node0_lparen view t
     | State_lbrack -> act0 trace node0_lbrack view t
@@ -3461,6 +3480,7 @@ module Dfa = struct
     | State_btick -> act0 trace node0_btick view t
     | State_0 -> act0 trace node0_0 view t
     | State_0_dot -> act0 trace node0_0_dot view t
+    | State_operator v -> act1 trace Operator.node1 v view t
     | State_paren_comment_body v -> act1 trace ParenComment.node1_body v view t
     | State_paren_comment_lparen v -> act1 trace ParenComment.node1_lparen v view t
     | State_paren_comment_star v -> act1 trace ParenComment.node1_star v view t
