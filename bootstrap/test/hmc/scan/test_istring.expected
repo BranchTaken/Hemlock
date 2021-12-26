@@ -41,17 +41,17 @@
   [1:10..1:10) : <Tok_end_of_input>
 ``"\u{x"``
   [1:0..1:1) : <Tok_istring_lditto>
-  [1:1..1:5) : <Tok_isubstring=Malformed ["[1:1..1:4): Partial \u{...}"]>
+  [1:1..1:5) : <Tok_isubstring=Malformed ["[1:1..1:4): Invalid \u{...}"]>
   [1:5..1:6) : <Tok_istring_rditto>
   [1:6..1:6) : <Tok_end_of_input>
 ``"\u{0"``
   [1:0..1:1) : <Tok_istring_lditto>
-  [1:1..1:5) : <Tok_isubstring=Malformed ["[1:1..1:6): Partial \u{...}"]>
+  [1:1..1:5) : <Tok_isubstring=Malformed ["[1:1..1:6): Invalid \u{...}"]>
   [1:5..1:6) : <Tok_istring_rditto>
   [1:6..1:6) : <Tok_end_of_input>
 ``"\u{"``
   [1:0..1:1) : <Tok_istring_lditto>
-  [1:1..1:4) : <Tok_isubstring=Malformed ["[1:1..1:5): Partial \u{...}"]>
+  [1:1..1:4) : <Tok_isubstring=Malformed ["[1:1..1:5): Invalid \u{...}"]>
   [1:4..1:5) : <Tok_istring_rditto>
   [1:5..1:5) : <Tok_end_of_input>
 ``"\u0"``

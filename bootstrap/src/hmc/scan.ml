@@ -611,8 +611,8 @@ let illegal_backslash base past =
 let missing_backslash base past =
   malformation ~base ~past "Missing backslash escape"
 
-let partial_unicode base past =
-  malformation ~base ~past "Partial \\u{...}"
+let invalid_unicode_escape base past =
+  malformation ~base ~past "Invalid \\u{...}"
 
 let empty_codepoint base past =
   malformation ~base ~past "Empty codepoint literal"
@@ -797,7 +797,7 @@ end = struct
             fn_cp accum' cursor' t
           end
         | Some UMapTick -> begin
-            let mal = malformed (partial_unicode bslash_cursor cursor) in
+            let mal = malformed (invalid_unicode_escape bslash_cursor cursor) in
             accept (Tok_codepoint mal) cursor' t
           end
         | Some UMapDitto
@@ -1860,6 +1860,27 @@ module State = struct
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
       bslash_cursor: Source.Cursor.t;
+    }
+
+    let pp {mals; path; bslash_cursor} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
+      |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
+      |> Fmt.fmt "}"
+
+    let init ~mals ~path ~bslash_cursor =
+      {mals; path; bslash_cursor}
+
+    let mals_accum mal {mals; path; _} =
+      Src_directive_path.{mals=mal :: mals; path}
+  end
+
+  module Src_directive_path_bslash_u_lcurly_hex = struct
+    type t = {
+      mals: AbstractToken.Rendition.Malformation.t list;
+      path: codepoint list option;
+      bslash_cursor: Source.Cursor.t;
       u: Nat.t;
     }
 
@@ -1871,8 +1892,8 @@ module State = struct
       |> Fmt.fmt "; u=" |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
       |> Fmt.fmt "}"
 
-    let init ~mals ~path ~bslash_cursor =
-      {mals; path; bslash_cursor; u=Nat.k_0}
+    let init ~mals ~path ~bslash_cursor ~u =
+      {mals; path; bslash_cursor; u}
 
     let mals_accum mal {mals; path; _} =
       Src_directive_path.{mals=mal :: mals; path}
@@ -1960,6 +1981,27 @@ module State = struct
 
     let col_accum digit ({col; _} as t) =
       {t with col=Nat.(col * k_a + digit)}
+  end
+
+  module Src_directive_col_0 = struct
+    type t = {
+      mals: AbstractToken.Rendition.Malformation.t list;
+      path: codepoint list option;
+      line: Nat.t option;
+    }
+
+    let pp {mals; path; line} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
+      |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
+      |> Fmt.fmt "}"
+
+    let init ~mals ~path ~line =
+      {mals; path; line}
+
+    let mals_accum mal ({mals; _} as t) =
+      {t with mals=mal :: mals}
   end
 
   module CodepointAccum = struct
@@ -2070,11 +2112,13 @@ module State = struct
     | State_src_directive_path_bslash of Src_directive_path_bslash.t
     | State_src_directive_path_bslash_u of Src_directive_path_bslash_u.t
     | State_src_directive_path_bslash_u_lcurly of Src_directive_path_bslash_u_lcurly.t
+    | State_src_directive_path_bslash_u_lcurly_hex of Src_directive_path_bslash_u_lcurly_hex.t
     | State_src_directive_rditto of Src_directive_rditto.t
     | State_src_directive_path_colon of Src_directive_path_colon.t
     | State_src_directive_line of Src_directive_line.t
     | State_src_directive_line_colon of Src_directive_line_colon.t
     | State_src_directive_col of Src_directive_col.t
+    | State_src_directive_col_0 of Src_directive_col_0.t
     | State_dentation_start
     | State_dentation_lparen
     | State_dentation_space
@@ -2142,6 +2186,9 @@ module State = struct
       formatter |> Fmt.fmt "State_path_bslash_u " |> Src_directive_path_bslash_u.pp v
     | State_src_directive_path_bslash_u_lcurly v ->
       formatter |> Fmt.fmt "State_path_bslash_u_lcurly " |> Src_directive_path_bslash_u_lcurly.pp v
+    | State_src_directive_path_bslash_u_lcurly_hex v ->
+      formatter |> Fmt.fmt "State_path_bslash_u_lcurly_hex "
+      |> Src_directive_path_bslash_u_lcurly_hex.pp v
     | State_src_directive_rditto v ->
       formatter |> Fmt.fmt "State_rditto " |> Src_directive_rditto.pp v
     | State_src_directive_path_colon v ->
@@ -2150,6 +2197,7 @@ module State = struct
     | State_src_directive_line_colon v ->
       formatter |> Fmt.fmt "State_line_colon " |> Src_directive_line_colon.pp v
     | State_src_directive_col v -> formatter |> Fmt.fmt "State_col " |> Src_directive_col.pp v
+    | State_src_directive_col_0 v -> formatter |> Fmt.fmt "State_col_0 " |> Src_directive_col_0.pp v
     | State_dentation_start -> formatter |> Fmt.fmt "State_dentation_start"
     | State_dentation_lparen -> formatter |> Fmt.fmt "State_dentation_lparen"
     | State_dentation_space -> formatter |> Fmt.fmt "State_dentation_space"
@@ -2849,6 +2897,7 @@ module Dfa = struct
     let node0_colon = {
       edges0=map_of_cps_alist [
         ("\"", advance (State_src_directive_path State.Src_directive_path.empty));
+        ("_", advance (State_src_directive_path_colon State.Src_directive_path_colon.empty));
         ("123456789", (fun ({pcursor; _} as view) t ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_src_directive_line (State.Src_directive_line.init ~mals:[] ~path:None
@@ -2933,7 +2982,7 @@ module Dfa = struct
             )
           );
           ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-              let mal = illegal_backslash bslash_cursor cursor in
+              let mal = invalid_unicode_escape bslash_cursor cursor in
               advance (State_src_directive_rditto (state |> mals_accum mal)) view t
             )
           );
@@ -2944,7 +2993,7 @@ module Dfa = struct
           );
         ];
         default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-          let mal = illegal_backslash bslash_cursor cursor in
+          let mal = invalid_unicode_escape bslash_cursor cursor in
           advance (State_src_directive_path (state |> mals_accum mal)) view t
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
@@ -2959,9 +3008,43 @@ module Dfa = struct
         edges1=map_of_cps_alist [
           ("_", (fun state view t ->
               advance (State_src_directive_path_bslash_u_lcurly state) view t));
+          ("0123456789abcdef", (fun {mals; path; bslash_cursor} ({pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_path_bslash_u_lcurly_hex
+                  (State.Src_directive_path_bslash_u_lcurly_hex.init ~mals ~path ~bslash_cursor
+                      ~u:digit)) view t
+            )
+          );
+          ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+              let mal = invalid_unicode_escape bslash_cursor cursor in
+              advance (State_src_directive_rditto (state |> mals_accum mal)) view t
+            )
+          );
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+            )
+          );
+        ];
+        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+          let mal = invalid_unicode_escape bslash_cursor cursor in
+          advance (State_src_directive_path (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_path_bslash_u_lcurly_hex =
+      let open State.Src_directive_path_bslash_u_lcurly_hex in
+      {
+        edges1=map_of_cps_alist [
+          ("_", (fun state view t ->
+              advance (State_src_directive_path_bslash_u_lcurly_hex state) view t));
           ("0123456789abcdef", (fun state ({pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_src_directive_path_bslash_u_lcurly (state |> u_accum digit)) view t
+              advance (State_src_directive_path_bslash_u_lcurly_hex (state |> u_accum digit)) view t
             )
           );
           ("}", (fun ({bslash_cursor; u; _} as state) ({cursor; _} as view) t ->
@@ -2976,7 +3059,7 @@ module Dfa = struct
             )
           );
           ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-              let mal = illegal_backslash bslash_cursor cursor in
+              let mal = invalid_unicode_escape bslash_cursor cursor in
               advance (State_src_directive_rditto (state |> mals_accum mal)) view t
             )
           );
@@ -2987,7 +3070,7 @@ module Dfa = struct
           );
         ];
         default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
-          let mal = partial_unicode bslash_cursor cursor in
+          let mal = invalid_unicode_escape bslash_cursor cursor in
           advance (State_src_directive_path (state |> mals_accum mal)) view t
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
@@ -3022,6 +3105,7 @@ module Dfa = struct
       let open View in
       {
         edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_path_colon state) view t));
           ("123456789", (fun {mals; path} ({pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_line (State.Src_directive_line.init ~mals ~path
@@ -3064,6 +3148,7 @@ module Dfa = struct
       end in
       {
         edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_line state) view t));
           ("0123456789", (fun state (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_line (state |> line_accum digit)) view t
@@ -3097,6 +3182,10 @@ module Dfa = struct
       let open State.Src_directive_line_colon in
       {
         edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_line_colon state) view t));
+          ("0", (fun {mals; path; line} view t ->
+              advance (State_src_directive_col_0 (State.Src_directive_col_0.init ~mals ~path ~line))
+                view t));
           ("123456789", (fun {mals; path; line} (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_col (State.Src_directive_col.init ~mals ~path ~line
@@ -3121,12 +3210,13 @@ module Dfa = struct
       let open State.Src_directive_col in
       {
         edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_col state) view t));
           ("0123456789", (fun state (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_col (state |> col_accum digit)) view t
             )
           );
-          ("]", (fun {mals; path; col_cursor; line; col} ({pcursor; _} as view) t ->
+          ("]", (fun {mals; path; line; col_cursor; col} ({pcursor; _} as view) t ->
               let mals, col = match Nat.(col > max_abs_i64) with
                 | false -> mals, Some col
                 | true -> begin
@@ -3148,6 +3238,27 @@ module Dfa = struct
         default1=(fun state ({pcursor; cursor; _} as view) t ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
           advance (State_src_directive_col (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_col_0 =
+      let open State.Src_directive_col_0 in
+      {
+        edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_col_0 state) view t));
+          ("]", (fun {mals; path; line} view t ->
+              let tok = render_source_directive ~mals ~path ~line ~col:(Some Nat.k_0) in
+              accept_source_directive tok view t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_col_0 (state |> mals_accum mal)) view t
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
@@ -3514,12 +3625,12 @@ module Dfa = struct
       let mal = invalid_unicode bslash_cursor cursor in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
-    let accum_partial_unicode accum bslash_cursor cursor t = begin
-      let mal = partial_unicode bslash_cursor cursor in
+    let accum_invalid_unicode_escape accum bslash_cursor cursor t = begin
+      let mal = invalid_unicode_escape bslash_cursor cursor in
       t, Retry (State_isubstring_start {accum=State.CodepointAccum.accum_mal mal accum})
     end in
     let default1 {accum; bslash_cursor; _} {pcursor; _} t = begin
-      accum_partial_unicode accum bslash_cursor pcursor t
+      accum_invalid_unicode_escape accum bslash_cursor pcursor t
     end in
     let accum_cp cp {accum; _} view t = begin
       advance (State_isubstring_start {accum=State.CodepointAccum.accum_cp cp accum}) view t
@@ -3554,7 +3665,7 @@ module Dfa = struct
               ~default:(accum_invalid_unicode accum bslash_cursor cursor t)
           ));
         ("\"", (fun {accum; bslash_cursor; _} ({cursor; _} as view) t ->
-            let mal = partial_unicode bslash_cursor cursor in
+            let mal = invalid_unicode_escape bslash_cursor cursor in
             accept_isubstring_excl Istring_rditto (State.CodepointAccum.accum_mal mal accum) view t
           ));
       ];
@@ -3648,11 +3759,14 @@ module Dfa = struct
     | State_src_directive_path_bslash_u v -> act1 trace SrcDirective.node1_path_bslash_u v view t
     | State_src_directive_path_bslash_u_lcurly v ->
       act1 trace SrcDirective.node1_path_bslash_u_lcurly v view t
+    | State_src_directive_path_bslash_u_lcurly_hex v ->
+      act1 trace SrcDirective.node1_path_bslash_u_lcurly_hex v view t
     | State_src_directive_rditto v -> act1 trace SrcDirective.node1_rditto v view t
     | State_src_directive_path_colon v -> act1 trace SrcDirective.node1_path_colon v view t
     | State_src_directive_line v -> act1 trace SrcDirective.node1_line v view t
     | State_src_directive_line_colon v -> act1 trace SrcDirective.node1_line_colon v view t
     | State_src_directive_col v -> act1 trace SrcDirective.node1_col v view t
+    | State_src_directive_col_0 v -> act1 trace SrcDirective.node1_col_0 v view t
     | State_dentation_start -> act0 trace Dentation.node0_start view t
     | State_dentation_lparen -> act0 trace Dentation.node0_lparen view t
     | State_dentation_space -> act0 trace Dentation.node0_space view t
