@@ -635,9 +635,6 @@ let invalid_utf8 base past =
 let invalid_bar_indent base past =
   malformation ~base ~past "Invalid bar string indentation"
 
-let invalid_hex base past =
-  malformation ~base ~past "Invalid hexadecimal digit"
-
 let invalid_numerical base past =
   malformation ~base ~past "Invalid codepoint in numerical constant"
 
@@ -676,188 +673,7 @@ let ident_cident_cps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 let ident_uident_cps = "abcdefghijklmnopqrstuvwxyz"
 let ident_malformed_cps = "0123456789'"
 
-let accum_cp_of_nat ~accum_cp ~accum_mal nat accum base past =
-  Option.value_map (Nat.to_uns_opt nat)
-    ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
-    ~default:None
-  |> Option.value_map
-    ~f:(fun cp -> accum_cp cp accum)
-    ~default:(accum_mal (invalid_unicode base past) accum)
-
-module Codepoint_ : sig
-  val codepoint: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
-end = struct
-  type umap =
-    | UMapUscore
-    | UMapDigit
-    | UMapRcurly
-    | UMapDitto
-    | UMapTick
-
-  let u_map = map_of_cps_alist [
-    ("_", UMapUscore);
-    ("0123456789abcdef", UMapDigit);
-    ("}", UMapRcurly);
-    ("\"", UMapDitto);
-    ("'", UMapTick);
-  ]
-
-  type bmap =
-    | BMapU
-    | BMapT
-    | BMapN
-    | BMapR
-    | BMapTick
-    | BMapBslash
-    | BMapNewline
-
-  let bslash_map = map_of_cps_alist [
-    ("u", BMapU);
-    ("t", BMapT);
-    ("n", BMapN);
-    ("r", BMapR);
-    ("'", BMapTick);
-    ("\\", BMapBslash);
-    ("\n", BMapNewline);
-  ]
-
-  type lmap =
-    | LMapLookahead
-    | LMapTick
-    | LMapBslash
-
-  let lookahead_map = map_of_cps_alist [
-    ("abcdefghijklmnopqrstuvwxyz_ \n", LMapLookahead);
-    ("'", LMapTick);
-    ("\\", LMapBslash);
-  ]
-
-  type accum =
-    | Empty
-    | Cp of codepoint
-    | Malformations of AbstractToken.Rendition.Malformation.t list
-
-  let accum_cp cp = function
-    | Empty -> Cp cp
-    | Cp _ -> not_reached ()
-    | Malformations _ as accum -> accum
-
-  let accum_mal mal = function
-    | Empty
-    | Cp _ -> Malformations [mal]
-    | Malformations mals -> Malformations (mal :: mals)
-
-  (* Codepoint: '...' *)
-  let codepoint _ppcursor _pcursor cursor t =
-    let accept_codepoint accum cursor t = begin
-      match accum with
-      | Empty -> not_reached ()
-      | Cp cp -> accept (Tok_codepoint (Constant cp)) cursor t
-      | Malformations mals -> accept (Tok_codepoint (AbstractToken.Rendition.of_mals mals)) cursor t
-    end in
-
-    (* The callers of fn_wrapper have varying scanner state they're carrying as call parameters, so
-     * in most cases they have to allocate a closure. This isn't ideal performance-wise, but it
-     * reduces boilerplate. *)
-    let fn_wrapper ~f accum cursor t = begin
-      match Source.Cursor.next_opt cursor with
-      | None -> begin
-          let mal = unterminated_codepoint t.tok_base cursor in
-          accept_codepoint (accum_mal mal accum) cursor t
-        end
-      | Some (cp, cursor') -> f cp cursor' accum cursor t
-    end in
-    let rec fn_cp accum cursor t = begin
-      fn_wrapper ~f:(fun cp cursor' accum cursor t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '\'') ->
-          accept_codepoint accum cursor' t
-        | _ -> begin
-            let mal = excess_codepoint cursor cursor' in
-            fn_cp (accum_mal mal accum) cursor' t
-          end
-      ) accum cursor t
-    end in
-    let fn_lookahead accum pcursor cursor t = begin
-      match Source.Cursor.next_opt cursor with
-      | Some (cp, cursor') when Codepoint.(cp = of_char '\'') -> accept_codepoint accum cursor' t
-      | Some (_, _)
-      | None -> accept Tok_tick pcursor t
-    end in
-    let rec fn_bslash_u_lcurly nat bslash_cursor accum cursor t = begin
-      fn_wrapper ~f:(fun cp cursor' accum cursor t ->
-        match Map.get cp u_map with
-        | Some UMapUscore -> fn_bslash_u_lcurly nat bslash_cursor accum cursor' t
-        | Some UMapDigit -> begin
-            fn_bslash_u_lcurly Radix.(nat_accum (nat_of_cp cp) nat Hex) bslash_cursor accum cursor'
-              t
-          end
-        | Some UMapRcurly -> begin
-            let accum' = accum_cp_of_nat ~accum_cp ~accum_mal nat accum bslash_cursor cursor' in
-            fn_cp accum' cursor' t
-          end
-        | Some UMapTick -> begin
-            let mal = malformed (invalid_unicode_escape bslash_cursor cursor) in
-            accept (Tok_codepoint mal) cursor' t
-          end
-        | Some UMapDitto
-        | None -> begin
-            let mal = invalid_hex cursor cursor' in
-            let accum' = accum_mal mal accum in
-            fn_bslash_u_lcurly nat bslash_cursor accum' cursor' t
-          end
-      ) accum cursor t
-    end in
-    let fn_bslash_u bslash_cursor accum cursor t = begin
-      fn_wrapper ~f:(fun cp cursor' accum cursor t ->
-        match cp with
-        | cp when Codepoint.(cp = of_char '{') ->
-          fn_bslash_u_lcurly Nat.zero bslash_cursor accum cursor' t
-        | cp when Codepoint.(cp = of_char '\'') -> begin
-            let mal = malformed (illegal_backslash bslash_cursor cursor) in
-            accept (Tok_codepoint mal) cursor' t
-          end
-        | _ -> begin
-            let mal = illegal_backslash bslash_cursor cursor in
-            let accum = Malformations [mal] in
-            fn_cp accum cursor t
-          end
-      ) accum cursor t
-    end in
-    let fn_bslash bslash_cursor accum cursor t = begin
-      fn_wrapper ~f:(fun cp cursor' accum _cursor t ->
-        match Map.get cp bslash_map with
-        | Some BMapU -> fn_bslash_u bslash_cursor accum cursor' t
-        | Some BMapT -> fn_cp (Cp Codepoint.ht) cursor' t
-        | Some BMapN -> fn_cp (Cp Codepoint.nl) cursor' t
-        | Some BMapR -> fn_cp (Cp Codepoint.cr) cursor' t
-        | Some BMapTick
-        | Some BMapBslash -> fn_cp (Cp cp) cursor' t
-        | Some BMapNewline -> accept Tok_tick cursor t
-        | None -> begin
-            let mal = illegal_backslash bslash_cursor cursor' in
-            fn_cp (accum_mal mal accum) cursor' t
-          end
-      ) accum cursor t
-    end in
-    let accum = Empty in
-    match Source.Cursor.nextv_opt cursor with
-    | None -> accept Tok_tick cursor t
-    | Some (_, false, cursor') -> begin
-        let mal = invalid_utf8 cursor cursor' in
-        fn_cp (accum_mal mal accum) cursor' t
-      end
-    | Some (cp, true, cursor') -> begin
-        match Map.get cp lookahead_map with
-        | Some LMapLookahead -> fn_lookahead (Cp cp) cursor cursor' t
-        | Some LMapTick -> begin
-            let mal = empty_codepoint t.tok_base cursor' in
-            accept_codepoint (accum_mal mal accum) cursor' t
-          end
-        | Some LMapBslash -> fn_bslash cursor accum cursor' t
-        | None -> fn_cp (Cp cp) cursor' t
-      end
-end
+let whitespace_cps = " \n"
 
 module String_ : sig
   val bstring: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
@@ -1881,19 +1697,19 @@ module State = struct
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
       bslash_cursor: Source.Cursor.t;
-      u: Nat.t;
+      hex: Nat.t;
     }
 
-    let pp {mals; path; bslash_cursor; u} formatter =
+    let pp {mals; path; bslash_cursor; hex} formatter =
       formatter
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
-      |> Fmt.fmt "; u=" |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+      |> Fmt.fmt "; hex=" |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true hex
       |> Fmt.fmt "}"
 
-    let init ~mals ~path ~bslash_cursor ~u =
-      {mals; path; bslash_cursor; u}
+    let init ~mals ~path ~bslash_cursor ~hex =
+      {mals; path; bslash_cursor; hex}
 
     let mals_accum mal {mals; path; _} =
       Src_directive_path.{mals=mal :: mals; path}
@@ -1903,8 +1719,8 @@ module State = struct
       | None -> Src_directive_path.{mals; path=Some [cp]}
       | Some cps -> Src_directive_path.{mals; path=Some (cp :: cps)}
 
-    let u_accum digit ({u; _} as t) =
-      {t with u=Nat.(u * k_g + digit)}
+    let hex_accum digit ({hex; _} as t) =
+      {t with hex=Nat.(hex * k_g + digit)}
   end
 
   module Src_directive_rditto = Src_directive_path
@@ -2004,6 +1820,67 @@ module State = struct
       {t with mals=mal :: mals}
   end
 
+  module Codepoint_bslash = struct
+    type t = {
+      bslash_cursor: Source.Cursor.t;
+    }
+
+    let pp {bslash_cursor} formatter =
+      formatter
+      |> Fmt.fmt "{bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor) |> Fmt.fmt "}"
+
+    let init ~bslash_cursor =
+      {bslash_cursor}
+  end
+
+  module Codepoint_bslash_u = Codepoint_bslash
+
+  module Codepoint_bslash_u_lcurly = Codepoint_bslash
+
+  module Codepoint_bslash_u_lcurly_hex = struct
+    type t = {
+      bslash_cursor: Source.Cursor.t;
+      hex: Nat.t;
+    }
+
+    let pp {bslash_cursor; hex} formatter =
+      formatter
+      |> Fmt.fmt "{bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
+      |> Fmt.fmt "; hex=" |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true hex
+      |> Fmt.fmt "}"
+
+    let init ~bslash_cursor ~hex =
+      {bslash_cursor; hex}
+
+    let hex_accum digit ({hex; _} as t) =
+      {t with hex=Nat.(hex * k_g + digit)}
+  end
+
+  module Codepoint_cp = struct
+    type t = {
+      cp: codepoint;
+    }
+
+    let pp {cp} formatter =
+      formatter |> Fmt.fmt "{cp=" |> Codepoint.pp cp |> Fmt.fmt "}"
+
+    let init ~cp =
+      {cp}
+  end
+
+  module Codepoint_mal = struct
+    type t = {
+      mal: AbstractToken.Rendition.Malformation.t;
+    }
+
+    let pp {mal} formatter =
+      formatter
+      |> Fmt.fmt "{mal=" |> AbstractToken.Rendition.Malformation.pp mal |> Fmt.fmt "}"
+
+    let init mal =
+      {mal}
+  end
+
   module CodepointAccum = struct
     type t =
       | Codepoints of codepoint list
@@ -2080,6 +1957,8 @@ module State = struct
     | State_caret
     | State_bar
     | State_uscore
+    | State_tick
+    | State_tick_lookahead
     | State_btick
     | State_0
     | State_0_dot
@@ -2126,6 +2005,13 @@ module State = struct
     | State_whitespace
     | State_whitespace_bslash
     | State_hash_comment
+    | State_codepoint_tick
+    | State_codepoint_bslash of Codepoint_bslash.t
+    | State_codepoint_bslash_u of Codepoint_bslash_u.t
+    | State_codepoint_bslash_u_lcurly of Codepoint_bslash_u_lcurly.t
+    | State_codepoint_bslash_u_lcurly_hex of Codepoint_bslash_u_lcurly_hex.t
+    | State_codepoint_cp of Codepoint_cp.t
+    | State_codepoint_mal of Codepoint_mal.t
     | State_isubstring_start of Isubstring_start.t
     | State_isubstring_bslash of Isubstring_bslash.t
     | State_isubstring_bslash_u of Isubstring_bslash_u.t
@@ -2148,6 +2034,8 @@ module State = struct
     | State_caret -> formatter |> Fmt.fmt "State_caret"
     | State_bar -> formatter |> Fmt.fmt "State_bar"
     | State_uscore -> formatter |> Fmt.fmt "State_uscore"
+    | State_tick -> formatter |> Fmt.fmt "State_tick"
+    | State_tick_lookahead -> formatter |> Fmt.fmt "State_tick_lookahead"
     | State_btick -> formatter |> Fmt.fmt "State_btick"
     | State_0 -> formatter |> Fmt.fmt "State_0"
     | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
@@ -2205,6 +2093,18 @@ module State = struct
     | State_whitespace -> formatter |> Fmt.fmt "State_whitespace"
     | State_whitespace_bslash -> formatter |> Fmt.fmt "State_whitespace_bslash"
     | State_hash_comment -> formatter |> Fmt.fmt "State_hash_comment"
+    | State_codepoint_tick -> formatter |> Fmt.fmt "State_codepoint_tick"
+    | State_codepoint_bslash v ->
+      formatter |> Fmt.fmt "State_codepoint_bslash " |> Codepoint_bslash.pp v
+    | State_codepoint_bslash_u v ->
+      formatter |> Fmt.fmt "State_codepoint_bslash_u " |> Codepoint_bslash_u.pp v
+    | State_codepoint_bslash_u_lcurly v ->
+      formatter |> Fmt.fmt "State_codepoint_bslash_u_lcurly " |> Codepoint_bslash_u_lcurly.pp v
+    | State_codepoint_bslash_u_lcurly_hex v ->
+      formatter |> Fmt.fmt "State_codepoint_bslash_u_lcurly_hex "
+      |> Codepoint_bslash_u_lcurly_hex.pp v
+    | State_codepoint_cp v -> formatter |> Fmt.fmt "State_codepoint_cp " |> Codepoint_cp.pp v
+    | State_codepoint_mal v -> formatter |> Fmt.fmt "State_codepoint_mal " |> Codepoint_mal.pp v
     | State_isubstring_start v ->
       formatter |> Fmt.fmt "State_isubstring_start " |> Isubstring_start.pp v
     | State_isubstring_bslash v ->
@@ -2410,7 +2310,7 @@ module Dfa = struct
         ("_", advance State_uscore);
         ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", advance State_ident_cident);
         ("abcdefghijklmnopqrstuvwxyz", advance State_ident_uident);
-        ("'", wrap_legacy Codepoint_.codepoint);
+        ("'", advance State_tick);
         ("\"", wrap_legacy (accept_istring_push Istring_interp Tok_istring_lditto));
         ("`", advance State_btick);
         ("0", advance State_0);
@@ -2537,6 +2437,26 @@ module Dfa = struct
     ];
     default0=accept_excl Tok_uscore;
     eoi0=accept_incl Tok_uscore;
+  }
+
+  let node0_tick = {
+    edges0=map_of_cps_alist [
+      (String.concat ["_"; ident_uident_cps; whitespace_cps], advance State_tick_lookahead);
+    ];
+    default0=(fun _view t -> retry State_codepoint_tick t);
+    eoi0=accept_incl Tok_tick;
+  }
+
+  let node0_tick_lookahead = {
+    edges0=map_of_cps_alist [
+      ("'", (fun View.{ppcursor; cursor; _} t ->
+          let cp = Source.Cursor.rget ppcursor in
+          accept (Tok_codepoint (Constant cp)) cursor t
+        )
+      );
+    ];
+    default0=accept_pexcl Tok_tick;
+    eoi0=accept_excl Tok_tick;
   }
 
   let node0_btick = {
@@ -3012,7 +2932,7 @@ module Dfa = struct
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_path_bslash_u_lcurly_hex
                   (State.Src_directive_path_bslash_u_lcurly_hex.init ~mals ~path ~bslash_cursor
-                      ~u:digit)) view t
+                      ~hex:digit)) view t
             )
           );
           ("\"", (fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
@@ -3044,17 +2964,18 @@ module Dfa = struct
               advance (State_src_directive_path_bslash_u_lcurly_hex state) view t));
           ("0123456789abcdef", (fun state ({pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_src_directive_path_bslash_u_lcurly_hex (state |> u_accum digit)) view t
+              advance (State_src_directive_path_bslash_u_lcurly_hex (state |> hex_accum digit)) view
+                t
             )
           );
-          ("}", (fun ({bslash_cursor; u; _} as state) ({cursor; _} as view) t ->
+          ("}", (fun ({bslash_cursor; hex; _} as state) ({cursor; _} as view) t ->
               advance (State_src_directive_path (
-                Option.value_map (Nat.to_uns_opt u)
+                Option.value_map (Nat.to_uns_opt hex)
                   ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
                   ~default:None
                 |> Option.value_map
                   ~f:(fun cp -> (state |> path_accum cp))
-                  ~default:(state |> mals_accum (invalid_unicode bslash_cursor cursor))
+                  ~default:(state |> mals_accum (invalid_unicode_escape bslash_cursor cursor))
               )) view t
             )
           );
@@ -3509,6 +3430,142 @@ module Dfa = struct
     eoi0=accept_line_break_incl Tok_hash_comment;
   }
 
+  module Codepoint_ = struct
+    let eoi0 View.{cursor; _} t =
+      let mal = unterminated_codepoint t.tok_base cursor in
+      accept (Tok_codepoint (AbstractToken.Rendition.of_mals [mal])) cursor t
+
+    let eoi1 _state view t =
+      eoi0 view t
+
+    let node0_tick = {
+      edges0=map_of_cps_alist [
+        ("\\", (fun (View.{pcursor=bslash_cursor; _} as view) t ->
+            advance (State_codepoint_bslash (State.Codepoint_bslash.init ~bslash_cursor)) view t));
+        ("'", (fun ({cursor; _} as view) t ->
+            let mal = empty_codepoint t.tok_base cursor in
+            accept_incl (Tok_codepoint (AbstractToken.Rendition.of_mals [mal])) view t
+          )
+        );
+      ];
+      default0=(fun (View.{pcursor; _} as view) t ->
+        let cp = Source.Cursor.rget pcursor in
+        advance (State.State_codepoint_cp (State.Codepoint_cp.init ~cp)) view t
+      );
+      eoi0;
+    }
+
+    let node1_bslash =
+      let open State.Codepoint_bslash in
+      {
+        edges1=map_of_cps_alist [
+          ("u", (fun state view t -> advance (State_codepoint_bslash_u state) view t));
+          ("t", (fun _state view t ->
+              advance (State_codepoint_cp (State.Codepoint_cp.init ~cp:Codepoint.ht)) view t));
+          ("n", (fun _state view t ->
+              advance (State_codepoint_cp (State.Codepoint_cp.init ~cp:Codepoint.nl)) view t));
+          ("r", (fun _state view t ->
+              advance (State_codepoint_cp (State.Codepoint_cp.init ~cp:Codepoint.cr)) view t));
+          ("'\\", (fun _state ({pcursor; _} as view) t ->
+              let cp = Source.Cursor.rget pcursor in
+              advance (State_codepoint_cp (State.Codepoint_cp.init ~cp)) view t
+            )
+          );
+          ("\n", (fun _state view t -> accept_pexcl Tok_tick view t));
+        ];
+        default1=(fun {bslash_cursor} (View.{cursor; _} as view) t ->
+          let mal = illegal_backslash bslash_cursor cursor in
+          advance (State.State_codepoint_mal (State.Codepoint_mal.init mal)) view t
+        );
+        eoi1;
+      }
+
+    let node1_bslash_u = {
+      edges1=map_of_cps_alist [
+        ("{", (fun state view t -> advance (State_codepoint_bslash_u_lcurly state) view t));
+      ];
+      default1=(fun {bslash_cursor} (View.{cursor; _} as view) t ->
+        let mal = invalid_unicode_escape bslash_cursor cursor in
+        advance (State.State_codepoint_mal (State.Codepoint_mal.init mal)) view t
+      );
+      eoi1;
+    }
+
+    let node1_bslash_u_lcurly = {
+      edges1=map_of_cps_alist [
+        ("_", (fun state view t -> advance (State_codepoint_bslash_u_lcurly state) view t));
+        ("0123456789abcdef", (fun {bslash_cursor} (View.{pcursor; _} as view) t ->
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+            advance (State_codepoint_bslash_u_lcurly_hex (State.Codepoint_bslash_u_lcurly_hex.init
+                ~bslash_cursor ~hex:digit)) view t
+          )
+        );
+      ];
+      default1=(fun {bslash_cursor} (View.{cursor; _} as view) t ->
+        let mal = invalid_unicode_escape bslash_cursor cursor in
+        advance (State.State_codepoint_mal (State.Codepoint_mal.init mal)) view t
+      );
+      eoi1;
+    }
+
+    let node1_bslash_u_lcurly_hex =
+      let open State.Codepoint_bslash_u_lcurly_hex in
+      {
+        edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_codepoint_bslash_u_lcurly_hex state) view t));
+          ("0123456789abcdef", (fun state (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_codepoint_bslash_u_lcurly_hex (state |> hex_accum digit)) view t
+            )
+          );
+          ("}", (fun {bslash_cursor; hex} ({cursor; _} as view) t ->
+              advance (
+                Option.value_map (Nat.to_uns_opt hex)
+                  ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
+                  ~default:None
+                |> Option.value_map
+                  ~f:(fun cp -> State.State_codepoint_cp (State.Codepoint_cp.init ~cp))
+                  ~default:(State.State_codepoint_mal (State.Codepoint_mal.init
+                      (invalid_unicode_escape bslash_cursor cursor)))
+              ) view t
+            )
+          );
+        ];
+        default1=(fun {bslash_cursor; _} (View.{cursor; _} as view) t ->
+          let mal = invalid_unicode_escape bslash_cursor cursor in
+          advance (State.State_codepoint_mal (State.Codepoint_mal.init mal)) view t
+        );
+        eoi1;
+      }
+
+    let node1_cp =
+      let open State.Codepoint_cp in
+      {
+        edges1=map_of_cps_alist [
+          ("'", (fun {cp} View.{cursor; _} t -> accept (Tok_codepoint (Constant cp)) cursor t));
+        ];
+        default1=(fun _state (View.{pcursor; cursor; _} as view) t ->
+          let mal = excess_codepoint pcursor cursor in
+          advance (State.State_codepoint_mal (State.Codepoint_mal.init mal)) view t
+        );
+        eoi1;
+      }
+
+    let node1_mal =
+      let open State.Codepoint_mal in
+      {
+        edges1=map_of_cps_alist [
+          ("'", (fun {mal} View.{cursor; _} t ->
+              accept (Tok_codepoint (AbstractToken.Rendition.of_mals [mal])) cursor t));
+        ];
+        default1=(fun state view t -> advance (State.State_codepoint_mal state) view t);
+        eoi1=(fun {mal} View.{cursor; _} t ->
+          let mal2 = unterminated_codepoint t.tok_base cursor in
+          accept (Tok_codepoint (AbstractToken.Rendition.of_mals (mal2 :: [mal]))) cursor t
+        );
+      }
+  end
+
   let node1_isubstring_start =
     let open State.Isubstring_start in
     let open View in
@@ -3701,7 +3758,7 @@ module Dfa = struct
 
   let node0_spec_start = {
     edges0=map_of_cps_alist [
-      ("'", accept ~f:Codepoint_.codepoint);
+      (* ("'", XXX); *)
       ("(", advance State_spec_lparen)
     ]; default0; eoi0;
   }
@@ -3726,6 +3783,8 @@ module Dfa = struct
     | State_caret -> act0 trace node0_caret view t
     | State_bar -> act0 trace node0_bar view t
     | State_uscore -> act0 trace node0_uscore view t
+    | State_tick -> act0 trace node0_tick view t
+    | State_tick_lookahead -> act0 trace node0_tick_lookahead view t
     | State_btick -> act0 trace node0_btick view t
     | State_0 -> act0 trace node0_0 view t
     | State_0_dot -> act0 trace node0_0_dot view t
@@ -3774,6 +3833,14 @@ module Dfa = struct
     | State_whitespace -> act0 trace node0_whitespace view t
     | State_whitespace_bslash -> act0 trace node0_whitespace_bslash view t
     | State_hash_comment -> act0 trace node0_hash_comment view t
+    | State_codepoint_tick -> act0 trace Codepoint_.node0_tick view t
+    | State_codepoint_bslash v -> act1 trace Codepoint_.node1_bslash v view t
+    | State_codepoint_bslash_u v -> act1 trace Codepoint_.node1_bslash_u v view t
+    | State_codepoint_bslash_u_lcurly v -> act1 trace Codepoint_.node1_bslash_u_lcurly v view t
+    | State_codepoint_bslash_u_lcurly_hex v ->
+      act1 trace Codepoint_.node1_bslash_u_lcurly_hex v view t
+    | State_codepoint_cp v -> act1 trace Codepoint_.node1_cp v view t
+    | State_codepoint_mal v -> act1 trace Codepoint_.node1_mal v view t
     | State_isubstring_start v -> act1 trace node1_isubstring_start v view t
     | State_isubstring_bslash v -> act1 trace node1_isubstring_bslash v view t
     | State_isubstring_bslash_u v -> act1 trace node1_isubstring_bslash_u v view t
