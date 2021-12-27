@@ -1650,3 +1650,12 @@ a
   [7:0..7:0) : <Tok_dedent>
   [7:0..7:0) : <Tok_dedent>
   [7:0..7:0) : <Tok_end_of_input>
+``(``
+  [1:0..1:1) : <Tok_lparen>
+  [1:1..1:1) : <Tok_end_of_input>
+``    ``
+  [1:0..1:4) : <Tok_whitespace>
+  [1:4..1:4) : <Tok_end_of_input>
+``\``
+  [1:0..1:1) : <Tok_bslash>
+  [1:1..1:1) : <Tok_end_of_input>

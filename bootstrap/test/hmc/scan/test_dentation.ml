@@ -378,6 +378,11 @@ a
     b
             c
                         d
-|}
+|};
+
+  (* EOI. *)
+  scan_str {|(|};
+  scan_str {|    |};
+  scan_str {|\|}
 
 let _ = test ()
