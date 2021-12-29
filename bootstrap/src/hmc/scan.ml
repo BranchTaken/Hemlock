@@ -1,10 +1,39 @@
 open Basis
 open Basis.Rudiments
 
+let operator_cps = "-+*/%@^$<=>|:.~?"
+
+let bin_cps = "01"
+let oct_cps = String.concat [bin_cps; "234567"]
+let dec_cps = String.concat [oct_cps; "89"]
+let hex_cps = String.concat [dec_cps; "abcdef"]
+
+let ident_cident_cps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+let ident_uident_cps = "abcdefghijklmnopqrstuvwxyz"
+let ident_continue_cps = String.concat [dec_cps; "'"]
+let ident_cps = String.concat ["_"; ident_cident_cps; ident_uident_cps; ident_continue_cps]
+
+let whitespace_cps = " \n"
+
+let cpset_of_cps cps =
+  String.fold ~init:(Set.empty (module Codepoint)) ~f:(fun set cp ->
+    Set.insert cp set
+  ) cps
+
+let map_of_cpsets_alist alist =
+  List.fold ~init:(Map.empty (module Codepoint)) ~f:(fun edges (cpset, v) ->
+    Set.fold ~init:edges ~f:(fun edges cp ->
+      Map.insert_hlt ~k:cp ~v edges
+    ) cpset
+  ) alist
+
+let map_of_cps_alist alist =
+  map_of_cpsets_alist (List.map ~f:(fun (cps, v) -> cpset_of_cps cps, v) alist)
+
 let nat_digit_map = String.foldi ~init:(Map.empty (module Codepoint))
   ~f:(fun i digit_map cp ->
     Map.insert_hlt ~k:cp ~v:(Nat.of_uns i) digit_map
-  ) "0123456789abcdef"
+  ) hex_cps
 
 let nat_of_cp digit =
   Map.get_hlt digit nat_digit_map
@@ -12,7 +41,7 @@ let nat_of_cp digit =
 let zint_digit_map = String.foldi ~init:(Map.empty (module Codepoint))
   ~f:(fun i digit_map cp ->
     Map.insert_hlt ~k:cp ~v:(Zint.of_uns i) digit_map
-  ) "0123456789abcdef"
+  ) hex_cps
 
 let zint_of_cp digit =
   Map.get_hlt digit zint_digit_map
@@ -23,6 +52,15 @@ module Radix = struct
     | Oct
     | Dec
     | Hex
+
+  let pp t formatter =
+    formatter
+    |> Fmt.fmt (match t with
+      | Bin -> "Bin"
+      | Oct -> "Oct"
+      | Dec -> "Dec"
+      | Hex -> "Hex"
+    )
 
   let to_nat = function
     | Bin -> Nat.k_2
@@ -235,6 +273,8 @@ module AbstractToken = struct
     | Tok_i256 of i256 Rendition.t
     | Tok_u512 of u512 Rendition.t
     | Tok_i512 of i512 Rendition.t
+    | Tok_nat of Nat.t Rendition.t
+    | Tok_zint of Nat.t Rendition.t
     | Tok_end_of_input
     | Tok_misaligned
     | Tok_error
@@ -392,6 +432,10 @@ module AbstractToken = struct
         formatter |> Fmt.fmt "Tok_u512=" |> (Rendition.pp U512.pp) rendition
       | Tok_i512 rendition ->
         formatter |> Fmt.fmt "Tok_i512=" |> (Rendition.pp I512.pp) rendition
+      | Tok_nat rendition ->
+        formatter |> Fmt.fmt "Tok_nat=" |> (Rendition.pp Nat.pp) rendition
+      | Tok_zint rendition ->
+        formatter |> Fmt.fmt "Tok_zint=" |> (Rendition.pp Nat.pp) rendition
       | Tok_end_of_input -> formatter |> Fmt.fmt "Tok_end_of_input"
       | Tok_misaligned -> formatter |> Fmt.fmt "Tok_misaligned"
       | Tok_error -> formatter |> Fmt.fmt "Tok_error"
@@ -552,18 +596,6 @@ let source_at cursor t =
 let text t =
   Source.(text (Cursor.container t.tok_base))
 
-let set_of_cps cps =
-  String.fold ~init:(Set.empty (module Codepoint)) ~f:(fun set cp ->
-    Set.insert cp set
-  ) cps
-
-let map_of_cps_alist alist =
-  List.fold ~init:(Map.empty (module Codepoint)) ~f:(fun edges (cps, v) ->
-    String.fold ~init:edges ~f:(fun edges cp ->
-      Map.insert_hlt ~k:cp ~v edges
-    ) cps
-  ) alist
-
 let str_of_cursor cursor t =
   Source.Slice.to_string (Source.Slice.of_cursors ~base:t.tok_base ~past:cursor)
 
@@ -665,15 +697,6 @@ let out_of_range_real base past =
   malformation ~base ~past "Numerical constant cannot be precisely represented"
 
 (**************************************************************************************************)
-
-let operator_cps = "-+*/%@^$<=>|:.~?"
-let operator_set = set_of_cps operator_cps
-
-let ident_cident_cps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-let ident_uident_cps = "abcdefghijklmnopqrstuvwxyz"
-let ident_malformed_cps = "0123456789'"
-
-let whitespace_cps = " \n"
 
 module String_ : sig
   val bstring: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
@@ -909,7 +932,6 @@ module Real : sig
   type t
   val zero: AbstractToken.t
   val of_whole: Nat.t -> Radix.t -> t
-  val of_mals: AbstractToken.Rendition.Malformation.t list -> t
   val r_suffix: t -> Source.Cursor.t -> Radix.t -> Source.Cursor.t -> outer
     -> outer * ConcreteToken.t
   val exp: t -> Source.Cursor.t -> Radix.t -> Source.Cursor.t -> outer -> outer * ConcreteToken.t
@@ -1244,9 +1266,6 @@ end = struct
     | Bin | Oct | Hex -> R (realer_of_nat whole, Sint.kv 0L, ExpPos, Zint.zero)
     | Dec -> R_dec
 
-  let of_mals mals =
-    Malformations mals
-
   let r_suffix accum suffix_cursor radix cursor t =
     next_suffix Nat.k_0 suffix_cursor accum radix cursor t
 
@@ -1273,340 +1292,90 @@ end = struct
     first_exp R_dec pcursor Dec cursor t
 end
 
-module Integer : sig
-  val zero: AbstractToken.t
-  val bin: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
-    -> t * ConcreteToken.t
-  val oct: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
-    -> t * ConcreteToken.t
-  val dec: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
-    -> t * ConcreteToken.t
-  val hex: Nat.t -> Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
-    -> t * ConcreteToken.t
-  val mal_ident: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t -> t * ConcreteToken.t
-  val zero_u_suffix: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
-    -> t * ConcreteToken.t
-  val zero_i_suffix: Source.Cursor.t -> Source.Cursor.t -> Source.Cursor.t -> t
-    -> t * ConcreteToken.t
-end = struct
-  type signedness =
-    | Unsigned
-    | Signed
-
-  (* Full enumeration of integer types is a bit unwieldy, but it's more robust and doesn't actually
-   * cause much code bloat. *)
-  type subtype =
-    | Subtype_u8
-    | Subtype_i8
-    | Subtype_u16
-    | Subtype_i16
-    | Subtype_u32
-    | Subtype_i32
-    | Subtype_u64
-    | Subtype_i64
-    | Subtype_u128
-    | Subtype_i128
-    | Subtype_u256
-    | Subtype_i256
-    | Subtype_u512
-    | Subtype_i512
-
-  type accum =
-    | N of Nat.t
-    | Malformations of AbstractToken.Rendition.Malformation.t list
-
-  let accum_whole_digit cp radix = function
-    | N n -> N (Radix.nat_accum (nat_of_cp cp) n radix)
-    | Malformations _ as mals -> mals
-
-  let accum_mal mal = function
-    | N _ -> Malformations [mal]
-    | Malformations mals -> Malformations (mal :: mals)
-
-  (* Prefix signs are scanned as separate tokens, and there is no way to distinguish them from infix
-   * operators until parsing is complete. Therefore the scanner accepts min_value (e.g. 0x80i8)
-   * regardless of whether it's negative. Thanks to 2s complement representation, both 0x80i8 and
-   * -0x80i8 encode min_value, and no correctness issues arise from allowing 0x80i8.
-   *
-   * It would be possible to disallow this edge case during an AST optimization pass which combines
-   * constants and their prefix signs; if the compiler does so, it should take care to emit error
-   * messages formatted the same as those emitted by the scanner. Although it would be possible to
-   * push the limit checking into the post-parsing optimization, doing so would make the
-   * optimization mandatory, as well as making it more likely for the programmer to not see such
-   * errors unless there are no parse errors which prevent code generation. *)
-  let limit_of_subtype subtype =
-    let open Nat in
-    match subtype with
-    | Subtype_u8 -> max_u8
-    | Subtype_i8 -> max_abs_i8
-    | Subtype_u16 -> max_u16
-    | Subtype_i16 -> max_abs_i16
-    | Subtype_u32 -> max_u32
-    | Subtype_i32 -> max_abs_i32
-    | Subtype_u64 -> max_u64
-    | Subtype_i64 -> max_abs_i64
-    | Subtype_u128 -> max_u128
-    | Subtype_i128 -> max_abs_i128
-    | Subtype_u256 -> max_u256
-    | Subtype_i256 -> max_abs_i256
-    | Subtype_u512 -> max_u512
-    | Subtype_i512 -> max_abs_i512
-
-  let accept subtype_opt accum radix cursor t =
-    let open AbstractToken in
-    let accept_mals subtype mals cursor t = begin
-      let malformed = Rendition.of_mals mals in
-      let tok = match subtype with
-        | Subtype_u8 -> Tok_u8 malformed
-        | Subtype_i8 -> Tok_i8 malformed
-        | Subtype_u16 -> Tok_u16 malformed
-        | Subtype_i16 -> Tok_i16 malformed
-        | Subtype_u32 -> Tok_u32 malformed
-        | Subtype_i32 -> Tok_i32 malformed
-        | Subtype_u64 -> Tok_u64 malformed
-        | Subtype_i64 -> Tok_i64 malformed
-        | Subtype_u128 -> Tok_u128 malformed
-        | Subtype_i128 -> Tok_i128 malformed
-        | Subtype_u256 -> Tok_u256 malformed
-        | Subtype_i256 -> Tok_i256 malformed
-        | Subtype_u512 -> Tok_u512 malformed
-        | Subtype_i512 -> Tok_i512 malformed
-      in
-      accept tok cursor t
-    end in
-    let subtype = match subtype_opt with
-      | Some subtype -> subtype
-      | None -> Subtype_u64
-    in
-    match accum with
-    | N n -> begin
-        let limit = limit_of_subtype subtype in
-        match Nat.(n <= limit) with
-        | false -> begin
-            let mal = out_of_range_int radix limit t.tok_base cursor in
-            match (accum_mal mal accum) with
-            | Malformations mals -> accept_mals subtype mals cursor t
-            | N _ -> not_reached ()
-          end
-        | true -> begin
-            let tok = match subtype with
-              | Subtype_u8 -> Tok_u8 (Constant (Nat.to_u8_hlt n))
-              | Subtype_i8 -> Tok_i8 (Constant (Nat.to_i8_hlt n))
-              | Subtype_u16 -> Tok_u16 (Constant (Nat.to_u16_hlt n))
-              | Subtype_i16 -> Tok_i16 (Constant (Nat.to_i16_hlt n))
-              | Subtype_u32 -> Tok_u32 (Constant (Nat.to_u32_hlt n))
-              | Subtype_i32 -> Tok_i32 (Constant (Nat.to_i32_hlt n))
-              | Subtype_u64 -> Tok_u64 (Constant (Nat.to_u64_hlt n))
-              | Subtype_i64 -> Tok_i64 (Constant (Nat.to_i64_hlt n))
-              | Subtype_u128 -> Tok_u128 (Constant (Nat.to_u128_hlt n))
-              | Subtype_i128 -> Tok_i128 (Constant (Nat.to_i128_hlt n))
-              | Subtype_u256 -> Tok_u256 (Constant (Nat.to_u256_hlt n))
-              | Subtype_i256 -> Tok_i256 (Constant (Nat.to_i256_hlt n))
-              | Subtype_u512 -> Tok_u512 (Constant (Nat.to_u512_hlt n))
-              | Subtype_i512 -> Tok_i512 (Constant (Nat.to_i512_hlt n))
-            in
-            accept tok cursor t
-          end
-      end
-    | Malformations mals -> accept_mals subtype mals cursor t
-
-  let rec next_suffix bitwidth signedness suffix_cursor accum radix cursor t =
-    let accept_subtype bitwidth signedness suffix_cursor accum radix cursor t = begin
-      let subtype_opt = match Nat.to_uns_opt bitwidth with
-        | Some bit_length -> begin
-            match signedness, bit_length with
-            | Unsigned, 8L -> Some Subtype_u8
-            | Signed, 8L -> Some Subtype_i8
-            | Unsigned, 16L -> Some Subtype_u16
-            | Signed, 16L -> Some Subtype_i16
-            | Unsigned, 32L -> Some Subtype_u32
-            | Signed, 32L -> Some Subtype_i32
-            | Unsigned, 64L -> Some Subtype_u64
-            | Signed, 64L -> Some Subtype_i64
-            | Unsigned, 128L -> Some Subtype_u128
-            | Signed, 128L -> Some Subtype_i128
-            | Unsigned, 256L -> Some Subtype_u256
-            | Signed, 256L -> Some Subtype_i256
-            | Unsigned, 512L -> Some Subtype_u512
-            | Signed, 512L -> Some Subtype_i512
-            | Unsigned, 0L -> begin
-                let _cp, digits_cursor = Source.Cursor.next suffix_cursor in
-                match Source.Cursor.(digits_cursor = cursor) with
-                | true -> Some Subtype_u64 (* "u" suffix. *)
-                | false -> None
-              end
-            | Signed, 0L -> begin
-                let _cp, digits_cursor = Source.Cursor.next suffix_cursor in
-                match Source.Cursor.(digits_cursor = cursor) with
-                | true -> Some Subtype_i64 (* "i" suffix. *)
-                | false -> None
-              end
-            | _ -> None
-          end
-        | None -> None
-      in
-      let accum' = match subtype_opt with
-        | None -> begin
-            let mal = unsupported_bitwidth suffix_cursor cursor in
-            accum_mal mal accum
-          end
-        | Some _ -> accum
-      in
-      accept subtype_opt accum' radix cursor t
-    end in
-    match Source.Cursor.next_opt cursor with
-    | None -> accept_subtype bitwidth signedness suffix_cursor accum radix cursor t
-    | Some (cp, cursor') -> begin
-        match Map.get cp num_suffix_map with
-        | Some NSMapDigit -> begin
-            let digit = nat_of_cp cp in
-            match Nat.(bitwidth = zero && digit = zero) with
-            | true -> begin
-                let mal = invalid_type_suffix_leading_zero cursor cursor' in
-                let accum' = accum_mal mal accum in
-                next_suffix bitwidth signedness suffix_cursor accum' radix cursor' t
-              end
-            | false -> begin
-                let bitwidth' = Radix.(nat_accum digit bitwidth Dec) in
-                next_suffix bitwidth' signedness suffix_cursor accum radix cursor' t
-              end
-          end
-        | Some NSMapIdent -> begin
-            let mal = invalid_numerical cursor cursor' in
-            let accum' = accum_mal mal accum in
-            next_suffix bitwidth signedness suffix_cursor accum' radix cursor' t
-          end
-        | None ->
-          accept_subtype bitwidth signedness suffix_cursor accum radix cursor t
-      end
-
-  type whole_map =
-    | WMapUscore
-    | WMapDigit
-    | WMapDot
-    | WMapExp
-    | WMapUnsSuffix
-    | WMapIntSuffix
-    | WMapRealSuffix
-    | WMapMalIdent
-
-  let bin_whole_map = map_of_cps_alist [
-    ("_", WMapUscore);
-    ("01", WMapDigit);
-    (".", WMapDot);
-    ("p", WMapExp);
-    ("u", WMapUnsSuffix);
-    ("i", WMapIntSuffix);
-    ("r", WMapRealSuffix);
-    ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghjklmnoqstvwxyz23456789'",
-      WMapMalIdent);
-  ]
-
-  let oct_whole_map = map_of_cps_alist [
-    ("_", WMapUscore);
-    ("01234567", WMapDigit);
-    (".", WMapDot);
-    ("p", WMapExp);
-    ("u", WMapUnsSuffix);
-    ("i", WMapIntSuffix);
-    ("r", WMapRealSuffix);
-    ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghjklmnoqstvwxyz89'", WMapMalIdent);
-  ]
-
-  let dec_whole_map = map_of_cps_alist [
-    ("_", WMapUscore);
-    ("0123456789", WMapDigit);
-    (".", WMapDot);
-    ("e", WMapExp);
-    ("u", WMapUnsSuffix);
-    ("i", WMapIntSuffix);
-    ("r", WMapRealSuffix);
-    ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdfghjklmnopqstvwxyz'", WMapMalIdent);
-  ]
-
-  let hex_whole_map = map_of_cps_alist [
-    ("_", WMapUscore);
-    ("0123456789abcdef", WMapDigit);
-    (".", WMapDot);
-    ("p", WMapExp);
-    ("u", WMapUnsSuffix);
-    ("i", WMapIntSuffix);
-    ("r", WMapRealSuffix);
-    ("ABCDEFGHIJKLMNOPQRSTUVWXYZghjklmnoqstvwxyz'", WMapMalIdent);
-  ]
-
-  let real_accum_of_accum radix = function
-    | N whole -> Real.of_whole whole radix
-    | Malformations mals -> Real.of_mals mals
-
-  let next_dot accum whole_cursor radix pcursor cursor t =
-    match Source.Cursor.next_opt cursor with
-    | None -> Real.dot (real_accum_of_accum radix accum) whole_cursor radix cursor t
-    | Some (cp, _cursor') -> begin
-        match Set.mem cp operator_set with
-        | true -> accept None accum radix pcursor t
-        | false -> Real.dot (real_accum_of_accum radix accum) whole_cursor radix cursor t
-      end
-
-  let rec next_whole accum whole_cursor whole_map radix cursor t =
-    match Source.Cursor.next_opt cursor with
-    | None -> accept None accum radix cursor t
-    | Some (cp, cursor') -> begin
-        match Map.get cp whole_map with
-        | Some WMapUscore -> next_whole accum whole_cursor whole_map radix cursor' t
-        | Some WMapDigit -> begin
-            let accum' = accum_whole_digit cp radix accum in
-            next_whole accum' whole_cursor whole_map radix cursor' t
-          end
-        | Some WMapDot -> next_dot accum whole_cursor radix cursor cursor' t
-        | Some WMapExp -> Real.exp (real_accum_of_accum radix accum) cursor radix cursor' t
-        | Some WMapUnsSuffix -> next_suffix Nat.k_0 Unsigned cursor accum radix cursor' t
-        | Some WMapIntSuffix -> next_suffix Nat.k_0 Signed cursor accum radix cursor' t
-        | Some WMapRealSuffix ->
-          Real.r_suffix (real_accum_of_accum radix accum) cursor radix cursor' t
-        | Some WMapMalIdent -> begin
-            let mal = invalid_numerical cursor cursor' in
-            let accum' = accum_mal mal accum in
-            next_whole accum' whole_cursor whole_map radix cursor' t
-          end
-        | None -> accept None accum radix cursor t
-      end
-
-  (* Entry point functions follow. *)
-
-  let zero = AbstractToken.Tok_u64 (Constant U64.zero)
-
-  let bin n _ppcursor _pcursor cursor t =
-    let accum = N n in
-    next_whole accum cursor bin_whole_map Bin cursor t
-
-  let oct n _ppcursor _pcursor cursor t =
-    let accum = N n in
-    next_whole accum cursor oct_whole_map Oct cursor t
-
-  let dec n _ppcursor _pcursor cursor t =
-    let accum = N n in
-    next_whole accum t.tok_base dec_whole_map Dec cursor t
-
-  let hex n _ppcursor _pcursor cursor t =
-    let accum = N n in
-    next_whole accum cursor hex_whole_map Hex cursor t
-
-  let mal_ident _ppcursor pcursor cursor t =
-    let mal = invalid_numerical pcursor cursor in
-    let accum = Malformations [mal] in
-    next_whole accum t.tok_base dec_whole_map Dec cursor t
-
-  let zero_u_suffix _ppcursor pcursor cursor t =
-    let accum = N Nat.k_0 in
-    next_suffix Nat.k_0 Unsigned pcursor accum Dec cursor t
-
-  let zero_i_suffix _ppcursor pcursor cursor t =
-    let accum = N Nat.k_0 in
-    next_suffix Nat.k_0 Signed pcursor accum Dec cursor t
-end
-
 module State = struct
+  module Integer_bin = struct
+    type t = {
+      n: Nat.t;
+    }
+
+    let pp {n} formatter =
+      formatter |> Fmt.fmt "{n=" |> Nat.pp n |> Fmt.fmt "}"
+
+    let init ~n =
+      {n}
+
+    let bin_accum digit {n} =
+      {n=Nat.(n * k_2 + digit)}
+
+    let oct_accum digit {n} =
+      {n=Nat.(n * k_8 + digit)}
+
+    let dec_accum digit {n} =
+      {n=Nat.(n * k_a + digit)}
+
+    let hex_accum digit {n} =
+      {n=Nat.(n * k_g + digit)}
+  end
+
+  module Integer_oct = Integer_bin
+
+  module Integer_dec = Integer_bin
+
+  module Integer_hex = Integer_bin
+
+  module Integer_bin_dot = Integer_bin
+
+  module Integer_oct_dot = Integer_bin
+
+  module Integer_dec_dot = Integer_bin
+
+  module Integer_hex_dot = Integer_bin
+
+  module Integer_u = struct
+    type t = {
+      n: Nat.t;
+      radix: Radix.t;
+    }
+
+    let pp {n; radix} formatter =
+      formatter
+      |> Fmt.fmt "{n=" |> Nat.pp n
+      |> Fmt.fmt "; radix=" |> Radix.pp radix
+      |> Fmt.fmt "}"
+
+    let init ~n ~radix =
+      {n; radix}
+  end
+
+  module Integer_i = Integer_u
+
+  module Integer_n = Integer_u
+
+  module Integer_z = Integer_u
+
+  module Integer_u_bitwidth = struct
+    type t = {
+      n: Nat.t;
+      radix: Radix.t;
+      bitwidth: Nat.t;
+    }
+
+    let pp {n; radix; bitwidth} formatter =
+      formatter
+      |> Fmt.fmt "{n=" |> Nat.pp n
+      |> Fmt.fmt "; radix=" |> Radix.pp radix
+      |> Fmt.fmt "; bitwidth=" |> Nat.pp bitwidth
+      |> Fmt.fmt "}"
+
+    let init ~n ~radix ~bitwidth =
+      {n; radix; bitwidth}
+
+    let bitwidth_accum digit ({bitwidth; _} as t) =
+      {t with bitwidth=Nat.(bitwidth * k_a + digit)}
+  end
+
+  module Integer_i_bitwidth = Integer_u_bitwidth
+
   module Paren_comment_body = struct
     type t = {
       nesting: uns;
@@ -1960,8 +1729,26 @@ module State = struct
     | State_tick
     | State_tick_lookahead
     | State_btick
-    | State_0
-    | State_0_dot
+    | State_integer_0
+    | State_integer_0_dot
+    | State_integer_0b
+    | State_integer_0o
+    | State_integer_0x
+    | State_integer_bin of Integer_bin.t
+    | State_integer_oct of Integer_oct.t
+    | State_integer_dec of Integer_dec.t
+    | State_integer_hex of Integer_hex.t
+    | State_integer_bin_dot of Integer_bin_dot.t
+    | State_integer_oct_dot of Integer_oct_dot.t
+    | State_integer_dec_dot of Integer_dec_dot.t
+    | State_integer_hex_dot of Integer_hex_dot.t
+    | State_integer_u of Integer_u.t
+    | State_integer_i of Integer_i.t
+    | State_integer_n of Integer_n.t
+    | State_integer_z of Integer_z.t
+    | State_integer_u_bitwidth of Integer_u_bitwidth.t
+    | State_integer_i_bitwidth of Integer_i_bitwidth.t
+    | State_integer_mal_ident
     | State_ident_uscore
     | State_ident_cident
     | State_ident_uident
@@ -2037,8 +1824,32 @@ module State = struct
     | State_tick -> formatter |> Fmt.fmt "State_tick"
     | State_tick_lookahead -> formatter |> Fmt.fmt "State_tick_lookahead"
     | State_btick -> formatter |> Fmt.fmt "State_btick"
-    | State_0 -> formatter |> Fmt.fmt "State_0"
-    | State_0_dot -> formatter |> Fmt.fmt "State_0_dot"
+    | State_integer_0 -> formatter |> Fmt.fmt "State_integer_0"
+    | State_integer_0_dot -> formatter |> Fmt.fmt "State_integer_0_dot"
+    | State_integer_0b -> formatter |> Fmt.fmt "State_integer_0b"
+    | State_integer_0o -> formatter |> Fmt.fmt "State_integer_0o"
+    | State_integer_0x -> formatter |> Fmt.fmt "State_integer_0x"
+    | State_integer_bin v -> formatter |> Fmt.fmt "State_integer_bin " |> Integer_bin.pp v
+    | State_integer_oct v -> formatter |> Fmt.fmt "State_integer_oct " |> Integer_oct.pp v
+    | State_integer_dec v -> formatter |> Fmt.fmt "State_integer_dec " |> Integer_dec.pp v
+    | State_integer_hex v -> formatter |> Fmt.fmt "State_integer_hex " |> Integer_hex.pp v
+    | State_integer_bin_dot v ->
+      formatter |> Fmt.fmt "State_integer_bin_dot " |> Integer_bin_dot.pp v
+    | State_integer_oct_dot v ->
+      formatter |> Fmt.fmt "State_integer_oct_dot " |> Integer_oct_dot.pp v
+    | State_integer_dec_dot v ->
+      formatter |> Fmt.fmt "State_integer_dec_dot " |> Integer_dec_dot.pp v
+    | State_integer_hex_dot v ->
+      formatter |> Fmt.fmt "State_integer_hex_dot " |> Integer_hex_dot.pp v
+    | State_integer_u v -> formatter |> Fmt.fmt "State_integer_u " |> Integer_u.pp v
+    | State_integer_i v -> formatter |> Fmt.fmt "State_integer_i " |> Integer_i.pp v
+    | State_integer_n v -> formatter |> Fmt.fmt "State_integer_n " |> Integer_n.pp v
+    | State_integer_z v -> formatter |> Fmt.fmt "State_integer_z " |> Integer_z.pp v
+    | State_integer_u_bitwidth v ->
+      formatter |> Fmt.fmt "State_integer_u_bitwidth " |> Integer_u_bitwidth.pp v
+    | State_integer_i_bitwidth v ->
+      formatter |> Fmt.fmt "State_integer_i_bitwidth " |> Integer_i_bitwidth.pp v
+    | State_integer_mal_ident -> formatter |> Fmt.fmt "State_integer_mal_ident"
     | State_ident_uscore -> formatter |> Fmt.fmt "State_ident_uscore"
     | State_ident_cident -> formatter |> Fmt.fmt "State_ident_cident"
     | State_ident_uident -> formatter |> Fmt.fmt "State_ident_uident"
@@ -2313,10 +2124,10 @@ module Dfa = struct
         ("'", advance State_tick);
         ("\"", wrap_legacy (accept_istring_push Istring_interp Tok_istring_lditto));
         ("`", advance State_btick);
-        ("0", advance State_0);
+        ("0", advance State_integer_0);
         ("123456789", (fun (View.{pcursor; _} as view) t ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            wrap_legacy Integer.(dec digit) view t
+            advance (State_integer_dec (State.Integer_dec.init ~n:digit)) view t
           )
         );
       ];
@@ -2388,9 +2199,9 @@ module Dfa = struct
   }
 
   let node0_star = {
-    edges0=map_of_cps_alist [
-      ("*", advance State_operator_star_star);
-      (String.filter ~f:(fun cp -> Codepoint.(cp <> of_char '*')) operator_cps,
+    edges0=map_of_cpsets_alist [
+      (cpset_of_cps "*", advance State_operator_star_star);
+      (Set.diff (cpset_of_cps operator_cps) (cpset_of_cps "*"),
         advance State_operator_star);
     ];
     default0=accept_excl (Tok_star_op "*");
@@ -2433,7 +2244,7 @@ module Dfa = struct
       ("_", advance State_ident_uscore);
       (ident_cident_cps, advance State_ident_cident);
       (ident_uident_cps, advance State_ident_uident);
-      (ident_malformed_cps, advance State_ident_mal);
+      (ident_continue_cps, advance State_ident_mal);
     ];
     default0=accept_excl Tok_uscore;
     eoi0=accept_incl Tok_uscore;
@@ -2470,38 +2281,432 @@ module Dfa = struct
     );
   }
 
-  let node0_0 = {
-    edges0=map_of_cps_alist [
-      ("_", wrap_legacy Integer.(dec Nat.k_0));
-      ("0123456789", (fun (View.{pcursor; _} as view) t ->
-          let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-          wrap_legacy Integer.(dec digit) view t
-        )
-      );
-      ("b", wrap_legacy Integer.(bin Nat.k_0));
-      ("o", wrap_legacy Integer.(oct Nat.k_0));
-      ("x", wrap_legacy Integer.(hex Nat.k_0));
-      ("u", wrap_legacy Integer.zero_u_suffix);
-      ("i", wrap_legacy Integer.zero_i_suffix);
-      ("r", wrap_legacy Real.zero_r_suffix);
-      (".", advance State_0_dot);
-      ("e", wrap_legacy Real.zero_exp);
-      ("ABCDEFGHIJKLMNOPQRSTUVWXYZacdfghjklmnpqstvwyz'", wrap_legacy Integer.mal_ident);
-    ];
-    default0=accept_excl Integer.zero;
-    eoi0=accept_incl Integer.zero;
-  }
+  module Integer = struct
+    type signedness =
+      | Unsigned
+      | Signed
 
-  let node0_0_dot = {
-    edges0=map_of_cps_alist [
-      (operator_cps, accept_pexcl Integer.zero);
-    ];
-    default0=wrap_legacy Real.zero_frac;
-    eoi0=accept_incl Real.zero;
-  }
+    (* Full enumeration of integer types is a bit unwieldy, but it's more robust and doesn't actually
+     * cause much code bloat. *)
+    type subtype =
+      | Subtype_u8
+      | Subtype_i8
+      | Subtype_u16
+      | Subtype_i16
+      | Subtype_u32
+      | Subtype_i32
+      | Subtype_u64
+      | Subtype_i64
+      | Subtype_u128
+      | Subtype_i128
+      | Subtype_u256
+      | Subtype_i256
+      | Subtype_u512
+      | Subtype_i512
+      | Subtype_nat
+      | Subtype_zint
+
+    (* Prefix signs are scanned as separate tokens, and there is no way to distinguish them from
+     * infix operators until parsing is complete. Therefore the scanner accepts min_value (e.g.
+     * 0x80i8) regardless of whether it's negative. Thanks to 2s complement representation, both
+     * 0x80i8 and -0x80i8 encode min_value, and no correctness issues arise from allowing 0x80i8.
+     *
+     * It would be possible to disallow this edge case during an AST optimization pass which
+     * combines constants and their prefix signs; if the compiler does so, it should take care to
+     * emit error messages formatted the same as those emitted by the scanner. Although it would be
+     * possible to push the limit checking into the post-parsing optimization, doing so would make
+     * the optimization mandatory, as well as making it more likely for the programmer to not see
+     * such errors unless there are no parse errors which prevent code generation. *)
+    let limit_of_subtype subtype =
+      let open Nat in
+      match subtype with
+      | Subtype_u8 -> Some max_u8
+      | Subtype_i8 -> Some max_abs_i8
+      | Subtype_u16 -> Some max_u16
+      | Subtype_i16 -> Some max_abs_i16
+      | Subtype_u32 -> Some max_u32
+      | Subtype_i32 -> Some max_abs_i32
+      | Subtype_u64 -> Some max_u64
+      | Subtype_i64 -> Some max_abs_i64
+      | Subtype_u128 -> Some max_u128
+      | Subtype_i128 -> Some max_abs_i128
+      | Subtype_u256 -> Some max_u256
+      | Subtype_i256 -> Some max_abs_i256
+      | Subtype_u512 -> Some max_u512
+      | Subtype_i512 -> Some max_abs_i512
+      | Subtype_nat
+      | Subtype_zint -> None
+
+    let accept_integer ?subtype n radix cursor t =
+      let subtype = match subtype with
+        | None -> Subtype_u64
+        | Some subtype -> subtype
+      in
+      let limit = match limit_of_subtype subtype with
+        | None -> None
+        | Some limit when Nat.(n <= limit) -> None
+        | Some limit -> Some limit
+      in
+      let open AbstractToken in
+      let tok = match limit with
+        | Some limit -> begin
+            let mal = out_of_range_int radix limit t.tok_base cursor in
+            let malformed = Rendition.of_mals [mal] in
+            match subtype with
+            | Subtype_u8 -> Tok_u8 malformed
+            | Subtype_i8 -> Tok_i8 malformed
+            | Subtype_u16 -> Tok_u16 malformed
+            | Subtype_i16 -> Tok_i16 malformed
+            | Subtype_u32 -> Tok_u32 malformed
+            | Subtype_i32 -> Tok_i32 malformed
+            | Subtype_u64 -> Tok_u64 malformed
+            | Subtype_i64 -> Tok_i64 malformed
+            | Subtype_u128 -> Tok_u128 malformed
+            | Subtype_i128 -> Tok_i128 malformed
+            | Subtype_u256 -> Tok_u256 malformed
+            | Subtype_i256 -> Tok_i256 malformed
+            | Subtype_u512 -> Tok_u512 malformed
+            | Subtype_i512 -> Tok_i512 malformed
+            | Subtype_nat
+            | Subtype_zint -> not_reached ()
+          end
+        | None -> begin
+            match subtype with
+            | Subtype_u8 -> Tok_u8 (Constant (Nat.to_u8_hlt n))
+            | Subtype_i8 -> Tok_i8 (Constant (Nat.to_i8_hlt n))
+            | Subtype_u16 -> Tok_u16 (Constant (Nat.to_u16_hlt n))
+            | Subtype_i16 -> Tok_i16 (Constant (Nat.to_i16_hlt n))
+            | Subtype_u32 -> Tok_u32 (Constant (Nat.to_u32_hlt n))
+            | Subtype_i32 -> Tok_i32 (Constant (Nat.to_i32_hlt n))
+            | Subtype_u64 -> Tok_u64 (Constant (Nat.to_u64_hlt n))
+            | Subtype_i64 -> Tok_i64 (Constant (Nat.to_i64_hlt n))
+            | Subtype_u128 -> Tok_u128 (Constant (Nat.to_u128_hlt n))
+            | Subtype_i128 -> Tok_i128 (Constant (Nat.to_i128_hlt n))
+            | Subtype_u256 -> Tok_u256 (Constant (Nat.to_u256_hlt n))
+            | Subtype_i256 -> Tok_i256 (Constant (Nat.to_i256_hlt n))
+            | Subtype_u512 -> Tok_u512 (Constant (Nat.to_u512_hlt n))
+            | Subtype_i512 -> Tok_i512 (Constant (Nat.to_i512_hlt n))
+            | Subtype_nat -> Tok_nat (Constant n)
+            | Subtype_zint -> Tok_zint (Constant n)
+          end
+      in
+      accept tok cursor t
+
+    let accept_integer_incl ?subtype n radix View.{cursor; _} t =
+      accept_integer ?subtype n radix cursor t
+
+    let accept_integer_excl ?subtype n radix View.{pcursor; _} t =
+      accept_integer ?subtype n radix pcursor t
+
+    let accept_integer_pexcl ?subtype n radix View.{ppcursor; _} t =
+      accept_integer ?subtype n radix ppcursor t
+
+    let accept_zero cursor t =
+      accept_integer Nat.zero Hex cursor t
+
+    let accept_integer_bitwidth ~signedness ~bitwidth n radix cursor t =
+      let subtype_opt = match signedness, Nat.to_uns_opt bitwidth with
+        | Unsigned, Some 8L -> Some Subtype_u8
+        | Signed, Some 8L -> Some Subtype_i8
+        | Unsigned, Some 16L -> Some Subtype_u16
+        | Signed, Some 16L -> Some Subtype_i16
+        | Unsigned, Some 32L -> Some Subtype_u32
+        | Signed, Some 32L -> Some Subtype_i32
+        | Unsigned, Some 64L -> Some Subtype_u64
+        | Signed, Some 64L -> Some Subtype_i64
+        | Unsigned, Some 128L -> Some Subtype_u128
+        | Signed, Some 128L -> Some Subtype_i128
+        | Unsigned, Some 256L -> Some Subtype_u256
+        | Signed, Some 256L -> Some Subtype_i256
+        | Unsigned, Some 512L -> Some Subtype_u512
+        | Signed, Some 512L -> Some Subtype_i512
+        | _ -> None
+      in
+      match subtype_opt with
+      | None -> begin
+          let mal = unsupported_bitwidth t.tok_base cursor in
+          let malformed = AbstractToken.Rendition.of_mals [mal] in
+          accept (Tok_u64 malformed) cursor t
+        end
+      | Some subtype -> accept_integer ~subtype n radix cursor t
+
+    let accept_integer_bitwidth_incl ~signedness ~bitwidth n radix View.{cursor; _} t =
+      accept_integer_bitwidth ~signedness ~bitwidth n radix cursor t
+
+    let accept_integer_bitwidth_excl ~signedness ~bitwidth n radix View.{pcursor; _} t =
+      accept_integer_bitwidth ~signedness ~bitwidth n radix pcursor t
+
+    let accept_zero_incl View.{cursor; _} t =
+      accept_zero cursor t
+
+    let accept_zero_excl View.{pcursor; _} t =
+      accept_zero pcursor t
+
+    let accept_zero_pexcl View.{ppcursor; _} t =
+      accept_zero ppcursor t
+
+    let accept_mal_indent cursor t =
+      let mal = malformed (invalid_numerical t.tok_base cursor) in
+      accept (Tok_uident mal) cursor t
+
+    let accept_mal_indent_incl View.{cursor; _} t =
+      accept_mal_indent cursor t
+
+    let accept_mal_indent_excl View.{pcursor; _} t =
+      accept_mal_indent pcursor t
+
+    let node0_0 = {
+      edges0=map_of_cpsets_alist [
+        (cpset_of_cps "_", advance (State_integer_dec (State.Integer_dec.init ~n:Nat.k_0)));
+        (cpset_of_cps dec_cps, (fun (View.{pcursor; _} as view) t ->
+            let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+            advance (State_integer_dec (State.Integer_dec.init ~n:digit)) view t;
+          )
+        );
+        (cpset_of_cps "b", advance State_integer_0b);
+        (cpset_of_cps "o", advance State_integer_0o);
+        (cpset_of_cps "x", advance State_integer_0x);
+        (cpset_of_cps "u", advance (State_integer_u (State.Integer_u.init ~n:Nat.k_0 ~radix:Dec)));
+        (cpset_of_cps "i", advance (State_integer_i (State.Integer_i.init ~n:Nat.k_0 ~radix:Dec)));
+        (cpset_of_cps "n", advance (State_integer_n (State.Integer_n.init ~n:Nat.k_0 ~radix:Dec)));
+        (cpset_of_cps "z", advance (State_integer_z (State.Integer_z.init ~n:Nat.k_0 ~radix:Dec)));
+        (cpset_of_cps "r", wrap_legacy Real.zero_r_suffix);
+        (cpset_of_cps ".", advance State_integer_0_dot);
+        (cpset_of_cps "e", wrap_legacy Real.zero_exp);
+        (Set.diff (cpset_of_cps ident_cps)
+            (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_beinoruxz")),
+          advance State_integer_mal_ident);
+      ];
+      default0=accept_zero_excl;
+      eoi0=accept_zero_incl;
+    }
+
+    let node0_0_dot = {
+      edges0=map_of_cps_alist [
+        (operator_cps, accept_zero_pexcl);
+      ];
+      default0=wrap_legacy Real.zero_frac;
+      eoi0=accept_incl Real.zero;
+    }
+
+    let node0_0box ~base_cps ~state ~state_base_init =
+      {
+        edges0=map_of_cpsets_alist [
+          (cpset_of_cps "_", advance state);
+          (cpset_of_cps base_cps, (fun (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (state_base_init digit) view t
+            )
+          );
+          (Set.diff (cpset_of_cps ident_cps) (Set.union (cpset_of_cps "_") (cpset_of_cps base_cps)),
+            advance State_integer_mal_ident);
+        ];
+        default0=accept_mal_indent_excl;
+        eoi0=accept_mal_indent_incl;
+      }
+    let node0_0b = node0_0box ~base_cps:bin_cps ~state:State_integer_0b
+        ~state_base_init:(fun n -> State_integer_bin (State.Integer_bin.init ~n))
+    let node0_0o = node0_0box ~base_cps:oct_cps ~state:State_integer_0o
+        ~state_base_init:(fun n -> State_integer_oct (State.Integer_oct.init ~n))
+    let node0_0x = node0_0box ~base_cps:hex_cps ~state:State_integer_0x
+        ~state_base_init:(fun n -> State_integer_hex (State.Integer_hex.init ~n))
+
+    let node1_base ~radix ~base_cps ~state_init ~n_of_state ~digit_accum ~state_dot_init =
+      {
+        edges1=map_of_cpsets_alist [
+          (cpset_of_cps "_", (fun state view t -> advance (state_init state) view t));
+          (cpset_of_cps base_cps, (fun state (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (state_init (state |> digit_accum digit)) view t));
+          (cpset_of_cps ".", (fun state view t -> advance (state_dot_init state) view t));
+          (cpset_of_cps "p", (fun state View.{pcursor; cursor; _} t ->
+              let n = n_of_state state in
+              let t', tok = Real.exp (Real.of_whole n radix) pcursor radix cursor t in
+              t', Accept tok
+            )
+          );
+          (cpset_of_cps "u", (fun state view t ->
+              let n = n_of_state state in
+              advance (State_integer_u (State.Integer_u.init ~n ~radix)) view t
+            )
+          );
+          (cpset_of_cps "i", (fun state view t ->
+              let n = n_of_state state in
+              advance (State_integer_i (State.Integer_i.init ~n ~radix)) view t
+            )
+          );
+          (cpset_of_cps "n", (fun state view t ->
+              let n = n_of_state state in
+              advance (State_integer_n (State.Integer_n.init ~n ~radix)) view t
+            )
+          );
+          (cpset_of_cps "z", (fun state view t ->
+              let n = n_of_state state in
+              advance (State_integer_z (State.Integer_z.init ~n ~radix)) view t
+            )
+          );
+          (cpset_of_cps "r", (fun state View.{pcursor; cursor; _} t ->
+              let n = n_of_state state in
+              let t', tok = Real.r_suffix (Real.of_whole n radix) pcursor radix cursor t in
+              t', Accept tok
+            )
+          );
+          (Set.diff (cpset_of_cps ident_cps)
+              (Set.union (cpset_of_cps base_cps) (cpset_of_cps "_inpruz")),
+            (fun _state view t -> advance State_integer_mal_ident view t));
+        ];
+        default1=(fun state view t ->
+          let n = n_of_state state in
+          accept_integer_excl n radix view t
+        );
+        eoi1=(fun state view t ->
+          let n = n_of_state state in
+          accept_integer_incl n radix view t
+        );
+      }
+    let node1_bin =
+      node1_base ~radix:Bin ~base_cps:bin_cps
+        ~state_init:(fun state -> State.State_integer_bin state)
+        ~n_of_state:(fun State.Integer_bin.{n} -> n)
+        ~digit_accum:State.Integer_bin.bin_accum
+        ~state_dot_init:(fun state -> State.State_integer_bin_dot state)
+    let node1_oct =
+      node1_base ~radix:Oct ~base_cps:oct_cps
+        ~state_init:(fun state -> State.State_integer_oct state)
+        ~n_of_state:(fun State.Integer_oct.{n} -> n)
+        ~digit_accum:State.Integer_oct.oct_accum
+        ~state_dot_init:(fun state -> State.State_integer_oct_dot state)
+    let node1_dec =
+      node1_base ~radix:Dec ~base_cps:dec_cps
+        ~state_init:(fun state -> State.State_integer_dec state)
+        ~n_of_state:(fun State.Integer_dec.{n} -> n)
+        ~digit_accum:State.Integer_dec.dec_accum
+        ~state_dot_init:(fun state -> State.State_integer_dec_dot state)
+    let node1_hex =
+      node1_base ~radix:Hex ~base_cps:hex_cps
+        ~state_init:(fun state -> State.State_integer_hex state)
+        ~n_of_state:(fun State.Integer_hex.{n} -> n)
+        ~digit_accum:State.Integer_hex.hex_accum
+        ~state_dot_init:(fun state -> State.State_integer_hex_dot state)
+
+    let node1_base_dot ~radix ~n_of_state =
+      {
+        edges1=map_of_cps_alist [
+          (".", (fun state view t ->
+              let n = n_of_state state in
+              accept_integer_pexcl n radix view t
+            )
+          );
+        ];
+        default1=(fun state View.{pcursor; _} t ->
+          let mantissa_cursor = Source.Cursor.(seek 2L t.tok_base) in
+          let n = n_of_state state in
+          let t', tok = Real.dot (Real.of_whole n radix) mantissa_cursor radix pcursor t in
+          t', Accept tok
+        );
+        eoi1=(fun state view t ->
+          let n = n_of_state state in
+          accept_integer_excl n radix view t
+        );
+      }
+    let node1_bin_dot = node1_base_dot ~radix:Bin ~n_of_state:(fun State.Integer_bin_dot.{n} -> n)
+    let node1_oct_dot = node1_base_dot ~radix:Oct ~n_of_state:(fun State.Integer_oct_dot.{n} -> n)
+    let node1_dec_dot = node1_base_dot ~radix:Dec ~n_of_state:(fun State.Integer_dec_dot.{n} -> n)
+    let node1_hex_dot = node1_base_dot ~radix:Hex ~n_of_state:(fun State.Integer_hex_dot.{n} -> n)
+
+    let node1_u =
+      let open State.Integer_u in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, (fun {n; radix} (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_integer_u_bitwidth (State.Integer_u_bitwidth.init ~n ~radix
+                  ~bitwidth:digit)) view t
+            )
+          );
+        ];
+        default1=(fun {n; radix} view t -> accept_integer_excl ~subtype:Subtype_u64 n radix view t);
+        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_u64 n radix view t);
+      }
+
+    let node1_i =
+      let open State.Integer_i in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, (fun {n; radix} (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_integer_i_bitwidth (State.Integer_i_bitwidth.init ~n ~radix
+                  ~bitwidth:digit)) view t
+            )
+          );
+        ];
+        default1=(fun {n; radix} view t -> accept_integer_excl ~subtype:Subtype_i64 n radix view t);
+        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_i64 n radix view t);
+      }
+
+    let node1_n =
+      let open State.Integer_n in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, (fun _state view t -> advance State_integer_mal_ident view t));
+        ];
+        default1=(fun {n; radix} view t -> accept_integer_excl ~subtype:Subtype_nat n radix view t);
+        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_nat n radix view t);
+      }
+
+    let node1_z =
+      let open State.Integer_z in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, (fun _state view t -> advance State_integer_mal_ident view t));
+        ];
+        default1=(fun {n; radix} view t ->
+          accept_integer_excl ~subtype:Subtype_zint n radix view t);
+        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_zint n radix view t);
+      }
+
+    let node1_u_bitwidth =
+      let open State.Integer_u_bitwidth in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, (fun state (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_integer_u_bitwidth (state |> bitwidth_accum digit)) view t
+            )
+          );
+        ];
+        default1=(fun {n; radix; bitwidth} view t ->
+          accept_integer_bitwidth_excl ~signedness:Unsigned ~bitwidth n radix view t);
+        eoi1=(fun {n; radix; bitwidth} view t ->
+          accept_integer_bitwidth_incl ~signedness:Unsigned ~bitwidth n radix view t);
+      }
+
+    let node1_i_bitwidth =
+      let open State.Integer_i_bitwidth in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, (fun state (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_integer_i_bitwidth (state |> bitwidth_accum digit)) view t
+            )
+          );
+        ];
+        default1=(fun {n; radix; bitwidth} view t ->
+          accept_integer_bitwidth_excl ~signedness:Signed ~bitwidth n radix view t);
+        eoi1=(fun {n; radix; bitwidth} view t ->
+          accept_integer_bitwidth_incl ~signedness:Signed  ~bitwidth n radix view t);
+      }
+
+    let node0_mal_ident = {
+      edges0=map_of_cps_alist [
+        (ident_cps, advance State_integer_mal_ident);
+      ];
+      default0=accept_mal_indent_excl;
+      eoi0=accept_mal_indent_incl;
+    }
+  end
 
   module Ident = struct
-    let ident_cps = String.concat ["_"; ident_cident_cps; ident_uident_cps; ident_malformed_cps]
     let keyword_map = Map.of_alist (module String) [
       ("and", AbstractToken.Tok_and);
       ("also", Tok_also);
@@ -2566,7 +2771,7 @@ module Dfa = struct
         |> Fmt.fmt " lacks _*[A-Za-z] prefix"
         |> Fmt.to_string
       in
-      let mal = (malformed (malformation ~base:t.tok_base ~past:cursor description)) in
+      let mal = malformed (malformation ~base:t.tok_base ~past:cursor description) in
       accept (Tok_uident mal) cursor t
 
     let accept_mal_incl View.{cursor; _} t =
@@ -2580,7 +2785,7 @@ module Dfa = struct
         ("_", advance State_ident_uscore);
         (ident_cident_cps, advance State_ident_cident);
         (ident_uident_cps, advance State_ident_uident);
-        (ident_malformed_cps, advance State_ident_mal);
+        (ident_continue_cps, advance State_ident_mal);
       ];
       default0=accept_mal_excl;
       eoi0=accept_mal_incl;
@@ -2928,7 +3133,7 @@ module Dfa = struct
         edges1=map_of_cps_alist [
           ("_", (fun state view t ->
               advance (State_src_directive_path_bslash_u_lcurly state) view t));
-          ("0123456789abcdef", (fun {mals; path; bslash_cursor} ({pcursor; _} as view) t ->
+          (hex_cps, (fun {mals; path; bslash_cursor} ({pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_path_bslash_u_lcurly_hex
                   (State.Src_directive_path_bslash_u_lcurly_hex.init ~mals ~path ~bslash_cursor
@@ -2962,7 +3167,7 @@ module Dfa = struct
         edges1=map_of_cps_alist [
           ("_", (fun state view t ->
               advance (State_src_directive_path_bslash_u_lcurly_hex state) view t));
-          ("0123456789abcdef", (fun state ({pcursor; _} as view) t ->
+          (hex_cps, (fun state ({pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_path_bslash_u_lcurly_hex (state |> hex_accum digit)) view
                 t
@@ -3070,7 +3275,7 @@ module Dfa = struct
       {
         edges1=map_of_cps_alist [
           ("_", (fun state view t -> advance (State_src_directive_line state) view t));
-          ("0123456789", (fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, (fun state (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_line (state |> line_accum digit)) view t
             )
@@ -3132,7 +3337,7 @@ module Dfa = struct
       {
         edges1=map_of_cps_alist [
           ("_", (fun state view t -> advance (State_src_directive_col state) view t));
-          ("0123456789", (fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, (fun state (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_col (state |> col_accum digit)) view t
             )
@@ -3494,7 +3699,7 @@ module Dfa = struct
     let node1_bslash_u_lcurly = {
       edges1=map_of_cps_alist [
         ("_", (fun state view t -> advance (State_codepoint_bslash_u_lcurly state) view t));
-        ("0123456789abcdef", (fun {bslash_cursor} (View.{pcursor; _} as view) t ->
+        (hex_cps, (fun {bslash_cursor} (View.{pcursor; _} as view) t ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_codepoint_bslash_u_lcurly_hex (State.Codepoint_bslash_u_lcurly_hex.init
                 ~bslash_cursor ~hex:digit)) view t
@@ -3513,7 +3718,7 @@ module Dfa = struct
       {
         edges1=map_of_cps_alist [
           ("_", (fun state view t -> advance (State_codepoint_bslash_u_lcurly_hex state) view t));
-          ("0123456789abcdef", (fun state (View.{pcursor; _} as view) t ->
+          (hex_cps, (fun state (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_codepoint_bslash_u_lcurly_hex (state |> hex_accum digit)) view t
             )
@@ -3708,7 +3913,7 @@ module Dfa = struct
     {
       edges1=map_of_cps_alist [
         ("_", (fun state view t -> advance (State_isubstring_bslash_u_lcurly state) view t));
-        ("0123456789abcdef", (fun {accum; bslash_cursor; u} ({pcursor; _} as view) t ->
+        (hex_cps, (fun {accum; bslash_cursor; u} ({pcursor; _} as view) t ->
             let cp = Source.Cursor.rget pcursor in
             let u' = Radix.(nat_accum (nat_of_cp cp) u Hex) in
             advance (State_isubstring_bslash_u_lcurly {accum; bslash_cursor; u=u'}) view t
@@ -3786,8 +3991,26 @@ module Dfa = struct
     | State_tick -> act0 trace node0_tick view t
     | State_tick_lookahead -> act0 trace node0_tick_lookahead view t
     | State_btick -> act0 trace node0_btick view t
-    | State_0 -> act0 trace node0_0 view t
-    | State_0_dot -> act0 trace node0_0_dot view t
+    | State_integer_0 -> act0 trace Integer.node0_0 view t
+    | State_integer_0_dot -> act0 trace Integer.node0_0_dot view t
+    | State_integer_0b -> act0 trace Integer.node0_0b view t
+    | State_integer_0o -> act0 trace Integer.node0_0o view t
+    | State_integer_0x -> act0 trace Integer.node0_0x view t
+    | State_integer_bin v -> act1 trace Integer.node1_bin v view t
+    | State_integer_oct v -> act1 trace Integer.node1_oct v view t
+    | State_integer_dec v -> act1 trace Integer.node1_dec v view t
+    | State_integer_hex v -> act1 trace Integer.node1_hex v view t
+    | State_integer_bin_dot v -> act1 trace Integer.node1_bin_dot v view t
+    | State_integer_oct_dot v -> act1 trace Integer.node1_oct_dot v view t
+    | State_integer_dec_dot v -> act1 trace Integer.node1_dec_dot v view t
+    | State_integer_hex_dot v -> act1 trace Integer.node1_hex_dot v view t
+    | State_integer_u v -> act1 trace Integer.node1_u v view t
+    | State_integer_i v -> act1 trace Integer.node1_i v view t
+    | State_integer_n v -> act1 trace Integer.node1_n v view t
+    | State_integer_z v -> act1 trace Integer.node1_z v view t
+    | State_integer_u_bitwidth v -> act1 trace Integer.node1_u_bitwidth v view t
+    | State_integer_i_bitwidth v -> act1 trace Integer.node1_i_bitwidth v view t
+    | State_integer_mal_ident -> act0 trace Integer.node0_mal_ident view t
     | State_ident_uscore -> act0 trace Ident.node0_uscore view t
     | State_ident_uident -> act0 trace Ident.node0_uident view t
     | State_ident_cident -> act0 trace Ident.node0_cident view t

@@ -4,7 +4,7 @@ open Basis.Rudiments
 module T = struct
   type t = u64 array
   let min_word_length = 0L
-  let max_word_length = Uns.(2L ** 26L) (* 2**32 bits. *)
+  let max_word_length = Uns.(2L ** 58L) (* 2**64 bits. *)
   let init n ~f =
     Array.init (0L =:< n) ~f
   let word_length = Array.length
@@ -118,36 +118,42 @@ let to_i64_opt t =
   | false, true -> Some I64.min_value
   | false, false -> None
 
+let get_extend i t =
+  let l = Array.length t in
+  match Uns.(i < l) with
+  | false -> 0L
+  | true -> get i t
+
 let to_u128_opt t =
   match t <= max_u128 with
-  | true -> Some (U128.init ~f:(fun i -> get i t))
+  | true -> Some (U128.init ~f:(fun i -> get_extend i t))
   | false -> None
 
 let to_i128_opt t =
   match t <= max_i128, t = max_abs_i128 with
-  | true, _ -> Some (I128.init ~f:(fun i -> get i t))
+  | true, _ -> Some (I128.init ~f:(fun i -> get_extend i t))
   | false, true -> Some I128.min_value
   | false, false -> None
 
 let to_u256_opt t =
   match t <= max_u256 with
-  | true -> Some (U256.init ~f:(fun i -> get i t))
+  | true -> Some (U256.init ~f:(fun i -> get_extend i t))
   | false -> None
 
 let to_i256_opt t =
   match t <= max_i256, t = max_abs_i256 with
-  | true, _ -> Some (I256.init ~f:(fun i -> get i t))
+  | true, _ -> Some (I256.init ~f:(fun i -> get_extend i t))
   | false, true -> Some I256.min_value
   | false, false -> None
 
 let to_u512_opt t =
   match t <= max_u512 with
-  | true -> Some (U512.init ~f:(fun i -> get i t))
+  | true -> Some (U512.init ~f:(fun i -> get_extend i t))
   | false -> None
 
 let to_i512_opt t =
   match t <= max_i512, t = max_abs_i512 with
-  | true, _ -> Some (I512.init ~f:(fun i -> get i t))
+  | true, _ -> Some (I512.init ~f:(fun i -> get_extend i t))
   | false, true -> Some I512.min_value
   | false, false -> None
 

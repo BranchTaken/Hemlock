@@ -221,6 +221,7 @@ depending on optional type suffix:
   + `u128`: Unsigned 128-bit
   + `u256`: Unsigned 256-bit
   + `u512`: Unsigned 512-bit
+  + `n`: Arbitrary-precision 0-inclusive natural (ℕ₀)
 - Signed:
   + `i8`: Signed 8-bit
   + `i16`: Signed 16-bit
@@ -229,6 +230,7 @@ depending on optional type suffix:
   + `i128`: Signed 128-bit
   + `i256`: Signed 256-bit
   + `i512`: Signed 512-bit
+  + `z`: Arbitrary-precision integer (ℤ)
 
 Examples:
 

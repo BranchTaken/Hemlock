@@ -187,6 +187,8 @@ module AbstractToken : sig
     | Tok_i256 of i256 Rendition.t
     | Tok_u512 of u512 Rendition.t
     | Tok_i512 of i512 Rendition.t
+    | Tok_nat of Nat.t Rendition.t
+    | Tok_zint of Nat.t Rendition.t (* XXX Should be zint rather than nat. *)
     | Tok_end_of_input
     | Tok_misaligned
     | Tok_error
