@@ -33,8 +33,8 @@ made between operating system load versus store effects.
 For more semantics detail than is provided in the following syntax quick reference, see below.
 
 - Effect (`effect`)
-  - + `e`, `{e}` `{e|f}`, `{e|os|hlt}`: Effect sets. A set with only one member may omit the `{...}`
-    enclosure. Empty effect sets have no explicit syntax.
+  - + `{}`, `e`, `{e}` `{e|f}`, `{e|os|hlt}`: Effect sets. A set with exactly one member may omit
+    the `{...}` enclosure.
   - Select pre-defined effects. See [Effects categories](#effects-categories) for more.
     + `os`: Operating system load-store effect
     + `ld`: Runtime system load effect
