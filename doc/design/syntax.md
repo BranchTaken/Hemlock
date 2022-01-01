@@ -15,35 +15,35 @@ substitutions. Such replacements of invalid encoding are silently ignored inside
 explicitly cause scanning errors if inside codepoint/string literals, and elsewhere they result in
 error tokens which cause parsing errors.
 
-## Indentation
+## Dentation
 
-Semantically meaningful indentation has multiple advantages:
+Semantically meaningful {in,de}dentation, dentation for short, has multiple advantages:
 
 - Programmers typically indent code to indicate block structure, in order to streamline human
-  understanding, even if the compiler is oblivious to indentation. Making indentation meaningful
-  reduces the gap between the programmer's mental model and the language semantics.
+  understanding, even if the compiler is oblivious to dentation. Making dentation meaningful reduces
+  the gap between the programmer's mental model and the language semantics.
 - Fewer symbols are required. The omission of lines consisting only of `end` or `}` tends to reduce
-  total number of lines, even as compared with a two-column indentation style. (Hemlock enforces
-  four-column indentation; more on that below.)
+  total number of lines, even as compared with a two-column dentation style. (Hemlock enforces
+  four-column dentation; more on that below.)
 - Automated code formatting tools are brain-dead simple as compared with the near-sentience required
   to implement typical coding styles in many contemporary languages.
-- One of the most effective general heuristics for parser error recovery is to heed indentation and
-  restart parsing at the enclosing indentation level. By mandating proper indentation, error
-  recovery is yet more effective, and it becomes feasible to provide code introspection services
-  even for source files in intermediate editing states.
+- One of the most effective general heuristics for parser error recovery is to heed dentation and
+  restart parsing at the enclosing indentation level. By mandating proper dentation, error recovery
+  is yet more effective, and it becomes feasible to provide code introspection services even for
+  source files in intermediate editing states.
 
-Several other contemporary languages have semantically meaningful indentation, but approaches vary
+Several other contemporary languages have semantically meaningful dentation, but approaches vary
 considerably. The following languages have particularly interesting takes on the problem.
 
-- [Python](https://www.python.org/) is the most widely used language for which indentation is
-  significant, and the rules for what constitutes acceptable indentation are quite flexible. The
+- [Python](https://www.python.org/) is the most widely used language for which dentation is
+  significant, and the rules for what constitutes acceptable dentation are quite flexible. The
   details changed a bit between Python 2 and 3 to reduce ways in which tab width could obscure code
   meaning.
 - [Haskell](https://www.haskell.org/) requires continuation of an expression to be indented more
   than its beginning token. The rules are simple and consistent; the biggest common pitfall is that
   if a multi-line expression starts on a line with preceding tokens that change length, the entire
   expression must be re-indented during refactoring.
-- [F#](https://fsharp.org/) indentation is modeled as an "offside" rule similar to that used in
+- [F#](https://fsharp.org/) dentation is modeled as an "offside" rule similar to that used in
   soccer. Although elegant in concept, this approach motivates an unfortunate set of special cases
   which allow multi-line expressions to be indented "prettily", e.g. with math operators aligned.
 
