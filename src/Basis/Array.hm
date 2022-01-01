@@ -1,50 +1,51 @@
 open import Rudiments
 
-let List = List0
+List = List0
 
-let T = {|
+T = {
     type t 'a ^t: ^&t a = ^t&array a
     type elm 'a: elm a = a
 
-    let Builder = {|
+    Builder = {
         # `array_builder` is built into the compiler similarly to `array`, but it is only exposed
         # when compiling Basis code, as controlled by a compiler flag.
         type t 'a: &t a = &array_builder a
 
-        external alloc_lput 'a: uns -> a -> &t a = "hm_basis_array_builder_alloc_lput"
-        external alloc_rput 'a: uns -> a -> &t a = "hm_basis_array_builder_alloc_rput"
-        external lput 'a: a -> !&t a -> unit = "hm_basis_array_builder_lput"
-        external rput 'a: a -> !&t a -> unit = "hm_basis_array_builder_rput"
-        external build 'a ^t: !&t a -> ^&t a = "hm_basis_array_builder_build"
-      |}
+        alloc_lput 'a: uns -> a -> &t a = external "hm_basis_array_builder_alloc_lput"
+        alloc_rput 'a: uns -> a -> &t a = external "hm_basis_array_builder_alloc_rput"
+        lput 'a: a -> !&t a -> unit = external "hm_basis_array_builder_lput"
+        rput 'a: a -> !&t a -> unit = external "hm_basis_array_builder_rput"
+        build 'a ^t: !&t a -> ^&t a = external "hm_basis_array_builder_build"
+      }
 
-    external empty 'a ^t: ^&t a = "hm_basis_array_empty"
+    empty 'a ^t: ^&t a = external "hm_basis_array_empty"
 
-    external get 'a: uns -> _&t a -> a = "hm_basis_array_get"
+    get 'a: uns -> _&t a -> a = external "hm_basis_array_get"
 
-    external length 'a: _&t a -> uns = "hm_basis_array_length"
+    length 'a: _&t a -> uns = external "hm_basis_array_length"
 
-    let Cursor = {|
-        let T = {|
+    Cursor = {
+        T = {
             type container 'a ^container: ^&container a = ^container&t a
-            type t 'a ^container: t a container =
+            type t 'a ^container: t a container = {
                 array: ^&container a
                 index: uns
+              }
 
-            (* val cmp 'a ^container: t a container -> t a container -> Cmp.t *)
-            let cmp t0 t1 =
+            (* cmp 'a ^container: t a container -> t a container -> Cmp.t *)
+            cmp t0 t1 =
                 Uns.cmp t0.index t1.index
 
-            (* val hd 'a ^container: ^&container a -> t a container *)
-            let hd array =
+            (* hd 'a ^container: ^&container a -> t a container *)
+            hd array =
                 {array; index=0}
 
-            (* val tl 'a ^container: ^&container a -> t a container *)
-            let tl array =
+            (* tl 'a ^container: ^&container a -> t a container *)
+            tl array =
                 {array; index=length array}
 
-            (* val seek 'a ^container: sint -> t a container -> t a container *)
-            let seek i t =
+            (* seek 'a ^container: sint -> t a container -> t a container *)
+            seek i t =
                 match Sint.(i < 0i) with
                   | true ->
                     match Uns.((of_sint Sint.(neg i)) > t.index) with
@@ -55,36 +56,36 @@ let T = {|
                       | true -> halt "Cannot seek past end of array"
                       | false -> {t with index=t.index + (Uns.of_sint i)}
 
-            (* val succ 'a ^container: t a container -> t a container *)
-            let succ t =
+            (* succ 'a ^container: t a container -> t a container *)
+            succ t =
                 seek 1i t
 
-            (* val pred 'a ^container: t a container -> t a container *)
-            let pred t =
+            (* pred 'a ^container: t a container -> t a container *)
+            pred t =
                 seek (-1i) t
 
-            (* val lget 'a: t a _ -> a *)
-            let lget t =
+            (* lget 'a: t a _ -> a *)
+            lget t =
                 get (pred t.index) t.array
 
-            (* val rget 'a: t a _ -> a *)
-            let rget t =
+            (* rget 'a: t a _ -> a *)
+            rget t =
                 get t.index t.array
 
-            (* val container 'a ^container: t a container -> ^&container a *)
-            let container t =
+            (* container 'a ^container: t a container -> ^&container a *)
+            container t =
                 t.array
 
-            (* val index: t _ _ -> uns *)
-            let index t =
+            (* index: t _ _ -> uns *)
+            index t =
                 t.index
-          |}
+          }
         include T
         include Cmpable.makePoly(T)
-      |}
+      }
 
-    let cmp cmp_elm t0 t1 =
-        let rec f cursor0 cursor1 =
+    cmp cmp_elm t0 t1 =
+        rec f cursor0 cursor1 =
             match Cursor.(cursor0 = (tl t0)), Cursor.(cursor1 = (tl t1)) with
               | true, true -> Cmp.Eq
               | true, false -> Cmp.Lt
@@ -95,285 +96,290 @@ let T = {|
                   | Cmp.Eq -> f (Cursor.succ cursor0) (Cursor.succ cursor1)
                   | Cmp.Gt -> Cmp.Gt
         f (Cursor.hd t0) (Cursor.hd t1)
-  |}
+  }
 include T
 include ContainerCommon.makePolyFold(T)
 
-let hash_fold hash_fold_a t state =
+hash_fold hash_fold_a t state =
     fold t ~init:state ~f:(fn state elm -> state |> hash_fold_a elm)
 
-let Seq = {|
+Seq = {
     type outer 'a ^outer: ^&outer a = ^outer&t a
-    type SMono: SMono =
+    type SMono: SMono = {
         type t ^t: ^&t
         type elm ^elm: ^&elm
-        val to_array ^t ^elm ^outer: ^&t -> ^&elm ^&outer
-    type SPoly: SPoly =
+        to_array ^t ^elm ^outer: ^&t -> ^&elm ^&outer
+      }
+    type SPoly: SPoly = {
         type t 'a ^t: ^&t a
         type elm 'a: elm a
-        val to_array 'a ^t ^outer: ^&t a -> ^&outer elm a
+        to_array 'a ^t ^outer: ^&t a -> ^&outer elm a
+      }
 
-    let makeMono (T : SeqIntf.IMonoDef) : SMono
+    makeMono (T : SeqIntf.IMonoDef) : SMono
       with type t ^t: ^&t := T.^&t
       with type elm ^elm: ^&elm := T.^&elm
-      = {|
-        let to_array t =
+      = {
+        to_array t =
             match T.length t with
               | 0 -> [||]
               | l ->
-                let rec f t i builder =
+                rec f t i builder =
                     match i = l with
                       | true -> Builder.build builder
                       | false ->
-                        let elm, t' = T.next t
+                        elm, t' = T.next t
                         Builder.lput elm builder
                         f t' (succ i) builder
-                let elm, t' = T.next t
+                elm, t' = T.next t
                 f t' 1 (Builder.alloc_lput l elm)
-      |}
+      }
 
-    let makeMonoRev (T : SeqIntf.IMonoDef) : SMono
+    makeMonoRev (T : SeqIntf.IMonoDef) : SMono
       with type t ^t: ^&t := T.^&t
       with type elm ^elm: ^&elm := T.^&elm
-      = {|
-        let to_array t =
+      = {
+        to_array t =
             match T.length t with
               | 0 -> [||]
               | l ->
-                let rec f t i builder =
+                rec f t i builder =
                     match i = 0 with
                       | true -> Builder.build builder
                       | false ->
-                        let elm, t' = T.next t
+                        elm, t' = T.next t
                         Builder.rput elm builder
                         f t' (pred i) builder
-                let elm, t' = T.next t
+                elm, t' = T.next t
                 f t' (pred l) (Builder.alloc_rput l elm)
-      |}
+      }
 
-    let makePoly (T : SeqIntf.IPolyDef) : SPoly
+    makePoly (T : SeqIntf.IPolyDef) : SPoly
       with type t 'a ^t: ^&t a := T.^&t a
       with type elm 'a: elm a := T.elm a
-      = {|
-        let to_array t =
+      = {
+        to_array t =
             match T.length t with
               | 0 -> [||]
               | l ->
-                let rec f t i builder =
+                rec f t i builder =
                     match i = l with
                       | true -> Builder.build builder
                       | false ->
-                        let elm, t' = T.next t
+                        elm, t' = T.next t
                         Builder.lput elm builder
                         f t' (succ i) builder
-                let elm, t' = T.next t
+                elm, t' = T.next t
                 f t' 1 (Builder.alloc_lput l)
-      |}
+      }
 
-    let makePolyRev (T : SeqIntf.IPolyDef) : SPoly
+    makePolyRev (T : SeqIntf.IPolyDef) : SPoly
       with type t 'a ^t: ^&t a := T.^&t a
       with type elm 'a: elm a := T.elm a
-      = {|
-        let to_array t =
+      = {
+        to_array t =
             match T.length t with
               | 0 -> [||]
               | l ->
-                let rec f t i builder =
+                rec f t i builder =
                     match i = 0 with
                       | true -> Builder.build builder
                       | false ->
-                        let elm, t' = T.next t
+                        elm, t' = T.next t
                         Builder.rput elm builder
                         f t' (pred i) builder
-                let elm, t' = T.next t
+                elm, t' = T.next t
                 f t' (pred l) (Builder.alloc_rput l elm)
-      |}
+      }
 
     (* Special-purpose, for fold[i]_map . *)
-    let makePoly2 (T :
+    makePoly2 (T :
         type t 'a ^arr >e: t a arr e
         type accum: accum
         type b: b
-        val length 'a ^arr: t a arr _ -> uns
-        val next 'a ^arr >e: t a arr e -> accum >e-> (b, t a arr e, accum)
+        length 'a ^arr: t a arr _ -> uns
+        next 'a ^arr >e: t a arr e -> accum >e-> (b, t a arr e, accum)
       ) :
         type t 'a ^arr >e: t a arr e
         type accum: accum
         type b: b
-        val to_accum_array 'a ^arr ^outer >e: t a arr e -> init:accum >e-> (accum, ^&outer b)
+        to_accum_array 'a ^arr ^outer >e: t a arr e -> init:accum >e-> (accum, ^&outer b)
       with type t 'a ^arr >e: t a arr e := T.t a arr e
       with type accum: accum := T.accum
       with type b: b := T.b
-      = {|
+      = {
         # Alternatively, `include T`, omit redundant type definitions and use `{length,next}`
         # instead of `T.{length,next}`. The type ascription prevents exposing `{length,next}`
         # outside `makePoly2(T)`, so this approach would produce outwardly identical results.
         type t 'a ^arr >e: t a arr e = T.t a arr e
         type accum: accum = T.accum
         type b: b = T.b
-        let to_accum_array t ~init =
+        to_accum_array t ~init =
             match T.length t with
             | 0 -> init, [||]
             | l ->
-                let rec f t i accum builder =
+                rec f t i accum builder =
                     match i = l with
                     | true -> accum, (Builder.build builder)
                     | false ->
-                        let elm, t', accum' = T.next t accum
+                        elm, t', accum' = T.next t accum
                         Builder.lput elm builder
                         f t' (succ i) accum' builder
-                let elm, t', accum = T.next t init
+                elm, t', accum = T.next t init
                 f t' 1 accum (Builder.alloc_lput l elm)
-      |}
+      }
 
     (* Special-purpose, for fold[i]2_map . *)
-    let makePoly3 (T :
+    makePoly3 (T :
         type 'a 'b ^m ^n >e: t a b m n e
         type accum: accum
         type c: c
-        val length 'a 'b ^m ^n: t a b m n _ -> uns
-        val next 'a 'b ^m ^n >e: t a b m n e -> accum >e-> (c, t a b m n e, accum)
+        length 'a 'b ^m ^n: t a b m n _ -> uns
+        next 'a 'b ^m ^n >e: t a b m n e -> accum >e-> (c, t a b m n e, accum)
       ) :
         type 'a 'b ^m ^n >e: t a b m n e := T.t a b m n e
         type accum: accum
         type c: c
-        val to_accum_array 'a 'b ^m ^n ^outer >e: t a b m n e -> init:accum >e-> (accum, ^&outer c)
+        to_accum_array 'a 'b ^m ^n ^outer >e: t a b m n e -> init:accum >e-> (accum, ^&outer c)
       with type t 'a 'b ^m ^n >e: t a b m n e := T.t a b m n e
       with type accum: accum := T.accum
       with type b: b := T.b
-      = {|
+      = {
         type 'a 'b ^m ^n >e: t a b m n e = T.t a b m n e
         type accum: accum = T.acum
         type c: c = T.c
-        let to_accum_array t ~init =
+        to_accum_array t ~init =
             match T.length t with
               | 0 -> init, [||]
               | l ->
-                let rec f t i accum builder =
+                rec f t i accum builder =
                     match i = l with
                       | true -> accum, (Builder.build builder)
                       | false ->
-                        let elm, t', accum' = T.next t accum
+                        elm, t', accum' = T.next t accum
                         Builder.lput elm builder
                         f t' (succ i) accum' builder
-                let elm, t' accum = T.next t init
+                elm, t' accum = T.next t init
                 f t' 1 accum (Builder.alloc_lput l elm)
-      |}
-  |}
+      }
+  }
 
-let ArrayInit = {|
-    let T = {|
-        type t >e: t e =
+ArrayInit = {
+    T = {
+        type t >e: t e = {
             f a >e: uns >e-> a
             index : uns
             length: uns
+          }
         type elm 'a: elm a = a
 
-        (* val init 'a >e: uns -> f:(uns >e-> a) >e-> t e *)
-        let init base length ~f =
+        (* init 'a >e: uns -> f:(uns >e-> a) >e-> t e *)
+        init base length ~f =
             {f; index=base; length}
 
-        (* val length: t _ -> uns *)
-        let length t =
+        (* length: t _ -> uns *)
+        length t =
             t.length
 
-        (* val next 'a >e: t e >e-> (a, t e) *)
-        let next t =
-            let elm = t.f t.index
-            let t' = {t with index=(succ t.index)}
+        (* next 'a >e: t e >e-> (a, t e) *)
+        next t =
+            elm = t.f t.index
+            t' = {t with index=(succ t.index)}
             elm, t'
-      |}
+      }
     include T
     include Seq.makePoly(T)
-    (* val to_array 'a ^outer >e: t e >e-> ^&outer a *)
-  |}
+    (* to_array 'a ^outer >e: t e >e-> ^&outer a *)
+  }
 
-let init range ~f =
+init range ~f =
     ArrayInit.(to_array (init (Range.base range) (Range.length range) ~f))
 
-let ArrayOfListCommon = {|
-    type t 'a: t a =
+ArrayOfListCommon = {
+    type t 'a: t a = {
         list: list a
         length: uns
+      }
     type elm 'a: elm a = a
 
-    let init length list =
+    init length list =
         {list; length}
 
-    let length t =
+    length t =
         t.length
 
-    let next t =
+    next t =
         match t.list with
           | [] -> not_reached ()
           | elm :: list' ->
-            let t' = {t with list=list'}
+            t' = {t with list=list'}
             elm, t'
-  |}
+  }
 
-let ArrayOfList = {|
+ArrayOfList = {
     include ArrayOfListCommon
     include Seq.makePoly(ArrayOfListCommon)
-  |}
+  }
 
-let ArrayOfListRev = {|
+ArrayOfListRev = {
     include ArrayOfListCommon
     include Seq.makePolyRev(ArrayOfListCommon)
-  |}
+  }
 
-let of_list ?length list =
-    let length = match length with
+of_list ?length list =
+    length = match length with
       | None -> List.length list
       | Some length -> length
     ArrayOfList.to_array (ArrayOfList.init length list)
 
-let of_list_rev ?length list =
-    let length = match length with
+of_list_rev ?length list =
+    length = match length with
       | None -> List.length list
       | Some length -> length
     ArrayOfListRev.to_array (ArrayOfListRev.init length list)
 
-let is_empty t =
+is_empty t =
     (length t) = 0
 
-external set_inplace 'a: uns -> a -> !&t a -> unit = "hm_basis_array_set_inplace"
+set_inplace 'a: uns -> a -> !&t a -> unit = external "hm_basis_array_set_inplace"
 
-let copy t =
+copy t =
     init (0 .. (length t)) ~f:(fn i -> get i t)
 
-let pare range t =
+pare range t =
     init range ~f:(fn i -> get i t)
 
-let set i elm t =
-    let t' = copy t
+set i elm t =
+    t' = copy t
     set_inplace i elm t'
     t'
 
-let ArrayJoin = {|
-    let T = {|
+ArrayJoin = {
+    T = {
         type outer 'a ^outer: ^&outer a = ^outer&t a
-        type t 'a ^sep ^arrays: t a sep arrays =
+        type t 'a ^sep ^arrays: t a sep arrays = {
             sep: ^sep&outer a
             arrays: list ^arrays&outer a
             length: uns
             in_sep: bool
             index: uns
+          }
         type elm 'a: elm a = a
 
-        (* val init 'a ^sep ^arrays: uns -> ^sep&outer a -> list ^arrays&outer a -> t a sep arrays *)
-        let init length sep arrays =
+        (* init 'a ^sep ^arrays: uns -> ^sep&outer a -> list ^arrays&outer a -> t a sep arrays *)
+        init length sep arrays =
             {sep; arrays; length; in_sep=false; index=0}
 
-        (* val next 'a ^sep ^arrays: t a sep arrays -> (a, t a sep arrays) *)
-        let next t =
-            let rec f t =
+        (* next 'a ^sep ^arrays: t a sep arrays -> (a, t a sep arrays) *)
+        next t =
+            rec f t =
                 match t.in_sep with
                   | false ->
-                    let array = List.hd t.arrays
+                    array = List.hd t.arrays
                     match t.index < length array with
                       | true ->
-                        let elm = get t.index array
-                        let t' = {t with index=succ t.index}
+                        elm = get t.index array
+                        t' = {t with index=succ t.index}
                         elm, t'
                       | false -> f {t with
                         arrays=List.tl t.arrays
@@ -383,62 +389,62 @@ let ArrayJoin = {|
                   | true ->
                     match t.index < length t.sep with
                       | true ->
-                        let elm = get t.index t.sep
-                        let t' = {t with index=succ t.index}
+                        elm = get t.index t.sep
+                        t' = {t with index=succ t.index}
                         elm, t'
                       | false -> f {t with in_sep=false; index=0}
             f t
 
-        let length t =
+        length t =
             t.length
-      |}
+      }
     include T
     include Seq.makePoly(T)
-    (* val to_array 'a ^sep ^arrays ^outer: t a sep arrays -> ^&outer a *)
-  |}
+    (* to_array 'a ^sep ^arrays ^outer: t a sep arrays -> ^&outer a *)
+  }
 
-let join ?sep tlist =
-    let sep, sep_len = match sep with
+join ?sep tlist =
+    sep, sep_len = match sep with
       | None -> [||], 0
       | Some sep -> sep, length sep
-    let _, tlist_length = List.fold tlist ~init:(0, 0)
+    _, tlist_length = List.fold tlist ~init:(0, 0)
       ~f:(fn (i, accum) list ->
-        let i' = succ i
-        let sep_len' = match i with
+        i' = succ i
+        sep_len' = match i with
           | 0 -> 0
           | _ -> sep_len
-        let accum' = accum + sep_len' + (length list)
+        accum' = accum + sep_len' + (length list)
         i', accum'
       )
     ArrayJoin.(to_array (init tlist_length sep tlist))
 
-let concat t0 t1 =
-    let length_t0 = length t0
-    let length_t1 = length t1
-    let length = length_t0 + length_t1
+concat t0 t1 =
+    length_t0 = length t0
+    length_t1 = length t1
+    length = length_t0 + length_t1
     init (0 .. length) ~f:(fn i ->
         if i < length_t0 then get i t0
         else get (i - length_t0) t1
       )
 
-let append elm t =
-    let tlen = length t
+append elm t =
+    tlen = length t
     init (0 .. (succ tlen)) ~f:(fn i ->
         if i < tlen then get i t
         else elm
       )
 
-let prepend elm t =
+prepend elm t =
     init (0 .. (succ (length t))) ~f:(fn i ->
         if i = 0 then elm
         else get (pred i) t
       )
 
-let insert i elm t =
+insert i elm t =
     if i = 0 then
         prepend elm t
     else
-        let len = length t
+        len = length t
         if i < len then
             init (0 .. (succ len)) ~f:(fn index ->
                 match Uns.cmp index i with
@@ -449,8 +455,8 @@ let insert i elm t =
         else
             append elm t
 
-let remove i t =
-    let len = length t
+remove i t =
+    len = length t
     assert (|len > 0|)
     match len with
       | 1 ->
@@ -467,8 +473,8 @@ let remove i t =
         else
             pare (0 .. (pred len)) t
 
-let reduce ~f t =
-    let rec f i accum =
+reduce ~f t =
+    rec f i accum =
         match (i = (length t)) with
           | true -> accum
           | false -> f (succ i) (f accum (get i t))
@@ -476,62 +482,62 @@ let reduce ~f t =
       | [||] -> None
       | _ -> Some (f 1 (get 0 t))
 
-let reduce_hlt ~f t =
+reduce_hlt ~f t =
     match reduce ~f t with
       | None -> halt "Empty array"
       | Some x -> x
 
-let swap_inplace i0 i1 t =
-    let elm0 = get i0 t
-    let elm1 = get i1 t
+swap_inplace i0 i1 t =
+    elm0 = get i0 t
+    elm1 = get i1 t
     set_inplace i0 elm1 t
     set_inplace i1 elm0 t
 
-let swap i0 i1 t =
-    let t' = copy t
+swap i0 i1 t =
+    t' = copy t
     swap_inplace i0 i1 t'
     t'
 
-let rev_inplace t =
-    let rec f i0 i1 =
+rev_inplace t =
+    rec f i0 i1 =
         match (i0 >= i1) with
           | true -> ()
           | false ->
             swap_inplace i0 i1 t
             f (succ i0) (pred i1)
-    let len = length t
+    len = length t
     match len with
       | 0 -> ()
       | _ -> f 0 (pred len)
 
-let rev t =
-    let l = length t
+rev t =
+    l = length t
     init (0 .. l) ~f:(fn i -> get (l - i - 1) t)
 
 (* Used directly for non-overlapping blits. *)
-let blit_ascending len i0 t0 i1 t1 =
+blit_ascending len i0 t0 i1 t1 =
     iter (0 .. len) (fn i ->
         set_inplace (i1 + i) (get (i0 + i) t0) t1
       )
-let blit_descending len i0 t0 i1 t1 =
+blit_descending len i0 t0 i1 t1 =
     iter_right (0 .. len) (fn i ->
         set_inplace (i1 + i) (get (i0 + i) t0) t1
       )
 
-let blit len i0 t0 i1 t1 =
+blit len i0 t0 i1 t1 =
     assert (|Range.length r0 = Range.length r1|)
     (* Choose direction such that overlapping ranges don't corrupt the source. *)
     match Range.(base r0 < base r1) with
       | true -> blit_descending len (Range.base r0) t0 (Range.base r1) t1
       | false -> blit_ascending len (Range.base r0) t0 (Range.base r1) t1
 
-let is_sorted ?(strict=false) ~cmp t =
-    let len = length t
-    let rec f elm i =
+is_sorted ?(strict=false) ~cmp t =
+    len = length t
+    rec f elm i =
         match i = len with
           | true -> true
           | false ->
-            let elm' = get i t
+            elm' = get i t
             match (cmp elm elm'), strict with
               | Cmp.Lt, _
               | Cmp.Eq, false -> f elm' (succ i)
@@ -542,30 +548,31 @@ let is_sorted ?(strict=false) ~cmp t =
       | _ -> f (get 0 t) 1
 
 type order: order =
-    Increasing
-    Decreasing
-    Either
-type run: run =
+  | Increasing
+  | Decreasing
+  | Either
+type run: run = {
     base: uns
     past: uns
-let sort_impl ?(stable=false) ~cmp ~inplace t =
+  }
+sort_impl ?(stable=false) ~cmp ~inplace t =
     (* Merge a pair of adjacent runs. Input runs may be in increasing or decreasing order; the
      * output is always in increasing order. *)
-    let merge_pair ~cmp src run0 order0 run1 order1 dst =
+    merge_pair ~cmp src run0 order0 run1 order1 dst =
         assert (|run0.past = run1.base|)
-        let rblit len i0 t0 i1 t1 =
+        rblit len i0 t0 i1 t1 =
             iter (0 .. len) (fn i ->
                 set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
               )
-        let merge_pair_oo ~cmp src run0 order0 run1 order1 dst =
-            let rec f ~cmp src run0 order0 run1 order1 dst run =
+        merge_pair_oo ~cmp src run0 order0 run1 order1 dst =
+            rec f ~cmp src run0 order0 run1 order1 dst run =
                 match (run0.base = run0.past), (run1.base = run1.past) with
                   | false, false ->
-                    let elm0 = match order0 with
+                    elm0 = match order0 with
                       | Increasing -> get run0.base src
                       | Decreasing -> get (pred run0.past) src
                       | Either -> not_reached ()
-                    let elm1 = match order1 with
+                    elm1 = match order1 with
                       | Increasing -> get run1.base src
                       | Decreasing -> get (pred run1.past) src
                       | Either -> not_reached ()
@@ -575,45 +582,45 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
                         match order0 with
                           | Increasing ->
                             set_inplace run.past elm0 dst
-                            let run0' = {run0 with base=succ run0.base}
-                            let run' = {run with past=succ run.past}
+                            run0' = {run0 with base=succ run0.base}
+                            run' = {run with past=succ run.past}
                             f ~cmp src run0' order0 run1 order1 dst run'
                           | Decreasing ->
                             set_inplace run.past elm0 dst
-                            let run0' = {run0 with past=pred run0.past}
-                            let run' = {run with past=succ run.past}
+                            run0' = {run0 with past=pred run0.past}
+                            run' = {run with past=succ run.past}
                             f ~cmp src run0' order0 run1 order1 dst run'
                           | Either -> not_reached ()
                       | Cmp.Gt ->
                         match order1 with
                           | Increasing ->
                             set_inplace run.past elm1 dst
-                            let run1' = {run1 with base=succ run1.base}
-                            let run' = {run with past=succ run.past}
+                            run1' = {run1 with base=succ run1.base}
+                            run' = {run with past=succ run.past}
                             f ~cmp src run0 order0 run1' order1 dst run'
                           | Decreasing ->
                             set_inplace run.past elm1 dst
-                            let run1' = {run1 with past=pred run1.past}
-                            let run' = {run with past=succ run.past}
+                            run1' = {run1 with past=pred run1.past}
+                            run' = {run with past=succ run.past}
                             f ~cmp src run0 order0 run1' order1 dst run'
                           | Either -> not_reached ()
                   | true, false ->
-                    let len = run1.past - run1.base
-                    let () = match order1 with
+                    len = run1.past - run1.base
+                    () = match order1 with
                       | Increasing -> blit_ascending len run1.base src run.past dst
                       | Decreasing -> rblit len run1.base src run.past dst
                       | Either -> not_reached ()
                     {run with past=run.past + len}
                   | false, true ->
-                    let len = run0.past - run0.base
-                    let () = match order0 with
+                    len = run0.past - run0.base
+                    () = match order0 with
                       | Increasing -> blit_ascending len run0.base src run.past dst
                       | Decreasing -> rblit len run0.base src run.past dst
                       | Either -> not_reached ()
                     {run with past=run.past + len}
                   | true, true -> not_reached ()
             f ~cmp src run0 order0 run1 order1 dst {base=run0.base; past=run0.base}
-        let order0', order1' = match order0, order1 with
+        order0', order1' = match order0, order1 with
           | Increasing, Increasing
           | Increasing, Either
           | Either, Increasing
@@ -625,21 +632,21 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
           | Either, Decreasing -> Decreasing, Decreasing
         merge_pair_oo ~cmp src run0 order0' run1 order1' dst
     (* Select monotonic runs and merge run pairs. *)
-    let rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
+    rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
         match i = (length src) with
           | true ->
-            let run0, order0, run1, order1 = match run0_opt with
+            run0, order0, run1, order1 = match run0_opt with
               | None ->
                 (* Copy odd run. *)
-                let run0 = {base; past=i}
-                let run1 = {base=i; past=i}
+                run0 = {base; past=i}
+                run1 = {base=i; past=i}
                 run0, order, run1, Increasing
               | Some run0 -> run0, order0, {base; past=i}, order
-            let run = merge_pair ~cmp src run0 order0 run1 order1 dst
+            run = merge_pair ~cmp src run0 order0 run1 order1 dst
             run :: runs
           | false ->
-            let elm' = get i src
-            let i' = succ i
+            elm' = get i src
+            i' = succ i
             match cmp elm elm', order, stable with
               | Cmp.Lt, Either, _ ->
                 select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
@@ -655,26 +662,26 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
               | Cmp.Lt, Decreasing, _
               | Cmp.Eq, Decreasing, true
               | Cmp.Gt, Increasing, _ ->
-                let run0_opt', order0', runs' = match run0_opt with
+                run0_opt', order0', runs' = match run0_opt with
                   | None -> Some {base; past=i}, order, runs
                   | Some run0 ->
-                    let run1 = {base; past=i}
-                    let run = merge_pair ~cmp src run0 order0 run1 order dst
+                    run1 = {base; past=i}
+                    run = merge_pair ~cmp src run0 order0 run1 order dst
                     None, Either, (run :: runs)
                 select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst runs'
-    let aux = copy t
-    let runs = match t with
+    aux = copy t
+    runs = match t with
       | [||] -> [{base=0; past=0}]
       | _ -> select ~stable ~cmp (get 0 t) 0 1 Either None Either t aux []
 
     (* Repeatedly sweep through runs and merge pairs until only one run remains. Take care to
      * read/write linearly up/down based on the sweep direction, in order to improve cache locality.
      *)
-    let rec merge ~cmp ~inplace src to_merge up dst merged =
+    rec merge ~cmp ~inplace src to_merge up dst merged =
         match to_merge, up, merged with
           | run0 :: run1 :: to_merge', true, _
           | run1 :: run0 :: to_merge', false, _ ->
-            let run = merge_pair ~cmp src run0 Increasing run1 Increasing dst
+            run = merge_pair ~cmp src run0 Increasing run1 Increasing dst
             merge ~cmp ~inplace src to_merge' up dst (run :: merged)
           | [], _, _ :: _ :: _ ->
             (* Start another sweep. *)
@@ -699,20 +706,20 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
           | [], _, [] -> not_reached ()
     merge ~cmp ~inplace aux runs false t []
 
-let sort_inplace ?stable ~cmp t =
-    let _ = sort_impl ?stable ~cmp ~inplace:true t
+sort_inplace ?stable ~cmp t =
+    _ = sort_impl ?stable ~cmp ~inplace:true t
     ()
 
-let sort ?stable ~cmp t =
+sort ?stable ~cmp t =
     sort_impl ?stable ~cmp ~inplace:false (copy t)
 
-let search_impl ?range key ~cmp mode t =
-    let base, past = match range with
+search_impl ?range key ~cmp mode t =
+    base, past = match range with
       | None -> 0L, length t
       | Some range -> Range.base range, Range.past range
     assert (|base <= past|)
     assert (|past <= length t|)
-    let rec f ~base ~past =
+    rec f ~base ~past =
         assert (|base <= past|)
         match (base = past) with
           | true ->
@@ -736,7 +743,7 @@ let search_impl ?range key ~cmp mode t =
                   | true, true -> None # Empty; key > elms.
                   | true, false -> Some (Cmp.Lt, 0) # At beginning; key < elms.
                   | false, _ -> # In interior, or past end.
-                    let probe = pred base
+                    probe = pred base
                     match cmp key (get probe t) with
                       | Cmp.Lt -> not_reached ()
                       | Cmp.Eq -> Some (Cmp.Eq, probe) # probe at rightmost match.
@@ -745,7 +752,7 @@ let search_impl ?range key ~cmp mode t =
                           | false -> Some (Cmp.Lt, base) # In interior; key < * successor.
                           | true -> Some (Cmp.Gt, probe) # Past end; key > elms.
           | false ->
-            let mid = (base + past) / 2
+            mid = (base + past) / 2
             match (cmp key (get mid t)), mode with
               | Cmp.Lt, _
               | Cmp.Eq, Cmp.Lt -> f ~base ~past:mid
@@ -754,63 +761,64 @@ let search_impl ?range key ~cmp mode t =
               | Cmp.Gt, _ -> f ~base:(succ mid) ~past
     f ~base ~past
 
-let psearch ?range key ~cmp t =
+psearch ?range key ~cmp t =
     search_impl ?range key ~cmp Cmp.Lt t
 
-let search ?range key ~cmp t =
+search ?range key ~cmp t =
     match search_impl ?range key ~cmp Cmp.Eq t with
       | Some (_, i) -> Some i
       | _ -> None
 
-let nsearch ?range key ~cmp t =
+nsearch ?range key ~cmp t =
     search_impl ?range key ~cmp Cmp.Gt t
 
-let map ~f t =
+map ~f t =
     init (0 .. (length t)) ~f:(fn i -> f (get i t))
 
-let mapi ~f t =
+mapi ~f t =
     init (0 .. (length t)) ~f:(fn i -> f i (get i t))
 
-let ArrayFoldiMap = {|
-    let T = {|
+ArrayFoldiMap = {
+    T = {
         type outer 'a ^outer: ^&outer a = ^outer&t a
-        type t 'a ^arr >e: t a arr e =
+        type t 'a ^arr >e: t a arr e = {
             arr: outer a arr
             f 'accum 'b: uns -> accum a >e-> (accum, b)
             index: uns
             length: uns
-        (* val init 'a 'accum 'b ^arr >e: ^arr&outer a -> f:(uns -> accum -> a >e-> (accum, b)) ->
+          }
+        (* init 'a 'accum 'b ^arr >e: ^arr&outer a -> f:(uns -> accum -> a >e-> (accum, b)) ->
          *   uns -> t a arr e *)
-        let init arr ~f length =
+        init arr ~f length =
             {arr; f; length; index=0}
 
-        (* val length 'a ^arr: t a arr _ -> uns *)
-        let length t =
+        (* length 'a ^arr: t a arr _ -> uns *)
+        length t =
             t.length
 
-        (* val next 'a 'accum 'b ^arr >e: t a arr e -> accum >e-> (b, t a arr e, accum) *)
-        let next t accum =
-            let accum', elm' = t.f t.index accum (get t.index t.arr)
-            let t' = {t with index=succ t.index}
+        (* next 'a 'accum 'b ^arr >e: t a arr e -> accum >e-> (b, t a arr e, accum) *)
+        next t accum =
+            accum', elm' = t.f t.index accum (get t.index t.arr)
+            t' = {t with index=succ t.index}
             elm', t', accum'
-      |}
+      }
     include T
     include Seq.makePoly2(T)
-    (* val to_accum_array 'a 'accum 'b ^arr ^outer >e: t a arr e >e-> (accum, ^&outer b) *)
-  |}
+    (* to_accum_array 'a 'accum 'b ^arr ^outer >e: t a arr e >e-> (accum, ^&outer b) *)
+  }
 
-let fold_map t ~init ~f =
+fold_map t ~init ~f =
     ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t
       ~f:(fn _ accum elm -> f accum elm) (length t)) ~init
 
-let foldi_map t ~init ~f =
+foldi_map t ~init ~f =
     ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t ~f (length t)) ~init
 
-let filter ~f t =
-    let _, t' = ArrayFoldiMap.to_accum_array
+filter ~f t =
+    _, t' = ArrayFoldiMap.to_accum_array
       (ArrayFoldiMap.init t ~f:(fn _ i _ ->
-        let rec f2 i elm =
-            let i' = succ i
+        rec f2 i elm =
+            i' = succ i
             match f elm with
               | true -> i', elm
               | false -> f2 i' (get i' t)
@@ -818,16 +826,16 @@ let filter ~f t =
       ) (count ~f t)) ~init:0
     t'
 
-let filteri ~f t =
-    let n = foldi t ~init:0 ~f:(fn i accum elm ->
+filteri ~f t =
+    n = foldi t ~init:0 ~f:(fn i accum elm ->
         match f i elm with
           | false -> accum
           | true -> succ accum
       )
-    let _, t' = ArrayFoldiMap.to_accum_array
+    _, t' = ArrayFoldiMap.to_accum_array
       ArrayFoldiMap.init t ~f:(fn _ i _ ->
-        let rec f2 i elm =
-            let i' = succ i
+        rec f2 i elm =
+            i' = succ i
             match f i elm with
               | true -> i', elm
               | false -> f2 i' (get i' t)
@@ -836,93 +844,94 @@ let filteri ~f t =
       ~init:0
     t'
 
-let foldi2_until ~init ~f t0 t1 =
+foldi2_until ~init ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    let len = length t0
-    let rec f2 i accum =
+    len = length t0
+    rec f2 i accum =
         match i = len with
           | true -> accum
           | false ->
-            let accum', until = f i accum (get i t0) (get i t1)
+            accum', until = f i accum (get i t0) (get i t1)
             match until with
               | true -> accum'
               | false -> f2 (succ i) accum'
     f2 0 init
 
-let fold2_until ~init ~f t0 t1 =
+fold2_until ~init ~f t0 t1 =
     foldi2_until ~init ~f:(fn _ accum a b -> f accum a b) t0 t1
 
-let fold2 ~init ~f t0 t1 =
+fold2 ~init ~f t0 t1 =
     fold2_until ~init ~f:(fn accum a b -> (f accum a b), false) t0 t1
 
-let foldi2 ~init ~f t0 t1 =
+foldi2 ~init ~f t0 t1 =
     foldi2_until ~init ~f:(fn i accum a b -> (f i accum a b), false) t0 t1
 
-let iter2 ~f t0 t1 =
+iter2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
     iter (0 .. (length t0)) (fn i ->
         f (get i t0) (get i t1)
       )
 
-let iteri2 ~f t0 t1 =
+iteri2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
     iter (0 .. (length t0)) (fn i ->
         f i (get i t0) (get i t1)
       )
 
-let map2 ~f t0 t1 =
+map2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
     init (0 .. (length t0)) ~f:(fn i -> f (get i t0) (get i t1))
 
-let mapi2 ~f t0 t1 =
+mapi2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
     init (0 .. (length t0)) ~f:(fn i -> f i (get i t0) (get i t1))
 
-let ArrayFoldi2Map = {|
-    let T = {|
+ArrayFoldi2Map = {
+    T = {
         type outer 'a ^outer: ^&outer a = ^outer&t a
-        type t 'a 'b ^m ^n >e: t a b m n e =
+        type t 'a 'b ^m ^n >e: t a b m n e = {
             arr0: ^m&outer a
             arr1: ^n&outer b
             f 'accum 'c: uns -> accum -> a -> b >e-> (accum, c)
             index: uns
+          }
 
-        (* val init 'a 'b ^m ^n >e: ^m&outer a -> ^n&outer b
+        (* init 'a 'b ^m ^n >e: ^m&outer a -> ^n&outer b
          *   -> f:(uns -> accum -> a -> b >e-> (accum, c)) -> t a b m n e *)
-        let init arr0 arr1 ~f =
+        init arr0 arr1 ~f =
             {arr0; arr1; f; index=0}
 
-        (* val length 'a 'b ^m ^n: t a b m n _ -> uns *)
-        let length t =
+        (* length 'a 'b ^m ^n: t a b m n _ -> uns *)
+        length t =
             length t.arr0
 
-        (* val next 'a 'b 'accum 'c ^m ^n >e: t a b m n e -> accum >e-> (c, t a b m n e, accum) *)
-        let next t accum =
-            let accum', elm' = t.f t.index accum (get t.index t.arr0) (get t.index t.arr1)
-            let t' = {t with index=Uns.succ t.index}
+        (* next 'a 'b 'accum 'c ^m ^n >e: t a b m n e -> accum >e-> (c, t a b m n e, accum) *)
+        next t accum =
+            accum', elm' = t.f t.index accum (get t.index t.arr0) (get t.index t.arr1)
+            t' = {t with index=Uns.succ t.index}
             elm', t', accum'
-      |}
+      }
     include T
     include Seq.makePoly3(T)
-    (* val to_accum_array 'a 'b 'c ^m ^n ^outer >e: t a b m n e >e-> (accum, ^&outer c) *)
-  |}
+    (* to_accum_array 'a 'b 'c ^m ^n ^outer >e: t a b m n e >e-> (accum, ^&outer c) *)
+  }
 
-let fold2_map ~init ~f t0 t1 =
+fold2_map ~init ~f t0 t1 =
     ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f:(fn _ accum elm -> f accum elm))
       ~init
 
-let foldi2_map ~init ~f t0 t1 =
+foldi2_map ~init ~f t0 t1 =
     ArrayFoldi2Map.to_accum_array (ArrayFoldi2Map.init t0 t1 ~f) ~init
 
-let zip t0 t1 =
+zip t0 t1 =
     map2 ~f:(fn a b -> a, b) t0 t1
 
-let unzip t =
-    let t0 = map ~f:(fn (a, _) -> a) t
-    let t1 = map ~f:(fn (_, b) -> b) t
+unzip t =
+    t0 = map ~f:(fn (a, _) -> a) t
+    t1 = map ~f:(fn (_, b) -> b) t
     t0, t1
 
-let fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
+fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
   (fmt_a:(a -> Fmt.Formatter e -> Fmt.Formatter e)) t (Formatter:Fmt.Formatter e)
   : (Fmt.Formatter e) =
     foldi ~init:
@@ -945,8 +954,8 @@ let fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
       )
       |> Fmt.fmt "|]"
 
-let pp pp_elm ppf t =
-    let open Format
+pp pp_elm ppf t =
+    open Format
     fprintf ppf "@[<h>[|";
     iteri t ~f:(fn i elm ->
         if i > 0 then fprintf ppf ";@ "
@@ -959,10 +968,10 @@ let pp pp_elm ppf t =
  *)
 
 let%expect_test "cursor" =
-    let rec f2 arr hd cursor tl =
-        let index = Cursor.index cursor
-        let hd_cursor = Cursor.cmp hd cursor
-        let cursor_tl = Cursor.cmp cursor tl
+    rec f2 arr hd cursor tl =
+        index = Cursor.index cursor
+        hd_cursor = Cursor.cmp hd cursor
+        cursor_tl = Cursor.cmp cursor tl
         File.Fmt.Stdout
           |> Fmt.fmt
           "index=%u(^
@@ -985,7 +994,7 @@ let%expect_test "cursor" =
             | Gt -> not_reached ()
           ^)\n"
           |> ignore
-        let length = length arr
+        length = length arr
         assert (|Cursor.(=) (Cursor.seek (Uns.to_sint index) hd) cursor|)
         assert (|Cursor.(=) hd (Cursor.seek (-(Uns.to_sint index)) cursor)|)
         assert (|Cursor.(=) (Cursor.seek (Uns.to_sint (length - index)) cursor) tl|)
@@ -993,11 +1002,11 @@ let%expect_test "cursor" =
 
         match cursor_tl with
         | Lt ->
-            let cursor' = Cursor.succ cursor
+            cursor' = Cursor.succ cursor
             assert (|Cursor.(cursor = (pred cursor'))|)
             f2 arr hd cursor' tl
         | Eq | Gt -> ()
-    let arrs = [
+    arrs = [
         [||]
         [|0|]
         [|0; 1|]
@@ -1005,10 +1014,10 @@ let%expect_test "cursor" =
       ]
     List.iter arrs ~f:(fn arr ->
         File.Fmt.Stdout |> Fmt.fmt "--- %f(^fmt Uns.fmt arr^) ---" |> ignore
-        let hd = Cursor.hd arr
+        hd = Cursor.hd arr
         f2 arr hd hd (Cursor.tl arr)
       )
-    let _ = File.Fmt.(flush Stdout)
+    _ = File.Fmt.(flush Stdout)
 
     [%expect``
 --- [||] ---
