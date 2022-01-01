@@ -510,11 +510,13 @@ let rev t =
 
 (* Used directly for non-overlapping blits. *)
 let blit_ascending len i0 t0 i1 t1 =
-    for i = 0 to pred len do
+    iter (0 .. len) (fn i ->
         set_inplace (i1 + i) (get (i0 + i) t0) t1
+      )
 let blit_descending len i0 t0 i1 t1 =
-    for i = pred len downto 0 do
+    iter_right (0 .. len) (fn i ->
         set_inplace (i1 + i) (get (i0 + i) t0) t1
+      )
 
 let blit len i0 t0 i1 t1 =
     assert (|Range.length r0 = Range.length r1|)
@@ -552,8 +554,9 @@ let sort_impl ?(stable=false) ~cmp ~inplace t =
     let merge_pair ~cmp src run0 order0 run1 order1 dst =
         assert (|run0.past = run1.base|)
         let rblit len i0 t0 i1 t1 =
-            for i = 0 to pred len do
+            iter (0 .. len) (fn i ->
                 set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
+              )
         let merge_pair_oo ~cmp src run0 order0 run1 order1 dst =
             let rec f ~cmp src run0 order0 run1 order1 dst run =
                 match (run0.base = run0.past), (run1.base = run1.past) with
@@ -857,13 +860,15 @@ let foldi2 ~init ~f t0 t1 =
 
 let iter2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    for i = 0 to pred (length t0) do
+    iter (0 .. (length t0)) (fn i ->
         f (get i t0) (get i t1)
+      )
 
 let iteri2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    for i = 0 to pred (length t0) do
+    iter (0 .. (length t0)) (fn i ->
         f i (get i t0) (get i t1)
+      )
 
 let map2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
@@ -1117,7 +1122,7 @@ let%expect_test "get,length,is_empty" =
 let%expect_test "set,set_inplace" =
     let open Format
     let test_set len =
-        for i = 0 to pred len do
+        iter (0 .. len) (fn i ->
             let arr = init (0 .. len) ~f:(fn _ -> 0)
             let arr' = set i 1 arr
             printf "set %a: %a -> %a" Uns.pp i \
@@ -1129,6 +1134,7 @@ let%expect_test "set,set_inplace" =
             printf " -> copy,set_inplace: %a" (pp Uns.pp) arr''
             set_inplace i 2 arr''
             printf " -> %a\n" (pp Uns.pp) arr''
+          )
     printf "@[<h>"
     test_set 1
     test_set 2
@@ -1148,10 +1154,12 @@ let%expect_test "pare" =
     let open Format
     let test arr =
         printf "pare %a ->" (pp Uns.pp) arr
-        for i = 0 to length arr do
-            for j = i to length arr do
+        RangeF.iter RangeF.O.(0 ..= (length arr)) (fn i ->
+            RangeF.iter RangeF.O.(i ..= (length arr))) (fn j ->
                 let arr' = pare arr (i .. j)
                 printf " [%a,%a)=%a" Uns.pp i Uns.pp j (pp Uns.pp) arr'
+              )
+          )
         printf "\n"
     printf "@[<h>"
     test [||]
@@ -1290,9 +1298,10 @@ let%expect_test "insert" =
     let open Format
     let test arr x =
         printf "insert %a %a ->" (pp Uns.pp) arr Uns.pp x
-        for i = 0 to length arr do
+        RangeF.iter RangeF.O.(0 ..= (length arr)) (fn i ->
             let arr' = insert i x arr
             printf " %a" (pp Uns.pp) arr'
+          )
         printf "\n"
     printf "@[<h>"
     test [||] 0
@@ -1311,9 +1320,10 @@ let%expect_test "remove" =
     let open Format
     let test arr =
         printf "remove %a ->" (pp Uns.pp) arr
-        for i = 0 to pred (length arr) do
+        iter (0 .. (length arr)) (fn i ->
             let arr' = remove i arr
             printf " %a" (pp Uns.pp) arr'
+          )
         printf "\n"
     printf "@[<h>"
     test [|0|]
@@ -1346,13 +1356,15 @@ let%expect_test "reduce" =
 let%expect_test "swap,swap_inplace" =
     let open Format
     let test_swap arr =
-        for i = 0 to pred (length arr) do
-            for j = i to pred (length arr) do
+        iter (0 .. (length arr)) (fn i ->
+            iter (i .. (length arr)) (fn j ->
                 let arr' = copy arr
                 printf "%a %a: swap %a -> %a -> swap_inplace %a -> " Uns.pp i Uns.pp j
                   (pp Uns.pp) arr' (pp Uns.pp) (swap i j arr') (pp Uns.pp) arr'
                 swap_inplace i j arr';
                 printf "%a\n" (pp Uns.pp) arr'
+              )
+          )
     printf "@[<h>"
     test_swap [|0|]
     test_swap [|0; 1|]
@@ -1482,9 +1494,11 @@ let%expect_test "sort" =
             | Cmp.Gt -> Cmp.Gt
           )|)
     Random.init 0;
-    for len = 0 to 257 do
-        for _ = 1 to 10 do
+    iter (0 .. 256) (fn len ->
+        iter (0 .. 10) (fn _ ->
             test_sort (gen_array len)
+          )
+      )
 
     [%expect""]
 
@@ -1492,7 +1506,7 @@ let%expect_test "search" =
     let open Format
     let test_search arr key_max =
         printf "%a\n" (pp Uns.pp) arr
-        for probe = 0 to key_max do
+        RangeF.iter RangeF.O.(0 ..= key_max) (fn probe ->
             printf "    %a -> %s, %s, %s\n" Uns.pp probe
               (match psearch probe ~cmp:Uns.cmp arr with
                 | None -> "<"
@@ -1514,16 +1528,19 @@ let%expect_test "search" =
                   Uns.pp i Uns.pp (get i arr)
                 | None -> ">"
               )
+          )
     printf "@[<h>"
-    for len = 0 to 3 do
+    iter (0 .. 4) (fn len ->
         let arr = init (0 .. len) ~f:(fn i -> i * 2 + 1)
         let key_max = len * 2
         test_search arr key_max
-    for hlen = 1 to 3 do
+      )
+    iter (1 .. 4) (fn hlen ->
         let len = hlen * 2
         let arr = init (0 .. len) ~f:(fn i -> i + ((i + 1) % 2))
         let key_max = len
         test_search arr key_max
+      )
     printf "@]"
 
     [%expect`|[||]
