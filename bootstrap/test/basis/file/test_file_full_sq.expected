@@ -1,0 +1,420 @@
+sqring:
+    head: 0
+    tail: 0
+    ring_entries: 32
+    ring_mask: 31
+    flags: 0
+    array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+      sqes:
+sqring:
+    head: 0
+    tail: 32
+    ring_entries: 32
+    ring_mask: 31
+    flags: 0
+    array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+      sqes:
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+sqring:
+    head: 32
+    tail: 33
+    ring_entries: 32
+    ring_mask: 31
+    flags: 0
+    array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+      sqes:
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: 0
+            opcode: IORING_OP_NOP
+            user_data:
+                refcount: 1
+                opcode: IORING_OP_NOP
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
