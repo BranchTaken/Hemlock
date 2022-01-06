@@ -70,3 +70,5 @@ hm_opt_error_t hm_ioring_nop_submit(hm_user_data_t **user_data, hm_ioring_t *ior
 hm_opt_error_t hm_ioring_open_submit(hm_user_data_t **user_data, uint8_t *pathname, int flags,
   mode_t mode, hm_ioring_t *ioring);
 hm_opt_error_t hm_ioring_close_submit(hm_user_data_t **user_data, int fd, hm_ioring_t *ioring);
+hm_opt_error_t hm_ioring_read_submit(hm_user_data_t **user_data, int fd, uint8_t *buffer,
+  uint64_t n, hm_ioring_t *ioring);

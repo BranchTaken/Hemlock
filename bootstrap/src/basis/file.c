@@ -75,17 +75,6 @@ hm_basis_file_stderr_inner(value a_unit) {
 }
 
 CAMLprim value
-hm_basis_file_read_inner(value a_bytes, value a_fd) {
-    uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
-    size_t n = caml_string_length(a_bytes);
-    int fd = Int64_val(a_fd);
-
-    int result = read(fd, bytes, n);
-
-    return hm_basis_file_finalize_result(result);
-}
-
-CAMLprim value
 hm_basis_file_write_inner(value a_bytes, value a_fd) {
     uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
     size_t n = caml_string_length(a_bytes);
@@ -149,6 +138,21 @@ hm_basis_file_complete_inner(value a_user_data) {
     return caml_copy_int64(res);
 }
 
+// hm_basis_file_read_complete_inner: !&Stdlib.Bytes.t -> Basis.File.Read.inner >{os}-> int
+CAMLprim value
+hm_basis_file_read_complete_inner(value a_bytes, value a_user_data) {
+    hm_user_data_t *user_data = (hm_user_data_t *)Int64_val(a_user_data);
+
+    int64_t res = hm_ioring_user_data_complete(user_data, &hm_executor_get()->ioring);
+
+    if (res >= 0) {
+        uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
+        memcpy(bytes, user_data->buffer, res);
+    }
+
+    return caml_copy_int64(res);
+}
+
 CAMLprim value
 submit_out(hm_opt_error_t oe, hm_user_data_t *user_data) {
     value a_ret = caml_alloc_tuple(2);
@@ -204,6 +208,24 @@ hm_basis_file_close_submit_inner(value a_fd) {
 
     hm_user_data_t *user_data = NULL;
     HM_OE(oe, hm_ioring_close_submit(&user_data, fd, &hm_executor_get()->ioring));
+
+LABEL_OUT:
+    return submit_out(oe, user_data);
+}
+
+// hm_basis_file_read_submit_inner: uns -> Basis.File.t >{os}-> (int * &Basis.File.Read.inner)
+CAMLprim value
+hm_basis_file_read_submit_inner(value a_n, value a_fd) {
+    uint64_t n = Int64_val(a_n);
+    int fd = Int64_val(a_fd);
+
+    uint8_t *buffer = (uint8_t *)malloc(sizeof(uint8_t) * n);
+    assert(buffer != NULL);
+
+    hm_opt_error_t oe = HM_OE_NONE;
+
+    hm_user_data_t *user_data = NULL;
+    HM_OE(oe, hm_ioring_read_submit(&user_data, fd, buffer, n, &hm_executor_get()->ioring));
 
 LABEL_OUT:
     return submit_out(oe, user_data);
