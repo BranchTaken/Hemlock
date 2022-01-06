@@ -489,3 +489,25 @@ hm_ioring_nop_submit(hm_user_data_t **user_data, hm_ioring_t *ioring) {
 LABEL_OUT:
     return oe;
 }
+
+hm_opt_error_t
+hm_ioring_open_submit(hm_user_data_t **user_data, uint8_t *pathname, int flags, mode_t mode,
+  hm_ioring_t *ioring) {
+    hm_opt_error_t oe = HM_OE_NONE;
+    struct io_uring_sqe *sqe;
+    HM_OE(oe, hm_ioring_get_sqe(&sqe, ioring));
+
+    *user_data = hm_user_data_create();
+    (*user_data)->opcode = IORING_OP_OPENAT;
+    (*user_data)->pathname = pathname;
+
+    sqe->user_data = (uint64_t)(*user_data);
+    sqe->opcode = IORING_OP_OPENAT;
+    sqe->fd = AT_FDCWD;
+    sqe->addr = (uint64_t)pathname;
+    sqe->open_flags = flags;
+    sqe->len = mode;
+
+LABEL_OUT:
+    return oe;
+}

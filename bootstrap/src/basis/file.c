@@ -60,19 +60,6 @@ hm_basis_file_finalize_result(int result) {
 }
 
 CAMLprim value
-hm_basis_file_of_path_inner(value a_flag, value a_mode, value a_bytes) {
-    size_t flag = Long_val(a_flag);
-    size_t mode = Int64_val(a_mode);
-    uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
-    size_t n = caml_string_length(a_bytes);
-
-    int flags = flags_of_hemlock_file_flag[flag];
-    int result = open(bytes, flags, mode);
-
-    return hm_basis_file_finalize_result(result);
-}
-
-CAMLprim value
 hm_basis_file_stdin_inner(value a_unit) {
     return caml_copy_int64(STDIN_FILENO);
 }
@@ -159,6 +146,16 @@ hm_basis_file_user_data_pp(value a_fd, value a_user_data) {
     return Val_unit;
 }
 
+// hm_basis_file_complete_inner: !&Basis.File.{Open|Close|Write}.t >{os}-> int
+CAMLprim value
+hm_basis_file_complete_inner(value a_user_data) {
+    hm_user_data_t *user_data = (hm_user_data_t *)Int64_val(a_user_data);
+
+    int64_t res = hm_ioring_user_data_complete(user_data, &hm_executor_get()->ioring);
+
+    return caml_copy_int64(res);
+}
+
 CAMLprim value
 submit_out(hm_opt_error_t oe, hm_user_data_t *user_data) {
     value a_ret = caml_alloc_tuple(2);
@@ -175,6 +172,31 @@ hm_basis_file_nop_submit_inner(value a_unit) {
 
     hm_user_data_t *user_data = NULL;
     HM_OE(oe, hm_ioring_nop_submit(&user_data, &hm_executor_get()->ioring));
+
+LABEL_OUT:
+    return submit_out(oe, user_data);
+}
+
+// hm_basis_file_open_submit_inner: Basis.File.Flag.t -> uns -> Stdlib.Bytes.t >{os}->
+//   (int * &File.Open.t)
+CAMLprim value
+hm_basis_file_open_submit_inner(value a_flag, value a_mode, value a_bytes) {
+    size_t flag = Long_val(a_flag);
+    size_t mode = Int64_val(a_mode);
+    uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
+    size_t n = caml_string_length(a_bytes);
+
+    int flags = flags_of_hemlock_file_flag[flag];
+
+    uint8_t *pathname = (uint8_t *)malloc(sizeof(uint8_t) * (n + 1));
+    assert(pathname != NULL);
+    memcpy(pathname, bytes, sizeof(uint8_t) * n);
+    pathname[n] = '\0';
+
+    hm_opt_error_t oe = HM_OE_NONE;
+
+    hm_user_data_t *user_data = NULL;
+    HM_OE(oe, hm_ioring_open_submit(&user_data, pathname, flags, mode, &hm_executor_get()->ioring));
 
 LABEL_OUT:
     return submit_out(oe, user_data);

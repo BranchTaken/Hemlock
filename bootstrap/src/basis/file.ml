@@ -13,6 +13,9 @@ module Error = struct
   let of_value value =
     Uns.bits_of_sint Sint.(neg value)
 
+  let of_neg_errno neg_errno =
+    Uns.bits_of_sint Sint.(neg neg_errno)
+
   let to_string t =
     let n = to_string_get_length t in
     let bytes = Stdlib.Bytes.create (Int64.to_int n) in
@@ -45,21 +48,6 @@ let bytes_of_slice slice =
     Char.chr (Uns.trunc_to_int (U8.extend_to_uns (Array.get (base + (Int64.of_int i)) container)))
   )
 
-(* external of_path_inner: Flag.t -> uns -> _?bytes >os-> int *)
-external of_path_inner: Flag.t -> uns -> Stdlib.Bytes.t -> sint = "hm_basis_file_of_path_inner"
-
-let of_path ?(flag=Flag.R_O) ?(mode=0o660L) path =
-  let path_bytes = bytes_of_slice path in
-  let value = of_path_inner flag mode path_bytes in
-  match Sint.(value < kv 0L) with
-  | false -> Ok (Uns.bits_of_sint value)
-  | true -> Error (Uns.bits_of_sint Sint.(neg value))
-
-let of_path_hlt ?flag ?mode path =
-  match of_path ?flag ?mode path with
-  | Ok t -> t
-  | Error error -> halt (Error.to_string error)
-
 (* external stdin_inner: uns *)
 external stdin_inner: unit -> t = "hm_basis_file_stdin_inner"
 
@@ -80,6 +68,57 @@ let stderr =
 
 (* external close_inner: t >os-> int *)
 external close_inner: t -> sint = "hm_basis_file_close_inner"
+
+external user_data_decref: uns -> unit = "hm_basis_file_user_data_decref"
+external complete_inner: uns -> sint = "hm_basis_file_complete_inner"
+
+let register_user_data_finalizer user_data =
+  match user_data = 0L with
+  | true -> user_data
+  | false -> begin
+      let () = Stdlib.Gc.finalise user_data_decref user_data in
+      user_data
+    end
+
+module Open = struct
+  type file = t
+  type t = uns
+
+  external submit_inner: Flag.t -> uns -> Stdlib.Bytes.t -> (sint * t) =
+    "hm_basis_file_open_submit_inner"
+
+  let submit ?(flag=Flag.R_O) ?(mode=0o660L) path =
+    let path_bytes = bytes_of_slice path in
+    let value, t = submit_inner flag mode path_bytes in
+    let t = register_user_data_finalizer t in
+    match Sint.(value < kv 0L) with
+    | true -> Error (Error.of_neg_errno value)
+    | false -> Ok t
+
+  let submit_hlt ?(flag=Flag.R_O) ?(mode=0o660L) path =
+    match submit ~flag ~mode path with
+    | Error error -> halt (Error.to_string error)
+    | Ok t -> t
+
+  let complete t =
+    let value = complete_inner t in
+    match Sint.(value < 0L) with
+    | true -> Error (Error.of_neg_errno value)
+    | false -> Ok (Uns.bits_of_sint value)
+
+  let complete_hlt t =
+    match complete t with
+    | Ok t -> t
+    | Error error -> halt (Error.to_string error)
+end
+
+let of_path ?flag ?mode path =
+  match Open.submit ?flag ?mode path with
+  | Error error -> Error error
+  | Ok open' -> Open.complete open'
+
+let of_path_hlt ?flag ?mode path =
+  Open.(submit_hlt ?flag ?mode path |> complete_hlt)
 
 let close t =
   let value = close_inner t in
@@ -336,7 +375,21 @@ module Fmt = struct
 
   let stdout = of_t stdout
 
-  let () = at_exit (fun () -> let _ = Fmt.flush stdout in ())
-
   let stderr = of_t ~bufsize:0L stderr
+
+  let teardown () =
+    let _ = Fmt.flush stdout in
+    ()
 end
+
+external setup_inner: unit -> sint = "hm_basis_file_setup_inner"
+
+let () = begin
+  match setup_inner () = 0L with
+  | false -> halt "Setup failure"
+  | true -> ()
+end
+
+external teardown_inner: unit -> unit = "hm_basis_file_teardown_inner"
+
+let () = Stdlib.at_exit (fun () -> let _ = Fmt.teardown () in let _ = teardown_inner () in ())
