@@ -77,6 +77,38 @@ val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> t
     Flag.R_O) Unix file permissions and [mode] (default 0o660) Unix file permissions and and returns
     the resulting [t] or halts if the file could not be opened. *)
 
+module Close: sig
+  type file = t
+  type t
+  (* An internally immutable token backed by an external I/O close completion data structure. *)
+
+  val submit: file -> (t, Error.t) result
+  (** [submit file] submits a close for given [file]. This operation does not block. Returns a
+      [t] to the close submission or an [Error.t] if the close could not be submitted. *)
+
+  val submit_hlt: file -> t
+  (** [submit file] submits a close for given [file]. This operation does not block. Returns a
+      [t] to the close submission or halts if the close could not be submitted. *)
+
+  val complete: t -> Error.t option
+  (** [complete t] blocks until the given [t] is complete. Returns [None] or an [Error.t] if file
+      could not be closed. *)
+
+  val complete_hlt: t -> unit
+  (** [complete_hlt t] blocks until the given [t] is complete. Returns a [unit] or halts if file
+      could not be closed. *)
+end
+
+(* val close: t $-> Error.t option *)
+val close: t -> Error.t option
+(** [close t] closes the external mutable Unix file descriptor associated with [t] and returns
+    [None] or an [Error.t] if it could not be closed. *)
+
+(* val close_hlt: t $-> unit *)
+val close_hlt: t -> unit
+(** [close_hlt t] closes the external mutable Unix file descriptor associated with [t] and returns a
+    [unit] or halts if it could not be closed. *)
+
 (* val read_into: !&Bytes.Slice.t -> t $-> Error.t option *)
 val read_into: Bytes.Slice.t -> t -> Error.t option
 (** [read_into buffer t] reads up to n bytes from [t] into the given mutable [buffer], where n is
@@ -106,16 +138,6 @@ val write: Bytes.Slice.t -> t -> Error.t option
 val write_hlt: Bytes.Slice.t -> t -> unit
 (** [write_hlt bytes t] writes [bytes] to [t] and returns a unit or halts if bytes could not be
     written. *)
-
-(* val close: t $-> Error.t option *)
-val close: t -> Error.t option
-(** [close t] closes the external mutable Unix file descriptor associated with [t] and returns None
-    or an error if it could not be closed. *)
-
-(* val close_hlt: t $-> unit *)
-val close_hlt: t -> unit
-(** [close_hlt t] closes the external mutable Unix file descriptor associated with [t] and returns a
-    unit or halts if it could not be closed. *)
 
 (* val seek: sint -> t $-> (uns, Error.t) result *)
 val seek: sint -> t -> (uns, Error.t) result

@@ -511,3 +511,20 @@ hm_ioring_open_submit(hm_user_data_t **user_data, uint8_t *pathname, int flags, 
 LABEL_OUT:
     return oe;
 }
+
+hm_opt_error_t
+hm_ioring_close_submit(hm_user_data_t **user_data, int fd, hm_ioring_t *ioring) {
+    hm_opt_error_t oe = HM_OE_NONE;
+    struct io_uring_sqe *sqe;
+    HM_OE(oe, hm_ioring_get_sqe(&sqe, ioring));
+
+    *user_data = hm_user_data_create();
+    (*user_data)->opcode = IORING_OP_CLOSE;
+
+    sqe->user_data = (uint64_t)(*user_data);
+    sqe->opcode = IORING_OP_CLOSE;
+    sqe->fd = fd;
+
+LABEL_OUT:
+    return oe;
+}
