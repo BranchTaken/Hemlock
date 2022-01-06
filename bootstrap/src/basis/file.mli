@@ -153,14 +153,40 @@ val read_hlt: ?n:uns -> ?buffer:Bytes.Slice.t -> t -> Bytes.Slice.t
     [n]. Returns the [Bytes.Slice.t] into which bytes were read or halts if bytes could not be read.
 *)
 
+module Write: sig
+  type file = t
+  type t
+  (* An internally immutable token backed by an external I/O write completion data structure. *)
+
+  val submit: Bytes.Slice.t -> file -> (t, Error.t) result
+  (** [submit bytes file] submits a write for of given [bytes] to given [file]. This operation
+      does not block. Returns a [t] to the write submission or an [Error.t] if the write could not
+      be submitted. *)
+
+  val submit_hlt: Bytes.Slice.t -> file -> t
+  (** [submit bytes file] submits a write for of given [bytes] to given [file]. This operation
+      does not block. Returns a [t] to the write submission or halts if the write could not be
+      submitted. *)
+
+  val complete: t ->  (Bytes.Slice.t, Error.t) result
+  (** [complete t] blocks until the given [t] is complete. Returns a [Bytes.Slice.t] of remaining
+      bytes that were not written (typically empty) or an [Error.t] if bytes could not be written.
+  *)
+
+  val complete_hlt: t -> Bytes.Slice.t
+  (** [complete_hlt t] blocks until the given [t] is complete. Returns a [Bytes.Slice.t] of
+      remaining bytes that were not written (typically empty) or halts if bytes could not be
+      written. *)
+end
+
 (* val write: /_ Bytes.Slice.t -> t $-> Error.t option *)
 val write: Bytes.Slice.t -> t -> Error.t option
-(** [write bytes t] writes [bytes] to [t] and returns None or an error if bytes could not be
+(** [write bytes t] writes [bytes] to [t] and returns [None] or an [Error.t] if bytes could not be
     written. *)
 
 (* val write_hlt: /_ Bytes.Slice.t -> t $-> unit *)
 val write_hlt: Bytes.Slice.t -> t -> unit
-(** [write_hlt bytes t] writes [bytes] to [t] and returns a unit or halts if bytes could not be
+(** [write_hlt bytes t] writes [bytes] to [t] and returns a [unit] or halts if bytes could not be
     written. *)
 
 (* val seek: sint -> t $-> (uns, Error.t) result *)

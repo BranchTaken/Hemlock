@@ -10,9 +10,6 @@ module Error = struct
   external to_string_inner: uns -> Stdlib.Bytes.t -> t -> unit =
     "hm_basis_file_error_to_string_inner"
 
-  let of_value value =
-    Uns.bits_of_sint Sint.(neg value)
-
   let of_neg_errno neg_errno =
     Uns.bits_of_sint Sint.(neg neg_errno)
 
@@ -227,38 +224,76 @@ let read ?n ?buffer t =
 let read_hlt ?n ?buffer t =
   Read.(submit_hlt ?n ?buffer t |> complete_hlt)
 
-(* external write_inner: _?bytes -> t >os-> sint *)
-external write_inner: Stdlib.Bytes.t -> t -> sint = "hm_basis_file_write_inner"
+module Write = struct
+  type file = t
+  type inner = uns
+  type t = {
+    inner: inner;
+    buffer: Bytes.Slice.t;
+  }
 
-let rec write buffer t =
-  match Bytes.Cursor.index (Bytes.Slice.base buffer) < Bytes.Cursor.index (Bytes.Slice.past buffer)
-  with
-  | false -> None
-  | true -> begin
-      let bytes = bytes_of_slice buffer in
-      let value = write_inner bytes t in
-      match Sint.(value < kv 0L) with
-      | true -> Some (Error.of_value value)
-      | false ->
-        write (
-          Bytes.Slice.of_cursors ~base:(Bytes.Cursor.seek value (Bytes.Slice.base buffer))
-            ~past:(Bytes.Slice.base buffer)
-        ) t
-    end
+  external submit_inner: Stdlib.Bytes.t -> file -> (sint * inner) =
+    "hm_basis_file_write_submit_inner"
+
+  let submit buffer file =
+    let bytes = bytes_of_slice buffer in
+    let value, inner = submit_inner bytes file in
+    let inner = register_user_data_finalizer inner in
+    match Sint.(value < kv 0L) with
+    | true -> Error (Error.of_neg_errno value)
+    | false -> Ok {inner; buffer}
+
+  let submit_hlt buffer file =
+    match submit buffer file with
+    | Error error -> halt (Error.to_string error)
+    | Ok t -> t
+
+  let complete t =
+    let value = complete_inner t.inner in
+    match Sint.(value < kv 0L) with
+    | true -> Error (Error.of_neg_errno value)
+    | false -> begin
+        let base = Bytes.(Slice.base t.buffer |> Cursor.seek (Uns.bits_of_sint value)) in
+        let past = Bytes.Slice.past t.buffer in
+        let buffer = Bytes.Slice.of_cursors ~base ~past in
+        Ok buffer
+      end
+
+  let complete_hlt t =
+    match complete t with
+    | Ok buffer -> buffer
+    | Error error -> halt (Error.to_string error)
+end
+
+let write buffer t =
+  let rec f buffer t = begin
+    match Bytes.Slice.length buffer = 0L with
+    | true -> None
+    | false -> begin
+        match Write.submit buffer t with
+        | Error error -> Some error
+        | Ok write -> begin
+            match Write.complete write with
+            | Error error -> Some error
+            | Ok buffer -> f buffer t
+          end
+      end
+  end in
+  f buffer t
 
 let write_hlt buffer t =
-  match write buffer t with
-  | None -> ()
-  | Some error -> begin
-      let _ = close t in
-      halt (Error.to_string error)
-    end
+  let rec f buffer t = begin
+    match Bytes.Slice.length buffer = 0L with
+    | true -> ()
+    | false -> f Write.(submit_hlt buffer t |> complete_hlt) t
+  end in
+  f buffer t
 
 let seek_base inner rel_off t =
   let value = inner rel_off t in
   match Sint.(value < kv 0L) with
   | false -> Ok (Uns.bits_of_sint value)
-  | true -> Error (Error.of_value value)
+  | true -> Error (Error.of_neg_errno value)
 
 let seek_hlt_base inner rel_off t =
   match seek_base inner rel_off t with

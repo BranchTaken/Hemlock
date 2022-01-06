@@ -80,6 +80,7 @@ hm_basis_file_write_inner(value a_bytes, value a_fd) {
     size_t n = caml_string_length(a_bytes);
     int fd = Int64_val(a_fd);
 
+    assert(n > 0);
     int result = write(fd, bytes, n);
 
     return hm_basis_file_finalize_result(result);
@@ -229,6 +230,30 @@ hm_basis_file_read_submit_inner(value a_n, value a_fd) {
 
 LABEL_OUT:
     return submit_out(oe, user_data);
+}
+
+// hm_basis_file_write_submit_inner: Stdlib.Bytes.t -> Basis.File.t >{os}->
+//   (int * &Basis.File.Write.inner)
+CAMLprim value
+hm_basis_file_write_submit_inner(value a_bytes, value a_fd) {
+    hm_opt_error_t oe = HM_OE_NONE;
+    uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
+    size_t n = caml_string_length(a_bytes);
+    int fd = Int64_val(a_fd);
+
+    uint8_t *buffer = (uint8_t *)malloc(sizeof(uint8_t) * n);
+    assert(buffer != NULL);
+    memcpy(buffer, bytes, n);
+
+    hm_user_data_t *user_data = NULL;
+    HM_OE(oe, hm_ioring_write_submit(&user_data, fd, buffer, n, &hm_executor_get()->ioring));
+
+LABEL_OUT:
+    value a_ret = caml_alloc_tuple(2);
+    Store_field(a_ret, 0, caml_copy_int64((uint64_t)oe));
+    Store_field(a_ret, 1, caml_copy_int64((uint64_t)user_data));
+
+    return a_ret;
 }
 
 // hm_basis_file_setup_inner: unit >{os}-> int
