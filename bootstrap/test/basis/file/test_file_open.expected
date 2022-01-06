@@ -1,0 +1,45 @@
+user_data:
+    refcount: 2
+    pathname: "file"
+    opcode: IORING_OP_OPENAT
+    cqe:
+        res: 0
+        flags: 0
+        user_data: NULL
+sqring:
+    head: 0
+    tail: 1
+    ring_entries: 32
+    ring_mask: 31
+    flags: 0
+    array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+      sqes:
+        sqe:
+            flags: 0
+            ioprio: 0
+            fd: -100
+            opcode: IORING_OP_OPENAT
+            user_data:
+                refcount: 2
+                pathname: "file"
+                opcode: IORING_OP_OPENAT
+                cqe:
+                    res: 0
+                    flags: 0
+                    user_data: NULL
+user_data:
+    refcount: 1
+    pathname: NULL
+    opcode: IORING_OP_OPENAT
+    cqe:
+        res: 4
+        flags: 0
+        user_data: <same as parent>
+sqring:
+    head: 1
+    tail: 1
+    ring_entries: 32
+    ring_mask: 31
+    flags: 0
+    array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+      sqes:
