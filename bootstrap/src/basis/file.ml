@@ -3,10 +3,8 @@ open Rudiments
 module Error = struct
   type t = uns
 
-  (* external to_string_get_length: t -> uns *)
   external to_string_get_length: t -> uns = "hm_basis_file_error_to_string_get_length"
 
-  (* external to_string_inner: uns -> !&bytes -> t >os-> unit *)
   external to_string_inner: uns -> Stdlib.Bytes.t -> t -> unit =
     "hm_basis_file_error_to_string_inner"
 
@@ -45,19 +43,16 @@ let bytes_of_slice slice =
     Char.chr (Uns.trunc_to_int (U8.extend_to_uns (Array.get (base + (Int64.of_int i)) container)))
   )
 
-(* external stdin_inner: uns *)
 external stdin_inner: unit -> t = "hm_basis_file_stdin_inner"
 
 let stdin =
   stdin_inner ()
 
-(* external stdout_inner: uns *)
 external stdout_inner: unit -> t = "hm_basis_file_stdout_inner"
 
 let stdout =
   stdout_inner ()
 
-(* external stderr_inner: uns *)
 external stderr_inner: unit -> t = "hm_basis_file_stderr_inner"
 
 let stderr =
@@ -303,21 +298,18 @@ let seek_hlt_base inner rel_off t =
       halt (Error.to_string error)
     end
 
-(* external seek_inner: int -> t >os-> int *)
 external seek_inner: sint -> t -> sint = "hm_basis_file_seek_inner"
 
 let seek = seek_base seek_inner
 
 let seek_hlt = seek_hlt_base seek_inner
 
-(* external seek_hd_inner: int -> t >os-> int *)
 external seek_hd_inner: sint -> t -> sint = "hm_basis_file_seek_hd_inner"
 
 let seek_hd = seek_base seek_hd_inner
 
 let seek_hd_hlt = seek_hlt_base seek_hd_inner
 
-(* external seek_tl_inner: int -> t >os-> int *)
 external seek_tl_inner: sint -> t -> sint = "hm_basis_file_seek_tl_inner"
 
 let seek_tl = seek_base seek_tl_inner
