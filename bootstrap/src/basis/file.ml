@@ -145,7 +145,6 @@ module Close = struct
     match complete t with
     | None -> ()
     | Some error -> halt (Error.to_string error)
-
 end
 
 let close t =
@@ -156,49 +155,77 @@ let close t =
 let close_hlt t =
   Close.(submit_hlt t |> complete_hlt)
 
-let read_n = 1024L
+module Read = struct
+  type file = t
+  type inner = uns
+  type t = {
+    inner: inner;
+    buffer: Bytes.Slice.t;
+  }
 
-(* external read_inner: !&bytes -> t >os-> int *)
-external read_inner: Stdlib.Bytes.t -> t -> sint = "hm_basis_file_read_inner"
+  let default_n = 1024L
 
-let read_impl buffer t =
-  let base = Bytes.(Cursor.index (Slice.base buffer)) in
-  let bytes = Stdlib.Bytes.create (Int64.to_int (Bytes.Slice.length buffer)) in
-  let value = read_inner bytes t in
-  match Sint.(value < kv 0L) with
-  | true -> Error (Uns.bits_of_sint Sint.(neg value))
-  | false -> begin
-      let range = (base =:< (base + (Uns.bits_of_sint value))) in
-      let container = Bytes.Slice.container buffer in
-      Range.iter range ~f:(fun i ->
-        Array.set_inplace i (U8.of_char (Stdlib.Bytes.get bytes (Int64.to_int (i - base))))
-          container
-      );
-      Ok (Bytes.Slice.init ~range (Bytes.Slice.container buffer))
-    end
+  external submit_inner: uns -> file -> (sint * inner) = "hm_basis_file_read_submit_inner"
 
-let read ?(n=read_n) t =
-  let bytes = Array.init (0L =:< n) ~f:(fun _ -> Byte.kv 0L) in
-  let buffer = Bytes.Slice.init bytes in
-  read_impl buffer t
+  let submit ?n ?buffer file =
+    let n, buffer = begin
+      match n with
+      | None -> begin
+          match buffer with
+          | None -> default_n, Bytes.Slice.init (Array.init (0L =:< default_n)
+            ~f:(fun _ -> Byte.kv 0L))
+          | Some buffer -> Bytes.Slice.length buffer, buffer
+        end
+      | Some n -> begin
+          match buffer with
+          | None -> n, Bytes.Slice.init (Array.init (0L =:< n) ~f:(fun _ -> Byte.kv 0L))
+          | Some buffer -> (Uns.min n (Bytes.Slice.length buffer)), buffer
+        end
+    end in
+    let value, inner = submit_inner n file in
+    let inner = register_user_data_finalizer inner in
+    match Sint.(value < kv 0L) with
+    | true -> Error (Error.of_neg_errno value)
+    | false -> Ok {inner; buffer}
 
-let read_hlt ?n t =
-  match read ?n t with
-  | Ok buffer -> buffer
-  | Error error -> let _ = close_hlt t in halt (Error.to_string error)
+  let submit_hlt ?n ?buffer file =
+    match submit ?n ?buffer file with
+    | Error error -> halt (Error.to_string error)
+    | Ok t -> t
 
-let read_into buffer t =
-  match read_impl buffer t with
-  | Ok _ -> None
-  | Error error -> Some error
+  external complete_inner: Stdlib.Bytes.t -> inner -> sint =
+    "hm_basis_file_read_complete_inner"
 
-let read_into_hlt buffer t =
-  match read_into buffer t with
-  | None -> ()
-  | Some error -> begin
-      let _ = close_hlt t in
-      halt (Error.to_string error)
-    end
+  let complete t =
+    let base = Bytes.(Cursor.index (Slice.base t.buffer)) in
+    let bytes = Stdlib.Bytes.create (Int64.to_int (Bytes.Slice.length t.buffer)) in
+    let value = complete_inner bytes t.inner in
+    match Sint.(value < kv 0L) with
+    | true -> Error (Uns.bits_of_sint Sint.(neg value))
+    | false -> begin
+        let range = (base =:< (base + (Uns.bits_of_sint value))) in
+        let container = Bytes.Slice.container t.buffer in
+        Range.iter range ~f:(fun i ->
+          Array.set_inplace i (U8.of_char (Stdlib.Bytes.get bytes (Int64.to_int (i - base))))
+            container
+        );
+        Ok (Bytes.Slice.init ~range (Bytes.Slice.container t.buffer))
+      end
+
+  let complete_hlt t =
+    match complete t with
+    | Ok buffer -> buffer
+    | Error error -> halt (Error.to_string error)
+
+end
+
+let read ?n ?buffer t =
+  match Read.submit ?n ?buffer t with
+  | Error error -> Error error
+  | Ok read -> Read.complete read
+
+let read_hlt ?n ?buffer t =
+  Read.(submit_hlt ?n ?buffer t |> complete_hlt)
 
 (* external write_inner: _?bytes -> t >os-> sint *)
 external write_inner: Stdlib.Bytes.t -> t -> sint = "hm_basis_file_write_inner"

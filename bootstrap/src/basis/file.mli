@@ -109,25 +109,49 @@ val close_hlt: t -> unit
 (** [close_hlt t] closes the external mutable Unix file descriptor associated with [t] and returns a
     [unit] or halts if it could not be closed. *)
 
-(* val read_into: !&Bytes.Slice.t -> t $-> Error.t option *)
-val read_into: Bytes.Slice.t -> t -> Error.t option
-(** [read_into buffer t] reads up to n bytes from [t] into the given mutable [buffer], where n is
-    the size of the buffer. Returns an error if bytes could not be read. *)
+module Read: sig
+  type file = t
+  type t
+  (* An internally immutable token backed by an external I/O read completion data structure. *)
 
-(* val read_into_hlt: !&Bytes.Slice.t -> t $-> unit *)
-val read_into_hlt: Bytes.Slice.t -> t -> unit
-(** [read_into_hlt buffer t] reads up to n bytes from [t] into the given mutable [buffer], where n
-    is the size of the buffer. Halts if bytes could not be read. *)
+  val submit: ?n:uns -> ?buffer:Bytes.Slice.t -> file -> (t, Error.t) result
+  (** [submit ?n ?buffer file] submits a read for given [file]. If given, [n] is the maximum read
+      size and 1024 otherwise. If given, [buffer] is where read bytes are stored and the maximum
+      read size is the minumum of [n] and the size of [buffer]. If [buffer] is not given, one will
+      be created with size [n]. This operation does not block. Returns a [t] to the read submission
+      or an [Error.t] if the read could not be submitted. *)
+
+  val submit_hlt: ?n:uns -> ?buffer:Bytes.Slice.t -> file -> t
+  (** [submit n buffer file] submits a read for given [file]. If given, [n] is the maximum read size
+      and 1024 otherwise. If given, [buffer] is where read bytes are stored and the maximum read
+      size is the minumum of [n] and the size of [buffer]. If [buffer] is not given, one will be
+      created with size [n]. This operation does not block. Returns a [t] to the read submission or
+      halts if the read could not be submitted. *)
+
+  val complete: t -> (Bytes.Slice.t, Error.t) result
+  (** [complete t] blocks until the given [t] is complete. Returns the buffer into which bytes were
+      read or an error if bytes could not be read. *)
+
+  val complete_hlt: t -> Bytes.Slice.t
+  (** [complete_hlt t] blocks until the given [t] is complete. Returns the buffer into which bytes
+      were read or halts if bytes could not be read. *)
+end
 
 (* val read: t $-> (/t Bytes.Slice.t, Error.t) result *)
-val read: ?n:uns -> t -> (Bytes.Slice.t, Error.t) result
-(** [read ~n t] reads up to [n] (default 1024) bytes from [t] into a new buffer and returns the
-    buffer or an error if bytes could not be read. *)
+val read: ?n:uns -> ?buffer:Bytes.Slice.t -> t -> (Bytes.Slice.t, Error.t) result
+(** [read ?n ?buffer t] reads from given [t]. If given, [n] is the maximum read size and 1024
+    otherwise. If given, [buffer] is where read bytes are stored and the maximum read size is the
+    minumum of [n] and the size of [buffer]. If [buffer] is not given, one will be created with size
+    [n]. Returns the [Bytes.Slice.t] into which bytes were read or an [Error.t] if bytes could not
+    be read. *)
 
 (* val read_hlt: t $-> /t Bytes.Slice.t *)
-val read_hlt: ?n:uns -> t -> Bytes.Slice.t
-(** [read_hlt n t] reads up to [n] (default 1024) bytes from [t] into a new buffer and returns the
-    buffer or halts if bytes could not be read. *)
+val read_hlt: ?n:uns -> ?buffer:Bytes.Slice.t -> t -> Bytes.Slice.t
+(** [read_hlt ?n ?buffer t] reads from given [t]. If given, [n] is the maximum read size and 1024
+    otherwise. If given, [buffer] is where read bytes are stored and the maximum read size is the
+    minumum of [n] and the size of [buffer]. If [buffer] is not given, one will be created with size
+    [n]. Returns the [Bytes.Slice.t] into which bytes were read or halts if bytes could not be read.
+*)
 
 (* val write: /_ Bytes.Slice.t -> t $-> Error.t option *)
 val write: Bytes.Slice.t -> t -> Error.t option
