@@ -1,5 +1,6 @@
 (tests
  (names
   test_file
-  test_file2)
+  test_file2
+  test_file_full_sq)
  (libraries Basis))

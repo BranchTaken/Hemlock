@@ -5,6 +5,7 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         ca-certificates \
         git \
+        liburing-dev \
         m4 \
         opam \
         python3 \
