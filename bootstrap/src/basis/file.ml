@@ -66,9 +66,6 @@ external stderr_inner: unit -> t = "hm_basis_file_stderr_inner"
 let stderr =
   stderr_inner ()
 
-(* external close_inner: t >os-> int *)
-external close_inner: t -> sint = "hm_basis_file_close_inner"
-
 external user_data_decref: uns -> unit = "hm_basis_file_user_data_decref"
 external complete_inner: uns -> sint = "hm_basis_file_complete_inner"
 
@@ -120,16 +117,44 @@ let of_path ?flag ?mode path =
 let of_path_hlt ?flag ?mode path =
   Open.(submit_hlt ?flag ?mode path |> complete_hlt)
 
+module Close = struct
+  type file = t
+  type t = uns
+
+  external submit_inner: file -> (sint * t) = "hm_basis_file_close_submit_inner"
+
+  let submit file =
+    let value, t = submit_inner file in
+    let t = register_user_data_finalizer t in
+    match Sint.(value < kv 0L) with
+    | true -> Error (Error.of_neg_errno value)
+    | false -> Ok t
+
+  let submit_hlt file =
+    match submit file with
+    | Error error -> halt (Error.to_string error)
+    | Ok t -> t
+
+  let complete t =
+    let value = complete_inner t in
+    match Sint.(value < kv 0L) with
+    | true -> Some (Error.of_neg_errno value)
+    | false -> None
+
+  let complete_hlt t =
+    match complete t with
+    | None -> ()
+    | Some error -> halt (Error.to_string error)
+
+end
+
 let close t =
-  let value = close_inner t in
-  match Sint.(value < kv 0L) with
-  | false -> None
-  | true -> Some (Error.of_value value)
+  match Close.submit t with
+  | Error error -> Some error
+  | Ok close -> Close.complete close
 
 let close_hlt t =
-  match close t with
-  | None -> ()
-  | Some error -> halt (Error.to_string error)
+  Close.(submit_hlt t |> complete_hlt)
 
 let read_n = 1024L
 
