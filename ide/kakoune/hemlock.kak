@@ -102,7 +102,7 @@ add-highlighter shared/hemlock/code/real_r regex \b([0-9][0-9_]*)(r(32|64)?)\b 1
 
 evaluate-commands %sh{
   keywords="and|also|as|conceal|effect|else|expose|external|fn|function|if|import|include|lazy|let"
-  keywords="${keywords}|match|mutability|of|open|or|rec|then|type|val|when|with"
+  keywords="${keywords}|match|mutability|of|open|or|rec|then|type|when|with"
 
   printf %s\\n "declare-option str-list hemlock_static_words ${keywords}" | tr '|' ' '
 

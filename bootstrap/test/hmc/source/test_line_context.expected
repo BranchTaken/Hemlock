@@ -1,197 +1,181 @@
 ---
-source=``let x = 42``
-first={atoken=<Tok_let>; source=[1:0..1:3)}
-last={atoken=<Tok_let>; source=[1:0..1:3)}
-lookahead=Some (1:10)
+source=``x = 42``
+first={atoken=<Tok_uident=Constant "x">; source=[1:0..1:1)}
+last={atoken=<Tok_uident=Constant "x">; source=[1:0..1:1)}
+lookahead=Some (1:6)
 ctokens=[
-    {atoken=<Tok_let>; source=[1:0..1:3)}
-    {atoken=<Tok_whitespace>; source=[1:3..1:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[1:4..1:5)}
-    {atoken=<Tok_whitespace>; source=[1:5..1:6)}
-    {atoken=<Tok_eq>; source=[1:6..1:7)}
-    {atoken=<Tok_whitespace>; source=[1:7..1:8)}
-    {atoken=<Tok_u64=Constant 42>; source=[1:8..1:10)}
+    (0, {atoken=<Tok_uident=Constant "x">; source=[1:0..1:1)})
+    (1, {atoken=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atoken=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atoken=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atoken=<Tok_u64=Constant 42>; source=[1:4..1:6)})
   ]
 context_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 context_no_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 ---
-source=``let x = 42``
-first={atoken=<Tok_uident=Constant "x">; source=[1:4..1:5)}
-last={atoken=<Tok_uident=Constant "x">; source=[1:4..1:5)}
-lookahead=Some (1:10)
+source=``x = 42``
+first={atoken=<Tok_whitespace>; source=[1:1..1:2)}
+last={atoken=<Tok_whitespace>; source=[1:1..1:2)}
+lookahead=Some (1:6)
 ctokens=[
-    {atoken=<Tok_let>; source=[1:0..1:3)}
-    {atoken=<Tok_whitespace>; source=[1:3..1:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[1:4..1:5)}
-    {atoken=<Tok_whitespace>; source=[1:5..1:6)}
-    {atoken=<Tok_eq>; source=[1:6..1:7)}
-    {atoken=<Tok_whitespace>; source=[1:7..1:8)}
-    {atoken=<Tok_u64=Constant 42>; source=[1:8..1:10)}
+    (0, {atoken=<Tok_uident=Constant "x">; source=[1:0..1:1)})
+    (1, {atoken=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atoken=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atoken=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atoken=<Tok_u64=Constant 42>; source=[1:4..1:6)})
   ]
 context_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 context_no_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 ---
-source=``let x = 42``
-first={atoken=<Tok_whitespace>; source=[1:3..1:4)}
-last={atoken=<Tok_uident=Constant "x">; source=[1:4..1:5)}
-lookahead=Some (1:10)
+source=``x = 42``
+first={atoken=<Tok_whitespace>; source=[1:1..1:2)}
+last={atoken=<Tok_eq>; source=[1:2..1:3)}
+lookahead=Some (1:6)
 ctokens=[
-    {atoken=<Tok_let>; source=[1:0..1:3)}
-    {atoken=<Tok_whitespace>; source=[1:3..1:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[1:4..1:5)}
-    {atoken=<Tok_whitespace>; source=[1:5..1:6)}
-    {atoken=<Tok_eq>; source=[1:6..1:7)}
-    {atoken=<Tok_whitespace>; source=[1:7..1:8)}
-    {atoken=<Tok_u64=Constant 42>; source=[1:8..1:10)}
+    (0, {atoken=<Tok_uident=Constant "x">; source=[1:0..1:1)})
+    (1, {atoken=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atoken=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atoken=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atoken=<Tok_u64=Constant 42>; source=[1:4..1:6)})
   ]
 context_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 context_no_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 ---
-source=``let x = 42``
-first={atoken=<Tok_u64=Constant 42>; source=[1:8..1:10)}
-last={atoken=<Tok_u64=Constant 42>; source=[1:8..1:10)}
+source=``x = 42``
+first={atoken=<Tok_u64=Constant 42>; source=[1:4..1:6)}
+last={atoken=<Tok_u64=Constant 42>; source=[1:4..1:6)}
 lookahead=None
 ctokens=[
-    {atoken=<Tok_let>; source=[1:0..1:3)}
-    {atoken=<Tok_whitespace>; source=[1:3..1:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[1:4..1:5)}
-    {atoken=<Tok_whitespace>; source=[1:5..1:6)}
-    {atoken=<Tok_eq>; source=[1:6..1:7)}
-    {atoken=<Tok_whitespace>; source=[1:7..1:8)}
-    {atoken=<Tok_u64=Constant 42>; source=[1:8..1:10)}
+    (0, {atoken=<Tok_uident=Constant "x">; source=[1:0..1:1)})
+    (1, {atoken=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atoken=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atoken=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atoken=<Tok_u64=Constant 42>; source=[1:4..1:6)})
   ]
 context_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 context_no_lookahead=[
-    [1:0..1:10): "let x = 42"
+    [1:0..1:6): "x = 42"
   ]
 ---
-source=``[:"Foo.hm"]let x = 42``
-first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:1:4..Foo.hm:1:5)}
-last={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:1:4..Foo.hm:1:5)}
-lookahead=Some (Foo.hm:1:10)
+source=``[:"Foo.hm"]x = 42``
+first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:1:0..Foo.hm:1:1)}
+last={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:1:0..Foo.hm:1:1)}
+lookahead=Some (Foo.hm:1:6)
 ctokens=[
-    {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>; source=[1:0..1:11)}
-    {atoken=<Tok_let>; source=[Foo.hm:1:0..Foo.hm:1:3)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:1:3..Foo.hm:1:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:1:4..Foo.hm:1:5)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:1:5..Foo.hm:1:6)}
-    {atoken=<Tok_eq>; source=[Foo.hm:1:6..Foo.hm:1:7)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:1:7..Foo.hm:1:8)}
-    {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:1:8..Foo.hm:1:10)}
+    (0, {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:1:0..Foo.hm:1:1)})
+    (2, {atoken=<Tok_whitespace>; source=[Foo.hm:1:1..Foo.hm:1:2)})
+    (3, {atoken=<Tok_eq>; source=[Foo.hm:1:2..Foo.hm:1:3)})
+    (4, {atoken=<Tok_whitespace>; source=[Foo.hm:1:3..Foo.hm:1:4)})
+    (5, {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:1:4..Foo.hm:1:6)})
   ]
 context_lookahead=[
     [1:0..1:11): "[:\"Foo.hm\"]"
-    [Foo.hm:1:0..Foo.hm:1:10): "let x = 42"
+    [Foo.hm:1:0..Foo.hm:1:6): "x = 42"
   ]
 context_no_lookahead=[
     [1:0..1:11): "[:\"Foo.hm\"]"
-    [Foo.hm:1:0..Foo.hm:1:5): "let x"
-    [1:16..1:21): " = 42"
+    [Foo.hm:1:0..Foo.hm:1:1): "x"
+    [1:12..1:17): " = 42"
   ]
 ---
 source=``[:"Foo.hm"]\
-let x =
+x =
     42``
-first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:4..Foo.hm:2:5)}
-last={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:4..Foo.hm:2:5)}
+first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:0..Foo.hm:2:1)}
+last={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:0..Foo.hm:2:1)}
 lookahead=Some (Foo.hm:3:4)
 ctokens=[
-    {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>; source=[1:0..1:11)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)}
-    {atoken=<Tok_let>; source=[Foo.hm:2:0..Foo.hm:2:3)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:2:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:4..Foo.hm:2:5)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:5..Foo.hm:2:6)}
-    {atoken=<Tok_eq>; source=[Foo.hm:2:6..Foo.hm:2:7)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:7..Foo.hm:3:0)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)}
-    {atoken=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)}
-    {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:3:4..Foo.hm:3:6)}
-    {atoken=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)}
+    (0, {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atoken=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)})
+    (2, {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:0..Foo.hm:2:1)})
+    (3, {atoken=<Tok_whitespace>; source=[Foo.hm:2:1..Foo.hm:2:2)})
+    (4, {atoken=<Tok_eq>; source=[Foo.hm:2:2..Foo.hm:2:3)})
+    (5, {atoken=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:3:0)})
+    (6, {atoken=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)})
+    (7, {atoken=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)})
+    (8, {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:3:4..Foo.hm:3:6)})
+    (9, {atoken=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)})
   ]
 context_lookahead=[
-    [Foo.hm:2:0..Foo.hm:2:7): "let x ="
+    [Foo.hm:2:0..Foo.hm:2:3): "x ="
   ]
 context_no_lookahead=[
-    [Foo.hm:2:0..Foo.hm:2:5): "let x"
-    [2:5..2:7): " ="
+    [Foo.hm:2:0..Foo.hm:2:1): "x"
+    [2:1..2:3): " ="
   ]
 ---
 source=``[:"Foo.hm"]\
-let x =
+x =
     42``
-first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:4..Foo.hm:2:5)}
-last={atoken=<Tok_whitespace>; source=[Foo.hm:2:7..Foo.hm:3:0)}
+first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:0..Foo.hm:2:1)}
+last={atoken=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:3:0)}
 lookahead=Some (Foo.hm:3:6)
 ctokens=[
-    {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>; source=[1:0..1:11)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)}
-    {atoken=<Tok_let>; source=[Foo.hm:2:0..Foo.hm:2:3)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:2:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:4..Foo.hm:2:5)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:5..Foo.hm:2:6)}
-    {atoken=<Tok_eq>; source=[Foo.hm:2:6..Foo.hm:2:7)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:7..Foo.hm:3:0)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)}
-    {atoken=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)}
-    {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:3:4..Foo.hm:3:6)}
-    {atoken=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)}
+    (0, {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atoken=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)})
+    (2, {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:0..Foo.hm:2:1)})
+    (3, {atoken=<Tok_whitespace>; source=[Foo.hm:2:1..Foo.hm:2:2)})
+    (4, {atoken=<Tok_eq>; source=[Foo.hm:2:2..Foo.hm:2:3)})
+    (5, {atoken=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:3:0)})
+    (6, {atoken=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)})
+    (7, {atoken=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)})
+    (8, {atoken=<Tok_u64=Constant 42>; source=[Foo.hm:3:4..Foo.hm:3:6)})
+    (9, {atoken=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)})
   ]
 context_lookahead=[
-    [Foo.hm:2:0..Foo.hm:3:6): "let x =\n    42"
+    [Foo.hm:2:0..Foo.hm:3:6): "x =\n    42"
   ]
 context_no_lookahead=[
-    [Foo.hm:2:0..Foo.hm:3:0): "let x =\n"
+    [Foo.hm:2:0..Foo.hm:3:0): "x =\n"
     [3:0..3:6): "    42"
   ]
 ---
 source=``[:"Foo.hm"]\
-let x =[:"Bar.hm"]
+x =[:"Bar.hm"]
     42 + 13``
-first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:4..Foo.hm:2:5)}
+first={atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:0..Foo.hm:2:1)}
 last={atoken=<Tok_u64=Constant 42>; source=[Bar.hm:2:4..Bar.hm:2:6)}
 lookahead=Some (Bar.hm:2:11)
 ctokens=[
-    {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; col=None})>; source=[1:0..1:11)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)}
-    {atoken=<Tok_let>; source=[Foo.hm:2:0..Foo.hm:2:3)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:2:4)}
-    {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:4..Foo.hm:2:5)}
-    {atoken=<Tok_whitespace>; source=[Foo.hm:2:5..Foo.hm:2:6)}
-    {atoken=<Tok_eq>; source=[Foo.hm:2:6..Foo.hm:2:7)}
-    {atoken=<Tok_source_directive=Constant {path=Some ("Bar.hm"); line=None; col=None})>; source=[2:7..2:18)}
-    {atoken=<Tok_whitespace>; source=[Bar.hm:1:0..Bar.hm:2:0)}
-    {atoken=<Tok_whitespace>; source=[Bar.hm:2:0..Bar.hm:2:4)}
-    {atoken=<Tok_indent>; source=[Bar.hm:2:4..Bar.hm:2:4)}
-    {atoken=<Tok_u64=Constant 42>; source=[Bar.hm:2:4..Bar.hm:2:6)}
-    {atoken=<Tok_whitespace>; source=[Bar.hm:2:6..Bar.hm:2:7)}
-    {atoken=<Tok_plus_op="+">; source=[Bar.hm:2:7..Bar.hm:2:8)}
-    {atoken=<Tok_whitespace>; source=[Bar.hm:2:8..Bar.hm:2:9)}
-    {atoken=<Tok_u64=Constant 13>; source=[Bar.hm:2:9..Bar.hm:2:11)}
-    {atoken=<Tok_dedent>; source=[Bar.hm:2:11..Bar.hm:2:11)}
+    (0, {atoken=<Tok_source_directive=Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atoken=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)})
+    (2, {atoken=<Tok_uident=Constant "x">; source=[Foo.hm:2:0..Foo.hm:2:1)})
+    (3, {atoken=<Tok_whitespace>; source=[Foo.hm:2:1..Foo.hm:2:2)})
+    (4, {atoken=<Tok_eq>; source=[Foo.hm:2:2..Foo.hm:2:3)})
+    (5, {atoken=<Tok_source_directive=Constant {path=Some ("Bar.hm"); line=None; io=None})>; source=[2:3..2:14)})
+    (6, {atoken=<Tok_whitespace>; source=[Bar.hm:1:0..Bar.hm:2:0)})
+    (7, {atoken=<Tok_whitespace>; source=[Bar.hm:2:0..Bar.hm:2:4)})
+    (8, {atoken=<Tok_indent>; source=[Bar.hm:2:4..Bar.hm:2:4)})
+    (9, {atoken=<Tok_u64=Constant 42>; source=[Bar.hm:2:4..Bar.hm:2:6)})
+    (10, {atoken=<Tok_whitespace>; source=[Bar.hm:2:6..Bar.hm:2:7)})
+    (11, {atoken=<Tok_plus_op="+">; source=[Bar.hm:2:7..Bar.hm:2:8)})
+    (12, {atoken=<Tok_whitespace>; source=[Bar.hm:2:8..Bar.hm:2:9)})
+    (13, {atoken=<Tok_u64=Constant 13>; source=[Bar.hm:2:9..Bar.hm:2:11)})
+    (14, {atoken=<Tok_dedent>; source=[Bar.hm:2:11..Bar.hm:2:11)})
   ]
 context_lookahead=[
-    [Foo.hm:2:0..Foo.hm:2:7): "let x ="
-    [2:7..2:18): "[:\"Bar.hm\"]"
+    [Foo.hm:2:0..Foo.hm:2:3): "x ="
+    [2:3..2:14): "[:\"Bar.hm\"]"
     [Bar.hm:1:0..Bar.hm:2:11): "\n    42 + 13"
   ]
 context_no_lookahead=[
-    [Foo.hm:2:0..Foo.hm:2:7): "let x ="
-    [2:7..2:18): "[:\"Bar.hm\"]"
+    [Foo.hm:2:0..Foo.hm:2:3): "x ="
+    [2:3..2:14): "[:\"Bar.hm\"]"
     [Bar.hm:1:0..Bar.hm:2:6): "\n    42"
     [3:6..3:11): " + 13"
   ]

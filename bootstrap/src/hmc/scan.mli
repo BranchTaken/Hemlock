@@ -59,10 +59,14 @@ module AbstractToken : sig
 
     include FormattableIntf.SPoly with type 'a t := 'a t
   end
+  type indent_omit = {
+    indent: uns;
+    omit: uns;
+  }
   type source_directive = {
     path: string option;
     line: uns option;
-    col: uns option;
+    io: indent_omit option;
   }
   type t =
     (* Keywords. *)
@@ -91,7 +95,6 @@ module AbstractToken : sig
     | Tok_then
     | Tok_true
     | Tok_type
-    | Tok_val
     | Tok_when
     | Tok_with
 
@@ -142,8 +145,6 @@ module AbstractToken : sig
     | Tok_rcapture
     | Tok_larray
     | Tok_rarray
-    | Tok_lmodule
-    | Tok_rmodule
     | Tok_bslash
     | Tok_tick
     | Tok_caret

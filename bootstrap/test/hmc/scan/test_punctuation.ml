@@ -11,10 +11,10 @@ let test () =
   scan_str "< <= = <> >= >";
   scan_str ")|)|(|(";
   scan_str "]|]|[|[";
-  scan_str "}|}|{|{";
+  scan_str "}{";
   scan_str "() (||)";
   scan_str "[] [||]";
-  scan_str "{} {||}";
+  scan_str "{}";
   scan_str {|\^&\&_&\|};
   scan_str {|!&!!\|};
   scan_str "- -> ->> ->";

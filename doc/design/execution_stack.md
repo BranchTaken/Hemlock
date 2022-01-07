@@ -4,17 +4,17 @@ Individual Hemlock actor stacks are native, C-like stacks. It is generally easy 
 layout of such a stack given an input program.
 
 ```hemlock
-let bar () =
+bar () =
   ...some work...
   Stdout.print "Representing the stack right here is easy!"
   ...some work...
 
-let foo () =
+foo () =
   ...some work...
   bar ()
   ...some work...
 
-let main argv =
+main argv =
   ...some work...
   foo ()
   ...some work...
@@ -145,9 +145,9 @@ interrupted.
 
 To significantly reduce the amount of metadata needed to facilitate runtime operation, the runtime
 only allows stack suspension when the final stack frame is in a well-formed state. For executor time
-slice pauses, this may happen when the actor runs out of reductions upon jumping backward (looping) or returning
-from a function call. For garbage collection pauses, this may happen whenever the actor allocates
-memory.
+slice pauses, this may happen when the actor runs out of reductions upon jumping backward (looping)
+or returning from a function call. For garbage collection pauses, this may happen whenever the actor
+allocates memory.
 
 Note that runtime debuggers necessarily cause arbitrary interruptions of execution, so still require
 generation of the full set of possible metadata for introspection. However, omitting debug metadata
@@ -162,14 +162,16 @@ be made as fast as possible.
 Individual stack frames have the following metadata.
 
 ```hemlock
-val FrameMetadata:
-    type t: t =
+FrameMetadata: {
+    type t: t = {
         frame_size: uns
 
         gc_references_bitmap: Bitmap.t uns # 1 bit per word in frame
 
         ws_qg_offset: uns
         ws_trampoline_pc: PC.t
+      }
+  }
 ```
 
 Hemlock stack frame introspection uses a frame's (primary) PC to look up frame metadata. If the
@@ -182,14 +184,16 @@ may also come from a common code block and may require yet another secondary PC 
 sequence of primary PC and secondary PCs is sufficient to identify every unique stack frame layout.
 
 ```hemlock
-val PCMetadataTable:
-  type t: t = map PC.t node
-    also node: node =
-      | frame_metadata of FrameMetadata.t
-      | secondary_lookup of secondary_lookup
-    also secondary_lookup: secondary_loookup =
-      pc_offset: uns
-      table: t
+PCMetadataTable: {
+    type t: t = map PC.t node
+      also node: node =
+      | Frame_metadata of FrameMetadata.t
+      | Secondary_lookup of secondary_lookup
+      also secondary_lookup: secondary_loookup = {
+        pc_offset: uns
+        table: t
+      }
+  }
 ```
 
 ### Stack traversal
@@ -201,7 +205,7 @@ storing a frame pointer on the stack. Once the size of a frame is known, determi
 the PC in the next-older frame is a simple calculation.
 
 ```hemlock
-let older_pc_address = current_pc_address + (word_size * current_frame_size)
+older_pc_address = current_pc_address + (word_size * current_frame_size)
 ```
 #### C frames
 
@@ -227,11 +231,11 @@ compaction](memory.md#major-heap). The PC metadata table includes a bitmap of th
 that denotes each address as either a reference (1) or a non-reference (0).
 
 ```hemlock
-let gc_frame address frame_metadata gc_state =
-    let rec inner address bitmap gc_state =
+gc_frame address frame_metadata gc_state =
+    rec inner address bitmap gc_state =
       match Bitmap.(bitmap = 0) with
-      | true -> gc_state
-      | false ->
+        | true -> gc_state
+        | false ->
           let n_zeros = Bitmap.ctz bitmap
           let address' = address + (word_size * n_zeros)
           let bitmap' = Bitmap.usr (n_zeros + 1) bitmap
@@ -239,10 +243,10 @@ let gc_frame address frame_metadata gc_state =
             |> inner address' bitmap'
     inner address frame_metadata.gc_references_bitmap gc_state
 
-let rec gc_stack pc_address gc_state =
+rec gc_stack pc_address gc_state =
     match pc_address >= gc_state.stack_address with
-    | true -> gc_state
-    | false ->
+      | true -> gc_state
+      | false ->
         let frame_metadata = FrameMetadata.lookup pc_address.value
         gc_frame pc_address frame_metadata.gc_references_bitmap gc_state
           |> gc_stack (pc_address + (word_size * frame_metadata.frame_size))
@@ -257,22 +261,22 @@ the stack frame's metadata. An offset value of `0` from the PC address would not
 reserved to indicate that no RC can be stolen from the stack frame.
 
 ```hemlock
-let ws_frame pc_address frame_metadata ws_state =
+ws_frame pc_address frame_metadata ws_state =
     match frame_metadata.qg_offset = 0 with
-    | true -> ws_state # No work stealing opportunities in this frame
-    | false ->
-        qg_address = pc_address + (word_size * frame_metadata.qg_offset)
+      | true -> ws_state # No work stealing opportunities in this frame
+      | false ->
+        let qg_address = pc_address + (word_size * frame_metadata.qg_offset)
         match qg_address.value = 0 with
-        | true -> WorkStealingState.set_qg qg_address ws_state
-        | false ->
+          | true -> WorkStealingState.set_qg qg_address ws_state
+          | false ->
             match qg_address.value > ws_state.stealable_qg with
-            | true -> ws_state # This RC hasn't survived long enough on the stack for work stealing
-            | false -> WorkStealing.steal pc_address frame_metadata.ws_trampoline_pc ws_state
+              | true -> ws_state # RC hasn't survived long enough on the stack for work stealing
+              | false -> WorkStealing.steal pc_address frame_metadata.ws_trampoline_pc ws_state
 
-let rec ws_stack pc_address ws_state =
+rec ws_stack pc_address ws_state =
     match pc_address >= ws_state.stack_address with
-    | true -> ws_state
-    | false ->
+      | true -> ws_state
+      | false ->
         let frame_metadata = FrameMetadata.lookup pc_address.value
         ws_frame pc_address frame_metadata ws_state
           |> ws_stack pc_address + (word_size * frame_metadata.frame_size)

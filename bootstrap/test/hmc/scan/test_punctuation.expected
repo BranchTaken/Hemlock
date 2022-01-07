@@ -53,13 +53,10 @@
   [1:4..1:6) : <Tok_larray>
   [1:6..1:7) : <Tok_lbrack>
   [1:7..1:7) : <Tok_end_of_input>
-``}|}|{|{``
+``}{``
   [1:0..1:1) : <Tok_rcurly>
-  [1:1..1:3) : <Tok_rmodule>
-  [1:3..1:4) : <Tok_bar>
-  [1:4..1:6) : <Tok_lmodule>
-  [1:6..1:7) : <Tok_lcurly>
-  [1:7..1:7) : <Tok_end_of_input>
+  [1:1..1:2) : <Tok_lcurly>
+  [1:2..1:2) : <Tok_end_of_input>
 ``() (||)``
   [1:0..1:1) : <Tok_lparen>
   [1:1..1:2) : <Tok_rparen>
@@ -74,13 +71,10 @@
   [1:3..1:5) : <Tok_larray>
   [1:5..1:7) : <Tok_rarray>
   [1:7..1:7) : <Tok_end_of_input>
-``{} {||}``
+``{}``
   [1:0..1:1) : <Tok_lcurly>
   [1:1..1:2) : <Tok_rcurly>
-  [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:5) : <Tok_lmodule>
-  [1:5..1:7) : <Tok_rmodule>
-  [1:7..1:7) : <Tok_end_of_input>
+  [1:2..1:2) : <Tok_end_of_input>
 ``\^&\&_&\``
   [1:0..1:1) : <Tok_bslash>
   [1:1..1:2) : <Tok_caret>

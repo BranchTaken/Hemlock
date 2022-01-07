@@ -43,13 +43,21 @@ let contextualize source first last =
       ~past:(Source.Slice.past (Scan.ConcreteToken.source last_ctoken)) in
   let context_lookahead = Source.Slice.line_context ?lookahead source_slice in
   let context_no_lookahead = Source.Slice.line_context source_slice in
+  let pp_i_tok (i, tok) formatter = begin
+    formatter
+    |> Fmt.fmt "("
+    |> Uns.pp i
+    |> Fmt.fmt ", "
+    |> Scan.ConcreteToken.pp tok
+    |> Fmt.fmt ")"
+  end in
   File.Fmt.stdout
   |> Fmt.fmt "---\nsource=" |> String.fmt ~alt:true ~pretty:true source
   |> Fmt.fmt "\nfirst=" |> Scan.ConcreteToken.pp (List.nth first ctokens)
   |> Fmt.fmt "\nlast=" |> Scan.ConcreteToken.pp (List.nth last ctokens)
   |> Fmt.fmt "\nlookahead=" |> (Option.pp Source.Cursor.pp) lookahead
   |> Fmt.fmt "\nctokens="
-  |> (List.fmt ~alt:true Scan.ConcreteToken.pp) ctokens
+  |> (List.fmt ~alt:true pp_i_tok) (List.mapi ctokens ~f:(fun i tok -> (i, tok)))
   |> Fmt.fmt "\ncontext_lookahead="
   |> (List.fmt ~alt:true (fun slice formatter ->
     formatter
@@ -68,19 +76,34 @@ let contextualize source first last =
   |> ignore
 
 let test () =
-  contextualize {|let x = 42|} 0L 0L;
-  contextualize {|let x = 42|} 2L 2L;
-  contextualize {|let x = 42|} 1L 2L;
-  contextualize {|let x = 42|} 6L 6L;
-  contextualize {|[:"Foo.hm"]let x = 42|} 3L 3L;
+  contextualize {|x = 42|} 0L 0L;
+  contextualize {|x = 42|} 1L 1L;
+  contextualize {|x = 42|} 1L 2L;
+  contextualize {|x = 42|} 4L 4L;
+  contextualize {|[:"Foo.hm"]x = 42|} 1L 1L;
   contextualize {|[:"Foo.hm"]\
-let x =
-    42|} 4L 4L;
+x =
+    42|} 2L 2L;
   contextualize {|[:"Foo.hm"]\
-let x =
-    42|} 4L 7L;
+x =
+    42|} 2L 5L;
   contextualize {|[:"Foo.hm"]\
-let x =[:"Bar.hm"]
-    42 + 13|} 4L 11L
+x =[:"Bar.hm"]
+    42 + 13|} 2L 9L(*XXX Enable;
+
+  contextualize {|accept parser =
+    let node, parser' = [...]
+    let () = (%accept_hook)
+    node, parser'|} 0L 41L;
+  contextualize {|%accept_hook = %(
+    File.Fmt.stdout |> `XXX`%(^Node.pp^)=(^node^)\n`XXX` |> ignore
+  )%|} 0L 27L;
+  contextualize {|[:"Pgen.hm"]accept parser =
+    let node, parser' = [...]
+    let () = ([:"Foo.hmy":1:0+16](
+    File.Fmt.stdout |> `XXX`%(^Node.pp^)=(^node^)\n`XXX` |> ignore
+  )[:"Pgen.hm":3:4+26])
+    node, parser'|} 0L 63L
+*)
 
 let _ = test ()

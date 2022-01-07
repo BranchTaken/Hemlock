@@ -85,7 +85,7 @@ T = {
       }
 
     cmp cmp_elm t0 t1 =
-        rec f cursor0 cursor1 =
+        let rec f cursor0 cursor1 =
             match Cursor.(cursor0 = (tl t0)), Cursor.(cursor1 = (tl t1)) with
               | true, true -> Cmp.Eq
               | true, false -> Cmp.Lt
@@ -124,14 +124,14 @@ Seq = {
             match T.length t with
               | 0 -> [||]
               | l ->
-                rec f t i builder =
+                let rec f t i builder =
                     match i = l with
                       | true -> Builder.build builder
                       | false ->
-                        elm, t' = T.next t
+                        let elm, t' = T.next t
                         Builder.lput elm builder
                         f t' (succ i) builder
-                elm, t' = T.next t
+                let elm, t' = T.next t
                 f t' 1 (Builder.alloc_lput l elm)
       }
 
@@ -143,14 +143,14 @@ Seq = {
             match T.length t with
               | 0 -> [||]
               | l ->
-                rec f t i builder =
+                let rec f t i builder =
                     match i = 0 with
                       | true -> Builder.build builder
                       | false ->
-                        elm, t' = T.next t
+                        let elm, t' = T.next t
                         Builder.rput elm builder
                         f t' (pred i) builder
-                elm, t' = T.next t
+                let elm, t' = T.next t
                 f t' (pred l) (Builder.alloc_rput l elm)
       }
 
@@ -162,14 +162,14 @@ Seq = {
             match T.length t with
               | 0 -> [||]
               | l ->
-                rec f t i builder =
+                let rec f t i builder =
                     match i = l with
                       | true -> Builder.build builder
                       | false ->
-                        elm, t' = T.next t
+                        let elm, t' = T.next t
                         Builder.lput elm builder
                         f t' (succ i) builder
-                elm, t' = T.next t
+                let elm, t' = T.next t
                 f t' 1 (Builder.alloc_lput l)
       }
 
@@ -181,29 +181,30 @@ Seq = {
             match T.length t with
               | 0 -> [||]
               | l ->
-                rec f t i builder =
+                let rec f t i builder =
                     match i = 0 with
                       | true -> Builder.build builder
                       | false ->
-                        elm, t' = T.next t
+                        let elm, t' = T.next t
                         Builder.rput elm builder
                         f t' (pred i) builder
-                elm, t' = T.next t
+                let elm, t' = T.next t
                 f t' (pred l) (Builder.alloc_rput l elm)
       }
 
     (* Special-purpose, for fold[i]_map . *)
-    makePoly2 (T :
+    makePoly2 (T : {
         type t 'a ^arr >e: t a arr e
         type accum: accum
         type b: b
         length 'a ^arr: t a arr _ -> uns
         next 'a ^arr >e: t a arr e -> accum >e-> (b, t a arr e, accum)
-      ) :
+      }) : {
         type t 'a ^arr >e: t a arr e
         type accum: accum
         type b: b
         to_accum_array 'a ^arr ^outer >e: t a arr e -> init:accum >e-> (accum, ^&outer b)
+      }
       with type t 'a ^arr >e: t a arr e := T.t a arr e
       with type accum: accum := T.accum
       with type b: b := T.b
@@ -216,31 +217,32 @@ Seq = {
         type b: b = T.b
         to_accum_array t ~init =
             match T.length t with
-            | 0 -> init, [||]
-            | l ->
-                rec f t i accum builder =
+              | 0 -> init, [||]
+              | l ->
+                let rec f t i accum builder =
                     match i = l with
-                    | true -> accum, (Builder.build builder)
-                    | false ->
-                        elm, t', accum' = T.next t accum
+                      | true -> accum, (Builder.build builder)
+                      | false ->
+                        let elm, t', accum' = T.next t accum
                         Builder.lput elm builder
                         f t' (succ i) accum' builder
-                elm, t', accum = T.next t init
+                let elm, t', accum = T.next t init
                 f t' 1 accum (Builder.alloc_lput l elm)
       }
 
     (* Special-purpose, for fold[i]2_map . *)
-    makePoly3 (T :
+    makePoly3 (T : {
         type 'a 'b ^m ^n >e: t a b m n e
         type accum: accum
         type c: c
         length 'a 'b ^m ^n: t a b m n _ -> uns
         next 'a 'b ^m ^n >e: t a b m n e -> accum >e-> (c, t a b m n e, accum)
-      ) :
+      }) : {
         type 'a 'b ^m ^n >e: t a b m n e := T.t a b m n e
         type accum: accum
         type c: c
         to_accum_array 'a 'b ^m ^n ^outer >e: t a b m n e -> init:accum >e-> (accum, ^&outer c)
+      }
       with type t 'a 'b ^m ^n >e: t a b m n e := T.t a b m n e
       with type accum: accum := T.accum
       with type b: b := T.b
@@ -252,14 +254,14 @@ Seq = {
             match T.length t with
               | 0 -> init, [||]
               | l ->
-                rec f t i accum builder =
+                let rec f t i accum builder =
                     match i = l with
                       | true -> accum, (Builder.build builder)
                       | false ->
-                        elm, t', accum' = T.next t accum
+                        let elm, t', accum' = T.next t accum
                         Builder.lput elm builder
                         f t' (succ i) accum' builder
-                elm, t' accum = T.next t init
+                let elm, t' accum = T.next t init
                 f t' 1 accum (Builder.alloc_lput l elm)
       }
   }
@@ -283,8 +285,8 @@ ArrayInit = {
 
         (* next 'a >e: t e >e-> (a, t e) *)
         next t =
-            elm = t.f t.index
-            t' = {t with index=(succ t.index)}
+            let elm = t.f t.index
+            let t' = {t with index=(succ t.index)}
             elm, t'
       }
     include T
@@ -312,7 +314,7 @@ ArrayOfListCommon = {
         match t.list with
           | [] -> not_reached ()
           | elm :: list' ->
-            t' = {t with list=list'}
+            let t' = {t with list=list'}
             elm, t'
   }
 
@@ -327,13 +329,13 @@ ArrayOfListRev = {
   }
 
 of_list ?length list =
-    length = match length with
+    let length = match length with
       | None -> List.length list
       | Some length -> length
     ArrayOfList.to_array (ArrayOfList.init length list)
 
 of_list_rev ?length list =
-    length = match length with
+    let length = match length with
       | None -> List.length list
       | Some length -> length
     ArrayOfListRev.to_array (ArrayOfListRev.init length list)
@@ -350,7 +352,7 @@ pare range t =
     init range ~f:(fn i -> get i t)
 
 set i elm t =
-    t' = copy t
+    let t' = copy t
     set_inplace i elm t'
     t'
 
@@ -372,14 +374,14 @@ ArrayJoin = {
 
         (* next 'a ^sep ^arrays: t a sep arrays -> (a, t a sep arrays) *)
         next t =
-            rec f t =
+            let rec f t =
                 match t.in_sep with
                   | false ->
-                    array = List.hd t.arrays
+                    let array = List.hd t.arrays
                     match t.index < length array with
                       | true ->
-                        elm = get t.index array
-                        t' = {t with index=succ t.index}
+                        let elm = get t.index array
+                        let t' = {t with index=succ t.index}
                         elm, t'
                       | false -> f {t with
                         arrays=List.tl t.arrays
@@ -389,8 +391,8 @@ ArrayJoin = {
                   | true ->
                     match t.index < length t.sep with
                       | true ->
-                        elm = get t.index t.sep
-                        t' = {t with index=succ t.index}
+                        let elm = get t.index t.sep
+                        let t' = {t with index=succ t.index}
                         elm, t'
                       | false -> f {t with in_sep=false; index=0}
             f t
@@ -404,77 +406,80 @@ ArrayJoin = {
   }
 
 join ?sep tlist =
-    sep, sep_len = match sep with
+    let sep, sep_len = match sep with
       | None -> [||], 0
       | Some sep -> sep, length sep
-    _, tlist_length = List.fold tlist ~init:(0, 0)
+    let _, tlist_length = List.fold tlist ~init:(0, 0)
       ~f:(fn (i, accum) list ->
-        i' = succ i
-        sep_len' = match i with
+        let i' = succ i
+        let sep_len' = match i with
           | 0 -> 0
           | _ -> sep_len
-        accum' = accum + sep_len' + (length list)
+        let accum' = accum + sep_len' + (length list)
         i', accum'
       )
     ArrayJoin.(to_array (init tlist_length sep tlist))
 
 concat t0 t1 =
-    length_t0 = length t0
-    length_t1 = length t1
-    length = length_t0 + length_t1
+    let length_t0 = length t0
+    let length_t1 = length t1
+    let length = length_t0 + length_t1
     init (0 .. length) ~f:(fn i ->
-        if i < length_t0 then get i t0
-        else get (i - length_t0) t1
+        if i < length_t0
+          then get i t0
+          else get (i - length_t0) t1
       )
 
 append elm t =
-    tlen = length t
+    let tlen = length t
     init (0 .. (succ tlen)) ~f:(fn i ->
-        if i < tlen then get i t
-        else elm
+        if i < tlen
+          then get i t
+          else elm
       )
 
 prepend elm t =
     init (0 .. (succ (length t))) ~f:(fn i ->
-        if i = 0 then elm
-        else get (pred i) t
+        if i = 0
+          then elm
+          else get (pred i) t
       )
 
 insert i elm t =
-    if i = 0 then
-        prepend elm t
-    else
-        len = length t
-        if i < len then
+    if i = 0
+      then prepend elm t
+      else
+        let len = length t
+        if i < len
+          then
             init (0 .. (succ len)) ~f:(fn index ->
                 match Uns.cmp index i with
                   | Lt -> get index t
                   | Eq -> elm
                   | Gt -> get (pred index) t
               )
-        else
-            append elm t
+          else append elm t
 
 remove i t =
-    len = length t
+    let len = length t
     assert (|len > 0|)
     match len with
       | 1 ->
         assert (|i = 0|)
         [||]
       | _ ->
-        if i = 0 then
-            pare (1 .. len) t
-        else if i < len then
+        if i = 0
+          then pare (1 .. len) t
+          else if i < len then
             init (0 .. (pred len)) ~f:(fn index ->
-                if index < i then get index t
-                else get (succ index) t
+                if index < i
+                  then get index t
+                  else get (succ index) t
               )
-        else
-            pare (0 .. (pred len)) t
+          else pare (0 .. (pred len)) t
 
 reduce ~f t =
-    rec f i accum =
+    let rec f i accum =
         match (i = (length t)) with
           | true -> accum
           | false -> f (succ i) (f accum (get i t))
@@ -488,30 +493,30 @@ reduce_hlt ~f t =
       | Some x -> x
 
 swap_inplace i0 i1 t =
-    elm0 = get i0 t
-    elm1 = get i1 t
+    let elm0 = get i0 t
+    let elm1 = get i1 t
     set_inplace i0 elm1 t
     set_inplace i1 elm0 t
 
 swap i0 i1 t =
-    t' = copy t
+    let t' = copy t
     swap_inplace i0 i1 t'
     t'
 
 rev_inplace t =
-    rec f i0 i1 =
+    let rec f i0 i1 =
         match (i0 >= i1) with
           | true -> ()
           | false ->
             swap_inplace i0 i1 t
             f (succ i0) (pred i1)
-    len = length t
+    let len = length t
     match len with
       | 0 -> ()
       | _ -> f 0 (pred len)
 
 rev t =
-    l = length t
+    let l = length t
     init (0 .. l) ~f:(fn i -> get (l - i - 1) t)
 
 (* Used directly for non-overlapping blits. *)
@@ -532,12 +537,12 @@ blit len i0 t0 i1 t1 =
       | false -> blit_ascending len (Range.base r0) t0 (Range.base r1) t1
 
 is_sorted ?(strict=false) ~cmp t =
-    len = length t
-    rec f elm i =
+    let len = length t
+    let rec f elm i =
         match i = len with
           | true -> true
           | false ->
-            elm' = get i t
+            let elm' = get i t
             match (cmp elm elm'), strict with
               | Cmp.Lt, _
               | Cmp.Eq, false -> f elm' (succ i)
@@ -558,21 +563,21 @@ type run: run = {
 sort_impl ?(stable=false) ~cmp ~inplace t =
     (* Merge a pair of adjacent runs. Input runs may be in increasing or decreasing order; the
      * output is always in increasing order. *)
-    merge_pair ~cmp src run0 order0 run1 order1 dst =
+    let merge_pair ~cmp src run0 order0 run1 order1 dst =
         assert (|run0.past = run1.base|)
-        rblit len i0 t0 i1 t1 =
+        let rblit len i0 t0 i1 t1 =
             iter (0 .. len) (fn i ->
                 set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
               )
-        merge_pair_oo ~cmp src run0 order0 run1 order1 dst =
-            rec f ~cmp src run0 order0 run1 order1 dst run =
+        let merge_pair_oo ~cmp src run0 order0 run1 order1 dst =
+            let rec f ~cmp src run0 order0 run1 order1 dst run =
                 match (run0.base = run0.past), (run1.base = run1.past) with
                   | false, false ->
-                    elm0 = match order0 with
+                    let elm0 = match order0 with
                       | Increasing -> get run0.base src
                       | Decreasing -> get (pred run0.past) src
                       | Either -> not_reached ()
-                    elm1 = match order1 with
+                    let elm1 = match order1 with
                       | Increasing -> get run1.base src
                       | Decreasing -> get (pred run1.past) src
                       | Either -> not_reached ()
@@ -582,45 +587,45 @@ sort_impl ?(stable=false) ~cmp ~inplace t =
                         match order0 with
                           | Increasing ->
                             set_inplace run.past elm0 dst
-                            run0' = {run0 with base=succ run0.base}
-                            run' = {run with past=succ run.past}
+                            let run0' = {run0 with base=succ run0.base}
+                            let run' = {run with past=succ run.past}
                             f ~cmp src run0' order0 run1 order1 dst run'
                           | Decreasing ->
                             set_inplace run.past elm0 dst
-                            run0' = {run0 with past=pred run0.past}
-                            run' = {run with past=succ run.past}
+                            let run0' = {run0 with past=pred run0.past}
+                            let run' = {run with past=succ run.past}
                             f ~cmp src run0' order0 run1 order1 dst run'
                           | Either -> not_reached ()
                       | Cmp.Gt ->
                         match order1 with
                           | Increasing ->
                             set_inplace run.past elm1 dst
-                            run1' = {run1 with base=succ run1.base}
-                            run' = {run with past=succ run.past}
+                            let run1' = {run1 with base=succ run1.base}
+                            let run' = {run with past=succ run.past}
                             f ~cmp src run0 order0 run1' order1 dst run'
                           | Decreasing ->
                             set_inplace run.past elm1 dst
-                            run1' = {run1 with past=pred run1.past}
-                            run' = {run with past=succ run.past}
+                            let run1' = {run1 with past=pred run1.past}
+                            let run' = {run with past=succ run.past}
                             f ~cmp src run0 order0 run1' order1 dst run'
                           | Either -> not_reached ()
                   | true, false ->
-                    len = run1.past - run1.base
-                    () = match order1 with
+                    let len = run1.past - run1.base
+                    let () = match order1 with
                       | Increasing -> blit_ascending len run1.base src run.past dst
                       | Decreasing -> rblit len run1.base src run.past dst
                       | Either -> not_reached ()
                     {run with past=run.past + len}
                   | false, true ->
-                    len = run0.past - run0.base
-                    () = match order0 with
+                    let len = run0.past - run0.base
+                    let () = match order0 with
                       | Increasing -> blit_ascending len run0.base src run.past dst
                       | Decreasing -> rblit len run0.base src run.past dst
                       | Either -> not_reached ()
                     {run with past=run.past + len}
                   | true, true -> not_reached ()
             f ~cmp src run0 order0 run1 order1 dst {base=run0.base; past=run0.base}
-        order0', order1' = match order0, order1 with
+        let order0', order1' = match order0, order1 with
           | Increasing, Increasing
           | Increasing, Either
           | Either, Increasing
@@ -632,21 +637,21 @@ sort_impl ?(stable=false) ~cmp ~inplace t =
           | Either, Decreasing -> Decreasing, Decreasing
         merge_pair_oo ~cmp src run0 order0' run1 order1' dst
     (* Select monotonic runs and merge run pairs. *)
-    rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
+    let rec select ~stable ~cmp elm base i order run0_opt order0 src dst runs =
         match i = (length src) with
           | true ->
-            run0, order0, run1, order1 = match run0_opt with
+            let run0, order0, run1, order1 = match run0_opt with
               | None ->
                 (* Copy odd run. *)
-                run0 = {base; past=i}
-                run1 = {base=i; past=i}
+                let run0 = {base; past=i}
+                let run1 = {base=i; past=i}
                 run0, order, run1, Increasing
               | Some run0 -> run0, order0, {base; past=i}, order
-            run = merge_pair ~cmp src run0 order0 run1 order1 dst
+            let run = merge_pair ~cmp src run0 order0 run1 order1 dst
             run :: runs
           | false ->
-            elm' = get i src
-            i' = succ i
+            let elm' = get i src
+            let i' = succ i
             match cmp elm elm', order, stable with
               | Cmp.Lt, Either, _ ->
                 select ~stable ~cmp elm' base i' Increasing run0_opt order0 src dst runs
@@ -662,26 +667,26 @@ sort_impl ?(stable=false) ~cmp ~inplace t =
               | Cmp.Lt, Decreasing, _
               | Cmp.Eq, Decreasing, true
               | Cmp.Gt, Increasing, _ ->
-                run0_opt', order0', runs' = match run0_opt with
+                let run0_opt', order0', runs' = match run0_opt with
                   | None -> Some {base; past=i}, order, runs
                   | Some run0 ->
-                    run1 = {base; past=i}
-                    run = merge_pair ~cmp src run0 order0 run1 order dst
+                    let run1 = {base; past=i}
+                    let run = merge_pair ~cmp src run0 order0 run1 order dst
                     None, Either, (run :: runs)
                 select ~stable ~cmp elm' i i' Either run0_opt' order0' src dst runs'
-    aux = copy t
-    runs = match t with
+    let aux = copy t
+    let runs = match t with
       | [||] -> [{base=0; past=0}]
       | _ -> select ~stable ~cmp (get 0 t) 0 1 Either None Either t aux []
 
     (* Repeatedly sweep through runs and merge pairs until only one run remains. Take care to
      * read/write linearly up/down based on the sweep direction, in order to improve cache locality.
      *)
-    rec merge ~cmp ~inplace src to_merge up dst merged =
+    let rec merge ~cmp ~inplace src to_merge up dst merged =
         match to_merge, up, merged with
           | run0 :: run1 :: to_merge', true, _
           | run1 :: run0 :: to_merge', false, _ ->
-            run = merge_pair ~cmp src run0 Increasing run1 Increasing dst
+            let run = merge_pair ~cmp src run0 Increasing run1 Increasing dst
             merge ~cmp ~inplace src to_merge' up dst (run :: merged)
           | [], _, _ :: _ :: _ ->
             (* Start another sweep. *)
@@ -707,19 +712,19 @@ sort_impl ?(stable=false) ~cmp ~inplace t =
     merge ~cmp ~inplace aux runs false t []
 
 sort_inplace ?stable ~cmp t =
-    _ = sort_impl ?stable ~cmp ~inplace:true t
+    let _ = sort_impl ?stable ~cmp ~inplace:true t
     ()
 
 sort ?stable ~cmp t =
     sort_impl ?stable ~cmp ~inplace:false (copy t)
 
 search_impl ?range key ~cmp mode t =
-    base, past = match range with
+    let base, past = match range with
       | None -> 0L, length t
       | Some range -> Range.base range, Range.past range
     assert (|base <= past|)
     assert (|past <= length t|)
-    rec f ~base ~past =
+    let rec f ~base ~past =
         assert (|base <= past|)
         match (base = past) with
           | true ->
@@ -743,7 +748,7 @@ search_impl ?range key ~cmp mode t =
                   | true, true -> None # Empty; key > elms.
                   | true, false -> Some (Cmp.Lt, 0) # At beginning; key < elms.
                   | false, _ -> # In interior, or past end.
-                    probe = pred base
+                    let probe = pred base
                     match cmp key (get probe t) with
                       | Cmp.Lt -> not_reached ()
                       | Cmp.Eq -> Some (Cmp.Eq, probe) # probe at rightmost match.
@@ -752,7 +757,7 @@ search_impl ?range key ~cmp mode t =
                           | false -> Some (Cmp.Lt, base) # In interior; key < * successor.
                           | true -> Some (Cmp.Gt, probe) # Past end; key > elms.
           | false ->
-            mid = (base + past) / 2
+            let mid = (base + past) / 2
             match (cmp key (get mid t)), mode with
               | Cmp.Lt, _
               | Cmp.Eq, Cmp.Lt -> f ~base ~past:mid
@@ -798,8 +803,8 @@ ArrayFoldiMap = {
 
         (* next 'a 'accum 'b ^arr >e: t a arr e -> accum >e-> (b, t a arr e, accum) *)
         next t accum =
-            accum', elm' = t.f t.index accum (get t.index t.arr)
-            t' = {t with index=succ t.index}
+            let accum', elm' = t.f t.index accum (get t.index t.arr)
+            let t' = {t with index=succ t.index}
             elm', t', accum'
       }
     include T
@@ -815,10 +820,10 @@ foldi_map t ~init ~f =
     ArrayFoldiMap.to_accum_array (ArrayFoldiMap.init t ~f (length t)) ~init
 
 filter ~f t =
-    _, t' = ArrayFoldiMap.to_accum_array
+    let _, t' = ArrayFoldiMap.to_accum_array
       (ArrayFoldiMap.init t ~f:(fn _ i _ ->
-        rec f2 i elm =
-            i' = succ i
+        let rec f2 i elm =
+            let i' = succ i
             match f elm with
               | true -> i', elm
               | false -> f2 i' (get i' t)
@@ -827,15 +832,15 @@ filter ~f t =
     t'
 
 filteri ~f t =
-    n = foldi t ~init:0 ~f:(fn i accum elm ->
+    let n = foldi t ~init:0 ~f:(fn i accum elm ->
         match f i elm with
           | false -> accum
           | true -> succ accum
       )
-    _, t' = ArrayFoldiMap.to_accum_array
+    let _, t' = ArrayFoldiMap.to_accum_array
       ArrayFoldiMap.init t ~f:(fn _ i _ ->
-        rec f2 i elm =
-            i' = succ i
+        let rec f2 i elm =
+            let i' = succ i
             match f i elm with
               | true -> i', elm
               | false -> f2 i' (get i' t)
@@ -846,12 +851,12 @@ filteri ~f t =
 
 foldi2_until ~init ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    len = length t0
-    rec f2 i accum =
+    let len = length t0
+    let rec f2 i accum =
         match i = len with
           | true -> accum
           | false ->
-            accum', until = f i accum (get i t0) (get i t1)
+            let accum', until = f i accum (get i t0) (get i t1)
             match until with
               | true -> accum'
               | false -> f2 (succ i) accum'
@@ -907,8 +912,8 @@ ArrayFoldi2Map = {
 
         (* next 'a 'b 'accum 'c ^m ^n >e: t a b m n e -> accum >e-> (c, t a b m n e, accum) *)
         next t accum =
-            accum', elm' = t.f t.index accum (get t.index t.arr0) (get t.index t.arr1)
-            t' = {t with index=Uns.succ t.index}
+            let accum', elm' = t.f t.index accum (get t.index t.arr0) (get t.index t.arr1)
+            let t' = {t with index=Uns.succ t.index}
             elm', t', accum'
       }
     include T
@@ -927,8 +932,8 @@ zip t0 t1 =
     map2 ~f:(fn a b -> a, b) t0 t1
 
 unzip t =
-    t0 = map ~f:(fn (a, _) -> a) t
-    t1 = map ~f:(fn (_, b) -> b) t
+    let t0 = map ~f:(fn (a, _) -> a) t
+    let t1 = map ~f:(fn (_, b) -> b) t
     t0, t1
 
 fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
@@ -940,896 +945,75 @@ fmt ('a:type) (>e:effect) ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
         Formatter
           |> (fn Formatter ->
             match alt with
-            | false ->
+              | false ->
                 match i with
-                | 0 -> Formatter
-                | _ -> Formatter |> Fmt.fmt "; "
-            | true -> Formatter |> Fmt.fmt "\n%*(^width + 4^)s(^""^)"
+                  | 0 -> Formatter
+                  | _ -> Formatter |> Fmt.fmt "; "
+              | true -> Formatter |> Fmt.fmt "\n%*(^width + 4^)s(^""^)"
           )
           |> fmt_a elm
       |> (fn Formatter ->
         match alt with
-        | false -> Formatter
-        | true -> Formatter |> Fmt.fmt "\n%*(^width + 2^)s(^""^)"
+          | false -> Formatter
+          | true -> Formatter |> Fmt.fmt "\n%*(^width + 2^)s(^""^)"
       )
       |> Fmt.fmt "|]"
 
-pp pp_elm ppf t =
-    open Format
-    fprintf ppf "@[<h>[|";
-    iteri t ~f:(fn i elm ->
-        if i > 0 then fprintf ppf ";@ "
-        fprintf ppf "%a" pp_elm elm
-      )
-    fprintf ppf "|]@]"
+pp pp_a t formatter =
+    fmt pp_a t formatter
 
 (***************************************************************************************************
  * Begin tests.
  *)
 
-let%expect_test "cursor" =
-    rec f2 arr hd cursor tl =
-        index = Cursor.index cursor
-        hd_cursor = Cursor.cmp hd cursor
-        cursor_tl = Cursor.cmp cursor tl
+cursor_test =
+    let rec f2 arr hd cursor tl =
+        let index = Cursor.index cursor
+        let hd_cursor = Cursor.cmp hd cursor
+        let cursor_tl = Cursor.cmp cursor tl
         File.Fmt.Stdout
           |> Fmt.fmt
           "index=%u(^
             index
-          ^), container %f(^
-            Cmp.fmt (cmp Uns.cmp (Cursor.container cursor))
-          ^) arr, hd %f(^\
-            Cmp.fmt hd_cursor
-          ^) cursor, cursor %f(^
-            Cmp.fmt cursor_tl
+          ^), container %(^Cmp.fmt^)(^
+            cmp Uns.cmp (Cursor.container cursor)
+          ^) arr, hd %(^Cmp.fmt^)(^\
+            hd_cursor
+          ^) cursor, cursor %(^Cmp.fmt^)(^
+            cursor_tl
           ^) tl, lget=%s(^
             match hd_cursor with
-            | Lt -> "%u(^Cursor.lget cursor^)"
-            | Eq -> "_"
-            | Gt -> not_reached ()
+              | Lt -> "%u(^Cursor.lget cursor^)"
+              | Eq -> "_"
+              | Gt -> not_reached ()
           ^), rget=%s(^
             match cursor_tl with
-            | Lt -> "%u(^Cursor.rget cursor^)"
-            | Eq -> "_"
-            | Gt -> not_reached ()
+              | Lt -> "%u(^Cursor.rget cursor^)"
+              | Eq -> "_"
+              | Gt -> not_reached ()
           ^)\n"
           |> ignore
-        length = length arr
+        let length = length arr
         assert (|Cursor.(=) (Cursor.seek (Uns.to_sint index) hd) cursor|)
         assert (|Cursor.(=) hd (Cursor.seek (-(Uns.to_sint index)) cursor)|)
         assert (|Cursor.(=) (Cursor.seek (Uns.to_sint (length - index)) cursor) tl|)
         assert (|Cursor.(=) cursor (Cursor.seek (-(Uns.to_sint (length - index))) tl)|)
 
         match cursor_tl with
-        | Lt ->
-            cursor' = Cursor.succ cursor
+          | Lt ->
+            let cursor' = Cursor.succ cursor
             assert (|Cursor.(cursor = (pred cursor'))|)
             f2 arr hd cursor' tl
-        | Eq | Gt -> ()
-    arrs = [
+          | Eq | Gt -> ()
+    let arrs = [
         [||]
         [|0|]
         [|0; 1|]
         [|0; 1; 2|]
       ]
     List.iter arrs ~f:(fn arr ->
-        File.Fmt.Stdout |> Fmt.fmt "--- %f(^fmt Uns.fmt arr^) ---" |> ignore
-        hd = Cursor.hd arr
+        File.Fmt.Stdout |> Fmt.fmt "--- %(^fmt Uns.fmt^)(^arr^) ---" |> ignore
+        let hd = Cursor.hd arr
         f2 arr hd hd (Cursor.tl arr)
       )
-    _ = File.Fmt.(flush Stdout)
-
-    [%expect``
---- [||] ---
-index=0, container Eq arr, hd Eq cursor, cursor Eq tl, lget=_, rget=_
---- [|0|] ---
-index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
-index=1, container Eq arr, hd Lt cursor, cursor Eq tl, lget=0, rget=_
---- [|0; 1|] ---
-index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
-index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
-index=2, container Eq arr, hd Lt cursor, cursor Eq tl, lget=1, rget=_
---- [|0; 1; 2|] ---
-index=0, container Eq arr, hd Eq cursor, cursor Lt tl, lget=_, rget=0
-index=1, container Eq arr, hd Lt cursor, cursor Lt tl, lget=0, rget=1
-index=2, container Eq arr, hd Lt cursor, cursor Lt tl, lget=1, rget=2
-index=3, container Eq arr, hd Lt cursor, cursor Eq tl, lget=2, rget=_
-``]
-
-let%expect_test "hash_fold" =
-    let open Format
-    printf "@[<h>"
-    let rec f arrs =
-        match arrs with
-        | [] -> ()
-        | arr :: arrs' ->
-            printf "hash_fold %a -> %a\n" (pp Uns.pp) arr Hash.pp
-              (Hash.t_of_state (hash_fold Uns.hash_fold arr Hash.State.empty))
-            f arrs'
-    let arrs = [
-        [||]
-        [|0|]
-        [|0; 0|]
-        [|0; 1|]
-      ]
-    f arrs
-    printf "@]"
-
-    [%expect`|hash_fold [||] -> 0x0000000000000000
-             |hash_fold [|0|] -> 0x0000000007be548a
-             |hash_fold [|0; 0|] -> 0x0000000012cbe18f
-             |hash_fold [|0; 1|] -> 0x0000000005e8da31
-            `]
-
-let%expect_test "cmp" =
-    let open Format
-    let arrs = [
-        [||]
-        [|0|]
-        [|0; 0|]
-        [|0; 1|]
-        [|0; 0|]
-        [|0|]
-        [||]
-      ]
-    let rec f2 arr arrs =
-        match arrs with
-        | [] -> ()
-        | hd :: tl ->
-            let () = List.iter arrs ~f:(fn arr2 ->
-                printf "cmp %a %a -> %a\n" (pp Uns.pp) arr (pp Uns.pp) arr2
-                  Cmp.pp (cmp Uns.cmp arr arr2)
-              )
-            f2 hd tl
-    let hd, tl = match arrs with
-        | hd :: tl -> hd, tl
-        | [] -> not_reached ()
-    printf "@[<h>"
-    f2 hd tl
-    printf "@]"
-
-    [%expect`|cmp [||] [|0|] -> Lt
-             |cmp [||] [|0; 0|] -> Lt
-             |cmp [||] [|0; 1|] -> Lt
-             |cmp [||] [|0; 0|] -> Lt
-             |cmp [||] [|0|] -> Lt
-             |cmp [||] [||] -> Eq
-             |cmp [|0|] [|0; 0|] -> Lt
-             |cmp [|0|] [|0; 1|] -> Lt
-             |cmp [|0|] [|0; 0|] -> Lt
-             |cmp [|0|] [|0|] -> Eq
-             |cmp [|0|] [||] -> Gt
-             |cmp [|0; 0|] [|0; 1|] -> Lt
-             |cmp [|0; 0|] [|0; 0|] -> Eq
-             |cmp [|0; 0|] [|0|] -> Gt
-             |cmp [|0; 0|] [||] -> Gt
-             |cmp [|0; 1|] [|0; 0|] -> Gt
-             |cmp [|0; 1|] [|0|] -> Gt
-             |cmp [|0; 1|] [||] -> Gt
-             |cmp [|0; 0|] [|0|] -> Gt
-             |cmp [|0; 0|] [||] -> Gt
-             |cmp [|0|] [||] -> Gt
-            `]
-
-let%expect_test "get,length,is_empty" =
-    let open Format
-    let test_length arr =
-        printf "%a: length=%a, is_empty=%B\n" (pp Uns.pp) arr Uns.pp (length arr) (is_empty arr)
-    printf "@[<h>"
-    test_length [||]
-    test_length [|0|]
-    test_length [|0; 1|]
-    test_length [|0; 1; 2|]
-    printf "@]"
-
-    [%expect`|[||]: length=0, is_empty=true
-             |[|0|]: length=1, is_empty=false
-             |[|0; 1|]: length=2, is_empty=false
-             |[|0; 1; 2|]: length=3, is_empty=false
-            `]
-
-let%expect_test "set,set_inplace" =
-    let open Format
-    let test_set len =
-        iter (0 .. len) (fn i ->
-            let arr = init (0 .. len) ~f:(fn _ -> 0)
-            let arr' = set i 1 arr
-            printf "set %a: %a -> %a" Uns.pp i \
-                                      (pp Uns.pp) arr \
-                                      (pp Uns.pp) arr'
-            set_inplace i 1 arr
-            printf " -> set_inplace: %a" (pp Uns.pp) arr
-            let arr'' = copy arr
-            printf " -> copy,set_inplace: %a" (pp Uns.pp) arr''
-            set_inplace i 2 arr''
-            printf " -> %a\n" (pp Uns.pp) arr''
-          )
-    printf "@[<h>"
-    test_set 1
-    test_set 2
-    test_set 3
-    printf "@]"
-
-    [%expect{``
-set 0: [|0|] -> [|1|] -> set_inplace: [|1|] -> copy,set_inplace: [|1|] -> [|2|]
-set 0: [|0; 0|] -> [|1; 0|] -> set_inplace: [|1; 0|] -> copy,set_inplace: [|1; 0|] -> [|2; 0|]
-set 1: [|0; 0|] -> [|0; 1|] -> set_inplace: [|0; 1|] -> copy,set_inplace: [|0; 1|] -> [|0; 2|]
-set 0: [|0; 0; 0|] -> [|1; 0; 0|] -> set_inplace: [|1; 0; 0|] -> copy,set_inplace: [|1; 0; 0|] -> [|2; 0; 0|]
-set 1: [|0; 0; 0|] -> [|0; 1; 0|] -> set_inplace: [|0; 1; 0|] -> copy,set_inplace: [|0; 1; 0|] -> [|0; 2; 0|]
-set 2: [|0; 0; 0|] -> [|0; 0; 1|] -> set_inplace: [|0; 0; 1|] -> copy,set_inplace: [|0; 0; 1|] -> [|0; 0; 2|]
-``]
-
-let%expect_test "pare" =
-    let open Format
-    let test arr =
-        printf "pare %a ->" (pp Uns.pp) arr
-        RangeF.iter RangeF.O.(0 ..= (length arr)) (fn i ->
-            RangeF.iter RangeF.O.(i ..= (length arr))) (fn j ->
-                let arr' = pare arr (i .. j)
-                printf " [%a,%a)=%a" Uns.pp i Uns.pp j (pp Uns.pp) arr'
-              )
-          )
-        printf "\n"
-    printf "@[<h>"
-    test [||]
-    test [|0|]
-    test [|0; 1|]
-    test [|0; 1; 2|]
-    printf "@]"
-
-    [%expect`|pare [||] -> [0,0)=[||]
-             |pare [|0|] -> [0,0)=[||] [0,1)=[|0|] [1,1)=[||]
-             |pare [|0; 1|] -> [0,0)=[||] [0,1)=[|0|] [0,2)=[|0; 1|] [1,1)=[||] [1,2)=[|1|] [2,2)=[||]
-             |pare [|0; 1; 2|] -> [0,0)=[||] [0,1)=[|0|] [0,2)=[|0; 1|] [0,3)=[|0; 1; 2|] [1,1)=[||] [1,2)=[|1|] [1,3)=[|1; 2|] [2,2)=[||] [2,3)=[|2|] [3,3)=[||]
-            `]
-
-let%expect_test "join" =
-    let open Format
-    let test ?sep arrs =
-        printf "join"
-        let () = match sep with
-            | None -> ()
-            | Some sep -> printf " ~sep:%a" (pp Uns.pp) sep
-        printf " %a -> %a\n" (List.pp (pp Uns.pp)) arrs (pp Uns.pp) (join ?sep arrs)
-    printf "@[<h>"
-    test []
-    test [[||]]
-    test [[||]; [||]]
-    test [[||]; [||]; [||]]
-
-    test [[|0|]]
-
-    test [[|0|]; [||]]
-    test [[||]; [|0|]]
-    test [[|0|]; [|1|]]
-
-    test [[|0|]; [||]; [||]]
-    test [[||]; [|0|]; [||]]
-    test [[||]; [||]; [|0|]]
-    test [[|0|]; [|1|]; [||]]
-    test [[|0|]; [||]; [|1|]]
-    test [[|0|]; [|1|]; [|2|]]
-
-    test ~sep:[|3|] []
-    test ~sep:[|3|] [[||]]
-    test ~sep:[|3|] [[||]; [||]]
-    test ~sep:[|3|] [[||]; [||]; [||]]
-
-    test ~sep:[|3|] [[|0|]]
-
-    test ~sep:[|3|] [[|0|]; [||]]
-    test ~sep:[|3|] [[||]; [|0|]]
-    test ~sep:[|3|] [[|0|]; [|1|]]
-
-    test ~sep:[|3|] [[|0|]; [||]; [||]]
-    test ~sep:[|3|] [[||]; [|0|]; [||]]
-    test ~sep:[|3|] [[||]; [||]; [|0|]]
-    test ~sep:[|3|] [[|0|]; [|1|]; [||]]
-    test ~sep:[|3|] [[|0|]; [||]; [|1|]]
-    test ~sep:[|3|] [[|0|]; [|1|]; [|2|]]
-    printf "@]";
-
-    [%expect`|join [] -> [||]
-             |join [[||]] -> [||]
-             |join [[||]; [||]] -> [||]
-             |join [[||]; [||]; [||]] -> [||]
-             |join [[|0|]] -> [|0|]
-             |join [[|0|]; [||]] -> [|0|]
-             |join [[||]; [|0|]] -> [|0|]
-             |join [[|0|]; [|1|]] -> [|0; 1|]
-             |join [[|0|]; [||]; [||]] -> [|0|]
-             |join [[||]; [|0|]; [||]] -> [|0|]
-             |join [[||]; [||]; [|0|]] -> [|0|]
-             |join [[|0|]; [|1|]; [||]] -> [|0; 1|]
-             |join [[|0|]; [||]; [|1|]] -> [|0; 1|]
-             |join [[|0|]; [|1|]; [|2|]] -> [|0; 1; 2|]
-             |join ~sep:[|3|] [] -> [||]
-             |join ~sep:[|3|] [[||]] -> [||]
-             |join ~sep:[|3|] [[||]; [||]] -> [|3|]
-             |join ~sep:[|3|] [[||]; [||]; [||]] -> [|3; 3|]
-             |join ~sep:[|3|] [[|0|]] -> [|0|]
-             |join ~sep:[|3|] [[|0|]; [||]] -> [|0; 3|]
-             |join ~sep:[|3|] [[||]; [|0|]] -> [|3; 0|]
-             |join ~sep:[|3|] [[|0|]; [|1|]] -> [|0; 3; 1|]
-             |join ~sep:[|3|] [[|0|]; [||]; [||]] -> [|0; 3; 3|]
-             |join ~sep:[|3|] [[||]; [|0|]; [||]] -> [|3; 0; 3|]
-             |join ~sep:[|3|] [[||]; [||]; [|0|]] -> [|3; 3; 0|]
-             |join ~sep:[|3|] [[|0|]; [|1|]; [||]] -> [|0; 3; 1; 3|]
-             |join ~sep:[|3|] [[|0|]; [||]; [|1|]] -> [|0; 3; 3; 1|]
-             |join ~sep:[|3|] [[|0|]; [|1|]; [|2|]] -> [|0; 3; 1; 3; 2|]
-            `]
-
-let%expect_test "concat" =
-    let open Format
-    let test arr0 arr1 =
-        printf "concat %a %a -> %a\n" (pp Uns.pp) arr0 (pp Uns.pp) arr1 (pp
-          Uns.pp) (concat arr0 arr1)
-    printf "@[<h>"
-    test [||] [||]
-    test [|0|] [||]
-    test [||] [|0|]
-    test [|0|] [|1|]
-    test [|0; 1|] [|2|]
-    test [|0|] [|1; 2|]
-    test [|0; 1|] [|2; 3|]
-    printf "@]"
-
-    [%expect`|concat [||] [||] -> [||]
-             |concat [|0|] [||] -> [|0|]
-             |concat [||] [|0|] -> [|0|]
-             |concat [|0|] [|1|] -> [|0; 1|]
-             |concat [|0; 1|] [|2|] -> [|0; 1; 2|]
-             |concat [|0|] [|1; 2|] -> [|0; 1; 2|]
-             |concat [|0; 1|] [|2; 3|] -> [|0; 1; 2; 3|]
-            `]
-
-let%expect_test "append,prepend" =
-    let open Format
-    let test arr x =
-        let arr_x = append x arr
-        let x_arr = prepend x arr
-        printf "%a %a: append -> %a, prepend -> %a\n" (pp Uns.pp) arr Uns.pp x
-          (pp Uns.pp) arr_x (pp Uns.pp) x_arr
-    printf "@[<h>"
-    test [||] 0
-    test [|0|] 1
-    test [|0; 1|] 2
-    test [|0; 1; 2|] 3
-    printf "@]"
-
-    [%expect`|[||] 0: append -> [|0|], prepend -> [|0|]
-             |[|0|] 1: append -> [|0; 1|], prepend -> [|1; 0|]
-             |[|0; 1|] 2: append -> [|0; 1; 2|], prepend -> [|2; 0; 1|]
-             |[|0; 1; 2|] 3: append -> [|0; 1; 2; 3|], prepend -> [|3; 0; 1; 2|]
-            `]
-
-let%expect_test "insert" =
-    let open Format
-    let test arr x =
-        printf "insert %a %a ->" (pp Uns.pp) arr Uns.pp x
-        RangeF.iter RangeF.O.(0 ..= (length arr)) (fn i ->
-            let arr' = insert i x arr
-            printf " %a" (pp Uns.pp) arr'
-          )
-        printf "\n"
-    printf "@[<h>"
-    test [||] 0
-    test [|0|] 1
-    test [|0; 1|] 2
-    test [|0; 1; 2|] 3
-    printf "@]"
-
-    [%expect`|insert [||] 0 -> [|0|]
-             |insert [|0|] 1 -> [|1; 0|] [|0; 1|]
-             |insert [|0; 1|] 2 -> [|2; 0; 1|] [|0; 2; 1|] [|0; 1; 2|]
-             |insert [|0; 1; 2|] 3 -> [|3; 0; 1; 2|] [|0; 3; 1; 2|] [|0; 1; 3; 2|] [|0; 1; 2; 3|]
-            `]
-
-let%expect_test "remove" =
-    let open Format
-    let test arr =
-        printf "remove %a ->" (pp Uns.pp) arr
-        iter (0 .. (length arr)) (fn i ->
-            let arr' = remove i arr
-            printf " %a" (pp Uns.pp) arr'
-          )
-        printf "\n"
-    printf "@[<h>"
-    test [|0|]
-    test [|0; 1|]
-    test [|0; 1; 2|]
-    printf "@]"
-
-    [%expect`|remove [|0|] -> [||]
-             |remove [|0; 1|] -> [|1|] [|0|]
-             |remove [|0; 1; 2|] -> [|1; 2|] [|0; 2|] [|0; 1|]
-            `]
-
-let%expect_test "reduce" =
-    let open Format
-    let test_reduce arr ~f =
-        printf "reduce %a" (pp Uns.pp) arr
-        match reduce arr ~f with
-        | None -> printf " -> None\n"
-        | Some x -> printf " -> %a\n" Uns.pp x
-    let f a b = (a + b)
-    printf "@[<h>"
-    test_reduce [||] ~f
-    test_reduce [|0; 1; 2; 3; 4|] ~f
-    printf "@]"
-
-    [%expect`|reduce [||] -> None
-             |reduce [|0; 1; 2; 3; 4|] -> 10
-            `]
-
-let%expect_test "swap,swap_inplace" =
-    let open Format
-    let test_swap arr =
-        iter (0 .. (length arr)) (fn i ->
-            iter (i .. (length arr)) (fn j ->
-                let arr' = copy arr
-                printf "%a %a: swap %a -> %a -> swap_inplace %a -> " Uns.pp i Uns.pp j
-                  (pp Uns.pp) arr' (pp Uns.pp) (swap i j arr') (pp Uns.pp) arr'
-                swap_inplace i j arr';
-                printf "%a\n" (pp Uns.pp) arr'
-              )
-          )
-    printf "@[<h>"
-    test_swap [|0|]
-    test_swap [|0; 1|]
-    test_swap [|0; 1; 2|]
-    test_swap [|0; 1; 2; 3|]
-    printf "@]"
-
-    [%expect``
-0 0: swap [|0|] -> [|0|] -> swap_inplace [|0|] -> [|0|]
-0 0: swap [|0; 1|] -> [|0; 1|] -> swap_inplace [|0; 1|] -> [|0; 1|]
-0 1: swap [|0; 1|] -> [|1; 0|] -> swap_inplace [|0; 1|] -> [|1; 0|]
-1 1: swap [|0; 1|] -> [|0; 1|] -> swap_inplace [|0; 1|] -> [|0; 1|]
-0 0: swap [|0; 1; 2|] -> [|0; 1; 2|] -> swap_inplace [|0; 1; 2|] -> [|0; 1; 2|]
-0 1: swap [|0; 1; 2|] -> [|1; 0; 2|] -> swap_inplace [|0; 1; 2|] -> [|1; 0; 2|]
-0 2: swap [|0; 1; 2|] -> [|2; 1; 0|] -> swap_inplace [|0; 1; 2|] -> [|2; 1; 0|]
-1 1: swap [|0; 1; 2|] -> [|0; 1; 2|] -> swap_inplace [|0; 1; 2|] -> [|0; 1; 2|]
-1 2: swap [|0; 1; 2|] -> [|0; 2; 1|] -> swap_inplace [|0; 1; 2|] -> [|0; 2; 1|]
-2 2: swap [|0; 1; 2|] -> [|0; 1; 2|] -> swap_inplace [|0; 1; 2|] -> [|0; 1; 2|]
-0 0: swap [|0; 1; 2; 3|] -> [|0; 1; 2; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 2; 3|]
-0 1: swap [|0; 1; 2; 3|] -> [|1; 0; 2; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|1; 0; 2; 3|]
-0 2: swap [|0; 1; 2; 3|] -> [|2; 1; 0; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|2; 1; 0; 3|]
-0 3: swap [|0; 1; 2; 3|] -> [|3; 1; 2; 0|] -> swap_inplace [|0; 1; 2; 3|] -> [|3; 1; 2; 0|]
-1 1: swap [|0; 1; 2; 3|] -> [|0; 1; 2; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 2; 3|]
-1 2: swap [|0; 1; 2; 3|] -> [|0; 2; 1; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 2; 1; 3|]
-1 3: swap [|0; 1; 2; 3|] -> [|0; 3; 2; 1|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 3; 2; 1|]
-2 2: swap [|0; 1; 2; 3|] -> [|0; 1; 2; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 2; 3|]
-2 3: swap [|0; 1; 2; 3|] -> [|0; 1; 3; 2|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 3; 2|]
-3 3: swap [|0; 1; 2; 3|] -> [|0; 1; 2; 3|] -> swap_inplace [|0; 1; 2; 3|] -> [|0; 1; 2; 3|]
-``]
-
-let%expect_test "rev,rev_inplace" =
-    let open Format
-    let test_rev arr =
-        printf "rev %a -> %a -> rev_inplace %a -> " (pp Uns.pp) arr (pp Uns.pp)
-          (rev arr) (pp Uns.pp) arr
-        rev_inplace arr
-        printf "%a\n" (pp Uns.pp) arr
-    printf "@[<h>"
-    test_rev [|0|]
-    test_rev [|0; 1|]
-    test_rev [|0; 1; 2|]
-    test_rev [|0; 1; 2; 3|]
-    printf "@]"
-
-    [%expect`|rev [|0|] -> [|0|] -> rev_inplace [|0|] -> [|0|]
-             |rev [|0; 1|] -> [|1; 0|] -> rev_inplace [|0; 1|] -> [|1; 0|]
-             |rev [|0; 1; 2|] -> [|2; 1; 0|] -> rev_inplace [|0; 1; 2|] -> [|2; 1; 0|]
-             |rev [|0; 1; 2; 3|] -> [|3; 2; 1; 0|] -> rev_inplace [|0; 1; 2; 3|] -> [|3; 2; 1; 0|]
-            `]
-
-let%expect_test "blit" =
-    let open Format
-    let range_pp ppf r =
-        Format.fprintf ppf "(%u .. %u)" (Range.base r) (Range.past r)
-
-
-    let test_blit r0 arr0 r1 arr1 =
-        printf "blit %a %a %a %a -> " range_pp r0 (pp Uns.pp) arr0
-          range_pp r1 (pp Uns.pp) arr1
-        blit r0 arr0 r1 arr1
-        printf "%a\n" (pp Uns.pp) arr1
-    printf "@[<h>"
-    test_blit (0 .. 0) [||] (0 .. 0) [||]
-    test_blit (0 .. 1) [|0|] (0 .. 1) [|1|]
-    test_blit (1 .. 2) [|0; 1|] (0 .. 1) [|2|]
-    test_blit (0 .. 1) [|0|] (1 .. 2) [|1; 2|]
-    test_blit (0 .. 2) [|0; 1|] (0 .. 2) [|2; 3|]
-    test_blit (1 .. 3) [|0; 1; 2|] (0 .. 2) [|3; 4; 5|]
-    test_blit (0 .. 3) [|0; 1; 2|] (0 .. 3) [|3; 4; 5|]
-    printf "@]"
-
-    [%expect`|blit (0 .. 0) [||] (0 .. 0) [||] -> [||]
-             |blit (0 .. 1) [|0|] (0 .. 1) [|1|] -> [|0|]
-             |blit (1 .. 2) [|0; 1|] (0 .. 1) [|2|] -> [|1|]
-             |blit (0 .. 1) [|0|] (1 .. 2) [|1; 2|] -> [|1; 0|]
-             |blit (0 .. 2) [|0; 1|] (0 .. 2) [|2; 3|] -> [|0; 1|]
-             |blit (1 .. 3) [|0; 1; 2|] (0 .. 2) [|3; 4; 5|] -> [|1; 2; 5|]
-             |blit (0 .. 3) [|0; 1; 2|] (0 .. 3) [|3; 4; 5|] -> [|0; 1; 2|]
-            `]
-
-let%expect_test "is_sorted" =
-    let open Format
-    let test_is_sorted arr =
-        printf "is_sorted %a: not strict -> %B, strict -> %B\n" (pp Uns.pp) arr
-          (is_sorted arr ~cmp:Uns.cmp) (is_sorted ~strict:true arr ~cmp:Uns.cmp)
-    printf "@[<h>"
-    test_is_sorted [||]
-    test_is_sorted [|0|]
-    test_is_sorted [|0; 0|]
-    test_is_sorted [|0; 1|]
-    test_is_sorted [|1; 0|]
-    test_is_sorted [|0; 1; 1|]
-    test_is_sorted [|0; 1; 2|]
-    test_is_sorted [|0; 2; 1|]
-    printf "@]"
-
-    [%expect`|is_sorted [||]: not strict -> true, strict -> true
-             |is_sorted [|0|]: not strict -> true, strict -> true
-             |is_sorted [|0; 0|]: not strict -> true, strict -> false
-             |is_sorted [|0; 1|]: not strict -> true, strict -> true
-             |is_sorted [|1; 0|]: not strict -> false, strict -> false
-             |is_sorted [|0; 1; 1|]: not strict -> true, strict -> false
-             |is_sorted [|0; 1; 2|]: not strict -> true, strict -> true
-             |is_sorted [|0; 2; 1|]: not strict -> false, strict -> false
-            `]
-
-type sort_elm =
-    key: uns (* Random, possibly non-unique. *)
-    sn: uns (* Sequential in initial array. *)
-let%expect_test "sort" =
-    let gen_array len =
-        let key_limit =
-            if len > 0 then len
-            else 1
-        init (0 .. len) ~f:(fn i -> {key=Random.int key_limit; sn=i})
-    let cmp elm0 elm1 =
-        Uns.cmp elm0.key elm1.key
-    let test_sort arr =
-        let arr' = sort arr ~cmp
-        assert (|is_sorted arr' ~cmp|)
-
-        let arr' = sort ~stable:true arr ~cmp
-        assert (|is_sorted ~strict:true arr' ~cmp:(fn elm0 elm1 ->
-            match cmp elm0 elm1 with
-            | Cmp.Lt -> Cmp.Lt
-            | Cmp.Eq -> Uns.cmp elm0.sn elm1.sn
-            | Cmp.Gt -> Cmp.Gt
-          )|)
-    Random.init 0;
-    iter (0 .. 256) (fn len ->
-        iter (0 .. 10) (fn _ ->
-            test_sort (gen_array len)
-          )
-      )
-
-    [%expect""]
-
-let%expect_test "search" =
-    let open Format
-    let test_search arr key_max =
-        printf "%a\n" (pp Uns.pp) arr
-        RangeF.iter RangeF.O.(0 ..= key_max) (fn probe ->
-            printf "    %a -> %s, %s, %s\n" Uns.pp probe
-              (match psearch probe ~cmp:Uns.cmp arr with
-                | None -> "<"
-                | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-                  Uns.pp i Uns.pp (get i arr)
-                | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-                  Uns.pp i Uns.pp (get i arr)
-                | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-                  Uns.pp i Uns.pp (get i arr)
-              ) (match search probe ~cmp:Uns.cmp arr with
-                | None -> "<>"
-                | Some i -> asprintf "=%a" Uns.pp (get i arr)
-              ) (match nsearch probe ~cmp:Uns.cmp arr with
-                | Some (Cmp.Lt, i) -> asprintf "<[%a]=%a"
-                  Uns.pp i Uns.pp (get i arr)
-                | Some (Cmp.Eq, i) -> asprintf "=[%a]=%a"
-                  Uns.pp i Uns.pp (get i arr)
-                | Some (Cmp.Gt, i) -> asprintf ">[%a]=%a"
-                  Uns.pp i Uns.pp (get i arr)
-                | None -> ">"
-              )
-          )
-    printf "@[<h>"
-    iter (0 .. 4) (fn len ->
-        let arr = init (0 .. len) ~f:(fn i -> i * 2 + 1)
-        let key_max = len * 2
-        test_search arr key_max
-      )
-    iter (1 .. 4) (fn hlen ->
-        let len = hlen * 2
-        let arr = init (0 .. len) ~f:(fn i -> i + ((i + 1) % 2))
-        let key_max = len
-        test_search arr key_max
-      )
-    printf "@]"
-
-    [%expect`|[||]
-             |    0 -> <, <>, >
-             |[|1|]
-             |    0 -> <[0]=1, <>, <[0]=1
-             |    1 -> =[0]=1, =1, =[0]=1
-             |    2 -> >[0]=1, <>, >[0]=1
-             |[|1; 3|]
-             |    0 -> <[0]=1, <>, <[0]=1
-             |    1 -> =[0]=1, =1, =[0]=1
-             |    2 -> >[0]=1, <>, <[1]=3
-             |    3 -> =[1]=3, =3, =[1]=3
-             |    4 -> >[1]=3, <>, >[1]=3
-             |[|1; 3; 5|]
-             |    0 -> <[0]=1, <>, <[0]=1
-             |    1 -> =[0]=1, =1, =[0]=1
-             |    2 -> >[0]=1, <>, <[1]=3
-             |    3 -> =[1]=3, =3, =[1]=3
-             |    4 -> >[1]=3, <>, <[2]=5
-             |    5 -> =[2]=5, =5, =[2]=5
-             |    6 -> >[2]=5, <>, >[2]=5
-             |[|1; 1|]
-             |    0 -> <[0]=1, <>, <[0]=1
-             |    1 -> =[0]=1, =1, =[1]=1
-             |    2 -> >[1]=1, <>, >[1]=1
-             |[|1; 1; 3; 3|]
-             |    0 -> <[0]=1, <>, <[0]=1
-             |    1 -> =[0]=1, =1, =[1]=1
-             |    2 -> >[1]=1, <>, <[2]=3
-             |    3 -> =[2]=3, =3, =[3]=3
-             |    4 -> >[3]=3, <>, >[3]=3
-             |[|1; 1; 3; 3; 5; 5|]
-             |    0 -> <[0]=1, <>, <[0]=1
-             |    1 -> =[0]=1, =1, =[1]=1
-             |    2 -> >[1]=1, <>, <[2]=3
-             |    3 -> =[2]=3, =3, =[3]=3
-             |    4 -> >[3]=3, <>, <[4]=5
-             |    5 -> =[4]=5, =5, =[5]=5
-             |    6 -> >[5]=5, <>, >[5]=5
-            `]
-
-let%expect_test "map,mapi" =
-    let open Format
-    let pp_str ppf t = Format.fprintf ppf "%S" t
-    let test_map uarr =
-        printf "%a -> map " (pp Uns.pp) uarr
-        let sarr = map uarr ~f:(fn elm -> asprintf "%a" Uns.pp elm)
-        printf "%a" (pp pp_str) sarr
-        printf " -> mapi "
-        let sarr = mapi uarr ~f:(fn i elm ->
-            asprintf "[%a]=%a" Uns.pp i Uns.pp elm
-          )
-        printf "%a\n" (pp pp_str) sarr
-    printf "@[<h>"
-    test_map [||]
-    test_map [|0|]
-    test_map [|1; 0|]
-    test_map [|2; 1; 0|]
-    printf "@]"
-
-    [%expect`|[||] -> map [||] -> mapi [||]
-             |[|0|] -> map [|"0"|] -> mapi [|"[0]=0"|]
-             |[|1; 0|] -> map [|"1"; "0"|] -> mapi [|"[0]=1"; "[1]=0"|]
-             |[|2; 1; 0|] -> map [|"2"; "1"; "0"|] -> mapi [|"[0]=2"; "[1]=1"; "[2]=0"|]
-            `]
-
-let%expect_test "fold_map,foldi_map" =
-    let open Format
-    let pp_str ppf t = Format.fprintf ppf "%S" t
-    let test_fold_map uarr =
-        let accum, sarr = fold_map uarr ~init:0 ~f:(fn accum elm ->
-            (accum + elm), (asprintf "%a" Uns.pp elm)
-          )
-        let accum2, sarr2 = foldi_map uarr ~init:0 ~f:(fn i accum elm ->
-            (accum + i + elm),
-            (asprintf "[%a]=%a" Uns.pp i Uns.pp elm)
-          )
-        printf "%a -> fold_map %a %a -> foldi_map %a %a\n"
-          (pp Uns.pp) uarr
-          Uns.pp accum
-          (pp pp_str) sarr
-          Uns.pp accum2
-          (pp pp_str) sarr2
-    printf "@[<h>"
-    test_fold_map [||]
-    test_fold_map [|0|]
-    test_fold_map [|1; 0|]
-    test_fold_map [|2; 1; 0|]
-    printf "@]"
-
-    [%expect`|[||] -> fold_map 0 [||] -> foldi_map 0 [||]
-             |[|0|] -> fold_map 0 [|"0"|] -> foldi_map 0 [|"[0]=0"|]
-             |[|1; 0|] -> fold_map 1 [|"1"; "0"|] -> foldi_map 2 [|"[0]=1"; "[1]=0"|]
-             |[|2; 1; 0|] -> fold_map 3 [|"2"; "1"; "0"|] -> foldi_map 6 [|"[0]=2"; "[1]=1"; "[2]=0"|]
-            `]
-
-let%expect_test "filter,filteri" =
-    let open Format
-    let test_filter arr =
-        let farr = filter arr ~f:(fn elm -> elm % 2 = 0)
-        let farr2 = filteri arr ~f:(fn _ elm -> elm % 2 = 0)
-        let farr3 = filteri arr ~f:(fn i _ -> i % 2 = 0)
-        printf "%a -> filter %a -> filteri %a %a\n"
-          (pp Uns.pp) arr
-          (pp Uns.pp) farr
-          (pp Uns.pp) farr2
-          (pp Uns.pp) farr3
-    printf "@[<h>"
-    test_filter [||]
-    test_filter [|0|]
-    test_filter [|1; 0|]
-    test_filter [|2; 1; 0|]
-    test_filter [|3; 2; 1; 0|]
-    printf "@]"
-
-    [%expect`|[||] -> filter [||] -> filteri [||] [||]
-             |[|0|] -> filter [|0|] -> filteri [|0|] [|0|]
-             |[|1; 0|] -> filter [|0|] -> filteri [|0|] [|1|]
-             |[|2; 1; 0|] -> filter [|2; 0|] -> filteri [|2; 0|] [|2; 0|]
-             |[|3; 2; 1; 0|] -> filter [|2; 0|] -> filteri [|2; 0|] [|3; 1|]
-            `]
-
-let%expect_test "fold2_until,foldi2_until" =
-    let open Format
-    let test_fold2_until uarr0 uarr1 =
-        printf "%a %a"
-          (pp Uns.pp) uarr0
-          (pp Uns.pp) uarr1
-        let accum = fold2_until uarr0 uarr1 ~init:0
-          ~f:(fn accum elm0 elm1 ->
-            (accum + elm0 + elm1), (accum > 10)
-          )
-        printf " -> fold2_until %a" Uns.pp accum
-        let accum = foldi2_until uarr0 uarr1 ~init:0
-          ~f:(fn i accum elm0 elm1 ->
-            (accum + i + elm0 + elm1), ((i + 2) >= (length uarr0))
-          )
-        printf " -> foldi2_until %a\n" Uns.pp accum
-    printf "@[<h>"
-    test_fold2_until [||] [||]
-    test_fold2_until [|1|] [|0|]
-    test_fold2_until [|3; 2|] [|1; 0|]
-    test_fold2_until [|5; 4; 3|] [|2; 1; 0|]
-    printf "@]"
-
-    [%expect`|[||] [||] -> fold2_until 0 -> foldi2_until 0
-             |[|1|] [|0|] -> fold2_until 1 -> foldi2_until 1
-             |[|3; 2|] [|1; 0|] -> fold2_until 6 -> foldi2_until 4
-             |[|5; 4; 3|] [|2; 1; 0|] -> fold2_until 15 -> foldi2_until 13
-            `]
-
-let%expect_test "fold2,foldi2" =
-    let open Format
-    let test_fold2 uarr0 uarr1 =
-        printf "%a %a"
-          (pp Uns.pp) uarr0
-          (pp Uns.pp) uarr1
-        let accum = fold2 uarr0 uarr1 ~init:0 ~f:(fn accum elm0 elm1 ->
-            accum + elm0 + elm1
-          )
-        printf " -> fold2 %a" Uns.pp accum
-        let accum = foldi2 uarr0 uarr1 ~init:0
-          ~f:(fn i accum elm0 elm1 -> accum + i + elm0 + elm1)
-        printf " -> foldi2 %a\n" Uns.pp accum
-    printf "@[<h>"
-    test_fold2 [||] [||]
-    test_fold2 [|1|] [|0|]
-    test_fold2 [|3; 2|] [|1; 0|]
-    test_fold2 [|5; 4; 3|] [|2; 1; 0|]
-    printf "@]"
-
-    [%expect`|[||] [||] -> fold2 0 -> foldi2 0
-             |[|1|] [|0|] -> fold2 1 -> foldi2 1
-             |[|3; 2|] [|1; 0|] -> fold2 6 -> foldi2 7
-             |[|5; 4; 3|] [|2; 1; 0|] -> fold2 15 -> foldi2 18
-            `]
-
-let%expect_test "iteri2" =
-    let open Format
-    let print_uns_arrays arr0 arr1 =
-        printf "[|"
-        iteri2 arr0 arr1 ~f:(fn i elm0 elm1 ->
-            if i > 0 then printf "; "
-            printf "(%a, %a)" Uns.pp elm0 Uns.pp elm1
-          )
-        printf "|]"
-    let test_iter2 arr0 arr1 =
-        print_uns_arrays arr0 arr1
-        printf "\n"
-    test_iter2 [||] [||]
-    test_iter2 [|0|] [|1|]
-    test_iter2 [|0; 1|] [|2; 3|]
-    test_iter2 [|0; 1; 2|] [|3; 4; 5|]
-
-    [%expect`|[||]
-             |[|(0, 1)|]
-             |[|(0, 2); (1, 3)|]
-             |[|(0, 3); (1, 4); (2, 5)|]
-            `]
-
-let%expect_test "map2,mapi2" =
-    let open Format
-    let pp_str ppf t = Format.fprintf ppf "%S" t
-    let test_map2 uarr0 uarr1 =
-        let sarr = map2 uarr0 uarr1 ~f:(fn elm0 elm1 ->
-            asprintf "(%a,%a)" Uns.pp elm0 Uns.pp elm1
-          )
-        let sarr2 = mapi2 uarr0 uarr1 ~f:(fn i elm0 elm1 ->
-            asprintf "[%a]=(%a,%a)" Uns.pp i Uns.pp elm0 Uns.pp elm1
-          )
-        printf "%a %a -> map2 %a -> mapi2 %a\n"
-          (pp Uns.pp) uarr0
-          (pp Uns.pp) uarr1
-          (pp pp_str) sarr
-          (pp pp_str) sarr2
-    printf "@[<h>"
-    test_map2 [||] [||]
-    test_map2 [|1|] [|0|]
-    test_map2 [|3; 2|] [|1; 0|]
-    test_map2 [|5; 4; 3|] [|2; 1; 0|]
-    printf "@]"
-
-    [%expect`|[||] [||] -> map2 [||] -> mapi2 [||]
-             |[|1|] [|0|] -> map2 [|"(1,0)"|] -> mapi2 [|"[0]=(1,0)"|]
-             |[|3; 2|] [|1; 0|] -> map2 [|"(3,1)"; "(2,0)"|] -> mapi2 [|"[0]=(3,1)"; "[1]=(2,0)"|]
-             |[|5; 4; 3|] [|2; 1; 0|] -> map2 [|"(5,2)"; "(4,1)"; "(3,0)"|] -> mapi2 [|"[0]=(5,2)"; "[1]=(4,1)"; "[2]=(3,0)"|]
-            `]
-
-let%expect_test "fold2_map,foldi2_map" =
-    let open Format
-    let pp_str ppf t = Format.fprintf ppf "%S" t
-    let test_fold2_map uarr0 uarr1 =
-        let accum, sarr = fold2_map uarr0 uarr1 ~init:0
-          ~f:(fn accum elm0 elm1 ->
-            (accum + elm0 + elm1),
-            (asprintf "(%a,%a)" Uns.pp elm0 Uns.pp elm1)
-          )
-        let accum2, sarr2 = foldi2_map uarr0 uarr1 ~init:0
-          ~f:(fn i accum elm0 elm1 ->
-            (accum + i + elm0 + elm1),
-            (asprintf "[%a]=(%a,%a)" Uns.pp i Uns.pp elm0 Uns.pp elm1)
-          )
-        printf "%a %a -> fold2_map %a %a -> foldi2_map %a %a\n"
-          (pp Uns.pp) uarr0
-          (pp Uns.pp) uarr1
-          Uns.pp accum
-          (pp pp_str) sarr
-          Uns.pp accum2
-          (pp pp_str) sarr2
-    printf "@[<h>"
-    test_fold2_map [||] [||]
-    test_fold2_map [|1|] [|0|]
-    test_fold2_map [|3; 2|] [|1; 0|]
-    test_fold2_map [|5; 4; 3|] [|2; 1; 0|]
-    printf "@]"
-
-    [%expect
-      `|[||] [||] -> fold2_map 0 [||] -> foldi2_map 0 [||]
-       |[|1|] [|0|] -> fold2_map 1 [|"(1,0)"|] -> foldi2_map 1 [|"[0]=(1,0)"|]
-       |[|3; 2|] [|1; 0|] -> fold2_map 6 [|"(3,1)"; "(2,0)"|] -> foldi2_map 7 [|"[0]=(3,1)"; "[1]=(2,0)"|]
-       |[|5; 4; 3|] [|2; 1; 0|] -> fold2_map 15 [|"(5,2)"; "(4,1)"; "(3,0)"|] -> foldi2_map 18 [|"[0]=(5,2)"; "[1]=(4,1)"; "[2]=(3,0)"|]
-      `]
-
-let%expect_test "zip,unzip" =
-    let open Format
-    let test_zip arr0 arr1 =
-        let arr0', arr1' = unzip (zip arr0 arr1)
-        printf "%a %a\n"
-          (pp Uns.pp) arr0'
-          (pp Uns.pp) arr1'
-    printf "@[<h>"
-    test_zip [||] [||]
-    test_zip [|0|] [|1|]
-    test_zip [|0; 1|] [|2; 3|]
-    test_zip [|0; 1; 2|] [|3; 4; 5|]
-    printf "@]"
-
-    [%expect`|[||] [||]
-             |[|0|] [|1|]
-             |[|0; 1|] [|2; 3|]
-             |[|0; 1; 2|] [|3; 4; 5|]
-            `]
+    File.Fmt.(flush Stdout) |> ignore

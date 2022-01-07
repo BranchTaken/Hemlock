@@ -103,7 +103,7 @@ Hemlock uses various symbols as punctuation:
 
 ```hemlock
 . , ; ;; : :: :=
-( ) (| |) [ ] [| |] { } {| |}
+( ) (| |) [ ] [| |] { }
 | \ ' ^ < <= = <> >= >
 ! &
 ~ ?
@@ -176,14 +176,13 @@ The following words are keywords which are used as syntactic elements, and canno
 purposes.
 
 ```hemlock
-and         false       match       type
-also        fn          mutability  val
-as          function    of          when
-conceal     if          open        with
-effect      import      or
-else        include     rec
-expose      lazy        then
-external    let         true
+and         external    lazy        rec
+also        false       let         then
+as          fn          match       true
+conceal     function    mutability  type
+effect      if          of          when
+else        import      open        with
+expose      include     or
 ```
 
 ### Identifier
@@ -446,7 +445,7 @@ context:
   The following example shows how a string containing format specifiers is desugared.
 
   ```hemlock
-  let answer = 42
+  answer = 42
 
   # Formatted string.
   "Hello %s(^"Fred"^), %u=(^answer^) and this is a list: %(^List.fmt Uns.fmt^)(^[0; 1; 2]^)"
@@ -595,48 +594,75 @@ context:
 ## Source directives
 
 Token path/line/column locations are ordinarily a simple function of the source stream from which
-they derive, but if the source stream is generated from another source, e.g. using a parser
-generator, it can be useful to associate tokens with the pre-generated source locations. Source
-directives provide a mechanism for setting the path, line and column for subsequent source. Although
-the scanner accepts source directive tokens much as any other token, the primary purpose of such
-tokens is to affect scanner state, and the parser ignores them.
+they derive, but if the primary source stream comprises embedded sources, e.g. as the product of a
+parser generator, it can be useful to associate tokens with the unembedded source locations. Source
+directives provide a mechanism for setting the path, line, block indentation, and column for
+embedded source. Although the scanner accepts source directive tokens much as any other token, the
+main purpose of such tokens is to affect scanner state, and the parser ignores them.
 
-Source directives are delimited by `[:`...`]` and comprise three optional colon-separated ordered
-parameters, matched by `\[:<path>[:<line>[:<col>]]|:<line>[:<col>]|:\]`:
+A source directive specifies the position of the codepoint immediately following the directive, even
+if it is a newline. Furthermore a source directive specifies block indentation of the first line,
+which allows what would otherwise be malformed indentation transitions between sources.
 
-- `<path>`: `"..."`-delimited interpolated string, minus support for format specifiers, defaults to
-  current source path
+Source directives are delimited by `[:`...`]` and comprise optional colon-separated ordered
+parameters, matched by `\[:<path>[:<line>[:<indent>+<omit>]]|:<line>[:<indent>+<omit>]|:\]`:
+
+- Source `<path>`: `"..."`-delimited interpolated string, minus support for format specifiers,
+  defaults to current source path
 - `<line>`: `_*[1-9][0-9_]*`, constrained to the range of `int`, defaults to 1
-- `<col>`: `_*[1-9][0-9_]*`, constrained to the range of `int`, defaults to 0
+- `<indent>`: `_*[0-9][0-9_]*`, constrained to the range of `int`, defaults to 0, specifies block
+  indentation column of `<line>`, which must be a multiple of 4
+- `<omit>`: `_*[0-9][0-9_]*`, constrained to the range of `int`, defaults to 0, specifies number of
+  codepoints omitted past `<indent>` column, i.e. `<indent>+<omit>` is the starting column
 
-If all parameters are absent (`[:]`), the directive resets the source to the actual source being
-scanned.
-
-Examples follow.
+If all parameters are absent (`[:]`), the directive resets the source to the primary source and
+restores the indentation to its value at the preceding source directive.
 
 ```hemlock
-[:"Foo.hm":42:13]
+[:"Foo.hm":42:8+13]
 [:"Foo.hm":42]
 [:"Foo.hm"]
-[:42:13]
+[:42:8+13]
 [:42]
 [:]
 ```
 
-Unlike line directives, source directives specify the position of the codepoint immediately
-following the directive, even if it is a newline. If the intent were to specify the source directive
-and separate the directive from the source by a newline, the specified line number would need to be
-one less than that of the following source.
+The following contrived example inlines the body of `%accept_hook` to demonstrate how logical
+nesting works. `%accept_hook` in `"Pgen.hm"` is replaced by the inlined body provided in
+`"Foo.hmy"`. Source directives do not provide actual nesting semantics because replaced text
+(`%accept_hook` in this case) would have to be zero-length for such semantics to be useful.
 
+- "Pgen.hm"
 ```hemlock
-let x = [:42]"hello"
-
-let x = [:41]\
-"hello"
+accept parser =
+    let node, parser' = [...]
+    let () = (%accept_hook)
+    node, parser'
 ```
 
-However, line numbering starts at 1 and line 0 cannot be specified, so this approach would not work
-in all cases. Therefore source directives should be emitted without emitting extraneous line breaks.
+- "Foo.hmy"
+```hemlock
+%accept_hook = %(
+    File.Fmt.stdout |> "%(^Node.pp^)=(^node^)\n" |> ignore
+  )%
+```
+
+- "Foo.hm"
+```hemlock
+[:"Pgen.hm"]accept parser =
+    let node, parser' = [...]
+    let () = ([:"Foo.hmy":1:0+16](
+    File.Fmt.stdout |> "%(^Node.pp^)=(^node^)\n" |> ignore
+  )[:"Pgen.hm":3:4+26])
+    node, parser'
+```
+
+Note the enclosing `(...)` which are preserved in the code sourced from "Foo.hmy". Absent this
+enclosure, the scanner would not accept a dedent token to match the indent token induced by the
+block indentation. On the other hand, the prelude/postlude sourced from "Pgen.hm" each intentionally
+cause indent/dedent mismatches such that the net result is valid. Source directives provide
+sufficient capabilities for complex code generation, but in general these subtleties are best
+avoided where possible.
 
 ## Grammar
 

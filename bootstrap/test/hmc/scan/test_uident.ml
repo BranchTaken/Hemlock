@@ -40,7 +40,6 @@ let test () =
   scan_str "then";
   scan_str "true";
   scan_str "type";
-  scan_str "val";
   scan_str "when";
   scan_str "with"
 

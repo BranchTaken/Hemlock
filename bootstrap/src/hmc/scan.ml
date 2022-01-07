@@ -137,17 +137,28 @@ module AbstractToken = struct
       Malformed (List.sort ~cmp:Malformation.cmp mals)
   end
 
+  type indent_omit = {
+    indent: uns;
+    omit: uns;
+  }
+
+  let pp_indent_omit {indent; omit} formatter =
+    formatter
+    |> Fmt.fmt "{indent=" |> Uns.pp indent
+    |> Fmt.fmt "; omit=" |> Uns.pp omit
+    |> Fmt.fmt "}"
+
   type source_directive = {
     path: string option;
     line: uns option;
-    col: uns option;
+    io: indent_omit option;
   }
 
-  let pp_source_directive {path; line; col} formatter =
+  let pp_source_directive {path; line; io} formatter =
     formatter
     |> Fmt.fmt "{path=" |> (Option.pp String.pp) path
     |> Fmt.fmt "; line=" |> (Option.pp Uns.pp) line
-    |> Fmt.fmt "; col=" |> (Option.pp Uns.pp) col
+    |> Fmt.fmt "; io=" |> (Option.pp pp_indent_omit) io
     |> Fmt.fmt "}"
 
   type t =
@@ -177,7 +188,6 @@ module AbstractToken = struct
     | Tok_then
     | Tok_true
     | Tok_type
-    | Tok_val
     | Tok_when
     | Tok_with
 
@@ -228,8 +238,6 @@ module AbstractToken = struct
     | Tok_rcapture
     | Tok_larray
     | Tok_rarray
-    | Tok_lmodule
-    | Tok_rmodule
     | Tok_bslash
     | Tok_tick
     | Tok_caret
@@ -310,7 +318,6 @@ module AbstractToken = struct
       | Tok_then -> formatter |> Fmt.fmt "Tok_then"
       | Tok_true -> formatter |> Fmt.fmt "Tok_true"
       | Tok_type -> formatter |> Fmt.fmt "Tok_type"
-      | Tok_val -> formatter |> Fmt.fmt "Tok_val"
       | Tok_when -> formatter |> Fmt.fmt "Tok_when"
       | Tok_with -> formatter |> Fmt.fmt "Tok_with"
 
@@ -361,8 +368,6 @@ module AbstractToken = struct
       | Tok_rcapture -> formatter |> Fmt.fmt "Tok_rcapture"
       | Tok_larray -> formatter |> Fmt.fmt "Tok_larray"
       | Tok_rarray -> formatter |> Fmt.fmt "Tok_rarray"
-      | Tok_lmodule -> formatter |> Fmt.fmt "Tok_lmodule"
-      | Tok_rmodule -> formatter |> Fmt.fmt "Tok_rmodule"
       | Tok_bslash -> formatter |> Fmt.fmt "Tok_bslash"
       | Tok_tick -> formatter |> Fmt.fmt "Tok_tick"
       | Tok_caret -> formatter |> Fmt.fmt "Tok_caret"
@@ -488,6 +493,56 @@ module View = struct
     | Some (cp, cursor') -> Some (cp, {ppcursor=pcursor; pcursor=cursor; cursor=cursor'})
 end
 
+module Level = struct
+  type t =
+    | Primary of uns
+    | Embedded of {
+        primary: uns;
+        embedded: uns;
+      }
+
+  let pp t formatter =
+    match t with
+    | Primary primary -> formatter |> Fmt.fmt "Primary " |> Uns.pp primary
+    | Embedded {primary; embedded} -> begin
+        formatter
+        |> Fmt.fmt "Embedded {primary=" |> Uns.pp primary
+        |> Fmt.fmt "; embedded=" |> Uns.pp embedded
+        |> Fmt.fmt "}"
+      end
+
+  let level = function
+    | Primary primary -> primary
+    | Embedded {primary=_; embedded} -> embedded
+
+  let cmp t0 t1 =
+    Uns.cmp (level t0) (level t1)
+
+  let ( = ) t0 t1 =
+    Cmp.is_eq (cmp t0 t1)
+
+  let init u =
+    Primary u
+
+  let update u = function
+    | Primary _ -> Primary u
+    | Embedded e -> Embedded {e with embedded=u}
+
+  let succ t =
+    update (succ (level t)) t
+
+  let pred t =
+    update (pred (level t)) t
+
+  let embed u = function
+    | Primary primary -> Embedded {primary; embedded=u}
+    | Embedded e -> Embedded {e with embedded=u}
+
+  let reset = function
+    | Primary _ as level -> level
+    | Embedded {primary; embedded=_} -> Primary primary
+end
+
 (* Dentation code block state. The scanner needs to track whether any expressions have been scanned
  * in the current block. *)
 type block_state =
@@ -563,7 +618,7 @@ let pp_istring_state istring_state formatter =
 
 type t = {
   tok_base: Source.Cursor.t;
-  level: uns;
+  level: Level.t;
   block_state: block_state;
   line_state: line_state;
   istring_state: istring_state list;
@@ -572,7 +627,7 @@ type t = {
 let init text =
   {
     tok_base=Source.Cursor.hd (Source.init text);
-    level=0L;
+    level=Level.init 0L;
     block_state=Block_primal;
     line_state=Line_begin;
     istring_state=[];
@@ -581,7 +636,7 @@ let init text =
 let pp t formatter =
   formatter
   |> Fmt.fmt "{tok_base=" |> Text.Pos.pp (Source.Cursor.pos t.tok_base)
-  |> Fmt.fmt "; level=" |> Uns.pp t.level
+  |> Fmt.fmt "; level=" |> Level.pp t.level
   |> Fmt.fmt "; block_state=" |> pp_block_state t.block_state
   |> Fmt.fmt "; line_state=" |> pp_line_state t.line_state
   |> Fmt.fmt "; istring_state=" |> (List.pp pp_istring_state) t.istring_state
@@ -1540,35 +1595,35 @@ module State = struct
       {t with mals=mal :: mals}
   end
 
-  module Src_directive_col = struct
+  module Src_directive_indent = struct
     type t = {
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
       line: Nat.t option;
-      col_cursor: Source.Cursor.t;
-      col: Nat.t;
+      indent_cursor: Source.Cursor.t;
+      indent: Nat.t;
     }
 
-    let pp {mals; path; line; col_cursor; col} formatter =
+    let pp {mals; path; line; indent_cursor; indent} formatter =
       formatter
       |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
-      |> Fmt.fmt "; col_cursor=" |> Text.Pos.pp (Source.Cursor.pos col_cursor)
-      |> Fmt.fmt "; col=" |> Nat.pp col
+      |> Fmt.fmt "; indent_cursor=" |> Text.Pos.pp (Source.Cursor.pos indent_cursor)
+      |> Fmt.fmt "; indent=" |> Nat.pp indent
       |> Fmt.fmt "}"
 
-    let init ~mals ~path ~line ~col_cursor ~col =
-      {mals; path; line; col_cursor; col}
+    let init ~mals ~path ~line ~indent_cursor ~indent =
+      {mals; path; line; indent_cursor; indent}
 
     let mals_accum mal ({mals; _} as t) =
       {t with mals=mal :: mals}
 
-    let col_accum digit ({col; _} as t) =
-      {t with col=Nat.(col * k_a + digit)}
+    let indent_accum digit ({indent; _} as t) =
+      {t with indent=Nat.(indent * k_a + digit)}
   end
 
-  module Src_directive_col_0 = struct
+  module Src_directive_indent_0 = struct
     type t = {
       mals: AbstractToken.Rendition.Malformation.t list;
       path: codepoint list option;
@@ -1588,6 +1643,61 @@ module State = struct
     let mals_accum mal ({mals; _} as t) =
       {t with mals=mal :: mals}
   end
+
+  module Src_directive_indent_plus = struct
+    type t = {
+      mals: AbstractToken.Rendition.Malformation.t list;
+      path: codepoint list option;
+      line: Nat.t option;
+      indent: Nat.t option;
+    }
+
+    let pp {mals; path; line; indent} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
+      |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
+      |> Fmt.fmt "; indent=" |> (Option.pp Nat.pp) indent
+      |> Fmt.fmt "}"
+
+    let init ~mals ~path ~line ~indent =
+      {mals; path; line; indent}
+
+    let mals_accum mal ({mals; _} as t) =
+      {t with mals=mal :: mals}
+  end
+
+  module Src_directive_omit = struct
+    type t = {
+      mals: AbstractToken.Rendition.Malformation.t list;
+      path: codepoint list option;
+      line: Nat.t option;
+      indent: Nat.t option;
+      omit_cursor: Source.Cursor.t;
+      omit: Nat.t;
+    }
+
+    let pp {mals; path; line; indent; omit_cursor; omit} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
+      |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
+      |> Fmt.fmt "; indent=" |> (Option.pp Nat.pp) indent
+      |> Fmt.fmt "; omit_cursor=" |> Text.Pos.pp (Source.Cursor.pos omit_cursor)
+      |> Fmt.fmt "; omit=" |> Nat.pp omit
+      |> Fmt.fmt "}"
+
+    let init ~mals ~path ~line ~indent ~omit_cursor ~omit =
+      {mals; path; line; indent; omit_cursor; omit}
+
+    let mals_accum mal ({mals; _} as t) =
+      {t with mals=mal :: mals}
+
+    let omit_accum digit ({omit; _} as t) =
+      {t with omit=Nat.(omit * k_a + digit)}
+  end
+
+  module Src_directive_omit_0 = Src_directive_indent_plus
 
   module Codepoint_bslash = struct
     type t = {
@@ -1718,7 +1828,6 @@ module State = struct
     | State_semi
     | State_lparen
     | State_lbrack
-    | State_lcurly
     | State_bslash
     | State_tilde
     | State_qmark
@@ -1783,8 +1892,11 @@ module State = struct
     | State_src_directive_path_colon of Src_directive_path_colon.t
     | State_src_directive_line of Src_directive_line.t
     | State_src_directive_line_colon of Src_directive_line_colon.t
-    | State_src_directive_col of Src_directive_col.t
-    | State_src_directive_col_0 of Src_directive_col_0.t
+    | State_src_directive_indent of Src_directive_indent.t
+    | State_src_directive_indent_0 of Src_directive_indent_0.t
+    | State_src_directive_indent_plus of Src_directive_indent_plus.t
+    | State_src_directive_omit of Src_directive_omit.t
+    | State_src_directive_omit_0 of Src_directive_omit_0.t
     | State_dentation_start
     | State_dentation_lparen
     | State_dentation_space
@@ -1813,7 +1925,6 @@ module State = struct
     | State_semi -> formatter |> Fmt.fmt "State_semi"
     | State_lparen -> formatter |> Fmt.fmt "State_lparen"
     | State_lbrack -> formatter |> Fmt.fmt "State_lbrack"
-    | State_lcurly -> formatter |> Fmt.fmt "State_lcurly"
     | State_bslash -> formatter |> Fmt.fmt "State_bslash"
     | State_tilde -> formatter |> Fmt.fmt "State_tilde"
     | State_qmark -> formatter |> Fmt.fmt "State_qmark"
@@ -1895,8 +2006,15 @@ module State = struct
     | State_src_directive_line v -> formatter |> Fmt.fmt "State_line " |> Src_directive_line.pp v
     | State_src_directive_line_colon v ->
       formatter |> Fmt.fmt "State_line_colon " |> Src_directive_line_colon.pp v
-    | State_src_directive_col v -> formatter |> Fmt.fmt "State_col " |> Src_directive_col.pp v
-    | State_src_directive_col_0 v -> formatter |> Fmt.fmt "State_col_0 " |> Src_directive_col_0.pp v
+    | State_src_directive_indent v ->
+      formatter |> Fmt.fmt "State_indent " |> Src_directive_indent.pp v
+    | State_src_directive_indent_0 v ->
+      formatter |> Fmt.fmt "State_indent_0 " |> Src_directive_indent_0.pp v
+    | State_src_directive_indent_plus v ->
+      formatter |> Fmt.fmt "State_indent_plus " |> Src_directive_indent_plus.pp v
+    | State_src_directive_omit v -> formatter |> Fmt.fmt "State_omit " |> Src_directive_omit.pp v
+    | State_src_directive_omit_0 v ->
+      formatter |> Fmt.fmt "State_omit_0 " |> Src_directive_omit_0.pp v
     | State_dentation_start -> formatter |> Fmt.fmt "State_dentation_start"
     | State_dentation_lparen -> formatter |> Fmt.fmt "State_dentation_lparen"
     | State_dentation_space -> formatter |> Fmt.fmt "State_dentation_space"
@@ -2031,12 +2149,13 @@ module Dfa = struct
       end in
       f base cursor
     end in
-    let cursor' = match atoken with
-      | AbstractToken.Tok_source_directive Constant {path=None; line=None; col=None} -> begin
-          (* Rebias the source such that it is unbiased. *)
-          past
-        end
-      | AbstractToken.Tok_source_directive Constant {path; line; col} -> begin
+    let cursor', level' = match atoken with
+      | AbstractToken.Tok_source_directive Constant {path=None; line=None; io=None}
+        -> begin
+            (* Rebias the source such that it is unbiased. *)
+            past, Level.reset t.level
+          end
+      | AbstractToken.Tok_source_directive Constant {path; line; io} -> begin
           let source = Source.Cursor.container past in
           let path = match path with
             | None -> Source.path source
@@ -2048,20 +2167,21 @@ module Dfa = struct
           in
           let line_bias = Sint.((Uns.bits_to_sint line) - (Uns.bits_to_sint (Text.(Pos.line
               (Cursor.pos (Source.Cursor.text_cursor past)))))) in
-          let col = match col with
-            | None -> Sint.zero
-            | Some col -> col
+          let indent, omit = match io with
+            | None -> Sint.zero, Sint.zero
+            | Some {indent; omit} -> indent, omit
           in
+          let col = Sint.(indent + omit) in
           let col_bias = Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col (Cursor.pos
               (Source.Cursor.text_cursor past)))))) in
           let source' = Source.bias ~path ~line_bias ~col_bias source in
-          Source.Cursor.bias source' past
+          (Source.Cursor.bias source' past), Level.embed (indent / 4L) t.level
         end
-      | AbstractToken.Tok_source_directive Malformed _ -> past
+      | AbstractToken.Tok_source_directive Malformed _ -> past, t.level
       | _ -> not_reached ()
     in
     let source_slice = Source.Slice.of_cursors ~base ~past in
-    {t with tok_base=cursor'}, Accept (ConcreteToken.init atoken source_slice)
+    {t with tok_base=cursor'; level=level'}, Accept (ConcreteToken.init atoken source_slice)
 
   let accept_line_break atoken cursor t =
     let source = source_at cursor t in
@@ -2094,7 +2214,7 @@ module Dfa = struct
         (")", accept_incl Tok_rparen);
         ("[", advance State_lbrack);
         ("]", accept_incl Tok_rbrack);
-        ("{", advance State_lcurly);
+        ("{", accept_incl Tok_lcurly);
         ("}", accept_incl Tok_rcurly);
         ("\\", advance State_bslash);
         ("&", accept_incl Tok_amp);
@@ -2133,10 +2253,10 @@ module Dfa = struct
       ];
       default0=accept_incl Tok_error;
       eoi0=(fun view t ->
-        match t.level, t.line_state with
+        match Level.level t.level, t.line_state with
         | 0L, Line_begin -> accept_dentation Tok_line_delim view t
         | 0L, _ -> accept_incl Tok_end_of_input view t
-        | _ -> accept_dentation (Tok_dedent (Constant ())) view {t with level=pred t.level}
+        | _ -> accept_dentation (Tok_dedent (Constant ())) view {t with level=Level.pred t.level}
       );
     }
 
@@ -2164,14 +2284,6 @@ module Dfa = struct
     ];
     default0=accept_excl Tok_lbrack;
     eoi0=accept_incl Tok_lbrack;
-  }
-
-  let node0_lcurly = {
-    edges0=map_of_cps_alist [
-      ("|", accept_incl Tok_lmodule);
-    ];
-    default0=accept_excl Tok_lcurly;
-    eoi0=accept_incl Tok_lcurly;
   }
 
   let node0_bslash = {
@@ -2232,7 +2344,6 @@ module Dfa = struct
     edges0=map_of_cps_alist [
       (")", accept_incl Tok_rcapture);
       ("]", accept_incl Tok_rarray);
-      ("}", accept_incl Tok_rmodule);
       (operator_cps, advance State_operator_bar);
     ];
     default0=accept_excl Tok_bar;
@@ -2733,7 +2844,6 @@ module Dfa = struct
       ("then", Tok_then);
       ("true", Tok_true);
       ("type", Tok_type);
-      ("val", Tok_val);
       ("when", Tok_when);
       ("with", Tok_with);
     ]
@@ -3000,7 +3110,7 @@ module Dfa = struct
   end
 
   module SrcDirective = struct
-    let render_source_directive ~mals ~path ~line ~col =
+    let render_source_directive ~mals ~path ~line ~indent ~omit =
       match mals with
       | [] -> begin
           let path = match path with
@@ -3011,11 +3121,14 @@ module Dfa = struct
             | None -> None
             | Some line -> Some (Nat.to_u64_hlt line)
           in
-          let col = match col with
-            | None -> None
-            | Some col -> Some (Nat.to_u64_hlt col)
+          let io = match indent, omit with
+            | None, None -> None
+            | Some indent, Some omit ->
+              Some AbstractToken.{indent=(Nat.to_u64_hlt indent); omit=(Nat.to_u64_hlt omit)}
+            | Some _, None
+            | None, Some _ -> not_reached ()
           in
-          AbstractToken.Tok_source_directive (Constant {path; line; col})
+          AbstractToken.Tok_source_directive (Constant {path; line; io})
         end
       | _ :: _ -> AbstractToken.Tok_source_directive (AbstractToken.Rendition.of_mals mals)
 
@@ -3028,7 +3141,8 @@ module Dfa = struct
             advance (State_src_directive_line (State.Src_directive_line.init ~mals:[] ~path:None
               ~line_cursor:pcursor ~line:(Some digit))) view t));
         ("]", (fun view t ->
-            let tok = render_source_directive ~mals:[] ~path:None ~line:None ~col:None in
+            let tok =
+              render_source_directive ~mals:[] ~path:None ~line:None ~indent:None ~omit:None in
             accept_source_directive tok view t
           )
         );
@@ -3211,7 +3325,7 @@ module Dfa = struct
         edges1=map_of_cps_alist [
           (":", (fun state view t -> advance (State_src_directive_path_colon state) view t));
           ("]", (fun {mals; path} view t ->
-              let tok = render_source_directive ~mals ~path ~line:None ~col:None in
+              let tok = render_source_directive ~mals ~path ~line:None ~indent:None ~omit:None in
               accept_source_directive tok view t
             )
           );
@@ -3288,7 +3402,7 @@ module Dfa = struct
           );
           ("]", (fun ({path; _} as state) view t ->
               let mals, line = validate_line state view in
-              let tok = render_source_directive ~mals ~path ~line ~col:None in
+              let tok = render_source_directive ~mals ~path ~line ~indent:None ~omit:None in
               accept_source_directive tok view t
             )
           );
@@ -3310,12 +3424,12 @@ module Dfa = struct
         edges1=map_of_cps_alist [
           ("_", (fun state view t -> advance (State_src_directive_line_colon state) view t));
           ("0", (fun {mals; path; line} view t ->
-              advance (State_src_directive_col_0 (State.Src_directive_col_0.init ~mals ~path ~line))
-                view t));
+              advance (State_src_directive_indent_0 (State.Src_directive_indent_0.init ~mals ~path
+                  ~line)) view t));
           ("123456789", (fun {mals; path; line} (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_src_directive_col (State.Src_directive_col.init ~mals ~path ~line
-                  ~col_cursor:pcursor ~col:digit)) view t));
+              advance (State_src_directive_indent (State.Src_directive_indent.init ~mals ~path ~line
+                  ~indent_cursor:pcursor ~indent:digit)) view t));
           ("]", (fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
@@ -3332,38 +3446,51 @@ module Dfa = struct
         );
       }
 
-    let node1_col =
-      let open State.Src_directive_col in
+    let node1_indent =
+      let open State.Src_directive_indent in
       {
         edges1=map_of_cps_alist [
-          ("_", (fun state view t -> advance (State_src_directive_col state) view t));
+          ("_", (fun state view t -> advance (State_src_directive_indent state) view t));
           (dec_cps, (fun state (View.{pcursor; _} as view) t ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_src_directive_col (state |> col_accum digit)) view t
+              advance (State_src_directive_indent (state |> indent_accum digit)) view t
             )
           );
-          ("]", (fun {mals; path; line; col_cursor; col} ({pcursor; _} as view) t ->
-              let mals, col = match Nat.(col > max_abs_i64) with
-                | false -> mals, Some col
+          ("+", (fun {mals; path; line; indent_cursor; indent} ({pcursor; _} as view) t ->
+              let mals = match Nat.(indent % k_4 = k_0) with
+                | true -> mals
+                | false -> begin
+                    let mal = malformation ~base:indent_cursor ~past:pcursor
+                        "Indentation is not a multiple of 4" in
+                    (mal :: mals)
+                  end
+              in
+              let mals, indent = match Nat.(indent > max_abs_i64) with
+                | false -> mals, Some indent
                 | true -> begin
                     let description =
                       String.Fmt.empty
-                      |> Fmt.fmt "Column exceeds "
+                      |> Fmt.fmt "Indentation exceeds "
                       |> Nat.fmt ~alt:true Nat.max_abs_i64
                       |> Fmt.to_string
                     in
-                    let mal = malformation ~base:col_cursor ~past:pcursor description in
+                    let mal = malformation ~base:indent_cursor ~past:pcursor description in
                     (mal :: mals), None
                   end
               in
-              let tok = render_source_directive ~mals ~path ~line ~col in
-              accept_source_directive tok view t
+              advance (State_src_directive_indent_plus (State.Src_directive_indent_plus.init ~mals
+                  ~path ~line ~indent)) view t
+            )
+          );
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
             )
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_col (state |> mals_accum mal)) view t
+          advance (State_src_directive_indent (state |> mals_accum mal)) view t
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
@@ -3371,20 +3498,113 @@ module Dfa = struct
         );
       }
 
-    let node1_col_0 =
-      let open State.Src_directive_col_0 in
+    let node1_indent_0 =
+      let open State.Src_directive_indent_0 in
       {
         edges1=map_of_cps_alist [
-          ("_", (fun state view t -> advance (State_src_directive_col_0 state) view t));
-          ("]", (fun {mals; path; line} view t ->
-              let tok = render_source_directive ~mals ~path ~line ~col:(Some Nat.k_0) in
+          ("_", (fun state view t -> advance (State_src_directive_indent_0 state) view t));
+          ("+", (fun {mals; path; line} view t ->
+              advance (State_src_directive_indent_plus (State.Src_directive_indent_plus.init ~mals
+                  ~path ~line ~indent:(Some Nat.k_0))) view t
+            )
+          );
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_indent_0 (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_indent_plus =
+      let open State.Src_directive_indent_plus in
+      {
+        edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_indent_plus state) view t));
+          ("0", (fun {mals; path; line; indent} view t ->
+              advance (State_src_directive_omit_0 (State.Src_directive_omit_0.init ~mals ~path
+                  ~line ~indent)) view t));
+          ("123456789", (fun {mals; path; line; indent} (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_omit (State.Src_directive_omit.init ~mals ~path ~line
+                  ~indent ~omit_cursor:pcursor ~omit:digit)) view t));
+          ("]", (fun {mals; _} {pcursor; cursor; _} t ->
+              let mal = unexpected_codepoint_source_directive pcursor cursor in
+              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_indent_plus (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_omit =
+      let open State.Src_directive_omit in
+      {
+        edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_omit state) view t));
+          (dec_cps, (fun state (View.{pcursor; _} as view) t ->
+              let digit = nat_of_cp (Source.Cursor.rget pcursor) in
+              advance (State_src_directive_omit (state |> omit_accum digit)) view t
+            )
+          );
+          ("]", (fun {mals; path; line; indent; omit_cursor; omit} ({pcursor; _} as view) t ->
+              let mals, omit = match Nat.(omit > max_abs_i64) with
+                | false -> mals, Some omit
+                | true -> begin
+                    let description =
+                      String.Fmt.empty
+                      |> Fmt.fmt "Omitted columns exceeds "
+                      |> Nat.fmt ~alt:true Nat.max_abs_i64
+                      |> Fmt.to_string
+                    in
+                    let mal = malformation ~base:omit_cursor ~past:pcursor description in
+                    (mal :: mals), None
+                  end
+              in
+              let tok = render_source_directive ~mals ~path ~line ~indent ~omit in
               accept_source_directive tok view t
             )
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_col_0 (state |> mals_accum mal)) view t
+          advance (State_src_directive_omit (state |> mals_accum mal)) view t
+        );
+        eoi1=(fun {mals; _} {cursor; _} t ->
+          let mal = unterminated_source_directive t.tok_base cursor in
+          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+        );
+      }
+
+    let node1_omit_0 =
+      let open State.Src_directive_omit_0 in
+      {
+        edges1=map_of_cps_alist [
+          ("_", (fun state view t -> advance (State_src_directive_omit_0 state) view t));
+          ("]", (fun {mals; path; line; indent} view t ->
+              let tok = render_source_directive ~mals ~path ~line ~indent ~omit:(Some Nat.k_0) in
+              accept_source_directive tok view t
+            )
+          );
+        ];
+        default1=(fun state ({pcursor; cursor; _} as view) t ->
+          let mal = unexpected_codepoint_source_directive pcursor cursor in
+          advance (State_src_directive_omit_0 (state |> mals_accum mal)) view t
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
@@ -3428,15 +3648,15 @@ module Dfa = struct
       (* Compute level an alignement such that the misaligned cases rounded to the nearest level.
       *)
       let level, alignment = match col / 4L, col % 4L with
-        | floor_level, 0L -> floor_level, Aligned
-        | floor_level, 1L -> floor_level, Misaligned
-        | floor_level, 2L -> floor_level, Continued
-        | floor_level, 3L -> succ floor_level, Misaligned
+        | floor_level, 0L -> Level.update floor_level t.level, Aligned
+        | floor_level, 1L -> Level.update floor_level t.level, Misaligned
+        | floor_level, 2L -> Level.update floor_level t.level, Continued
+        | floor_level, 3L -> Level.update (succ floor_level) t.level, Misaligned
         | _ -> not_reached ()
       in
-      let level_change = match Uns.cmp t.level level with
+      let level_change = match Level.cmp t.level level with
         | Lt -> begin
-            match succ t.level = level with
+            match Level.(=) (Level.succ t.level) level with
             | true -> Level_indent
             | false -> Level_excess_indent
           end
@@ -3464,7 +3684,7 @@ module Dfa = struct
       (* New expression at higher level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
         accept_dentation (tok_missing_indent cursor) cursor
-          {t with level=succ t.level; block_state=Block_nonempty; line_state=Line_body}
+          {t with level=Level.succ t.level; block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
         accept_dentation tok_indent cursor {t with level; line_state=Line_body}
 
@@ -3473,13 +3693,13 @@ module Dfa = struct
         (Aligned|Continued) -> not_reached ()
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
         (Aligned|Continued) ->
-        accept_dentation tok_dedent cursor {t with level=pred t.level}
+        accept_dentation tok_dedent cursor {t with level=Level.pred t.level}
 
       (* Misaligned at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
         not_reached ()
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
-        accept_dentation (tok_missing_dedent cursor) cursor {t with level=pred t.level}
+        accept_dentation (tok_missing_dedent cursor) cursor {t with level=Level.pred t.level}
 
       (* Misaligned at current level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
@@ -3494,12 +3714,12 @@ module Dfa = struct
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_excess_indent,
         (Aligned|Continued|Misaligned) ->
         accept_dentation (tok_missing_indent cursor) cursor
-          {t with level=succ t.level; block_state=Block_nonempty}
+          {t with level=Level.succ t.level; block_state=Block_nonempty}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _),
         Level_excess_indent, (Aligned|Continued|Misaligned) ->
-        accept_dentation (tok_missing_indent cursor) cursor {t with level=succ t.level}
+        accept_dentation (tok_missing_indent cursor) cursor {t with level=Level.succ t.level}
 
       | _, Line_body, _, _ -> not_reached ()
 
@@ -3552,10 +3772,11 @@ module Dfa = struct
       ];
       default0=other_excl ~retry_state:State_start;
       eoi0=(fun view t ->
-        match t.line_state, t.level with
+        match t.line_state, Level.level t.level with
         | (Line_begin|Line_whitespace|Line_start_col _), 0L -> accept_incl Tok_end_of_input view t
         | (Line_begin|Line_whitespace|Line_start_col _), t_level ->
-          accept_incl (Tok_dedent (Constant ())) view {t with level=Uns.pred t_level}
+          accept_incl (Tok_dedent (Constant ())) view {t with level=Level.update (pred t_level)
+            t.level}
         | _ -> not_reached ()
       );
     }
@@ -3980,7 +4201,6 @@ module Dfa = struct
     | State_semi -> act0 trace node0_semi view t
     | State_lparen -> act0 trace node0_lparen view t
     | State_lbrack -> act0 trace node0_lbrack view t
-    | State_lcurly -> act0 trace node0_lcurly view t
     | State_bslash -> act0 trace node0_bslash view t
     | State_tilde -> act0 trace node0_tilde view t
     | State_qmark -> act0 trace node0_qmark view t
@@ -4047,8 +4267,11 @@ module Dfa = struct
     | State_src_directive_path_colon v -> act1 trace SrcDirective.node1_path_colon v view t
     | State_src_directive_line v -> act1 trace SrcDirective.node1_line v view t
     | State_src_directive_line_colon v -> act1 trace SrcDirective.node1_line_colon v view t
-    | State_src_directive_col v -> act1 trace SrcDirective.node1_col v view t
-    | State_src_directive_col_0 v -> act1 trace SrcDirective.node1_col_0 v view t
+    | State_src_directive_indent v -> act1 trace SrcDirective.node1_indent v view t
+    | State_src_directive_indent_0 v -> act1 trace SrcDirective.node1_indent_0 v view t
+    | State_src_directive_indent_plus v -> act1 trace SrcDirective.node1_indent_plus v view t
+    | State_src_directive_omit v -> act1 trace SrcDirective.node1_omit v view t
+    | State_src_directive_omit_0 v -> act1 trace SrcDirective.node1_omit_0 v view t
     | State_dentation_start -> act0 trace Dentation.node0_start view t
     | State_dentation_lparen -> act0 trace Dentation.node0_lparen view t
     | State_dentation_space -> act0 trace Dentation.node0_space view t
