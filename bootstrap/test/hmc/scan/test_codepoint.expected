@@ -37,8 +37,7 @@
 ``'\
 
 ``
-  [1:0..1:1) : <Tok_tick>
-  [1:1..2:0) : <Tok_whitespace>
+  [1:0..2:0) : <Tok_codepoint=Malformed ["[1:0..2:0): Unterminated codepoint literal"; "[1:1..2:0): Illegal backslash escape"]>
   [2:0..2:0) : <Tok_end_of_input>
 ``' a``
   [1:0..1:1) : <Tok_tick>

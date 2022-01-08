@@ -1828,7 +1828,6 @@ module State = struct
     | State_semi
     | State_lparen
     | State_lbrack
-    | State_bslash
     | State_tilde
     | State_qmark
     | State_star
@@ -1900,9 +1899,7 @@ module State = struct
     | State_dentation_start
     | State_dentation_lparen
     | State_dentation_space
-    | State_dentation_bslash
     | State_whitespace
-    | State_whitespace_bslash
     | State_hash_comment
     | State_codepoint_tick
     | State_codepoint_bslash of Codepoint_bslash.t
@@ -1925,7 +1922,6 @@ module State = struct
     | State_semi -> formatter |> Fmt.fmt "State_semi"
     | State_lparen -> formatter |> Fmt.fmt "State_lparen"
     | State_lbrack -> formatter |> Fmt.fmt "State_lbrack"
-    | State_bslash -> formatter |> Fmt.fmt "State_bslash"
     | State_tilde -> formatter |> Fmt.fmt "State_tilde"
     | State_qmark -> formatter |> Fmt.fmt "State_qmark"
     | State_star -> formatter |> Fmt.fmt "State_star"
@@ -2018,9 +2014,7 @@ module State = struct
     | State_dentation_start -> formatter |> Fmt.fmt "State_dentation_start"
     | State_dentation_lparen -> formatter |> Fmt.fmt "State_dentation_lparen"
     | State_dentation_space -> formatter |> Fmt.fmt "State_dentation_space"
-    | State_dentation_bslash -> formatter |> Fmt.fmt "State_dentation_bslash"
     | State_whitespace -> formatter |> Fmt.fmt "State_whitespace"
-    | State_whitespace_bslash -> formatter |> Fmt.fmt "State_whitespace_bslash"
     | State_hash_comment -> formatter |> Fmt.fmt "State_hash_comment"
     | State_codepoint_tick -> formatter |> Fmt.fmt "State_codepoint_tick"
     | State_codepoint_bslash v ->
@@ -2216,7 +2210,7 @@ module Dfa = struct
         ("]", accept_incl Tok_rbrack);
         ("{", accept_incl Tok_lcurly);
         ("}", accept_incl Tok_rcurly);
-        ("\\", advance State_bslash);
+        ("\\", accept_incl Tok_bslash);
         ("&", accept_incl Tok_amp);
         ("!", accept_incl Tok_xmark);
         ("\n", accept_line_break_incl Tok_whitespace);
@@ -2284,14 +2278,6 @@ module Dfa = struct
     ];
     default0=accept_excl Tok_lbrack;
     eoi0=accept_incl Tok_lbrack;
-  }
-
-  let node0_bslash = {
-    edges0=map_of_cps_alist [
-      ("\n", advance State_whitespace);
-    ];
-    default0=accept_excl Tok_bslash;
-    eoi0=accept_incl Tok_bslash;
   }
 
   let node0_tilde = {
@@ -3743,11 +3729,6 @@ module Dfa = struct
     let accept_whitespace_excl View.{pcursor; _} t =
       accept_whitespace pcursor t
 
-    let accept_whitespace_pexcl ~retry_state (View.{ppcursor; _} as view) t =
-      match Source.Cursor.(t.tok_base < ppcursor) with
-      | false -> other_pexcl ~retry_state view t
-      | true -> accept_whitespace ppcursor t
-
     let advance ?line_state state view t =
       let t' = match line_state with
         | None -> t
@@ -3760,7 +3741,6 @@ module Dfa = struct
         (" ", advance State_dentation_space);
         ("#", advance ~line_state:Line_body State_hash_comment);
         ("(", advance State_dentation_lparen);
-        ("\\", advance State_dentation_bslash);
         ("\n", (fun view t ->
             match t.line_state with
             | Line_begin -> accept_incl Tok_whitespace view t
@@ -3804,48 +3784,20 @@ module Dfa = struct
     let node0_space = {
       edges0=map_of_cps_alist [
         (" ", advance State_dentation_space);
-        ("\\", advance State_dentation_bslash);
         ("\n", accept_line_break_incl Tok_whitespace);
       ];
       default0=accept_whitespace_excl;
       eoi0=accept_whitespace_incl;
-    }
-
-    let node0_bslash = {
-      edges0=map_of_cps_alist [
-        ("\n", (fun (View.{ppcursor; _} as view) t ->
-            match t.line_state with
-            | Line_begin -> begin
-                let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
-                advance State_dentation_space view {t with line_state=(Line_start_col col)}
-              end
-            | Line_start_col _ -> advance State_dentation_space view t
-            | Line_whitespace
-            | Line_body -> not_reached ()
-          )
-        );
-      ];
-      default0=accept_whitespace_pexcl ~retry_state:State_bslash;
-      eoi0=accept_whitespace_pexcl ~retry_state:State_bslash;
     }
   end
 
   let node0_whitespace = {
     edges0=map_of_cps_alist [
       (" ", advance State_whitespace);
-      ("\\", advance State_whitespace_bslash);
       ("\n", accept_line_break_incl Tok_whitespace);
     ];
     default0=accept_excl Tok_whitespace;
     eoi0=accept_incl Tok_whitespace;
-  }
-
-  let node0_whitespace_bslash = {
-    edges0=map_of_cps_alist [
-      ("\n", advance State_whitespace);
-    ];
-    default0=accept_pexcl Tok_whitespace;
-    eoi0=accept_excl Tok_whitespace;
   }
 
   let node0_hash_comment = {
@@ -3897,7 +3849,6 @@ module Dfa = struct
               advance (State_codepoint_cp (State.Codepoint_cp.init ~cp)) view t
             )
           );
-          ("\n", (fun _state view t -> accept_pexcl Tok_tick view t));
         ];
         default1=(fun {bslash_cursor} (View.{cursor; _} as view) t ->
           let mal = illegal_backslash bslash_cursor cursor in
@@ -4201,7 +4152,6 @@ module Dfa = struct
     | State_semi -> act0 trace node0_semi view t
     | State_lparen -> act0 trace node0_lparen view t
     | State_lbrack -> act0 trace node0_lbrack view t
-    | State_bslash -> act0 trace node0_bslash view t
     | State_tilde -> act0 trace node0_tilde view t
     | State_qmark -> act0 trace node0_qmark view t
     | State_star -> act0 trace node0_star view t
@@ -4275,9 +4225,7 @@ module Dfa = struct
     | State_dentation_start -> act0 trace Dentation.node0_start view t
     | State_dentation_lparen -> act0 trace Dentation.node0_lparen view t
     | State_dentation_space -> act0 trace Dentation.node0_space view t
-    | State_dentation_bslash -> act0 trace Dentation.node0_bslash view t
     | State_whitespace -> act0 trace node0_whitespace view t
-    | State_whitespace_bslash -> act0 trace node0_whitespace_bslash view t
     | State_hash_comment -> act0 trace node0_hash_comment view t
     | State_codepoint_tick -> act0 trace Codepoint_.node0_tick view t
     | State_codepoint_bslash v -> act1 trace Codepoint_.node1_bslash v view t

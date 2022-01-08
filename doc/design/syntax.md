@@ -54,34 +54,25 @@ Hemlock takes a comparatively simple approach to avoid some of the pitfalls ment
 - Block indentation is four columns.
 - Expression continuation indentation is two columns. One-column and three-column indentation are
   *always* invalid, which eliminates undetected off-by-one errors.
-- The raw `'\n'` at the end of a line is treated as non-breaking whitespace if immediately preceded
-  by a `'\\'`. This acts as an escape hatch which allows arbitrary continuation indentation.
 - Lines comprising only comments and/or whitespace are ignored.
 - Consecutive expressions at the same indentation are distinct expressions.
 
 Automated formatting only needs to perform a few actions:
 
-- Wrap lines that exceed 100 columns if at all possible without changing the token stream.
 - Strip extraneous trailing whitespace, including any `'\n'` codepoints following the last token.
-- Dense expression wrapping can be used to enforce uniform coding style.
+- Replace multi-space separation between tokens with single spaces.
+- Densely rewrap lines that exceed 100 columns, but make no effort to split tokens which exceed 100
+  columns even when placed alone on a line.
 
-  + Replace multi-space separation between tokens with single spaces.
-  + Remove `'\\'` continuation.
-  + Wrap lines that exceed 100 columns, with the exception that no effort is made to reformat tokens
-    which start a line and exceed 100 columns.
+With autoformatting done, there are limited significant formatting style considerations, e.g.:
 
-  This is Hemlock's answer to endless coding style debate, but it is a draconian approach, and
-  therefore opt-in. In the absence of automated dense expression wrapping, code formatting style
-  guidelines are pretty minimal.
-
-  + Wrap expressions such that lines do not exceed 100 columns if possible. (Don't bother with
-    heroics such as string literal splitting unless it makes the code more readable.)
-  + Prefer to densely wrap long expressions unless sparser wrapping significantly improves
-    readability.
-  + Use block indentation of subexpressions for long expressions rather than dense wrapping when
-    doing so improves readability.
-  + Use additional inter-token alignment spacing only if it significantly improves readability.
-  + Use `'\\'` continuation sparingly, if at all.
+- Use block indentation of subexpressions for long expressions rather than dense wrapping when doing
+  so improves readability.
+- Use block indentation when its absence would cause confusion, e.g. non-trivial pattern match
+  actions.
+- Prefer to omit `(...)` delimiters when they do not increase code clarity.
+- Prefer to order named parameters such that non-trivial `fn` expressions come last and use block
+  indentation for their bodies.
 
 ## Tokens
 
@@ -600,10 +591,6 @@ directives provide a mechanism for setting the path, line, block indentation, an
 embedded source. Although the scanner accepts source directive tokens much as any other token, the
 main purpose of such tokens is to affect scanner state, and the parser ignores them.
 
-A source directive specifies the position of the codepoint immediately following the directive, even
-if it is a newline. Furthermore a source directive specifies block indentation of the first line,
-which allows what would otherwise be malformed indentation transitions between sources.
-
 Source directives are delimited by `[:`...`]` and comprise optional colon-separated ordered
 parameters, matched by `\[:<path>[:<line>[:<indent>+<omit>]]|:<line>[:<indent>+<omit>]|:\]`:
 
@@ -615,8 +602,14 @@ parameters, matched by `\[:<path>[:<line>[:<indent>+<omit>]]|:<line>[:<indent>+<
 - `<omit>`: `_*[0-9][0-9_]*`, constrained to the range of `int`, defaults to 0, specifies number of
   codepoints omitted past `<indent>` column, i.e. `<indent>+<omit>` is the starting column
 
-If all parameters are absent (`[:]`), the directive resets the source to the primary source and
-restores the indentation to its value at the preceding source directive.
+Every directive resets the source to the primary source and restores the indentation to its value at
+the previous source directive, because the source directive itself naturally originates in the
+primary source. An empty source directive, `[:]`, has no other effect, but a non-empty source
+directive:
+
+- sets the position of the codepoint immediately following the directive, even if it is a newline
+- set specifies block indentation of the first line, which allows what would otherwise be malformed
+  indentation transitions between sources
 
 ```hemlock
 [:"Foo.hm":42:8+13]

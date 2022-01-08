@@ -81,15 +81,17 @@ let test () =
   contextualize {|x = 42|} 1L 2L;
   contextualize {|x = 42|} 4L 4L;
   contextualize {|[:"Foo.hm"]x = 42|} 1L 1L;
-  contextualize {|[:"Foo.hm"]\
+  contextualize {|[:"Foo.hm"]
 x =
-    42|} 2L 2L;
-  contextualize {|[:"Foo.hm"]\
+    42|} 3L 3L;
+  contextualize {|[:"Foo.hm"]
 x =
-    42|} 2L 5L;
-  contextualize {|[:"Foo.hm"]\
+    42|} 3L 6L;
+  contextualize {|[:"Foo.hm"]
 x =[:"Bar.hm"]
-    42 + 13|} 2L 9L(*XXX Enable;
+    42 + 13|} 3L 10L
+(*XXX Enable once interpolated string scanning is functional.
+  ;
 
   contextualize {|accept parser =
     let node, parser' = [...]

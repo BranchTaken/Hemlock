@@ -54,26 +54,16 @@ a
         e
         f|};
   scan_str {|a
-    \
-b
+    b
     c|};
-  scan_str {|\
-    a
-    \
-b
-    c \
-    d|};
-  scan_str {|\
-    a\
-    b \
-    c
+  scan_str {|a
+    b
+    c d|};
+  scan_str {|a b c
     d|};
   scan_str "\t|";
   scan_str "  ";
   scan_str "\n  \n";
-  scan_str "\\\n";
-  scan_str "\\\na";
-  scan_str "\\\n\\\na";
   scan_str {|# a
 b
     c
@@ -113,8 +103,7 @@ g
   scan_str {|a
     b
 (* Ignore. *) (*
- ... *) \
-# ...
+ ... *) # ...
     c
 |};
   scan_str {|a
@@ -125,8 +114,7 @@ g
   scan_str {|a
     b
 (* Don't ignore. *) (* ...
- *) \
- true
+ *) true
     c
 |};
   scan_str {|a
@@ -383,6 +371,14 @@ a
   (* EOI. *)
   scan_str {|(|};
   scan_str {|    |};
-  scan_str {|\|}
+
+  (* Errors *)
+  scan_str "a
+    b
+\tc";
+  scan_str "a
+    b
+        c
+\td"
 
 let _ = test ()
