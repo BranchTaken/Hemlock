@@ -2542,15 +2542,15 @@ module Dfa = struct
     let accept_zero_pexcl View.{ppcursor; _} t =
       accept_zero ppcursor t
 
-    let accept_mal_indent cursor t =
+    let accept_mal_ident cursor t =
       let mal = malformed (invalid_numerical t.tok_base cursor) in
       accept (Tok_uident mal) cursor t
 
-    let accept_mal_indent_incl View.{cursor; _} t =
-      accept_mal_indent cursor t
+    let accept_mal_ident_incl View.{cursor; _} t =
+      accept_mal_ident cursor t
 
-    let accept_mal_indent_excl View.{pcursor; _} t =
-      accept_mal_indent pcursor t
+    let accept_mal_ident_excl View.{pcursor; _} t =
+      accept_mal_ident pcursor t
 
     let node0_0 = {
       edges0=map_of_cpsets_alist [
@@ -2598,8 +2598,8 @@ module Dfa = struct
           (Set.diff (cpset_of_cps ident_cps) (Set.union (cpset_of_cps "_") (cpset_of_cps base_cps)),
             advance State_integer_mal_ident);
         ];
-        default0=accept_mal_indent_excl;
-        eoi0=accept_mal_indent_incl;
+        default0=accept_mal_ident_excl;
+        eoi0=accept_mal_ident_incl;
       }
     let node0_0b = node0_0box ~base_cps:bin_cps ~state:State_integer_0b
         ~state_base_init:(fun n -> State_integer_bin (State.Integer_bin.init ~n))
@@ -2798,8 +2798,8 @@ module Dfa = struct
       edges0=map_of_cps_alist [
         (ident_cps, advance State_integer_mal_ident);
       ];
-      default0=accept_mal_indent_excl;
-      eoi0=accept_mal_indent_incl;
+      default0=accept_mal_ident_excl;
+      eoi0=accept_mal_ident_incl;
     }
   end
 
