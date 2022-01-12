@@ -1,0 +1,10 @@
+bits_to_zint/like_to_zint_opt 0x0n -> 0x0z/Some 0x0z
+bits_to_zint/like_to_zint_opt 0x1n -> 0x1z/Some 0x1z
+bits_to_zint/like_to_zint_opt 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffn -> 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffz/Some 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffz
+bits_to_zint/like_to_zint_opt 0x8000_0000_0000_0000_0000_0000_0000_0000n -> -0x8000_0000_0000_0000_0000_0000_0000_0000z/Some 0x8000_0000_0000_0000_0000_0000_0000_0000z
+
+bits_of_zint/like_of_zint_opt -0xffff_ffff_ffff_ffff_ffffz -> 0xffff_ffff_ffff_0000_0000_0000_0000_0001n/None
+bits_of_zint/like_of_zint_opt -0x1z -> 0xffff_ffff_ffff_ffffn/None
+bits_of_zint/like_of_zint_opt 0x0z -> 0x0n/Some 0x0
+bits_of_zint/like_of_zint_opt 0x1z -> 0x1n/Some 0x1
+bits_of_zint/like_of_zint_opt 0xffff_ffff_ffff_ffff_ffffz -> 0xffff_ffff_ffff_ffff_ffffn/Some 0xffff_ffff_ffff_ffff_ffff

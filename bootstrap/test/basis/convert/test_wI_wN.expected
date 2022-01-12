@@ -1,0 +1,13 @@
+widen_to_nat_opt -0x8000_0000_0000_0000_0000_0000_0000_0000i128 -> None
+widen_to_nat_opt -0x1i128 -> None
+widen_to_nat_opt 0x0i128 -> Some 0x0n
+widen_to_nat_opt 0x1i128 -> Some 0x1n
+widen_to_nat_opt 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi128 -> Some 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffn
+
+trunc_of_nat/narrow_of_nat_opt 0x0n -> 0x0i128/Some 0x0i128
+trunc_of_nat/narrow_of_nat_opt 0x1n -> 0x1i128/Some 0x1i128
+trunc_of_nat/narrow_of_nat_opt 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffn -> 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi128/Some 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffffi128
+trunc_of_nat/narrow_of_nat_opt 0x8000_0000_0000_0000_0000_0000_0000_0000n -> -0x8000_0000_0000_0000_0000_0000_0000_0000i128/None
+trunc_of_nat/narrow_of_nat_opt 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffn -> -0x1i128/None
+trunc_of_nat/narrow_of_nat_opt 0x1_0000_0000_0000_0000_0000_0000_0000_0000n -> 0x0i128/None
+trunc_of_nat/narrow_of_nat_opt 0x1_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffn -> -0x1i128/None

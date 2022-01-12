@@ -1,9 +1,19 @@
 (* 256-bit unsigned integer.
 
-    See {!module:ConvertIntf} for documentation on conversion functions. *)
+   See {!module:ConvertIntf} for documentation on conversion functions. *)
 
 type t
 include IntwIntf.SFU with type t := t
+
+val trunc_of_zint: Zint.t -> t
+val extend_to_zint: t -> Zint.t
+val narrow_of_zint_opt: Zint.t -> t option
+val narrow_of_zint_hlt: Zint.t -> t
+
+val trunc_of_nat: Nat.t -> t
+val extend_to_nat: t -> Nat.t
+val narrow_of_nat_opt: Nat.t -> t option
+val narrow_of_nat_hlt: Nat.t -> t
 
 val trunc_of_i512: I512.t -> t
 val extend_to_i512: t -> I512.t

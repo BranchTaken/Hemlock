@@ -1,0 +1,11 @@
+extend_to_zint 0u128 -> 0z
+extend_to_zint 1u128 -> 1z
+extend_to_zint 127u128 -> 127z
+extend_to_zint 128u128 -> 128z
+extend_to_zint 255u128 -> 255z
+
+trunc_of_zint/narrow_of_zint_opt -0x1z -> 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128/None
+trunc_of_zint/narrow_of_zint_opt 0x0z -> 0x0u128/Some 0u128
+trunc_of_zint/narrow_of_zint_opt 0x1z -> 0x1u128/Some 1u128
+trunc_of_zint/narrow_of_zint_opt 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffz -> 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffu128/Some 340_282_366_920_938_463_463_374_607_431_768_211_455u128
+trunc_of_zint/narrow_of_zint_opt 0x1_0000_0000_0000_0000_0000_0000_0000_0000z -> 0x0u128/None

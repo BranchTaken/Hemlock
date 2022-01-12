@@ -17,6 +17,18 @@ include T
 include Identifiable.Make(T)
 include Cmpable.MakeZero(T)
 
+module UZ = Convert.Make_wU_wZ(T)(Zint)
+let trunc_of_zint = UZ.trunc_of_x
+let extend_to_zint = UZ.extend_to_x
+let narrow_of_zint_opt = UZ.narrow_of_x_opt
+let narrow_of_zint_hlt = UZ.narrow_of_x_hlt
+
+module UN = Convert.Make_wU_wN(T)(Nat)
+let trunc_of_nat = UN.trunc_of_u
+let extend_to_nat = UN.extend_to_u
+let narrow_of_nat_opt = UN.narrow_of_u_opt
+let narrow_of_nat_hlt = UN.narrow_of_u_hlt
+
 module UX512 = Convert.Make_wU_wX(T)(I512)
 let trunc_of_i512 = UX512.trunc_of_x
 let extend_to_i512 = UX512.extend_to_x

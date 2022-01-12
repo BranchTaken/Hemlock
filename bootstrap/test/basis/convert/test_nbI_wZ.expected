@@ -1,0 +1,13 @@
+extend_to_zint -32_768i16 -> -32_768z
+extend_to_zint -1i16 -> -1z
+extend_to_zint 0i16 -> 0z
+extend_to_zint 1i16 -> 1z
+extend_to_zint 32_767i16 -> 32_767z
+
+trunc_of_zint/narrow_of_zint_opt -32_769z -> 32_767i16/None
+trunc_of_zint/narrow_of_zint_opt -32_768z -> -32_768i16/Some -32_768i16
+trunc_of_zint/narrow_of_zint_opt -1z -> -1i16/Some -1i16
+trunc_of_zint/narrow_of_zint_opt 0z -> 0i16/Some 0i16
+trunc_of_zint/narrow_of_zint_opt 1z -> 1i16/Some 1i16
+trunc_of_zint/narrow_of_zint_opt 32_767z -> 32_767i16/Some 32_767i16
+trunc_of_zint/narrow_of_zint_opt 32_768z -> -32_768i16/None
