@@ -79,19 +79,19 @@ add-highlighter shared/hemlock/code/oct_integer regex \b(0o)([_]*[0-7][0-7_]*)((
 add-highlighter shared/hemlock/code/hex_integer regex \b(0x)([_]*[0-9a-f][0-9a-f_]*)(([ui](8|16|32|64|128|256|512)?)|[zn])?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/integer regex \b(([1-9][0-9_]*)|0[_]*)(([ui](8|16|32|64|128|256|512)?)|[zn])?\b 1:value 3:attribute
 
-add-highlighter shared/hemlock/code/bin_real_dot regex \b(0b)([01][01_]*\.[01_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
+add-highlighter shared/hemlock/code/bin_real_dot regex \b(0b)([01][01_]*\.(?!\.)[01_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/bin_real_p regex \b(0b)([01][01_]*p_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/bin_real_r regex \b(0b)([01][01_]*)(r(32|64)?)\b 1:attribute 2:value 3:attribute
 
-add-highlighter shared/hemlock/code/oct_real_dot regex \b(0o)([0-7][0-7_]*\.[0-7_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
+add-highlighter shared/hemlock/code/oct_real_dot regex \b(0o)([0-7][0-7_]*\.(?!\.)[0-7_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/oct_real_p regex \b(0o)([0-7][0-7_]*p_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/oct_real_r regex \b(0o)([0-7][0-7_]*)(r(32|64)?)\b 1:attribute 2:value 3:attribute
 
-add-highlighter shared/hemlock/code/hex_real_dot regex \b(0x)([0-9a-f][0-9a-f_]*\.[0-9a-f_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
+add-highlighter shared/hemlock/code/hex_real_dot regex \b(0x)([0-9a-f][0-9a-f_]*\.(?!\.)[0-9a-f_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/hex_real_p regex \b(0x)([0-9a-f][0-9a-f_]*p_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/hex_real_r regex \b(0x)([0-9a-f][0-9a-f_]*)(r(32|64)?)\b 1:attribute 2:value 3:attribute
 
-add-highlighter shared/hemlock/code/real_dot regex \b([0-9][0-9_]*\.[0-9_]*(e_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:value 2:attribute
+add-highlighter shared/hemlock/code/real_dot regex \b([0-9][0-9_]*\.(?!\.)[0-9_]*(e_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:value 2:attribute
 add-highlighter shared/hemlock/code/real_e regex \b([0-9][0-9_]*e_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:value 2:attribute
 add-highlighter shared/hemlock/code/real_r regex \b([0-9][0-9_]*)(r(32|64)?)\b 1:value 2:attribute
 
