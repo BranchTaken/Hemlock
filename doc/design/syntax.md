@@ -15,65 +15,85 @@ substitutions. Such replacements of invalid encoding are silently ignored inside
 explicitly cause scanning errors if inside codepoint/string literals, and elsewhere they result in
 error tokens which cause parsing errors.
 
-## Indentation
+## Dentation
 
-Semantically meaningful indentation has multiple advantages:
+Semantically meaningful {in,de}dentation, dentation for short, has multiple advantages:
 
 - Programmers typically indent code to indicate block structure, in order to streamline human
-  understanding, even if the compiler is oblivious to indentation. Making indentation meaningful
-  reduces the gap between the programmer's mental model and the language semantics.
+  understanding, even if the compiler is oblivious to dentation. Making dentation meaningful reduces
+  the gap between the programmer's mental model and the language semantics.
 - Fewer symbols are required. The omission of lines consisting only of `end` or `}` tends to reduce
-  total number of lines, even as compared with a two-column indentation style. (Hemlock enforces
-  four-column indentation; more on that below.)
+  total number of lines, even as compared with a two-column dentation style. (Hemlock enforces
+  four-column dentation; more on that below.)
 - Automated code formatting tools are brain-dead simple as compared with the near-sentience required
   to implement typical coding styles in many contemporary languages.
-- One of the most effective general heuristics for parser error recovery is to heed indentation and
-  restart parsing at the enclosing indentation level. By mandating proper indentation, error
-  recovery is yet more effective, and it becomes feasible to provide code introspection services
-  even for source files in intermediate editing states.
+- One of the most effective general heuristics for parser error recovery is to heed dentation and
+  restart parsing at the enclosing indentation level. By mandating proper dentation, error recovery
+  is yet more effective, and it becomes feasible to provide code introspection services even for
+  source files in intermediate editing states.
 
-Several other contemporary languages have semantically meaningful indentation, but approaches vary
+Several other contemporary languages have semantically meaningful dentation, but approaches vary
 considerably. The following languages have particularly interesting takes on the problem.
 
-- [Python](https://www.python.org/) is the most widely used language for which indentation is
-  significant, and the rules for what constitutes acceptable indentation are quite flexible. The
+- [Python](https://www.python.org/) is the most widely used language for which dentation is
+  significant, and the rules for what constitutes acceptable dentation are quite flexible. The
   details changed a bit between Python 2 and 3 to reduce ways in which tab width could obscure code
   meaning.
 - [Haskell](https://www.haskell.org/) requires continuation of an expression to be indented more
   than its beginning token. The rules are simple and consistent; the biggest common pitfall is that
   if a multi-line expression starts on a line with preceding tokens that change length, the entire
   expression must be re-indented during refactoring.
-- [F#](https://fsharp.org/) indentation is modeled as an "offside" rule similar to that used in
+- [F#](https://fsharp.org/) dentation is modeled as an "offside" rule similar to that used in
   soccer. Although elegant in concept, this approach motivates an unfortunate set of special cases
   which allow multi-line expressions to be indented "prettily", e.g. with math operators aligned.
 
 Hemlock takes a comparatively simple approach to avoid some of the pitfalls mentioned above:
 
-- Tabs are forbidden in whitespace. (Tabs can be embedded only in string literals and comments.)
-- The first non-whitespace token establishes line indentation.
+- Tabs can be embedded only in raw string literals and comments. This prevents tabs from impacting
+  code structure.
+- The first non-space codepoint on each line establishes its indentation.
 - Block indentation is four columns.
-- Expression continuation indentation is two colums. One-column and three-column indentation are
+- Expression continuation indentation is two columns. One-column and three-column indentation are
   *always* invalid, which eliminates undetected off-by-one errors.
-- The raw `'\n'` at the end of a line is treated as non-breaking whitespace if immediately preceded
-  by a `'\\'`. This acts as an escape hatch which allows arbitrary continuation indentation.
-- Unindented lines comprising only comments and/or whitespace are ignored.
-- Consecutive lines at the same indentation are distinct expressions.
+- Lines comprising only comments and/or whitespace are ignored.
+- Consecutive expressions at the same indentation are distinct expressions.
 
-Automated formatting only needs to perform a few actions:
+Autoformatting only needs to remove excessive whitespace and densely rewrap. With that done, there
+are limited significant formatting style considerations, e.g.:
 
-- Wrap lines that exceed 100 columns if at all possible without changing the token stream.
-- Strip extraneous trailing whitespace, including any `'\n'` codepoints following the last token.
-- Dense wrapping of expressions (as well as removal of `'\\'` continuation) can be used to enforce
-  uniform coding style. This is Hemlock's answer to endless coding style debate, but it is a
-  draconian approach, and therefore opt-in. In the absence of dense wrapping, code formatting style
-  guidelines are pretty minimal.
+- Use block indentation of subexpressions for long expressions rather than dense wrapping when doing
+  so improves readability.
+- Use block indentation when its absence would cause confusion, e.g. non-trivial pattern match
+  actions.
+- Prefer to omit `(...)` delimiters when they do not increase code clarity.
+- Prefer to order named parameters such that non-trivial `fn` expressions come last and use block
+  indentation for their bodies.
 
-  + Wrap expressions such that lines do not exceed 100 columns if possible. (Don't bother with
-    heroics such as string literal splitting unless it makes the code more readable.)
-  + Prefer to densely wrap long expressions unless sparser wrapping significantly improves
-    readability.
-  + Use additional inter-token alignment spacing only if it significantly improves readability.
-  + Use `'\\'` continuation sparingly.
+Additional notes:
+
+- Tabs *can* affect column numbering for code in lines that intersperse raw strings and/or comments.
+  For the purposes of column computation the compiler fixes the tabstops at multiples of eight.
+  There are two useful rules for avoiding confusion:
+  + Don't do that. Raw tabs are rarely necessary, and they *never* need to be used in combination
+    with trailing code on the same line.
+  + Configure the terminal and code editor to use tabstops at multiples of eight. For example, use
+    the following [EditorConfig](https://editorconfig.org/) settings in `~/.editorconfig`.
+    ```
+    [*.{hm,hmi}]
+    indent_style = space
+    indent_size = 4
+    tab_width = 8
+    charset = utf-8
+    end_of_line = lf
+    trim_trailing_whitespace = true
+    insert_final_newline = false
+    ```
+- There are special places in the language syntax for documentation strings, which can be extracted
+  during documentation generation. Such strings are ingested as
+  [Markdown](https://github.github.com/gfm/), and documentation generation could well fail on
+  malformed input. For the purposes of code compilation such strings are opaque, but autoformatting
+  could in principle normalize indentation and wrapping. However the complexity is rather high for a
+  limited payoff.
 
 ## Tokens
 
@@ -94,12 +114,12 @@ Comments have two syntaxes.
 Hemlock uses various symbols as punctuation:
 
 ```hemlock
-. , ; ;; : :: :=
-( ) [ ] [| |] { } {| |}
+. , ; : :: :=
+( ) (| |) [ ] [| |] { }
 | \ ' ^ < <= = <> >= >
 ! &
 ~ ?
-->
+-> ~->
 ```
 
 ### Operator
@@ -110,19 +130,19 @@ prefix or infix, as determined by the leading codepoint.
 - Prefix operator: `[~?][-+*/%@^$<=>|:.~?]+`
 - Infix operator: `[-+*/%@^$<=>|:.][-+*/%@$<=>|:.~?]*` excluding punctuation symbols
 
-### Prececence and associativity
+### Precedence and associativity
 
 Precedence and associativity varies somewhat by use for some punctuation. For example, the
-precedence of `>` is not important when used as a prefix for an effect name binding as in `(>e:
-effect)`, because there are no nearby syntactic elements for which precedence can change how valid
-code is parsed.
+precedence of `>` is not important when used as a prefix for an effect name binding as in
+`>(e:effect)`, because there are no nearby syntactic elements for which precedence can change how
+valid code is parsed.
 
 Type/binding construction:
 
 | Operator      | Associativity |
 | :-----------: | :-----------: |
 | `,`           | —             |
-| `->`          | right         |
+| `->`, `~->`   | right         |
 | `as`          | —             |
 | `!`, `&`      | —             |
 | `'`, `^`, `>` | —             |
@@ -135,7 +155,7 @@ Pattern construction:
 | Variant application | right         |
 | `::`                | right         |
 | `,`                 | —             |
-| `|`                 | left          |
+| `\|`                | left          |
 | `as`                | —             |
 
 Expressions:
@@ -143,7 +163,7 @@ Expressions:
 | Operator                                               | Associativity |
 | :----------------------------------------------------: | :-----------: |
 | `.`                                                    | —             |
-| Function/variant application, `assert`, `lazy`         | left          |
+| Function/variant application, `lazy`                   | left          |
 | `-` (prefix), `~`..., `?`...                           | —             |
 | `'` (prefix), `^` (prefix), `>` (prefix)               | —             |
 | `**`...                                                | right         |
@@ -157,10 +177,10 @@ Expressions:
 | `,`                                                    | —             |
 | `:=`                                                   | right         |
 | `if`                                                   | —             |
-| `;`, `;;`                                              | right         |
+| `;`                                                    | right         |
 | `import`                                               | —             |
 | `open`                                                 | —             |
-| `let`, `match`, `fun`, `function`, `expose`, `conceal` | —             |
+| `let`, `match`, `fn`, `function`, `expose`, `conceal`  | —             |
 
 ### Keyword
 
@@ -168,14 +188,13 @@ The following words are keywords which are used as syntactic elements, and canno
 purposes.
 
 ```hemlock
-and         external    let         true
-also        false       match       type
-as          fun         mutability  val
-assert      function    of          when
-conceal     if          open        with
-effect      import      or
-else        include     rec
-expose      lazy        then
+and         external    lazy        rec
+also        false       let         then
+as          fn          match       true
+conceal     function    mutability  type
+effect      if          of          when
+else        import      open        with
+expose      include     or
 ```
 
 ### Identifier
@@ -213,6 +232,7 @@ depending on optional type suffix:
   + `u128`: Unsigned 128-bit
   + `u256`: Unsigned 256-bit
   + `u512`: Unsigned 512-bit
+  + `n`: Arbitrary-precision 0-inclusive natural (ℕ₀, `nat` type)
 - Signed:
   + `i8`: Signed 8-bit
   + `i16`: Signed 16-bit
@@ -221,6 +241,7 @@ depending on optional type suffix:
   + `i128`: Signed 128-bit
   + `i256`: Signed 256-bit
   + `i512`: Signed 512-bit
+  + `z`: Arbitrary-precision integer (ℤ, `zint` type)
 
 Examples:
 
@@ -319,9 +340,10 @@ Examples:
 Codepoint tokens are delimited by `'` codepoints, and their contents are interpolated for a limited
 set of codepoint sequences.
 - `\u{...}`: Hexadecimal-encoded codepoint, e.g. `\u{fffd}` is the `�` replacement codepoint.
-- `\t`: Tab (`\u{9}`).
-- `\n`: Newline, aka line feed (`\u{a}`).
-- `\r`: Return (`\u{d}`).
+- `\t`: Tab (`\u{9}`). Raw tab codepoints are prohibited.
+- `\n`: Newline, aka line feed (`\u{a}`). Raw newline codepoints are not supported, because `'␤` is
+  considered a whitespace-delimited implicit type parameter sigil.
+- `\r`: Return (`\u{d}`). Raw return codepoints are prohibited.
 - `\'`: Single quote.
 - `\\`: Backslash.
 
@@ -347,56 +369,23 @@ valid prefixes.
 String tokens have three distinct syntaxes, all of which are useful depending on contents and
 context:
 
-- **Raw** strings are delimited by matching `` `([^|`][^`]*)?` `` sequences, where the optional tag
+- **Raw** strings are delimited by matching `` `[A-Za-z0-9_']*` `` sequences, where the optional tag
   between the `` ` `` codepoints can be used to distinguish the delimiters from string contents.
   ```hemlock
   ``Simple raw string``
   `_`String would ``end prematurely`` without a tag`_`
   ```
-  If the raw string begins and/or ends with a `\n`, that codepoint is omitted. This allows raw
-  string delimiters to be on separate lines from the string contents without changing the string.
-  ```hemlock
-  ``Single-line raw string``
-  ``
-  Single-line raw string
-  ``
-  ```
-
-  ```hemlock
-  ``
-
-  Three-line raw string
-
-  ``
-  ```
-- **Bar-margin [raw] strings** are delimited by `` `| `` and a codepoint sequence matching `` ^[ ]*`
-  ``. Each line past the first one is prefixed by enough whitespace to align a `|` with the opening
-  delimiter's `|`. The per line leading whitespace and `|` are omitted from the string; they provide
-  a left margin for the string contents.
-  ```hemlock
-  `|First line
-   |Second line
-  `
-  ```
-  Note that the final `\n` preceding the closing delimiter is itself part of the delimiter and is
-  omitted.
-  ```hemlock
-  `|Single-line bar-margin string
-  `
-  `|Two-line bar-margin string
-   |
-  `
-  ```
 - **Interpolated** strings are delimited by `"` codepoints, and their contents are interpolated for
   a limited set of codepoint sequences.
   ```hemlock
   "Interpolated string without any interpolated sequences"
+  "Interpolated string with \"embedded quotes\" and\na newline"
   ```
   The following codepoint sequences are interpolated as indicated:
   + `\u{...}`: Hexadecimal-encoded codepoint, e.g. `\u{fffd}` is the `�` replacement codepoint.
-  + `\t`: Tab (`\u{9}`).
+  + `\t`: Tab (`\u{9}`). Raw tab codepoints are prohibited.
   + `\n`: Newline, aka line feed (`\u{a}`).
-  + `\r`: Return (`\u{d}`).
+  + `\r`: Return (`\u{d}`). Raw return codepoints are prohibited.
   + `\"`: Double quote.
   + `\\`: Backslash.
   + `\%`: Percent.
@@ -407,15 +396,14 @@ context:
     interpolated string"
     ```
 
-  #### Formatting
-
-  Furthermore, interpolated strings provide syntactic sugar for formatting. Format specifiers
-  support unrestricted embedded code expressions, which means that interpolated strings can
-  nest arbitrarily deeply. The delimiters for embedded expressions are unambiguous relative to all
-  other language syntax, which enables tokenization without parser feedback. The format specifiers
-  include enough explicit type information that desugaring requires no type inference. Nonetheless,
-  the scanner requires considerable sophistication to track nesting and state transitions between
-  the tokens which together logically comprise one interpolated string.
+- **Formatted** strings provide syntactic sugar for formatting. Formatted strings support all the
+  interpolation syntax of interpolated strings, but they additionally contain one or more format
+  specifiers. Format specifiers support unrestricted embedded code expressions, which means that
+  formatted strings can nest arbitrarily deeply. The delimiters for embedded expressions are
+  unambiguous relative to all other language syntax, which enables tokenization without parser
+  feedback. The format specifiers include enough explicit type information that desugaring requires
+  no type inference. Nonetheless, the scanner requires considerable sophistication to track nesting
+  and state transitions between the tokens which together logically comprise one formatted string.
 
   ##### Supported types
 
@@ -425,8 +413,8 @@ context:
   + Numeric types (`uns`, `int`, `[ui](8|16|32|64|128|256|512)`, `nat`, `zint`, `real`, `r(32|64)`)
   + `codepoint`
   + `string`
-  + Partially applied formatter functions of type `(>e:effect) -> Fmt.Formatter e >e-> Fmt.Formatter
-    e`
+  + Partially applied formatter functions of type `>(e:effect) -> t -> Fmt.Formatter e >e->
+    Fmt.Formatter e`, where `t` is the type of the value expression
 
   Composite polymorphic types like `type List 'a: List a` provide formatters which can be composed
   to produce partially applied formatter functions, as shown later.
@@ -436,17 +424,19 @@ context:
   The following example shows how a string containing format specifiers is desugared.
 
   ```hemlock
+  answer = 42
+
   # Formatted string.
-  "Hello %s(^"Fred"^), this is %b(^true^)ly a list: %f(^List.fmt Uns.fmt [0; 1; 2]^)"
+  "Hello %s(^"Fred"^), %u=(^answer^) and this is a list: %f(^List.fmt Uns.fmt^)(^[0; 1; 2]^)"
 
   # Desugared form.
   Basis.String.Fmt.empty
     |> Basis.Fmt.fmt "Hello "
     |> Basis.String.fmt ("Fred")
-    |> Basis.Fmt.fmt ", this is "
-    |> Basis.Bool.fmt (true)
-    |> Basis.Fmt.fmt "ly a list: "
-    |> (List.fmt Uns.fmt [0; 1; 2])
+    |> Basis.Fmt.fmt ", answer="
+    |> Basis.Uns.fmt (answer)
+    |> Basis.Fmt.fmt " and this is a list: "
+    |> (List.fmt Uns.fmt) ([0; 1; 2])
     |> Basis.Fmt.to_string
   ```
 
@@ -459,32 +449,32 @@ context:
   errors in code that follows.
 
   ```hemlock
-      # Formatted string.
-      let s = "4-space indentation, %s(^
-          "8-space indentation, %u(^
-              12
-            ^)-space indentation"
-        ^)."
+  # Formatted string.
+  s = "0-space indentation, %s(^
+      "4-space indentation, %u(^
+          8
+        ^)-space indentation"
+    ^)."
 
-      # Desugared form.
-      let s = Basis.String.Fmt.empty
+  # Desugared form.
+  s = Basis.String.Fmt.empty
+    |> Basis.Fmt.fmt "0-space indentation, "
+    |> Basis.String.fmt (
+      Basis.String.Fmt.empty
         |> Basis.Fmt.fmt "4-space indentation, "
-        |> Basis.String.fmt (
-                Basis.String.Fmt.empty
-                  |> Basis.Fmt.fmt "8-space indentation, "
-                  |> Basis.Uns.fmt (
-                    12
-                  )
-                  |> Basis.Fmt.fmt "-space indentation"
-                  |> Basis.Fmt.to_string
+        |> Basis.Uns.fmt (
+          8
         )
-        |> Basis.Fmt.fmt "."
+        |> Basis.Fmt.fmt "-space indentation"
         |> Basis.Fmt.to_string
+    )
+    |> Basis.Fmt.fmt "."
+    |> Basis.Fmt.to_string
   ```
 
   ##### Syntax
 
-  A format specifier can be embedded in an interpolated string as `%<specifier>(^...^)`. Specifier
+  A format specifier is embedded in a formatted string as `%<specifier>(^...^)`. Specifier
   options are desugared to optional function parameters, e.g. `#` becomes `~alt:true`. Some
   specifiers are only supported by a subset of types, e.g. zero padding will cause a compilation
   error if used with a string value (`"%0s(^"hello"^)"`). Formatter functions, whether those
@@ -494,7 +484,7 @@ context:
 
   Format specifiers are of the form:
   ```
-  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<radix>][<notation>][<pretty>][<type>](^...^)
+  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<radix>][<notation>][<pretty>][<fmt>][<sep>](^...^)
   ```
   + `'<pad>'` (`?pad:codepoint`): Pad with specified codepoint (default: `' '`; complete codepoint
     literal syntax supported)
@@ -511,10 +501,10 @@ context:
       - Octal: `0o` prefix, groups of 3
       - Decimal: No prefix, groups of 3
       - Hexadecimal: `0x` prefix, groups of 4
-    * String: ``` ``raw`` ```, with auto-generated ``` `tag`...`tag` ``` as needed
+    * String (with `<pretty>`): ``` ``raw`` ```, with auto-generated ``` `tag`...`tag` ``` as needed
     * Container types (`list a`, `array a`): Multi-line block-based formatting, where `width` is
       interpreted as the starting indentation
-  + `<zpad>` (`?zpad:bool)`: `0` enables padding numeric type with leading zeros between sign/prefix
+  + `<zpad>` (`?zpad:bool`): `0` enables padding numeric type with leading zeros between sign/prefix
     and non-zero digits (default: `false`)
   + `<width>` (`?width:uns`): Minimum width (default: `0`)
     * `42`: Fixed width in codepoints
@@ -535,59 +525,126 @@ context:
     * `m`: Normalized scientific form, i.e. decimal exponential or binary floating point notation
       (mnemonic: Mantissa × radix <sup>exponent</sup>)
     * `a`: Radix point form (mnemonic: rAdix point)
-    * `c`: Trailing zeros omitted, and the radix point omitted in normalized form unless followed by
-      non-zero mantissa digits (mnemonic: Compact)
-      - Binary/octal/hexadecimal with unspecified precision: Normalized form
-      - Otherwise: The more compact of normalized vs radix point forms
+    * `c`: The more compact of normalized vs radix point forms (mnemonic: Compact)
   + `<pretty>` (`?pretty:bool`): `p` enables pretty-printing as if a lexical token (default:
     `false`)
     * Numeric types: Append type suffix
     * Codepoint: `'c'`, special codepoints escaped
-    * String: `"some string"`, special codepoints escaped
-  + `<type>`: Type abbreviation
+    * String: `"some string"`/``` ``some string`` ```, depending on `<alt>`
+  + `<fmt>`: Formatter to use, designated via type abbreviation or nested expression
     * `b`: `bool` (`%b(^...^)` is unambiguous with respect to e.g. binary-formatted `uns` —
       `%bu(^...^)`)
-    * `[ui](8|16|32|64|128|256|512)?`, `z`, `n`, `r(32|64)?`: Numeric type of corresponding literal
+    * `[ui](8|16|32|64|128|256|512)?`, `n`, `z`, `r(32|64)?`: Numeric type of corresponding literal
       suffix
     * `c`: `codepoint` (`%c(^...^)` is unambiguous with respect to e.g. compact-formatted `real` —
       `%cr(^...^)`)
     * `s`: `string`
-    * `f`: Partially applied formatter of type `(>e:effect) -> Fmt.Formatter e >e-> Fmt.Formatter e`
+    * `f(^...^)`: Partially applied formatter of type `>(e:effect) -> t -> Fmt.Formatter e >e->
+      Fmt.Formatter e`, where `t` is the type of the value expression
+  + `<sep>`: Separator between stringified representation of value and its formatted
+    representation, i.e. `<stringified><sep><repr>`, where `<sep>` matches `[ ]*<infix_op>[ ]*` and
+    `<infix_op>` matches an infix operator
 
   Examples:
 
   ```hemlock
-  "%s(^name^)"
-  "%#xu(^age^)"
-  "%u(^succ age^)"
-  "%pz(^x^)"
-  "%^50f(^List.fmt String.fmt children^)"
-  "%^50f(^List.fmt String.fmt (List.mapi children ~f:(fun i child ->
-      "%u(^succ i^):%s(^child^)"
-    ))^)"
-  "%f(^(List.fmt String.fmt) children^)"
-  "%016#xu(^some_uns^)"
-  "%'␠'^*(^page_width^)s(^title^)\n"
-  "%'␠'^s(^title^)\n"
-  "(%'*'98s(^""^))" # Length-100 "(**...**)" string.
-  "%#xu(^x^) > %#xu(^y^) -> %b(^x > y^)"
-  "%#bu(^x^) %#ou(^x^) %#u(^x^) %#xu(^x^)"
+  "%s(^name^)"                              # "Fred"
+  "%#xu=(^age^)"                            # "age=0x2a"
+  "%u(^succ age^)"                          # "43"
+  "%pz=(^x^)"                               # "x=42z"
+  "%016xu(^some_uns^)"                      # "000000000000002a"
+  "%' '^*(^page_width^)s(^title^)\n"        # "  Some Book Title  "
+  "(%'*'98s(^""^))"                         # Length-100 "(**...**)" string.
+  "%#xu=(^x^) > %#xu=(^y^) -> %b(^x > y^)"  # "x=0x2a > y=0x2b -> false"
+  "%#bu(^x^) %#ou(^x^) %#du(^x^) %#xu(^x^)" # "0b1111 0o17 15 0xf"
+  "%f(^List.fmt String.pp^)=(^children^)"   # "children=[\"Alice\"; \"Bob\"]"
+  "%^24f(^List.fmt String.pp^)(^children^)" # "    [\"Alice\"; \"Bob\"]    "
+  "%^24f(^List.fmt String.pp^)(^
+      List.mapi children ~f:fn i child ->
+          "%u(^succ i^):%s(^child^)"
+    ^)"                                     # "  [\"1:Alice\"; \"2:Bob\"]  "
   ```
 
-## Line directives
+## Source directives
 
 Token path/line/column locations are ordinarily a simple function of the source stream from which
-they derive, but if the source stream is generated from another source, e.g. using a parser
-generator, it can be useful to associate tokens with the pre-generated source locations. Line
-directives provide a mechanism for setting the line and path for subsequent source lines. Line
-directives are consumed by the scanner and no tokens result unless there is a syntax error in the
-line directive. As such, the line directive syntax is extremely rigid. Line directives begin with
-`:` at column 0, followed by positive decimal line number (leading zero prohibited), followed by
-optional single space and double-quoted string path, terminated by newline.
+they derive, but if the primary source stream comprises embedded sources, e.g. as the product of a
+parser generator, it can be useful to associate tokens with the unembedded source locations. Source
+directives provide a mechanism for setting the path, line, block indentation, and column for
+embedded source. Although the scanner accepts source directive tokens much as any other token, the
+main purpose of such tokens is to affect scanner state, and the parser ignores them.
 
-Examples:
+Source directives are delimited by `[:`...`]` and comprise optional colon-separated ordered
+parameters, matched by `\[:<path>[:<line>[:<indent>+<omit>]]|:<line>[:<indent>+<omit>]|:\]`:
+
+- Source `<path>`: `"..."`-delimited interpolated string defaults to current source path
+- `<line>`: `_*[1-9][0-9_]*`, constrained to the range of `int`, defaults to 1
+- `<indent>`: `_*[0-9][0-9_]*`, constrained to the range of `int`, defaults to 0, specifies block
+  indentation column of `<line>`, which must be a multiple of 4
+- `<omit>`: `_*[0-9][0-9_]*`, constrained to the range of `int`, defaults to 0, specifies number of
+  codepoints omitted past `<indent>` column, i.e. `<indent>+<omit>` is the starting column
+
+Every directive resets the source to the primary source and restores the indentation to its value at
+the previous source directive, because the source directive itself naturally originates in the
+primary source. An empty source directive, `[:]`, has no other effect, but a non-empty source
+directive:
+
+- sets the position of the codepoint immediately following the directive, even if it is a newline
+- set specifies block indentation of the first line, which allows what would otherwise be malformed
+  indentation transitions between sources
 
 ```hemlock
-:42␤
-:42 "foo.hm"␤
+[:"Foo.hm":42:8+13]
+[:"Foo.hm":42]
+[:"Foo.hm"]
+[:42:8+13]
+[:42]
+[:]
 ```
+
+The following contrived example inlines the body of `%accept_hook` to demonstrate how logical
+nesting works. `%accept_hook` in `"Pgen.hm"` is replaced by the inlined body provided in
+`"Foo.hmy"`. Source directives do not provide actual nesting semantics because replaced text
+(`%accept_hook` in this case) would have to be zero-length for such semantics to be useful.
+
+- "Pgen.hm"
+```hemlock
+accept parser =
+    let node, parser' = [...]
+    let () = (%accept_hook)
+    node, parser'
+```
+
+- "Foo.hmy"
+```hemlock
+%accept_hook = %(
+    File.Fmt.stdout |> "%(^Node.pp^)=(^node^)\n" |> ignore
+  )%
+```
+
+- "Foo.hm"
+```hemlock
+[:"Pgen.hm"]accept parser =
+    let node, parser' = [...]
+    let () = ([:"Foo.hmy":1:0+16](
+    File.Fmt.stdout |> "%(^Node.pp^)=(^node^)\n" |> ignore
+  )[:"Pgen.hm":3:4+26])
+    node, parser'
+```
+
+Note the enclosing `(...)` which are preserved in the code sourced from "Foo.hmy". Absent this
+enclosure, the scanner would not accept a dedent token to match the indent token induced by the
+block indentation. On the other hand, the prelude/postlude sourced from "Pgen.hm" each intentionally
+cause indent/dedent mismatches such that the net result is valid. Source directives provide
+sufficient capabilities for complex code generation, but in general these subtleties are best
+avoided where possible.
+
+## Grammar
+
+<a name="expr">[expr](#expr)</a> ::=
+
+    | ( [expr](#expr) )
+
+    | (| [expr](#expr) |)
+
+    | XXX

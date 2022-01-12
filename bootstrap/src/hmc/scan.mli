@@ -1,34 +1,51 @@
+(** Scanner.
+
+    The following naming convention is used for special codepoints which show up in the language
+    syntax. Token names for other codepoints are e.g. Tok_a and Tok_A; concatenations are e.g.
+    Tok_aA. The special codepoints are referred to similarly, e.g. Tok_nl and Tok_lbrack_bar.
+
+    - '\t' : ht
+    - '\n' : nl
+    - '\r' : cr
+    - ' '  : space
+    - '!'  : xmark
+    - '"'  : ditto
+    - '#'  : hash
+    - '$'  : dollar
+    - '%'  : pct
+    - '&'  : amp
+    - '\'' : tick
+    - '('  : lparen
+    - ')'  : rparen
+    - '*'  : star
+    - '+'  : plus
+    - ','  : comma
+    - '-'  : minus
+    - '.'  : dot
+    - '/'  : slash
+    - ':'  : colon
+    - ';'  : semi
+    - '<'  : lt
+    - '='  : eq
+    - '>'  : gt
+    - '?'  : qmark
+    - '@'  : at
+    - '['  : lbrack
+    - '\\' : bslash
+    - ']'  : rbrack
+    - '^'  : caret
+    - '_'  : uscore
+    - '`'  : btick
+    - '{'  : lcurly
+    - '|'  : bar
+    - '}'  : rcurly
+    - '~'  : tilde
+*)
 open Basis
 open Basis.Rudiments
 
-module Source : sig
-  type t
-
-  include FormattableIntf.SMono with type t := t
-  val pp_loc: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-
-  val path: t -> string option
-
-  module Cursor : sig
-    include CursorIntf.SMonoIndex
-      with type container := t
-      with type elm := codepoint
-
-    val pos: t -> Text.Pos.t
-  end
-
-  module Slice : sig
-    include SliceIntf.SMonoIndex
-      with type container := t
-      with type cursor := Cursor.t
-      with type elm := codepoint
-  end
-
-  val line_context: t -> Slice.t * t
-  (** [line_context t] creates an expanded source which contains the entirety of the line(s) on
-      which [t] resides, as well as a slice of the expanded source which corresponds to [t]. *)
-end
-
+(** Abstract tokens do not have source location information, which makes it possible for ASTs to be
+    recognized as equal even if there are code formatting differences between two sources. *)
 module AbstractToken : sig
   module Rendition : sig
     module Malformation : sig
@@ -36,8 +53,8 @@ module AbstractToken : sig
 
       include FormattableIntf.SMono with type t := t
 
-      val init: string option -> sint -> base:Text.Cursor.t -> past:Text.Cursor.t -> string -> t
-      val source: t -> Source.t
+      val init: base:Source.Cursor.t -> past:Source.Cursor.t -> description:string -> t
+      val source: t -> Source.Slice.t
       val description: t -> string
     end
     type 'a t =
@@ -46,19 +63,53 @@ module AbstractToken : sig
 
     include FormattableIntf.SPoly with type 'a t := 'a t
   end
+  type indent_omit = {
+    indent: uns;
+    omit: uns;
+  }
+  type source_directive = {
+    path: string option;
+    line: uns option;
+    io: indent_omit option;
+  }
+  type fmt =
+    | Fmt_b
+    | Fmt_u
+    | Fmt_u8
+    | Fmt_u16
+    | Fmt_u32
+    | Fmt_u64
+    | Fmt_u128
+    | Fmt_u256
+    | Fmt_u512
+    | Fmt_i
+    | Fmt_i8
+    | Fmt_i16
+    | Fmt_i32
+    | Fmt_i64
+    | Fmt_i128
+    | Fmt_i256
+    | Fmt_i512
+    | Fmt_n
+    | Fmt_z
+    | Fmt_r
+    | Fmt_r32
+    | Fmt_r64
+    | Fmt_c
+    | Fmt_s
+    | Fmt_f
   type t =
     (* Keywords. *)
     | Tok_and
     | Tok_also
     | Tok_as
-    | Tok_assert
     | Tok_conceal
     | Tok_effect
     | Tok_else
     | Tok_expose
     | Tok_external
     | Tok_false
-    | Tok_fun
+    | Tok_fn
     | Tok_function
     | Tok_if
     | Tok_import
@@ -74,7 +125,6 @@ module AbstractToken : sig
     | Tok_then
     | Tok_true
     | Tok_type
-    | Tok_val
     | Tok_when
     | Tok_with
 
@@ -110,7 +160,6 @@ module AbstractToken : sig
     | Tok_comma
     | Tok_dot
     | Tok_semi
-    | Tok_semi_semi
     | Tok_colon
     | Tok_colon_colon
     | Tok_colon_eq
@@ -121,10 +170,10 @@ module AbstractToken : sig
     | Tok_lcurly
     | Tok_rcurly
     | Tok_bar
+    | Tok_lcapture
+    | Tok_rcapture
     | Tok_larray
     | Tok_rarray
-    | Tok_lmodule
-    | Tok_rmodule
     | Tok_bslash
     | Tok_tick
     | Tok_caret
@@ -133,8 +182,9 @@ module AbstractToken : sig
     | Tok_arrow
     | Tok_carrow
 
-    | Tok_indent of unit Rendition.t
+    | Tok_source_directive of source_directive Rendition.t
     | Tok_line_delim
+    | Tok_indent of unit Rendition.t
     | Tok_dedent of unit Rendition.t
     | Tok_whitespace
     | Tok_hash_comment
@@ -143,9 +193,30 @@ module AbstractToken : sig
     | Tok_uident of string Rendition.t
     | Tok_cident of string
     | Tok_codepoint of codepoint Rendition.t
-    | Tok_istring of string Rendition.t
     | Tok_rstring of string Rendition.t
-    | Tok_bstring of string Rendition.t
+    | Tok_istring of string Rendition.t
+    | Tok_fstring_lditto
+    | Tok_fstring_interpolated of string Rendition.t
+    | Tok_fstring_pct
+    | Tok_fstring_pad of codepoint Rendition.t
+    | Tok_fstring_just of Fmt.just
+    | Tok_fstring_sign of Fmt.sign
+    | Tok_fstring_alt
+    | Tok_fstring_zpad
+    | Tok_fstring_width_star
+    | Tok_fstring_width of uns Rendition.t
+    | Tok_fstring_pmode of Fmt.pmode
+    | Tok_fstring_precision_star
+    | Tok_fstring_precision of uns Rendition.t
+    | Tok_fstring_radix of Radix.t
+    | Tok_fstring_notation of Fmt.notation
+    | Tok_fstring_pretty
+    | Tok_fstring_fmt of fmt Rendition.t
+    | Tok_fstring_sep of string Rendition.t
+    | Tok_fstring_label of string
+    | Tok_fstring_lparen_caret
+    | Tok_fstring_caret_rparen
+    | Tok_fstring_rditto
     | Tok_r32 of real Rendition.t
     | Tok_r64 of real Rendition.t
     | Tok_u8 of u8 Rendition.t
@@ -162,18 +233,23 @@ module AbstractToken : sig
     | Tok_i256 of i256 Rendition.t
     | Tok_u512 of u512 Rendition.t
     | Tok_i512 of i512 Rendition.t
+    | Tok_nat of Nat.t Rendition.t
+    | Tok_zint of Zint.t Rendition.t
     | Tok_end_of_input
     | Tok_misaligned
-    | Tok_error
+    | Tok_error of Rendition.Malformation.t list
 
-  val to_string: t -> string
+  val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 end
 
+(** Concrete tokens augment abstract tokens with source locations. *)
 module ConcreteToken : sig
   type t
 
-  val atoken: t -> AbstractToken.t
-  val source: t -> Source.t
+  val atok: t -> AbstractToken.t
+  val source: t -> Source.Slice.t
+
+  val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 end
 
 type t

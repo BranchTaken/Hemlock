@@ -13,19 +13,18 @@ let test () =
   scan_str "a _a __a ___a";
   scan_str "__ _0 _' __0 __'";
 
-  scan_str "a as ass asse asser assert asserts";
+  scan_str "e ef eff effe effec effect effects";
 
   scan_str "and";
   scan_str "also";
   scan_str "as";
-  scan_str "assert";
   scan_str "conceal";
   scan_str "effect";
   scan_str "else";
   scan_str "expose";
   scan_str "external";
   scan_str "false";
-  scan_str "fun";
+  scan_str "fn";
   scan_str "function";
   scan_str "if";
   scan_str "import";
@@ -41,7 +40,6 @@ let test () =
   scan_str "then";
   scan_str "true";
   scan_str "type";
-  scan_str "val";
   scan_str "when";
   scan_str "with"
 

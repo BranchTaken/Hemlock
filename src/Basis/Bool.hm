@@ -1,0 +1,47 @@
+open Rudiments0
+
+T = {
+    type t: t = bool
+
+    to_uns = function
+      | false -> 0
+      | true -> 1
+
+    hash_fold t state =
+      state
+      |> Uns.hash_fold (to_uns t)
+
+    cmp t0 t1 =
+      let open Cmp
+      match t0, t1 with
+      | false, true -> Lt
+      | false, false
+      | true, true -> Eq
+      | true, false -> Gt
+
+    of_string = function
+      | "false" -> false
+      | "true" -> true
+      | _ -> not_reached ()
+
+    to_string = function
+      | false -> "false"
+      | true -> "true"
+
+    fmt ?pad ?just ?width t formatter =
+        let pad = match pad with
+          | None -> None
+          | Some c -> Some (Codepoint.to_string c)
+        Fmt.fmt ?pad ?just ?width (to_string t) formatter
+
+    pp t formatter =
+        fmt t formatter
+  }
+include T
+include Identifiable.Make(T)
+
+of_uns = function
+  | 0 -> false
+  | _ -> true
+
+not = not

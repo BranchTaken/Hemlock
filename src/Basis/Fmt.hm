@@ -1,0 +1,133 @@
+type synced 'a: synced a =
+  | To_string of string
+  | Synced of 'a
+
+type Formatter: Formatter (e: effect) = {
+    type t
+
+    state: t
+    fmt: string -> t >e-> t
+    sync: t >e-> t synced
+  }
+
+type just =
+  | Left
+  | Center
+  | Right
+
+type sign =
+  | Implicit
+  | Explicit
+  | Space
+
+type pmode =
+  | Limited
+  | Fixed
+
+type notation =
+  | Normalized
+  | RadixPoint
+  | Compact
+
+pad_default = ' '
+just_default = Right
+sign_default = Implicit
+alt_default = false
+zpad_default = false
+width_default = 0
+pmode_default = Limited
+precision_bin_m_default = 52
+precision_bin_a_default = 53
+precision_oct_m_default = 18
+precision_oct_a_default = 18
+precision_dec_m_default = 15
+precision_dec_a_default = 3
+precision_hex_m_default = 13
+precision_hex_a_default = 14
+radix_default = Radix0.Dec
+notation_default = Compact
+pretty_default = false
+
+padding n pad =
+    let string_to_array: string -> array codepoint = external "hm_basis_string_to_array"
+    let array_length 'a: array a -> uns = external "hm_basis_array_length"
+    let pad_cps = string_to_array pad
+    let padlen = array_length pad_cps
+    string_init 0..(n * padlen) ~f:fn i ->
+        array_get (i % padlen) pad_cps
+
+fmt ?(pad=pad_default) ?(just=just_default) ?(width=width_default) s
+  (T: Formatter e) : Formatter e =
+    let string_c_length: string -> uns = external "hm_basis_string_c_length"
+    {
+        type t: t = T.t
+
+        state = T.state |> T.fmt
+            let clength = string_c_length s
+            match width <= clength with
+              | true -> s
+              | _ ->
+                let npad = width - clength
+                match just with
+                  | Left -> s ^ (padding npad pad)
+                  | Center ->
+                    let lpad = npad / 2
+                    let rpad = npad - lpad
+                    (padding lpad pad) ^ s ^ (padding rpad pad)
+                  | Right -> (padding npad pad) ^ s
+        fmt = T.fmt
+        sync = T.sync
+      }
+
+pp_synced pp_a synced formatter =
+    formatter |> fmt
+        match synced with
+          | To_string s -> "To_string %f(^fmt^)(^s^)"
+          | Synced a -> "Synced %f(^pp_a^)(^a^)"
+
+pp_just just formatter =
+    formatter |> fmt
+        match just with
+          | Left -> "Left"
+          | Center -> "Center"
+          | Right -> "Right"
+
+pp_sign sign formatter =
+    formatter |> fmt
+        match sign with
+          | Implicit -> "Implicit"
+          | Explicit -> "Explicit"
+          | Space -> "Space"
+
+pp_pmode pmode formatter =
+    formatter |> fmt
+        match pmode with
+          | Limited -> "Limited"
+          | Fixed -> "Fixed"
+
+pp_notation notation formatter =
+    formatter |> fmt
+        match notation with
+          | Normalized -> "Normalized"
+          | RadixPoint -> "RadixPoint"
+          | Compact -> "Compact"
+
+sync (T: Formatter e) : synced (Formatter e) =
+    match T.sync T.state with
+      | To_string s -> To_string s
+      | Synced state -> Synced {
+        type t = T.t
+        state = state
+        fmt = T.fmt
+        sync = T.sync
+      }
+
+flush t =
+    match sync t with
+      | To_string _ -> halt "sync produced (To_string string)"
+      | Synced t' -> t'
+
+to_string t =
+    match sync t with
+      | To_string s -> s
+      | Synced _ -> halt "sync produced (Synced t')"

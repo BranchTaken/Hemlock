@@ -1,0 +1,2846 @@
+``"%s(^s^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:6) : <Tok_uident (Constant "s")>
+  [1:6..1:8) : <Tok_fstring_caret_rparen>
+  [1:8..1:9) : <Tok_fstring_rditto>
+  [1:9..1:9) : <Tok_end_of_input>
+``"<<<%s(^s^)>>>"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:4) : <Tok_fstring_interpolated (Constant "<<<")>
+  [1:4..1:5) : <Tok_fstring_pct>
+  [1:5..1:6) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:9) : <Tok_uident (Constant "s")>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:14) : <Tok_fstring_interpolated (Constant ">>>")>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%s(^s^)%s(^s^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:6) : <Tok_uident (Constant "s")>
+  [1:6..1:8) : <Tok_fstring_caret_rparen>
+  [1:8..1:9) : <Tok_fstring_pct>
+  [1:9..1:10) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:13) : <Tok_uident (Constant "s")>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:15..1:16) : <Tok_fstring_rditto>
+  [1:16..1:16) : <Tok_end_of_input>
+``"<<<%s(^s^)^^^%s(^s^)>>>"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:4) : <Tok_fstring_interpolated (Constant "<<<")>
+  [1:4..1:5) : <Tok_fstring_pct>
+  [1:5..1:6) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:9) : <Tok_uident (Constant "s")>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:14) : <Tok_fstring_interpolated (Constant "^^^")>
+  [1:14..1:15) : <Tok_fstring_pct>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:19) : <Tok_uident (Constant "s")>
+  [1:19..1:21) : <Tok_fstring_caret_rparen>
+  [1:21..1:24) : <Tok_fstring_interpolated (Constant ">>>")>
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%s(^"hi"^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:9) : <Tok_istring (Constant "hi")>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%s(^"%s(^s^)"^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:6) : <Tok_fstring_lditto>
+  [1:6..1:7) : <Tok_fstring_pct>
+  [1:7..1:8) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:8..1:10) : <Tok_fstring_lparen_caret>
+  [1:10..1:11) : <Tok_uident (Constant "s")>
+  [1:11..1:13) : <Tok_fstring_caret_rparen>
+  [1:13..1:14) : <Tok_fstring_rditto>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%'·'s(^s^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:9) : <Tok_uident (Constant "s")>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%'\''s(^s^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_pad (Constant '\'')>
+  [1:6..1:7) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:7..1:9) : <Tok_fstring_lparen_caret>
+  [1:9..1:10) : <Tok_uident (Constant "s")>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%<s(^s^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_just Left>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:7) : <Tok_uident (Constant "s")>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%^s(^s^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_just Center>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:7) : <Tok_uident (Constant "s")>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%>s(^s^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_just Right>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:7) : <Tok_uident (Constant "s")>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%+i(^42i^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_sign Explicit>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_i)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:9) : <Tok_i64 (Constant 42i)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%_i(^42i^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_sign Space>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_i)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:9) : <Tok_i64 (Constant 42i)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%#u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_alt>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%0u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_zpad>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%012u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_zpad>
+  [1:3..1:5) : <Tok_fstring_width (Constant 12)>
+  [1:5..1:6) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:10) : <Tok_u64 (Constant 42)>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%8u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_width (Constant 8)>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%12u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:4) : <Tok_fstring_width (Constant 12)>
+  [1:4..1:5) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:9) : <Tok_u64 (Constant 42)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%*(^8^)u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_width_star>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:6) : <Tok_u64 (Constant 8)>
+  [1:6..1:8) : <Tok_fstring_caret_rparen>
+  [1:8..1:9) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:9..1:11) : <Tok_fstring_lparen_caret>
+  [1:11..1:13) : <Tok_u64 (Constant 42)>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:15..1:16) : <Tok_fstring_rditto>
+  [1:16..1:16) : <Tok_end_of_input>
+``"%.3r(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pmode Limited>
+  [1:3..1:4) : <Tok_fstring_precision (Constant 3)>
+  [1:4..1:5) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:10) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%.=3r(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:4) : <Tok_fstring_pmode Fixed>
+  [1:4..1:5) : <Tok_fstring_precision (Constant 3)>
+  [1:5..1:6) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:11) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:11..1:13) : <Tok_fstring_caret_rparen>
+  [1:13..1:14) : <Tok_fstring_rditto>
+  [1:14..1:14) : <Tok_end_of_input>
+``"%.*(^3^)r(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pmode Limited>
+  [1:3..1:4) : <Tok_fstring_precision_star>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:7) : <Tok_u64 (Constant 3)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:15) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:15..1:17) : <Tok_fstring_caret_rparen>
+  [1:17..1:18) : <Tok_fstring_rditto>
+  [1:18..1:18) : <Tok_end_of_input>
+``"%bu(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_radix Bin>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%ou(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_radix Oct>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%du(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_radix Dec>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%xu(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_radix Hex>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%mr(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_notation Normalized>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:9) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%ar(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_notation RadixPoint>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:9) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%cr(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_notation Compact>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:9) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%pu(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pretty>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%b(^true^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_b)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:9) : <Tok_true>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%u8(^42u8^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:4) : <Tok_fstring_fmt (Constant Fmt_u8)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:10) : <Tok_u8 (Constant 42u8)>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%u16(^42u16^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_u16)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_u16 (Constant 42u16)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%u32(^42u32^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_u32)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_u32 (Constant 42u32)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%u64(^42u64^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_u64)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_u64 (Constant 42)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%u128(^42u128^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Constant Fmt_u128)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:14) : <Tok_u128 (Constant 42u128)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%u256(^42u256^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Constant Fmt_u256)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:14) : <Tok_u256 (Constant 42u256)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%u512(^42u512^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Constant Fmt_u512)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:14) : <Tok_u512 (Constant 42u512)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%i(^42i^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_i)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:8) : <Tok_i64 (Constant 42i)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%i8(^42i8^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:4) : <Tok_fstring_fmt (Constant Fmt_i8)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:10) : <Tok_i8 (Constant 42i8)>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%i16(^42i16^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_i16)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_i16 (Constant 42i16)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%i32(^42i32^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_i32)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_i32 (Constant 42i32)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%i64(^42i64^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_i64)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_i64 (Constant 42i)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%i128(^42i128^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Constant Fmt_i128)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:14) : <Tok_i128 (Constant 42i128)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%i256(^42i256^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Constant Fmt_i256)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:14) : <Tok_i256 (Constant 42i256)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%i512(^42i512^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Constant Fmt_i512)>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:14) : <Tok_i512 (Constant 42i512)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%n(^42n^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_n)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:8) : <Tok_nat (Constant 42n)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%z(^42z^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_z)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:8) : <Tok_zint (Constant 42z)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%r(^42r^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:8) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%r32(^42r32^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_r32)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_r32 (Constant 0x1.5p5)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%r64(^42r64^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Constant Fmt_r64)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:12) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%c(^'c'^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_c)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:8) : <Tok_codepoint (Constant 'c')>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%s(^"string"^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_s)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:13) : <Tok_istring (Constant "string")>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:15..1:16) : <Tok_fstring_rditto>
+  [1:16..1:16) : <Tok_end_of_input>
+``"%f(^Option.pp Uns.pp^)(^Some 42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_f)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:11) : <Tok_cident "Option">
+  [1:11..1:12) : <Tok_dot>
+  [1:12..1:14) : <Tok_uident (Constant "pp")>
+  [1:14..1:15) : <Tok_whitespace>
+  [1:15..1:18) : <Tok_cident "Uns">
+  [1:18..1:19) : <Tok_dot>
+  [1:19..1:21) : <Tok_uident (Constant "pp")>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:23..1:25) : <Tok_fstring_lparen_caret>
+  [1:25..1:29) : <Tok_cident "Some">
+  [1:29..1:30) : <Tok_whitespace>
+  [1:30..1:32) : <Tok_u64 (Constant 42)>
+  [1:32..1:34) : <Tok_fstring_caret_rparen>
+  [1:34..1:35) : <Tok_fstring_rditto>
+  [1:35..1:35) : <Tok_end_of_input>
+``"%u=(^x^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:4) : <Tok_fstring_sep (Constant "=")>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:7) : <Tok_uident (Constant "x")>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:6..1:7) : <Tok_fstring_label "x">
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%u =(^x^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:5) : <Tok_fstring_sep (Constant " =")>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:8) : <Tok_uident (Constant "x")>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:7..1:8) : <Tok_fstring_label "x">
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%u = (^x^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:6) : <Tok_fstring_sep (Constant " = ")>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:9) : <Tok_uident (Constant "x")>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:8..1:9) : <Tok_fstring_label "x">
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%u= (^x^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:5) : <Tok_fstring_sep (Constant "= ")>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:8) : <Tok_uident (Constant "x")>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:7..1:8) : <Tok_fstring_label "x">
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%u  =  (^x^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:8) : <Tok_fstring_sep (Constant "  =  ")>
+  [1:8..1:10) : <Tok_fstring_lparen_caret>
+  [1:10..1:11) : <Tok_uident (Constant "x")>
+  [1:11..1:13) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_label "x">
+  [1:13..1:14) : <Tok_fstring_rditto>
+  [1:14..1:14) : <Tok_end_of_input>
+``"%u-+*/%@$<=>|:.~?(^x^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:18) : <Tok_fstring_sep (Constant "-+*/\%@$<=>|:.~?")>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:21) : <Tok_uident (Constant "x")>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:20..1:21) : <Tok_fstring_label "x">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:23) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:23..1:25) : <Tok_fstring_caret_rparen>
+  [1:20..1:23) : <Tok_fstring_label "42.">
+  [1:25..1:26) : <Tok_fstring_rditto>
+  [1:26..1:26) : <Tok_end_of_input>
+``"%'·'^+#0*(^8^).=*(^3^)xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width_star>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:13) : <Tok_u64 (Constant 8)>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:15..1:17) : <Tok_fstring_pmode Fixed>
+  [1:17..1:18) : <Tok_fstring_precision_star>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:21) : <Tok_u64 (Constant 3)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:23..1:24) : <Tok_fstring_radix Hex>
+  [1:24..1:25) : <Tok_fstring_notation Normalized>
+  [1:25..1:26) : <Tok_fstring_pretty>
+  [1:26..1:27) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:27..1:28) : <Tok_fstring_sep (Constant "=")>
+  [1:28..1:30) : <Tok_fstring_lparen_caret>
+  [1:30..1:33) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:33..1:35) : <Tok_fstring_caret_rparen>
+  [1:30..1:33) : <Tok_fstring_label "42.">
+  [1:35..1:36) : <Tok_fstring_rditto>
+  [1:36..1:36) : <Tok_end_of_input>
+``"%'·'^+#0*(^8^).=*(^3^)xmpf(^pp^)=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width_star>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:13) : <Tok_u64 (Constant 8)>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:15..1:17) : <Tok_fstring_pmode Fixed>
+  [1:17..1:18) : <Tok_fstring_precision_star>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:21) : <Tok_u64 (Constant 3)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:23..1:24) : <Tok_fstring_radix Hex>
+  [1:24..1:25) : <Tok_fstring_notation Normalized>
+  [1:25..1:26) : <Tok_fstring_pretty>
+  [1:26..1:27) : <Tok_fstring_fmt (Constant Fmt_f)>
+  [1:27..1:29) : <Tok_fstring_lparen_caret>
+  [1:29..1:31) : <Tok_uident (Constant "pp")>
+  [1:31..1:33) : <Tok_fstring_caret_rparen>
+  [1:33..1:34) : <Tok_fstring_sep (Constant "=")>
+  [1:34..1:36) : <Tok_fstring_lparen_caret>
+  [1:36..1:39) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:39..1:41) : <Tok_fstring_caret_rparen>
+  [1:36..1:39) : <Tok_fstring_label "42.">
+  [1:41..1:42) : <Tok_fstring_rditto>
+  [1:42..1:42) : <Tok_end_of_input>
+``"%'·'+#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_sign Explicit>
+  [1:6..1:7) : <Tok_fstring_alt>
+  [1:7..1:8) : <Tok_fstring_zpad>
+  [1:8..1:9) : <Tok_fstring_width (Constant 8)>
+  [1:9..1:11) : <Tok_fstring_pmode Fixed>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_radix Hex>
+  [1:13..1:14) : <Tok_fstring_notation Normalized>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_alt>
+  [1:6..1:7) : <Tok_fstring_zpad>
+  [1:7..1:8) : <Tok_fstring_width (Constant 8)>
+  [1:8..1:10) : <Tok_fstring_pmode Fixed>
+  [1:10..1:11) : <Tok_fstring_precision (Constant 3)>
+  [1:11..1:12) : <Tok_fstring_radix Hex>
+  [1:12..1:13) : <Tok_fstring_notation Normalized>
+  [1:13..1:14) : <Tok_fstring_pretty>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_zpad>
+  [1:6..1:7) : <Tok_fstring_width (Constant 8)>
+  [1:7..1:9) : <Tok_fstring_pmode Fixed>
+  [1:9..1:10) : <Tok_fstring_precision (Constant 3)>
+  [1:10..1:11) : <Tok_fstring_radix Hex>
+  [1:11..1:12) : <Tok_fstring_notation Normalized>
+  [1:12..1:13) : <Tok_fstring_pretty>
+  [1:13..1:14) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:14..1:15) : <Tok_fstring_sep (Constant "=")>
+  [1:15..1:17) : <Tok_fstring_lparen_caret>
+  [1:17..1:20) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:20..1:22) : <Tok_fstring_caret_rparen>
+  [1:17..1:20) : <Tok_fstring_label "42.">
+  [1:22..1:23) : <Tok_fstring_rditto>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'8.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_width (Constant 8)>
+  [1:6..1:8) : <Tok_fstring_pmode Fixed>
+  [1:8..1:9) : <Tok_fstring_precision (Constant 3)>
+  [1:9..1:10) : <Tok_fstring_radix Hex>
+  [1:10..1:11) : <Tok_fstring_notation Normalized>
+  [1:11..1:12) : <Tok_fstring_pretty>
+  [1:12..1:13) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:13..1:14) : <Tok_fstring_sep (Constant "=")>
+  [1:14..1:16) : <Tok_fstring_lparen_caret>
+  [1:16..1:19) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:19..1:21) : <Tok_fstring_caret_rparen>
+  [1:16..1:19) : <Tok_fstring_label "42.">
+  [1:21..1:22) : <Tok_fstring_rditto>
+  [1:22..1:22) : <Tok_end_of_input>
+``"%'·'.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:7) : <Tok_fstring_pmode Fixed>
+  [1:7..1:8) : <Tok_fstring_precision (Constant 3)>
+  [1:8..1:9) : <Tok_fstring_radix Hex>
+  [1:9..1:10) : <Tok_fstring_notation Normalized>
+  [1:10..1:11) : <Tok_fstring_pretty>
+  [1:11..1:12) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:12..1:13) : <Tok_fstring_sep (Constant "=")>
+  [1:13..1:15) : <Tok_fstring_lparen_caret>
+  [1:15..1:18) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:18..1:20) : <Tok_fstring_caret_rparen>
+  [1:15..1:18) : <Tok_fstring_label "42.">
+  [1:20..1:21) : <Tok_fstring_rditto>
+  [1:21..1:21) : <Tok_end_of_input>
+``"%'·'.3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_pmode Limited>
+  [1:6..1:7) : <Tok_fstring_precision (Constant 3)>
+  [1:7..1:8) : <Tok_fstring_radix Hex>
+  [1:8..1:9) : <Tok_fstring_notation Normalized>
+  [1:9..1:10) : <Tok_fstring_pretty>
+  [1:10..1:11) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:11..1:12) : <Tok_fstring_sep (Constant "=")>
+  [1:12..1:14) : <Tok_fstring_lparen_caret>
+  [1:14..1:17) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:17..1:19) : <Tok_fstring_caret_rparen>
+  [1:14..1:17) : <Tok_fstring_label "42.">
+  [1:19..1:20) : <Tok_fstring_rditto>
+  [1:20..1:20) : <Tok_end_of_input>
+``"%'·'xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_radix Hex>
+  [1:6..1:7) : <Tok_fstring_notation Normalized>
+  [1:7..1:8) : <Tok_fstring_pretty>
+  [1:8..1:9) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:9..1:10) : <Tok_fstring_sep (Constant "=")>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:15) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:15..1:17) : <Tok_fstring_caret_rparen>
+  [1:12..1:15) : <Tok_fstring_label "42.">
+  [1:17..1:18) : <Tok_fstring_rditto>
+  [1:18..1:18) : <Tok_end_of_input>
+``"%'·'mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_notation Normalized>
+  [1:6..1:7) : <Tok_fstring_pretty>
+  [1:7..1:8) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:8..1:9) : <Tok_fstring_sep (Constant "=")>
+  [1:9..1:11) : <Tok_fstring_lparen_caret>
+  [1:11..1:14) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:11..1:14) : <Tok_fstring_label "42.">
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%'·'pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_pretty>
+  [1:6..1:7) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:7..1:8) : <Tok_fstring_sep (Constant "=")>
+  [1:8..1:10) : <Tok_fstring_lparen_caret>
+  [1:10..1:13) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:10..1:13) : <Tok_fstring_label "42.">
+  [1:15..1:16) : <Tok_fstring_rditto>
+  [1:16..1:16) : <Tok_end_of_input>
+``"%'·'r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:6..1:7) : <Tok_fstring_sep (Constant "=")>
+  [1:7..1:9) : <Tok_fstring_lparen_caret>
+  [1:9..1:12) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:12..1:14) : <Tok_fstring_caret_rparen>
+  [1:9..1:12) : <Tok_fstring_label "42.">
+  [1:14..1:15) : <Tok_fstring_rditto>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%'·'^#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_alt>
+  [1:7..1:8) : <Tok_fstring_zpad>
+  [1:8..1:9) : <Tok_fstring_width (Constant 8)>
+  [1:9..1:11) : <Tok_fstring_pmode Fixed>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_radix Hex>
+  [1:13..1:14) : <Tok_fstring_notation Normalized>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_zpad>
+  [1:7..1:8) : <Tok_fstring_width (Constant 8)>
+  [1:8..1:10) : <Tok_fstring_pmode Fixed>
+  [1:10..1:11) : <Tok_fstring_precision (Constant 3)>
+  [1:11..1:12) : <Tok_fstring_radix Hex>
+  [1:12..1:13) : <Tok_fstring_notation Normalized>
+  [1:13..1:14) : <Tok_fstring_pretty>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^8.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_width (Constant 8)>
+  [1:7..1:9) : <Tok_fstring_pmode Fixed>
+  [1:9..1:10) : <Tok_fstring_precision (Constant 3)>
+  [1:10..1:11) : <Tok_fstring_radix Hex>
+  [1:11..1:12) : <Tok_fstring_notation Normalized>
+  [1:12..1:13) : <Tok_fstring_pretty>
+  [1:13..1:14) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:14..1:15) : <Tok_fstring_sep (Constant "=")>
+  [1:15..1:17) : <Tok_fstring_lparen_caret>
+  [1:17..1:20) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:20..1:22) : <Tok_fstring_caret_rparen>
+  [1:17..1:20) : <Tok_fstring_label "42.">
+  [1:22..1:23) : <Tok_fstring_rditto>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'^.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:8) : <Tok_fstring_pmode Fixed>
+  [1:8..1:9) : <Tok_fstring_precision (Constant 3)>
+  [1:9..1:10) : <Tok_fstring_radix Hex>
+  [1:10..1:11) : <Tok_fstring_notation Normalized>
+  [1:11..1:12) : <Tok_fstring_pretty>
+  [1:12..1:13) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:13..1:14) : <Tok_fstring_sep (Constant "=")>
+  [1:14..1:16) : <Tok_fstring_lparen_caret>
+  [1:16..1:19) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:19..1:21) : <Tok_fstring_caret_rparen>
+  [1:16..1:19) : <Tok_fstring_label "42.">
+  [1:21..1:22) : <Tok_fstring_rditto>
+  [1:22..1:22) : <Tok_end_of_input>
+``"%'·'^.3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_pmode Limited>
+  [1:7..1:8) : <Tok_fstring_precision (Constant 3)>
+  [1:8..1:9) : <Tok_fstring_radix Hex>
+  [1:9..1:10) : <Tok_fstring_notation Normalized>
+  [1:10..1:11) : <Tok_fstring_pretty>
+  [1:11..1:12) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:12..1:13) : <Tok_fstring_sep (Constant "=")>
+  [1:13..1:15) : <Tok_fstring_lparen_caret>
+  [1:15..1:18) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:18..1:20) : <Tok_fstring_caret_rparen>
+  [1:15..1:18) : <Tok_fstring_label "42.">
+  [1:20..1:21) : <Tok_fstring_rditto>
+  [1:21..1:21) : <Tok_end_of_input>
+``"%'·'^xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_radix Hex>
+  [1:7..1:8) : <Tok_fstring_notation Normalized>
+  [1:8..1:9) : <Tok_fstring_pretty>
+  [1:9..1:10) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:10..1:11) : <Tok_fstring_sep (Constant "=")>
+  [1:11..1:13) : <Tok_fstring_lparen_caret>
+  [1:13..1:16) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:16..1:18) : <Tok_fstring_caret_rparen>
+  [1:13..1:16) : <Tok_fstring_label "42.">
+  [1:18..1:19) : <Tok_fstring_rditto>
+  [1:19..1:19) : <Tok_end_of_input>
+``"%'·'^mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_notation Normalized>
+  [1:7..1:8) : <Tok_fstring_pretty>
+  [1:8..1:9) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:9..1:10) : <Tok_fstring_sep (Constant "=")>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:15) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:15..1:17) : <Tok_fstring_caret_rparen>
+  [1:12..1:15) : <Tok_fstring_label "42.">
+  [1:17..1:18) : <Tok_fstring_rditto>
+  [1:18..1:18) : <Tok_end_of_input>
+``"%'·'^pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_pretty>
+  [1:7..1:8) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:8..1:9) : <Tok_fstring_sep (Constant "=")>
+  [1:9..1:11) : <Tok_fstring_lparen_caret>
+  [1:11..1:14) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:11..1:14) : <Tok_fstring_label "42.">
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%'·'^r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:7..1:8) : <Tok_fstring_sep (Constant "=")>
+  [1:8..1:10) : <Tok_fstring_lparen_caret>
+  [1:10..1:13) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:10..1:13) : <Tok_fstring_label "42.">
+  [1:15..1:16) : <Tok_fstring_rditto>
+  [1:16..1:16) : <Tok_end_of_input>
+``"%'·'^+08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_zpad>
+  [1:8..1:9) : <Tok_fstring_width (Constant 8)>
+  [1:9..1:11) : <Tok_fstring_pmode Fixed>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_radix Hex>
+  [1:13..1:14) : <Tok_fstring_notation Normalized>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^+8.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_width (Constant 8)>
+  [1:8..1:10) : <Tok_fstring_pmode Fixed>
+  [1:10..1:11) : <Tok_fstring_precision (Constant 3)>
+  [1:11..1:12) : <Tok_fstring_radix Hex>
+  [1:12..1:13) : <Tok_fstring_notation Normalized>
+  [1:13..1:14) : <Tok_fstring_pretty>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:9) : <Tok_fstring_pmode Fixed>
+  [1:9..1:10) : <Tok_fstring_precision (Constant 3)>
+  [1:10..1:11) : <Tok_fstring_radix Hex>
+  [1:11..1:12) : <Tok_fstring_notation Normalized>
+  [1:12..1:13) : <Tok_fstring_pretty>
+  [1:13..1:14) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:14..1:15) : <Tok_fstring_sep (Constant "=")>
+  [1:15..1:17) : <Tok_fstring_lparen_caret>
+  [1:17..1:20) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:20..1:22) : <Tok_fstring_caret_rparen>
+  [1:17..1:20) : <Tok_fstring_label "42.">
+  [1:22..1:23) : <Tok_fstring_rditto>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'^+.3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_pmode Limited>
+  [1:8..1:9) : <Tok_fstring_precision (Constant 3)>
+  [1:9..1:10) : <Tok_fstring_radix Hex>
+  [1:10..1:11) : <Tok_fstring_notation Normalized>
+  [1:11..1:12) : <Tok_fstring_pretty>
+  [1:12..1:13) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:13..1:14) : <Tok_fstring_sep (Constant "=")>
+  [1:14..1:16) : <Tok_fstring_lparen_caret>
+  [1:16..1:19) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:19..1:21) : <Tok_fstring_caret_rparen>
+  [1:16..1:19) : <Tok_fstring_label "42.">
+  [1:21..1:22) : <Tok_fstring_rditto>
+  [1:22..1:22) : <Tok_end_of_input>
+``"%'·'^+xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_radix Hex>
+  [1:8..1:9) : <Tok_fstring_notation Normalized>
+  [1:9..1:10) : <Tok_fstring_pretty>
+  [1:10..1:11) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:11..1:12) : <Tok_fstring_sep (Constant "=")>
+  [1:12..1:14) : <Tok_fstring_lparen_caret>
+  [1:14..1:17) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:17..1:19) : <Tok_fstring_caret_rparen>
+  [1:14..1:17) : <Tok_fstring_label "42.">
+  [1:19..1:20) : <Tok_fstring_rditto>
+  [1:20..1:20) : <Tok_end_of_input>
+``"%'·'^+mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_notation Normalized>
+  [1:8..1:9) : <Tok_fstring_pretty>
+  [1:9..1:10) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:10..1:11) : <Tok_fstring_sep (Constant "=")>
+  [1:11..1:13) : <Tok_fstring_lparen_caret>
+  [1:13..1:16) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:16..1:18) : <Tok_fstring_caret_rparen>
+  [1:13..1:16) : <Tok_fstring_label "42.">
+  [1:18..1:19) : <Tok_fstring_rditto>
+  [1:19..1:19) : <Tok_end_of_input>
+``"%'·'^+pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_pretty>
+  [1:8..1:9) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:9..1:10) : <Tok_fstring_sep (Constant "=")>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:15) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:15..1:17) : <Tok_fstring_caret_rparen>
+  [1:12..1:15) : <Tok_fstring_label "42.">
+  [1:17..1:18) : <Tok_fstring_rditto>
+  [1:18..1:18) : <Tok_end_of_input>
+``"%'·'^+r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:8..1:9) : <Tok_fstring_sep (Constant "=")>
+  [1:9..1:11) : <Tok_fstring_lparen_caret>
+  [1:11..1:14) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:14..1:16) : <Tok_fstring_caret_rparen>
+  [1:11..1:14) : <Tok_fstring_label "42.">
+  [1:16..1:17) : <Tok_fstring_rditto>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%'·'^+#8.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_width (Constant 8)>
+  [1:9..1:11) : <Tok_fstring_pmode Fixed>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_radix Hex>
+  [1:13..1:14) : <Tok_fstring_notation Normalized>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^+#.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:10) : <Tok_fstring_pmode Fixed>
+  [1:10..1:11) : <Tok_fstring_precision (Constant 3)>
+  [1:11..1:12) : <Tok_fstring_radix Hex>
+  [1:12..1:13) : <Tok_fstring_notation Normalized>
+  [1:13..1:14) : <Tok_fstring_pretty>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+#.3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_pmode Limited>
+  [1:9..1:10) : <Tok_fstring_precision (Constant 3)>
+  [1:10..1:11) : <Tok_fstring_radix Hex>
+  [1:11..1:12) : <Tok_fstring_notation Normalized>
+  [1:12..1:13) : <Tok_fstring_pretty>
+  [1:13..1:14) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:14..1:15) : <Tok_fstring_sep (Constant "=")>
+  [1:15..1:17) : <Tok_fstring_lparen_caret>
+  [1:17..1:20) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:20..1:22) : <Tok_fstring_caret_rparen>
+  [1:17..1:20) : <Tok_fstring_label "42.">
+  [1:22..1:23) : <Tok_fstring_rditto>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'^+#xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_radix Hex>
+  [1:9..1:10) : <Tok_fstring_notation Normalized>
+  [1:10..1:11) : <Tok_fstring_pretty>
+  [1:11..1:12) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:12..1:13) : <Tok_fstring_sep (Constant "=")>
+  [1:13..1:15) : <Tok_fstring_lparen_caret>
+  [1:15..1:18) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:18..1:20) : <Tok_fstring_caret_rparen>
+  [1:15..1:18) : <Tok_fstring_label "42.">
+  [1:20..1:21) : <Tok_fstring_rditto>
+  [1:21..1:21) : <Tok_end_of_input>
+``"%'·'^+#mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_notation Normalized>
+  [1:9..1:10) : <Tok_fstring_pretty>
+  [1:10..1:11) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:11..1:12) : <Tok_fstring_sep (Constant "=")>
+  [1:12..1:14) : <Tok_fstring_lparen_caret>
+  [1:14..1:17) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:17..1:19) : <Tok_fstring_caret_rparen>
+  [1:14..1:17) : <Tok_fstring_label "42.">
+  [1:19..1:20) : <Tok_fstring_rditto>
+  [1:20..1:20) : <Tok_end_of_input>
+``"%'·'^+#pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_pretty>
+  [1:9..1:10) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:10..1:11) : <Tok_fstring_sep (Constant "=")>
+  [1:11..1:13) : <Tok_fstring_lparen_caret>
+  [1:13..1:16) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:16..1:18) : <Tok_fstring_caret_rparen>
+  [1:13..1:16) : <Tok_fstring_label "42.">
+  [1:18..1:19) : <Tok_fstring_rditto>
+  [1:19..1:19) : <Tok_end_of_input>
+``"%'·'^+#r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:9..1:10) : <Tok_fstring_sep (Constant "=")>
+  [1:10..1:12) : <Tok_fstring_lparen_caret>
+  [1:12..1:15) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:15..1:17) : <Tok_fstring_caret_rparen>
+  [1:12..1:15) : <Tok_fstring_label "42.">
+  [1:17..1:18) : <Tok_fstring_rditto>
+  [1:18..1:18) : <Tok_end_of_input>
+``"%'·'^+#0.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:11) : <Tok_fstring_pmode Fixed>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_radix Hex>
+  [1:13..1:14) : <Tok_fstring_notation Normalized>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^+#0.3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_pmode Limited>
+  [1:10..1:11) : <Tok_fstring_precision (Constant 3)>
+  [1:11..1:12) : <Tok_fstring_radix Hex>
+  [1:12..1:13) : <Tok_fstring_notation Normalized>
+  [1:13..1:14) : <Tok_fstring_pretty>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+#0xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_radix Hex>
+  [1:10..1:11) : <Tok_fstring_notation Normalized>
+  [1:11..1:12) : <Tok_fstring_pretty>
+  [1:12..1:13) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:13..1:14) : <Tok_fstring_sep (Constant "=")>
+  [1:14..1:16) : <Tok_fstring_lparen_caret>
+  [1:16..1:19) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:19..1:21) : <Tok_fstring_caret_rparen>
+  [1:16..1:19) : <Tok_fstring_label "42.">
+  [1:21..1:22) : <Tok_fstring_rditto>
+  [1:22..1:22) : <Tok_end_of_input>
+``"%'·'^+#0mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_notation Normalized>
+  [1:10..1:11) : <Tok_fstring_pretty>
+  [1:11..1:12) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:12..1:13) : <Tok_fstring_sep (Constant "=")>
+  [1:13..1:15) : <Tok_fstring_lparen_caret>
+  [1:15..1:18) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:18..1:20) : <Tok_fstring_caret_rparen>
+  [1:15..1:18) : <Tok_fstring_label "42.">
+  [1:20..1:21) : <Tok_fstring_rditto>
+  [1:21..1:21) : <Tok_end_of_input>
+``"%'·'^+#0pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_pretty>
+  [1:10..1:11) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:11..1:12) : <Tok_fstring_sep (Constant "=")>
+  [1:12..1:14) : <Tok_fstring_lparen_caret>
+  [1:14..1:17) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:17..1:19) : <Tok_fstring_caret_rparen>
+  [1:14..1:17) : <Tok_fstring_label "42.">
+  [1:19..1:20) : <Tok_fstring_rditto>
+  [1:20..1:20) : <Tok_end_of_input>
+``"%'·'^+#0r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:10..1:11) : <Tok_fstring_sep (Constant "=")>
+  [1:11..1:13) : <Tok_fstring_lparen_caret>
+  [1:13..1:16) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:16..1:18) : <Tok_fstring_caret_rparen>
+  [1:13..1:16) : <Tok_fstring_label "42.">
+  [1:18..1:19) : <Tok_fstring_rditto>
+  [1:19..1:19) : <Tok_end_of_input>
+``"%'·'^+#08.3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_pmode Limited>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_radix Hex>
+  [1:13..1:14) : <Tok_fstring_notation Normalized>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^+#08xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_radix Hex>
+  [1:11..1:12) : <Tok_fstring_notation Normalized>
+  [1:12..1:13) : <Tok_fstring_pretty>
+  [1:13..1:14) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:14..1:15) : <Tok_fstring_sep (Constant "=")>
+  [1:15..1:17) : <Tok_fstring_lparen_caret>
+  [1:17..1:20) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:20..1:22) : <Tok_fstring_caret_rparen>
+  [1:17..1:20) : <Tok_fstring_label "42.">
+  [1:22..1:23) : <Tok_fstring_rditto>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'^+#08mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_notation Normalized>
+  [1:11..1:12) : <Tok_fstring_pretty>
+  [1:12..1:13) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:13..1:14) : <Tok_fstring_sep (Constant "=")>
+  [1:14..1:16) : <Tok_fstring_lparen_caret>
+  [1:16..1:19) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:19..1:21) : <Tok_fstring_caret_rparen>
+  [1:16..1:19) : <Tok_fstring_label "42.">
+  [1:21..1:22) : <Tok_fstring_rditto>
+  [1:22..1:22) : <Tok_end_of_input>
+``"%'·'^+#08pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_pretty>
+  [1:11..1:12) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:12..1:13) : <Tok_fstring_sep (Constant "=")>
+  [1:13..1:15) : <Tok_fstring_lparen_caret>
+  [1:15..1:18) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:18..1:20) : <Tok_fstring_caret_rparen>
+  [1:15..1:18) : <Tok_fstring_label "42.">
+  [1:20..1:21) : <Tok_fstring_rditto>
+  [1:21..1:21) : <Tok_end_of_input>
+``"%'·'^+#08r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:11..1:12) : <Tok_fstring_sep (Constant "=")>
+  [1:12..1:14) : <Tok_fstring_lparen_caret>
+  [1:14..1:17) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:17..1:19) : <Tok_fstring_caret_rparen>
+  [1:14..1:17) : <Tok_fstring_label "42.">
+  [1:19..1:20) : <Tok_fstring_rditto>
+  [1:20..1:20) : <Tok_end_of_input>
+``"%'·'^+#08.=3mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_notation Normalized>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^+#08.=3pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_pretty>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+#08.=3r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:14..1:15) : <Tok_fstring_sep (Constant "=")>
+  [1:15..1:17) : <Tok_fstring_lparen_caret>
+  [1:17..1:20) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:20..1:22) : <Tok_fstring_caret_rparen>
+  [1:17..1:20) : <Tok_fstring_label "42.">
+  [1:22..1:23) : <Tok_fstring_rditto>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'^+#08.3mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_pmode Limited>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_notation Normalized>
+  [1:13..1:14) : <Tok_fstring_pretty>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+#08.3pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_pmode Limited>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_pretty>
+  [1:13..1:14) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:14..1:15) : <Tok_fstring_sep (Constant "=")>
+  [1:15..1:17) : <Tok_fstring_lparen_caret>
+  [1:17..1:20) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:20..1:22) : <Tok_fstring_caret_rparen>
+  [1:17..1:20) : <Tok_fstring_label "42.">
+  [1:22..1:23) : <Tok_fstring_rditto>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'^+#08.3r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_pmode Limited>
+  [1:11..1:12) : <Tok_fstring_precision (Constant 3)>
+  [1:12..1:13) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:13..1:14) : <Tok_fstring_sep (Constant "=")>
+  [1:14..1:16) : <Tok_fstring_lparen_caret>
+  [1:16..1:19) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:19..1:21) : <Tok_fstring_caret_rparen>
+  [1:16..1:19) : <Tok_fstring_label "42.">
+  [1:21..1:22) : <Tok_fstring_rditto>
+  [1:22..1:22) : <Tok_end_of_input>
+``"%'·'^+#08.=3xpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_pretty>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^+#08.=3xr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:15..1:16) : <Tok_fstring_sep (Constant "=")>
+  [1:16..1:18) : <Tok_fstring_lparen_caret>
+  [1:18..1:21) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:21..1:23) : <Tok_fstring_caret_rparen>
+  [1:18..1:21) : <Tok_fstring_label "42.">
+  [1:23..1:24) : <Tok_fstring_rditto>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:16..1:17) : <Tok_fstring_sep (Constant "=")>
+  [1:17..1:19) : <Tok_fstring_lparen_caret>
+  [1:19..1:22) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:22..1:24) : <Tok_fstring_caret_rparen>
+  [1:19..1:22) : <Tok_fstring_label "42.">
+  [1:24..1:25) : <Tok_fstring_rditto>
+  [1:25..1:25) : <Tok_end_of_input>
+``"%b(^true^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_b)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:9) : <Tok_true>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%b=(^b^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_b)>
+  [1:3..1:4) : <Tok_fstring_sep (Constant "=")>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:7) : <Tok_uident (Constant "b")>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:6..1:7) : <Tok_fstring_label "b">
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%bb(^true^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_radix Bin>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_b)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:10) : <Tok_true>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%bu(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_radix Bin>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%c(^'c'^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_c)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:8) : <Tok_codepoint (Constant 'c')>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%c=(^c^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_c)>
+  [1:3..1:4) : <Tok_fstring_sep (Constant "=")>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:7) : <Tok_uident (Constant "c")>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:6..1:7) : <Tok_fstring_label "c">
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%cc(^'c'^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_notation Compact>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_c)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:9) : <Tok_codepoint (Constant 'c')>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%cr(^Real.pi^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_notation Compact>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:10) : <Tok_cident "Real">
+  [1:10..1:11) : <Tok_dot>
+  [1:11..1:13) : <Tok_uident (Constant "pi")>
+  [1:13..1:15) : <Tok_fstring_caret_rparen>
+  [1:15..1:16) : <Tok_fstring_rditto>
+  [1:16..1:16) : <Tok_end_of_input>
+``"%'·''·'^+#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:5) : <Tok_fstring_fmt (Malformed ["[1:5..1:5): Pad parameter must be followed by just/sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:5..1:6) : <Tok_fstring_sep (Malformed ["[1:5..1:6): Fmt parameter must be followed by separator/value parameter"])>
+  [1:6..1:6) : <Tok_error ["[1:6..1:6): Separator parameter must be followed by value parameter"]>
+  [1:6..1:28) : <Tok_fstring_interpolated (Constant "·'^+#08.=3xmpr=(^42.^)")>
+  [1:28..1:29) : <Tok_fstring_rditto>
+  [1:29..1:29) : <Tok_end_of_input>
+``"%'·'^^+#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:6) : <Tok_fstring_fmt (Malformed ["[1:6..1:6): Justification parameter must be followed by sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:6..1:8) : <Tok_fstring_sep (Constant "^+")>
+  [1:8..1:8) : <Tok_error ["[1:8..1:8): Separator parameter must be followed by value parameter"]>
+  [1:8..1:26) : <Tok_fstring_interpolated (Constant "#08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^++#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:7) : <Tok_fstring_fmt (Malformed ["[1:7..1:7): Sign parameter must be followed by alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:7..1:8) : <Tok_fstring_sep (Constant "+")>
+  [1:8..1:8) : <Tok_error ["[1:8..1:8): Separator parameter must be followed by value parameter"]>
+  [1:8..1:26) : <Tok_fstring_interpolated (Constant "#08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+##08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:8) : <Tok_fstring_fmt (Malformed ["[1:8..1:8): Alt parameter must be followed by zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:8..1:9) : <Tok_fstring_sep (Malformed ["[1:8..1:9): Fmt parameter must be followed by separator/value parameter"])>
+  [1:9..1:9) : <Tok_error ["[1:9..1:9): Separator parameter must be followed by value parameter"]>
+  [1:9..1:26) : <Tok_fstring_interpolated (Constant "08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#008.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:9) : <Tok_fstring_fmt (Malformed ["[1:9..1:9): Zpad parameter must be followed by width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:9..1:10) : <Tok_fstring_sep (Malformed ["[1:9..1:10): Fmt parameter must be followed by separator/value parameter"])>
+  [1:10..1:10) : <Tok_error ["[1:10..1:10): Separator parameter must be followed by value parameter"]>
+  [1:10..1:26) : <Tok_fstring_interpolated (Constant "8.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08..=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_precision (Malformed ["[1:10..1:11): Dot must be followed by precision mode or precision"])>
+  [1:11..1:11) : <Tok_fstring_fmt (Malformed ["[1:11..1:11): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:11..1:13) : <Tok_fstring_sep (Constant ".=")>
+  [1:13..1:13) : <Tok_error ["[1:13..1:13): Separator parameter must be followed by value parameter"]>
+  [1:13..1:26) : <Tok_fstring_interpolated (Constant "3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.==3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:12) : <Tok_fstring_precision (Malformed ["[1:12..1:12): Precision mode parameter must be followed by precision parameter"])>
+  [1:12..1:12) : <Tok_fstring_fmt (Malformed ["[1:12..1:12): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:12..1:13) : <Tok_fstring_sep (Constant "=")>
+  [1:13..1:13) : <Tok_error ["[1:13..1:13): Separator parameter must be followed by value parameter"]>
+  [1:13..1:26) : <Tok_fstring_interpolated (Constant "3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3.xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:13) : <Tok_fstring_fmt (Malformed ["[1:13..1:13): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:13..1:14) : <Tok_fstring_sep (Constant ".")>
+  [1:14..1:14) : <Tok_error ["[1:14..1:14): Separator parameter must be followed by value parameter"]>
+  [1:14..1:26) : <Tok_fstring_interpolated (Constant "xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xxmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:14) : <Tok_fstring_fmt (Malformed ["[1:14..1:14): Radix parameter must be followed by notation/pretty/fmt parameter"])>
+  [1:14..1:15) : <Tok_fstring_sep (Malformed ["[1:14..1:15): Fmt parameter must be followed by separator/value parameter"])>
+  [1:15..1:15) : <Tok_error ["[1:15..1:15): Separator parameter must be followed by value parameter"]>
+  [1:15..1:26) : <Tok_fstring_interpolated (Constant "mpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:15) : <Tok_fstring_fmt (Malformed ["[1:15..1:15): Notation parameter must be followed by pretty/fmt parameter"])>
+  [1:15..1:16) : <Tok_fstring_sep (Malformed ["[1:15..1:16): Fmt parameter must be followed by separator/value parameter"])>
+  [1:16..1:16) : <Tok_error ["[1:16..1:16): Separator parameter must be followed by value parameter"]>
+  [1:16..1:26) : <Tok_fstring_interpolated (Constant "pr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmppr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:16) : <Tok_fstring_fmt (Malformed ["[1:16..1:16): Pretty parameter must be followed by fmt parameter"])>
+  [1:16..1:17) : <Tok_fstring_sep (Malformed ["[1:16..1:17): Fmt parameter must be followed by separator/value parameter"])>
+  [1:17..1:17) : <Tok_error ["[1:17..1:17): Separator parameter must be followed by value parameter"]>
+  [1:17..1:26) : <Tok_fstring_interpolated (Constant "r=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmprr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Malformed ["[1:17..1:18): Fmt parameter must be followed by separator/value parameter"])>
+  [1:18..1:18) : <Tok_error ["[1:18..1:18): Separator parameter must be followed by value parameter"]>
+  [1:18..1:26) : <Tok_fstring_interpolated (Constant "=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%�'·'^+#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:2) : <Tok_fstring_fmt (Malformed ["[1:2..1:2): Percent must be followed by pad/just/sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:2..1:3) : <Tok_fstring_sep (Malformed ["[1:2..1:3): Fmt parameter must be followed by separator/value parameter"])>
+  [1:3..1:3) : <Tok_error ["[1:3..1:3): Separator parameter must be followed by value parameter"]>
+  [1:3..1:26) : <Tok_fstring_interpolated (Constant "'·'^+#08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'�^+#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:5) : <Tok_fstring_fmt (Malformed ["[1:5..1:5): Pad parameter must be followed by just/sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:5..1:6) : <Tok_fstring_sep (Malformed ["[1:5..1:6): Fmt parameter must be followed by separator/value parameter"])>
+  [1:6..1:6) : <Tok_error ["[1:6..1:6): Separator parameter must be followed by value parameter"]>
+  [1:6..1:26) : <Tok_fstring_interpolated (Constant "^+#08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^�+#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:6) : <Tok_fstring_fmt (Malformed ["[1:6..1:6): Justification parameter must be followed by sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:6..1:7) : <Tok_fstring_sep (Malformed ["[1:6..1:7): Fmt parameter must be followed by separator/value parameter"])>
+  [1:7..1:7) : <Tok_error ["[1:7..1:7): Separator parameter must be followed by value parameter"]>
+  [1:7..1:26) : <Tok_fstring_interpolated (Constant "+#08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+�#08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:7) : <Tok_fstring_fmt (Malformed ["[1:7..1:7): Sign parameter must be followed by alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:7..1:8) : <Tok_fstring_sep (Malformed ["[1:7..1:8): Fmt parameter must be followed by separator/value parameter"])>
+  [1:8..1:8) : <Tok_error ["[1:8..1:8): Separator parameter must be followed by value parameter"]>
+  [1:8..1:26) : <Tok_fstring_interpolated (Constant "#08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#�08.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:8) : <Tok_fstring_fmt (Malformed ["[1:8..1:8): Alt parameter must be followed by zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:8..1:9) : <Tok_fstring_sep (Malformed ["[1:8..1:9): Fmt parameter must be followed by separator/value parameter"])>
+  [1:9..1:9) : <Tok_error ["[1:9..1:9): Separator parameter must be followed by value parameter"]>
+  [1:9..1:26) : <Tok_fstring_interpolated (Constant "08.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#0�8.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:9) : <Tok_fstring_fmt (Malformed ["[1:9..1:9): Zpad parameter must be followed by width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:9..1:10) : <Tok_fstring_sep (Malformed ["[1:9..1:10): Fmt parameter must be followed by separator/value parameter"])>
+  [1:10..1:10) : <Tok_error ["[1:10..1:10): Separator parameter must be followed by value parameter"]>
+  [1:10..1:26) : <Tok_fstring_interpolated (Constant "8.=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08�.=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:10) : <Tok_fstring_fmt (Malformed ["[1:10..1:10): Width parameter must be followed by precision/radix/notation/pretty/fmt parameter"])>
+  [1:10..1:11) : <Tok_fstring_sep (Malformed ["[1:10..1:11): Fmt parameter must be followed by separator/value parameter"])>
+  [1:11..1:11) : <Tok_error ["[1:11..1:11): Separator parameter must be followed by value parameter"]>
+  [1:11..1:26) : <Tok_fstring_interpolated (Constant ".=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.�=3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_precision (Malformed ["[1:10..1:11): Dot must be followed by precision mode or precision"])>
+  [1:11..1:11) : <Tok_fstring_fmt (Malformed ["[1:11..1:11): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:11..1:12) : <Tok_fstring_sep (Malformed ["[1:11..1:12): Fmt parameter must be followed by separator/value parameter"])>
+  [1:12..1:12) : <Tok_error ["[1:12..1:12): Separator parameter must be followed by value parameter"]>
+  [1:12..1:26) : <Tok_fstring_interpolated (Constant "=3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=�3xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:12) : <Tok_fstring_precision (Malformed ["[1:12..1:12): Precision mode parameter must be followed by precision parameter"])>
+  [1:12..1:12) : <Tok_fstring_fmt (Malformed ["[1:12..1:12): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:12..1:13) : <Tok_fstring_sep (Malformed ["[1:12..1:13): Fmt parameter must be followed by separator/value parameter"])>
+  [1:13..1:13) : <Tok_error ["[1:13..1:13): Separator parameter must be followed by value parameter"]>
+  [1:13..1:26) : <Tok_fstring_interpolated (Constant "3xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3�xmpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:13) : <Tok_fstring_fmt (Malformed ["[1:13..1:13): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:13..1:14) : <Tok_fstring_sep (Malformed ["[1:13..1:14): Fmt parameter must be followed by separator/value parameter"])>
+  [1:14..1:14) : <Tok_error ["[1:14..1:14): Separator parameter must be followed by value parameter"]>
+  [1:14..1:26) : <Tok_fstring_interpolated (Constant "xmpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3x�mpr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:14) : <Tok_fstring_fmt (Malformed ["[1:14..1:14): Radix parameter must be followed by notation/pretty/fmt parameter"])>
+  [1:14..1:15) : <Tok_fstring_sep (Malformed ["[1:14..1:15): Fmt parameter must be followed by separator/value parameter"])>
+  [1:15..1:15) : <Tok_error ["[1:15..1:15): Separator parameter must be followed by value parameter"]>
+  [1:15..1:26) : <Tok_fstring_interpolated (Constant "mpr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xm�pr=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:15) : <Tok_fstring_fmt (Malformed ["[1:15..1:15): Notation parameter must be followed by pretty/fmt parameter"])>
+  [1:15..1:16) : <Tok_fstring_sep (Malformed ["[1:15..1:16): Fmt parameter must be followed by separator/value parameter"])>
+  [1:16..1:16) : <Tok_error ["[1:16..1:16): Separator parameter must be followed by value parameter"]>
+  [1:16..1:26) : <Tok_fstring_interpolated (Constant "pr=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmp�r=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:16) : <Tok_fstring_fmt (Malformed ["[1:16..1:16): Pretty parameter must be followed by fmt parameter"])>
+  [1:16..1:17) : <Tok_fstring_sep (Malformed ["[1:16..1:17): Fmt parameter must be followed by separator/value parameter"])>
+  [1:17..1:17) : <Tok_error ["[1:17..1:17): Separator parameter must be followed by value parameter"]>
+  [1:17..1:26) : <Tok_fstring_interpolated (Constant "r=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr�=(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Malformed ["[1:17..1:18): Fmt parameter must be followed by separator/value parameter"])>
+  [1:18..1:18) : <Tok_error ["[1:18..1:18): Separator parameter must be followed by value parameter"]>
+  [1:18..1:26) : <Tok_fstring_interpolated (Constant "=(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=�(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:18) : <Tok_error ["[1:18..1:18): Separator parameter must be followed by value parameter"]>
+  [1:18..1:26) : <Tok_fstring_interpolated (Constant "�(^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(�^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:20) : <Tok_error ["[1:18..1:20): Value parameter must be of the form `(^ ... ^)`"]>
+  [1:20..1:26) : <Tok_fstring_interpolated (Constant "^42.^)")>
+  [1:26..1:27) : <Tok_fstring_rditto>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(^42.^�)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:23) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:23..1:24) : <Tok_caret>
+  [1:24..1:25) : <Tok_error ["[1:24..1:25): Unsupported codepoint"]>
+  [1:25..1:26) : <Tok_rparen>
+  [1:26..1:27) : <Tok_istring (Malformed ["[1:27..1:27): Unterminated string literal"])>
+  [1:27..1:27) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(^42.^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:23) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:23..1:25) : <Tok_fstring_caret_rparen>
+  [1:20..1:23) : <Tok_fstring_label "42.">
+  [1:25..1:25) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(^42.^``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:23) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:23..1:24) : <Tok_caret>
+  [1:24..1:24) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(^42.``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:23) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:23..1:23) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(^``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:20) : <Tok_fstring_lparen_caret>
+  [1:20..1:20) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=(``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:19) : <Tok_error ["[1:18..1:19): Value parameter must be of the form `(^ ... ^)`"]>
+  [1:19..1:19) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr=``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:18) : <Tok_fstring_sep (Constant "=")>
+  [1:18..1:18) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmpr``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:17) : <Tok_fstring_fmt (Constant Fmt_r)>
+  [1:17..1:17) : <Tok_end_of_input>
+``"%'·'^+#08.=3xmp``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:16) : <Tok_fstring_pretty>
+  [1:16..1:16) : <Tok_end_of_input>
+``"%'·'^+#08.=3xm``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:15) : <Tok_fstring_notation Normalized>
+  [1:15..1:15) : <Tok_end_of_input>
+``"%'·'^+#08.=3x``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:14) : <Tok_fstring_radix Hex>
+  [1:14..1:14) : <Tok_end_of_input>
+``"%'·'^+#08.=3``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision (Constant 3)>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%'·'^+#08.=``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%'·'^+#08.``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:11) : <Tok_fstring_precision (Malformed ["[1:10..1:11): Dot must be followed by precision mode or precision"])>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%'·'^+#08``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%'·'^+#0``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:9) : <Tok_end_of_input>
+``"%'·'^+#``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:8) : <Tok_end_of_input>
+``"%'·'^+``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:7) : <Tok_end_of_input>
+``"%'·'^``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:6) : <Tok_end_of_input>
+``"%'·'``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:5) : <Tok_end_of_input>
+``"%'·``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:4) : <Tok_fstring_pad (Malformed ["[1:2..1:4): Unterminated codepoint literal"])>
+  [1:4..1:4) : <Tok_end_of_input>
+``"%'``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pad (Malformed ["[1:2..1:3): Unterminated codepoint literal"])>
+  [1:3..1:3) : <Tok_end_of_input>
+``"%``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:2) : <Tok_end_of_input>
+``"%'·'^+#08.=*``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width (Constant 8)>
+  [1:10..1:12) : <Tok_fstring_pmode Fixed>
+  [1:12..1:13) : <Tok_fstring_precision_star>
+  [1:13..1:13) : <Tok_fstring_precision (Malformed ["[1:13..1:13): Parametric precision must be of the form `*(^ ... ^)`"])>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%'·'^+#0*``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:6) : <Tok_fstring_just Center>
+  [1:6..1:7) : <Tok_fstring_sign Explicit>
+  [1:7..1:8) : <Tok_fstring_alt>
+  [1:8..1:9) : <Tok_fstring_zpad>
+  [1:9..1:10) : <Tok_fstring_width_star>
+  [1:10..1:10) : <Tok_fstring_width (Malformed ["[1:10..1:10): Parametric width must be of the form `*(^ ... ^)`"])>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%'u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pad (Malformed ["[1:2..1:5): Unterminated codepoint literal"])>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%'·u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pad (Malformed ["[1:2..1:5): Unterminated codepoint literal"])>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Pad parameter must be followed by just/sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:4) : <Tok_fstring_sep (Malformed ["[1:3..1:4): Fmt parameter must be followed by separator/value parameter"])>
+  [1:4..1:4) : <Tok_error ["[1:4..1:4): Separator parameter must be followed by value parameter"]>
+  [1:4..1:11) : <Tok_fstring_interpolated (Constant "u(^42^)")>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%'··u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pad (Malformed ["[1:2..1:5): Unterminated codepoint literal"])>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Pad parameter must be followed by just/sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:4) : <Tok_fstring_sep (Malformed ["[1:3..1:4): Fmt parameter must be followed by separator/value parameter"])>
+  [1:4..1:4) : <Tok_error ["[1:4..1:4): Separator parameter must be followed by value parameter"]>
+  [1:4..1:12) : <Tok_fstring_interpolated (Constant "·u(^42^)")>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%00u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_zpad>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Zpad parameter must be followed by width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:4) : <Tok_fstring_sep (Malformed ["[1:3..1:4): Fmt parameter must be followed by separator/value parameter"])>
+  [1:4..1:4) : <Tok_error ["[1:4..1:4): Separator parameter must be followed by value parameter"]>
+  [1:4..1:11) : <Tok_fstring_interpolated (Constant "u(^42^)")>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%008u(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_zpad>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Zpad parameter must be followed by width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:4) : <Tok_fstring_sep (Malformed ["[1:3..1:4): Fmt parameter must be followed by separator/value parameter"])>
+  [1:4..1:4) : <Tok_error ["[1:4..1:4): Separator parameter must be followed by value parameter"]>
+  [1:4..1:12) : <Tok_fstring_interpolated (Constant "8u(^42^)")>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%u064(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Malformed ["[1:2..1:6): Unsupported bitwidth"])>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:10) : <Tok_u64 (Constant 42)>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%i064(^42i^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Malformed ["[1:2..1:6): Unsupported bitwidth"])>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:11) : <Tok_i64 (Constant 42i)>
+  [1:11..1:13) : <Tok_fstring_caret_rparen>
+  [1:13..1:14) : <Tok_fstring_rditto>
+  [1:14..1:14) : <Tok_end_of_input>
+``"%r064(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:6) : <Tok_fstring_fmt (Malformed ["[1:2..1:6): Unsupported bitwidth"])>
+  [1:6..1:8) : <Tok_fstring_lparen_caret>
+  [1:8..1:11) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:11..1:13) : <Tok_fstring_caret_rparen>
+  [1:13..1:14) : <Tok_fstring_rditto>
+  [1:14..1:14) : <Tok_end_of_input>
+``"%u63(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Malformed ["[1:2..1:5): Unsupported bitwidth"])>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:9) : <Tok_u64 (Constant 42)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%i63(^42i^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Malformed ["[1:2..1:5): Unsupported bitwidth"])>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:10) : <Tok_i64 (Constant 42i)>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%r63(^42.^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_fmt (Malformed ["[1:2..1:5): Unsupported bitwidth"])>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:10) : <Tok_r64 (Constant 0x1.5p5)>
+  [1:10..1:12) : <Tok_fstring_caret_rparen>
+  [1:12..1:13) : <Tok_fstring_rditto>
+  [1:13..1:13) : <Tok_end_of_input>
+``"%u(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:9) : <Tok_end_of_input>
+``"%u(^42^)>>>``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:12) : <Tok_fstring_interpolated (Constant ">>>")>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:2) : <Tok_end_of_input>
+``"%'·'``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:5) : <Tok_end_of_input>
+``"%8``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_width (Constant 8)>
+  [1:3..1:3) : <Tok_end_of_input>
+``"%*u(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_width_star>
+  [1:3..1:3) : <Tok_fstring_width (Malformed ["[1:3..1:3): Parametric width must be of the form `*(^ ... ^)`"])>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:2) : <Tok_fstring_fmt (Malformed ["[1:2..1:2): Percent must be followed by pad/just/sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:2..1:4) : <Tok_fstring_lparen_caret>
+  [1:4..1:6) : <Tok_u64 (Constant 42)>
+  [1:6..1:8) : <Tok_fstring_caret_rparen>
+  [1:8..1:8) : <Tok_end_of_input>
+``"%'·'(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:5) : <Tok_fstring_pad (Constant '·')>
+  [1:5..1:5) : <Tok_fstring_fmt (Malformed ["[1:5..1:5): Pad parameter must be followed by just/sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:9) : <Tok_u64 (Constant 42)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%^(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_just Center>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Justification parameter must be followed by sign/alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:9) : <Tok_end_of_input>
+``"%+(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_sign Explicit>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Sign parameter must be followed by alt/zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:9) : <Tok_end_of_input>
+``"%#(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_alt>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Alt parameter must be followed by zpad/width/precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:9) : <Tok_end_of_input>
+``"%8(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_width (Constant 8)>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Width parameter must be followed by precision/radix/notation/pretty/fmt parameter"])>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:9) : <Tok_end_of_input>
+``"%.u(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_precision (Malformed ["[1:2..1:3): Dot must be followed by precision mode or precision"])>
+  [1:3..1:4) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%.=u(^42^)``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:4) : <Tok_fstring_pmode Fixed>
+  [1:4..1:4) : <Tok_fstring_precision (Malformed ["[1:4..1:4): Precision mode parameter must be followed by precision parameter"])>
+  [1:4..1:5) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:9) : <Tok_u64 (Constant 42)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%.3``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pmode Limited>
+  [1:3..1:4) : <Tok_fstring_precision (Constant 3)>
+  [1:4..1:4) : <Tok_end_of_input>
+``"%.*�(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pmode Limited>
+  [1:3..1:4) : <Tok_fstring_precision_star>
+  [1:4..1:4) : <Tok_fstring_precision (Malformed ["[1:4..1:4): Parametric precision must be of the form `*(^ ... ^)`"])>
+  [1:4..1:4) : <Tok_fstring_fmt (Malformed ["[1:4..1:4): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:4..1:5) : <Tok_fstring_sep (Malformed ["[1:4..1:5): Fmt parameter must be followed by separator/value parameter"])>
+  [1:5..1:7) : <Tok_fstring_lparen_caret>
+  [1:7..1:9) : <Tok_u64 (Constant 42)>
+  [1:9..1:11) : <Tok_fstring_caret_rparen>
+  [1:7..1:9) : <Tok_fstring_label "42">
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%.3(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pmode Limited>
+  [1:3..1:4) : <Tok_fstring_precision (Constant 3)>
+  [1:4..1:4) : <Tok_fstring_fmt (Malformed ["[1:4..1:4): Precision parameter must be followed by radix/notation/pretty/fmt parameter"])>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%x(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_radix Hex>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Radix parameter must be followed by notation/pretty/fmt parameter"])>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%m(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_notation Normalized>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Notation parameter must be followed by pretty/fmt parameter"])>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%p(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_pretty>
+  [1:3..1:3) : <Tok_fstring_fmt (Malformed ["[1:3..1:3): Pretty parameter must be followed by fmt parameter"])>
+  [1:3..1:5) : <Tok_fstring_lparen_caret>
+  [1:5..1:7) : <Tok_u64 (Constant 42)>
+  [1:7..1:9) : <Tok_fstring_caret_rparen>
+  [1:9..1:10) : <Tok_fstring_rditto>
+  [1:10..1:10) : <Tok_end_of_input>
+``"%f�(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_f)>
+  [1:3..1:3) : <Tok_error ["[1:3..1:3): `f` fmt parameter must be of the form `f(^ ... ^)`"]>
+  [1:3..1:4) : <Tok_fstring_sep (Malformed ["[1:3..1:4): Fmt parameter must be followed by separator/value parameter"])>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:6..1:8) : <Tok_fstring_label "42">
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%u�(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:4) : <Tok_fstring_sep (Malformed ["[1:3..1:4): Fmt parameter must be followed by separator/value parameter"])>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:6..1:8) : <Tok_fstring_label "42">
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%u=�(^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:4) : <Tok_fstring_sep (Constant "=")>
+  [1:4..1:4) : <Tok_error ["[1:4..1:4): Separator parameter must be followed by value parameter"]>
+  [1:4..1:11) : <Tok_fstring_interpolated (Constant "�(^42^)")>
+  [1:11..1:12) : <Tok_fstring_rditto>
+  [1:12..1:12) : <Tok_end_of_input>
+``"%u (^42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:4) : <Tok_fstring_sep (Malformed ["[1:3..1:4): Separator parameter must contain an infix operator"])>
+  [1:4..1:6) : <Tok_fstring_lparen_caret>
+  [1:6..1:8) : <Tok_u64 (Constant 42)>
+  [1:8..1:10) : <Tok_fstring_caret_rparen>
+  [1:6..1:8) : <Tok_fstring_label "42">
+  [1:10..1:11) : <Tok_fstring_rditto>
+  [1:11..1:11) : <Tok_end_of_input>
+``"%u(42^)"``
+  [1:0..1:1) : <Tok_fstring_lditto>
+  [1:1..1:2) : <Tok_fstring_pct>
+  [1:2..1:3) : <Tok_fstring_fmt (Constant Fmt_u)>
+  [1:3..1:5) : <Tok_error ["[1:3..1:5): Value parameter must be of the form `(^ ... ^)`"]>
+  [1:5..1:8) : <Tok_fstring_interpolated (Constant "2^)")>
+  [1:8..1:9) : <Tok_fstring_rditto>
+  [1:9..1:9) : <Tok_end_of_input>

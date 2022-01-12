@@ -17,10 +17,17 @@ let test () =
   |> fmt ~alt:true ~pretty:true "\n\n" |> Basis.Fmt.fmt "\n"
   |> fmt ~alt:true ~pretty:true "..." |> Basis.Fmt.fmt "\n"
   |> fmt ~alt:true ~pretty:true "...`..." |> Basis.Fmt.fmt "\n"
-  |> fmt ~alt:true ~pretty:true "...`_..." |> Basis.Fmt.fmt "\n"
-  |> fmt ~alt:true ~pretty:true "...`__..." |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "...``..." |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "`..." |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "...`" |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "...``...`_`..." |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "_`...``..." |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "...``...`_" |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "...``...`_`...`__`..." |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "__`...``...`_`..." |> Basis.Fmt.fmt "\n"
+  |> fmt ~alt:true ~pretty:true "...``...`_`...`__" |> Basis.Fmt.fmt "\n"
   |> fmt ~alt:true ~pretty:true
-    "...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_..."
+    "...``...`_`...`__`...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_..."
   |> Basis.Fmt.fmt "\n"
   |> ignore
 

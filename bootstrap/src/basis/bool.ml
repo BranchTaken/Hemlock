@@ -3,8 +3,7 @@ open Rudiments0
 module T = struct
   type t = bool
 
-  let to_uns t =
-    match t with
+  let to_uns = function
     | false -> 0L
     | true -> 1L
 
@@ -20,14 +19,12 @@ module T = struct
     | true, true -> Eq
     | true, false -> Gt
 
-  let of_string s =
-    match s with
+  let of_string = function
     | "false" -> false
     | "true" -> true
     | _ -> not_reached ()
 
-  let to_string t =
-    match t with
+  let to_string = function
     | false -> "false"
     | true -> "true"
 
@@ -44,8 +41,7 @@ end
 include T
 include Identifiable.Make(T)
 
-let of_uns x =
-  match x with
+let of_uns = function
   | 0L -> false
   | _ -> true
 

@@ -205,6 +205,7 @@ module Utf8 = struct
         | cp when (cp = us) -> "\\u{1f}"
         | cp when (cp = (of_char '"')) -> "\\\""
         | cp when (cp = (of_char '\\')) -> "\\\\"
+        | cp when (cp = (of_char '%')) -> "\\%"
         | cp when (cp = del) -> "\\u{7f}"
         | _ -> to_string t
       end
@@ -217,9 +218,12 @@ let to_bytes t =
   Utf8.(to_bytes (of_codepoint t))
 
 let escape t =
+  (* Specially handle codepoints which are escaped in interpolated string literals but not in
+   * codepoint literals. *)
   match t with
   | t when (t = (of_char '"')) -> "'\"'"
   | t when (t = (of_char '\'')) -> "'\\\''"
+  | t when (t = (of_char '%')) -> "'%'"
   | _ -> begin
       let utf8_str = Utf8.(escape (of_codepoint t)) in
       let len = (Int64.of_int (Stdlib.String.length utf8_str)) + 2L in

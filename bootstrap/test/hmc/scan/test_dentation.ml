@@ -7,13 +7,6 @@ let test () =
   scan_str "";
   scan_str "a";
   scan_str "\n";
-  scan_str "    a";
-  scan_str {|    a
-|};
-  scan_str {|    a
-b
-|};
-
   scan_str {|a
 b
 c
@@ -24,21 +17,18 @@ g
 h
 i
 |};
-
   scan_str {|a
     b
       c
     d
 e
 |};
-
   scan_str {|
 a
 b
     c
 d
 |};
-
   scan_str {|
 a
     b
@@ -52,17 +42,17 @@ a
     d
         e
         f|};
-  scan_str {|\
-    a\
-    b \
-    c
+  scan_str {|a
+    b
+    c|};
+  scan_str {|a
+    b
+    c d|};
+  scan_str {|a b c
     d|};
   scan_str "\t|";
   scan_str "  ";
   scan_str "\n  \n";
-  scan_str "\\\n";
-  scan_str "\\\na";
-  scan_str "\\\n\\\na";
   scan_str {|# a
 b
     c
@@ -81,12 +71,28 @@ g
     b
 (* Ignore. *) (* ... *) # ...
     c
+ (* Ignore. *) (* ... *) # ...
+    d
+  (* Ignore. *) (* ... *) # ...
+    e
+   (* Ignore. *) (* ... *) # ...
+    f
+    (* Ignore. *) (* ... *) # ...
+    g
+     (* Ignore. *) (* ... *) # ...
+        h
+            (* Ignore. *) (* ... *) # ...
+        i
+|};
+  scan_str {|a
+    b
+(* Ignore. *) (* ... *) # ...
+    c
 |};
   scan_str {|a
     b
 (* Ignore. *) (*
- ... *) \
-# ...
+ ... *) # ...
     c
 |};
   scan_str {|a
@@ -97,8 +103,7 @@ g
   scan_str {|a
     b
 (* Don't ignore. *) (* ...
- *) \
- true
+ *) true
     c
 |};
   scan_str {|a
@@ -134,9 +139,6 @@ g
   b
   c
 d
-|};
-  scan_str {|a
-        b
 |};
   scan_str {|a
     b
@@ -343,6 +345,48 @@ a
         c
             d
                         x
+|};
+  scan_str {|
+# : | : | : | : | : | : |
+        a
+    b
+            c
+                        d
+|};
+
+  (* EOI. *)
+  scan_str {|(|};
+  scan_str {|    |};
+
+  (* Miscellaneous errors. *)
+  scan_str "    a";
+  scan_str {|    a
+|};
+  scan_str {|    a
+b
+|};
+  scan_str {|
+    a
+|};
+  scan_str {|
+a
+        b
+|};
+  scan_str {|  a
+  b
+      c
+      d
+|};
+
+  scan_str "a
+    b
+\tc";
+  scan_str "a
+    b
+        c
+\td";
+  scan_str {|a
+        b
 |}
 
 let _ = test ()
