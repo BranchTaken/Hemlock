@@ -33,6 +33,10 @@ add-highlighter shared/hemlock/code default-region group
 add-highlighter shared/hemlock/code/cident regex \b[_]*[A-Z][A-Za-z0-9_']*\b 0:module
 add-highlighter shared/hemlock/code/uident regex \b[_]*[a-z][A-Za-z0-9_']*\b 0:Default
 add-highlighter shared/hemlock/code/tab regex \t 0:Error
+add-highlighter shared/hemlock/code/unaligned regex ^(\ \ )*\ (?![\ ]) 0:Error
+add-highlighter shared/hemlock/code/unaligned_continue_keyword regex ^(\ \ \ \ )*(and|also|as|else|external|of|or|rec|then|when|with)\b 0:Error
+add-highlighter shared/hemlock/code/unaligned_continue_punctuation regex ^(\ \ \ \ )*([\x7D\]),!'\\\-+*/%@^$<=>\|:.]) 0:Error
+add-highlighter shared/hemlock/code/trailing regex (\ )+$ 0:Error
 
 add-highlighter shared/hemlock/line_directive region '^:[1-9][0-9]*' '\n' fill meta
 
@@ -50,7 +54,7 @@ add-highlighter shared/hemlock/string/inner_precision region \^\)\.=?\*\(\^ () f
 add-highlighter shared/hemlock/string/inner_value region \^\)(\.=?[1-9][0-9]*)?[bodx]?[mac]?p?([bnzcsf]|([ui](8|16|32|64|128|256|512)?)|(r(32|64)?))\(\^ () fill meta
 
 add-highlighter shared/hemlock/string/unprotected region (?<!\\)% () fill Error
-add-highlighter shared/hemlock/string/overprotected region \\(?![utnr"\\%]) () fill Error
+add-highlighter shared/hemlock/string/overprotected region \\(?![utnr"\\%\n]) () fill Error
 
 # Anchoring to the beginning of the input (\A) doesn't work as expected here. It appears that
 # kakoune is not resetting the input bounds to exclude preceding codepoints on the first line of
@@ -79,19 +83,19 @@ add-highlighter shared/hemlock/code/oct_integer regex \b(0o)([_]*[0-7][0-7_]*)((
 add-highlighter shared/hemlock/code/hex_integer regex \b(0x)([_]*[0-9a-f][0-9a-f_]*)(([ui](8|16|32|64|128|256|512)?)|[zn])?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/integer regex \b(([1-9][0-9_]*)|0[_]*)(([ui](8|16|32|64|128|256|512)?)|[zn])?\b 1:value 3:attribute
 
-add-highlighter shared/hemlock/code/bin_real_dot regex \b(0b)([01][01_]*\.[01_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
+add-highlighter shared/hemlock/code/bin_real_dot regex \b(0b)([01][01_]*\.(?!\.)[01_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/bin_real_p regex \b(0b)([01][01_]*p_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/bin_real_r regex \b(0b)([01][01_]*)(r(32|64)?)\b 1:attribute 2:value 3:attribute
 
-add-highlighter shared/hemlock/code/oct_real_dot regex \b(0o)([0-7][0-7_]*\.[0-7_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
+add-highlighter shared/hemlock/code/oct_real_dot regex \b(0o)([0-7][0-7_]*\.(?!\.)[0-7_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/oct_real_p regex \b(0o)([0-7][0-7_]*p_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/oct_real_r regex \b(0o)([0-7][0-7_]*)(r(32|64)?)\b 1:attribute 2:value 3:attribute
 
-add-highlighter shared/hemlock/code/hex_real_dot regex \b(0x)([0-9a-f][0-9a-f_]*\.[0-9a-f_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
+add-highlighter shared/hemlock/code/hex_real_dot regex \b(0x)([0-9a-f][0-9a-f_]*\.(?!\.)[0-9a-f_]*(p_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/hex_real_p regex \b(0x)([0-9a-f][0-9a-f_]*p_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:attribute 2:value 3:attribute
 add-highlighter shared/hemlock/code/hex_real_r regex \b(0x)([0-9a-f][0-9a-f_]*)(r(32|64)?)\b 1:attribute 2:value 3:attribute
 
-add-highlighter shared/hemlock/code/real_dot regex \b([0-9][0-9_]*\.[0-9_]*(e_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:value 2:attribute
+add-highlighter shared/hemlock/code/real_dot regex \b([0-9][0-9_]*\.(?!\.)[0-9_]*(e_*[+\-]?_*[0-9][0-9_]*)?)(r(32|64)?)? 1:value 2:attribute
 add-highlighter shared/hemlock/code/real_e regex \b([0-9][0-9_]*e_*[+\-]?_*[0-9][0-9_]*)(r(32|64)?)?\b 1:value 2:attribute
 add-highlighter shared/hemlock/code/real_r regex \b([0-9][0-9_]*)(r(32|64)?)\b 1:value 2:attribute
 
