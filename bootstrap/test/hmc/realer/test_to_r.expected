@@ -43,3 +43,33 @@ nan
 0x1.56p2
   to_r64 -> Precise 0x1.56p2
   to_r32 -> Precise 0x1.56p2
+0x1.fffffep-126
+  to_r64 -> Precise 0x1.fffffep-126
+  to_r32 -> Precise 0x1.fffffep-126
+0x1.ffffffp-126
+  to_r64 -> Precise 0x1.ffffffp-126
+  to_r32 -> Rounded 0x1.fffffep-126
+0x1.fffffcp-127
+  to_r64 -> Precise 0x1.fffffcp-127
+  to_r32 -> Precise 0x1.fffffcp-127
+0x1.fffffep-127
+  to_r64 -> Precise 0x1.fffffep-127
+  to_r32 -> Rounded 0x1.fffffcp-127
+0x1p-149
+  to_r64 -> Precise 0x1p-149
+  to_r32 -> Precise 0x1p-149
+0x1p-150
+  to_r64 -> Precise 0x1p-150
+  to_r32 -> Rounded 0x0p0
+0x1.ffffffffffffep-1023
+  to_r64 -> Precise 0x1.ffffffffffffep-1023
+  to_r32 -> Rounded 0x0p0
+0x1.fffffffffffffp-1023
+  to_r64 -> Rounded 0x1.ffffffffffffep-1023
+  to_r32 -> Rounded 0x0p0
+0x1p-1074
+  to_r64 -> Precise 0x1p-1074
+  to_r32 -> Rounded 0x0p0
+0x1p-1075
+  to_r64 -> Rounded 0x0p0
+  to_r32 -> Rounded 0x0p0
