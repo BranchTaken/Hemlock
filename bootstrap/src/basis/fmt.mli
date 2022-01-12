@@ -21,15 +21,26 @@ module type Formatter = sig
       whereas file formatters flush any output buffers and produce [Synced t]. *)
 end
 
+val pp_synced: ('a -> (module Formatter) -> (module Formatter)) -> 'a synced -> (module Formatter)
+  -> (module Formatter)
+(** [pp_synced pp_a synced formatter] uses [pp_a] to format a syntactically valid representation of
+    [synced]. *)
+
 type just =
   | Left   (** Left-justify. *)
   | Center (** Center. *)
   | Right  (** Right-justify. *)
 
+val pp_just: just -> (module Formatter) -> (module Formatter)
+(** [pp_just just] formats a syntactically valid representation of [just]. *)
+
 type sign =
   | Implicit (** Non-negative sign is implicit. *)
   | Explicit (** Sign is always explicit. *)
   | Space    (** Non-negative sign is formatted as a space. *)
+
+val pp_sign: sign -> (module Formatter) -> (module Formatter)
+(** [pp_sign sign] formats a syntactically valid representation of [sign]. *)
 
 type base =
   | Bin (** Binary base (2). *)
@@ -37,14 +48,23 @@ type base =
   | Dec (** Decimal base (10). *)
   | Hex (** Hexadecimal base (16). *)
 
+val pp_base: base -> (module Formatter) -> (module Formatter)
+(** [pp_base base] formats a syntactically valid representation of [base]. *)
+
 type pmode =
   | Limited (** Limited precision, i.e. trailing zeros omitted. *)
   | Fixed   (** Fixed precision, i.e. trailing zeros as needed. *)
+
+val pp_pmode: pmode -> (module Formatter) -> (module Formatter)
+(** [pp_pmode pmode] formats a syntactically valid representation of [pmode]. *)
 
 type notation =
   | Normalized (** Normalized scientific form. *)
   | RadixPoint (** Radix point form. *)
   | Compact    (** The more compact of [Normalized]/[RadixPoint]. *)
+
+val pp_notation: notation -> (module Formatter) -> (module Formatter)
+(** [pp_notation notation] formats a syntactically valid representation of [notation]. *)
 
 val pad_default: string
 (** Default padding ([" "]). This is a {!type:string} rather than {!type:codepoint} due to
