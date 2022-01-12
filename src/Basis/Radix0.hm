@@ -1,0 +1,5 @@
+type t: t =
+  | Bin [@doc "Binary (base 2)."]
+  | Oct [@doc "Octal (base 8)."]
+  | Dec [@doc "Decimal (base 10)."]
+  | Hex [@doc "Hexadecimal (base 16)."]

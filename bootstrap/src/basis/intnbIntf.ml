@@ -117,7 +117,7 @@ module type SLimitless = sig
   (** Bit shift left. *)
 
   val bit_sr: shift:uns -> t -> t
-  (** Bit shift right, with sign extension iff {type:t} is signed. *)
+  (** Bit shift right, with sign extension iff {!type:t} is signed. *)
 
   val bit_pop: t -> uns
   (** Population count, i.e. number of bits set to 1. *)

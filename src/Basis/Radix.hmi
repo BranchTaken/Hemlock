@@ -1,0 +1,8 @@
+[@@@doc "Radix (base) type."]
+
+include (type of Radix0)
+
+include FormattableIntf.SMono with type t: t := t
+
+to_uns: t -> uns
+  [@@doc "`to_uns t` returns `2`, `8`, `10`, or `16`."]

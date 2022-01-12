@@ -370,8 +370,7 @@ type mbits =
  * stored as r64 values.
  *
  * `create_r32 ~neg ~exponent ~mantissa` creates an `r32`, where `-127 <= exponent <= 128` and
- * `mantissa <= 0x7f_ffff`.
-*)
+ * `mantissa <= 0x7f_ffff`. *)
 let create_r32 ~neg ~exponent ~mantissa =
   assert Sint.(exponent >= (-127L));
   assert Sint.(exponent <= 128L);
@@ -431,7 +430,6 @@ let to_r_impl mbits t =
               let zpad_bits_n = Nat.like_of_zint_hlt zpad_bits in
               let subnormal_bits_n = Nat.(zpad_bits_n + (of_uns sig_bits)) in
               let subnormal_bits = Nat.to_uns_hlt subnormal_bits_n in
-
               let neg = match sign with
                 | Pos -> false
                 | Neg -> true

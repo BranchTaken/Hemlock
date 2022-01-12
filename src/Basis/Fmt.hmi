@@ -1,0 +1,131 @@
+[@@@doc "Formatted string/file output."]
+
+type synced 'a: synced a =
+  | To_string of string [@doc "`sync` produced a string."]
+  | Synced of a         [@doc "`sync` synchronized."]
+  [@@doc "Output type for `sync`."]
+
+type Formatter: Formatter (e: effect) = {
+    type t
+      [@@doc "Abstract formatter type."]
+
+    state: t
+      [@@doc "Opaque state."]
+
+    fmt: string -> t >e-> t
+      [@@doc "`fmt s t` produces a new state which incorporates `s` into `t`."]
+
+    sync: t >e-> synced t
+      [@@doc "`sync t` synchronizes any pending formatting. String formatters produce `To_string
+      string`, whereas file formatters flush any output buffers and produce `Synced t`."]
+  }
+  [@@doc "Formatter module type, used both for string and file output."]
+
+pp_synced 'a >e: (a -> Formatter e >e-> Formatter e) -> synced a -> Formatter e >e-> Formatter e
+  [@@doc "`pp_synced pp_a synced formatter` uses `pp_a` to format a syntactically valid
+  representation of `synced``"]
+
+type just: just =
+  | Left   [@doc "Left-justify."]
+  | Center [@doc "Center."]
+  | Right  [@doc "Right-justify."]
+  [@@doc "Justification."]
+
+pp_just >e: just -> Formatter e >e-> Formatter e
+  [@@doc "`pp_just just` formats a syntactically valid representation of `just`."]
+
+type sign: sign =
+  | Implicit [@doc "Non-negative sign is implicit."]
+  | Explicit [@doc "Sign is always explicit."]
+  | Space    [@doc "Non-negative sign is formatted as a space."]
+  [@@doc "Sign formatting."]
+
+pp_sign >e: sign -> Formatter e >e-> Formatter e
+  [@@doc "`pp_sign sign` formats a syntactically valid representation of `sign`."]
+
+type pmode: pmode =
+  | Limited [@doc "Limited precision, i.e. trailing zeros omitted."]
+  | Fixed [@doc "Fixed precision, i.e. trailing zeros as needed."]
+  [@@doc "Precision mode."]
+
+pp_pmode >e: pmode -> Formatter e >e-> Formatter e
+  [@@doc "`pp_pmode pmode` formats a syntactically valid representation of `pmode`."]
+
+type notation: notation =
+  | Normalized [@doc "Normalized scientific form."]
+  | RadixPoint [@doc "Radix point form."]
+  | Compact    [@doc "The more compact of [Normalized]/[RadixPoint]."]
+  [@@doc "`real` notation"]
+
+pp_notation >e: notation -> Formatter e >e-> Formatter e
+  [@@doc "`pp_notation notation` formats a syntactically valid representation of `notation`."]
+
+pad_default: codepoint
+  [@@doc "Default padding (`' '`)."]
+
+just_default: just
+  [@@doc "Default justification (`Right`)."]
+
+sign_default: sign
+  [@@doc "Default sign formatting (`Implicit`)."]
+
+alt_default: bool
+  [@@doc "Default alternate formatting (`false`)."]
+
+zpad_default: bool
+  [@@doc "Default zero-padding (`false`)."]
+
+width_default: uns
+  [@@doc "Default width (`0`)."]
+
+pmode_default: pmode
+  [@@doc "Default precision mode (`Limited`)."]
+
+precision_bin_m_default: uns
+  [@@doc "Default digits of `Normalized` precision to right of binary radix point (`52`)."]
+
+precision_bin_a_default: uns
+  [@@doc "Default digits of `RadixPoint` precision to right of binary radix point (`53`)."]
+
+precision_oct_m_default: uns
+  [@@doc "Default digits of `Normalized` precision to right of octal radix point (`18`)."]
+
+precision_oct_a_default: uns
+  [@@doc "Default digits of `RadixPoint` precision to right of octal radix point (`18`)."]
+
+precision_dec_m_default: uns
+  [@@doc "Default digits of `Normalized` precision to right of decimal radix point (`15`)."]
+
+precision_dec_a_default: uns
+  [@@doc "Default digits of `RadixPoint` precision to right of decimal radix point (`3`)."]
+
+precision_hex_m_default: uns
+  [@@doc "Default digits of `Normalized` precision to right of hexadecimal radix point (`13`)."]
+
+precision_hex_a_default: uns
+  [@@doc "Default digits of `RadixPoint` precision to right of hexadecimal radix point (`14`)."]
+
+radix_default: Radix0.t
+  [@@doc "Default numerical radix (`Dec`)."]
+
+notation_default: notation
+  [@@doc "Default notation (`Compact`)."]
+
+pretty_default: bool
+  [@@doc "Default pretty (`false`)."]
+
+fmt >e: ?pad:codepoint -> ?just:just -> ?width:uns -> string -> Formatter e >e-> Formatter e
+  [@@doc "`fmt ~pad ~just ~width s formatter` creates a string based on `s` that is
+  `~just`-justified with minimum `~pad`-padded `~width` and applies the result to `formatter`."]
+
+sync >e: Formatter e >e-> synced (Formatter e)
+  [@@doc "`sync formatter` calls `formatter`'s `sync` function and returns the result. A string
+  formatter returns `To_string string`, whereas a file formatter returns `Synced formatter`."]
+
+flush >e: Formatter e >e-> Formatter e
+  [@@doc "`flush formatter` calls `formatter`'s `sync` function and returns `formatter'` if `sync`
+  returns `Synced formatter'`, or halts if `sync` returns `To_string string`."]
+
+to_string >e: Formatter e >e-> string
+  [@@doc "`to_string formatter` calls `formatter`'s `sync` function and returns the resulting string
+  if `sync` returns `To_string string`, or halts if `sync` returns `Synced formatter'`."]

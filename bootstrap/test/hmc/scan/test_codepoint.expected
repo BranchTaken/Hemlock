@@ -1,25 +1,22 @@
-``'a' '
-'``
-  [1:0..1:3) : <Tok_codepoint=Constant 'a'>
-  [1:3..1:4) : <Tok_whitespace>
-  [1:4..2:1) : <Tok_codepoint=Constant '\n'>
-  [2:1..2:1) : <Tok_end_of_input>
+``'a'``
+  [1:0..1:3) : <Tok_codepoint (Constant 'a')>
+  [1:3..1:3) : <Tok_end_of_input>
 ``'\t' '\n' '\r' '\'' '\\'``
-  [1:0..1:4) : <Tok_codepoint=Constant '\t'>
+  [1:0..1:4) : <Tok_codepoint (Constant '\t')>
   [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:9) : <Tok_codepoint=Constant '\n'>
+  [1:5..1:9) : <Tok_codepoint (Constant '\n')>
   [1:9..1:10) : <Tok_whitespace>
-  [1:10..1:14) : <Tok_codepoint=Constant '\r'>
+  [1:10..1:14) : <Tok_codepoint (Constant '\r')>
   [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:19) : <Tok_codepoint=Constant '\''>
+  [1:15..1:19) : <Tok_codepoint (Constant '\'')>
   [1:19..1:20) : <Tok_whitespace>
-  [1:20..1:24) : <Tok_codepoint=Constant '\\'>
+  [1:20..1:24) : <Tok_codepoint (Constant '\\')>
   [1:24..1:24) : <Tok_end_of_input>
 ``'\u{41}'``
-  [1:0..1:8) : <Tok_codepoint=Constant 'A'>
+  [1:0..1:8) : <Tok_codepoint (Constant 'A')>
   [1:8..1:8) : <Tok_end_of_input>
 ``'\u{000_ff_fd}'``
-  [1:0..1:15) : <Tok_codepoint=Constant '�'>
+  [1:0..1:15) : <Tok_codepoint (Constant '�')>
   [1:15..1:15) : <Tok_end_of_input>
 ``'``
   [1:0..1:1) : <Tok_tick>
@@ -33,87 +30,140 @@
 ``
   [1:0..1:1) : <Tok_tick>
   [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:0) : <Tok_line_delim>
   [2:0..2:0) : <Tok_end_of_input>
-``'\
-
-``
-  [1:0..1:2) : <Tok_tick>
-  [1:2..2:0) : <Tok_whitespace>
+``'
+'``
+  [1:0..1:1) : <Tok_tick>
+  [1:1..2:0) : <Tok_whitespace>
   [2:0..2:0) : <Tok_line_delim>
-  [2:0..2:0) : <Tok_end_of_input>
+  [2:0..2:1) : <Tok_tick>
+  [2:1..2:1) : <Tok_end_of_input>
 ``' a``
   [1:0..1:1) : <Tok_tick>
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:3) : <Tok_uident=Constant "a">
+  [1:2..1:3) : <Tok_uident (Constant "a")>
   [1:3..1:3) : <Tok_end_of_input>
 ``'a``
   [1:0..1:1) : <Tok_tick>
-  [1:1..1:2) : <Tok_uident=Constant "a">
+  [1:1..1:2) : <Tok_uident (Constant "a")>
   [1:2..1:2) : <Tok_end_of_input>
 ``'abcdefghijklmnopqrstuvwxyz_``
   [1:0..1:1) : <Tok_tick>
-  [1:1..1:28) : <Tok_uident=Constant "abcdefghijklmnopqrstuvwxyz_">
+  [1:1..1:28) : <Tok_uident (Constant "abcdefghijklmnopqrstuvwxyz_")>
   [1:28..1:28) : <Tok_end_of_input>
 ``'aa'``
   [1:0..1:1) : <Tok_tick>
-  [1:1..1:4) : <Tok_uident=Constant "aa'">
+  [1:1..1:4) : <Tok_uident (Constant "aa'")>
   [1:4..1:4) : <Tok_end_of_input>
+``'(a: type)``
+  [1:0..1:1) : <Tok_tick>
+  [1:1..1:2) : <Tok_lparen>
+  [1:2..1:3) : <Tok_uident (Constant "a")>
+  [1:3..1:4) : <Tok_colon>
+  [1:4..1:5) : <Tok_whitespace>
+  [1:5..1:9) : <Tok_type>
+  [1:9..1:10) : <Tok_rparen>
+  [1:10..1:10) : <Tok_end_of_input>
+``'
+  (a: type)``
+  [1:0..1:1) : <Tok_tick>
+  [1:1..2:0) : <Tok_whitespace>
+  [2:0..2:2) : <Tok_whitespace>
+  [2:2..2:3) : <Tok_lparen>
+  [2:3..2:4) : <Tok_uident (Constant "a")>
+  [2:4..2:5) : <Tok_colon>
+  [2:5..2:6) : <Tok_whitespace>
+  [2:6..2:10) : <Tok_type>
+  [2:10..2:11) : <Tok_rparen>
+  [2:11..2:11) : <Tok_end_of_input>
+``x 'a: '(b: type) -> a -> b``
+  [1:0..1:1) : <Tok_uident (Constant "x")>
+  [1:1..1:2) : <Tok_whitespace>
+  [1:2..1:3) : <Tok_tick>
+  [1:3..1:4) : <Tok_uident (Constant "a")>
+  [1:4..1:5) : <Tok_colon>
+  [1:5..1:6) : <Tok_whitespace>
+  [1:6..1:7) : <Tok_tick>
+  [1:7..1:8) : <Tok_lparen>
+  [1:8..1:9) : <Tok_uident (Constant "b")>
+  [1:9..1:10) : <Tok_colon>
+  [1:10..1:11) : <Tok_whitespace>
+  [1:11..1:15) : <Tok_type>
+  [1:15..1:16) : <Tok_rparen>
+  [1:16..1:17) : <Tok_whitespace>
+  [1:17..1:19) : <Tok_arrow>
+  [1:19..1:20) : <Tok_whitespace>
+  [1:20..1:21) : <Tok_uident (Constant "a")>
+  [1:21..1:22) : <Tok_whitespace>
+  [1:22..1:24) : <Tok_arrow>
+  [1:24..1:25) : <Tok_whitespace>
+  [1:25..1:26) : <Tok_uident (Constant "b")>
+  [1:26..1:26) : <Tok_end_of_input>
+``'	' ''``
+  [1:0..1:9) : <Tok_codepoint (Malformed ["[1:1..1:8): Invalid codepoint"])>
+  [1:9..1:10) : <Tok_whitespace>
+  [1:10..1:13) : <Tok_codepoint (Malformed ["[1:11..1:12): Invalid codepoint"])>
+  [1:13..1:13) : <Tok_end_of_input>
+``'\
+
+``
+  [1:0..2:0) : <Tok_codepoint (Malformed ["[1:0..2:0): Unterminated codepoint literal"; "[1:1..2:0): Illegal backslash escape"])>
+  [2:0..2:0) : <Tok_end_of_input>
 ``'\u{0}x'``
-  [1:0..1:8) : <Tok_codepoint=Malformed ["[1:6..1:7): Excess codepoint before terminator"]>
+  [1:0..1:8) : <Tok_codepoint (Malformed ["[1:6..1:7): Excess codepoint before terminator"])>
   [1:8..1:8) : <Tok_end_of_input>
 ``'\u{110ffff}'``
-  [1:0..1:13) : <Tok_codepoint=Malformed ["[1:1..1:12): Invalid Unicode value"]>
+  [1:0..1:13) : <Tok_codepoint (Malformed ["[1:1..1:12): Invalid \u{...}"])>
   [1:13..1:13) : <Tok_end_of_input>
 ``'\u{110000}'``
-  [1:0..1:12) : <Tok_codepoint=Malformed ["[1:1..1:11): Invalid Unicode value"]>
+  [1:0..1:12) : <Tok_codepoint (Malformed ["[1:1..1:11): Invalid \u{...}"])>
   [1:12..1:12) : <Tok_end_of_input>
 ``'\u{110000}'``
-  [1:0..1:12) : <Tok_codepoint=Malformed ["[1:1..1:11): Invalid Unicode value"]>
+  [1:0..1:12) : <Tok_codepoint (Malformed ["[1:1..1:11): Invalid \u{...}"])>
   [1:12..1:12) : <Tok_end_of_input>
 ``'\u{d800}'``
-  [1:0..1:10) : <Tok_codepoint=Malformed ["[1:1..1:9): Invalid Unicode value"]>
+  [1:0..1:10) : <Tok_codepoint (Malformed ["[1:1..1:9): Invalid \u{...}"])>
   [1:10..1:10) : <Tok_end_of_input>
 ``'\u{0z1}'``
-  [1:0..1:9) : <Tok_codepoint=Malformed ["[1:5..1:6): Invalid hexadecimal digit"]>
+  [1:0..1:9) : <Tok_codepoint (Malformed ["[1:1..1:6): Invalid \u{...}"])>
   [1:9..1:9) : <Tok_end_of_input>
 ``'\u{x'``
-  [1:0..1:6) : <Tok_codepoint=Malformed ["[1:1..1:5): Partial \u{...}"]>
+  [1:0..1:6) : <Tok_codepoint (Malformed ["[1:1..1:5): Invalid \u{...}"])>
   [1:6..1:6) : <Tok_end_of_input>
 ``'\u{0}a'``
-  [1:0..1:8) : <Tok_codepoint=Malformed ["[1:6..1:7): Excess codepoint before terminator"]>
+  [1:0..1:8) : <Tok_codepoint (Malformed ["[1:6..1:7): Excess codepoint before terminator"])>
   [1:8..1:8) : <Tok_end_of_input>
 ``'\u{0}``
-  [1:0..1:6) : <Tok_codepoint=Malformed ["[1:0..1:6): Unterminated codepoint literal"]>
+  [1:0..1:6) : <Tok_codepoint (Malformed ["[1:0..1:6): Unterminated codepoint literal"])>
   [1:6..1:6) : <Tok_end_of_input>
 ``'\u{0'``
-  [1:0..1:6) : <Tok_codepoint=Malformed ["[1:1..1:5): Partial \u{...}"]>
+  [1:0..1:6) : <Tok_codepoint (Malformed ["[1:0..1:6): Unterminated codepoint literal"; "[1:1..1:6): Invalid \u{...}"])>
   [1:6..1:6) : <Tok_end_of_input>
 ``'\u{'``
-  [1:0..1:5) : <Tok_codepoint=Malformed ["[1:1..1:4): Partial \u{...}"]>
+  [1:0..1:5) : <Tok_codepoint (Malformed ["[1:0..1:5): Unterminated codepoint literal"; "[1:1..1:5): Invalid \u{...}"])>
   [1:5..1:5) : <Tok_end_of_input>
 ``'\u00'``
-  [1:0..1:6) : <Tok_codepoint=Malformed ["[1:1..1:3): Illegal backslash escape"; "[1:3..1:4): Excess codepoint before terminator"; "[1:4..1:5): Excess codepoint before terminator"]>
+  [1:0..1:6) : <Tok_codepoint (Malformed ["[1:1..1:4): Invalid \u{...}"])>
   [1:6..1:6) : <Tok_end_of_input>
 ``'\u0'``
-  [1:0..1:5) : <Tok_codepoint=Malformed ["[1:1..1:3): Illegal backslash escape"; "[1:3..1:4): Excess codepoint before terminator"]>
+  [1:0..1:5) : <Tok_codepoint (Malformed ["[1:1..1:4): Invalid \u{...}"])>
   [1:5..1:5) : <Tok_end_of_input>
 ``'\u'``
-  [1:0..1:4) : <Tok_codepoint=Malformed ["[1:1..1:3): Illegal backslash escape"]>
+  [1:0..1:4) : <Tok_codepoint (Malformed ["[1:0..1:4): Unterminated codepoint literal"; "[1:1..1:4): Invalid \u{...}"])>
   [1:4..1:4) : <Tok_end_of_input>
 ``'\u``
-  [1:0..1:3) : <Tok_codepoint=Malformed ["[1:0..1:3): Unterminated codepoint literal"]>
+  [1:0..1:3) : <Tok_codepoint (Malformed ["[1:0..1:3): Unterminated codepoint literal"])>
   [1:3..1:3) : <Tok_end_of_input>
 ``'\x'``
-  [1:0..1:4) : <Tok_codepoint=Malformed ["[1:1..1:3): Illegal backslash escape"]>
+  [1:0..1:4) : <Tok_codepoint (Malformed ["[1:1..1:3): Illegal backslash escape"])>
   [1:4..1:4) : <Tok_end_of_input>
 ``'\``
-  [1:0..1:2) : <Tok_codepoint=Malformed ["[1:0..1:2): Unterminated codepoint literal"]>
+  [1:0..1:2) : <Tok_codepoint (Malformed ["[1:0..1:2): Unterminated codepoint literal"])>
   [1:2..1:2) : <Tok_end_of_input>
 ``'''``
-  [1:0..1:2) : <Tok_codepoint=Malformed ["[1:0..1:2): Empty codepoint literal"]>
+  [1:0..1:2) : <Tok_codepoint (Malformed ["[1:0..1:2): Empty codepoint literal"])>
   [1:2..1:3) : <Tok_tick>
   [1:3..1:3) : <Tok_end_of_input>
 ``''``
-  [1:0..1:2) : <Tok_codepoint=Malformed ["[1:0..1:2): Empty codepoint literal"]>
+  [1:0..1:2) : <Tok_codepoint (Malformed ["[1:0..1:2): Empty codepoint literal"])>
   [1:2..1:2) : <Tok_end_of_input>

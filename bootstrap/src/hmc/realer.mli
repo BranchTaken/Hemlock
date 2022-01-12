@@ -1,6 +1,6 @@
 (** Arbitrary-precision binary floating point number. Trailing 0 binary digits in the mantissa are
     normalized away; this preserves accuracy but not explicit precision. Only operations which can
-    be performed without loss of precision are supported; e.g. division is intintionally omitted. *)
+    be performed without loss of precision are supported; e.g. division is intentionally omitted. *)
 
 open Basis
 open Basis.Rudiments

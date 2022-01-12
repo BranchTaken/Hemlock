@@ -1,16 +1,16 @@
 (tests
  (names
-  test_bstring
   test_cident
   test_codepoint
   test_comment
   test_dentation
+  test_fstring
   test_integer
   test_istring
-  test_line_directive
   test_operators
   test_punctuation
   test_real
   test_rstring
+  test_source_directive
   test_uident)
  (libraries Basis Hmc))

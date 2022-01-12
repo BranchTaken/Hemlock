@@ -1858,18 +1858,26 @@ let to_string ?(alt=Fmt.alt_default) ?(pretty=Fmt.pretty_default) s =
             | _ -> ""
           end
       end in
-      match substr_find ~pattern:"`" s, substr_find ~pattern:"`_" s,
-        substr_find ~pattern:"`__" s with
-      | None, _, _ -> "``" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "``"
-      | Some _, None, _ -> "`_`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "`_`"
-      | Some _, Some _, None -> "`__`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "`__`"
-      | Some _, Some _, Some _ -> begin
+      let ambiguous0 = Option.is_some (substr_find ~pattern:"``" s) || is_prefix ~prefix:"`" s ||
+                       is_suffix ~suffix:"`" s in
+      let ambiguous1 = Option.is_some (substr_find ~pattern:"`_`" s) || is_prefix ~prefix:"_`" s ||
+                       is_suffix ~suffix:"`_" s in
+      let ambiguous2 = Option.is_some (substr_find ~pattern:"`__`" s) || is_prefix ~prefix:"__`" s
+                       || is_suffix ~suffix:"`__" s in
+      match ambiguous0, ambiguous1, ambiguous2 with
+      | false, _, _ -> "``" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "``"
+      | true, false, _ -> "`_`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "`_`"
+      | true, true, false -> "`__`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ "`__`"
+      | true, true, true -> begin
           let rec fn h_hd h_right s = begin
-            let btick_tag =
-              "`_" ^ C.Slice.(to_string (of_cursors ~base:h_hd ~past:h_right)) ^ "_" in
-            match substr_find ~pattern:btick_tag s with
-            | None -> btick_tag ^ "`" ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ btick_tag ^ "`"
-            | Some _ -> fn h_hd (C.Cursor.succ h_right) s
+            let tag = "_" ^ C.Slice.(to_string (of_cursors ~base:h_hd ~past:h_right)) ^ "_" in
+            let tagged_delim = "`" ^ tag ^ "`" in
+            let ambiguous_prefix = tag ^ "`" in
+            let ambiguous_suffix = "`" ^ tag in
+            match Option.is_some (substr_find ~pattern:tagged_delim s) || is_prefix
+                    ~prefix:ambiguous_prefix s || is_suffix ~suffix:ambiguous_suffix s with
+            | false -> tagged_delim ^ (pad_nl_pre s) ^ s ^ (pad_nl_suf s) ^ tagged_delim
+            | true -> fn h_hd (C.Cursor.succ h_right) s
           end in
           let h =
             Hash.State.empty |> hash_fold s |> Hash.t_of_state |> U128.to_string ~radix:Radix.Hex in

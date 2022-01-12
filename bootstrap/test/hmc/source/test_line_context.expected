@@ -1,0 +1,401 @@
+---
+source=``x = 42``
+first={atok=<Tok_uident (Constant "x")>; source=[1:0..1:1)}
+last={atok=<Tok_uident (Constant "x")>; source=[1:0..1:1)}
+lookahead=Some (1:6)
+ctoks=[
+    (0, {atok=<Tok_uident (Constant "x")>; source=[1:0..1:1)})
+    (1, {atok=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atok=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atok=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atok=<Tok_u64 (Constant 42)>; source=[1:4..1:6)})
+  ]
+context_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+context_no_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+---
+source=``x = 42``
+first={atok=<Tok_whitespace>; source=[1:1..1:2)}
+last={atok=<Tok_whitespace>; source=[1:1..1:2)}
+lookahead=Some (1:6)
+ctoks=[
+    (0, {atok=<Tok_uident (Constant "x")>; source=[1:0..1:1)})
+    (1, {atok=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atok=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atok=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atok=<Tok_u64 (Constant 42)>; source=[1:4..1:6)})
+  ]
+context_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+context_no_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+---
+source=``x = 42``
+first={atok=<Tok_whitespace>; source=[1:1..1:2)}
+last={atok=<Tok_eq>; source=[1:2..1:3)}
+lookahead=Some (1:6)
+ctoks=[
+    (0, {atok=<Tok_uident (Constant "x")>; source=[1:0..1:1)})
+    (1, {atok=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atok=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atok=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atok=<Tok_u64 (Constant 42)>; source=[1:4..1:6)})
+  ]
+context_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+context_no_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+---
+source=``x = 42``
+first={atok=<Tok_u64 (Constant 42)>; source=[1:4..1:6)}
+last={atok=<Tok_u64 (Constant 42)>; source=[1:4..1:6)}
+lookahead=None
+ctoks=[
+    (0, {atok=<Tok_uident (Constant "x")>; source=[1:0..1:1)})
+    (1, {atok=<Tok_whitespace>; source=[1:1..1:2)})
+    (2, {atok=<Tok_eq>; source=[1:2..1:3)})
+    (3, {atok=<Tok_whitespace>; source=[1:3..1:4)})
+    (4, {atok=<Tok_u64 (Constant 42)>; source=[1:4..1:6)})
+  ]
+context_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+context_no_lookahead=[
+    [1:0..1:6): "x = 42"
+  ]
+---
+source=``[:"Foo.hm"]x = 42``
+first={atok=<Tok_uident (Constant "x")>; source=[Foo.hm:1:0..Foo.hm:1:1)}
+last={atok=<Tok_uident (Constant "x")>; source=[Foo.hm:1:0..Foo.hm:1:1)}
+lookahead=Some (Foo.hm:1:6)
+ctoks=[
+    (0, {atok=<Tok_source_directive (Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atok=<Tok_uident (Constant "x")>; source=[Foo.hm:1:0..Foo.hm:1:1)})
+    (2, {atok=<Tok_whitespace>; source=[Foo.hm:1:1..Foo.hm:1:2)})
+    (3, {atok=<Tok_eq>; source=[Foo.hm:1:2..Foo.hm:1:3)})
+    (4, {atok=<Tok_whitespace>; source=[Foo.hm:1:3..Foo.hm:1:4)})
+    (5, {atok=<Tok_u64 (Constant 42)>; source=[Foo.hm:1:4..Foo.hm:1:6)})
+  ]
+context_lookahead=[
+    [1:0..1:11): "[:\"Foo.hm\"]"
+    [Foo.hm:1:0..Foo.hm:1:6): "x = 42"
+  ]
+context_no_lookahead=[
+    [1:0..1:11): "[:\"Foo.hm\"]"
+    [Foo.hm:1:0..Foo.hm:1:1): "x"
+    [1:12..1:17): " = 42"
+  ]
+---
+source=``[:"Foo.hm"]
+x =
+    42``
+first={atok=<Tok_uident (Constant "x")>; source=[Foo.hm:2:0..Foo.hm:2:1)}
+last={atok=<Tok_uident (Constant "x")>; source=[Foo.hm:2:0..Foo.hm:2:1)}
+lookahead=Some (Foo.hm:3:4)
+ctoks=[
+    (0, {atok=<Tok_source_directive (Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atok=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)})
+    (2, {atok=<Tok_line_delim>; source=[Foo.hm:2:0..Foo.hm:2:0)})
+    (3, {atok=<Tok_uident (Constant "x")>; source=[Foo.hm:2:0..Foo.hm:2:1)})
+    (4, {atok=<Tok_whitespace>; source=[Foo.hm:2:1..Foo.hm:2:2)})
+    (5, {atok=<Tok_eq>; source=[Foo.hm:2:2..Foo.hm:2:3)})
+    (6, {atok=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:3:0)})
+    (7, {atok=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)})
+    (8, {atok=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)})
+    (9, {atok=<Tok_u64 (Constant 42)>; source=[Foo.hm:3:4..Foo.hm:3:6)})
+    (10, {atok=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)})
+  ]
+context_lookahead=[
+    [Foo.hm:2:0..Foo.hm:2:3): "x ="
+  ]
+context_no_lookahead=[
+    [Foo.hm:2:0..Foo.hm:2:1): "x"
+    [2:1..2:3): " ="
+  ]
+---
+source=``[:"Foo.hm"]
+x =
+    42``
+first={atok=<Tok_uident (Constant "x")>; source=[Foo.hm:2:0..Foo.hm:2:1)}
+last={atok=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:3:0)}
+lookahead=Some (Foo.hm:3:6)
+ctoks=[
+    (0, {atok=<Tok_source_directive (Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atok=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)})
+    (2, {atok=<Tok_line_delim>; source=[Foo.hm:2:0..Foo.hm:2:0)})
+    (3, {atok=<Tok_uident (Constant "x")>; source=[Foo.hm:2:0..Foo.hm:2:1)})
+    (4, {atok=<Tok_whitespace>; source=[Foo.hm:2:1..Foo.hm:2:2)})
+    (5, {atok=<Tok_eq>; source=[Foo.hm:2:2..Foo.hm:2:3)})
+    (6, {atok=<Tok_whitespace>; source=[Foo.hm:2:3..Foo.hm:3:0)})
+    (7, {atok=<Tok_whitespace>; source=[Foo.hm:3:0..Foo.hm:3:4)})
+    (8, {atok=<Tok_indent>; source=[Foo.hm:3:4..Foo.hm:3:4)})
+    (9, {atok=<Tok_u64 (Constant 42)>; source=[Foo.hm:3:4..Foo.hm:3:6)})
+    (10, {atok=<Tok_dedent>; source=[Foo.hm:3:6..Foo.hm:3:6)})
+  ]
+context_lookahead=[
+    [Foo.hm:2:0..Foo.hm:3:6): "x =\n    42"
+  ]
+context_no_lookahead=[
+    [Foo.hm:2:0..Foo.hm:3:0): "x =\n"
+    [3:0..3:6): "    42"
+  ]
+---
+source=``[:"Foo.hm"]
+x =[:"Bar.hm"]
+    42 + 13``
+first={atok=<Tok_uident (Constant "x")>; source=[Foo.hm:2:0..Foo.hm:2:1)}
+last={atok=<Tok_u64 (Constant 42)>; source=[Bar.hm:2:4..Bar.hm:2:6)}
+lookahead=Some (Bar.hm:2:11)
+ctoks=[
+    (0, {atok=<Tok_source_directive (Constant {path=Some ("Foo.hm"); line=None; io=None})>; source=[1:0..1:11)})
+    (1, {atok=<Tok_whitespace>; source=[Foo.hm:1:0..Foo.hm:2:0)})
+    (2, {atok=<Tok_line_delim>; source=[Foo.hm:2:0..Foo.hm:2:0)})
+    (3, {atok=<Tok_uident (Constant "x")>; source=[Foo.hm:2:0..Foo.hm:2:1)})
+    (4, {atok=<Tok_whitespace>; source=[Foo.hm:2:1..Foo.hm:2:2)})
+    (5, {atok=<Tok_eq>; source=[Foo.hm:2:2..Foo.hm:2:3)})
+    (6, {atok=<Tok_source_directive (Constant {path=Some ("Bar.hm"); line=None; io=None})>; source=[2:3..2:14)})
+    (7, {atok=<Tok_whitespace>; source=[Bar.hm:1:0..Bar.hm:2:0)})
+    (8, {atok=<Tok_whitespace>; source=[Bar.hm:2:0..Bar.hm:2:4)})
+    (9, {atok=<Tok_indent>; source=[Bar.hm:2:4..Bar.hm:2:4)})
+    (10, {atok=<Tok_u64 (Constant 42)>; source=[Bar.hm:2:4..Bar.hm:2:6)})
+    (11, {atok=<Tok_whitespace>; source=[Bar.hm:2:6..Bar.hm:2:7)})
+    (12, {atok=<Tok_plus_op "+">; source=[Bar.hm:2:7..Bar.hm:2:8)})
+    (13, {atok=<Tok_whitespace>; source=[Bar.hm:2:8..Bar.hm:2:9)})
+    (14, {atok=<Tok_u64 (Constant 13)>; source=[Bar.hm:2:9..Bar.hm:2:11)})
+    (15, {atok=<Tok_dedent>; source=[Bar.hm:2:11..Bar.hm:2:11)})
+  ]
+context_lookahead=[
+    [Foo.hm:2:0..Foo.hm:2:3): "x ="
+    [2:3..2:14): "[:\"Bar.hm\"]"
+    [Bar.hm:1:0..Bar.hm:2:11): "\n    42 + 13"
+  ]
+context_no_lookahead=[
+    [Foo.hm:2:0..Foo.hm:2:3): "x ="
+    [2:3..2:14): "[:\"Bar.hm\"]"
+    [Bar.hm:1:0..Bar.hm:2:6): "\n    42"
+    [3:6..3:11): " + 13"
+  ]
+---
+source=``accept parser =
+    let node, parser' = [...]
+    let () = (%accept_hook)
+    node, parser'``
+first={atok=<Tok_uident (Constant "accept")>; source=[1:0..1:6)}
+last={atok=<Tok_dedent>; source=[4:17..4:17)}
+lookahead=None
+ctoks=[
+    (0, {atok=<Tok_uident (Constant "accept")>; source=[1:0..1:6)})
+    (1, {atok=<Tok_whitespace>; source=[1:6..1:7)})
+    (2, {atok=<Tok_uident (Constant "parser")>; source=[1:7..1:13)})
+    (3, {atok=<Tok_whitespace>; source=[1:13..1:14)})
+    (4, {atok=<Tok_eq>; source=[1:14..1:15)})
+    (5, {atok=<Tok_whitespace>; source=[1:15..2:0)})
+    (6, {atok=<Tok_whitespace>; source=[2:0..2:4)})
+    (7, {atok=<Tok_indent>; source=[2:4..2:4)})
+    (8, {atok=<Tok_let>; source=[2:4..2:7)})
+    (9, {atok=<Tok_whitespace>; source=[2:7..2:8)})
+    (10, {atok=<Tok_uident (Constant "node")>; source=[2:8..2:12)})
+    (11, {atok=<Tok_comma>; source=[2:12..2:13)})
+    (12, {atok=<Tok_whitespace>; source=[2:13..2:14)})
+    (13, {atok=<Tok_uident (Constant "parser'")>; source=[2:14..2:21)})
+    (14, {atok=<Tok_whitespace>; source=[2:21..2:22)})
+    (15, {atok=<Tok_eq>; source=[2:22..2:23)})
+    (16, {atok=<Tok_whitespace>; source=[2:23..2:24)})
+    (17, {atok=<Tok_lbrack>; source=[2:24..2:25)})
+    (18, {atok=<Tok_dot_op "...">; source=[2:25..2:28)})
+    (19, {atok=<Tok_rbrack>; source=[2:28..2:29)})
+    (20, {atok=<Tok_whitespace>; source=[2:29..3:0)})
+    (21, {atok=<Tok_whitespace>; source=[3:0..3:4)})
+    (22, {atok=<Tok_line_delim>; source=[3:4..3:4)})
+    (23, {atok=<Tok_let>; source=[3:4..3:7)})
+    (24, {atok=<Tok_whitespace>; source=[3:7..3:8)})
+    (25, {atok=<Tok_lparen>; source=[3:8..3:9)})
+    (26, {atok=<Tok_rparen>; source=[3:9..3:10)})
+    (27, {atok=<Tok_whitespace>; source=[3:10..3:11)})
+    (28, {atok=<Tok_eq>; source=[3:11..3:12)})
+    (29, {atok=<Tok_whitespace>; source=[3:12..3:13)})
+    (30, {atok=<Tok_lparen>; source=[3:13..3:14)})
+    (31, {atok=<Tok_pct_op "\%">; source=[3:14..3:15)})
+    (32, {atok=<Tok_uident (Constant "accept_hook")>; source=[3:15..3:26)})
+    (33, {atok=<Tok_rparen>; source=[3:26..3:27)})
+    (34, {atok=<Tok_whitespace>; source=[3:27..4:0)})
+    (35, {atok=<Tok_whitespace>; source=[4:0..4:4)})
+    (36, {atok=<Tok_line_delim>; source=[4:4..4:4)})
+    (37, {atok=<Tok_uident (Constant "node")>; source=[4:4..4:8)})
+    (38, {atok=<Tok_comma>; source=[4:8..4:9)})
+    (39, {atok=<Tok_whitespace>; source=[4:9..4:10)})
+    (40, {atok=<Tok_uident (Constant "parser'")>; source=[4:10..4:17)})
+    (41, {atok=<Tok_dedent>; source=[4:17..4:17)})
+  ]
+context_lookahead=[
+    [1:0..4:17): "accept parser =\n    let node, parser' = [...]\n    let () = (\%accept_hook)\n    node, parser'"
+  ]
+context_no_lookahead=[
+    [1:0..4:17): "accept parser =\n    let node, parser' = [...]\n    let () = (\%accept_hook)\n    node, parser'"
+  ]
+---
+source=``%accept_hook = %(
+    File.Fmt.stdout |> "%f(^Node.pp^)=(^node^)\n" |> ignore
+  )%``
+first={atok=<Tok_pct_op "\%">; source=[1:0..1:1)}
+last={atok=<Tok_fstring_lparen_caret>; source=[2:38..2:40)}
+lookahead=Some (3:2)
+ctoks=[
+    (0, {atok=<Tok_pct_op "\%">; source=[1:0..1:1)})
+    (1, {atok=<Tok_uident (Constant "accept_hook")>; source=[1:1..1:12)})
+    (2, {atok=<Tok_whitespace>; source=[1:12..1:13)})
+    (3, {atok=<Tok_eq>; source=[1:13..1:14)})
+    (4, {atok=<Tok_whitespace>; source=[1:14..1:15)})
+    (5, {atok=<Tok_pct_op "\%">; source=[1:15..1:16)})
+    (6, {atok=<Tok_lparen>; source=[1:16..1:17)})
+    (7, {atok=<Tok_whitespace>; source=[1:17..2:0)})
+    (8, {atok=<Tok_whitespace>; source=[2:0..2:4)})
+    (9, {atok=<Tok_indent>; source=[2:4..2:4)})
+    (10, {atok=<Tok_cident "File">; source=[2:4..2:8)})
+    (11, {atok=<Tok_dot>; source=[2:8..2:9)})
+    (12, {atok=<Tok_cident "Fmt">; source=[2:9..2:12)})
+    (13, {atok=<Tok_dot>; source=[2:12..2:13)})
+    (14, {atok=<Tok_uident (Constant "stdout")>; source=[2:13..2:19)})
+    (15, {atok=<Tok_whitespace>; source=[2:19..2:20)})
+    (16, {atok=<Tok_bar_op "|>">; source=[2:20..2:22)})
+    (17, {atok=<Tok_whitespace>; source=[2:22..2:23)})
+    (18, {atok=<Tok_fstring_lditto>; source=[2:23..2:24)})
+    (19, {atok=<Tok_fstring_pct>; source=[2:24..2:25)})
+    (20, {atok=<Tok_fstring_fmt (Constant Fmt_f)>; source=[2:25..2:26)})
+    (21, {atok=<Tok_fstring_lparen_caret>; source=[2:26..2:28)})
+    (22, {atok=<Tok_cident "Node">; source=[2:28..2:32)})
+    (23, {atok=<Tok_dot>; source=[2:32..2:33)})
+    (24, {atok=<Tok_uident (Constant "pp")>; source=[2:33..2:35)})
+    (25, {atok=<Tok_fstring_caret_rparen>; source=[2:35..2:37)})
+    (26, {atok=<Tok_fstring_sep (Constant "=")>; source=[2:37..2:38)})
+    (27, {atok=<Tok_fstring_lparen_caret>; source=[2:38..2:40)})
+    (28, {atok=<Tok_uident (Constant "node")>; source=[2:40..2:44)})
+    (29, {atok=<Tok_fstring_caret_rparen>; source=[2:44..2:46)})
+    (30, {atok=<Tok_fstring_label "node">; source=[2:40..2:44)})
+    (31, {atok=<Tok_fstring_interpolated (Constant "\n")>; source=[2:46..2:48)})
+    (32, {atok=<Tok_fstring_rditto>; source=[2:48..2:49)})
+    (33, {atok=<Tok_whitespace>; source=[2:49..2:50)})
+    (34, {atok=<Tok_bar_op "|>">; source=[2:50..2:52)})
+    (35, {atok=<Tok_whitespace>; source=[2:52..2:53)})
+    (36, {atok=<Tok_uident (Constant "ignore")>; source=[2:53..2:59)})
+    (37, {atok=<Tok_whitespace>; source=[2:59..3:0)})
+    (38, {atok=<Tok_whitespace>; source=[3:0..3:2)})
+    (39, {atok=<Tok_dedent>; source=[3:2..3:2)})
+    (40, {atok=<Tok_rparen>; source=[3:2..3:3)})
+    (41, {atok=<Tok_pct_op "\%">; source=[3:3..3:4)})
+  ]
+context_lookahead=[
+    [1:0..2:59): "\%accept_hook = \%(\n    File.Fmt.stdout |> \"\%f(^Node.pp^)=(^node^)\\n\" |> ignore"
+  ]
+context_no_lookahead=[
+    [1:0..2:59): "\%accept_hook = \%(\n    File.Fmt.stdout |> \"\%f(^Node.pp^)=(^node^)\\n\" |> ignore"
+  ]
+---
+source=``[:"Pgen.hm"]accept parser =
+    let node, parser' = [...]
+    let () = ([:"Foo.hmy":1:0+16](
+    File.Fmt.stdout |> "%f(^Node.pp^)=(^node^)\n" |> ignore
+  )[:"Pgen.hm":3:4+26])
+    node, parser'``
+first={atok=<Tok_source_directive (Constant {path=Some ("Pgen.hm"); line=None; io=None})>; source=[1:0..1:12)}
+last={atok=<Tok_uident (Constant "ignore")>; source=[Foo.hmy:2:53..Foo.hmy:2:59)}
+lookahead=Some (Foo.hmy:3:2)
+ctoks=[
+    (0, {atok=<Tok_source_directive (Constant {path=Some ("Pgen.hm"); line=None; io=None})>; source=[1:0..1:12)})
+    (1, {atok=<Tok_uident (Constant "accept")>; source=[Pgen.hm:1:0..Pgen.hm:1:6)})
+    (2, {atok=<Tok_whitespace>; source=[Pgen.hm:1:6..Pgen.hm:1:7)})
+    (3, {atok=<Tok_uident (Constant "parser")>; source=[Pgen.hm:1:7..Pgen.hm:1:13)})
+    (4, {atok=<Tok_whitespace>; source=[Pgen.hm:1:13..Pgen.hm:1:14)})
+    (5, {atok=<Tok_eq>; source=[Pgen.hm:1:14..Pgen.hm:1:15)})
+    (6, {atok=<Tok_whitespace>; source=[Pgen.hm:1:15..Pgen.hm:2:0)})
+    (7, {atok=<Tok_whitespace>; source=[Pgen.hm:2:0..Pgen.hm:2:4)})
+    (8, {atok=<Tok_indent>; source=[Pgen.hm:2:4..Pgen.hm:2:4)})
+    (9, {atok=<Tok_let>; source=[Pgen.hm:2:4..Pgen.hm:2:7)})
+    (10, {atok=<Tok_whitespace>; source=[Pgen.hm:2:7..Pgen.hm:2:8)})
+    (11, {atok=<Tok_uident (Constant "node")>; source=[Pgen.hm:2:8..Pgen.hm:2:12)})
+    (12, {atok=<Tok_comma>; source=[Pgen.hm:2:12..Pgen.hm:2:13)})
+    (13, {atok=<Tok_whitespace>; source=[Pgen.hm:2:13..Pgen.hm:2:14)})
+    (14, {atok=<Tok_uident (Constant "parser'")>; source=[Pgen.hm:2:14..Pgen.hm:2:21)})
+    (15, {atok=<Tok_whitespace>; source=[Pgen.hm:2:21..Pgen.hm:2:22)})
+    (16, {atok=<Tok_eq>; source=[Pgen.hm:2:22..Pgen.hm:2:23)})
+    (17, {atok=<Tok_whitespace>; source=[Pgen.hm:2:23..Pgen.hm:2:24)})
+    (18, {atok=<Tok_lbrack>; source=[Pgen.hm:2:24..Pgen.hm:2:25)})
+    (19, {atok=<Tok_dot_op "...">; source=[Pgen.hm:2:25..Pgen.hm:2:28)})
+    (20, {atok=<Tok_rbrack>; source=[Pgen.hm:2:28..Pgen.hm:2:29)})
+    (21, {atok=<Tok_whitespace>; source=[Pgen.hm:2:29..Pgen.hm:3:0)})
+    (22, {atok=<Tok_whitespace>; source=[Pgen.hm:3:0..Pgen.hm:3:4)})
+    (23, {atok=<Tok_line_delim>; source=[Pgen.hm:3:4..Pgen.hm:3:4)})
+    (24, {atok=<Tok_let>; source=[Pgen.hm:3:4..Pgen.hm:3:7)})
+    (25, {atok=<Tok_whitespace>; source=[Pgen.hm:3:7..Pgen.hm:3:8)})
+    (26, {atok=<Tok_lparen>; source=[Pgen.hm:3:8..Pgen.hm:3:9)})
+    (27, {atok=<Tok_rparen>; source=[Pgen.hm:3:9..Pgen.hm:3:10)})
+    (28, {atok=<Tok_whitespace>; source=[Pgen.hm:3:10..Pgen.hm:3:11)})
+    (29, {atok=<Tok_eq>; source=[Pgen.hm:3:11..Pgen.hm:3:12)})
+    (30, {atok=<Tok_whitespace>; source=[Pgen.hm:3:12..Pgen.hm:3:13)})
+    (31, {atok=<Tok_lparen>; source=[Pgen.hm:3:13..Pgen.hm:3:14)})
+    (32, {atok=<Tok_source_directive (Constant {path=Some ("Foo.hmy"); line=Some (1); io=Some ({indent=0; omit=16})})>; source=[3:14..3:33)})
+    (33, {atok=<Tok_lparen>; source=[Foo.hmy:1:16..Foo.hmy:1:17)})
+    (34, {atok=<Tok_whitespace>; source=[Foo.hmy:1:17..Foo.hmy:2:0)})
+    (35, {atok=<Tok_whitespace>; source=[Foo.hmy:2:0..Foo.hmy:2:4)})
+    (36, {atok=<Tok_indent>; source=[Foo.hmy:2:4..Foo.hmy:2:4)})
+    (37, {atok=<Tok_cident "File">; source=[Foo.hmy:2:4..Foo.hmy:2:8)})
+    (38, {atok=<Tok_dot>; source=[Foo.hmy:2:8..Foo.hmy:2:9)})
+    (39, {atok=<Tok_cident "Fmt">; source=[Foo.hmy:2:9..Foo.hmy:2:12)})
+    (40, {atok=<Tok_dot>; source=[Foo.hmy:2:12..Foo.hmy:2:13)})
+    (41, {atok=<Tok_uident (Constant "stdout")>; source=[Foo.hmy:2:13..Foo.hmy:2:19)})
+    (42, {atok=<Tok_whitespace>; source=[Foo.hmy:2:19..Foo.hmy:2:20)})
+    (43, {atok=<Tok_bar_op "|>">; source=[Foo.hmy:2:20..Foo.hmy:2:22)})
+    (44, {atok=<Tok_whitespace>; source=[Foo.hmy:2:22..Foo.hmy:2:23)})
+    (45, {atok=<Tok_fstring_lditto>; source=[Foo.hmy:2:23..Foo.hmy:2:24)})
+    (46, {atok=<Tok_fstring_pct>; source=[Foo.hmy:2:24..Foo.hmy:2:25)})
+    (47, {atok=<Tok_fstring_fmt (Constant Fmt_f)>; source=[Foo.hmy:2:25..Foo.hmy:2:26)})
+    (48, {atok=<Tok_fstring_lparen_caret>; source=[Foo.hmy:2:26..Foo.hmy:2:28)})
+    (49, {atok=<Tok_cident "Node">; source=[Foo.hmy:2:28..Foo.hmy:2:32)})
+    (50, {atok=<Tok_dot>; source=[Foo.hmy:2:32..Foo.hmy:2:33)})
+    (51, {atok=<Tok_uident (Constant "pp")>; source=[Foo.hmy:2:33..Foo.hmy:2:35)})
+    (52, {atok=<Tok_fstring_caret_rparen>; source=[Foo.hmy:2:35..Foo.hmy:2:37)})
+    (53, {atok=<Tok_fstring_sep (Constant "=")>; source=[Foo.hmy:2:37..Foo.hmy:2:38)})
+    (54, {atok=<Tok_fstring_lparen_caret>; source=[Foo.hmy:2:38..Foo.hmy:2:40)})
+    (55, {atok=<Tok_uident (Constant "node")>; source=[Foo.hmy:2:40..Foo.hmy:2:44)})
+    (56, {atok=<Tok_fstring_caret_rparen>; source=[Foo.hmy:2:44..Foo.hmy:2:46)})
+    (57, {atok=<Tok_fstring_label "node">; source=[Foo.hmy:2:40..Foo.hmy:2:44)})
+    (58, {atok=<Tok_fstring_interpolated (Constant "\n")>; source=[Foo.hmy:2:46..Foo.hmy:2:48)})
+    (59, {atok=<Tok_fstring_rditto>; source=[Foo.hmy:2:48..Foo.hmy:2:49)})
+    (60, {atok=<Tok_whitespace>; source=[Foo.hmy:2:49..Foo.hmy:2:50)})
+    (61, {atok=<Tok_bar_op "|>">; source=[Foo.hmy:2:50..Foo.hmy:2:52)})
+    (62, {atok=<Tok_whitespace>; source=[Foo.hmy:2:52..Foo.hmy:2:53)})
+    (63, {atok=<Tok_uident (Constant "ignore")>; source=[Foo.hmy:2:53..Foo.hmy:2:59)})
+    (64, {atok=<Tok_whitespace>; source=[Foo.hmy:2:59..Foo.hmy:3:0)})
+    (65, {atok=<Tok_whitespace>; source=[Foo.hmy:3:0..Foo.hmy:3:2)})
+    (66, {atok=<Tok_dedent>; source=[Foo.hmy:3:2..Foo.hmy:3:2)})
+    (67, {atok=<Tok_rparen>; source=[Foo.hmy:3:2..Foo.hmy:3:3)})
+    (68, {atok=<Tok_source_directive (Constant {path=Some ("Pgen.hm"); line=Some (3); io=Some ({indent=4; omit=26})})>; source=[5:3..5:22)})
+    (69, {atok=<Tok_rparen>; source=[Pgen.hm:3:30..Pgen.hm:3:31)})
+    (70, {atok=<Tok_whitespace>; source=[Pgen.hm:3:31..Pgen.hm:4:0)})
+    (71, {atok=<Tok_whitespace>; source=[Pgen.hm:4:0..Pgen.hm:4:4)})
+    (72, {atok=<Tok_line_delim>; source=[Pgen.hm:4:4..Pgen.hm:4:4)})
+    (73, {atok=<Tok_uident (Constant "node")>; source=[Pgen.hm:4:4..Pgen.hm:4:8)})
+    (74, {atok=<Tok_comma>; source=[Pgen.hm:4:8..Pgen.hm:4:9)})
+    (75, {atok=<Tok_whitespace>; source=[Pgen.hm:4:9..Pgen.hm:4:10)})
+    (76, {atok=<Tok_uident (Constant "parser'")>; source=[Pgen.hm:4:10..Pgen.hm:4:17)})
+    (77, {atok=<Tok_dedent>; source=[Pgen.hm:4:17..Pgen.hm:4:17)})
+  ]
+context_lookahead=[
+    [1:0..1:12): "[:\"Pgen.hm\"]"
+    [Pgen.hm:1:0..Pgen.hm:3:14): "accept parser =\n    let node, parser' = [...]\n    let () = ("
+    [3:14..3:33): "[:\"Foo.hmy\":1:0+16]"
+    [Foo.hmy:1:16..Foo.hmy:2:59): "(\n    File.Fmt.stdout |> \"\%f(^Node.pp^)=(^node^)\\n\" |> ignore"
+  ]
+context_no_lookahead=[
+    [1:0..1:12): "[:\"Pgen.hm\"]"
+    [Pgen.hm:1:0..Pgen.hm:3:14): "accept parser =\n    let node, parser' = [...]\n    let () = ("
+    [3:14..3:33): "[:\"Foo.hmy\":1:0+16]"
+    [Foo.hmy:1:16..Foo.hmy:2:59): "(\n    File.Fmt.stdout |> \"\%f(^Node.pp^)=(^node^)\\n\" |> ignore"
+  ]

@@ -1,0 +1,15 @@
+include Radix0
+
+pp t formatter =
+    formatter |> Fmt.fmt
+        match t with
+          | Bin -> "Bin"
+          | Oct -> "Oct"
+          | Dec -> "Dec"
+          | Hex -> "Hex"
+
+to_uns = function
+  | Bin -> 2
+  | Oct -> 8
+  | Dec -> 10
+  | Hex -> 16

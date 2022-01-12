@@ -2,160 +2,160 @@
   [1:0..1:1) : <Tok_uscore>
   [1:1..1:1) : <Tok_end_of_input>
 ``A B C D E F G H I J K L M N O P Q R S T U V W X Y Z``
-  [1:0..1:1) : <Tok_cident="A">
+  [1:0..1:1) : <Tok_cident "A">
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:3) : <Tok_cident="B">
+  [1:2..1:3) : <Tok_cident "B">
   [1:3..1:4) : <Tok_whitespace>
-  [1:4..1:5) : <Tok_cident="C">
+  [1:4..1:5) : <Tok_cident "C">
   [1:5..1:6) : <Tok_whitespace>
-  [1:6..1:7) : <Tok_cident="D">
+  [1:6..1:7) : <Tok_cident "D">
   [1:7..1:8) : <Tok_whitespace>
-  [1:8..1:9) : <Tok_cident="E">
+  [1:8..1:9) : <Tok_cident "E">
   [1:9..1:10) : <Tok_whitespace>
-  [1:10..1:11) : <Tok_cident="F">
+  [1:10..1:11) : <Tok_cident "F">
   [1:11..1:12) : <Tok_whitespace>
-  [1:12..1:13) : <Tok_cident="G">
+  [1:12..1:13) : <Tok_cident "G">
   [1:13..1:14) : <Tok_whitespace>
-  [1:14..1:15) : <Tok_cident="H">
+  [1:14..1:15) : <Tok_cident "H">
   [1:15..1:16) : <Tok_whitespace>
-  [1:16..1:17) : <Tok_cident="I">
+  [1:16..1:17) : <Tok_cident "I">
   [1:17..1:18) : <Tok_whitespace>
-  [1:18..1:19) : <Tok_cident="J">
+  [1:18..1:19) : <Tok_cident "J">
   [1:19..1:20) : <Tok_whitespace>
-  [1:20..1:21) : <Tok_cident="K">
+  [1:20..1:21) : <Tok_cident "K">
   [1:21..1:22) : <Tok_whitespace>
-  [1:22..1:23) : <Tok_cident="L">
+  [1:22..1:23) : <Tok_cident "L">
   [1:23..1:24) : <Tok_whitespace>
-  [1:24..1:25) : <Tok_cident="M">
+  [1:24..1:25) : <Tok_cident "M">
   [1:25..1:26) : <Tok_whitespace>
-  [1:26..1:27) : <Tok_cident="N">
+  [1:26..1:27) : <Tok_cident "N">
   [1:27..1:28) : <Tok_whitespace>
-  [1:28..1:29) : <Tok_cident="O">
+  [1:28..1:29) : <Tok_cident "O">
   [1:29..1:30) : <Tok_whitespace>
-  [1:30..1:31) : <Tok_cident="P">
+  [1:30..1:31) : <Tok_cident "P">
   [1:31..1:32) : <Tok_whitespace>
-  [1:32..1:33) : <Tok_cident="Q">
+  [1:32..1:33) : <Tok_cident "Q">
   [1:33..1:34) : <Tok_whitespace>
-  [1:34..1:35) : <Tok_cident="R">
+  [1:34..1:35) : <Tok_cident "R">
   [1:35..1:36) : <Tok_whitespace>
-  [1:36..1:37) : <Tok_cident="S">
+  [1:36..1:37) : <Tok_cident "S">
   [1:37..1:38) : <Tok_whitespace>
-  [1:38..1:39) : <Tok_cident="T">
+  [1:38..1:39) : <Tok_cident "T">
   [1:39..1:40) : <Tok_whitespace>
-  [1:40..1:41) : <Tok_cident="U">
+  [1:40..1:41) : <Tok_cident "U">
   [1:41..1:42) : <Tok_whitespace>
-  [1:42..1:43) : <Tok_cident="V">
+  [1:42..1:43) : <Tok_cident "V">
   [1:43..1:44) : <Tok_whitespace>
-  [1:44..1:45) : <Tok_cident="W">
+  [1:44..1:45) : <Tok_cident "W">
   [1:45..1:46) : <Tok_whitespace>
-  [1:46..1:47) : <Tok_cident="X">
+  [1:46..1:47) : <Tok_cident "X">
   [1:47..1:48) : <Tok_whitespace>
-  [1:48..1:49) : <Tok_cident="Y">
+  [1:48..1:49) : <Tok_cident "Y">
   [1:49..1:50) : <Tok_whitespace>
-  [1:50..1:51) : <Tok_cident="Z">
+  [1:50..1:51) : <Tok_cident "Z">
   [1:51..1:51) : <Tok_end_of_input>
 ``a b c d e f g h i j k l m n o p q r s t u v w x y z``
-  [1:0..1:1) : <Tok_uident=Constant "a">
+  [1:0..1:1) : <Tok_uident (Constant "a")>
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:3) : <Tok_uident=Constant "b">
+  [1:2..1:3) : <Tok_uident (Constant "b")>
   [1:3..1:4) : <Tok_whitespace>
-  [1:4..1:5) : <Tok_uident=Constant "c">
+  [1:4..1:5) : <Tok_uident (Constant "c")>
   [1:5..1:6) : <Tok_whitespace>
-  [1:6..1:7) : <Tok_uident=Constant "d">
+  [1:6..1:7) : <Tok_uident (Constant "d")>
   [1:7..1:8) : <Tok_whitespace>
-  [1:8..1:9) : <Tok_uident=Constant "e">
+  [1:8..1:9) : <Tok_uident (Constant "e")>
   [1:9..1:10) : <Tok_whitespace>
-  [1:10..1:11) : <Tok_uident=Constant "f">
+  [1:10..1:11) : <Tok_uident (Constant "f")>
   [1:11..1:12) : <Tok_whitespace>
-  [1:12..1:13) : <Tok_uident=Constant "g">
+  [1:12..1:13) : <Tok_uident (Constant "g")>
   [1:13..1:14) : <Tok_whitespace>
-  [1:14..1:15) : <Tok_uident=Constant "h">
+  [1:14..1:15) : <Tok_uident (Constant "h")>
   [1:15..1:16) : <Tok_whitespace>
-  [1:16..1:17) : <Tok_uident=Constant "i">
+  [1:16..1:17) : <Tok_uident (Constant "i")>
   [1:17..1:18) : <Tok_whitespace>
-  [1:18..1:19) : <Tok_uident=Constant "j">
+  [1:18..1:19) : <Tok_uident (Constant "j")>
   [1:19..1:20) : <Tok_whitespace>
-  [1:20..1:21) : <Tok_uident=Constant "k">
+  [1:20..1:21) : <Tok_uident (Constant "k")>
   [1:21..1:22) : <Tok_whitespace>
-  [1:22..1:23) : <Tok_uident=Constant "l">
+  [1:22..1:23) : <Tok_uident (Constant "l")>
   [1:23..1:24) : <Tok_whitespace>
-  [1:24..1:25) : <Tok_uident=Constant "m">
+  [1:24..1:25) : <Tok_uident (Constant "m")>
   [1:25..1:26) : <Tok_whitespace>
-  [1:26..1:27) : <Tok_uident=Constant "n">
+  [1:26..1:27) : <Tok_uident (Constant "n")>
   [1:27..1:28) : <Tok_whitespace>
-  [1:28..1:29) : <Tok_uident=Constant "o">
+  [1:28..1:29) : <Tok_uident (Constant "o")>
   [1:29..1:30) : <Tok_whitespace>
-  [1:30..1:31) : <Tok_uident=Constant "p">
+  [1:30..1:31) : <Tok_uident (Constant "p")>
   [1:31..1:32) : <Tok_whitespace>
-  [1:32..1:33) : <Tok_uident=Constant "q">
+  [1:32..1:33) : <Tok_uident (Constant "q")>
   [1:33..1:34) : <Tok_whitespace>
-  [1:34..1:35) : <Tok_uident=Constant "r">
+  [1:34..1:35) : <Tok_uident (Constant "r")>
   [1:35..1:36) : <Tok_whitespace>
-  [1:36..1:37) : <Tok_uident=Constant "s">
+  [1:36..1:37) : <Tok_uident (Constant "s")>
   [1:37..1:38) : <Tok_whitespace>
-  [1:38..1:39) : <Tok_uident=Constant "t">
+  [1:38..1:39) : <Tok_uident (Constant "t")>
   [1:39..1:40) : <Tok_whitespace>
-  [1:40..1:41) : <Tok_uident=Constant "u">
+  [1:40..1:41) : <Tok_uident (Constant "u")>
   [1:41..1:42) : <Tok_whitespace>
-  [1:42..1:43) : <Tok_uident=Constant "v">
+  [1:42..1:43) : <Tok_uident (Constant "v")>
   [1:43..1:44) : <Tok_whitespace>
-  [1:44..1:45) : <Tok_uident=Constant "w">
+  [1:44..1:45) : <Tok_uident (Constant "w")>
   [1:45..1:46) : <Tok_whitespace>
-  [1:46..1:47) : <Tok_uident=Constant "x">
+  [1:46..1:47) : <Tok_uident (Constant "x")>
   [1:47..1:48) : <Tok_whitespace>
-  [1:48..1:49) : <Tok_uident=Constant "y">
+  [1:48..1:49) : <Tok_uident (Constant "y")>
   [1:49..1:50) : <Tok_whitespace>
-  [1:50..1:51) : <Tok_uident=Constant "z">
+  [1:50..1:51) : <Tok_uident (Constant "z")>
   [1:51..1:51) : <Tok_end_of_input>
 ``_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'``
-  [1:0..1:65) : <Tok_cident="_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'">
+  [1:0..1:65) : <Tok_cident "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'">
   [1:65..1:65) : <Tok_end_of_input>
 ``_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'``
-  [1:0..1:65) : <Tok_uident=Constant "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'">
+  [1:0..1:65) : <Tok_uident (Constant "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'")>
   [1:65..1:65) : <Tok_end_of_input>
 ``A _A __A ___A``
-  [1:0..1:1) : <Tok_cident="A">
+  [1:0..1:1) : <Tok_cident "A">
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_cident="_A">
+  [1:2..1:4) : <Tok_cident "_A">
   [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_cident="__A">
+  [1:5..1:8) : <Tok_cident "__A">
   [1:8..1:9) : <Tok_whitespace>
-  [1:9..1:13) : <Tok_cident="___A">
+  [1:9..1:13) : <Tok_cident "___A">
   [1:13..1:13) : <Tok_end_of_input>
 ``a _a __a ___a``
-  [1:0..1:1) : <Tok_uident=Constant "a">
+  [1:0..1:1) : <Tok_uident (Constant "a")>
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_uident=Constant "_a">
+  [1:2..1:4) : <Tok_uident (Constant "_a")>
   [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_uident=Constant "__a">
+  [1:5..1:8) : <Tok_uident (Constant "__a")>
   [1:8..1:9) : <Tok_whitespace>
-  [1:9..1:13) : <Tok_uident=Constant "___a">
+  [1:9..1:13) : <Tok_uident (Constant "___a")>
   [1:13..1:13) : <Tok_end_of_input>
 ``__ _0 _' __0 __'``
-  [1:0..1:2) : <Tok_uident=Constant "__">
+  [1:0..1:2) : <Tok_uident (Malformed ["[1:0..1:2): Identifier __ lacks _*[A-Za-z] prefix"])>
   [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:5) : <Tok_uident=Constant "_0">
+  [1:3..1:5) : <Tok_uident (Malformed ["[1:3..1:5): Identifier _0 lacks _*[A-Za-z] prefix"])>
   [1:5..1:6) : <Tok_whitespace>
-  [1:6..1:8) : <Tok_uident=Constant "_'">
+  [1:6..1:8) : <Tok_uident (Malformed ["[1:6..1:8): Identifier _' lacks _*[A-Za-z] prefix"])>
   [1:8..1:9) : <Tok_whitespace>
-  [1:9..1:12) : <Tok_uident=Malformed ["[1:9..1:12): Identifier __0 lacks _*[A-Za-z] prefix"]>
+  [1:9..1:12) : <Tok_uident (Malformed ["[1:9..1:12): Identifier __0 lacks _*[A-Za-z] prefix"])>
   [1:12..1:13) : <Tok_whitespace>
-  [1:13..1:16) : <Tok_uident=Malformed ["[1:13..1:16): Identifier __' lacks _*[A-Za-z] prefix"]>
+  [1:13..1:16) : <Tok_uident (Malformed ["[1:13..1:16): Identifier __' lacks _*[A-Za-z] prefix"])>
   [1:16..1:16) : <Tok_end_of_input>
-``a as ass asse asser assert asserts``
-  [1:0..1:1) : <Tok_uident=Constant "a">
+``e ef eff effe effec effect effects``
+  [1:0..1:1) : <Tok_uident (Constant "e")>
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_as>
+  [1:2..1:4) : <Tok_uident (Constant "ef")>
   [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_uident=Constant "ass">
+  [1:5..1:8) : <Tok_uident (Constant "eff")>
   [1:8..1:9) : <Tok_whitespace>
-  [1:9..1:13) : <Tok_uident=Constant "asse">
+  [1:9..1:13) : <Tok_uident (Constant "effe")>
   [1:13..1:14) : <Tok_whitespace>
-  [1:14..1:19) : <Tok_uident=Constant "asser">
+  [1:14..1:19) : <Tok_uident (Constant "effec")>
   [1:19..1:20) : <Tok_whitespace>
-  [1:20..1:26) : <Tok_assert>
+  [1:20..1:26) : <Tok_effect>
   [1:26..1:27) : <Tok_whitespace>
-  [1:27..1:34) : <Tok_uident=Constant "asserts">
+  [1:27..1:34) : <Tok_uident (Constant "effects")>
   [1:34..1:34) : <Tok_end_of_input>
 ``and``
   [1:0..1:3) : <Tok_and>
@@ -166,9 +166,6 @@
 ``as``
   [1:0..1:2) : <Tok_as>
   [1:2..1:2) : <Tok_end_of_input>
-``assert``
-  [1:0..1:6) : <Tok_assert>
-  [1:6..1:6) : <Tok_end_of_input>
 ``conceal``
   [1:0..1:7) : <Tok_conceal>
   [1:7..1:7) : <Tok_end_of_input>
@@ -187,9 +184,9 @@
 ``false``
   [1:0..1:5) : <Tok_false>
   [1:5..1:5) : <Tok_end_of_input>
-``fun``
-  [1:0..1:3) : <Tok_fun>
-  [1:3..1:3) : <Tok_end_of_input>
+``fn``
+  [1:0..1:2) : <Tok_fn>
+  [1:2..1:2) : <Tok_end_of_input>
 ``function``
   [1:0..1:8) : <Tok_function>
   [1:8..1:8) : <Tok_end_of_input>
@@ -235,9 +232,6 @@
 ``type``
   [1:0..1:4) : <Tok_type>
   [1:4..1:4) : <Tok_end_of_input>
-``val``
-  [1:0..1:3) : <Tok_val>
-  [1:3..1:3) : <Tok_end_of_input>
 ``when``
   [1:0..1:4) : <Tok_when>
   [1:4..1:4) : <Tok_end_of_input>
