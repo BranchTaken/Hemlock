@@ -428,9 +428,7 @@ let to_r_impl mbits t =
               | Neg -> Rounded, Real.(neg 0.)
             end
           | false -> begin
-              (* XXX Use Nat.like_of_zint_hlt once #128 is complete. *)
-              assert Zint.(zpad_bits >= zero);
-              let zpad_bits_n = Nat.of_string (Zint.to_string zpad_bits) in
+              let zpad_bits_n = Nat.like_of_zint_hlt zpad_bits in
               let subnormal_bits_n = Nat.(zpad_bits_n + (of_uns sig_bits)) in
               let subnormal_bits = Nat.to_uns_hlt subnormal_bits_n in
 

@@ -1,0 +1,33 @@
+open! Basis.Rudiments
+open! Basis
+
+let test () =
+  File.Fmt.stdout
+  |> (fun formatter ->
+    List.fold I16.([kv (-32768L); kv (-1L); kv 0L; kv 1L; kv 32767L]) ~init:formatter
+      ~f:(fun formatter i ->
+        formatter
+        |> Fmt.fmt "extend_to_zint "
+        |> I16.pp i
+        |> Fmt.fmt " -> "
+        |> Zint.pp (I16.extend_to_zint i)
+        |> Fmt.fmt "\n"
+      )
+  )
+  |> Fmt.fmt "\n"
+  |> (fun formatter ->
+    List.fold Zint.([of_i64 (-32769L); of_i64 (-32768L); of_i64 (-1L); of_i64 0L; of_i64 1L;
+      of_i64 32767L; of_i64 32768L]) ~init:formatter ~f:(fun formatter u ->
+      formatter
+      |> Fmt.fmt "trunc_of_zint/narrow_of_zint_opt "
+      |> Zint.pp u
+      |> Fmt.fmt " -> "
+      |> I16.pp (I16.trunc_of_zint u)
+      |> Fmt.fmt "/"
+      |> (Option.fmt I16.pp) (I16.narrow_of_zint_opt u)
+      |> Fmt.fmt "\n"
+    )
+  )
+  |> ignore
+
+let _ = test ()

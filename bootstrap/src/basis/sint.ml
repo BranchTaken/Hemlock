@@ -211,6 +211,19 @@ module T = struct
 end
 include T
 
+module IZ = Convert.Make_nbI_wZ(T)(Zint)
+let trunc_of_zint = IZ.trunc_of_x
+let extend_to_zint = IZ.extend_to_x
+let narrow_of_zint_opt = IZ.narrow_of_x_opt
+let narrow_of_zint_hlt = IZ.narrow_of_x_hlt
+
+module IN = Convert.Make_nbI_wN(T)(Nat)
+let trunc_of_nat = IN.trunc_of_u
+let narrow_of_nat_opt = IN.narrow_of_u_opt
+let widen_to_nat_opt = IN.widen_to_u_opt
+let narrow_of_nat_hlt = IN.narrow_of_u_hlt
+let widen_to_nat_hlt = IN.widen_to_u_hlt
+
 module IX512 = Convert.Make_nbI_wX(T)(I512)
 let trunc_of_i512 = IX512.trunc_of_x
 let extend_to_i512 = IX512.extend_to_x
