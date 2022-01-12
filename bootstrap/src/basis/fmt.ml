@@ -90,6 +90,51 @@ let fmt ?(pad=pad_default) ?(just=just_default) ?(width=width_default) s
     let sync = T.sync
   end)
 
+let pp_synced pp_a synced formatter =
+  match synced with
+  | To_string s -> formatter |> fmt "To_string " |> fmt s
+  | Synced a -> formatter |> fmt "Synced " |> pp_a a
+
+let pp_just just formatter =
+  formatter |> fmt (
+    match just with
+    | Left -> "Left"
+    | Center -> "Center"
+    | Right -> "Right"
+  )
+
+let pp_sign sign formatter =
+  formatter |> fmt (
+    match sign with
+    | Implicit -> "Implicit"
+    | Explicit -> "Explicit"
+    | Space -> "Space"
+  )
+
+let pp_base base formatter =
+  formatter |> fmt (
+    match base with
+    | Bin -> "Bin"
+    | Oct -> "Oct"
+    | Dec -> "Dec"
+    | Hex -> "Hex"
+  )
+
+let pp_pmode pmode formatter =
+  formatter |> fmt (
+    match pmode with
+    | Limited -> "Limited"
+    | Fixed -> "Fixed"
+  )
+
+let pp_notation notation formatter =
+  formatter |> fmt (
+    match notation with
+    | Normalized -> "Normalized"
+    | RadixPoint -> "RadixPoint"
+    | Compact -> "Compact"
+  )
+
 let sync ((module T): (module Formatter)) : (module Formatter) synced =
   match T.sync T.state with
   | To_string s -> To_string s
