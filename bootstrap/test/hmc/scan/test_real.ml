@@ -4,6 +4,7 @@ open! Hmc
 open! ScanTest
 
 let test () =
+  (* Zero. *)
   scan_str "0.";
   scan_str "0.0";
   scan_str "00.0";
@@ -14,9 +15,32 @@ let test () =
   scan_str "0e+0";
   scan_str "0e00";
 
+  (* Suffixes. *)
   scan_str "0r";
   scan_str "0r64";
   scan_str "0r32";
+
+  (* Base-specific digits. *)
+  scan_str "0b10_._01";
+  scan_str "0o76543210_._01234567";
+  scan_str "9876753210_._0123456789";
+  scan_str "0xfedcba98.0 0x0.89abcdef";
+  scan_str "0x76543210_.0 0x0._01234567";
+
+  (* Min/max constants. *)
+  scan_str "0b1p-1074";
+  scan_str "0o1p-1074";
+  scan_str "0x1p-1074";
+  scan_str "0x0.0000_0000_0000_1p-1022";
+  scan_str "0x1.ffff_ffff_ffff_fp1023";
+
+  scan_str "0b1p-149r32";
+  scan_str "0o1p-149r32";
+  scan_str "0x1p-149r32";
+  scan_str "0x0.0000_02p-126r32";
+  scan_str "0x1.ffff_fep127r32";
+
+  (* Miscellaneous. *)
   scan_str "1.0";
   scan_str "1_000_000.0";
   scan_str "42.e44";
@@ -52,7 +76,6 @@ let test () =
   scan_str "0x0p1";
 
   (* Invalid. *)
-
   scan_str "0x1.z";
   scan_str "0x1px5";
   scan_str "0x1p0x5";
@@ -61,13 +84,22 @@ let test () =
   scan_str "0r032";
   scan_str "0r3x2";
   scan_str "0x1.zpxyr042";
+  scan_str "0x3.f_ffff_e_r32";
 
   scan_str "0x3.f_ffff_ffff_ffff";
-  scan_str "0x1p-1023";
+  scan_str "0x1p-1075";
+  scan_str "0x0.0000_0000_0000_1p-1023";
   scan_str "0x1p1024";
+  scan_str "0x1.ffff_ffff_ffff_f8p1023";
 
-  scan_str "0x3.f_ffff_e_r32";
-  scan_str "0x1p-127_r32";
-  scan_str "0x1p128_r32"
+  scan_str "0x3.ffff_fer32";
+  scan_str "0x1p-150r32";
+  scan_str "0x0.0000_01p-126r32";
+  scan_str "0x1.ffff_ffp127r32";
+
+  scan_str "0b10_._012";
+  scan_str "0o76543210_._012345678";
+  scan_str "9876753210_._0123456789a";
+  scan_str "0xgfedcba98.0 0x0.89abcdefg"
 
 let _ = test ()
