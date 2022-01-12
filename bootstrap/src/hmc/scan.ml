@@ -1836,22 +1836,21 @@ end = struct
    * optimization mandatory, as well as making it more likely for the programmer to not see such
    * errors unless there are no parse errors which prevent code generation. *)
   let limit_of_subtype subtype =
-    let open Nat in
     match subtype with
-    | Subtype_u8 -> max_u8
-    | Subtype_i8 -> max_abs_i8
-    | Subtype_u16 -> max_u16
-    | Subtype_i16 -> max_abs_i16
-    | Subtype_u32 -> max_u32
-    | Subtype_i32 -> max_abs_i32
-    | Subtype_u64 -> max_u64
-    | Subtype_i64 -> max_abs_i64
-    | Subtype_u128 -> max_u128
-    | Subtype_i128 -> max_abs_i128
-    | Subtype_u256 -> max_u256
-    | Subtype_i256 -> max_abs_i256
-    | Subtype_u512 -> max_u512
-    | Subtype_i512 -> max_abs_i512
+    | Subtype_u8 -> U8.(extend_to_nat max_value)
+    | Subtype_i8 -> Sint.(widen_to_nat_hlt (abs (I8.(extend_to_sint min_value))))
+    | Subtype_u16 -> U16.(extend_to_nat max_value)
+    | Subtype_i16 -> Sint.(widen_to_nat_hlt (abs (I16.(extend_to_sint min_value))))
+    | Subtype_u32 -> U32.(extend_to_nat max_value)
+    | Subtype_i32 -> Sint.(widen_to_nat_hlt (abs (I32.(extend_to_sint min_value))))
+    | Subtype_u64 -> U64.(extend_to_nat max_value)
+    | Subtype_i64 -> Nat.like_of_zint_hlt (Zint.abs I64.(extend_to_zint min_value))
+    | Subtype_u128 -> U128.(extend_to_nat max_value)
+    | Subtype_i128 -> Nat.like_of_zint_hlt (Zint.abs I128.(extend_to_zint min_value))
+    | Subtype_u256 -> U256.(extend_to_nat max_value)
+    | Subtype_i256 -> Nat.like_of_zint_hlt (Zint.abs I256.(extend_to_zint min_value))
+    | Subtype_u512 -> U512.(extend_to_nat max_value)
+    | Subtype_i512 -> Nat.like_of_zint_hlt (Zint.abs I512.(extend_to_zint min_value))
 
   let accept subtype_opt accum radix cursor t =
     let open AbstractToken in
@@ -1891,20 +1890,20 @@ end = struct
           end
         | true -> begin
             let tok = match subtype with
-              | Subtype_u8 -> Tok_u8 (Constant (Nat.to_u8_hlt n))
-              | Subtype_i8 -> Tok_i8 (Constant (Nat.to_i8_hlt n))
-              | Subtype_u16 -> Tok_u16 (Constant (Nat.to_u16_hlt n))
-              | Subtype_i16 -> Tok_i16 (Constant (Nat.to_i16_hlt n))
-              | Subtype_u32 -> Tok_u32 (Constant (Nat.to_u32_hlt n))
-              | Subtype_i32 -> Tok_i32 (Constant (Nat.to_i32_hlt n))
-              | Subtype_u64 -> Tok_u64 (Constant (Nat.to_u64_hlt n))
-              | Subtype_i64 -> Tok_i64 (Constant (Nat.to_i64_hlt n))
-              | Subtype_u128 -> Tok_u128 (Constant (Nat.to_u128_hlt n))
-              | Subtype_i128 -> Tok_i128 (Constant (Nat.to_i128_hlt n))
-              | Subtype_u256 -> Tok_u256 (Constant (Nat.to_u256_hlt n))
-              | Subtype_i256 -> Tok_i256 (Constant (Nat.to_i256_hlt n))
-              | Subtype_u512 -> Tok_u512 (Constant (Nat.to_u512_hlt n))
-              | Subtype_i512 -> Tok_i512 (Constant (Nat.to_i512_hlt n))
+              | Subtype_u8 -> Tok_u8 (Constant (U8.trunc_of_nat n))
+              | Subtype_i8 -> Tok_i8 (Constant (I8.trunc_of_nat n))
+              | Subtype_u16 -> Tok_u16 (Constant (U16.trunc_of_nat n))
+              | Subtype_i16 -> Tok_i16 (Constant (I16.trunc_of_nat n))
+              | Subtype_u32 -> Tok_u32 (Constant (U32.trunc_of_nat n))
+              | Subtype_i32 -> Tok_i32 (Constant (I32.trunc_of_nat n))
+              | Subtype_u64 -> Tok_u64 (Constant (U64.trunc_of_nat n))
+              | Subtype_i64 -> Tok_i64 (Constant (I64.trunc_of_nat n))
+              | Subtype_u128 -> Tok_u128 (Constant (U128.trunc_of_nat n))
+              | Subtype_i128 -> Tok_i128 (Constant (I128.trunc_of_nat n))
+              | Subtype_u256 -> Tok_u256 (Constant (U256.trunc_of_nat n))
+              | Subtype_i256 -> Tok_i256 (Constant (I256.trunc_of_nat n))
+              | Subtype_u512 -> Tok_u512 (Constant (U512.trunc_of_nat n))
+              | Subtype_i512 -> Tok_i512 (Constant (I512.trunc_of_nat n))
             in
             accept tok cursor t
           end
@@ -2312,7 +2311,7 @@ end = struct
     | Some (_, cursor') -> error cursor' t
 
   let accept_directive ?path n cursor t =
-    match Nat.to_int_opt n with
+    match Sint.narrow_of_nat_opt n with
     | Some ni -> begin
         let path = match path with
           | None -> t.path

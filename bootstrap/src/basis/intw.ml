@@ -425,7 +425,14 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
             end
           | _ -> halt "Malformed string"
         end in
-        fn s i i len
+        match Stdlib.(Int64.(unsigned_compare T.min_word_length T.max_word_length) = 0) with
+        | true -> fn s i i len
+        | false -> begin
+            (* n/z *)
+            match i < len with
+            | false -> i
+            | true -> halt "Malformed string"
+          end
       end in
       let rec hexadecimal s i ndigits len = begin
         match getc_opt s i len with
@@ -435,23 +442,19 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
             | _ -> zero, one
           end
         | Some (c, i') -> begin
-            match c with
-            | '_' -> hexadecimal s i' ndigits len
-            | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-            | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' -> begin
+            match T.signed, c with
+            | _, '_' -> hexadecimal s i' ndigits len
+            | _, ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'|'a'|'b'|'c'|'d'|'e'|'f') -> begin
                 let ndigits' = Int64.succ ndigits in
                 let accum, mult = hexadecimal s i' ndigits' len in
                 let accum' = accum + mult * (d_of_c c) in
                 let mult' = mult * (of_uns 16L) in
                 accum', mult'
               end
-            | 'i' | 'u' -> begin
-                match (T.signed && c = 'i') || ((not T.signed) && c = 'u') with
-                | false -> halt "Malformed string"
-                | true -> begin
-                    let i'' = suffix s i' len in
-                    hexadecimal s i'' ndigits len
-                  end
+            | false, ('u'|'n')
+            | true, ('i'|'z') -> begin
+                let i'' = suffix s i' len in
+                hexadecimal s i'' ndigits len
               end
             | _ -> halt "Malformed string"
           end
@@ -460,21 +463,43 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         match getc_opt s i len with
         | None -> zero, one
         | Some (c, i') -> begin
-            match c with
-            | '_' -> decimal s i' len
-            | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> begin
+            match T.signed, c with
+            | _, '_' -> decimal s i' len
+            | _, ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9') -> begin
                 let accum, mult = decimal s i' len in
                 let accum' = accum + mult * (d_of_c c) in
                 let mult' = mult * (of_uns 10L) in
                 accum', mult'
               end
-            | 'i' | 'u' -> begin
-                match (T.signed && c = 'i') || ((not T.signed) && c = 'u') with
-                | false -> halt "Malformed string"
-                | true -> begin
-                    let i'' = suffix s i' len in
-                    decimal s i'' len
-                  end
+            | false, ('u'|'n')
+            | true, ('i'|'z') -> begin
+                let i'' = suffix s i' len in
+                decimal s i'' len
+              end
+            | _ -> halt "Malformed string"
+          end
+      end in
+      let rec octal s i ndigits len = begin
+        match getc_opt s i len with
+        | None -> begin
+            match ndigits with
+            | 0L -> halt "Malformed string" (* "0o" *)
+            | _ -> zero, one
+          end
+        | Some (c, i') -> begin
+            match T.signed, c with
+            | _, '_' -> octal s i' ndigits len
+            | _, ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7') -> begin
+                let ndigits' = Int64.succ ndigits in
+                let accum, mult = octal s i' ndigits' len in
+                let accum' = accum + mult * (d_of_c c) in
+                let mult' = mult * (of_uns 8L) in
+                accum', mult'
+              end
+            | false, ('u'|'n')
+            | true, ('i'|'z') -> begin
+                let i'' = suffix s i' len in
+                octal s i'' ndigits len
               end
             | _ -> halt "Malformed string"
           end
@@ -487,22 +512,19 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
             | _ -> zero, one
           end
         | Some (c, i') -> begin
-            match c with
-            | '_' -> binary s i' ndigits len
-            | '0' | '1' -> begin
+            match T.signed, c with
+            | _, '_' -> binary s i' ndigits len
+            | _, ('0'|'1') -> begin
                 let ndigits' = Int64.succ ndigits in
                 let accum, mult = binary s i' ndigits' len in
                 let accum' = accum + mult * (d_of_c c) in
                 let mult' = mult * (of_uns 2L) in
                 accum', mult'
               end
-            | 'i' | 'u' -> begin
-                match (T.signed && c = 'i') || ((not T.signed) && c = 'u') with
-                | false -> halt "Malformed string"
-                | true -> begin
-                    let i'' = suffix s i' len in
-                    binary s i'' ndigits len
-                  end
+            | false, ('u'|'n')
+            | true, ('i'|'z') -> begin
+                let i'' = suffix s i' len in
+                binary s i'' ndigits len
               end
             | _ -> halt "Malformed string"
           end
@@ -511,29 +533,30 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
         match getc_opt s i len with
         | None -> zero
         | Some (c, i') -> begin
-            match c with
-            | 'b' -> begin
+            match T.signed, c with
+            | _, 'b' -> begin
                 let accum, _ = binary s i' 0L len in
                 accum
               end
-            | 'x' -> begin
+            | _, 'o' -> begin
+                let accum, _ = octal s i' 0L len in
+                accum
+              end
+            | _, 'x' -> begin
                 let accum, _ = hexadecimal s i' 0L len in
                 accum
               end
-            | '_' -> begin
+            | _, '_' -> begin
                 let accum, _ = decimal s i' len in
                 accum
               end
-            | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
+            | _, ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9') ->
               let accum, mult = decimal s i' len in
               accum + mult * (d_of_c c)
-            | 'i' | 'u' -> begin
-                match (T.signed && c = 'i') || ((not T.signed) && c = 'u') with
-                | false -> halt "Malformed string"
-                | true -> begin
-                    let _ = suffix s i' len in
-                    zero
-                  end
+            | false, ('u'|'n')
+            | true, ('i'|'z') -> begin
+                let _ = suffix s i' len in
+                zero
               end
             | _ -> halt "Malformed string"
           end

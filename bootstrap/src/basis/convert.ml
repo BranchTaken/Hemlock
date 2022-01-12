@@ -1,6 +1,128 @@
 open RudimentsFunctions
 open ConvertIntf
 
+module Make_wI_wZ (T : IntwIntf.SFI) (Z : IntwIntf.SVI) : IX with type t := T.t with type x := Z.t
+= struct
+  let z_get_extend i x =
+    match Stdlib.((Int64.compare i (Z.word_length x)) < 0), Z.is_negative x with
+    | true, _ -> Z.get i x
+    | false, false -> 0L
+    | false, true -> 0xffff_ffff_ffff_ffffL
+
+  let trunc_of_x x =
+    T.init ~f:(fun i -> z_get_extend i x)
+
+  let extend_to_x t =
+    Z.init T.word_length ~f:(fun i -> T.get i t)
+
+  let narrow_of_x_opt x =
+    let t = trunc_of_x x in
+    match Z.(x = (extend_to_x t)) with
+    | false -> None
+    | true -> Some t
+
+  let narrow_of_x_hlt x =
+    match narrow_of_x_opt x with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+end
+
+module Make_wI_wN (T : IntwIntf.SFI) (N : IntwIntf.SVU) : IU with type t := T.t with type u := N.t
+= struct
+  let t_get_zpad i t =
+    match Stdlib.((Int64.compare i T.word_length) < 0) with
+    | true -> T.get i t
+    | false -> 0L
+
+  let n_get_zpad i u =
+    match Stdlib.((Int64.compare i (N.word_length u)) < 0) with
+    | true -> N.get i u
+    | false -> 0L
+
+  let trunc_of_u u =
+    T.init ~f:(fun i -> n_get_zpad i u)
+
+  let narrow_of_u_opt u =
+    let lsb = N.(bit_and (pred (bit_sl ~shift:Int64.(pred (mul T.word_length 64L)) one)) u) in
+    match N.(u = lsb) with
+    | false -> None
+    | true -> Some (T.init ~f:(fun i -> n_get_zpad i u))
+
+  let widen_to_u_opt t =
+    match T.(t < zero) with
+    | true -> None
+    | false -> Some (N.init (Int64.succ T.word_length) ~f:(fun i -> t_get_zpad i t))
+
+  let narrow_of_u_hlt u =
+    match narrow_of_u_opt u with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+
+  let widen_to_u_hlt t =
+    match widen_to_u_opt t with
+    | None -> halt "Lossy conversion"
+    | Some u -> u
+end
+
+module Make_wU_wZ (T : IntwIntf.SFU) (Z : IntwIntf.SVI) : UX with type t := T.t with type x := Z.t
+= struct
+  let t_get_zpad i t =
+    match Stdlib.((Int64.compare i T.word_length) < 0) with
+    | true -> T.get i t
+    | false -> 0L
+
+  let z_get_extend i x =
+    match Stdlib.((Int64.compare i (Z.word_length x)) < 0), Z.is_negative x with
+    | true, _ -> Z.get i x
+    | false, false -> 0L
+    | false, true -> 0xffff_ffff_ffff_ffffL
+
+  let trunc_of_x x =
+    T.init ~f:(fun i -> z_get_extend i x)
+
+  let extend_to_x t =
+    Z.init (Int64.succ T.word_length) ~f:(fun i -> t_get_zpad i t)
+
+  let narrow_of_x_opt x =
+    let t = trunc_of_x x in
+    match Z.(x = (extend_to_x t)) with
+    | false -> None
+    | true -> Some (trunc_of_x x)
+
+  let narrow_of_x_hlt x =
+    match narrow_of_x_opt x with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+end
+
+module Make_wU_wN (T : IntwIntf.SFU) (N : IntwIntf.SVU) : UU with type t := T.t with type u := N.t
+= struct
+  let n_get_zpad i u =
+    match Stdlib.((Int64.compare i (N.word_length u)) < 0) with
+    | true -> N.get i u
+    | false -> 0L
+
+  let lsb_of_u u =
+    N.(bit_and (pred (bit_sl ~shift:Stdlib.Int64.(mul T.word_length 64L) one)) u)
+
+  let narrow_of_u_opt u =
+    let lsb = lsb_of_u u in
+    match N.(u = lsb) with
+    | false -> None
+    | true -> Some (T.init ~f:(fun i -> n_get_zpad i u))
+
+  let narrow_of_u_hlt u =
+    match narrow_of_u_opt u with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+
+  let trunc_of_u u =
+    T.init ~f:(fun i -> n_get_zpad i u)
+
+  let extend_to_u t =
+    N.init T.word_length ~f:(fun i -> T.get i t)
+end
+
 module Make_wI_wX (T : IntwIntf.SFI) (X : IntwIntf.SFI) : IX with type t := T.t with type x := X.t
 = struct
   let trunc_of_x x =
@@ -224,6 +346,112 @@ module Make_nbU (T : IntnbIntf.SU) : Nb with type t := T.t = struct
     match narrow_of_uns_opt x with
     | None -> halt "Lossy conversion"
     | Some t -> t
+end
+
+module Make_nbI_wZ (T : IntnbIntf.SI) (Z : IntwIntf.SVI) : IX with type t := T.t with type x := Z.t
+= struct
+  module TI = struct
+    include Make_nbI(T)
+  end
+
+  let trunc_of_x x =
+    TI.trunc_of_sint (Z.to_u64 x)
+
+  let extend_to_x t =
+    Z.init 1L ~f:(fun _ -> TI.extend_to_sint t)
+
+  let narrow_of_x_opt x =
+    let t = trunc_of_x x in
+    match Z.(x = (extend_to_x t)) with
+    | false -> None
+    | true -> Some t
+
+  let narrow_of_x_hlt x =
+    match narrow_of_x_opt x with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+end
+
+module Make_nbI_wN (T : IntnbIntf.SI) (N : IntwIntf.SVU) : IU with type t := T.t with type u := N.t
+= struct
+  module TI = struct
+    include Make_nbI(T)
+  end
+
+  let trunc_of_u u =
+    TI.trunc_of_uns (N.to_u64 u)
+
+  let narrow_of_u_opt u =
+    let lsb = N.(bit_and (pred (bit_sl ~shift:Int64.(pred T.(bit_pop (bit_not zero))) one)) u) in
+    match N.(u = lsb) with
+    | false -> None
+    | true -> Some (trunc_of_u u)
+
+  let widen_to_u_opt t =
+    match T.(t < zero) with
+    | true -> None
+    | false -> Some (N.of_u64 (TI.extend_to_uns t))
+
+  let narrow_of_u_hlt u =
+    match narrow_of_u_opt u with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+
+  let widen_to_u_hlt t =
+    match widen_to_u_opt t with
+    | None -> halt "Lossy conversion"
+    | Some u -> u
+end
+
+module Make_nbU_wZ (T : IntnbIntf.SU) (Z : IntwIntf.SVI) : UX with type t := T.t with type x := Z.t
+= struct
+  module TU = struct
+    include Make_nbU(T)
+  end
+
+  let trunc_of_x x =
+    TU.trunc_of_uns (Z.to_u64 x)
+
+  let extend_to_x t =
+    Z.init 1L ~f:(fun _ -> TU.extend_to_uns t)
+
+  let narrow_of_x_opt x =
+    let t = trunc_of_x x in
+    match Z.(x = (extend_to_x t)) with
+    | false -> None
+    | true -> Some (trunc_of_x x)
+
+  let narrow_of_x_hlt x =
+    match narrow_of_x_opt x with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+end
+
+module Make_nbU_wN (T : IntnbIntf.SU) (N : IntwIntf.SVU) : UU with type t := T.t with type u := N.t
+= struct
+  module TU = struct
+    include Make_nbU(T)
+  end
+
+  let lsb_of_u u =
+    N.(bit_and (pred (bit_sl ~shift:T.(bit_pop max_value) one)) u)
+
+  let narrow_of_u_opt u =
+    let lsb = lsb_of_u u in
+    match N.(u = lsb) with
+    | false -> None
+    | true -> Some (TU.trunc_of_uns (N.to_u64 u))
+
+  let narrow_of_u_hlt u =
+    match narrow_of_u_opt u with
+    | None -> halt "Lossy conversion"
+    | Some t -> t
+
+  let trunc_of_u u =
+    TU.trunc_of_uns (N.to_u64 u)
+
+  let extend_to_u t =
+    N.init 1L ~f:(fun _ -> TU.extend_to_uns t)
 end
 
 module Make_nbI_wX (T : IntnbIntf.SI) (X : IntwIntf.SFI) : IX with type t := T.t with type x := X.t

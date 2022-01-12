@@ -1,0 +1,11 @@
+extend_to_nat 0u8 -> 0n
+extend_to_nat 1u8 -> 1n
+extend_to_nat 127u8 -> 127n
+extend_to_nat 128u8 -> 128n
+extend_to_nat 255u8 -> 255n
+
+trunc_of_nat/narrow_of_nat_opt 0n -> 0u8/Some 0u8
+trunc_of_nat/narrow_of_nat_opt 1n -> 1u8/Some 1u8
+trunc_of_nat/narrow_of_nat_opt 255n -> 255u8/Some 255u8
+trunc_of_nat/narrow_of_nat_opt 256n -> 0u8/None
+trunc_of_nat/narrow_of_nat_opt 511n -> 255u8/None

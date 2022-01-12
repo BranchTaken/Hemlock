@@ -1,0 +1,13 @@
+widen_to_nat_opt -32_768i16 -> None
+widen_to_nat_opt -1i16 -> None
+widen_to_nat_opt 0i16 -> Some 0n
+widen_to_nat_opt 1i16 -> Some 1n
+widen_to_nat_opt 32_767i16 -> Some 32_767n
+
+trunc_of_nat/narrow_of_nat_opt 0n -> 0x0000i16/Some 0i16
+trunc_of_nat/narrow_of_nat_opt 1n -> 0x0001i16/Some 1i16
+trunc_of_nat/narrow_of_nat_opt 32_767n -> 0x7fffi16/Some 32_767i16
+trunc_of_nat/narrow_of_nat_opt 32_768n -> -0x8000i16/None
+trunc_of_nat/narrow_of_nat_opt 65_535n -> -0x0001i16/None
+trunc_of_nat/narrow_of_nat_opt 65_536n -> 0x0000i16/None
+trunc_of_nat/narrow_of_nat_opt 131_071n -> -0x0001i16/None

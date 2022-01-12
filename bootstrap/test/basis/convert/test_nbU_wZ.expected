@@ -1,0 +1,11 @@
+extend_to_zint 0u8 -> 0z
+extend_to_zint 1u8 -> 1z
+extend_to_zint 127u8 -> 127z
+extend_to_zint 128u8 -> 128z
+extend_to_zint 255u8 -> 255z
+
+trunc_of_zint/narrow_of_zint_opt -1z -> 255u8/None
+trunc_of_zint/narrow_of_zint_opt 0z -> 0u8/Some 0u8
+trunc_of_zint/narrow_of_zint_opt 1z -> 1u8/Some 1u8
+trunc_of_zint/narrow_of_zint_opt 255z -> 255u8/Some 255u8
+trunc_of_zint/narrow_of_zint_opt 256z -> 0u8/None
