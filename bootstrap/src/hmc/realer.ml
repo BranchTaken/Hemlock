@@ -54,7 +54,7 @@ module T = struct
     | Nan -> t
 
   (* Denormalize the inputs such that their binary points are aligned, by padding at most one of the
-   * mantissas with trailing 0 digits. This enables digit-aligned operations (comparison, addition,
+   * mantissas with trailing 0 bits. This enables bit-aligned operations (comparison, addition,
    * subtraction). *)
   let denorm t0 t1 =
     match t0, t1 with
@@ -65,18 +65,18 @@ module T = struct
         match Nat.(m0 = zero) || Nat.(m1 = zero) with
         | true -> t0, t1
         | false -> begin
-            let frac_ndigits0 = pred ((Nat.bit_length m0) - (Nat.bit_clz m0)) in
-            let frac_ndigits1 = pred ((Nat.bit_length m1) - (Nat.bit_clz m1)) in
-            let min_fixed_frac_ndigits0 = Zint.(of_uns frac_ndigits0 - e0) in
-            let min_fixed_frac_ndigits1 = Zint.(of_uns frac_ndigits1 - e1) in
-            match Zint.cmp min_fixed_frac_ndigits0 min_fixed_frac_ndigits1 with
+            let frac_nbits0 = pred ((Nat.bit_length m0) - (Nat.bit_clz m0)) in
+            let frac_nbits1 = pred ((Nat.bit_length m1) - (Nat.bit_clz m1)) in
+            let min_fixed_frac_nbits0 = Zint.(of_uns frac_nbits0 - e0) in
+            let min_fixed_frac_nbits1 = Zint.(of_uns frac_nbits1 - e1) in
+            match Zint.cmp min_fixed_frac_nbits0 min_fixed_frac_nbits1 with
             | Lt -> begin
-                let shift = Zint.(to_uns_hlt (min_fixed_frac_ndigits1 - min_fixed_frac_ndigits0)) in
+                let shift = Zint.(to_uns_hlt (min_fixed_frac_nbits1 - min_fixed_frac_nbits0)) in
                 N {sign=s0; mag=Fin {exponent=e0; mantissa=Nat.bit_sl ~shift m0}}, t1
               end
             | Eq -> t0, t1
             | Gt -> begin
-                let shift = Zint.(to_uns_hlt (min_fixed_frac_ndigits0 - min_fixed_frac_ndigits1)) in
+                let shift = Zint.(to_uns_hlt (min_fixed_frac_nbits0 - min_fixed_frac_nbits1)) in
                 t0, N {sign=s1; mag=Fin {exponent=e1; mantissa=Nat.bit_sl ~shift m1}}
               end
           end
@@ -127,13 +127,13 @@ module T = struct
       (N {sign=Pos; mag=(Fin {exponent=e1; mantissa=_})} as n1)
     | (N {sign=Neg; mag=(Fin {exponent=e1; mantissa=_})} as n1),
       (N {sign=Neg; mag=(Fin {exponent=e0; mantissa=_})} as n0) -> begin
-        (* If exponents are unequal, the larger exponent corresponds to the * larger/smaller value,
+        (* If exponents are unequal, the larger exponent corresponds to the larger/smaller value,
          * for Pos/Neg respectively. *)
         match Zint.cmp e0 e1 with
         | Lt -> Lt
         | Eq -> begin
-            (* Denormalize, such that the values have the same number of * significant binary
-             * digits. This requires padding one of the * mantissas with trailing zeros. *)
+            (* Denormalize, such that the values have the same number of significant bits. This
+             * requires padding one of the mantissas with trailing zeros. *)
             match denorm n0 n1 with
             | N {sign=_; mag=(Fin {exponent=_; mantissa=m0})},
               N {sign=_; mag=(Fin {exponent=_; mantissa=m1})} -> Nat.cmp m0 m1
@@ -201,8 +201,8 @@ module T = struct
           |> pp_sign sign
           |> Fmt.fmt "0x0p0"
         | false -> begin
-            let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
-            let shift = pred sig_digits in
+            let sig_bits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
+            let shift = pred sig_bits in
             let frac_mask = Nat.((bit_sl ~shift one) - one) in
             let frac = Nat.bit_and mantissa frac_mask in
             match Nat.(frac = zero) with
@@ -269,18 +269,18 @@ let ( + ) t0 t1 =
     match denorm t0 t1 with
     | N {sign; mag=Fin {exponent=e0; mantissa=m0}},
       N {sign=_; mag=Fin {exponent=e1; mantissa=m1}} -> begin
-        let mantissa_ndigits0 = (Nat.bit_length m0) - (Nat.bit_clz m0) in
-        let mantissa_ndigits1 = (Nat.bit_length m1) - (Nat.bit_clz m1) in
+        let mantissa_nbits0 = (Nat.bit_length m0) - (Nat.bit_clz m0) in
+        let mantissa_nbits1 = (Nat.bit_length m1) - (Nat.bit_clz m1) in
         let mantissa' = match op with
           | Add -> Nat.(m0 + m1)
           | Sub -> Nat.(m0 - m1)
         in
-        let mantissa'_ndigits = Zint.of_uns
+        let mantissa'_nbits = Zint.of_uns
             ((Nat.bit_length mantissa') - (Nat.bit_clz mantissa')) in
-        let exponent' = match Uns.cmp mantissa_ndigits0 mantissa_ndigits1 with
-          | Lt -> Zint.(e1 + mantissa'_ndigits - (of_uns mantissa_ndigits1))
+        let exponent' = match Uns.cmp mantissa_nbits0 mantissa_nbits1 with
+          | Lt -> Zint.(e1 + mantissa'_nbits - (of_uns mantissa_nbits1))
           | Eq
-          | Gt -> Zint.(e0 + mantissa'_ndigits - (of_uns mantissa_ndigits0))
+          | Gt -> Zint.(e0 + mantissa'_nbits - (of_uns mantissa_nbits0))
         in
         norm (N {sign; mag=Fin {exponent=exponent'; mantissa=mantissa'}})
       end
@@ -365,18 +365,107 @@ type mbits =
   | Mbits_53
   | Mbits_24
 
-let to_r_impl emin emax mbits t =
+(* Equivalent to Real.create, but the inputs are constrained as if creating an r32 rather than r64.
+ * NB: r32 subnormals must be represented as r64 normals, so beware classification of r32 contstants
+ * stored as r64 values.
+ *
+ * `create_r32 ~neg ~exponent ~mantissa` creates an `r32`, where `-127 <= exponent <= 128` and
+ * `mantissa <= 0x7f_ffff`.
+*)
+let create_r32 ~neg ~exponent ~mantissa =
+  assert Sint.(exponent >= (-127L));
+  assert Sint.(exponent <= 128L);
+  assert Uns.(mantissa <= 0x7f_ffffL);
+  let e, m = match Sint.(exponent = (-127L)) with
+    | true -> begin
+        (* Subnormal. *)
+        let sig_bits = Uns.((bit_pop max_value) - (bit_clz mantissa)) in
+        (* Shift the to-be-implicit leading bit out of the mantissa. *)
+        let shift = Uns.(53L - sig_bits) in
+        let e = Sint.(exponent + sig_bits - 23L) in
+        let m = Uns.(bit_and (bit_sl ~shift mantissa) 0xf_ffff_ffff_ffffL) in
+        e, m
+      end
+    | false -> begin
+        (* Normal or infinity. *)
+        let e = match Sint.(exponent = 128L) with
+          | true -> Sint.kv 1024L (* Infinity. *)
+          | false -> exponent
+        in
+        let m = Uns.bit_sl ~shift:29L mantissa in
+        e, m
+      end
+  in
+  Real.create ~neg ~exponent:e ~mantissa:m
+
+let to_r_impl mbits t =
   assert (is_norm t);
+  let emin, emax, create = match mbits with
+    | Mbits_53 -> Sint.(kv ~-1022L), Sint.kv 1023L, Real.create
+    | Mbits_24 -> Sint.(kv ~-126L), Sint.kv 127L, create_r32
+  in
+  let emin_z = Zint.of_sint emin in
+  let emax_z = Zint.of_sint emax in
   match t with
   | N {sign; mag=Fin {exponent; mantissa}} -> begin
-      match Zint.(exponent < emin) with
+      match Zint.(exponent < emin_z) with
       | true -> begin
-          match sign with
-          | Pos -> Rounded, 0.
-          | Neg -> Rounded, Real.(neg 0.)
+          (* Subnormal or rounded to zero. *)
+          let sig_bits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
+          let e_subnormal = Sint.pred emin in
+          let e_subnormal_z = Zint.of_sint e_subnormal in
+          let zpad_bits = Zint.(e_subnormal_z - exponent) in
+          let max_mbits = match mbits with
+            | Mbits_53 -> 52L
+            | Mbits_24 -> 23L
+          in
+          let max_mbits_z = Zint.of_uns max_mbits in
+          match Zint.(zpad_bits >= max_mbits_z) with
+          | true -> begin
+              (* None of the significant bits fit in the mantissa, so round to zero. *)
+              match sign with
+              | Pos -> Rounded, 0.
+              | Neg -> Rounded, Real.(neg 0.)
+            end
+          | false -> begin
+              (* XXX Use Nat.like_of_zint_hlt once #128 is complete. *)
+              assert Zint.(zpad_bits >= zero);
+              let zpad_bits_n = Nat.of_string (Zint.to_string zpad_bits) in
+              let subnormal_bits_n = Nat.(zpad_bits_n + (of_uns sig_bits)) in
+              let subnormal_bits = Nat.to_uns_hlt subnormal_bits_n in
+
+              let neg = match sign with
+                | Pos -> false
+                | Neg -> true
+              in
+              (* The potential for mismatch between output value type (always `r64`) and nominal
+               * type (maybe `r32`) complicates the logic here. We can do better in the self-hosted
+               * compiler by using `r32` for the output. *)
+              let precision, m = match Uns.cmp subnormal_bits max_mbits with
+                | Cmp.Lt -> begin
+                    (* Shift left to incorporate trailing zero bits. *)
+                    let m = Nat.(to_uns_hlt (bit_sl ~shift:Uns.(max_mbits -
+                        subnormal_bits) mantissa)) in
+                    Precise, m
+                  end
+                | Cmp.Eq -> begin
+                    (* No shifting required. *)
+                    let m = Nat.to_uns_hlt mantissa in
+                    Precise, m
+                  end
+                | Cmp.Gt -> begin
+                    (* Shift right to discard trailing bits. *)
+                    let m = Nat.(to_uns_hlt (bit_usr ~shift:Uns.(subnormal_bits -
+                        max_mbits) mantissa)) in
+                    Rounded, m
+                  end
+              in
+              precision, create ~neg ~exponent:e_subnormal ~mantissa:m
+            end
         end
       | false -> begin
-          match Zint.(exponent > emax) with
+          (* Normal or rounded to infinity. *)
+          match Zint.(exponent > emax_z) with
           | true -> begin
               match sign with
               | Pos -> Rounded, Real.inf
@@ -396,27 +485,27 @@ let to_r_impl emin emax mbits t =
                     | Neg -> true
                     | Pos -> false
                   in
-                  let sig_digits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
-                  let max_mbits, mask = match mbits with
+                  let sig_bits = Uns.( - ) (Nat.bit_length mantissa) (Nat.bit_clz mantissa) in
+                  let max_sig_bits, mask = match mbits with
                     | Mbits_53 -> 53L, 0xf_ffff_ffff_ffffL
-                    | Mbits_24 -> 24L, 0xf_ffff_e000_0000L
+                    | Mbits_24 -> 24L, 0x7f_ffffL
                   in
-                  let precision = match Uns.(sig_digits <= max_mbits) with
+                  let precision = match Uns.(sig_bits <= max_sig_bits) with
                     | true -> Precise
                     | false -> Rounded
                   in
-                  let m = Uns.bit_and mask (match Uns.cmp sig_digits 53L with
+                  let m = Uns.bit_and mask (match Uns.cmp sig_bits max_sig_bits with
                     | Lt -> begin
-                        let shift = Uns.(53L - sig_digits) in
+                        let shift = Uns.(max_sig_bits - sig_bits) in
                         Nat.(to_uns (bit_sl ~shift mantissa))
                       end
                     | Eq -> Nat.to_uns mantissa
                     | Gt -> begin
-                        let shift = Uns.(sig_digits - 53L) in
+                        let shift = Uns.(sig_bits - max_sig_bits) in
                         Nat.(to_uns (bit_usr ~shift mantissa))
                       end
                   ) in
-                  precision, Real.create ~neg ~exponent:e ~mantissa:m
+                  precision, create ~neg ~exponent:e ~mantissa:m
                 end
             end
         end
@@ -427,11 +516,8 @@ let to_r_impl emin emax mbits t =
 
   | Nan -> Precise, Real.nan
 
-let z_1023 = Zint.(pred (bit_sl ~shift:10L one))
-let z_neg_1022 = Zint.(neg (pred z_1023))
-
 let to_r64_impl t =
-  to_r_impl z_neg_1022 z_1023 Mbits_53 t
+  to_r_impl Mbits_53 t
 
 let to_r64 t =
   match to_r64_impl t with _precision, r64 -> r64
@@ -446,11 +532,8 @@ let to_r64_hlt t =
   | Precise, r64 -> r64
   | Rounded, _ -> halt "Inexact conversion"
 
-let z_127 = Zint.(pred (bit_sl ~shift:7L one))
-let z_neg_126 = Zint.(neg (pred z_127))
-
 let to_r32_impl t =
-  to_r_impl z_neg_126 z_127 Mbits_24 t
+  to_r_impl Mbits_24 t
 
 let to_r32 t =
   match to_r32_impl t with _precision, r32 -> r32
