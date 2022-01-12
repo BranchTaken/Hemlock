@@ -49,7 +49,7 @@ considerably. The following languages have particularly interesting takes on the
 
 Hemlock takes a comparatively simple approach to avoid some of the pitfalls mentioned above:
 
-- Tabs are forbidden in whitespace. (Tabs can be embedded only in string literals and comments.)
+- Tabs are forbidden in whitespace. (Tabs can be embedded only in raw string literals and comments.)
 - The first non-space codepoint establishes line indentation.
 - Block indentation is four columns.
 - Expression continuation indentation is two columns. One-column and three-column indentation are
@@ -57,14 +57,8 @@ Hemlock takes a comparatively simple approach to avoid some of the pitfalls ment
 - Lines comprising only comments and/or whitespace are ignored.
 - Consecutive expressions at the same indentation are distinct expressions.
 
-Automated formatting only needs to perform a few actions:
-
-- Strip extraneous trailing whitespace, including any `'\n'` codepoints following the last token.
-- Replace multi-space separation between tokens with single spaces.
-- Densely rewrap lines that exceed 100 columns, but make no effort to split tokens which exceed 100
-  columns even when placed alone on a line.
-
-With autoformatting done, there are limited significant formatting style considerations, e.g.:
+Autoformatting only needs to remove excessive whitespace and densely rewrap. With that done, there
+are limited significant formatting style considerations, e.g.:
 
 - Use block indentation of subexpressions for long expressions rather than dense wrapping when doing
   so improves readability.
@@ -369,10 +363,11 @@ context:
 
   ``
   ```
-- **Bar-margin [raw] strings** are delimited by `` `| `` and a codepoint sequence matching `` ^[ ]*`
-  ``. Each line past the first one is prefixed by enough whitespace to align a `|` with the opening
-  delimiter's `|`. The per line leading whitespace and `|` are omitted from the string; they provide
-  a left margin for the string contents.
+- **Documentation strings** contain [Markdown](https://commonmark.org/)-formatted text and are
+  delimited by `` `| `` and a codepoint sequence matching `` ^[ ]*` ``. Each line past the first one
+  is prefixed by enough spaces to align a `|` with the opening delimiter's `|`. The per line leading
+  whitespace and `|` are omitted from the string; they provide a left margin for the string
+  contents.
   ```hemlock
   `|First line
    |Second line
@@ -381,12 +376,14 @@ context:
   Note that the final `\n` preceding the closing delimiter is itself part of the delimiter and is
   omitted.
   ```hemlock
-  `|Single-line bar-margin string
+  `|Single-line documentation string
   `
-  `|Two-line bar-margin string
+  `|Two-line documentation string
    |
   `
   ```
+  Documentation strings are subject to rewrapping by the `hmfmt` autoformatter, so another form of
+  string literal should be used if autoformatting would disrupt intended use.
 - **Interpolated** strings are delimited by `"` codepoints, and their contents are interpolated for
   a limited set of codepoint sequences.
   ```hemlock
@@ -394,9 +391,9 @@ context:
   ```
   The following codepoint sequences are interpolated as indicated:
   + `\u{...}`: Hexadecimal-encoded codepoint, e.g. `\u{fffd}` is the `�` replacement codepoint.
-  + `\t`: Tab (`\u{9}`).
+  + `\t`: Tab (`\u{9}`). Raw tab codepoints are prohibited.
   + `\n`: Newline, aka line feed (`\u{a}`).
-  + `\r`: Return (`\u{d}`).
+  + `\r`: Return (`\u{d}`). Raw return codepoints are prohibited.
   + `\"`: Double quote.
   + `\\`: Backslash.
   + `\%`: Percent.
