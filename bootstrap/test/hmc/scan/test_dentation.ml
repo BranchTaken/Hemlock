@@ -7,12 +7,6 @@ let test () =
   scan_str "";
   scan_str "a";
   scan_str "\n";
-  scan_str "    a";
-  scan_str {|    a
-|};
-  scan_str {|    a
-b
-|};
   scan_str {|a
 b
 c
@@ -40,11 +34,6 @@ a
     b
   c
     d
-|};
-  scan_str {|  a
-  b
-      c
-      d
 |};
   scan_str {|a
     b
@@ -150,9 +139,6 @@ g
   b
   c
 d
-|};
-  scan_str {|a
-        b
 |};
   scan_str {|a
     b
@@ -372,13 +358,35 @@ a
   scan_str {|(|};
   scan_str {|    |};
 
-  (* Errors *)
+  (* Miscellaneous errors. *)
+  scan_str "    a";
+  scan_str {|    a
+|};
+  scan_str {|    a
+b
+|};
+  scan_str {|
+    a
+|};
+  scan_str {|
+a
+        b
+|};
+  scan_str {|  a
+  b
+      c
+      d
+|};
+
   scan_str "a
     b
 \tc";
   scan_str "a
     b
         c
-\td"
+\td";
+  scan_str {|a
+        b
+|}
 
 let _ = test ()
