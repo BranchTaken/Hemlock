@@ -22,20 +22,6 @@ let test () =
   |> Fmt.fmt "\n"
   |> ignore;
 
-  (* This underflow unintuitively results in two words rather than one, because it doesn't make
-   * sense to trim leading "sign" bits for an arbitrary-precision unsigned result. *)
-  let r = (zero - one) in
-  File.Fmt.stdout
-  |> pp zero
-  |> Fmt.fmt " - "
-  |> pp one
-  |> Fmt.fmt " -> "
-  |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true r
-  |> Fmt.fmt " "
-  |> pp r
-  |> Fmt.fmt "\n"
-  |> ignore;
-
   let r = (u64_max * fifteen) in
   File.Fmt.stdout
   |> Fmt.fmt "u64_max * "

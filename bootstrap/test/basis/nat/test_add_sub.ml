@@ -22,19 +22,11 @@ let test () =
   let pairs = [
     (of_string "0", of_string "0");
 
-    (of_string "0", of_string "1");
     (of_string "1", of_string "0");
 
-    (of_string "1", of_string "0xffff_ffff_ffff_ffff");
     (of_string "0xffff_ffff_ffff_ffff", of_string "1");
-
-    (of_string "1", of_string "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff");
     (of_string "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff", of_string "1");
-
-    (of_string "1", of_string
-        "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff");
-    (of_string
-        "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff",
+    (of_string "0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff",
       of_string "1");
   ] in
   test_pairs pairs

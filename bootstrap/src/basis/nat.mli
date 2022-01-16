@@ -1,5 +1,9 @@
 (** Arbitrary-precision unsigned integer (ℕ₀).
 
+    Values do not wrap, which means that subtraction via [( - )] or [pred] can halt if the result
+    would be negative. For intermediate computations which must tolerate negative values, use
+    {type:zint}.
+
     See {!module:ConvertIntf} for documentation on conversion functions. *)
 
 type t
