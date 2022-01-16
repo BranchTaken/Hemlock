@@ -14,6 +14,14 @@ end
 include T
 include Intw.MakeVU(T)
 
+let ( - ) t0 t1 =
+  match t0 < t1 with
+  | true -> halt "Undefined result"
+  | false -> t0 - t1
+
+let pred t =
+  t - one
+
 let get_extend i t =
   let l = Stdlib.Int64.of_int (Stdlib.Array.length t) in
   match Stdlib.((Int64.unsigned_compare i l) < 0) with
