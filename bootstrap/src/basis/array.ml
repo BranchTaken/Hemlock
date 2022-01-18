@@ -557,7 +557,7 @@ module Slice = struct
             else get (succ index) t
           )
         else
-          pare (0L =:< (pred len)) t
+          pare (0L =:< i) t
       end
 
   let reduce ~f t =
