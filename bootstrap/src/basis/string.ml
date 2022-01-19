@@ -356,7 +356,7 @@ module CPre = struct
           let b = Byte.extend_to_uns (get bindex string) in
           match Uns.((bit_and b 0b11_000000L) <> 0b10_000000L) with
           | true -> begin
-              let mask = bit_usr ~shift:(nbits/6L) 0x3fL in
+              let mask = bit_sr ~shift:(nbits/6L) 0x3fL in
               let bits = bit_and b mask in
               let u' = bit_or u (bit_sl ~shift:nbits bits) in
               (Codepoint.trunc_of_uns u'), {string; bindex}

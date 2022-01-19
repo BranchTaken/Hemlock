@@ -17,6 +17,8 @@ module type SVCommon = sig
 
   include SVCommon with type t := t
   include SSigned with type t := t
+
+  val bit_ssr: shift:uns -> t -> t
 end
 
 module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
@@ -186,6 +188,8 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
 
     let bit_usr ~shift t =
       of_arr (intw_bit_usr shift (to_arr t) T.min_word_length T.max_word_length)
+
+    let bit_sr = bit_usr
 
     external intw_bit_ssr: uns -> int64 array -> uns -> uns -> int64 array =
       "hm_basis_intw_bit_ssr"
@@ -715,6 +719,7 @@ module MakeVI (T : IV) : SVI with type t := T.t = struct
   end
   include U
   include MakeVCommon(U)
+  let bit_sr = bit_ssr
 end
 
 module MakeVU (T : IV) : SVU with type t := T.t = struct
@@ -731,7 +736,13 @@ module type IFCommon = sig
   val signed: bool
 end
 
-module MakeFCommon (T : IFCommon) : SFI with type t := T.t = struct
+module type SFCommon = sig
+  include SFI
+
+  val bit_ssr: shift:uns -> t -> t
+end
+
+module MakeFCommon (T : IFCommon) : SFCommon with type t := T.t = struct
   module U = struct
     module V = struct
       include T
@@ -755,7 +766,7 @@ module MakeFCommon (T : IFCommon) : SFI with type t := T.t = struct
 
   let max_value =
     match T.signed with
-    | true -> bit_usr ~shift:1L (bit_not zero)
+    | true -> bit_sr ~shift:1L (bit_not zero)
     | false -> bit_not zero
 
   let min_value =
@@ -771,6 +782,7 @@ module MakeFI (T : IF) : SFI with type t := T.t = struct
   end
   include U
   include MakeFCommon(U)
+  let bit_sr = bit_ssr
 end
 
 module MakeFU (T : IF) : SFU with type t := T.t = struct

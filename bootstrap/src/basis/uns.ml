@@ -197,11 +197,8 @@ module T = struct
   let bit_sl ~shift t =
     Int64.(shift_left t (to_int shift))
 
-  let bit_usr ~shift t =
+  let bit_sr ~shift t =
     Int64.(shift_right_logical t (to_int shift))
-
-  let bit_ssr ~shift t =
-    Int64.(shift_right t (to_int shift))
 
   let ( + ) t0 t1 =
     Int64.add t0 t1
@@ -230,7 +227,7 @@ module T = struct
             | false -> r * p
           in
           let p' = p * p in
-          let n' = bit_usr ~shift:1L n in
+          let n' = bit_sr ~shift:1L n in
           fn r' p' n'
         end
     end in

@@ -50,8 +50,8 @@ val u128_bit_or: u128 -> u128 -> u128
 val u128_bit_sl: shift:uns -> u128 -> u128
 (** Bit shift left. *)
 
-val u128_bit_usr: shift:uns -> u128 -> u128
-(** Unsigned bit shift right (no sign extension). *)
+val u128_bit_sr: shift:uns -> u128 -> u128
+(** Bit shift right. *)
 
 val u128_add: u128 -> u128 -> u128
 (** Addition. *)

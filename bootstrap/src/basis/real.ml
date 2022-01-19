@@ -217,7 +217,7 @@ module T = struct
             | _ -> not_reached ()
           in
           let p' = p * p in
-          let n' = Uns.bit_usr ~shift:1L n in
+          let n' = Uns.bit_sr ~shift:1L n in
           fn r' p' n'
         end
     end in
@@ -633,7 +633,7 @@ module T = struct
                 end
               | false, false -> begin
                   let sig_bits' = Uns.(sig_bits - bits_per_digit) in
-                  let digit = Uns.bit_usr ~shift:sig_bits' frac in
+                  let digit = Uns.bit_sr ~shift:sig_bits' frac in
                   let mask = pred (bit_sl ~shift:sig_bits' 1L) in
                   let frac' = bit_and frac mask in
                   formatter
@@ -690,7 +690,7 @@ module T = struct
             (* Mask out trailing bits that won't be used so that in limited precision mode it is
              * trivial to recognize when no non-zero digits remain. *)
             let ulp = (bit_sl ~shift:Uns.((sig_bits_norm - (precision * bits_per_digit))) 1L) in
-            let half_ulp = bit_usr ~shift:1L ulp in
+            let half_ulp = Uns.bit_sr ~shift:1L ulp in
             let rounded_mask = bit_not (pred ulp) in
             let m_rounded = Uns.(bit_and (m_norm + half_ulp) rounded_mask) in
             (* If rounding overflows, shift one bit out of the mantissa and correspondingly adjust
@@ -739,7 +739,7 @@ module T = struct
       | Class.Subnormal, _ -> begin
           assert Uns.(sig_bits >= (bits_of_sint i));
           let shift = Uns.(sig_bits - (bits_of_sint i)) in
-          Uns.bit_and (Uns.bit_usr ~shift m) 1L
+          Uns.bit_and (Uns.bit_sr ~shift m) 1L
         end
       | Class.Infinite, _
       | Class.Nan, _ -> not_reached ()
@@ -838,7 +838,7 @@ module T = struct
             (* Mask out trailing bits that won't be used so that in limited precision mode it is
              * trivial to recognize when no non-zero digits remain. *)
             let ulp = (bit_sl ~shift:Uns.(bits_of_sint Sint.(explicit_bits_max - lsbit)) 1L) in
-            let half_ulp = bit_usr ~shift:1L ulp in
+            let half_ulp = Uns.bit_sr ~shift:1L ulp in
             let rounded_mask = bit_not (pred ulp) in
             let m_rounded = Uns.(bit_and (m_norm + half_ulp) rounded_mask) in
             let mask = pred (bit_sl ~shift:sig_bits 1L) in

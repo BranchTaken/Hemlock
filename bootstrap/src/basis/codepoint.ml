@@ -90,20 +90,20 @@ module Utf8 = struct
     | 1L -> One (Byte.trunc_of_uns u)
     | 2L ->
       Two (
-        Byte.trunc_of_uns Uns.(bit_or 0b110_00000L (bit_usr ~shift:6L u)),
+        Byte.trunc_of_uns Uns.(bit_or 0b110_00000L (bit_sr ~shift:6L u)),
         Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
       )
     | 3L ->
       Three (
-        Byte.trunc_of_uns Uns.(bit_or 0b1110_0000L (bit_usr ~shift:12L u)),
-        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:6L u) 0x3fL)),
+        Byte.trunc_of_uns Uns.(bit_or 0b1110_0000L (bit_sr ~shift:12L u)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_sr ~shift:6L u) 0x3fL)),
         Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
       )
     | 4L ->
       Four (
-        Byte.trunc_of_uns Uns.(bit_or 0b11110_000L (bit_usr ~shift:18L u)),
-        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:12L u) 0x3fL)),
-        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_usr ~shift:6L u) 0x3fL)),
+        Byte.trunc_of_uns Uns.(bit_or 0b11110_000L (bit_sr ~shift:18L u)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_sr ~shift:12L u) 0x3fL)),
+        Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and (bit_sr ~shift:6L u) 0x3fL)),
         Byte.trunc_of_uns Uns.(bit_or 0b10_000000L (bit_and u 0x3fL))
       )
     | _ -> not_reached ()
