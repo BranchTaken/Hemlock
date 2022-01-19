@@ -85,7 +85,7 @@ module State = struct
         | true -> hash u t
         | false -> begin
             let u' = u128_bit_or t.rem (u128_bit_sl ~shift:t.nrem u) in
-            let rem = u128_bit_usr ~shift:Int64.(sub 16L t.nrem) u in
+            let rem = u128_bit_sr ~shift:Int64.(sub 16L t.nrem) u in
             let t' = {t with rem} in
             hash u' t'
           end
@@ -104,7 +104,7 @@ module State = struct
         | true -> begin
             let u' = u128_bit_or t.rem (u128_bit_sl ~shift:Int64.(mul t.nrem 8L) u) in
             let t' = {t with
-              rem=u128_bit_usr ~shift:Int64.(mul (sub 16L t.nrem) 8L) u;
+              rem=u128_bit_sr ~shift:Int64.(mul (sub 16L t.nrem) 8L) u;
               nrem=Int64.(rem t.nrem 8L)
             } in
             hash u' t'

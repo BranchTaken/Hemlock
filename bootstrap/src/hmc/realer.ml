@@ -47,7 +47,7 @@ module T = struct
     | N {sign; mag=Fin {exponent; mantissa}} -> begin
         match Nat.bit_ctz mantissa, Nat.(mantissa = zero) with
         | 0L, false -> t
-        | tz, false -> N {sign; mag=Fin {exponent; mantissa=Nat.(bit_usr ~shift:tz mantissa)}}
+        | tz, false -> N {sign; mag=Fin {exponent; mantissa=Nat.(bit_sr ~shift:tz mantissa)}}
         | _, true -> N {sign; mag=Fin {exponent=Zint.zero; mantissa=Nat.zero}}
       end
     | N {sign=_; mag=Inf} -> t
@@ -187,7 +187,7 @@ module T = struct
             | true -> Int64.zero
             | false -> Nat.get 0L digit
           in
-          let frac' = Nat.bit_usr ~shift:4L frac in
+          let frac' = Nat.bit_sr ~shift:4L frac in
           formatter
           |> pp_frac (pred hex_digits) frac';
           |> Uns.fmt ~base:Fmt.Hex int64_digit
@@ -453,7 +453,7 @@ let to_r_impl mbits t =
                   end
                 | Cmp.Gt -> begin
                     (* Shift right to discard trailing bits. *)
-                    let m = Nat.(to_uns_hlt (bit_usr ~shift:Uns.(subnormal_bits -
+                    let m = Nat.(to_uns_hlt (bit_sr ~shift:Uns.(subnormal_bits -
                         max_mbits) mantissa)) in
                     Rounded, m
                   end
@@ -500,7 +500,7 @@ let to_r_impl mbits t =
                     | Eq -> Nat.to_uns mantissa
                     | Gt -> begin
                         let shift = Uns.(sig_bits - max_sig_bits) in
-                        Nat.(to_uns (bit_usr ~shift mantissa))
+                        Nat.(to_uns (bit_sr ~shift mantissa))
                       end
                   ) in
                   precision, create ~neg ~exponent:e ~mantissa:m

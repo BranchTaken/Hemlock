@@ -96,7 +96,7 @@ let u128_bit_sl ~shift t =
   end in
   u128_of_tup (lo, hi)
 
-let u128_bit_usr ~shift t =
+let u128_bit_sr ~shift t =
   let t_lo, t_hi = u128_to_tup t in
   let i = Int64.(rem shift 128L) in
   let hi = begin

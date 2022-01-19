@@ -109,9 +109,8 @@ module T = struct
 
   let bit_sl = U64.bit_sl
 
-  let bit_usr = U64.bit_usr
-
-  let bit_ssr = U64.bit_ssr
+  let bit_sr ~shift t =
+    Int64.(shift_right t (to_int shift))
 
   let ( + ) = U64.( + )
 
@@ -125,6 +124,11 @@ module T = struct
 
   let ( ** ) t0 t1 =
     (* Decompose the exponent to limit algorithmic complexity. *)
+    let neg, n = if t1 < 0L then
+        true, Int64.neg t1
+      else
+        false, t1
+    in
     let rec fn r p n = begin
       match n = zero with
       | true -> r
@@ -135,11 +139,14 @@ module T = struct
             | false -> r * p
           in
           let p' = p * p in
-          let n' = bit_usr ~shift:1L n in
+          let n' = bit_sr ~shift:1L n in
           fn r' p' n'
         end
     end in
-    fn one t0 t1
+    let r = fn 1L t0 n in
+    match neg with
+    | false -> r
+    | true -> one / r
 
   let ( // ) t0 t1 =
     (to_real t0) /. (to_real t1)

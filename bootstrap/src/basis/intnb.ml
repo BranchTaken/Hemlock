@@ -261,11 +261,8 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
     let bit_sl ~shift t =
       widen Int64.(shift_left t (to_int shift))
 
-    let bit_usr ~shift t =
+    let bit_sr ~shift t =
       widen Int64.(shift_right_logical t (to_int shift))
-
-    let bit_ssr ~shift t =
-      widen Int64.(shift_right t (to_int shift))
 
     let bit_pop t =
       let x = lbclear t in
@@ -324,7 +321,7 @@ module MakeCommon (T : ICommon) : SCommon with type t := uns = struct
               | _ -> assert false
             in
             let p' = Int64.(mul p p) in
-            let n' = bit_usr ~shift:1L n in
+            let n' = bit_sr ~shift:1L n in
             fn r' p' n'
           end
       end in
@@ -430,11 +427,8 @@ module MakeI (T : I) : SI with type t := sint = struct
     let bit_sl ~shift t =
       sint_of_uns (V.bit_sl ~shift (uns_of_sint t))
 
-    let bit_usr ~shift t =
-      sint_of_uns (V.bit_usr ~shift (uns_of_sint t))
-
-    let bit_ssr ~shift t =
-      sint_of_uns (V.bit_ssr ~shift (uns_of_sint t))
+    let bit_sr ~shift t =
+      sint_of_uns (V.widen (Int64.(shift_right t (to_int shift))))
 
     let bit_pop t =
       V.bit_pop (uns_of_sint t)

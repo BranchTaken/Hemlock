@@ -108,7 +108,7 @@ let shift_of_level level =
 let present_index_at_level hash level =
   let shift = shift_of_level level in
   let mask = U128.of_uns (elms_per_level - 1L) in
-  U128.(to_uns (bit_and mask (bit_usr ~shift hash)))
+  U128.(to_uns (bit_and mask (bit_sr ~shift hash)))
 
 let present_bit_of_index index =
   Bitset.bit_sl ~shift:index Bitset.one
