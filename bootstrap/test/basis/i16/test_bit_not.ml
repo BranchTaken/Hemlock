@@ -8,9 +8,9 @@ let test () =
     | x :: xs' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "bit_not "
-        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true x
+        |> fmt ~alt:true ~zpad:true ~width:4L ~radix:Radix.Hex ~pretty:true x
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true (bit_not x)
+        |> fmt ~alt:true ~zpad:true ~width:4L ~radix:Radix.Hex ~pretty:true (bit_not x)
         |> Fmt.fmt "\n"
         |> ignore;
         test xs'

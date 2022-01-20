@@ -10,9 +10,9 @@ let test () =
     | t :: ts' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "log "
-        |> fmt ~alt:true ~base:Fmt.Hex t
+        |> fmt ~alt:true ~radix:Radix.Hex t
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex (norm_nan (log t))
+        |> fmt ~alt:true ~radix:Radix.Hex (norm_nan (log t))
         |> Fmt.fmt "\n"
         |> ignore;
         fn ts'

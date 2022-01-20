@@ -3,7 +3,7 @@ open! Basis
 open Nat
 
 let pp_x u formatter =
-  formatter |> fmt ~alt:true ~base:Fmt.Hex u
+  formatter |> fmt ~alt:true ~radix:Radix.Hex u
 
 let test () =
   let fn x y formatter = begin

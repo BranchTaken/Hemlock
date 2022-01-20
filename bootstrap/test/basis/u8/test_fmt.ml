@@ -8,13 +8,13 @@ let test () =
     | x :: xs' -> begin
         let _ =
           File.Fmt.stdout
-          |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Bin ~pretty:true x
+          |> fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Bin ~pretty:true x
           |> Fmt.fmt ", "
-          |> fmt ~alt:true ~zpad:true ~width:3L ~base:Fmt.Oct ~pretty:true x
+          |> fmt ~alt:true ~zpad:true ~width:3L ~radix:Radix.Oct ~pretty:true x
           |> Fmt.fmt ", "
           |> pp x
           |> Fmt.fmt ", "
-          |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true x
+          |> fmt ~alt:true ~zpad:true ~width:2L ~radix:Radix.Hex ~pretty:true x
           |> Fmt.fmt "\n"
         in
         fn xs'

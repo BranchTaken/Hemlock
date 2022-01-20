@@ -9,17 +9,17 @@ let test () =
     | t :: ts' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "round "
-        |> fmt ~alt:true ~base:Fmt.Hex t
+        |> fmt ~alt:true ~radix:Radix.Hex t
         |> Fmt.fmt " -> (Down: "
-        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Down t)
+        |> fmt ~alt:true ~radix:Radix.Hex (round ~dir:Down t)
         |> Fmt.fmt ") (Up: "
-        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Up t)
+        |> fmt ~alt:true ~radix:Radix.Hex (round ~dir:Up t)
         |> Fmt.fmt ") Nearest: "
-        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Nearest t)
+        |> fmt ~alt:true ~radix:Radix.Hex (round ~dir:Nearest t)
         |> Fmt.fmt ") ([default]: "
-        |> fmt ~alt:true ~base:Fmt.Hex (round t)
+        |> fmt ~alt:true ~radix:Radix.Hex (round t)
         |> Fmt.fmt ") (Zero: "
-        |> fmt ~alt:true ~base:Fmt.Hex (round ~dir:Zero t)
+        |> fmt ~alt:true ~radix:Radix.Hex (round ~dir:Zero t)
         |> Fmt.fmt ")\n"
         |> ignore;
         fn ts'

@@ -9,7 +9,7 @@ let test () =
     | x :: xs' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "hash_fold "
-        |> fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true x
+        |> fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true x
         |> Fmt.fmt " -> "
         |> Hash.pp (Hash.t_of_state (hash_fold x Hash.State.empty))
         |> Fmt.fmt "\n"

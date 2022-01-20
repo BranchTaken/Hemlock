@@ -8,7 +8,7 @@ let test () =
     | u :: us' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "bit_{pop,clz,ctz} "
-        |> fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex u
+        |> fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex u
         |> Fmt.fmt " -> "
         |> Uns.pp (bit_pop u)
         |> Fmt.fmt ", "

@@ -22,7 +22,7 @@ let test () =
       |> Fmt.fmt "trunc_of_u512/narrow_of_u512_opt "
       |> U512.pp u
       |> Fmt.fmt " -> "
-      |> I16.fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true (I16.trunc_of_u512 u)
+      |> I16.fmt ~alt:true ~zpad:true ~width:4L ~radix:Radix.Hex ~pretty:true (I16.trunc_of_u512 u)
       |> Fmt.fmt "/"
       |> (Option.fmt I16.pp) (I16.narrow_of_u512_opt u)
       |> Fmt.fmt "\n"

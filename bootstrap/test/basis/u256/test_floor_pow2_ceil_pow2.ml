@@ -8,11 +8,11 @@ let test () =
     | u :: us' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "floor_pow2,ceil_pow2 "
-        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true u
+        |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (floor_pow2 u)
+        |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true (floor_pow2 u)
         |> Fmt.fmt ", "
-        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (ceil_pow2 u)
+        |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true (ceil_pow2 u)
         |> Fmt.fmt "\n"
         |> ignore;
         test us'

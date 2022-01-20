@@ -80,17 +80,17 @@ module type SLimitless = sig
   include CmpableIntf.SMonoZero with type t := t
   include RealableIntf.S with type t := t
 
-  val to_string: ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns -> ?base:Fmt.base
+  val to_string: ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns -> ?radix:Radix.t
     -> ?pretty:bool -> t -> string
-  (** [to_string ~sign ~alt ~zpad ~width ~base ~pretty t] creates a base-[~base] representation of
+  (** [to_string ~sign ~alt ~zpad ~width ~radix ~pretty t] creates a base-[~radix] representation of
       [t] with [~sign]-controlled sign representation, [~zpad]-controlled zero padding to [~width]
-      digits, [~alt]-controlled alternate formatting (base prefix and digits grouped via '_'), and
+      digits, [~alt]-controlled alternate formatting (radix prefix and digits grouped via '_'), and
       [~pretty]-controlled type suffix. *)
 
   val fmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
-    -> ?base:Fmt.base -> ?pretty:bool -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~base ~pretty t formatter] calls [formatter.fmt ~pad
-      ~just ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~base ~pretty t]. *)
+    -> ?radix:Radix.t -> ?pretty:bool -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~radix ~pretty t formatter] calls [formatter.fmt ~pad
+      ~just ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~radix ~pretty t]. *)
 
   val one: t
   (** Constant value 1. *)

@@ -13,18 +13,18 @@ let test () =
     | x :: xs' ->
       List.fold ~init:(
         formatter
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt "\n"
-      ) [Fmt.Bin; Fmt.Oct; Fmt.Hex] ~f:(fun formatter base ->
+      ) [Radix.Bin; Radix.Oct; Radix.Hex] ~f:(fun formatter radix ->
         List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space] ~f:(fun formatter sign ->
           List.fold ~init:formatter [false; true] ~f:(fun formatter alt ->
             List.fold ~init:formatter [false; true] ~f:(fun formatter zpad ->
               List.fold ~init:formatter [0L; 20L] ~f:(fun formatter width ->
-                List.fold ~init:formatter (match base with
-                  | Fmt.Bin -> [(Fmt.Limited, 0L); (Fmt.Limited, 9L); (Fmt.Fixed, 9L)]
-                  | Fmt.Oct -> [(Fmt.Limited, 0L); (Fmt.Limited, 4L); (Fmt.Fixed, 4L)]
-                  | Fmt.Dec -> not_reached ()
-                  | Fmt.Hex -> [(Fmt.Limited, 0L); (Fmt.Limited, 5L); (Fmt.Fixed, 5L)])
+                List.fold ~init:formatter (match radix with
+                  | Radix.Bin -> [(Fmt.Limited, 0L); (Fmt.Limited, 9L); (Fmt.Fixed, 9L)]
+                  | Radix.Oct -> [(Fmt.Limited, 0L); (Fmt.Limited, 4L); (Fmt.Fixed, 4L)]
+                  | Radix.Dec -> not_reached ()
+                  | Radix.Hex -> [(Fmt.Limited, 0L); (Fmt.Limited, 5L); (Fmt.Fixed, 5L)])
                   ~f:(fun formatter (pmode, precision) ->
                     List.fold ~init:formatter [Fmt.Normalized; Fmt.RadixPoint; Fmt.Compact]
                       ~f:(fun formatter notation ->
@@ -35,9 +35,10 @@ let test () =
                             |> Fmt.fmt ~pad:"_" ~width:21L (
                               String.Fmt.empty
                               |> (match precision with
-                                | 0L -> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~notation ~base x
+                                | 0L ->
+                                  fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~notation ~radix x
                                 | _ -> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~pmode ~precision
-                                    ~notation ~base x
+                                    ~notation ~radix x
                               )
                               |> Fmt.to_string
                             )
@@ -70,11 +71,11 @@ let test () =
                               )
                             )
                             |> Fmt.fmt (
-                              match base with
-                              | Fmt.Bin -> "b"
-                              | Fmt.Oct -> "o"
-                              | Fmt.Dec -> "d"
-                              | Fmt.Hex -> "h"
+                              match radix with
+                              | Radix.Bin -> "b"
+                              | Radix.Oct -> "o"
+                              | Radix.Dec -> "d"
+                              | Radix.Hex -> "h"
                             )
                             |> Fmt.fmt (
                               match notation with
@@ -108,7 +109,7 @@ let test () =
   in
   File.Fmt.stdout
   |> Fmt.fmt (match verbose with true -> output | false -> "")
-  |> Fmt.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true
+  |> Fmt.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~radix:Radix.Hex ~pretty:true
       (Hash.State.empty |> String.hash_fold output |> Hash.t_of_state))
 
 let _ = test ()

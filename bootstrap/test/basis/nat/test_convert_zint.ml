@@ -10,11 +10,11 @@ let test () =
       ~f:(fun formatter u ->
         formatter
         |> Fmt.fmt "bits_to_zint/like_to_zint_opt "
-        |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> Zint.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (Nat.bits_to_zint u)
+        |> Zint.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (Nat.bits_to_zint u)
         |> Fmt.fmt "/"
-        |> (Option.fmt (Zint.fmt ~alt:true ~base:Fmt.Hex ~pretty:true)) (Nat.like_to_zint_opt u)
+        |> (Option.fmt (Zint.fmt ~alt:true ~radix:Radix.Hex ~pretty:true)) (Nat.like_to_zint_opt u)
         |> Fmt.fmt "\n"
       )
   )
@@ -25,11 +25,11 @@ let test () =
       ~f:(fun formatter i ->
         formatter
         |> Fmt.fmt "bits_of_zint/like_of_zint_opt "
-        |> Zint.fmt ~alt:true ~base:Fmt.Hex ~pretty:true i
+        |> Zint.fmt ~alt:true ~radix:Radix.Hex ~pretty:true i
         |> Fmt.fmt " -> "
-        |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (Nat.bits_of_zint i)
+        |> Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (Nat.bits_of_zint i)
         |> Fmt.fmt "/"
-        |> (Option.fmt (Nat.fmt ~alt:true ~base:Fmt.Hex)) (Nat.like_of_zint_opt i)
+        |> (Option.fmt (Nat.fmt ~alt:true ~radix:Radix.Hex)) (Nat.like_of_zint_opt i)
         |> Fmt.fmt "\n"
       )
   )

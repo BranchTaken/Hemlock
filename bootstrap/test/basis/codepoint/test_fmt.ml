@@ -9,7 +9,7 @@ let test () =
     | _ -> begin
         let cp = trunc_of_uns i in
         File.Fmt.stdout
-        |> Uns.fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex i
+        |> Uns.fmt ~alt:true ~zpad:true ~width:2L ~radix:Radix.Hex i
         |> Fmt.fmt " -> "
         |> pp cp
         |> Fmt.fmt " "

@@ -3,7 +3,7 @@ open! Basis
 open Codepoint
 
 let pp_uns_x u formatter =
-  formatter |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex u
+  formatter |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex u
 
 let pp_x cp formatter =
   formatter |> pp_uns_x (extend_to_uns cp)

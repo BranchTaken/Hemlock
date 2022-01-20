@@ -12,13 +12,13 @@ let test () =
         let t' = trunc_of_sint i' in
         File.Fmt.stdout
         |> Fmt.fmt "trunc_of_sint "
-        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true i
+        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true i
         |> Fmt.fmt " -> extend_to_sint "
-        |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true t
+        |> fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Hex ~pretty:true t
         |> Fmt.fmt " -> trunc_of_sint "
         |> Sint.pp i'
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true t'
+        |> fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Hex ~pretty:true t'
         |> Fmt.fmt "\n"
         |> ignore;
         let t = trunc_of_uns (Uns.bits_of_sint i) in
@@ -26,13 +26,13 @@ let test () =
         let t' = trunc_of_uns u in
         File.Fmt.stdout
         |> Fmt.fmt "trunc_of_uns "
-        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true i
+        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true i
         |> Fmt.fmt " -> extend_to_uns "
-        |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true t
+        |> fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Hex ~pretty:true t
         |> Fmt.fmt " -> trunc_of_uns "
-        |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex u
+        |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex u
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true t'
+        |> fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Hex ~pretty:true t'
         |> Fmt.fmt "\n"
         |> ignore;
         fn xs'

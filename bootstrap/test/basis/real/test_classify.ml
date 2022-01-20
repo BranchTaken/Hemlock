@@ -8,7 +8,7 @@ let test () =
     | [] -> ()
     | t :: ts' -> begin
         File.Fmt.stdout
-        |> fmt ~alt:true ~base:Fmt.Hex t
+        |> fmt ~alt:true ~radix:Radix.Hex t
         |> Fmt.fmt " -> "
         |> Class.pp (classify t)
         |> Fmt.fmt "\n"

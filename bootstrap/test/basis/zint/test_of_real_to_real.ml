@@ -10,11 +10,11 @@ let test () =
         let x = of_real r in
         File.Fmt.stdout
         |> Fmt.fmt "of_real "
-        |> Real.fmt ~alt:true ~base:Fmt.Hex r
+        |> Real.fmt ~alt:true ~radix:Radix.Hex r
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt "; to_real -> "
-        |> Real.fmt ~alt:true ~base:Fmt.Hex (to_real x)
+        |> Real.fmt ~alt:true ~radix:Radix.Hex (to_real x)
         |> Fmt.fmt "\n"
         |> ignore;
         test_rs rs'
@@ -52,11 +52,11 @@ let test () =
         let r = to_real x in
         File.Fmt.stdout
         |> Fmt.fmt "to_real "
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt " -> "
-        |> Real.fmt ~alt:true ~base:Fmt.Hex r
+        |> Real.fmt ~alt:true ~radix:Radix.Hex r
         |> Fmt.fmt "; of_real -> "
-        |> fmt ~alt:true ~base:Fmt.Hex (of_real r)
+        |> fmt ~alt:true ~radix:Radix.Hex (of_real r)
         |> Fmt.fmt "\n"
         |> ignore;
         test_xs xs'

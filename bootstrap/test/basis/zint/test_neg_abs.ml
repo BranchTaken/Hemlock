@@ -9,11 +9,11 @@ let test () =
         let fn u = begin
           File.Fmt.stdout
           |> Fmt.fmt "neg,abs "
-          |> fmt ~alt:true ~base:Fmt.Hex u
+          |> fmt ~alt:true ~radix:Radix.Hex u
           |> Fmt.fmt " -> "
-          |> fmt ~alt:true ~base:Fmt.Hex (neg u)
+          |> fmt ~alt:true ~radix:Radix.Hex (neg u)
           |> Fmt.fmt ", "
-          |> fmt ~alt:true ~base:Fmt.Hex (abs u)
+          |> fmt ~alt:true ~radix:Radix.Hex (abs u)
           |> Fmt.fmt "\n"
           |> ignore
         end in

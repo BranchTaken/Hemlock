@@ -9,11 +9,11 @@ let test () =
         let fn u = begin
           File.Fmt.stdout
           |> Fmt.fmt "to_i64,to_sint "
-          |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+          |> fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
           |> Fmt.fmt " -> "
-          |> I64.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true (to_i64 u)
+          |> I64.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true (to_i64 u)
           |> Fmt.fmt ", "
-          |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true (to_sint u)
+          |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true (to_sint u)
           |> Fmt.fmt "\n"
           |> ignore
         end in

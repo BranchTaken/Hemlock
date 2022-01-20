@@ -10,9 +10,9 @@ let test () =
       ~f:(fun formatter i ->
         formatter
         |> Fmt.fmt "widen_to_nat_opt "
-        |> I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true i
+        |> I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true i
         |> Fmt.fmt " -> "
-        |> (Option.fmt (Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true)) (I128.widen_to_nat_opt i)
+        |> (Option.fmt (Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true)) (I128.widen_to_nat_opt i)
         |> Fmt.fmt "\n"
       )
   )
@@ -27,11 +27,11 @@ let test () =
       ~f:(fun formatter u ->
         formatter
         |> Fmt.fmt "trunc_of_nat/narrow_of_nat_opt "
-        |> Nat.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (I128.trunc_of_nat u)
+        |> I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (I128.trunc_of_nat u)
         |> Fmt.fmt "/"
-        |> (Option.fmt (I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true)) (I128.narrow_of_nat_opt u)
+        |> (Option.fmt (I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true)) (I128.narrow_of_nat_opt u)
         |> Fmt.fmt "\n"
       )
   )

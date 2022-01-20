@@ -12,13 +12,13 @@ let test () =
         let f' = f2x m ~p:x in
         File.Fmt.stdout
         |> Fmt.fmt "m2x "
-        |> fmt ~alt:true ~base:Fmt.Hex f
+        |> fmt ~alt:true ~radix:Radix.Hex f
         |> Fmt.fmt " -> f2x "
-        |> fmt ~alt:true ~base:Fmt.Hex m
+        |> fmt ~alt:true ~radix:Radix.Hex m
         |> Fmt.fmt " ~p:"
         |> Sint.pp x
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex f'
+        |> fmt ~alt:true ~radix:Radix.Hex f'
         |> Fmt.fmt "\n"
         |> ignore;
         fn tups'

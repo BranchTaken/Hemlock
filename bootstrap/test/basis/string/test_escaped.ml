@@ -8,7 +8,7 @@ let test () =
     | 0x80L -> ()
     | _ -> begin
         File.Fmt.stdout
-        |> Uns.fmt ~alt:true ~zpad:true ~width:2L ~base:Basis.Fmt.Hex i
+        |> Uns.fmt ~alt:true ~zpad:true ~width:2L ~radix:Radix.Hex i
         |> Basis.Fmt.fmt " -> \""
         |> fmt (escaped (of_codepoint Codepoint.(trunc_of_uns i)))
         |> Basis.Fmt.fmt "\"\n"

@@ -8,7 +8,7 @@ let test () =
     | x :: xs' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "bit_length, bit_{pop,clz,ctz} "
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt " -> "
         |> Uns.fmt (bit_length x)
         |> Fmt.fmt ", "

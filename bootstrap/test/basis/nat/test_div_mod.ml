@@ -9,13 +9,13 @@ let test () =
         let quotient = x / y in
         let remainder = x % y in
         File.Fmt.stdout
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt " /,% "
-        |> fmt ~alt:true ~base:Fmt.Hex y
+        |> fmt ~alt:true ~radix:Radix.Hex y
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex quotient
+        |> fmt ~alt:true ~radix:Radix.Hex quotient
         |> Fmt.fmt ", "
-        |> fmt ~alt:true ~base:Fmt.Hex remainder
+        |> fmt ~alt:true ~radix:Radix.Hex remainder
         |> Fmt.fmt "\n"
         |> ignore;
         assert (x = (y * quotient + remainder));

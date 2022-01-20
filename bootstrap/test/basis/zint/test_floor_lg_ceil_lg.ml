@@ -8,7 +8,7 @@ let test () =
     | u :: us' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "floor_lg,ceil_lg "
-        |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
         |> pp (floor_lg u)
         |> Fmt.fmt ", "

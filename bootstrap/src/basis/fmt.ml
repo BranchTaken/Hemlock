@@ -22,12 +22,6 @@ type sign =
   | Explicit
   | Space
 
-type base =
-  | Bin
-  | Oct
-  | Dec
-  | Hex
-
 type pmode =
   | Limited
   | Fixed
@@ -52,7 +46,7 @@ let precision_dec_m_default = 15L
 let precision_dec_a_default = 3L
 let precision_hex_m_default = 13L
 let precision_hex_a_default = 14L
-let base_default = Dec
+let radix_default = Radix0.Dec
 let notation_default = Compact
 let pretty_default = false
 
@@ -109,15 +103,6 @@ let pp_sign sign formatter =
     | Implicit -> "Implicit"
     | Explicit -> "Explicit"
     | Space -> "Space"
-  )
-
-let pp_base base formatter =
-  formatter |> fmt (
-    match base with
-    | Bin -> "Bin"
-    | Oct -> "Oct"
-    | Dec -> "Dec"
-    | Hex -> "Hex"
   )
 
 let pp_pmode pmode formatter =

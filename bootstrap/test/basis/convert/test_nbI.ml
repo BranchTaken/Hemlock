@@ -10,7 +10,7 @@ let test () =
         |> Fmt.fmt "extend_to_uns "
         |> I16.pp i
         |> Fmt.fmt " -> "
-        |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex (I16.extend_to_uns i)
+        |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex (I16.extend_to_uns i)
         |> Fmt.fmt "\n"
       )
   )

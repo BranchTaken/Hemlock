@@ -20,9 +20,9 @@ let test () =
       kv 65535L; kv 65536L; kv 131071L]) ~init:formatter ~f:(fun formatter u ->
       formatter
       |> Fmt.fmt "trunc_of_u32/narrow_of_u32_opt "
-      |> U32.fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true u
+      |> U32.fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Hex ~pretty:true u
       |> Fmt.fmt " -> "
-      |> I16.fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true (I16.trunc_of_u32 u)
+      |> I16.fmt ~alt:true ~zpad:true ~width:4L ~radix:Radix.Hex ~pretty:true (I16.trunc_of_u32 u)
       |> Fmt.fmt "/"
       |> (Option.fmt I16.pp) (I16.narrow_of_u32_opt u)
       |> Fmt.fmt "\n"

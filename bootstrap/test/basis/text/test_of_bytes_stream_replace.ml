@@ -18,7 +18,7 @@ let stream_of_byte_list bl =
 let test () =
   let fn bl = begin
     File.Fmt.stdout
-    |> (List.pp (Byte.fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true)) bl
+    |> (List.pp (Byte.fmt ~alt:true ~zpad:true ~width:2L ~radix:Radix.Hex ~pretty:true)) bl
     |> Fmt.fmt "\n" |> ignore;
     let text = of_bytes_stream (stream_of_byte_list bl) in
 

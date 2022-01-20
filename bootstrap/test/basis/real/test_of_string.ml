@@ -153,7 +153,7 @@ let test () =
     let r = of_string s in
     File.Fmt.stdout
     |> Fmt.fmt "\t->\t" |> pp r
-    |> Fmt.fmt "\t" |> fmt ~alt:true ~base:Fmt.Hex ~notation:Fmt.Normalized ~precision:13L r
+    |> Fmt.fmt "\t" |> fmt ~alt:true ~radix:Radix.Hex ~notation:Fmt.Normalized ~precision:13L r
     |> Fmt.fmt "\n" |> ignore
   )
 
