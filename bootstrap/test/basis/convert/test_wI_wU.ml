@@ -10,9 +10,9 @@ let test () =
       ~f:(fun formatter i ->
         formatter
         |> Fmt.fmt "widen_to_u512_opt "
-        |> I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true i
+        |> I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true i
         |> Fmt.fmt " -> "
-        |> (Option.fmt (U512.fmt ~alt:true ~base:Fmt.Hex ~pretty:true)) (I128.widen_to_u512_opt i)
+        |> (Option.fmt (U512.fmt ~alt:true ~radix:Radix.Hex ~pretty:true)) (I128.widen_to_u512_opt i)
         |> Fmt.fmt "\n"
       )
   )
@@ -27,11 +27,11 @@ let test () =
       ~f:(fun formatter u ->
         formatter
         |> Fmt.fmt "trunc_of_u512/narrow_of_u512_opt "
-        |> U512.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> U512.fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (I128.trunc_of_u512 u)
+        |> I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (I128.trunc_of_u512 u)
         |> Fmt.fmt "/"
-        |> (Option.fmt (I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true)) (I128.narrow_of_u512_opt u)
+        |> (Option.fmt (I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true)) (I128.narrow_of_u512_opt u)
         |> Fmt.fmt "\n"
       )
   )

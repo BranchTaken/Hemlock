@@ -9,9 +9,9 @@ let test () =
     | t :: ts' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "ex "
-        |> fmt ~alt:true ~base:Fmt.Hex t
+        |> fmt ~alt:true ~radix:Radix.Hex t
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex (ex t)
+        |> fmt ~alt:true ~radix:Radix.Hex (ex t)
         |> Fmt.fmt "\n"
         |> ignore;
         fn ts'

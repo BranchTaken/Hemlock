@@ -9,9 +9,9 @@ let test () =
       ~f:(fun formatter u ->
         formatter
         |> Fmt.fmt "extend_to_u512 "
-        |> U128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> U128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> U512.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (U128.extend_to_u512 u)
+        |> U512.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (U128.extend_to_u512 u)
         |> Fmt.fmt "\n"
       )
   )
@@ -23,9 +23,9 @@ let test () =
       ~f:(fun formatter u ->
         formatter
         |> Fmt.fmt "trunc_of_u512/narrow_of_u512_opt "
-        |> U512.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> U512.fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> U128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (U128.trunc_of_u512 u)
+        |> U128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (U128.trunc_of_u512 u)
         |> Fmt.fmt "/"
         |> (Option.fmt U128.pp) (U128.narrow_of_u512_opt u)
         |> Fmt.fmt "\n"

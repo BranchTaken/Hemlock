@@ -190,7 +190,7 @@ module Slice = struct
 
   let pp t formatter =
     let slice = Array.Slice.init ~range:(range t) (container t) in
-    Array.Slice.fmt (Byte.fmt ~alt:true ~base:Fmt.Hex ~pretty:true) slice formatter
+    Array.Slice.fmt (Byte.fmt ~alt:true ~radix:Radix.Hex ~pretty:true) slice formatter
 
   let hash_fold t state =
     Hash.State.Gen.init state

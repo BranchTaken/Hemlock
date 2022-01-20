@@ -1872,7 +1872,7 @@ let to_string ?(alt=Fmt.alt_default) ?(pretty=Fmt.pretty_default) s =
             | Some _ -> fn h_hd (C.Cursor.succ h_right) s
           end in
           let h =
-            Hash.State.empty |> hash_fold s |> Hash.t_of_state |> U128.to_string ~base:Fmt.Hex in
+            Hash.State.empty |> hash_fold s |> Hash.t_of_state |> U128.to_string ~radix:Radix.Hex in
           let h_hd = C.Cursor.hd h in
           fn h_hd h_hd s
         end

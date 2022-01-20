@@ -42,15 +42,6 @@ type sign =
 val pp_sign: sign -> (module Formatter) -> (module Formatter)
 (** [pp_sign sign] formats a syntactically valid representation of [sign]. *)
 
-type base =
-  | Bin (** Binary base (2). *)
-  | Oct (** Octal base (8). *)
-  | Dec (** Decimal base (10). *)
-  | Hex (** Hexadecimal base (16). *)
-
-val pp_base: base -> (module Formatter) -> (module Formatter)
-(** [pp_base base] formats a syntactically valid representation of [base]. *)
-
 type pmode =
   | Limited (** Limited precision, i.e. trailing zeros omitted. *)
   | Fixed   (** Fixed precision, i.e. trailing zeros as needed. *)
@@ -113,8 +104,8 @@ val precision_hex_m_default: int64
 val precision_hex_a_default: int64
 (** Default digits of [RadixPoint] precision to right of hexadecimal radix point ([14]). *)
 
-val base_default: base
-(** Default numerical base ([Dec]). *)
+val radix_default: Radix0.t
+(** Default numerical radix ([Dec]). *)
 
 val notation_default: notation
 (** Default notation ([Compact]). *)

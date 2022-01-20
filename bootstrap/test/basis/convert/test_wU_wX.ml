@@ -22,9 +22,9 @@ let test () =
       ~f:(fun formatter u ->
         formatter
         |> Fmt.fmt "trunc_of_i512/narrow_of_i512_opt "
-        |> I512.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> I512.fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> U128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (U128.trunc_of_i512 u)
+        |> U128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (U128.trunc_of_i512 u)
         |> Fmt.fmt "/"
         |> (Option.fmt U128.pp) (U128.narrow_of_i512_opt u)
         |> Fmt.fmt "\n"

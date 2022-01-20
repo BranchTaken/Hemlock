@@ -7,11 +7,11 @@ let test () =
   |> Fmt.fmt "max_value + "
   |> pp one
   |> Fmt.fmt " -> "
-  |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true (max_value + one)
+  |> fmt ~alt:true ~zpad:true ~width:2L ~radix:Radix.Hex ~pretty:true (max_value + one)
   |> Fmt.fmt "\nmin_value - "
   |> pp one
   |> Fmt.fmt " -> "
-  |> fmt ~alt:true ~zpad:true ~width:2L ~base:Fmt.Hex ~pretty:true (min_value - one)
+  |> fmt ~alt:true ~zpad:true ~width:2L ~radix:Radix.Hex ~pretty:true (min_value - one)
   |> Fmt.fmt "\n"
   |> ignore
 

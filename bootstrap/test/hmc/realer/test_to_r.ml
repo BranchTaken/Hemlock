@@ -61,11 +61,11 @@ let test () =
     |> Fmt.fmt "  to_r64 -> "
     |> Fmt.fmt (prec_s prec64)
     |> Fmt.fmt " "
-    |> Real.fmt ~precision:13L ~notation:Fmt.Normalized ~base:Fmt.Hex r64
+    |> Real.fmt ~precision:13L ~notation:Fmt.Normalized ~radix:Radix.Hex r64
     |> Fmt.fmt "\n  to_r32 -> "
     |> Fmt.fmt (prec_s prec32)
     |> Fmt.fmt " "
-    |> Real.fmt ~precision:6L ~notation:Fmt.Normalized ~base:Fmt.Hex r32
+    |> Real.fmt ~precision:6L ~notation:Fmt.Normalized ~radix:Radix.Hex r32
     |> Fmt.fmt "\n"
     |> ignore;
   )

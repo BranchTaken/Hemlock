@@ -190,7 +190,7 @@ module T = struct
           let frac' = Nat.bit_sr ~shift:4L frac in
           formatter
           |> pp_frac (pred hex_digits) frac';
-          |> Uns.fmt ~base:Fmt.Hex int64_digit
+          |> Uns.fmt ~radix:Radix.Hex int64_digit
         end
     end in
     match t with

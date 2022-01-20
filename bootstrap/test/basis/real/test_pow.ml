@@ -10,15 +10,15 @@ let test () =
         let xf = of_sint x in
         File.Fmt.stdout
         |> Fmt.fmt "** pow int_pow "
-        |> fmt ~alt:true ~base:Fmt.Hex b
+        |> fmt ~alt:true ~radix:Radix.Hex b
         |> Fmt.fmt " ~p:"
         |> Sint.pp x
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex (b ** xf)
+        |> fmt ~alt:true ~radix:Radix.Hex (b ** xf)
         |> Fmt.fmt " "
-        |> fmt ~alt:true ~base:Fmt.Hex (pow b ~p:xf)
+        |> fmt ~alt:true ~radix:Radix.Hex (pow b ~p:xf)
         |> Fmt.fmt " "
-        |> fmt ~alt:true ~base:Fmt.Hex (int_pow b ~p:x)
+        |> fmt ~alt:true ~radix:Radix.Hex (int_pow b ~p:x)
         |> Fmt.fmt "\n"
         |> ignore;
         fn pairs'

@@ -9,11 +9,11 @@ let test () =
   |> Fmt.fmt "\nmin_value="
   |> pp min_value
   |> Fmt.fmt " "
-  |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true min_value
+  |> fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Hex ~pretty:true min_value
   |> Fmt.fmt "\nmax_value="
   |> pp max_value
   |> Fmt.fmt " "
-  |> fmt ~alt:true ~zpad:true ~width:8L ~base:Fmt.Hex ~pretty:true max_value
+  |> fmt ~alt:true ~zpad:true ~width:8L ~radix:Radix.Hex ~pretty:true max_value
   |> Fmt.fmt "\n"
   |> ignore
 

@@ -9,9 +9,9 @@ let test () =
       ~init:formatter ~f:(fun formatter i ->
       formatter
       |> Fmt.fmt "extend_to_i512 "
-      |> I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true i
+      |> I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true i
       |> Fmt.fmt " -> "
-      |> I512.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (I128.extend_to_i512 i)
+      |> I512.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (I128.extend_to_i512 i)
       |> Fmt.fmt "\n"
     )
   )
@@ -26,9 +26,9 @@ let test () =
       ~f:(fun formatter i ->
         formatter
         |> Fmt.fmt "trunc_of_i512/narrow_of_i512_opt "
-        |> I512.fmt ~alt:true ~base:Fmt.Hex ~pretty:true i
+        |> I512.fmt ~alt:true ~radix:Radix.Hex ~pretty:true i
         |> Fmt.fmt " -> "
-        |> I128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (I128.trunc_of_i512 i)
+        |> I128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (I128.trunc_of_i512 i)
         |> Fmt.fmt "/"
         |> (Option.fmt I128.pp) (I128.narrow_of_i512_opt i)
         |> Fmt.fmt "\n"

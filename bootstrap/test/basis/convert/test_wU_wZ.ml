@@ -22,9 +22,9 @@ let test () =
       ~f:(fun formatter u ->
         formatter
         |> Fmt.fmt "trunc_of_zint/narrow_of_zint_opt "
-        |> Zint.fmt ~alt:true ~base:Fmt.Hex ~pretty:true u
+        |> Zint.fmt ~alt:true ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
-        |> U128.fmt ~alt:true ~base:Fmt.Hex ~pretty:true (U128.trunc_of_zint u)
+        |> U128.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (U128.trunc_of_zint u)
         |> Fmt.fmt "/"
         |> (Option.fmt U128.pp) (U128.narrow_of_zint_opt u)
         |> Fmt.fmt "\n"

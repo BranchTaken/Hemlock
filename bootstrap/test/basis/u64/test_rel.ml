@@ -3,7 +3,7 @@ open! Basis
 open U64
 
 let pp_x x formatter =
-  formatter |> fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex x
+  formatter |> fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex x
 
 let test () =
   let fn x y formatter = begin

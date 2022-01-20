@@ -967,10 +967,10 @@ let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_v t formatter =
     let width' = width + indent in
     formatter
     |> Fmt.fmt "present_kv="
-    |> Bitset.fmt ~alt:true ~base:Fmt.Hex node.present_kv
+    |> Bitset.fmt ~alt:true ~radix:Radix.Hex node.present_kv
     |> fmt_sep ~alt ~width
     |> Fmt.fmt "present_child="
-    |> Bitset.fmt ~alt:true ~base:Fmt.Hex node.present_child
+    |> Bitset.fmt ~alt:true ~radix:Radix.Hex node.present_child
     |> fmt_sep ~alt ~width
     |> Fmt.fmt "elms_kv="
     |> (Array.fmt ~alt ~width fmt_kv) node.elms_kv

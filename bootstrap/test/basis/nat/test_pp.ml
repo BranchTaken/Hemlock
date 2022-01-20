@@ -7,13 +7,13 @@ let test () =
     | [] -> ()
     | x :: xs' -> begin
         File.Fmt.stdout
-        |> fmt ~alt:true ~base:Fmt.Bin ~pretty:true x
+        |> fmt ~alt:true ~radix:Radix.Bin ~pretty:true x
         |> Fmt.fmt " "
-        |> fmt ~alt:true ~base:Fmt.Oct ~pretty:true x
+        |> fmt ~alt:true ~radix:Radix.Oct ~pretty:true x
         |> Fmt.fmt " "
         |> pp x
         |> Fmt.fmt " "
-        |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true x
+        |> fmt ~alt:true ~radix:Radix.Hex ~pretty:true x
         |> Fmt.fmt "\n"
         |> ignore;
         fn xs'

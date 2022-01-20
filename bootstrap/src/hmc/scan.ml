@@ -18,26 +18,16 @@ let zint_of_cp digit =
   Map.get_hlt digit zint_digit_map
 
 module Radix = struct
-  type t =
-    | Bin
-    | Oct
-    | Dec
-    | Hex
+  include Radix
 
-  let to_nat = function
-    | Bin -> Nat.k_2
-    | Oct -> Nat.k_8
-    | Dec -> Nat.k_a
-    | Hex -> Nat.k_g
+  let to_nat t =
+    (to_uns t) |> Uns.extend_to_nat
 
   let nat_accum digit nat t =
     Nat.(nat * (to_nat t) + digit)
 
-  let to_zint = function
-    | Bin -> Zint.k_2
-    | Oct -> Zint.k_8
-    | Dec -> Zint.k_a
-    | Hex -> Zint.k_g
+  let to_zint t =
+    (to_uns t) |> Uns.extend_to_zint
 
   let zint_accum digit zint t =
     Zint.(zint * (to_zint t) + digit)
@@ -489,12 +479,12 @@ module AbstractToken = struct
       |> Fmt.fmt ">" |> Fmt.to_string
     | Tok_r32 rendition ->
       String.Fmt.empty |> Fmt.fmt "<Tok_r32="
-      |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:6L ~notation:Fmt.Normalized))
+      |> (Rendition.pp Real.(fmt ~alt:true ~radix:Radix.Hex ~precision:6L ~notation:Fmt.Normalized))
         rendition |> Fmt.fmt ">" |> Fmt.to_string
     | Tok_r64 rendition ->
       String.Fmt.empty |> Fmt.fmt "<Tok_r64="
-      |> (Rendition.pp Real.(fmt ~alt:true ~base:Fmt.Hex ~precision:13L ~notation:Fmt.Normalized))
-        rendition |> Fmt.fmt ">" |> Fmt.to_string
+      |> (Rendition.pp Real.(fmt ~alt:true ~radix:Radix.Hex ~precision:13L
+          ~notation:Fmt.Normalized)) rendition |> Fmt.fmt ">" |> Fmt.to_string
     | Tok_u8 rendition ->
       String.Fmt.empty |> Fmt.fmt "<Tok_u8=" |> (Rendition.pp U8.pp) rendition |> Fmt.fmt ">"
       |> Fmt.to_string
@@ -711,15 +701,7 @@ let out_of_range_int radix limit base past t =
   let description =
     String.Fmt.empty
     |> Fmt.fmt "Numerical constant exceeds "
-    |> (
-      let base = match radix with
-        | Radix.Bin -> Fmt.Bin
-        | Radix.Oct -> Fmt.Oct
-        | Radix.Dec -> Fmt.Dec
-        | Radix.Hex -> Fmt.Hex
-      in
-      Nat.fmt ~alt:true ~base
-    ) limit
+    |> Nat.fmt ~alt:true ~radix limit
     |> Fmt.to_string
   in
   malformation ~base ~past description t

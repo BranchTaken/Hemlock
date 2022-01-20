@@ -192,7 +192,7 @@ special in that it creates no lexical binding at all.
 ### Integer
 
 Integers are either signed or unsigned, though a leading sign is always a separate token. Integer
-literals may be specified in any of four bases, as determined by optional base prefix:
+literals may be specified in any of four radixes, as determined by optional radix prefix:
 
 - `0b`: Binary, where digits are in `[01]`.
 - `0o`: Octal, where digits are in `[0-7]`.
@@ -262,21 +262,21 @@ ways:
 - Type suffix
 
 Reals are signed, though a leading sign is always a separate token. Real number literal mantissas
-may be specified in any of four bases, as determined by optional base prefix:
+may be specified in any of four radixes, as determined by optional radix prefix:
 
 - `0b`: Binary, where digits are in `[01]`. All well formed binary literals have bit-precise machine
   representations.
 - `0o`: Octal, where digits are in `[0-7]`. All well formed octal literals have bit-precise machine
   representations.
 - Default: Decimal, where digits are in `[0-9]`. Not all decimal-format literals have bit-precise
-  machine representations; favor the other bases if this is of significance to the application.
+  machine representations; favor the other radixes if this is of significance to the application.
 - `0x`: Hexadecimal, where digits are in `[0-9a-f]`. All well formed hexadecimal literals have
   bit-precise machine representations.
 
 Optional signed exponents are separated from a binary/octal/hexadecimal mantissa by a `p` codepoint,
 or from a decimal mantissa by an `e` codepoint. The optional exponent sign is in `[-+]`. The
-exponent is always expressed as a decimal value, where digits are in `[0-9]`, but the implicit base
-of the exponent depends on the mantissa's base prefix:
+exponent is always expressed as a decimal value, where digits are in `[0-9]`, but the implicit radix
+of the exponent depends on the mantissa's radix prefix:
 
 - Binary (`0b<mantissa>p<exponent>`): *mantissa<sub>2</sub>* × 2<sup>*exponent<sub>10</sub>*</sup>
 - Octal (`0o<mantissa>p<exponent>`): *mantissa<sub>8</sub>* × 2<sup>*exponent<sub>10</sub>*</sup>
@@ -494,7 +494,7 @@ context:
 
   Format specifiers are of the form:
   ```
-  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<base>][<notation>][<pretty>][<type>](^...^)
+  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<radix>][<notation>][<pretty>][<type>](^...^)
   ```
   + `'<pad>'` (`?pad:codepoint`): Pad with specified codepoint (default: `' '`; complete codepoint
     literal syntax supported)
@@ -506,7 +506,7 @@ context:
     * `+`: Explicit sign, even when positive
     * `_`: Space in place of sign if sign is non-negative
   + `<alt>` (`?alt:bool`): `#` enables alternate formatting (default: `false`)
-    * Numeric types: Prefix with base, separate digit groups with `_`
+    * Numeric types: Prefix with radix, separate digit groups with `_`
       - Binary: `0b` prefix, groups of 8
       - Octal: `0o` prefix, groups of 3
       - Decimal: No prefix, groups of 3
@@ -526,14 +526,14 @@ context:
     * `.=3`: Fixed precision
     * `.3`: Limited precision
     * `.*`: Parametric limited precision in digits, e.g. `%*(^width^).*(^precision^)r(^some_r^)`
-  + `<base>` (`?base:Fmt.base`): Numerical base (default: `Fmt.Dec`)
+  + `<radix>` (`?radix:Radix.t`): Numerical radix (default: `Radix.Dec`)
     * `b`: Binary
     * `o`: Octal
     * `d`: Decimal
     * `x`: Hexadecimal
   + `<notation>` (`?notation:Fmt.notation`): Real-specific notation (default: `Fmt.Compact`)
     * `m`: Normalized scientific form, i.e. decimal exponential or binary floating point notation
-      (mnemonic: Mantissa × base <sup>exponent</sup>)
+      (mnemonic: Mantissa × radix <sup>exponent</sup>)
     * `a`: Radix point form (mnemonic: rAdix point)
     * `c`: Trailing zeros omitted, and the radix point omitted in normalized form unless followed by
       non-zero mantissa digits (mnemonic: Compact)

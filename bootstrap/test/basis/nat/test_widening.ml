@@ -7,7 +7,7 @@ let test () =
   let fifteen = of_string "15" in
   File.Fmt.stdout
   |> Fmt.fmt "u64_max -> "
-  |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true u64_max
+  |> fmt ~alt:true ~radix:Radix.Hex ~pretty:true u64_max
   |> Fmt.fmt "\n"
   |> ignore;
 
@@ -16,7 +16,7 @@ let test () =
   |> Fmt.fmt "u64_max + "
   |> pp one
   |> Fmt.fmt " -> "
-  |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true r
+  |> fmt ~alt:true ~radix:Radix.Hex ~pretty:true r
   |> Fmt.fmt " "
   |> pp r
   |> Fmt.fmt "\n"
@@ -27,7 +27,7 @@ let test () =
   |> Fmt.fmt "u64_max * "
   |> pp fifteen
   |> Fmt.fmt " -> "
-  |> fmt ~alt:true ~base:Fmt.Hex ~pretty:true r
+  |> fmt ~alt:true ~radix:Radix.Hex ~pretty:true r
   |> Fmt.fmt " "
   |> pp r
   |> Fmt.fmt "\n"

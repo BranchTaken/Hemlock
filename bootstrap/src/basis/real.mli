@@ -8,19 +8,19 @@ include IdentifiableIntf.S with type t := t
 include StringableIntf.S with type t := t
 
 val to_string: ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns -> ?pmode:Fmt.pmode
-  -> ?precision:uns -> ?notation:Fmt.notation -> ?base:Fmt.base -> t -> string
-(** [to_string ~sign ~alt ~zpad ~width ~pmode ~precision ~notation ~base t] creates a base-[~base]
+  -> ?precision:uns -> ?notation:Fmt.notation -> ?radix:Radix.t -> t -> string
+(** [to_string ~sign ~alt ~zpad ~width ~pmode ~precision ~notation ~radix t] creates a base-[~radix]
     representation of [t] with [~sign]-controlled sign representation, [~zpad]-controlled zero
     padding to [~width] digits and [~pmode]-controlled [~precision] digits past the radix point in
-    the specified [~notation], and [~alt]-controlled alternate formatting (base prefix and digits
+    the specified [~notation], and [~alt]-controlled alternate formatting (radix prefix and digits
     grouped via '_'). *)
 
 val fmt: ?pad:string -> ?just:Fmt.just -> ?sign:Fmt.sign -> ?alt:bool -> ?zpad:bool -> ?width:uns
-  -> ?pmode:Fmt.pmode -> ?precision:uns -> ?notation:Fmt.notation -> ?base:Fmt.base -> t
+  -> ?pmode:Fmt.pmode -> ?precision:uns -> ?notation:Fmt.notation -> ?radix:Radix.t -> t
   -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~pmode ~precision ~notation ~base t formatter] calls
+(** [fmt ~pad ~just ~sign ~alt ~zpad ~width ~pmode ~precision ~notation ~radix t formatter] calls
     [formatter.fmt ~pad ~just ~width] on the result of [to_string ~sign ~alt ~zpad ~width ~pmode
-    ~precision ~notation ~base t]. *)
+    ~precision ~notation ~radix t]. *)
 
 (** Rounding direction. *)
 module Dir : sig

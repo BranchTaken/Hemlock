@@ -17,7 +17,7 @@ let test () =
       | false -> begin
           File.Fmt.stdout
           |> Basis.Fmt.fmt " "
-          |> Byte.fmt ~alt:true ~base:Basis.Fmt.Hex ~pretty:true (B.get i s)
+          |> Byte.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (B.get i s)
           |> ignore;
           fn (Uns.succ i)
         end

@@ -8,7 +8,7 @@ let test () =
     | u :: us' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "is_pow2 "
-        |> fmt ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true u
+        |> fmt ~alt:true ~zpad:true ~width:32L ~radix:Radix.Hex ~pretty:true u
         |> Fmt.fmt " -> "
         |> Bool.pp (is_pow2 u)
         |> Fmt.fmt "\n"

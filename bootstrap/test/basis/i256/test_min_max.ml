@@ -8,13 +8,13 @@ let test () =
     | (x, y) :: pairs' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "min,max "
-        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true x
+        |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true x
         |> Fmt.fmt " "
-        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true y
+        |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true y
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (min x y)
+        |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true (min x y)
         |> Fmt.fmt ", "
-        |> fmt ~alt:true ~zpad:true ~width:64L ~base:Fmt.Hex ~pretty:true (max x y)
+        |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true (max x y)
         |> Fmt.fmt "\n"
         |> ignore;
         test_pairs pairs'

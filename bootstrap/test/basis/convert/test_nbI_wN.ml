@@ -22,7 +22,7 @@ let test () =
       |> Fmt.fmt "trunc_of_nat/narrow_of_nat_opt "
       |> Nat.pp u
       |> Fmt.fmt " -> "
-      |> I16.fmt ~alt:true ~zpad:true ~width:4L ~base:Fmt.Hex ~pretty:true (I16.trunc_of_nat u)
+      |> I16.fmt ~alt:true ~zpad:true ~width:4L ~radix:Radix.Hex ~pretty:true (I16.trunc_of_nat u)
       |> Fmt.fmt "/"
       |> (Option.fmt I16.pp) (I16.narrow_of_nat_opt u)
       |> Fmt.fmt "\n"

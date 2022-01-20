@@ -10,7 +10,7 @@ let test () =
         |> Fmt.fmt "of_string "
         |> String.pp s
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true (of_string s)
+        |> fmt ~alt:true ~zpad:true ~width:32L ~radix:Radix.Hex ~pretty:true (of_string s)
         |> Fmt.fmt "\n"
         |> ignore;
         test_strs strs'

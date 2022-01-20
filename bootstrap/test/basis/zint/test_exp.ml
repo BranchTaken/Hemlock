@@ -7,11 +7,11 @@ let test () =
     | [] -> ()
     | (x, y) :: pairs' -> begin
         File.Fmt.stdout
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt " ** "
-        |> fmt ~alt:true ~base:Fmt.Hex y
+        |> fmt ~alt:true ~radix:Radix.Hex y
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex (x ** y)
+        |> fmt ~alt:true ~radix:Radix.Hex (x ** y)
         |> Fmt.fmt "\n"
         |> ignore;
         test_pairs pairs'

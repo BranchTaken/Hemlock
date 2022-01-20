@@ -13,9 +13,9 @@ let test () =
     | x :: xs' ->
       List.fold ~init:(
         formatter
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt "\n"
-      ) [Fmt.Dec] ~f:(fun formatter base ->
+      ) [Radix.Dec] ~f:(fun formatter radix ->
         List.fold ~init:formatter [Fmt.Implicit; Fmt.Explicit; Fmt.Space] ~f:(fun formatter sign ->
           List.fold ~init:formatter [false; true] ~f:(fun formatter alt ->
             List.fold ~init:formatter [false; true] ~f:(fun formatter zpad ->
@@ -31,7 +31,7 @@ let test () =
                             |> Fmt.fmt ~pad:"_" ~width:41L (
                               String.Fmt.empty
                               |> fmt ~pad:"·" ~just ~sign ~alt ~zpad ~width ~pmode ~precision
-                                ~notation ~base x
+                                ~notation ~radix x
                               |> Fmt.to_string
                             )
                             |> Fmt.fmt "] %'·'"
@@ -63,11 +63,11 @@ let test () =
                               )
                             )
                             |> Fmt.fmt (
-                              match base with
-                              | Fmt.Bin -> "b"
-                              | Fmt.Oct -> "o"
-                              | Fmt.Dec -> "d"
-                              | Fmt.Hex -> "h"
+                              match radix with
+                              | Radix.Bin -> "b"
+                              | Radix.Oct -> "o"
+                              | Radix.Dec -> "d"
+                              | Radix.Hex -> "h"
                             )
                             |> Fmt.fmt (
                               match notation with
@@ -107,7 +107,7 @@ let test () =
   in
   File.Fmt.stdout
   |> Fmt.fmt (match verbose with true -> output | false -> "")
-  |> Fmt.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~base:Fmt.Hex ~pretty:true
+  |> Fmt.fmt (U128.to_string ~alt:true ~zpad:true ~width:32L ~radix:Radix.Hex ~pretty:true
       (Hash.State.empty |> String.hash_fold output |> Hash.t_of_state))
 
 let _ = test ()

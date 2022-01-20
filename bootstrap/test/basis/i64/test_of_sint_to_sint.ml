@@ -10,11 +10,11 @@ let test () =
         let sx = x in
         File.Fmt.stdout
         |> Fmt.fmt "to_sint "
-        |> fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true x
+        |> fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true x
         |> Fmt.fmt " -> "
-        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true x
+        |> Sint.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true x
         |> Fmt.fmt "; of_sint -> "
-        |> fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex ~pretty:true sx
+        |> fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex ~pretty:true sx
         |> Fmt.fmt "\n"
         |> ignore;
         test_xs xs'

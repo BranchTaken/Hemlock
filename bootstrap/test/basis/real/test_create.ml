@@ -14,9 +14,9 @@ let test () =
         |> Fmt.fmt ", e="
         |> Sint.pp e
         |> Fmt.fmt ", m="
-        |> Uns.fmt ~alt:true ~zpad:true ~width:13L ~base:Fmt.Hex m
+        |> Uns.fmt ~alt:true ~zpad:true ~width:13L ~radix:Radix.Hex m
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex f
+        |> fmt ~alt:true ~radix:Radix.Hex f
         |> Fmt.fmt "\n"
         |> ignore;
         fn tups'

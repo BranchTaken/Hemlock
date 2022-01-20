@@ -22,7 +22,7 @@ module T = struct
     let one = Int64.one
 
     let to_string ?(sign=Fmt.sign_default) ?(alt=Fmt.alt_default) ?(zpad=Fmt.zpad_default)
-      ?(width=Fmt.width_default) ?(base=Fmt.base_default) ?(pretty=Fmt.pretty_default) t =
+      ?(width=Fmt.width_default) ?(radix=Fmt.radix_default) ?(pretty=Fmt.pretty_default) t =
       let rec fn accum ndigits t = begin
         match Stdlib.(Int64.(unsigned_compare t 0L) = 0)
               && Stdlib.(not zpad || (ndigits >= (Int64.to_int width))) with
@@ -30,7 +30,7 @@ module T = struct
             (match sign with Implicit -> "" | Explicit -> "+" | Space -> " ")
             ^ (match alt with
               | true -> begin
-                  match base with
+                  match radix with
                   | Bin -> "0b"
                   | Oct -> "0o"
                   | Dec -> ""
@@ -42,7 +42,7 @@ module T = struct
             ^ (match pretty with false -> "" | true -> "u")
           end
         | _ -> begin
-            let divisor, group = match base with
+            let divisor, group = match radix with
               | Bin -> 2L, 8
               | Oct -> 8L, 3
               | Dec -> 10L, 3
@@ -60,8 +60,8 @@ module T = struct
       end in
       fn [] 0 t
 
-    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?base ?pretty t formatter =
-      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?base ?pretty t) formatter
+    let fmt ?pad ?just ?sign ?alt ?zpad ?width ?radix ?pretty t formatter =
+      Fmt.fmt ?pad ?just ?width (to_string ?sign ?alt ?zpad ?width ?radix ?pretty t) formatter
 
     let pp t formatter =
       fmt ~alt:true t formatter

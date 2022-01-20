@@ -5,9 +5,9 @@ open Nat
 let test () =
   File.Fmt.stdout
   |> Fmt.fmt "zero="
-  |> fmt ~alt:true ~base:Fmt.Hex zero
+  |> fmt ~alt:true ~radix:Radix.Hex zero
   |> Fmt.fmt "\none="
-  |> fmt ~alt:true ~base:Fmt.Hex one
+  |> fmt ~alt:true ~radix:Radix.Hex one
   |> Fmt.fmt "\n"
   |> ignore
 

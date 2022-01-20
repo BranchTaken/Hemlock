@@ -8,11 +8,11 @@ let test () =
     | (x, y) :: pairs' -> begin
         let z = (x * y) in
         File.Fmt.stdout
-        |> fmt ~alt:true ~base:Fmt.Hex x
+        |> fmt ~alt:true ~radix:Radix.Hex x
         |> Fmt.fmt " * "
-        |> fmt ~alt:true ~base:Fmt.Hex y
+        |> fmt ~alt:true ~radix:Radix.Hex y
         |> Fmt.fmt " -> "
-        |> fmt ~alt:true ~base:Fmt.Hex z
+        |> fmt ~alt:true ~radix:Radix.Hex z
         |> Fmt.fmt "\n"
         |> ignore;
         test_pairs pairs'

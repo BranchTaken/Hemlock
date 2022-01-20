@@ -16,7 +16,7 @@ let test () =
     | u64s :: u64s_list' -> begin
         File.Fmt.stdout
         |> Fmt.fmt "hash_fold "
-        |> (Array.pp (Uns.fmt ~alt:true ~zpad:true ~width:16L ~base:Fmt.Hex)) u64s
+        |> (Array.pp (Uns.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex)) u64s
         |> Fmt.fmt " -> "
         |> pp (t_of_state State.(hash_fold u64s empty))
         |> Fmt.fmt "\n"
