@@ -18,6 +18,7 @@
   test_m2x_f2x
   test_min_max
   test_min_max_value
+  test_of_string
   test_operators
   test_pow
   test_round

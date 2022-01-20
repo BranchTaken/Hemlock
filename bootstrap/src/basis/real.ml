@@ -321,8 +321,246 @@ module T = struct
   let tanh t =
     tanh t
 
+  type base =
+    | Bin
+    | Oct
+    | Dec
+    | Hex
+
   let of_string s =
-    float_of_string s
+    let result_of_accums base ~e ~m = begin
+      match base with
+      | Dec -> m *. (10. ** e)
+      | Bin
+      | Oct
+      | Hex -> m *. (2. ** e)
+    end in
+    let r3 base ~e ~m cursor = begin
+      let cp, _cursor' = String.C.Cursor.next cursor in
+      match cp with
+      | cp when Codepoint.(cp = of_char '2') -> result_of_accums base ~e ~m
+      | _ -> halt "Malformed real constant"
+    end in
+    let r6 base ~e ~m cursor = begin
+      let cp, _cursor' = String.C.Cursor.next cursor in
+      match cp with
+      | cp when Codepoint.(cp = of_char '4') -> result_of_accums base ~e ~m
+      | _ -> halt "Malformed real constant"
+    end in
+    let r base ~e ~m cursor tl = begin
+      match String.C.Cursor.(=) cursor tl with
+      | true -> result_of_accums base ~e ~m
+      | false -> begin
+          let cp, cursor' = String.C.Cursor.next cursor in
+          match cp with
+          | cp when Codepoint.(cp = of_char '3') -> r3 base ~e ~m cursor'
+          | cp when Codepoint.(cp = of_char '6') -> r6 base ~e ~m cursor'
+          | _ -> halt "Malformed real constant"
+        end
+    end in
+    let rec exp base eaccum esign ~m cursor tl = begin
+      match String.C.Cursor.(=) cursor tl with
+      | true -> result_of_accums base ~e:(Sign.to_real esign *. eaccum) ~m
+      | false -> begin
+          let cp, cursor' = String.C.Cursor.next cursor in
+          match base, cp with
+          | _, cp when Codepoint.(cp = of_char '0') ->
+            exp base (eaccum *. 10. +. 0.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '1') ->
+            exp base (eaccum *. 10. +. 1.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '2') ->
+            exp base (eaccum *. 10. +. 2.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '3') ->
+            exp base (eaccum *. 10. +. 3.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '4') ->
+            exp base (eaccum *. 10. +. 4.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '5') ->
+            exp base (eaccum *. 10. +. 5.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '6') ->
+            exp base (eaccum *. 10. +. 6.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '7') ->
+            exp base (eaccum *. 10. +. 7.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '8') ->
+            exp base (eaccum *. 10. +. 8.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '9') ->
+            exp base (eaccum *. 10. +. 9.) esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char '_') -> exp base eaccum esign ~m cursor' tl
+          | _, cp when Codepoint.(cp = of_char 'r') ->
+            r base ~e:(Sign.to_real esign *. eaccum) ~m cursor' tl
+          | _ -> halt "Malformed real constant"
+        end
+    end in
+    let rec ep_sign base esign ~m cursor tl = begin
+      let cp, cursor' = String.C.Cursor.next cursor in
+      match cp with
+      | cp when Codepoint.(cp = of_char '0') -> exp base 0. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '1') -> exp base 1. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '2') -> exp base 2. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '3') -> exp base 3. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '4') -> exp base 4. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '5') -> exp base 5. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '6') -> exp base 6. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '7') -> exp base 7. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '8') -> exp base 8. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '9') -> exp base 9. esign ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '_') -> ep_sign base esign ~m cursor' tl
+      | _ -> halt "Malformed real constant"
+    end in
+    let rec ep base ~m cursor tl = begin
+      let cp, cursor' = String.C.Cursor.next cursor in
+      match cp with
+      | cp when Codepoint.(cp = of_char '-') -> ep_sign base Sign.Neg ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '+') -> ep_sign base Sign.Pos ~m cursor' tl
+      | cp when Codepoint.(cp = of_char '_') -> ep base ~m cursor' tl
+      | _ -> ep_sign base Sign.Pos ~m cursor tl
+    end in
+    let rec frac ~ds ~b base maccum msign cursor tl = begin
+      (* (ds * digit) scales digit to its fractional value. *)
+      let ds' = ds /. b in
+      match String.C.Cursor.(=) cursor tl with
+      | true -> maccum
+      | false -> begin
+          let cp, cursor' = String.C.Cursor.next cursor in
+          match base, cp with
+          | _, cp when Codepoint.(cp = of_char '0') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 0.) msign cursor' tl
+          | _, cp when Codepoint.(cp = of_char '1') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 1.) msign cursor' tl
+          | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '2') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 2.) msign cursor' tl
+          | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '3') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 3.) msign cursor' tl
+          | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '4') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 4.) msign cursor' tl
+          | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '5') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 5.) msign cursor' tl
+          | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '6') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 6.) msign cursor' tl
+          | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '7') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 7.) msign cursor' tl
+          | (Dec|Hex), cp when Codepoint.(cp = of_char '8') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 8.) msign cursor' tl
+          | (Dec|Hex), cp when Codepoint.(cp = of_char '9') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 9.) msign cursor' tl
+          | Hex, cp when Codepoint.(cp = of_char 'a') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 0xa.) msign cursor' tl
+          | Hex, cp when Codepoint.(cp = of_char 'b') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 0xb.) msign cursor' tl
+          | Hex, cp when Codepoint.(cp = of_char 'c') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 0xc.) msign cursor' tl
+          | Hex, cp when Codepoint.(cp = of_char 'd') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 0xd.) msign cursor' tl
+          | Hex, cp when Codepoint.(cp = of_char 'e') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 0xe.) msign cursor' tl
+          | Hex, cp when Codepoint.(cp = of_char 'f') ->
+            frac ~ds:ds' ~b base (maccum +. ds *. 0xf.) msign cursor' tl
+          | _, cp when Codepoint.(cp = of_char '_') -> frac ~ds ~b base maccum msign cursor' tl
+          | Dec, cp when Codepoint.(cp = of_char 'e') ->
+            ep base ~m:(Sign.to_real msign *. maccum) cursor' tl
+          | (Bin|Oct|Hex), cp when Codepoint.(cp = of_char 'p') ->
+            ep base ~m:(Sign.to_real msign *. maccum) cursor' tl
+          | _, cp when Codepoint.(cp = of_char 'r') ->
+            r base ~e:0. ~m:(Sign.to_real msign *. maccum) cursor' tl
+          | _ -> halt "Malformed real constant"
+        end
+    end in
+    let rec whole ~b base maccum msign cursor tl = begin
+      let cp, cursor' = String.C.Cursor.next cursor in
+      match base, cp with
+      | _, cp when Codepoint.(cp = of_char '0') ->
+        whole ~b base (maccum *. b +. 0.) msign cursor' tl
+      | _, cp when Codepoint.(cp = of_char '1') ->
+        whole ~b base (maccum *. b +. 1.) msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '2') ->
+        whole ~b base (maccum *. b +. 2.) msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '3') ->
+        whole ~b base (maccum *. b +. 3.) msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '4') ->
+        whole ~b base (maccum *. b +. 4.) msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '5') ->
+        whole ~b base (maccum *. b +. 5.) msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '6') ->
+        whole ~b base (maccum *. b +. 6.) msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '7') ->
+        whole ~b base (maccum *. b +. 7.) msign cursor' tl
+      | (Dec|Hex), cp when Codepoint.(cp = of_char '8') ->
+        whole ~b base (maccum *. b +. 8.) msign cursor' tl
+      | (Dec|Hex), cp when Codepoint.(cp = of_char '9') ->
+        whole ~b base (maccum *. b +. 9.) msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'a') ->
+        whole ~b base (maccum *. b +. 0xa.) msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'b') ->
+        whole ~b base (maccum *. b +. 0xb.) msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'c') ->
+        whole ~b base (maccum *. b +. 0xc.) msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'd') ->
+        whole ~b base (maccum *. b +. 0xd.) msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'e') ->
+        whole ~b base (maccum *. b +. 0xe.) msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'f') ->
+        whole ~b base (maccum *. b +. 0xf.) msign cursor' tl
+      | _, cp when Codepoint.(cp = of_char '_') -> whole ~b base maccum msign cursor' tl
+      | Dec, cp when Codepoint.(cp = of_char 'e') ->
+        ep base ~m:(Sign.to_real msign *. maccum) cursor' tl
+      | (Bin|Oct|Hex), cp when Codepoint.(cp = of_char 'p') ->
+        ep base ~m:(Sign.to_real msign *. maccum) cursor' tl
+      | _, cp when Codepoint.(cp = of_char '.') ->
+        frac ~ds:(1. /. b) ~b base maccum msign cursor' tl
+      | _, cp when Codepoint.(cp = of_char 'r') ->
+        r base ~e:0. ~m:(Sign.to_real msign *. maccum) cursor' tl
+      | _ -> halt "Malformed real constant"
+    end in
+    let rec base ~b base_ msign cursor tl = begin
+      let cp, cursor' = String.C.Cursor.next cursor in
+      match base_, cp with
+      | _, cp when Codepoint.(cp = of_char '0') -> whole ~b base_ 0. msign cursor' tl
+      | _, cp when Codepoint.(cp = of_char '1') -> whole ~b base_ 1. msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '2') -> whole ~b base_ 2. msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '3') -> whole ~b base_ 3. msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '4') -> whole ~b base_ 4. msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '5') -> whole ~b base_ 5. msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '6') -> whole ~b base_ 6. msign cursor' tl
+      | (Oct|Dec|Hex), cp when Codepoint.(cp = of_char '7') -> whole ~b base_ 7. msign cursor' tl
+      | (Dec|Hex), cp when Codepoint.(cp = of_char '8') -> whole ~b base_ 8. msign cursor' tl
+      | (Dec|Hex), cp when Codepoint.(cp = of_char '9') -> whole ~b base_ 9. msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'a') -> whole ~b base_ 0xa. msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'b') -> whole ~b base_ 0xb. msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'c') -> whole ~b base_ 0xc. msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'd') -> whole ~b base_ 0xd. msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'e') -> whole ~b base_ 0xe. msign cursor' tl
+      | Hex, cp when Codepoint.(cp = of_char 'f') -> whole ~b base_ 0xf. msign cursor' tl
+      | _, cp when Codepoint.(cp = of_char '_') -> base ~b base_ msign cursor' tl
+      | _ -> halt "Malformed real constant"
+    end in
+    let zero msign cursor tl = begin
+      let cp, cursor' = String.C.Cursor.next cursor in
+      match cp with
+      | cp when Codepoint.(cp = of_char 'b') -> base ~b:2. Bin msign cursor' tl
+      | cp when Codepoint.(cp = of_char 'o') -> base ~b:8. Oct msign cursor' tl
+      | cp when Codepoint.(cp = of_char 'x') -> base ~b:0x10. Hex msign cursor' tl
+      | cp when Codepoint.(cp = of_char '.') -> frac ~ds:(1. / 10.) ~b:10. Dec 0. msign cursor' tl
+      | cp when Codepoint.(cp = of_char 'r') -> r Dec ~e:0. ~m:0. cursor' tl
+      | _ -> whole ~b:10. Dec 0. msign cursor tl
+    end in
+    let msign sign cursor tl = begin
+      let cp, cursor' = String.C.Cursor.next cursor in
+      match cp with
+      | cp when Codepoint.(cp = of_char '0') -> zero sign cursor' tl
+      | _ -> base ~b:10. Dec sign cursor tl
+    end in
+    match s with
+    | "-inf" -> neg_inf
+    | "inf" | "+inf" -> inf
+    | "nan" -> nan
+    | _ -> begin
+        let cursor = String.C.Cursor.hd s in
+        let tl = String.C.Cursor.tl s in
+        let cp, cursor' = String.C.Cursor.next cursor in
+        match cp with
+        | cp when Codepoint.(cp = of_char '-') -> msign Sign.Neg cursor' tl
+        | cp when Codepoint.(cp = of_char '+') -> msign Sign.Pos cursor' tl
+        | _ -> msign Sign.Pos cursor tl
+      end
 
   let to_string_inf ~sign t =
     match classify t with
