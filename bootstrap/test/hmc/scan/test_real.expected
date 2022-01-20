@@ -38,10 +38,10 @@
   [1:0..1:11) : <Tok_r64=Constant 0x1.e848p19>
   [1:11..1:11) : <Tok_end_of_input>
 ``42.e44``
-  [1:0..1:6) : <Tok_r64=Constant 0x1.78ab_455e_0547_3p151>
+  [1:0..1:6) : <Tok_r64=Constant 0x1.78ab_455e_0547_4p151>
   [1:6..1:6) : <Tok_end_of_input>
 ``42.3e-78``
-  [1:0..1:8) : <Tok_r64=Constant 0x1.3978_eb89_0893_1p-254>
+  [1:0..1:8) : <Tok_r64=Constant 0x1.3978_eb89_0893p-254>
   [1:8..1:8) : <Tok_end_of_input>
 ``1.5r32``
   [1:0..1:6) : <Tok_r32=Constant 0x1.8p0>

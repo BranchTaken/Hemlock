@@ -1490,7 +1490,7 @@ end = struct
     | R_dec -> Malformations [mal]
     | Malformations mals -> Malformations (mal :: mals)
 
-  let accept subtype_opt suffix_cursor accum radix cursor t =
+  let accept subtype_opt accum radix cursor t =
     let open AbstractToken in
     let accept_mals subtype mals cursor t = begin
       let malformed = Rendition.Malformed (List.rev mals) in
@@ -1535,8 +1535,8 @@ end = struct
       end
     | R _, Dec -> not_reached ()
     | R_dec, Dec -> begin
-        let r = Real.of_string Text.Slice.(to_string (init ~base:t.cursor
-            ~past:suffix_cursor (Text.Cursor.container t.cursor))) in
+        let r = Real.of_string Text.Slice.(to_string (init ~base:t.cursor ~past:cursor
+            (Text.Cursor.container t.cursor))) in
         let tok = match subtype with
           | Subtype_r32 -> Tok_r32 (Constant r)
           | Subtype_r64 -> Tok_r64 (Constant r)
@@ -1572,7 +1572,7 @@ end = struct
           end
         | Some _ -> accum
       in
-      accept subtype_opt suffix_cursor accum' radix cursor t
+      accept subtype_opt accum' radix cursor t
     end in
     match Text.Cursor.next_opt cursor with
     | None -> accept_subtype bitwidth suffix_cursor accum radix cursor t
@@ -1627,7 +1627,7 @@ end = struct
 
   let rec next_exp exp_map accum exp_cursor radix cursor t =
     match Text.Cursor.next_opt cursor with
-    | None -> accept None cursor accum radix cursor t
+    | None -> accept None accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp exp_map with
         | Some EMapUscore -> next_exp exp_map accum exp_cursor radix cursor' t
@@ -1644,7 +1644,7 @@ end = struct
             let accum' = accum_mal mal accum in
             next_exp exp_map accum' exp_cursor radix cursor' t
           end
-        | None -> accept None cursor accum radix cursor t
+        | None -> accept None accum radix cursor t
       end
 
   let rec first_exp accum exp_cursor radix cursor t =
@@ -1656,7 +1656,7 @@ end = struct
       | Hex -> hex_exp_map
     in
     match Text.Cursor.next_opt cursor with
-    | None -> accept None cursor accum radix cursor t
+    | None -> accept None accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp exp_map with
         | Some EMapUscore -> first_exp accum exp_cursor radix cursor' t
@@ -1679,7 +1679,7 @@ end = struct
             let accum' = accum_exp_sign ExpPos accum in
             next_exp exp_map accum' exp_cursor radix cursor' t
           end
-        | None -> accept None cursor accum radix cursor t
+        | None -> accept None accum radix cursor t
       end
 
   type frac_map =
@@ -1723,7 +1723,7 @@ end = struct
 
   let rec next_frac accum mantissa_cursor frac_map radix cursor t =
     match Text.Cursor.next_opt cursor with
-    | None -> accept None cursor accum radix cursor t
+    | None -> accept None accum radix cursor t
     | Some (cp, cursor') -> begin
         match Map.get cp frac_map with
         | Some FMapUscore -> next_frac accum mantissa_cursor frac_map radix cursor' t
@@ -1738,7 +1738,7 @@ end = struct
             let accum' = accum_mal mal accum in
             next_frac accum' mantissa_cursor frac_map radix cursor' t
           end
-        | None -> accept None cursor accum radix cursor t
+        | None -> accept None accum radix cursor t
       end
 
   (* Entry point functions follow. *)
