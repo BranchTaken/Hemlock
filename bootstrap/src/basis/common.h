@@ -10,7 +10,6 @@ typedef enum {
     // All values > 0 are specific linux errno.
 } hm_opt_error_t;
 
-
 #define HM_OE(oe, statement) do { \
     oe = statement; \
     if (oe != HM_OE_NONE) { \
