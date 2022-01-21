@@ -113,8 +113,7 @@ module T = struct
   let c43e0_0000_0000_0000 = of_string "0x43e0_0000_0000_0000"
 
   let to_real t =
-    match Stdlib.(Int64.(compare (logand t c8000_0000_0000_0000) zero) = 0)
-    with
+    match Stdlib.(Int64.(compare (logand t c8000_0000_0000_0000) zero) = 0) with
     | true -> Int64.to_float t
     | false -> begin
         let fraction = Int64.(logand (shift_right_logical t 11) cf_ffff_ffff_ffff) in

@@ -10,4 +10,4 @@ of_real 0x7fff_ffff_ffff_fc00. -> 0x7fff_ffff_ffff_fc00i; to_real -> 0x7fff_ffff
 to_real 0x0000_0000_0000_0000i -> 0x0.; of_real -> 0x0000_0000_0000_0000i
 to_real 0x0000_0000_0000_0001i -> 0x1.; of_real -> 0x0000_0000_0000_0001i
 to_real -0x8000_0000_0000_0000i -> -0x1p63; of_real -> -0x8000_0000_0000_0000i
-to_real 0x7fff_ffff_ffff_ffffi -> 0x1p63; of_real -> -0x8000_0000_0000_0000i
+to_real 0x7fff_ffff_ffff_ffffi -> 0x1p63; of_real -> 0x7fff_ffff_ffff_ffffi
