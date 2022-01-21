@@ -114,7 +114,7 @@ hm_sqe_pp(int fd, int indent, struct io_uring_sqe *sqe) {
         dprintf(fd, "%*ssqe: NULL\n", indent, "");
     } else {
         dprintf(fd, "%*ssqe:\n", indent, "");
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         dprintf(fd,
             "%*sflags: %u\n"
             "%*sioprio: %u\n"
@@ -135,7 +135,7 @@ hm_cqe_pp(int fd, int indent, struct io_uring_cqe *cqe) {
         dprintf(fd, "%*scqe: NULL\n", indent, "");
     } else {
         dprintf(fd, "%*scqe:\n", indent, "");
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         dprintf(fd,
             "%*sres: %i\n"
             "%*sflags: %u\n"
@@ -165,7 +165,7 @@ hm_user_data_pp(int fd, int indent, hm_user_data_t *user_data) {
         dprintf(fd, "%*suser_data: NULL\n", indent, "");
     } else {
         dprintf(fd, "%*suser_data:\n", indent, "");
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         dprintf(fd,
             "%*srefcount: %u\n",
             indent, "", user_data->refcount
@@ -196,7 +196,7 @@ hm_sqring_pp(int fd, int indent, hm_sqring_t *sqring) {
         dprintf(fd, "%*ssqring: NULL\n", indent, "");
     } else {
         dprintf(fd, "%*ssqring:\n", indent, "");
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         dprintf(fd,
             "%*shead: %u\n"
             "%*stail: %u\n"
@@ -210,14 +210,14 @@ hm_sqring_pp(int fd, int indent, hm_sqring_t *sqring) {
             indent, "", *sqring->ring_mask,
             indent, "", *sqring->flags
         );
-		dprintf(fd, "%*sarray: [%u" , indent, "", sqring->array[0]);
-		for (size_t i = 1; i < *sqring->ring_entries; i++) {
-			dprintf(fd, ", %u", sqring->array[i]);
-		}
-		dprintf(fd, "]\n");
+        dprintf(fd, "%*sarray: [%u" , indent, "", sqring->array[0]);
+        for (size_t i = 1; i < *sqring->ring_entries; i++) {
+            dprintf(fd, ", %u", sqring->array[i]);
+        }
+        dprintf(fd, "]\n");
 
         dprintf(fd, "%*s  sqes:\n", indent, "");
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         for (unsigned head = HM_ATOMIC_LOAD_ACQUIRE(sqring->head); head < *sqring->tail; head++) {
             hm_sqe_pp(fd, indent, &sqring->sqes[head & *sqring->ring_mask]);
         }
@@ -230,7 +230,7 @@ hm_cqring_pp(int fd, int indent, hm_cqring_t *cqring) {
         dprintf(fd, "%*scqring: NULL\n", indent, "");
     } else {
         dprintf(fd, "%*scqring:\n", indent, "");
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         dprintf(fd,
             "%*shead: %u\n"
             "%*stail: %u\n"
@@ -244,7 +244,7 @@ hm_cqring_pp(int fd, int indent, hm_cqring_t *cqring) {
             indent, "", *cqring->ring_mask,
             indent, ""
         );
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         for (unsigned head = *cqring->head; head < HM_ATOMIC_LOAD_ACQUIRE(cqring->tail); head++) {
             hm_cqe_pp(fd, indent, &cqring->cqes[head & *cqring->ring_mask]);
         }
@@ -257,7 +257,7 @@ hm_ioring_pp(int fd, int indent, hm_ioring_t *ioring) {
         dprintf(fd, "%*sioring: NULL\n", indent, "");
     } else {
         dprintf(fd, "%*sioring:\n", indent, "");
-		indent += HM_INDENT_SIZE;
+        indent += HM_INDENT_SIZE;
         dprintf(fd, "%*sfd: %i\n" , indent, "", ioring->fd);
         hm_cqring_pp(fd, indent, &ioring->cqring);
         hm_sqring_pp(fd, indent, &ioring->sqring);
