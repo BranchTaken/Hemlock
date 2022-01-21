@@ -81,9 +81,17 @@ module T = struct
     Int64.of_string s
 
   let of_real r =
-    (* OCaml handles overflow poorly, but this deficiency has no anticipated impact on bootstrapping.
-    *)
-    Int64.of_float r
+    match Float.classify_float r with
+    | FP_normal -> begin
+        match Stdlib.(Float.(compare r (-0x1p63)) <= 0), Stdlib.(Float.(compare r 0x1p63) >= 0) with
+        | true, _ -> Int64.min_int
+        | false, false -> Int64.of_float r
+        | _, true -> Int64.max_int
+      end
+    | FP_subnormal
+    | FP_zero
+    | FP_infinite -> zero
+    | FP_nan -> halt "Not a number"
 
   let to_real t =
     Int64.to_float t
