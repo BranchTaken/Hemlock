@@ -12,10 +12,16 @@ typedef enum {
 
 #define HM_OE(oe, statement) do { \
     oe = statement; \
-    if (oe != HM_OE_NONE) { \
-        fprintf(stderr, "Error %s:%i\n", __FILE__, __LINE__); \
-        goto LABEL_OUT; \
-    }; \
+    switch (oe) { \
+        case HM_OE_ERROR: \
+            fprintf(stderr, "Error %s:%i: Unspecifie error\n", __FILE__, __LINE__); \
+            goto LABEL_OUT; \
+        case HM_OE_NONE: break; \
+        default: \
+            assert(oe > 0); \
+            fprintf(stderr, "Error %s:%i: %s\n", __FILE__, __LINE__, strerror(oe)); \
+            goto LABEL_OUT; \
+    } \
 } while (0)
 
 #define HM_OE_ERRNO_RESULT(oe, result, statement) do { \
