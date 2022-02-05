@@ -37,7 +37,8 @@ add-highlighter shared/hemlock/code/unaligned regex ^(\ \ )*\ (?![\ ]) 0:Error
 add-highlighter shared/hemlock/code/unaligned_continue_keyword regex ^(\ \ \ \ )*(and|also|as|else|external|of|or|then|when|with)\b 0:Error
 add-highlighter shared/hemlock/code/unaligned_continue_punctuation regex ^(\ \ \ \ )*([\x7D\]),!'\\\-+*/%@$<=>\|:.]) 0:Error
 add-highlighter shared/hemlock/code/unaligned_continue_caret regex ^(\ \ \ \ )*([\^](?![&A-Za-z_])) 0:Error
-add-highlighter shared/hemlock/code/trailing regex (\ )+$ 0:Error
+add-highlighter shared/hemlock/code/trailing regex (\ )+$ 0:ExcessWhitespace
+add-highlighter shared/hemlock/code/interior_multispace regex (?<=\S)(\ ){2,}(?=\S) 0:ExcessWhitespace
 
 add-highlighter shared/hemlock/comment region -recurse \Q(* \Q(* \Q*) fill comment
 add-highlighter shared/hemlock/line_comment region '#' '\n' fill comment
@@ -69,7 +70,6 @@ add-highlighter shared/hemlock/string/caret_rparen region \^\) () fill meta
 add-highlighter shared/hemlock/string/dquote region '"' () fill meta
 
 add-highlighter shared/hemlock/raw_string region -match-capture '`([a-z_])*`' '`([a-z_])*`' fill string
-add-highlighter shared/hemlock/bar_string region '`[|]' '^[ ]*`' fill string
 
 add-highlighter shared/hemlock/codepoint region [']([^'\\]|(\\[tnr'\\])|(\\u\{[a-f0-9]{1,6}\}))['] () regions
 add-highlighter shared/hemlock/codepoint/ default-region fill string
