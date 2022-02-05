@@ -88,7 +88,7 @@ Additional notes:
     trim_trailing_whitespace = true
     insert_final_newline = false
     ```
-- There are special places in the language syntax for documentation strings, which can be extracted
+- There are documentation-specific attributes for documentation strings, which can be extracted
   during documentation generation. Such strings are ingested as
   [Markdown](https://github.github.com/gfm/), and documentation generation could well fail on
   malformed input. For the purposes of code compilation such strings are opaque, but autoformatting
