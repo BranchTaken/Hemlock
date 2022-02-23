@@ -40,6 +40,10 @@ module Slice : sig
   (** [of_string_slice slice] creates a slice of bytes corresponding to the UTF-8 encoding of
       [slice]. *)
 
+  val join: ?sep:t -> t list -> t
+  (** [join ~sep slices] creates a slice comprised of the concatenation of the [slices] list, with
+      [sep] interposed between the inputs. *)
+
   val to_string: t -> string option
   (** [to_string t] interprets [t] as a sequence of UTF-8 code points and returns a corresponding
       {!type:string}, or [None] if [t] is malformed. *)
