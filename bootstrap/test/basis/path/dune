@@ -1,0 +1,6 @@
+(tests
+ (names
+  test_normalize
+  test_path
+  test_segment)
+ (libraries Basis))

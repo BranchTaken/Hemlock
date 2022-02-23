@@ -1,0 +1,216 @@
+"/" -> ""
+    is_empty -> true
+    is_current -> false
+    is_parent -> false
+    split -> [""]
+    stem -> ""
+    suffixes -> []
+    suffix -> ""
+    join -> ""
+"." -> "."
+    is_empty -> false
+    is_current -> true
+    is_parent -> false
+    split -> [""]
+    stem -> ""
+    suffixes -> []
+    suffix -> ""
+    join -> ""
+".." -> ".."
+    is_empty -> false
+    is_current -> false
+    is_parent -> true
+    split -> [".."]
+    stem -> ".."
+    suffixes -> []
+    suffix -> ""
+    join -> ".."
+"basename" -> "basename"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["basename"]
+    stem -> "basename"
+    suffixes -> []
+    suffix -> ""
+    join -> "basename"
+"basename.suf" -> "basename.suf"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["basename"; ".suf"]
+    stem -> "basename"
+    suffixes -> [".suf"]
+    suffix -> ".suf"
+    join -> "basename.suf"
+"basename.suf.ext" -> "basename.suf.ext"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["basename"; ".suf"; ".ext"]
+    stem -> "basename"
+    suffixes -> [".suf"; ".ext"]
+    suffix -> ".ext"
+    join -> "basename.suf.ext"
+".suf" -> ".suf"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> [".suf"]
+    stem -> ".suf"
+    suffixes -> []
+    suffix -> ""
+    join -> ".suf"
+".suf.ext" -> ".suf.ext"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> [".suf"; ".ext"]
+    stem -> ".suf"
+    suffixes -> [".ext"]
+    suffix -> ".ext"
+    join -> ".suf.ext"
+[|0x2fu8|] ~ "" -> ""
+    is_empty -> true
+    is_current -> false
+    is_parent -> false
+    split -> [""]
+    stem -> ""
+    suffixes -> []
+    suffix -> ""
+    join -> ""
+[|0x2eu8|] ~ "." -> "."
+    is_empty -> false
+    is_current -> true
+    is_parent -> false
+    split -> [""]
+    stem -> ""
+    suffixes -> []
+    suffix -> ""
+    join -> ""
+[|0x2eu8; 0x2eu8|] ~ ".." -> ".."
+    is_empty -> false
+    is_current -> false
+    is_parent -> true
+    split -> [".."]
+    stem -> ".."
+    suffixes -> []
+    suffix -> ""
+    join -> ".."
+[|0x62u8; 0x61u8; 0x73u8; 0x65u8; 0x6eu8; 0x61u8; 0x6du8; 0x65u8|] ~ "basename" -> "basename"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["basename"]
+    stem -> "basename"
+    suffixes -> []
+    suffix -> ""
+    join -> "basename"
+[|0x62u8; 0x61u8; 0x73u8; 0x65u8; 0x6eu8; 0x61u8; 0x6du8; 0x65u8; 0x2eu8; 0x73u8; 0x75u8; 0x66u8|] ~ "basename.suf" -> "basename.suf"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["basename"; ".suf"]
+    stem -> "basename"
+    suffixes -> [".suf"]
+    suffix -> ".suf"
+    join -> "basename.suf"
+[|0x62u8; 0x61u8; 0x73u8; 0x65u8; 0x6eu8; 0x61u8; 0x6du8; 0x65u8; 0x2eu8; 0x73u8; 0x75u8; 0x66u8; 0x2eu8; 0x65u8; 0x78u8; 0x74u8|] ~ "basename.suf.ext" -> "basename.suf.ext"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["basename"; ".suf"; ".ext"]
+    stem -> "basename"
+    suffixes -> [".suf"; ".ext"]
+    suffix -> ".ext"
+    join -> "basename.suf.ext"
+[|0x2eu8; 0x73u8; 0x75u8; 0x66u8|] ~ ".suf" -> ".suf"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> [".suf"]
+    stem -> ".suf"
+    suffixes -> []
+    suffix -> ""
+    join -> ".suf"
+[|0x2eu8; 0x73u8; 0x75u8; 0x66u8; 0x2eu8; 0x65u8; 0x78u8; 0x74u8|] ~ ".suf.ext" -> ".suf.ext"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> [".suf"; ".ext"]
+    stem -> ".suf"
+    suffixes -> [".ext"]
+    suffix -> ".ext"
+    join -> ".suf.ext"
+[|0x5fu8; 0x61u8; 0x2eu8; 0x5fu8; 0x62u8; 0x2eu8; 0x5fu8; 0x63u8|] ~ "_a._b._c" -> "_a._b._c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["_a"; "._b"; "._c"]
+    stem -> "_a"
+    suffixes -> ["._b"; "._c"]
+    suffix -> "._c"
+    join -> "_a._b._c"
+[|0x5fu8; 0x61u8; 0x2eu8; 0x5fu8; 0x62u8; 0x2eu8; 0xffu8; 0x63u8|] ~ "_a._b.�c" -> "_a._b.�c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["_a"; "._b"; ".�c"]
+    stem -> "_a"
+    suffixes -> ["._b"; ".�c"]
+    suffix -> ".�c"
+    join -> "_a._b.�c"
+[|0x5fu8; 0x61u8; 0x2eu8; 0xffu8; 0x62u8; 0x2eu8; 0x5fu8; 0x63u8|] ~ "_a.�b._c" -> "_a.�b._c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["_a"; ".�b"; "._c"]
+    stem -> "_a"
+    suffixes -> [".�b"; "._c"]
+    suffix -> "._c"
+    join -> "_a.�b._c"
+[|0x5fu8; 0x61u8; 0x2eu8; 0xffu8; 0x62u8; 0x2eu8; 0xffu8; 0x63u8|] ~ "_a.�b.�c" -> "_a.�b.�c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["_a"; ".�b"; ".�c"]
+    stem -> "_a"
+    suffixes -> [".�b"; ".�c"]
+    suffix -> ".�c"
+    join -> "_a.�b.�c"
+[|0xffu8; 0x61u8; 0x2eu8; 0x5fu8; 0x62u8; 0x2eu8; 0x5fu8; 0x63u8|] ~ "�a._b._c" -> "�a._b._c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["�a"; "._b"; "._c"]
+    stem -> "�a"
+    suffixes -> ["._b"; "._c"]
+    suffix -> "._c"
+    join -> "�a._b._c"
+[|0xffu8; 0x61u8; 0x2eu8; 0x5fu8; 0x62u8; 0x2eu8; 0xffu8; 0x63u8|] ~ "�a._b.�c" -> "�a._b.�c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["�a"; "._b"; ".�c"]
+    stem -> "�a"
+    suffixes -> ["._b"; ".�c"]
+    suffix -> ".�c"
+    join -> "�a._b.�c"
+[|0xffu8; 0x61u8; 0x2eu8; 0xffu8; 0x62u8; 0x2eu8; 0x5fu8; 0x63u8|] ~ "�a.�b._c" -> "�a.�b._c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["�a"; ".�b"; "._c"]
+    stem -> "�a"
+    suffixes -> [".�b"; "._c"]
+    suffix -> "._c"
+    join -> "�a.�b._c"
+[|0xffu8; 0x61u8; 0x2eu8; 0xffu8; 0x62u8; 0x2eu8; 0xffu8; 0x63u8|] ~ "�a.�b.�c" -> "�a.�b.�c"
+    is_empty -> false
+    is_current -> false
+    is_parent -> false
+    split -> ["�a"; ".�b"; ".�c"]
+    stem -> "�a"
+    suffixes -> [".�b"; ".�c"]
+    suffix -> ".�c"
+    join -> "�a.�b.�c"

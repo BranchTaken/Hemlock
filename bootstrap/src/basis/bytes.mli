@@ -51,7 +51,7 @@ module Slice : sig
   val to_string_replace: t -> string
   (** [to_string_replace t] interprets [t] as a sequence of UTF-8 code points and returns a
       corresponding {!type:string}, with malformed input converted to one or more '�' replacement
-      characters. *)
+      codepoints. *)
 
   val to_string_hlt: t -> string
   (** [to_string_hlt t] interprets [t] as a sequence of UTF-8 code points and returns a
@@ -84,7 +84,7 @@ val to_string: t -> string option
 val to_string_replace: t -> string
 (** [to_string_replace t] interprets [t] as a sequence of UTF-8 code points and returns a
     corresponding {!type:string}, with malformed input converted to one or more '�' replacement
-    characters. *)
+    codepoints. *)
 
 val to_string_hlt: t -> string
 (** [to_string_hlt t] interprets [t] as a sequence of UTF-8 code points and returns a corresponding
