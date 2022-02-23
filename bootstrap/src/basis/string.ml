@@ -914,7 +914,7 @@ module C = struct
       | false -> t
       | true -> of_list codepoints
 
-    module StringConcat = struct
+    module StringJoin = struct
       module T = struct
         type outer = t
         type source =
@@ -960,7 +960,7 @@ module C = struct
       include Seq.Slice.Make(T)
     end
 
-    let concat ?(sep=(of_string "")) (slices:t list) =
+    let join ?(sep=(of_string "")) slices =
       let _, blength = List.fold slices ~init:(0L, 0L)
         ~f:(fun (i, len) slice ->
           let i' = Uns.succ i in
@@ -974,9 +974,9 @@ module C = struct
       match (length sep), (List.length slices) with
       | _, 0L -> of_string ""
       | 0L, 1L -> List.hd slices
-      | _ -> of_string (StringConcat.to_string (StringConcat.init sep slices blength))
+      | _ -> of_string (StringJoin.to_string (StringJoin.init sep slices blength))
 
-    let concat_rev ?(sep=(of_string "")) slices_rev =
+    let join_rev ?(sep=(of_string "")) slices_rev =
       let slices, blength = List.fold slices_rev ~init:([], 0L)
         ~f:(fun (slices, len) slice ->
           let slices' = slice :: slices in
@@ -990,10 +990,10 @@ module C = struct
       match (length sep), (List.length slices) with
       | _, 0L -> of_string ""
       | 0L, 1L -> List.hd slices
-      | _ -> of_string (StringConcat.to_string (StringConcat.init sep slices blength))
+      | _ -> of_string (StringJoin.to_string (StringJoin.init sep slices blength))
 
-    let concat_map ?sep ~f t =
-      (* Iterate in reverse order to generate a list of slices that can then be passed to concat. *)
+    let join_map ?sep ~f t =
+      (* Iterate in reverse order to generate a list of slices that can then be passed to join. *)
       let modified, slices = fold_right t ~init:(false, [])
         ~f:(fun (modified, slices) cp ->
           let slice = f cp in
@@ -1006,10 +1006,10 @@ module C = struct
         ) in
       match modified, sep with
       | false, None -> t
-      | _ -> concat ?sep slices
+      | _ -> join ?sep slices
 
     let escaped t =
-      concat_map t ~f:(fun cp -> of_string Codepoint.Utf8.(escape (of_codepoint cp)))
+      join_map t ~f:(fun cp -> of_string Codepoint.Utf8.(escape (of_codepoint cp)))
 
     module StringRev = struct
       module T = struct
@@ -1638,21 +1638,21 @@ let tr ~target ~replacement t =
 let filter ~f t =
   C.Slice.(to_string (filter ~f (of_string t)))
 
-let concat ?(sep="") strings =
+let join ?(sep="") strings =
   let slices_rev = List.fold strings ~init:[]
     ~f:(fun accum s -> (C.Slice.of_string s) :: accum) in
-  C.Slice.(to_string (concat_rev ~sep:(of_string sep) slices_rev))
+  C.Slice.(to_string (join_rev ~sep:(of_string sep) slices_rev))
 
-let concat_rev ?(sep="") strings_rev =
+let join_rev ?(sep="") strings_rev =
   let slices = List.fold strings_rev ~init:[]
     ~f:(fun accum s -> (C.Slice.of_string s) :: accum) in
-  C.Slice.(to_string (concat ~sep:(of_string sep) slices))
+  C.Slice.(to_string (join ~sep:(of_string sep) slices))
 
-let concat_map ?sep ~f t =
+let join_map ?sep ~f t =
   let f = (fun cp -> C.Slice.of_string (f cp)) in
   C.Slice.to_string (match sep with
-    | None -> C.Slice.(concat_map ~f (of_string t))
-    | Some sep -> C.Slice.(concat_map ~sep:(of_string sep) ~f (of_string t))
+    | None -> C.Slice.(join_map ~f (of_string t))
+    | Some sep -> C.Slice.(join_map ~sep:(of_string sep) ~f (of_string t))
   )
 
 let escaped t =
@@ -1662,7 +1662,7 @@ let rev t =
   C.Slice.(to_string (rev (of_string t)))
 
 let ( ^ ) t0 t1 =
-  concat [t0; t1]
+  join [t0; t1]
 
 let lfind ?base ?past codepoint t =
   let base = match base with
@@ -1901,6 +1901,6 @@ module Fmt = struct
       let fmt s t =
         s :: t
       let sync t =
-        Fmt.To_string (concat_rev t)
+        Fmt.To_string (join_rev t)
     end)
 end

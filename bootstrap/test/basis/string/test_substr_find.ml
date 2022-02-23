@@ -20,7 +20,7 @@ let test () =
     "abaab";
     "abaabaaab";
   ] in
-  let s = concat patterns in
+  let s = join patterns in
   List.iter patterns ~f:(fun pattern ->
     let p = C.Slice.Pattern.create (C.Slice.of_string pattern) in
     File.Fmt.stdout
