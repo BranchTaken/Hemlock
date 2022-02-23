@@ -589,7 +589,7 @@ module T = struct
       match zpad, zpad_rem, Uns.(ndigits % group = 0L) with
       | false, _, _
       | _, 0L, _
-      | true, 1L, true -> String.concat accum
+      | true, 1L, true -> String.join accum
       | true, _, _ -> begin
           let zpad_rem', pad = match alt && Uns.(ndigits % group = 0L) with
             | true -> Uns.(zpad_rem - 2L), "0_"

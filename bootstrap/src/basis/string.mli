@@ -166,16 +166,16 @@ module C : sig
     (** [filter ~f t] creates a slice from [t]'s codepoints filtered by [f]. Only codepoints for
         which [f] returns [true] are incorporated into the result. *)
 
-    val concat: ?sep:t -> t list -> t
-    (** [concat ~sep slices] creates a slice comprised of the concatenation of the [slices] list,
-        with [sep] interposed between the inputs. *)
+    val join: ?sep:t -> t list -> t
+    (** [join ~sep slices] creates a slice comprised of the concatenation of the [slices] list, with
+        [sep] interposed between the inputs. *)
 
-    val concat_rev: ?sep:t -> t list -> t
-    (** [concat_rev ~sep slices] creates a slice comprised of the concatenation of reversed [slices]
+    val join_rev: ?sep:t -> t list -> t
+    (** [join_rev ~sep slices] creates a slice comprised of the concatenation of reversed [slices]
         list, with [sep] interposed between the inputs. *)
 
-    val concat_map: ?sep:t -> f:(codepoint -> t) -> t -> t
-    (** [concat_map ~sep ~f t] creates a slice which is the concatenation of applying [f] to convert
+    val join_map: ?sep:t -> f:(codepoint -> t) -> t -> t
+    (** [join_map ~sep ~f t] creates a slice which is the concatenation of applying [f] to convert
         each codepoint to a slice. This is more general (and more expensive) than {!map}, because
         each input codepoint can be mapped to any length of output. *)
 
@@ -438,18 +438,18 @@ val filter: f:(codepoint -> bool) -> t -> t
 (** [filter ~f t] creates a string from [t]'s codepoints filtered by [f]. Only codepoints for which
     [f] returns [true] are incorporated into the result. *)
 
-val concat: ?sep:t -> t list -> t
-(** [concat ~sep strings] creates a string comprised of the concatenation of the [strings] list,
-    with [sep] interposed between the inputs. *)
+val join: ?sep:t -> t list -> t
+(** [join ~sep strings] creates a string comprised of the concatenation of the [strings] list, with
+    [sep] interposed between the inputs. *)
 
-val concat_rev: ?sep:t -> t list -> t
-(** [concat_rev ~sep strings] creates a string comprised of the concatenation of reversed [strings]
+val join_rev: ?sep:t -> t list -> t
+(** [join_rev ~sep strings] creates a string comprised of the concatenation of reversed [strings]
     list, with [sep] interposed between the inputs. *)
 
-val concat_map: ?sep:t -> f:(codepoint -> t) -> t -> t
-(** [concat_map ~sep ~f t] creates a string which is the concatenation of applying [f] to convert
-    each codepoint to a string. This is more general (and more expensive) than {!map}, because each
-    input codepoint can be mapped to any length of output. *)
+val join_map: ?sep:t -> f:(codepoint -> t) -> t -> t
+(** [join_map ~sep ~f t] creates a string which is the concatenation of applying [f] to convert each
+    codepoint to a string. This is more general (and more expensive) than {!map}, because each input
+    codepoint can be mapped to any length of output. *)
 
 val escaped: t -> t
 (** Convert all unprintable or special ASCII characters to their backslash-escaped forms, such that
@@ -459,7 +459,7 @@ val rev: t -> t
 (** [rev t] creates a string with the codepoint ordering reversed relative to [t]. *)
 
 val ( ^ ): t -> t -> t
-(** [s0 ^ s1] is equivalent to [concat [a; b]]. *)
+(** [s0 ^ s1] is equivalent to [join [a; b]]. *)
 
 val lfind: ?base:C.Cursor.t -> ?past:C.Cursor.t -> codepoint -> t -> C.Cursor.t option
 (** [lfind cp t] returns a cursor to the leftmost instance of [cp] in [t], or [None] if [cp] is

@@ -48,21 +48,21 @@ open Basis.Rudiments
  * so that `Set` operations can be used in constructing the codepoint classes. *)
 let operator_prefix_lead_cps = "~?"
 let operator_infix_lead_cps = "-+*/%@^$<=>|:."
-let operator_cps = String.concat [operator_infix_lead_cps; operator_prefix_lead_cps]
+let operator_cps = String.join [operator_infix_lead_cps; operator_prefix_lead_cps]
 
 let bin_lead_cps = "1"
-let bin_cps = String.concat ["0"; bin_lead_cps]
-let oct_lead_cps = String.concat [bin_lead_cps; "234567"]
-let oct_cps = String.concat ["0"; oct_lead_cps]
-let dec_lead_cps = String.concat [oct_lead_cps; "89"]
-let dec_cps = String.concat ["0"; dec_lead_cps]
-let hex_lead_cps = String.concat [dec_lead_cps; "abcdef"]
-let hex_cps = String.concat ["0"; hex_lead_cps]
+let bin_cps = String.join ["0"; bin_lead_cps]
+let oct_lead_cps = String.join [bin_lead_cps; "234567"]
+let oct_cps = String.join ["0"; oct_lead_cps]
+let dec_lead_cps = String.join [oct_lead_cps; "89"]
+let dec_cps = String.join ["0"; dec_lead_cps]
+let hex_lead_cps = String.join [dec_lead_cps; "abcdef"]
+let hex_cps = String.join ["0"; hex_lead_cps]
 
 let ident_cident_cps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 let ident_uident_cps = "abcdefghijklmnopqrstuvwxyz"
-let ident_continue_cps = String.concat [dec_cps; "'"]
-let ident_cps = String.concat ["_"; ident_cident_cps; ident_uident_cps; ident_continue_cps]
+let ident_continue_cps = String.join [dec_cps; "'"]
+let ident_cps = String.join ["_"; ident_cident_cps; ident_uident_cps; ident_continue_cps]
 
 let cpset_of_cps cps =
   String.fold ~init:(Set.empty (module Codepoint)) ~f:(fun set cp ->
@@ -2641,7 +2641,7 @@ module Dfa = struct
 
   let node0_tick = {
     edges0=map_of_cps_alist [
-      (String.concat [" _"; ident_uident_cps], advance State_tick_lookahead);
+      (String.join [" _"; ident_uident_cps], advance State_tick_lookahead);
       ("\n", accept_excl Tok_tick);
     ];
     default0=(fun _view t -> retry State_codepoint_tick t);
@@ -3563,7 +3563,7 @@ module Dfa = struct
           );
           (cpset_of_cps "r", r_advance);
           (Set.diff (cpset_of_cps ident_cps)
-              (Set.union (cpset_of_cps base_cps) (cpset_of_cps (String.concat ["_inruz"; ep_cp]))),
+              (Set.union (cpset_of_cps base_cps) (cpset_of_cps (String.join ["_inruz"; ep_cp]))),
             fun _state view t -> advance State_integer_mal_ident view t);
         ];
         default1=(fun state view t ->
