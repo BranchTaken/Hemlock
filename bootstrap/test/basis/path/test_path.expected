@@ -1,0 +1,384 @@
+"" -> ""
+    is_abs -> false
+    is_empty -> true
+    dirname -> ""
+    basename -> None
+    split -> "", None
+    normalize -> ""
+    join -> ""
+    to_string -> Some ("")
+    to_string_replace -> ""
+    to_string_hlt -> ""
+    to_bytes -> ~ ""
+"." -> "."
+    is_abs -> false
+    is_empty -> false
+    dirname -> ""
+    basename -> Some (".")
+    split -> "", Some (".")
+    normalize -> ""
+    join -> "."
+    to_string -> Some (".")
+    to_string_replace -> "."
+    to_string_hlt -> "."
+    to_bytes -> ~ "."
+".." -> ".."
+    is_abs -> false
+    is_empty -> false
+    dirname -> ""
+    basename -> Some ("..")
+    split -> "", Some ("..")
+    normalize -> ".."
+    join -> ".."
+    to_string -> Some ("..")
+    to_string_replace -> ".."
+    to_string_hlt -> ".."
+    to_bytes -> ~ ".."
+"a" -> "a"
+    is_abs -> false
+    is_empty -> false
+    dirname -> ""
+    basename -> Some ("a")
+    split -> "", Some ("a")
+    normalize -> "a"
+    join -> "a"
+    to_string -> Some ("a")
+    to_string_replace -> "a"
+    to_string_hlt -> "a"
+    to_bytes -> ~ "a"
+"a/" -> "a/"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a"
+    basename -> Some ("")
+    split -> "a", Some ("")
+    normalize -> "a"
+    join -> "a/"
+    to_string -> Some ("a/")
+    to_string_replace -> "a/"
+    to_string_hlt -> "a/"
+    to_bytes -> ~ "a/"
+"a/b" -> "a/b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a"
+    basename -> Some ("b")
+    split -> "a", Some ("b")
+    normalize -> "a/b"
+    join -> "a/b"
+    to_string -> Some ("a/b")
+    to_string_replace -> "a/b"
+    to_string_hlt -> "a/b"
+    to_bytes -> ~ "a/b"
+"a/b/" -> "a/b/"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/b"
+    basename -> Some ("")
+    split -> "a/b", Some ("")
+    normalize -> "a/b"
+    join -> "a/b/"
+    to_string -> Some ("a/b/")
+    to_string_replace -> "a/b/"
+    to_string_hlt -> "a/b/"
+    to_bytes -> ~ "a/b/"
+"a/b/c" -> "a/b/c"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/b"
+    basename -> Some ("c")
+    split -> "a/b", Some ("c")
+    normalize -> "a/b/c"
+    join -> "a/b/c"
+    to_string -> Some ("a/b/c")
+    to_string_replace -> "a/b/c"
+    to_string_hlt -> "a/b/c"
+    to_bytes -> ~ "a/b/c"
+"/" -> "/"
+    is_abs -> true
+    is_empty -> false
+    dirname -> ""
+    basename -> Some ("")
+    split -> "", Some ("")
+    normalize -> "/"
+    join -> "/"
+    to_string -> Some ("/")
+    to_string_replace -> "/"
+    to_string_hlt -> "/"
+    to_bytes -> ~ "/"
+"/a" -> "/a"
+    is_abs -> true
+    is_empty -> false
+    dirname -> ""
+    basename -> Some ("a")
+    split -> "", Some ("a")
+    normalize -> "/a"
+    join -> "/a"
+    to_string -> Some ("/a")
+    to_string_replace -> "/a"
+    to_string_hlt -> "/a"
+    to_bytes -> ~ "/a"
+"/a/" -> "/a/"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "/a"
+    basename -> Some ("")
+    split -> "/a", Some ("")
+    normalize -> "/a"
+    join -> "/a/"
+    to_string -> Some ("/a/")
+    to_string_replace -> "/a/"
+    to_string_hlt -> "/a/"
+    to_bytes -> ~ "/a/"
+"/a/b" -> "/a/b"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "/a"
+    basename -> Some ("b")
+    split -> "/a", Some ("b")
+    normalize -> "/a/b"
+    join -> "/a/b"
+    to_string -> Some ("/a/b")
+    to_string_replace -> "/a/b"
+    to_string_hlt -> "/a/b"
+    to_bytes -> ~ "/a/b"
+"/a/b/" -> "/a/b/"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "/a/b"
+    basename -> Some ("")
+    split -> "/a/b", Some ("")
+    normalize -> "/a/b"
+    join -> "/a/b/"
+    to_string -> Some ("/a/b/")
+    to_string_replace -> "/a/b/"
+    to_string_hlt -> "/a/b/"
+    to_bytes -> ~ "/a/b/"
+"/a/b/c" -> "/a/b/c"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "/a/b"
+    basename -> Some ("c")
+    split -> "/a/b", Some ("c")
+    normalize -> "/a/b/c"
+    join -> "/a/b/c"
+    to_string -> Some ("/a/b/c")
+    to_string_replace -> "/a/b/c"
+    to_string_hlt -> "/a/b/c"
+    to_bytes -> ~ "/a/b/c"
+"//" -> "//"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "/"
+    basename -> Some ("")
+    split -> "/", Some ("")
+    normalize -> "//"
+    join -> "//"
+    to_string -> Some ("//")
+    to_string_replace -> "//"
+    to_string_hlt -> "//"
+    to_bytes -> ~ "//"
+"//a" -> "//a"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "/"
+    basename -> Some ("a")
+    split -> "/", Some ("a")
+    normalize -> "//a"
+    join -> "//a"
+    to_string -> Some ("//a")
+    to_string_replace -> "//a"
+    to_string_hlt -> "//a"
+    to_bytes -> ~ "//a"
+"///" -> "///"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "//"
+    basename -> Some ("")
+    split -> "//", Some ("")
+    normalize -> "/"
+    join -> "///"
+    to_string -> Some ("///")
+    to_string_replace -> "///"
+    to_string_hlt -> "///"
+    to_bytes -> ~ "///"
+"///a" -> "///a"
+    is_abs -> true
+    is_empty -> false
+    dirname -> "//"
+    basename -> Some ("a")
+    split -> "//", Some ("a")
+    normalize -> "/a"
+    join -> "///a"
+    to_string -> Some ("///a")
+    to_string_replace -> "///a"
+    to_string_hlt -> "///a"
+    to_bytes -> ~ "///a"
+"a//" -> "a//"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/"
+    basename -> Some ("")
+    split -> "a/", Some ("")
+    normalize -> "a"
+    join -> "a//"
+    to_string -> Some ("a//")
+    to_string_replace -> "a//"
+    to_string_hlt -> "a//"
+    to_bytes -> ~ "a//"
+"a//b" -> "a//b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/"
+    basename -> Some ("b")
+    split -> "a/", Some ("b")
+    normalize -> "a/b"
+    join -> "a//b"
+    to_string -> Some ("a//b")
+    to_string_replace -> "a//b"
+    to_string_hlt -> "a//b"
+    to_bytes -> ~ "a//b"
+"a///" -> "a///"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a//"
+    basename -> Some ("")
+    split -> "a//", Some ("")
+    normalize -> "a"
+    join -> "a///"
+    to_string -> Some ("a///")
+    to_string_replace -> "a///"
+    to_string_hlt -> "a///"
+    to_bytes -> ~ "a///"
+"a///b" -> "a///b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a//"
+    basename -> Some ("b")
+    split -> "a//", Some ("b")
+    normalize -> "a/b"
+    join -> "a///b"
+    to_string -> Some ("a///b")
+    to_string_replace -> "a///b"
+    to_string_hlt -> "a///b"
+    to_bytes -> ~ "a///b"
+"a/." -> "a/."
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a"
+    basename -> Some (".")
+    split -> "a", Some (".")
+    normalize -> "a"
+    join -> "a/."
+    to_string -> Some ("a/.")
+    to_string_replace -> "a/."
+    to_string_hlt -> "a/."
+    to_bytes -> ~ "a/."
+"a/./" -> "a/./"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/."
+    basename -> Some ("")
+    split -> "a/.", Some ("")
+    normalize -> "a"
+    join -> "a/./"
+    to_string -> Some ("a/./")
+    to_string_replace -> "a/./"
+    to_string_hlt -> "a/./"
+    to_bytes -> ~ "a/./"
+"a/./b" -> "a/./b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/."
+    basename -> Some ("b")
+    split -> "a/.", Some ("b")
+    normalize -> "a/b"
+    join -> "a/./b"
+    to_string -> Some ("a/./b")
+    to_string_replace -> "a/./b"
+    to_string_hlt -> "a/./b"
+    to_bytes -> ~ "a/./b"
+"a/.." -> "a/.."
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a"
+    basename -> Some ("..")
+    split -> "a", Some ("..")
+    normalize -> ""
+    join -> "a/.."
+    to_string -> Some ("a/..")
+    to_string_replace -> "a/.."
+    to_string_hlt -> "a/.."
+    to_bytes -> ~ "a/.."
+"a/../" -> "a/../"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/.."
+    basename -> Some ("")
+    split -> "a/..", Some ("")
+    normalize -> ""
+    join -> "a/../"
+    to_string -> Some ("a/../")
+    to_string_replace -> "a/../"
+    to_string_hlt -> "a/../"
+    to_bytes -> ~ "a/../"
+"a/../b" -> "a/../b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/.."
+    basename -> Some ("b")
+    split -> "a/..", Some ("b")
+    normalize -> "b"
+    join -> "a/../b"
+    to_string -> Some ("a/../b")
+    to_string_replace -> "a/../b"
+    to_string_hlt -> "a/../b"
+    to_bytes -> ~ "a/../b"
+[|0x61u8; 0x2fu8; 0x2eu8; 0x2fu8; 0x2eu8; 0x2eu8; 0x2fu8; 0x62u8|] ~ "a/./../b" -> "a/./../b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "a/./.."
+    basename -> Some ("b")
+    split -> "a/./..", Some ("b")
+    normalize -> "b"
+    join -> "a/./../b"
+          ~ "a/./../b"
+    to_string -> Some ("a/./../b")
+    to_string_replace -> "a/./../b"
+    to_bytes -> [|0x61u8; 0x2fu8; 0x2eu8; 0x2fu8; 0x2eu8; 0x2eu8; 0x2fu8; 0x62u8|]
+[|0xffu8; 0x61u8|] ~ "�a" -> "�a"
+    is_abs -> false
+    is_empty -> false
+    dirname -> ""
+    basename -> Some ("�a")
+    split -> "", Some ("�a")
+    normalize -> "�a"
+    join -> "�a"
+          ~ "�a"
+    to_string -> None
+    to_string_replace -> "�a"
+    to_bytes -> [|0xffu8; 0x61u8|]
+[|0xffu8; 0x61u8; 0x2fu8; 0xffu8; 0x62u8|] ~ "�a/�b" -> "�a/�b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "�a"
+    basename -> Some ("�b")
+    split -> "�a", Some ("�b")
+    normalize -> "�a/�b"
+    join -> "�a/�b"
+          ~ "�a/�b"
+    to_string -> None
+    to_string_replace -> "�a/�b"
+    to_bytes -> [|0xffu8; 0x61u8; 0x2fu8; 0xffu8; 0x62u8|]
+[|0xffu8; 0x61u8; 0x2fu8; 0x2eu8; 0x2fu8; 0x2eu8; 0x2eu8; 0x2fu8; 0xffu8; 0x62u8|] ~ "�a/./../�b" -> "�a/./../�b"
+    is_abs -> false
+    is_empty -> false
+    dirname -> "�a/./.."
+    basename -> Some ("�b")
+    split -> "�a/./..", Some ("�b")
+    normalize -> "�b"
+    join -> "�a/./../�b"
+          ~ "�a/./../�b"
+    to_string -> None
+    to_string_replace -> "�a/./../�b"
+    to_bytes -> [|0xffu8; 0x61u8; 0x2fu8; 0x2eu8; 0x2fu8; 0x2eu8; 0x2eu8; 0x2fu8; 0xffu8; 0x62u8|]
