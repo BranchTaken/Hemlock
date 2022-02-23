@@ -2,6 +2,7 @@
  (names
   test_hash_fold
   test_hash_fold_empty
+  test_join
   test_of_codepoint
   test_of_string
   test_to_string)

@@ -209,6 +209,69 @@ module Slice = struct
   let of_string_slice slice =
     init (ArraySeq.to_array (ArraySeq.init slice))
 
+  module SliceJoin = struct
+    module T = struct
+      type outer = t
+      type t = {
+        sep: outer;
+        slices: outer list;
+        length: uns;
+        in_sep: bool;
+        index: uns;
+      }
+      type elm = byte
+
+      let init length sep slices =
+        {sep; slices; length; in_sep=false; index=0L}
+
+      let next t =
+        let rec fn t = begin
+          match t.in_sep with
+          | false -> begin
+              let array = List.hd t.slices in
+              match t.index < length array with
+              | true -> begin
+                  let elm = get t.index array in
+                  let t' = {t with index=succ t.index} in
+                  elm, t'
+                end
+              | false -> fn {t with slices=List.tl t.slices; in_sep=true; index=0L}
+            end
+          | true -> begin
+              match t.index < length t.sep with
+              | true -> begin
+                  let elm = get t.index t.sep in
+                  let t' = {t with index=succ t.index} in
+                  elm, t'
+                end
+              | false -> fn {t with in_sep=false; index=0L}
+            end
+        end in
+        fn t
+
+      let length t =
+        t.length
+    end
+    include T
+    include Array.Seq.MakeMono(T)
+  end
+
+  let join ?sep tlist =
+    let sep, sep_len = match sep with
+      | None -> init [||], 0L
+      | Some sep -> sep, length sep
+    in
+    let _, tlist_length = List.fold tlist ~init:(0L, 0L) ~f:(fun (i, accum) list ->
+      let i' = Uns.succ i in
+      let sep_len' = match i with
+        | 0L -> 0L
+        | _ -> sep_len
+      in
+      let accum' = accum + sep_len' + (length list) in
+      i', accum'
+    ) in
+    init SliceJoin.(to_array (init tlist_length sep tlist))
+
   let transcode ?(on_invalid=Error) t =
     let cursor, past = cursors t in
     match StringSeq.init ~on_invalid ~cursor ~past with
