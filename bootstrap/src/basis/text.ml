@@ -185,7 +185,7 @@ end
 
 type t = {
   (* Filesystem path. *)
-  path: string option;
+  path: Path.t option;
   (* Tab width. *)
   tabwidth: uns;
   (* Excerpts already forced into text. The map is initialized with a base excerpt, which simplifies
@@ -197,7 +197,7 @@ type t = {
 
 let pp t formatter =
   formatter
-  |> Fmt.fmt "{path=" |> (Option.pp String.pp) t.path
+  |> Fmt.fmt "{path=" |> (Option.pp Path.pp) t.path
   |> Fmt.fmt "; tabwidth=" |> Uns.pp t.tabwidth
   |> Fmt.fmt "; ...}"
 

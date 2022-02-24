@@ -77,7 +77,7 @@ module Open = struct
     "hm_basis_file_open_submit_inner"
 
   let submit ?(flag=Flag.R_O) ?(mode=0o660L) path =
-    let path_bytes = bytes_of_slice path in
+    let path_bytes = bytes_of_slice (Path.to_bytes path) in
     let value, t = submit_inner flag mode path_bytes in
     let t = register_user_data_finalizer t in
     match Sint.(value < kv 0L) with

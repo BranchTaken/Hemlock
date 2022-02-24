@@ -37,13 +37,13 @@ module Open: sig
   type t
   (* An internally immutable token backed by an external I/O open completion data structure. *)
 
-  val submit: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> (t, Error.t) result
+  val submit: ?flag:Flag.t -> ?mode:uns -> Path.t -> (t, Error.t) result
   (** [submit ~flag ~mode path] submits an open operation for a file at [path] with [flag] (default
       Flag.R_O) Unix file permissions and [mode] (default 0o660) Unix file permissions. This
       operation does not block. Returns a [t] to the open submission or an [Error.t] if the open
       could not be submitted. *)
 
-  val submit_hlt: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> t
+  val submit_hlt: ?flag:Flag.t -> ?mode:uns -> Path.t -> t
   (** [submit ~flag ~mode path] submits an open operation for a file at [path] with [flag] (default
       Flag.R_O) Unix file permissions and [mode] (default 0o660) Unix file permissions. This
       operation does not block. Returns a [t] to the open submission or halts if the open could
@@ -58,12 +58,12 @@ module Open: sig
       could not be opened. *)
 end
 
-val of_path: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> (t, Error.t) result
+val of_path: ?flag:Flag.t -> ?mode:uns -> Path.t -> (t, Error.t) result
 (** [of_path ~flag ~mode path] opens or creates the file at [path] with [flag] (default Flag.R_O)
     Unix file permissions and [mode] (default 0o660) Unix file permissions and and returns the
     resulting [t] or an [Error.t] if the file could not be opened. *)
 
-val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Bytes.Slice.t -> t
+val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Path.t -> t
 (** [of_path_hlt ~flag ~mode path] opens or creates the file at [path] with [flag] (default
     Flag.R_O) Unix file permissions and [mode] (default 0o660) Unix file permissions and and returns
     the resulting [t] or halts if the file could not be opened. *)

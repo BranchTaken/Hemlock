@@ -3,7 +3,7 @@ open Basis.Rudiments
 
 type t = {
   text: Text.t;
-  path: string option;
+  path: Path.t option;
   line_bias: sint;
   col_bias: sint; (* Only applies to first biased line. *)
 }
@@ -11,7 +11,7 @@ type t = {
 let pp {path; line_bias; col_bias; _} formatter =
   formatter
   |> Fmt.fmt "{text=..."
-  |> Fmt.fmt "; path=" |> (Option.pp String.pp) path
+  |> Fmt.fmt "; path=" |> (Option.pp Path.pp) path
   |> Fmt.fmt "; line_bias=" |> Sint.pp line_bias
   |> Fmt.fmt "; col_bias=" |> Sint.pp col_bias
   |> Fmt.fmt "}"
@@ -22,7 +22,8 @@ module O = struct
     match t0.path, t1.path with
     | None, Some _
     | Some _, None -> false
-    | Some path0, Some path1 when String.(path0 <> path1) -> false
+    | Some path0, Some path1
+      when String.(<>) (Path.to_string_replace path0) (Path.to_string_replace path1) -> false
     | None, None
     | Some _, Some _ -> t0.line_bias = t1.line_bias && t0.col_bias = t1.col_bias
 end
@@ -197,7 +198,7 @@ module Cursor = struct
         | None -> formatter
         | Some path ->
           formatter
-          |> Fmt.fmt path
+          |> Fmt.fmt (Path.to_string_replace path)
           |> Fmt.fmt ":"
       ))
       |> Text.Pos.pp (pos t)
@@ -220,7 +221,7 @@ module Slice = struct
       | None -> formatter
       | Some path ->
         formatter
-        |> Fmt.fmt path
+        |> Fmt.fmt (Path.to_string_replace path)
         |> Fmt.fmt ":"
     ))
     |> Text.Pos.pp (Cursor.(pos base))
@@ -229,7 +230,7 @@ module Slice = struct
       | None -> formatter
       | Some path ->
         formatter
-        |> Fmt.fmt path
+        |> Fmt.fmt (Path.to_string_replace path)
         |> Fmt.fmt ":"
     ))
     |> Text.Pos.pp (Cursor.(pos past))

@@ -10,7 +10,7 @@ include FormattableIntf.SMono with type t := t
 val init: Text.t -> t
 (** [init text] initializes source without bias. *)
 
-val bias: path:string option -> line_bias:sint -> col_bias:sint -> t -> t
+val bias: path:Path.t option -> line_bias:sint -> col_bias:sint -> t -> t
 (** [bias ~path ~line_bias ~col_bias t] creates a biased version of [t]. The result is independent
     of the bias of [t], if any, i.e. [bias ... t] produces the same result as [bias ... (unbias t)].
 *)
@@ -21,7 +21,7 @@ val unbias: t -> t
 val text: t -> Text.t
 (** [text t] returns the text with which [t] was created. *)
 
-val path: t -> string option
+val path: t -> Path.t option
 (** [path t] returns the current (potentially biased) path. *)
 
 val line_bias: t -> sint

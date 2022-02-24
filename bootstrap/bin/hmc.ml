@@ -21,8 +21,7 @@ let scan_file path =
   let () = match File.of_path path with
     | Ok f -> begin
         let stream = File.Stream.of_file f in
-        let path_str = Bytes.Slice.to_string_hlt path in
-        let text = Text.of_bytes_stream ~path:path_str stream in
+        let text = Text.of_bytes_stream ~path stream in
         let scanner = Scan.init text in
         fn scanner
       end
@@ -41,7 +40,6 @@ let _ =
   | 0L | 1L -> halt "hmc usage: hmc <path>"
   | _ -> begin
       let path_str = Array.get 1L Sys.argv in
-      let path_slice = String.C.Slice.of_string path_str in
-      let path = Bytes.Slice.of_string_slice path_slice in
+      let path = Path.of_string path_str in
       scan_file path
     end
