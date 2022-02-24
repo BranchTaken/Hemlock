@@ -295,13 +295,13 @@ module T = struct
   let fold_right_until ~init ~f t =
     let rec fn accum f = function
       | Empty -> accum, false
-      | Leaf {k; v} -> f (k, v) accum
+      | Leaf {k; v} -> f accum (k, v)
       | Node {l; k; v; n=_; h=_; r} -> begin
           let accum', until = fn accum f r in
           match until with
           | true -> accum', true
           | false -> begin
-              let accum'', until = f (k, v) accum' in
+              let accum'', until = f accum' (k, v) in
               match until with
               | true -> accum'', true
               | false -> fn accum'' f l
@@ -937,7 +937,7 @@ let of_alist m kvs =
     end
 
 let to_alist t =
-  fold_right ~init:[] ~f:(fun kv accum -> kv :: accum) t
+  fold_right ~init:[] ~f:(fun accum kv -> kv :: accum) t
 
 let to_alist_rev t =
   fold ~init:[] ~f:(fun accum kv -> kv :: accum) t

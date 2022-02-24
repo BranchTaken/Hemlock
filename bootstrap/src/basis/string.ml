@@ -906,7 +906,7 @@ module C = struct
 
     let filter ~f t =
       let codepoints, modified = fold_right t ~init:([], false)
-        ~f:(fun codepoint (codepoints, modified) ->
+        ~f:(fun (codepoints, modified) codepoint ->
           if f codepoint then codepoint :: codepoints, modified
           else codepoints, true
         ) in
@@ -995,7 +995,7 @@ module C = struct
     let concat_map ?sep ~f t =
       (* Iterate in reverse order to generate a list of slices that can then be passed to concat. *)
       let modified, slices = fold_right t ~init:(false, [])
-        ~f:(fun cp (modified, slices) ->
+        ~f:(fun (modified, slices) cp ->
           let slice = f cp in
           let modified' = modified
                           || Uns.((CPre.Slice.blength slice) <>
@@ -1469,7 +1469,7 @@ module C = struct
         match Cursor.(base = CPre.Slice.base t) with
         | true -> begin
             let slice = of_cursors ~base ~past in
-            let accum', _ = f slice accum in
+            let accum', _ = f accum slice in
             accum'
           end
         | false -> begin
@@ -1478,7 +1478,7 @@ module C = struct
                 let base' = Cursor.pred base in
                 let past' = base' in
                 let slice = of_cursors ~base ~past in
-                let accum', until = f slice accum in
+                let accum', until = f accum slice in
                 match until with
                 | true -> accum'
                 | false -> fn base' past' accum'
@@ -1489,7 +1489,7 @@ module C = struct
       fn (past t) (past t) init
 
     let split_fold_right ~init ~on ~f t =
-      split_fold_right_until ~init ~on ~f:(fun slice accum -> (f slice accum), false) t
+      split_fold_right_until ~init ~on ~f:(fun accum slice -> (f accum slice), false) t
 
     let lines_fold ~init ~f t =
       let rec fn base past cr_seen accum = begin
@@ -1523,13 +1523,13 @@ module C = struct
             match nl_seen with
             | false -> begin
                 let slice = of_cursors ~base ~past in
-                f slice accum
+                f accum slice
               end
             | true -> begin
                 let slice = of_cursors ~base:(Cursor.succ base) ~past in
-                let accum' = f slice accum in
+                let accum' = f accum slice in
                 let empty_slice = of_cursors ~base ~past:base in
-                f empty_slice accum'
+                f accum' empty_slice
               end
           end
         | false -> begin
@@ -1545,7 +1545,7 @@ module C = struct
                   | _ -> base, base, false
                 in
                 let slice = of_cursors ~base:(Cursor.succ base) ~past in
-                let accum' = f slice accum in
+                let accum' = f accum slice in
                 fn base' past' nl_seen' accum'
               end
           end
@@ -1570,7 +1570,7 @@ module C = struct
     let rsplit2 ~on t =
       split_fold_right_until ~init:None ~on:(fun codepoint ->
         Codepoint.(codepoint = on)
-      ) ~f:(fun slice _ ->
+      ) ~f:(fun _ slice ->
         let base, past = (base t), (Cursor.pred (base slice)) in
         let slice0 = of_cursors ~base ~past in
         (Some (slice0, slice)), true
@@ -1789,7 +1789,7 @@ let strip ?drop t =
   C.Slice.(to_string (strip ?drop (of_string t)))
 
 let split ~f t =
-  C.Slice.split_fold_right (C.Slice.of_string t) ~init:[] ~on:f ~f:(fun slice strings ->
+  C.Slice.split_fold_right (C.Slice.of_string t) ~init:[] ~on:f ~f:(fun strings slice ->
     (C.Slice.to_string slice) :: strings
   )
 
@@ -1798,7 +1798,7 @@ let split_rev ~f t =
     (C.Slice.of_string t)
 
 let split_lines t =
-  C.Slice.lines_fold_right (C.Slice.of_string t) ~init:[] ~f:(fun slice lines ->
+  C.Slice.lines_fold_right (C.Slice.of_string t) ~init:[] ~f:(fun lines slice ->
     (C.Slice.to_string slice) :: lines
   )
 

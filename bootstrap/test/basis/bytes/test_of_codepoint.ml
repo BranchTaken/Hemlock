@@ -9,7 +9,7 @@ let test () =
     "‡";
     "𐆗";
   ] in
-  let cps = List.fold_right strs ~init:[] ~f:(fun s cps ->
+  let cps = List.fold_right strs ~init:[] ~f:(fun cps s ->
     String.C.Cursor.(rget (hd s)) :: cps
   ) in
   List.iter cps ~f:(fun cp ->

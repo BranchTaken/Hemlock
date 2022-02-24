@@ -11,7 +11,7 @@ let test () =
     assert ((List.length ms) = (length ordset));
     let n = length ordset in
     let triangle_sum = List.fold ms ~init:0L ~f:(fun accum m ->
-      accum + fold_right_until ordset ~init:0L ~f:(fun a accum ->
+      accum + fold_right_until ordset ~init:0L ~f:(fun accum a ->
         (succ accum), (m = a)
       )
     ) in

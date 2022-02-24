@@ -9,7 +9,7 @@ let test () =
     |> pp s
     |> Basis.Fmt.fmt " ->"
     |> ignore;
-    let () = fold_right s ~init:() ~f:(fun cp _ ->
+    let () = fold_right s ~init:() ~f:(fun _ cp ->
       File.Fmt.stdout
       |> Basis.Fmt.fmt " "
       |> Basis.Fmt.fmt (of_codepoint cp)
