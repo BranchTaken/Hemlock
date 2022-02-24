@@ -13,14 +13,14 @@ open Rudiments
 type t
 (** Text. *)
 
-val of_bytes_stream: ?path:string -> ?tabwidth:uns -> Bytes.Slice.t Stream.t -> t
+val of_bytes_stream: ?path:Path.t -> ?tabwidth:uns -> Bytes.Slice.t Stream.t -> t
 (** [of_string_stream ~path ~tabwidth stream] returns a text which streams from [stream].
     [~tabwidth] defaults to 8. *)
 
-val of_string_slice: ?path:string -> ?tabwidth:uns -> String.C.Slice.t -> t
+val of_string_slice: ?path:Path.t -> ?tabwidth:uns -> String.C.Slice.t -> t
 (** [of_string_slice ~path slice] returns an eagerly initialized text. [~tabwidth] defaults to 8. *)
 
-val path: t -> string option
+val path: t -> Path.t option
 (** [path t] returns the optional path associated with the text. *)
 
 val tabwidth: t -> uns

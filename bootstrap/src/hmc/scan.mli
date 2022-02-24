@@ -68,7 +68,7 @@ module AbstractToken : sig
     omit: uns;
   }
   type source_directive = {
-    path: string option;
+    path: Path.t option;
     line: uns option;
     io: indent_omit option;
   }

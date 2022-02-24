@@ -183,14 +183,14 @@ module AbstractToken = struct
     |> Fmt.fmt "}"
 
   type source_directive = {
-    path: string option;
+    path: Path.t option;
     line: uns option;
     io: indent_omit option;
   }
 
   let pp_source_directive {path; line; io} formatter =
     formatter
-    |> Fmt.fmt "{path=" |> (Option.pp String.pp) path
+    |> Fmt.fmt "{path=" |> (Option.pp Path.pp) path
     |> Fmt.fmt "; line=" |> (Option.pp Uns.pp) line
     |> Fmt.fmt "; io=" |> (Option.pp pp_indent_omit) io
     |> Fmt.fmt "}"
@@ -4062,7 +4062,7 @@ module Dfa = struct
       | [] -> begin
           let path = match path with
             | None -> None
-            | Some cps -> Some (String.of_list_rev cps)
+            | Some cps -> Some (Path.of_string (String.of_list_rev cps))
           in
           let line = match line with
             | None -> None
