@@ -15,7 +15,7 @@ module type IMonoFold = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:(elm -> 'accum -> 'accum * bool) -> t -> 'accum
+  val fold_right_until: init:'accum -> f:('accum -> elm -> 'accum * bool) -> t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
       accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
       [f] always returns [accum, false]. *)
@@ -72,7 +72,7 @@ module type SMonoIter = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:(elm -> 'accum -> 'accum * bool) -> t -> 'accum
+  val fold_right_until: init:'accum -> f:('accum -> elm -> 'accum * bool) -> t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
       accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
       [f] always returns [accum, false]. *)
@@ -86,7 +86,7 @@ module type SMonoIter = sig
   (** [fold ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator value.
   *)
 
-  val fold_right: init:'accum -> f:(elm -> 'accum -> 'accum) -> t -> 'accum
+  val fold_right: init:'accum -> f:('accum -> elm -> 'accum) -> t -> 'accum
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
       value. *)
 
@@ -196,7 +196,7 @@ module type IPolyFold = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:('a elm -> 'accum -> 'accum * bool) -> 'a t -> 'accum
+  val fold_right_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> 'a t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
       accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
       [f] always returns [accum, false]. *)
@@ -248,7 +248,7 @@ module type SPolyIter = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:('a -> 'accum -> 'accum * bool) -> 'a t -> 'accum
+  val fold_right_until: init:'accum -> f:('accum -> 'a -> 'accum * bool) -> 'a t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
       accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
       [f] always returns [accum, false]. *)
@@ -262,7 +262,7 @@ module type SPolyIter = sig
   (** [fold ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator value.
   *)
 
-  val fold_right: init:'accum -> f:('a -> 'accum -> 'accum) -> 'a t -> 'accum
+  val fold_right: init:'accum -> f:('accum -> 'a -> 'accum) -> 'a t -> 'accum
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
       value. *)
 
@@ -327,10 +327,10 @@ module type SPolyIterGen = sig
   type 'a t
   type 'a elm
   val fold_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> 'a t -> 'accum
-  val fold_right_until: init:'accum -> f:('a elm -> 'accum -> 'accum * bool) -> 'a t -> 'accum
+  val fold_right_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> 'a t -> 'accum
   val foldi_until: init:'accum -> f:(uns -> 'accum -> 'a elm -> 'accum * bool) -> 'a t -> 'accum
   val fold: init:'accum -> f:('accum -> 'a elm -> 'accum) -> 'a t -> 'accum
-  val fold_right: init:'accum -> f:('a elm -> 'accum -> 'accum) -> 'a t -> 'accum
+  val fold_right: init:'accum -> f:('accum -> 'a elm -> 'accum) -> 'a t -> 'accum
   val foldi: init:'accum -> f:(uns -> 'accum -> 'a elm -> 'accum) -> 'a t -> 'accum
   val iter: f:('a elm -> unit) -> 'a t -> unit
   val iter_right: f:('a elm -> unit) -> 'a t -> unit
@@ -427,7 +427,7 @@ module type IPoly2Fold = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:('a elm -> 'accum -> 'accum * bool) -> ('a, 'cmp) t
+  val fold_right_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> ('a, 'cmp) t
     -> 'accum
     (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
         accumulator value, continuing until [f] returns [accum, true], or until folding is complete
@@ -445,7 +445,7 @@ module type SPoly2Iter = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:('a -> 'accum -> 'accum * bool) -> ('a, 'cmp) t -> 'accum
+  val fold_right_until: init:'accum -> f:('accum -> 'a -> 'accum * bool) -> ('a, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
       accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
       [f] always returns [accum, false]. *)
@@ -459,7 +459,7 @@ module type SPoly2Iter = sig
   (** [fold ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator value.
   *)
 
-  val fold_right: init:'accum -> f:('a -> 'accum -> 'accum) -> ('a, 'cmp) t -> 'accum
+  val fold_right: init:'accum -> f:('accum -> 'a -> 'accum) -> ('a, 'cmp) t -> 'accum
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
       value. *)
 
@@ -524,12 +524,12 @@ module type SPoly2IterGen = sig
   type ('a, 'cmp) t
   type 'a elm
   val fold_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> ('a, 'cmp) t -> 'accum
-  val fold_right_until: init:'accum -> f:('a elm -> 'accum -> 'accum * bool) -> ('a, 'cmp) t
+  val fold_right_until: init:'accum -> f:('accum -> 'a elm -> 'accum * bool) -> ('a, 'cmp) t
     -> 'accum
   val foldi_until: init:'accum -> f:(uns -> 'accum -> 'a elm -> 'accum * bool) -> ('a, 'cmp) t
     -> 'accum
   val fold: init:'accum -> f:('accum -> 'a elm -> 'accum) -> ('a, 'cmp) t -> 'accum
-  val fold_right: init:'accum -> f:('a elm -> 'accum -> 'accum) -> ('a, 'cmp) t -> 'accum
+  val fold_right: init:'accum -> f:('accum -> 'a elm -> 'accum) -> ('a, 'cmp) t -> 'accum
   val foldi: init:'accum -> f:(uns -> 'accum -> 'a elm -> 'accum) -> ('a, 'cmp) t -> 'accum
   val iter: f:('a elm -> unit) -> ('a, 'cmp) t -> unit
   val iter_right: f:('a elm -> unit) -> ('a, 'cmp) t -> unit
@@ -592,7 +592,7 @@ module type IPoly3Fold = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:(('k key * 'v value) -> 'accum -> 'accum * bool)
+  val fold_right_until: init:'accum -> f:('accum -> ('k key * 'v value) -> 'accum * bool)
     -> ('k, 'v, 'cmp) t -> 'accum
     (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
         accumulator value, continuing until [f] returns [accum, true], or until folding is complete
@@ -611,7 +611,7 @@ module type SPoly3Iter = sig
       value, continuing until [f] returns [accum, true], or until folding is complete if [f] always
       returns [accum, false]. *)
 
-  val fold_right_until: init:'accum -> f:(('a * 'v) -> 'accum -> 'accum * bool) -> ('k, 'v, 'cmp) t
+  val fold_right_until: init:'accum -> f:('accum -> ('a * 'v) -> 'accum * bool) -> ('k, 'v, 'cmp) t
     -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
       accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
@@ -627,7 +627,7 @@ module type SPoly3Iter = sig
   (** [fold ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator value.
   *)
 
-  val fold_right: init:'accum -> f:(('a * 'v) -> 'accum -> 'accum) -> ('k, 'v, 'cmp) t -> 'accum
+  val fold_right: init:'accum -> f:('accum -> ('a * 'v) -> 'accum) -> ('k, 'v, 'cmp) t -> 'accum
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
       value. *)
 
@@ -694,12 +694,12 @@ module type SPoly3IterGen = sig
   type 'v value
   val fold_until: init:'accum -> f:('accum -> ('k key * 'v value) -> 'accum * bool)
     -> ('k, 'v, 'cmp) t -> 'accum
-  val fold_right_until: init:'accum -> f:(('k key * 'v value) -> 'accum -> 'accum * bool)
+  val fold_right_until: init:'accum -> f:('accum -> ('k key * 'v value) -> 'accum * bool)
     -> ('k, 'v, 'cmp) t -> 'accum
   val foldi_until: init:'accum -> f:(uns -> 'accum -> ('k key * 'v value) -> 'accum * bool)
     -> ('k, 'v, 'cmp) t -> 'accum
   val fold: init:'accum -> f:('accum -> ('k key * 'v value) -> 'accum) -> ('k, 'v, 'cmp) t -> 'accum
-  val fold_right: init:'accum -> f:(('k key * 'v value) -> 'accum -> 'accum) -> ('k, 'v, 'cmp) t
+  val fold_right: init:'accum -> f:('accum -> ('k key * 'v value) -> 'accum) -> ('k, 'v, 'cmp) t
     -> 'accum
   val foldi: init:'accum -> f:(uns -> 'accum -> ('k key * 'v value) -> 'accum) -> ('k, 'v, 'cmp) t
     -> 'accum

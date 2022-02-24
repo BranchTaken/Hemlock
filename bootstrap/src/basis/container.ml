@@ -20,7 +20,7 @@ module MakePoly3Fold (T : IPoly3Fold) : SPoly3IterGen
     fold_until t ~init ~f:(fun accum elm -> (f accum elm), false)
 
   let fold_right ~init ~f t =
-    fold_right_until t ~init ~f:(fun elm accum -> (f elm accum), false)
+    fold_right_until t ~init ~f:(fun accum elm -> (f accum elm), false)
 
   let foldi ~init ~f t =
     foldi_until t ~init ~f:(fun i accum elm -> (f i accum elm), false)
@@ -29,7 +29,7 @@ module MakePoly3Fold (T : IPoly3Fold) : SPoly3IterGen
     fold t ~init:() ~f:(fun _ elm -> f elm)
 
   let iter_right ~f t =
-    fold_right t ~init:() ~f:(fun elm _ -> f elm)
+    fold_right t ~init:() ~f:(fun _ elm -> f elm)
 
   let iteri ~f t =
     foldi t ~init:() ~f:(fun i _ elm -> f i elm)
@@ -106,7 +106,7 @@ module MakePoly3Fold (T : IPoly3Fold) : SPoly3IterGen
     )
 
   let to_list t =
-    fold_right t ~init:[] ~f:(fun elm accum -> elm :: accum)
+    fold_right t ~init:[] ~f:(fun accum elm -> elm :: accum)
 
   let to_list_rev t =
     fold t ~init:[] ~f:(fun accum elm -> elm :: accum)
@@ -150,7 +150,7 @@ module MakePoly2Fold (T : IPoly2Fold) : SPoly2IterGen
     fold_until t ~init ~f:(fun accum elm -> (f accum elm), false)
 
   let fold_right ~init ~f t =
-    fold_right_until t ~init ~f:(fun elm accum -> (f elm accum), false)
+    fold_right_until t ~init ~f:(fun accum elm -> (f accum elm), false)
 
   let foldi ~init ~f t =
     foldi_until t ~init ~f:(fun i accum elm -> (f i accum elm), false)
@@ -159,7 +159,7 @@ module MakePoly2Fold (T : IPoly2Fold) : SPoly2IterGen
     fold t ~init:() ~f:(fun _ elm -> f elm)
 
   let iter_right ~f t =
-    fold_right t ~init:() ~f:(fun elm _ -> f elm)
+    fold_right t ~init:() ~f:(fun _ elm -> f elm)
 
   let iteri ~f t =
     foldi t ~init:() ~f:(fun i _ elm -> f i elm)
@@ -236,7 +236,7 @@ module MakePoly2Fold (T : IPoly2Fold) : SPoly2IterGen
     )
 
   let to_list t =
-    fold_right t ~init:[] ~f:(fun elm accum -> elm :: accum)
+    fold_right t ~init:[] ~f:(fun accum elm -> elm :: accum)
 
   let to_list_rev t =
     fold t ~init:[] ~f:(fun accum elm -> elm :: accum)
@@ -318,7 +318,7 @@ module MakePolyIter (T : IPolyIter) : SPolyIterGen
         | true -> accum
         | false -> begin
             let elm = T.Cursor.lget cursor in
-            let (accum', until) = f elm accum in
+            let (accum', until) = f accum elm in
             match until with
             | true -> accum'
             | false -> fn t ~f accum' hd (T.Cursor.pred cursor)

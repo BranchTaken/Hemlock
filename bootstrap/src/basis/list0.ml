@@ -70,7 +70,6 @@ module T = struct
     fn init f t
 
   let fold_right_until ~init ~f t =
-    let f = (fun elm accum -> f accum elm) in
     fold_until ~init ~f (rev t)
 end
 include T

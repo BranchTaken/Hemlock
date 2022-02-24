@@ -12,7 +12,7 @@ let test () =
     assert ((List.length ks) = (length ordmap));
     let n = length ordmap in
     let triangle_sum = List.fold ks ~init:0L ~f:(fun accum k ->
-      accum + fold_right_until ordmap ~init:0L ~f:(fun (k1, _) accum ->
+      accum + fold_right_until ordmap ~init:0L ~f:(fun accum (k1, _) ->
         (succ accum), (k = k1)
       )
     ) in

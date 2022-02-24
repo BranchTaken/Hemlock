@@ -289,7 +289,7 @@ module C : sig
         slices have been folded. *)
 
     val split_fold_right_until: init:'accum -> on:(codepoint -> bool)
-      -> f:(t -> 'accum -> 'accum * bool) -> t -> 'accum
+      -> f:('accum -> t -> 'accum * bool) -> t -> 'accum
     (** [split_fold_right_until ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in
         right to left order based on initial value [init], until [f] returns [accum, true], or until
         all slices have been folded. *)
@@ -299,7 +299,7 @@ module C : sig
     (** [split_fold ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in left to right
         order based on initial value [init]. *)
 
-    val split_fold_right: init:'accum -> on:(codepoint -> bool) -> f:(t -> 'accum -> 'accum) -> t
+    val split_fold_right: init:'accum -> on:(codepoint -> bool) -> f:('accum -> t -> 'accum) -> t
       -> 'accum
     (** [split_fold_right ~init ~on ~f t] splits [t] on [on] into slices, which [f] folds in right
         to left order based on initial value [init]. *)
@@ -308,7 +308,7 @@ module C : sig
     (** [lines_fold ~init ~f t] splits [t] into lines separated by ["\r\n"] or ["\n"], which [f]
         folds in left to right order based on initial value [init]. *)
 
-    val lines_fold_right: init:'accum -> f:(t -> 'accum -> 'accum) -> t -> 'accum
+    val lines_fold_right: init:'accum -> f:('accum -> t -> 'accum) -> t -> 'accum
     (** [lines_fold_right ~init ~f t] splits [t] into lines separated by ["\r\n"] or ["\n"], which
         [f] folds in right to left order based on initial value [init]. *)
 

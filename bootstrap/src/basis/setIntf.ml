@@ -228,7 +228,7 @@ module type SOrd = sig
 
   (** {1 Folding, mapping, and filtering} *)
 
-  val fold_right_until: init:'accum -> f:('a -> 'accum -> 'accum * bool) -> ('a, 'cmp) t -> 'accum
+  val fold_right_until: init:'accum -> f:('accum -> 'a -> 'accum * bool) -> ('a, 'cmp) t -> 'accum
   (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
       accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
       [f] always returns [accum, false]. *)
@@ -238,7 +238,7 @@ module type SOrd = sig
       as the initial accumulator value, continuing until [f] returns [accum, true], or until folding
       is complete if [f] always returns [accum, false]. *)
 
-  val fold_right: init:'accum -> f:('a -> 'accum -> 'accum) -> ('a, 'cmp) t -> 'accum
+  val fold_right: init:'accum -> f:('accum -> 'a -> 'accum) -> ('a, 'cmp) t -> 'accum
   (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
       value. *)
 

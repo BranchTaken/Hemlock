@@ -12,7 +12,7 @@ module T = struct
     Ordmap.fold_until ~init ~f:(fun accum (k, _) -> f accum k) t
 
   let fold_right_until ~init ~f t =
-    Ordmap.fold_right_until ~init ~f:(fun (k, _) accum -> f k accum) t
+    Ordmap.fold_right_until ~init ~f:(fun accum (k, _) -> f accum k) t
 end
 include T
 include Container.MakePoly2Fold(T)

@@ -9,7 +9,7 @@ let test () =
     |> pp s
     |> Basis.Fmt.fmt " ->"
     |> ignore;
-    let () = fold_right_until s ~init:() ~f:(fun cp _ ->
+    let () = fold_right_until s ~init:() ~f:(fun _ cp ->
       let until = Codepoint.(cp = (of_char 'c')) in
       File.Fmt.stdout
       |> Basis.Fmt.fmt " "
