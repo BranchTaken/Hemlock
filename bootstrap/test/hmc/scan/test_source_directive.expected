@@ -1,17 +1,17 @@
 ``[:"Foo.hm":42:0+13]``
   [1:0..1:19) : <Tok_source_directive (Constant {path=Some ("Foo.hm"); line=Some (42); io=Some ({indent=0; omit=13})})>
-  [Foo.hm:42:13..Foo.hm:42:13) : <Tok_end_of_input>
+  ["Foo.hm":42:13.."Foo.hm":42:13) : <Tok_end_of_input>
 ``[:"Foo.hm":42:8+13]``
   [1:0..1:19) : <Tok_source_directive (Constant {path=Some ("Foo.hm"); line=Some (42); io=Some ({indent=8; omit=13})})>
-  [Foo.hm:42:21..Foo.hm:42:21) : <Tok_dedent>
-  [Foo.hm:42:21..Foo.hm:42:21) : <Tok_dedent>
-  [Foo.hm:42:21..Foo.hm:42:21) : <Tok_end_of_input>
+  ["Foo.hm":42:21.."Foo.hm":42:21) : <Tok_dedent>
+  ["Foo.hm":42:21.."Foo.hm":42:21) : <Tok_dedent>
+  ["Foo.hm":42:21.."Foo.hm":42:21) : <Tok_end_of_input>
 ``[:"Foo.hm":42]``
   [1:0..1:14) : <Tok_source_directive (Constant {path=Some ("Foo.hm"); line=Some (42); io=None})>
-  [Foo.hm:42:0..Foo.hm:42:0) : <Tok_end_of_input>
+  ["Foo.hm":42:0.."Foo.hm":42:0) : <Tok_end_of_input>
 ``[:"Foo.hm"]``
   [1:0..1:11) : <Tok_source_directive (Constant {path=Some ("Foo.hm"); line=None; io=None})>
-  [Foo.hm:1:0..Foo.hm:1:0) : <Tok_end_of_input>
+  ["Foo.hm":1:0.."Foo.hm":1:0) : <Tok_end_of_input>
 ``[:42:0+13]``
   [1:0..1:10) : <Tok_source_directive (Constant {path=None; line=Some (42); io=Some ({indent=0; omit=13})})>
   [42:13..42:13) : <Tok_end_of_input>
@@ -34,33 +34,31 @@
   [2:0..2:0) : <Tok_end_of_input>
 ``[:"Foo.hm"] [:] [:"Bar.hm"]``
   [1:0..1:11) : <Tok_source_directive (Constant {path=Some ("Foo.hm"); line=None; io=None})>
-  [Foo.hm:1:0..Foo.hm:1:1) : <Tok_whitespace>
+  ["Foo.hm":1:0.."Foo.hm":1:1) : <Tok_whitespace>
   [1:12..1:15) : <Tok_source_directive (Constant {path=None; line=None; io=None})>
   [1:15..1:16) : <Tok_whitespace>
   [1:16..1:27) : <Tok_source_directive (Constant {path=Some ("Bar.hm"); line=None; io=None})>
-  [Bar.hm:1:0..Bar.hm:1:0) : <Tok_end_of_input>
+  ["Bar.hm":1:0.."Bar.hm":1:0) : <Tok_end_of_input>
 ``[:"Foo.hm"] [:"Bar.hm"] [:] [:"Biz.hm"]``
   [1:0..1:11) : <Tok_source_directive (Constant {path=Some ("Foo.hm"); line=None; io=None})>
-  [Foo.hm:1:0..Foo.hm:1:1) : <Tok_whitespace>
+  ["Foo.hm":1:0.."Foo.hm":1:1) : <Tok_whitespace>
   [1:12..1:23) : <Tok_source_directive (Constant {path=Some ("Bar.hm"); line=None; io=None})>
-  [Bar.hm:1:0..Bar.hm:1:1) : <Tok_whitespace>
+  ["Bar.hm":1:0.."Bar.hm":1:1) : <Tok_whitespace>
   [1:24..1:27) : <Tok_source_directive (Constant {path=None; line=None; io=None})>
   [1:27..1:28) : <Tok_whitespace>
   [1:28..1:39) : <Tok_source_directive (Constant {path=Some ("Biz.hm"); line=None; io=None})>
-  [Biz.hm:1:0..Biz.hm:1:0) : <Tok_end_of_input>
+  ["Biz.hm":1:0.."Biz.hm":1:0) : <Tok_end_of_input>
 ``[:"Foo.hm":1:0+42]a
 b``
   [1:0..1:18) : <Tok_source_directive (Constant {path=Some ("Foo.hm"); line=Some (1); io=Some ({indent=0; omit=42})})>
-  [Foo.hm:1:42..Foo.hm:1:43) : <Tok_uident (Constant "a")>
-  [Foo.hm:1:43..Foo.hm:2:0) : <Tok_whitespace>
-  [Foo.hm:2:0..Foo.hm:2:0) : <Tok_line_delim>
-  [Foo.hm:2:0..Foo.hm:2:1) : <Tok_uident (Constant "b")>
-  [Foo.hm:2:1..Foo.hm:2:1) : <Tok_end_of_input>
+  ["Foo.hm":1:42.."Foo.hm":1:43) : <Tok_uident (Constant "a")>
+  ["Foo.hm":1:43.."Foo.hm":2:0) : <Tok_whitespace>
+  ["Foo.hm":2:0.."Foo.hm":2:0) : <Tok_line_delim>
+  ["Foo.hm":2:0.."Foo.hm":2:1) : <Tok_uident (Constant "b")>
+  ["Foo.hm":2:1.."Foo.hm":2:1) : <Tok_end_of_input>
 ``[:"A\tB\rC\n\u{44}"]``
   [1:0..1:20) : <Tok_source_directive (Constant {path=Some ("A\tB\rC\nD"); line=None; io=None})>
-  [A	BC
-D:1:0..A	BC
-D:1:0) : <Tok_end_of_input>
+  ["A\tB\rC\nD":1:0.."A\tB\rC\nD":1:0) : <Tok_end_of_input>
 ``[:1_0_:0_+0_]``
   [1:0..1:13) : <Tok_source_directive (Constant {path=None; line=Some (10); io=Some ({indent=0; omit=0})})>
   [10:0..10:0) : <Tok_end_of_input>
