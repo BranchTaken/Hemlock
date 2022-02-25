@@ -85,7 +85,7 @@ val normalize: t -> t
     - [a//b] -> [a/b]: Remove internal empty segments.
     - [a/] -> [a]: Remove trailing empty segments.
     - [./a/./b/.] -> [a/b]: Remove [.] segments.
-    - [a/../b] -> [b]: Collapse parent directory segments with parents. This may change how the
+    - [/../a/../b] -> [b]: Collapse parent directory segments with parents. This may change how the
       path resolves if the parent is a symbolic link. *)
 
 val join: t list -> t
