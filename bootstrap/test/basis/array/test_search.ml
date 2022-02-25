@@ -8,7 +8,7 @@ let test () =
     |> (pp Uns.pp) arr
     |> Fmt.fmt "\n"
     |> ignore;
-    Range.iter (0L =:< (succ key_max)) ~f:(fun probe ->
+    Range.Uns.iter (0L =:< (succ key_max)) ~f:(fun probe ->
       let open Cmp in
       File.Fmt.stdout
       |> Fmt.fmt "  "
@@ -46,12 +46,12 @@ let test () =
       |> ignore
     )
   end in
-  Range.iter (0L =:< 4L) ~f:(fun len ->
+  Range.Uns.iter (0L =:< 4L) ~f:(fun len ->
     let arr = init (0L =:< len) ~f:(fun i -> i * 2L + 1L) in
     let key_max = len * 2L in
     test_search arr key_max
   );
-  Range.iter (1L =:< 4L) ~f:(fun hlen ->
+  Range.Uns.iter (1L =:< 4L) ~f:(fun hlen ->
     let len = hlen * 2L in
     let arr = init (0L =:< len) ~f:(fun i -> i + ((i + 1L) % 2L)) in
     let key_max = len in

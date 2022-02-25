@@ -93,7 +93,9 @@ let init range ~f =
         fn t' base i'
       end
   end in
-  fn [] (Range.base range) (Range.past range)
+  let base = Range.Uns.base range in
+  let past = base + (Range.Uns.length_hlt range) in
+  fn [] base past
 
 let is_empty t =
   (length t) = 0L

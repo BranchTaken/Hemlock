@@ -3,7 +3,7 @@ open! Basis
 open Real
 
 let test () =
-  RangeF.Sint.(iter Sint.(kv 1L =:= kv 40L)) ~f:(fun n ->
+  Range.Sint.(iter Sint.(kv 1L =:= kv 40L)) ~f:(fun n ->
     let x = (of_sint n) / 4. in
     File.Fmt.stdout
     |> Fmt.fmt "lngamma "

@@ -3,8 +3,8 @@ open! Basis
 open List
 
 let test () =
-  Range.iter (0L =:< 4L) ~f:(fun i ->
-    Range.iter (0L =:< i) ~f:(fun j ->
+  Range.Uns.iter (0L =:< 4L) ~f:(fun i ->
+    Range.Uns.iter (0L =:< i) ~f:(fun j ->
       File.Fmt.stdout
       |> Fmt.fmt "("
       |> Uns.pp j

@@ -660,7 +660,7 @@ module T = struct
         | Fmt.Compact -> not_reached ()
       in
       (* Create a list with an extra digit (half_ulp), which will be rounded. *)
-      let dl_unrounded = RangeF.Uns.fold RangeF.Uns.(0L =:= max_digit) ~init:[] ~f:(
+      let dl_unrounded = Range.Uns.fold Range.Uns.(0L =:= max_digit) ~init:[] ~f:(
         match classify abs_t with
         | Zero -> (fun digits _ -> 0L :: digits)
         | Normal
@@ -978,7 +978,7 @@ module T = struct
       | Class.Nan, _ -> not_reached ()
     end in
     let digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit = begin
-      Range.fold (0L =:< bits_per_digit) ~init:0L ~f:(fun accum i ->
+      Range.Uns.fold (0L =:< bits_per_digit) ~init:0L ~f:(fun accum i ->
         Uns.(bit_or
             (bit_sl ~shift:1L accum)
             (bit ~class_ ~m ~sig_bits Sint.(msbit + (bits_to_sint i)))
@@ -997,7 +997,7 @@ module T = struct
         |> (match nwhole with
           | 0L -> Fmt.fmt "0"
           | _ -> (fun formatter ->
-            Range.fold (0L =:< nwhole) ~init:formatter ~f:(fun formatter i ->
+            Range.Uns.fold (0L =:< nwhole) ~init:formatter ~f:(fun formatter i ->
               let msbit = Sint.(msbit + (Uns.bits_to_sint (i * bits_per_digit))) in
               formatter
               |> Fmt.fmt (
@@ -1013,7 +1013,7 @@ module T = struct
     let fmt_part ~alt ~pmode ~precision ~class_ ~bits_per_digit ~group ~m ~sig_bits ~msbit
         formatter =
       begin
-        let dl = Range.fold (0L =:< precision) ~init:[] ~f:(fun digits i ->
+        let dl = Range.Uns.fold (0L =:< precision) ~init:[] ~f:(fun digits i ->
           let msbit = Sint.(msbit + (Uns.bits_to_sint (i * bits_per_digit))) in
           (digit ~class_ ~bits_per_digit ~m ~sig_bits ~msbit) :: digits
         ) in

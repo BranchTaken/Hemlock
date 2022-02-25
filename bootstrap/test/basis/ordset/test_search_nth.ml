@@ -9,7 +9,7 @@ let test () =
     |> fmt ordset
     |> Fmt.fmt "\n"
     |> ignore;
-    RangeF.Uns.(iter (0L =:= key_max)) ~f:(fun probe ->
+    Range.Uns.iter (0L =:= key_max) ~f:(fun probe ->
       File.Fmt.stdout
       |> Fmt.fmt "  "
       |> Uns.pp probe
@@ -46,7 +46,7 @@ let test () =
       |> ignore
     )
   end in
-  Range.iter (0L =:< 4L) ~f:(fun len ->
+  Range.Uns.iter (0L =:< 4L) ~f:(fun len ->
     let ordset = of_array (module Uns)
       (Array.init (0L =:< len) ~f:(fun i -> i * 2L + 1L)) in
     let key_max = len * 2L in

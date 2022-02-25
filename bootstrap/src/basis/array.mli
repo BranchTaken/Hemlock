@@ -277,8 +277,8 @@ module Slice : sig
 end
 
 val init: range -> f:(uns -> 'a) -> 'a t
-(** Initialize array. [init range ~f:(fun i -> ...)] creates an array of length [Range.length range]
-    using [~f] to map range elements to array elements. *)
+(** Initialize array. [init range ~f:(fun i -> ...)] creates an array of length
+    [Range.Uns.length_hlt range] using [~f] to map range elements to array elements. *)
 
 val of_list: ?length:uns -> 'a list -> 'a t
 (** Initialize array using contents of list. If specified, [?length] must equal [(List.length

@@ -11,7 +11,7 @@ let () =
     user_data_decref (user_data)
   end in
   sqring_pp File.stdout;
-  let () = Range.iter ~f:(fun _ -> submit_nop ()) (0L=:<32L) in
+  let () = Range.Uns.iter ~f:(fun _ -> submit_nop ()) (0L=:<32L) in
   sqring_pp File.stdout;
   submit_nop ();
   sqring_pp File.stdout

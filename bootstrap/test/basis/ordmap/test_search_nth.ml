@@ -9,7 +9,7 @@ let test () =
     |> (fmt Uns.pp) ordmap
     |> Fmt.fmt "\n"
     |> ignore;
-    Range.iter (0L =:< (succ key_max)) ~f:(fun probe ->
+    Range.Uns.iter (0L =:< (succ key_max)) ~f:(fun probe ->
       let open Cmp in
       File.Fmt.stdout
       |> Fmt.fmt "  "
@@ -53,7 +53,7 @@ let test () =
       |> ignore
     );
   end in
-  Range.iter (0L =:< 4L) ~f:(fun len ->
+  Range.Uns.iter (0L =:< 4L) ~f:(fun len ->
     let ordmap = of_array (module Uns)
       (Array.init (0L =:< len) ~f:(fun i -> let k = (i * 2L + 1L) in k, k * 10L)) in
     let key_max = len * 2L in

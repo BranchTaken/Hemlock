@@ -43,20 +43,24 @@ module MakeMonoIndex (Cursor : CursorIntf.SMonoIndex) :
   with type elm := Cursor.elm = struct
   type t = {
     container: Cursor.container;
-    range: Range.t;
+    range: Range.Uns.t;
   }
 
   let init ?range container =
     match range with
-    | None -> {container; range=Range.(0L =:< Cursor.index (Cursor.tl container))}
+    | None -> {container; range=Range.Uns.(0L =:< Cursor.index (Cursor.tl container))}
     | Some r -> begin
-        assert Uns.(Range.base r <= Range.past r);
-        assert Uns.(Range.past r <= (Cursor.index (Cursor.tl container)));
+        assert (
+          let base = Range.Uns.base r in
+          match Range.Uns.limit r with
+          | Excl past -> base <= past && past <= (Cursor.index (Cursor.tl container))
+          | Incl last -> base < last && last < (Cursor.index (Cursor.tl container))
+        );
         {container; range=r}
       end
 
   let of_cursors ~base ~past =
-    let range = Range.( =:< ) (Cursor.index base) (Cursor.index past) in
+    let range = Range.Uns.( =:< ) (Cursor.index base) (Cursor.index past) in
     {container=Cursor.container base; range}
 
   let container t =
@@ -66,13 +70,17 @@ module MakeMonoIndex (Cursor : CursorIntf.SMonoIndex) :
     t.range
 
   let length t =
-    Range.length t.range
+    Range.Uns.length_hlt t.range
 
   let base t =
-    Cursor.seek (Uns.bits_to_sint (Range.base t.range)) (Cursor.hd t.container)
+    Cursor.seek (Uns.bits_to_sint (Range.Uns.base t.range)) (Cursor.hd t.container)
 
   let past t =
-    Cursor.seek (Uns.bits_to_sint (Range.past t.range)) (Cursor.hd t.container)
+    let i = match Range.Uns.limit t.range with
+      | Excl past -> past
+      | Incl last -> Uns.succ last
+    in
+    Cursor.seek (Uns.bits_to_sint i) (Cursor.hd t.container)
 
   let cursors t =
     (base t), (past t)
@@ -121,20 +129,24 @@ module MakePolyIndex (Cursor : CursorIntf.SPolyIndex) :
   with type 'a elm := 'a Cursor.elm = struct
   type 'a t = {
     container: 'a Cursor.container;
-    range: Range.t;
+    range: Range.Uns.t;
   }
 
   let init ?range container =
     match range with
-    | None -> {container; range=Range.(0L =:< Cursor.index (Cursor.tl container))}
+    | None -> {container; range=Range.Uns.(0L =:< Cursor.index (Cursor.tl container))}
     | Some r -> begin
-        assert Uns.(Range.base r <= Range.past r);
-        assert Uns.(Range.past r <= (Cursor.index (Cursor.tl container)));
+        assert (
+          let base = Range.Uns.base r in
+          match Range.Uns.limit r with
+          | Excl past -> base <= past && past <= (Cursor.index (Cursor.tl container))
+          | Incl last -> base < last && last < (Cursor.index (Cursor.tl container))
+        );
         {container; range=r}
       end
 
   let of_cursors ~base ~past =
-    let range = Range.( =:< ) (Cursor.index base) (Cursor.index past) in
+    let range = Range.Uns.( =:< ) (Cursor.index base) (Cursor.index past) in
     {container=Cursor.container base; range}
 
   let container t =
@@ -144,13 +156,17 @@ module MakePolyIndex (Cursor : CursorIntf.SPolyIndex) :
     t.range
 
   let length t =
-    Range.length t.range
+    Range.Uns.length_hlt t.range
 
   let base t =
-    Cursor.seek (Uns.bits_to_sint (Range.base t.range)) (Cursor.hd t.container)
+    Cursor.seek (Uns.bits_to_sint (Range.Uns.base t.range)) (Cursor.hd t.container)
 
   let past t =
-    Cursor.seek (Uns.bits_to_sint (Range.past t.range)) (Cursor.hd t.container)
+    let i = match Range.Uns.limit t.range with
+      | Excl past -> past
+      | Incl last -> Uns.succ last
+    in
+    Cursor.seek (Uns.bits_to_sint i) (Cursor.hd t.container)
 
   let cursors t =
     (base t), (past t)

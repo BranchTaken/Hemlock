@@ -20,7 +20,7 @@ let test () =
         |> Fmt.fmt "cmp_length_with "
         |> (pp Uns.pp) list
         |> ignore;
-        Range.iter (0L =:< 4L) ~f:(fun limit ->
+        Range.Uns.iter (0L =:< 4L) ~f:(fun limit ->
           File.Fmt.stdout
           |> Fmt.fmt (if limit = 0L then ": " else ", ")
           |> ignore;

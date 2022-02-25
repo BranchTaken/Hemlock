@@ -4,9 +4,9 @@ open Real
 
 let test () =
   let norm_nan t = if (is_nan t) then nan else t in
-  RangeF.Sint.(iter Sint.(kv (-1L) =:= kv 2L)) ~f:(fun i ->
+  Range.Sint.(iter Sint.(kv (-1L) =:= kv 2L)) ~f:(fun i ->
     let t0 = of_sint i in
-    RangeF.Sint.(iter Sint.(kv (-1L) =:= kv 2L)) ~f:(fun j ->
+    Range.Sint.(iter Sint.(kv (-1L) =:= kv 2L)) ~f:(fun j ->
       let t1 = of_sint j in
       File.Fmt.stdout
       |> Fmt.fmt "+ - * / %% ** copysign "

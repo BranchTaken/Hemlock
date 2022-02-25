@@ -53,7 +53,7 @@ padding n pad =
     let array_length 'a: array a -> uns = external "hm_basis_array_length"
     let pad_cps = string_to_array pad
     let padlen = array_length pad_cps
-    string_init 0..(n * padlen) ~f:fn i ->
+    string_init [0..n * padlen) ~f:fn i ->
         array_get (i % padlen) pad_cps
 
 fmt ?(pad=pad_default) ?(just=just_default) ?(width=width_default) s

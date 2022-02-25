@@ -11,7 +11,7 @@ let test () =
           let i = C.Cursor.bindex cursor in
           assert B.Cursor.((at i s) = (C.Cursor.to_bcursor cursor));
           let () = if Uns.(i_prev <> max_value) then
-              Range.iter (0L =:< (i - i_prev)) ~f:(fun j ->
+              Range.Uns.iter (0L =:< (i - i_prev)) ~f:(fun j ->
                 assert B.Cursor.((near (i_prev + j) s) = (at i_prev s));
               )
           in
@@ -39,7 +39,7 @@ let test () =
           let i = C.Cursor.bindex cursor in
           assert B.Cursor.((at i s) = (C.Cursor.to_bcursor cursor));
           let () = if Uns.(i_prev <> max_value) then
-              Range.iter (0L =:< (i_prev - i)) ~f:(fun j ->
+              Range.Uns.iter (0L =:< (i_prev - i)) ~f:(fun j ->
                 assert B.Cursor.((near (i + j) s) = (at i s));
               )
           in

@@ -197,7 +197,7 @@ module Read = struct
     | false -> begin
         let range = (base =:< (base + (Uns.bits_of_sint value))) in
         let container = Bytes.Slice.container t.buffer in
-        Range.iter range ~f:(fun i ->
+        Range.Uns.iter range ~f:(fun i ->
           Array.set_inplace i (U8.of_char (Stdlib.Bytes.get bytes (Int64.to_int (i - base))))
             container
         );

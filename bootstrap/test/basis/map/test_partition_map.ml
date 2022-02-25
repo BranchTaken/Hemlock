@@ -22,7 +22,7 @@ let test () =
     |> Fmt.fmt "\n"
     |> ignore
   end in
-  Range.iter (0L =:< 7L) ~f:(fun n ->
+  Range.Uns.iter (0L =:< 7L) ~f:(fun n ->
     let ks = Array.(to_list (init (0L =:< n) ~f:(fun i -> i))) in
     test ks
   )

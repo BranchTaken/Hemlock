@@ -421,7 +421,7 @@ module Slice = struct
   include Container.MakePolyIter(T)
 
   let init_array range ~f =
-    init ArrayInit.(to_array (init (Range.base range) (Range.length range) ~f))
+    init ArrayInit.(to_array (init (Range.Uns.base range) (Range.Uns.length_hlt range) ~f))
 
   let is_empty t =
     (length t) = 0L
@@ -606,11 +606,11 @@ module Slice = struct
 
   (* Used directly for non-overlapping blits. *)
   let blit_ascending len i0 t0 i1 t1 =
-    Range.(iter (0L =:< len)) ~f:(fun i ->
+    Range.Uns.(iter (0L =:< len)) ~f:(fun i ->
       set_inplace (i1 + i) (get (i0 + i) t0) t1
     )
   let blit_descending len i0 t0 i1 t1 =
-    Range.(iter_right (0L =:< len)) ~f:(fun i ->
+    Range.Uns.(iter_right (0L =:< len)) ~f:(fun i ->
       set_inplace (i1 + i) (get (i0 + i) t0) t1
     )
 
@@ -1125,7 +1125,7 @@ module Slice = struct
 end
 
 let init range ~f =
-  ArrayInit.(to_array (init (Range.base range) (Range.length range) ~f))
+  ArrayInit.(to_array (init (Range.Uns.base range) (Range.Uns.length_hlt range) ~f))
 
 module ArrayOfListCommon = struct
   type 'a t = {

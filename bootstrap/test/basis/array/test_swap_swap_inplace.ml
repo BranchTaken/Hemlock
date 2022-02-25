@@ -4,8 +4,8 @@ open Array
 
 let test () =
   let test_swap arr = begin
-    Range.iter (0L =:< (length arr)) ~f:(fun i ->
-      Range.iter (i =:< (length arr)) ~f:(fun j ->
+    Range.Uns.iter (0L =:< (length arr)) ~f:(fun i ->
+      Range.Uns.iter (i =:< (length arr)) ~f:(fun j ->
         let arr' = copy arr in
         File.Fmt.stdout
         |> Uns.pp i

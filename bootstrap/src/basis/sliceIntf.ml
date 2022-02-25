@@ -43,7 +43,7 @@ module type SMonoIndex = sig
   (** Return the range of indices contained in the slice. *)
 
   val length: t -> uns
-  (** [length t] returns the length of the slice, equivalent to [Range.length (range t)]. *)
+  (** [length t] returns the length of the slice, equivalent to [Range.Uns.length_hlt (range t)]. *)
 
   val base: t -> cursor
   (** Return the cursor at the base of the slice. *)
@@ -98,7 +98,7 @@ module type SPolyIndex = sig
   (** Return the range of indices contained in the slice. *)
 
   val length: 'a t -> uns
-  (** [length t] returns the length of the slice, equivalent to [Range.length (range t)]. *)
+  (** [length t] returns the length of the slice, equivalent to [Range.Uns.length_hlt (range t)]. *)
 
   val base: 'a t -> 'a cursor
   (** Return the cursor at the base of the slice. *)

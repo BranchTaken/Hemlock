@@ -17,7 +17,9 @@ let init range ~f =
         Cons(elm, t)
       end
   end in
-  fn (Range.base range) (Range.past range) f
+  let base = Range.Uns.base range in
+  let past = base + (Range.Uns.length_hlt range) in
+  fn base past f
 
 let rec init_indef ~f state =
   lazy begin

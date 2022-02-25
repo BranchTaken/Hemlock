@@ -3,24 +3,16 @@ open! Basis
 open Array
 
 let test () =
-  let range_fmt r formatter =
-    formatter
-    |> Fmt.fmt "("
-    |> Uns.fmt (Range.base r)
-    |> Fmt.fmt " .. "
-    |> Uns.fmt (Range.past r)
-    |> Fmt.fmt ")"
-  in
   (* Test on separate arrays. *)
   let test_blit2 r0 arr0 r1 arr1 = begin
     let _ =
       File.Fmt.stdout
       |> Fmt.fmt "blit "
-      |> range_fmt r0
+      |> Range.Uns.pp r0
       |> Fmt.fmt " "
       |> (fmt Uns.fmt) arr0
       |> Fmt.fmt " "
-      |> range_fmt r1
+      |> Range.Uns.pp r1
       |> Fmt.fmt " "
       |> (fmt Uns.fmt) arr1
       |> Fmt.fmt " -> "
@@ -36,9 +28,9 @@ let test () =
     let _ =
       File.Fmt.stdout
       |> Fmt.fmt "blit "
-      |> range_fmt r0
+      |> Range.Uns.pp r0
       |> Fmt.fmt " "
-      |> range_fmt r1
+      |> Range.Uns.pp r1
       |> Fmt.fmt " "
       |> (fmt Uns.fmt) arr
       |> Fmt.fmt " -> "
