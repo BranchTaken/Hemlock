@@ -221,7 +221,7 @@ module Slice = struct
       | None -> formatter
       | Some path ->
         formatter
-        |> Fmt.fmt (Path.to_string_replace path)
+        |> String.pp (Path.to_string_replace path)
         |> Fmt.fmt ":"
     ))
     |> Text.Pos.pp (Cursor.(pos base))
@@ -230,7 +230,7 @@ module Slice = struct
       | None -> formatter
       | Some path ->
         formatter
-        |> Fmt.fmt (Path.to_string_replace path)
+        |> String.pp (Path.to_string_replace path)
         |> Fmt.fmt ":"
     ))
     |> Text.Pos.pp (Cursor.(pos past))
