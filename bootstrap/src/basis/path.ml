@@ -267,6 +267,8 @@ let normalize t =
       | a :: t' -> a :: (f t')
     in
     match t' with
+    | Parent :: Empty :: [] -> Empty :: []
+    | Parent :: Empty :: Empty :: [] -> Empty :: Empty :: []
     | Parent :: (Sslice _|Bslice _) :: t'' -> t''
     | _ -> t'
   end in
@@ -277,6 +279,7 @@ let normalize t =
       match basename :: dirname' with
       | (Empty|Current) :: Empty :: t' -> Empty :: Empty :: t'
       | (Empty|Current) :: _ -> dirname'
+      | Parent :: Empty :: t'
       | Parent :: (Sslice _|Bslice _) :: Empty :: t' -> Empty :: Empty :: t'
       | Parent :: (Sslice _|Bslice _) :: t' -> t'
       | _ as t' -> t'
