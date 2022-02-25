@@ -43,8 +43,8 @@ val cmp_length_with: 'a t -> uns -> Cmp.t
 (** {1 Creation} *)
 
 val init: range -> f:(uns -> 'a) -> 'a t
-(** Initialize list. [init range ~f:(fun i -> ...)] creates a list of length [Range.length range]
-    using [~f] to map range elements to list elements. *)
+(** Initialize list. [init range ~f:(fun i -> ...)] creates a list of length [Range.Uns.length_hlt
+    range] using [~f] to map range elements to list elements. *)
 
 (** {1 Length} *)
 

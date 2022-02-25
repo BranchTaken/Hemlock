@@ -23,7 +23,7 @@ val empty: 'a t
 (* val init: range -> f:(uns >e-> 'a) -> ('a, >e) t *)
 val init: range -> f:(uns -> 'a) -> 'a t
 (** Initialize stream. [init range ~f:(fun i -> ...)] lazily initializes a stream of length
-    [Range.length range], where [f] maps range elements to stream elements. *)
+    [Range.Uns.length_hlt range], where [f] maps range elements to stream elements. *)
 
 (* val init_indef: f:(/m 'state >e-> ('a * /m 'state) option) -> /m 'state -> ('a, >e) t *)
 val init_indef: f:('state -> ('a * 'state) option) -> 'state -> 'a t

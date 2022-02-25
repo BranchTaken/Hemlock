@@ -1,14 +1,14 @@
-length (0 .. 0) -> 0
-length (0 .. 3) -> 3
-length (253u8 .. 2u8) -> 251
-length (-2i .. 2i) -> 4
-length (0 ..= 0) -> Length 1
-length (0 ..= 3) -> Length 4
-length (2 ..= 1) -> Overflow
-length (253u8 ..= 2u8) -> Length 6u8
-length (2u8 ..= 1u8) -> Overflow
-length (3u8 ..= 1u8) -> Length 255u8
-length (1u8 ..= 255u8) -> Length 255u8
-length (255u8 ..= 0u8) -> Length 2u8
-length (0u8 ..= 255u8) -> Overflow
-length (1u8 ..= 0u8) -> Overflow
+length [0..0) -> Length 0
+length [0..3) -> Length 3
+length [253u8..2u8) -> Length 251u8
+length [-2i..2i) -> Length 4i
+length [0..0] -> Length 1
+length [0..3] -> Length 4
+length [2..1] -> Overflow
+length [253u8..2u8] -> Length 6u8
+length [2u8..1u8] -> Overflow
+length [3u8..1u8] -> Length 255u8
+length [1u8..255u8] -> Length 255u8
+length [255u8..0u8] -> Length 2u8
+length [0u8..255u8] -> Overflow
+length [1u8..0u8] -> Overflow

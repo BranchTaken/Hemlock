@@ -48,8 +48,8 @@ let test () =
     ));
   end in
   Stdlib.Random.init 0;
-  Range.iter (0L =:< 258L) ~f:(fun len ->
-    Range.iter (0L =:< 10L) ~f:(fun _ ->
+  Range.Uns.iter (0L =:< 258L) ~f:(fun len ->
+    Range.Uns.iter (0L =:< 10L) ~f:(fun _ ->
       test_sort (gen_array len)
     )
   )

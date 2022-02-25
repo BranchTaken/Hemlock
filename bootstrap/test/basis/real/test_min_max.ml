@@ -3,9 +3,9 @@ open! Basis
 open Real
 
 let test () =
-  RangeF.Sint.(iter Sint.(kv (-1L) =:= kv 1L)) ~f:(fun i ->
+  Range.Sint.(iter Sint.(kv (-1L) =:= kv 1L)) ~f:(fun i ->
     let t0 = of_sint i in
-    RangeF.Sint.(iter Sint.(kv (-1L) =:= kv 1L)) ~f:(fun j ->
+    Range.Sint.(iter Sint.(kv (-1L) =:= kv 1L)) ~f:(fun j ->
       let t1 = of_sint j in
       File.Fmt.stdout
       |> Fmt.fmt "min max "

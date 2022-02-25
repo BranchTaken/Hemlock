@@ -7,7 +7,7 @@ let test () =
     File.Fmt.stdout
     |> Fmt.fmt "["
     |> ignore;
-    Range.iter (0L =:< (length lst)) ~f:(fun i ->
+    Range.Uns.iter (0L =:< (length lst)) ~f:(fun i ->
       File.Fmt.stdout
       |> Fmt.fmt (if i > 0L then "; " else "")
       |> Uns.pp (nth i lst)

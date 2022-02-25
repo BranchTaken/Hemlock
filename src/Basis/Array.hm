@@ -295,7 +295,7 @@ ArrayInit = {
   }
 
 init range ~f =
-    ArrayInit.(to_array (init (Range.base range) (Range.length range) ~f))
+    ArrayInit.(to_array (init (Range.Uns.base range) (Range.Uns.length_hlt range) ~f))
 
 ArrayOfListCommon = {
     type t 'a: t a = {
@@ -346,7 +346,7 @@ is_empty t =
 set_inplace 'a: uns -> a -> !&t a -> unit = external "hm_basis_array_set_inplace"
 
 copy t =
-    init 0..(length t) ~f:fn i -> get i t
+    init [0..length t) ~f:fn i -> get i t
 
 pare range t =
     init range ~f:fn i -> get i t
@@ -422,20 +422,20 @@ concat t0 t1 =
     let length_t0 = length t0
     let length_t1 = length t1
     let length = length_t0 + length_t1
-    init 0..length ~f:fn i ->
+    init [0..length) ~f:fn i ->
         if i < length_t0
           then get i t0
           else get (i - length_t0) t1
 
 append elm t =
     let tlen = length t
-    init 0..(succ tlen) ~f:fn i ->
+    init [0..tlen] ~f:fn i ->
         if i < tlen
           then get i t
           else elm
 
 prepend elm t =
-    init 0..(succ (length t)) ~f:fn i ->
+    init [0..length t] ~f:fn i ->
         if i = 0
           then elm
           else get (pred i) t
@@ -447,7 +447,7 @@ insert i elm t =
         let len = length t
         if i < len
           then
-            init 0..(succ len) ~f:fn index ->
+            init [0..len] ~f:fn index ->
                 match Uns.cmp index i with
                   | Lt -> get index t
                   | Eq -> elm
@@ -463,13 +463,13 @@ remove i t =
         [||]
       | _ ->
         match i = 0, i < len with
-          | true, _ -> pare 1..len t
+          | true, _ -> pare [1..len) t
           | false, true ->
-            init 0..(pred len) ~f:fn index ->
+            init [0..pred len) ~f:fn index ->
                 if index < i
                   then get index t
                   else get (succ index) t
-          | false, false -> pare 0..i t
+          | false, false -> pare [0..i) t
 
 reduce ~f t =
     let rec f i accum =
@@ -510,22 +510,22 @@ rev_inplace t =
 
 rev t =
     let l = length t
-    init 0..l ~f:fn i -> get (l - i - 1) t
+    init [0..l) ~f:fn i -> get (l - i - 1) t
 
 (* Used directly for non-overlapping blits. *)
 blit_ascending len i0 t0 i1 t1 =
-    Range.iter 0..len fn i ->
+    Range.Uns.iter [0..len) fn i ->
         set_inplace (i1 + i) (get (i0 + i) t0) t1
 blit_descending len i0 t0 i1 t1 =
-    Range.iter_right 0..len fn i ->
+    Range.Uns.iter_right [0..len) fn i ->
         set_inplace (i1 + i) (get (i0 + i) t0) t1
 
 blit len i0 t0 i1 t1 =
-    assert (|Range.length r0 = Range.length r1|)
+    assert (|length t0 = length t1|)
     (* Choose direction such that overlapping ranges don't corrupt the source. *)
-    match Range.(base r0 < base r1) with
-      | true -> blit_descending len (Range.base r0) t0 (Range.base r1) t1
-      | false -> blit_ascending len (Range.base r0) t0 (Range.base r1) t1
+    match i0 < i1 with
+      | true -> blit_descending len 0 t0 0 t1
+      | false -> blit_ascending len 0 t0 0 t1
 
 is_sorted ?(strict=false) ~cmp t =
     let len = length t
@@ -557,7 +557,7 @@ sort_impl ?(stable=false) ~cmp ~inplace t =
     let merge_pair ~cmp src run0 order0 run1 order1 dst =
         assert (|run0.past = run1.base|)
         let rblit len i0 t0 i1 t1 =
-            Range.iter 0..len fn i ->
+            Range.Uns.iter [0..len) fn i ->
                 set_inplace (i1 + i) (get (i0 + len - (i + 1)) t0) t1
         let merge_pair_oo ~cmp src run0 order0 run1 order1 dst =
             let rec f ~cmp src run0 order0 run1 order1 dst run =
@@ -710,8 +710,8 @@ sort ?stable ~cmp t =
 
 search_impl ?range key ~cmp mode t =
     let base, past = match range with
-      | None -> 0L, length t
-      | Some range -> Range.base range, Range.past range
+      | None -> 0, length t
+      | Some range -> Range.Uns.base range, Range.Uns.(base range + length_hlt range)
     assert (|base <= past|)
     assert (|past <= length t|)
     let rec f ~base ~past =
@@ -768,10 +768,10 @@ nsearch ?range key ~cmp t =
     search_impl ?range key ~cmp Cmp.Gt t
 
 map ~f t =
-    init 0..(length t) ~f:fn i -> f (get i t)
+    init [0..length t) ~f:fn i -> f (get i t)
 
 mapi ~f t =
-    init 0..(length t) ~f:fn i -> f i (get i t)
+    init [0..length t) ~f:fn i -> f i (get i t)
 
 ArrayFoldiMap = {
     T = {
@@ -860,21 +860,21 @@ foldi2 ~init ~f t0 t1 =
 
 iter2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    Range.iter 0..(length t0) fn i ->
+    Range.Uns.iter [0..length t0) fn i ->
         f (get i t0) (get i t1)
 
 iteri2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    Range.iter 0..(length t0) fn i ->
+    Range.Uns.iter [0..length t0) fn i ->
         f i (get i t0) (get i t1)
 
 map2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    init 0..(length t0) ~f:fn i -> f (get i t0) (get i t1)
+    init [0..length t0) ~f:fn i -> f (get i t0) (get i t1)
 
 mapi2 ~f t0 t1 =
     assert (|(length t0) = (length t1)|)
-    init 0..(length t0) ~f:fn i -> f i (get i t0) (get i t1)
+    init [0..length t0) ~f:fn i -> f i (get i t0) (get i t1)
 
 ArrayFoldi2Map = {
     T = {

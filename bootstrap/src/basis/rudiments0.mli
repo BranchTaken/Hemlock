@@ -62,11 +62,14 @@ val sint_of_int: int -> sint
 
 include (module type of Uns)
 
-type range = Range.t
-(** Equivalent to {!type:Range.t}/{!type:RangeH.Uns.t}. *)
+type range = Range.Uns.t
+(** Equivalent to {!type:Range.Uns.t}. *)
 
 val ( =:< ): uns -> uns -> range
-(** Alias for {!RangeH.Uns.(=:<)}. *)
+(** Alias for {!Range.Uns.(=:<)}. *)
+
+val ( =:= ): uns -> uns -> range
+(** Alias for {!Range.Uns.(=:=)}. *)
 
 val not: bool -> bool
 (** [not t] returns the logical negation of [t]. *)

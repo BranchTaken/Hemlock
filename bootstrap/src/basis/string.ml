@@ -765,7 +765,7 @@ module C = struct
     end
 
     let blength_of_crange crange ~f =
-      Range.fold crange ~init:0L ~f:(fun nbytes cindex ->
+      Range.Uns.fold crange ~init:0L ~f:(fun nbytes cindex ->
         let codepoint = f cindex in
         let cp_nbytes = Codepoint.Utf8.length_of_codepoint codepoint in
         nbytes + cp_nbytes
@@ -776,7 +776,7 @@ module C = struct
         | None -> blength_of_crange crange ~f
         | Some blength -> blength
       in
-      of_string StringOfIndexed.(to_string (init ~f blength (Range.base crange)))
+      of_string StringOfIndexed.(to_string (init ~f blength (Range.Uns.base crange)))
 
     let of_codepoint codepoint =
       init (0L =:< 1L) ~f:(fun _ -> codepoint)

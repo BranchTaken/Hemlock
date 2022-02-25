@@ -9,7 +9,7 @@ let test () =
     "«»";
   ] in
   List.iter strs ~f:(fun s ->
-    Range.iter (0L =:< (C.length s + 2L)) ~f:(fun i ->
+    Range.Uns.iter (0L =:< (C.length s + 2L)) ~f:(fun i ->
       File.Fmt.stdout
       |> Basis.Fmt.fmt "prefix "
       |> pp s

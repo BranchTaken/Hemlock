@@ -3,7 +3,7 @@ open! Basis
 open Real
 
 let test () =
-  RangeF.Sint.(iter Sint.(kv (-2L) =:= kv 2L)) ~f:(fun i ->
+  Range.Sint.(iter Sint.(kv (-2L) =:= kv 2L)) ~f:(fun i ->
     let t = of_sint i in
     File.Fmt.stdout
     |> Fmt.fmt "sinh cosh tanh "

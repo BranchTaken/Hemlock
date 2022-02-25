@@ -19,7 +19,7 @@ let test () =
     |> Fmt.fmt "\n"
     |> ignore
   end in
-  Range.iter (0L =:< 7L) ~f:(fun n ->
+  Range.Uns.iter (0L =:< 7L) ~f:(fun n ->
     let arr = Array.init (0L =:< n) ~f:(fun i -> i * 10L) in
     test arr
   )
