@@ -13,7 +13,7 @@ module T = struct
     Uns.extend_of_int (Stdlib.Array.length t)
 
   let range t =
-    0L =:< (length t)
+    0L =:< length t
 
   module Cursor = struct
     module T = struct
@@ -514,13 +514,13 @@ module Slice = struct
 
   let append elm t =
     let tlen = length t in
-    init_array (0L =:< (succ tlen)) ~f:(fun i ->
+    init_array (0L =:= tlen) ~f:(fun i ->
       if i < tlen then get i t
       else elm
     )
 
   let prepend elm t =
-    init_array (0L =:< (succ (length t))) ~f:(fun i ->
+    init_array (0L =:= length t) ~f:(fun i ->
       if i = 0L then elm
       else get (pred i) t
     )
@@ -531,7 +531,7 @@ module Slice = struct
     else begin
       let len = length t in
       if i < len then
-        init_array (0L =:< (succ len)) ~f:(fun index ->
+        init_array (0L =:= len) ~f:(fun index ->
           match Uns.cmp index i with
           | Lt -> get index t
           | Eq -> elm
@@ -552,7 +552,7 @@ module Slice = struct
         if i = 0L then
           pare (1L =:< len) t
         else if i < len then
-          init_array (0L =:< (pred len)) ~f:(fun index ->
+          init_array (0L =:< pred len) ~f:(fun index ->
             if index < i then get index t
             else get (succ index) t
           )
@@ -917,10 +917,10 @@ module Slice = struct
     search_impl key ~cmp Cmp.Gt t
 
   let map ~f t =
-    init_array (0L =:< (length t)) ~f:(fun i -> f (get i t))
+    init_array (0L =:< length t) ~f:(fun i -> f (get i t))
 
   let mapi ~f t =
-    init_array (0L =:< (length t)) ~f:(fun i -> f i (get i t))
+    init_array (0L =:< length t) ~f:(fun i -> f i (get i t))
 
   module SliceFoldiMap = struct
     module T = struct
@@ -1041,11 +1041,11 @@ module Slice = struct
 
   let map2 ~f t0 t1 =
     assert ((length t0) = (length t1));
-    init_array (0L =:< (length t0)) ~f:(fun i -> f (get i t0) (get i t1))
+    init_array (0L =:< length t0) ~f:(fun i -> f (get i t0) (get i t1))
 
   let mapi2 ~f t0 t1 =
     assert ((length t0) = (length t1));
-    init_array (0L =:< (length t0)) ~f:(fun i -> f i (get i t0) (get i t1))
+    init_array (0L =:< length t0) ~f:(fun i -> f i (get i t0) (get i t1))
 
   module SliceFoldi2Map = struct
     module T = struct

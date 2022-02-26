@@ -12,7 +12,7 @@ let test () =
   ] in
   File.Fmt.stdout
   |> Basis.Fmt.fmt "init -> "
-  |> pp (init (0L =:< (Array.length codepoints)) ~f:(fun i ->
+  |> pp (init (0L =:< Array.length codepoints) ~f:(fun i ->
     Array.get i codepoints
   ))
   |> Basis.Fmt.fmt "\ninit (1 .. 3) -> "

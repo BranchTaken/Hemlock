@@ -442,7 +442,7 @@ module Fmt = struct
         let () = match t.buf, t.pos with
           | Some buf, Some pos -> begin
               if (Bytes.Cursor.index pos) > 0L then begin
-                write_hlt (Bytes.Slice.init ~range:(0L =:< (Bytes.Cursor.index pos)) buf) t.file;
+                write_hlt (Bytes.Slice.init ~range:(0L =:< Bytes.Cursor.index pos) buf) t.file;
                 t.pos <- Some (Bytes.Cursor.hd buf);
               end;
               ()

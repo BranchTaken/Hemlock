@@ -9,7 +9,7 @@ let test () =
     [0L; 1L];
   ] in
   iter lists ~f:(fun l ->
-    Range.Uns.iter (0L =:< (succ (length l))) ~f:(fun i ->
+    Range.Uns.iter (0L =:= length l) ~f:(fun i ->
       let f elm = (elm >= i) in
       let l0, l1 = split_until ~f l in
       let rl0, rl1 = rev_split_until ~f l in
