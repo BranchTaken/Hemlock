@@ -9,7 +9,7 @@ let test () =
     [0L; 1L]
   ] in
   iter lists ~f:(fun l ->
-    Range.Uns.iter (0L =:< (succ (length l))) ~f:(fun i ->
+    Range.Uns.iter (0L =:= length l) ~f:(fun i ->
       let a, b = split i l in
       File.Fmt.stdout
       |> Fmt.fmt "split/take,drop "

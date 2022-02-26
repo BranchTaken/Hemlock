@@ -8,7 +8,7 @@ let test () =
     |> (pp Uns.pp) arr
     |> Fmt.fmt "\n"
     |> ignore;
-    Range.Uns.iter (0L =:< (succ key_max)) ~f:(fun probe ->
+    Range.Uns.iter (0L =:= key_max) ~f:(fun probe ->
       let open Cmp in
       File.Fmt.stdout
       |> Fmt.fmt "  "
