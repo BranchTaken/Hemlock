@@ -313,6 +313,7 @@ module AbstractToken = struct
     | Tok_gt
     | Tok_comma
     | Tok_dot
+    | Tok_dot_dot
     | Tok_semi
     | Tok_colon
     | Tok_colon_colon
@@ -458,6 +459,7 @@ module AbstractToken = struct
       | Tok_gt -> formatter |> Fmt.fmt "Tok_gt"
       | Tok_comma -> formatter |> Fmt.fmt "Tok_comma"
       | Tok_dot -> formatter |> Fmt.fmt "Tok_dot"
+      | Tok_dot_dot -> formatter |> Fmt.fmt "Tok_dot_dot"
       | Tok_semi -> formatter |> Fmt.fmt "Tok_semi"
       | Tok_colon -> formatter |> Fmt.fmt "Tok_colon"
       | Tok_colon_colon -> formatter |> Fmt.fmt "Tok_colon_colon"
@@ -3882,6 +3884,7 @@ module Dfa = struct
         ("::", Tok_colon_colon);
         (":=", Tok_colon_eq);
         (".", Tok_dot);
+        ("..", Tok_dot_dot);
         ("-", Tok_minus);
         ("^", Tok_caret);
         ("<", Tok_lt);

@@ -114,7 +114,7 @@ Comments have two syntaxes.
 Hemlock uses various symbols as punctuation:
 
 ```hemlock
-. , ; : :: :=
+. .. , ; : :: :=
 ( ) (| |) [ ] [| |] { }
 | \ ' ^ < <= = <> >= >
 ! &
@@ -178,6 +178,7 @@ Expressions:
 | `:=`                                                   | right         |
 | `if`                                                   | —             |
 | `;`                                                    | right         |
+| `..`                                                   | —             |
 | `import`                                               | —             |
 | `open`                                                 | —             |
 | `let`, `match`, `fn`, `function`, `expose`, `conceal`  | —             |
@@ -642,9 +643,8 @@ avoided where possible.
 ## Grammar
 
 <a name="expr">[expr](#expr)</a> ::=
-
-    | ( [expr](#expr) )
-
-    | (| [expr](#expr) |)
-
-    | XXX
+<br>&nbsp;&nbsp;&nbsp;&nbsp;| `(` [expr](#expr) `)`
+<br>&nbsp;&nbsp;&nbsp;&nbsp;| `(|` [expr](#expr) `|)`
+<br>&nbsp;&nbsp;&nbsp;&nbsp;| `[` [expr](#expr) `..` [expr](#expr) `)`
+<br>&nbsp;&nbsp;&nbsp;&nbsp;| `[` [expr](#expr) `..` [expr](#expr) `]`
+<br>&nbsp;&nbsp;&nbsp;&nbsp;| XXX

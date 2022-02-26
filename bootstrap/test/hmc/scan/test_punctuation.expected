@@ -4,11 +4,13 @@
   [1:2..1:3) : <Tok_comma>
   [1:3..1:4) : <Tok_comma>
   [1:4..1:4) : <Tok_end_of_input>
-``. ..``
+``. .. ...``
   [1:0..1:1) : <Tok_dot>
   [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_dot_op "..">
-  [1:4..1:4) : <Tok_end_of_input>
+  [1:2..1:4) : <Tok_dot_dot>
+  [1:4..1:5) : <Tok_whitespace>
+  [1:5..1:8) : <Tok_dot_op "...">
+  [1:8..1:8) : <Tok_end_of_input>
 ``; ;;``
   [1:0..1:1) : <Tok_semi>
   [1:1..1:2) : <Tok_whitespace>
@@ -217,20 +219,28 @@
   [1:5..1:6) : <Tok_whitespace>
   [1:6..1:23) : <Tok_qmark_op "?-+*/\%@^$<=>|:.~?">
   [1:23..1:23) : <Tok_end_of_input>
-``0..n 0x3..n 1..=n i..n``
-  [1:0..1:1) : <Tok_u64 (Constant 0)>
-  [1:1..1:3) : <Tok_dot_op "..">
-  [1:3..1:4) : <Tok_uident (Constant "n")>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_u64 (Constant 3)>
-  [1:8..1:10) : <Tok_dot_op "..">
-  [1:10..1:11) : <Tok_uident (Constant "n")>
-  [1:11..1:12) : <Tok_whitespace>
-  [1:12..1:13) : <Tok_u64 (Constant 1)>
-  [1:13..1:16) : <Tok_dot_op "..=">
-  [1:16..1:17) : <Tok_uident (Constant "n")>
-  [1:17..1:18) : <Tok_whitespace>
-  [1:18..1:19) : <Tok_uident (Constant "i")>
-  [1:19..1:21) : <Tok_dot_op "..">
-  [1:21..1:22) : <Tok_uident (Constant "n")>
-  [1:22..1:22) : <Tok_end_of_input>
+``[0..n) [0x3..n) [1..n] [i..n)``
+  [1:0..1:1) : <Tok_lbrack>
+  [1:1..1:2) : <Tok_u64 (Constant 0)>
+  [1:2..1:4) : <Tok_dot_dot>
+  [1:4..1:5) : <Tok_uident (Constant "n")>
+  [1:5..1:6) : <Tok_rparen>
+  [1:6..1:7) : <Tok_whitespace>
+  [1:7..1:8) : <Tok_lbrack>
+  [1:8..1:11) : <Tok_u64 (Constant 3)>
+  [1:11..1:13) : <Tok_dot_dot>
+  [1:13..1:14) : <Tok_uident (Constant "n")>
+  [1:14..1:15) : <Tok_rparen>
+  [1:15..1:16) : <Tok_whitespace>
+  [1:16..1:17) : <Tok_lbrack>
+  [1:17..1:18) : <Tok_u64 (Constant 1)>
+  [1:18..1:20) : <Tok_dot_dot>
+  [1:20..1:21) : <Tok_uident (Constant "n")>
+  [1:21..1:22) : <Tok_rbrack>
+  [1:22..1:23) : <Tok_whitespace>
+  [1:23..1:24) : <Tok_lbrack>
+  [1:24..1:25) : <Tok_uident (Constant "i")>
+  [1:25..1:27) : <Tok_dot_dot>
+  [1:27..1:28) : <Tok_uident (Constant "n")>
+  [1:28..1:29) : <Tok_rparen>
+  [1:29..1:29) : <Tok_end_of_input>
