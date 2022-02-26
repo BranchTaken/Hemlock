@@ -159,6 +159,7 @@ module AbstractToken : sig
     | Tok_gt
     | Tok_comma
     | Tok_dot
+    | Tok_dot_dot
     | Tok_semi
     | Tok_colon
     | Tok_colon_colon
