@@ -1,9 +1,6 @@
 open! Basis.Rudiments
 open! Basis
 
-let print s =
-  File.Fmt.stdout |> Fmt.fmt s |> ignore
-
 let test () =
   File.Fmt.stdout
   |> Fmt.fmt "length [0..0) -> " |> (Range.pp_length Uns.pp) (Range.Uns.length (0L =:< 0L))

@@ -4,6 +4,9 @@
  (private_modules convert convertIntf)
  (foreign_stubs
   (language c)
-  (names entropy executor file intnb intw ioring u64))
+  (names entropy intnb intw u64))
+ (foreign_stubs
+  (language c)
+  (names executor file ioring) (flags -fPIC))
  (synopsis "Hemlock bootstrap Basis library")
  )
