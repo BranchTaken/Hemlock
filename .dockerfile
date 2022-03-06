@@ -43,8 +43,8 @@ WORKDIR /home/hemlock/origin
 COPY --chown=hemlock:hemlock ${HEMLOCK_PRE_PUSH_CLONE_PATH:?arg-is-required} .
 WORKDIR /home/hemlock/Hemlock
 RUN git clone ~/origin . \
-    && opam exec -- dune build \
-    && opam exec -- dune runtest \
+    && (cd bootstrap; opam exec -- dune build) \
+    && (cd bootstrap; opam exec -- dune runtest) \
     && HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT=${HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT:?arg-is-required} \
         python3 .github/scripts/check_ocp_indent.py
 
