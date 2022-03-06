@@ -6,7 +6,7 @@ open IntnbIntf
 module MakeDerived (T : IDerived) : SDerived with type t := T.t
 
 (** Functor for signed integers of specific bitwidth. *)
-module MakeI (T : I) : SI with type t := sint
+module MakeI (_ : I) : SI with type t := sint
 
 (** Functor for unsigned integers of specific bitwidth. *)
-module MakeU (T : I) : SU with type t := uns
+module MakeU (_ : I) : SU with type t := uns

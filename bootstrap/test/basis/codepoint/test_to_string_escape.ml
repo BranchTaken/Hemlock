@@ -5,9 +5,6 @@ open Codepoint
 let pp_uns_x u formatter =
   formatter |> Uns.fmt ~alt:true ~zpad:true ~width:16L ~radix:Radix.Hex u
 
-let pp_x cp formatter =
-  formatter |> pp_uns_x (extend_to_uns cp)
-
 let utf8_pp t formatter =
   formatter |> Fmt.fmt (Utf8.escape t)
 
