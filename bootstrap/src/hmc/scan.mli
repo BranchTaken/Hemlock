@@ -1,46 +1,47 @@
-(** Scanner.
+(** Scanner. *)
 
-    The following naming convention is used for special codepoints which show up in the language
-    syntax. Token names for other codepoints are e.g. Tok_a and Tok_A; concatenations are e.g.
-    Tok_aA. The special codepoints are referred to similarly, e.g. Tok_nl and Tok_lbrack_bar.
+(* The following naming convention is used for special codepoints which show up in the language
+   syntax. Token names for other codepoints are e.g. Tok_a and Tok_A; concatenations are e.g.
+   Tok_aA. The special codepoints are referred to similarly, e.g. Tok_nl and Tok_lbrack_bar.
 
-    - '\t' : ht
-    - '\n' : nl
-    - '\r' : cr
-    - ' '  : space
-    - '!'  : xmark
-    - '"'  : ditto
-    - '#'  : hash
-    - '$'  : dollar
-    - '%'  : pct
-    - '&'  : amp
-    - '\'' : tick
-    - '('  : lparen
-    - ')'  : rparen
-    - '*'  : star
-    - '+'  : plus
-    - ','  : comma
-    - '-'  : minus
-    - '.'  : dot
-    - '/'  : slash
-    - ':'  : colon
-    - ';'  : semi
-    - '<'  : lt
-    - '='  : eq
-    - '>'  : gt
-    - '?'  : qmark
-    - '@'  : at
-    - '['  : lbrack
-    - '\\' : bslash
-    - ']'  : rbrack
-    - '^'  : caret
-    - '_'  : uscore
-    - '`'  : btick
-    - '{'  : lcurly
-    - '|'  : bar
-    - '}'  : rcurly
-    - '~'  : tilde
+   - '\t' : ht
+   - '\n' : nl
+   - '\r' : cr
+   - ' '  : space
+   - '!'  : xmark
+   - '"'  : ditto
+   - '#'  : hash
+   - '$'  : dollar
+   - '%'  : pct
+   - '&'  : amp
+   - '\'' : tick
+   - '('  : lparen
+   - ')'  : rparen
+   - '*'  : star
+   - '+'  : plus
+   - ','  : comma
+   - '-'  : minus
+   - '.'  : dot
+   - '/'  : slash
+   - ':'  : colon
+   - ';'  : semi
+   - '<'  : lt
+   - '='  : eq
+   - '>'  : gt
+   - '?'  : qmark
+   - '@'  : at
+   - '['  : lbrack
+   - '\\' : bslash
+   - ']'  : rbrack
+   - '^'  : caret
+   - '_'  : uscore
+   - '`'  : btick
+   - '{'  : lcurly
+   - '|'  : bar
+   - '}'  : rcurly
+   - '~'  : tilde
 *)
+
 open Basis
 open Basis.Rudiments
 
