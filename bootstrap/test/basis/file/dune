@@ -3,5 +3,6 @@
   test_file
   test_file2
   test_file_full_sq
-  test_file_open)
+  test_file_open
+  test_sink)
  (libraries Basis))
