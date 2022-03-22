@@ -236,4 +236,7 @@ module Fmt : sig
 
   val stderr: (module Fmt.Formatter)
   (** Unbuffered formatter which outputs to [stderr]. *)
+
+  val sink: (module Fmt.Formatter)
+  (** Formatter which discards all input. *)
 end

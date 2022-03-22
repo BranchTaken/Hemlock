@@ -456,6 +456,16 @@ module Fmt = struct
 
   let stderr = of_t ~bufsize:0L stderr
 
+  let sink : (module Fmt.Formatter) =
+    (module struct
+      type t = unit
+      let state = ()
+      let fmt _s t =
+        t
+      let sync t =
+        Fmt.Synced t
+    end)
+
   let teardown () =
     let _ = Fmt.flush stdout in
     ()
