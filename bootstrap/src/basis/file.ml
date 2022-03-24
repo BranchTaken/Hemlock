@@ -1,22 +1,7 @@
 open Rudiments
 
-module Error = struct
-  type t = uns
-
-  external to_string_get_length: t -> uns = "hm_basis_file_error_to_string_get_length"
-
-  external to_string_inner: uns -> Stdlib.Bytes.t -> t -> unit =
-    "hm_basis_file_error_to_string_inner"
-
-  let of_neg_errno neg_errno =
-    Uns.bits_of_sint Sint.(neg neg_errno)
-
-  let to_string t =
-    let n = to_string_get_length t in
-    let bytes = Stdlib.Bytes.create (Int64.to_int n) in
-    let () = to_string_inner n bytes t in
-    Stdlib.Bytes.to_string bytes
-end
+let error_of_neg_errno neg_errno =
+  Errno.of_uns_hlt (Uns.bits_of_sint (Sint.neg neg_errno))
 
 module Flag = struct
   (* Modifications to Flag.t must be reflected in file.c. *)
@@ -58,8 +43,11 @@ external stderr_inner: unit -> t = "hm_basis_file_stderr_inner"
 let stderr =
   stderr_inner ()
 
-external user_data_decref: uns -> unit = "hm_basis_file_user_data_decref"
-external complete_inner: uns -> sint = "hm_basis_file_complete_inner"
+let fd t =
+  t
+
+external user_data_decref: uns -> unit = "hm_basis_executor_user_data_decref"
+external complete_inner: uns -> sint = "hm_basis_executor_complete_inner"
 
 let register_user_data_finalizer user_data =
   match user_data = 0L with
@@ -81,24 +69,24 @@ module Open = struct
     let value, t = submit_inner flag mode path_bytes in
     let t = register_user_data_finalizer t in
     match Sint.(value < kv 0L) with
-    | true -> Error (Error.of_neg_errno value)
+    | true -> Error (error_of_neg_errno value)
     | false -> Ok t
 
   let submit_hlt ?(flag=Flag.R_O) ?(mode=0o660L) path =
     match submit ~flag ~mode path with
-    | Error error -> halt (Error.to_string error)
+    | Error error -> halt (Errno.to_string error)
     | Ok t -> t
 
   let complete t =
     let value = complete_inner t in
     match Sint.(value < 0L) with
-    | true -> Error (Error.of_neg_errno value)
+    | true -> Error (error_of_neg_errno value)
     | false -> Ok (Uns.bits_of_sint value)
 
   let complete_hlt t =
     match complete t with
     | Ok t -> t
-    | Error error -> halt (Error.to_string error)
+    | Error error -> halt (Errno.to_string error)
 end
 
 let of_path ?flag ?mode path =
@@ -119,24 +107,24 @@ module Close = struct
     let value, t = submit_inner file in
     let t = register_user_data_finalizer t in
     match Sint.(value < kv 0L) with
-    | true -> Error (Error.of_neg_errno value)
+    | true -> Error (error_of_neg_errno value)
     | false -> Ok t
 
   let submit_hlt file =
     match submit file with
-    | Error error -> halt (Error.to_string error)
+    | Error error -> halt (Errno.to_string error)
     | Ok t -> t
 
   let complete t =
     let value = complete_inner t in
     match Sint.(value < kv 0L) with
-    | true -> Some (Error.of_neg_errno value)
+    | true -> Some (error_of_neg_errno value)
     | false -> None
 
   let complete_hlt t =
     match complete t with
     | None -> ()
-    | Some error -> halt (Error.to_string error)
+    | Some error -> halt (Errno.to_string error)
 end
 
 let close t =
@@ -177,12 +165,12 @@ module Read = struct
     let value, inner = submit_inner n file in
     let inner = register_user_data_finalizer inner in
     match Sint.(value < kv 0L) with
-    | true -> Error (Error.of_neg_errno value)
+    | true -> Error (error_of_neg_errno value)
     | false -> Ok {inner; buffer}
 
   let submit_hlt ?n ?buffer file =
     match submit ?n ?buffer file with
-    | Error error -> halt (Error.to_string error)
+    | Error error -> halt (Errno.to_string error)
     | Ok t -> t
 
   external complete_inner: Stdlib.Bytes.t -> inner -> sint =
@@ -193,7 +181,7 @@ module Read = struct
     let bytes = Stdlib.Bytes.create (Int64.to_int (Bytes.Slice.length t.buffer)) in
     let value = complete_inner bytes t.inner in
     match Sint.(value < kv 0L) with
-    | true -> Error (Uns.bits_of_sint Sint.(neg value))
+    | true -> Error (error_of_neg_errno value)
     | false -> begin
         let range = (base =:< (base + (Uns.bits_of_sint value))) in
         let container = Bytes.Slice.container t.buffer in
@@ -207,8 +195,7 @@ module Read = struct
   let complete_hlt t =
     match complete t with
     | Ok buffer -> buffer
-    | Error error -> halt (Error.to_string error)
-
+    | Error error -> halt (Errno.to_string error)
 end
 
 let read ?n ?buffer t =
@@ -235,18 +222,18 @@ module Write = struct
     let value, inner = submit_inner bytes file in
     let inner = register_user_data_finalizer inner in
     match Sint.(value < kv 0L) with
-    | true -> Error (Error.of_neg_errno value)
+    | true -> Error (error_of_neg_errno value)
     | false -> Ok {inner; buffer}
 
   let submit_hlt buffer file =
     match submit buffer file with
-    | Error error -> halt (Error.to_string error)
+    | Error error -> halt (Errno.to_string error)
     | Ok t -> t
 
   let complete t =
     let value = complete_inner t.inner in
     match Sint.(value < kv 0L) with
-    | true -> Error (Error.of_neg_errno value)
+    | true -> Error (error_of_neg_errno value)
     | false -> begin
         let base = Bytes.(Slice.base t.buffer |> Cursor.seek (Uns.bits_of_sint value)) in
         let past = Bytes.Slice.past t.buffer in
@@ -257,7 +244,7 @@ module Write = struct
   let complete_hlt t =
     match complete t with
     | Ok buffer -> buffer
-    | Error error -> halt (Error.to_string error)
+    | Error error -> halt (Errno.to_string error)
 end
 
 let write buffer t =
@@ -288,14 +275,14 @@ let seek_base inner rel_off t =
   let value = inner rel_off t in
   match Sint.(value < kv 0L) with
   | false -> Ok (Uns.bits_of_sint value)
-  | true -> Error (Error.of_neg_errno value)
+  | true -> Error (error_of_neg_errno value)
 
 let seek_hlt_base inner rel_off t =
   match seek_base inner rel_off t with
   | Ok base_off -> base_off
   | Error error -> begin
       let _ = close t in
-      halt (Error.to_string error)
+      halt (Errno.to_string error)
     end
 
 external seek_inner: sint -> t -> sint = "hm_basis_file_seek_inner"
@@ -471,7 +458,7 @@ module Fmt = struct
     ()
 end
 
-external setup_inner: unit -> sint = "hm_basis_file_setup_inner"
+external setup_inner: unit -> sint = "hm_basis_executor_setup_inner"
 
 let () = begin
   match setup_inner () = 0L with
@@ -479,6 +466,10 @@ let () = begin
   | true -> ()
 end
 
-external teardown_inner: unit -> unit = "hm_basis_file_teardown_inner"
+external teardown_inner: unit -> unit = "hm_basis_executor_teardown_inner"
 
-let () = Stdlib.at_exit (fun () -> let _ = Fmt.teardown () in let _ = teardown_inner () in ())
+let () = Stdlib.at_exit (fun () ->
+  let _ = Fmt.teardown () in
+  let _ = teardown_inner () in
+  ()
+)
