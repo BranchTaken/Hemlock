@@ -18,16 +18,16 @@
 
 int flags_of_hemlock_file_flag[] = {
     /* R_O   */ O_RDONLY,
-    /* W     */ O_WRONLY | O_CREAT,
+    /* W     */ O_WRONLY | O_CREAT | O_TRUNC,
     /* W_A   */ O_WRONLY | O_APPEND | O_CREAT,
     /* W_AO  */ O_WRONLY | O_APPEND,
     /* W_C   */ O_WRONLY | O_CREAT | O_EXCL,
-    /* W_O   */ O_WRONLY,
-    /* RW    */ O_RDWR | O_CREAT,
+    /* W_O   */ O_WRONLY | O_TRUNC,
+    /* RW    */ O_RDWR | O_CREAT | O_TRUNC,
     /* RW_A  */ O_RDWR | O_APPEND| O_CREAT,
     /* RW_AO */ O_RDWR | O_APPEND,
     /* RW_C  */ O_RDWR | O_CREAT | O_EXCL,
-    /* RW_O  */ O_RDWR,
+    /* RW_O  */ O_RDWR | O_TRUNC,
 };
 
 CAMLprim value
