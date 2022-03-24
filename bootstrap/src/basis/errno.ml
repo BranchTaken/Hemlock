@@ -1,0 +1,551 @@
+open Rudiments
+
+type t =
+  | EPERM
+  | ENOENT
+  | ESRCH
+  | EINTR
+  | EIO
+  | ENXIO
+  | E2BIG
+  | ENOEXEC
+  | EBADF
+  | ECHILD
+  | EAGAIN
+  | ENOMEM
+  | EACCES
+  | EFAULT
+  | ENOTBLK
+  | EBUSY
+  | EEXIST
+  | EXDEV
+  | ENODEV
+  | ENOTDIR
+  | EISDIR
+  | EINVAL
+  | ENFILE
+  | EMFILE
+  | ENOTTY
+  | ETXTBSY
+  | EFBIG
+  | ENOSPC
+  | ESPIPE
+  | EROFS
+  | EMLINK
+  | EPIPE
+  | EDOM
+  | ERANGE
+  | EDEADLK
+  | ENAMETOOLONG
+  | ENOLCK
+  | ENOSYS
+  | ENOTEMPTY
+  | ELOOP
+  | ENOMSG
+  | EIDRM
+  | ECHRNG
+  | EL2NSYNC
+  | EL3HLT
+  | EL3RST
+  | ELNRNG
+  | EUNATCH
+  | ENOCSI
+  | EL2HLT
+  | EBADE
+  | EBADR
+  | EXFULL
+  | ENOANO
+  | EBADRQC
+  | EBADSLT
+  | EBFONT
+  | ENOSTR
+  | ENODATA
+  | ETIME
+  | ENOSR
+  | ENONET
+  | ENOPKG
+  | EREMOTE
+  | ENOLINK
+  | EADV
+  | ESRMNT
+  | ECOMM
+  | EPROTO
+  | EMULTIHOP
+  | EDOTDOT
+  | EBADMSG
+  | EOVERFLOW
+  | ENOTUNIQ
+  | EBADFD
+  | EREMCHG
+  | ELIBACC
+  | ELIBBAD
+  | ELIBSCN
+  | ELIBMAX
+  | ELIBEXEC
+  | EILSEQ
+  | ERESTART
+  | ESTRPIPE
+  | EUSERS
+  | ENOTSOCK
+  | EDESTADDRREQ
+  | EMSGSIZE
+  | EPROTOTYPE
+  | ENOPROTOOPT
+  | EPROTONOSUPPORT
+  | ESOCKTNOSUPPORT
+  | EOPNOTSUPP
+  | EPFNOSUPPORT
+  | EAFNOSUPPORT
+  | EADDRINUSE
+  | EADDRNOTAVAIL
+  | ENETDOWN
+  | ENETUNREACH
+  | ENETRESET
+  | ECONNABORTED
+  | ECONNRESET
+  | ENOBUFS
+  | EISCONN
+  | ENOTCONN
+  | ESHUTDOWN
+  | ETOOMANYREFS
+  | ETIMEDOUT
+  | ECONNREFUSED
+  | EHOSTDOWN
+  | EHOSTUNREACH
+  | EALREADY
+  | EINPROGRESS
+  | ESTALE
+  | EUCLEAN
+  | ENOTNAM
+  | ENAVAIL
+  | EISNAM
+  | EREMOTEIO
+  | EDQUOT
+  | ENOMEDIUM
+  | EMEDIUMTYPE
+  | ECANCELED
+  | ENOKEY
+  | EKEYEXPIRED
+  | EKEYREVOKED
+  | EKEYREJECTED
+  | EOWNERDEAD
+  | ENOTRECOVERABLE
+  | ERFKILL
+  | EHWPOISON
+
+external to_string_get_length: t -> uns = "hm_basis_errno_to_string_get_length"
+
+external to_string_inner: uns -> Stdlib.Bytes.t -> t -> unit = "hm_basis_errno_to_string_inner"
+
+let of_uns = function
+  | 1L -> Some EPERM
+  | 2L -> Some ENOENT
+  | 3L -> Some ESRCH
+  | 4L -> Some EINTR
+  | 5L -> Some EIO
+  | 6L -> Some ENXIO
+  | 7L -> Some E2BIG
+  | 8L -> Some ENOEXEC
+  | 9L -> Some EBADF
+  | 10L -> Some ECHILD
+  | 11L -> Some EAGAIN
+  | 12L -> Some ENOMEM
+  | 13L -> Some EACCES
+  | 14L -> Some EFAULT
+  | 15L -> Some ENOTBLK
+  | 16L -> Some EBUSY
+  | 17L -> Some EEXIST
+  | 18L -> Some EXDEV
+  | 19L -> Some ENODEV
+  | 20L -> Some ENOTDIR
+  | 21L -> Some EISDIR
+  | 22L -> Some EINVAL
+  | 23L -> Some ENFILE
+  | 24L -> Some EMFILE
+  | 25L -> Some ENOTTY
+  | 26L -> Some ETXTBSY
+  | 27L -> Some EFBIG
+  | 28L -> Some ENOSPC
+  | 29L -> Some ESPIPE
+  | 30L -> Some EROFS
+  | 31L -> Some EMLINK
+  | 32L -> Some EPIPE
+  | 33L -> Some EDOM
+  | 34L -> Some ERANGE
+  | 35L -> Some EDEADLK
+  | 36L -> Some ENAMETOOLONG
+  | 37L -> Some ENOLCK
+  | 38L -> Some ENOSYS
+  | 39L -> Some ENOTEMPTY
+  | 40L -> Some ELOOP
+  | 42L -> Some ENOMSG
+  | 43L -> Some EIDRM
+  | 44L -> Some ECHRNG
+  | 45L -> Some EL2NSYNC
+  | 46L -> Some EL3HLT
+  | 47L -> Some EL3RST
+  | 48L -> Some ELNRNG
+  | 49L -> Some EUNATCH
+  | 50L -> Some ENOCSI
+  | 51L -> Some EL2HLT
+  | 52L -> Some EBADE
+  | 53L -> Some EBADR
+  | 54L -> Some EXFULL
+  | 55L -> Some ENOANO
+  | 56L -> Some EBADRQC
+  | 57L -> Some EBADSLT
+  | 59L -> Some EBFONT
+  | 60L -> Some ENOSTR
+  | 61L -> Some ENODATA
+  | 62L -> Some ETIME
+  | 63L -> Some ENOSR
+  | 64L -> Some ENONET
+  | 65L -> Some ENOPKG
+  | 66L -> Some EREMOTE
+  | 67L -> Some ENOLINK
+  | 68L -> Some EADV
+  | 69L -> Some ESRMNT
+  | 70L -> Some ECOMM
+  | 71L -> Some EPROTO
+  | 72L -> Some EMULTIHOP
+  | 73L -> Some EDOTDOT
+  | 74L -> Some EBADMSG
+  | 75L -> Some EOVERFLOW
+  | 76L -> Some ENOTUNIQ
+  | 77L -> Some EBADFD
+  | 78L -> Some EREMCHG
+  | 79L -> Some ELIBACC
+  | 80L -> Some ELIBBAD
+  | 81L -> Some ELIBSCN
+  | 82L -> Some ELIBMAX
+  | 83L -> Some ELIBEXEC
+  | 84L -> Some EILSEQ
+  | 85L -> Some ERESTART
+  | 86L -> Some ESTRPIPE
+  | 87L -> Some EUSERS
+  | 88L -> Some ENOTSOCK
+  | 89L -> Some EDESTADDRREQ
+  | 90L -> Some EMSGSIZE
+  | 91L -> Some EPROTOTYPE
+  | 92L -> Some ENOPROTOOPT
+  | 93L -> Some EPROTONOSUPPORT
+  | 94L -> Some ESOCKTNOSUPPORT
+  | 95L -> Some EOPNOTSUPP
+  | 96L -> Some EPFNOSUPPORT
+  | 97L -> Some EAFNOSUPPORT
+  | 98L -> Some EADDRINUSE
+  | 99L -> Some EADDRNOTAVAIL
+  | 100L -> Some ENETDOWN
+  | 101L -> Some ENETUNREACH
+  | 102L -> Some ENETRESET
+  | 103L -> Some ECONNABORTED
+  | 104L -> Some ECONNRESET
+  | 105L -> Some ENOBUFS
+  | 106L -> Some EISCONN
+  | 107L -> Some ENOTCONN
+  | 108L -> Some ESHUTDOWN
+  | 109L -> Some ETOOMANYREFS
+  | 110L -> Some ETIMEDOUT
+  | 111L -> Some ECONNREFUSED
+  | 112L -> Some EHOSTDOWN
+  | 113L -> Some EHOSTUNREACH
+  | 114L -> Some EALREADY
+  | 115L -> Some EINPROGRESS
+  | 116L -> Some ESTALE
+  | 117L -> Some EUCLEAN
+  | 118L -> Some ENOTNAM
+  | 119L -> Some ENAVAIL
+  | 120L -> Some EISNAM
+  | 121L -> Some EREMOTEIO
+  | 122L -> Some EDQUOT
+  | 123L -> Some ENOMEDIUM
+  | 124L -> Some EMEDIUMTYPE
+  | 125L -> Some ECANCELED
+  | 126L -> Some ENOKEY
+  | 127L -> Some EKEYEXPIRED
+  | 128L -> Some EKEYREVOKED
+  | 129L -> Some EKEYREJECTED
+  | 130L -> Some EOWNERDEAD
+  | 131L -> Some ENOTRECOVERABLE
+  | 132L -> Some ERFKILL
+  | 133L -> Some EHWPOISON
+  | _ -> None
+
+let of_uns_hlt u =
+  match of_uns u with
+  | None -> halt "Invalid errno encoding"
+  | Some t -> t
+
+let to_uns = function
+  | EPERM -> 1L
+  | ENOENT -> 2L
+  | ESRCH -> 3L
+  | EINTR -> 4L
+  | EIO -> 5L
+  | ENXIO -> 6L
+  | E2BIG -> 7L
+  | ENOEXEC -> 8L
+  | EBADF -> 9L
+  | ECHILD -> 10L
+  | EAGAIN -> 11L
+  | ENOMEM -> 12L
+  | EACCES -> 13L
+  | EFAULT -> 14L
+  | ENOTBLK -> 15L
+  | EBUSY -> 16L
+  | EEXIST -> 17L
+  | EXDEV -> 18L
+  | ENODEV -> 19L
+  | ENOTDIR -> 20L
+  | EISDIR -> 21L
+  | EINVAL -> 22L
+  | ENFILE -> 23L
+  | EMFILE -> 24L
+  | ENOTTY -> 25L
+  | ETXTBSY -> 26L
+  | EFBIG -> 27L
+  | ENOSPC -> 28L
+  | ESPIPE -> 29L
+  | EROFS -> 30L
+  | EMLINK -> 31L
+  | EPIPE -> 32L
+  | EDOM -> 33L
+  | ERANGE -> 34L
+  | EDEADLK -> 35L
+  | ENAMETOOLONG -> 36L
+  | ENOLCK -> 37L
+  | ENOSYS -> 38L
+  | ENOTEMPTY -> 39L
+  | ELOOP -> 40L
+  | ENOMSG -> 42L
+  | EIDRM -> 43L
+  | ECHRNG -> 44L
+  | EL2NSYNC -> 45L
+  | EL3HLT -> 46L
+  | EL3RST -> 47L
+  | ELNRNG -> 48L
+  | EUNATCH -> 49L
+  | ENOCSI -> 50L
+  | EL2HLT -> 51L
+  | EBADE -> 52L
+  | EBADR -> 53L
+  | EXFULL -> 54L
+  | ENOANO -> 55L
+  | EBADRQC -> 56L
+  | EBADSLT -> 57L
+  | EBFONT -> 59L
+  | ENOSTR -> 60L
+  | ENODATA -> 61L
+  | ETIME -> 62L
+  | ENOSR -> 63L
+  | ENONET -> 64L
+  | ENOPKG -> 65L
+  | EREMOTE -> 66L
+  | ENOLINK -> 67L
+  | EADV -> 68L
+  | ESRMNT -> 69L
+  | ECOMM -> 70L
+  | EPROTO -> 71L
+  | EMULTIHOP -> 72L
+  | EDOTDOT -> 73L
+  | EBADMSG -> 74L
+  | EOVERFLOW -> 75L
+  | ENOTUNIQ -> 76L
+  | EBADFD -> 77L
+  | EREMCHG -> 78L
+  | ELIBACC -> 79L
+  | ELIBBAD -> 80L
+  | ELIBSCN -> 81L
+  | ELIBMAX -> 82L
+  | ELIBEXEC -> 83L
+  | EILSEQ -> 84L
+  | ERESTART -> 85L
+  | ESTRPIPE -> 86L
+  | EUSERS -> 87L
+  | ENOTSOCK -> 88L
+  | EDESTADDRREQ -> 89L
+  | EMSGSIZE -> 90L
+  | EPROTOTYPE -> 91L
+  | ENOPROTOOPT -> 92L
+  | EPROTONOSUPPORT -> 93L
+  | ESOCKTNOSUPPORT -> 94L
+  | EOPNOTSUPP -> 95L
+  | EPFNOSUPPORT -> 96L
+  | EAFNOSUPPORT -> 97L
+  | EADDRINUSE -> 98L
+  | EADDRNOTAVAIL -> 99L
+  | ENETDOWN -> 100L
+  | ENETUNREACH -> 101L
+  | ENETRESET -> 102L
+  | ECONNABORTED -> 103L
+  | ECONNRESET -> 104L
+  | ENOBUFS -> 105L
+  | EISCONN -> 106L
+  | ENOTCONN -> 107L
+  | ESHUTDOWN -> 108L
+  | ETOOMANYREFS -> 109L
+  | ETIMEDOUT -> 110L
+  | ECONNREFUSED -> 111L
+  | EHOSTDOWN -> 112L
+  | EHOSTUNREACH -> 113L
+  | EALREADY -> 114L
+  | EINPROGRESS -> 115L
+  | ESTALE -> 116L
+  | EUCLEAN -> 117L
+  | ENOTNAM -> 118L
+  | ENAVAIL -> 119L
+  | EISNAM -> 120L
+  | EREMOTEIO -> 121L
+  | EDQUOT -> 122L
+  | ENOMEDIUM -> 123L
+  | EMEDIUMTYPE -> 124L
+  | ECANCELED -> 125L
+  | ENOKEY -> 126L
+  | EKEYEXPIRED -> 127L
+  | EKEYREVOKED -> 128L
+  | EKEYREJECTED -> 129L
+  | EOWNERDEAD -> 130L
+  | ENOTRECOVERABLE -> 131L
+  | ERFKILL -> 132L
+  | EHWPOISON -> 133L
+
+let to_string t =
+  let n = to_string_get_length t in
+  let bytes = Stdlib.Bytes.create (Int64.to_int n) in
+  let () = to_string_inner n bytes t in
+  Stdlib.Bytes.to_string bytes
+
+let pp t formatter =
+  formatter |> Fmt.fmt (match t with
+    | EPERM -> "EPERM"
+    | ENOENT -> "ENOENT"
+    | ESRCH -> "ESRCH"
+    | EINTR -> "EINTR"
+    | EIO -> "EIO"
+    | ENXIO -> "ENXIO"
+    | E2BIG -> "E2BIG"
+    | ENOEXEC -> "ENOEXEC"
+    | EBADF -> "EBADF"
+    | ECHILD -> "ECHILD"
+    | EAGAIN -> "EAGAIN"
+    | ENOMEM -> "ENOMEM"
+    | EACCES -> "EACCES"
+    | EFAULT -> "EFAULT"
+    | ENOTBLK -> "ENOTBLK"
+    | EBUSY -> "EBUSY"
+    | EEXIST -> "EEXIST"
+    | EXDEV -> "EXDEV"
+    | ENODEV -> "ENODEV"
+    | ENOTDIR -> "ENOTDIR"
+    | EISDIR -> "EISDIR"
+    | EINVAL -> "EINVAL"
+    | ENFILE -> "ENFILE"
+    | EMFILE -> "EMFILE"
+    | ENOTTY -> "ENOTTY"
+    | ETXTBSY -> "ETXTBSY"
+    | EFBIG -> "EFBIG"
+    | ENOSPC -> "ENOSPC"
+    | ESPIPE -> "ESPIPE"
+    | EROFS -> "EROFS"
+    | EMLINK -> "EMLINK"
+    | EPIPE -> "EPIPE"
+    | EDOM -> "EDOM"
+    | ERANGE -> "ERANGE"
+    | EDEADLK -> "EDEADLK"
+    | ENAMETOOLONG -> "ENAMETOOLONG"
+    | ENOLCK -> "ENOLCK"
+    | ENOSYS -> "ENOSYS"
+    | ENOTEMPTY -> "ENOTEMPTY"
+    | ELOOP -> "ELOOP"
+    | ENOMSG -> "ENOMSG"
+    | EIDRM -> "EIDRM"
+    | ECHRNG -> "ECHRNG"
+    | EL2NSYNC -> "EL2NSYNC"
+    | EL3HLT -> "EL3HLT"
+    | EL3RST -> "EL3RST"
+    | ELNRNG -> "ELNRNG"
+    | EUNATCH -> "EUNATCH"
+    | ENOCSI -> "ENOCSI"
+    | EL2HLT -> "EL2HLT"
+    | EBADE -> "EBADE"
+    | EBADR -> "EBADR"
+    | EXFULL -> "EXFULL"
+    | ENOANO -> "ENOANO"
+    | EBADRQC -> "EBADRQC"
+    | EBADSLT -> "EBADSLT"
+    | EBFONT -> "EBFONT"
+    | ENOSTR -> "ENOSTR"
+    | ENODATA -> "ENODATA"
+    | ETIME -> "ETIME"
+    | ENOSR -> "ENOSR"
+    | ENONET -> "ENONET"
+    | ENOPKG -> "ENOPKG"
+    | EREMOTE -> "EREMOTE"
+    | ENOLINK -> "ENOLINK"
+    | EADV -> "EADV"
+    | ESRMNT -> "ESRMNT"
+    | ECOMM -> "ECOMM"
+    | EPROTO -> "EPROTO"
+    | EMULTIHOP -> "EMULTIHOP"
+    | EDOTDOT -> "EDOTDOT"
+    | EBADMSG -> "EBADMSG"
+    | EOVERFLOW -> "EOVERFLOW"
+    | ENOTUNIQ -> "ENOTUNIQ"
+    | EBADFD -> "EBADFD"
+    | EREMCHG -> "EREMCHG"
+    | ELIBACC -> "ELIBACC"
+    | ELIBBAD -> "ELIBBAD"
+    | ELIBSCN -> "ELIBSCN"
+    | ELIBMAX -> "ELIBMAX"
+    | ELIBEXEC -> "ELIBEXEC"
+    | EILSEQ -> "EILSEQ"
+    | ERESTART -> "ERESTART"
+    | ESTRPIPE -> "ESTRPIPE"
+    | EUSERS -> "EUSERS"
+    | ENOTSOCK -> "ENOTSOCK"
+    | EDESTADDRREQ -> "EDESTADDRREQ"
+    | EMSGSIZE -> "EMSGSIZE"
+    | EPROTOTYPE -> "EPROTOTYPE"
+    | ENOPROTOOPT -> "ENOPROTOOPT"
+    | EPROTONOSUPPORT -> "EPROTONOSUPPORT"
+    | ESOCKTNOSUPPORT -> "ESOCKTNOSUPPORT"
+    | EOPNOTSUPP -> "EOPNOTSUPP"
+    | EPFNOSUPPORT -> "EPFNOSUPPORT"
+    | EAFNOSUPPORT -> "EAFNOSUPPORT"
+    | EADDRINUSE -> "EADDRINUSE"
+    | EADDRNOTAVAIL -> "EADDRNOTAVAIL"
+    | ENETDOWN -> "ENETDOWN"
+    | ENETUNREACH -> "ENETUNREACH"
+    | ENETRESET -> "ENETRESET"
+    | ECONNABORTED -> "ECONNABORTED"
+    | ECONNRESET -> "ECONNRESET"
+    | ENOBUFS -> "ENOBUFS"
+    | EISCONN -> "EISCONN"
+    | ENOTCONN -> "ENOTCONN"
+    | ESHUTDOWN -> "ESHUTDOWN"
+    | ETOOMANYREFS -> "ETOOMANYREFS"
+    | ETIMEDOUT -> "ETIMEDOUT"
+    | ECONNREFUSED -> "ECONNREFUSED"
+    | EHOSTDOWN -> "EHOSTDOWN"
+    | EHOSTUNREACH -> "EHOSTUNREACH"
+    | EALREADY -> "EALREADY"
+    | EINPROGRESS -> "EINPROGRESS"
+    | ESTALE -> "ESTALE"
+    | EUCLEAN -> "EUCLEAN"
+    | ENOTNAM -> "ENOTNAM"
+    | ENAVAIL -> "ENAVAIL"
+    | EISNAM -> "EISNAM"
+    | EREMOTEIO -> "EREMOTEIO"
+    | EDQUOT -> "EDQUOT"
+    | ENOMEDIUM -> "ENOMEDIUM"
+    | EMEDIUMTYPE -> "EMEDIUMTYPE"
+    | ECANCELED -> "ECANCELED"
+    | ENOKEY -> "ENOKEY"
+    | EKEYEXPIRED -> "EKEYEXPIRED"
+    | EKEYREVOKED -> "EKEYREVOKED"
+    | EKEYREJECTED -> "EKEYREJECTED"
+    | EOWNERDEAD -> "EOWNERDEAD"
+    | ENOTRECOVERABLE -> "ENOTRECOVERABLE"
+    | ERFKILL -> "ERFKILL"
+    | EHWPOISON -> "EHWPOISON"
+  )
