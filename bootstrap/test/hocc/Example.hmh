@@ -1,0 +1,63 @@
+open import Basis
+
+# Specify the parser. `hocc ...` expands to a module implementation, `{ ... }`.
+include hocc
+    left mul
+    token STAR "*" prec mul
+    token SLASH "/" prec mul
+    nonterm MulOp of Token.t ::=
+      | "*" -> STAR
+      | "/" -> SLASH
+
+    left add < mul
+    token PLUS "+" prec add
+    token MINUS "-" prec add
+    nonterm AddOp of Token.t ::=
+      | "+" -> PLUS
+      | "-" -> MINUS
+
+    token INT of Zint.t
+    nonterm Expr of Zint.t ::=
+      | e0:Expr op:MulOp e1:Expr prec mul ->
+        match op with
+          | MulOp STAR -> Zint.(e0 * e1)
+          | MulOp SLASH -> Zint.(e0 / e1)
+      | e0:Expr op:AddOp e1:Expr prec add ->
+        match op with
+          | AddOp PLUS -> Zint.(e0 + e1)
+          | AddOp MINUS -> Zint.(e0 - e1)
+      | x:INT -> x
+
+    token EOI
+    start Answer of Zint.t ::=
+      | e:Expr EOI -> e
+
+# Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
+tokenize s =
+    s |> String.split_rev ~f:(fn cp -> Codepoint.O.(cp = ' '))
+      |> List.rev_filter ~f:(fn s -> String.length s <> 0)
+      |> List.rev_map ~f:fn s ->
+        let open Token
+        match s with
+          | "*" -> STAR
+          | "/" -> SLASH
+          | "+" -> PLUS
+          | "-" -> MINUS
+          | _ -> INT (Zint.of_string s)
+      |> List.push Token.EOI
+      |> List.rev
+
+# Calculate the result of the arithmetic expression expressed in `s`, e.g. "2 + 3 * 4".
+calculate s =
+    List.fold_until (tokenize s) ~init:Start.Answer.boi ~f:fn parser tok ->
+        let parser' = Start.Answer.next tok parser
+        let done = match status parser' with
+          | Prefix -> false
+          | Accept _
+          | Error _ -> true
+        parser', done
+      |>
+        function
+          | Accept answer -> answer
+          | Prefix _ -> halt "Partial input"
+          | Error _ -> halt "Parse error"

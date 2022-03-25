@@ -1,0 +1,153 @@
+IelrFig4_rno grammar
+
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token Ta
+        First: {Ta}
+        Follow: {"⊥", Ta, Tb}
+    token Tb
+        First: {Tb}
+        Follow: {"⊥", Ta}
+Non-terminals
+    start Sn
+        First: {Ta, Tb}
+        Follow: {"⊥"}
+        Productions
+            Sn ::= Ta A Ta
+            Sn ::= Ta A Tb
+            Sn ::= Ta B Ta
+            Sn ::= Tb A Ta
+            Sn ::= Tb B Tb
+    start Sn'
+        First: {Ta, Tb}
+        Follow: {"ε"}
+        Productions
+            Sn' ::= Sn "⊥"
+    nonterm A
+        First: {Ta}
+        Follow: {Ta, Tb}
+        Productions
+            A ::= Ta
+    nonterm B
+        First: {Ta}
+        Follow: {Ta, Tb}
+        Productions
+            B ::= Ta
+IELR(1) States
+    State 0
+        Kernel
+            [Sn' ::= · Sn "⊥", {"ε"}]
+        Added
+            [Sn ::= · Ta A Ta, {"⊥"}]
+            [Sn ::= · Ta A Tb, {"⊥"}]
+            [Sn ::= · Ta B Ta, {"⊥"}]
+            [Sn ::= · Tb A Ta, {"⊥"}]
+            [Sn ::= · Tb B Tb, {"⊥"}]
+        Actions
+            Ta : ShiftPrefix 1
+            Tb : ShiftPrefix 2
+        Gotos
+            Sn : 3
+    State 1
+        Kernel
+            [Sn ::= Ta · A Ta, {"⊥"}]
+            [Sn ::= Ta · A Tb, {"⊥"}]
+            [Sn ::= Ta · B Ta, {"⊥"}]
+        Added
+            [A ::= · Ta, {Ta, Tb}]
+            [B ::= · Ta, {Ta}]
+        Actions
+            Ta : ShiftPrefix 4
+        Gotos
+            A : 5
+            B : 6
+    State 2
+        Kernel
+            [Sn ::= Tb · A Ta, {"⊥"}]
+            [Sn ::= Tb · B Tb, {"⊥"}]
+        Added
+            [A ::= · Ta, {Ta}]
+            [B ::= · Ta, {Tb}]
+        Actions
+            Ta : ShiftPrefix 7
+        Gotos
+            A : 8
+            B : 9
+    State 3
+        Kernel
+            [Sn' ::= Sn · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 10
+    State 4
+        Kernel
+            [A ::= Ta ·, {Ta, Tb}]
+            [B ::= Ta ·, {Ta}]
+        Actions
+            Ta :
+CONFLICT        Reduce A ::= Ta
+CONFLICT        Reduce B ::= Ta
+            Tb : Reduce A ::= Ta
+    State 5
+        Kernel
+            [Sn ::= Ta A · Ta, {"⊥"}]
+            [Sn ::= Ta A · Tb, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 11
+            Tb : ShiftAccept 12
+    State 6
+        Kernel
+            [Sn ::= Ta B · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 13
+    State 7
+        Kernel
+            [A ::= Ta ·, {Ta}]
+            [B ::= Ta ·, {Tb}]
+        Actions
+            Ta : Reduce A ::= Ta
+            Tb : Reduce B ::= Ta
+    State 8
+        Kernel
+            [Sn ::= Tb A · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 14
+    State 9
+        Kernel
+            [Sn ::= Tb B · Tb, {"⊥"}]
+        Actions
+            Tb : ShiftAccept 15
+    State 10
+        Kernel
+            [Sn' ::= Sn "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce Sn' ::= Sn "⊥"
+    State 11
+        Kernel
+            [Sn ::= Ta A Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Sn ::= Ta A Ta
+    State 12
+        Kernel
+            [Sn ::= Ta A Tb ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Sn ::= Ta A Tb
+    State 13
+        Kernel
+            [Sn ::= Ta B Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Sn ::= Ta B Ta
+    State 14
+        Kernel
+            [Sn ::= Tb A Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Sn ::= Tb A Ta
+    State 15
+        Kernel
+            [Sn ::= Tb B Tb ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Sn ::= Tb B Tb

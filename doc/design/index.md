@@ -1,4 +1,4 @@
-# Hemlock
+# Hemlock Design
 
 [Hemlock](https://github.com/BranchTaken/Hemlock) is a systems programming language, but not all
 systems are alike. Hemlock is intentionally constrained to excel for a (large) subset of possible

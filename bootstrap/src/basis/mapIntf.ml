@@ -46,7 +46,7 @@ module type S = sig
 
   val fmt: ?alt:bool -> ?width:int64 -> ('v -> (module Fmt.Formatter) -> (module Fmt.Formatter))
     -> ('k, 'v, 'cmp) t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** [fmt ~alt ~width fmt_v t] uses the [fmt_v] formatter to format a syntactically valid
+  (** [fmt ~alt ~width fmt_v t formatter] uses the [fmt_v] formatter to format a syntactically valid
       associative list representation of [t]. If [~alt=true], the output is broken across multiple
       lines with outermost indentation [~width] (elements are indented to [~width + 4]). *)
 

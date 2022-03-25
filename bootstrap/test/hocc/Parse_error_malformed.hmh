@@ -1,0 +1,3 @@
+hocc
+    token FUBAR "fu	bar"
+    start S ::= FUBAR "fu	bar"
