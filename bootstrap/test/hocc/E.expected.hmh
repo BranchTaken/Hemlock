@@ -1,0 +1,8 @@
+hocc
+    token C
+    token D
+    token EOI
+    start S ::= N N EOI
+    nonterm N ::=
+      | C N
+      | D

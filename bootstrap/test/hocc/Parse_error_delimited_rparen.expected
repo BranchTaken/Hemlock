@@ -1,0 +1,2 @@
+hocc: Parsing "./Parse_error_delimited_rparen.hmh"
+hocc: At ["./Parse_error_delimited_rparen.hmh":4:0.."./Parse_error_delimited_rparen.hmh":4:0): Expected ')'

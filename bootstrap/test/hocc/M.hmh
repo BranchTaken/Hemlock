@@ -1,0 +1,33 @@
+# Example grammar G2 from Pager(1977), pp 256.
+
+hocc
+    token At
+    token Bt
+    token Ct
+    token Dt
+    token Et
+    token Tt
+    token Ut
+    token EOI
+
+    start Sn ::= Xn EOI
+
+    nonterm Xn ::=
+      | At Yn Dt
+      | At Zn Ct
+      | At Tn
+      | Bt Yn Et
+      | Bt Zn Dt
+      | Bt Tn
+
+    nonterm Yn ::=
+      | Tt Wn
+      | Ut Xn
+
+    nonterm Zn ::= Tt Ut
+
+    nonterm Tn ::= Ut Xn At
+
+    nonterm Wn ::= Ut Vn
+
+    nonterm Vn ::= epsilon

@@ -1,0 +1,371 @@
+H grammar
+
+Precedences
+    neutral p1
+    neutral p2 < p1
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token Ta prec p2
+        First: {Ta}
+        Follow: {"⊥", Ta, Tb, Tc, Ty0, Ty1}
+    token Tb
+        First: {Tb}
+        Follow: {"⊥", Ty0, Ty1}
+    token Tc
+        First: {Tc}
+        Follow: {Ta, Tb}
+    token Ty0
+        First: {Ty0}
+        Follow: {Tz0, Tz1}
+    token Ty1
+        First: {Ty1}
+        Follow: {Tz0, Tz1}
+    token Tz0
+        First: {Tz0}
+        Follow: {Ta}
+    token Tz1
+        First: {Tz1}
+        Follow: {Ta}
+Non-terminals
+    start S
+        First: {Ta, Tb}
+        Follow: {"⊥"}
+        Productions
+            S ::= Ta Y Ta
+            S ::= Tb Y Tb
+    start S'
+        First: {Ta, Tb}
+        Follow: {"ε"}
+        Productions
+            S' ::= S "⊥"
+    nonterm Y
+        First: {Ty0, Ty1}
+        Follow: {Ta, Tb}
+        Productions
+            Y ::= Ty0 Z
+            Y ::= Ty1 Z
+    nonterm Z
+        First: {Tz0, Tz1}
+        Follow: {Ta, Tb}
+        Productions
+            Z ::= Tz0 A B
+            Z ::= Tz1 A B
+    nonterm A
+        First: {Ta}
+        Follow: {Ta, Tb, Tc}
+        Productions
+            A ::= Ta C D E
+    nonterm B
+        First: {"ε", Tc}
+        Follow: {Ta, Tb}
+        Productions
+            B ::= Tc
+            B ::= epsilon
+    nonterm C
+        First: {Ta}
+        Follow: {Ta}
+        Productions
+            C ::= D
+    nonterm D
+        First: {Ta}
+        Follow: {Ta, Tb, Tc}
+        Productions
+            D ::= Ta
+    nonterm E
+        First: {"ε", Ta}
+        Follow: {Ta, Tb, Tc}
+        Productions
+            E ::= Ta
+            E ::= epsilon prec p1
+IELR(1) States
+    State 0
+        Kernel
+            [S' ::= · S "⊥", {"ε"}]
+        Added
+            [S ::= · Ta Y Ta, {"⊥"}]
+            [S ::= · Tb Y Tb, {"⊥"}]
+        Actions
+            Ta : ShiftPrefix 1 prec p2
+            Tb : ShiftPrefix 2
+        Gotos
+            S : 3
+    State 1
+        Kernel
+            [S ::= Ta · Y Ta, {"⊥"}]
+        Added
+            [Y ::= · Ty0 Z, {Ta}]
+            [Y ::= · Ty1 Z, {Ta}]
+        Actions
+            Ty0 : ShiftPrefix 4
+            Ty1 : ShiftPrefix 5
+        Gotos
+            Y : 6
+    State 2
+        Kernel
+            [S ::= Tb · Y Tb, {"⊥"}]
+        Added
+            [Y ::= · Ty0 Z, {Tb}]
+            [Y ::= · Ty1 Z, {Tb}]
+        Actions
+            Ty0 : ShiftPrefix 7
+            Ty1 : ShiftPrefix 8
+        Gotos
+            Y : 9
+    State 3
+        Kernel
+            [S' ::= S · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 10
+    State 4
+        Kernel
+            [Y ::= Ty0 · Z, {Ta}]
+        Added
+            [Z ::= · Tz0 A B, {Ta}]
+            [Z ::= · Tz1 A B, {Ta}]
+        Actions
+            Tz0 : ShiftPrefix 11
+            Tz1 : ShiftPrefix 12
+        Gotos
+            Z : 13
+    State 5
+        Kernel
+            [Y ::= Ty1 · Z, {Ta}]
+        Added
+            [Z ::= · Tz0 A B, {Ta}]
+            [Z ::= · Tz1 A B, {Ta}]
+        Actions
+            Tz0 : ShiftPrefix 11
+            Tz1 : ShiftPrefix 12
+        Gotos
+            Z : 14
+    State 6
+        Kernel
+            [S ::= Ta Y · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 15 prec p2
+    State 7
+        Kernel
+            [Y ::= Ty0 · Z, {Tb}]
+        Added
+            [Z ::= · Tz0 A B, {Tb}]
+            [Z ::= · Tz1 A B, {Tb}]
+        Actions
+            Tz0 : ShiftPrefix 16
+            Tz1 : ShiftPrefix 17
+        Gotos
+            Z : 13
+    State 8
+        Kernel
+            [Y ::= Ty1 · Z, {Tb}]
+        Added
+            [Z ::= · Tz0 A B, {Tb}]
+            [Z ::= · Tz1 A B, {Tb}]
+        Actions
+            Tz0 : ShiftPrefix 16
+            Tz1 : ShiftPrefix 17
+        Gotos
+            Z : 14
+    State 9
+        Kernel
+            [S ::= Tb Y · Tb, {"⊥"}]
+        Actions
+            Tb : ShiftAccept 18
+    State 10
+        Kernel
+            [S' ::= S "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce S' ::= S "⊥"
+    State 11
+        Kernel
+            [Z ::= Tz0 · A B, {Ta}]
+        Added
+            [A ::= · Ta C D E, {Ta, Tc}]
+        Actions
+            Ta : ShiftPrefix 19 prec p2
+        Gotos
+            A : 20
+    State 12
+        Kernel
+            [Z ::= Tz1 · A B, {Ta}]
+        Added
+            [A ::= · Ta C D E, {Ta, Tc}]
+        Actions
+            Ta : ShiftPrefix 19 prec p2
+        Gotos
+            A : 21
+    State 13
+        Kernel
+            [Y ::= Ty0 Z ·, {Ta, Tb}]
+        Actions
+            Ta : Reduce Y ::= Ty0 Z
+            Tb : Reduce Y ::= Ty0 Z
+    State 14
+        Kernel
+            [Y ::= Ty1 Z ·, {Ta, Tb}]
+        Actions
+            Ta : Reduce Y ::= Ty1 Z
+            Tb : Reduce Y ::= Ty1 Z
+    State 15
+        Kernel
+            [S ::= Ta Y Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Ta Y Ta
+    State 16
+        Kernel
+            [Z ::= Tz0 · A B, {Tb}]
+        Added
+            [A ::= · Ta C D E, {Tb, Tc}]
+        Actions
+            Ta : ShiftPrefix 22 prec p2
+        Gotos
+            A : 20
+    State 17
+        Kernel
+            [Z ::= Tz1 · A B, {Tb}]
+        Added
+            [A ::= · Ta C D E, {Tb, Tc}]
+        Actions
+            Ta : ShiftPrefix 22 prec p2
+        Gotos
+            A : 21
+    State 18
+        Kernel
+            [S ::= Tb Y Tb ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Tb Y Tb
+    State 19
+        Kernel
+            [A ::= Ta · C D E, {Ta, Tc}]
+        Added
+            [C ::= · D, {Ta}]
+            [D ::= · Ta, {Ta}]
+        Actions
+            Ta : ShiftPrefix 23 prec p2
+        Gotos
+            C : 24
+            D : 25
+    State 20
+        Kernel
+            [Z ::= Tz0 A · B, {Ta, Tb}]
+        Added
+            [B ::= · Tc, {Ta, Tb}]
+            [B ::= ·, {Ta, Tb}]
+        Actions
+            Ta : Reduce B ::= epsilon
+            Tb : Reduce B ::= epsilon
+            Tc : ShiftPrefix 26
+        Gotos
+            B : 27
+    State 21
+        Kernel
+            [Z ::= Tz1 A · B, {Ta, Tb}]
+        Added
+            [B ::= · Tc, {Ta, Tb}]
+            [B ::= ·, {Ta, Tb}]
+        Actions
+            Ta : Reduce B ::= epsilon
+            Tb : Reduce B ::= epsilon
+            Tc : ShiftPrefix 26
+        Gotos
+            B : 28
+    State 22
+        Kernel
+            [A ::= Ta · C D E, {Tb, Tc}]
+        Added
+            [C ::= · D, {Ta}]
+            [D ::= · Ta, {Ta}]
+        Actions
+            Ta : ShiftPrefix 23 prec p2
+        Gotos
+            C : 29
+            D : 25
+    State 23
+        Kernel
+            [D ::= Ta ·, {Ta, Tb, Tc}]
+        Actions
+            Ta : Reduce D ::= Ta
+            Tb : Reduce D ::= Ta
+            Tc : Reduce D ::= Ta
+    State 24
+        Kernel
+            [A ::= Ta C · D E, {Ta, Tc}]
+        Added
+            [D ::= · Ta, {Ta, Tc}]
+        Actions
+            Ta : ShiftPrefix 23 prec p2
+        Gotos
+            D : 30
+    State 25
+        Kernel
+            [C ::= D ·, {Ta}]
+        Actions
+            Ta : Reduce C ::= D
+    State 26
+        Kernel
+            [B ::= Tc ·, {Ta, Tb}]
+        Actions
+            Ta : Reduce B ::= Tc
+            Tb : Reduce B ::= Tc
+    State 27
+        Kernel
+            [Z ::= Tz0 A B ·, {Ta, Tb}]
+        Actions
+            Ta : Reduce Z ::= Tz0 A B
+            Tb : Reduce Z ::= Tz0 A B
+    State 28
+        Kernel
+            [Z ::= Tz1 A B ·, {Ta, Tb}]
+        Actions
+            Ta : Reduce Z ::= Tz1 A B
+            Tb : Reduce Z ::= Tz1 A B
+    State 29
+        Kernel
+            [A ::= Ta C · D E, {Tb, Tc}]
+        Added
+            [D ::= · Ta, {Ta, Tb, Tc}]
+        Actions
+            Ta : ShiftPrefix 23 prec p2
+        Gotos
+            D : 31
+    State 30
+        Kernel
+            [A ::= Ta C D · E, {Ta, Tc}]
+        Added
+            [E ::= · Ta, {Ta, Tc}]
+            [E ::= ·, {Ta, Tc}] prec p1
+        Actions
+            Ta : Reduce E ::= epsilon prec p1
+            Tc : Reduce E ::= epsilon prec p1
+        Gotos
+            E : 33
+    State 31
+        Kernel
+            [A ::= Ta C D · E, {Tb, Tc}]
+        Added
+            [E ::= · Ta, {Tb, Tc}]
+            [E ::= ·, {Tb, Tc}] prec p1
+        Actions
+            Ta : ShiftPrefix 32 prec p2
+            Tb : Reduce E ::= epsilon prec p1
+            Tc : Reduce E ::= epsilon prec p1
+        Gotos
+            E : 33
+    State 32
+        Kernel
+            [E ::= Ta ·, {Ta, Tb, Tc}]
+        Actions
+            Ta : Reduce E ::= Ta
+            Tb : Reduce E ::= Ta
+            Tc : Reduce E ::= Ta
+    State 33
+        Kernel
+            [A ::= Ta C D E ·, {Ta, Tb, Tc}]
+        Actions
+            Ta : Reduce A ::= Ta C D E
+            Tb : Reduce A ::= Ta C D E
+            Tc : Reduce A ::= Ta C D E

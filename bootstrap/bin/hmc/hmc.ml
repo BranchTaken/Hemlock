@@ -36,10 +36,9 @@ let scan_file path =
   ()
 
 let _ =
-  match Array.length Sys.argv with
+  match Array.length Os.argv with
   | 0L | 1L -> halt "hmc usage: hmc <path>"
   | _ -> begin
-      let path_str = Array.get 1L Sys.argv in
-      let path = Path.of_string path_str in
+      let path = Path.of_bytes (Bytes.Slice.init (Array.get 1L Os.argv)) in
       scan_file path
     end

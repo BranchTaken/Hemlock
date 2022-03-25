@@ -1,0 +1,23 @@
+# Example grammar G3 from Pager(1977), pp 259. Weak compatibility fails to combine states that would
+# be combined if strong compatibility were used.
+
+hocc
+    token A
+    token B
+    token C
+    token D
+    token E
+    token T
+    token U
+    token V
+    token W
+
+    start X ::=
+      | A Y D
+      | A Z C
+      | B Y E
+      | B Z D
+
+    nonterm Y ::= T U V
+
+    nonterm Z ::= T U W

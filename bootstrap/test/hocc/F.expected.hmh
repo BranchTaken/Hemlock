@@ -1,0 +1,13 @@
+hocc
+    token A
+    token B
+    token C
+    token D
+    token E
+    start S ::=
+      | A M D
+      | B N D
+      | A N E
+      | B M E
+    nonterm M ::= C
+    nonterm N ::= C
