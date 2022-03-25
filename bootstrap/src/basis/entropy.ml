@@ -11,6 +11,6 @@ let get () =
   | _ -> halt "Entropy.get error: Entropy acquisition failure"
 
 let seed =
-  match Sys.getenv_opt "HEMLOCK_ENTROPY" with
+  match Stdlib.Sys.getenv_opt "HEMLOCK_ENTROPY" with
   | None -> get ()
   | Some hemlock_entropy -> u128_of_string hemlock_entropy
