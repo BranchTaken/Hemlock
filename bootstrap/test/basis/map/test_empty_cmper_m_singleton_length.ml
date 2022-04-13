@@ -8,7 +8,7 @@ let test () =
   validate e;
   assert (length e = 0L);
   File.Fmt.stdout
-  |> (fmt ~alt:true Unit.pp) e
+  |> (fmt_internals ~alt:true Unit.pp) e
   |> Fmt.fmt "\n"
   |> ignore;
 
@@ -16,7 +16,7 @@ let test () =
   validate s;
   assert (length s = 1L);
   File.Fmt.stdout
-  |> (fmt ~alt:true String.pp) s
+  |> (fmt_internals ~alt:true String.pp) s
   |> Fmt.fmt "\n"
   |> ignore
 

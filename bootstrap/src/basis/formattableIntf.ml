@@ -1,6 +1,6 @@
 (** Formattable type functor signature. *)
 
-(** Monomorphic Fmt pretty printing conversion functions. *)
+(** Monomorphic Fmt pretty printing function. *)
 module type SMono = sig
   type t
 
@@ -8,7 +8,7 @@ module type SMono = sig
   (** [pp t formatter] applies a formatted representation of [t] to the [formatter]. *)
 end
 
-(** Polymorphic Fmt pretty printing conversion functions. *)
+(** Polymorphic Fmt pretty printing function. *)
 module type SPoly = sig
   type 'a t
 
@@ -18,7 +18,7 @@ module type SPoly = sig
         [pp_a] for the parametric type value [a]. *)
 end
 
-(** Polymorphic Fmt pretty printing conversion functions. *)
+(** Polymorphic Fmt pretty printing function. *)
 module type SPoly2 = sig
   type ('a, 'b) t
 

@@ -40,6 +40,17 @@ module type S = sig
   val cmper: ('a, 'cmp) t -> ('a, 'cmp) Cmper.t
   (** [cmper t] returns the comparator associated with [t]. *)
 
+  (** {1 Formatting} *)
+
+  val fmt: ?alt:bool -> ?width:uns -> ('a, 'cmp) t -> (module Fmt.Formatter)
+    -> (module Fmt.Formatter)
+  (** [fmt ~alt ~width t] formats a syntactically valid list representation of [t]. If [~alt=true],
+      the output is broken across multiple lines with outermost indentation [~width] (elements are
+      indented to [~width + 4]). *)
+
+  val pp: ('a, 'cmp) t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [pp t formatter] applies a formatted representation of [t] to the [formatter]. *)
+
   (** {1 Creation} *)
 
   val empty: ('a, 'cmp) cmper -> ('a, 'cmp) t

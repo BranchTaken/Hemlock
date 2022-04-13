@@ -137,3 +137,11 @@ end
 
 let to_array t =
   SetToArray.(to_array (init t))
+
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) t formatter =
+  let cmper = cmper t in
+  let t_sorted = Array.sort ~cmp:cmper.cmp (to_array t) |> Array.to_list in
+  List.fmt ~alt ~width cmper.pp t_sorted formatter
+
+let pp t formatter =
+  fmt t formatter

@@ -6,7 +6,7 @@ open Ordmap
 let test () =
   let test_search ordmap (key_max:uns) = begin
     File.Fmt.stdout
-    |> (fmt Uns.pp) ordmap
+    |> (fmt_internals Uns.pp) ordmap
     |> Fmt.fmt "\n"
     |> ignore;
     Range.Uns.iter (0L =:= key_max) ~f:(fun probe ->

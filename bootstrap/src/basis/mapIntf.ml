@@ -42,6 +42,19 @@ module type S = sig
   val cmper: ('k, 'v, 'cmp) t -> ('k, 'cmp) Cmper.t
   (** [cmper t] returns the comparator associated with the map [t]. *)
 
+  (** {1 Formatting} *)
+
+  val fmt: ?alt:bool -> ?width:int64 -> ('v -> (module Fmt.Formatter) -> (module Fmt.Formatter))
+    -> ('k, 'v, 'cmp) t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [fmt ~alt ~width fmt_v t] uses the [fmt_v] formatter to format a syntactically valid
+      associative list representation of [t]. If [~alt=true], the output is broken across multiple
+      lines with outermost indentation [~width] (elements are indented to [~width + 4]). *)
+
+  val pp: ('v -> (module Fmt.Formatter) -> (module Fmt.Formatter))
+    -> ('k, 'v, 'cmp) t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [pp pp_v t formatter] applies a formatted representation of [t] to the [formatter] using
+      [pp_v] for the parametric type value [v]. *)
+
   (** {1 Creation} *)
 
   val empty: ('k, 'cmp) cmper -> ('k, 'v, 'cmp) t

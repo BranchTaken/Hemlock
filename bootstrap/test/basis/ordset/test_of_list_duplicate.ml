@@ -1,6 +1,5 @@
 open! Basis.Rudiments
 open! Basis
-open OrdsetTest
 open Ordset
 
 let test () =
