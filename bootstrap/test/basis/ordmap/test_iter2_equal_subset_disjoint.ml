@@ -18,9 +18,9 @@ let test () =
       | Some _, None -> begin
           File.Fmt.stdout
           |> Fmt.fmt "Should be equal: "
-          |> (fmt Uns.pp) ordmap0
+          |> (fmt_internals Uns.pp) ordmap0
           |> Fmt.fmt ", "
-          |> (fmt Uns.pp) ordmap1
+          |> (fmt_internals Uns.pp) ordmap1
           |> Fmt.fmt "\n"
           |> ignore;
           assert false;
@@ -40,9 +40,9 @@ let test () =
       | Some _, Some _ -> begin
           File.Fmt.stdout
           |> Fmt.fmt "Should be disjoint: "
-          |> (fmt Uns.pp) ordmap0
+          |> (fmt_internals Uns.pp) ordmap0
           |> Fmt.fmt ", "
-          |> (fmt Uns.pp) ordmap1
+          |> (fmt_internals Uns.pp) ordmap1
           |> Fmt.fmt "\n"
           |> ignore;
           assert false;

@@ -17,9 +17,9 @@ let test () =
     |> Fmt.fmt "remove_hlt "
     |> Uns.pp k
     |> Fmt.fmt "\n"
-    |> (fmt ~alt:true String.pp) map
+    |> (fmt_internals ~alt:true String.pp) map
     |> Fmt.fmt " ->\n"
-    |> (fmt ~alt:true String.pp) map'
+    |> (fmt_internals ~alt:true String.pp) map'
     |> Fmt.fmt "\n"
     |> ignore
   end in

@@ -5,6 +5,7 @@
   test_empty_cmper_m_singleton_length
   test_filter
   test_filter_map
+  test_fmt
   test_fold2
   test_fold_until
   test_fold2_until

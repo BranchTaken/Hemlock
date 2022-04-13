@@ -939,10 +939,25 @@ end
 let to_array t =
   SetToArray.(to_array (init t))
 
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_v t formatter =
+  let kvcmp (k0, _) (k1, _) = t.cmper.cmp k0 k1 in
+  let t_sorted = Array.sort ~cmp:kvcmp (to_array t) |> Array.to_list in
+  List.fmt ~alt ~width (fun (k, v) formatter ->
+    formatter
+    |> Fmt.fmt "("
+    |> t.cmper.pp k
+    |> Fmt.fmt ", "
+    |> fmt_v v
+    |> Fmt.fmt ")"
+  ) t_sorted formatter
+
+let pp fmt_v t formatter =
+  fmt fmt_v t formatter
+
 (**************************************************************************************************)
 (* Begin test support. *)
 
-let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_v t formatter =
+let fmt_internals ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) fmt_v t formatter =
   let fmt_sep ~alt ~width ?(edge=false) formatter = begin
     formatter
     |> Fmt.fmt (match alt, edge with true, _ -> "\n" | false, false -> "; " | false, true -> "")

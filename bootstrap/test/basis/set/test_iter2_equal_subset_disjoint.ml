@@ -1,6 +1,5 @@
 open! Basis.Rudiments
 open! Basis
-open SetTest
 open Set
 
 let test () =

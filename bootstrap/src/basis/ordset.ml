@@ -147,3 +147,9 @@ let reduce ~f t =
 
 let reduce_hlt ~f t =
   Ordmap.kreduce_hlt ~f t
+
+let fmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) t formatter =
+  List.fmt ~alt ~width (cmper t).pp (to_list t) formatter
+
+let pp t formatter =
+  fmt t formatter

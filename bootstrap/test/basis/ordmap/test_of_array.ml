@@ -10,7 +10,7 @@ let test () =
     |> Fmt.fmt "of_array "
     |> (Array.pp (pp_kv_pair String.pp)) kvs
     |> Fmt.fmt " -> "
-    |> (fmt ~alt:true String.pp) ordmap
+    |> (fmt_internals ~alt:true String.pp) ordmap
     |> Fmt.fmt "\n"
     |> ignore;
     validate ordmap
