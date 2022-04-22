@@ -1896,11 +1896,21 @@ let fmt ?pad ?just ?alt ?width ?pretty s formatter =
 module Fmt = struct
   let empty : (module Fmt.Formatter) =
     (module struct
-      type t = string list
-      let state = []
-      let fmt s t =
-        s :: t
-      let sync t =
-        Fmt.To_string (join_rev t)
+      let batch_count = 128L
+      type t = {
+        batch_rem: uns;
+        elms: string list;
+      }
+      let state = {batch_rem=batch_count; elms=[]}
+      let fmt s {batch_rem; elms} =
+        match batch_rem with
+        | 0L -> begin
+            (* Join a batch of inputs to limit list and per string overheads. *)
+            let batch, elms' = List.rev_split batch_count elms in
+            {batch_rem=pred batch_count; elms=s :: (join batch) :: elms'}
+          end
+        | _ -> {batch_rem=pred batch_rem; elms=s :: elms}
+      let sync {elms; _} =
+        Fmt.To_string (join_rev elms)
     end)
 end
