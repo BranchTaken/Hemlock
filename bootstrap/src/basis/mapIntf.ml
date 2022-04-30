@@ -136,11 +136,11 @@ module type S = sig
 
   val amend: 'k -> f:('v option -> 'v option) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [amend k ~f t] returns an incremental derivative of [t] that is equivalent to [t] in all
-      mappings except possibly for key [k], as determined by the result of [~f v_opt], where [v_opt
-      = Some v] indicates [k] is associated with [v] in [t], and [v_opt = None] indicates [k] is not
-      a key in [t]. The result contains a mapping from [k] to [v'] if [~f v_opt] returns [Some v'];
-      the result contains no mapping for [k] if [~f v_opt] returns [None]. O(lg n) time complexity
-      if ordered, O(1) time complexity if unordered. *)
+      mappings except possibly for key [k], as determined by the result of [~f v_opt], where
+      [v_opt = Some v] indicates [k] is associated with [v] in [t], and [v_opt = None] indicates [k]
+      is not a key in [t]. The result contains a mapping from [k] to [v'] if [~f v_opt] returns
+      [Some v']; the result contains no mapping for [k] if [~f v_opt] returns [None]. O(lg n) time
+      complexity if ordered, O(1) time complexity if unordered. *)
 
   (** {1 Map operations} *)
 
