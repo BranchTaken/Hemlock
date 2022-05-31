@@ -816,6 +816,18 @@ let find_map ~f t =
     | None -> None, false
   ) t
 
+let map ~f t =
+  fold ~init:(empty (cmper_m t)) ~f:(fun accum (k, v) ->
+    let v2 = f (k, v) in
+    insert_hlt ~k ~v:v2 accum
+  ) t
+
+let fold_map ~init ~f t =
+  fold ~init:(init, empty (cmper_m t)) ~f:(fun (accum, t2) (k, v) ->
+    let accum, v2 = f accum (k, v) in
+    accum, insert_hlt ~k ~v:v2 t2
+  ) t
+
 let filter ~f t =
   fold ~init:(empty (cmper_m t)) ~f:(fun accum (k, v) ->
     match f (k, v) with

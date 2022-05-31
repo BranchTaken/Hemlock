@@ -8,15 +8,19 @@
   test_filteri
   test_filteri_map
   test_fmt
+  test_fold_map
   test_fold_right_until
   test_fold_until
   test_fold2
   test_fold2_until
+  test_foldi_map
   test_hash_fold
   test_hash_fold_empty
   test_inter
   test_iter2_equal_subset_disjoint
   test_kreduce
+  test_map
+  test_mapi
   test_mem_get_amend
   test_mem_get_insert_insert_hlt
   test_mem_get_insert_subset

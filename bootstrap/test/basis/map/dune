@@ -7,6 +7,7 @@
   test_filter_map
   test_fmt
   test_fold2
+  test_fold_map
   test_fold_until
   test_fold2_until
   test_hash_fold
@@ -14,6 +15,7 @@
   test_inter
   test_iter2_equal_subset_disjoint
   test_kreduce
+  test_map
   test_mem_get_amend
   test_mem_get_insert_subset
   test_mem_get_insert_insert_hlt

@@ -211,6 +211,15 @@ module type S = sig
   (** [find_map ~f t] iterates over [t] and returns [Some a] for a mapping which [f] returns [Some
       a], or [None] if [f] always returns [None]. *)
 
+  val map: f:(('k * 'v) -> 'v2) -> ('k, 'v, 'cmp) t -> ('k, 'v2, 'cmp) t
+  (** [map ~f t] creates a map with values mapped by from the input values, according to the mapping
+      function [f]. Θ(n) time complexity. *)
+
+  val fold_map: init:'accum -> f:('accum -> ('k * 'v) -> 'accum * 'v2) -> ('k, 'v, 'cmp) t
+    -> 'accum * ('k, 'v2, 'cmp) t
+  (** [fold_map ~init ~f t] creates an accumulated result and map with values mapped from the input
+      values, according to the folding mapping function [f]. Θ(n) time complexity. *)
+
   val filter: f:(('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [filter ~f t] creates a map with contents filtered by [~f]. Only mappings for which the filter
       function returns [true] are incorporated into the result. Θ(n) time complexity. *)
@@ -343,6 +352,15 @@ module type SOrd = sig
   val findi_map: f:(uns -> ('k * 'v) -> 'a option) -> ('k, 'v, 'cmp) t -> 'a option
   (** [findi_map ~f t] iterates from left to right over [t] with index provided to [f] and returns
       [Some a] for a mapping which [f] returns [Some a], or [None] if [f] always returns [None]. *)
+
+  val mapi: f:(uns -> ('k * 'v) -> 'v2) -> ('k, 'v, 'cmp) t -> ('k, 'v2, 'cmp) t
+  (** [mapi ~f t] creates a map with values mapped by from the input values, according to the
+      indexed mapping function [f]. Θ(n) time complexity. *)
+
+  val foldi_map: init:'accum -> f:(uns -> 'accum -> ('k * 'v) -> 'accum * 'v2) -> ('k, 'v, 'cmp) t
+    -> 'accum * ('k, 'v2, 'cmp) t
+  (** [foldi_map ~init ~f t] creates an accumulated result and map with values mapped from the input
+      values, according to the indexed folding mapping function [f]. Θ(n) time complexity. *)
 
   val filteri: f:(uns -> ('k * 'v) -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
   (** [filteri ~f t] creates a map with contents filtered by [~f]. Only mappings for which the
