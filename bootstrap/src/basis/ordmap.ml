@@ -1026,6 +1026,39 @@ let diff t0 t1 =
   let root' = fn t0.cmper t0.root t1.root in
   {t0 with root=root'}
 
+let map ~f t =
+  let rec fn ~f = function
+    | Empty -> Empty
+    | Leaf {k; v} -> begin
+        let v2 = f (k, v) in
+        leaf_init (k, v2)
+      end
+    | Node {l; k; v; n=_; h=_; r} -> begin
+        let l' = fn ~f l in
+        let r' = fn ~f r in
+        let v2 = f (k, v) in
+        join l' (k, v2) r'
+      end
+  in
+  {t with root=fn ~f t.root}
+
+let fold_map ~init ~f t =
+  let rec fn ~f accum = function
+    | Empty -> accum, Empty
+    | Leaf {k; v} -> begin
+        let accum, v2 = f accum (k, v) in
+        accum, leaf_init (k, v2)
+      end
+    | Node {l; k; v; n=_; h=_; r} -> begin
+        let accum, l' = fn ~f accum l in
+        let accum, r' = fn ~f accum r in
+        let accum, v2 = f accum (k, v) in
+        accum, join l' (k, v2) r'
+      end
+  in
+  let accum, root = fn ~f init t.root in
+  accum, {t with root}
+
 let filter ~f t =
   let rec fn ~f node = begin
     match node with
@@ -1082,6 +1115,41 @@ let filteri ~f t =
       end
   end in
   {t with root=fn ~f 0L t.root}
+
+let mapi ~f t =
+  let rec fn ~f base = function
+    | Empty -> Empty
+    | Leaf {k; v} -> begin
+        let v2 = f base (k, v) in
+        leaf_init (k, v2)
+      end
+    | Node {l; k; v; n=_; h=_; r} -> begin
+        let index = base + (nnodes l) in
+        let l' = fn ~f base l in
+        let r' = fn ~f (succ index) r in
+        let v2 = f index (k, v) in
+        join l' (k, v2) r'
+      end
+  in
+  {t with root=fn ~f 0L t.root}
+
+let foldi_map ~init ~f t =
+  let rec fn ~f accum base = function
+    | Empty -> accum, Empty
+    | Leaf {k; v} -> begin
+        let accum, v2 = f base accum (k, v) in
+        accum, leaf_init (k, v2)
+      end
+    | Node {l; k; v; n=_; h=_; r} -> begin
+        let index = base + (nnodes l) in
+        let accum, l' = fn ~f accum base l in
+        let accum, r' = fn ~f accum (succ index) r in
+        let accum, v2 = f index accum (k, v) in
+        accum, join l' (k, v2) r'
+      end
+  in
+  let accum, root = fn ~f init 0L t.root in
+  accum, {t with root}
 
 let filteri_map ~f t =
   let rec fn ~f base = function
