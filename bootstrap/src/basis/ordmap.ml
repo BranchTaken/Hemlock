@@ -507,17 +507,17 @@ module SeqPoly3Fold2 = struct
   let length t =
     match t.cursor_opt with
     | None -> 0L
-    | Some cursor -> length (Cursor.container cursor)
+    | Some cursor -> (length (Cursor.container cursor)) - (index t)
 
   let next t =
-    assert (index t < length t);
+    assert (length t > 0L);
     let cursor = Option.value_hlt t.cursor_opt in
     let (k, v) = Cursor.rget cursor in
     let cursor' = Cursor.succ cursor in
     (k, v), {cursor_opt=Some cursor'}
 
   let next_opt t =
-    match (index t) < (length t) with
+    match (length t > 0L) with
     | false -> None
     | true -> Some (next t)
 
