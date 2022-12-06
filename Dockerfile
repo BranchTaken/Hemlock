@@ -47,25 +47,3 @@ RUN git clone ~/origin . \
     && (cd bootstrap; opam exec -- dune runtest) \
     && HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT=${HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT:?arg-is-required} \
         python3 .github/scripts/check_ocp_indent.py
-
-FROM --platform=${HEMLOCK_PLATFORM} base AS dev
-USER root
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-        meson \
-        openssh-client \
-    && rm -rf /var/lib/apt/lists/*
-ARG DOTFILES_URL
-ARG DOTFILES_HASH
-USER hemlock
-WORKDIR /home/hemlock
-RUN --mount=type=ssh,uid=1000,gid=1000 \
-    --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    ([ -z ${DOTFILES_URL} ] || \
-        mkdir -p -m 0700 ~/.ssh \
-        && ssh-keyscan -H github.com \
-            >> ~/.ssh/known_hosts \
-        && git clone -v ${DOTFILES_URL} .dotfiles) \
-    && ([ ! -f .dotfiles/install.sh ] || .dotfiles/install.sh)
-COPY --chown=hemlock:hemlock --from=prod /home/hemlock/.opam /home/hemlock/.opam
