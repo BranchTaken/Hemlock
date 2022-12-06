@@ -23,16 +23,16 @@ Install [docker](https://docs.docker.com/engine/install/).
 
 Install [docker compose](https://docs.docker.com/compose/cli-command/).
 
-Build the Hemlock `prod` docker image from the root of the Hemlock repo checkout.
+Build the Hemlock docker image from the root of the Hemlock repo checkout.
 
 ```sh
-docker compose build prod
+docker compose build
 ```
 
-Run a Hemlock `prod` docker container.
+Run a Hemlock docker container.
 
 ```sh
-docker compose run prod
+docker compose run
 ```
 
 (Optional) Install
@@ -40,8 +40,8 @@ docker compose run prod
 enables building and running cross-platform images.
 ```sh
 docker run --privileged --rm tonistiigi/binfmt --install all
-HEMLOCK_PLATFORM=linux/arm64 docker compose build prod
-HEMLOCK_PLATFORM=linux/arm64 docker compose run prod
+HEMLOCK_PLATFORM=linux/arm64 docker compose build
+HEMLOCK_PLATFORM=linux/arm64 docker compose run
 ```
 
 #### Native Prerequisites

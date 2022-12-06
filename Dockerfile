@@ -13,8 +13,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -l -m -U -G sudo -s /bin/bash hemlock \
     && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
-
-FROM --platform=${HEMLOCK_PLATFORM} base AS prod
 ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION
 USER hemlock
 WORKDIR /home/hemlock
@@ -31,7 +29,7 @@ RUN opam init \
     && opam install -y --deps-only . \
     && rm Hemlock.opam
 
-FROM --platform=${HEMLOCK_PLATFORM} prod AS pre-push
+FROM --platform=${HEMLOCK_PLATFORM} base AS pre-push
 ARG HEMLOCK_PRE_PUSH_CLONE_PATH
 ARG HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT
 USER hemlock

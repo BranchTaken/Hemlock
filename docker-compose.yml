@@ -1,21 +1,20 @@
 version: "3.9"
 services:
-  prod:
+  base:
     build:
       args:
         - HEMLOCK_BOOTSTRAP_OCAML_VERSION=4.14.0
         - HEMLOCK_PLATFORM
         - HEMLOCK_UBUNTU_TAG=rolling
       context: .
-      target: prod
-    container_name: branchtaken__hemlock__prod
-    image: branchtaken/hemlock:prod
-    working_dir: /home/hemlock/Hemlock
+      target: base
+    container_name: branchtaken__hemlock__base
+    image: branchtaken/hemlock:base
   pre-push:
     build:
       args:
         - HEMLOCK_PRE_PUSH_CLONE_PATH
         - HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT
       target: pre-push
-    extends: prod
+    extends: base
     image: branchtaken/hemlock:pre-push
