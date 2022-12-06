@@ -3,9 +3,9 @@ services:
   prod:
     build:
       args:
-        - HEMLOCK_BOOTSTRAP_OCAML_VERSION
+        - HEMLOCK_BOOTSTRAP_OCAML_VERSION=4.14.0
         - HEMLOCK_PLATFORM
-        - HEMLOCK_UBUNTU_TAG
+        - HEMLOCK_UBUNTU_TAG=rolling
       context: .
       target: prod
     container_name: branchtaken__hemlock__prod
