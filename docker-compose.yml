@@ -9,17 +9,7 @@ services:
       context: .
       target: prod
     container_name: branchtaken__hemlock__prod
-    cap_add:
-      - SYS_PTRACE
-    environment:
-      - SSH_AUTH_SOCK
     image: branchtaken/hemlock:prod
-    security_opt:
-      - seccomp:unconfined
-    privileged: true
-    volumes:
-      - .:/home/hemlock/Hemlock
-      - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
     working_dir: /home/hemlock/Hemlock
   pre-push:
     build:

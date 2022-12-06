@@ -13,7 +13,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -l -m -U -G sudo -s /bin/bash hemlock \
     && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
-CMD [ "/bin/bash" ]
 
 FROM --platform=${HEMLOCK_PLATFORM} base AS prod
 ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION
@@ -28,10 +27,7 @@ RUN opam init \
         --shell-setup \
         --yes \
     && opam switch create ${HEMLOCK_BOOTSTRAP_OCAML_VERSION} \
-    && opam install -y \
-        ocaml-lsp-server \
-        ocp-indent \
-        utop \
+    && opam install -y ocp-indent \
     && opam install -y --deps-only . \
     && rm Hemlock.opam
 
