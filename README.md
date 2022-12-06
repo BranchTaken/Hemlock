@@ -44,33 +44,6 @@ HEMLOCK_PLATFORM=linux/arm64 docker compose build prod
 HEMLOCK_PLATFORM=linux/arm64 docker compose run prod
 ```
 
-##### (Optional) Building Dotfiles Into `dev` Image
-
-Set a `DOTFILES_URL` environment variable to include your dotfiles in the Hemlock `dev` image.
-
-```sh
-export DOTFILES_URL=https://github.com/<you>/dotfiles.git
-docker compose build dev
-docker compose run dev
-```
-
-Note that cloning dotfiles via SSH is not supported due to current `docker compose` limitations.
-
-You may include an `install.sh` script at the base of your dotfiles repo to automatically execute
-dotfiles setup during `docker compose build dev`.
-
-Set an additional environment variable, `DOTFILES_HASH` if you need `docker compose build dev` to
-rebuild dotfiles whenever the hash changes. This is useful when making upstream changes in your
-dotfiles repo. You may find it best to set `DOTFILES_*` variables programmatically via your shell
-setup script like so.
-
-```sh
-pushd $YOUR_DOTFILES_PATH > /dev/null
-export DOTFILES_URL=$(git remote get-url origin 2> /dev/null || :)
-export DOTFILES_HASH=$(git rev-parse origin/main 2> /dev/null || :)
-popd > /dev/null
-```
-
 #### Native Prerequisites
 
 The bootstrap compiler depends on [OCaml](http://ocaml.org/) and the [Dune](https://dune.build/)

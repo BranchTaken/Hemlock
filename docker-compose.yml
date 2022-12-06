@@ -29,12 +29,3 @@ services:
       target: pre-push
     extends: prod
     image: branchtaken/hemlock:pre-push
-  dev:
-    build:
-      args:
-        - DOTFILES_HASH
-        - DOTFILES_URL
-      target: dev
-    container_name: branchtaken__hemlock__dev
-    extends: prod
-    image: branchtaken/hemlock:dev
