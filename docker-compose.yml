@@ -7,7 +7,6 @@ services:
         - HEMLOCK_PLATFORM
         - HEMLOCK_UBUNTU_TAG
       context: .
-      dockerfile: .dockerfile
       target: prod
     container_name: branchtaken__hemlock__prod
     cap_add:
