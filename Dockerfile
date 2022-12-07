@@ -8,7 +8,6 @@ RUN apt-get update \
         liburing-dev \
         m4 \
         opam \
-        python3 \
         sudo \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -l -m -U -G sudo -s /bin/bash hemlock \
