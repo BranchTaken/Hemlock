@@ -22,11 +22,3 @@ services:
     container_name: branchtaken__hemlock__tested
     extends: latest
     image: branchtaken/hemlock:tested
-  pre-push:
-    build:
-      args:
-        - HEMLOCK_PRE_PUSH_CLONE_PATH
-        - HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT
-      target: pre-push
-    extends: base
-    image: branchtaken/hemlock:pre-push
