@@ -43,16 +43,3 @@ RUN find . -type f -regex '.*\mli?' | xargs -- opam exec -- ocp-indent -i \
     && opam exec -- dune build \
     && opam exec -- dune runtest \
     && rm -rf _build
-
-FROM --platform=${HEMLOCK_PLATFORM} base AS pre-push
-ARG HEMLOCK_PRE_PUSH_CLONE_PATH
-ARG HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT
-USER hemlock
-WORKDIR /home/hemlock/origin
-COPY --chown=hemlock:hemlock ${HEMLOCK_PRE_PUSH_CLONE_PATH:?arg-is-required} .
-WORKDIR /home/hemlock/Hemlock
-RUN git clone ~/origin . \
-    && (cd bootstrap; opam exec -- dune build) \
-    && (cd bootstrap; opam exec -- dune runtest) \
-    && HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT=${HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT:?arg-is-required} \
-        python3 .github/scripts/check_ocp_indent.py
