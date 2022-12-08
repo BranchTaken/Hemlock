@@ -16,6 +16,12 @@ services:
     container_name: branchtaken__hemlock__latest
     extends: base
     image: branchtaken/hemlock:latest
+  tested:
+    build:
+      target: tested
+    container_name: branchtaken__hemlock__tested
+    extends: latest
+    image: branchtaken/hemlock:tested
   pre-push:
     build:
       args:
