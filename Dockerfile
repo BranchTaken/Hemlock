@@ -1,5 +1,5 @@
 ARG HEMLOCK_PLATFORM=$BUILDPLATFORM
-ARG HEMLOCK_UBUNTU_TAG
+ARG HEMLOCK_UBUNTU_TAG=rolling
 FROM --platform=${HEMLOCK_PLATFORM} ubuntu:${HEMLOCK_UBUNTU_TAG} AS base
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
@@ -12,7 +12,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -l -m -U -G sudo -s /bin/bash hemlock \
     && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
-ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION
+ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION=4.14.0
 USER hemlock
 WORKDIR /home/hemlock
 COPY --chown=hemlock:hemlock bootstrap/Hemlock.opam .
