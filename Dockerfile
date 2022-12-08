@@ -29,6 +29,12 @@ RUN opam init \
     && opam install -y --deps-only . \
     && rm Hemlock.opam
 
+FROM --platform=${HEMLOCK_PLATFORM} base AS latest
+USER hemlock
+WORKDIR /home/hemlock/Hemlock
+COPY --chown=hemlock:hemlock /.git/ .git
+RUN git reset --hard
+
 FROM --platform=${HEMLOCK_PLATFORM} base AS pre-push
 ARG HEMLOCK_PRE_PUSH_CLONE_PATH
 ARG HEMLOCK_CHECK_OCP_INDENT_BASE_COMMIT
