@@ -354,7 +354,7 @@ Non-terminals
         Follow: {"ε"}
         Productions
             Hmhi' ::= Hmhi "⊥"
-IELR(1) States
+PGM(1) States
     State 0
         Kernel
             [Hmh' ::= · Hmh "⊥", {"ε"}]

@@ -47,7 +47,7 @@ Non-terminals
         Follow: {}
         Productions
             NUnusedB ::= TUnusedA
-IELR(1) States
+LR(1) States
     State 0
         Kernel
             [S' ::= · S "⊥", {"ε"}]

@@ -45,7 +45,7 @@ Non-terminals
         Follow: {EOI}
         Productions
             D ::= epsilon
-IELR(1) States
+LR(1) States
     State 0
         Kernel
             [S' ::= · S "⊥", {"ε"}]

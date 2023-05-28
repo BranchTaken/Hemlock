@@ -38,7 +38,7 @@ Parameters:
 - `-hmh` | `-hocc`: Write a complete grammar specification in `hocc` format to
   `<outdir>/hocc/<basename>.hmh`, but with all non-terminal types and reduction code omitted.
 - `-a[lgorithm] <alg>`: Use the specified `<alg>`orithm for generating an automoton. Defaults to
-  `ielr1`.
+  `lr1`.
   + `lr1`: Canonical LR(1) automoton[^knuth1965].
   + `ielr1`: Compact LR(1) automoton[^denny2009] that recognizes valid inputs identically to `lr1`
     automotons, even in the presence of precedence-resolved ambiguities.

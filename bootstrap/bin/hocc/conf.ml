@@ -50,7 +50,7 @@ let default = {
   text=false;
   html=false;
   hocc=false;
-  algorithm=Ielr1;
+  algorithm=Lr1;
   resolve=true;
   hemlock=false;
   ocaml=false;
@@ -79,7 +79,7 @@ Parameters:
                       "<outdir>/hocc/<basename>.hmh", but with all non-terminal
                       types and reduction code omitted.
  -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an automoton.
-                      Defaults to ielr1.
+                      Defaults to lr1.
                       - lr1: Canonical LR(1) automoton.
                       - ielr1: Compact LR(1) automoton that recognizes valid
                         inputs identically to lr1 automotons, even in the

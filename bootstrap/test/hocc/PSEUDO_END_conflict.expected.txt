@@ -50,7 +50,7 @@ Non-terminals
         Follow: {"ε"}
         Productions
             Expr' ::= Expr "⊥"
-IELR(1) States
+LR(1) States
     State 0
         Kernel
             [Expr' ::= · Expr "⊥", {"ε"}]

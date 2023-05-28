@@ -40,7 +40,7 @@ Non-terminals
             E ::= ID
             E ::= E "*" E prec p1
             E ::= E "+" E prec p2
-IELR(1) States
+LR(1) States
     State 0
         Kernel
             [S' ::= · S "⊥", {"ε"}]
