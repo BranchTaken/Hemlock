@@ -42,7 +42,7 @@ Non-terminals
         Follow: {EQUAL, EOI}
         Productions
             R ::= L
-IELR(1) States
+PGM(1) States
     State 0
         Kernel
             [S' ::= · S "⊥", {"ε"}]

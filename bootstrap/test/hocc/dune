@@ -324,7 +324,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig1_rno.out (run ./hocc_test %{bin:hocc} IelrFig1 -resolve no -v -txt -hmh)))))
+   (with-outputs-to IelrFig1_rno.out (run ./hocc_test %{bin:hocc} IelrFig1 -resolve no -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -341,7 +341,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig1.out (run ./hocc_test %{bin:hocc} IelrFig1 -v -txt -hmh)))))
+   (with-outputs-to IelrFig1.out (run ./hocc_test %{bin:hocc} IelrFig1 -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -358,7 +358,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig2_rno.out (run ./hocc_test %{bin:hocc} IelrFig2 -resolve no -v -txt -hmh)))))
+   (with-outputs-to IelrFig2_rno.out (run ./hocc_test %{bin:hocc} IelrFig2 -resolve no -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -375,7 +375,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig2.out (run ./hocc_test %{bin:hocc} IelrFig2 -v -txt -hmh)))))
+   (with-outputs-to IelrFig2.out (run ./hocc_test %{bin:hocc} IelrFig2 -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -392,7 +392,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig3_rno.out (run ./hocc_test %{bin:hocc} IelrFig3 -resolve no -v -txt -hmh)))))
+   (with-outputs-to IelrFig3_rno.out (run ./hocc_test %{bin:hocc} IelrFig3 -resolve no -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -409,7 +409,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig3.out (run ./hocc_test %{bin:hocc} IelrFig3 -v -txt -hmh)))))
+   (with-outputs-to IelrFig3.out (run ./hocc_test %{bin:hocc} IelrFig3 -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -426,7 +426,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig4_rno.out (run ./hocc_test %{bin:hocc} IelrFig4 -resolve no -v -txt -hmh)))))
+   (with-outputs-to IelrFig4_rno.out (run ./hocc_test %{bin:hocc} IelrFig4 -resolve no -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -443,7 +443,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig5_rno.out (run ./hocc_test %{bin:hocc} IelrFig5 -resolve no -v -txt -hmh)))))
+   (with-outputs-to IelrFig5_rno.out (run ./hocc_test %{bin:hocc} IelrFig5 -resolve no -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -460,7 +460,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig5.out (run ./hocc_test %{bin:hocc} IelrFig5 -v -txt -hmh)))))
+   (with-outputs-to IelrFig5.out (run ./hocc_test %{bin:hocc} IelrFig5 -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -477,7 +477,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig6.out (run ./hocc_test %{bin:hocc} IelrFig6 -v -txt -hmh)))))
+   (with-outputs-to IelrFig6.out (run ./hocc_test %{bin:hocc} IelrFig6 -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -542,7 +542,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -txt -hmh)))))
+   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -a pgm1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -576,7 +576,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to B.out (run ./hocc_test %{bin:hocc} B -v -txt -hmh)))))
+   (with-outputs-to B.out (run ./hocc_test %{bin:hocc} B -v -a pgm1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -593,7 +593,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to C.out (run ./hocc_test %{bin:hocc} C -v -txt -hmh)))))
+   (with-outputs-to C.out (run ./hocc_test %{bin:hocc} C -v -a pgm1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -627,7 +627,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to E.out (run ./hocc_test %{bin:hocc} E -v -txt -hmh)))))
+   (with-outputs-to E.out (run ./hocc_test %{bin:hocc} E -v -a pgm1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -661,7 +661,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to G.out (run ./hocc_test %{bin:hocc} G -v -txt -hmh)))))
+   (with-outputs-to G.out (run ./hocc_test %{bin:hocc} G -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -678,7 +678,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to H.out (run ./hocc_test %{bin:hocc} H -v -txt -hmh)))))
+   (with-outputs-to H.out (run ./hocc_test %{bin:hocc} H -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -695,7 +695,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to M.out (run ./hocc_test %{bin:hocc} M -v -txt -hmh)))))
+   (with-outputs-to M.out (run ./hocc_test %{bin:hocc} M -v -a pgm1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -740,7 +740,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gawk.out (run ./hocc_test %{bin:hocc} Gawk -v)))))
+   (with-outputs-to Gawk.out (run ./hocc_test %{bin:hocc} Gawk -v -a ielr1)))))
 (rule
  (alias runtest)
  (action (diff Gawk.expected Gawk.out)))
@@ -752,7 +752,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gpic.out (run ./hocc_test %{bin:hocc} Gpic -v)))))
+   (with-outputs-to Gpic.out (run ./hocc_test %{bin:hocc} Gpic -v -a ielr1)))))
 (rule
  (alias runtest)
  (action (diff Gpic.expected Gpic.out)))

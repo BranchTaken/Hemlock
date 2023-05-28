@@ -78,7 +78,7 @@ Non-terminals
         Follow: {Dt, Et}
         Productions
             Vn ::= epsilon
-IELR(1) States
+PGM(1) States
     State 0
         Kernel
             [Sn' ::= · Sn "⊥", {"ε"}]
@@ -108,7 +108,7 @@ IELR(1) States
             [Tn ::= · Ut Xn At, {At, Dt, Et, EOI}]
         Actions
             Tt : ShiftPrefix 5
-            Ut : ShiftPrefix 19
+            Ut : ShiftPrefix 18
         Gotos
             Yn : 6
             Zn : 7
@@ -154,12 +154,12 @@ IELR(1) States
         Kernel
             [Xn ::= At Yn · Dt, {At, Dt, Et, EOI}]
         Actions
-            Dt : ShiftPrefix 20
+            Dt : ShiftPrefix 19
     State 7
         Kernel
             [Xn ::= At Zn · Ct, {At, Dt, Et, EOI}]
         Actions
-            Ct : ShiftPrefix 21
+            Ct : ShiftPrefix 20
     State 8
         Kernel
             [Xn ::= At Tn ·, {At, Dt, Et, EOI}]
@@ -175,19 +175,19 @@ IELR(1) States
         Added
             [Wn ::= · Ut Vn, {Et}]
         Actions
-            Ut : ShiftPrefix 22
+            Ut : ShiftPrefix 21
         Gotos
             Wn : 16
     State 10
         Kernel
             [Xn ::= Bt Yn · Et, {At, Dt, Et, EOI}]
         Actions
-            Et : ShiftPrefix 23
+            Et : ShiftPrefix 22
     State 11
         Kernel
             [Xn ::= Bt Zn · Dt, {At, Dt, Et, EOI}]
         Actions
-            Dt : ShiftPrefix 24
+            Dt : ShiftPrefix 23
     State 12
         Kernel
             [Xn ::= Bt Tn ·, {At, Dt, Et, EOI}]
@@ -216,7 +216,7 @@ IELR(1) States
             Ct : Reduce Zn ::= Tt Ut
             Dt : Reduce Vn ::= epsilon
         Gotos
-            Vn : 25
+            Vn : 24
     State 16
         Kernel
             [Yn ::= Tt Wn ·, {Dt, Et}]
@@ -228,20 +228,20 @@ IELR(1) States
             [Yn ::= Ut Xn ·, {Dt, Et}]
             [Tn ::= Ut Xn · At, {At, Dt, Et, EOI}]
         Actions
-            At : ShiftPrefix 26
+            At : ShiftPrefix 25
             Dt : Reduce Yn ::= Ut Xn
             Et : Reduce Yn ::= Ut Xn
     State 18
         Kernel
-            [Yn ::= Ut · Xn, {Et}]
+            [Yn ::= Ut · Xn, {Dt, Et}]
             [Tn ::= Ut · Xn At, {At, Dt, Et, EOI}]
         Added
-            [Xn ::= · At Yn Dt, {At, Et}]
-            [Xn ::= · At Zn Ct, {At, Et}]
-            [Xn ::= · At Tn, {At, Et}]
-            [Xn ::= · Bt Yn Et, {At, Et}]
-            [Xn ::= · Bt Zn Dt, {At, Et}]
-            [Xn ::= · Bt Tn, {At, Et}]
+            [Xn ::= · At Yn Dt, {At, Dt, Et}]
+            [Xn ::= · At Zn Ct, {At, Dt, Et}]
+            [Xn ::= · At Tn, {At, Dt, Et}]
+            [Xn ::= · Bt Yn Et, {At, Dt, Et}]
+            [Xn ::= · Bt Zn Dt, {At, Dt, Et}]
+            [Xn ::= · Bt Tn, {At, Dt, Et}]
         Actions
             At : ShiftPrefix 1
             Bt : ShiftPrefix 2
@@ -249,29 +249,13 @@ IELR(1) States
             Xn : 17
     State 19
         Kernel
-            [Yn ::= Ut · Xn, {Dt}]
-            [Tn ::= Ut · Xn At, {At, Dt, Et, EOI}]
-        Added
-            [Xn ::= · At Yn Dt, {At, Dt}]
-            [Xn ::= · At Zn Ct, {At, Dt}]
-            [Xn ::= · At Tn, {At, Dt}]
-            [Xn ::= · Bt Yn Et, {At, Dt}]
-            [Xn ::= · Bt Zn Dt, {At, Dt}]
-            [Xn ::= · Bt Tn, {At, Dt}]
-        Actions
-            At : ShiftPrefix 1
-            Bt : ShiftPrefix 2
-        Gotos
-            Xn : 17
-    State 20
-        Kernel
             [Xn ::= At Yn Dt ·, {At, Dt, Et, EOI}]
         Actions
             At : Reduce Xn ::= At Yn Dt
             Dt : Reduce Xn ::= At Yn Dt
             Et : Reduce Xn ::= At Yn Dt
             EOI : Reduce Xn ::= At Yn Dt
-    State 21
+    State 20
         Kernel
             [Xn ::= At Zn Ct ·, {At, Dt, Et, EOI}]
         Actions
@@ -279,7 +263,7 @@ IELR(1) States
             Dt : Reduce Xn ::= At Zn Ct
             Et : Reduce Xn ::= At Zn Ct
             EOI : Reduce Xn ::= At Zn Ct
-    State 22
+    State 21
         Kernel
             [Zn ::= Tt Ut ·, {Dt}]
             [Wn ::= Ut · Vn, {Et}]
@@ -289,8 +273,8 @@ IELR(1) States
             Dt : Reduce Zn ::= Tt Ut
             Et : Reduce Vn ::= epsilon
         Gotos
-            Vn : 25
-    State 23
+            Vn : 24
+    State 22
         Kernel
             [Xn ::= Bt Yn Et ·, {At, Dt, Et, EOI}]
         Actions
@@ -298,7 +282,7 @@ IELR(1) States
             Dt : Reduce Xn ::= Bt Yn Et
             Et : Reduce Xn ::= Bt Yn Et
             EOI : Reduce Xn ::= Bt Yn Et
-    State 24
+    State 23
         Kernel
             [Xn ::= Bt Zn Dt ·, {At, Dt, Et, EOI}]
         Actions
@@ -306,13 +290,13 @@ IELR(1) States
             Dt : Reduce Xn ::= Bt Zn Dt
             Et : Reduce Xn ::= Bt Zn Dt
             EOI : Reduce Xn ::= Bt Zn Dt
-    State 25
+    State 24
         Kernel
             [Wn ::= Ut Vn ·, {Dt, Et}]
         Actions
             Dt : Reduce Wn ::= Ut Vn
             Et : Reduce Wn ::= Ut Vn
-    State 26
+    State 25
         Kernel
             [Tn ::= Ut Xn At ·, {At, Dt, Et, EOI}]
         Actions

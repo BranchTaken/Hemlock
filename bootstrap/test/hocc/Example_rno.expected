@@ -1,16 +1,7 @@
 hocc: Parsing "./Example_rno.hmh"
-hocc: Generating IELR(1) specification
+hocc: Generating LR(1) specification
 hocc: 2 precedences, 8 tokens, 5 non-terminals, 9 productions
-hocc: Generating LALR(1) specification as IELR(1) prerequisite
-hocc: LR(1) item set compatibility: lalr1
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++++
-hocc: Generating 14 LR(1) states
-hocc: 8 conflicts in 2 states (0 ⊥, 8 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
-hocc: Gathering IELR(1) conflict contributions..
-hocc: Closing IELR(1) conflict contributions.....
-hocc: Closing IELR(1) state split-stability (^.=unstable/stable).....
-hocc: 0 split-unstable states
-hocc: LR(1) item set compatibility: ielr1
+hocc: LR(1) item set compatibility: lr1
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++++
 hocc: Generating 14 LR(1) states
 hocc: 8 conflicts in 2 states (0 ⊥, 8 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)

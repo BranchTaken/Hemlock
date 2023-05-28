@@ -58,7 +58,7 @@ Non-terminals
         Follow: {"ε"}
         Productions
             Answer' ::= Answer "⊥"
-IELR(1) States
+LR(1) States
     State 0
         Kernel
             [Answer' ::= · Answer "⊥", {"ε"}]
