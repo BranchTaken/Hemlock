@@ -10,7 +10,9 @@ RUN apt-get update \
         opam \
         sudo \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd -l -m -U -G sudo -s /bin/bash hemlock \
+    && mv /home/ubuntu /home/hemlock \
+    && groupmod -n hemlock ubuntu \
+    && usermod -d /home/hemlock -c Hemlock -l hemlock ubuntu \
     && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
 ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION=4.14.0
 USER hemlock
