@@ -1,0 +1,11 @@
+hocc
+    token Ta
+    token Tb
+    start S ::=
+      | Ta A Ta
+      | Ta Ta Tb
+      | Tb A Tb
+    nonterm A ::= B C
+    nonterm B ::= Ta
+    nonterm C ::= D
+    nonterm D ::= epsilon

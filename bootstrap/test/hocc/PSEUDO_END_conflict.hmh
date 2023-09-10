@@ -1,0 +1,20 @@
+hocc
+    left mul
+    token STAR "*" prec mul
+    token SLASH "/" prec mul
+    nonterm MulOp of Token.t ::=
+      | "*" -> STAR
+      | "/" -> SLASH
+
+    left add < mul
+    token PLUS "+" prec add
+    token MINUS "-" prec add
+    nonterm AddOp of Token.t ::=
+      | "+" -> PLUS
+      | "-" -> MINUS
+
+    token INT
+    start Expr ::=
+      | Expr MulOp Expr prec mul
+      | Expr AddOp Expr prec add
+      | INT

@@ -1,0 +1,2 @@
+hocc: Parsing "./Parse_error_uident.hmh"
+hocc: At ["./Parse_error_uident.hmh":2:12.."./Parse_error_uident.hmh":2:18): Expected uident

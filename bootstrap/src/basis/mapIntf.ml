@@ -46,7 +46,7 @@ module type S = sig
 
   val fmt: ?alt:bool -> ?width:int64 -> ('v -> (module Fmt.Formatter) -> (module Fmt.Formatter))
     -> ('k, 'v, 'cmp) t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** [fmt ~alt ~width fmt_v t] uses the [fmt_v] formatter to format a syntactically valid
+  (** [fmt ~alt ~width fmt_v t formatter] uses the [fmt_v] formatter to format a syntactically valid
       associative list representation of [t]. If [~alt=true], the output is broken across multiple
       lines with outermost indentation [~width] (elements are indented to [~width + 4]). *)
 
@@ -212,7 +212,7 @@ module type S = sig
       a], or [None] if [f] always returns [None]. *)
 
   val map: f:(('k * 'v) -> 'v2) -> ('k, 'v, 'cmp) t -> ('k, 'v2, 'cmp) t
-  (** [map ~f t] creates a map with values mapped by from the input values, according to the mapping
+  (** [map ~f t] creates a map with values mapped from the input values, according to the mapping
       function [f]. Θ(n) time complexity. *)
 
   val fold_map: init:'accum -> f:('accum -> ('k * 'v) -> 'accum * 'v2) -> ('k, 'v, 'cmp) t
@@ -354,8 +354,8 @@ module type SOrd = sig
       [Some a] for a mapping which [f] returns [Some a], or [None] if [f] always returns [None]. *)
 
   val mapi: f:(uns -> ('k * 'v) -> 'v2) -> ('k, 'v, 'cmp) t -> ('k, 'v2, 'cmp) t
-  (** [mapi ~f t] creates a map with values mapped by from the input values, according to the
-      indexed mapping function [f]. Θ(n) time complexity. *)
+  (** [mapi ~f t] creates a map with values mapped from the input values, according to the indexed
+      mapping function [f]. Θ(n) time complexity. *)
 
   val foldi_map: init:'accum -> f:(uns -> 'accum -> ('k * 'v) -> 'accum * 'v2) -> ('k, 'v, 'cmp) t
     -> 'accum * ('k, 'v2, 'cmp) t

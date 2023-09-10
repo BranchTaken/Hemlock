@@ -1,0 +1,13 @@
+# The two conflicting ε reductions should be attributed to the start state.
+hocc
+    token Tb
+    token EOI
+    start S ::=
+      | A EOI
+    nonterm A ::= B C
+    nonterm B ::= Tb
+    nonterm C ::=
+      | D
+      | epsilon
+    nonterm D ::=
+      | epsilon

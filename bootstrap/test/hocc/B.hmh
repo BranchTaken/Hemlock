@@ -1,0 +1,21 @@
+hocc
+    token PLUS
+    token STAR
+    token LPAREN
+    token RPAREN
+    token ID
+    token EOI
+
+    start S ::= E EOI
+
+    nonterm E ::=
+      | E PLUS T
+      | T
+
+    nonterm T ::=
+      | T STAR F
+      | F
+
+    nonterm F ::=
+      | LPAREN E RPAREN
+      | ID

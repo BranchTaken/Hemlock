@@ -1,0 +1,16 @@
+hocc
+    token PLUS "+"
+    token NAME
+    token LET "let"
+    token REC "rec"
+    token IN "in"
+    token EOF
+    start Commandline ::=
+      | "let" Term EOF
+      | Term EOF
+    nonterm Term ::=
+      | NAME
+      | Name "+"
+      | "let" Name "in" Term
+      | "rec" Term "in" Term
+    nonterm Name ::= NAME
