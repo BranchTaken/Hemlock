@@ -1823,8 +1823,8 @@ and hmh_extract io hmh =
   let io, symbols, prods, reductions = symbols_init io precs symbols hmh in
   io, precs, symbols, prods, reductions
 
-and gc_states ~resolve io states =
-  let state_indexes_reachable ~resolve states = begin
+and gc_states io states =
+  let state_indexes_reachable states = begin
     let ergo_state_indexes_of_state_index states state_index = begin
       let state = Array.get state_index states in
       let shift_ergo_state_indexes = Ordmap.fold ~init:(Ordset.empty (module State.Index))
@@ -1855,21 +1855,11 @@ and gc_states ~resolve io states =
         | false -> trace states (Ordset.insert ergo_state_index reachable) ergo_state_index
       ) (ergo_state_indexes_of_state_index states state_index)
     end in
-    match resolve with
-    | false -> begin
-        Array.fold ~init:(Ordset.empty (module State.Index))
-          ~f:(fun reachable_state_indexes state ->
-            let state_index = State.index state in
-            Ordset.insert state_index reachable_state_indexes
-          ) states
-      end
-    | true -> begin
-        Ordset.fold ~init:starts ~f:(fun reachable state_index ->
-          trace states reachable state_index
-        ) starts
-      end
+    Ordset.fold ~init:starts ~f:(fun reachable state_index ->
+      trace states reachable state_index
+    ) starts
   end in
-  let reachable_state_indexes = state_indexes_reachable ~resolve states in
+  let reachable_state_indexes = state_indexes_reachable states in
   let nreachable = Ordset.length reachable_state_indexes in
   let nunreachable = Array.length states - nreachable in
   let io =
@@ -1895,7 +1885,6 @@ and gc_states ~resolve io states =
   match nunreachable with
   | 0L -> io, states
   | _ -> begin
-      assert resolve;
       let io =
         io.log
         |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nreachable |> Fmt.fmt " LR(1) state"
@@ -1944,7 +1933,7 @@ and init algorithm ~resolve io hmh =
   in
   let io, precs, symbols, prods, reductions = hmh_extract io hmh in
   let io, _isocores, states = init_inner algorithm ~resolve io precs symbols prods reductions in
-  let io, states = gc_states ~resolve io states in
+  let io, states = gc_states io states in
   let io = log_unused io precs symbols prods states in
   io, {precs; symbols; prods; reductions; states}
 
