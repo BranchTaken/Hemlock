@@ -266,54 +266,53 @@ let compat_lr1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
 
 let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
   {lr1itemsetclosure={index=_XXX; _}; contribs=t_contribs; _} =
-  let contribs_compat contribs0 contribs1 = begin
+  let contribs_compat o_contribs t_contribs = begin
     Contribs.fold2_until ~init:true
       ~f:(fun _ _conflict_state_index Attribs.Akey.{symbol_index; _} aval_opt0 aval_opt1 ->
-        let Attribs.Aval.{contrib=contrib0; _} =
+        let Attribs.Aval.{contrib=o_contrib; _} =
           Option.value ~default:Attribs.Aval.empty aval_opt0 in
-        let Attribs.Aval.{contrib=contrib1; _} =
+        let Attribs.Aval.{contrib=t_contrib; _} =
           Option.value ~default:Attribs.Aval.empty aval_opt1 in
         (* Merge shift into an empty contrib if the other contrib contains shift. If there is a
          * shift action in the conflict, *all* lanes implicitly contribute shift, even if they don't
          * contribute reduces. *)
-        let contrib0, contrib1 =
-          match Contrib.is_empty contrib0 && Contrib.mem_shift contrib1 with
+        let o_contrib, t_contrib =
+          match Contrib.is_empty o_contrib && Contrib.mem_shift t_contrib with
           | false -> begin
-              match Contrib.is_empty contrib1 && Contrib.mem_shift contrib0 with
-              | false -> contrib0, contrib1
-              | true -> contrib0, Contrib.shift
+              match Contrib.is_empty t_contrib && Contrib.mem_shift o_contrib with
+              | false -> o_contrib, t_contrib
+              | true -> o_contrib, Contrib.shift
             end
-          | true -> Contrib.shift, contrib1
+          | true -> Contrib.shift, t_contrib
         in
-        let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index contrib0 contrib1 in
+        let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index o_contrib t_contrib in
         compat, not compat
-      ) contribs0 contribs1
+      ) o_contribs t_contribs
   end in
   let compat = contribs_compat o_contribs t_contribs in
 
 (*
-  let contribs_incompat contribs0 contribs1 = begin
+  let contribs_incompat o_contribs t_contribs = begin
     Contribs.fold2 ~init:()
       ~f:(fun _ _conflict_state_index Attribs.Akey.{symbol_index; _} aval_opt0 aval_opt1 ->
-        let Attribs.Aval.{contrib=contrib0; _} =
+        let Attribs.Aval.{contrib=o_contrib; _} =
           Option.value ~default:Attribs.Aval.empty aval_opt0 in
-        let Attribs.Aval.{contrib=contrib1; _} =
+        let Attribs.Aval.{contrib=t_contrib; _} =
           Option.value ~default:Attribs.Aval.empty aval_opt1 in
-        let contrib0, contrib1 =
-          match Contrib.is_empty contrib0 && Contrib.mem_shift contrib1 with
+        let o_contrib, t_contrib =
+          match Contrib.is_empty o_contrib && Contrib.mem_shift t_contrib with
           | false -> begin
-              match Contrib.is_empty contrib1 && Contrib.mem_shift contrib0 with
-              | false -> contrib0, contrib1
-              | true -> contrib0, Contrib.shift
+              match Contrib.is_empty t_contrib && Contrib.mem_shift o_contrib with
+              | false -> o_contrib, t_contrib
+              | true -> o_contrib, Contrib.shift
             end
-          | true -> Contrib.shift, contrib1
+          | true -> Contrib.shift, t_contrib
         in
-        let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index contrib0 contrib1 in
-        File.Fmt.stderr |> Fmt.fmt "XXX compat=" |> Bool.pp compat |> Fmt.fmt ", conflict_state_index=" |> StateIndex.pp _conflict_state_index |> Fmt.fmt ", symbol=" |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols) |> Fmt.fmt ", contrib0=" |> Contrib.pp_hr symbols prods contrib0 |> Fmt.fmt ", contrib1=" |> Contrib.pp_hr symbols prods contrib1 |> Fmt.fmt "\n" |> ignore;
-      ) contribs0 contribs1
+        let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index o_contrib t_contrib in
+        File.Fmt.stderr |> Fmt.fmt "XXX compat=" |> Bool.pp compat |> Fmt.fmt ", conflict_state_index=" |> StateIndex.pp _conflict_state_index |> Fmt.fmt ", symbol=" |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols) |> Fmt.fmt ", o_contrib=" |> Contrib.pp_hr symbols prods o_contrib |> Fmt.fmt ", t_contrib=" |> Contrib.pp_hr symbols prods t_contrib |> Fmt.fmt "\n" |> ignore;
+      ) o_contribs t_contribs
   end in
-
-  File.Fmt.stderr |> Fmt.fmt "\n\nXXX index=" |> Index.pp index |> Fmt.fmt "\n" |> ignore;
+  File.Fmt.stderr |> Fmt.fmt "\n===\nXXX index=" |> Index.pp index |> Fmt.fmt "\n" |> ignore;
   File.Fmt.stderr |> Fmt.fmt "XXX o_contribs vs t_contribs\n" |> ignore;
   contribs_incompat o_contribs t_contribs;
 
