@@ -40,7 +40,7 @@ Parameters:
 - `-a[lgorithm] <alg>`: Use the specified `<alg>`orithm for generating an automoton. Defaults to
   `lr1`.
   + `lr1`: Canonical LR(1) automoton[^knuth1965].
-  + `ielr1`: Compact LR(1) automoton[^denny2009] that recognizes valid inputs identically to `lr1`
+  + `ielr1`: Compact LR(1) automoton[^denny2010] that recognizes valid inputs identically to `lr1`
     automotons, even in the presence of precedence-resolved ambiguities.
   + `pgm1`: Compact LR(1) automoton[^pager1977] that recognizes valid inputs identically to `lr1`
     automotons, provided there were no precedence-resolved ambiguities in the grammar specification.
@@ -977,7 +977,7 @@ hocc
     Department of Electrical Engineering,
     Massachusetts Institute of Technology, Cambridge, 1969.
 
-[^denny2009]:
+[^denny2010]:
     Joel E. Denny and Brian A. Malloy,
     “The IELR(1) algorithm for generating minimal LR(1) parser tables for non-LR(1) grammars with
     conflict resolution”,
