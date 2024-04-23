@@ -1,124 +1,122 @@
 open Basis
 open! Basis.Rudiments
 
-let gather_transit_contribs ~resolve symbols prods lalr1_states antes ~lalr1_transit_contribs
-    conflict_state_index =
-  (* Backpropagate contribs that were directly attributed, such that all lane antecedents make
-   * equivalent indirect contribs. *)
-  let rec backprop_transit_contribs antes transit_contribs lalr1_transit_contribs marks
-      state_index = begin
-    Array.fold ~init:lalr1_transit_contribs
-      ~f:(fun lalr1_transit_contribs ante_state_index ->
-        match Set.mem ante_state_index marks with
-        | true -> lalr1_transit_contribs
-        | false -> begin
-            let transit = Transit.init ~src:ante_state_index ~dst:state_index in
-            assert (not (Transit.cyclic transit));
-            let transit_contribs_prev = match Ordmap.get transit lalr1_transit_contribs with
-              | None -> TransitContribs.empty
-              | Some transit_contribs_prev -> transit_contribs_prev
-            in
-            let transit_contribs_union =
-              TransitContribs.union transit_contribs transit_contribs_prev in
-            match AnonContribs.equal (TransitContribs.all transit_contribs_union)
-              (TransitContribs.all transit_contribs_prev) with
-            | true -> lalr1_transit_contribs
-            | false -> begin
-                let lalr1_transit_contribs = Ordmap.upsert ~k:transit ~v:transit_contribs_union
-                    lalr1_transit_contribs in
-                let marks = Set.insert ante_state_index marks in
-                backprop_transit_contribs antes transit_contribs lalr1_transit_contribs marks
-                  ante_state_index
-              end
-          end
-      ) (Antes.antes_of_state_index state_index antes)
-  end in
-  let rec ante_transit_contribs ~resolve lalr1_states antes ~lalr1_transit_contribs marks
-      lanectx = begin
-    (* Marking of the current lane segment spanning the start state back to the current state
-     * prevents infinite recursion. It is possible for a grammar to induce a combinatorial explosion
-     * of contributing lanes, but only non-redundant transition contribs lead to recursion, thus
-     * assuring that each transition is recursed on only once. *)
-    let state = LaneCtx.state lanectx in
-    let state_index = State.index state in
-    assert (not (Set.mem state_index marks));
-    let marks = Set.insert state_index marks in
-    (* Accumulate transit contribs and antecedents of `lanectx`. *)
-    let lalr1_transit_contribs, ante_lanectxs =
-      Array.fold ~init:(lalr1_transit_contribs, [])
-        ~f:(fun (lalr1_transit_contribs, ante_lanectxs) ante_state_index ->
-          let ante_state = Array.get ante_state_index lalr1_states in
-          let ante_lanectx = LaneCtx.of_ante ante_state lanectx in
-          let ante_kernel_contribs = LaneCtx.kernel_contribs ante_lanectx in
-(*
-          File.Fmt.stderr |> Fmt.fmt "XXX ante_lanectx=" |> LaneCtx.fmt_hr ~alt:true symbols prods ante_lanectx |> Fmt.fmt "\n" |> ignore;
-*)
-          let transit = LaneCtx.transit ante_lanectx in
-          (* Load current transit contribs. It is possible for there to be existing contribs to
-           * other conflict states. *)
-          let transit_contribs =
-            Ordmap.get transit lalr1_transit_contribs
-            |> Option.value ~default:TransitContribs.empty
-          in
-          let kernel_contribs = TransitContribs.kernel_contribs transit_contribs in
-          let transit_contribs' =
-            TransitContribs.insert_kernel_contribs ante_kernel_contribs transit_contribs in
-          (* Avoid recursing if no new transit contribs were inserted, since no additional
-           * insertions will occur in the recursion. *)
-          let kernel_contribs' = TransitContribs.kernel_contribs transit_contribs' in
-          let lalr1_transit_contribs =
-            match KernelContribs.equal kernel_contribs' kernel_contribs with
-            | true -> lalr1_transit_contribs
-            | false -> begin
-                assert (not (Transit.cyclic transit));
-                let lalr1_transit_contribs =
-                  Ordmap.upsert ~k:transit ~v:transit_contribs' lalr1_transit_contribs in
-                (* Recurse if lanes may extend to antecedents. *)
-                match LaneCtx.traces_length ante_lanectx with
-                | 0L -> lalr1_transit_contribs
-                | _ -> ante_transit_contribs ~resolve lalr1_states antes ~lalr1_transit_contribs
-                    marks ante_lanectx
-              end
-          in
-          let ante_lanectxs = ante_lanectx :: ante_lanectxs in
-          lalr1_transit_contribs, ante_lanectxs
-        ) (Array.filter ~f:(fun ante_state_index -> not (Set.mem ante_state_index marks))
-          (Antes.antes_of_state_index state_index antes))
-    in
-    (* Finish computing direct attributions for `lanectx`. This is done post-order to detect
-     * attributions for which there is a relevant kernel item in `lanectx`, but no relevant item in
-     * any of its antecedents' lane contexts. *)
-    let lanectx = LaneCtx.post_init ante_lanectxs lanectx in
-(*
-    File.Fmt.stderr |> Fmt.fmt "XXX post_init lanectx=" |> LaneCtx.fmt_hr ~alt:true symbols prods lanectx |> Fmt.fmt "\n" |> ignore;
-*)
-    (* Accumulate direct attributions. *)
-    let transit = LaneCtx.transit lanectx in
-    let anon_contribs_direct = LaneCtx.anon_contribs_direct lanectx in
-    let lalr1_transit_contribs = match AnonContribs.is_empty anon_contribs_direct with
+(* Backpropagate contribs that were directly attributed, such that all lane antecedents make
+ * equivalent indirect contribs. *)
+let rec backprop_transit_contribs antes transit_contribs lalr1_transit_contribs marks state_index =
+  Array.fold ~init:lalr1_transit_contribs
+    ~f:(fun lalr1_transit_contribs ante_state_index ->
+      match Set.mem ante_state_index marks with
       | true -> lalr1_transit_contribs
       | false -> begin
-          (* Backpropagate. *)
-          let transit_contribs = TransitContribs.of_anon_contribs anon_contribs_direct in
-          let lalr1_transit_contribs = backprop_transit_contribs antes transit_contribs
-              lalr1_transit_contribs marks state_index in
-          let lalr1_transit_contribs = match Transit.cyclic transit with
-            | true -> lalr1_transit_contribs
-            | false -> begin
-                let transit_contribs_direct =
-                  TransitContribs.of_anon_contribs_direct anon_contribs_direct in
-                Ordmap.amend transit ~f:(function
-                  | None -> Some transit_contribs_direct
-                  | Some transit_contribs_existing ->
-                    Some (TransitContribs.union transit_contribs_direct transit_contribs_existing)
-                ) lalr1_transit_contribs
-              end
+          let transit = Transit.init ~src:ante_state_index ~dst:state_index in
+          assert (not (Transit.cyclic transit));
+          let transit_contribs_prev = match Ordmap.get transit lalr1_transit_contribs with
+            | None -> TransitContribs.empty
+            | Some transit_contribs_prev -> transit_contribs_prev
           in
-          lalr1_transit_contribs
+          let transit_contribs_union =
+            TransitContribs.union transit_contribs transit_contribs_prev in
+          match AnonContribs.equal (TransitContribs.all transit_contribs_union)
+            (TransitContribs.all transit_contribs_prev) with
+          | true -> lalr1_transit_contribs
+          | false -> begin
+              let lalr1_transit_contribs = Ordmap.upsert ~k:transit ~v:transit_contribs_union
+                  lalr1_transit_contribs in
+              let marks = Set.insert ante_state_index marks in
+              backprop_transit_contribs antes transit_contribs lalr1_transit_contribs marks
+                ante_state_index
+            end
         end
-    in
-    lalr1_transit_contribs
-  end in
+    ) (Antes.antes_of_state_index state_index antes)
+
+let rec ante_transit_contribs ~resolve lalr1_states antes ~lalr1_transit_contribs marks lanectx =
+  (* Marking of the current lane segment spanning the start state back to the current state prevents
+   * infinite recursion. It is possible for a grammar to induce a combinatorial explosion of
+   * contributing lanes, but only non-redundant transition contribs lead to recursion, thus assuring
+   * that each transition is recursed on only once. *)
+  let state = LaneCtx.state lanectx in
+  let state_index = State.index state in
+  assert (not (Set.mem state_index marks));
+  let marks = Set.insert state_index marks in
+  (* Accumulate transit contribs and antecedents of `lanectx`. *)
+  let lalr1_transit_contribs, ante_lanectxs =
+    Array.fold ~init:(lalr1_transit_contribs, [])
+      ~f:(fun (lalr1_transit_contribs, ante_lanectxs) ante_state_index ->
+        let ante_state = Array.get ante_state_index lalr1_states in
+        let ante_lanectx = LaneCtx.of_ante ante_state lanectx in
+        let ante_kernel_contribs = LaneCtx.kernel_contribs ante_lanectx in
+(*
+        File.Fmt.stderr |> Fmt.fmt "XXX ante_lanectx=" |> LaneCtx.fmt_hr ~alt:true symbols prods ante_lanectx |> Fmt.fmt "\n" |> ignore;
+*)
+        let transit = LaneCtx.transit ante_lanectx in
+        (* Load current transit contribs. It is possible for there to be existing contribs to other
+         * conflict states. *)
+        let transit_contribs =
+          Ordmap.get transit lalr1_transit_contribs
+          |> Option.value ~default:TransitContribs.empty
+        in
+        let kernel_contribs = TransitContribs.kernel_contribs transit_contribs in
+        let transit_contribs' =
+          TransitContribs.insert_kernel_contribs ante_kernel_contribs transit_contribs in
+        (* Avoid recursing if no new transit contribs were inserted, since no additional insertions
+         * will occur in the recursion. *)
+        let kernel_contribs' = TransitContribs.kernel_contribs transit_contribs' in
+        let lalr1_transit_contribs =
+          match KernelContribs.equal kernel_contribs' kernel_contribs with
+          | true -> lalr1_transit_contribs
+          | false -> begin
+              assert (not (Transit.cyclic transit));
+              let lalr1_transit_contribs =
+                Ordmap.upsert ~k:transit ~v:transit_contribs' lalr1_transit_contribs in
+              (* Recurse if lanes may extend to antecedents. *)
+              match LaneCtx.traces_length ante_lanectx with
+              | 0L -> lalr1_transit_contribs
+              | _ -> ante_transit_contribs ~resolve lalr1_states antes ~lalr1_transit_contribs
+                  marks ante_lanectx
+            end
+        in
+        let ante_lanectxs = ante_lanectx :: ante_lanectxs in
+        lalr1_transit_contribs, ante_lanectxs
+      ) (Array.filter ~f:(fun ante_state_index -> not (Set.mem ante_state_index marks))
+        (Antes.antes_of_state_index state_index antes))
+  in
+  (* Finish computing direct attributions for `lanectx`. This is done post-order to detect
+   * attributions for which there is a relevant kernel item in `lanectx`, but no relevant item in
+   * any of its antecedents' lane contexts. *)
+  let lanectx = LaneCtx.post_init ante_lanectxs lanectx in
+(*
+  File.Fmt.stderr |> Fmt.fmt "XXX post_init lanectx=" |> LaneCtx.fmt_hr ~alt:true symbols prods lanectx |> Fmt.fmt "\n" |> ignore;
+*)
+  (* Accumulate direct attributions. *)
+  let transit = LaneCtx.transit lanectx in
+  let anon_contribs_direct = LaneCtx.anon_contribs_direct lanectx in
+  let lalr1_transit_contribs = match AnonContribs.is_empty anon_contribs_direct with
+    | true -> lalr1_transit_contribs
+    | false -> begin
+        (* Backpropagate. *)
+        let transit_contribs = TransitContribs.of_anon_contribs anon_contribs_direct in
+        let lalr1_transit_contribs = backprop_transit_contribs antes transit_contribs
+            lalr1_transit_contribs marks state_index in
+        let lalr1_transit_contribs = match Transit.cyclic transit with
+          | true -> lalr1_transit_contribs
+          | false -> begin
+              let transit_contribs_direct =
+                TransitContribs.of_anon_contribs_direct anon_contribs_direct in
+              Ordmap.amend transit ~f:(function
+                | None -> Some transit_contribs_direct
+                | Some transit_contribs_existing ->
+                  Some (TransitContribs.union transit_contribs_direct transit_contribs_existing)
+              ) lalr1_transit_contribs
+            end
+        in
+        lalr1_transit_contribs
+      end
+  in
+  lalr1_transit_contribs
+
+let gather_transit_contribs ~resolve symbols prods lalr1_states antes ~lalr1_transit_contribs
+    conflict_state_index =
   let marks = Set.empty (module State.Index) in
   let conflict_state = Array.get conflict_state_index lalr1_states in
   let lanectx = LaneCtx.of_conflict_state ~resolve symbols prods conflict_state in
@@ -539,8 +537,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states antes erg
             end
         in
         work ~resolve io symbols prods lalr1_isocores lalr1_states antes ergos
-          ~lalr1_transit_contribs ~stable stability_deps
-          ~unstable churn workq
+          ~lalr1_transit_contribs ~stable stability_deps ~unstable churn workq
       end
   end in
   (* Gather the set of states in conflict-contributing lanes, excluding start states, which are
