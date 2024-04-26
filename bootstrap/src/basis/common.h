@@ -14,7 +14,7 @@ typedef enum {
     oe = statement; \
     switch (oe) { \
         case HM_OE_ERROR: \
-            fprintf(stderr, "Error %s:%i: Unspecifie error\n", __FILE__, __LINE__); \
+            fprintf(stderr, "Error %s:%i: Unspecified error\n", __FILE__, __LINE__); \
             goto LABEL_OUT; \
         case HM_OE_NONE: break; \
         default: \
