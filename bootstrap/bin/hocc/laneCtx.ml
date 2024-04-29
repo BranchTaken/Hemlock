@@ -5,22 +5,22 @@ open! Basis.Rudiments
 module TraceKey = struct
   module T = struct
     type t = {
-      akey: Attribs.Akey.t; (* Conflicted symbol index and conflict manifestation. *)
+      akey: Attrib.K.t; (* Conflicted symbol index and conflict manifestation. *)
       action: State.Action.t; (* Action *)
     }
 
     let hash_fold {akey; action} state =
-      state |> Attribs.Akey.hash_fold akey |> State.Action.hash_fold action
+      state |> Attrib.K.hash_fold akey |> State.Action.hash_fold action
 
     let cmp {akey=akey0; action=action0} {akey=akey1; action=action1} = let open Cmp in
-      match Attribs.Akey.cmp akey0 akey1 with
+      match Attrib.K.cmp akey0 akey1 with
       | Lt -> Lt
       | Eq -> State.Action.cmp action0 action1
       | Gt -> Gt
 
     let pp {akey; action} formatter =
       formatter
-      |> Fmt.fmt "{akey=" |> Attribs.Akey.pp akey
+      |> Fmt.fmt "{akey=" |> Attrib.K.pp akey
       |> Fmt.fmt "; action=" |> State.Action.pp action
       |> Fmt.fmt "}"
   end
@@ -233,7 +233,7 @@ let kernel_contribs {conflict_state; traces; _} =
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
       TraceVal.fold ~init:kernel_contribs ~f:(fun kernel_contribs (lr1item, ergo_lr1itemset) ->
-        let aval = Attribs.Aval.init ~ergo_lr1itemset ~contrib in
+        let aval = Attrib.V.init ~ergo_lr1itemset ~contrib in
         let trace_contribs = Contribs.singleton ~conflict_state_index akey aval in
         KernelContribs.insert lr1item trace_contribs kernel_contribs
       ) kernel_ergos
@@ -242,7 +242,7 @@ let kernel_contribs {conflict_state; traces; _} =
 let anon_contribs ({anon_contribs_direct; _} as t) =
   KernelContribs.fold ~init:AnonContribs.empty ~f:(fun anon_contribs (_lr1item, contribs) ->
     Contribs.fold ~init:AnonContribs.empty
-      ~f:(fun anon_contribs conflict_state_index {symbol_index; _} Attribs.Aval.{contrib; _} ->
+      ~f:(fun anon_contribs conflict_state_index {symbol_index; _} Attrib.V.{contrib; _} ->
         AnonContribs.insert ~conflict_state_index symbol_index contrib anon_contribs
       ) contribs
     |> AnonContribs.union anon_contribs

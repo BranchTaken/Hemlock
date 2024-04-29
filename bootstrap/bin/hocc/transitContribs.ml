@@ -96,7 +96,7 @@ let insert_kernel_contribs kernel_contribs t =
   KernelContribs.fold ~init:t
     ~f:(fun ({kernel_contribs; _} as t) (item, contribs) ->
       let t = Contribs.fold ~init:t
-          ~f:(fun t conflict_state_index Attribs.Akey.{symbol_index; _} Attribs.Aval.{contrib; _} ->
+          ~f:(fun t conflict_state_index Attrib.K.{symbol_index; _} Attrib.V.{contrib; _} ->
             merge ~conflict_state_index symbol_index contrib t
           ) contribs in
       let kernel_contribs = KernelContribs.insert item contribs kernel_contribs in
@@ -115,10 +115,10 @@ let contribs lr1itemset {kernel_contribs; _} =
   KernelContribs.fold ~init:Contribs.empty
     ~f:(fun contribs (_src_lr1item, src_lr1item_contribs) ->
       Contribs.fold ~init:contribs
-        ~f:(fun contribs conflict_state_index (Attribs.Akey.{symbol_index; conflict} as akey)
-          (Attribs.Aval.{ergo_lr1itemset; _} as aval) ->
+        ~f:(fun contribs conflict_state_index (Attrib.K.{symbol_index; conflict} as akey)
+          (Attrib.V.{ergo_lr1itemset; _} as aval) ->
           let shift_contrib = Contrib.(inter shift conflict) in
-          let shift_aval = Attribs.Aval.init ~ergo_lr1itemset ~contrib:shift_contrib in
+          let shift_aval = Attrib.V.init ~ergo_lr1itemset ~contrib:shift_contrib in
           let has_shift = Contrib.is_empty shift_contrib in
           Lr1Itemset.fold ~init:contribs ~f:(fun contribs ergo_lr1item ->
             match Lr1Itemset.get ergo_lr1item lr1itemset with
@@ -135,7 +135,7 @@ let contribs lr1itemset {kernel_contribs; _} =
                     | true -> Contribs.insert ~conflict_state_index akey shift_aval contribs
                   end
                 | true -> begin
-                    let aval' = Attribs.Aval.union shift_aval aval in
+                    let aval' = Attrib.V.union shift_aval aval in
                     Contribs.insert ~conflict_state_index akey aval' contribs
                   end
               end

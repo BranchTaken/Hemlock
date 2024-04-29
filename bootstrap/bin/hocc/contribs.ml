@@ -46,7 +46,7 @@ let equal t0 t1 =
 
 module Seq = struct
   type container = t
-  type elm = StateIndex.t * Attribs.Akey.t * Attribs.Aval.t
+  type elm = StateIndex.t * Attrib.K.t * Attrib.V.t
   type t = {
     l: uns;
     conflict_state_index_opt: uns option;
@@ -143,10 +143,10 @@ let get_hlt ~conflict_state_index symbol_index t =
   |> Option.value_hlt
 
 let contains ~conflict_state_index symbol_index aval t =
-  assert (not (Attribs.Aval.is_empty aval));
+  assert (not (Attrib.V.is_empty aval));
   match get ~conflict_state_index symbol_index t with
   | None -> false
-  | Some (_akey_existing, aval_existing) -> Attribs.Aval.(inter aval_existing aval = aval)
+  | Some (_akey_existing, aval_existing) -> Attrib.V.(inter aval_existing aval = aval)
 
 let amend ~conflict_state_index akey ~f t =
   let attribs = match Ordmap.get conflict_state_index t with
@@ -157,7 +157,7 @@ let amend ~conflict_state_index akey ~f t =
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
 let insert ~conflict_state_index akey aval t =
-  match Attribs.Aval.is_empty aval with
+  match Attrib.V.is_empty aval with
   | true -> t
   | false ->
     Ordmap.amend conflict_state_index t ~f:(function
@@ -166,7 +166,7 @@ let insert ~conflict_state_index akey aval t =
           Some (
             Attribs.amend akey attribs ~f:(function
               | None -> Some aval
-              | Some aval_prev -> Some (Attribs.Aval.union aval aval_prev)
+              | Some aval_prev -> Some (Attrib.V.union aval aval_prev)
             )
           )
         end
@@ -231,7 +231,7 @@ let fold2_until ~init ~f t0 t1 =
       Some ((state_index1, akey1, aval1), seq1') -> begin
         let rel = match Uns.cmp state_index0 state_index1 with
           | Cmp.Lt -> Cmp.Lt
-          | Eq -> Attribs.Akey.cmp akey0 akey1
+          | Eq -> Attrib.K.cmp akey0 akey1
           | Gt -> Gt
         in
         match rel with
