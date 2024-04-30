@@ -55,21 +55,21 @@ val get_hlt: conflict_state_index:StateIndex.t -> Symbol.Index.t -> t -> Attrib.
 (** [get_hlt ~conflict_state_index symbol_index t] returns the attrib for the specified
     [conflict_state_index] and [symbol_index] if present in [t], halts otherwise. *)
 
-val contains: conflict_state_index:StateIndex.t -> Symbol.Index.t -> Attrib.V.t -> t -> bool
-(** [contains ~conflict_state_index symbol_index v t] returns true iff [t] contains a non-strict
-    superset of [v] for the specified [conflict_state_index] and [symbol_index]. *)
+val contains: conflict_state_index:StateIndex.t -> Symbol.Index.t -> Attrib.t -> t -> bool
+(** [contains ~conflict_state_index symbol_index attrib t] returns true iff [t] contains a
+    non-strict superset of [attrib] for the specified [conflict_state_index] and [symbol_index]. *)
 
 val amend: conflict_state_index:StateIndex.t -> Attrib.K.t
-  -> f:(Attrib.V.t option -> Attrib.V.t option) -> t -> t
-(** [amend ~conflict_state_index k ~f t] returns an incremental derivative of [t] that is
-    equivalent to [t] in all attributions except possibly for {[conflict_state_index], [k]}, as
-    determined by the result of [~f v_opt], where [v_opt = Some v] indicates [k] is
-    associated with [v] in [t], and [v_opt = None] indicates [k] is not attributed in [t].
-    The result contains a mapping from [k] to [v'] if [~f v_opt] returns [Some v']; the
-    result contains no attribution for [k] if [~f v_opt] returns [None]. *)
+  -> f:(Attrib.t option -> Attrib.t option) -> t -> t
+(** [amend ~conflict_state_index k ~f t] returns an incremental derivative of [t] that is equivalent
+    to [t] in all attributions except possibly for {[conflict_state_index], [k]}, as determined by
+    the result of [~f attrib_opt], where [attrib_opt = Some attrib] indicates [k] is associated with
+    [attrib] in [t], and [attrib_opt = None] indicates [k] is not attributed in [t]. The result
+    contains a mapping from [k] to [attrib'] if [~f attrib_opt] returns [Some attrib']; the result
+    contains no attribution for [k] if [~f attrib_opt] returns [None]. *)
 
 val insert: conflict_state_index:StateIndex.t -> Attrib.t -> t -> t
-(** [insert ~conflict_state_index attrib t] inserts the conflict contribution [attrib.v] to state
+(** [insert ~conflict_state_index attrib t] inserts the conflict contribution [attrib] to state
     [conflict_state_index] on [attrib.k]. *)
 
 val merged_of_t: t -> t

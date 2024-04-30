@@ -34,107 +34,68 @@ module K = struct
     {symbol_index; conflict}
 end
 
-module V = struct
-  module T = struct
-    type t = {
-      ergo_lr1itemset: Lr1Itemset.t; (* Only the core matters for `hash_fold`/`cmp`/`equal`. *)
-      contrib: Contrib.t;
-    }
-
-    let hash_fold {ergo_lr1itemset; contrib} state =
-      state
-      |> Uns.hash_fold 0L |> Lr0Itemset.hash_fold (Lr1Itemset.core ergo_lr1itemset)
-      |> Uns.hash_fold 1L |> Contrib.hash_fold contrib
-
-    let cmp {ergo_lr1itemset=e0; contrib=c0} {ergo_lr1itemset=e1; contrib=c1} =
-      let open Cmp in
-      match Lr0Itemset.cmp (Lr1Itemset.core e0) (Lr1Itemset.core e1) with
-      | Lt -> Lt
-      | Eq -> Contrib.cmp c0 c1
-      | Gt -> Gt
-
-    let equal {ergo_lr1itemset=e0; contrib=c0} {ergo_lr1itemset=e1; contrib=c1} =
-      Lr0Itemset.equal (Lr1Itemset.core e0) (Lr1Itemset.core e1) && Contrib.equal c0 c1
-
-    let pp {ergo_lr1itemset; contrib} formatter =
-      formatter
-      |> Fmt.fmt "{ergo_lr1itemset=" |> Lr1Itemset.pp ergo_lr1itemset
-      |> Fmt.fmt "; contrib=" |> Contrib.pp contrib
-      |> Fmt.fmt "}"
-
-    let fmt_hr symbols prods ?(alt=false) ?(width=0L) {ergo_lr1itemset; contrib} formatter =
-      formatter
-      |> Fmt.fmt "{ergo_lr1itemset="
-      |> Lr1Itemset.fmt_hr symbols ~alt ~width ergo_lr1itemset
-      |> Fmt.fmt "; contrib="
-      |> Contrib.pp_hr symbols prods contrib
-      |> Fmt.fmt "}"
-  end
-  include T
-  include Identifiable.Make(T)
-
-  let empty = {
-    ergo_lr1itemset=Lr1Itemset.empty;
-    contrib=Contrib.empty;
-  }
-
-  let init ~ergo_lr1itemset ~contrib =
-    {ergo_lr1itemset; contrib}
-
-  let is_empty {contrib; _} =
-    Contrib.is_empty contrib
-
-  let union {ergo_lr1itemset=e0; contrib=c0} {ergo_lr1itemset=e1; contrib=c1} =
-    {ergo_lr1itemset=Lr1Itemset.union e0 e1; contrib=Contrib.union c0 c1}
-
-  let inter {ergo_lr1itemset=e0; contrib=c0} {ergo_lr1itemset=e1; contrib=c1} =
-    {ergo_lr1itemset=Lr1Itemset.inter e0 e1; contrib=Contrib.inter c0 c1}
-end
-
 module T = struct
   type t = {
     k: K.t;
-    v: V.t;
+    ergo_lr1itemset: Lr1Itemset.t; (* Only the core matters for `hash_fold`/`cmp`/`equal`. *)
+    contrib: Contrib.t;
   }
 
-  let hash_fold {k; v} state =
+  let hash_fold {k; ergo_lr1itemset; contrib} state =
     state
-    |> K.hash_fold k
-    |> V.hash_fold v
+    |> Uns.hash_fold 0L |> K.hash_fold k
+    |> Uns.hash_fold 1L |> Lr0Itemset.hash_fold (Lr1Itemset.core ergo_lr1itemset)
+    |> Uns.hash_fold 2L |> Contrib.hash_fold contrib
 
-  let cmp {k=k0; v=v0} {k=k1; v=v1} =
+  let cmp {k=k0; ergo_lr1itemset=e0; contrib=c0} {k=k1; ergo_lr1itemset=e1; contrib=c1} =
     let open Cmp in
     match K.cmp k0 k1 with
     | Lt -> Lt
-    | Eq -> V.cmp v0 v1
+    | Eq -> begin
+        match Lr0Itemset.cmp (Lr1Itemset.core e0) (Lr1Itemset.core e1) with
+        | Lt -> Lt
+        | Eq -> Contrib.cmp c0 c1
+        | Gt -> Gt
+      end
     | Gt -> Gt
 
-  let equal {k=k0; v=v0} {k=k1; v=v1} =
+  let equal {k=k0; ergo_lr1itemset=e0; contrib=c0} {k=k1; ergo_lr1itemset=e1; contrib=c1} =
     assert K.(k0 = k1);
-    V.equal v0 v1
+    Lr0Itemset.equal (Lr1Itemset.core e0) (Lr1Itemset.core e1) && Contrib.equal c0 c1
 
-  let pp {k; v} formatter =
+  let pp {k; ergo_lr1itemset; contrib} formatter =
     formatter
-    |> Fmt.fmt "{k="
-    |> K.pp k
-    |> Fmt.fmt "; v="
-    |> V.pp v
+    |> Fmt.fmt "{k=" |> K.pp k
+    |> Fmt.fmt "; ergo_lr1itemset=" |> Lr1Itemset.pp ergo_lr1itemset
+    |> Fmt.fmt "; contrib=" |> Contrib.pp contrib
     |> Fmt.fmt "}"
 
-  let fmt_hr symbols prods ?(alt=false) ?(width=0L) {k; v} formatter =
+  let fmt_hr symbols prods ?(alt=false) ?(width=0L) {k; ergo_lr1itemset; contrib} formatter =
     formatter
     |> Fmt.fmt "{k="
     |> K.pp_hr symbols prods k
-    |> Fmt.fmt "; v="
-    |> V.fmt_hr symbols prods ~alt ~width v
+    |> Fmt.fmt "; ergo_lr1itemset="
+    |> Lr1Itemset.fmt_hr symbols ~alt ~width ergo_lr1itemset
+    |> Fmt.fmt "; contrib="
+    |> Contrib.pp_hr symbols prods contrib
     |> Fmt.fmt "}"
 
-  let init ~k ~v =
-    {k; v}
+  let empty ~k =
+    {k; ergo_lr1itemset=Lr1Itemset.empty; contrib=Contrib.empty}
 
-  let union {k=k0; v=v0} {k=k1; v=v1} =
+  let init ~k ~ergo_lr1itemset ~contrib =
+    {k; ergo_lr1itemset; contrib}
+
+  let is_empty {k=_; ergo_lr1itemset=_; contrib} =
+    Contrib.is_empty contrib
+
+  let union {k=k0; ergo_lr1itemset=e0; contrib=c0} {k=k1; ergo_lr1itemset=e1; contrib=c1} =
     assert K.(k0 = k1);
-    init ~k:k0 ~v:(V.union v0 v1)
+    init ~k:k0 ~ergo_lr1itemset:(Lr1Itemset.union e0 e1) ~contrib:(Contrib.union c0 c1)
+
+  let inter {k=k0; ergo_lr1itemset=e0; contrib=c0} {k=k1; ergo_lr1itemset=e1; contrib=c1} =
+    assert K.(k0 = k1);
+    init ~k:k0 ~ergo_lr1itemset:(Lr1Itemset.inter e0 e1) ~contrib:(Contrib.inter c0 c1)
 end
 include T
 include Identifiable.Make(T)

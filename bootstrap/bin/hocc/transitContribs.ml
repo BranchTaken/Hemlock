@@ -96,7 +96,7 @@ let insert_kernel_contribs kernel_contribs t =
   KernelContribs.fold ~init:t
     ~f:(fun ({kernel_contribs; _} as t) (item, contribs) ->
       let t = Contribs.fold ~init:t
-          ~f:(fun t conflict_state_index Attrib.{k={symbol_index; _}; v={contrib; _}} ->
+          ~f:(fun t conflict_state_index Attrib.{k={symbol_index; _}; contrib; _} ->
             merge ~conflict_state_index symbol_index contrib t
           ) contribs in
       let kernel_contribs = KernelContribs.insert item contribs kernel_contribs in
@@ -116,9 +116,9 @@ let contribs lr1itemset {kernel_contribs; _} =
     ~f:(fun contribs (_src_lr1item, src_lr1item_contribs) ->
       Contribs.fold ~init:contribs
         ~f:(fun contribs conflict_state_index
-          Attrib.{k={symbol_index; conflict} as k; v={ergo_lr1itemset; _} as v} ->
+          (Attrib.{k={symbol_index; conflict} as k; ergo_lr1itemset; _} as attrib) ->
           let shift_contrib = Contrib.(inter shift conflict) in
-          let shift_v = Attrib.V.init ~ergo_lr1itemset ~contrib:shift_contrib in
+          let shift_attrib = Attrib.init ~k ~ergo_lr1itemset ~contrib:shift_contrib in
           let has_shift = Contrib.is_empty shift_contrib in
           Lr1Itemset.fold ~init:contribs ~f:(fun contribs ergo_lr1item ->
             match Lr1Itemset.get ergo_lr1item lr1itemset with
@@ -126,7 +126,7 @@ let contribs lr1itemset {kernel_contribs; _} =
                 match has_shift with
                 | false -> contribs
                 | true ->
-                  Contribs.insert ~conflict_state_index (Attrib.init ~k ~v:shift_v) contribs
+                  Contribs.insert ~conflict_state_index shift_attrib contribs
               end
             | Some {follow; _} -> begin
                 match Ordset.mem symbol_index follow with
@@ -134,11 +134,11 @@ let contribs lr1itemset {kernel_contribs; _} =
                     match has_shift with
                     | false -> contribs
                     | true ->
-                      Contribs.insert ~conflict_state_index (Attrib.init ~k ~v:shift_v) contribs
+                      Contribs.insert ~conflict_state_index shift_attrib contribs
                   end
                 | true -> begin
-                    let v' = Attrib.V.union shift_v v in
-                    Contribs.insert ~conflict_state_index (Attrib.init ~k ~v:v') contribs
+                    let attrib' = Attrib.union shift_attrib attrib in
+                    Contribs.insert ~conflict_state_index attrib' contribs
                   end
               end
           ) ergo_lr1itemset

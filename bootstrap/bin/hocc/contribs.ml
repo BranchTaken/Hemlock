@@ -142,11 +142,11 @@ let get_hlt ~conflict_state_index symbol_index t =
   get ~conflict_state_index symbol_index t
   |> Option.value_hlt
 
-let contains ~conflict_state_index symbol_index v t =
-  assert (not (Attrib.V.is_empty v));
+let contains ~conflict_state_index symbol_index attrib t =
+  assert (not (Attrib.is_empty attrib));
   match get ~conflict_state_index symbol_index t with
   | None -> false
-  | Some Attrib.{k=_; v=v_existing} -> Attrib.V.(inter v_existing v = v)
+  | Some attrib_existing -> Attrib.(inter attrib_existing attrib = attrib)
 
 let amend ~conflict_state_index k ~f t =
   let attribs = match Ordmap.get conflict_state_index t with
@@ -156,8 +156,8 @@ let amend ~conflict_state_index k ~f t =
   let attribs' = Attribs.amend k ~f attribs in
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
-let insert ~conflict_state_index (Attrib.{k; v} as attrib) t =
-  match Attrib.V.is_empty v with
+let insert ~conflict_state_index (Attrib.{k; _} as attrib) t =
+  match Attrib.is_empty attrib with
   | true -> t
   | false ->
     Ordmap.amend conflict_state_index t ~f:(function
@@ -165,8 +165,8 @@ let insert ~conflict_state_index (Attrib.{k; v} as attrib) t =
       | Some attribs -> begin
           Some (
             Attribs.amend k attribs ~f:(function
-              | None -> Some v
-              | Some v_prev -> Some (Attrib.V.union v v_prev)
+              | None -> Some attrib
+              | Some attrib_prev -> Some (Attrib.union attrib attrib_prev)
             )
           )
         end
@@ -227,8 +227,8 @@ let fold2_until ~init ~f t0 t1 =
       left state_index0 attrib0 seq0'
     | None, Some ((state_index1, attrib1), seq1') ->
       right state_index1 attrib1 seq1'
-    | Some ((state_index0, (Attrib.{k=k0; v=_} as attrib0)), seq0'),
-      Some ((state_index1, (Attrib.{k=k1; v=_} as attrib1)), seq1') -> begin
+    | Some ((state_index0, (Attrib.{k=k0; _} as attrib0)), seq0'),
+      Some ((state_index1, (Attrib.{k=k1; _} as attrib1)), seq1') -> begin
         let rel = match Uns.cmp state_index0 state_index1 with
           | Cmp.Lt -> Cmp.Lt
           | Eq -> Attrib.K.cmp k0 k1
