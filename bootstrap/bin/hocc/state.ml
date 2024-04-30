@@ -164,7 +164,7 @@ let conflict_attribs ~resolve symbols prods {actions; _} =
      * `ergo_lr1itemset` is always empty, because there is no ergo state for the conflict state.
     *)
     let aval = Attrib.V.init ~ergo_lr1itemset:Lr1Itemset.empty ~contrib:conflict in
-    Attribs.insert akey aval attribs
+    Attribs.insert (Attrib.init akey aval) attribs
   )
 
 let conflicts ?(filter_pseudo_end=true) ({actions; _} as t) =

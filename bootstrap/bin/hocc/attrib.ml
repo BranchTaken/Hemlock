@@ -112,6 +112,11 @@ module T = struct
     | Eq -> V.cmp v0 v1
     | Gt -> Gt
 
+  let equal {k=k0; v=v0} {k=k1; v=v1} =
+    match K.( = ) k0 k1 with
+    | false -> false
+    | true -> V.equal v0 v1
+
   let pp {k; v} formatter =
     formatter
     |> Fmt.fmt "{k="
@@ -130,3 +135,10 @@ module T = struct
 end
 include T
 include Identifiable.Make(T)
+
+let init k v =
+  {k; v}
+
+let union {k=k0; v=v0} {k=k1; v=v1} =
+  assert K.(k0 = k1);
+  init k0 (V.union v0 v1)

@@ -46,5 +46,11 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
+val equal: t -> t -> bool
+
 val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter)
   -> (module Fmt.Formatter)
+
+val init: K.t -> V.t -> t
+
+val union: t -> t -> t

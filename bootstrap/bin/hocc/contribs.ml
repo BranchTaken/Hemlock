@@ -46,7 +46,7 @@ let equal t0 t1 =
 
 module Seq = struct
   type container = t
-  type elm = StateIndex.t * Attrib.K.t * Attrib.V.t
+  type elm = StateIndex.t * Attrib.t
   type t = {
     l: uns;
     conflict_state_index_opt: uns option;
@@ -96,8 +96,8 @@ module Seq = struct
     end in
     match normalize t with
     | l, conflict_state_index, seq_inner, seq_outer -> begin
-        let (_akey, (akey, aval)), seq_inner = Attribs.Seq.next seq_inner in
-        (conflict_state_index, akey, aval), {
+        let (_akey, attrib), seq_inner = Attribs.Seq.next seq_inner in
+        (conflict_state_index, attrib), {
           l=pred l;
           conflict_state_index_opt=Some conflict_state_index;
           seq_inner_opt=Some seq_inner;
@@ -113,8 +113,8 @@ end
 
 let empty = Ordmap.empty (module StateIndex)
 
-let singleton ~conflict_state_index akey aval =
-  let attribs =  Attribs.singleton akey aval in
+let singleton ~conflict_state_index attrib =
+  let attribs =  Attribs.singleton attrib in
   match Attribs.is_empty attribs with
   | true -> empty
   | false ->  Ordmap.singleton (module StateIndex) ~k:conflict_state_index ~v:attribs
@@ -135,7 +135,7 @@ let get ~conflict_state_index symbol_index t =
   | Some attribs -> begin
       match Attribs.get symbol_index attribs with
       | None -> None
-      | Some (_akey, _aval) as akey_aval_opt -> akey_aval_opt
+      | Some _attrib as attrib_opt -> attrib_opt
     end
 
 let get_hlt ~conflict_state_index symbol_index t =
@@ -146,7 +146,7 @@ let contains ~conflict_state_index symbol_index aval t =
   assert (not (Attrib.V.is_empty aval));
   match get ~conflict_state_index symbol_index t with
   | None -> false
-  | Some (_akey_existing, aval_existing) -> Attrib.V.(inter aval_existing aval = aval)
+  | Some Attrib.{k=_; v=aval_existing} -> Attrib.V.(inter aval_existing aval = aval)
 
 let amend ~conflict_state_index akey ~f t =
   let attribs = match Ordmap.get conflict_state_index t with
@@ -156,17 +156,17 @@ let amend ~conflict_state_index akey ~f t =
   let attribs' = Attribs.amend akey ~f attribs in
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
-let insert ~conflict_state_index akey aval t =
-  match Attrib.V.is_empty aval with
+let insert ~conflict_state_index (Attrib.{k; v} as attrib) t =
+  match Attrib.V.is_empty v with
   | true -> t
   | false ->
     Ordmap.amend conflict_state_index t ~f:(function
-      | None -> Some (Attribs.singleton akey aval)
+      | None -> Some (Attribs.singleton attrib)
       | Some attribs -> begin
           Some (
-            Attribs.amend akey attribs ~f:(function
-              | None -> Some aval
-              | Some aval_prev -> Some (Attrib.V.union aval aval_prev)
+            Attribs.amend k attribs ~f:(function
+              | None -> Some v
+              | Some aval_prev -> Some (Attrib.V.union v aval_prev)
             )
           )
         end
@@ -174,22 +174,22 @@ let insert ~conflict_state_index akey aval t =
 
 let fold_until ~init ~f t =
   Ordmap.fold_until ~init ~f:(fun accum (conflict_state_index, attribs) ->
-    Attribs.fold_until ~init:(accum, false) ~f:(fun (accum, _) (akey, aval) ->
-      let accum, until = f accum conflict_state_index akey aval in
+    Attribs.fold_until ~init:(accum, false) ~f:(fun (accum, _) attrib ->
+      let accum, until = f accum conflict_state_index attrib in
       (accum, until), until
     ) attribs
   ) t
 
 let fold ~init ~f t =
   Ordmap.fold ~init ~f:(fun accum (conflict_state_index, attribs) ->
-    Attribs.fold ~init:accum ~f:(fun accum (akey, aval) ->
-      f accum conflict_state_index akey aval
+    Attribs.fold ~init:accum ~f:(fun accum attrib ->
+      f accum conflict_state_index attrib
     ) attribs
   ) t
 
 let merged_of_t t =
-  fold ~init:empty ~f:(fun t_merged conflict_state_index akey aval ->
-    insert ~conflict_state_index akey aval t_merged
+  fold ~init:empty ~f:(fun t_merged conflict_state_index attrib ->
+    insert ~conflict_state_index attrib t_merged
   ) t
 
 let union t0 t1 =
@@ -209,40 +209,40 @@ let union t0 t1 =
 
 let fold2_until ~init ~f t0 t1 =
   let rec inner ~f accum seq0 seq1 = begin
-    let left state_index0 symbol_index0 aval0 seq0' = begin
-      let accum, until = f accum state_index0 symbol_index0 (Some aval0) None in
+    let left state_index0 (Attrib.{k; _} as attrib0) seq0' = begin
+      let accum, until = f accum state_index0 k (Some attrib0) None in
       match until with
       | true -> accum
       | false -> inner ~f accum seq0' seq1
     end in
-    let right state_index1 symbol_index1 aval1 seq1' = begin
-      let accum, until = f accum state_index1 symbol_index1 None (Some aval1) in
+    let right state_index1 (Attrib.{k; _} as attrib1) seq1' = begin
+      let accum, until = f accum state_index1 k None (Some attrib1) in
       match until with
       | true -> accum
       | false -> inner ~f accum seq0 seq1'
     end in
     match Seq.next_opt seq0, Seq.next_opt seq1 with
     | None, None -> accum
-    | Some ((state_index0, akey0, aval0), seq0'), None ->
-      left state_index0 akey0 aval0 seq0'
-    | None, Some ((state_index1, akey1, aval1), seq1') ->
-      right state_index1 akey1 aval1 seq1'
-    | Some ((state_index0, akey0, aval0), seq0'),
-      Some ((state_index1, akey1, aval1), seq1') -> begin
+    | Some ((state_index0, attrib0), seq0'), None ->
+      left state_index0 attrib0 seq0'
+    | None, Some ((state_index1, attrib1), seq1') ->
+      right state_index1 attrib1 seq1'
+    | Some ((state_index0, (Attrib.{k=k0; v=_} as attrib0)), seq0'),
+      Some ((state_index1, (Attrib.{k=k1; v=_} as attrib1)), seq1') -> begin
         let rel = match Uns.cmp state_index0 state_index1 with
           | Cmp.Lt -> Cmp.Lt
-          | Eq -> Attrib.K.cmp akey0 akey1
+          | Eq -> Attrib.K.cmp k0 k1
           | Gt -> Gt
         in
         match rel with
-        | Lt -> left state_index0 akey0 aval0 seq0'
+        | Lt -> left state_index0 attrib0 seq0'
         | Eq -> begin
-            let accum, until = f accum state_index0 akey0 (Some aval0) (Some aval1) in
+            let accum, until = f accum state_index0 k0 (Some attrib0) (Some attrib1) in
             match until with
             | true -> accum
             | false -> inner ~f accum seq0' seq1'
           end
-        | Gt -> right state_index1 akey1 aval1 seq1'
+        | Gt -> right state_index1 attrib1 seq1'
       end
   end in
   inner ~f init (Seq.init t0) (Seq.init t1)

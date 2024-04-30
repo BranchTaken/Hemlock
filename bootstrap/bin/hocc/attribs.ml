@@ -2,28 +2,26 @@ open Basis
 open! Basis.Rudiments
 
 module T = struct
-  type t = (Attrib.K.t, Attrib.K.t * Attrib.V.t, Attrib.K.cmper_witness) Ordmap.t
+  type t = (Attrib.K.t, Attrib.t, Attrib.K.cmper_witness) Ordmap.t
 
-  let hash_fold = Ordmap.hash_fold (fun (_akey, aval) state -> state |> Attrib.V.hash_fold aval)
+  let hash_fold = Ordmap.hash_fold (fun Attrib.{k=_; v} state -> state |> Attrib.V.hash_fold v)
 
-  let cmp = Ordmap.cmp (fun (_akey0, aval0) (_akey1, aval1) -> Attrib.V.cmp aval0 aval1)
+  let cmp = Ordmap.cmp (fun Attrib.{k=_; v=v0} {k=_; v=v1} -> Attrib.V.cmp v0 v1)
 
   let fmt ?(alt=false) ?(width=0L) t formatter =
-    formatter |> Ordmap.fmt ~alt ~width (fun (_akey, aval) formatter -> formatter |> Attrib.V.pp aval) t
+    formatter
+    |> Ordmap.fmt ~alt ~width (fun Attrib.{k=_; v} formatter ->
+      formatter |> Attrib.V.pp v
+    ) t
 
-  let pp = Ordmap.pp (fun (_akey, aval) formatter -> formatter |> Attrib.V.pp aval)
+  let pp = Ordmap.pp (fun Attrib.{k=_; v} formatter -> formatter |> Attrib.V.pp v)
 
   let fmt_hr symbols prods ?(alt=false) ?(width=0L) t formatter =
+    let attrib_lst =
+      Ordmap.fold_right ~init:[] ~f:(fun attrib_lst (_, attrib) -> attrib :: attrib_lst) t in
     formatter
     |> (fun formatter ->
-      List.fmt ~alt ~width (fun (symbol, aval) formatter ->
-        formatter
-        |> Attrib.K.pp_hr symbols prods symbol
-        |> Fmt.fmt " = "
-        |> (fun (_akey, aval) formatter ->
-          formatter |> Attrib.V.fmt_hr symbols prods ~alt ~width:(width + 4L) aval
-        ) aval
-      ) (Ordmap.to_alist t) formatter
+      List.fmt ~alt ~width (Attrib.fmt_hr symbols prods ~alt ~width) attrib_lst formatter
     )
 end
 include T
@@ -32,12 +30,13 @@ include Identifiable.Make(T)
 let length = Ordmap.length
 
 let equal t0 t1 =
-  Ordmap.equal (fun (_akey0, aval0) (_akey1, aval1) -> Attrib.V.equal aval0 aval1) t0 t1
+  let open Attrib in
+  Ordmap.equal (fun {k=_; v=v0} {k=_; v=v1} -> V.equal v0 v1) t0 t1
 
 module Seq = struct
   type container = t
-  type elm = Attrib.K.t * (Attrib.K.t * Attrib.V.t)
-  type t = (Attrib.K.t, Attrib.K.t * Attrib.V.t, Attrib.K.cmper_witness) Ordmap.Seq.t
+  type elm = Attrib.K.t * Attrib.t
+  type t = (Attrib.K.t, Attrib.t, Attrib.K.cmper_witness) Ordmap.Seq.t
 
   let init = Ordmap.Seq.init
   let length = Ordmap.Seq.length
@@ -47,8 +46,8 @@ end
 
 let empty = Ordmap.empty (module Attrib.K)
 
-let singleton akey aval =
-  Ordmap.singleton (module Attrib.K) ~k:akey ~v:(akey, aval)
+let singleton attrib =
+  Ordmap.singleton (module Attrib.K) ~k:Attrib.(attrib.k) ~v:attrib
 
 let is_empty = Ordmap.is_empty
 
@@ -57,29 +56,29 @@ let get symbol_index t =
   Ordmap.get akey t
 
 let amend akey ~f t =
-  Ordmap.amend akey ~f:(fun akey_aval_option ->
-    let aval_opt = match akey_aval_option with
+  Ordmap.amend akey ~f:(fun attrib_option ->
+    let aval_opt = match attrib_option with
       | None -> f None
-      | Some (_akey, aval) -> f (Some aval)
+      | Some Attrib.{k=_; v} -> f (Some v)
     in
     match aval_opt with
     | None -> None
-    | Some aval -> Some (akey, aval)
+    | Some aval -> Some (Attrib.init akey aval)
   ) t
 
-let insert akey aval t =
-  Ordmap.amend akey ~f:(function
-    | None -> Some (akey, aval)
-    | Some (akey_prev, aval_prev) -> begin
-        assert Contrib.(Attrib.K.(akey.conflict) = Attrib.K.(akey_prev.conflict));
-        Some (akey_prev, Attrib.V.union aval aval_prev)
+let insert (Attrib.{k; v=_} as attrib) t =
+  Ordmap.amend k ~f:(function
+    | None -> Some attrib
+    | Some (Attrib.{k=akey_prev; v=_} as attrib_prev) -> begin
+        assert Contrib.(Attrib.K.(k.conflict) = Attrib.K.(akey_prev.conflict));
+        Some (Attrib.union attrib_prev attrib)
       end
   ) t
 
 let union t0 t1 =
-  Ordmap.union ~f:(fun _akey (akey0, aval0) (akey1, aval1) ->
-    assert Contrib.(Attrib.K.(akey0.conflict) = Attrib.K.(akey1.conflict));
-    akey0, Attrib.V.union aval0 aval1
+  Ordmap.union ~f:(fun _k (Attrib.{k=k0; v=_} as attrib0) (Attrib.{k=k1; v=_} as attrib1) ->
+    assert Contrib.(Attrib.K.(k0.conflict) = Attrib.K.(k1.conflict));
+    Attrib.union attrib0 attrib1
   ) t0 t1
 
 let fold_until ~init ~f t =
@@ -95,11 +94,11 @@ let fold2_until ~init ~f t =
   Ordmap.fold2_until ~init ~f:(fun accum k_kv_opt0 k_kv_opt1 ->
     let kv_opt0 = match k_kv_opt0 with
       | None -> None
-      | Some (_akey, akey_aval) -> Some akey_aval
+      | Some (_akey, attrib) -> Some attrib
     in
     let kv_opt1 = match k_kv_opt1 with
       | None -> None
-      | Some (_akey, akey_aval) -> Some akey_aval
+      | Some (_akey, attrib) -> Some attrib
     in
     f accum kv_opt0 kv_opt1
   ) t
@@ -119,6 +118,6 @@ let fold2 ~init ~f t =
 
 let symbol_indexes t =
   fold ~init:(Ordset.empty (module Symbol.Index))
-    ~f:(fun symbol_indexes (Attrib.K.{symbol_index; _}, _aval) ->
+    ~f:(fun symbol_indexes Attrib.{k=K.{symbol_index; _}; v=_} ->
       Ordset.insert symbol_index symbol_indexes
     ) t

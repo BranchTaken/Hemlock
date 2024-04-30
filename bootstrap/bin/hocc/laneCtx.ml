@@ -234,7 +234,7 @@ let kernel_contribs {conflict_state; traces; _} =
       in
       TraceVal.fold ~init:kernel_contribs ~f:(fun kernel_contribs (lr1item, ergo_lr1itemset) ->
         let aval = Attrib.V.init ~ergo_lr1itemset ~contrib in
-        let trace_contribs = Contribs.singleton ~conflict_state_index akey aval in
+        let trace_contribs = Contribs.singleton ~conflict_state_index (Attrib.init akey aval) in
         KernelContribs.insert lr1item trace_contribs kernel_contribs
       ) kernel_ergos
     ) traces
@@ -242,7 +242,7 @@ let kernel_contribs {conflict_state; traces; _} =
 let anon_contribs ({anon_contribs_direct; _} as t) =
   KernelContribs.fold ~init:AnonContribs.empty ~f:(fun anon_contribs (_lr1item, contribs) ->
     Contribs.fold ~init:AnonContribs.empty
-      ~f:(fun anon_contribs conflict_state_index {symbol_index; _} Attrib.V.{contrib; _} ->
+      ~f:(fun anon_contribs conflict_state_index Attrib.{k={symbol_index; _}; v={contrib; _}} ->
         AnonContribs.insert ~conflict_state_index symbol_index contrib anon_contribs
       ) contribs
     |> AnonContribs.union anon_contribs
@@ -256,7 +256,7 @@ let of_conflict_state ~resolve symbols prods conflict_state =
   let conflict_state_index = State.index conflict_state in
   let traces, anon_contribs_direct = Attribs.fold
       ~init:(Ordmap.empty (module TraceKey), AnonContribs.empty)
-      ~f:(fun (traces, anon_contribs_direct) (({symbol_index; _} as akey), {contrib; _}) ->
+      ~f:(fun (traces, anon_contribs_direct) Attrib.{k={symbol_index; _} as akey; v={contrib; _}} ->
         let anon_contribs_direct = match Contrib.mem_shift contrib with
           | false -> anon_contribs_direct
           | true ->

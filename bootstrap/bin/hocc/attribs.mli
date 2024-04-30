@@ -22,7 +22,7 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 module Seq : sig
   type container = t
 
-  include SeqIntf.SMonoDef with type elm = Attrib.K.t * (Attrib.K.t * Attrib.V.t)
+  include SeqIntf.SMonoDef with type elm = Attrib.K.t * Attrib.t
 
   val init: container -> t
 end
@@ -36,13 +36,13 @@ val equal: t -> t -> bool
 val empty: t
 (** [empty] returns attribs with no attributions. *)
 
-val singleton: Attrib.K.t -> Attrib.V.t -> t
-(** [singleton akey aval] returns a singleton [akey]->[aval] attribution. *)
+val singleton: Attrib.t -> t
+(** [singleton attrib] returns a singleton attribution. *)
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)
 
-val get: Symbol.Index.t -> t -> (Attrib.K.t * Attrib.V.t) option
+val get: Symbol.Index.t -> t -> Attrib.t option
 (** [get symbol_index t] returns the contributions of [symbol_index], or [None] if there are no
     attributions on [symbol_index]. *)
 
@@ -54,33 +54,32 @@ val amend: Attrib.K.t -> f:(Attrib.V.t option -> Attrib.V.t option) -> t -> t
     contains a mapping from [symbol_index] to [aval'] if [~f aval_opt] returns [Some aval']; the
     result contains no attribution for [symbol_index] if [~f aval_opt] returns [None]. *)
 
-val insert: Attrib.K.t -> Attrib.V.t -> t -> t
-(** [insert akey aval t] inserts the attribution of [aval] on [akey]. *)
+val insert: Attrib.t -> t -> t
+(** [insert attrib t] inserts [attrib]. *)
 
 val union: t -> t -> t
 (** [union t0 t1] returns the union of attributions in [t0] and [t1]. *)
 
-val fold_until: init:'accum -> f:('accum -> Attrib.K.t * Attrib.V.t -> 'accum * bool) -> t -> 'accum
-(** [fold ~init ~f t] folds over the (akey, aval) tuples in [t], using [init] as the initial
+val fold_until: init:'accum -> f:('accum -> Attrib.t-> 'accum * bool) -> t -> 'accum
+(** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial
     accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
     [f] always returns [accum, false]. *)
 
-val fold: init:'accum -> f:('accum -> Attrib.K.t * Attrib.V.t -> 'accum) -> t -> 'accum
-(** [fold ~init ~f t] folds over the (akey, aval) tuples in [t], using [init] as the initial
-    accumulator value. *)
+val fold: init:'accum -> f:('accum -> Attrib.t -> 'accum) -> t -> 'accum
+(** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial accumulator value.
+*)
 
-val for_any: f:(Attrib.K.t * Attrib.V.t -> bool) -> t -> bool
+val for_any: f:(Attrib.t -> bool) -> t -> bool
 (** [for_any ~f t] iterates over t and returns true if any invocation of f returns true, false
     otherwise. *)
 
-val fold2_until: init:'accum -> f:('accum -> (Attrib.K.t * Attrib.V.t) option -> (Attrib.K.t * Attrib.V.t) option
-  -> 'accum * bool) -> t -> t -> 'accum
-(** [fold2_until ~init ~f t0 t1] folds over the (akey, aval) tuples in [t0] and [t1]. Folding
-    terminates early if [~f] returns [(_, true)]. *)
+val fold2_until: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option -> 'accum * bool)
+  -> t -> t -> 'accum
+(** [fold2_until ~init ~f t0 t1] folds over the attribs in [t0] and [t1]. Folding terminates early
+    if [~f] returns [(_, true)]. *)
 
-val fold2: init:'accum -> f:('accum -> (Attrib.K.t * Attrib.V.t) option
-  -> (Attrib.K.t * Attrib.V.t) option -> 'accum) -> t -> t -> 'accum
-(** [fold2_until ~init ~f t0 t1] folds over the (akey, aval) tuples in [t0] and [t1]. *)
+val fold2: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option -> 'accum) -> t -> t -> 'accum
+(** [fold2_until ~init ~f t0 t1] folds over the attribs in [t0] and [t1]. *)
 
 val symbol_indexes: t -> (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t
 (** [symbol_indexes t] returns the attributed symbol indexes in [t]. *)
