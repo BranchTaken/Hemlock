@@ -56,17 +56,17 @@ val get_hlt: conflict_state_index:StateIndex.t -> Symbol.Index.t -> t -> Attrib.
     [conflict_state_index] and [symbol_index] if present in [t], halts otherwise. *)
 
 val contains: conflict_state_index:StateIndex.t -> Symbol.Index.t -> Attrib.V.t -> t -> bool
-(** [contains ~conflict_state_index symbol_index aval t] returns true iff [t] contains a non-strict
-    superset of [aval] for the specified [conflict_state_index] and [symbol_index]. *)
+(** [contains ~conflict_state_index symbol_index v t] returns true iff [t] contains a non-strict
+    superset of [v] for the specified [conflict_state_index] and [symbol_index]. *)
 
 val amend: conflict_state_index:StateIndex.t -> Attrib.K.t
   -> f:(Attrib.V.t option -> Attrib.V.t option) -> t -> t
-(** [amend ~conflict_state_index akey ~f t] returns an incremental derivative of [t] that is
-    equivalent to [t] in all attributions except possibly for {[conflict_state_index], [akey]}, as
-    determined by the result of [~f aval_opt], where [aval_opt = Some aval] indicates [akey] is
-    associated with [aval] in [t], and [aval_opt = None] indicates [akey] is not attributed in [t].
-    The result contains a mapping from [akey] to [aval'] if [~f aval_opt] returns [Some aval']; the
-    result contains no attribution for [akey] if [~f aval_opt] returns [None]. *)
+(** [amend ~conflict_state_index k ~f t] returns an incremental derivative of [t] that is
+    equivalent to [t] in all attributions except possibly for {[conflict_state_index], [k]}, as
+    determined by the result of [~f v_opt], where [v_opt = Some v] indicates [k] is
+    associated with [v] in [t], and [v_opt = None] indicates [k] is not attributed in [t].
+    The result contains a mapping from [k] to [v'] if [~f v_opt] returns [Some v']; the
+    result contains no attribution for [k] if [~f v_opt] returns [None]. *)
 
 val insert: conflict_state_index:StateIndex.t -> Attrib.t -> t -> t
 (** [insert ~conflict_state_index attrib t] inserts the conflict contribution [attrib.v] to state
@@ -97,6 +97,6 @@ val fold2_until: init:'accum -> f:('accum -> StateIndex.t -> Attrib.K.t -> Attri
 
 val fold2: init:'accum -> f:('accum -> StateIndex.t -> Attrib.K.t -> Attrib.t option
   -> Attrib.t option -> 'accum) -> t -> t -> 'accum
-(** [fold2 ~init ~f t0 t1] folds over the (conflict state index, akey, aval) tuples in [t0] and
-    [t1]. Tuples that differ only in the aval component are paired in calls to [~f]; tuples missing
-    from one of the inputs are signified by [None]. *)
+(** [fold2 ~init ~f t0 t1] folds over the (conflict state index, attrib) tuples in [t0] and [t1].
+    Tuples that differ only in the [v] component are paired in calls to [~f]; tuples missing from
+    one of the inputs are signified by [None]. *)

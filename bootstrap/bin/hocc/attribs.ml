@@ -52,25 +52,25 @@ let singleton attrib =
 let is_empty = Ordmap.is_empty
 
 let get symbol_index t =
-  let akey = Attrib.K.init ~symbol_index ~conflict:Contrib.empty in
-  Ordmap.get akey t
+  let k = Attrib.K.init ~symbol_index ~conflict:Contrib.empty in
+  Ordmap.get k t
 
-let amend akey ~f t =
-  Ordmap.amend akey ~f:(fun attrib_option ->
+let amend k ~f t =
+  Ordmap.amend k ~f:(fun attrib_option ->
     let aval_opt = match attrib_option with
       | None -> f None
       | Some Attrib.{k=_; v} -> f (Some v)
     in
     match aval_opt with
     | None -> None
-    | Some aval -> Some (Attrib.init akey aval)
+    | Some aval -> Some (Attrib.init ~k ~v:aval)
   ) t
 
 let insert (Attrib.{k; v=_} as attrib) t =
   Ordmap.amend k ~f:(function
     | None -> Some attrib
-    | Some (Attrib.{k=akey_prev; v=_} as attrib_prev) -> begin
-        assert Contrib.(Attrib.K.(k.conflict) = Attrib.K.(akey_prev.conflict));
+    | Some (Attrib.{k=k_prev; v=_} as attrib_prev) -> begin
+        assert Contrib.(Attrib.K.(k.conflict) = Attrib.K.(k_prev.conflict));
         Some (Attrib.union attrib_prev attrib)
       end
   ) t
@@ -82,23 +82,23 @@ let union t0 t1 =
   ) t0 t1
 
 let fold_until ~init ~f t =
-  Ordmap.fold_until ~init ~f:(fun accum (_akey, akey_aval) -> f accum akey_aval) t
+  Ordmap.fold_until ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t
 
 let fold ~init ~f t =
-  Ordmap.fold ~init ~f:(fun accum (_akey, akey_aval) -> f accum akey_aval) t
+  Ordmap.fold ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t
 
 let for_any ~f t =
-  Ordmap.for_any ~f:(fun (_akey, akey_aval) -> f akey_aval) t
+  Ordmap.for_any ~f:(fun (_k, attrib) -> f attrib) t
 
 let fold2_until ~init ~f t =
   Ordmap.fold2_until ~init ~f:(fun accum k_kv_opt0 k_kv_opt1 ->
     let kv_opt0 = match k_kv_opt0 with
       | None -> None
-      | Some (_akey, attrib) -> Some attrib
+      | Some (_k, attrib) -> Some attrib
     in
     let kv_opt1 = match k_kv_opt1 with
       | None -> None
-      | Some (_akey, attrib) -> Some attrib
+      | Some (_k, attrib) -> Some attrib
     in
     f accum kv_opt0 kv_opt1
   ) t
@@ -107,11 +107,11 @@ let fold2 ~init ~f t =
   Ordmap.fold2 ~init ~f:(fun accum k_kv_opt0 k_kv_opt1 ->
     let kv_opt0 = match k_kv_opt0 with
       | None -> None
-      | Some (_akey, akey_aval) -> Some akey_aval
+      | Some (_k, attrib) -> Some attrib
     in
     let kv_opt1 = match k_kv_opt1 with
       | None -> None
-      | Some (_akey, akey_aval) -> Some akey_aval
+      | Some (_k, attrib) -> Some attrib
     in
     f accum kv_opt0 kv_opt1
   ) t

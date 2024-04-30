@@ -47,12 +47,12 @@ val get: Symbol.Index.t -> t -> Attrib.t option
     attributions on [symbol_index]. *)
 
 val amend: Attrib.K.t -> f:(Attrib.V.t option -> Attrib.V.t option) -> t -> t
-(** [amend akey ~f t] returns an incremental derivative of [t] that is equivalent to [t] in
-    all attributions except possibly for [symbol_index], as determined by the result of [~f
-    aval_opt], where [aval_opt = Some aval] indicates [symbol_index] is associated with [aval] in
-    [t], and [aval_opt = None] indicates [symbol_index] is not attributed in [t]. The result
-    contains a mapping from [symbol_index] to [aval'] if [~f aval_opt] returns [Some aval']; the
-    result contains no attribution for [symbol_index] if [~f aval_opt] returns [None]. *)
+(** [amend k ~f t] returns an incremental derivative of [t] that is equivalent to [t] in all
+    attributions except possibly for [symbol_index], as determined by the result of [~f v_opt],
+    where [v_opt = Some v] indicates [symbol_index] is associated with [v] in [t], and [v_opt =
+    None] indicates [symbol_index] is not attributed in [t]. The result contains a mapping from
+    [symbol_index] to [v'] if [~f v_opt] returns [Some v']; the result contains no attribution for
+    [symbol_index] if [~f v_opt] returns [None]. *)
 
 val insert: Attrib.t -> t -> t
 (** [insert attrib t] inserts [attrib]. *)

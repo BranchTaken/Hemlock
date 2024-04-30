@@ -96,7 +96,7 @@ module Seq = struct
     end in
     match normalize t with
     | l, conflict_state_index, seq_inner, seq_outer -> begin
-        let (_akey, attrib), seq_inner = Attribs.Seq.next seq_inner in
+        let (_k, attrib), seq_inner = Attribs.Seq.next seq_inner in
         (conflict_state_index, attrib), {
           l=pred l;
           conflict_state_index_opt=Some conflict_state_index;
@@ -142,18 +142,18 @@ let get_hlt ~conflict_state_index symbol_index t =
   get ~conflict_state_index symbol_index t
   |> Option.value_hlt
 
-let contains ~conflict_state_index symbol_index aval t =
-  assert (not (Attrib.V.is_empty aval));
+let contains ~conflict_state_index symbol_index v t =
+  assert (not (Attrib.V.is_empty v));
   match get ~conflict_state_index symbol_index t with
   | None -> false
-  | Some Attrib.{k=_; v=aval_existing} -> Attrib.V.(inter aval_existing aval = aval)
+  | Some Attrib.{k=_; v=v_existing} -> Attrib.V.(inter v_existing v = v)
 
-let amend ~conflict_state_index akey ~f t =
+let amend ~conflict_state_index k ~f t =
   let attribs = match Ordmap.get conflict_state_index t with
     | None -> Attribs.empty
     | Some attribs -> attribs
   in
-  let attribs' = Attribs.amend akey ~f attribs in
+  let attribs' = Attribs.amend k ~f attribs in
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
 let insert ~conflict_state_index (Attrib.{k; v} as attrib) t =
@@ -166,7 +166,7 @@ let insert ~conflict_state_index (Attrib.{k; v} as attrib) t =
           Some (
             Attribs.amend k attribs ~f:(function
               | None -> Some v
-              | Some aval_prev -> Some (Attrib.V.union v aval_prev)
+              | Some v_prev -> Some (Attrib.V.union v v_prev)
             )
           )
         end
@@ -248,6 +248,6 @@ let fold2_until ~init ~f t0 t1 =
   inner ~f init (Seq.init t0) (Seq.init t1)
 
 let fold2 ~init ~f t0 t1 =
-  fold2_until ~init ~f:(fun accum conflict_state_index symbol_index aval_opt0 aval_opt1 ->
-    f accum conflict_state_index symbol_index aval_opt0 aval_opt1, false
+  fold2_until ~init ~f:(fun accum conflict_state_index symbol_index v_opt0 v_opt1 ->
+    f accum conflict_state_index symbol_index v_opt0 v_opt1, false
   ) t0 t1

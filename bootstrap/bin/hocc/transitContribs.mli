@@ -14,6 +14,7 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
     (elements are indented to [~width + 4]). *)
 
 val empty: t
+(** [empty] returns an empty {type:t}. *)
 
 val of_anon_contribs: AnonContribs.t -> t
 (** [of_anon_contribs anon_contribs] initializes a {type:t} by inserting [anon_contribs]. *)

@@ -84,9 +84,6 @@ module V = struct
   let is_empty {contrib; _} =
     Contrib.is_empty contrib
 
-  let merge {ergo_lr1itemset=e0; contrib=c0} {ergo_lr1itemset=e1; contrib=c1} =
-    {ergo_lr1itemset=Lr1Itemset.union e0 e1; contrib=Contrib.union c0 c1}
-
   let union {ergo_lr1itemset=e0; contrib=c0} {ergo_lr1itemset=e1; contrib=c1} =
     {ergo_lr1itemset=Lr1Itemset.union e0 e1; contrib=Contrib.union c0 c1}
 
@@ -113,9 +110,8 @@ module T = struct
     | Gt -> Gt
 
   let equal {k=k0; v=v0} {k=k1; v=v1} =
-    match K.( = ) k0 k1 with
-    | false -> false
-    | true -> V.equal v0 v1
+    assert K.(k0 = k1);
+    V.equal v0 v1
 
   let pp {k; v} formatter =
     formatter
@@ -132,13 +128,13 @@ module T = struct
     |> Fmt.fmt "; v="
     |> V.fmt_hr symbols prods ~alt ~width v
     |> Fmt.fmt "}"
+
+  let init ~k ~v =
+    {k; v}
+
+  let union {k=k0; v=v0} {k=k1; v=v1} =
+    assert K.(k0 = k1);
+    init ~k:k0 ~v:(V.union v0 v1)
 end
 include T
 include Identifiable.Make(T)
-
-let init k v =
-  {k; v}
-
-let union {k=k0; v=v0} {k=k1; v=v1} =
-  assert K.(k0 = k1);
-  init k0 (V.union v0 v1)

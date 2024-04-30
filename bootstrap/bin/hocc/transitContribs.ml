@@ -88,8 +88,8 @@ let merge_direct ~conflict_state_index symbol_index contrib ({direct; _} as t) =
   {t with direct}
 
 let of_anon_contribs_direct anon_contribs_direct =
-  AnonContribs.fold ~init:empty ~f:(fun t conflict_state_index symbol_index aval ->
-    merge_direct ~conflict_state_index symbol_index aval t
+  AnonContribs.fold ~init:empty ~f:(fun t conflict_state_index symbol_index v ->
+    merge_direct ~conflict_state_index symbol_index v t
   ) anon_contribs_direct
 
 let insert_kernel_contribs kernel_contribs t =
@@ -116,9 +116,9 @@ let contribs lr1itemset {kernel_contribs; _} =
     ~f:(fun contribs (_src_lr1item, src_lr1item_contribs) ->
       Contribs.fold ~init:contribs
         ~f:(fun contribs conflict_state_index
-          Attrib.{k={symbol_index; conflict} as akey; v={ergo_lr1itemset; _} as aval} ->
+          Attrib.{k={symbol_index; conflict} as k; v={ergo_lr1itemset; _} as v} ->
           let shift_contrib = Contrib.(inter shift conflict) in
-          let shift_aval = Attrib.V.init ~ergo_lr1itemset ~contrib:shift_contrib in
+          let shift_v = Attrib.V.init ~ergo_lr1itemset ~contrib:shift_contrib in
           let has_shift = Contrib.is_empty shift_contrib in
           Lr1Itemset.fold ~init:contribs ~f:(fun contribs ergo_lr1item ->
             match Lr1Itemset.get ergo_lr1item lr1itemset with
@@ -126,7 +126,7 @@ let contribs lr1itemset {kernel_contribs; _} =
                 match has_shift with
                 | false -> contribs
                 | true ->
-                  Contribs.insert ~conflict_state_index (Attrib.init akey shift_aval) contribs
+                  Contribs.insert ~conflict_state_index (Attrib.init ~k ~v:shift_v) contribs
               end
             | Some {follow; _} -> begin
                 match Ordset.mem symbol_index follow with
@@ -134,11 +134,11 @@ let contribs lr1itemset {kernel_contribs; _} =
                     match has_shift with
                     | false -> contribs
                     | true ->
-                      Contribs.insert ~conflict_state_index (Attrib.init akey shift_aval) contribs
+                      Contribs.insert ~conflict_state_index (Attrib.init ~k ~v:shift_v) contribs
                   end
                 | true -> begin
-                    let aval' = Attrib.V.union shift_aval aval in
-                    Contribs.insert ~conflict_state_index (Attrib.init akey aval') contribs
+                    let v' = Attrib.V.union shift_v v in
+                    Contribs.insert ~conflict_state_index (Attrib.init ~k ~v:v') contribs
                   end
               end
           ) ergo_lr1itemset

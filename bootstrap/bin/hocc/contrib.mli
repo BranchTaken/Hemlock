@@ -12,6 +12,7 @@ type t
 include IdentifiableIntf.S with type t := t
 
 val equal: t -> t -> bool
+(** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. *)
 
 val pp_hr: Symbols.t -> Prods.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs contrib in human-readable form. *)
