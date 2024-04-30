@@ -268,11 +268,13 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
   {lr1itemsetclosure={index=_XXX; _}; contribs=t_contribs; _} =
   let compat = Contribs.fold2_until ~init:true
       ~f:(fun _ _conflict_state_index symbol_index attrib_opt0 attrib_opt1 ->
-        let o_contrib = attrib_opt0
+        let o_contrib =
+          attrib_opt0
           |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
           |> Option.value ~default:Contrib.empty
         in
-        let t_contrib = attrib_opt1
+        let t_contrib =
+          attrib_opt1
           |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
           |> Option.value ~default:Contrib.empty
         in
@@ -297,11 +299,13 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
   let contribs_incompat o_contribs t_contribs = begin
     Contribs.fold2 ~init:()
       ~f:(fun _ _conflict_state_index Attrib.K.{symbol_index; _} aval_opt0 aval_opt1 ->
-        let o_contrib = attrib_opt0
+        let o_contrib =
+          attrib_opt0
           |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
           |> Option.value ~default:Contrib.empty
         in
-        let t_contrib = attrib_opt1
+        let t_contrib =
+          attrib_opt1
           |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
           |> Option.value ~default:Contrib.empty
         in

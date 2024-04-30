@@ -17,7 +17,7 @@ module T = struct
     |> Uns.hash_fold 3L |> Contrib.hash_fold contrib
 
   let cmp {symbol_index=s0; conflict=x0; ergo_lr1itemset=e0; contrib=c0}
-      {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
+    {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
     let open Cmp in
     match Symbol.Index.cmp s0 s1 with
     | Lt -> Lt
@@ -35,7 +35,7 @@ module T = struct
     | Gt -> Gt
 
   let equal {symbol_index=s0; conflict=x0; ergo_lr1itemset=e0; contrib=c0}
-      {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
+    {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
     assert Symbol.Index.(s0 = s1);
     assert Contrib.(x0 = x1);
     Lr0Itemset.equal (Lr1Itemset.core e0) (Lr1Itemset.core e1) && Contrib.equal c0 c1
@@ -49,7 +49,7 @@ module T = struct
     |> Fmt.fmt "}"
 
   let fmt_hr symbols prods ?(alt=false) ?(width=0L)
-      {symbol_index; conflict; ergo_lr1itemset; contrib} formatter =
+    {symbol_index; conflict; ergo_lr1itemset; contrib} formatter =
     formatter
     |> Fmt.fmt "{symbol_index="
     |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols)
@@ -71,14 +71,14 @@ module T = struct
     Contrib.is_empty contrib
 
   let union {symbol_index=s0; conflict=x0; ergo_lr1itemset=e0; contrib=c0}
-      {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
+    {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
     assert Symbol.Index.(s0 = s1);
     assert Contrib.(x0 = x1);
     init ~symbol_index:s0 ~conflict:x0 ~ergo_lr1itemset:(Lr1Itemset.union e0 e1)
       ~contrib:(Contrib.union c0 c1)
 
   let inter {symbol_index=s0; conflict=x0; ergo_lr1itemset=e0; contrib=c0}
-      {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
+    {symbol_index=s1; conflict=x1; ergo_lr1itemset=e1; contrib=c1} =
     assert Symbol.Index.(s0 = s1);
     assert Contrib.(x0 = x1);
     init ~symbol_index:s0 ~conflict:x0 ~ergo_lr1itemset:(Lr1Itemset.inter e0 e1)
