@@ -7,10 +7,10 @@ open! Basis.Rudiments
 (** Attribution key. *)
 module K : sig
   type t = {
-    (* Symbol index. *)
-    symbol_index: Symbol.Index.t;
-    (* Attributed conflict action(s). *)
-    conflict: Contrib.t;
+    symbol_index: Symbol.Index.t; (** Symbol index. *)
+    conflict: Contrib.t; (** Conflict on symbol. This is a non-strict superset of attributed
+                             conflict contribution, i.e. the attribution may not explain the entire
+                             conflict. *)
   }
 
   include IdentifiableIntf.S with type t := t
@@ -26,7 +26,7 @@ end
 type t = {
   k: K.t; (** Key. *)
   ergo_lr1itemset: Lr1Itemset.t; (** Ergo's LR(1) itemset. *)
-  contrib: Contrib.t; (** Conflict contribution. *)
+  contrib: Contrib.t; (** Attributed conflict contribution. *)
 }
 
 include IdentifiableIntf.S with type t := t
