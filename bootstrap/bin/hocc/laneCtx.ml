@@ -5,30 +5,42 @@ open! Basis.Rudiments
 module TraceKey = struct
   module T = struct
     type t = {
-      k: Attrib.K.t; (* Conflicted symbol index and conflict manifestation. *)
+      symbol_index: Symbol.Index.t; (* Conflicted symbol index. *)
+      conflict: Contrib.t; (* Conflict manifestation. *)
       action: State.Action.t; (* Action *)
     }
 
-    let hash_fold {k; action} state =
-      state |> Attrib.K.hash_fold k |> State.Action.hash_fold action
+    let hash_fold {symbol_index; conflict; action} state =
+      state
+      |> Symbol.Index.hash_fold symbol_index
+      |> Contrib.hash_fold conflict
+      |> State.Action.hash_fold action
 
-    let cmp {k=k0; action=action0} {k=k1; action=action1} = let open Cmp in
-      match Attrib.K.cmp k0 k1 with
+    let cmp {symbol_index=s0; conflict=x0; action=action0}
+      {symbol_index=s1; conflict=x1; action=action1} =
+      let open Cmp in
+      match Symbol.Index.cmp s0 s1 with
       | Lt -> Lt
-      | Eq -> State.Action.cmp action0 action1
+      | Eq -> begin
+          match Contrib.cmp x0 x1 with
+          | Lt -> Lt
+          | Eq -> State.Action.cmp action0 action1
+          | Gt -> Gt
+        end
       | Gt -> Gt
 
-    let pp {k; action} formatter =
+    let pp {symbol_index; conflict; action} formatter =
       formatter
-      |> Fmt.fmt "{k=" |> Attrib.K.pp k
+      |> Fmt.fmt "{symbol_index=" |> Symbol.Index.pp symbol_index
+      |> Fmt.fmt "; conflict=" |> Contrib.pp conflict
       |> Fmt.fmt "; action=" |> State.Action.pp action
       |> Fmt.fmt "}"
   end
   include T
   include Identifiable.Make(T)
 
-  let init ~k ~action =
-    {k; action}
+  let init ~symbol_index ~conflict ~action =
+    {symbol_index; conflict; action}
 end
 
 (* Interstitial lane trace association between transition source/destination (aka ergo) items. The
@@ -226,14 +238,14 @@ let kernel_lr1itemset_of_prod_index prods state symbol_index prod_index =
 let kernel_contribs {conflict_state; traces; _} =
   let conflict_state_index = State.index conflict_state in
   Ordmap.fold ~init:KernelContribs.empty
-    ~f:(fun kernel_contribs (TraceKey.{k; action}, kernel_ergos) ->
+    ~f:(fun kernel_contribs (TraceKey.{symbol_index; conflict; action}, kernel_ergos) ->
       let contrib = match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
       TraceVal.fold ~init:kernel_contribs ~f:(fun kernel_contribs (lr1item, ergo_lr1itemset) ->
-        let attrib = Attrib.init ~k ~ergo_lr1itemset ~contrib in
+        let attrib = Attrib.init ~symbol_index ~conflict ~ergo_lr1itemset ~contrib in
         let trace_contribs = Contribs.singleton ~conflict_state_index attrib in
         KernelContribs.insert lr1item trace_contribs kernel_contribs
       ) kernel_ergos
@@ -242,7 +254,7 @@ let kernel_contribs {conflict_state; traces; _} =
 let anon_contribs ({anon_contribs_direct; _} as t) =
   KernelContribs.fold ~init:AnonContribs.empty ~f:(fun anon_contribs (_lr1item, contribs) ->
     Contribs.fold ~init:AnonContribs.empty
-      ~f:(fun anon_contribs conflict_state_index Attrib.{k={symbol_index; _}; contrib; _} ->
+      ~f:(fun anon_contribs conflict_state_index Attrib.{symbol_index; contrib; _} ->
         AnonContribs.insert ~conflict_state_index symbol_index contrib anon_contribs
       ) contribs
     |> AnonContribs.union anon_contribs
@@ -256,7 +268,7 @@ let of_conflict_state ~resolve symbols prods conflict_state =
   let conflict_state_index = State.index conflict_state in
   let traces, anon_contribs_direct = Attribs.fold
       ~init:(Ordmap.empty (module TraceKey), AnonContribs.empty)
-      ~f:(fun (traces, anon_contribs_direct) Attrib.{k={symbol_index; _} as k; contrib; _} ->
+      ~f:(fun (traces, anon_contribs_direct) Attrib.{symbol_index; conflict; contrib; _} ->
         let anon_contribs_direct = match Contrib.mem_shift contrib with
           | false -> anon_contribs_direct
           | true ->
@@ -265,7 +277,7 @@ let of_conflict_state ~resolve symbols prods conflict_state =
         in
         let traces = Ordset.fold ~init:traces ~f:(fun traces prod_index ->
           let action = State.Action.Reduce prod_index in
-          let tracekey = TraceKey.init ~k ~action in
+          let tracekey = TraceKey.init ~symbol_index ~conflict ~action in
           let lr1itemset =
             kernel_lr1itemset_of_prod_index prods conflict_state symbol_index prod_index in
           let traceval = TraceVal.init symbol_index ~lr1itemset ~ergo_lr1itemset:Lr1Itemset.empty in
@@ -292,7 +304,7 @@ let of_ante state {conflict_state; state=ergo; traces=ergo_traces; _} =
    * the ergo state; others may continue or even lead to forks. *)
   let traces, anon_contribs_direct = Ordmap.fold
       ~init:(Ordmap.empty (module TraceKey), AnonContribs.empty)
-      ~f:(fun (traces, anon_contribs_direct) (TraceKey.{k={symbol_index; _}; action} as tracekey,
+      ~f:(fun (traces, anon_contribs_direct) (TraceKey.{symbol_index; action; _} as tracekey,
         ergo_traceval) ->
         match action with
         | State.Action.ShiftPrefix _
@@ -406,7 +418,7 @@ let post_init ante_lanectxs ({conflict_state; traces; anon_contribs_direct; _} a
    * to any antecedents. This situation is detected in `of_ante` when the trace source is an added
    * item, so it's sufficient to look only at traces with kernel items as sources. *)
   let anon_contribs_direct = Ordmap.fold ~init:anon_contribs_direct
-      ~f:(fun anon_contribs_direct (TraceKey.{k={symbol_index; _}; action}, traceval) ->
+      ~f:(fun anon_contribs_direct (TraceKey.{symbol_index; action; _}, traceval) ->
         match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()

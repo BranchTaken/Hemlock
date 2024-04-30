@@ -22,7 +22,7 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 module Seq : sig
   type container = t
 
-  include SeqIntf.SMonoDef with type elm = Attrib.K.t * Attrib.t
+  include SeqIntf.SMonoDef with type elm = Symbol.Index.t * Attrib.t
 
   val init: container -> t
 end
@@ -46,13 +46,14 @@ val get: Symbol.Index.t -> t -> Attrib.t option
 (** [get symbol_index t] returns the contributions of [symbol_index], or [None] if there are no
     attributions on [symbol_index]. *)
 
-val amend: Attrib.K.t -> f:(Attrib.t option -> Attrib.t option) -> t -> t
-(** [amend k ~f t] returns an incremental derivative of [t] that is equivalent to [t] in all
-    attributions except possibly for [symbol_index], as determined by the result of [~f attrib_opt],
-    where [attrib_opt = Some attrib] indicates [symbol_index] is associated with [attrib] in [t],
-    and [attrib_opt = None] indicates [symbol_index] is not attributed in [t]. The result contains a
-    mapping from [symbol_index] to [attrib'] if [~f attrib_opt] returns [Some attrib']; the result
-    contains no attribution for [symbol_index] if [~f attrib_opt] returns [None]. *)
+val amend: Symbol.Index.t -> f:(Attrib.t option -> Attrib.t option) -> t -> t
+(** [amend symbol_index ~f t] returns an incremental derivative of [t] that is equivalent to [t] in
+    all attributions except possibly for [symbol_index], as determined by the result of [~f
+    attrib_opt], where [attrib_opt = Some attrib] indicates [symbol_index] is associated with
+    [attrib] in [t], and [attrib_opt = None] indicates [symbol_index] is not attributed in [t]. The
+    result contains a mapping from [symbol_index] to [attrib'] if [~f attrib_opt] returns [Some
+    attrib']; the result contains no attribution for [symbol_index] if [~f attrib_opt] returns
+    [None]. *)
 
 val insert: Attrib.t -> t -> t
 (** [insert attrib t] inserts [attrib]. *)

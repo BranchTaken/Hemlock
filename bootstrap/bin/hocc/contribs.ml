@@ -156,7 +156,7 @@ let amend ~conflict_state_index k ~f t =
   let attribs' = Attribs.amend k ~f attribs in
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
-let insert ~conflict_state_index (Attrib.{k; _} as attrib) t =
+let insert ~conflict_state_index (Attrib.{symbol_index; _} as attrib) t =
   match Attrib.is_empty attrib with
   | true -> t
   | false ->
@@ -164,7 +164,7 @@ let insert ~conflict_state_index (Attrib.{k; _} as attrib) t =
       | None -> Some (Attribs.singleton attrib)
       | Some attribs -> begin
           Some (
-            Attribs.amend k attribs ~f:(function
+            Attribs.amend symbol_index attribs ~f:(function
               | None -> Some attrib
               | Some attrib_prev -> Some (Attrib.union attrib attrib_prev)
             )
@@ -209,14 +209,14 @@ let union t0 t1 =
 
 let fold2_until ~init ~f t0 t1 =
   let rec inner ~f accum seq0 seq1 = begin
-    let left state_index0 (Attrib.{k; _} as attrib0) seq0' = begin
-      let accum, until = f accum state_index0 k (Some attrib0) None in
+    let left state_index0 (Attrib.{symbol_index; _} as attrib0) seq0' = begin
+      let accum, until = f accum state_index0 symbol_index (Some attrib0) None in
       match until with
       | true -> accum
       | false -> inner ~f accum seq0' seq1
     end in
-    let right state_index1 (Attrib.{k; _} as attrib1) seq1' = begin
-      let accum, until = f accum state_index1 k None (Some attrib1) in
+    let right state_index1 (Attrib.{symbol_index; _} as attrib1) seq1' = begin
+      let accum, until = f accum state_index1 symbol_index None (Some attrib1) in
       match until with
       | true -> accum
       | false -> inner ~f accum seq0 seq1'
@@ -227,17 +227,17 @@ let fold2_until ~init ~f t0 t1 =
       left state_index0 attrib0 seq0'
     | None, Some ((state_index1, attrib1), seq1') ->
       right state_index1 attrib1 seq1'
-    | Some ((state_index0, (Attrib.{k=k0; _} as attrib0)), seq0'),
-      Some ((state_index1, (Attrib.{k=k1; _} as attrib1)), seq1') -> begin
+    | Some ((state_index0, (Attrib.{symbol_index=s0; _} as attrib0)), seq0'),
+      Some ((state_index1, (Attrib.{symbol_index=s1; _} as attrib1)), seq1') -> begin
         let rel = match Uns.cmp state_index0 state_index1 with
           | Cmp.Lt -> Cmp.Lt
-          | Eq -> Attrib.K.cmp k0 k1
+          | Eq -> Symbol.Index.cmp s0 s1
           | Gt -> Gt
         in
         match rel with
         | Lt -> left state_index0 attrib0 seq0'
         | Eq -> begin
-            let accum, until = f accum state_index0 k0 (Some attrib0) (Some attrib1) in
+            let accum, until = f accum state_index0 s0 (Some attrib0) (Some attrib1) in
             match until with
             | true -> accum
             | false -> inner ~f accum seq0' seq1'

@@ -159,10 +159,10 @@ let conflict_attribs ~resolve symbols prods {actions; _} =
       end
   )
   |> List.fold ~init:Attribs.empty ~f:(fun attribs (symbol_index, conflict) ->
-    let k = Attrib.K.init ~symbol_index ~conflict in
     (* This function is only called by `LaneCtx.of_conflict_state`, for which case `ergo_lr1itemset`
      * is always empty, because there is no ergo state for the conflict state. *)
-    let attrib = Attrib.init ~k ~ergo_lr1itemset:Lr1Itemset.empty ~contrib:conflict in
+    let attrib =
+      Attrib.init ~symbol_index ~conflict ~ergo_lr1itemset:Lr1Itemset.empty ~contrib:conflict in
     Attribs.insert attrib attribs
   )
 
