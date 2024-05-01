@@ -1145,21 +1145,22 @@ and hmh_extract io hmh =
 
 and gc_states io states =
   let state_indexes_reachable states = begin
-    let ergo_state_indexes_of_state_index states state_index = begin
+    let isucc_state_indexes_of_state_index states state_index = begin
       let state = Array.get state_index states in
-      let shift_ergo_state_indexes = Ordmap.fold ~init:(Ordset.empty (module State.Index))
-        ~f:(fun ergo_state_indexes (_symbol_index, actions) ->
-          Ordset.fold ~init:ergo_state_indexes ~f:(fun ergo_state_indexes action ->
+      let shift_isucc_state_indexes = Ordmap.fold ~init:(Ordset.empty (module State.Index))
+        ~f:(fun isucc_state_indexes (_symbol_index, actions) ->
+          Ordset.fold ~init:isucc_state_indexes ~f:(fun isucc_state_indexes action ->
             let open State.Action in
             match action with
-            | ShiftPrefix ergo_state_index
-            | ShiftAccept ergo_state_index -> Ordset.insert ergo_state_index ergo_state_indexes
-            | Reduce _ -> ergo_state_indexes
+            | ShiftPrefix isucc_state_index
+            | ShiftAccept isucc_state_index -> Ordset.insert isucc_state_index isucc_state_indexes
+            | Reduce _ -> isucc_state_indexes
           ) actions
         ) State.(state.actions) in
-      Ordmap.fold ~init:shift_ergo_state_indexes ~f:(fun ergo_state_indexes (_symbol_index, goto) ->
-        Ordset.insert goto ergo_state_indexes
-      ) State.(state.gotos)
+      Ordmap.fold ~init:shift_isucc_state_indexes
+        ~f:(fun isucc_state_indexes (_symbol_index, goto) ->
+          Ordset.insert goto isucc_state_indexes
+        ) State.(state.gotos)
     end in
     let starts = Array.fold ~init:(Ordset.empty (module State.Index)) ~f:(fun reachable state ->
       match State.is_start state with
@@ -1167,13 +1168,13 @@ and gc_states io states =
       | true -> Ordset.insert (State.index state) reachable
     ) states in
     let rec trace states reachable state_index = begin
-      Ordset.fold ~init:reachable ~f:(fun reachable ergo_state_index ->
-        let ergo_state = Array.get ergo_state_index states in
-        let ergo_state_index = State.index ergo_state in
-        match Ordset.mem ergo_state_index reachable with
+      Ordset.fold ~init:reachable ~f:(fun reachable isucc_state_index ->
+        let isucc_state = Array.get isucc_state_index states in
+        let isucc_state_index = State.index isucc_state in
+        match Ordset.mem isucc_state_index reachable with
         | true -> reachable
-        | false -> trace states (Ordset.insert ergo_state_index reachable) ergo_state_index
-      ) (ergo_state_indexes_of_state_index states state_index)
+        | false -> trace states (Ordset.insert isucc_state_index reachable) isucc_state_index
+      ) (isucc_state_indexes_of_state_index states state_index)
     end in
     Ordset.fold ~init:starts ~f:(fun reachable state_index ->
       trace states reachable state_index

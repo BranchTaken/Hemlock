@@ -43,10 +43,9 @@ module TraceKey = struct
     {symbol_index; conflict; action}
 end
 
-(* Interstitial lane trace association between transition source/destination (aka ergo) items. The
- * mapping implementation is 1:N, which is a canonical decomposition of the logical M:N mapping. The
- * source is a kernel item for interstitial states, a kernel or added item for contributing states.
-*)
+(* Interstitial lane trace association between transition source/destination items. The mapping
+ * implementation is 1:N, which is a canonical decomposition of the logical M:N mapping. The source
+ * is a kernel item for interstitial states, a kernel or added item for contributing states. *)
 module TraceVal = struct
   module T = struct
     type t = (Lr1Item.t, Lr1Itemset.t, Lr1Item.cmper_witness) Ordmap.t
@@ -75,7 +74,7 @@ module TraceVal = struct
 
   let length = Ordmap.length
 
-  let init symbol_index ~lr1itemset ~ergo_lr1itemset =
+  let init symbol_index ~lr1itemset ~isucc_lr1itemset =
     Lr1Itemset.fold ~init:(Ordmap.empty (module Lr1Item))
       ~f:(fun t Lr1Item.{lr0item; follow=follow_unfiltered} ->
         (* Filter the follow set to contain only `symbol_index`, since it is the only relevant
@@ -83,17 +82,17 @@ module TraceVal = struct
         assert (Ordset.mem symbol_index follow_unfiltered);
         let follow = Ordset.singleton (module Symbol.Index) symbol_index in
         let lr1item = Lr1Item.init ~lr0item ~follow in
-        Ordmap.insert_hlt ~k:lr1item ~v:ergo_lr1itemset t
+        Ordmap.insert_hlt ~k:lr1item ~v:isucc_lr1itemset t
       ) lr1itemset
 
   let lr1itemset t =
-    Ordmap.fold ~init:Lr1Itemset.empty ~f:(fun lr1itemset (lr1item, _ergo_lr1itemset) ->
+    Ordmap.fold ~init:Lr1Itemset.empty ~f:(fun lr1itemset (lr1item, _isucc_lr1itemset) ->
       Lr1Itemset.insert_hlt lr1item lr1itemset
     ) t
 
   let union t0 t1 =
-    Ordmap.union ~f:(fun _lr1item ergo_lr1itemset0 ergo_lr1itemset1 ->
-      Lr1Itemset.union ergo_lr1itemset0 ergo_lr1itemset1
+    Ordmap.union ~f:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
+      Lr1Itemset.union isucc_lr1itemset0 isucc_lr1itemset1
     ) t0 t1
 
   let fold_until = Ordmap.fold_until
@@ -106,7 +105,7 @@ type t = {
   conflict_state: State.t;
 
   (* State this lane context immediately leads to. *)
-  ergo: State.t;
+  isucc: State.t;
 
   (* State corresponding to this lane context. *)
   state: State.t;
@@ -115,14 +114,14 @@ type t = {
    * because multiple kernel items in the conflict state can induce the same added ε production. *)
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
 
-  (* Conflict contributions directly to `state`->`ergo`. *)
+  (* Conflict contributions directly to `state`->`isucc`. *)
   anon_contribs_direct: AnonContribs.t;
 }
 
-let pp {conflict_state; ergo; state; traces; anon_contribs_direct} formatter =
+let pp {conflict_state; isucc; state; traces; anon_contribs_direct} formatter =
   formatter
   |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
-  |> Fmt.fmt "; ergo index=" |> Uns.pp (State.index ergo)
+  |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
   |> Fmt.fmt "; state index=" |> Uns.pp (State.index state)
   |> Fmt.fmt "; traces count="
   |> Uns.pp (Ordmap.fold ~init:0L ~f:(fun accum (_, traceval) ->
@@ -132,10 +131,10 @@ let pp {conflict_state; ergo; state; traces; anon_contribs_direct} formatter =
   |> Fmt.fmt "}"
 
 let fmt_hr symbols prods ?(alt=false) ?(width=0L)
-  {conflict_state; ergo; state; traces; anon_contribs_direct} formatter =
+  {conflict_state; isucc; state; traces; anon_contribs_direct} formatter =
   formatter
   |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
-  |> Fmt.fmt "; ergo index=" |> Uns.pp (State.index ergo)
+  |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
   |> Fmt.fmt "; state index=" |> Uns.pp (State.index state)
   |> Fmt.fmt "; traces="
   |> List.fmt ~alt ~width:(width + 4L) (fun (tracekey, traceval) formatter ->
@@ -151,14 +150,14 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L)
 let conflict_state {conflict_state; _} =
   conflict_state
 
-let ergo {ergo; _} =
-  ergo
+let isucc {isucc; _} =
+  isucc
 
 let state {state; _} =
   state
 
-let transit {state; ergo; _} =
-  Transit.init ~src:(State.index state) ~dst:(State.index ergo)
+let transit {state; isucc; _} =
+  Transit.init ~src:(State.index state) ~dst:(State.index isucc)
 
 let traces_length {traces; _} =
   Ordmap.length traces
@@ -238,17 +237,17 @@ let kernel_lr1itemset_of_prod_index prods state symbol_index prod_index =
 let kernel_contribs {conflict_state; traces; _} =
   let conflict_state_index = State.index conflict_state in
   Ordmap.fold ~init:KernelContribs.empty
-    ~f:(fun kernel_contribs (TraceKey.{symbol_index; conflict; action}, kernel_ergos) ->
+    ~f:(fun kernel_contribs (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
       let contrib = match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
-      TraceVal.fold ~init:kernel_contribs ~f:(fun kernel_contribs (lr1item, ergo_lr1itemset) ->
-        let attrib = Attrib.init ~symbol_index ~conflict ~ergo_lr1itemset ~contrib in
+      TraceVal.fold ~init:kernel_contribs ~f:(fun kernel_contribs (lr1item, isucc_lr1itemset) ->
+        let attrib = Attrib.init ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
         let trace_contribs = Contribs.singleton ~conflict_state_index attrib in
         KernelContribs.insert lr1item trace_contribs kernel_contribs
-      ) kernel_ergos
+      ) kernel_isuccs
     ) traces
 
 let anon_contribs ({anon_contribs_direct; _} as t) =
@@ -280,9 +279,9 @@ let of_conflict_state ~resolve symbols prods conflict_state =
           let tracekey = TraceKey.init ~symbol_index ~conflict ~action in
           let lr1itemset =
             kernel_lr1itemset_of_prod_index prods conflict_state symbol_index prod_index in
-          let traceval = TraceVal.init symbol_index ~lr1itemset ~ergo_lr1itemset:Lr1Itemset.empty in
-          Ordmap.amend tracekey ~f:(fun kernel_ergos_opt ->
-            match kernel_ergos_opt with
+          let traceval = TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset:Lr1Itemset.empty in
+          Ordmap.amend tracekey ~f:(fun kernel_isuccs_opt ->
+            match kernel_isuccs_opt with
             | None -> Some traceval
             | Some traceval_existing -> Some (TraceVal.union traceval traceval_existing)
           ) traces
@@ -292,35 +291,35 @@ let of_conflict_state ~resolve symbols prods conflict_state =
   assert (not (Ordmap.is_empty traces));
   {
     conflict_state;
-    ergo=conflict_state;
+    isucc=conflict_state;
     state=conflict_state;
     traces;
     anon_contribs_direct;
   }
 
-let of_ante state {conflict_state; state=ergo; traces=ergo_traces; _} =
+let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
   let conflict_state_index = State.index conflict_state in
-  (* Create traces incrementally derived from those in `ergo_traces`. Some traces may terminate at
-   * the ergo state; others may continue or even lead to forks. *)
+  (* Create traces incrementally derived from those in `isucc_traces`. Some traces may terminate at
+   * the isucc state; others may continue or even lead to forks. *)
   let traces, anon_contribs_direct = Ordmap.fold
       ~init:(Ordmap.empty (module TraceKey), AnonContribs.empty)
       ~f:(fun (traces, anon_contribs_direct) (TraceKey.{symbol_index; action; _} as tracekey,
-        ergo_traceval) ->
+        isucc_traceval) ->
         match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> begin
             TraceVal.fold ~init:(traces, anon_contribs_direct)
-              ~f:(fun (traces, anon_contribs_direct) (ergo_lr1item, _ergo_ergo_lr1itemset) ->
-                let ergo_lr0item = Lr1Item.(ergo_lr1item.lr0item) in
-                match ergo_lr0item.dot with
+              ~f:(fun (traces, anon_contribs_direct) (isucc_lr1item, _isucc_isucc_lr1itemset) ->
+                let isucc_lr0item = Lr1Item.(isucc_lr1item.lr0item) in
+                match isucc_lr0item.dot with
                 | 0L -> begin
-                    (* The lane trace terminates at a direct contribution by `ergo_lr1item`. *)
+                    (* The lane trace terminates at a direct contribution by `isucc_lr1item`. *)
                     traces, anon_contribs_direct
                   end
                 | _ -> begin
-                    let prod = ergo_lr0item.prod in
-                    let dot = pred ergo_lr0item.dot in
+                    let prod = isucc_lr0item.prod in
+                    let dot = pred isucc_lr0item.dot in
                     let lr0item = Lr0Item.init ~prod ~dot in
                     (* Search for an item in state based on lr0item that has `symbol_index` in its
                      * follow set. *)
@@ -349,9 +348,9 @@ let of_ante state {conflict_state; state=ergo; traces=ergo_traces; _} =
                                 (* Contributing state. The trace source is an added item. *)
                                 let lr1itemset = Lr1Itemset.singleton lr1item in
                                 let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
-                                  let ergo_lr1itemset = TraceVal.lr1itemset ergo_traceval in
+                                  let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
                                   let traceval =
-                                    TraceVal.init symbol_index ~lr1itemset ~ergo_lr1itemset in
+                                    TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
                                   match traceval_opt with
                                   | None -> Some traceval
                                   | Some traceval_existing ->
@@ -373,9 +372,9 @@ let of_ante state {conflict_state; state=ergo; traces=ergo_traces; _} =
                                 (* Interstitial state. The trace source is one or more kernel items.
                                 *)
                                 let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
-                                  let ergo_lr1itemset = TraceVal.lr1itemset ergo_traceval in
+                                  let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
                                   let traceval =
-                                    TraceVal.init symbol_index ~lr1itemset ~ergo_lr1itemset in
+                                    TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
                                   match traceval_opt with
                                   | None -> Some traceval
                                   | Some traceval_existing ->
@@ -388,9 +387,9 @@ let of_ante state {conflict_state; state=ergo; traces=ergo_traces; _} =
                             (* Interstitial state. The trace source is a kernel item. *)
                             let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
                               let lr1itemset = Lr1Itemset.singleton lr1item in
-                              let ergo_lr1itemset = TraceVal.lr1itemset ergo_traceval in
+                              let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
                               let traceval =
-                                TraceVal.init symbol_index ~lr1itemset ~ergo_lr1itemset in
+                                TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
                               match traceval_opt with
                               | None -> Some traceval
                               | Some traceval_existing ->
@@ -400,22 +399,22 @@ let of_ante state {conflict_state; state=ergo; traces=ergo_traces; _} =
                           end
                       end
                   end
-              ) ergo_traceval
+              ) isucc_traceval
           end
-      ) ergo_traces
+      ) isucc_traces
   in
   {
     conflict_state;
-    ergo;
+    isucc;
     state;
     traces;
     anon_contribs_direct;
   }
 
-let post_init ante_lanectxs ({conflict_state; traces; anon_contribs_direct; _} as t) =
+let post_init ipred_lanectxs ({conflict_state; traces; anon_contribs_direct; _} as t) =
   let conflict_state_index = State.index conflict_state in
   (* A lane trace in this lane context makes a direct contribution if the lane does not extend back
-   * to any antecedents. This situation is detected in `of_ante` when the trace source is an added
+   * to any predecessors. This situation is detected in `of_ipred` when the trace source is an added
    * item, so it's sufficient to look only at traces with kernel items as sources. *)
   let anon_contribs_direct = Ordmap.fold ~init:anon_contribs_direct
       ~f:(fun anon_contribs_direct (TraceKey.{symbol_index; action; _}, traceval) ->
@@ -424,23 +423,23 @@ let post_init ante_lanectxs ({conflict_state; traces; anon_contribs_direct; _} a
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> begin
             TraceVal.fold ~init:anon_contribs_direct
-              ~f:(fun anon_contribs_direct (src, _ergo_dsts) ->
+              ~f:(fun anon_contribs_direct (src, _isucc_dsts) ->
                 match Lr1Item.(src.lr0item.dot) with
                 | 0L -> anon_contribs_direct (* Source is an added item. *)
                 | _ -> begin
-                    let lane_extends = List.fold_until ~init:false ~f:(fun _ ante_lanectx ->
+                    let lane_extends = List.fold_until ~init:false ~f:(fun _ ipred_lanectx ->
                       let lane_extends = Ordmap.fold_until ~init:false
-                          ~f:(fun _ (_ante_tracekey, ante_traceval) ->
+                          ~f:(fun _ (_ipred_tracekey, ipred_traceval) ->
                             let lane_extends = TraceVal.fold_until ~init:false
-                                ~f:(fun _ (_ante_src, dsts) ->
+                                ~f:(fun _ (_ipred_src, dsts) ->
                                   let lane_extends = Lr1Itemset.mem src dsts in
                                   lane_extends, lane_extends
-                                ) ante_traceval in
+                                ) ipred_traceval in
                             lane_extends, lane_extends
-                          ) ante_lanectx.traces
+                          ) ipred_lanectx.traces
                       in
                       lane_extends, lane_extends
-                    ) ante_lanectxs in
+                    ) ipred_lanectxs in
                     match lane_extends with
                     | true -> anon_contribs_direct
                     | false -> begin

@@ -116,13 +116,14 @@ let contribs lr1itemset {kernel_contribs; _} =
     ~f:(fun contribs (_src_lr1item, src_lr1item_contribs) ->
       Contribs.fold ~init:contribs
         ~f:(fun contribs conflict_state_index
-          (Attrib.{symbol_index; conflict; ergo_lr1itemset; contrib} as attrib) ->
+          (Attrib.{symbol_index; conflict; isucc_lr1itemset; contrib} as attrib) ->
           assert Contrib.(inter conflict contrib = contrib);
           let shift_contrib = Contrib.(inter shift conflict) in
-          let shift_attrib = Attrib.init ~symbol_index ~conflict ~ergo_lr1itemset ~contrib:shift_contrib in
+          let shift_attrib =
+            Attrib.init ~symbol_index ~conflict ~isucc_lr1itemset ~contrib:shift_contrib in
           let has_shift = Contrib.is_empty shift_contrib in
-          Lr1Itemset.fold ~init:contribs ~f:(fun contribs ergo_lr1item ->
-            match Lr1Itemset.get ergo_lr1item lr1itemset with
+          Lr1Itemset.fold ~init:contribs ~f:(fun contribs isucc_lr1item ->
+            match Lr1Itemset.get isucc_lr1item lr1itemset with
             | None -> begin
                 match has_shift with
                 | false -> contribs
@@ -142,7 +143,7 @@ let contribs lr1itemset {kernel_contribs; _} =
                     Contribs.insert ~conflict_state_index attrib' contribs
                   end
               end
-          ) ergo_lr1itemset
+          ) isucc_lr1itemset
         ) src_lr1item_contribs
     ) kernel_contribs
   |> Contribs.merged_of_t

@@ -1,8 +1,8 @@
 (** Contribution to a conflict state's conflict, for a particular symbol (which is tracked by an
     enclosing data structure). Contributions come in two flavors:
     - Shift: Conflict states may contain shift actions which conflict with the reduce actions of one
-      or more antecedents.
-    - Reduce: Conflict states and/or their antecedents may be attributed reduce actions. *)
+      or more predecessors.
+    - Reduce: Conflict states and/or their predecessors may be attributed reduce actions. *)
 
 open! Basis
 open! Basis.Rudiments

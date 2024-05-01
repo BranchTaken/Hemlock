@@ -8,7 +8,7 @@ type t = {
   conflict: Contrib.t;
   (** Conflict on symbol. This is a non-strict superset of attributed conflict contribution, i.e.
       the attribution may not explain the entire conflict. *)
-  ergo_lr1itemset: Lr1Itemset.t; (** Ergo's LR(1) itemset. *)
+  isucc_lr1itemset: Lr1Itemset.t; (** Immediate successor's LR(1) itemset. *)
   contrib: Contrib.t; (** Attributed conflict contribution. *)
 }
 
@@ -28,10 +28,10 @@ val empty: symbol_index:Symbol.Index.t -> conflict:Contrib.t -> t
 (** [empty ~symbol_index ~conflict] returns an empty attribution, i.e. with no itemsets nor
     conflict contributions. *)
 
-val init: symbol_index:Symbol.Index.t -> conflict:Contrib.t -> ergo_lr1itemset:Lr1Itemset.t
+val init: symbol_index:Symbol.Index.t -> conflict:Contrib.t -> isucc_lr1itemset:Lr1Itemset.t
   -> contrib:Contrib.t -> t
-(** [init ~symbol_index ~conflict ~ergo_lr1itemset ~contrib] returns an attribution with key [k]
-    that attributes [contrib] to [ergo_lr1itemset]. *)
+(** [init ~symbol_index ~conflict ~isucc_lr1itemset ~contrib] returns an attribution with key [k]
+    that attributes [contrib] to [isucc_lr1itemset]. *)
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)

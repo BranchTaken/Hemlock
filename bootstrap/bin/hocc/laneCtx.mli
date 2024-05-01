@@ -43,30 +43,30 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 val conflict_state: t -> State.t
 (** [conflict_state t] returns the conflict state that [t] leads to. *)
 
-val ergo: t -> State.t
-(** [ergo t] returns the state [t] immediately leads to. *)
+val isucc: t -> State.t
+(** [isucc t] returns the state [t] immediately leads to. *)
 
 val state: t -> State.t
 (** [state t] returns the state corresponding to [t]. *)
 
 val transit: t -> Transit.t
-(** [transit t] returns a transit with source [state t] and destination [ergo t]. *)
+(** [transit t] returns a transit with source [state t] and destination [isucc t]. *)
 
 val traces_length: t -> uns
 (** [traces_length t] returns the number of lane traces in [t]. If [t] contains no traces, its
-    antecedents will contain no traces nor conflict contributions. *)
+    predecessors will contain no traces nor conflict contributions. *)
 
 val of_conflict_state: resolve:bool -> Symbols.t -> Prods.t -> State.t -> t
 (** [of_conflict_state ~resolve symbols prods conflict_state] creates a lane context for the
     conflict state. *)
 
-val of_ante: State.t -> t -> t
-(** [of_ante ante t] creates a lane context for the [ante] state, where [t] is the lane context for
-    the [ante] state's "ergo" state (i.e. the successor state in the lane). *)
+val of_ipred: State.t -> t -> t
+(** [of_ipred ipred t] creates a lane context for the [ipred] state, where [t] is the lane context
+    for the [ipred] state's immediate successor (isucc) state in the lane. *)
 
 val post_init: t list -> t -> t
-(** [post_init ante_lanectxs t] finishes initializing direct attributions, given all (acyclic)
-    antecedents' contexts and returns a derivative of [t]. *)
+(** [post_init ipred_lanectxs t] finishes initializing direct attributions, given all (acyclic)
+    ipreds' contexts and returns a derivative of [t]. *)
 
 val kernel_contribs: t -> KernelContribs.t
 (** [kernel_contribs t] returns a map of the conflict contributions attributable to the lane(s)
@@ -78,5 +78,5 @@ val anon_contribs: t -> AnonContribs.t
 
 val anon_contribs_direct: t -> AnonContribs.t
 (** [anon_contribs_direct t] returns a map of the merged conflict contributions directly
-    attributable to the transition from [state t] to [ergo t]. Conflict contributions added by
+    attributable to the transition from [state t] to [isucc t]. Conflict contributions added by
     [post_init] are included in the map. *)
