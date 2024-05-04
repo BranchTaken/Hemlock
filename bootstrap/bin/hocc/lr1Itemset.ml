@@ -64,24 +64,23 @@ let length {items; _} =
 let is_empty {items; _} =
   Ordmap.is_empty items
 
-let mem Lr1Item.{lr0item; follow} {items; _} =
-  match Ordmap.mem lr0item items with
-  | false -> false
-  | true -> begin
-      let Lr1Item.{follow=t_follow; _} = Ordmap.get_hlt lr0item items in
-      Ordset.subset t_follow follow
-    end
-
 let choose {items; _} =
   match Ordmap.choose items with
   | None -> None
   | Some (_, lr1item) -> Some lr1item
 
-let get Lr1Item.{lr0item; _} {items; _} =
-  Ordmap.get lr0item items
+let get Lr1Item.{lr0item; follow} {items; _} =
+  match Ordmap.mem lr0item items with
+  | false -> None
+  | true -> begin
+      let Lr1Item.{follow=t_follow; _} = Ordmap.get_hlt lr0item items in
+      match Ordset.subset t_follow follow with
+      | false -> None
+      | true -> Ordmap.get lr0item items
+    end
 
-let get_hlt Lr1Item.{lr0item; _} {items; _} =
-  Ordmap.get_hlt lr0item items
+let mem lr1item t =
+  Option.is_some (get lr1item t)
 
 let insert (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
   match Ordmap.get lr0item items with

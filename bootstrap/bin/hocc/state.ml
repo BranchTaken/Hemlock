@@ -134,7 +134,7 @@ let has_pseudo_end_conflict {actions; _} =
     -> false
   | true, _ -> true
 
-let conflict_attribs ~resolve symbols prods {actions; _} =
+let conflicts_alist ~resolve symbols prods {actions; _} =
   Ordmap.fold ~init:[] ~f:(fun symbol_index_actions (symbol_index, actions) ->
     match Ordset.length actions with
     | 0L -> not_reached ()
@@ -158,6 +158,14 @@ let conflict_attribs ~resolve symbols prods {actions; _} =
         | false -> (symbol_index, conflict) :: symbol_index_conflict
       end
   )
+
+let has_conflict_attribs ~resolve symbols prods t =
+  conflicts_alist ~resolve symbols prods t
+  |> List.is_empty
+  |> Bool.not
+
+let conflict_attribs ~resolve symbols prods t =
+  conflicts_alist ~resolve symbols prods t
   |> List.fold ~init:Attribs.empty ~f:(fun attribs (symbol_index, conflict) ->
     (* This function is only called by `LaneCtx.of_conflict_state`, for which case
      * `isucc_lr1itemset` is always empty, because there is no isucc state for the conflict state.

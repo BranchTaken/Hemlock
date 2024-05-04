@@ -323,15 +323,12 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                     let lr0item = Lr0Item.init ~prod ~dot in
                     (* Search for an item in state based on lr0item that has `symbol_index` in its
                      * follow set. *)
-                    let lr1item_opt = Lr1Itemset.fold_until ~init:None ~f:(fun _ lr1item ->
-                      match Lr0Item.(lr1item.lr0item = lr0item)
-                            && Ordset.mem symbol_index lr1item.follow with
-                      | false -> None, false
-                      | true -> Some lr1item, true
-                    ) (match dot with
-                      | 0L -> State.(state.statenub.lr1itemsetclosure.added)
-                      | _ -> State.(state.statenub.lr1itemsetclosure.kernel)
-                    )
+                    let lr1item_opt = Lr1Itemset.get
+                        (Lr1Item.init ~lr0item
+                            ~follow:(Ordset.singleton (module Symbol.Index) symbol_index))
+                        (match dot with
+                          | 0L -> State.(state.statenub.lr1itemsetclosure.added)
+                          | _ -> State.(state.statenub.lr1itemsetclosure.kernel))
                     in
                     match lr1item_opt with
                     | None -> (* Lane doesn't encompass this state. *)
@@ -414,8 +411,8 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
 let post_init ipred_lanectxs ({conflict_state; traces; anon_contribs_direct; _} as t) =
   let conflict_state_index = State.index conflict_state in
   (* A lane trace in this lane context makes a direct contribution if the lane does not extend back
-   * to any predecessors. This situation is detected in `of_ipred` when the trace source is an added
-   * item, so it's sufficient to look only at traces with kernel items as sources. *)
+   * to any predecessors. This situation is handled in `of_ipred` when the trace source is an added
+   * item, so it suffices here to process only traces with kernel items as sources. *)
   let anon_contribs_direct = Ordmap.fold ~init:anon_contribs_direct
       ~f:(fun anon_contribs_direct (TraceKey.{symbol_index; action; _}, traceval) ->
         match action with
@@ -443,14 +440,12 @@ let post_init ipred_lanectxs ({conflict_state; traces; anon_contribs_direct; _} 
                     match lane_extends with
                     | true -> anon_contribs_direct
                     | false -> begin
-                        AnonContribs.amend ~conflict_state_index symbol_index
-                          ~f:(fun contrib_opt ->
-                            let contrib = Contrib.init_reduce prod_index in
-                            match contrib_opt with
-                            | None -> Some contrib
-                            | Some contrib_existing ->
-                              Some (Contrib.union contrib contrib_existing)
-                          ) anon_contribs_direct
+                        AnonContribs.amend ~conflict_state_index symbol_index ~f:(fun contrib_opt ->
+                          let contrib = Contrib.init_reduce prod_index in
+                          match contrib_opt with
+                          | None -> Some contrib
+                          | Some contrib_existing -> Some (Contrib.union contrib contrib_existing)
+                        ) anon_contribs_direct
                       end
                   end
               ) traceval

@@ -35,8 +35,7 @@ let rec ipred_transit_contribs ~resolve lalr1_states adjs ~lalr1_transit_contrib
    * infinite recursion. It is possible for a grammar to induce a combinatorial explosion of
    * contributing lanes, but only non-redundant transition contribs lead to recursion, thus assuring
    * that each transition is recursed on only once. *)
-  let state = LaneCtx.state lanectx in
-  let state_index = State.index state in
+  let state_index = State.index (LaneCtx.state lanectx) in
   assert (not (Set.mem state_index marks));
   let marks = Set.insert state_index marks in
   (* Accumulate transit contribs and ipred lane contexts of `lanectx`. *)
@@ -603,13 +602,9 @@ let annotations_init ~resolve io symbols prods lalr1_isocores lalr1_states =
   let io, lalr1_transit_contribs =
     Array.fold ~init:(io, Ordmap.empty (module Transit))
       ~f:(fun (io, lalr1_transit_contribs) state ->
-        let conflicts_on =
-          State.conflict_attribs ~resolve symbols prods state
-          |> Attribs.symbol_indexes
-        in
-        match Ordset.is_empty conflicts_on with
-        | true -> io, lalr1_transit_contribs
-        | false -> begin
+        match State.has_conflict_attribs ~resolve symbols prods state with
+        | false -> io, lalr1_transit_contribs
+        | true -> begin
             let io = io.log |> Fmt.fmt "." |> Io.with_log io in
             let conflict_state_index = State.index state in
             let lalr1_transit_contribs =
@@ -623,7 +618,7 @@ let annotations_init ~resolve io symbols prods lalr1_isocores lalr1_states =
 
   let io =
     io.log
-    |> Fmt.fmt "hocc: Closing IELR(1) conflict contributions"
+    |> Fmt.fmt "hocc: Closing IELR(1) conflict contributions (+.=propagate/quiesce)"
     |> Io.with_log io
   in
   let io, lalr1_transit_contribs = close_transit_contribs io adjs lalr1_transit_contribs in
@@ -652,9 +647,9 @@ let annotations_init ~resolve io symbols prods lalr1_isocores lalr1_states =
 
   io, lalr1_transit_contribs
 
+(* Create lookup function for contribs that closes on the prerequisite LALR(1) inadequacy analysis.
+*)
 let gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr1_isocores lalr1_states =
-  (* Create lookup function for contribs that closes on the prerequisite LALR(1) inadequacy
-   * analysis. *)
   let io, lalr1_transit_contribs =
     annotations_init ~resolve io symbols prods lalr1_isocores lalr1_states in
   let transit_of_statenub_goto statenub goto = begin

@@ -7,7 +7,7 @@ hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++.++++++++++
 hocc: Generating 19 LR(1) states
 hocc: 2 conflicts in 1 state (0 ⊥, 0 shift-reduce, 2 reduce-reduce) (conflict resolution disabled)
 hocc: Gathering IELR(1) conflict contributions.
-hocc: Closing IELR(1) conflict contributions....
+hocc: Closing IELR(1) conflict contributions (+.=propagate/quiesce)....
 hocc: Closing IELR(1) state split-stability (^.=unstable/stable)..^^
 hocc: 2 split-unstable states
 hocc: LR(1) item set compatibility: ielr1

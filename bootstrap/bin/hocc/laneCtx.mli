@@ -65,18 +65,18 @@ val of_ipred: State.t -> t -> t
     for the [ipred] state's immediate successor (isucc) state in the lane. *)
 
 val post_init: t list -> t -> t
-(** [post_init ipred_lanectxs t] finishes initializing direct attributions, given all (acyclic)
-    ipreds' contexts and returns a derivative of [t]. *)
+(** [post_init ipred_lanectxs t] finishes initializing direct anonymous conflict contributions,
+    given all (acyclic) ipreds' contexts and returns a derivative of [t]. *)
 
 val kernel_contribs: t -> KernelContribs.t
 (** [kernel_contribs t] returns a map of the conflict contributions attributable to the lane(s)
     encompassing [t], i.e. both direct and indirect conflict contributions. *)
 
 val anon_contribs: t -> AnonContribs.t
-(** [anon_contribs t] returns a map of the merged conflict contributions attributable to the lanes
-    encompassing [t], i.e. both direct and indirect conflict contributions. *)
+(** [anon_contribs t] returns a map of the merged anonymous conflict contributions attributable to
+    the lanes encompassing [t], i.e. both direct and indirect conflict contributions. *)
 
 val anon_contribs_direct: t -> AnonContribs.t
-(** [anon_contribs_direct t] returns a map of the merged conflict contributions directly
+(** [anon_contribs_direct t] returns a map of the merged anonymous conflict contributions directly
     attributable to the transition from [state t] to [isucc t]. Conflict contributions added by
     [post_init] are included in the map. *)

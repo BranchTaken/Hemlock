@@ -62,7 +62,7 @@ end
 module T = struct
   type t = (
     StateIndex.t, (* Conflict state. *)
-    Attribs.t, (* Symbol -> {isucc kernel items, contrib} attributions. *)
+    Attribs.t, (* Symbol -> contrib attributions. *)
     StateIndex.cmper_witness
   ) Ordmap.t
 

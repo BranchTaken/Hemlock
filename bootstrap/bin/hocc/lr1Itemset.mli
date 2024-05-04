@@ -46,12 +46,9 @@ val choose: t -> Lr1Item.t option
 (** [choose t] returns an arbitrary LR(1) item in [t] if the set is non-empty, [None] otherwise. *)
 
 val get: Lr1Item.t -> t -> Lr1Item.t option
-(** [get lr1item t] returns the LR(1) item in [t] with LR(0) core matching that of [lr1item] if
-    present, [None] otherwise. *)
-
-val get_hlt: Lr1Item.t -> t -> Lr1Item.t
-(** [get lr1item t] returns the LR(1) item in [t] with LR(0) core matching that of [lr1item] if
-    present, halts otherwise. *)
+(** [get lr1item t] returns the LR(1) item in [t] with LR(0) core matching that of [lr1item] and
+    follow set containing a non-strict superset of that of [lr1item] if present, [None] otherwise.
+*)
 
 val insert: Lr1Item.t -> t -> t
 (** [insert lr1item t] creates an LR(1) item set equivalent to [t] with [lr1item] inserted, or
