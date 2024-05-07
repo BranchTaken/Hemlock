@@ -61,7 +61,7 @@ val insert: Attrib.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of attributions in [t0] and [t1]. *)
 
-val fold_until: init:'accum -> f:('accum -> Attrib.t-> 'accum * bool) -> t -> 'accum
+val fold_until: init:'accum -> f:('accum -> Attrib.t -> 'accum * bool) -> t -> 'accum
 (** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial
     accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
     [f] always returns [accum, false]. *)
