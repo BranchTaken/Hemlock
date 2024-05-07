@@ -72,11 +72,11 @@ val kernel_contribs: t -> KernelContribs.t
 (** [kernel_contribs t] returns a map of the conflict contributions attributable to the lane(s)
     encompassing [t], i.e. both direct and indirect conflict contributions. *)
 
-val anon_contribs: t -> AnonContribs.t
+val anon_contribs: t -> Contribs.t
 (** [anon_contribs t] returns a map of the merged anonymous conflict contributions attributable to
     the lanes encompassing [t], i.e. both direct and indirect conflict contributions. *)
 
-val anon_contribs_direct: t -> AnonContribs.t
+val anon_contribs_direct: t -> Contribs.t
 (** [anon_contribs_direct t] returns a map of the merged anonymous conflict contributions directly
     attributable to the transition from [state t] to [isucc t]. Conflict contributions added by
     [post_init] are included in the map. *)

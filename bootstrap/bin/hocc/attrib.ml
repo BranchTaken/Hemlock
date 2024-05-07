@@ -42,12 +42,17 @@ module T = struct
       end
     | Gt -> Gt
 
+  let equal_keys
+    {conflict_state_index=csi0; symbol_index=s0; conflict=x0; _}
+    {conflict_state_index=csi1; symbol_index=s1; conflict=x1; _} =
+    StateIndex.(csi0 = csi1) &&
+    Symbol.Index.(s0 = s1) &&
+    Contrib.(x0 = x1)
+
   let equal
-    {conflict_state_index=csi0; symbol_index=s0; conflict=x0; isucc_lr1itemset=is0; contrib=c0}
-    {conflict_state_index=csi1; symbol_index=s1; conflict=x1; isucc_lr1itemset=is1; contrib=c1} =
-    assert StateIndex.(csi0 = csi1);
-    assert Symbol.Index.(s0 = s1);
-    assert Contrib.(x0 = x1);
+    ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
+    ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
+    assert (equal_keys t0 t1);
     Lr0Itemset.equal (Lr1Itemset.core is0) (Lr1Itemset.core is1) && Contrib.equal c0 c1
 
   let pp {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} formatter =
@@ -80,6 +85,9 @@ module T = struct
 
   let init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib}
+
+  let init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib =
+    {conflict_state_index; symbol_index; conflict; isucc_lr1itemset=Lr1Itemset.empty; contrib}
 
   let is_empty {contrib; _} =
     Contrib.is_empty contrib

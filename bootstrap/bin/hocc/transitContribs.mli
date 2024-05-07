@@ -16,10 +16,10 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 val empty: t
 (** [empty] returns an empty {type:t}. *)
 
-val of_anon_contribs: AnonContribs.t -> t
+val of_anon_contribs: Contribs.t -> t
 (** [of_anon_contribs anon_contribs] initializes a {type:t} by inserting [anon_contribs]. *)
 
-val of_anon_contribs_direct: AnonContribs.t -> t
+val of_anon_contribs_direct: Contribs.t -> t
 (** [of_contribs contribs_direct] initializes a {type:t} by inserting [anon_contribs] as direct
     conflict contributions. *)
 
@@ -28,10 +28,10 @@ val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -
     indexes translated according to [index_map], where keys are the original indexes, and values are
     the reindexed indexes. *)
 
-val all: t -> AnonContribs.t
+val all: t -> Contribs.t
 (** [all t] returns the union of all conflict contributions in [t]. *)
 
-val direct: t -> AnonContribs.t
+val direct: t -> Contribs.t
 (** [direct t] returns the union of direct conflict contributions made by all kernel items. *)
 
 val kernel_contribs: t -> KernelContribs.t

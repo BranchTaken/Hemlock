@@ -3,10 +3,10 @@ open! Basis.Rudiments
 
 type t = {
   (* Union of conflict contributions in `kernel_contribs`. *)
-  all: AnonContribs.t;
+  all: Contribs.t;
 
   (* Direct conflict contributions, whether shift (conflict state only) or reduce. *)
-  direct: AnonContribs.t;
+  direct: Contribs.t;
 
   (* Per kernel item reduce conflict contributions. Shift contributions are omitted since it is
    * irrelevant which kernel item makes a shift contribution, whether directly or indirectly. *)
@@ -36,9 +36,9 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L) {direct; all; kernel_contribs}
   in
   formatter
   |> Fmt.fmt "{"
-  |> Fmt.fmt sep |> Fmt.fmt "all=" |> AnonContribs.fmt_hr symbols prods ~alt ~width:(width + 4L) all
+  |> Fmt.fmt sep |> Fmt.fmt "all=" |> Contribs.fmt_hr symbols prods ~alt ~width:(width + 4L) all
   |> Fmt.fmt sep |> Fmt.fmt "direct="
-  |> AnonContribs.fmt_hr symbols prods ~alt ~width:(width + 4L) direct
+  |> Contribs.fmt_hr symbols prods ~alt ~width:(width + 4L) direct
   |> Fmt.fmt sep |> Fmt.fmt "kernel_contribs="
   |> KernelContribs.fmt_hr symbols prods ~alt ~width:(width + 4L) kernel_contribs
   |> Fmt.fmt rsep
@@ -46,21 +46,21 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L) {direct; all; kernel_contribs}
 
 let pp {direct; all; kernel_contribs} formatter =
   formatter
-  |> Fmt.fmt "{all=" |> AnonContribs.pp all
-  |> Fmt.fmt "; direct=" |> AnonContribs.pp direct
+  |> Fmt.fmt "{all=" |> Contribs.pp all
+  |> Fmt.fmt "; direct=" |> Contribs.pp direct
   |> Fmt.fmt "; kernel_contribs=" |> KernelContribs.pp kernel_contribs
   |> Fmt.fmt "}"
 
 let empty = {
-  all=AnonContribs.empty;
-  direct=AnonContribs.empty;
+  all=Contribs.empty;
+  direct=Contribs.empty;
   kernel_contribs=KernelContribs.empty
 }
 
 let reindex index_map {all; direct; kernel_contribs} =
   {
-    all=AnonContribs.reindex index_map all;
-    direct=AnonContribs.reindex index_map direct;
+    all=Contribs.reindex index_map all;
+    direct=Contribs.reindex index_map direct;
     kernel_contribs=KernelContribs.reindex index_map kernel_contribs
   }
 
@@ -74,25 +74,25 @@ let kernel_contribs {kernel_contribs; _} =
   kernel_contribs
 
 let merge ~conflict_state_index ~symbol_index ~conflict ~contrib ({all; _} as t) =
-  let attrib = AnonContribs.Attrib.init ~conflict_state_index ~symbol_index ~conflict ~contrib in
-  let all = AnonContribs.insert attrib all in
+  let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
+  let all = Contribs.insert attrib all in
   {t with all}
 
 let of_anon_contribs anon_contribs =
-  AnonContribs.fold ~init:empty
-    ~f:(fun t AnonContribs.Attrib.{conflict_state_index; symbol_index; conflict; contrib} ->
+  Contribs.fold ~init:empty
+    ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
       merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
     ) anon_contribs
 
 let merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib ({direct; _} as t) =
   let t = merge ~conflict_state_index ~symbol_index ~conflict ~contrib t in
-  let attrib = AnonContribs.Attrib.init ~conflict_state_index ~symbol_index ~conflict ~contrib in
-  let direct = AnonContribs.insert attrib direct in
+  let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
+  let direct = Contribs.insert attrib direct in
   {t with direct}
 
 let of_anon_contribs_direct anon_contribs_direct =
-  AnonContribs.fold ~init:empty
-    ~f:(fun t AnonContribs.Attrib.{conflict_state_index; symbol_index; conflict; contrib} ->
+  Contribs.fold ~init:empty
+    ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
       merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib t
     ) anon_contribs_direct
 
@@ -110,8 +110,8 @@ let insert_kernel_contribs kernel_contribs t =
 let union {all=a0; direct=d0; kernel_contribs=kc0}
   {all=a1; direct=d1; kernel_contribs=kc1} =
   {
-    all=AnonContribs.union a0 a1;
-    direct=AnonContribs.union d0 d1;
+    all=Contribs.union a0 a1;
+    direct=Contribs.union d0 d1;
     kernel_contribs=KernelContribs.union kc0 kc1
   }
 

@@ -1,5 +1,4 @@
-(** Map of per symbol conflict contributions, i.e. attributions of conflict contributions on
-    symbols. *)
+(** Conflict-state-invariant map of attributions of conflict contributions on symbols. *)
 
 open Basis
 open! Basis.Rudiments
@@ -30,11 +29,14 @@ end
 val length: t -> uns
 (** [length t] returns the number of distinct symbol indices in [t]. *)
 
+val conflict_state_index: t -> StateIndex.t
+(** [conflict_state_index t] returns the conflict state associated with all attributions in [t]. *)
+
 val equal: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. *)
 
-val empty: t
-(** [empty] returns attribs with no attributions. *)
+val empty: conflict_state_index:StateIndex.t -> t
+(** [empty ~conflict_state_index] returns attribs with no attributions. *)
 
 val singleton: Attrib.t -> t
 (** [singleton attrib] returns a singleton attribution. *)
@@ -81,6 +83,3 @@ val fold2_until: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option 
 
 val fold2: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option -> 'accum) -> t -> t -> 'accum
 (** [fold2_until ~init ~f t0 t1] folds over the attribs in [t0] and [t1]. *)
-
-val symbol_indexes: t -> (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t
-(** [symbol_indexes t] returns the attributed symbol indexes in [t]. *)

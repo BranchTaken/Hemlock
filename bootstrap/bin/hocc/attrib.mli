@@ -15,6 +15,10 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
+val equal_keys: t -> t -> bool
+(** [equal t0 t1] returns true iff the contents of [t0] and [t1] have equal ([conflict_state_index],
+    [symbol_index], [conflict]) keys. *)
+
 val equal: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. The keys must be
     equal. *)
@@ -35,6 +39,11 @@ val init: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> co
 (** [init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib] returns an
     attribution with key (conflict_state_index, symbol_index) that attributes [contrib] to
     [isucc_lr1itemset]. *)
+
+val init_anon: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
+  -> contrib:Contrib.t -> t
+(** [init ~conflict_state_index ~symbol_index ~conflict ~contrib] returns an attribution with key
+    (conflict_state_index, symbol_index) that anonymously attributes [contrib]. *)
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)

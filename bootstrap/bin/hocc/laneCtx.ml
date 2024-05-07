@@ -115,7 +115,7 @@ type t = {
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
 
   (* Conflict contributions directly to `state`->`isucc`. *)
-  anon_contribs_direct: AnonContribs.t;
+  anon_contribs_direct: Contribs.t;
 }
 
 let pp {conflict_state; isucc; state; traces; anon_contribs_direct} formatter =
@@ -127,7 +127,7 @@ let pp {conflict_state; isucc; state; traces; anon_contribs_direct} formatter =
   |> Uns.pp (Ordmap.fold ~init:0L ~f:(fun accum (_, traceval) ->
     accum + (TraceVal.length traceval)) traces
   )
-  |> Fmt.fmt "; anon_contribs_direct=" |> AnonContribs.pp anon_contribs_direct
+  |> Fmt.fmt "; anon_contribs_direct=" |> Contribs.pp anon_contribs_direct
   |> Fmt.fmt "}"
 
 let fmt_hr symbols prods ?(alt=false) ?(width=0L)
@@ -144,7 +144,7 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L)
     |> Fmt.fmt "}"
   ) (Ordmap.to_alist traces)
   |> Fmt.fmt "; anon_contribs_direct="
-  |> AnonContribs.fmt_hr symbols prods ~alt ~width:(width + 4L) anon_contribs_direct
+  |> Contribs.fmt_hr symbols prods ~alt ~width:(width + 4L) anon_contribs_direct
   |> Fmt.fmt "}"
 
 let conflict_state {conflict_state; _} =
@@ -252,16 +252,15 @@ let kernel_contribs {conflict_state; traces; _} =
     ) traces
 
 let anon_contribs ({anon_contribs_direct; _} as t) =
-  KernelContribs.fold ~init:AnonContribs.empty ~f:(fun anon_contribs (_lr1item, contribs) ->
-    Contribs.fold ~init:AnonContribs.empty
+  KernelContribs.fold ~init:Contribs.empty ~f:(fun anon_contribs (_lr1item, contribs) ->
+    Contribs.fold ~init:Contribs.empty
       ~f:(fun anon_contribs {conflict_state_index; symbol_index; conflict; contrib; _} ->
-        let attrib =
-          AnonContribs.Attrib.init ~conflict_state_index ~symbol_index ~conflict ~contrib in
-        AnonContribs.insert attrib anon_contribs
+        let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
+        Contribs.insert attrib anon_contribs
       ) contribs
-    |> AnonContribs.union anon_contribs
+    |> Contribs.union anon_contribs
   ) (kernel_contribs t)
-  |> AnonContribs.union anon_contribs_direct
+  |> Contribs.union anon_contribs_direct
 
 let anon_contribs_direct {anon_contribs_direct; _} =
   anon_contribs_direct
@@ -269,14 +268,14 @@ let anon_contribs_direct {anon_contribs_direct; _} =
 let of_conflict_state ~resolve symbols prods conflict_state =
   let conflict_state_index = State.index conflict_state in
   let traces, anon_contribs_direct = Attribs.fold
-      ~init:(Ordmap.empty (module TraceKey), AnonContribs.empty)
+      ~init:(Ordmap.empty (module TraceKey), Contribs.empty)
       ~f:(fun (traces, anon_contribs_direct) {symbol_index; conflict; contrib; _} ->
         let anon_contribs_direct = match Contrib.mem_shift contrib with
           | false -> anon_contribs_direct
           | true -> begin
-              let attrib = AnonContribs.Attrib.init ~conflict_state_index ~symbol_index ~conflict
+              let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict
                 ~contrib:Contrib.shift in
-              AnonContribs.insert attrib anon_contribs_direct
+              Contribs.insert attrib anon_contribs_direct
             end
         in
         let traces = Ordset.fold ~init:traces ~f:(fun traces prod_index ->
@@ -284,7 +283,8 @@ let of_conflict_state ~resolve symbols prods conflict_state =
           let tracekey = TraceKey.init ~symbol_index ~conflict ~action in
           let lr1itemset =
             kernel_lr1itemset_of_prod_index prods conflict_state symbol_index prod_index in
-          let traceval = TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset:Lr1Itemset.empty in
+          let traceval =
+            TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset:Lr1Itemset.empty in
           Ordmap.amend tracekey ~f:(fun kernel_isuccs_opt ->
             match kernel_isuccs_opt with
             | None -> Some traceval
@@ -307,7 +307,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
   (* Create traces incrementally derived from those in `isucc_traces`. Some traces may terminate at
    * the isucc state; others may continue or even lead to forks. *)
   let traces, anon_contribs_direct = Ordmap.fold
-      ~init:(Ordmap.empty (module TraceKey), AnonContribs.empty)
+      ~init:(Ordmap.empty (module TraceKey), Contribs.empty)
       ~f:(fun (traces, anon_contribs_direct) (TraceKey.{symbol_index; conflict; action} as tracekey,
         isucc_traceval) ->
         match action with
@@ -360,15 +360,15 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                                 ) traces in
                                 (* Attributable to all lanes leading to this state. *)
                                 let anon_contribs_direct =
-                                  AnonContribs.amend ~conflict_state_index symbol_index
+                                  Contribs.amend ~conflict_state_index symbol_index
                                     ~f:(fun attrib_opt ->
                                       let contrib = Contrib.init_reduce prod_index in
-                                      let attrib = AnonContribs.Attrib.init ~conflict_state_index
+                                      let attrib = Attrib.init_anon ~conflict_state_index
                                         ~symbol_index ~conflict ~contrib in
                                       match attrib_opt with
                                       | None -> Some attrib
                                       | Some attrib_existing ->
-                                        Some (AnonContribs.Attrib.union attrib attrib_existing)
+                                        Some (Attrib.union attrib attrib_existing)
                                     ) anon_contribs_direct in
                                 traces, anon_contribs_direct
                               end
@@ -447,14 +447,13 @@ let post_init ipred_lanectxs ({conflict_state; traces; anon_contribs_direct; _} 
                     match lane_extends with
                     | true -> anon_contribs_direct
                     | false -> begin
-                        AnonContribs.amend ~conflict_state_index symbol_index ~f:(fun attrib_opt ->
+                        Contribs.amend ~conflict_state_index symbol_index ~f:(fun attrib_opt ->
                           let contrib = Contrib.init_reduce prod_index in
-                          let attrib = AnonContribs.Attrib.init ~conflict_state_index ~symbol_index
+                          let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index
                             ~conflict ~contrib in
                           match attrib_opt with
                           | None -> Some attrib
-                          | Some contrib_existing ->
-                            Some (AnonContribs.Attrib.union attrib contrib_existing)
+                          | Some contrib_existing -> Some (Attrib.union attrib contrib_existing)
                         ) anon_contribs_direct
                       end
                   end
