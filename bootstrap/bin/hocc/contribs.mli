@@ -55,10 +55,6 @@ val get_hlt: conflict_state_index:StateIndex.t -> Symbol.Index.t -> t -> Attrib.
 (** [get_hlt ~conflict_state_index symbol_index t] returns the attrib for the specified
     [conflict_state_index] and [symbol_index] if present in [t], halts otherwise. *)
 
-val contains: conflict_state_index:StateIndex.t -> Symbol.Index.t -> Attrib.t -> t -> bool
-(** [contains ~conflict_state_index symbol_index attrib t] returns true iff [t] contains a
-    non-strict superset of [attrib] for the specified [conflict_state_index] and [symbol_index]. *)
-
 val amend: conflict_state_index:StateIndex.t -> Symbol.Index.t
   -> f:(Attrib.t option -> Attrib.t option) -> t -> t
 (** [amend ~conflict_state_index symbol_index ~f t] returns an incremental derivative of [t] that is

@@ -142,12 +142,6 @@ let get_hlt ~conflict_state_index symbol_index t =
   get ~conflict_state_index symbol_index t
   |> Option.value_hlt
 
-let contains ~conflict_state_index symbol_index attrib t =
-  assert (not (Attrib.is_empty attrib));
-  match get ~conflict_state_index symbol_index t with
-  | None -> false
-  | Some attrib_existing -> Attrib.(inter attrib_existing attrib = attrib)
-
 let amend ~conflict_state_index k ~f t =
   let attribs = match Ordmap.get conflict_state_index t with
     | None -> Attribs.empty
