@@ -69,9 +69,6 @@ val insert: Attrib.t -> t -> t
 (** [insert attrib t] inserts the conflict contribution [attrib] to state
     [attrib.conflict_state_index] on [attrib.symbol_index]. *)
 
-val merged_of_t: t -> t
-(** [merged t] returns the merged conflict contributions in [t]. *)
-
 val union: t -> t -> t
 (** [union t0 t1] returns the union of conflict contributions in [t0] and [t1]. *)
 

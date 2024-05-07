@@ -39,15 +39,17 @@ val kernel_contribs: t -> KernelContribs.t
     contributions are omitted since it is irrelevant which kernel item makes a shift contribution,
     whether directly or indirectly. *)
 
-val merge: conflict_state_index:StateIndex.t -> Symbol.Index.t -> Contrib.t -> t -> t
-(** [merge ~conflict_state_index symbol_index aval t] merges the conflict contribution [aval] to
-    state [conflict_state_index] on symbol [symbol_index] into the set of all conflict
-    contributions. *)
+val merge: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
+  -> contrib:Contrib.t -> t -> t
+(** [merge ~conflict_state_index ~symbol_index ~conflict ~contrib t] merges the conflict
+    contribution [contrib] to state [conflict_state_index] on symbol [symbol_index] into the set of
+    all conflict contributions. *)
 
-val merge_direct: conflict_state_index:StateIndex.t -> Symbol.Index.t -> Contrib.t -> t -> t
-(** [merge_direct ~conflict_state_index symbol_index aval t] merges the conflict contribution
-    [aval] to state [conflict_state_index] on symbol [symbol_index] into the set of direct conflict
-    contributions, as well as into the set of all conflict contributions. *)
+val merge_direct: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t
+  -> conflict:Contrib.t -> contrib:Contrib.t -> t -> t
+(** [merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib t] merges the conflict
+    contribution [aval] to state [conflict_state_index] on symbol [symbol_index] into the set of
+    direct conflict contributions, as well as into the set of all conflict contributions. *)
 
 val insert_kernel_contribs: KernelContribs.t -> t -> t
 (** [insert_kernel_contribs kernel_contribs t] inserts the conflict contributions in

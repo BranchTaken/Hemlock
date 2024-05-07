@@ -73,31 +73,35 @@ let direct {direct; _} =
 let kernel_contribs {kernel_contribs; _} =
   kernel_contribs
 
-let merge ~conflict_state_index symbol_index contrib ({all; _} as t) =
-  let all = AnonContribs.insert ~conflict_state_index symbol_index contrib all in
+let merge ~conflict_state_index ~symbol_index ~conflict ~contrib ({all; _} as t) =
+  let attrib = AnonContribs.Attrib.init ~conflict_state_index ~symbol_index ~conflict ~contrib in
+  let all = AnonContribs.insert attrib all in
   {t with all}
 
 let of_anon_contribs anon_contribs =
-  AnonContribs.fold ~init:empty ~f:(fun t conflict_state_index symbol_index contrib ->
-    merge ~conflict_state_index symbol_index contrib t
-  ) anon_contribs
+  AnonContribs.fold ~init:empty
+    ~f:(fun t AnonContribs.Attrib.{conflict_state_index; symbol_index; conflict; contrib} ->
+      merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
+    ) anon_contribs
 
-let merge_direct ~conflict_state_index symbol_index contrib ({direct; _} as t) =
-  let t = merge ~conflict_state_index symbol_index contrib t in
-  let direct = AnonContribs.insert ~conflict_state_index symbol_index contrib direct in
+let merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib ({direct; _} as t) =
+  let t = merge ~conflict_state_index ~symbol_index ~conflict ~contrib t in
+  let attrib = AnonContribs.Attrib.init ~conflict_state_index ~symbol_index ~conflict ~contrib in
+  let direct = AnonContribs.insert attrib direct in
   {t with direct}
 
 let of_anon_contribs_direct anon_contribs_direct =
-  AnonContribs.fold ~init:empty ~f:(fun t conflict_state_index symbol_index v ->
-    merge_direct ~conflict_state_index symbol_index v t
-  ) anon_contribs_direct
+  AnonContribs.fold ~init:empty
+    ~f:(fun t AnonContribs.Attrib.{conflict_state_index; symbol_index; conflict; contrib} ->
+      merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib t
+    ) anon_contribs_direct
 
 let insert_kernel_contribs kernel_contribs t =
   KernelContribs.fold ~init:t
     ~f:(fun ({kernel_contribs; _} as t) (item, contribs) ->
       let t = Contribs.fold ~init:t
-          ~f:(fun t Attrib.{conflict_state_index; symbol_index; contrib; _} ->
-            merge ~conflict_state_index symbol_index contrib t
+          ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
+            merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
           ) contribs in
       let kernel_contribs = KernelContribs.insert item contribs kernel_contribs in
       {t with kernel_contribs}
@@ -147,4 +151,3 @@ let contribs lr1itemset {kernel_contribs; _} =
           ) isucc_lr1itemset
         ) src_lr1item_contribs
     ) kernel_contribs
-  |> Contribs.merged_of_t

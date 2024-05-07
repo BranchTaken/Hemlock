@@ -160,8 +160,9 @@ let close_transit_contribs io adjs lalr1_transit_contribs =
             ) in_transits in
         let io, lalr1_transit_contribs, workq =
           AnonContribs.fold ~init:(io, lalr1_transit_contribs, workq)
-            ~f:(fun (io, lalr1_transit_contribs, workq) conflict_state_index symbol_index
-              in_contrib_all ->
+            ~f:(fun (io, lalr1_transit_contribs, workq)
+              AnonContribs.Attrib.{conflict_state_index; symbol_index; conflict;
+              contrib=in_contrib_all; _} ->
               (* Filter in/out transits lacking the relevant {conflict_state, symbol}. *)
               let in_transits_relevant = Ordset.filter ~f:(fun in_transit ->
                 Ordmap.get_hlt in_transit lalr1_transit_contribs
@@ -179,7 +180,7 @@ let close_transit_contribs io adjs lalr1_transit_contribs =
                * propagation. *)
               let out_contrib_all = Ordset.fold_until ~init:in_contrib_all
                   ~f:(fun out_contrib_all in_transit ->
-                    let contrib =
+                    let AnonContribs.Attrib.{contrib; _} =
                       Ordmap.get_hlt in_transit lalr1_transit_contribs
                       |> TransitContribs.all
                       |> AnonContribs.get_hlt ~conflict_state_index symbol_index in
@@ -196,7 +197,7 @@ let close_transit_contribs io adjs lalr1_transit_contribs =
                         let transit_contribs =
                           Ordmap.get_hlt out_transit lalr1_transit_contribs in
                         let transit_contribs' = TransitContribs.merge ~conflict_state_index
-                            symbol_index out_contrib_all transit_contribs in
+                            ~symbol_index ~conflict ~contrib:out_contrib_all transit_contribs in
                         match AnonContribs.equal (TransitContribs.all transit_contribs')
                           (TransitContribs.all transit_contribs) with
                         | true -> io, lalr1_transit_contribs, workq
@@ -293,8 +294,8 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
          *   be split-stable (i.e. ipred-dependent split-stability). *)
         let io, stability_deps_indexes_opt = AnonContribs.fold_until
             ~init:(io, Some (Ordset.empty (module State.Index)))
-            ~f:(fun (io, stability_deps_indexes_opt) conflict_state_index symbol_index
-              _contrib_all ->
+            ~f:(fun (io, stability_deps_indexes_opt)
+              AnonContribs.Attrib.{conflict_state_index; symbol_index; conflict; _} ->
               (* Filter in/out transits lacking the relevant {conflict_state, symbol}. *)
               let in_transits_relevant = Ordset.filter ~f:(fun in_transit ->
                 Ordmap.get_hlt in_transit lalr1_transit_contribs
@@ -314,12 +315,12 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                         let manifestation =
                           Ordset.fold ~init:Contrib.empty
                             ~f:(fun manifestation in_transit ->
-                              let aval =
+                              let AnonContribs.Attrib.{contrib; _} =
                                 Ordmap.get_hlt in_transit lalr1_transit_contribs
                                 |> TransitContribs.all
                                 |> AnonContribs.get_hlt ~conflict_state_index symbol_index
                               in
-                              Contrib.union aval manifestation
+                              Contrib.union contrib manifestation
                             ) in_transits_relevant in
                         let unsplit_resolution = match resolve with
                           | false -> manifestation
@@ -329,7 +330,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                          * split from all other in-transitions, the state is split-stable if the
                          * resolution of the in-contribution is the same as the non-split case. *)
                         let split_unstable = Ordset.for_any ~f:(fun in_transit ->
-                          let contrib =
+                          let AnonContribs.Attrib.{contrib; _} =
                             Ordmap.get_hlt in_transit lalr1_transit_contribs
                             |> TransitContribs.all
                             |> AnonContribs.get_hlt ~conflict_state_index symbol_index
@@ -360,33 +361,35 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                         ) out_transits_all in
                         let in_direct_contrib_union = Ordset.fold ~init:Contrib.empty
                             ~f:(fun in_direct_contrib_union in_transit ->
-                              let contrib =
+                              let AnonContribs.Attrib.{contrib; _} =
                                 Ordmap.get in_transit lalr1_transit_contribs
                                 |> Option.value ~default:TransitContribs.empty
                                 |> TransitContribs.direct
                                 |> AnonContribs.get ~conflict_state_index symbol_index
-                                |> Option.value ~default:Contrib.empty
+                                |> Option.value ~default:(AnonContribs.Attrib.empty
+                                   ~conflict_state_index ~symbol_index ~conflict)
                               in
                               Contrib.union contrib in_direct_contrib_union
                             ) in_transits_relevant in
                         let split_unstable = Ordset.for_any ~f:(fun in_transit ->
-                          let in_contrib =
+                          let AnonContribs.Attrib.{contrib=in_contrib; _} =
                             Ordmap.get_hlt in_transit lalr1_transit_contribs
                             |> TransitContribs.all
                             |> AnonContribs.get_hlt ~conflict_state_index symbol_index
                           in
                           Ordset.for_any ~f:(fun out_transit ->
-                            let out_contrib =
+                            let AnonContribs.Attrib.{contrib=out_contrib; _} =
                               Ordmap.get_hlt out_transit lalr1_transit_contribs
                               |> TransitContribs.all
                               |> AnonContribs.get_hlt ~conflict_state_index symbol_index
                             in
-                            let out_direct_contrib =
+                            let AnonContribs.Attrib.{contrib=out_direct_contrib; _} =
                               Ordmap.get out_transit lalr1_transit_contribs
                               |> Option.value ~default:TransitContribs.empty
                               |> TransitContribs.direct
                               |> AnonContribs.get ~conflict_state_index symbol_index
-                              |> Option.value ~default:Contrib.empty
+                              |> Option.value ~default:(AnonContribs.Attrib.empty
+                                 ~conflict_state_index ~symbol_index ~conflict)
                             in
                             let split_out_contrib = Contrib.(
                               union (inter in_contrib out_contrib) out_direct_contrib
@@ -457,7 +460,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                                 (* Use previously computed value. *)
                                 Ordset.mem ipred_state_index stability_deps_indexes_prev
                               | None -> begin
-                                  let contrib =
+                                  let AnonContribs.Attrib.{contrib; _} =
                                     Ordmap.get_hlt in_transit lalr1_transit_contribs
                                     |> TransitContribs.all
                                     |> AnonContribs.get_hlt ~conflict_state_index symbol_index

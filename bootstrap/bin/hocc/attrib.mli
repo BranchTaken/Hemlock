@@ -33,7 +33,8 @@ val empty: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> c
 val init: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
   -> isucc_lr1itemset:Lr1Itemset.t -> contrib:Contrib.t -> t
 (** [init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib] returns an
-    attribution with key [k] that attributes [contrib] to [isucc_lr1itemset]. *)
+    attribution with key (conflict_state_index, symbol_index) that attributes [contrib] to
+    [isucc_lr1itemset]. *)
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)

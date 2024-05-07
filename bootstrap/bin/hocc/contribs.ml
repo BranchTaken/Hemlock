@@ -137,12 +137,12 @@ let get_hlt ~conflict_state_index symbol_index t =
   get ~conflict_state_index symbol_index t
   |> Option.value_hlt
 
-let amend ~conflict_state_index k ~f t =
+let amend ~conflict_state_index symbol_index ~f t =
   let attribs = match Ordmap.get conflict_state_index t with
     | None -> Attribs.empty
     | Some attribs -> attribs
   in
-  let attribs' = Attribs.amend k ~f attribs in
+  let attribs' = Attribs.amend symbol_index ~f attribs in
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
 let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
@@ -176,11 +176,6 @@ let fold ~init ~f t =
     ) attribs
   ) t
 
-let merged_of_t t =
-  fold ~init:empty ~f:(fun t_merged attrib ->
-    insert attrib t_merged
-  ) t
-
 let union t0 t1 =
   Ordmap.fold2 ~init:empty ~f:(fun t state_attribs_opt0 state_attribs_opt1 ->
     let conflict_state_index, attribs =
@@ -194,7 +189,7 @@ let union t0 t1 =
     match Attribs.is_empty attribs with
     | true -> t
     | false -> Ordmap.insert_hlt ~k:conflict_state_index ~v:attribs t
-  ) (merged_of_t t0) (merged_of_t t1)
+  ) t0 t1
 
 let fold2_until ~init ~f t0 t1 =
   let rec inner ~f accum seq0 seq1 = begin
@@ -237,6 +232,6 @@ let fold2_until ~init ~f t0 t1 =
   inner ~f init (Seq.init t0) (Seq.init t1)
 
 let fold2 ~init ~f t0 t1 =
-  fold2_until ~init ~f:(fun accum v_opt0 v_opt1 ->
-    f accum v_opt0 v_opt1, false
+  fold2_until ~init ~f:(fun accum attrib_opt0 attrib_opt1 ->
+    f accum attrib_opt0 attrib_opt1, false
   ) t0 t1

@@ -58,7 +58,21 @@ let is_empty = Ordmap.is_empty
 let get symbol_index t =
   Ordmap.get symbol_index t
 
-let amend = Ordmap.amend
+let amend symbol_index ~f =
+  Ordmap.amend symbol_index ~f:(fun attrib_opt ->
+    let attrib_opt' = f attrib_opt in
+    let () = match attrib_opt, attrib_opt' with
+      | Some Attrib.{conflict_state_index=csi0; symbol_index=x0; _},
+        Some Attrib.{conflict_state_index=csi1; symbol_index=x1; _} -> begin
+          assert StateIndex.(csi0 = csi1);
+          assert Symbol.Index.(x0 = x1);
+        end
+      | Some _, None
+      | None, Some _
+      | None, None -> ()
+    in
+    attrib_opt'
+  )
 
 let insert (Attrib.{symbol_index; conflict; _} as attrib) t =
   amend symbol_index ~f:(function
@@ -77,10 +91,10 @@ let union t0 t1 =
   ) t0 t1
 
 let fold_until ~init ~f t =
-  Ordmap.fold_until ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t
+  Ordmap.fold_until ~init ~f:(fun accum (_symbol_index, attrib) -> f accum attrib) t
 
 let fold ~init ~f t =
-  Ordmap.fold ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t
+  Ordmap.fold ~init ~f:(fun accum (_symbol_index, attrib) -> f accum attrib) t
 
 let for_any ~f t =
   Ordmap.for_any ~f:(fun (_k, attrib) -> f attrib) t
