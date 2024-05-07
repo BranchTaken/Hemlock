@@ -46,10 +46,9 @@ let equal t0 t1 =
 
 module Seq = struct
   type container = t
-  type elm = StateIndex.t * Attrib.t
+  type elm = Attrib.t
   type t = {
     l: uns;
-    conflict_state_index_opt: uns option;
     seq_inner_opt: Attribs.Seq.t option;
     seq_outer: (
       StateIndex.t,
@@ -61,7 +60,6 @@ module Seq = struct
   let init container =
     {
       l=length container;
-      conflict_state_index_opt=None;
       seq_inner_opt=None;
       seq_outer=Ordmap.Seq.init container;
     }
@@ -72,11 +70,10 @@ module Seq = struct
   let next t =
     let rec normalize ({l; seq_inner_opt; _} as t) = begin
       let advance ({seq_outer; _} as t) = begin
-        let (conflict_state_index, attribs), seq_outer =
+        let (_conflict_state_index, attribs), seq_outer =
           Ordmap.Seq.next seq_outer in
         let seq_inner = Attribs.Seq.init attribs in
         normalize {t with
-          conflict_state_index_opt=Some conflict_state_index;
           seq_inner_opt=Some seq_inner;
           seq_outer;
         }
@@ -88,18 +85,16 @@ module Seq = struct
           | 0L -> advance t
           | _ ->
             t.l,
-            Option.value_hlt t.conflict_state_index_opt,
             Option.value_hlt t.seq_inner_opt,
             t.seq_outer
         end
       | None -> advance t
     end in
     match normalize t with
-    | l, conflict_state_index, seq_inner, seq_outer -> begin
-        let (_k, attrib), seq_inner = Attribs.Seq.next seq_inner in
-        (conflict_state_index, attrib), {
+    | l, seq_inner, seq_outer -> begin
+        let attrib, seq_inner = Attribs.Seq.next seq_inner in
+        attrib, {
           l=pred l;
-          conflict_state_index_opt=Some conflict_state_index;
           seq_inner_opt=Some seq_inner;
           seq_outer;
         }
@@ -113,11 +108,11 @@ end
 
 let empty = Ordmap.empty (module StateIndex)
 
-let singleton ~conflict_state_index attrib =
-  let attribs =  Attribs.singleton attrib in
+let singleton attrib =
+  let attribs = Attribs.singleton attrib in
   match Attribs.is_empty attribs with
   | true -> empty
-  | false ->  Ordmap.singleton (module StateIndex) ~k:conflict_state_index ~v:attribs
+  | false -> Ordmap.singleton (module StateIndex) ~k:attrib.conflict_state_index ~v:attribs
 
 let reindex index_map t =
   Ordmap.fold ~init:empty ~f:(fun reindexed_t (state_index, attribs) ->
@@ -150,7 +145,7 @@ let amend ~conflict_state_index k ~f t =
   let attribs' = Attribs.amend k ~f attribs in
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
-let insert ~conflict_state_index (Attrib.{symbol_index; _} as attrib) t =
+let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
   match Attrib.is_empty attrib with
   | true -> t
   | false ->
@@ -167,23 +162,23 @@ let insert ~conflict_state_index (Attrib.{symbol_index; _} as attrib) t =
     )
 
 let fold_until ~init ~f t =
-  Ordmap.fold_until ~init ~f:(fun accum (conflict_state_index, attribs) ->
+  Ordmap.fold_until ~init ~f:(fun accum (_conflict_state_index, attribs) ->
     Attribs.fold_until ~init:(accum, false) ~f:(fun (accum, _) attrib ->
-      let accum, until = f accum conflict_state_index attrib in
+      let accum, until = f accum attrib in
       (accum, until), until
     ) attribs
   ) t
 
 let fold ~init ~f t =
-  Ordmap.fold ~init ~f:(fun accum (conflict_state_index, attribs) ->
+  Ordmap.fold ~init ~f:(fun accum (_conflict_state_index, attribs) ->
     Attribs.fold ~init:accum ~f:(fun accum attrib ->
-      f accum conflict_state_index attrib
+      f accum attrib
     ) attribs
   ) t
 
 let merged_of_t t =
-  fold ~init:empty ~f:(fun t_merged conflict_state_index attrib ->
-    insert ~conflict_state_index attrib t_merged
+  fold ~init:empty ~f:(fun t_merged attrib ->
+    insert attrib t_merged
   ) t
 
 let union t0 t1 =
@@ -203,45 +198,45 @@ let union t0 t1 =
 
 let fold2_until ~init ~f t0 t1 =
   let rec inner ~f accum seq0 seq1 = begin
-    let left state_index0 (Attrib.{symbol_index; _} as attrib0) seq0' = begin
-      let accum, until = f accum state_index0 symbol_index (Some attrib0) None in
+    let left attrib0 seq0' = begin
+      let accum, until = f accum (Some attrib0) None in
       match until with
       | true -> accum
       | false -> inner ~f accum seq0' seq1
     end in
-    let right state_index1 (Attrib.{symbol_index; _} as attrib1) seq1' = begin
-      let accum, until = f accum state_index1 symbol_index None (Some attrib1) in
+    let right attrib1 seq1' = begin
+      let accum, until = f accum None (Some attrib1) in
       match until with
       | true -> accum
       | false -> inner ~f accum seq0 seq1'
     end in
     match Seq.next_opt seq0, Seq.next_opt seq1 with
     | None, None -> accum
-    | Some ((state_index0, attrib0), seq0'), None ->
-      left state_index0 attrib0 seq0'
-    | None, Some ((state_index1, attrib1), seq1') ->
-      right state_index1 attrib1 seq1'
-    | Some ((state_index0, (Attrib.{symbol_index=s0; _} as attrib0)), seq0'),
-      Some ((state_index1, (Attrib.{symbol_index=s1; _} as attrib1)), seq1') -> begin
-        let rel = match Uns.cmp state_index0 state_index1 with
+    | Some (attrib0, seq0'), None ->
+      left attrib0 seq0'
+    | None, Some (attrib1, seq1') ->
+      right attrib1 seq1'
+    | Some ((Attrib.{conflict_state_index=csi0; symbol_index=s0; _} as attrib0), seq0'),
+      Some ((Attrib.{conflict_state_index=csi1; symbol_index=s1; _} as attrib1), seq1') -> begin
+        let rel = match Uns.cmp csi0 csi1 with
           | Cmp.Lt -> Cmp.Lt
           | Eq -> Symbol.Index.cmp s0 s1
           | Gt -> Gt
         in
         match rel with
-        | Lt -> left state_index0 attrib0 seq0'
+        | Lt -> left attrib0 seq0'
         | Eq -> begin
-            let accum, until = f accum state_index0 s0 (Some attrib0) (Some attrib1) in
+            let accum, until = f accum (Some attrib0) (Some attrib1) in
             match until with
             | true -> accum
             | false -> inner ~f accum seq0' seq1'
           end
-        | Gt -> right state_index1 attrib1 seq1'
+        | Gt -> right attrib1 seq1'
       end
   end in
   inner ~f init (Seq.init t0) (Seq.init t1)
 
 let fold2 ~init ~f t0 t1 =
-  fold2_until ~init ~f:(fun accum conflict_state_index symbol_index v_opt0 v_opt1 ->
-    f accum conflict_state_index symbol_index v_opt0 v_opt1, false
+  fold2_until ~init ~f:(fun accum v_opt0 v_opt1 ->
+    f accum v_opt0 v_opt1, false
   ) t0 t1

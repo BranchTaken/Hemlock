@@ -244,8 +244,9 @@ let kernel_contribs {conflict_state; traces; _} =
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
       TraceVal.fold ~init:kernel_contribs ~f:(fun kernel_contribs (lr1item, isucc_lr1itemset) ->
-        let attrib = Attrib.init ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
-        let trace_contribs = Contribs.singleton ~conflict_state_index attrib in
+        let attrib =
+          Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
+        let trace_contribs = Contribs.singleton attrib in
         KernelContribs.insert lr1item trace_contribs kernel_contribs
       ) kernel_isuccs
     ) traces
@@ -253,7 +254,7 @@ let kernel_contribs {conflict_state; traces; _} =
 let anon_contribs ({anon_contribs_direct; _} as t) =
   KernelContribs.fold ~init:AnonContribs.empty ~f:(fun anon_contribs (_lr1item, contribs) ->
     Contribs.fold ~init:AnonContribs.empty
-      ~f:(fun anon_contribs conflict_state_index Attrib.{symbol_index; contrib; _} ->
+      ~f:(fun anon_contribs Attrib.{conflict_state_index; symbol_index; contrib; _} ->
         AnonContribs.insert ~conflict_state_index symbol_index contrib anon_contribs
       ) contribs
     |> AnonContribs.union anon_contribs

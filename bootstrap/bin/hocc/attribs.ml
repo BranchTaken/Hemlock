@@ -34,13 +34,18 @@ let equal t0 t1 =
 
 module Seq = struct
   type container = t
-  type elm = Symbol.Index.t * Attrib.t
+  type elm = Attrib.t
   type t = (Symbol.Index.t, Attrib.t, Symbol.Index.cmper_witness) Ordmap.Seq.t
 
   let init = Ordmap.Seq.init
   let length = Ordmap.Seq.length
-  let next = Ordmap.Seq.next
-  let next_opt = Ordmap.Seq.next_opt
+  let next seq =
+    match Ordmap.Seq.next seq with
+    | (_symbol_index, attrib), seq' -> attrib, seq'
+  let next_opt seq =
+    match Ordmap.Seq.next_opt seq with
+    | None -> None
+    | Some ((_symbol_index, attrib), seq') -> Some (attrib, seq')
 end
 
 let empty = Ordmap.empty (module Symbol.Index)

@@ -267,16 +267,15 @@ let compat_lr1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
 let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
   {lr1itemsetclosure={index=_XXX; _}; contribs=t_contribs; _} =
   let compat = Contribs.fold2_until ~init:true
-      ~f:(fun _ _conflict_state_index symbol_index attrib_opt0 attrib_opt1 ->
-        let o_contrib =
-          attrib_opt0
-          |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
-          |> Option.value ~default:Contrib.empty
-        in
-        let t_contrib =
-          attrib_opt1
-          |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
-          |> Option.value ~default:Contrib.empty
+      ~f:(fun _ attrib_opt0 attrib_opt1 ->
+        let symbol_index, o_contrib, t_contrib = match attrib_opt0, attrib_opt1 with
+          | Some Attrib.{symbol_index; contrib=contrib0; _}, Some {contrib=contrib1; _} ->
+            symbol_index, contrib0, contrib1
+          | Some Attrib.{symbol_index; contrib=contrib0; _}, None ->
+            symbol_index, contrib0, Contrib.empty
+          | None, Some Attrib.{symbol_index; contrib=contrib1; _} ->
+            symbol_index, Contrib.empty, contrib1
+          | None, None -> not_reached ()
         in
         (* Merge shift into an empty contrib if the other contrib contains shift. If there is a
          * shift action in the conflict, *all* lanes implicitly contribute shift, even if they don't
@@ -298,16 +297,17 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
 (*
   let contribs_incompat o_contribs t_contribs = begin
     Contribs.fold2 ~init:()
-      ~f:(fun _ _conflict_state_index Attrib.K.{symbol_index; _} aval_opt0 aval_opt1 ->
-        let o_contrib =
-          attrib_opt0
-          |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
-          |> Option.value ~default:Contrib.empty
-        in
-        let t_contrib =
-          attrib_opt1
-          |> Option.map ~f:(fun Attrib.{contrib; _} -> contrib)
-          |> Option.value ~default:Contrib.empty
+      ~f:(fun _ attrib_opt0 attrib_opt1 ->
+        let conflict_state_index, symbol_index, o_contrib, t_contrib =
+          match attrib_opt0, attrib_opt1 with
+          | Some Attrib.{conflict_state_index; symbol_index; contrib=contrib0; _},
+            Some {contrib=contrib1; _} ->
+            conflict_state_index, symbol_index, contrib0, contrib1
+          | Some Attrib.{conflict_state_index; symbol_index; contrib=contrib0; _}, None ->
+            conflict_state_index, symbol_index, contrib0, Contrib.empty
+          | None, Some Attrib.{conflict_state_index; symbol_index; contrib=contrib1; _} ->
+            conflict_state_index, symbol_index, Contrib.empty, contrib1
+          | None, None -> not_reached ()
         in
         let o_contrib, t_contrib =
           match Contrib.is_empty o_contrib && Contrib.mem_shift t_contrib with
@@ -319,7 +319,7 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
           | true -> Contrib.shift, t_contrib
         in
         let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index o_contrib t_contrib in
-        File.Fmt.stderr |> Fmt.fmt "XXX compat=" |> Bool.pp compat |> Fmt.fmt ", conflict_state_index=" |> StateIndex.pp _conflict_state_index |> Fmt.fmt ", symbol=" |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols) |> Fmt.fmt ", o_contrib=" |> Contrib.pp_hr symbols prods o_contrib |> Fmt.fmt ", t_contrib=" |> Contrib.pp_hr symbols prods t_contrib |> Fmt.fmt "\n" |> ignore;
+        File.Fmt.stderr |> Fmt.fmt "XXX compat=" |> Bool.pp compat |> Fmt.fmt ", conflict_state_index=" |> StateIndex.pp conflict_state_index |> Fmt.fmt ", symbol=" |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols) |> Fmt.fmt ", o_contrib=" |> Contrib.pp_hr symbols prods o_contrib |> Fmt.fmt ", t_contrib=" |> Contrib.pp_hr symbols prods t_contrib |> Fmt.fmt "\n" |> ignore;
       ) o_contribs t_contribs
   end in
   File.Fmt.stderr |> Fmt.fmt "\n===\nXXX index=" |> Index.pp index |> Fmt.fmt "\n" |> ignore;
@@ -328,6 +328,7 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
 
   File.Fmt.stderr |> Fmt.fmt "XXX o_contribs=" |> Contribs.fmt_hr symbols prods ~alt:true o_contribs |> Fmt.fmt "\n" |> ignore;
   File.Fmt.stderr |> Fmt.fmt "XXX t_contribs=" |> Contribs.fmt_hr symbols prods ~alt:true t_contribs |> Fmt.fmt "\n" |> ignore;
+
 *)
 
   compat

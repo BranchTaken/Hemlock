@@ -22,7 +22,7 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 module Seq : sig
   type container = t
 
-  include SeqIntf.SMonoDef with type elm = Symbol.Index.t * Attrib.t
+  include SeqIntf.SMonoDef with type elm = Attrib.t
 
   val init: container -> t
 end
