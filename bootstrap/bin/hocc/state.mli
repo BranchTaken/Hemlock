@@ -57,7 +57,7 @@ val has_conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> bool
     conflict contributions, and conflicting actions on ⊥ are a special case to which conflict
     contributions do not apply. *)
 
-val conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> Attribs.t
+val conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> Contribs.t
 (** [conflict_attribs ~resolve symbols prods t] returns conflict attributions, i.e. per symbol
     conflict contributions. If [resolve] is true, omit conflicts that cannot result in inadequacy in
     the context of conflict resolution (i.e. conflicts that resolve to shift). The pseudo-end (⊥)

@@ -167,14 +167,14 @@ let has_conflict_attribs ~resolve symbols prods t =
 let conflict_attribs ~resolve symbols prods t =
   let conflict_state_index = index t in
   conflicts_alist ~resolve symbols prods t
-  |> List.fold ~init:(Attribs.empty ~conflict_state_index)
+  |> List.fold ~init:Contribs.empty
     ~f:(fun attribs (symbol_index, conflict) ->
     (* This function is only called by `LaneCtx.of_conflict_state`, for which case
      * `isucc_lr1itemset` is always empty, because there is no isucc state for the conflict state.
     *)
     let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
       ~isucc_lr1itemset:Lr1Itemset.empty ~contrib:conflict in
-    Attribs.insert attrib attribs
+    Contribs.insert attrib attribs
   )
 
 let conflicts ?(filter_pseudo_end=true) ({actions; _} as t) =

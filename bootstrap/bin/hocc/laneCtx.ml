@@ -267,7 +267,7 @@ let anon_contribs_direct {anon_contribs_direct; _} =
 
 let of_conflict_state ~resolve symbols prods conflict_state =
   let conflict_state_index = State.index conflict_state in
-  let traces, anon_contribs_direct = Attribs.fold
+  let traces, anon_contribs_direct = Contribs.fold
       ~init:(Ordmap.empty (module TraceKey), Contribs.empty)
       ~f:(fun (traces, anon_contribs_direct) {symbol_index; conflict; contrib; _} ->
         let anon_contribs_direct = match Contrib.mem_shift contrib with
