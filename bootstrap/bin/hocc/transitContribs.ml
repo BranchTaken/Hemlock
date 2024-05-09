@@ -3,10 +3,10 @@ open! Basis.Rudiments
 
 type t = {
   (* Union of conflict contributions in `kernel_contribs`. *)
-  all: Contribs.t;
+  all: Attribs.t;
 
   (* Direct conflict contributions, whether shift (conflict state only) or reduce. *)
-  direct: Contribs.t;
+  direct: Attribs.t;
 
   (* Per kernel item reduce conflict contributions. Shift contributions are omitted since it is
    * irrelevant which kernel item makes a shift contribution, whether directly or indirectly. *)
@@ -36,9 +36,9 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L) {direct; all; kernel_contribs}
   in
   formatter
   |> Fmt.fmt "{"
-  |> Fmt.fmt sep |> Fmt.fmt "all=" |> Contribs.fmt_hr symbols prods ~alt ~width:(width + 4L) all
+  |> Fmt.fmt sep |> Fmt.fmt "all=" |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) all
   |> Fmt.fmt sep |> Fmt.fmt "direct="
-  |> Contribs.fmt_hr symbols prods ~alt ~width:(width + 4L) direct
+  |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) direct
   |> Fmt.fmt sep |> Fmt.fmt "kernel_contribs="
   |> KernelContribs.fmt_hr symbols prods ~alt ~width:(width + 4L) kernel_contribs
   |> Fmt.fmt rsep
@@ -46,21 +46,21 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L) {direct; all; kernel_contribs}
 
 let pp {direct; all; kernel_contribs} formatter =
   formatter
-  |> Fmt.fmt "{all=" |> Contribs.pp all
-  |> Fmt.fmt "; direct=" |> Contribs.pp direct
+  |> Fmt.fmt "{all=" |> Attribs.pp all
+  |> Fmt.fmt "; direct=" |> Attribs.pp direct
   |> Fmt.fmt "; kernel_contribs=" |> KernelContribs.pp kernel_contribs
   |> Fmt.fmt "}"
 
 let empty = {
-  all=Contribs.empty;
-  direct=Contribs.empty;
+  all=Attribs.empty;
+  direct=Attribs.empty;
   kernel_contribs=KernelContribs.empty
 }
 
 let reindex index_map {all; direct; kernel_contribs} =
   {
-    all=Contribs.reindex index_map all;
-    direct=Contribs.reindex index_map direct;
+    all=Attribs.reindex index_map all;
+    direct=Attribs.reindex index_map direct;
     kernel_contribs=KernelContribs.reindex index_map kernel_contribs
   }
 
@@ -75,51 +75,51 @@ let kernel_contribs {kernel_contribs; _} =
 
 let merge ~conflict_state_index ~symbol_index ~conflict ~contrib ({all; _} as t) =
   let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
-  let all = Contribs.insert attrib all in
+  let all = Attribs.insert attrib all in
   {t with all}
 
-let of_anon_contribs anon_contribs =
-  Contribs.fold ~init:empty
+let of_anon_attribs anon_attribs =
+  Attribs.fold ~init:empty
     ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
       merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
-    ) anon_contribs
+    ) anon_attribs
 
 let merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib ({direct; _} as t) =
   let t = merge ~conflict_state_index ~symbol_index ~conflict ~contrib t in
   let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
-  let direct = Contribs.insert attrib direct in
+  let direct = Attribs.insert attrib direct in
   {t with direct}
 
-let of_anon_contribs_direct anon_contribs_direct =
-  Contribs.fold ~init:empty
+let of_anon_attribs_direct anon_attribs_direct =
+  Attribs.fold ~init:empty
     ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
       merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib t
-    ) anon_contribs_direct
+    ) anon_attribs_direct
 
 let insert_kernel_contribs kernel_contribs t =
   KernelContribs.fold ~init:t
-    ~f:(fun ({kernel_contribs; _} as t) (item, contribs) ->
-      let t = Contribs.fold ~init:t
+    ~f:(fun ({kernel_contribs; _} as t) (item, attribs) ->
+      let t = Attribs.fold ~init:t
           ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
             merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
-          ) contribs in
-      let kernel_contribs = KernelContribs.insert item contribs kernel_contribs in
+          ) attribs in
+      let kernel_contribs = KernelContribs.insert item attribs kernel_contribs in
       {t with kernel_contribs}
     ) kernel_contribs
 
 let union {all=a0; direct=d0; kernel_contribs=kc0}
   {all=a1; direct=d1; kernel_contribs=kc1} =
   {
-    all=Contribs.union a0 a1;
-    direct=Contribs.union d0 d1;
+    all=Attribs.union a0 a1;
+    direct=Attribs.union d0 d1;
     kernel_contribs=KernelContribs.union kc0 kc1
   }
 
-let contribs lr1itemset {kernel_contribs; _} =
-  KernelContribs.fold ~init:Contribs.empty
-    ~f:(fun contribs (_src_lr1item, src_lr1item_contribs) ->
-      Contribs.fold ~init:contribs
-        ~f:(fun contribs
+let attribs lr1itemset {kernel_contribs; _} =
+  KernelContribs.fold ~init:Attribs.empty
+    ~f:(fun attribs (_src_lr1item, src_lr1item_attribs) ->
+      Attribs.fold ~init:attribs
+        ~f:(fun attribs
           (Attrib.{conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} as
             attrib) ->
           assert Contrib.(inter conflict contrib = contrib);
@@ -127,27 +127,27 @@ let contribs lr1itemset {kernel_contribs; _} =
           let shift_attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
               ~isucc_lr1itemset ~contrib:shift_contrib in
           let has_shift = Contrib.is_empty shift_contrib in
-          Lr1Itemset.fold ~init:contribs ~f:(fun contribs isucc_lr1item ->
+          Lr1Itemset.fold ~init:attribs ~f:(fun attribs isucc_lr1item ->
             match Lr1Itemset.get isucc_lr1item lr1itemset with
             | None -> begin
                 match has_shift with
-                | false -> contribs
+                | false -> attribs
                 | true ->
-                  Contribs.insert shift_attrib contribs
+                  Attribs.insert shift_attrib attribs
               end
             | Some {follow; _} -> begin
                 match Ordset.mem symbol_index follow with
                 | false -> begin
                     match has_shift with
-                    | false -> contribs
+                    | false -> attribs
                     | true ->
-                      Contribs.insert shift_attrib contribs
+                      Attribs.insert shift_attrib attribs
                   end
                 | true -> begin
                     let attrib' = Attrib.union shift_attrib attrib in
-                    Contribs.insert attrib' contribs
+                    Attribs.insert attrib' attribs
                   end
               end
           ) isucc_lr1itemset
-        ) src_lr1item_contribs
+        ) src_lr1item_attribs
     ) kernel_contribs

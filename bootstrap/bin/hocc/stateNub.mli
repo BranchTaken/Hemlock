@@ -31,8 +31,8 @@ type t = {
   transit_contribs_lst: TransitContribs.t list;
   (** List of transit conflict contributions, one for each merged in-transition. *)
 
-  contribs: Contribs.t;
-  (** Memoized merged contribs. *)
+  attribs: Attribs.t;
+  (** Memoized merged attribs. *)
 }
 
 include IdentifiableIntf.S with type t := t

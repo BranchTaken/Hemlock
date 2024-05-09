@@ -177,7 +177,7 @@ module T = struct
   type t = {
     lr1itemsetclosure: Lr1ItemsetClosure.t;
     transit_contribs_lst: TransitContribs.t list;
-    contribs: Contribs.t;
+    attribs: Attribs.t;
   }
 
   let hash_fold {lr1itemsetclosure; _} state =
@@ -186,45 +186,45 @@ module T = struct
   let cmp {lr1itemsetclosure=c0; _} {lr1itemsetclosure=c1; _} =
     Lr1ItemsetClosure.cmp c0 c1
 
-  let pp {lr1itemsetclosure; transit_contribs_lst; contribs} formatter =
+  let pp {lr1itemsetclosure; transit_contribs_lst; attribs} formatter =
     formatter
     |> Fmt.fmt "{lr1itemsetclosure=" |> Lr1ItemsetClosure.pp  lr1itemsetclosure
     |> Fmt.fmt "; transit_contribs_lst=" |> List.pp TransitContribs.pp transit_contribs_lst
-    |> Fmt.fmt "; contribs=" |> Contribs.pp contribs
+    |> Fmt.fmt "; attribs=" |> Attribs.pp attribs
     |> Fmt.fmt "}"
 end
 include T
 include Identifiable.Make(T)
 
-let init symbols ~index GotoNub.{goto; transit_contribs; contribs} =
+let init symbols ~index GotoNub.{goto; transit_contribs; attribs} =
   let lr1itemsetclosure = Lr1ItemsetClosure.init symbols ~index goto in
-  {lr1itemsetclosure; transit_contribs_lst=[transit_contribs]; contribs}
+  {lr1itemsetclosure; transit_contribs_lst=[transit_contribs]; attribs}
 
-let reindex index_map {lr1itemsetclosure; transit_contribs_lst; contribs} =
+let reindex index_map {lr1itemsetclosure; transit_contribs_lst; attribs} =
   let lr1itemsetclosure = Lr1ItemsetClosure.reindex index_map lr1itemsetclosure in
   let transit_contribs_lst = List.map ~f:(fun transit_contribs ->
     TransitContribs.reindex index_map transit_contribs
   ) transit_contribs_lst in
-  let contribs = Contribs.reindex index_map contribs in
-  {lr1itemsetclosure; transit_contribs_lst; contribs}
+  let attribs = Attribs.reindex index_map attribs in
+  {lr1itemsetclosure; transit_contribs_lst; attribs}
 
 let index {lr1itemsetclosure; _} =
   lr1itemsetclosure.index
 
 let merge symbols GotoNub.{goto; transit_contribs; _}
-  {lr1itemsetclosure; transit_contribs_lst; contribs} =
+  {lr1itemsetclosure; transit_contribs_lst; attribs} =
   let merged, (Lr1ItemsetClosure.{kernel=lr1itemset; _} as lr1itemsetclosure) =
     Lr1ItemsetClosure.merge symbols goto lr1itemsetclosure in
   let transit_contribs_lst = transit_contribs :: transit_contribs_lst in
-  let contribs = match merged with
-    | false -> contribs (* No-op merge means no change in contribs. *)
+  let attribs = match merged with
+    | false -> attribs (* No-op merge means no change in attribs. *)
     | true -> begin
-        List.fold ~init:Contribs.empty ~f:(fun contribs transit_contribs ->
-          Contribs.union (TransitContribs.contribs lr1itemset transit_contribs) contribs
+        List.fold ~init:Attribs.empty ~f:(fun attribs transit_contribs ->
+          Attribs.union (TransitContribs.attribs lr1itemset transit_contribs) attribs
         ) transit_contribs_lst
       end
   in
-  merged, {lr1itemsetclosure; transit_contribs_lst; contribs}
+  merged, {lr1itemsetclosure; transit_contribs_lst; attribs}
 
 let next {lr1itemsetclosure; _} =
   Lr1ItemsetClosure.next lr1itemsetclosure
@@ -264,9 +264,9 @@ let resolve symbols prods actions =
 let compat_lr1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
   Lr1Itemset.compat_lr1 goto kernel
 
-let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
-  {lr1itemsetclosure={index=_XXX; _}; contribs=t_contribs; _} =
-  let compat = Contribs.fold2_until ~init:true
+let compat_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _}
+  {lr1itemsetclosure={index=_XXX; _}; attribs=t_attribs; _} =
+  let compat = Attribs.fold2_until ~init:true
       ~f:(fun _ attrib_opt0 attrib_opt1 ->
         let symbol_index, o_contrib, t_contrib = match attrib_opt0, attrib_opt1 with
           | Some Attrib.{symbol_index; contrib=contrib0; _}, Some {contrib=contrib1; _} ->
@@ -291,12 +291,12 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
         in
         let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index o_contrib t_contrib in
         compat, not compat
-      ) o_contribs t_contribs
+      ) o_attribs t_attribs
   in
 
 (*
-  let contribs_incompat o_contribs t_contribs = begin
-    Contribs.fold2 ~init:()
+  let attribs_incompat o_attribs t_attribs = begin
+    Attribs.fold2 ~init:()
       ~f:(fun _ attrib_opt0 attrib_opt1 ->
         let conflict_state_index, symbol_index, o_contrib, t_contrib =
           match attrib_opt0, attrib_opt1 with
@@ -320,14 +320,14 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{contribs=o_contribs; _}
         in
         let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index o_contrib t_contrib in
         File.Fmt.stderr |> Fmt.fmt "XXX compat=" |> Bool.pp compat |> Fmt.fmt ", conflict_state_index=" |> StateIndex.pp conflict_state_index |> Fmt.fmt ", symbol=" |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols) |> Fmt.fmt ", o_contrib=" |> Contrib.pp_hr symbols prods o_contrib |> Fmt.fmt ", t_contrib=" |> Contrib.pp_hr symbols prods t_contrib |> Fmt.fmt "\n" |> ignore;
-      ) o_contribs t_contribs
+      ) o_attribs t_attribs
   end in
   File.Fmt.stderr |> Fmt.fmt "\n===\nXXX index=" |> Index.pp index |> Fmt.fmt "\n" |> ignore;
-  File.Fmt.stderr |> Fmt.fmt "XXX o_contribs vs t_contribs\n" |> ignore;
-  contribs_incompat o_contribs t_contribs;
+  File.Fmt.stderr |> Fmt.fmt "XXX o_attribs vs t_attribs\n" |> ignore;
+  attribs_incompat o_attribs t_attribs;
 
-  File.Fmt.stderr |> Fmt.fmt "XXX o_contribs=" |> Contribs.fmt_hr symbols prods ~alt:true o_contribs |> Fmt.fmt "\n" |> ignore;
-  File.Fmt.stderr |> Fmt.fmt "XXX t_contribs=" |> Contribs.fmt_hr symbols prods ~alt:true t_contribs |> Fmt.fmt "\n" |> ignore;
+  File.Fmt.stderr |> Fmt.fmt "XXX o_attribs=" |> Attribs.fmt_hr symbols prods ~alt:true o_attribs |> Fmt.fmt "\n" |> ignore;
+  File.Fmt.stderr |> Fmt.fmt "XXX t_attribs=" |> Attribs.fmt_hr symbols prods ~alt:true t_attribs |> Fmt.fmt "\n" |> ignore;
 
 *)
 

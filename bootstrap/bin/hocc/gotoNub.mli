@@ -11,8 +11,8 @@ type t = {
   transit_contribs: TransitContribs.t;
   (** Transit conflict contributions. *)
 
-  contribs: Contribs.t;
-  (** Memoized contribs computed for `goto` in the context of `transit_contribs`. *)
+  attribs: Attribs.t;
+  (** Memoized attribs computed for `goto` in the context of `transit_contribs`. *)
 }
 
 include IdentifiableIntf.S with type t := t

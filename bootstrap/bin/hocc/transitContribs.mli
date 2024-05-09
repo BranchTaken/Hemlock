@@ -1,4 +1,4 @@
-(** Conflict contributions associated with a transition. *)
+(** Conflict attributions associated with a transition. *)
 
 open Basis
 open! Basis.Rudiments
@@ -16,22 +16,22 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 val empty: t
 (** [empty] returns an empty {type:t}. *)
 
-val of_anon_contribs: Contribs.t -> t
-(** [of_anon_contribs anon_contribs] initializes a {type:t} by inserting [anon_contribs]. *)
+val of_anon_attribs: Attribs.t -> t
+(** [of_anon_attribs anon_attribs] initializes a {type:t} by inserting [anon_attribs]. *)
 
-val of_anon_contribs_direct: Contribs.t -> t
-(** [of_contribs contribs_direct] initializes a {type:t} by inserting [anon_contribs] as direct
-    conflict contributions. *)
+val of_anon_attribs_direct: Attribs.t -> t
+(** [of_attribs attribs_direct] initializes a {type:t} by inserting [anon_attribs] as direct
+    conflict attributions. *)
 
 val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
-(** [reindex index_map t] creates kernel contribs with all LR(1) item set closure and state nub
+(** [reindex index_map t] creates kernel attribs with all LR(1) item set closure and state nub
     indexes translated according to [index_map], where keys are the original indexes, and values are
     the reindexed indexes. *)
 
-val all: t -> Contribs.t
+val all: t -> Attribs.t
 (** [all t] returns the union of all conflict contributions in [t]. *)
 
-val direct: t -> Contribs.t
+val direct: t -> Attribs.t
 (** [direct t] returns the union of direct conflict contributions made by all kernel items. *)
 
 val kernel_contribs: t -> KernelContribs.t
@@ -59,5 +59,5 @@ val insert_kernel_contribs: KernelContribs.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of transit conflict contributions in [t0] and [t1]. *)
 
-val contribs: Lr1Itemset.t -> t -> Contribs.t
-(** [contribs lr1itemset t] computes the contribs made by [lr1itemset] in the context of [t]. *)
+val attribs: Lr1Itemset.t -> t -> Attribs.t
+(** [attribs lr1itemset t] computes the attribs made by [lr1itemset] in the context of [t]. *)

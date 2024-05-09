@@ -143,8 +143,7 @@ let union {symbol_attribs=sa0} {symbol_attribs=sa1} =
   ) sa0 sa1 in
   {symbol_attribs}
 
-let reindex index_map ({symbol_attribs} as t) =
-  assert (not (is_empty t));
+let reindex index_map {symbol_attribs} =
   Ordmap.fold ~init:empty
     ~f:(fun reindexed_t (_symbol_index, (Attrib.{conflict_state_index; _} as attrib)) ->
       match Map.get conflict_state_index index_map with
