@@ -29,14 +29,11 @@ end
 val length: t -> uns
 (** [length t] returns the number of distinct symbol indices in [t]. *)
 
-val conflict_state_index: t -> StateIndex.t
-(** [conflict_state_index t] returns the conflict state associated with all attributions in [t]. *)
-
 val equal: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. *)
 
-val empty: conflict_state_index:StateIndex.t -> t
-(** [empty ~conflict_state_index] returns attribs with no attributions. *)
+val empty: t
+(** [empty] returns attribs with no attributions. *)
 
 val singleton: Attrib.t -> t
 (** [singleton attrib] returns a singleton attribution. *)

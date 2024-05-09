@@ -139,7 +139,7 @@ let get_hlt ~conflict_state_index symbol_index t =
 
 let amend ~conflict_state_index symbol_index ~f t =
   let attribs = match Ordmap.get conflict_state_index t with
-    | None -> Attribs.empty ~conflict_state_index
+    | None -> Attribs.empty
     | Some attribs -> attribs
   in
   let attribs' = Attribs.amend symbol_index ~f attribs in
