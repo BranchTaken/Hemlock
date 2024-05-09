@@ -86,7 +86,7 @@ module T = struct
   let init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib}
 
-  let init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib =
+  let init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset=Lr1Itemset.empty; contrib}
 
   let is_empty {contrib; _} =

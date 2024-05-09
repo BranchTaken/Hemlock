@@ -74,27 +74,27 @@ let kernel_attribs {kernel_attribs; _} =
   kernel_attribs
 
 let merge ~conflict_state_index ~symbol_index ~conflict ~contrib ({all; _} as t) =
-  let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
+  let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib in
   let all = Attribs.insert attrib all in
   {t with all}
 
-let of_anon_attribs anon_attribs =
+let of_lane_attribs lane_attribs =
   Attribs.fold ~init:empty
     ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
       merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
-    ) anon_attribs
+    ) lane_attribs
 
 let merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib ({direct; _} as t) =
   let t = merge ~conflict_state_index ~symbol_index ~conflict ~contrib t in
-  let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
+  let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib in
   let direct = Attribs.insert attrib direct in
   {t with direct}
 
-let of_anon_attribs_direct anon_attribs_direct =
+let of_lane_attribs_direct lane_attribs_direct =
   Attribs.fold ~init:empty
     ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
       merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib t
-    ) anon_attribs_direct
+    ) lane_attribs_direct
 
 let insert_kernel_attribs kernel_attribs t =
   KernelAttribs.fold ~init:t

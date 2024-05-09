@@ -16,12 +16,12 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 val empty: t
 (** [empty] returns an empty {type:t}. *)
 
-val of_anon_attribs: Attribs.t -> t
-(** [of_anon_attribs anon_attribs] initializes a {type:t} by inserting [anon_attribs]. *)
+val of_lane_attribs: Attribs.t -> t
+(** [of_lane_attribs lane_attribs] initializes a {type:t} by inserting [lane_attribs]. *)
 
-val of_anon_attribs_direct: Attribs.t -> t
-(** [of_attribs attribs_direct] initializes a {type:t} by inserting [anon_attribs] as direct
-    conflict attributions. *)
+val of_lane_attribs_direct: Attribs.t -> t
+(** [of_lane_attribs_direct lane_attribs_direct] initializes a {type:t} by inserting
+    [lane_attribs_direct] as direct conflict attributions. *)
 
 val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
 (** [reindex index_map t] creates kernel attribs with all LR(1) item set closure and state nub

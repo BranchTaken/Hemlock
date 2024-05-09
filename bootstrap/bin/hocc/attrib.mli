@@ -9,7 +9,9 @@ type t = {
   conflict: Contrib.t;
   (** Conflict on symbol. This is a non-strict superset of attributed conflict contribution, i.e.
       the attribution may not explain the entire conflict. *)
-  isucc_lr1itemset: Lr1Itemset.t; (** Immediate successor's LR(1) itemset. *)
+  isucc_lr1itemset: Lr1Itemset.t;
+  (** Immediate successor's LR(1) itemset. Empty for lane attribs (maintained only during lane
+      tracing). *)
   contrib: Contrib.t; (** Attributed conflict contribution. *)
 }
 
@@ -40,10 +42,10 @@ val init: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> co
     attribution with key (conflict_state_index, symbol_index) that attributes [contrib] to
     [isucc_lr1itemset]. *)
 
-val init_anon: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
+val init_lane: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
   -> contrib:Contrib.t -> t
-(** [init ~conflict_state_index ~symbol_index ~conflict ~contrib] returns an attribution with key
-    (conflict_state_index, symbol_index) that anonymously attributes [contrib]. *)
+(** [init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib] returns an attribution with
+    key (conflict_state_index, symbol_index) that attributes [contrib] to a lane. *)
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)

@@ -89,19 +89,19 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
 *)
   (* Accumulate direct attributions. *)
   let transit = LaneCtx.transit lanectx in
-  let anon_attribs_direct = LaneCtx.anon_attribs_direct lanectx in
-  let lalr1_transit_attribs = match Attribs.is_empty anon_attribs_direct with
+  let lane_attribs_direct = LaneCtx.lane_attribs_direct lanectx in
+  let lalr1_transit_attribs = match Attribs.is_empty lane_attribs_direct with
     | true -> lalr1_transit_attribs
     | false -> begin
         (* Backpropagate. *)
-        let transit_attribs = TransitAttribs.of_anon_attribs anon_attribs_direct in
+        let transit_attribs = TransitAttribs.of_lane_attribs lane_attribs_direct in
         let lalr1_transit_attribs = backprop_transit_attribs adjs transit_attribs
             lalr1_transit_attribs marks state_index in
         let lalr1_transit_attribs = match Transit.cyclic transit with
           | true -> lalr1_transit_attribs
           | false -> begin
               let transit_attribs_direct =
-                TransitAttribs.of_anon_attribs_direct anon_attribs_direct in
+                TransitAttribs.of_lane_attribs_direct lane_attribs_direct in
               Ordmap.amend transit ~f:(function
                 | None -> Some transit_attribs_direct
                 | Some transit_attribs_existing ->
@@ -153,10 +153,10 @@ let close_transit_attribs io adjs lalr1_transit_attribs =
           ) (Adjs.isuccs_of_state_index state_index adjs) in
         let in_attribs_all = Ordset.fold ~init:Attribs.empty
             ~f:(fun attribs_all transit ->
-              let anon_attribs =
+              let lane_attribs =
                 Ordmap.get_hlt transit lalr1_transit_attribs
                 |> TransitAttribs.all in
-              Attribs.union anon_attribs attribs_all
+              Attribs.union lane_attribs attribs_all
             ) in_transits in
         let io, lalr1_transit_attribs, workq =
           Attribs.fold ~init:(io, lalr1_transit_attribs, workq)
@@ -231,60 +231,70 @@ let close_transit_attribs io adjs lalr1_transit_attribs =
       ) lalr1_transit_attribs in
   work io adjs lalr1_transit_attribs workq
 
-let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
-    ~lalr1_transit_attribs =
+let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lalr1_transit_attribs =
+  let work_finish io ~stable workq = begin
+    (* Remaining queued states are split-stable, becauses all transitively reachable states in
+     * the `stability_deps` graph are also qeued. *)
+    let reqd = Workq.set workq in
+    let io =
+      io.log
+      |> String.fmt ~pad:(Codepoint.of_char '.') ~width:(Set.length reqd) ""
+      |> Io.with_log io
+    in
+    let stable = Set.union reqd stable in
+    io, stable
+  end in
+  let gather_transits state_index lalr1_transit_attribs adjs = begin
+    (* Filter in/out transits for which there are no conflict attributions, since they lie outside
+     * any relevant lane. *)
+    let in_transits_all = Array.fold ~init:(Ordset.empty (module Transit))
+      ~f:(fun in_transits_all ipred_state_index ->
+        let transit = Transit.init ~src:ipred_state_index ~dst:state_index in
+        match Ordmap.get transit lalr1_transit_attribs with
+        | None -> in_transits_all
+        | Some _ -> Ordset.insert transit in_transits_all
+      ) (Adjs.ipreds_of_state_index state_index adjs) in
+    let out_transits_all = Array.fold ~init:(Ordset.empty (module Transit))
+      ~f:(fun out_transits_all isucc_state_index ->
+        let transit = Transit.init ~src:state_index ~dst:isucc_state_index in
+        match Ordmap.get transit lalr1_transit_attribs with
+        | None -> out_transits_all
+        | Some _ -> Ordset.insert transit out_transits_all
+      ) (Adjs.isuccs_of_state_index state_index adjs) in
+    (in_transits_all, out_transits_all)
+  end in
+  let gather_in_attribs lalr1_transit_attribs in_transits_all = begin
+    (* Gather the set of all in-attribs, which is a non-strict subset of all out-attribs
+     * (out-transitions may make direct attributions). *)
+    Ordset.fold ~init:Attribs.empty
+        ~f:(fun in_attribs_all transit ->
+          let lane_attribs = Ordmap.get_hlt transit lalr1_transit_attribs
+                             |> TransitAttribs.all in
+          Attribs.union lane_attribs in_attribs_all
+        ) in_transits_all
+  end in
+  let filter_transits_relevant lalr1_transit_attribs transits ~conflict_state_index symbol_index
+    = begin
+    (* Filter in/out transits lacking the relevant {conflict_state, symbol}. *)
+    Ordset.filter ~f:(fun in_transit ->
+      Ordmap.get_hlt in_transit lalr1_transit_attribs
+      |> TransitAttribs.all
+      |> Attribs.get ~conflict_state_index symbol_index
+      |> Option.is_some
+    ) transits
+  end in
   let rec work ~resolve io symbols prods lalr1_isocores lalr1_states adjs
       ~lalr1_transit_attribs ~stable stability_deps ~unstable churn workq = begin
     (* Terminate work if all workq items have been considered since the last forward progress. This
      * conveniently also terminates if the workq empties. *)
     match churn < Workq.length workq with
-    | false -> begin
-        (* Remaining queued states are split-stable, becauses all transitively reachable states in
-         * the `stability_deps` graph are also qeued. *)
-        let reqd = Workq.set workq in
-(*
-        File.Fmt.stderr |> Fmt.fmt "XXX stability_deps=" |> Ordmap.fmt ~alt:true Ordset.pp stability_deps |> Fmt.fmt "\n" |> ignore;
-        File.Fmt.stderr |> Fmt.fmt "XXX reqd=" |> Set.pp reqd |> Fmt.fmt "\n" |> ignore;
-        File.Fmt.stderr |> Fmt.fmt "XXX unstable=" |> Set.pp unstable |> Fmt.fmt "\n" |> ignore;
-*)
-        let io =
-          io.log
-          |> String.fmt ~pad:(Codepoint.of_char '.') ~width:(Set.length reqd) ""
-          |> Io.with_log io
-        in
-        let stable = Set.union reqd stable in
-        io, stable
-      end
+    | false -> work_finish io ~stable workq
     | true -> begin
         assert (not (Workq.is_empty workq));
         let state_index, workq = Workq.pop workq in
-(*
-        File.Fmt.stderr |> Fmt.fmt "XXX work churn=" |> Uns.pp churn |> Fmt.fmt ", state_index=" |> State.Index.pp state_index |> Fmt.fmt "\n" |> ignore;
-*)
-        (* Filter in/out transits for which there are no conflict attributions, since they lie
-         * outside any relevant lane. *)
-        let in_transits_all = Array.fold ~init:(Ordset.empty (module Transit))
-          ~f:(fun in_transits_all ipred_state_index ->
-            let transit = Transit.init ~src:ipred_state_index ~dst:state_index in
-            match Ordmap.get transit lalr1_transit_attribs with
-            | None -> in_transits_all
-            | Some _ -> Ordset.insert transit in_transits_all
-          ) (Adjs.ipreds_of_state_index state_index adjs) in
-        let out_transits_all = Array.fold ~init:(Ordset.empty (module Transit))
-          ~f:(fun out_transits_all isucc_state_index ->
-            let transit = Transit.init ~src:state_index ~dst:isucc_state_index in
-            match Ordmap.get transit lalr1_transit_attribs with
-            | None -> out_transits_all
-            | Some _ -> Ordset.insert transit out_transits_all
-          ) (Adjs.isuccs_of_state_index state_index adjs) in
-        (* Gather the set of all in-attribs, which is a non-strict subset of all out-attribs
-         * (out-transitions may make direct attributions). *)
-        let in_attribs_all = Ordset.fold ~init:Attribs.empty
-            ~f:(fun in_attribs_all transit ->
-              let anon_attribs = Ordmap.get_hlt transit lalr1_transit_attribs
-                                 |> TransitAttribs.all in
-              Attribs.union anon_attribs in_attribs_all
-            ) in_transits_all in
+        let (in_transits_all, out_transits_all) =
+          gather_transits state_index lalr1_transit_attribs adjs in
+        let in_attribs_all = gather_in_attribs lalr1_transit_attribs in_transits_all in
         (* Iteratively test whether this state is split-stable with respect to each attribution.
          * There are three possible outcomes:
          * - The state is split-stable.
@@ -295,13 +305,8 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
             ~init:(io, Some (Ordset.empty (module State.Index)))
             ~f:(fun (io, stability_deps_indexes_opt)
               Attrib.{conflict_state_index; symbol_index; conflict; _} ->
-              (* Filter in/out transits lacking the relevant {conflict_state, symbol}. *)
-              let in_transits_relevant = Ordset.filter ~f:(fun in_transit ->
-                Ordmap.get_hlt in_transit lalr1_transit_attribs
-                |> TransitAttribs.all
-                |> Attribs.get ~conflict_state_index symbol_index
-                |> Option.is_some
-              ) in_transits_all in
+              let in_transits_relevant = filter_transits_relevant lalr1_transit_attribs
+                in_transits_all ~conflict_state_index symbol_index in
               (* If state has already been evaluated as ipred-dependent there is no need to
                * re-evaluate independent split-stability. *)
               let has_stability_deps = Ordmap.mem state_index stability_deps in
@@ -340,24 +345,14 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                           in
                           Contrib.(split_resolution <> unsplit_resolution)
                         ) in_transits_relevant in
-(*
-                        let () = match split_unstable with
-                          | false -> ()
-                          | true -> File.Fmt.stderr |> Fmt.fmt "XXX self-unstable: " |> State.Index.pp state_index |> Fmt.fmt "\n" |> ignore
-                        in
-*)
                         io, split_unstable
                       end
                     | false -> begin
                         (* For all relevant in-transitions considered in turn as if the state were
                          * split from all other in-transitions, the state is split-stable if
                          * direct-stable and indirect-stable. *)
-                        let out_transits_relevant = Ordset.filter ~f:(fun out_transit ->
-                          Ordmap.get_hlt out_transit lalr1_transit_attribs
-                          |> TransitAttribs.all
-                          |> Attribs.get ~conflict_state_index symbol_index
-                          |> Option.is_some
-                        ) out_transits_all in
+                        let out_transits_relevant = filter_transits_relevant lalr1_transit_attribs
+                          out_transits_all ~conflict_state_index symbol_index in
                         let in_direct_contrib_union = Ordset.fold ~init:Contrib.empty
                             ~f:(fun in_direct_contrib_union in_transit ->
                               let Attrib.{contrib; _} =
@@ -422,16 +417,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                               is_empty split_resolution ||
                               split_resolution = unsplit_resolution_indirect
                             ) in
-(*
-                            let () = match direct_unstable with
-                              | false -> ()
-                              | true -> File.Fmt.stderr |> Fmt.fmt "XXX direct-unstable: " |> State.Index.pp state_index |> Fmt.fmt "\n" |> ignore
-                            in
-                            let () = match indirect_unstable with
-                              | false -> ()
-                              | true -> File.Fmt.stderr |> Fmt.fmt "XXX indirect-unstable: " |> State.Index.pp state_index |> Fmt.fmt "\n" |> ignore
-                            in
-*)
                             direct_unstable || indirect_unstable
                           ) out_transits_relevant
                         ) in_transits_relevant in
@@ -480,9 +465,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                             let stability_deps_indexes =
                               Option.value ~default:(Ordset.empty (module State.Index))
                                 stability_deps_indexes_opt in
-(*
-                            File.Fmt.stderr |> Fmt.fmt "XXX maybe ipred-unstable: " |> State.Index.pp state_index |> Fmt.fmt ", unstable ipred_state_index=" |> State.Index.pp ipred_state_index |> Fmt.fmt "\n" |> ignore;
-*)
                             (io, Some (Ordset.insert ipred_state_index stability_deps_indexes)),
                             false
                           end
@@ -490,9 +472,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
                             (* Split-stability depends on the ipred being split-stable, and the
                              * ipred is already known to be split-unstable. Requeuing would cause no
                              * correctness issues, but doing so would cause pointless extra work. *)
-(*
-                            File.Fmt.stderr |> Fmt.fmt "XXX ipred-unstable: " |> State.Index.pp state_index |> Fmt.fmt ", unstable ipred_state_index=" |> State.Index.pp ipred_state_index |> Fmt.fmt "\n" |> ignore;
-*)
                             (io, None), true
                           end
                       ) in_transits_relevant in
@@ -502,9 +481,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
         let io, stable, stability_deps, unstable, churn, workq =
           match stability_deps_indexes_opt with
           | Some stability_deps_indexes when Ordset.is_empty stability_deps_indexes -> begin
-(*
-              File.Fmt.stderr |> Fmt.fmt "XXX stable: " |> State.Index.pp state_index |> Fmt.fmt "\n" |> ignore;
-*)
               io.log |> Fmt.fmt "." |> Io.with_log io,
               Set.insert state_index stable,
               Ordmap.remove state_index stability_deps, (* Removal not strictly necessary. *)
@@ -513,9 +489,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
               workq
             end
           | None -> begin
-(*
-              File.Fmt.stderr |> Fmt.fmt "XXX unstable: " |> State.Index.pp state_index |> Fmt.fmt "\n" |> ignore;
-*)
               io.log |> Fmt.fmt "^" |> Io.with_log io,
               stable,
               Ordmap.remove state_index stability_deps, (* Removal not strictly necessary. *)
@@ -524,9 +497,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
               workq
             end
           | Some stability_deps_indexes -> begin
-(*
-              File.Fmt.stderr |> Fmt.fmt "XXX req: " |> State.Index.pp state_index |> Fmt.fmt ", stability_deps_indexes=" |> Ordset.pp stability_deps_indexes |> Fmt.fmt "\n" |> ignore;
-*)
               io,
               stable,
               Ordmap.upsert ~k:state_index ~v:stability_deps_indexes stability_deps,
@@ -548,9 +518,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
         | true -> workq
         | false -> Workq.push_back dst workq
       ) lalr1_transit_attribs in
-(*
-  File.Fmt.stderr |> Fmt.fmt "XXX workq=" |> Workq.pp workq |> Fmt.fmt "\n" |> ignore;
-*)
   (* Initialize the set of split-stable states as the complement of `workq`. *)
   let stable = Range.Uns.fold (0L =:< Isocores.length lalr1_isocores)
     ~init:(Set.empty (module StateNub.Index))
@@ -573,9 +540,6 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs
       0L
       workq in
   let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
-(*
-  File.Fmt.stderr |> Fmt.fmt "XXX stable=" |> Set.pp stable |> Fmt.fmt "\n" |> ignore;
-*)
   let unstable_states = (Isocores.length lalr1_isocores) - (Set.length stable) in
   let io =
     io.log
