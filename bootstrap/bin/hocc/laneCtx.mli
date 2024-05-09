@@ -1,6 +1,6 @@
-(** Lane context for tracing conflict contributions backward from a conflict state. A conflicting
+(** Lane context for tracing conflict attributions backward from a conflict state. A conflicting
     reduce action is typically attributed to one or more states that begin lanes to the
-    conflict-inducing kernel item(s) in the conflict state. Conflict contributions are attributed on
+    conflict-inducing kernel item(s) in the conflict state. Conflict attributions are attributed on
     a per symbol basis, even though it is common for one lane to correspond to multiple conflicts.
     It is also possible for multiple items (and therefore distinct lanes) to contribute to the same
     conflict.
@@ -54,7 +54,7 @@ val transit: t -> Transit.t
 
 val traces_length: t -> uns
 (** [traces_length t] returns the number of lane traces in [t]. If [t] contains no traces, its
-    predecessors will contain no traces nor conflict contributions. *)
+    predecessors will contain no traces nor conflict attributions. *)
 
 val of_conflict_state: resolve:bool -> Symbols.t -> Prods.t -> State.t -> t
 (** [of_conflict_state ~resolve symbols prods conflict_state] creates a lane context for the
@@ -65,18 +65,18 @@ val of_ipred: State.t -> t -> t
     for the [ipred] state's immediate successor (isucc) state in the lane. *)
 
 val post_init: t list -> t -> t
-(** [post_init ipred_lanectxs t] finishes initializing direct anonymous conflict contributions,
-    given all (acyclic) ipreds' contexts and returns a derivative of [t]. *)
+(** [post_init ipred_lanectxs t] finishes initializing direct anonymous conflict attributions, given
+    all (acyclic) ipreds' contexts and returns a derivative of [t]. *)
 
-val kernel_contribs: t -> KernelContribs.t
-(** [kernel_contribs t] returns a map of the conflict contributions attributable to the lane(s)
-    encompassing [t], i.e. both direct and indirect conflict contributions. *)
+val kernel_attribs: t -> KernelAttribs.t
+(** [kernel_attribs t] returns a map of the conflict attributions attributable to the lane(s)
+    encompassing [t], i.e. both direct and indirect conflict attributions. *)
 
 val anon_attribs: t -> Attribs.t
-(** [anon_attribs t] returns a map of the merged anonymous conflict contributions attributable to
-    the lanes encompassing [t], i.e. both direct and indirect conflict contributions. *)
+(** [anon_attribs t] returns a map of the merged anonymous conflict attributions attributable to
+    the lanes encompassing [t], i.e. both direct and indirect conflict attributions. *)
 
 val anon_attribs_direct: t -> Attribs.t
-(** [anon_attribs_direct t] returns a map of the merged anonymous conflict contributions directly
-    attributable to the transition from [state t] to [isucc t]. Conflict contributions added by
+(** [anon_attribs_direct t] returns a map of the merged anonymous conflict attributions directly
+    attributable to the transition from [state t] to [isucc t]. Conflict attributions added by
     [post_init] are included in the map. *)

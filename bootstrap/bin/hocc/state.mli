@@ -17,7 +17,7 @@ end
 
 type t = {
   statenub: StateNub.t;
-  (** State nub, which contains the LR(1) item set closure and inadequacy contributions. *)
+  (** State nub, which contains the LR(1) item set closure and inadequacy attributions. *)
 
   actions:
     (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
@@ -51,18 +51,18 @@ val has_pseudo_end_conflict: t -> bool
 
 val has_conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> bool
 (** [has_conflict_attribs ~resolve symbols prods t] returns true iff there are conflict
-    attributions, i.e. per symbol conflict contributions. If [resolve] is true, omit conflicts that
+    attributions, i.e. per symbol conflict attributions. If [resolve] is true, omit conflicts that
     cannot result in inadequacy in the context of conflict resolution (i.e. conflicts that resolve
     to shift). The pseudo-end (⊥) symbol is omitted, because this function is used for attributing
-    conflict contributions, and conflicting actions on ⊥ are a special case to which conflict
-    contributions do not apply. *)
+    conflict attributions, and conflicting actions on ⊥ are a special case to which conflict
+    attributions do not apply. *)
 
 val conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> Attribs.t
 (** [conflict_attribs ~resolve symbols prods t] returns conflict attributions. If [resolve] is true,
     omit conflicts that cannot result in inadequacy in the context of conflict resolution (i.e.
     conflicts that resolve to shift). The pseudo-end (⊥) symbol is omitted, because this function is
     used for attributing conflict contributions, and conflicting actions on ⊥ are a special case to
-    which conflict contributions do not apply. *)
+    which conflict attributions do not apply. *)
 
 val conflicts: ?filter_pseudo_end:bool -> t -> uns
 (** [conflicts ~filter_pseudo_end t] returns the number of conflicts in [t]. Pseudo-end (⊥)

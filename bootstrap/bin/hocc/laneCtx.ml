@@ -78,7 +78,7 @@ module TraceVal = struct
     Lr1Itemset.fold ~init:(Ordmap.empty (module Lr1Item))
       ~f:(fun t Lr1Item.{lr0item; follow=follow_unfiltered} ->
         (* Filter the follow set to contain only `symbol_index`, since it is the only relevant
-         * symbol in the context of kernel contribs. *)
+         * symbol in the context of kernel attribs. *)
         assert (Ordset.mem symbol_index follow_unfiltered);
         let follow = Ordset.singleton (module Symbol.Index) symbol_index in
         let lr1item = Lr1Item.init ~lr0item ~follow in
@@ -114,7 +114,7 @@ type t = {
    * because multiple kernel items in the conflict state can induce the same added ε production. *)
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
 
-  (* Conflict contributions directly to `state`->`isucc`. *)
+  (* Conflict attributions directly to `state`->`isucc`. *)
   anon_attribs_direct: Attribs.t;
 }
 
@@ -234,32 +234,32 @@ let kernel_lr1itemset_of_prod_index prods state symbol_index prod_index =
   let prod = Prods.prod_of_prod_index prod_index prods in
   kernel_lr1itemset_of_prod state symbol_index prod
 
-let kernel_contribs {conflict_state; traces; _} =
+let kernel_attribs {conflict_state; traces; _} =
   let conflict_state_index = State.index conflict_state in
-  Ordmap.fold ~init:KernelContribs.empty
-    ~f:(fun kernel_contribs (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
+  Ordmap.fold ~init:KernelAttribs.empty
+    ~f:(fun kernel_attribs (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
       let contrib = match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
-      TraceVal.fold ~init:kernel_contribs ~f:(fun kernel_contribs (lr1item, isucc_lr1itemset) ->
+      TraceVal.fold ~init:kernel_attribs ~f:(fun kernel_attribs (lr1item, isucc_lr1itemset) ->
         let attrib =
           Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
         let trace_attribs = Attribs.singleton attrib in
-        KernelContribs.insert lr1item trace_attribs kernel_contribs
+        KernelAttribs.insert lr1item trace_attribs kernel_attribs
       ) kernel_isuccs
     ) traces
 
 let anon_attribs ({anon_attribs_direct; _} as t) =
-  KernelContribs.fold ~init:Attribs.empty ~f:(fun anon_attribs (_lr1item, attribs) ->
+  KernelAttribs.fold ~init:Attribs.empty ~f:(fun anon_attribs (_lr1item, attribs) ->
     Attribs.fold ~init:Attribs.empty
       ~f:(fun anon_attribs {conflict_state_index; symbol_index; conflict; contrib; _} ->
         let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict ~contrib in
         Attribs.insert attrib anon_attribs
       ) attribs
     |> Attribs.union anon_attribs
-  ) (kernel_contribs t)
+  ) (kernel_attribs t)
   |> Attribs.union anon_attribs_direct
 
 let anon_attribs_direct {anon_attribs_direct; _} =
@@ -274,7 +274,7 @@ let of_conflict_state ~resolve symbols prods conflict_state =
           | false -> anon_attribs_direct
           | true -> begin
               let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index ~conflict
-                ~contrib:Contrib.shift in
+                  ~contrib:Contrib.shift in
               Attribs.insert attrib anon_attribs_direct
             end
         in
@@ -319,7 +319,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                 let isucc_lr0item = Lr1Item.(isucc_lr1item.lr0item) in
                 match isucc_lr0item.dot with
                 | 0L -> begin
-                    (* The lane trace terminates at a direct contribution by `isucc_lr1item`. *)
+                    (* The lane trace terminates at a direct attribution by `isucc_lr1item`. *)
                     traces, anon_attribs_direct
                   end
                 | _ -> begin
@@ -364,7 +364,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                                     ~f:(fun attrib_opt ->
                                       let contrib = Contrib.init_reduce prod_index in
                                       let attrib = Attrib.init_anon ~conflict_state_index
-                                        ~symbol_index ~conflict ~contrib in
+                                          ~symbol_index ~conflict ~contrib in
                                       match attrib_opt with
                                       | None -> Some attrib
                                       | Some attrib_existing ->
@@ -417,8 +417,8 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
 
 let post_init ipred_lanectxs ({conflict_state; traces; anon_attribs_direct; _} as t) =
   let conflict_state_index = State.index conflict_state in
-  (* A lane trace in this lane context makes a direct contribution if the lane does not extend back
-   * to any predecessors. This situation is handled in `of_ipred` when the trace source is an added
+  (* A lane trace in this lane context has a direct attribution if the lane does not extend back to
+   * any predecessors. This situation is handled in `of_ipred` when the trace source is an added
    * item, so it suffices here to process only traces with kernel items as sources. *)
   let anon_attribs_direct = Ordmap.fold ~init:anon_attribs_direct
       ~f:(fun anon_attribs_direct (TraceKey.{symbol_index; conflict; action}, traceval) ->
@@ -450,7 +450,7 @@ let post_init ipred_lanectxs ({conflict_state; traces; anon_attribs_direct; _} a
                         Attribs.amend ~conflict_state_index symbol_index ~f:(fun attrib_opt ->
                           let contrib = Contrib.init_reduce prod_index in
                           let attrib = Attrib.init_anon ~conflict_state_index ~symbol_index
-                            ~conflict ~contrib in
+                              ~conflict ~contrib in
                           match attrib_opt with
                           | None -> Some attrib
                           | Some contrib_existing -> Some (Attrib.union attrib contrib_existing)

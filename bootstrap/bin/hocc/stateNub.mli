@@ -28,8 +28,8 @@ type t = {
   lr1itemsetclosure: Lr1ItemsetClosure.t;
   (** LR(1) item set closure. *)
 
-  transit_contribs_lst: TransitContribs.t list;
-  (** List of transit conflict contributions, one for each merged in-transition. *)
+  transit_attribs_lst: TransitAttribs.t list;
+  (** List of transit conflict attributions, one for each merged in-transition. *)
 
   attribs: Attribs.t;
   (** Memoized merged attribs. *)
@@ -39,7 +39,7 @@ include IdentifiableIntf.S with type t := t
 
 val init: Symbols.t -> index:Index.t -> GotoNub.t -> t
 (** [init symbols ~index gotonub] initializes a state nub with given [index], LR(1) item set closure
-    based on the kernel of [gotonub], and conflict contributions of [gotonub]. *)
+    based on the kernel of [gotonub], and conflict attributions of [gotonub]. *)
 
 val index: t -> Index.t
 (** [index t] returns the index of the contained unique LR(1) item set closure. *)
@@ -51,7 +51,7 @@ val reindex: (Index.t, Index.t, Index.cmper_witness) Map.t -> t -> t
 
 val merge: Symbols.t -> GotoNub.t -> t -> bool * t
 (** [merge symbols gotonub t] merges the kernel represented by [gotonub] into [t]'s kernel and
-    creates the closure of the merged kernel, as well as merging conflict contributions from
+    creates the closure of the merged kernel, as well as merging conflict attributions from
     [gotonub]. The boolean result indicates whether items were merged into the kernel. *)
 
 val next: t -> (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t
@@ -78,9 +78,9 @@ val compat_lr1: GotoNub.t -> t -> bool
     is the basis of the canonical LR(1) algorithm. *)
 
 val compat_ielr1: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
-(** [compat_ielr1 ~resolve symbols prods gotonub t] determines whether [gotonub] and [t]
-    are split-stable (i.e. irrelevant to compatibility testing) and make compatible conflict
-    contributions (if any) in the context of each {state,symbol} conflict. If [resolve] is true,
+(** [compat_ielr1 ~resolve symbols prods gotonub t] determines whether [gotonub] and [t] are
+    split-stable (i.e. irrelevant to compatibility testing) and make compatible conflict
+    attributions (if any) in the context of each {state,symbol} conflict. If [resolve] is true,
     conflicts which will be successfully resolved during state generation are treated as compatible
     to avoid pointless state duplication. This function is the basis of the IELR(1) algorithm. *)
 

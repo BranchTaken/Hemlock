@@ -4,7 +4,7 @@ open! Basis.Rudiments
 module T = struct
   type t = {
     goto: Lr1Itemset.t;
-    transit_contribs: TransitContribs.t;
+    transit_attribs: TransitAttribs.t;
     attribs: Attribs.t;
   }
 
@@ -14,18 +14,18 @@ module T = struct
   let cmp {goto=g0; _} {goto=g1; _} =
     Lr1Itemset.cmp g0 g1
 
-  let pp {goto; transit_contribs; attribs} formatter =
+  let pp {goto; transit_attribs; attribs} formatter =
     formatter
     |> Fmt.fmt "{goto=" |> Lr1Itemset.pp goto
-    |> Fmt.fmt "; transit_contribs=" |> TransitContribs.pp transit_contribs
+    |> Fmt.fmt "; transit_attribs=" |> TransitAttribs.pp transit_attribs
     |> Fmt.fmt "; attribs=" |> Attribs.pp attribs
     |> Fmt.fmt "}"
 end
 include T
 include Identifiable.Make(T)
 
-let init ~goto ~transit_contribs =
-  {goto; transit_contribs; attribs=TransitContribs.attribs goto transit_contribs}
+let init ~goto ~transit_attribs =
+  {goto; transit_attribs; attribs=TransitAttribs.attribs goto transit_attribs}
 
 let core {goto; _} =
   Lr1Itemset.core goto

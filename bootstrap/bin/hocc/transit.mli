@@ -1,4 +1,4 @@
-(** LALR(1) state transition, used as a key for IELR(1) inadequacy contributions. *)
+(** LALR(1) state transition, used as a key for IELR(1) inadequacy attributions. *)
 
 open Basis
 open! Basis.Rudiments

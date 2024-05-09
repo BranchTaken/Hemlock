@@ -1,4 +1,4 @@
-(** Map of per kernel item conflict contributions. *)
+(** Map of per kernel item conflict attributions. *)
 
 open Basis
 open! Basis.Rudiments
@@ -42,22 +42,22 @@ val is_empty: t -> bool
 (** [is_empty t] returns true if there are no kernel items in [t]. *)
 
 val get: Lr1Item.t -> t -> Attribs.t option
-(** [get item t] returns the conflict contributions of [item], or [None] if there are no conflict
-    contributions on [item]. *)
+(** [get item t] returns the conflict attributions of [item], or [None] if there are no conflict
+    attributions on [item]. *)
 
 val amend: Lr1Item.t -> f:(Attribs.t option -> Attribs.t option) -> t -> t
 (** [amend item ~f t] returns an incremental derivative of [t] that is equivalent to [t] in all
-    conflict contributions except possibly for [item], as determined by the result of [~f
+    conflict attributions except possibly for [item], as determined by the result of [~f
     attribs_opt], where [attribs_opt = Some attribs] indicates [item] is associated with [attribs]
-    in [t], and [attribs_opt = None] indicates [item] has no conflict contributions in [t]. The
+    in [t], and [attribs_opt = None] indicates [item] has no conflict attributions in [t]. The
     result contains a mapping from [item] to [attribs'] if [~f attribs_opt] returns [Some attribs'];
-    the result contains no conflict contributions for [item] if [~f attribs_opt] returns [None]. *)
+    the result contains no conflict attributions for [item] if [~f attribs_opt] returns [None]. *)
 
 val insert: Lr1Item.t -> Attribs.t -> t -> t
-(** [insert item attribs t] inserts the conflict contributions of [attribs] on [item]. *)
+(** [insert item attribs t] inserts the conflict attributions of [attribs] on [item]. *)
 
 val union: t -> t -> t
-(** [union t0 t1] returns the union of per kernel conflict contributions in [t0] and [t1]. *)
+(** [union t0 t1] returns the union of per kernel conflict attributions in [t0] and [t1]. *)
 
 val fold_until: init:'accum -> f:('accum -> Lr1Item.t * Attribs.t -> 'accum * bool) -> t
   -> 'accum

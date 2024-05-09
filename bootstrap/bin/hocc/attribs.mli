@@ -1,4 +1,4 @@
-(** Conflict-state-invariant map of attributions of conflict contributions on symbols. *)
+(** Conflict contribution attributions map, i.e. (conflict state, symbol) -> attrib. *)
 
 open Basis
 open! Basis.Rudiments
@@ -68,7 +68,7 @@ val union: t -> t -> t
 (** [union t0 t1] returns the union of conflict attributions in [t0] and [t1]. *)
 
 val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
-(** [reindex index_map t] creates contribs with all state indexes translated according to
+(** [reindex index_map t] creates attribs with all state indexes translated according to
     [index_map], where keys are the original indexes, and values are the reindexed indexes. *)
 
 val fold_until: init:'accum -> f:('accum -> Attrib.t -> 'accum * bool) -> t -> 'accum
