@@ -37,8 +37,7 @@ val empty: t
 
 val singleton: Attrib.t -> t
 (** [singleton attrib] returns a singleton conflict contribution collection containing the conflict
-    contribution [attrib.v] to state [conflict_state_index] on [attrib.k].
-*)
+    contribution [attrib.v] to state [conflict_state_index] on [attrib.k]. *)
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no conflict tuples in [t]. *)

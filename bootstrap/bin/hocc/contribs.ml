@@ -121,7 +121,7 @@ let get ~conflict_state_index symbol_index t =
   match Ordmap.get conflict_state_index t with
   | None -> None
   | Some attribs -> begin
-      match Attribs.get symbol_index attribs with
+      match Attribs.get ~conflict_state_index symbol_index attribs with
       | None -> None
       | Some _attrib as attrib_opt -> attrib_opt
     end
@@ -135,7 +135,7 @@ let amend ~conflict_state_index symbol_index ~f t =
     | None -> Attribs.empty
     | Some attribs -> attribs
   in
-  let attribs' = Attribs.amend symbol_index ~f attribs in
+  let attribs' = Attribs.amend ~conflict_state_index symbol_index ~f attribs in
   Ordmap.upsert ~k:conflict_state_index ~v:attribs' t
 
 let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
@@ -146,7 +146,7 @@ let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
       | None -> Some (Attribs.singleton attrib)
       | Some attribs -> begin
           Some (
-            Attribs.amend symbol_index attribs ~f:(function
+            Attribs.amend ~conflict_state_index symbol_index attribs ~f:(function
               | None -> Some attrib
               | Some attrib_prev -> Some (Attrib.union attrib attrib_prev)
             )

@@ -1,9 +1,39 @@
 open Basis
 open! Basis.Rudiments
 
+module K = struct
+  module T = struct
+    type t = {
+      conflict_state_index: StateIndex.t;
+      symbol_index: Symbol.Index.t;
+    }
+
+    let hash_fold {conflict_state_index; symbol_index} state =
+      state
+      |> Uns.hash_fold 1L |> StateIndex.hash_fold conflict_state_index
+      |> Uns.hash_fold 2L |> Symbol.Index.hash_fold symbol_index
+
+    let cmp {conflict_state_index=csi0; symbol_index=s0}
+      {conflict_state_index=csi1; symbol_index=s1} =
+      let open Cmp in
+      match StateIndex.cmp csi0 csi1 with
+      | Lt -> Lt
+      | Eq -> Symbol.Index.cmp s0 s1
+      | Gt -> Gt
+
+    let pp {conflict_state_index; symbol_index} formatter =
+      formatter
+      |> Fmt.fmt "{conflict_state_index=" |> StateIndex.pp conflict_state_index
+      |> Fmt.fmt "; symbol_index=" |> Symbol.Index.pp symbol_index
+      |> Fmt.fmt "}"
+  end
+  include T
+  include Identifiable.Make(T)
+end
+
 module T = struct
   type t = {
-    symbol_attribs: (Symbol.Index.t, Attrib.t, Symbol.Index.cmper_witness) Ordmap.t
+    symbol_attribs: (K.t, Attrib.t, K.cmper_witness) Ordmap.t (* XXX Flatten. *)
   }
 
   let hash_fold {symbol_attribs; _} =
@@ -49,7 +79,7 @@ let equal {symbol_attribs=sa0} {symbol_attribs=sa1} =
 module Seq = struct
   type container = t
   type elm = Attrib.t
-  type t = (Symbol.Index.t, Attrib.t, Symbol.Index.cmper_witness) Ordmap.Seq.t
+  type t = (K.t, Attrib.t, K.cmper_witness) Ordmap.Seq.t
 
   let init {symbol_attribs} =
     Ordmap.Seq.init symbol_attribs
@@ -64,21 +94,28 @@ module Seq = struct
 end
 
 let empty =
-  {symbol_attribs=Ordmap.empty (module Symbol.Index)}
+  {symbol_attribs=Ordmap.empty (module K)}
 
-let singleton attrib =
+let singleton (Attrib.{conflict_state_index; symbol_index; _} as attrib) =
+  let k = K.{conflict_state_index; symbol_index} in
   {
-    symbol_attribs=Ordmap.singleton (module Symbol.Index) ~k:Attrib.(attrib.symbol_index) ~v:attrib
+    symbol_attribs=Ordmap.singleton (module K) ~k ~v:attrib
   }
 
 let is_empty {symbol_attribs} =
   Ordmap.is_empty symbol_attribs
 
-let get symbol_index {symbol_attribs} =
-  Ordmap.get symbol_index symbol_attribs
+let get ~conflict_state_index symbol_index {symbol_attribs} =
+  let k = K.{conflict_state_index; symbol_index} in
+  Ordmap.get k symbol_attribs
 
-let amend symbol_index ~f {symbol_attribs} =
-  let symbol_attribs' = Ordmap.amend symbol_index ~f:(fun attrib_opt ->
+let get_hlt ~conflict_state_index symbol_index {symbol_attribs} =
+  let k = K.{conflict_state_index; symbol_index} in
+  Ordmap.get_hlt k symbol_attribs
+
+let amend ~conflict_state_index symbol_index ~f {symbol_attribs} =
+  let k = K.{conflict_state_index; symbol_index} in
+  let symbol_attribs' = Ordmap.amend k ~f:(fun attrib_opt ->
     let attrib_opt' = f attrib_opt in
     let () = match attrib_opt, attrib_opt' with
       | Some attrib, Some attrib' -> assert (Attrib.equal_keys attrib attrib');
@@ -90,8 +127,8 @@ let amend symbol_index ~f {symbol_attribs} =
   ) symbol_attribs in
   {symbol_attribs=symbol_attribs'}
 
-let insert (Attrib.{symbol_index; _} as attrib) t =
-  amend symbol_index ~f:(function
+let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
+  amend ~conflict_state_index symbol_index ~f:(function
     | None -> Some attrib
     | Some attrib_prev -> begin
         assert (Attrib.equal_keys attrib attrib_prev);
