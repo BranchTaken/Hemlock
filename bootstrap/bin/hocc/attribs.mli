@@ -60,6 +60,10 @@ val insert: Attrib.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of attributions in [t0] and [t1]. *)
 
+val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
+(** [reindex index_map t] creates contribs with all state indexes translated according to
+    [index_map], where keys are the original indexes, and values are the reindexed indexes. *)
+
 val fold_until: init:'accum -> f:('accum -> Attrib.t -> 'accum * bool) -> t -> 'accum
 (** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial
     accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
@@ -69,14 +73,11 @@ val fold: init:'accum -> f:('accum -> Attrib.t -> 'accum) -> t -> 'accum
 (** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial accumulator value.
 *)
 
-val for_any: f:(Attrib.t -> bool) -> t -> bool
-(** [for_any ~f t] iterates over t and returns true if any invocation of f returns true, false
-    otherwise. *)
-
 val fold2_until: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option -> 'accum * bool)
   -> t -> t -> 'accum
 (** [fold2_until ~init ~f t0 t1] folds over the attribs in [t0] and [t1]. Folding terminates early
     if [~f] returns [(_, true)]. *)
 
-val fold2: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option -> 'accum) -> t -> t -> 'accum
+val fold2: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option -> 'accum) -> t -> t
+  -> 'accum
 (** [fold2_until ~init ~f t0 t1] folds over the attribs in [t0] and [t1]. *)

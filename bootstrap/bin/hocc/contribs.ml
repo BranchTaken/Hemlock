@@ -114,13 +114,6 @@ let singleton attrib =
   | true -> empty
   | false -> Ordmap.singleton (module StateIndex) ~k:attrib.conflict_state_index ~v:attribs
 
-let reindex index_map t =
-  Ordmap.fold ~init:empty ~f:(fun reindexed_t (state_index, attribs) ->
-    match Map.get state_index index_map with
-    | None -> reindexed_t
-    | Some state_index' -> Ordmap.insert ~k:state_index' ~v:attribs reindexed_t
-  ) t
-
 let is_empty t =
   Uns.(=) (length t) 0L
 
@@ -161,21 +154,6 @@ let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
         end
     )
 
-let fold_until ~init ~f t =
-  Ordmap.fold_until ~init ~f:(fun accum (_conflict_state_index, attribs) ->
-    Attribs.fold_until ~init:(accum, false) ~f:(fun (accum, _) attrib ->
-      let accum, until = f accum attrib in
-      (accum, until), until
-    ) attribs
-  ) t
-
-let fold ~init ~f t =
-  Ordmap.fold ~init ~f:(fun accum (_conflict_state_index, attribs) ->
-    Attribs.fold ~init:accum ~f:(fun accum attrib ->
-      f accum attrib
-    ) attribs
-  ) t
-
 let union t0 t1 =
   Ordmap.fold2 ~init:empty ~f:(fun t state_attribs_opt0 state_attribs_opt1 ->
     let conflict_state_index, attribs =
@@ -190,6 +168,31 @@ let union t0 t1 =
     | true -> t
     | false -> Ordmap.insert_hlt ~k:conflict_state_index ~v:attribs t
   ) t0 t1
+
+let reindex index_map t =
+  Ordmap.fold ~init:empty ~f:(fun reindexed_t (conflict_state_index, attribs) ->
+    match Map.get conflict_state_index index_map with
+    | None -> reindexed_t
+    | Some conflict_state_index' -> begin
+        let attribs' = Attribs.reindex index_map attribs in
+        Ordmap.insert ~k:conflict_state_index' ~v:attribs' reindexed_t
+      end
+  ) t
+
+let fold_until ~init ~f t =
+  Ordmap.fold_until ~init ~f:(fun accum (_conflict_state_index, attribs) ->
+    Attribs.fold_until ~init:(accum, false) ~f:(fun (accum, _) attrib ->
+      let accum, until = f accum attrib in
+      (accum, until), until
+    ) attribs
+  ) t
+
+let fold ~init ~f t =
+  Ordmap.fold ~init ~f:(fun accum (_conflict_state_index, attribs) ->
+    Attribs.fold ~init:accum ~f:(fun accum attrib ->
+      f accum attrib
+    ) attribs
+  ) t
 
 let fold2_until ~init ~f t0 t1 =
   let rec inner ~f accum seq0 seq1 = begin

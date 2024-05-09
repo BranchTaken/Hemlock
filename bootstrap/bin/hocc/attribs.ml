@@ -106,14 +106,21 @@ let union {symbol_attribs=sa0} {symbol_attribs=sa1} =
   ) sa0 sa1 in
   {symbol_attribs}
 
+let reindex index_map ({symbol_attribs} as t) =
+  assert (not (is_empty t));
+  Ordmap.fold ~init:empty
+    ~f:(fun reindexed_t (_symbol_index, (Attrib.{conflict_state_index; _} as attrib)) ->
+      match Map.get conflict_state_index index_map with
+      | None -> reindexed_t
+      | Some conflict_state_index' ->
+        insert {attrib with conflict_state_index=conflict_state_index'} reindexed_t
+    ) symbol_attribs
+
 let fold_until ~init ~f {symbol_attribs} =
   Ordmap.fold_until ~init ~f:(fun accum (_symbol_index, attrib) -> f accum attrib) symbol_attribs
 
 let fold ~init ~f {symbol_attribs} =
   Ordmap.fold ~init ~f:(fun accum (_symbol_index, attrib) -> f accum attrib) symbol_attribs
-
-let for_any ~f {symbol_attribs} =
-  Ordmap.for_any ~f:(fun (_k, attrib) -> f attrib) symbol_attribs
 
 let fold2_until ~init ~f {symbol_attribs=sa0} {symbol_attribs=sa1} =
   Ordmap.fold2_until ~init ~f:(fun accum k_kv_opt0 k_kv_opt1 ->

@@ -40,10 +40,6 @@ val singleton: Attrib.t -> t
     contribution [attrib.v] to state [conflict_state_index] on [attrib.k].
 *)
 
-val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
-(** [reindex index_map t] creates contribs with all state indexes translated according to
-    [index_map], where keys are the original indexes, and values are the reindexed indexes. *)
-
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no conflict tuples in [t]. *)
 
@@ -71,6 +67,10 @@ val insert: Attrib.t -> t -> t
 
 val union: t -> t -> t
 (** [union t0 t1] returns the union of conflict contributions in [t0] and [t1]. *)
+
+val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
+(** [reindex index_map t] creates contribs with all state indexes translated according to
+    [index_map], where keys are the original indexes, and values are the reindexed indexes. *)
 
 val fold_until: init:'accum -> f:('accum -> Attrib.t -> 'accum * bool) -> t -> 'accum
 (** [fold ~init ~f t] folds over the attrib values in [t], using [init] as the initial accumulator
