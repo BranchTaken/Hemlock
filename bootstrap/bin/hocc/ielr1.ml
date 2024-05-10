@@ -267,14 +267,14 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
     (* Gather the set of all in-attribs, which is a non-strict subset of all out-attribs
      * (out-transitions may make direct attributions). *)
     Ordset.fold ~init:Attribs.empty
-        ~f:(fun in_attribs_all transit ->
-          let lane_attribs = Ordmap.get_hlt transit lalr1_transit_attribs
-                             |> TransitAttribs.all in
-          Attribs.union lane_attribs in_attribs_all
-        ) in_transits_all
+      ~f:(fun in_attribs_all transit ->
+        let lane_attribs = Ordmap.get_hlt transit lalr1_transit_attribs
+                           |> TransitAttribs.all in
+        Attribs.union lane_attribs in_attribs_all
+      ) in_transits_all
   end in
-  let filter_transits_relevant lalr1_transit_attribs transits ~conflict_state_index symbol_index
-    = begin
+  let filter_transits_relevant lalr1_transit_attribs transits ~conflict_state_index
+      symbol_index = begin
     (* Filter in/out transits lacking the relevant {conflict_state, symbol}. *)
     Ordset.filter ~f:(fun in_transit ->
       Ordmap.get_hlt in_transit lalr1_transit_attribs
@@ -306,7 +306,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
             ~f:(fun (io, stability_deps_indexes_opt)
               Attrib.{conflict_state_index; symbol_index; conflict; _} ->
               let in_transits_relevant = filter_transits_relevant lalr1_transit_attribs
-                in_transits_all ~conflict_state_index symbol_index in
+                  in_transits_all ~conflict_state_index symbol_index in
               (* If state has already been evaluated as ipred-dependent there is no need to
                * re-evaluate independent split-stability. *)
               let has_stability_deps = Ordmap.mem state_index stability_deps in
@@ -352,7 +352,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
                          * split from all other in-transitions, the state is split-stable if
                          * direct-stable and indirect-stable. *)
                         let out_transits_relevant = filter_transits_relevant lalr1_transit_attribs
-                          out_transits_all ~conflict_state_index symbol_index in
+                            out_transits_all ~conflict_state_index symbol_index in
                         let in_direct_contrib_union = Ordset.fold ~init:Contrib.empty
                             ~f:(fun in_direct_contrib_union in_transit ->
                               let Attrib.{contrib; _} =
