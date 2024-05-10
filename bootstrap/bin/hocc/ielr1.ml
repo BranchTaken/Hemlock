@@ -283,6 +283,131 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
       |> Option.is_some
     ) transits
   end in
+  let is_split_unstable_self symbols prods ~lalr1_transit_attribs
+      Attrib.{conflict_state_index; symbol_index; _} in_transits_relevant = begin
+    (* Self-contributing conflict state. *)
+    let manifestation =
+      Ordset.fold ~init:Contrib.empty
+        ~f:(fun manifestation in_transit ->
+          let Attrib.{contrib; _} =
+            Ordmap.get_hlt in_transit lalr1_transit_attribs
+            |> TransitAttribs.all
+            |> Attribs.get_hlt ~conflict_state_index symbol_index
+          in
+          Contrib.union contrib manifestation
+        ) in_transits_relevant in
+    let unsplit_resolution = match resolve with
+      | false -> manifestation
+      | true -> Contrib.resolve symbols prods symbol_index manifestation
+    in
+    (* For all relevant in-transitions considered in turn as if the state were split from all other
+     * in-transitions, the state is split-stable if the resolution of the in-contribution is the
+     * same as the non-split case. *)
+    let split_unstable = Ordset.for_any ~f:(fun in_transit ->
+      let Attrib.{contrib; _} =
+        Ordmap.get_hlt in_transit lalr1_transit_attribs
+        |> TransitAttribs.all
+        |> Attribs.get_hlt ~conflict_state_index symbol_index
+      in
+      let split_resolution = match resolve with
+        | false -> contrib
+        | true -> Contrib.resolve symbols prods symbol_index contrib
+      in
+      Contrib.(split_resolution <> unsplit_resolution)
+    ) in_transits_relevant in
+    split_unstable
+  end in
+  let is_split_unstable ~resolve symbols prods ~lalr1_transit_attribs stability_deps state_index
+      (Attrib.{conflict_state_index; symbol_index; conflict; _} as attrib) in_transits_relevant
+      out_transits_all = begin
+    (* If state has already been evaluated as ipred-dependent there is no need to re-evaluate
+     * independent split-stability. *)
+    let has_stability_deps = Ordmap.mem state_index stability_deps in
+    let split_unstable = match has_stability_deps with
+      | true -> false
+      | false -> begin
+          match conflict_state_index = state_index with
+          | true -> begin
+              is_split_unstable_self symbols prods ~lalr1_transit_attribs attrib
+                in_transits_relevant
+            end
+          | false -> begin
+              (* For all relevant in-transitions considered in turn as if the state were split from
+               * all other in-transitions, the state is split-stable if direct-stable and
+               * indirect-stable. *)
+              let out_transits_relevant = filter_transits_relevant lalr1_transit_attribs
+                  out_transits_all ~conflict_state_index symbol_index in
+              let in_direct_contrib_union = Ordset.fold ~init:Contrib.empty
+                  ~f:(fun in_direct_contrib_union in_transit ->
+                    let Attrib.{contrib; _} =
+                      Ordmap.get in_transit lalr1_transit_attribs
+                      |> Option.value ~default:TransitAttribs.empty
+                      |> TransitAttribs.direct
+                      |> Attribs.get ~conflict_state_index symbol_index
+                      |> Option.value ~default:(Attrib.empty ~conflict_state_index ~symbol_index
+                          ~conflict)
+                    in
+                    Contrib.union contrib in_direct_contrib_union
+                  ) in_transits_relevant in
+              let split_unstable = Ordset.for_any ~f:(fun in_transit ->
+                let Attrib.{contrib=in_contrib; _} =
+                  Ordmap.get_hlt in_transit lalr1_transit_attribs
+                  |> TransitAttribs.all
+                  |> Attribs.get_hlt ~conflict_state_index symbol_index
+                in
+                Ordset.for_any ~f:(fun out_transit ->
+                  let Attrib.{contrib=out_contrib; _} =
+                    Ordmap.get_hlt out_transit lalr1_transit_attribs
+                    |> TransitAttribs.all
+                    |> Attribs.get_hlt ~conflict_state_index symbol_index
+                  in
+                  let Attrib.{contrib=out_direct_contrib; _} =
+                    Ordmap.get out_transit lalr1_transit_attribs
+                    |> Option.value ~default:TransitAttribs.empty
+                    |> TransitAttribs.direct
+                    |> Attribs.get ~conflict_state_index symbol_index
+                    |> Option.value ~default:(Attrib.empty ~conflict_state_index ~symbol_index
+                        ~conflict)
+                  in
+                  let split_out_contrib = Contrib.(
+                    union (inter in_contrib out_contrib) out_direct_contrib
+                  ) in
+                  let unsplit_out_contrib =
+                    Contrib.union split_out_contrib in_direct_contrib_union in
+                  (* 1) Direct-stable: All out-transition sets must resolve the same as if all
+                        direct in-contributions were made. *)
+                  let split_resolution = match resolve with
+                    | false -> split_out_contrib
+                    | true -> Contrib.resolve symbols prods symbol_index split_out_contrib
+                  in
+                  let unsplit_resolution_direct = match resolve with
+                    | false -> unsplit_out_contrib
+                    | true -> Contrib.resolve symbols prods symbol_index unsplit_out_contrib
+                  in
+                  let direct_unstable =
+                    not Contrib.(split_resolution = unsplit_resolution_direct) in
+                  (* 2) Indirect-stable: The state is split-stable if the resolution of the
+                   *    out-contributions is either:
+                   *    - The same as the non-split case.
+                   *    - Empty (i.e. the out-transition is not part of a relevant lane).
+                  *)
+                  let unsplit_resolution_indirect = match resolve with
+                    | false -> out_contrib
+                    | true -> Contrib.resolve symbols prods symbol_index out_contrib
+                  in
+                  let indirect_unstable = not Contrib.(
+                    is_empty split_resolution ||
+                    split_resolution = unsplit_resolution_indirect
+                  ) in
+                  direct_unstable || indirect_unstable
+                ) out_transits_relevant
+              ) in_transits_relevant in
+              split_unstable
+            end
+        end
+    in
+    split_unstable
+  end in
   let rec work ~resolve io symbols prods lalr1_isocores lalr1_states adjs
       ~lalr1_transit_attribs ~stable stability_deps ~unstable churn workq = begin
     (* Terminate work if all workq items have been considered since the last forward progress. This
@@ -301,186 +426,73 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
          * - The state is split-unstable.
          * - The state may be split-stable, but only if one or more of its ipreds are determined to
          *   be split-stable (i.e. ipred-dependent split-stability). *)
-        let io, stability_deps_indexes_opt = Attribs.fold_until
-            ~init:(io, Some (Ordset.empty (module State.Index)))
-            ~f:(fun (io, stability_deps_indexes_opt)
-              Attrib.{conflict_state_index; symbol_index; conflict; _} ->
+        let split_unstable, stability_deps_indexes = Attribs.fold_until
+            ~init:(false, Ordset.empty (module State.Index))
+            ~f:(fun (_split_unstable, stability_deps_indexes)
+              (Attrib.{conflict_state_index; symbol_index; _} as attrib) ->
               let in_transits_relevant = filter_transits_relevant lalr1_transit_attribs
                   in_transits_all ~conflict_state_index symbol_index in
-              (* If state has already been evaluated as ipred-dependent there is no need to
-               * re-evaluate independent split-stability. *)
-              let has_stability_deps = Ordmap.mem state_index stability_deps in
-              let io, split_unstable = match has_stability_deps with
-                | true -> io, false
+              let split_unstable = is_split_unstable ~resolve symbols prods
+                  ~lalr1_transit_attribs stability_deps state_index attrib in_transits_relevant
+                  out_transits_all in
+              let (split_unstable, stability_deps_indexes) = match split_unstable with
+                | true -> (true, stability_deps_indexes)
                 | false -> begin
-                    match conflict_state_index = state_index with
-                    | true -> begin
-                        (* Self-contributing conflict state. *)
-                        let manifestation =
-                          Ordset.fold ~init:Contrib.empty
-                            ~f:(fun manifestation in_transit ->
-                              let Attrib.{contrib; _} =
-                                Ordmap.get_hlt in_transit lalr1_transit_attribs
-                                |> TransitAttribs.all
-                                |> Attribs.get_hlt ~conflict_state_index symbol_index
-                              in
-                              Contrib.union contrib manifestation
-                            ) in_transits_relevant in
-                        let unsplit_resolution = match resolve with
-                          | false -> manifestation
-                          | true -> Contrib.resolve symbols prods symbol_index manifestation
-                        in
-                        (* For all relevant in-transitions considered in turn as if the state were
-                         * split from all other in-transitions, the state is split-stable if the
-                         * resolution of the in-contribution is the same as the non-split case. *)
-                        let split_unstable = Ordset.for_any ~f:(fun in_transit ->
-                          let Attrib.{contrib; _} =
-                            Ordmap.get_hlt in_transit lalr1_transit_attribs
-                            |> TransitAttribs.all
-                            |> Attribs.get_hlt ~conflict_state_index symbol_index
+                    (* XXX Extract.
+                                      let stability_deps_indexes_opt = gather_stability_deps_indexes XXX in
+                    *)
+                    (* If ipred is potentially split-unstable, the resolution of `contrib` must have
+                     * stable resolution for all possible contrib subsets to recognize state as
+                     * unconditionally split-stable. *)
+                    let split_unstable, stability_deps_indexes_opt = Ordset.fold_until
+                        ~init:(false, stability_deps_indexes)
+                        ~f:(fun (_split_unstable, stability_deps_indexes) in_transit ->
+                          let ipred_state_index = Transit.(in_transit.src) in
+                          let is_ipred_stable = Set.mem ipred_state_index stable in
+                          let is_ipred_unstable = Set.mem ipred_state_index unstable in
+                          let is_resolution_unstable = match is_ipred_stable with
+                            | true -> false
+                            | false -> begin
+                                match Ordmap.get state_index stability_deps with
+                                | Some stability_deps_indexes_prev ->
+                                  (* Use previously computed value. *)
+                                  Ordset.mem ipred_state_index stability_deps_indexes_prev
+                                | None -> begin
+                                    let Attrib.{contrib; _} =
+                                      Ordmap.get_hlt in_transit lalr1_transit_attribs
+                                      |> TransitAttribs.all
+                                      |> Attribs.get_hlt ~conflict_state_index symbol_index
+                                    in
+                                    not (Contrib.stable ~resolve symbols prods symbol_index contrib)
+                                  end
+                              end
                           in
-                          let split_resolution = match resolve with
-                            | false -> contrib
-                            | true -> Contrib.resolve symbols prods symbol_index contrib
-                          in
-                          Contrib.(split_resolution <> unsplit_resolution)
-                        ) in_transits_relevant in
-                        io, split_unstable
-                      end
-                    | false -> begin
-                        (* For all relevant in-transitions considered in turn as if the state were
-                         * split from all other in-transitions, the state is split-stable if
-                         * direct-stable and indirect-stable. *)
-                        let out_transits_relevant = filter_transits_relevant lalr1_transit_attribs
-                            out_transits_all ~conflict_state_index symbol_index in
-                        let in_direct_contrib_union = Ordset.fold ~init:Contrib.empty
-                            ~f:(fun in_direct_contrib_union in_transit ->
-                              let Attrib.{contrib; _} =
-                                Ordmap.get in_transit lalr1_transit_attribs
-                                |> Option.value ~default:TransitAttribs.empty
-                                |> TransitAttribs.direct
-                                |> Attribs.get ~conflict_state_index symbol_index
-                                |> Option.value ~default:(Attrib.empty ~conflict_state_index
-                                    ~symbol_index ~conflict)
-                              in
-                              Contrib.union contrib in_direct_contrib_union
-                            ) in_transits_relevant in
-                        let split_unstable = Ordset.for_any ~f:(fun in_transit ->
-                          let Attrib.{contrib=in_contrib; _} =
-                            Ordmap.get_hlt in_transit lalr1_transit_attribs
-                            |> TransitAttribs.all
-                            |> Attribs.get_hlt ~conflict_state_index symbol_index
-                          in
-                          Ordset.for_any ~f:(fun out_transit ->
-                            let Attrib.{contrib=out_contrib; _} =
-                              Ordmap.get_hlt out_transit lalr1_transit_attribs
-                              |> TransitAttribs.all
-                              |> Attribs.get_hlt ~conflict_state_index symbol_index
-                            in
-                            let Attrib.{contrib=out_direct_contrib; _} =
-                              Ordmap.get out_transit lalr1_transit_attribs
-                              |> Option.value ~default:TransitAttribs.empty
-                              |> TransitAttribs.direct
-                              |> Attribs.get ~conflict_state_index symbol_index
-                              |> Option.value ~default:(Attrib.empty ~conflict_state_index
-                                  ~symbol_index ~conflict)
-                            in
-                            let split_out_contrib = Contrib.(
-                              union (inter in_contrib out_contrib) out_direct_contrib
-                            ) in
-                            let unsplit_out_contrib =
-                              Contrib.union split_out_contrib in_direct_contrib_union in
-                            (* 1) Direct-stable: All out-transition sets must resolve the same as if
-                             *    all direct in-contributions were made. *)
-                            let split_resolution = match resolve with
-                              | false -> split_out_contrib
-                              | true ->
-                                Contrib.resolve symbols prods symbol_index split_out_contrib
-                            in
-                            let unsplit_resolution_direct = match resolve with
-                              | false -> unsplit_out_contrib
-                              | true ->
-                                Contrib.resolve symbols prods symbol_index unsplit_out_contrib
-                            in
-                            let direct_unstable =
-                              not Contrib.(split_resolution = unsplit_resolution_direct) in
-                            (* 2) Indirect-stable: The state is split-stable if the resolution of
-                             *    the out-contributions is either:
-                             *    - The same as the non-split case.
-                             *    - Empty (i.e. the out-transition is not part of a relevant lane).
-                            *)
-                            let unsplit_resolution_indirect = match resolve with
-                              | false -> out_contrib
-                              | true -> Contrib.resolve symbols prods symbol_index out_contrib
-                            in
-                            let indirect_unstable = not Contrib.(
-                              is_empty split_resolution ||
-                              split_resolution = unsplit_resolution_indirect
-                            ) in
-                            direct_unstable || indirect_unstable
-                          ) out_transits_relevant
-                        ) in_transits_relevant in
-                        (io, split_unstable)
-                      end
+                          match is_resolution_unstable, is_ipred_unstable with
+                          | false, _ -> (false, stability_deps_indexes), false
+                          | true, false -> begin
+                              (* Split-stability depends on the ipred being split-stable, and the
+                               * ipred's split-stability is currently undetermined. Record the
+                               * dependency on the ipred and requeue. The dependency information only
+                               * comes into play if the work queue fails to determine split-stability
+                               * of all states, as can happen with dependency cycles. *)
+                              (false, Ordset.insert ipred_state_index stability_deps_indexes), false
+                            end
+                          | true, true -> begin
+                              (* Split-stability depends on the ipred being split-stable, and the
+                               * ipred is already known to be split-unstable. Requeuing would cause no
+                               * correctness issues, but doing so would cause pointless extra work. *)
+                              (true, stability_deps_indexes), true
+                            end
+                        ) in_transits_relevant
+                    in
+                    (split_unstable, stability_deps_indexes_opt)
                   end
               in
-              match split_unstable with
-              | true -> (io, None), true
-              | false -> begin
-                  (* If ipred is potentially split-unstable, the resolution of `contrib` must have
-                   * stable resolution for all possible contrib subsets to recognize state as
-                   * unconditionally split-stable. *)
-                  let io, stability_deps_indexes_opt = Ordset.fold_until
-                      ~init:(io, stability_deps_indexes_opt)
-                      ~f:(fun (io, stability_deps_indexes_opt) in_transit ->
-                        let ipred_state_index = Transit.(in_transit.src) in
-                        let is_ipred_stable = Set.mem ipred_state_index stable in
-                        let is_ipred_unstable = Set.mem ipred_state_index unstable in
-                        let is_resolution_unstable = match is_ipred_stable with
-                          | true -> false
-                          | false -> begin
-                              match Ordmap.get state_index stability_deps with
-                              | Some stability_deps_indexes_prev ->
-                                (* Use previously computed value. *)
-                                Ordset.mem ipred_state_index stability_deps_indexes_prev
-                              | None -> begin
-                                  let Attrib.{contrib; _} =
-                                    Ordmap.get_hlt in_transit lalr1_transit_attribs
-                                    |> TransitAttribs.all
-                                    |> Attribs.get_hlt ~conflict_state_index symbol_index
-                                  in
-                                  not (Contrib.stable ~resolve symbols prods symbol_index
-                                      contrib)
-                                end
-                            end
-                        in
-                        match is_resolution_unstable, is_ipred_unstable with
-                        | false, _ -> (io, stability_deps_indexes_opt), false
-                        | true, false -> begin
-                            (* Split-stability depends on the ipred being split-stable, and the
-                             * ipred's split-stability is currently undetermined. Record the
-                             * dependency on the ipred and requeue. The dependency information only
-                             * comes into play if the work queue fails to determine split-stability
-                             * of all states, as can happen with dependency cycles. *)
-                            let stability_deps_indexes =
-                              Option.value ~default:(Ordset.empty (module State.Index))
-                                stability_deps_indexes_opt in
-                            (io, Some (Ordset.insert ipred_state_index stability_deps_indexes)),
-                            false
-                          end
-                        | true, true -> begin
-                            (* Split-stability depends on the ipred being split-stable, and the
-                             * ipred is already known to be split-unstable. Requeuing would cause no
-                             * correctness issues, but doing so would cause pointless extra work. *)
-                            (io, None), true
-                          end
-                      ) in_transits_relevant in
-                  (io, stability_deps_indexes_opt), Option.is_none stability_deps_indexes_opt
-                end
+              (split_unstable, stability_deps_indexes), split_unstable
             ) in_attribs_all in
         let io, stable, stability_deps, unstable, churn, workq =
-          match stability_deps_indexes_opt with
-          | Some stability_deps_indexes when Ordset.is_empty stability_deps_indexes -> begin
+          match split_unstable with
+          | false when Ordset.is_empty stability_deps_indexes -> begin
               io.log |> Fmt.fmt "." |> Io.with_log io,
               Set.insert state_index stable,
               Ordmap.remove state_index stability_deps, (* Removal not strictly necessary. *)
@@ -488,7 +500,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               0L,
               workq
             end
-          | None -> begin
+          | true -> begin
               io.log |> Fmt.fmt "^" |> Io.with_log io,
               stable,
               Ordmap.remove state_index stability_deps, (* Removal not strictly necessary. *)
@@ -496,7 +508,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               0L,
               workq
             end
-          | Some stability_deps_indexes -> begin
+          | false -> begin
               io,
               stable,
               Ordmap.upsert ~k:state_index ~v:stability_deps_indexes stability_deps,
