@@ -268,8 +268,9 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
      * (out-transitions may make direct attributions). *)
     Ordset.fold ~init:Attribs.empty
       ~f:(fun in_attribs_all transit ->
-        let lane_attribs = Ordmap.get_hlt transit lalr1_transit_attribs
-                           |> TransitAttribs.all in
+        let lane_attribs =
+          Ordmap.get_hlt transit lalr1_transit_attribs
+          |> TransitAttribs.all in
         Attribs.union lane_attribs in_attribs_all
       ) in_transits_all
   end in
@@ -326,11 +327,9 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
     let split_unstable = match has_stability_deps with
       | true -> false
       | false -> begin
-          match conflict_state_index = state_index with
-          | true -> begin
-              is_split_unstable_self symbols prods ~lalr1_transit_attribs attrib
-                in_transits_relevant
-            end
+          match State.Index.(conflict_state_index = state_index) with
+          | true ->
+            is_split_unstable_self symbols prods ~lalr1_transit_attribs attrib in_transits_relevant
           | false -> begin
               (* For all relevant in-transitions considered in turn as if the state were split from
                * all other in-transitions, the state is split-stable if direct-stable and
@@ -456,8 +455,8 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
     in
     (split_unstable, stability_deps_indexes_opt)
   end in
-  let rec work ~resolve io symbols prods lalr1_isocores lalr1_states adjs
-      ~lalr1_transit_attribs ~stable stability_deps ~unstable churn workq = begin
+  let rec work ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lalr1_transit_attribs
+    ~stable stability_deps ~unstable churn workq = begin
     (* Terminate work if all workq items have been considered since the last forward progress. This
      * conveniently also terminates if the workq empties. *)
     match churn < Workq.length workq with
@@ -480,9 +479,8 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               (Attrib.{conflict_state_index; symbol_index; _} as attrib) ->
               let in_transits_relevant = filter_transits_relevant lalr1_transit_attribs
                   in_transits_all ~conflict_state_index symbol_index in
-              let split_unstable = is_split_unstable ~resolve symbols prods
-                  ~lalr1_transit_attribs stability_deps state_index attrib in_transits_relevant
-                  out_transits_all in
+              let split_unstable = is_split_unstable ~resolve symbols prods ~lalr1_transit_attribs
+                  stability_deps state_index attrib in_transits_relevant out_transits_all in
               let (split_unstable, stability_deps_indexes) = match split_unstable with
                 | true -> (true, stability_deps_indexes)
                 | false -> begin
@@ -520,8 +518,8 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               Workq.push_back state_index workq
             end
         in
-        work ~resolve io symbols prods lalr1_isocores lalr1_states adjs
-          ~lalr1_transit_attribs ~stable stability_deps ~unstable churn workq
+        work ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lalr1_transit_attribs
+          ~stable stability_deps ~unstable churn workq
       end
   end in
   (* Gather the set of states in conflict-contributing lanes, excluding start states, which are
