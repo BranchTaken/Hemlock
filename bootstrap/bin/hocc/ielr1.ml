@@ -456,7 +456,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
     (split_unstable, stability_deps_indexes_opt)
   end in
   let rec work ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lalr1_transit_attribs
-    ~stable stability_deps ~unstable churn workq = begin
+      ~stable stability_deps ~unstable churn workq = begin
     (* Terminate work if all workq items have been considered since the last forward progress. This
      * conveniently also terminates if the workq empties. *)
     match churn < Workq.length workq with
