@@ -408,6 +408,54 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
     in
     split_unstable
   end in
+  let gather_stability_deps_indexes ~resolve symbols prods ~lalr1_transit_attribs ~stable
+      stability_deps ~unstable state_index stability_deps_indexes
+      Attrib.{conflict_state_index; symbol_index; _} in_transits_relevant = begin
+    (* If ipred is potentially split-unstable, the resolution of `contrib` must have stable
+     * resolution for all possible contrib subsets to recognize state as unconditionally
+     * split-stable. *)
+    let split_unstable, stability_deps_indexes_opt = Ordset.fold_until
+        ~init:(false, stability_deps_indexes)
+        ~f:(fun (_split_unstable, stability_deps_indexes) in_transit ->
+          let ipred_state_index = Transit.(in_transit.src) in
+          let is_ipred_stable = Set.mem ipred_state_index stable in
+          let is_ipred_unstable = Set.mem ipred_state_index unstable in
+          let is_resolution_unstable = match is_ipred_stable with
+            | true -> false
+            | false -> begin
+                match Ordmap.get state_index stability_deps with
+                | Some stability_deps_indexes_prev ->
+                  (* Use previously computed value. *)
+                  Ordset.mem ipred_state_index stability_deps_indexes_prev
+                | None -> begin
+                    let Attrib.{contrib; _} =
+                      Ordmap.get_hlt in_transit lalr1_transit_attribs
+                      |> TransitAttribs.all
+                      |> Attribs.get_hlt ~conflict_state_index symbol_index
+                    in
+                    not (Contrib.stable ~resolve symbols prods symbol_index contrib)
+                  end
+              end
+          in
+          match is_resolution_unstable, is_ipred_unstable with
+          | false, _ -> (false, stability_deps_indexes), false
+          | true, false -> begin
+              (* Split-stability depends on the ipred being split-stable, and the ipred's
+               * split-stability is currently undetermined. Record the dependency on the ipred and
+               * requeue. The dependency information only comes into play if the work queue fails to
+               * determine split-stability of all states, as can happen with dependency cycles. *)
+              (false, Ordset.insert ipred_state_index stability_deps_indexes), false
+            end
+          | true, true -> begin
+              (* Split-stability depends on the ipred being split-stable, and the ipred is already
+               * known to be split-unstable. Requeuing would cause no correctness issues, but doing
+               * so would cause pointless extra work. *)
+              (true, stability_deps_indexes), true
+            end
+        ) in_transits_relevant
+    in
+    (split_unstable, stability_deps_indexes_opt)
+  end in
   let rec work ~resolve io symbols prods lalr1_isocores lalr1_states adjs
       ~lalr1_transit_attribs ~stable stability_deps ~unstable churn workq = begin
     (* Terminate work if all workq items have been considered since the last forward progress. This
@@ -438,54 +486,9 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               let (split_unstable, stability_deps_indexes) = match split_unstable with
                 | true -> (true, stability_deps_indexes)
                 | false -> begin
-                    (* XXX Extract.
-                                      let stability_deps_indexes_opt = gather_stability_deps_indexes XXX in
-                    *)
-                    (* If ipred is potentially split-unstable, the resolution of `contrib` must have
-                     * stable resolution for all possible contrib subsets to recognize state as
-                     * unconditionally split-stable. *)
-                    let split_unstable, stability_deps_indexes_opt = Ordset.fold_until
-                        ~init:(false, stability_deps_indexes)
-                        ~f:(fun (_split_unstable, stability_deps_indexes) in_transit ->
-                          let ipred_state_index = Transit.(in_transit.src) in
-                          let is_ipred_stable = Set.mem ipred_state_index stable in
-                          let is_ipred_unstable = Set.mem ipred_state_index unstable in
-                          let is_resolution_unstable = match is_ipred_stable with
-                            | true -> false
-                            | false -> begin
-                                match Ordmap.get state_index stability_deps with
-                                | Some stability_deps_indexes_prev ->
-                                  (* Use previously computed value. *)
-                                  Ordset.mem ipred_state_index stability_deps_indexes_prev
-                                | None -> begin
-                                    let Attrib.{contrib; _} =
-                                      Ordmap.get_hlt in_transit lalr1_transit_attribs
-                                      |> TransitAttribs.all
-                                      |> Attribs.get_hlt ~conflict_state_index symbol_index
-                                    in
-                                    not (Contrib.stable ~resolve symbols prods symbol_index contrib)
-                                  end
-                              end
-                          in
-                          match is_resolution_unstable, is_ipred_unstable with
-                          | false, _ -> (false, stability_deps_indexes), false
-                          | true, false -> begin
-                              (* Split-stability depends on the ipred being split-stable, and the
-                               * ipred's split-stability is currently undetermined. Record the
-                               * dependency on the ipred and requeue. The dependency information only
-                               * comes into play if the work queue fails to determine split-stability
-                               * of all states, as can happen with dependency cycles. *)
-                              (false, Ordset.insert ipred_state_index stability_deps_indexes), false
-                            end
-                          | true, true -> begin
-                              (* Split-stability depends on the ipred being split-stable, and the
-                               * ipred is already known to be split-unstable. Requeuing would cause no
-                               * correctness issues, but doing so would cause pointless extra work. *)
-                              (true, stability_deps_indexes), true
-                            end
-                        ) in_transits_relevant
-                    in
-                    (split_unstable, stability_deps_indexes_opt)
+                    gather_stability_deps_indexes ~resolve symbols prods ~lalr1_transit_attribs
+                      ~stable stability_deps ~unstable state_index stability_deps_indexes attrib
+                      in_transits_relevant
                   end
               in
               (split_unstable, stability_deps_indexes), split_unstable
