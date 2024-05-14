@@ -289,6 +289,7 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _}
             end
           | true -> Contrib.shift, t_contrib
         in
+        assert (Bool.( = ) (Contrib.mem_shift o_contrib) (Contrib.mem_shift t_contrib));
         let compat = Contrib.compat_ielr1 ~resolve symbols prods symbol_index o_contrib t_contrib in
         compat, not compat
       ) o_attribs t_attribs
