@@ -16,6 +16,9 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
 val empty: t
 (** [empty] returns an empty {type:t}. *)
 
+val is_empty: t -> bool
+(** [is_empty t] returns true if there are no attribs in [t]. *)
+
 val of_lane_attribs: Attribs.t -> t
 (** [of_lane_attribs lane_attribs] initializes a {type:t} by inserting [lane_attribs]. *)
 

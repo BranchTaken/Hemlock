@@ -57,6 +57,9 @@ let empty = {
   kernel_attribs=KernelAttribs.empty
 }
 
+let is_empty {all; direct; kernel_attribs} =
+  Attribs.is_empty all && Attribs.is_empty direct && KernelAttribs.is_empty kernel_attribs
+
 let reindex index_map {all; direct; kernel_attribs} =
   {
     all=Attribs.reindex index_map all;
