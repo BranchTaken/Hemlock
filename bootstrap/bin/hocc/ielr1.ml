@@ -226,7 +226,7 @@ let close_transit_attribs io adjs lalr1_transit_attribs =
 
 let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lalr1_transit_attribs =
   let work_finish io ~stable workq = begin
-    (* Remaining queued states are split-stable, becauses all transitively reachable states in the
+    (* Remaining queued states are split-stable, because all transitively reachable states in the
      * `ipred_stability_deps` graph are also queued. *)
     let reqd = Workq.set workq in
     let io =
@@ -412,9 +412,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
             | true, false -> begin
                 (* Split-stability depends on the ipred being split-stable, and the ipred's
                  * split-stability is currently undetermined. Record the dependency on the ipred and
-                 * requeue. The dependency information only comes into play if the work queue fails
-                 * to determine split-stability of all states, as can happen with dependency cycles.
-                *)
+                 * requeue. *)
                 ipred_split_unstable, Ordset.insert ipred_state_index ipred_stability_deps_indexes
               end
             | true, true -> begin
@@ -457,7 +455,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
   let rec work ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lalr1_transit_attribs
       ~stable ~ipred_stability_deps ~isucc_stability_deps ~unstable churn workq = begin
     (* Terminate work if all workq items have been considered twice since the last forward progress
-     * (first to try to categorize as stable/unstable, second to break dependency cycles). This
+     * (first to try to categorize as stable/unstable, second to break a dependency cycle). This
      * conveniently also terminates if the workq empties. *)
     let workq_length = Workq.length workq in
     match Uns.(churn < workq_length * 2L) with
@@ -547,23 +545,33 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               workq
             end
           | _, Maybe, No, _
-          | false, Maybe, (Maybe|Yes), _
-          | true, (No|Maybe), Maybe, false -> begin
-              (* Possible ipred/isucc-dependent split-stability. *)
-              let ipred_stability_deps = match ipred_split_unstable with
-                | true -> ipred_stability_deps
-                | false ->
-                  Ordmap.upsert ~k:state_index ~v:ipred_stability_deps_indexes ipred_stability_deps
-              in
-              let isucc_stability_deps = match isucc_split_unstable with
-                | true -> isucc_stability_deps
-                | false ->
-                  Ordmap.upsert ~k:state_index ~v:isucc_stability_deps_indexes isucc_stability_deps
-              in
+          | false, Maybe, Yes, _ -> begin
+              (* Possible ipred-dependent split-stability. *)
               io,
               stable,
-              ipred_stability_deps,
-              isucc_stability_deps,
+              Ordmap.upsert ~k:state_index ~v:ipred_stability_deps_indexes ipred_stability_deps,
+              Ordmap.remove state_index isucc_stability_deps,
+              unstable,
+              succ churn,
+              Workq.push_back state_index workq
+            end
+          | false, Maybe, Maybe, _
+          | true, Maybe, Maybe, false -> begin
+              (* Possible ipred/isucc-dependent split-stability. *)
+              io,
+              stable,
+              Ordmap.upsert ~k:state_index ~v:ipred_stability_deps_indexes ipred_stability_deps,
+              Ordmap.upsert ~k:state_index ~v:isucc_stability_deps_indexes isucc_stability_deps,
+              unstable,
+              succ churn,
+              Workq.push_back state_index workq
+            end
+          | true, No, Maybe, false -> begin
+              (* Possible isucc-dependent split-stability. *)
+              io,
+              stable,
+              Ordmap.remove state_index ipred_stability_deps,
+              Ordmap.upsert ~k:state_index ~v:isucc_stability_deps_indexes isucc_stability_deps,
               unstable,
               succ churn,
               Workq.push_back state_index workq
