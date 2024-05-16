@@ -5,15 +5,15 @@ type t = {
   (* Union of conflict attributions in `kernel_attribs`. *)
   all: Attribs.t;
 
-  (* Direct conflict attributions, whether shift (conflict state only) or reduce. *)
-  direct: Attribs.t;
+  (* Definite conflict attributions, whether shift (conflict state only) or reduce. *)
+  definite: Attribs.t;
 
   (* Per kernel item reduce conflict attributions. Shift attributions are omitted since it is
-   * irrelevant which kernel item has a shift attribution, whether direct or indirect. *)
+   * irrelevant which kernel item has a shift attribution, whether definite or potential. *)
   kernel_attribs: KernelAttribs.t;
 }
 
-let fmt_hr symbols prods ?(alt=false) ?(width=0L) {direct; all; kernel_attribs} formatter =
+let fmt_hr symbols prods ?(alt=false) ?(width=0L) {definite; all; kernel_attribs} formatter =
   let lsep = match alt with
     | false -> ""
     | true ->
@@ -37,41 +37,41 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L) {direct; all; kernel_attribs} 
   formatter
   |> Fmt.fmt "{"
   |> Fmt.fmt sep |> Fmt.fmt "all=" |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) all
-  |> Fmt.fmt sep |> Fmt.fmt "direct="
-  |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) direct
+  |> Fmt.fmt sep |> Fmt.fmt "definite="
+  |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) definite
   |> Fmt.fmt sep |> Fmt.fmt "kernel_attribs="
   |> KernelAttribs.fmt_hr symbols prods ~alt ~width:(width + 4L) kernel_attribs
   |> Fmt.fmt rsep
   |> Fmt.fmt "}"
 
-let pp {direct; all; kernel_attribs} formatter =
+let pp {definite; all; kernel_attribs} formatter =
   formatter
   |> Fmt.fmt "{all=" |> Attribs.pp all
-  |> Fmt.fmt "; direct=" |> Attribs.pp direct
+  |> Fmt.fmt "; definite=" |> Attribs.pp definite
   |> Fmt.fmt "; kernel_attribs=" |> KernelAttribs.pp kernel_attribs
   |> Fmt.fmt "}"
 
 let empty = {
   all=Attribs.empty;
-  direct=Attribs.empty;
+  definite=Attribs.empty;
   kernel_attribs=KernelAttribs.empty
 }
 
-let is_empty {all; direct; kernel_attribs} =
-  Attribs.is_empty all && Attribs.is_empty direct && KernelAttribs.is_empty kernel_attribs
+let is_empty {all; definite; kernel_attribs} =
+  Attribs.is_empty all && Attribs.is_empty definite && KernelAttribs.is_empty kernel_attribs
 
-let reindex index_map {all; direct; kernel_attribs} =
+let reindex index_map {all; definite; kernel_attribs} =
   {
     all=Attribs.reindex index_map all;
-    direct=Attribs.reindex index_map direct;
+    definite=Attribs.reindex index_map definite;
     kernel_attribs=KernelAttribs.reindex index_map kernel_attribs
   }
 
 let all {all; _} =
   all
 
-let direct {direct; _} =
-  direct
+let definite {definite; _} =
+  definite
 
 let kernel_attribs {kernel_attribs; _} =
   kernel_attribs
@@ -87,17 +87,17 @@ let of_lane_attribs lane_attribs =
       merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
     ) lane_attribs
 
-let merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib ({direct; _} as t) =
+let merge_definite ~conflict_state_index ~symbol_index ~conflict ~contrib ({definite; _} as t) =
   let t = merge ~conflict_state_index ~symbol_index ~conflict ~contrib t in
   let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib in
-  let direct = Attribs.insert attrib direct in
-  {t with direct}
+  let definite = Attribs.insert attrib definite in
+  {t with definite}
 
-let of_lane_attribs_direct lane_attribs_direct =
+let of_lane_attribs_definite lane_attribs_definite =
   Attribs.fold ~init:empty
     ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
-      merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib t
-    ) lane_attribs_direct
+      merge_definite ~conflict_state_index ~symbol_index ~conflict ~contrib t
+    ) lane_attribs_definite
 
 let insert_kernel_attribs kernel_attribs t =
   KernelAttribs.fold ~init:t
@@ -110,11 +110,11 @@ let insert_kernel_attribs kernel_attribs t =
       {t with kernel_attribs}
     ) kernel_attribs
 
-let union {all=a0; direct=d0; kernel_attribs=ka0}
-  {all=a1; direct=d1; kernel_attribs=ka1} =
+let union {all=a0; definite=d0; kernel_attribs=ka0}
+  {all=a1; definite=d1; kernel_attribs=ka1} =
   {
     all=Attribs.union a0 a1;
-    direct=Attribs.union d0 d1;
+    definite=Attribs.union d0 d1;
     kernel_attribs=KernelAttribs.union ka0 ka1
   }
 

@@ -22,9 +22,9 @@ val is_empty: t -> bool
 val of_lane_attribs: Attribs.t -> t
 (** [of_lane_attribs lane_attribs] initializes a {type:t} by inserting [lane_attribs]. *)
 
-val of_lane_attribs_direct: Attribs.t -> t
-(** [of_lane_attribs_direct lane_attribs_direct] initializes a {type:t} by inserting
-    [lane_attribs_direct] as direct conflict attributions. *)
+val of_lane_attribs_definite: Attribs.t -> t
+(** [of_lane_attribs_definite lane_attribs_definite] initializes a {type:t} by inserting
+    [lane_attribs_definite] as definite conflict attributions. *)
 
 val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
 (** [reindex index_map t] creates kernel attribs with all LR(1) item set closure and state nub
@@ -34,13 +34,14 @@ val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -
 val all: t -> Attribs.t
 (** [all t] returns the union of all conflict attributions in [t]. *)
 
-val direct: t -> Attribs.t
-(** [direct t] returns the union of direct conflict attributions made by all kernel items. *)
+val definite: t -> Attribs.t
+(** [definite t] returns the union of definite conflict attributions made by all kernel items, as
+    well as any definite conflict attributions introduced via [merge_definite]. *)
 
 val kernel_attribs: t -> KernelAttribs.t
-(** [kernel_attribs t] returns the per kernel item reduce conflict attributions in [t]. Shift
-    attributions are omitted since it is irrelevant which kernel item has a shift attribution,
-    whether direct or indirect. *)
+(** [kernel_attribs t] returns the per kernel item (definite) reduce conflict attributions in [t].
+    Shift attributions are omitted since it is irrelevant which kernel item has a shift attribution,
+    whether definite or potential. *)
 
 val merge: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
   -> contrib:Contrib.t -> t -> t
@@ -48,16 +49,16 @@ val merge: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> c
     conflict contribution [contrib] to state [conflict_state_index] on symbol [symbol_index] into
     the set of all conflict attributions. *)
 
-val merge_direct: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t
+val merge_definite: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t
   -> conflict:Contrib.t -> contrib:Contrib.t -> t -> t
-(** [merge_direct ~conflict_state_index ~symbol_index ~conflict ~contrib t] merges attribution of
+(** [merge_definite ~conflict_state_index ~symbol_index ~conflict ~contrib t] merges attribution of
     the conflict contribution [contrib] to state [conflict_state_index] on symbol [symbol_index]
-    into the set of direct conflict attributions, as well as into the set of all conflict
+    into the set of definite conflict attributions, as well as into the set of all conflict
     attributions. *)
 
 val insert_kernel_attribs: KernelAttribs.t -> t -> t
 (** [insert_kernel_attribs kernel_attribs t] inserts the conflict attributions in [kernel_attribs]
-    into the conflict attributions. In addition, merge [kernel_attribs] into the set of all conflict
+    into the conflict attributions, and merging [kernel_attribs] into the set of all conflict
     attributions. *)
 
 val union: t -> t -> t

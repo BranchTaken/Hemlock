@@ -43,7 +43,7 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
       ~f:(fun (lalr1_transit_attribs, ipred_lanectxs) ipred_state_index ->
         let ipred_state = Array.get ipred_state_index lalr1_states in
         let ipred_lanectx = LaneCtx.of_ipred ipred_state lanectx in
-        let ipred_kernel_attribs = LaneCtx.kernel_attribs ipred_lanectx in
+        let ipred_kernel_attribs = LaneCtx.kernel_attribs_all ipred_lanectx in
         let transit = LaneCtx.transit ipred_lanectx in
         (* Load current transit attribs. It is possible for there to be existing attribs to other
          * conflict states. *)
@@ -82,19 +82,19 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
   let lanectx = LaneCtx.post_init ipred_lanectxs lanectx in
   (* Accumulate direct attributions. *)
   let transit = LaneCtx.transit lanectx in
-  let lane_attribs_direct = LaneCtx.lane_attribs_direct lanectx in
-  let lalr1_transit_attribs = match Attribs.is_empty lane_attribs_direct with
+  let lane_attribs_definite = LaneCtx.lane_attribs_definite lanectx in
+  let lalr1_transit_attribs = match Attribs.is_empty lane_attribs_definite with
     | true -> lalr1_transit_attribs
     | false -> begin
         (* Backpropagate. *)
-        let transit_attribs = TransitAttribs.of_lane_attribs lane_attribs_direct in
+        let transit_attribs = TransitAttribs.of_lane_attribs lane_attribs_definite in
         let lalr1_transit_attribs = backprop_transit_attribs adjs transit_attribs
             lalr1_transit_attribs marks state_index in
         let lalr1_transit_attribs = match Transit.cyclic transit with
           | true -> lalr1_transit_attribs
           | false -> begin
               let transit_attribs_direct =
-                TransitAttribs.of_lane_attribs_direct lane_attribs_direct in
+                TransitAttribs.of_lane_attribs_definite lane_attribs_definite in
               Ordmap.amend transit ~f:(function
                 | None -> Some transit_attribs_direct
                 | Some transit_attribs_existing ->
@@ -315,7 +315,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               let Attrib.{contrib; _} =
                 Ordmap.get in_transit lalr1_transit_attribs
                 |> Option.value ~default:TransitAttribs.empty
-                |> TransitAttribs.direct
+                |> TransitAttribs.definite
                 |> Attribs.get ~conflict_state_index symbol_index
                 |> Option.value ~default:(Attrib.empty ~conflict_state_index ~symbol_index
                     ~conflict)
@@ -337,7 +337,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
             let Attrib.{contrib=out_direct_contrib; _} =
               Ordmap.get out_transit lalr1_transit_attribs
               |> Option.value ~default:TransitAttribs.empty
-              |> TransitAttribs.direct
+              |> TransitAttribs.definite
               |> Attribs.get ~conflict_state_index symbol_index
               |> Option.value ~default:(Attrib.empty ~conflict_state_index ~symbol_index ~conflict)
             in
