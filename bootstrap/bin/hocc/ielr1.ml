@@ -378,8 +378,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
       end
   end in
   let is_dominant_contrib_unstable ~resolve symbols prods adjs ~lalr1_transit_attribs ~stable
-      Attrib.{conflict_state_index; symbol_index; contrib; _}
-      state_index = begin
+      Attrib.{conflict_state_index; symbol_index; contrib; _} state_index = begin
     let pred_stability_deps_indexes = Set.empty (module State.Index) in
     (* Compute whether the dominant contribution from the state (corresponding to `state_index`) to
      * the isucc associated with the attrib parameter is unstable. *)
@@ -400,9 +399,8 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
             | None -> in_transits
             | Some _ -> Ordset.insert transit in_transits
           ) (Adjs.ipreds_of_state_index state_index adjs) in
-        let in_transits_relevant =
-          filter_transits_relevant lalr1_transit_attribs in_transits ~conflict_state_index
-            symbol_index in
+        let in_transits_relevant = filter_transits_relevant lalr1_transit_attribs in_transits
+            ~conflict_state_index symbol_index in
         let is_resolution_unstable, pred_stability_deps_indexes, _dominant_opt =
           Ordset.fold_until ~init:(false, pred_stability_deps_indexes, None)
             ~f:(fun (_is_resolution_unstable, pred_stability_deps_indexes, dominant_opt)
@@ -416,24 +414,24 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
                 | true -> Contrib.resolve symbols prods symbol_index in_contrib
               in
               let is_ipred_stable = Set.mem ipred_state_index stable in
-              let not_stable, pred_stability_deps_indexes = match is_ipred_stable with
+              let is_contrib_unstable, pred_stability_deps_indexes = match is_ipred_stable with
                 | true -> false, pred_stability_deps_indexes
                 | false -> begin
                     (* Fall back to checking in-contrib stability. Although recursion is viable, it
                      * can incur exponential overhead, which puts strong pressure on the depth
                      * limit. Furthermore, recursing does not improve the resulting closure result.
                     *)
-                    let not_stable =
+                    let is_contrib_unstable =
                       not (Contrib.stable ~resolve symbols prods symbol_index in_contrib) in
                     let pred_stability_deps_indexes =
                       Set.insert ipred_state_index pred_stability_deps_indexes in
-                    not_stable, pred_stability_deps_indexes
+                    is_contrib_unstable, pred_stability_deps_indexes
                   end
               in
               let is_resolution_unstable, dominant_opt = match dominant_opt with
-                | None -> not_stable, Some resolution
+                | None -> is_contrib_unstable, Some resolution
                 | Some dominant as some_dominant ->
-                  not_stable || not (Contrib.equal dominant resolution), some_dominant
+                  is_contrib_unstable || not (Contrib.equal dominant resolution), some_dominant
               in
               (is_resolution_unstable, pred_stability_deps_indexes, dominant_opt),
               is_resolution_unstable
