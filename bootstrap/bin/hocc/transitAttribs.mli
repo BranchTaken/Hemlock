@@ -43,6 +43,7 @@ val kernel_attribs: t -> KernelAttribs.t
     Shift attributions are omitted since it is irrelevant which kernel item has a shift attribution,
     whether definite or potential. *)
 
+(* XXX Not used externally. Remove from interface? *)
 val merge: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
   -> contrib:Contrib.t -> t -> t
 (** [merge ~conflict_state_index ~symbol_index ~conflict ~contrib t] merges attribution of the

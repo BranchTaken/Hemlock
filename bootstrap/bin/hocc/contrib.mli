@@ -53,13 +53,6 @@ val resolve: Symbols.t -> Prods.t -> Symbol.Index.t -> t -> t
 (** [resolve symbols prods symbol_index t] returns the resolution of [t] assuming conflict on
     [symbol_index]. *)
 
-(* XXX Refactor to take ~potential and ~all, or remove. *)
-val stable: resolve:bool -> Symbols.t -> Prods.t -> Symbol.Index.t -> t -> bool
-(** [stable ~resolve symbols prods symbol_index t] determines whether the contribution represented
-    by [t] is split-stable, i.e. all possible partitions of contributions have the same resolution.
-    If [resolve] is false, conflict resolution is not performed prior to evaluating contribution
-    partitions, thus impeding split-stability. *)
-
 val compat_ielr1: resolve:bool -> Symbols.t -> Prods.t -> Symbol.Index.t -> t -> t -> bool
 (** [compat_ielr1 ~resolve symbols prods symbol_index t0 t1] determines whether [t0] and [t1] make
     compatible contributions, where [symbol_index] is the index of the input symbol (i.e. the symbol

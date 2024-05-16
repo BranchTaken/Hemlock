@@ -202,20 +202,6 @@ let resolve symbols prods symbol_index t =
         end
     end
 
-let stable ~resolve:do_resolve symbols prods symbol_index t =
-  match length t with
-  | 0L (* Irrelevant. *)
-  | 1L -> true (* Single shift or reduce. *)
-  | _ -> begin
-      let resolved = match do_resolve with
-        | false -> t
-        | true -> resolve symbols prods symbol_index t
-      in
-      match length resolved, mem_shift resolved with
-      | 1L, true -> true (* Always resolves to shift. *)
-      | _, _ -> false
-    end
-
 let compat_ielr1 ~resolve:do_resolve symbols prods symbol_index t0 t1 =
   (* Compute the resolutions (if enabled) of what the merged lane would receive from each input
    * lane. *)
