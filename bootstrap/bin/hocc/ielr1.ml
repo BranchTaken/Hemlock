@@ -1,9 +1,6 @@
 open Basis
 open! Basis.Rudiments
 
-(* Maximum recursion depth for assessing dominant contrib instability. *)
-let dominant_contrib_maxdepth = 0L
-
 (* Backpropagate attribs that were directly attributed, such that all lane predecessors make
  * equivalent indirect attribs. *)
 let rec backprop_transit_attribs adjs transit_attribs lalr1_transit_attribs marks state_index =
@@ -380,85 +377,70 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
         split_unstable
       end
   end in
-  let is_dominant_contrib_unstable ~resolve symbols prods adjs ~lalr1_transit_attribs ~stable attrib
+  let is_dominant_contrib_unstable ~resolve symbols prods adjs ~lalr1_transit_attribs ~stable
+      Attrib.{conflict_state_index; symbol_index; contrib; _}
       state_index = begin
-    let rec inner ~resolve symbols prods adjs ~lalr1_transit_attribs ~stable
-        pred_stability_deps_indexes marks Attrib.{conflict_state_index; symbol_index; contrib; _}
-        state_index = begin
-      let marks = Set.insert state_index marks in
-      (* Compute whether the dominant contribution from the state (corresponding to `state_index`)
-       * to the isucc associated with the attrib parameter is unstable. *)
-      match not (Contrib.stable ~resolve symbols prods symbol_index contrib) with
-      | false -> begin
-          (* The contrib is split-stable, which means the state's dominant contribution is
-           * split-stable. However, the inverse does not necessarily hold, thus the meat of this
-           * function below. *)
-          false, pred_stability_deps_indexes
-        end
-      | true -> begin
-          (* Resolution is unstable unless all the state's relevant incoming transits make the same
-           * dominant contribution. *)
-          let in_transits = Array.fold ~init:(Ordset.empty (module Transit))
-            ~f:(fun in_transits ipred_state_index ->
-              let transit = Transit.init ~src:ipred_state_index ~dst:state_index in
-              match Ordmap.get transit lalr1_transit_attribs with
-              | None -> in_transits
-              | Some _ -> Ordset.insert transit in_transits
-            ) (Adjs.ipreds_of_state_index state_index adjs) in
-          let in_transits_relevant =
-            filter_transits_relevant lalr1_transit_attribs in_transits ~conflict_state_index
-              symbol_index in
-          let is_resolution_unstable, pred_stability_deps_indexes, _dominant_opt =
-            Ordset.fold_until ~init:(false, pred_stability_deps_indexes, None)
-              ~f:(fun (_is_resolution_unstable, pred_stability_deps_indexes, dominant_opt)
-                (Transit.{src=ipred_state_index; _} as in_transit) ->
-                let Attrib.{contrib=in_contrib; _} as in_attrib =
-                  Ordmap.get_hlt in_transit lalr1_transit_attribs
-                  |> TransitAttribs.all
-                  |> Attribs.get_hlt ~conflict_state_index symbol_index in
-                let resolution = match resolve with
-                  | false -> in_contrib
-                  | true -> Contrib.resolve symbols prods symbol_index in_contrib
-                in
-                let is_ipred_stable = Set.mem ipred_state_index stable in
-                let not_stable, pred_stability_deps_indexes = match is_ipred_stable with
-                  | true -> false, pred_stability_deps_indexes
-                  | false -> begin
-                      let pred_stability_deps_indexes =
-                        Set.insert ipred_state_index pred_stability_deps_indexes in
-                      (* Fall back to checking in-contrib stability if the recursion depth limit has
-                       * been reached. Recursion can incur exponential overhead, which puts strong
-                       * pressure on the depth limit. In principle, the deeper the recursion the
-                       * more accurate the assessment of dominant contribution instability, but in
-                       * practice there does not appear to be much benefit to recursion. *)
-                      match Set.mem ipred_state_index marks ||
-                            Uns.( > ) (Set.length marks) dominant_contrib_maxdepth with
-                      | true -> begin
-                          not (Contrib.stable ~resolve symbols prods symbol_index in_contrib),
-                          pred_stability_deps_indexes
-                        end
-                      | false -> begin
-                          inner ~resolve symbols prods adjs ~lalr1_transit_attribs ~stable
-                            pred_stability_deps_indexes marks in_attrib ipred_state_index
-                        end
-                    end
-                in
-                let is_resolution_unstable, dominant_opt = match dominant_opt with
-                  | None -> not_stable, Some resolution
-                  | Some dominant as some_dominant ->
-                    not_stable || not (Contrib.equal dominant resolution), some_dominant
-                in
-                (is_resolution_unstable, pred_stability_deps_indexes, dominant_opt),
-                is_resolution_unstable
-              ) in_transits_relevant
-          in
-          (is_resolution_unstable, pred_stability_deps_indexes)
-        end
-    end in
     let pred_stability_deps_indexes = Set.empty (module State.Index) in
-    let marks = Set.empty (module State.Index) in
-    inner ~resolve symbols prods adjs ~lalr1_transit_attribs ~stable pred_stability_deps_indexes
-      marks attrib state_index
+    (* Compute whether the dominant contribution from the state (corresponding to `state_index`) to
+     * the isucc associated with the attrib parameter is unstable. *)
+    match not (Contrib.stable ~resolve symbols prods symbol_index contrib) with
+    | false -> begin
+        (* The contrib is split-stable, which means the state's dominant contribution is
+         * split-stable. However, the inverse does not necessarily hold, thus the meat of this
+         * function below. *)
+        false, pred_stability_deps_indexes
+      end
+    | true -> begin
+        (* Resolution is unstable unless all the state's relevant incoming transits make the same
+         * dominant contribution. *)
+        let in_transits = Array.fold ~init:(Ordset.empty (module Transit))
+          ~f:(fun in_transits ipred_state_index ->
+            let transit = Transit.init ~src:ipred_state_index ~dst:state_index in
+            match Ordmap.get transit lalr1_transit_attribs with
+            | None -> in_transits
+            | Some _ -> Ordset.insert transit in_transits
+          ) (Adjs.ipreds_of_state_index state_index adjs) in
+        let in_transits_relevant =
+          filter_transits_relevant lalr1_transit_attribs in_transits ~conflict_state_index
+            symbol_index in
+        let is_resolution_unstable, pred_stability_deps_indexes, _dominant_opt =
+          Ordset.fold_until ~init:(false, pred_stability_deps_indexes, None)
+            ~f:(fun (_is_resolution_unstable, pred_stability_deps_indexes, dominant_opt)
+              (Transit.{src=ipred_state_index; _} as in_transit) ->
+              let Attrib.{contrib=in_contrib; _} =
+                Ordmap.get_hlt in_transit lalr1_transit_attribs
+                |> TransitAttribs.all
+                |> Attribs.get_hlt ~conflict_state_index symbol_index in
+              let resolution = match resolve with
+                | false -> in_contrib
+                | true -> Contrib.resolve symbols prods symbol_index in_contrib
+              in
+              let is_ipred_stable = Set.mem ipred_state_index stable in
+              let not_stable, pred_stability_deps_indexes = match is_ipred_stable with
+                | true -> false, pred_stability_deps_indexes
+                | false -> begin
+                    (* Fall back to checking in-contrib stability. Although recursion is viable, it
+                     * can incur exponential overhead, which puts strong pressure on the depth
+                     * limit. Furthermore, recursing does not improve the resulting closure result.
+                    *)
+                    let not_stable =
+                      not (Contrib.stable ~resolve symbols prods symbol_index in_contrib) in
+                    let pred_stability_deps_indexes =
+                      Set.insert ipred_state_index pred_stability_deps_indexes in
+                    not_stable, pred_stability_deps_indexes
+                  end
+              in
+              let is_resolution_unstable, dominant_opt = match dominant_opt with
+                | None -> not_stable, Some resolution
+                | Some dominant as some_dominant ->
+                  not_stable || not (Contrib.equal dominant resolution), some_dominant
+              in
+              (is_resolution_unstable, pred_stability_deps_indexes, dominant_opt),
+              is_resolution_unstable
+            ) in_transits_relevant
+        in
+        (is_resolution_unstable, pred_stability_deps_indexes)
+      end
   end in
   let gather_pred_stability_deps_indexes ~resolve symbols prods adjs ~lalr1_transit_attribs ~stable
       ~unstable is_pred_stability_deps_stale pred_stability_deps_indexes ipred_split_unstable
