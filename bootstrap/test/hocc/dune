@@ -388,6 +388,23 @@
  (deps
   (glob_files IelrFig3.hmh*)
   %{bin:hocc})
+ (targets IelrFig3_apgm1.out.txt IelrFig3_apgm1.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to IelrFig3_apgm1.out (run ./hocc_test %{bin:hocc} IelrFig3 -algorithm pgm1 -v -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrFig3_apgm1.expected IelrFig3_apgm1.out)
+   (diff IelrFig3_apgm1.expected.txt IelrFig3_apgm1.out.txt)
+   (diff IelrFig3_apgm1.expected.hmh IelrFig3_apgm1.out.hmh))))
+
+(rule
+ (deps
+  (glob_files IelrFig3.hmh*)
+  %{bin:hocc})
  (targets IelrFig3_rno.out.txt IelrFig3_rno.out.hmh)
  (action
   (with-accepted-exit-codes
