@@ -706,6 +706,23 @@
 
 (rule
  (deps
+  (glob_files M.hmh*)
+  %{bin:hocc})
+ (targets M_aielr1.out.txt M_aielr1.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to M_aielr1.out (run ./hocc_test %{bin:hocc} M -algorithm ielr1 -v -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff M_aielr1.expected M_aielr1.out)
+   (diff M_aielr1.expected.txt M_aielr1.out.txt)
+   (diff M_aielr1.expected.hmh M_aielr1.out.hmh))))
+
+(rule
+ (deps
   (glob_files N.hmh*)
   %{bin:hocc})
  (targets N.out.txt N.out.hmh)

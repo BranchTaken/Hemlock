@@ -1,24 +1,41 @@
 #!/bin/sh
 #
-# Usage: hocc_test <hocc> <src> [-resolve yes|no] [<parameter>]*
+# Usage: hocc_test <hocc> <src> [-algorithm lr1|ielr1|pgm1|lalr1] [-resolve yes|no] [<parameter>]*
 
 hocc="$1"
 src="$2"
 shift 2
+
+mangled_src="${src}"
+
+case "$1" in
+    '-algorithm')
+        algorithm="$2"
+        mangled_src="${mangled_src}_a${algorithm}"
+        shift 2
+        ;;
+    *)
+        algorithm="lr1"
+esac
+
 case "$1" in
     '-resolve')
         resolve="$2"
-        # Mangle the source path so that generated files from parallel test runs don't clobber each
-        # other.
-        ln -s "${src}.hmh" "${src}_r${resolve}.hmh"
-        src="${src}_r${resolve}"
+        mangled_src="${mangled_src}_r${resolve}"
         shift 2
         ;;
     *)
         resolve="yes"
 esac
 
-"${hocc}" -s "${src}" -r "${resolve}" $@
+if [ "x${mangled_src}" != "x${src}" ] ; then
+    # Mangle the source path so that generated files from parallel test runs don't clobber each
+    # other.
+    ln -s "${src}.hmh" "${mangled_src}.hmh"
+    src="${mangled_src}"
+fi
+
+"${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" $@
 
 # Usage: mv_report <suffix>
 #
