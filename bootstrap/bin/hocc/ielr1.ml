@@ -3,7 +3,7 @@ open! Basis.Rudiments
 
 (* Backpropagate potential attribs, such that all lane predecessors make equivalent potential
  * attribs. *)
-let rec backprop_transit_attribs adjs transit_attribs_potential lalr1_transit_attribs state_index =
+let rec backprop_transit_attribs adjs lane_attribs_potential lalr1_transit_attribs state_index =
   Array.fold ~init:lalr1_transit_attribs
     ~f:(fun lalr1_transit_attribs ipred_state_index ->
       let transit = Transit.init ~src:ipred_state_index ~dst:state_index in
@@ -11,14 +11,28 @@ let rec backprop_transit_attribs adjs transit_attribs_potential lalr1_transit_at
         | None -> TransitAttribs.empty
         | Some transit_attribs -> transit_attribs
       in
-      let transit_attribs' = TransitAttribs.union transit_attribs_potential transit_attribs in
-      match Attribs.equal (TransitAttribs.all transit_attribs') (TransitAttribs.all transit_attribs)
-      with
-      | true -> lalr1_transit_attribs
-      | false -> begin
+      let transit_attribs_all = TransitAttribs.all transit_attribs in
+      (* Detect the no-op case as quickly as possible. The conceptually simpler approach of
+       * performing the union and diffing before/after transit attribs is a lot more expensive. *)
+      let do_union = Attribs.fold_until ~init:false
+        ~f:(fun _do_union Attrib.{conflict_state_index; symbol_index; contrib=lane_contrib; _} ->
+        let do_union =
+          match Attribs.get ~conflict_state_index symbol_index transit_attribs_all with
+          | None -> true
+          | Some Attrib.{contrib=transit_contrib; _} ->
+            not Contrib.(is_empty (diff lane_contrib transit_contrib))
+        in
+        do_union, do_union
+      ) lane_attribs_potential in
+      match do_union with
+      | false -> lalr1_transit_attribs
+      | true -> begin
+          let transit_attribs_potential =
+            TransitAttribs.of_attribs_potential lane_attribs_potential in
+          let transit_attribs' = TransitAttribs.union transit_attribs_potential transit_attribs in
           let lalr1_transit_attribs = Ordmap.upsert ~k:transit ~v:transit_attribs'
               lalr1_transit_attribs in
-          backprop_transit_attribs adjs transit_attribs_potential lalr1_transit_attribs
+          backprop_transit_attribs adjs lane_attribs_potential lalr1_transit_attribs
             ipred_state_index
         end
     ) (Adjs.ipreds_of_state_index state_index adjs)
@@ -87,8 +101,7 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
         ) lalr1_transit_attribs
         in
         (* Backpropagate. *)
-        let transit_attribs_potential = TransitAttribs.of_attribs_potential lane_attribs_definite in
-        backprop_transit_attribs adjs transit_attribs_potential lalr1_transit_attribs state_index
+        backprop_transit_attribs adjs lane_attribs_definite lalr1_transit_attribs state_index
       end
   in
   lalr1_transit_attribs

@@ -83,10 +83,7 @@ let merge_potential lane_attrib ({all; _} as t) =
   {t with all}
 
 let of_attribs_potential lane_attribs =
-  Attribs.fold ~init:empty
-    ~f:(fun t lane_attrib ->
-      merge_potential lane_attrib t
-    ) lane_attribs
+  {all=lane_attribs; definite=Attribs.empty; kernel_attribs_all=KernelAttribs.empty}
 
 let merge_definite lane_attrib ({definite; _} as t) =
   assert (Attrib.is_lane_attrib lane_attrib);
@@ -95,10 +92,7 @@ let merge_definite lane_attrib ({definite; _} as t) =
   {t with definite}
 
 let of_attribs_definite lane_attribs =
-  Attribs.fold ~init:empty
-    ~f:(fun t attrib_definite ->
-      merge_definite attrib_definite t
-    ) lane_attribs
+  {all=lane_attribs; definite=lane_attribs; kernel_attribs_all=KernelAttribs.empty}
 
 let insert_kernel_attribs_all kernel_attribs_all t =
   KernelAttribs.fold ~init:t
