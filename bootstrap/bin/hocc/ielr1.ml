@@ -35,7 +35,7 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
       ~f:(fun (lalr1_transit_attribs, ipred_lanectxs) ipred_state_index ->
         let ipred_state = Array.get ipred_state_index lalr1_states in
         let ipred_lanectx = LaneCtx.of_ipred ipred_state lanectx in
-        let ipred_kernel_attribs = LaneCtx.kernel_attribs ipred_lanectx in
+        let ipred_kernel_attribs = LaneCtx.kernel_attribs_all ipred_lanectx in
         let transit = LaneCtx.transit ipred_lanectx in
         (* Load current transit attribs. It is possible for there to be existing attribs to other
          * conflict states. *)
@@ -43,14 +43,14 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
           Ordmap.get transit lalr1_transit_attribs
           |> Option.value ~default:TransitAttribs.empty
         in
-        let kernel_attribs = TransitAttribs.kernel_attribs transit_attribs in
+        let kernel_attribs_all = TransitAttribs.kernel_attribs_all transit_attribs in
         let transit_attribs' =
-          TransitAttribs.insert_kernel_attribs ipred_kernel_attribs transit_attribs in
+          TransitAttribs.insert_kernel_attribs_all ipred_kernel_attribs transit_attribs in
         (* Avoid recursing if no new transit attribs were inserted, since no additional insertions
          * will occur in the recursion. *)
-        let kernel_attribs' = TransitAttribs.kernel_attribs transit_attribs' in
+        let kernel_attribs_all' = TransitAttribs.kernel_attribs_all transit_attribs' in
         let lalr1_transit_attribs =
-          match KernelAttribs.equal kernel_attribs' kernel_attribs with
+          match KernelAttribs.equal kernel_attribs_all' kernel_attribs_all with
           | true -> lalr1_transit_attribs
           | false -> begin
               let lalr1_transit_attribs =

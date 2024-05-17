@@ -68,9 +68,9 @@ val post_init: t list -> t -> t
 (** [post_init ipred_lanectxs t] finishes initializing definite lane conflict attributions, given
     all (acyclic) ipreds' contexts and returns a derivative of [t]. *)
 
-val kernel_attribs: t -> KernelAttribs.t
-(** [kernel_attribs t] returns a map of the conflict attributions directly attributable to the
-    lane(s) encompassing [t], i.e. both definite and potential conflict attributions. *)
+val kernel_attribs_all: t -> KernelAttribs.t
+(** [kernel_attribs_all t] returns a map of all conflict attributions attributable to the lane(s)
+    encompassing [t], i.e. both definite and potential conflict attributions. *)
 
 val lane_attribs_all: t -> Attribs.t
 (** [lane_attribs_all t] returns a map of the merged lane conflict attributions attributable to

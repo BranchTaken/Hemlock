@@ -41,9 +41,9 @@ val definite: t -> Attribs.t
     well as any definite conflict attributions introduced via [of_attribs_definite] and/or
     [merge_definite]. *)
 
-val kernel_attribs: t -> KernelAttribs.t
-(** [kernel_attribs t] returns the per kernel item (definite) reduce conflict attributions in [t].
-    Shift attributions are omitted since it is irrelevant which kernel item has a shift attribution,
+val kernel_attribs_all: t -> KernelAttribs.t
+(** [kernel_attribs_all t] returns the per kernel item reduce conflict attributions in [t]. Shift
+    attributions are omitted since it is irrelevant which kernel item has a shift attribution,
     whether definite or potential. *)
 
 val merge_potential: Attrib.t -> t -> t
@@ -54,10 +54,10 @@ val merge_definite: Attrib.t -> t -> t
 (** [merge_definite lane_attrib t] merges [lane_attrib] into the set of definite conflict
     attributions, as well as into the set of all conflict attributions. *)
 
-val insert_kernel_attribs: KernelAttribs.t -> t -> t
-(** [insert_kernel_attribs kernel_attribs t] inserts the conflict attributions in [kernel_attribs]
-    into the set of kernel attribs, as well as into the set of definite conflict attributions and
-    the set of all conflict attributions. *)
+val insert_kernel_attribs_all: KernelAttribs.t -> t -> t
+(** [insert_kernel_attribs_all kernel_attribs t] inserts the conflict attributions in
+    [kernel_attribs] into the set of kernel attribs, as well as into the set of potential conflict
+    attributions. *)
 
 val union: t -> t -> t
 (** [union t0 t1] returns the union of transit conflict attributions in [t0] and [t1]. *)

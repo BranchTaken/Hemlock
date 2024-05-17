@@ -235,21 +235,22 @@ let kernel_lr1itemset_of_prod_index prods state symbol_index prod_index =
   let prod = Prods.prod_of_prod_index prod_index prods in
   kernel_lr1itemset_of_prod state symbol_index prod
 
-let kernel_attribs {conflict_state; traces; _} =
+let kernel_attribs_all {conflict_state; traces; _} =
   let conflict_state_index = State.index conflict_state in
   Ordmap.fold ~init:KernelAttribs.empty
-    ~f:(fun kernel_attribs (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
+    ~f:(fun kernel_attribs_all (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
       let contrib = match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
-      TraceVal.fold ~init:kernel_attribs ~f:(fun kernel_attribs (lr1item, isucc_lr1itemset) ->
-        let attrib =
-          Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
-        let trace_attribs = Attribs.singleton attrib in
-        KernelAttribs.insert lr1item trace_attribs kernel_attribs
-      ) kernel_isuccs
+      TraceVal.fold ~init:kernel_attribs_all
+        ~f:(fun kernel_attribs_all (lr1item, isucc_lr1itemset) ->
+          let attrib =
+            Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
+          let trace_attribs = Attribs.singleton attrib in
+          KernelAttribs.insert lr1item trace_attribs kernel_attribs_all
+        ) kernel_isuccs
     ) traces
 
 let lane_attribs_all ({lane_attribs_definite; _} as t) =
@@ -260,7 +261,7 @@ let lane_attribs_all ({lane_attribs_definite; _} as t) =
         Attribs.insert attrib lane_attribs
       ) attribs
     |> Attribs.union lane_attribs
-  ) (kernel_attribs t)
+  ) (kernel_attribs_all t)
   |> Attribs.union lane_attribs_definite
 
 let lane_attribs_definite {lane_attribs_definite; _} =
