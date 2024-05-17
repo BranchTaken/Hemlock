@@ -89,8 +89,14 @@ module T = struct
   let init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset=Lr1Itemset.empty; contrib}
 
+  let to_lane_attrib {conflict_state_index; symbol_index; conflict; contrib; _} =
+    init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib
+
   let is_empty {contrib; _} =
     Contrib.is_empty contrib
+
+  let is_lane_attrib {isucc_lr1itemset; _} =
+    Lr1Itemset.is_empty isucc_lr1itemset
 
   let union
       {conflict_state_index=csi0; symbol_index=s0; conflict=x0; isucc_lr1itemset=is0; contrib=c0}

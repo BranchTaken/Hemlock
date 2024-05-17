@@ -2,10 +2,12 @@ open Basis
 open! Basis.Rudiments
 
 type t = {
-  (* Union of conflict attributions in `kernel_attribs`. *)
+  (* Union of conflict attributions in `definite` and any conflict attributions introduced via
+   * `{of_attribs,merge}_potential`. *)
   all: Attribs.t;
 
-  (* Definite conflict attributions, whether shift (conflict state only) or reduce. *)
+  (* Union of conflict attributions in `kernel_attribs`, whether shift (conflict state only) or
+   * reduce, and any conflict attributions introduced via `{of_attribs,merge}_definite`. *)
   definite: Attribs.t;
 
   (* Per kernel item reduce conflict attributions. Shift attributions are omitted since it is
@@ -76,36 +78,36 @@ let definite {definite; _} =
 let kernel_attribs {kernel_attribs; _} =
   kernel_attribs
 
-let merge ~conflict_state_index ~symbol_index ~conflict ~contrib ({all; _} as t) =
-  let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib in
-  let all = Attribs.insert attrib all in
+let merge_potential lane_attrib ({all; _} as t) =
+  assert (Attrib.is_lane_attrib lane_attrib);
+  let all = Attribs.insert lane_attrib all in
   {t with all}
 
-let of_lane_attribs lane_attribs =
+let of_attribs_potential lane_attribs =
   Attribs.fold ~init:empty
-    ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
-      merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
+    ~f:(fun t lane_attrib ->
+      merge_potential lane_attrib t
     ) lane_attribs
 
-let merge_definite ~conflict_state_index ~symbol_index ~conflict ~contrib ({definite; _} as t) =
-  let t = merge ~conflict_state_index ~symbol_index ~conflict ~contrib t in
-  let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib in
-  let definite = Attribs.insert attrib definite in
+let merge_definite lane_attrib ({definite; _} as t) =
+  assert (Attrib.is_lane_attrib lane_attrib);
+  let t = merge_potential lane_attrib t in
+  let definite = Attribs.insert lane_attrib definite in
   {t with definite}
 
-let of_lane_attribs_definite lane_attribs_definite =
+let of_attribs_definite lane_attribs =
   Attribs.fold ~init:empty
-    ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
-      merge_definite ~conflict_state_index ~symbol_index ~conflict ~contrib t
-    ) lane_attribs_definite
+    ~f:(fun t attrib_definite ->
+      merge_definite attrib_definite t
+    ) lane_attribs
 
 let insert_kernel_attribs kernel_attribs t =
   KernelAttribs.fold ~init:t
     ~f:(fun ({kernel_attribs; _} as t) (item, attribs) ->
-      let t = Attribs.fold ~init:t
-          ~f:(fun t Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
-            merge ~conflict_state_index ~symbol_index ~conflict ~contrib t
-          ) attribs in
+      let t = Attribs.fold ~init:t ~f:(fun t attrib ->
+        let lane_attrib = Attrib.to_lane_attrib attrib in
+        merge_definite lane_attrib t
+      ) attribs in
       let kernel_attribs = KernelAttribs.insert item attribs kernel_attribs in
       {t with kernel_attribs}
     ) kernel_attribs

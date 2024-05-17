@@ -1,49 +1,41 @@
 open Basis
 open! Basis.Rudiments
 
-(* Backpropagate attribs that were directly attributed, such that all lane predecessors make
- * equivalent indirect attribs. *)
-let rec backprop_transit_attribs adjs transit_attribs lalr1_transit_attribs marks state_index =
+(* Backpropagate potential attribs, such that all lane predecessors make equivalent potential
+ * attribs. *)
+let rec backprop_transit_attribs adjs transit_attribs_potential lalr1_transit_attribs state_index =
   Array.fold ~init:lalr1_transit_attribs
     ~f:(fun lalr1_transit_attribs ipred_state_index ->
-      match Set.mem ipred_state_index marks with
+      let transit = Transit.init ~src:ipred_state_index ~dst:state_index in
+      let transit_attribs = match Ordmap.get transit lalr1_transit_attribs with
+        | None -> TransitAttribs.empty
+        | Some transit_attribs -> transit_attribs
+      in
+      let transit_attribs' = TransitAttribs.union transit_attribs_potential transit_attribs in
+      match Attribs.equal (TransitAttribs.all transit_attribs') (TransitAttribs.all transit_attribs)
+      with
       | true -> lalr1_transit_attribs
       | false -> begin
-          let transit = Transit.init ~src:ipred_state_index ~dst:state_index in
-          assert (not (Transit.cyclic transit));
-          let transit_attribs_prev = match Ordmap.get transit lalr1_transit_attribs with
-            | None -> TransitAttribs.empty
-            | Some transit_attribs_prev -> transit_attribs_prev
-          in
-          let transit_attribs_union = TransitAttribs.union transit_attribs transit_attribs_prev in
-          match Attribs.equal (TransitAttribs.all transit_attribs_union)
-            (TransitAttribs.all transit_attribs_prev) with
-          | true -> lalr1_transit_attribs
-          | false -> begin
-              let lalr1_transit_attribs = Ordmap.upsert ~k:transit ~v:transit_attribs_union
-                  lalr1_transit_attribs in
-              let marks = Set.insert ipred_state_index marks in
-              backprop_transit_attribs adjs transit_attribs lalr1_transit_attribs marks
-                ipred_state_index
-            end
+          let lalr1_transit_attribs = Ordmap.upsert ~k:transit ~v:transit_attribs'
+              lalr1_transit_attribs in
+          backprop_transit_attribs adjs transit_attribs_potential lalr1_transit_attribs
+            ipred_state_index
         end
     ) (Adjs.ipreds_of_state_index state_index adjs)
 
-let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs marks lanectx =
+let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs lanectx =
   (* Marking of the current lane segment spanning the start state back to the current state prevents
    * infinite recursion. It is possible for a grammar to induce a combinatorial explosion of
    * contributing lanes, but only non-redundant transition attribs lead to recursion, thus assuring
    * that each transition is recursed on only once. *)
   let state_index = State.index (LaneCtx.state lanectx) in
-  assert (not (Set.mem state_index marks));
-  let marks = Set.insert state_index marks in
   (* Accumulate transit attribs and ipred lane contexts of `lanectx`. *)
   let lalr1_transit_attribs, ipred_lanectxs =
     Array.fold ~init:(lalr1_transit_attribs, [])
       ~f:(fun (lalr1_transit_attribs, ipred_lanectxs) ipred_state_index ->
         let ipred_state = Array.get ipred_state_index lalr1_states in
         let ipred_lanectx = LaneCtx.of_ipred ipred_state lanectx in
-        let ipred_kernel_attribs = LaneCtx.kernel_attribs_all ipred_lanectx in
+        let ipred_kernel_attribs = LaneCtx.kernel_attribs ipred_lanectx in
         let transit = LaneCtx.transit ipred_lanectx in
         (* Load current transit attribs. It is possible for there to be existing attribs to other
          * conflict states. *)
@@ -61,58 +53,51 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
           match KernelAttribs.equal kernel_attribs' kernel_attribs with
           | true -> lalr1_transit_attribs
           | false -> begin
-              assert (not (Transit.cyclic transit));
               let lalr1_transit_attribs =
                 Ordmap.upsert ~k:transit ~v:transit_attribs' lalr1_transit_attribs in
               (* Recurse if lanes may extend to predecessors. *)
               match LaneCtx.traces_length ipred_lanectx with
               | 0L -> lalr1_transit_attribs
               | _ -> ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs
-                  marks ipred_lanectx
+                  ipred_lanectx
             end
         in
         let ipred_lanectxs = ipred_lanectx :: ipred_lanectxs in
         lalr1_transit_attribs, ipred_lanectxs
-      ) (Array.filter ~f:(fun ipred_state_index -> not (Set.mem ipred_state_index marks))
-        (Adjs.ipreds_of_state_index state_index adjs))
+      ) (Adjs.ipreds_of_state_index state_index adjs)
   in
-  (* Finish computing direct attributions for `lanectx`. This is done post-order to detect
+  (* Finish computing definite attributions for `lanectx`. This is done post-order to detect
    * attributions for which there is a relevant kernel item in `lanectx`, but no relevant item in
    * any of its ipreds' lane contexts. *)
   let lanectx = LaneCtx.post_init ipred_lanectxs lanectx in
-  (* Accumulate direct attributions. *)
+  (* Accumulate definite attributions. *)
   let transit = LaneCtx.transit lanectx in
   let lane_attribs_definite = LaneCtx.lane_attribs_definite lanectx in
   let lalr1_transit_attribs = match Attribs.is_empty lane_attribs_definite with
     | true -> lalr1_transit_attribs
     | false -> begin
-        (* Backpropagate. *)
-        let transit_attribs = TransitAttribs.of_lane_attribs lane_attribs_definite in
-        let lalr1_transit_attribs = backprop_transit_attribs adjs transit_attribs
-            lalr1_transit_attribs marks state_index in
-        let lalr1_transit_attribs = match Transit.cyclic transit with
-          | true -> lalr1_transit_attribs
-          | false -> begin
-              let transit_attribs_direct =
-                TransitAttribs.of_lane_attribs_definite lane_attribs_definite in
-              Ordmap.amend transit ~f:(function
-                | None -> Some transit_attribs_direct
-                | Some transit_attribs_existing ->
-                  Some (TransitAttribs.union transit_attribs_direct transit_attribs_existing)
-              ) lalr1_transit_attribs
-            end
+        (* Merge definite attribs before backpropagating. If there are relevant cycles incorporating
+         * this state, recursion will (in the worst case) terminate upon reaching this state. *)
+        let transit_attribs_definite =
+          TransitAttribs.of_attribs_definite lane_attribs_definite in
+        let lalr1_transit_attribs = Ordmap.amend transit ~f:(function
+          | None -> Some transit_attribs_definite
+          | Some transit_attribs_existing ->
+            Some (TransitAttribs.union transit_attribs_definite transit_attribs_existing)
+        ) lalr1_transit_attribs
         in
-        lalr1_transit_attribs
+        (* Backpropagate. *)
+        let transit_attribs_potential = TransitAttribs.of_attribs_potential lane_attribs_definite in
+        backprop_transit_attribs adjs transit_attribs_potential lalr1_transit_attribs state_index
       end
   in
   lalr1_transit_attribs
 
 let gather_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_transit_attribs
     conflict_state_index =
-  let marks = Set.empty (module State.Index) in
   let conflict_state = Array.get conflict_state_index lalr1_states in
   let lanectx = LaneCtx.of_conflict_state ~resolve symbols prods conflict_state in
-  ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs marks lanectx
+  ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs lanectx
 
 let filter_transits_relevant lalr1_transit_attribs transits ~conflict_state_index symbol_index =
   (* Filter in/out transits lacking a relevant {conflict_state, symbol} attrib. *)
@@ -192,8 +177,10 @@ let close_transit_attribs io adjs lalr1_transit_attribs =
                       ~f:(fun (io, lalr1_transit_attribs, workq) out_transit ->
                         let transit_attribs =
                           Ordmap.get_hlt out_transit lalr1_transit_attribs in
-                        let transit_attribs' = TransitAttribs.merge_definite ~conflict_state_index
-                            ~symbol_index ~conflict ~contrib:in_contrib_common transit_attribs in
+                        let lane_attrib = Attrib.init_lane ~conflict_state_index ~symbol_index
+                            ~conflict ~contrib:in_contrib_common in
+                        let transit_attribs' =
+                          TransitAttribs.merge_definite lane_attrib transit_attribs in
                         match Attribs.equal (TransitAttribs.definite transit_attribs')
                           (TransitAttribs.definite transit_attribs) with
                         | true -> io, lalr1_transit_attribs, workq

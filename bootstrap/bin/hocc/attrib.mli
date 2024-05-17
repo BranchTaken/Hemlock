@@ -47,8 +47,14 @@ val init_lane: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t 
 (** [init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib] returns an attribution with
     key (conflict_state_index, symbol_index) that attributes [contrib] to a lane. *)
 
+val to_lane_attrib: t -> t
+(** [to_lane t] returns a derivative of [t] with empty [isucc_lr1itemset]. *)
+
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)
+
+val is_lane_attrib: t -> bool
+(** [is_lane t] returns true if [isucc_lr1itemset] is empty in [t]. *)
 
 val union: t -> t -> t
 (** [union t0 t1] returns an attribution with the union of attribution values in [t0] and [t1]. The
