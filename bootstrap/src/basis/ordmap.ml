@@ -546,18 +546,23 @@ let cmp vcmp t0 t1 =
   ) t0 t1
 
 let equal veq t0 t1 =
-  (* Equal AVL trees may have different internal structure. fold2_until is structure-agnostic, so
-   * the following produces correct results even when coupled recursive traversal would fail. *)
-  fold2_until ~init:true ~f:(fun _ kv0_opt kv1_opt ->
-    match kv0_opt, kv1_opt with
-    | Some (_, v0), Some (_, v1) -> begin
-        let eq = veq v0 v1 in
-        eq, (not eq)
-      end
-    | Some _, None -> false, true
-    | None, Some _ -> false, true
-    | None, None -> not_reached ()
-  ) t0 t1
+  match (length t0) = (length t1) with
+  | false -> false
+  | true -> begin
+      (* Equal AVL trees may have different internal structure. fold2_until is structure-agnostic,
+       * so the following produces correct results even when coupled recursive traversal would fail.
+      *)
+      fold2_until ~init:true ~f:(fun _ kv0_opt kv1_opt ->
+        match kv0_opt, kv1_opt with
+        | Some (_, v0), Some (_, v1) -> begin
+            let eq = veq v0 v1 in
+            eq, (not eq)
+          end
+        | Some _, None -> false, true
+        | None, Some _ -> false, true
+        | None, None -> not_reached ()
+      ) t0 t1
+    end
 
 let expose = function
   | Leaf {k; v} -> Empty, (k, v), Empty
