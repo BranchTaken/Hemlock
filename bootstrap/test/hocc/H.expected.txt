@@ -83,7 +83,7 @@ Non-terminals
             E ::= Ta
             E ::= epsilon prec p1
 IELR(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
@@ -94,7 +94,7 @@ IELR(1) States
             Tb : ShiftPrefix 2
         Gotos
             S : 3
-    State 1
+    State 1 [1.0]
         Kernel
             [S ::= Ta · Y Ta, {"⊥"}]
         Added
@@ -105,7 +105,7 @@ IELR(1) States
             Ty1 : ShiftPrefix 5
         Gotos
             Y : 6
-    State 2
+    State 2 [2.0]
         Kernel
             [S ::= Tb · Y Tb, {"⊥"}]
         Added
@@ -116,12 +116,12 @@ IELR(1) States
             Ty1 : ShiftPrefix 8
         Gotos
             Y : 9
-    State 3
+    State 3 [3.0]
         Kernel
             [S' ::= S · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 10
-    State 4
+    State 4 [4.0]
         Kernel
             [Y ::= Ty0 · Z, {Ta}]
         Added
@@ -132,7 +132,7 @@ IELR(1) States
             Tz1 : ShiftPrefix 12
         Gotos
             Z : 13
-    State 5
+    State 5 [5.0]
         Kernel
             [Y ::= Ty1 · Z, {Ta}]
         Added
@@ -143,12 +143,12 @@ IELR(1) States
             Tz1 : ShiftPrefix 12
         Gotos
             Z : 14
-    State 6
+    State 6 [6.0]
         Kernel
             [S ::= Ta Y · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 15 prec p2
-    State 7
+    State 7 [4.1]
         Kernel
             [Y ::= Ty0 · Z, {Tb}]
         Added
@@ -159,7 +159,7 @@ IELR(1) States
             Tz1 : ShiftPrefix 17
         Gotos
             Z : 13
-    State 8
+    State 8 [5.1]
         Kernel
             [Y ::= Ty1 · Z, {Tb}]
         Added
@@ -170,17 +170,17 @@ IELR(1) States
             Tz1 : ShiftPrefix 17
         Gotos
             Z : 14
-    State 9
+    State 9 [7.0]
         Kernel
             [S ::= Tb Y · Tb, {"⊥"}]
         Actions
             Tb : ShiftAccept 18
-    State 10
+    State 10 [8.0]
         Kernel
             [S' ::= S "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce S' ::= S "⊥"
-    State 11
+    State 11 [9.0]
         Kernel
             [Z ::= Tz0 · A B, {Ta}]
         Added
@@ -189,7 +189,7 @@ IELR(1) States
             Ta : ShiftPrefix 19 prec p2
         Gotos
             A : 20
-    State 12
+    State 12 [10.0]
         Kernel
             [Z ::= Tz1 · A B, {Ta}]
         Added
@@ -198,24 +198,24 @@ IELR(1) States
             Ta : ShiftPrefix 19 prec p2
         Gotos
             A : 21
-    State 13
+    State 13 [11.0]
         Kernel
             [Y ::= Ty0 Z ·, {Ta, Tb}]
         Actions
             Ta : Reduce Y ::= Ty0 Z
             Tb : Reduce Y ::= Ty0 Z
-    State 14
+    State 14 [12.0]
         Kernel
             [Y ::= Ty1 Z ·, {Ta, Tb}]
         Actions
             Ta : Reduce Y ::= Ty1 Z
             Tb : Reduce Y ::= Ty1 Z
-    State 15
+    State 15 [13.0]
         Kernel
             [S ::= Ta Y Ta ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Ta Y Ta
-    State 16
+    State 16 [9.1]
         Kernel
             [Z ::= Tz0 · A B, {Tb}]
         Added
@@ -224,7 +224,7 @@ IELR(1) States
             Ta : ShiftPrefix 22 prec p2
         Gotos
             A : 20
-    State 17
+    State 17 [10.1]
         Kernel
             [Z ::= Tz1 · A B, {Tb}]
         Added
@@ -233,12 +233,12 @@ IELR(1) States
             Ta : ShiftPrefix 22 prec p2
         Gotos
             A : 21
-    State 18
+    State 18 [14.0]
         Kernel
             [S ::= Tb Y Tb ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Tb Y Tb
-    State 19
+    State 19 [15.0]
         Kernel
             [A ::= Ta · C D E, {Ta, Tc}]
         Added
@@ -249,7 +249,7 @@ IELR(1) States
         Gotos
             C : 24
             D : 25
-    State 20
+    State 20 [16.0]
         Kernel
             [Z ::= Tz0 A · B, {Ta, Tb}]
         Added
@@ -261,7 +261,7 @@ IELR(1) States
             Tc : ShiftPrefix 26
         Gotos
             B : 27
-    State 21
+    State 21 [17.0]
         Kernel
             [Z ::= Tz1 A · B, {Ta, Tb}]
         Added
@@ -273,7 +273,7 @@ IELR(1) States
             Tc : ShiftPrefix 26
         Gotos
             B : 28
-    State 22
+    State 22 [15.1]
         Kernel
             [A ::= Ta · C D E, {Tb, Tc}]
         Added
@@ -284,14 +284,14 @@ IELR(1) States
         Gotos
             C : 29
             D : 25
-    State 23
+    State 23 [18.0]
         Kernel
             [D ::= Ta ·, {Ta, Tb, Tc}]
         Actions
             Ta : Reduce D ::= Ta
             Tb : Reduce D ::= Ta
             Tc : Reduce D ::= Ta
-    State 24
+    State 24 [19.0]
         Kernel
             [A ::= Ta C · D E, {Ta, Tc}]
         Added
@@ -300,30 +300,30 @@ IELR(1) States
             Ta : ShiftPrefix 23 prec p2
         Gotos
             D : 30
-    State 25
+    State 25 [20.0]
         Kernel
             [C ::= D ·, {Ta}]
         Actions
             Ta : Reduce C ::= D
-    State 26
+    State 26 [21.0]
         Kernel
             [B ::= Tc ·, {Ta, Tb}]
         Actions
             Ta : Reduce B ::= Tc
             Tb : Reduce B ::= Tc
-    State 27
+    State 27 [22.0]
         Kernel
             [Z ::= Tz0 A B ·, {Ta, Tb}]
         Actions
             Ta : Reduce Z ::= Tz0 A B
             Tb : Reduce Z ::= Tz0 A B
-    State 28
+    State 28 [23.0]
         Kernel
             [Z ::= Tz1 A B ·, {Ta, Tb}]
         Actions
             Ta : Reduce Z ::= Tz1 A B
             Tb : Reduce Z ::= Tz1 A B
-    State 29
+    State 29 [19.1]
         Kernel
             [A ::= Ta C · D E, {Tb, Tc}]
         Added
@@ -332,7 +332,7 @@ IELR(1) States
             Ta : ShiftPrefix 23 prec p2
         Gotos
             D : 31
-    State 30
+    State 30 [24.0]
         Kernel
             [A ::= Ta C D · E, {Ta, Tc}]
         Added
@@ -343,7 +343,7 @@ IELR(1) States
             Tc : Reduce E ::= epsilon prec p1
         Gotos
             E : 33
-    State 31
+    State 31 [24.1]
         Kernel
             [A ::= Ta C D · E, {Tb, Tc}]
         Added
@@ -355,14 +355,14 @@ IELR(1) States
             Tc : Reduce E ::= epsilon prec p1
         Gotos
             E : 33
-    State 32
+    State 32 [25.0]
         Kernel
             [E ::= Ta ·, {Ta, Tb, Tc}]
         Actions
             Ta : Reduce E ::= Ta
             Tb : Reduce E ::= Ta
             Tc : Reduce E ::= Ta
-    State 33
+    State 33 [26.0]
         Kernel
             [A ::= Ta C D E ·, {Ta, Tb, Tc}]
         Actions

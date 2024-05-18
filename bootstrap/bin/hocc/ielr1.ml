@@ -15,15 +15,15 @@ let rec backprop_transit_attribs adjs lane_attribs_potential lalr1_transit_attri
       (* Detect the no-op case as quickly as possible. The conceptually simpler approach of
        * performing the union and diffing before/after transit attribs is a lot more expensive. *)
       let do_union = Attribs.fold_until ~init:false
-        ~f:(fun _do_union Attrib.{conflict_state_index; symbol_index; contrib=lane_contrib; _} ->
-        let do_union =
-          match Attribs.get ~conflict_state_index symbol_index transit_attribs_all with
-          | None -> true
-          | Some Attrib.{contrib=transit_contrib; _} ->
-            not Contrib.(is_empty (diff lane_contrib transit_contrib))
-        in
-        do_union, do_union
-      ) lane_attribs_potential in
+          ~f:(fun _do_union Attrib.{conflict_state_index; symbol_index; contrib=lane_contrib; _} ->
+            let do_union =
+              match Attribs.get ~conflict_state_index symbol_index transit_attribs_all with
+              | None -> true
+              | Some Attrib.{contrib=transit_contrib; _} ->
+                not Contrib.(is_empty (diff lane_contrib transit_contrib))
+            in
+            do_union, do_union
+          ) lane_attribs_potential in
       match do_union with
       | false -> lalr1_transit_attribs
       | true -> begin
@@ -724,12 +724,17 @@ let gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr1_isocores lalr1_
     let dst = Isocores.get_core_hlt goto_core lalr1_isocores in
     Transit.init ~src ~dst
   end in
+  let isocores_sn_of_transit Transit.{dst; _} =
+    Isocores.statenub dst lalr1_isocores
+    |> StateNub.isocores_sn
+  in
   let gotonub_of_statenub_goto statenub goto = begin
     let transit = transit_of_statenub_goto statenub goto in
+    let isocores_sn = isocores_sn_of_transit transit in
     let transit_attribs = match Ordmap.get transit lalr1_transit_attribs with
       | None -> TransitAttribs.empty
       | Some transit_attribs -> transit_attribs
     in
-    GotoNub.init ~goto ~transit_attribs
+    GotoNub.init ~isocores_sn_opt:(Some isocores_sn) ~goto ~transit_attribs
   end in
   io, gotonub_of_statenub_goto

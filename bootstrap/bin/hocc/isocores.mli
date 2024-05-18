@@ -35,16 +35,21 @@ val get_core_hlt: Lr0Itemset.t -> t -> StateNub.Index.t
 
 val insert: Symbols.t -> GotoNub.t -> t -> StateNub.Index.t * t
 (** [insert symbols gotonub t] constructs a state nub which incorporates [gotonub], inserts it into
-    an incremental derivative of [t], and returns its index along with the derivative of [t]. *)
+    an incremental derivative of [t], and returns its index along with the derivative of [t]. If the
+    result establishes a new isocore set, the isocore set's sequence number is automatically
+    assigned unless [GotoNub] carries an isocore set sequence number. *)
 
 val merge: Symbols.t -> GotoNub.t -> StateNub.Index.t -> t -> bool * t
 (** [merge symbols gotonub statenub_index t] merges [gotonub] into the state nub with given
     [statenub_index]. If the resulting state nub is distinct from the input, true is returned along
     with a derivative of [t] containing the resulting state nub; [false, t] otherwise. *)
 
+val isocores_length: t -> uns
+(** [isocores_length t] returns the number of isocore sets in [t]. *)
+
 val length: t -> uns
-(** [length t] returns the number of state nubs in [t] (greater than or equal to the number of
-    isocore sets). *)
+(** [length t] returns the number of state nubs in [t] (greater than or equal to [isocores_length
+    t]). *)
 
 val statenub: StateNub.Index.t -> t -> StateNub.t
 (** [statenub statenub_index t] returns the state nub in [t] with given [statenub_index]. *)

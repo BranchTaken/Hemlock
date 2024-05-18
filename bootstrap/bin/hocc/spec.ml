@@ -2,6 +2,7 @@ open Basis
 open! Basis.Rudiments
 
 type t = {
+  algorithm: Conf.algorithm;
   precs: Precs.t;
   symbols: Symbols.t;
   prods: Prods.t;
@@ -773,7 +774,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
               let lr1item = Lr1Item.init ~lr0item ~follow:symbol.follow in
               let goto = Lr1Itemset.singleton lr1item in
               let transit_attribs = TransitAttribs.empty in
-              let gotonub = GotoNub.init ~goto ~transit_attribs in
+              let gotonub = GotoNub.init ~isocores_sn_opt:None ~goto ~transit_attribs in
               let index, isocores' = Isocores.insert symbols gotonub isocores in
               let workq' = Workq.push_back index workq in
               isocores', workq'
@@ -859,7 +860,11 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
           init_inner Conf.Lalr1 ~resolve:false io precs symbols prods reductions in
         Ielr1.gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr1_isocores lalr1_states
       end
-    | _ -> io, (fun _statenub goto -> GotoNub.init ~goto ~transit_attribs:TransitAttribs.empty)
+    | _ -> begin
+        io,
+        (fun _statenub goto ->
+            GotoNub.init ~isocores_sn_opt:None ~goto ~transit_attribs:TransitAttribs.empty)
+      end
   in
   let io, compat = compat_init algorithm ~resolve io symbols prods in
   let isocores, workq = init symbols ~compat in
@@ -1192,17 +1197,6 @@ and gc_states io states =
     |> Fmt.fmt "\n"
     |> Io.with_log io
   in
-(*
-  let unreachable_state_indexes = Range.Uns.fold (0L =:< Array.length states)
-    ~init:(Ordset.empty (module State.Index))
-    ~f:(fun unreachable_state_indexes state_index ->
-      match Ordset.mem state_index reachable_state_indexes with
-      | true -> unreachable_state_indexes
-      | false -> Ordset.insert state_index unreachable_state_indexes
-    ) in
-  File.Fmt.stderr |> Fmt.fmt "XXX unreachable_state_indexes=" |> Ordset.pp unreachable_state_indexes |> Fmt.fmt "\n" |> ignore;
-  let nunreachable = 0L in(* XXX *)
-*)
   match nunreachable with
   | 0L -> io, states
   | _ -> begin
@@ -1256,7 +1250,7 @@ and init algorithm ~resolve io hmh =
   let io, _isocores, states = init_inner algorithm ~resolve io precs symbols prods reductions in
   let io, states = gc_states io states in
   let io = log_unused io precs symbols prods states in
-  io, {precs; symbols; prods; reductions; states}
+  io, {algorithm; precs; symbols; prods; reductions; states}
 
 let conflicts {states; _} =
   match Array.reduce ~f:Uns.(+)
@@ -1614,6 +1608,20 @@ let to_description conf io description t =
         |> Fmt.fmt "    " |> html "<li>" |> Fmt.fmt "State "
         |> html "<a id=\"state-" |> html state_index_string |> html "\">"
         |> Fmt.fmt state_index_string
+        |> (fun formatter ->
+          match t.algorithm with
+          | Lr1
+          | Ielr1
+          | Pgm1 -> begin
+              formatter
+              |> Fmt.fmt " ["
+              |> Uns.pp (StateNub.isocores_sn statenub)
+              |> Fmt.fmt "."
+              |> Uns.pp (StateNub.isocore_set_sn statenub)
+              |> Fmt.fmt "]"
+            end
+          | Lalr1 -> formatter
+        )
         |> html "</a>" |> Fmt.fmt "\n"
         |> html "        <ul type=none>\n"
         |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Kernel\n"

@@ -34,7 +34,7 @@ Non-terminals
             A ::= Ta prec p
             A ::= Ta Ta prec p
 IELR(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
@@ -45,7 +45,7 @@ IELR(1) States
             Tb : ShiftPrefix 2
         Gotos
             S : 3
-    State 1
+    State 1 [1.0]
         Kernel
             [S ::= Ta · A Ta, {"⊥"}] prec p
         Added
@@ -55,7 +55,7 @@ IELR(1) States
             Ta : ShiftPrefix 4 prec p
         Gotos
             A : 5
-    State 2
+    State 2 [2.0]
         Kernel
             [S ::= Tb · A Tb, {"⊥"}]
         Added
@@ -65,12 +65,12 @@ IELR(1) States
             Ta : ShiftPrefix 6 prec p
         Gotos
             A : 7
-    State 3
+    State 3 [3.0]
         Kernel
             [S' ::= S · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 8
-    State 4
+    State 4 [4.0]
         Kernel
             [A ::= Ta ·, {Ta}] prec p
             [A ::= Ta · Ta, {Ta}] prec p
@@ -78,40 +78,40 @@ IELR(1) States
             Ta :
 CONFLICT        ShiftPrefix 9 prec p
 CONFLICT        Reduce A ::= Ta prec p
-    State 5
+    State 5 [5.0]
         Kernel
             [S ::= Ta A · Ta, {"⊥"}] prec p
         Actions
             Ta : ShiftAccept 10 prec p
-    State 6
+    State 6 [4.1]
         Kernel
             [A ::= Ta ·, {Tb}] prec p
             [A ::= Ta · Ta, {Tb}] prec p
         Actions
             Ta : ShiftPrefix 9 prec p
             Tb : Reduce A ::= Ta prec p
-    State 7
+    State 7 [6.0]
         Kernel
             [S ::= Tb A · Tb, {"⊥"}]
         Actions
             Tb : ShiftAccept 11
-    State 8
+    State 8 [7.0]
         Kernel
             [S' ::= S "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce S' ::= S "⊥"
-    State 9
+    State 9 [8.0]
         Kernel
             [A ::= Ta Ta ·, {Ta, Tb}] prec p
         Actions
             Ta : Reduce A ::= Ta Ta prec p
             Tb : Reduce A ::= Ta Ta prec p
-    State 10
+    State 10 [9.0]
         Kernel
             [S ::= Ta A Ta ·, {"⊥"}] prec p
         Actions
             "⊥" : Reduce S ::= Ta A Ta prec p
-    State 11
+    State 11 [10.0]
         Kernel
             [S ::= Tb A Tb ·, {"⊥"}]
         Actions

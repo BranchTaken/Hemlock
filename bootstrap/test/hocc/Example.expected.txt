@@ -59,7 +59,7 @@ Non-terminals
         Productions
             Answer' ::= Answer "⊥"
 LR(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [Answer' ::= · Answer "⊥", {"ε"}]
         Added
@@ -72,7 +72,7 @@ LR(1) States
         Gotos
             Expr : 2
             Answer : 3
-    State 1
+    State 1 [1.0]
         Kernel
             [Expr ::= INT ·, {"*", "/", "+", "-", EOI}]
         Actions
@@ -81,7 +81,7 @@ LR(1) States
             "+" : Reduce Expr ::= INT
             "-" : Reduce Expr ::= INT
             EOI : Reduce Expr ::= INT
-    State 2
+    State 2 [2.0]
         Kernel
             [Expr ::= Expr · MulOp Expr, {"*", "/", "+", "-", EOI}] prec mul
             [Expr ::= Expr · AddOp Expr, {"*", "/", "+", "-", EOI}] prec add
@@ -100,37 +100,37 @@ LR(1) States
         Gotos
             MulOp : 9
             AddOp : 10
-    State 3
+    State 3 [3.0]
         Kernel
             [Answer' ::= Answer · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 11
-    State 4
+    State 4 [4.0]
         Kernel
             [MulOp ::= "*" ·, {INT}]
         Actions
             INT : Reduce MulOp ::= "*"
-    State 5
+    State 5 [5.0]
         Kernel
             [MulOp ::= "/" ·, {INT}]
         Actions
             INT : Reduce MulOp ::= "/"
-    State 6
+    State 6 [6.0]
         Kernel
             [AddOp ::= "+" ·, {INT}]
         Actions
             INT : Reduce AddOp ::= "+"
-    State 7
+    State 7 [7.0]
         Kernel
             [AddOp ::= "-" ·, {INT}]
         Actions
             INT : Reduce AddOp ::= "-"
-    State 8
+    State 8 [8.0]
         Kernel
             [Answer ::= Expr EOI ·, {"⊥"}]
         Actions
             "⊥" : Reduce Answer ::= Expr EOI
-    State 9
+    State 9 [9.0]
         Kernel
             [Expr ::= Expr MulOp · Expr, {"*", "/", "+", "-", EOI}] prec mul
         Added
@@ -141,7 +141,7 @@ LR(1) States
             INT : ShiftPrefix 1
         Gotos
             Expr : 12
-    State 10
+    State 10 [10.0]
         Kernel
             [Expr ::= Expr AddOp · Expr, {"*", "/", "+", "-", EOI}] prec add
         Added
@@ -152,12 +152,12 @@ LR(1) States
             INT : ShiftPrefix 1
         Gotos
             Expr : 13
-    State 11
+    State 11 [11.0]
         Kernel
             [Answer' ::= Answer "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce Answer' ::= Answer "⊥"
-    State 12
+    State 12 [12.0]
         Kernel
             [Expr ::= Expr · MulOp Expr, {"*", "/", "+", "-", EOI}] prec mul
             [Expr ::= Expr MulOp Expr ·, {"*", "/", "+", "-", EOI}] prec mul
@@ -176,7 +176,7 @@ LR(1) States
         Gotos
             MulOp : 9
             AddOp : 10
-    State 13
+    State 13 [13.0]
         Kernel
             [Expr ::= Expr · MulOp Expr, {"*", "/", "+", "-", EOI}] prec mul
             [Expr ::= Expr · AddOp Expr, {"*", "/", "+", "-", EOI}] prec add

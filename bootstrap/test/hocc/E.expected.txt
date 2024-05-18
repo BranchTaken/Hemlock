@@ -34,7 +34,7 @@ Non-terminals
             N ::= C N
             N ::= D
 PGM(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
@@ -47,7 +47,7 @@ PGM(1) States
         Gotos
             S : 3
             N : 4
-    State 1
+    State 1 [1.0]
         Kernel
             [N ::= C · N, {C, D, EOI}]
         Added
@@ -58,19 +58,19 @@ PGM(1) States
             D : ShiftPrefix 2
         Gotos
             N : 5
-    State 2
+    State 2 [2.0]
         Kernel
             [N ::= D ·, {C, D, EOI}]
         Actions
             C : Reduce N ::= D
             D : Reduce N ::= D
             EOI : Reduce N ::= D
-    State 3
+    State 3 [3.0]
         Kernel
             [S' ::= S · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 6
-    State 4
+    State 4 [4.0]
         Kernel
             [S ::= N · N EOI, {"⊥"}]
         Added
@@ -81,24 +81,24 @@ PGM(1) States
             D : ShiftPrefix 2
         Gotos
             N : 7
-    State 5
+    State 5 [5.0]
         Kernel
             [N ::= C N ·, {C, D, EOI}]
         Actions
             C : Reduce N ::= C N
             D : Reduce N ::= C N
             EOI : Reduce N ::= C N
-    State 6
+    State 6 [6.0]
         Kernel
             [S' ::= S "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce S' ::= S "⊥"
-    State 7
+    State 7 [7.0]
         Kernel
             [S ::= N N · EOI, {"⊥"}]
         Actions
             EOI : ShiftAccept 8
-    State 8
+    State 8 [8.0]
         Kernel
             [S ::= N N EOI ·, {"⊥"}]
         Actions

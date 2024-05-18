@@ -28,6 +28,12 @@ type t = {
   lr1itemsetclosure: Lr1ItemsetClosure.t;
   (** LR(1) item set closure. *)
 
+  isocores_sn: uns;
+  (** Isocore set serial number for the set containing this state nub. *)
+
+  isocore_set_sn: uns;
+  (** Serial number for this state nub within its containing isocore set. *)
+
   transit_attribs_lst: TransitAttribs.t list;
   (** List of transit conflict attributions, one for each merged in-transition. *)
 
@@ -37,12 +43,20 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
-val init: Symbols.t -> index:Index.t -> GotoNub.t -> t
-(** [init symbols ~index gotonub] initializes a state nub with given [index], LR(1) item set closure
-    based on the kernel of [gotonub], and conflict attributions of [gotonub]. *)
+val init: Symbols.t -> index:Index.t -> isocores_sn:uns -> isocore_set_sn:uns -> GotoNub.t -> t
+(** [init symbols ~index ~isocores_sn ~isocore_set_sn gotonub] initializes a state nub with given
+    [index], [isocores_sn], [isocore_set_sn], LR(1) item set closure based on the kernel of
+    [gotonub], and conflict attributions of [gotonub]. *)
 
 val index: t -> Index.t
 (** [index t] returns the index of the contained unique LR(1) item set closure. *)
+
+val isocores_sn: t -> uns
+(** [isocores_sn t] returns the isocore set serial number for the set containing [t]. *)
+
+val isocore_set_sn: t -> uns
+(** [isocore_set_sn t] returns the serial number of [t] with respect to its containing isocore set.
+*)
 
 val reindex: (Index.t, Index.t, Index.cmper_witness) Map.t -> t -> t
 (** [reindex index_map t] creates a state nub with all LR(1) item set closure and state nub indexes

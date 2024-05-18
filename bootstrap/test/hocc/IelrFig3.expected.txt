@@ -49,7 +49,7 @@ Non-terminals
         Productions
             C ::= Ta Ta prec p3
 IELR(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
@@ -64,7 +64,7 @@ IELR(1) States
             Tb : ShiftPrefix 2
         Gotos
             S : 3
-    State 1
+    State 1 [1.0]
         Kernel
             [S ::= Ta · A Ta, {"⊥"}]
             [S ::= Ta · B Ta, {"⊥"}]
@@ -79,7 +79,7 @@ IELR(1) States
             A : 5
             B : 6
             C : 7
-    State 2
+    State 2 [2.0]
         Kernel
             [S ::= Tb · A Tb, {"⊥"}]
             [S ::= Tb · B Ta, {"⊥"}]
@@ -94,83 +94,83 @@ IELR(1) States
             A : 9
             B : 10
             C : 11
-    State 3
+    State 3 [3.0]
         Kernel
             [S' ::= S · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 12
-    State 4
+    State 4 [4.0]
         Kernel
             [A ::= Ta · Ta, {Ta}] prec p1
             [B ::= Ta · Ta, {Ta}] prec p2
             [C ::= Ta · Ta, {Ta}] prec p3
         Actions
             Ta : ShiftPrefix 13
-    State 5
+    State 5 [5.0]
         Kernel
             [S ::= Ta A · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 14
-    State 6
+    State 6 [6.0]
         Kernel
             [S ::= Ta B · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 15
-    State 7
+    State 7 [7.0]
         Kernel
             [S ::= Ta C · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 16
-    State 8
+    State 8 [4.1]
         Kernel
             [A ::= Ta · Ta, {Tb}] prec p1
             [B ::= Ta · Ta, {Ta}] prec p2
             [C ::= Ta · Ta, {Ta}] prec p3
         Actions
             Ta : ShiftPrefix 17
-    State 9
+    State 9 [8.0]
         Kernel
             [S ::= Tb A · Tb, {"⊥"}]
         Actions
             Tb : ShiftAccept 18
-    State 10
+    State 10 [9.0]
         Kernel
             [S ::= Tb B · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 19
-    State 11
+    State 11 [10.0]
         Kernel
             [S ::= Tb C · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 20
-    State 12
+    State 12 [11.0]
         Kernel
             [S' ::= S "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce S' ::= S "⊥"
-    State 13
+    State 13 [12.0]
         Kernel
             [A ::= Ta Ta ·, {Ta}] prec p1
             [B ::= Ta Ta ·, {Ta}] prec p2
             [C ::= Ta Ta ·, {Ta}] prec p3
         Actions
             Ta : Reduce A ::= Ta Ta prec p1
-    State 14
+    State 14 [13.0]
         Kernel
             [S ::= Ta A Ta ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Ta A Ta
-    State 15
+    State 15 [14.0]
         Kernel
             [S ::= Ta B Ta ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Ta B Ta
-    State 16
+    State 16 [15.0]
         Kernel
             [S ::= Ta C Ta ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Ta C Ta
-    State 17
+    State 17 [12.1]
         Kernel
             [A ::= Ta Ta ·, {Tb}] prec p1
             [B ::= Ta Ta ·, {Ta}] prec p2
@@ -178,17 +178,17 @@ IELR(1) States
         Actions
             Ta : Reduce B ::= Ta Ta prec p2
             Tb : Reduce A ::= Ta Ta prec p1
-    State 18
+    State 18 [16.0]
         Kernel
             [S ::= Tb A Tb ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Tb A Tb
-    State 19
+    State 19 [17.0]
         Kernel
             [S ::= Tb B Ta ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Tb B Ta
-    State 20
+    State 20 [18.0]
         Kernel
             [S ::= Tb C Ta ·, {"⊥"}]
         Actions

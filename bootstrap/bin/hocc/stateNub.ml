@@ -176,6 +176,8 @@ module T = struct
   module Index = Lr1ItemsetClosure.Index
   type t = {
     lr1itemsetclosure: Lr1ItemsetClosure.t;
+    isocores_sn: uns;
+    isocore_set_sn: uns;
     transit_attribs_lst: TransitAttribs.t list;
     attribs: Attribs.t;
   }
@@ -186,9 +188,11 @@ module T = struct
   let cmp {lr1itemsetclosure=c0; _} {lr1itemsetclosure=c1; _} =
     Lr1ItemsetClosure.cmp c0 c1
 
-  let pp {lr1itemsetclosure; transit_attribs_lst; attribs} formatter =
+  let pp {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst; attribs} formatter =
     formatter
     |> Fmt.fmt "{lr1itemsetclosure=" |> Lr1ItemsetClosure.pp  lr1itemsetclosure
+    |> Fmt.fmt "; isocores_sn=" |> Uns.pp isocores_sn
+    |> Fmt.fmt "; isocore_set_sn=" |> Uns.pp isocore_set_sn
     |> Fmt.fmt "; transit_attribs_lst=" |> List.pp TransitAttribs.pp transit_attribs_lst
     |> Fmt.fmt "; attribs=" |> Attribs.pp attribs
     |> Fmt.fmt "}"
@@ -196,23 +200,30 @@ end
 include T
 include Identifiable.Make(T)
 
-let init symbols ~index GotoNub.{goto; transit_attribs; attribs} =
+let init symbols ~index ~isocores_sn ~isocore_set_sn GotoNub.{goto; transit_attribs; attribs; _} =
   let lr1itemsetclosure = Lr1ItemsetClosure.init symbols ~index goto in
-  {lr1itemsetclosure; transit_attribs_lst=[transit_attribs]; attribs}
+  {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst=[transit_attribs]; attribs}
 
-let reindex index_map {lr1itemsetclosure; transit_attribs_lst; attribs} =
+let reindex index_map
+    {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst; attribs} =
   let lr1itemsetclosure = Lr1ItemsetClosure.reindex index_map lr1itemsetclosure in
   let transit_attribs_lst = List.map ~f:(fun transit_attribs ->
     TransitAttribs.reindex index_map transit_attribs
   ) transit_attribs_lst in
   let attribs = Attribs.reindex index_map attribs in
-  {lr1itemsetclosure; transit_attribs_lst; attribs}
+  {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst; attribs}
 
 let index {lr1itemsetclosure; _} =
   lr1itemsetclosure.index
 
+let isocores_sn {isocores_sn; _} =
+  isocores_sn
+
+let isocore_set_sn {isocore_set_sn; _} =
+  isocore_set_sn
+
 let merge symbols GotoNub.{goto; transit_attribs; _}
-  {lr1itemsetclosure; transit_attribs_lst; attribs} =
+  {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst; attribs} =
   let merged, (Lr1ItemsetClosure.{kernel=lr1itemset; _} as lr1itemsetclosure) =
     Lr1ItemsetClosure.merge symbols goto lr1itemsetclosure in
   let transit_attribs_lst = transit_attribs :: transit_attribs_lst in
@@ -224,7 +235,7 @@ let merge symbols GotoNub.{goto; transit_attribs; _}
         ) transit_attribs_lst
       end
   in
-  merged, {lr1itemsetclosure; transit_attribs_lst; attribs}
+  merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst; attribs}
 
 let next {lr1itemsetclosure; _} =
   Lr1ItemsetClosure.next lr1itemsetclosure

@@ -4,6 +4,9 @@ open! Basis
 open! Basis.Rudiments
 
 type t = {
+  algorithm: Conf.algorithm;
+  (** Algorithm used to generate states. *)
+
   precs: Precs.t;
   (** Precedences. *)
 

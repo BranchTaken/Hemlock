@@ -47,7 +47,7 @@ Non-terminals
         Productions
             D ::= epsilon
 IELR(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
@@ -59,7 +59,7 @@ IELR(1) States
             Tb : ShiftPrefix 2
         Gotos
             S : 3
-    State 1
+    State 1 [1.0]
         Kernel
             [S ::= Ta · A Ta, {"⊥"}]
             [S ::= Ta · Ta Tb, {"⊥"}]
@@ -71,7 +71,7 @@ IELR(1) States
         Gotos
             A : 5
             B : 6
-    State 2
+    State 2 [2.0]
         Kernel
             [S ::= Tb · A Tb, {"⊥"}]
         Added
@@ -82,24 +82,24 @@ IELR(1) States
         Gotos
             A : 8
             B : 6
-    State 3
+    State 3 [3.0]
         Kernel
             [S' ::= S · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 9
-    State 4
+    State 4 [4.0]
         Kernel
             [S ::= Ta Ta · Tb, {"⊥"}]
             [B ::= Ta ·, {Ta}]
         Actions
             Ta : Reduce B ::= Ta
             Tb : ShiftAccept 10
-    State 5
+    State 5 [5.0]
         Kernel
             [S ::= Ta A · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 11
-    State 6
+    State 6 [6.0]
         Kernel
             [A ::= B · C, {Ta, Tb}]
         Added
@@ -111,44 +111,44 @@ IELR(1) States
         Gotos
             C : 12
             D : 13
-    State 7
+    State 7 [7.0]
         Kernel
             [B ::= Ta ·, {Tb}]
         Actions
             Tb : Reduce B ::= Ta
-    State 8
+    State 8 [8.0]
         Kernel
             [S ::= Tb A · Tb, {"⊥"}]
         Actions
             Tb : ShiftAccept 14
-    State 9
+    State 9 [9.0]
         Kernel
             [S' ::= S "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce S' ::= S "⊥"
-    State 10
+    State 10 [10.0]
         Kernel
             [S ::= Ta Ta Tb ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Ta Ta Tb
-    State 11
+    State 11 [11.0]
         Kernel
             [S ::= Ta A Ta ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= Ta A Ta
-    State 12
+    State 12 [12.0]
         Kernel
             [A ::= B C ·, {Ta, Tb}]
         Actions
             Ta : Reduce A ::= B C
             Tb : Reduce A ::= B C
-    State 13
+    State 13 [13.0]
         Kernel
             [C ::= D ·, {Ta, Tb}]
         Actions
             Ta : Reduce C ::= D
             Tb : Reduce C ::= D
-    State 14
+    State 14 [14.0]
         Kernel
             [S ::= Tb A Tb ·, {"⊥"}]
         Actions

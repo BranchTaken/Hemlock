@@ -46,7 +46,7 @@ Non-terminals
         Productions
             D ::= epsilon
 LR(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
@@ -59,22 +59,22 @@ LR(1) States
             S : 2
             A : 3
             B : 4
-    State 1
+    State 1 [1.0]
         Kernel
             [B ::= Tb ·, {EOI}]
         Actions
             EOI : Reduce B ::= Tb
-    State 2
+    State 2 [2.0]
         Kernel
             [S' ::= S · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 5
-    State 3
+    State 3 [3.0]
         Kernel
             [S ::= A · EOI, {"⊥"}]
         Actions
             EOI : ShiftAccept 6
-    State 4
+    State 4 [4.0]
         Kernel
             [A ::= B · C, {EOI}]
         Added
@@ -88,22 +88,22 @@ CONFLICT        Reduce D ::= epsilon
         Gotos
             C : 7
             D : 8
-    State 5
+    State 5 [5.0]
         Kernel
             [S' ::= S "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce S' ::= S "⊥"
-    State 6
+    State 6 [6.0]
         Kernel
             [S ::= A EOI ·, {"⊥"}]
         Actions
             "⊥" : Reduce S ::= A EOI
-    State 7
+    State 7 [7.0]
         Kernel
             [A ::= B C ·, {EOI}]
         Actions
             EOI : Reduce A ::= B C
-    State 8
+    State 8 [8.0]
         Kernel
             [C ::= D ·, {EOI}]
         Actions

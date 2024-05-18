@@ -51,7 +51,7 @@ Non-terminals
         Productions
             Name ::= NAME
 PGM(1) States
-    State 0
+    State 0 [0.0]
         Kernel
             [Commandline' ::= · Commandline "⊥", {"ε"}]
         Added
@@ -70,7 +70,7 @@ PGM(1) States
             Commandline : 4
             Term : 5
             Name : 6
-    State 1
+    State 1 [1.0]
         Kernel
             [Term ::= NAME ·, {EOF}]
             [Name ::= NAME ·, {"+", "in"}]
@@ -78,7 +78,7 @@ PGM(1) States
             "+" : Reduce Name ::= NAME
             "in" : Reduce Name ::= NAME
             EOF : Reduce Term ::= NAME
-    State 2
+    State 2 [2.0]
         Kernel
             [Commandline ::= "let" · Term EOF, {"⊥"}]
             [Term ::= "let" · Name "in" Term, {EOF}]
@@ -95,7 +95,7 @@ PGM(1) States
         Gotos
             Term : 8
             Name : 9
-    State 3
+    State 3 [3.0]
         Kernel
             [Term ::= "rec" · Term "in" Term, {"in", EOF}]
         Added
@@ -111,22 +111,22 @@ PGM(1) States
         Gotos
             Term : 11
             Name : 6
-    State 4
+    State 4 [4.0]
         Kernel
             [Commandline' ::= Commandline · "⊥", {"ε"}]
         Actions
             "⊥" : ShiftPrefix 12
-    State 5
+    State 5 [5.0]
         Kernel
             [Commandline ::= Term · EOF, {"⊥"}]
         Actions
             EOF : ShiftAccept 13
-    State 6
+    State 6 [6.0]
         Kernel
             [Term ::= Name · "+", {"in", EOF}]
         Actions
             "+" : ShiftPrefix 14
-    State 7
+    State 7 [7.0]
         Kernel
             [Term ::= "let" · Name "in" Term, {"in", EOF}]
         Added
@@ -135,19 +135,19 @@ PGM(1) States
             NAME : ShiftPrefix 15
         Gotos
             Name : 16
-    State 8
+    State 8 [8.0]
         Kernel
             [Commandline ::= "let" Term · EOF, {"⊥"}]
         Actions
             EOF : ShiftAccept 17
-    State 9
+    State 9 [9.0]
         Kernel
             [Term ::= Name · "+", {EOF}]
             [Term ::= "let" Name · "in" Term, {EOF}]
         Actions
             "+" : ShiftPrefix 14
             "in" : ShiftPrefix 18
-    State 10
+    State 10 [1.1]
         Kernel
             [Term ::= NAME ·, {"in", EOF}]
             [Name ::= NAME ·, {"+"}]
@@ -155,43 +155,43 @@ PGM(1) States
             "+" : Reduce Name ::= NAME
             "in" : Reduce Term ::= NAME
             EOF : Reduce Term ::= NAME
-    State 11
+    State 11 [10.0]
         Kernel
             [Term ::= "rec" Term · "in" Term, {"in", EOF}]
         Actions
             "in" : ShiftPrefix 19
-    State 12
+    State 12 [11.0]
         Kernel
             [Commandline' ::= Commandline "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce Commandline' ::= Commandline "⊥"
-    State 13
+    State 13 [12.0]
         Kernel
             [Commandline ::= Term EOF ·, {"⊥"}]
         Actions
             "⊥" : Reduce Commandline ::= Term EOF
-    State 14
+    State 14 [13.0]
         Kernel
             [Term ::= Name "+" ·, {"in", EOF}]
         Actions
             "in" : Reduce Term ::= Name "+"
             EOF : Reduce Term ::= Name "+"
-    State 15
+    State 15 [14.0]
         Kernel
             [Name ::= NAME ·, {"in"}]
         Actions
             "in" : Reduce Name ::= NAME
-    State 16
+    State 16 [15.0]
         Kernel
             [Term ::= "let" Name · "in" Term, {"in", EOF}]
         Actions
             "in" : ShiftPrefix 18
-    State 17
+    State 17 [16.0]
         Kernel
             [Commandline ::= "let" Term EOF ·, {"⊥"}]
         Actions
             "⊥" : Reduce Commandline ::= "let" Term EOF
-    State 18
+    State 18 [17.0]
         Kernel
             [Term ::= "let" Name "in" · Term, {"in", EOF}]
         Added
@@ -207,7 +207,7 @@ PGM(1) States
         Gotos
             Term : 20
             Name : 6
-    State 19
+    State 19 [18.0]
         Kernel
             [Term ::= "rec" Term "in" · Term, {"in", EOF}]
         Added
@@ -223,13 +223,13 @@ PGM(1) States
         Gotos
             Term : 21
             Name : 6
-    State 20
+    State 20 [19.0]
         Kernel
             [Term ::= "let" Name "in" Term ·, {"in", EOF}]
         Actions
             "in" : Reduce Term ::= "let" Name "in" Term
             EOF : Reduce Term ::= "let" Name "in" Term
-    State 21
+    State 21 [20.0]
         Kernel
             [Term ::= "rec" Term "in" Term ·, {"in", EOF}]
         Actions
