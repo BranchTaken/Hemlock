@@ -262,7 +262,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
   end in
   let gather_in_attribs lalr1_transit_attribs in_transits_all = begin
     (* Gather the set of all in-attribs, which is a non-strict subset of all out-attribs
-     * (out-transitions may make direct attributions). *)
+     * (out-transitions may make definite attributions). *)
     Ordset.fold ~init:Attribs.empty
       ~f:(fun in_attribs_all transit ->
         let lane_attribs =
@@ -271,7 +271,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
         Attribs.union lane_attribs in_attribs_all
       ) in_transits_all
   end in
-  let is_split_unstable_self symbols prods ~lalr1_transit_attribs
+  let is_split_unstable_self ~resolve symbols prods ~lalr1_transit_attribs
       Attrib.{conflict_state_index; symbol_index; _} in_transits_relevant = begin
     (* Self-contributing conflict state. *)
     let manifestation =
@@ -301,7 +301,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
         | false -> contrib
         | true -> Contrib.resolve symbols prods symbol_index contrib
       in
-      Contrib.(split_resolution <> unsplit_resolution)
+      not (Contrib.equal split_resolution unsplit_resolution)
     ) in_transits_relevant in
     split_unstable
   end in
@@ -310,7 +310,8 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
       out_transits_relevant = begin
     match State.Index.(conflict_state_index = state_index) with
     | true ->
-      is_split_unstable_self symbols prods ~lalr1_transit_attribs attrib in_transits_relevant
+      is_split_unstable_self ~resolve symbols prods ~lalr1_transit_attribs attrib
+        in_transits_relevant
     | false -> begin
         (* For all relevant in-transitions considered in turn as if the state were split from all
          * other in-transitions, the state is split-stable if direct-stable and indirect-stable. *)
@@ -361,7 +362,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
               | true -> Contrib.resolve symbols prods symbol_index unsplit_out_contrib
             in
             let direct_unstable =
-              not Contrib.(split_resolution = unsplit_resolution_direct) in
+              not (Contrib.equal split_resolution unsplit_resolution_direct) in
             (* 2) Indirect-stable: The state is split-stable if the resolution of the
              *    out-contributions is either:
              *    - The same as the non-split case.
@@ -373,7 +374,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
             in
             let indirect_unstable = not Contrib.(
               is_empty split_resolution ||
-              split_resolution = unsplit_resolution_indirect
+              equal split_resolution unsplit_resolution_indirect
             ) in
             direct_unstable || indirect_unstable
           ) out_transits_relevant
