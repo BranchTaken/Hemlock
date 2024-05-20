@@ -46,13 +46,13 @@ module T = struct
     |> Fmt.fmt "}"
 
   let pp_hr {name; alias; prods; _} formatter =
-    let pretty_name = match Ordset.is_empty prods, alias with
+    let pretty, pretty_name = match Ordset.is_empty prods, alias with
       | _, None
-      | false, Some _ -> name
-      | true, Some alias -> alias
+      | false, Some _ -> false, name
+      | true, Some alias -> true, alias
     in
     formatter
-    |> Fmt.fmt (String.to_string ~pretty:true pretty_name)
+    |> Fmt.fmt (String.to_string ~pretty pretty_name)
 end
 include T
 include Identifiable.Make(T)
