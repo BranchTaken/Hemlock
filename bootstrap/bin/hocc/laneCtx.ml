@@ -114,8 +114,8 @@ type t = {
    * because multiple kernel items in the conflict state can induce the same added ε production. *)
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
 
-  (* Conflicts attributed directly to the `state`->`isucc` transition apply to all lanes, i.e. they
-   * are definite attributions. *)
+  (* Conflicts attributed to the `state`->`isucc` transition apply to all lanes, i.e. they are
+   * definite attributions. *)
   lane_attribs_definite: Attribs.t;
 }
 
@@ -321,7 +321,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                 let isucc_lr0item = Lr1Item.(isucc_lr1item.lr0item) in
                 match isucc_lr0item.dot with
                 | 0L -> begin
-                    (* The lane trace terminates at a direct attribution by `isucc_lr1item`. *)
+                    (* The lane trace terminates at a definite attribution by `isucc_lr1item`. *)
                     traces, lane_attribs_definite
                   end
                 | _ -> begin
@@ -419,8 +419,8 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
 
 let post_init ipred_lanectxs ({conflict_state; traces; lane_attribs_definite; _} as t) =
   let conflict_state_index = State.index conflict_state in
-  (* A lane trace in this lane context has a direct attribution if the lane does not extend back to
-   * any predecessors. This situation is handled in `of_ipred` when the trace source is an added
+  (* A lane trace in this lane context has a definite attribution if the lane does not extend back
+   * to any predecessors. This situation is handled in `of_ipred` when the trace source is an added
    * item, so it suffices here to process only traces with kernel items as sources. *)
   let lane_attribs_definite = Ordmap.fold ~init:lane_attribs_definite
       ~f:(fun lane_attribs_definite (TraceKey.{symbol_index; conflict; action}, traceval) ->
