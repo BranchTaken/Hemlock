@@ -118,3 +118,49 @@ module T = struct
 end
 include T
 include Identifiable.Make(T)
+
+let compat_ielr1 ~resolve symbols prods {conflict=x0; contrib=c0; symbol_index; _}
+  {conflict=x1; contrib=c1; symbol_index=symbol_index1; _} =
+  assert (Contrib.equal x0 x1);
+  assert Uns.(symbol_index = symbol_index1);
+  (* Merge shift into contribs if present in the conflict manifestation, since all lanes are
+   * implicated in shift actions. *)
+  let c0, c1 = match Contrib.mem_shift x0 with
+    | false -> c0, c1
+    | true -> Contrib.(union shift c0), Contrib.(union shift c1)
+  in
+  (* Compute the resolutions (if enabled) of what the merged lane would receive from each input
+   * lane. *)
+  let r0, r1 = match resolve with
+    | false -> c0, c1
+    | true -> begin
+        (Contrib.resolve symbols prods symbol_index c0),
+        (Contrib.resolve symbols prods symbol_index c1)
+      end
+  in
+  (* Determine compatibility. *)
+  match Contrib.length r0, Contrib.length r1 with
+  | 0L, 0L -> begin
+      (* By construction, at least one lane must be implicated in the conflict. *)
+      not_reached ()
+    end
+  | 0L, _
+  | _, 0L -> begin
+      (* One of the lanes contributes nothing to the conflict, nor is there a shift action to be
+       * implicated in. Unimplicated lanes are oblivious to merging. *)
+      true
+    end
+  | 1L, 1L -> begin
+      (* Resolution must be equal for lanes to be compatible. *)
+      Contrib.equal r0 r1
+    end
+  | 1L, _
+  | _, 1L -> begin
+      (* One lane resolves, one doesn't. Different outcomes require splitting. *)
+      false
+    end
+  | _, _ -> begin
+      (* Both lanes result in conflict. The details of the conflicts don't matter, since merging
+       * cannot cause resolution to succeed. *)
+      true
+    end

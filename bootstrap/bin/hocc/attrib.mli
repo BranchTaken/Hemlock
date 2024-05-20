@@ -63,3 +63,9 @@ val union: t -> t -> t
 val inter: t -> t -> t
 (** [inter t0 t1] returns an attribution with the intersection of attribution values in [t0] and
     [t1]. The keys must be equal. *)
+
+val compat_ielr1: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
+(** [compat_ielr1 ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make compatible
+    contributions. If [resolve] is true, allow conflicts that cannot lead to inadequacy (i.e.
+    shift-reduce conflicts cannot lead to inadequacy if the conflict manifestation contains a shift
+    action and a single reduce action). *)
