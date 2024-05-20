@@ -313,19 +313,88 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
       is_split_unstable_self ~resolve symbols prods ~lalr1_transit_attribs attrib
         in_transits_relevant
     | false -> begin
+        (* Consider each relevant (in,out)-transition pair as if the state were split from all other
+         * in-transitions. *)
+        let empty_attrib = Attrib.empty ~conflict_state_index ~symbol_index ~conflict in
+        let split_unstable = Ordset.for_any ~f:(fun in_transit ->
+          let Attrib.{contrib=in_contrib_all; _} =
+            Ordmap.get_hlt in_transit lalr1_transit_attribs
+            |> TransitAttribs.all
+            |> Attribs.get_hlt ~conflict_state_index symbol_index
+          in
+          let Attrib.{contrib=in_contrib_definite; _} =
+            Ordmap.get in_transit lalr1_transit_attribs
+            |> Option.value ~default:TransitAttribs.empty
+            |> TransitAttribs.definite
+            |> Attribs.get ~conflict_state_index symbol_index
+            |> Option.value ~default:empty_attrib
+          in
+          Ordset.for_any ~f:(fun out_transit ->
+            let Attrib.{contrib=out_contrib_all; _} =
+              Ordmap.get_hlt out_transit lalr1_transit_attribs
+              |> TransitAttribs.all
+              |> Attribs.get_hlt ~conflict_state_index symbol_index
+            in
+            let Attrib.{contrib=out_contrib_definite; _} =
+              Ordmap.get out_transit lalr1_transit_attribs
+              |> Option.value ~default:TransitAttribs.empty
+              |> TransitAttribs.definite
+              |> Attribs.get ~conflict_state_index symbol_index
+              |> Option.value ~default:empty_attrib
+            in
+            (* The state is split-unstable if the dominant out-contribution is unstable, or if the
+             * dominant out-contribution changes between the split/unsplit cases. *)
+            let unsplit_out_contrib_all = out_contrib_all in
+            let unsplit_out_contrib_definite = out_contrib_definite in
+            let split_out_contrib_all = Contrib.union in_contrib_all out_contrib_definite in
+            let split_out_contrib_definite =
+              Contrib.union in_contrib_definite out_contrib_definite in
+            let unsplit_out_resolution_all, unsplit_out_resolution_definite = match resolve with
+              | false -> unsplit_out_contrib_all, unsplit_out_contrib_definite
+              | true -> begin
+                  Contrib.resolve symbols prods symbol_index unsplit_out_contrib_all,
+                  Contrib.resolve symbols prods symbol_index unsplit_out_contrib_definite
+                end
+            in
+            let split_out_resolution_all, split_out_resolution_definite = match resolve with
+              | false -> split_out_contrib_all, split_out_contrib_definite
+              | true -> begin
+                  Contrib.resolve symbols prods symbol_index split_out_contrib_all,
+                  Contrib.resolve symbols prods symbol_index split_out_contrib_definite
+                end
+            in
+            (* When conflict resolution is enabled, the dominant contribution is unstable unless the
+             * definite contribs include the dominant contribution. When resolution is disabled, the
+             * dominant contribution is unstable unless the definite contribs contain all potential
+             * contribs, i.e. all of ipred's ipreds make the same definite contribution. *)
+            let is_unsplit_dominant_contrib_unstable =
+              not (Contrib.equal unsplit_out_resolution_all unsplit_out_resolution_definite) in
+            let is_split_dominant_contrib_unstable =
+              not (Contrib.equal split_out_resolution_all split_out_resolution_definite) in
+            let does_dominant_contrib_change =
+              not (Contrib.equal unsplit_out_contrib_definite split_out_contrib_definite) in
+            is_unsplit_dominant_contrib_unstable ||
+            is_split_dominant_contrib_unstable ||
+            does_dominant_contrib_change
+          ) out_transits_relevant
+        ) in_transits_relevant in
+
+
+
+(*
         (* For all relevant in-transitions considered in turn as if the state were split from all
-         * other in-transitions, the state is split-stable if direct-stable and indirect-stable. *)
-        let in_direct_contrib_union = Ordset.fold ~init:Contrib.empty
-            ~f:(fun in_direct_contrib_union in_transit ->
+         * other in-transitions, the state is split-stable if definite-stable and potential-stable.
+        *)
+        let in_definite_contrib_union = Ordset.fold ~init:Contrib.empty
+            ~f:(fun in_definite_contrib_union in_transit ->
               let Attrib.{contrib; _} =
                 Ordmap.get in_transit lalr1_transit_attribs
                 |> Option.value ~default:TransitAttribs.empty
                 |> TransitAttribs.definite
                 |> Attribs.get ~conflict_state_index symbol_index
-                |> Option.value ~default:(Attrib.empty ~conflict_state_index ~symbol_index
-                    ~conflict)
+                |> Option.value ~default:empty_attrib
               in
-              Contrib.union contrib in_direct_contrib_union
+              Contrib.union contrib in_definite_contrib_union
             ) in_transits_relevant in
         let split_unstable = Ordset.for_any ~f:(fun in_transit ->
           let Attrib.{contrib=in_contrib; _} =
@@ -334,51 +403,51 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
             |> Attribs.get_hlt ~conflict_state_index symbol_index
           in
           Ordset.for_any ~f:(fun out_transit ->
-            let Attrib.{contrib=out_contrib; _} =
+            let Attrib.{contrib=out_all_contrib; _} =
               Ordmap.get_hlt out_transit lalr1_transit_attribs
               |> TransitAttribs.all
               |> Attribs.get_hlt ~conflict_state_index symbol_index
             in
-            let Attrib.{contrib=out_direct_contrib; _} =
+            let Attrib.{contrib=out_definite_contrib; _} =
               Ordmap.get out_transit lalr1_transit_attribs
               |> Option.value ~default:TransitAttribs.empty
               |> TransitAttribs.definite
               |> Attribs.get ~conflict_state_index symbol_index
-              |> Option.value ~default:(Attrib.empty ~conflict_state_index ~symbol_index ~conflict)
+              |> Option.value ~default:empty_attrib
             in
             let split_out_contrib = Contrib.(
-              union (inter in_contrib out_contrib) out_direct_contrib
+              union (inter in_contrib out_all_contrib) out_definite_contrib
             ) in
             let unsplit_out_contrib =
-              Contrib.union split_out_contrib in_direct_contrib_union in
-            (* 1) Direct-stable: All out-transition sets must resolve the same as if all direct
+              Contrib.union split_out_contrib in_definite_contrib_union in
+            (* 1) Definite-stable: All out-transition sets must resolve the same as if all definite
              *    in-contributions were made. *)
             let split_resolution = match resolve with
               | false -> split_out_contrib
               | true -> Contrib.resolve symbols prods symbol_index split_out_contrib
             in
-            let unsplit_resolution_direct = match resolve with
+            let unsplit_resolution_definite = match resolve with
               | false -> unsplit_out_contrib
               | true -> Contrib.resolve symbols prods symbol_index unsplit_out_contrib
             in
-            let direct_unstable =
-              not (Contrib.equal split_resolution unsplit_resolution_direct) in
-            (* 2) Indirect-stable: The state is split-stable if the resolution of the
+            let definite_unstable =
+              not (Contrib.equal split_resolution unsplit_resolution_definite) in
+            (* 2) Potential-stable: The state is split-stable if the resolution of the
              *    out-contributions is either:
              *    - The same as the non-split case.
-             *    - Empty (i.e. the out-transition is not part of a relevant lane).
-            *)
-            let unsplit_resolution_indirect = match resolve with
-              | false -> out_contrib
-              | true -> Contrib.resolve symbols prods symbol_index out_contrib
+             *    - Empty (i.e. the out-transition is not part of a relevant lane). *)
+            let unsplit_resolution_potential = match resolve with
+              | false -> out_all_contrib
+              | true -> Contrib.resolve symbols prods symbol_index out_all_contrib
             in
-            let indirect_unstable = not Contrib.(
+            let potential_unstable = not Contrib.(
               is_empty split_resolution ||
-              equal split_resolution unsplit_resolution_indirect
+              equal split_resolution unsplit_resolution_potential
             ) in
-            direct_unstable || indirect_unstable
+            definite_unstable || potential_unstable
           ) out_transits_relevant
         ) in_transits_relevant in
+*)
         split_unstable
       end
   end in
@@ -431,7 +500,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
                           (* When conflict resolution is enabled, the dominant contribution is
                            * unstable unless the definite contribs include the dominant
                            * contribution. When resolution is disabled, the dominant contribution is
-                           * unstable unless the definite contribs contain all potiential contribs,
+                           * unstable unless the definite contribs contain all potential contribs,
                            * i.e. all of ipred's ipreds make the same definite contribution. *)
                           not (Contrib.equal resolution_all resolution_definite)
                         end
