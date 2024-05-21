@@ -118,8 +118,8 @@ type t = {
   (* State corresponding to this lane context. *)
   state: State.t;
 
-  (* Interstitial lane traces. Note that each trace key may have more than one corresponding lane,
-   * because multiple kernel items in the conflict state can induce the same added ε production. *)
+  (* Interstitial lane traces. Note that each trace key may correspond to multiple lanes, because
+   * multiple kernel items in the conflict state can induce the same added ε production. *)
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
 
   (* Conflicts attributed to the `state`->`isucc` transition apply to all lanes, i.e. they are
@@ -427,9 +427,9 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
 
 let post_init ipred_lanectxs ({conflict_state; traces; lane_attribs_definite; _} as t) =
   let conflict_state_index = State.index conflict_state in
-  (* A lane trace in this lane context has a definite attribution if the lane does not extend back
-   * to any predecessors. This situation is handled in `of_ipred` when the trace source is an added
-   * item, so it suffices here to process only traces with kernel items as sources. *)
+  (* A lane trace in this lane context has a definite attribution if the lane trace does not extend
+   * back to any predecessors. This situation is handled in `of_ipred` when the trace source is an
+   * added item, so it suffices here to process only traces with kernel items as sources. *)
   let lane_attribs_definite = Ordmap.fold ~init:lane_attribs_definite
       ~f:(fun lane_attribs_definite (TraceKey.{symbol_index; conflict; action}, traceval) ->
         match action with

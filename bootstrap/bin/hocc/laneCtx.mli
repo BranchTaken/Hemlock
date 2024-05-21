@@ -1,16 +1,18 @@
-(** Lane context for tracing conflict attributions backward from a conflict state. A conflicting
-    reduce action is typically attributed to one or more states that begin lanes to the
-    conflict-inducing kernel item(s) in the conflict state. Conflict attributions are attributed on
-    a per symbol basis, even though it is common for one lane to correspond to multiple conflicts.
-    It is also possible for multiple items (and therefore distinct lanes) to contribute to the same
-    conflict.
+(** Lane context for tracing conflict attributions backward from a conflict state. Although a lane
+    extends backward from a conflict state to a start state, lane contexts are only computed as far
+    backward as necessary to attribute all conflict contributions. A conflicting reduce action is
+    associated with one or more conflict-inducing kernel items, and is typically attributed to one
+    or more states that terminate lane context traces to the conflict state. Conflict attributions
+    are attributed on a per symbol basis, even though it is common for one lane to correspond to
+    multiple conflicts. It is also possible for multiple items (and therefore distinct lanes) to
+    contribute to the same conflict.
 
     For each state during lane tracing a distinct lane context is created to represent the state's
-    role in the lane(s) being traced. For the conflict state the context contains a (symbol, action,
-    lr1item) tuple for each kernel item which can lead to the conflicting action on the symbol. This
-    may be due to a simple reduction of a kernel item, e.g. `A ::= t B C · {u}`. The more
-    complicated case is due to reduction of an added ε production corresponding to one or more
-    kernel items with dot positions that are not at the rightmost position, as shown in the
+    role in the lane(s) being traced. For the conflict state the context contains a (symbol,
+    conflict, action, lr1item) tuple for each kernel item which can lead to the conflicting action
+    on the symbol. This may be due to a simple reduction of a kernel item, e.g. `A ::= t B C · {u}`.
+    The more complicated case is due to reduction of an added ε production corresponding to one or
+    more kernel items with dot positions that are not at the rightmost position, as shown in the
     following example.
 
     - Contributing state
@@ -77,6 +79,6 @@ val lane_attribs_all: t -> Attribs.t
     the lanes encompassing [t], i.e. both definite and potential conflict attributions. *)
 
 val lane_attribs_definite: t -> Attribs.t
-(** [lane_attribs_definite t] returns a map of the merged lane conflict attributions directly
-    attributable to the transition from [state t] to [isucc t], i.e. definitely attributable to
-    lanes encompassing [t]. Conflict attributions added by [post_init] are included in the map. *)
+(** [lane_attribs_definite t] returns a map of the merged lane conflict attributions definitely
+    attributable to lanes encompassing the transition from [state t] to [isucc t]. Conflict
+    attributions added by [post_init] are included in the map. *)
