@@ -29,6 +29,14 @@ module TraceKey = struct
         end
       | Gt -> Gt
 
+    let pp_hr symbols prods {symbol_index; conflict; action} formatter =
+      formatter
+      |> Fmt.fmt "{symbol="
+      |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols)
+      |> Fmt.fmt "; conflict=" |> Contrib.pp_hr symbols prods conflict
+      |> Fmt.fmt "; action=" |> State.Action.pp_hr symbols prods action
+      |> Fmt.fmt "}"
+
     let pp {symbol_index; conflict; action} formatter =
       formatter
       |> Fmt.fmt "{symbol_index=" |> Symbol.Index.pp symbol_index
@@ -140,7 +148,7 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L)
   |> Fmt.fmt "; traces="
   |> List.fmt ~alt ~width:(width + 4L) (fun (tracekey, traceval) formatter ->
     formatter
-    |> Fmt.fmt "{tracekey=" |> TraceKey.pp tracekey
+    |> Fmt.fmt "{tracekey=" |> TraceKey.pp_hr symbols prods tracekey
     |> Fmt.fmt "; traceval=" |> TraceVal.fmt_hr symbols ~alt ~width:(width + 4L) traceval
     |> Fmt.fmt "}"
   ) (Ordmap.to_alist traces)

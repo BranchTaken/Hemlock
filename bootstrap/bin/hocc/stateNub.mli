@@ -14,6 +14,9 @@ module Action : sig
     | Reduce of Prod.Index.t (** Reduce. *)
 
   include IdentifiableIntf.S with type t := t
+
+  val pp_hr: Symbols.t -> Prods.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** Formatter which outputs action in human-readable form. *)
 end
 
 module Actionset: sig

@@ -37,6 +37,17 @@ module Action = struct
       | ShiftPrefix index -> formatter |> Fmt.fmt "ShiftPrefix " |> Index.pp index
       | ShiftAccept index -> formatter |> Fmt.fmt "ShiftAccept " |> Index.pp index
       | Reduce prod_index -> formatter |> Fmt.fmt "Reduce " |> Prod.Index.pp prod_index
+
+    let pp_hr symbols prods t formatter =
+      match t with
+      | ShiftPrefix index -> formatter |> Fmt.fmt "ShiftPrefix " |> Index.pp index
+      | ShiftAccept index -> formatter |> Fmt.fmt "ShiftAccept " |> Index.pp index
+      | Reduce prod_index -> begin
+          let prod = Prods.prod_of_prod_index prod_index prods in
+          formatter
+          |> Fmt.fmt "Reduce "
+          |> Symbols.pp_prod_hr prod symbols
+        end
   end
   include T
   include Identifiable.Make(T)
