@@ -96,9 +96,9 @@ let rec ipred_transit_attribs ~resolve lalr1_states adjs ~lalr1_transit_attribs 
         lalr1_transit_attribs
       end
   in
-  (* Backpropagate. *)
-  let lane_attribs_all = LaneCtx.lane_attribs_all lanectx in
-  backprop_transit_attribs adjs lane_attribs_all lalr1_transit_attribs state_index
+  (* Backpropagate definite attribs. *)
+  let lane_attribs_definite = LaneCtx.lane_attribs_definite lanectx in
+  backprop_transit_attribs adjs lane_attribs_definite lalr1_transit_attribs state_index
 
 let gather_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_transit_attribs
     conflict_state_index =
