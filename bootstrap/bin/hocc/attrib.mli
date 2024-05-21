@@ -64,6 +64,10 @@ val inter: t -> t -> t
 (** [inter t0 t1] returns an attribution with the intersection of attribution values in [t0] and
     [t1]. The keys must be equal. *)
 
+val equal_ielr1: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
+(** [equal_ielr1 ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make equal
+    contributions. *)
+
 val compat_ielr1: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
 (** [compat_ielr1 ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make compatible
     contributions. If [resolve] is true, allow conflicts that cannot lead to inadequacy (i.e.

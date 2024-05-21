@@ -145,80 +145,127 @@ let close_transit_attribs io adjs lalr1_transit_attribs =
             | None -> out_transits
             | Some _ -> Ordset.insert transit out_transits
           ) (Adjs.isuccs_of_state_index state_index adjs) in
-        let in_attribs_definite = Ordset.fold ~init:Attribs.empty
-            ~f:(fun in_attribs_definite transit ->
-              let lane_attribs_definite =
-                Ordmap.get_hlt transit lalr1_transit_attribs
-                |> TransitAttribs.definite in
-              Attribs.union lane_attribs_definite in_attribs_definite
-            ) in_transits in
-        let io, lalr1_transit_attribs, workq =
-          Attribs.fold ~init:(io, lalr1_transit_attribs, workq)
-            ~f:(fun (io, lalr1_transit_attribs, workq)
-              Attrib.{conflict_state_index; symbol_index; conflict; contrib=in_contrib_definite;
-              _} ->
-              let in_transits_relevant = filter_transits_relevant lalr1_transit_attribs in_transits
-                  ~conflict_state_index symbol_index in
-              let out_transits_relevant = filter_transits_relevant lalr1_transit_attribs
-                  out_transits ~conflict_state_index symbol_index in
-              (* Determine whether there exists a common definite in-contrib, the existence of which
-               * allows propagation. *)
-              let in_contrib_common = Ordset.fold_until ~init:in_contrib_definite
-                  ~f:(fun in_contrib_common in_transit ->
-                    let attrib_opt =
-                      Ordmap.get_hlt in_transit lalr1_transit_attribs
-                      |> TransitAttribs.definite
-                      |> Attribs.get ~conflict_state_index symbol_index in
-                    let contrib = match attrib_opt with
-                      | Some Attrib.{contrib; _} -> contrib
-                      | None -> Contrib.empty in
-                    let in_contrib_common = Contrib.inter contrib in_contrib_common in
-                    in_contrib_common, Contrib.is_empty in_contrib_common
-                  ) in_transits_relevant in
+        let io, lalr1_transit_attribs, workq = match Ordset.is_empty in_transits with
+          | true -> begin
+              (* Start state. Propagate shift attribs forward. *)
               let io, lalr1_transit_attribs, workq =
-                match Contrib.is_empty in_contrib_common with
-                | true -> io, lalr1_transit_attribs, workq
-                | false -> begin
-                    (* Propagate forward. *)
-                    Ordset.fold ~init:(io, lalr1_transit_attribs, workq)
-                      ~f:(fun (io, lalr1_transit_attribs, workq) out_transit ->
-                        let transit_attribs =
-                          Ordmap.get_hlt out_transit lalr1_transit_attribs in
-                        let lane_attrib = Attrib.init_lane ~conflict_state_index ~symbol_index
-                            ~conflict ~contrib:in_contrib_common in
-                        let transit_attribs' =
-                          TransitAttribs.merge_definite lane_attrib transit_attribs in
-                        match Attribs.equal (TransitAttribs.definite transit_attribs')
-                          (TransitAttribs.definite transit_attribs) with
-                        | true -> io, lalr1_transit_attribs, workq
-                        | false -> begin
-                            let lalr1_transit_attribs = Ordmap.update_hlt ~k:out_transit
-                                ~v:transit_attribs' lalr1_transit_attribs in
-                            let isucc_state_index = Transit.(out_transit.dst) in
-                            let io, workq = match Workq.mem isucc_state_index workq with
-                              | true -> io, workq
-                              | false -> begin
-                                  let io = io.log |> Fmt.fmt "+" |> Io.with_log io in
-                                  io, Workq.push_back isucc_state_index workq
-                                end
-                            in
-                            io, lalr1_transit_attribs, workq
-                          end
-                      ) out_transits_relevant
-                  end
-              in
+                Ordset.fold ~init:(io, lalr1_transit_attribs, workq)
+                  ~f:(fun (io, lalr1_transit_attribs, workq) out_transit ->
+                    let out_transit_attribs = Ordmap.get_hlt out_transit lalr1_transit_attribs in
+                    let out_attribs_all = out_transit_attribs |> TransitAttribs.all in
+                    let out_transit_attribs' = Attribs.fold ~init:out_transit_attribs
+                        ~f:(fun out_transit_attribs
+                          Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
+                          match Contrib.mem_shift contrib with
+                          | false -> out_transit_attribs
+                          | true -> begin
+                              let shift_attrib = Attrib.init_lane ~conflict_state_index
+                                  ~symbol_index ~conflict ~contrib:Contrib.shift in
+                              TransitAttribs.merge_definite shift_attrib out_transit_attribs
+                            end
+                        ) out_attribs_all in
+                    match Attribs.equal (TransitAttribs.definite out_transit_attribs')
+                      (TransitAttribs.definite out_transit_attribs) with
+                    | true -> io, lalr1_transit_attribs, workq
+                    | false -> begin
+                        let lalr1_transit_attribs = Ordmap.update_hlt ~k:out_transit
+                            ~v:out_transit_attribs' lalr1_transit_attribs in
+                        let isucc_state_index = Transit.(out_transit.dst) in
+                        let io, workq = match Workq.mem isucc_state_index workq with
+                          | true -> io, workq
+                          | false -> begin
+                              let io = io.log |> Fmt.fmt "+" |> Io.with_log io in
+                              io, Workq.push_back isucc_state_index workq
+                            end
+                        in
+                        io, lalr1_transit_attribs, workq
+                      end
+                  ) out_transits in
               io, lalr1_transit_attribs, workq
-            ) in_attribs_definite in
+            end
+          | false -> begin
+              let in_attribs_definite = Ordset.fold ~init:Attribs.empty
+                  ~f:(fun in_attribs_definite transit ->
+                    let lane_attribs_definite =
+                      Ordmap.get_hlt transit lalr1_transit_attribs
+                      |> TransitAttribs.definite in
+                    Attribs.union lane_attribs_definite in_attribs_definite
+                  ) in_transits in
+              let io, lalr1_transit_attribs, workq =
+                Attribs.fold ~init:(io, lalr1_transit_attribs, workq)
+                  ~f:(fun (io, lalr1_transit_attribs, workq)
+                    Attrib.{conflict_state_index; symbol_index; conflict;
+                    contrib=in_contrib_definite; _} ->
+                    let in_transits_relevant = filter_transits_relevant lalr1_transit_attribs
+                        in_transits ~conflict_state_index symbol_index in
+                    let out_transits_relevant = filter_transits_relevant lalr1_transit_attribs
+                        out_transits ~conflict_state_index symbol_index in
+                    let io, lalr1_transit_attribs, workq =
+                      (* Determine whether there exists a common definite in-contrib, the existence
+                       * of which allows propagation. *)
+                      let in_contrib_common =
+                        Ordset.fold_until ~init:in_contrib_definite
+                          ~f:(fun in_contrib_common in_transit ->
+                            let attrib_opt =
+                              Ordmap.get_hlt in_transit lalr1_transit_attribs
+                              |> TransitAttribs.definite
+                              |> Attribs.get ~conflict_state_index symbol_index in
+                            let contrib = match attrib_opt with
+                              | Some Attrib.{contrib; _} -> contrib
+                              | None -> Contrib.empty in
+                            let in_contrib_common = Contrib.inter contrib in_contrib_common in
+                            in_contrib_common, Contrib.is_empty in_contrib_common
+                          ) in_transits_relevant in
+                      match Contrib.is_empty in_contrib_common with
+                      | true -> io, lalr1_transit_attribs, workq
+                      | false -> begin
+                          (* Propagate forward. *)
+                          Ordset.fold ~init:(io, lalr1_transit_attribs, workq)
+                            ~f:(fun (io, lalr1_transit_attribs, workq) out_transit ->
+                              let out_transit_attribs =
+                                Ordmap.get_hlt out_transit lalr1_transit_attribs in
+                              let lane_attrib = Attrib.init_lane ~conflict_state_index ~symbol_index
+                                  ~conflict ~contrib:in_contrib_common in
+                              let out_transit_attribs' =
+                                TransitAttribs.merge_definite lane_attrib out_transit_attribs in
+                              match Attribs.equal (TransitAttribs.definite out_transit_attribs')
+                                (TransitAttribs.definite out_transit_attribs) with
+                              | true -> io, lalr1_transit_attribs, workq
+                              | false -> begin
+                                  let lalr1_transit_attribs = Ordmap.update_hlt ~k:out_transit
+                                      ~v:out_transit_attribs' lalr1_transit_attribs in
+                                  let isucc_state_index = Transit.(out_transit.dst) in
+                                  let io, workq = match Workq.mem isucc_state_index workq with
+                                    | true -> io, workq
+                                    | false -> begin
+                                        let io = io.log |> Fmt.fmt "+" |> Io.with_log io in
+                                        io, Workq.push_back isucc_state_index workq
+                                      end
+                                  in
+                                  io, lalr1_transit_attribs, workq
+                                end
+                            ) out_transits_relevant
+                        end
+                    in
+                    io, lalr1_transit_attribs, workq
+                  ) in_attribs_definite in
+              io, lalr1_transit_attribs, workq
+            end
+        in
         work io adjs lalr1_transit_attribs workq
       end
   end in
-  (* Gather the set of states in conflict-contributing lanes, excluding start states. Start states
-   * are always transition sources (never destinations), which makes them trivial to exclude. *)
+  (* Gather the set of states in conflict-contributing lanes. *)
   let workq = Ordmap.fold ~init:Workq.empty
-      ~f:(fun workq (Transit.{dst; _}, _transit_attribs) ->
-        match Workq.mem dst workq with
-        | true -> workq
-        | false -> Workq.push_back dst workq
+      ~f:(fun workq (Transit.{src; dst}, _transit_attribs) ->
+        let merge_state_index state_index workq = begin
+          match Workq.mem state_index workq with
+          | true -> workq
+          | false -> Workq.push_back state_index workq
+        end in
+        workq
+        |> merge_state_index src
+        |> merge_state_index dst
       ) lalr1_transit_attribs in
   work io adjs lalr1_transit_attribs workq
 
@@ -266,18 +313,20 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
       ) in_transits_all
   end in
   let is_split_unstable ~resolve symbols prods ~lalr1_transit_attribs
-      Attrib.{conflict_state_index; symbol_index; conflict; _} in_transits_relevant
+      Attrib.{conflict_state_index; conflict; symbol_index; _} in_transits_relevant
       out_transits_relevant = begin
     (* Consider each relevant (in,out)-transition pair as if the state were split from all other
-     * in-transitions. *)
+     * in-transitions. Note that if there's only one in-transition, the state cannot be split, and
+     * is trivially split-stable. *)
     let empty_attrib = Attrib.empty ~conflict_state_index ~symbol_index ~conflict in
-    let split_unstable = Ordset.for_any ~f:(fun in_transit ->
-      let Attrib.{contrib=in_contrib_all; _} =
+    let split_unstable = Uns.( > ) (Ordset.length in_transits_relevant) 1L &&
+      Ordset.for_any ~f:(fun in_transit ->
+      let in_attrib_all =
         Ordmap.get_hlt in_transit lalr1_transit_attribs
         |> TransitAttribs.all
         |> Attribs.get_hlt ~conflict_state_index symbol_index
       in
-      let Attrib.{contrib=in_contrib_definite; _} =
+      let in_attrib_definite =
         Ordmap.get in_transit lalr1_transit_attribs
         |> Option.value ~default:TransitAttribs.empty
         |> TransitAttribs.definite
@@ -285,12 +334,12 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
         |> Option.value ~default:empty_attrib
       in
       Ordset.for_any ~f:(fun out_transit ->
-        let Attrib.{contrib=out_contrib_all; _} =
+        let out_attrib_all =
           Ordmap.get_hlt out_transit lalr1_transit_attribs
           |> TransitAttribs.all
           |> Attribs.get_hlt ~conflict_state_index symbol_index
         in
-        let Attrib.{contrib=out_contrib_definite; _} =
+        let out_attrib_definite =
           Ordmap.get out_transit lalr1_transit_attribs
           |> Option.value ~default:TransitAttribs.empty
           |> TransitAttribs.definite
@@ -299,35 +348,16 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
         in
         (* The state is split-unstable if the dominant out-contribution is unstable, or if the
          * dominant out-contribution changes between the split/unsplit cases. *)
-        let unsplit_out_contrib_all = out_contrib_all in
-        let unsplit_out_contrib_definite = out_contrib_definite in
-        let split_out_contrib_all = Contrib.union in_contrib_all out_contrib_definite in
-        let split_out_contrib_definite =
-          Contrib.union in_contrib_definite out_contrib_definite in
-        let unsplit_out_resolution_all, unsplit_out_resolution_definite = match resolve with
-          | false -> unsplit_out_contrib_all, unsplit_out_contrib_definite
-          | true -> begin
-              Contrib.resolve symbols prods symbol_index unsplit_out_contrib_all,
-              Contrib.resolve symbols prods symbol_index unsplit_out_contrib_definite
-            end
-        in
-        let split_out_resolution_all, split_out_resolution_definite = match resolve with
-          | false -> split_out_contrib_all, split_out_contrib_definite
-          | true -> begin
-              Contrib.resolve symbols prods symbol_index split_out_contrib_all,
-              Contrib.resolve symbols prods symbol_index split_out_contrib_definite
-            end
-        in
-        (* When conflict resolution is enabled, the dominant contribution is unstable unless the
-         * definite contribs include the dominant contribution. When resolution is disabled, the
-         * dominant contribution is unstable unless the definite contribs contain all potential
-         * contribs, i.e. all of ipred's ipreds make the same definite contribution. *)
-        let is_unsplit_dominant_contrib_unstable =
-          not (Contrib.equal unsplit_out_resolution_all unsplit_out_resolution_definite) in
-        let is_split_dominant_contrib_unstable =
-          not (Contrib.equal split_out_resolution_all split_out_resolution_definite) in
-        let does_dominant_contrib_change =
-          not (Contrib.equal unsplit_out_contrib_definite split_out_contrib_definite) in
+        let unsplit_out_attrib_all = out_attrib_all in
+        let unsplit_out_attrib_definite = out_attrib_definite in
+        let split_out_attrib_all = Attrib.union in_attrib_all out_attrib_definite in
+        let split_out_attrib_definite = Attrib.union in_attrib_definite out_attrib_definite in
+        let is_unsplit_dominant_contrib_unstable = not (Attrib.equal_ielr1 ~resolve symbols prods
+            unsplit_out_attrib_all unsplit_out_attrib_definite) in
+        let is_split_dominant_contrib_unstable = not (Attrib.equal_ielr1 ~resolve symbols prods
+            split_out_attrib_all split_out_attrib_definite) in
+        let does_dominant_contrib_change = not (Attrib.equal_ielr1 ~resolve symbols prods
+            unsplit_out_attrib_definite split_out_attrib_definite) in
         is_unsplit_dominant_contrib_unstable ||
         is_split_dominant_contrib_unstable ||
         does_dominant_contrib_change
@@ -337,7 +367,7 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
   end in
   let gather_pred_stability_deps_indexes ~resolve symbols prods ~lalr1_transit_attribs ~stable
       ~unstable is_pred_stability_deps_stale ipred_split_unstable pred_stability_deps_indexes
-      Attrib.{conflict_state_index; symbol_index; _} in_transits_relevant = begin
+      Attrib.{conflict_state_index; conflict; symbol_index; _} in_transits_relevant = begin
     let ipred_split_unstable, pred_stability_deps_indexes =
       match ipred_split_unstable with
       | true -> ipred_split_unstable, pred_stability_deps_indexes
@@ -362,31 +392,20 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
                         end
                       | true -> begin
                           let transit_attribs = Ordmap.get_hlt in_transit lalr1_transit_attribs in
-                          let Attrib.{contrib=contrib_all; _} =
+                          let attrib_all =
                             transit_attribs
                             |> TransitAttribs.all
                             |> Attribs.get_hlt ~conflict_state_index symbol_index in
-                          let contrib_definite = match
-                              transit_attribs
-                              |> TransitAttribs.definite
-                              |> Attribs.get ~conflict_state_index symbol_index
-                            with
-                            | Some Attrib.{contrib; _} -> contrib
-                            | None -> Contrib.empty
+                          let empty_attrib =
+                            Attrib.empty ~conflict_state_index ~symbol_index ~conflict in
+                          let attrib_definite =
+                            transit_attribs
+                            |> TransitAttribs.definite
+                            |> Attribs.get ~conflict_state_index symbol_index
+                            |> Option.value ~default:empty_attrib
                           in
-                          let resolution_all, resolution_definite = match resolve with
-                            | false -> contrib_all, contrib_definite
-                            | true -> begin
-                                Contrib.resolve symbols prods symbol_index contrib_all,
-                                Contrib.resolve symbols prods symbol_index contrib_definite
-                              end
-                          in
-                          (* When conflict resolution is enabled, the dominant contribution is
-                           * unstable unless the definite contribs include the dominant
-                           * contribution. When resolution is disabled, the dominant contribution is
-                           * unstable unless the definite contribs contain all potential contribs,
-                           * i.e. all of ipred's ipreds make the same definite contribution. *)
-                          not (Contrib.equal resolution_all resolution_definite)
+                          not (Attrib.equal_ielr1 ~resolve symbols prods attrib_all
+                              attrib_definite)
                         end
                     in
                     let is_ipred_unstable = Set.mem ipred_state_index unstable in
@@ -591,14 +610,6 @@ let lalr1_transit_attribs_init ~resolve io symbols prods lalr1_isocores lalr1_st
   in
   let io, lalr1_transit_attribs = close_transit_attribs io adjs lalr1_transit_attribs in
   let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
-(*
-  File.Fmt.stderr
-  |> Fmt.fmt "XXX lalr1_transit_attribs="
-  |> Ordmap.fmt ~alt:true ~width:4L (TransitAttribs.fmt_hr symbols prods ~alt:true ~width:8L)
-     lalr1_transit_attribs
-  |> Fmt.fmt "\n"
-  |> ignore;
-*)
   (* Determine state split-stability. *)
   let io, lalr1_isocores_stable = close_stable ~resolve io symbols prods lalr1_isocores lalr1_states
       adjs ~lalr1_transit_attribs in

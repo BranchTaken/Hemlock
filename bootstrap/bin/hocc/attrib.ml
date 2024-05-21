@@ -119,7 +119,7 @@ end
 include T
 include Identifiable.Make(T)
 
-let compat_ielr1 ~resolve symbols prods {conflict=x0; contrib=c0; symbol_index; _}
+let resolutions ~resolve symbols prods {conflict=x0; contrib=c0; symbol_index; _}
   {conflict=x1; contrib=c1; symbol_index=symbol_index1; _} =
   assert (Contrib.equal x0 x1);
   assert Uns.(symbol_index = symbol_index1);
@@ -138,6 +138,14 @@ let compat_ielr1 ~resolve symbols prods {conflict=x0; contrib=c0; symbol_index; 
         (Contrib.resolve symbols prods symbol_index c1)
       end
   in
+  r0, r1
+
+let equal_ielr1 ~resolve symbols prods t0 t1 =
+  let r0, r1 = resolutions ~resolve symbols prods t0 t1 in
+  Contrib.equal r0 r1
+
+let compat_ielr1 ~resolve symbols prods t0 t1 =
+  let r0, r1 = resolutions ~resolve symbols prods t0 t1 in
   (* Determine compatibility. *)
   match Contrib.length r0, Contrib.length r1 with
   | 0L, 0L -> begin
