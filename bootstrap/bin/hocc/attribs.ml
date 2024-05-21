@@ -92,15 +92,15 @@ let singleton (Attrib.{conflict_state_index; symbol_index; _} as attrib) =
 
 let is_empty = Ordmap.is_empty
 
-let get ~conflict_state_index symbol_index t =
+let get ~conflict_state_index ~symbol_index t =
   let k = K.{conflict_state_index; symbol_index} in
   Ordmap.get k t
 
-let get_hlt ~conflict_state_index symbol_index t =
+let get_hlt ~conflict_state_index ~symbol_index t =
   let k = K.{conflict_state_index; symbol_index} in
   Ordmap.get_hlt k t
 
-let amend ~conflict_state_index symbol_index ~f t =
+let amend ~conflict_state_index ~symbol_index ~f t =
   let k = K.{conflict_state_index; symbol_index} in
   Ordmap.amend k ~f:(fun attrib_opt ->
     let attrib_opt' = f attrib_opt in
@@ -114,7 +114,7 @@ let amend ~conflict_state_index symbol_index ~f t =
   ) t
 
 let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
-  amend ~conflict_state_index symbol_index ~f:(function
+  amend ~conflict_state_index ~symbol_index ~f:(function
     | None -> Some attrib
     | Some attrib_prev -> begin
         assert (Attrib.equal_keys attrib attrib_prev);

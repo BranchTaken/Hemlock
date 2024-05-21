@@ -17,7 +17,7 @@ let rec backprop_transit_attribs adjs lane_attribs_potential lalr1_transit_attri
       let do_union = Attribs.fold_until ~init:false
           ~f:(fun _do_union Attrib.{conflict_state_index; symbol_index; contrib=lane_contrib; _} ->
             let do_union =
-              match Attribs.get ~conflict_state_index symbol_index transit_attribs_all with
+              match Attribs.get ~conflict_state_index ~symbol_index transit_attribs_all with
               | None -> true
               | Some Attrib.{contrib=transit_contrib; _} ->
                 not Contrib.(is_empty (diff lane_contrib transit_contrib))
@@ -111,7 +111,7 @@ let filter_transits_relevant lalr1_transit_attribs transits ~conflict_state_inde
   Ordset.filter ~f:(fun in_transit ->
     Ordmap.get_hlt in_transit lalr1_transit_attribs
     |> TransitAttribs.all
-    |> Attribs.get ~conflict_state_index symbol_index
+    |> Attribs.get ~conflict_state_index ~symbol_index
     |> Option.is_some
   ) transits
 
@@ -209,7 +209,7 @@ let close_transit_attribs io adjs lalr1_transit_attribs =
                             let attrib_opt =
                               Ordmap.get_hlt in_transit lalr1_transit_attribs
                               |> TransitAttribs.definite
-                              |> Attribs.get ~conflict_state_index symbol_index in
+                              |> Attribs.get ~conflict_state_index ~symbol_index in
                             let contrib = match attrib_opt with
                               | Some Attrib.{contrib; _} -> contrib
                               | None -> Contrib.empty in
@@ -324,26 +324,26 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
       let in_attrib_all =
         Ordmap.get_hlt in_transit lalr1_transit_attribs
         |> TransitAttribs.all
-        |> Attribs.get_hlt ~conflict_state_index symbol_index
+        |> Attribs.get_hlt ~conflict_state_index ~symbol_index
       in
       let in_attrib_definite =
         Ordmap.get in_transit lalr1_transit_attribs
         |> Option.value ~default:TransitAttribs.empty
         |> TransitAttribs.definite
-        |> Attribs.get ~conflict_state_index symbol_index
+        |> Attribs.get ~conflict_state_index ~symbol_index
         |> Option.value ~default:empty_attrib
       in
       Ordset.for_any ~f:(fun out_transit ->
         let out_attrib_all =
           Ordmap.get_hlt out_transit lalr1_transit_attribs
           |> TransitAttribs.all
-          |> Attribs.get_hlt ~conflict_state_index symbol_index
+          |> Attribs.get_hlt ~conflict_state_index ~symbol_index
         in
         let out_attrib_definite =
           Ordmap.get out_transit lalr1_transit_attribs
           |> Option.value ~default:TransitAttribs.empty
           |> TransitAttribs.definite
-          |> Attribs.get ~conflict_state_index symbol_index
+          |> Attribs.get ~conflict_state_index ~symbol_index
           |> Option.value ~default:empty_attrib
         in
         (* The state is split-unstable if the dominant out-contribution is unstable, or if the
@@ -395,13 +395,13 @@ let close_stable ~resolve io symbols prods lalr1_isocores lalr1_states adjs ~lal
                           let attrib_all =
                             transit_attribs
                             |> TransitAttribs.all
-                            |> Attribs.get_hlt ~conflict_state_index symbol_index in
+                            |> Attribs.get_hlt ~conflict_state_index ~symbol_index in
                           let empty_attrib =
                             Attrib.empty ~conflict_state_index ~symbol_index ~conflict in
                           let attrib_definite =
                             transit_attribs
                             |> TransitAttribs.definite
-                            |> Attribs.get ~conflict_state_index symbol_index
+                            |> Attribs.get ~conflict_state_index ~symbol_index
                             |> Option.value ~default:empty_attrib
                           in
                           not (Attrib.equal_ielr1 ~resolve symbols prods attrib_all

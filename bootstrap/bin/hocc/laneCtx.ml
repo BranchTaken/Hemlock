@@ -370,7 +370,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                                 ) traces in
                                 (* Attributable to all lanes leading to this state. *)
                                 let lane_attribs_definite =
-                                  Attribs.amend ~conflict_state_index symbol_index
+                                  Attribs.amend ~conflict_state_index ~symbol_index
                                     ~f:(fun attrib_opt ->
                                       let contrib = Contrib.init_reduce prod_index in
                                       let attrib = Attrib.init_lane ~conflict_state_index
@@ -457,7 +457,7 @@ let post_init ipred_lanectxs ({conflict_state; traces; lane_attribs_definite; _}
                     match lane_extends with
                     | true -> lane_attribs_definite
                     | false -> begin
-                        Attribs.amend ~conflict_state_index symbol_index ~f:(fun attrib_opt ->
+                        Attribs.amend ~conflict_state_index ~symbol_index ~f:(fun attrib_opt ->
                           let contrib = Contrib.init_reduce prod_index in
                           let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index
                               ~conflict ~contrib in

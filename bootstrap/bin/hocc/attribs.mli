@@ -42,18 +42,18 @@ val singleton: Attrib.t -> t
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)
 
-val get: conflict_state_index:StateIndex.t -> Symbol.Index.t -> t -> Attrib.t option
-(** [get ~conflict_state_index symbol_index t] returns the attrib for the specified
+val get: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> t -> Attrib.t option
+(** [get ~conflict_state_index ~symbol_index t] returns the attrib for the specified
     [conflict_state_index] and [symbol_index] if present in [t], [None] otherwise. *)
 
-val get_hlt: conflict_state_index:StateIndex.t -> Symbol.Index.t -> t -> Attrib.t
-(** [get_hlt ~conflict_state_index symbol_index t] returns the attrib for the specified
+val get_hlt: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> t -> Attrib.t
+(** [get_hlt ~conflict_state_index ~symbol_index t] returns the attrib for the specified
     [conflict_state_index] and [symbol_index] if present in [t], halts otherwise. *)
 
-val amend: conflict_state_index:StateIndex.t -> Symbol.Index.t
+val amend: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t
   -> f:(Attrib.t option -> Attrib.t option) -> t -> t
-(** [amend ~conflict_state_index symbol_index ~f t] returns an incremental derivative of [t] that is
-    equivalent to [t] in all attributions except possibly for {[conflict_state_index],
+(** [amend ~conflict_state_index ~symbol_index ~f t] returns an incremental derivative of [t] that
+    is equivalent to [t] in all attributions except possibly for {[conflict_state_index],
     [symbol_index]}, as determined by the result of [~f attrib_opt], where [attrib_opt = Some
     attrib] indicates [symbol_index] is associated with [attrib] in [t], and [attrib_opt = None]
     indicates [symbol_index] is not attributed in [t]. The result contains a mapping from
