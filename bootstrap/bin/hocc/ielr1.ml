@@ -37,25 +37,21 @@ let rec backprop_transit_attribs adjs lane_attribs_potential lalr1_transit_attri
         end
     ) (Adjs.ipreds_of_state_index state_index adjs)
 
-let rec ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_transit_attribs lanectx =
+let rec ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_transit_attribs
+    lanectx =
   let state_index = State.index (LaneCtx.state lanectx) in
-  (* Accumulate transit attribs and ipred lane contexts of `lanectx`. There is some subtle business
-   * with regard to `lalr1_transit_attribs` and its incremental derivative. Care must be taken to
-   * look at the original function input when determining whether insertion logically occurs. This
-   * is because the first fold iteration may perform a merge that covers merges in subsequent
-   * iterations, but it's important to treat each iteration in isolation so that all intended
-   * recursion occurs. *)
+  (* Accumulate transit attribs and ipred lane contexts of `lanectx`. *)
   let lalr1_transit_attribs, ipred_lanectxs =
     Array.fold ~init:(lalr1_transit_attribs, [])
-      ~f:(fun (lalr1_transit_attribs', ipred_lanectxs) ipred_state_index ->
+      ~f:(fun (lalr1_transit_attribs, ipred_lanectxs) ipred_state_index ->
         let ipred_state = Array.get ipred_state_index lalr1_states in
         let ipred_lanectx = LaneCtx.of_ipred ipred_state lanectx in
         let ipred_kernel_attribs = LaneCtx.kernel_attribs_all ipred_lanectx in
         let transit = LaneCtx.transit ipred_lanectx in
-        (* Load "current" transit attribs, i.e. as they were upon entry to this function. It is
-         * possible for there to be existing attribs to other conflict states. *)
+        (* Load any existing transit attribs, whether to other conflict states, or as a result of
+         * recursing into a lane cycle. *)
         let transit_attribs =
-          Ordmap.get transit lalr1_transit_attribs (* NB: Intentional "stale" read. *)
+          Ordmap.get transit lalr1_transit_attribs
           |> Option.value ~default:TransitAttribs.empty
         in
         let kernel_attribs_all = TransitAttribs.kernel_attribs_all transit_attribs in
@@ -64,28 +60,21 @@ let rec ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_tr
         let kernel_attribs_all' = TransitAttribs.kernel_attribs_all transit_attribs' in
         (* Avoid recursing if no new transit attribs were inserted, since no additional insertions
          * will occur in the recursion. *)
-        let lalr1_transit_attribs' =
+        let lalr1_transit_attribs =
           match KernelAttribs.equal kernel_attribs_all' kernel_attribs_all with
-          | true -> lalr1_transit_attribs'
+          | true -> lalr1_transit_attribs
           | false -> begin
-              (* Recompute transit_attribs' using the actual current transit attribs. *)
-              let transit_attribs =
-                Ordmap.get transit lalr1_transit_attribs'
-                |> Option.value ~default:TransitAttribs.empty
-              in
-              let transit_attribs' =
-                TransitAttribs.insert_kernel_attribs_all ipred_kernel_attribs transit_attribs in
-              let lalr1_transit_attribs' =
-                Ordmap.upsert ~k:transit ~v:transit_attribs' lalr1_transit_attribs' in
+              let lalr1_transit_attribs =
+                Ordmap.upsert ~k:transit ~v:transit_attribs' lalr1_transit_attribs in
               (* Recurse if lanes may extend to predecessors. *)
               match LaneCtx.traces_length ipred_lanectx with
-              | 0L -> lalr1_transit_attribs'
+              | 0L -> lalr1_transit_attribs
               | _ -> ipred_transit_attribs ~resolve symbols prods lalr1_states adjs
-                  ~lalr1_transit_attribs:lalr1_transit_attribs' ipred_lanectx
+                  ~lalr1_transit_attribs ipred_lanectx
             end
         in
         let ipred_lanectxs = ipred_lanectx :: ipred_lanectxs in
-        lalr1_transit_attribs', ipred_lanectxs
+        lalr1_transit_attribs, ipred_lanectxs
       ) (Adjs.ipreds_of_state_index state_index adjs)
   in
   (* Finish computing definite attributions for `lanectx`. This is done post-order to detect
