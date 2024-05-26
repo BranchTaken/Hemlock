@@ -215,6 +215,20 @@ let init symbols ~index ~isocores_sn ~isocore_set_sn GotoNub.{goto; transit_attr
   let lr1itemsetclosure = Lr1ItemsetClosure.init symbols ~index goto in
   {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst=[transit_attribs]; attribs}
 
+let remerge symbols
+    {lr1itemsetclosure=c0; isocores_sn=is0; isocore_set_sn=iss0; transit_attribs_lst=tal0;
+      attribs=a0}
+    {lr1itemsetclosure=c1; isocores_sn=is1; isocore_set_sn=iss1; transit_attribs_lst=tal1;
+      attribs=a1} =
+  assert Uns.(is0 = is1);
+  {
+    lr1itemsetclosure=Lr1ItemsetClosure.union symbols c0 c1;
+    isocores_sn=is0;
+    isocore_set_sn=Uns.min iss0 iss1;
+    transit_attribs_lst=List.concat tal0 tal1;
+    attribs=Attribs.union a0 a1
+  }
+
 let reindex index_map
     {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst; attribs} =
   let lr1itemsetclosure = Lr1ItemsetClosure.reindex index_map lr1itemsetclosure in
@@ -299,6 +313,33 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=
       in
       let compat = Attrib.compat_ielr1 ~resolve symbols prods o_attrib t_attrib in
       compat, not compat
+    ) o_attribs t_attribs
+
+let explain_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
+  Attribs.fold2 ~init:()
+    ~f:(fun _ attrib_opt0 attrib_opt1 ->
+      let o_attrib, t_attrib = match attrib_opt0, attrib_opt1 with
+        | Some o_attrib, Some t_attrib -> o_attrib, t_attrib
+        | Some (Attrib.{conflict_state_index; symbol_index; conflict; _} as o_attrib), None ->
+          o_attrib, Attrib.empty ~conflict_state_index ~symbol_index ~conflict
+        | None, Some (Attrib.{conflict_state_index; symbol_index; conflict; _} as t_attrib) ->
+          Attrib.empty ~conflict_state_index ~symbol_index ~conflict, t_attrib
+        | None, None -> not_reached ()
+      in
+      let compat = Attrib.compat_ielr1 ~resolve symbols prods o_attrib t_attrib in
+      match compat with
+      | true -> ()
+      | false -> begin
+          let o_contrib, t_contrib = Attrib.resolutions ~resolve symbols prods o_attrib t_attrib in
+          File.Fmt.stderr
+          |> Fmt.fmt "Incompatible:"
+          |> Fmt.fmt "\n    o_attrib=" |> Attrib.fmt_hr symbols prods ~alt:true o_attrib
+          |> Fmt.fmt "\n    t_attrib=" |> Attrib.fmt_hr symbols prods ~alt:true t_attrib
+          |> Fmt.fmt "\n    o_contrib=" |> Contrib.pp_hr symbols prods o_contrib
+          |> Fmt.fmt "\n    t_contrib=" |> Contrib.pp_hr symbols prods t_contrib
+          |> Fmt.fmt "\n"
+          |> ignore;
+        end
     ) o_attribs t_attribs
 
 let compat_pgm1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =

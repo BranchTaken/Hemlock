@@ -54,13 +54,16 @@ let get gotonub {compat; isocores; statenubs_map} =
 let get_hlt gotonub t =
   Option.value_hlt (get gotonub t)
 
-let get_core_hlt core {isocores; _} =
+let get_isocore_set_hlt core {isocores; _} =
   let {isocore_set; _} = Map.get_hlt core isocores in
-  let indexes = indexes_of_isocore_set isocore_set in
+  indexes_of_isocore_set isocore_set
+
+let get_core_hlt core t =
+  let indexes = get_isocore_set_hlt core t in
   assert (Uns.(=) (Ordset.length indexes) 1L);
   Ordset.choose_hlt indexes
 
-let insert symbols (GotoNub.{isocores_sn_opt; _} as gotonub) ({isocores; statenubs_map; _} as t) =
+let insert symbols _XXX_prods (GotoNub.{isocores_sn_opt; _} as gotonub) ({isocores; statenubs_map; _} as t) =
   assert (Option.is_none (get gotonub t));
   let core = GotoNub.core gotonub in
   let statenub_index = Ordmap.length statenubs_map in
@@ -78,7 +81,20 @@ let insert symbols (GotoNub.{isocores_sn_opt; _} as gotonub) ({isocores; statenu
       let v = { isocore_set=Ordset.singleton (module StateNub.Index) statenub_index; isocores_sn} in
       let isocores' = Map.insert_hlt ~k:core ~v isocores in
 (*
-      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.insert " |> Uns.pp index |> Fmt.fmt " (unique)\n" |> ignore;
+      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.insert " |> Uns.pp isocores_sn |> Fmt.fmt "." |> Uns.pp isocore_set_sn |> Fmt.fmt "\n" |> ignore;
+*)
+(*
+      let () = match isocores_sn with
+        | 234L -> begin
+            File.Fmt.stderr |> Fmt.fmt "\nXXX Isocores.insert " |> Uns.pp isocores_sn |> Fmt.fmt "." |> Uns.pp isocore_set_sn |> Fmt.fmt "\n" |> ignore;
+            File.Fmt.stderr |> Fmt.fmt "XXX 234 insert\n" |> ignore;
+            let gotonub_kernel = gotonub.goto in
+            File.Fmt.stderr
+            |> Fmt.fmt "gotonub kernel=" |> Lr1Itemset.fmt_hr symbols ~alt:true gotonub_kernel
+            |> Fmt.fmt "\n" |> ignore;
+          end
+        | _ -> ()
+      in
 *)
       statenub_index, {t with isocores=isocores'; statenubs_map=statenubs_map'}
     end
@@ -98,29 +114,96 @@ let insert symbols (GotoNub.{isocores_sn_opt; _} as gotonub) ({isocores; statenu
       let v' = {v with isocore_set=Ordset.insert statenub_index isocore_set} in
       let isocores' = Map.update_hlt ~k:core ~v:v' isocores in
 (*
-      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.insert " |> Uns.pp index |> Fmt.fmt " (non-unique wrt " |> Ordset.pp (indexes_of_vs vs) |> Fmt.fmt ")\n" |> ignore;
+      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.insert " |> Uns.pp isocores_sn |> Fmt.fmt "." |> Uns.pp isocore_set_sn |> Fmt.fmt "\n" |> ignore;
+*)
+(*
+      let () = match isocores_sn with
+        | 234L -> begin
+            File.Fmt.stderr |> Fmt.fmt "\nXXX Isocores.insert " |> Uns.pp isocores_sn |> Fmt.fmt "." |> Uns.pp isocore_set_sn |> Fmt.fmt "\n" |> ignore;
+            File.Fmt.stderr |> Fmt.fmt "XXX 234 insert\n" |> ignore;
+            let gotonub_kernel = gotonub.goto in
+            File.Fmt.stderr
+            |> Fmt.fmt "gotonub kernel=" |> Lr1Itemset.fmt_hr symbols ~alt:true gotonub_kernel
+            |> Fmt.fmt "\n" |> ignore;
+            Ordset.fold ~init:() ~f:(fun _ incompatible_statenub_index ->
+              let incompatible_statenub = Ordmap.get_hlt incompatible_statenub_index statenubs_map in
+              File.Fmt.stderr
+              |> Fmt.fmt "incompatible_statenub_index=" |> StateIndex.pp incompatible_statenub_index
+              |> Fmt.fmt "\n" |> ignore;
+              StateNub.explain_ielr1 ~resolve:true(*XXX*) symbols prods gotonub incompatible_statenub
+            ) isocore_set
+          end
+        | _ -> ()
+      in
 *)
       statenub_index, {t with isocores=isocores'; statenubs_map=statenubs_map'}
     end
 
-let merge symbols gotonub merge_index ({statenubs_map; _} as t) =
+let merge symbols _XXX_prods gotonub merge_index ({statenubs_map; _} as t) =
   (* Merge into existing LR(1) item set closure. *)
   let merge_statenub = Ordmap.get_hlt merge_index statenubs_map in
   let merged, merge_statenub' = StateNub.merge symbols gotonub merge_statenub in
   match merged with
   | false -> begin
 (*
-      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.merge " |> Uns.pp (StateNub.index merge_statenub) |> Fmt.fmt " (non-modifying)\n" |> ignore;
+      let StateNub.{isocores_sn; isocore_set_sn; _} = merge_statenub' in
+      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.merge " |> Uns.pp isocores_sn |> Fmt.fmt "." |> Uns.pp isocore_set_sn |> Fmt.fmt " (non-modifying)\n" |> ignore;
 *)
       false, t
     end
   | true -> begin
-      let statenubs_map' = Ordmap.update_hlt ~k:merge_index ~v:merge_statenub' statenubs_map in
 (*
-      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.merge " |> Uns.pp (StateNub.index merge_statenub) |> Fmt.fmt " (modifying)\n" |> ignore;
+      let StateNub.{isocores_sn; isocore_set_sn; _} = merge_statenub' in
 *)
+(*
+      File.Fmt.stderr |> Fmt.fmt "XXX Isocores.merge " |> Uns.pp isocores_sn |> Fmt.fmt "." |> Uns.pp isocore_set_sn |> Fmt.fmt " (modifying)\n" |> ignore;
+*)
+(*
+      let () = match isocores_sn with
+        | 234L -> begin
+            File.Fmt.stderr |> Fmt.fmt "\nXXX Isocores.merge " |> Uns.pp isocores_sn |> Fmt.fmt "." |> Uns.pp isocore_set_sn |> Fmt.fmt " (modifying)\n" |> ignore;
+            File.Fmt.stderr |> Fmt.fmt "XXX 234 merge\n" |> ignore;
+            let statenub_kernel = merge_statenub.lr1itemsetclosure.kernel in
+            File.Fmt.stderr
+            |> Fmt.fmt "unmerged kernel=" |> Lr1Itemset.fmt_hr symbols ~alt:true statenub_kernel
+            |> Fmt.fmt "\n" |> ignore;
+
+            let gotonub_kernel = gotonub.goto in
+            File.Fmt.stderr
+            |> Fmt.fmt "gotonub kernel=" |> Lr1Itemset.fmt_hr symbols ~alt:true gotonub_kernel
+            |> Fmt.fmt "\n" |> ignore;
+            let () = StateNub.explain_ielr1 ~resolve:true(*XXX*) symbols prods gotonub merge_statenub in
+
+            let merged_kernel = merge_statenub'.lr1itemsetclosure.kernel in
+            File.Fmt.stderr |> Fmt.fmt "merged kernel=" |> Lr1Itemset.fmt_hr symbols ~alt:true merged_kernel
+            |> Fmt.fmt "\n" |> ignore;
+          end
+        | _ -> ()
+      in
+*)
+      let statenubs_map' = Ordmap.update_hlt ~k:merge_index ~v:merge_statenub' statenubs_map in
       true, {t with statenubs_map=statenubs_map'}
     end
+
+let remove_hlt index ({isocores; statenubs_map; _} as t) =
+  let statenub = Ordmap.get_hlt index statenubs_map in
+  let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
+  let {isocore_set; _} as v = Map.get_hlt core isocores in
+  let isocore_set' = Ordset.fold ~init:(Ordset.empty (module StateNub.Index))
+    ~f:(fun isocore_set' statenub_index ->
+      match StateIndex.(statenub_index = index) with
+      | false -> Ordset.insert statenub_index isocore_set'
+      | true -> isocore_set'
+    ) isocore_set in
+  let isocores' = match Ordset.length isocore_set' with
+    | 0L -> Map.remove_hlt core isocores
+    | _ -> begin
+        let v' = {v with isocore_set=isocore_set'} in
+        Map.update_hlt ~k:core ~v:v' isocores
+      end
+  in
+  let statenubs_map' = Ordmap.remove_hlt index statenubs_map in
+  {t with isocores=isocores'; statenubs_map=statenubs_map'}
 
 let isocores_length {isocores; _} =
   Map.length isocores
@@ -135,3 +218,8 @@ let fold ~init ~f {statenubs_map; _} =
   Ordmap.fold ~init ~f:(fun accum (_, statenub) ->
     f accum statenub
   ) statenubs_map
+
+let fold_isocore_sets ~init ~f {isocores; _} =
+  Map.fold ~init ~f:(fun accum (_k, {isocore_set; _}) ->
+    f accum isocore_set
+  ) isocores

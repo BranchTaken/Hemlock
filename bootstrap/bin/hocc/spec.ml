@@ -775,7 +775,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
               let goto = Lr1Itemset.singleton lr1item in
               let transit_attribs = TransitAttribs.empty in
               let gotonub = GotoNub.init ~isocores_sn_opt:None ~goto ~transit_attribs in
-              let index, isocores' = Isocores.insert symbols gotonub isocores in
+              let index, isocores' = Isocores.insert symbols prods gotonub isocores in
               let workq' = Workq.push_back index workq in
               isocores', workq'
             end
@@ -806,12 +806,12 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
                       )
                       |> Io.with_log io
                     in
-                    let index, isocores' = Isocores.insert symbols gotonub isocores in
+                    let index, isocores' = Isocores.insert symbols prods gotonub isocores in
                     let workq' = Workq.push_back index workq in
                     io, isocores', workq'
                   end
                 | Some merge_index -> begin
-                    match Isocores.merge symbols gotonub merge_index isocores with
+                    match Isocores.merge symbols prods gotonub merge_index isocores with
                     | false, _ -> io, isocores, workq
                     | true, isocores' -> begin
                         let io = io.log |> Fmt.fmt "." |> Io.with_log io in
@@ -1148,7 +1148,7 @@ and hmh_extract io hmh =
   let io, symbols, prods, reductions = symbols_init io precs symbols hmh in
   io, precs, symbols, prods, reductions
 
-and gc_states io states =
+and gc_states io isocores states =
   let state_indexes_reachable states = begin
     let isucc_state_indexes_of_state_index states state_index = begin
       let state = Array.get state_index states in
@@ -1186,8 +1186,16 @@ and gc_states io states =
     ) starts
   end in
   let reachable_state_indexes = state_indexes_reachable states in
+  let unreachable_state_indexes = Array.fold ~init:(Ordset.empty (module State.Index))
+    ~f:(fun unreachable state ->
+      let index = State.index state in
+      match Ordset.mem index reachable_state_indexes with
+      | true -> unreachable
+      | false -> Ordset.insert index unreachable
+    ) states in
   let nreachable = Ordset.length reachable_state_indexes in
-  let nunreachable = Array.length states - nreachable in
+  let nunreachable = Ordset.length unreachable_state_indexes in
+  assert (Uns.(nreachable + nunreachable = Array.length states));
   let io =
     io.log
     |> Fmt.fmt "hocc: " |> Uns.pp nunreachable |> Fmt.fmt " unreachable state"
@@ -1198,7 +1206,7 @@ and gc_states io states =
     |> Io.with_log io
   in
   match nunreachable with
-  | 0L -> io, states
+  | 0L -> io, isocores, states
   | _ -> begin
       let io =
         io.log
@@ -1207,11 +1215,22 @@ and gc_states io states =
         |> Fmt.fmt "\n"
         |> Io.with_log io
       in
+      (* Remove unreachable state nubs from isocores. *)
+      let isocores = Ordset.fold ~init:isocores ~f:(fun isocores index ->
+          Isocores.remove_hlt index isocores
+        ) unreachable_state_indexes in
       (* Create a map of pre-GC state indexes to post-GC state indexes. *)
       let state_index_map = Ordset.foldi ~init:(Map.empty (module State.Index))
         ~f:(fun i state_index_map state_index ->
           Map.insert_hlt ~k:state_index ~v:i state_index_map
         ) reachable_state_indexes in
+(*
+      File.Fmt.stderr
+      |> Fmt.fmt "XXX state_index_map="
+      |> Map.fmt ~alt:true ~width:4L State.Index.pp state_index_map
+      |> Fmt.fmt "\n"
+      |> ignore;
+*)
       (* Create a new set of reindexed states. *)
       let reindexed_states =
         Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
@@ -1224,8 +1243,60 @@ and gc_states io states =
             end
         ) states
         |> Ordset.to_array in
-      io, reindexed_states
+      io, isocores, reindexed_states
     end
+
+and remerge_states io isocores states =
+  let rec work io isocores states remergeable_state_map workq = begin
+    match Workq.is_empty workq with
+    | true -> io, remergeable_state_map
+    | false -> begin
+        let state_index, workq = Workq.pop workq in
+        let State.{statenub; _} as state = Array.get state_index states in
+        assert Uns.(State.index state = state_index);
+        let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
+        let isocore_set = Isocores.get_isocore_set_hlt core isocores in
+        match Ordset.length isocore_set with
+        | 0L -> not_reached ()
+        | 1L -> work io isocores states remergeable_state_map workq
+        | _ -> begin
+            let remergeable_state_map = Ordset.fold ~init:remergeable_state_map
+              ~f:(fun remergeable_state_map iso_index ->
+                match State.Index.(iso_index = state_index) with
+                | true -> remergeable_state_map
+                | false -> begin
+                    let iso_state = Array.get iso_index states in
+                    match State.remergeable remergeable_state_map iso_state state with
+                    | false -> remergeable_state_map
+                    | true -> begin
+                        let k = State.Index.max iso_index state_index in
+                        let v = State.Index.min iso_index state_index in
+                        (* XXX This isn't good enough, because merges between more than two states
+                         * in an isocore set require normalization (keys for all but the
+                         * lowest-numbered state, all with values of the lowest-numbered state). *)
+                        let remergeable_state_map = Map.insert ~k ~v remergeable_state_map in
+                        remergeable_state_map
+                      end
+                  end
+              ) isocore_set in
+            work io isocores states remergeable_state_map workq
+          end
+      end
+  end in
+  (* Initialize the work queue with indices of all states in non-singleton isocore sets. *)
+  let workq = Isocores.fold_isocore_sets ~init:Workq.empty ~f:(fun workq isocore_set ->
+    match Ordset.length isocore_set with
+    | 0L -> not_reached ()
+    | 1L -> workq
+    | _ -> begin
+        Ordset.fold ~init:workq ~f:(fun workq index ->
+          Workq.push_back index workq
+        ) isocore_set
+      end
+  ) isocores in
+  let remergeable_state_map = Map.empty (module State.Index) in
+  let io, _XXX_remergeable_state_map = work io isocores states remergeable_state_map workq in
+  io, isocores, states
 
 and init_inner algorithm ~resolve io precs symbols prods reductions =
   let io, isocores, gotonub_of_statenub_goto =
@@ -1247,8 +1318,9 @@ and init algorithm ~resolve io hmh =
     |> Io.with_log io
   in
   let io, precs, symbols, prods, reductions = hmh_extract io hmh in
-  let io, _isocores, states = init_inner algorithm ~resolve io precs symbols prods reductions in
-  let io, states = gc_states io states in
+  let io, isocores, states = init_inner algorithm ~resolve io precs symbols prods reductions in
+  let io, isocores, states = gc_states io isocores states in
+  let io, _isocores, states = remerge_states io isocores states in
   let io = log_unused io precs symbols prods states in
   io, {algorithm; precs; symbols; prods; reductions; states}
 

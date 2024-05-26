@@ -118,6 +118,13 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
   in
   {statenub; actions; gotos}
 
+let remergeable _XXX_remergeable_state_map {statenub=_XXX_sn0; actions=_XXX_a0; gotos=_XXX_g0}
+  {statenub=_XXX_sn1; actions=_XXX_a1; gotos=_XXX_g1} =
+  false
+
+let remerge symbols {statenub=sn0; _} ({statenub=sn1; _} as t) =
+  {t with statenub=StateNub.remerge symbols sn0 sn1}
+
 let reindex index_map {statenub; actions; gotos} =
   let statenub = StateNub.reindex index_map statenub in
   let actions = Ordmap.map ~f:(fun (_symbol_index, actions) ->

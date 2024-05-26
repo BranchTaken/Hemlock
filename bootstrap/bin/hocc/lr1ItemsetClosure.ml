@@ -203,6 +203,9 @@ let merge symbols lr1itemset t =
       true, t'
     end
 
+let union symbols {index=i0; kernel=k0; _} ({index=i1; _} as t) =
+  match merge symbols k0 {t with index=Index.min i0 i1} with _, t' -> t'
+
 let init symbols ~index lr1itemset =
   match merge symbols lr1itemset {
     index;

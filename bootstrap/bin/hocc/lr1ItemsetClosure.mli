@@ -46,6 +46,10 @@ val merge: Symbols.t -> Lr1Itemset.t -> t -> bool * t
     creates the closure of the merged kernel. The boolean result indicates whether items were merged
     into the kernel. *)
 
+val union: Symbols.t -> t -> t -> t
+(** [union symbols t0 t1] merges the kernels of [t0] and [t1] creates the closure of the merged
+    kernel. *)
+
 val next: t -> (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t
 (** [next t] returns the set of symbol indexes that may appear next, i.e. the symbol indexes
     corresponding to the symbols for which [goto] returns a non-empty set. *)
