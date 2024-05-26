@@ -58,8 +58,6 @@ hocc
     token RBRACK "]"
     token RPAREN ")"
 
-    token EOI
-
     #
     # Tokens with precedence.
     #
@@ -211,9 +209,7 @@ hocc
     left pDot < pPlot
     token DOT "." prec pDot
 
-    start Start ::= Top EOI
-
-    nonterm Top ::=
+    start Top ::=
       | Optional_separator
       | Element_list
 
