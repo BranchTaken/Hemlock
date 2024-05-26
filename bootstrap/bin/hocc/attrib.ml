@@ -70,8 +70,9 @@ module T = struct
     |> Fmt.fmt "{conflict_state_index="
     |> StateIndex.pp conflict_state_index
     |> Fmt.fmt "; symbol_index="
-    |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols)
-    |> Fmt.fmt "; conflict="
+    |> Symbol.Index.pp symbol_index
+    |> Fmt.fmt " (" |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols)
+    |> Fmt.fmt "); conflict="
     |> Contrib.pp_hr symbols prods conflict
     |> Fmt.fmt "; isucc_lr1itemset="
     |> Lr1Itemset.fmt_hr symbols ~alt ~width isucc_lr1itemset
