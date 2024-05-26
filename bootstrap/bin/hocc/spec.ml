@@ -1215,10 +1215,6 @@ and gc_states io isocores states =
         |> Fmt.fmt "\n"
         |> Io.with_log io
       in
-      (* Remove unreachable state nubs from isocores. *)
-      let isocores = Ordset.fold ~init:isocores ~f:(fun isocores index ->
-          Isocores.remove_hlt index isocores
-        ) unreachable_state_indexes in
       (* Create a map of pre-GC state indexes to post-GC state indexes. *)
       let state_index_map = Ordset.foldi ~init:(Map.empty (module State.Index))
         ~f:(fun i state_index_map state_index ->
@@ -1231,6 +1227,8 @@ and gc_states io isocores states =
       |> Fmt.fmt "\n"
       |> ignore;
 *)
+      (* Create a new set of reindexed isocores. *)
+      let isocores = Isocores.reindex state_index_map isocores in
       (* Create a new set of reindexed states. *)
       let reindexed_states =
         Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->

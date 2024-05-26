@@ -49,8 +49,10 @@ val merge: Symbols.t -> Prods.t -> GotoNub.t -> StateNub.Index.t -> t -> bool * 
     [statenub_index]. If the resulting state nub is distinct from the input, true is returned along
     with a derivative of [t] containing the resulting state nub; [false, t] otherwise. *)
 
-val remove_hlt: StateNub.Index.t -> t -> t
-(** [remove_hlt statenub_index t] removes the state nub with given [statenub_index]. *)
+val reindex: (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Map.t -> t -> t
+(** [reindex index_map t] creates a derivative of [t] with all LR(1) item set closure and state nub
+    indexes translated according to [index_map], where keys are the original indexes, and values are
+    the reindexed indexes. State nubs without mappings are omitted from the result. *)
 
 val isocores_length: t -> uns
 (** [isocores_length t] returns the number of isocore sets in [t]. *)

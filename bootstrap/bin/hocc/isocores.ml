@@ -185,24 +185,27 @@ let merge symbols _XXX_prods gotonub merge_index ({statenubs_map; _} as t) =
       true, {t with statenubs_map=statenubs_map'}
     end
 
-let remove_hlt index ({isocores; statenubs_map; _} as t) =
-  let statenub = Ordmap.get_hlt index statenubs_map in
-  let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
-  let {isocore_set; _} as v = Map.get_hlt core isocores in
-  let isocore_set' = Ordset.fold ~init:(Ordset.empty (module StateNub.Index))
-    ~f:(fun isocore_set' statenub_index ->
-      match StateIndex.(statenub_index = index) with
-      | false -> Ordset.insert statenub_index isocore_set'
-      | true -> isocore_set'
-    ) isocore_set in
-  let isocores' = match Ordset.length isocore_set' with
-    | 0L -> Map.remove_hlt core isocores
-    | _ -> begin
-        let v' = {v with isocore_set=isocore_set'} in
-        Map.update_hlt ~k:core ~v:v' isocores
-      end
+let reindex index_map ({statenubs_map; _} as t) =
+  let isocores', statenubs_map' =
+    Map.fold ~init:(Map.empty (module Lr0Itemset), Ordmap.empty (module StateNub.Index))
+      ~f:(fun (isocores', statenubs_map') (index, index') ->
+        let statenub = Ordmap.get_hlt index statenubs_map in
+        let statenub' = StateNub.reindex index_map statenub in
+        let core = Lr1Itemset.core StateNub.(statenub'.lr1itemsetclosure).kernel in
+        let isocores' = Map.amend core ~f:(fun v_opt ->
+          match v_opt with
+          | None -> Some {
+              isocore_set=Ordset.singleton (module StateNub.Index) index';
+              isocores_sn=statenub'.isocores_sn
+            }
+          | Some ({isocore_set; _} as v) -> Some {v with
+              isocore_set=Ordset.insert index' isocore_set
+            }
+          ) isocores' in
+        let statenubs_map' = Ordmap.insert_hlt ~k:index' ~v:statenub' statenubs_map' in
+        isocores', statenubs_map'
+      ) index_map
   in
-  let statenubs_map' = Ordmap.remove_hlt index statenubs_map in
   {t with isocores=isocores'; statenubs_map=statenubs_map'}
 
 let isocores_length {isocores; _} =
