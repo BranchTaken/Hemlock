@@ -1258,18 +1258,33 @@ and remerge_states io symbols isocores states =
         | 0L -> not_reached ()
         | 1L -> work io isocores states remergeables workq
         | _ -> begin
-            let remergeables = Ordset.fold ~init:remergeables
-              ~f:(fun remergeables iso_index ->
+            let progress, remergeables = Ordset.fold ~init:(false, remergeables)
+              ~f:(fun (progress, remergeables) iso_index ->
                 match State.Index.(iso_index = state_index) with
-                | true -> remergeables
+                | true -> progress, remergeables
                 | false -> begin
                     let iso_state = Array.get iso_index states in
                     let index_map = Remergeables.index_map remergeables in
                     match State.remergeable index_map iso_state state with
-                    | false -> remergeables
-                    | true -> Remergeables.insert iso_state.statenub state.statenub remergeables
+                    | false -> progress, remergeables
+                    | true -> begin
+                        let iso_statenub = iso_state.statenub in
+                        let statenub = state.statenub in
+                        match Remergeables.mem iso_statenub remergeables &&
+                              Remergeables.mem statenub remergeables with
+                        | true -> progress, remergeables
+                        | false -> true, Remergeables.insert iso_statenub statenub remergeables
+                        (* XXX Rather than reinserting statenub, we need to reinsert its ipreds. It
+                         * may be simpler to rebuild the workq and iteratively `work` until no
+                         * progress occurs. (Bring back Isocores.remove_hlt to simplify workq
+                         * initialization. *)
+                      end
                   end
               ) isocore_set in
+            let workq = match progress with
+              | false -> workq
+              | true -> Workq.push_back state_index workq
+            in
             work io isocores states remergeables workq
           end
       end

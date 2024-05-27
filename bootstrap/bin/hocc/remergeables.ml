@@ -22,7 +22,19 @@ let empty =
     index_map=Map.empty (module StateNub.Index);
   }
 
-let insert statenub0 statenub1 {remergeable_map; index_map} =
+let mem statenub {remergeable_map; _} =
+  let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
+  match Map.get core remergeable_map with
+  | None -> false
+  | Some v -> begin
+      List.fold_until ~init:false ~f:(fun _mem remergeable_set ->
+        let mem = Ordset.mem statenub remergeable_set in
+        mem, mem
+      ) v
+    end
+
+let insert statenub0 statenub1 ({remergeable_map; index_map} as t) =
+  assert (not ((mem statenub0 t) && mem statenub1 t));
   let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
   let remergeable_map, remergeable_set = match Map.get core remergeable_map with
     | None -> begin

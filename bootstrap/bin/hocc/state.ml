@@ -118,9 +118,70 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
   in
   {statenub; actions; gotos}
 
-let remergeable _XXX_remergeable_state_map {statenub=_XXX_sn0; actions=_XXX_a0; gotos=_XXX_g0}
-  {statenub=_XXX_sn1; actions=_XXX_a1; gotos=_XXX_g1} =
-  false
+let remergeable_actions remergeable_state_map a0 a1 =
+  Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
+    let remergeable = match kv0_opt, kv1_opt with
+      | None, Some _
+      | Some _, None -> false
+      | Some (_, action_set0), Some (_, action_set1) -> begin
+          let open Action in
+          Ordset.fold2_until ~init:true
+            ~f:(fun _remergeable action0_opt action1_opt ->
+              let remergeable = match action0_opt, action1_opt with
+                | None, Some _
+                | Some _, None -> false
+                | Some action0, Some action1 -> begin
+                    match action0, action1 with
+                    | ShiftPrefix index0, ShiftPrefix index1
+                    | ShiftAccept index0, ShiftAccept index1 -> begin
+                        let index0 =
+                          Map.get index0 remergeable_state_map
+                          |> Option.value ~default:index0
+                        in
+                        let index1 =
+                          Map.get index1 remergeable_state_map
+                          |> Option.value ~default:index1
+                        in
+                        Index.(index0 = index1)
+                      end
+                    | _, _ -> true
+                  end
+                | None, None -> not_reached ()
+              in
+              remergeable, not remergeable
+            ) action_set0 action_set1
+        end
+      | None, None -> not_reached ()
+    in
+    remergeable, not remergeable
+  ) a0 a1
+
+let remergeable_gotos remergeable_state_map g0 g1 =
+  Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
+    match kv0_opt, kv1_opt with
+    | None, Some _
+    | Some _, None -> false, true
+    | Some (_, index0), Some (_, index1) -> begin
+        let index0 =
+          Map.get index0 remergeable_state_map
+          |> Option.value ~default:index0
+        in
+        let index1 =
+          Map.get index1 remergeable_state_map
+          |> Option.value ~default:index1
+        in
+        let remergeable = Lr1ItemsetClosure.Index.(index0 = index1) in
+        remergeable, not remergeable
+      end
+    | None, None -> not_reached ()
+  ) g0 g1
+
+let remergeable remergeable_state_map {statenub=sn0; actions=a0; gotos=g0}
+  {statenub=sn1; actions=a1; gotos=g1} =
+  let core0 = Lr1Itemset.core StateNub.(sn0.lr1itemsetclosure).kernel in
+  let core1 = Lr1Itemset.core StateNub.(sn1.lr1itemsetclosure).kernel in
+  assert Lr0Itemset.(core0 = core1);
+  remergeable_actions remergeable_state_map a0 a1 && remergeable_gotos remergeable_state_map g0 g1
 
 let remerge symbols {statenub=sn0; _} ({statenub=sn1; _} as t) =
   {t with statenub=StateNub.remerge symbols sn0 sn1}
