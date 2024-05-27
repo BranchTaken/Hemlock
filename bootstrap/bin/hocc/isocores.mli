@@ -49,6 +49,9 @@ val merge: Symbols.t -> Prods.t -> GotoNub.t -> StateNub.Index.t -> t -> bool * 
     [statenub_index]. If the resulting state nub is distinct from the input, true is returned along
     with a derivative of [t] containing the resulting state nub; [false, t] otherwise. *)
 
+val remove_hlt: StateNub.Index.t -> t -> t
+(** [remove_hlt statenub_index t] removes the state nub with given [statenub_index]. *)
+
 val remerge: Symbols.t -> StateNub.Index.t -> StateNub.Index.t -> t -> t
 (** [remerge symbols statenub_index0 statenub_index1 t] creates a merged state nub comprising the
     remergeable state nubs corresponding to [statenub_index0] and [statenub_index1] and replaces the

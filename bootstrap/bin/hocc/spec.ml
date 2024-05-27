@@ -1220,15 +1220,12 @@ and gc_states io isocores states =
         ~f:(fun i state_index_map state_index ->
           Map.insert_hlt ~k:state_index ~v:i state_index_map
         ) reachable_state_indexes in
-(*
-      File.Fmt.stderr
-      |> Fmt.fmt "XXX state_index_map="
-      |> Map.fmt ~alt:true ~width:4L State.Index.pp state_index_map
-      |> Fmt.fmt "\n"
-      |> ignore;
-*)
       (* Create a new set of reindexed isocores. *)
-      let reindexed_isocores = Isocores.reindex state_index_map isocores in
+      let reindexed_isocores =
+        Ordset.fold ~init:isocores ~f:(fun remaining_isocores index ->
+          Isocores.remove_hlt index remaining_isocores
+        ) unreachable_state_indexes
+        |> Isocores.reindex state_index_map in
       (* Create a new set of reindexed states. *)
       let reindexed_states =
         Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
@@ -1302,43 +1299,65 @@ and remerge_states io symbols isocores states =
   ) isocores in
   let io, remergeables = work io isocores states Remergeables.empty workq in
   let remergeable_index_map = Remergeables.index_map remergeables in
-  let remaining_state_indexes = Range.Uns.fold (0L =:< Array.length states)
-    ~init:(Ordset.empty (module State.Index))
-    ~f:(fun reachable_state_indexes i ->
-      match Map.mem i remergeable_index_map with
-      | true -> reachable_state_indexes
-      | false -> Ordset.insert i reachable_state_indexes
-    ) in
-  let state_index_map = Ordset.foldi ~init:(Map.empty (module State.Index))
-    ~f:(fun i state_index_map state_index ->
-      Map.insert_hlt ~k:state_index ~v:i state_index_map
-    ) remaining_state_indexes in
-  (* Remerge isocores and states. *)
-  let remerged_isocores, remerged_states = Map.fold ~init:(isocores, states)
-    ~f:(fun (remerged_isocores, remerged_states) (index0, index1) ->
-    assert State.Index.(index0 > index1);
-    let remerged_isocores = Isocores.remerge symbols index0 index1 remerged_isocores in
-    let state0 = Array.get index0 states in
-    let state1 = Array.get index1 states in
-    let state1' = State.remerge symbols state0 state1 in
-    let remerged_states = Array.set index1 state1' remerged_states in
-    remerged_isocores, remerged_states
-  ) remergeable_index_map in
-  (* Create a new set of reindexed isocores. *)
-  let reindexed_isocores = Isocores.reindex state_index_map remerged_isocores in
-  (* Create a new set of reindexed states. *)
-  let reindexed_states =
-    Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
-      let state_index = State.index state in
-      match Map.mem state_index state_index_map with
-      | false -> reindexed_states
-      | true -> begin
-          let reindexed_state = State.reindex state_index_map state in
-          Ordset.insert reindexed_state reindexed_states
-        end
-    ) remerged_states
-    |> Ordset.to_array in
-  io, reindexed_isocores, reindexed_states
+  let nremergeable = Map.length remergeable_index_map in
+  let io =
+    io.log
+    |> Fmt.fmt "hocc: " |> Uns.pp nremergeable |> Fmt.fmt " remergeable state"
+    |> (fun formatter ->
+      match nremergeable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+    )
+    |> Fmt.fmt "\n"
+    |> Io.with_log io
+  in
+  match nremergeable with
+  | 0L -> io, isocores, states
+  | _ -> begin
+      let remaining_state_indexes = Range.Uns.fold (0L =:< Array.length states)
+        ~init:(Ordset.empty (module State.Index))
+        ~f:(fun reachable_state_indexes i ->
+          match Map.mem i remergeable_index_map with
+          | true -> reachable_state_indexes
+          | false -> Ordset.insert i reachable_state_indexes
+        ) in
+      let nremaining = Ordset.length remaining_state_indexes in
+      let io =
+        io.log
+        |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nremaining |> Fmt.fmt " LR(1) state"
+        |> (fun formatter -> match nremaining with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+        |> Fmt.fmt "\n"
+        |> Io.with_log io
+      in
+      let state_index_map = Ordset.foldi ~init:remergeable_index_map
+        ~f:(fun i state_index_map state_index ->
+          Map.insert_hlt ~k:state_index ~v:i state_index_map
+        ) remaining_state_indexes in
+      (* Remerge isocores and states. *)
+      let remerged_isocores, remerged_states = Map.fold ~init:(isocores, states)
+        ~f:(fun (remerged_isocores, remerged_states) (index0, index1) ->
+        assert State.Index.(index0 > index1);
+        let remerged_isocores = Isocores.remerge symbols index0 index1 remerged_isocores in
+        let state0 = Array.get index0 states in
+        let state1 = Array.get index1 states in
+        let state1' = State.remerge symbols state0 state1 in
+        let remerged_states = Array.set index1 state1' remerged_states in
+        remerged_isocores, remerged_states
+      ) remergeable_index_map in
+      (* Create a new set of reindexed isocores. *)
+      let reindexed_isocores = Isocores.reindex state_index_map remerged_isocores in
+      (* Create a new set of reindexed states. *)
+      let reindexed_states =
+        Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
+          let state_index = State.index state in
+          match Map.mem state_index state_index_map with
+          | false -> reindexed_states
+          | true -> begin
+              let reindexed_state = State.reindex state_index_map state in
+              Ordset.insert reindexed_state reindexed_states
+            end
+        ) remerged_states
+        |> Ordset.to_array in
+      io, reindexed_isocores, reindexed_states
+    end
 
 and init_inner algorithm ~resolve io precs symbols prods reductions =
   let io, isocores, gotonub_of_statenub_goto =

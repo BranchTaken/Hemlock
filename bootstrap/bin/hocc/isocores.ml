@@ -185,6 +185,26 @@ let merge symbols _XXX_prods gotonub merge_index ({statenubs_map; _} as t) =
       true, {t with statenubs_map=statenubs_map'}
     end
 
+let remove_hlt index ({isocores; statenubs_map; _} as t) =
+  let statenub = Ordmap.get_hlt index statenubs_map in
+  let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
+  let {isocore_set; _} as v = Map.get_hlt core isocores in
+  let isocore_set' = Ordset.fold ~init:(Ordset.empty (module StateNub.Index))
+    ~f:(fun isocore_set' statenub_index ->
+      match StateIndex.(statenub_index = index) with
+      | false -> Ordset.insert statenub_index isocore_set'
+      | true -> isocore_set'
+    ) isocore_set in
+  let isocores' = match Ordset.length isocore_set' with
+    | 0L -> Map.remove_hlt core isocores
+    | _ -> begin
+        let v' = {v with isocore_set=isocore_set'} in
+        Map.update_hlt ~k:core ~v:v' isocores
+      end
+  in
+  let statenubs_map' = Ordmap.remove_hlt index statenubs_map in
+  {t with isocores=isocores'; statenubs_map=statenubs_map'}
+
 let remerge symbols statenub_index0 statenub_index1 ({statenubs_map; _} as t) =
   let statenub_index_hi, statenub_index_lo =
     match StateNub.Index.cmp statenub_index0 statenub_index1 with
@@ -196,13 +216,14 @@ let remerge symbols statenub_index0 statenub_index1 ({statenubs_map; _} as t) =
   let statenub_lo = Ordmap.get_hlt statenub_index_lo statenubs_map in
   let statenub_lo' = StateNub.remerge symbols statenub_hi statenub_lo in
   let statenubs_map' = Ordmap.update_hlt ~k:statenub_index_lo ~v:statenub_lo' statenubs_map in
-  {t with statenubs_map=statenubs_map'}
+  let t' = {t with statenubs_map=statenubs_map'} in
+  remove_hlt statenub_index_hi t'
 
 let reindex index_map ({statenubs_map; _} as t) =
   let isocores', statenubs_map' =
-    Map.fold ~init:(Map.empty (module Lr0Itemset), Ordmap.empty (module StateNub.Index))
-      ~f:(fun (isocores', statenubs_map') (index, index') ->
-        let statenub = Ordmap.get_hlt index statenubs_map in
+    Ordmap.fold ~init:(Map.empty (module Lr0Itemset), Ordmap.empty (module StateNub.Index))
+      ~f:(fun (isocores', statenubs_map') (index, statenub) ->
+        let index' = Map.get_hlt index index_map in
         let statenub' = StateNub.reindex index_map statenub in
         let core = Lr1Itemset.core StateNub.(statenub'.lr1itemsetclosure).kernel in
         let isocores' = Map.amend core ~f:(fun v_opt ->
@@ -217,7 +238,7 @@ let reindex index_map ({statenubs_map; _} as t) =
           ) isocores' in
         let statenubs_map' = Ordmap.insert_hlt ~k:index' ~v:statenub' statenubs_map' in
         isocores', statenubs_map'
-      ) index_map
+      ) statenubs_map
   in
   {t with isocores=isocores'; statenubs_map=statenubs_map'}
 

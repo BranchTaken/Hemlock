@@ -118,7 +118,32 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
   in
   {statenub; actions; gotos}
 
-let remergeable_actions remergeable_state_map a0 a1 =
+let equivalent_indexes remergeable_state_map {statenub=sn0; _} {statenub=sn1; _} index0 index1 =
+  let i0 =
+    Map.get index0 remergeable_state_map
+    |> Option.value ~default:index0
+  in
+  let i1 =
+    Map.get index1 remergeable_state_map
+    |> Option.value ~default:index1
+  in
+  match Index.(i0 = i1) with
+  | true -> true
+  | false -> begin
+      let statenub_index0 = StateNub.index sn0 in
+      let sni0 =
+        Map.get statenub_index0 remergeable_state_map
+        |> Option.value ~default:statenub_index0
+      in
+      let statenub_index1 = StateNub.index sn1 in
+      let sni1 =
+        Map.get statenub_index1 remergeable_state_map
+        |> Option.value ~default:statenub_index1
+      in
+      Index.(i0 = sni0) && Index.(i1 = sni1)
+    end
+
+let remergeable_actions remergeable_state_map ({actions=a0; _} as t0) ({actions=a1; _} as t1) =
   Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
     let remergeable = match kv0_opt, kv1_opt with
       | None, Some _
@@ -133,17 +158,8 @@ let remergeable_actions remergeable_state_map a0 a1 =
                 | Some action0, Some action1 -> begin
                     match action0, action1 with
                     | ShiftPrefix index0, ShiftPrefix index1
-                    | ShiftAccept index0, ShiftAccept index1 -> begin
-                        let index0 =
-                          Map.get index0 remergeable_state_map
-                          |> Option.value ~default:index0
-                        in
-                        let index1 =
-                          Map.get index1 remergeable_state_map
-                          |> Option.value ~default:index1
-                        in
-                        Index.(index0 = index1)
-                      end
+                    | ShiftAccept index0, ShiftAccept index1 ->
+                      equivalent_indexes remergeable_state_map t0 t1 index0 index1
                     | _, _ -> true
                   end
                 | None, None -> not_reached ()
@@ -156,32 +172,23 @@ let remergeable_actions remergeable_state_map a0 a1 =
     remergeable, not remergeable
   ) a0 a1
 
-let remergeable_gotos remergeable_state_map g0 g1 =
+let remergeable_gotos remergeable_state_map ({gotos=g0; _} as t0) ({gotos=g1; _} as t1) =
   Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
-    match kv0_opt, kv1_opt with
-    | None, Some _
-    | Some _, None -> false, true
-    | Some (_, index0), Some (_, index1) -> begin
-        let index0 =
-          Map.get index0 remergeable_state_map
-          |> Option.value ~default:index0
-        in
-        let index1 =
-          Map.get index1 remergeable_state_map
-          |> Option.value ~default:index1
-        in
-        let remergeable = Lr1ItemsetClosure.Index.(index0 = index1) in
-        remergeable, not remergeable
-      end
-    | None, None -> not_reached ()
+    let remergeable = match kv0_opt, kv1_opt with
+      | None, Some _
+      | Some _, None -> false
+      | Some (_, index0), Some (_, index1) ->
+          equivalent_indexes remergeable_state_map t0 t1 index0 index1
+      | None, None -> not_reached ()
+    in
+    remergeable, not remergeable
   ) g0 g1
 
-let remergeable remergeable_state_map {statenub=sn0; actions=a0; gotos=g0}
-  {statenub=sn1; actions=a1; gotos=g1} =
+let remergeable remergeable_state_map ({statenub=sn0; _} as t0) ({statenub=sn1; _} as t1) =
   let core0 = Lr1Itemset.core StateNub.(sn0.lr1itemsetclosure).kernel in
   let core1 = Lr1Itemset.core StateNub.(sn1.lr1itemsetclosure).kernel in
   assert Lr0Itemset.(core0 = core1);
-  remergeable_actions remergeable_state_map a0 a1 && remergeable_gotos remergeable_state_map g0 g1
+  remergeable_actions remergeable_state_map t0 t1 && remergeable_gotos remergeable_state_map t0 t1
 
 let remerge symbols {statenub=sn0; _} ({statenub=sn1; _} as t) =
   {t with statenub=StateNub.remerge symbols sn0 sn1}
