@@ -49,6 +49,11 @@ val merge: Symbols.t -> Prods.t -> GotoNub.t -> StateNub.Index.t -> t -> bool * 
     [statenub_index]. If the resulting state nub is distinct from the input, true is returned along
     with a derivative of [t] containing the resulting state nub; [false, t] otherwise. *)
 
+val remerge: Symbols.t -> StateNub.Index.t -> StateNub.Index.t -> t -> t
+(** [remerge symbols statenub_index0 statenub_index1 t] creates a merged state nub comprising the
+    remergeable state nubs corresponding to [statenub_index0] and [statenub_index1] and replaces the
+    lower-indexed state nub with the merged result in a derivative of [t]. *)
+
 val reindex: (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Map.t -> t -> t
 (** [reindex index_map t] creates a derivative of [t] with all LR(1) item set closure and state nub
     indexes translated according to [index_map], where keys are the original indexes, and values are

@@ -185,6 +185,19 @@ let merge symbols _XXX_prods gotonub merge_index ({statenubs_map; _} as t) =
       true, {t with statenubs_map=statenubs_map'}
     end
 
+let remerge symbols statenub_index0 statenub_index1 ({statenubs_map; _} as t) =
+  let statenub_index_hi, statenub_index_lo =
+    match StateNub.Index.cmp statenub_index0 statenub_index1 with
+    | Lt -> statenub_index1, statenub_index0
+    | Eq -> not_reached ()
+    | Gt -> statenub_index0, statenub_index1
+  in
+  let statenub_hi = Ordmap.get_hlt statenub_index_hi statenubs_map in
+  let statenub_lo = Ordmap.get_hlt statenub_index_lo statenubs_map in
+  let statenub_lo' = StateNub.remerge symbols statenub_hi statenub_lo in
+  let statenubs_map' = Ordmap.update_hlt ~k:statenub_index_lo ~v:statenub_lo' statenubs_map in
+  {t with statenubs_map=statenubs_map'}
+
 let reindex index_map ({statenubs_map; _} as t) =
   let isocores', statenubs_map' =
     Map.fold ~init:(Map.empty (module Lr0Itemset), Ordmap.empty (module StateNub.Index))

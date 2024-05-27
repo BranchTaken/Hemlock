@@ -1298,17 +1298,19 @@ and remerge_states io symbols isocores states =
     ~f:(fun i state_index_map state_index ->
       Map.insert_hlt ~k:state_index ~v:i state_index_map
     ) remaining_state_indexes in
-  (* XXX Remerge isocores. *)
-  (* Create a new set of reindexed isocores. *)
-  let reindexed_isocores = Isocores.reindex state_index_map isocores in
-  (* Remerge states. *)
-  let remerged_states = Map.fold ~init:states ~f:(fun states (index0, index1) ->
+  (* Remerge isocores and states. *)
+  let remerged_isocores, remerged_states = Map.fold ~init:(isocores, states)
+    ~f:(fun (remerged_isocores, remerged_states) (index0, index1) ->
     assert State.Index.(index0 > index1);
+    let remerged_isocores = Isocores.remerge symbols index0 index1 remerged_isocores in
     let state0 = Array.get index0 states in
     let state1 = Array.get index1 states in
     let state1' = State.remerge symbols state0 state1 in
-    Array.set index1 state1' states
+    let remerged_states = Array.set index1 state1' remerged_states in
+    remerged_isocores, remerged_states
   ) remergeable_index_map in
+  (* Create a new set of reindexed isocores. *)
+  let reindexed_isocores = Isocores.reindex state_index_map remerged_isocores in
   (* Create a new set of reindexed states. *)
   let reindexed_states =
     Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
