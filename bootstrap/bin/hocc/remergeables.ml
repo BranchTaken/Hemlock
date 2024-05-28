@@ -45,22 +45,23 @@ let insert statenub0 statenub1 ({remergeable_map; index_map} as t) =
     | Some v -> begin
         let remergeable_set_opt, v' = List.fold ~init:(None, [])
           ~f:(fun (remergeable_set_opt, v') remergeable_set ->
-          match remergeable_set_opt with
-          | Some _ -> remergeable_set_opt, remergeable_set :: v'
-          | None -> begin
-              match Ordset.mem statenub0 remergeable_set, Ordset.mem statenub1 remergeable_set with
-              | false, false -> None, remergeable_set :: v'
-              | false, true -> begin
-                  let remergeable_set = Ordset.insert statenub0 remergeable_set in
-                  Some remergeable_set, remergeable_set :: v'
-                end
-              | true, false -> begin
-                  let remergeable_set = Ordset.insert statenub1 remergeable_set in
-                  Some remergeable_set, remergeable_set :: v'
-                end
-              | true, true -> not_reached ()
-            end
-        ) v in
+            match remergeable_set_opt with
+            | Some _ -> remergeable_set_opt, remergeable_set :: v'
+            | None -> begin
+                match Ordset.mem statenub0 remergeable_set, Ordset.mem statenub1 remergeable_set
+                with
+                | false, false -> None, remergeable_set :: v'
+                | false, true -> begin
+                    let remergeable_set = Ordset.insert statenub0 remergeable_set in
+                    Some remergeable_set, remergeable_set :: v'
+                  end
+                | true, false -> begin
+                    let remergeable_set = Ordset.insert statenub1 remergeable_set in
+                    Some remergeable_set, remergeable_set :: v'
+                  end
+                | true, true -> not_reached ()
+              end
+          ) v in
         let remergeable_set, v' = match remergeable_set_opt with
           | Some remergeable_set -> remergeable_set, v'
           | None -> begin
@@ -72,9 +73,9 @@ let insert statenub0 statenub1 ({remergeable_map; index_map} as t) =
       end
   in
   let min_index =
-     Ordset.min_elm ~cmp:StateNub.cmp remergeable_set
-     |> Option.value_hlt
-     |> StateNub.index in
+    Ordset.min_elm ~cmp:StateNub.cmp remergeable_set
+    |> Option.value_hlt
+    |> StateNub.index in
   let index_map =
     index_map
     |> Map.remove min_index
@@ -83,7 +84,7 @@ let insert statenub0 statenub1 ({remergeable_map; index_map} as t) =
       match StateNub.Index.(statenub_index = min_index) with
       | true -> index_map
       | false -> Map.upsert ~k:statenub_index ~v:min_index index_map
-       ) remergeable_set
+    ) remergeable_set
   in
   {remergeable_map; index_map}
 

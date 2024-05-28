@@ -775,7 +775,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
               let goto = Lr1Itemset.singleton lr1item in
               let transit_attribs = TransitAttribs.empty in
               let gotonub = GotoNub.init ~isocores_sn_opt:None ~goto ~transit_attribs in
-              let index, isocores' = Isocores.insert symbols prods gotonub isocores in
+              let index, isocores' = Isocores.insert symbols gotonub isocores in
               let workq' = Workq.push_back index workq in
               isocores', workq'
             end
@@ -806,12 +806,12 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
                       )
                       |> Io.with_log io
                     in
-                    let index, isocores' = Isocores.insert symbols prods gotonub isocores in
+                    let index, isocores' = Isocores.insert symbols gotonub isocores in
                     let workq' = Workq.push_back index workq in
                     io, isocores', workq'
                   end
                 | Some merge_index -> begin
-                    match Isocores.merge symbols prods gotonub merge_index isocores with
+                    match Isocores.merge symbols gotonub merge_index isocores with
                     | false, _ -> io, isocores, workq
                     | true, isocores' -> begin
                         let io = io.log |> Fmt.fmt "." |> Io.with_log io in

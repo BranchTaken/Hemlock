@@ -105,9 +105,6 @@ val compat_ielr1: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
     conflicts which will be successfully resolved during state generation are treated as compatible
     to avoid pointless state duplication. This function is the basis of the IELR(1) algorithm. *)
 
-val explain_ielr1: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> unit
-(* XXX Remove. *)
-
 val compat_pgm1: GotoNub.t -> t -> bool
 (** [compat_pgm1 gotonub t] determines whether [gotonub] and [t] are weakly compatible, as defined
     by the Pager(1977) algorithm, and as refined by Menhir to prevent phantom conflicts accompanying

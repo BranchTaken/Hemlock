@@ -634,14 +634,6 @@ let lalr1_transit_attribs_init ~resolve io symbols prods lalr1_isocores lalr1_st
   in
   let io, lalr1_transit_attribs = close_transit_attribs io adjs lalr1_transit_attribs in
   let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
-(*
-  File.Fmt.stderr
-  |> Fmt.fmt "XXX lalr1_transit_attribs="
-  |> Ordmap.fmt ~alt:true ~width:4L (TransitAttribs.fmt_hr symbols prods ~alt:true ~width:8L)
-    lalr1_transit_attribs
-  |> Fmt.fmt "\n"
-  |> ignore;
-*)
   (* Determine state split-stability. *)
   let io, lalr1_isocores_stable = close_stable ~resolve io symbols prods lalr1_isocores lalr1_states
       adjs ~lalr1_transit_attribs in

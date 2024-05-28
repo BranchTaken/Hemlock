@@ -315,33 +315,6 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=
       compat, not compat
     ) o_attribs t_attribs
 
-let explain_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
-  Attribs.fold2 ~init:()
-    ~f:(fun _ attrib_opt0 attrib_opt1 ->
-      let o_attrib, t_attrib = match attrib_opt0, attrib_opt1 with
-        | Some o_attrib, Some t_attrib -> o_attrib, t_attrib
-        | Some (Attrib.{conflict_state_index; symbol_index; conflict; _} as o_attrib), None ->
-          o_attrib, Attrib.empty ~conflict_state_index ~symbol_index ~conflict
-        | None, Some (Attrib.{conflict_state_index; symbol_index; conflict; _} as t_attrib) ->
-          Attrib.empty ~conflict_state_index ~symbol_index ~conflict, t_attrib
-        | None, None -> not_reached ()
-      in
-      let compat = Attrib.compat_ielr1 ~resolve symbols prods o_attrib t_attrib in
-      match compat with
-      | true -> ()
-      | false -> begin
-          let o_contrib, t_contrib = Attrib.resolutions ~resolve symbols prods o_attrib t_attrib in
-          File.Fmt.stderr
-          |> Fmt.fmt "Incompatible:"
-          |> Fmt.fmt "\n    o_attrib=" |> Attrib.fmt_hr symbols prods ~alt:true o_attrib
-          |> Fmt.fmt "\n    t_attrib=" |> Attrib.fmt_hr symbols prods ~alt:true t_attrib
-          |> Fmt.fmt "\n    o_contrib=" |> Contrib.pp_hr symbols prods o_contrib
-          |> Fmt.fmt "\n    t_contrib=" |> Contrib.pp_hr symbols prods t_contrib
-          |> Fmt.fmt "\n"
-          |> ignore;
-        end
-    ) o_attribs t_attribs
-
 let compat_pgm1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
   Lr1Itemset.compat_pgm1 goto kernel
 
