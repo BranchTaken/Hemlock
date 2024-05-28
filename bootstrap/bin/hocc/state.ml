@@ -138,11 +138,6 @@ let normalize_index remergeable_state_map
   | false -> remerged_index
   | true -> self_index
 
-let equivalent_indexes remergeable_state_map t0 t1 index0 index1 =
-  let normalized_index0 = normalize_index remergeable_state_map t0 t1 index0 in
-  let normalized_index1 = normalize_index remergeable_state_map t0 t1 index1 in
-  Index.(normalized_index0 = normalized_index1)
-
 let normalize_action_set remergeable_state_map t0 t1 action_set =
   Ordset.fold ~init:(Ordset.empty (module Action)) ~f:(fun action_set' action ->
     let open Action in
@@ -153,6 +148,11 @@ let normalize_action_set remergeable_state_map t0 t1 action_set =
     in
     Ordset.insert action' action_set'
   ) action_set
+
+let equivalent_indexes remergeable_state_map t0 t1 index0 index1 =
+  let normalized_index0 = normalize_index remergeable_state_map t0 t1 index0 in
+  let normalized_index1 = normalize_index remergeable_state_map t0 t1 index1 in
+  Index.(normalized_index0 = normalized_index1)
 
 let remergeable_actions remergeable_state_map ({actions=a0; _} as t0) ({actions=a1; _} as t1) =
   Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
@@ -177,23 +177,7 @@ let remergeable_actions remergeable_state_map ({actions=a0; _} as t0) ({actions=
             normalize_action_set remergeable_state_map t0 t1 action_set0 in
           let normalized_action_set1 =
             normalize_action_set remergeable_state_map t0 t1 action_set1 in
-          let open Action in
-          Ordset.fold2_until ~init:true
-            ~f:(fun _remergeable action0_opt action1_opt ->
-              let remergeable = match action0_opt, action1_opt with
-                | Some action0, Some action1
-                  -> Action.(action0 = action1)
-                | None, Some ShiftPrefix _
-                | None, Some ShiftAccept _
-                | Some ShiftPrefix _, None
-                | Some ShiftAccept _, None
-                | None, Some Reduce _
-                | Some Reduce _, None
-                  -> false
-                | None, None -> not_reached ()
-              in
-              remergeable, not remergeable
-            ) normalized_action_set0 normalized_action_set1
+          Ordset.equal normalized_action_set0 normalized_action_set1
         end
       | None, None -> not_reached ()
     in
@@ -204,7 +188,7 @@ let remergeable_gotos remergeable_state_map ({gotos=g0; _} as t0) ({gotos=g1; _}
   Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
     let remergeable = match kv0_opt, kv1_opt with
       | None, Some _
-      | Some _, None -> false
+      | Some _, None -> true
       | Some (_, index0), Some (_, index1) ->
         equivalent_indexes remergeable_state_map t0 t1 index0 index1
       | None, None -> not_reached ()
