@@ -65,7 +65,7 @@ val remerge: Symbols.t -> t -> t -> t
 (** [remerge symbols t0 t1] creates a merged state nub comprising remergeable state nubs [t0] and
     [t1]. *)
 
-val reindex: (Index.t, Index.t, Index.cmper_witness) Map.t -> t -> t
+val reindex: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates a state nub with all LR(1) item set closure and state nub indexes
     translated according to [index_map], where keys are the original indexes, and values are the
     reindexed indexes. *)

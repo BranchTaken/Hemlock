@@ -33,7 +33,7 @@ val empty: t
 val singleton: Lr1Item.t -> Attribs.t -> t
 (** [singleton item attribs] returns singleton [item]->[attribs] conflict attributions. *)
 
-val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Map.t -> t -> t
+val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates kernel attribs with all LR(1) item set closure and state nub
     indexes translated according to [index_map], where keys are the original indexes, and values are
     the reindexed indexes. *)

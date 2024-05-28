@@ -13,13 +13,13 @@ type t = {
    * lowest-numbered state nub.
    *
    * Example: Given remergeable set {1, 2, 3}, the map contains [(2, 1); [3, 1)]. *)
-  index_map: (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Map.t;
+  index_map: (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Ordmap.t;
 }
 
 let empty =
   {
     remergeable_map=Map.empty (module Lr0Itemset);
-    index_map=Map.empty (module StateNub.Index);
+    index_map=Ordmap.empty (module StateNub.Index);
   }
 
 let mem statenub {remergeable_map; _} =
@@ -78,12 +78,12 @@ let insert statenub0 statenub1 ({remergeable_map; index_map} as t) =
     |> StateNub.index in
   let index_map =
     index_map
-    |> Map.remove min_index
+    |> Ordmap.remove min_index
     |> fun index_map -> Ordset.fold ~init:index_map ~f:(fun index_map statenub ->
       let statenub_index = StateNub.index statenub in
       match StateNub.Index.(statenub_index = min_index) with
       | true -> index_map
-      | false -> Map.upsert ~k:statenub_index ~v:min_index index_map
+      | false -> Ordmap.upsert ~k:statenub_index ~v:min_index index_map
     ) remergeable_set
   in
   {remergeable_map; index_map}

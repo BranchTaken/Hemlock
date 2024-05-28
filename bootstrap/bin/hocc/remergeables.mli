@@ -17,5 +17,5 @@ val insert: StateNub.t -> StateNub.t -> t -> t
     into a derivative of [t]. At most one of [statenub0] and [statenub1] can be a member of [t]
     prior to calling this function. *)
 
-val index_map: t -> (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Map.t
+val index_map: t -> (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Ordmap.t
 (** [index_map t] returns a map of remergeable statenub indexes in canonical form. *)

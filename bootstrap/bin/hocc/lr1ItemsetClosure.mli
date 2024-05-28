@@ -36,7 +36,7 @@ val init: Symbols.t -> index:Index.t -> Lr1Itemset.t -> t
 (** [init symbols ~index lr1itemset] creates the closure of the kernel represented by [lr1itemset],
     with index set to [index]. *)
 
-val reindex: (Index.t, Index.t, Index.cmper_witness) Map.t -> t -> t
+val reindex: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates an LR(1) item set closure with all LR(1) item set closure indexes
     translated according to [index_map], where keys are the original indexes, and values are the
     reindexed indexes. *)

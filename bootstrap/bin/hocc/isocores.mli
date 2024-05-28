@@ -57,7 +57,7 @@ val remerge: Symbols.t -> StateNub.Index.t -> StateNub.Index.t -> t -> t
     remergeable state nubs corresponding to [statenub_index0] and [statenub_index1] and replaces the
     lower-indexed state nub with the merged result in a derivative of [t]. *)
 
-val reindex: (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Map.t -> t -> t
+val reindex: (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates a derivative of [t] with all LR(1) item set closure and state nub
     indexes translated according to [index_map], where keys are the original indexes, and values are
     the reindexed indexes. State nubs without mappings are omitted from the result. *)

@@ -149,7 +149,7 @@ let reindex index_map ({statenubs_map; _} as t) =
   let isocores', statenubs_map' =
     Ordmap.fold ~init:(Map.empty (module Lr0Itemset), Ordmap.empty (module StateNub.Index))
       ~f:(fun (isocores', statenubs_map') (index, statenub) ->
-        let index' = Map.get_hlt index index_map in
+        let index' = Ordmap.get_hlt index index_map in
         let statenub' = StateNub.reindex index_map statenub in
         let core = Lr1Itemset.core StateNub.(statenub'.lr1itemsetclosure).kernel in
         let isocores' = Map.amend core ~f:(fun v_opt ->

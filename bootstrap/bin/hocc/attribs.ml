@@ -131,7 +131,7 @@ let union t0 t1 =
 let reindex index_map t =
   Ordmap.fold ~init:empty
     ~f:(fun reindexed_t (_symbol_index, (Attrib.{conflict_state_index; _} as attrib)) ->
-      match Map.get conflict_state_index index_map with
+      match Ordmap.get conflict_state_index index_map with
       | None -> reindexed_t
       | Some conflict_state_index' ->
         insert {attrib with conflict_state_index=conflict_state_index'} reindexed_t

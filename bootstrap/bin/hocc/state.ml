@@ -54,8 +54,8 @@ module Action = struct
   include Identifiable.Make(T)
 
   let reindex index_map = function
-    | ShiftPrefix state_index -> ShiftPrefix (Map.get_hlt state_index index_map)
-    | ShiftAccept state_index -> ShiftAccept (Map.get_hlt state_index index_map)
+    | ShiftPrefix state_index -> ShiftPrefix (Ordmap.get_hlt state_index index_map)
+    | ShiftAccept state_index -> ShiftAccept (Ordmap.get_hlt state_index index_map)
     | Reduce _ as reduce -> reduce
 end
 
@@ -124,7 +124,7 @@ let normalize_index remergeable_state_map
     {statenub={lr1itemsetclosure={index=t1_index; _}; _}; _} index =
   (* Normalize indexes that will be remerged. *)
   let remerged_index =
-    Map.get index remergeable_state_map
+    Ordmap.get index remergeable_state_map
     |> Option.value ~default:index
   in
   (* Speculatively normalize self-referential indexes, so that transitions to self will be
@@ -215,7 +215,7 @@ let reindex index_map {statenub; actions; gotos} =
       ) actions
   ) actions in
   let gotos = Ordmap.map ~f:(fun (_symbol_index, statenub_index) ->
-    Map.get_hlt statenub_index index_map
+    Ordmap.get_hlt statenub_index index_map
   ) gotos in
   {statenub; actions; gotos}
 

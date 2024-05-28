@@ -214,7 +214,7 @@ let init symbols ~index lr1itemset =
   } with _, t -> t
 
 let reindex index_map ({index; _} as t) =
-  {t with index=Map.get_hlt index index_map}
+  {t with index=Ordmap.get_hlt index index_map}
 
 let next t =
   fold ~init:(Ordset.empty (module Symbol.Index))
