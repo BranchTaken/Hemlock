@@ -25,6 +25,7 @@ module Action = struct
         -> Lt
       | ShiftPrefix i0, ShiftPrefix i1
       | ShiftAccept i0, ShiftAccept i1
+        -> Index.cmp i0 i1
       | Reduce i0, Reduce i1
         -> Prod.Index.cmp i0 i1
       | ShiftAccept _, ShiftPrefix _
@@ -64,7 +65,7 @@ module T = struct
     actions:
       (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
         Ordmap.t;
-    gotos: (Symbol.Index.t, Lr1ItemsetClosure.Index.t, Symbol.Index.cmper_witness) Ordmap.t;
+    gotos: (Symbol.Index.t, Index.t, Symbol.Index.cmper_witness) Ordmap.t;
   }
 
   let hash_fold {statenub; _} state =
@@ -77,7 +78,7 @@ module T = struct
     formatter
     |> Fmt.fmt "{statenub=" |> StateNub.pp statenub
     |> Fmt.fmt "; actions=" |> Ordmap.pp Ordset.pp actions
-    |> Fmt.fmt "; gotos=" |> Ordmap.pp Lr1ItemsetClosure.Index.pp gotos
+    |> Fmt.fmt "; gotos=" |> Ordmap.pp Index.pp gotos
     |> Fmt.fmt "}"
 end
 include T
@@ -118,54 +119,81 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
   in
   {statenub; actions; gotos}
 
-let equivalent_indexes remergeable_state_map {statenub=sn0; _} {statenub=sn1; _} index0 index1 =
-  let i0 =
-    Map.get index0 remergeable_state_map
-    |> Option.value ~default:index0
+let normalize_index remergeable_state_map
+  {statenub={lr1itemsetclosure={index=t0_index; _}; _}; _}
+  {statenub={lr1itemsetclosure={index=t1_index; _}; _}; _} index =
+  (* Normalize indexes that will be remerged. *)
+  let remerged_index =
+    Map.get index remergeable_state_map
+    |> Option.value ~default:index
   in
-  let i1 =
-    Map.get index1 remergeable_state_map
-    |> Option.value ~default:index1
+  (* Speculatively normalize self-referential indexes, so that transitions to self will be
+   * considered equal. *)
+  let self_index, other_index = match Index.cmp t0_index t1_index with
+    | Lt
+    | Eq -> t0_index, t1_index
+    | Gt -> t1_index, t0_index
   in
-  match Index.(i0 = i1) with
-  | true -> true
-  | false -> begin
-      let statenub_index0 = StateNub.index sn0 in
-      let sni0 =
-        Map.get statenub_index0 remergeable_state_map
-        |> Option.value ~default:statenub_index0
-      in
-      let statenub_index1 = StateNub.index sn1 in
-      let sni1 =
-        Map.get statenub_index1 remergeable_state_map
-        |> Option.value ~default:statenub_index1
-      in
-      Index.(i0 = sni0) && Index.(i1 = sni1)
-    end
+  match Index.(remerged_index = other_index) with
+  | false -> remerged_index
+  | true -> self_index
+
+let equivalent_indexes remergeable_state_map t0 t1 index0 index1 =
+  let normalized_index0 = normalize_index remergeable_state_map t0 t1 index0 in
+  let normalized_index1 = normalize_index remergeable_state_map t0 t1 index1 in
+  Index.(normalized_index0 = normalized_index1)
+
+let normalize_action_set remergeable_state_map t0 t1 action_set =
+  Ordset.fold ~init:(Ordset.empty (module Action)) ~f:(fun action_set' action ->
+    let open Action in
+    let action' = match action with
+      | ShiftPrefix index -> ShiftPrefix (normalize_index remergeable_state_map t0 t1 index)
+      | ShiftAccept index -> ShiftAccept (normalize_index remergeable_state_map t0 t1 index)
+      | Reduce _ as reduce -> reduce
+    in
+    Ordset.insert action' action_set'
+  ) action_set
 
 let remergeable_actions remergeable_state_map ({actions=a0; _} as t0) ({actions=a1; _} as t1) =
   Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
     let remergeable = match kv0_opt, kv1_opt with
-      | None, Some _
-      | Some _, None -> false
+      | None, Some (_, action_set)
+      | Some (_, action_set), None -> begin
+          let open Action in
+          Ordset.fold_until ~init:true
+            ~f:(fun _remergeable action ->
+              let remergeable = match action with
+                | ShiftPrefix _
+                | ShiftAccept _
+                  -> false
+                | Reduce _
+                  -> true
+              in
+              remergeable, not remergeable
+            ) action_set
+        end
       | Some (_, action_set0), Some (_, action_set1) -> begin
+          let normalized_action_set0 =
+            normalize_action_set remergeable_state_map t0 t1 action_set0 in
+          let normalized_action_set1 =
+            normalize_action_set remergeable_state_map t0 t1 action_set1 in
           let open Action in
           Ordset.fold2_until ~init:true
             ~f:(fun _remergeable action0_opt action1_opt ->
               let remergeable = match action0_opt, action1_opt with
-                | None, Some _
-                | Some _, None -> false
-                | Some action0, Some action1 -> begin
-                    match action0, action1 with
-                    | ShiftPrefix index0, ShiftPrefix index1
-                    | ShiftAccept index0, ShiftAccept index1 ->
-                      equivalent_indexes remergeable_state_map t0 t1 index0 index1
-                    | _, _ -> true
-                  end
+                | Some action0, Some action1
+                  -> Action.(action0 = action1)
+                | None, Some ShiftPrefix _
+                | None, Some ShiftAccept _
+                | Some ShiftPrefix _, None
+                | Some ShiftAccept _, None
+                | None, Some Reduce _
+                | Some Reduce _, None
+                  -> false
                 | None, None -> not_reached ()
               in
               remergeable, not remergeable
-            ) action_set0 action_set1
+            ) normalized_action_set0 normalized_action_set1
         end
       | None, None -> not_reached ()
     in

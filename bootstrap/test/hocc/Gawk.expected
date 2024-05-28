@@ -16,4 +16,6 @@ hocc: Generating 560 LR(1) states
 hocc: 134 unresolvable conflicts in 62 states (0 ⊥, 134 shift-reduce, 0 reduce-reduce)
 hocc: 10 unreachable states
 hocc: Reindexing 550 LR(1) states
+hocc: 30 remergeable states
+hocc: Reindexing 520 LR(1) states
 hocc: Searching for unused precedences/tokens/non-terminals/productions

@@ -15,6 +15,7 @@ hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++^++++++++^+
 hocc: Generating 21 LR(1) states
 hocc: 1 conflict in 1 state (0 ⊥, 0 shift-reduce, 1 reduce-reduce) (conflict resolution disabled)
 hocc: 0 unreachable states
+hocc: 0 remergeable states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Generating hocc report

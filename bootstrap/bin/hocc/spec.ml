@@ -1242,62 +1242,49 @@ and gc_states io isocores states =
     end
 
 and remerge_states io symbols isocores states =
-  let rec work io isocores states remergeables workq = begin
-    match Workq.is_empty workq with
-    | true -> io, remergeables
-    | false -> begin
-        let state_index, workq = Workq.pop workq in
-        let State.{statenub; _} as state = Array.get state_index states in
-        assert Uns.(State.index state = state_index);
-        let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
-        let isocore_set = Isocores.get_isocore_set_hlt core isocores in
+  let rec work io isocores states remergeables = begin
+    let progress, remergeables =
+      (* Initialize the work list with indices of all states in non-singleton isocore sets. *)
+      Isocores.fold_isocore_sets ~init:[] ~f:(fun state_indexes isocore_set ->
         match Ordset.length isocore_set with
         | 0L -> not_reached ()
-        | 1L -> work io isocores states remergeables workq
-        | _ -> begin
-            let progress, remergeables = Ordset.fold ~init:(false, remergeables)
-              ~f:(fun (progress, remergeables) iso_index ->
-                match State.Index.(iso_index = state_index) with
-                | true -> progress, remergeables
-                | false -> begin
-                    let iso_state = Array.get iso_index states in
-                    let index_map = Remergeables.index_map remergeables in
-                    match State.remergeable index_map iso_state state with
-                    | false -> progress, remergeables
-                    | true -> begin
-                        let iso_statenub = iso_state.statenub in
-                        let statenub = state.statenub in
-                        match Remergeables.mem iso_statenub remergeables &&
-                              Remergeables.mem statenub remergeables with
-                        | true -> progress, remergeables
-                        | false -> true, Remergeables.insert iso_statenub statenub remergeables
-                        (* XXX Rather than reinserting statenub, we need to reinsert its ipreds. It
-                         * may be simpler to rebuild the workq and iteratively `work` until no
-                         * progress occurs. (Bring back Isocores.remove_hlt to simplify workq
-                         * initialization. *)
-                      end
-                  end
-              ) isocore_set in
-            let workq = match progress with
-              | false -> workq
-              | true -> Workq.push_back state_index workq
-            in
-            work io isocores states remergeables workq
-          end
-      end
+        | 1L -> state_indexes
+        | _ -> Ordset.fold ~init:state_indexes ~f:(fun workq index -> index :: workq ) isocore_set
+      ) isocores
+      |> List.fold ~init:(false, remergeables)
+        ~f:(fun (progress, remergeables) state_index ->
+          let State.{statenub; _} as state = Array.get state_index states in
+          assert Uns.(State.index state = state_index);
+          let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
+          let isocore_set = Isocores.get_isocore_set_hlt core isocores in
+          Ordset.fold ~init:(progress, remergeables)
+            ~f:(fun (progress, remergeables) iso_index ->
+              (* Eliminate redundant/self pairs via `<=`. *)
+              match State.Index.(iso_index <= state_index) with
+              | true -> progress, remergeables
+              | false -> begin
+                  let iso_state = Array.get iso_index states in
+                  let index_map = Remergeables.index_map remergeables in
+                  match State.remergeable index_map iso_state state with
+                  | false -> progress, remergeables
+                  | true -> begin
+                      let iso_statenub = iso_state.statenub in
+                      let statenub = state.statenub in
+                      match Remergeables.mem iso_statenub remergeables &&
+                            Remergeables.mem statenub remergeables with
+                      | true -> progress, remergeables
+                      | false -> true, Remergeables.insert iso_statenub statenub remergeables
+                    end
+                end
+            ) isocore_set
+        )
+    in
+    (* Iterate until there is no remerging progress. *)
+    match progress with
+    | false -> io, remergeables
+    | true -> work io isocores states remergeables
   end in
-  (* Initialize the work queue with indices of all states in non-singleton isocore sets. *)
-  let workq = Isocores.fold_isocore_sets ~init:Workq.empty ~f:(fun workq isocore_set ->
-    match Ordset.length isocore_set with
-    | 0L -> not_reached ()
-    | 1L -> workq
-    | _ -> begin
-        Ordset.fold ~init:workq ~f:(fun workq index ->
-          Workq.push_back index workq
-        ) isocore_set
-      end
-  ) isocores in
-  let io, remergeables = work io isocores states Remergeables.empty workq in
+  let io, remergeables = work io isocores states Remergeables.empty in
   let remergeable_index_map = Remergeables.index_map remergeables in
   let nremergeable = Map.length remergeable_index_map in
   let io =
