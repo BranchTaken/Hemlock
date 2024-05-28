@@ -131,7 +131,8 @@ let remove_hlt index ({isocores; statenubs_map; _} as t) =
   let statenubs_map' = Ordmap.remove_hlt index statenubs_map in
   {t with isocores=isocores'; statenubs_map=statenubs_map'}
 
-let remerge symbols statenub_index0 statenub_index1 ({statenubs_map; _} as t) =
+let remerge symbols remergeable_index_map statenub_index0 statenub_index1
+    ({statenubs_map; _} as t) =
   let statenub_index_hi, statenub_index_lo =
     match StateNub.Index.cmp statenub_index0 statenub_index1 with
     | Lt -> statenub_index1, statenub_index0
@@ -140,7 +141,7 @@ let remerge symbols statenub_index0 statenub_index1 ({statenubs_map; _} as t) =
   in
   let statenub_hi = Ordmap.get_hlt statenub_index_hi statenubs_map in
   let statenub_lo = Ordmap.get_hlt statenub_index_lo statenubs_map in
-  let statenub_lo' = StateNub.remerge symbols statenub_hi statenub_lo in
+  let statenub_lo' = StateNub.remerge symbols remergeable_index_map statenub_hi statenub_lo in
   let statenubs_map' = Ordmap.update_hlt ~k:statenub_index_lo ~v:statenub_lo' statenubs_map in
   let t' = {t with statenubs_map=statenubs_map'} in
   remove_hlt statenub_index_hi t'

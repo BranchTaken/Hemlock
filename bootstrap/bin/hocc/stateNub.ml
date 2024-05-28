@@ -215,18 +215,20 @@ let init symbols ~index ~isocores_sn ~isocore_set_sn GotoNub.{goto; transit_attr
   let lr1itemsetclosure = Lr1ItemsetClosure.init symbols ~index goto in
   {lr1itemsetclosure; isocores_sn; isocore_set_sn; transit_attribs_lst=[transit_attribs]; attribs}
 
-let remerge symbols
+let remerge symbols remergeable_index_map
     {lr1itemsetclosure=c0; isocores_sn=is0; isocore_set_sn=iss0; transit_attribs_lst=tal0;
       attribs=a0}
     {lr1itemsetclosure=c1; isocores_sn=is1; isocore_set_sn=iss1; transit_attribs_lst=tal1;
       attribs=a1} =
   assert Uns.(is0 = is1);
+  let remerge_transit_attribs =
+    List.map ~f:(fun ta -> TransitAttribs.remerge1 remergeable_index_map ta) in
   {
-    lr1itemsetclosure=Lr1ItemsetClosure.union symbols c0 c1;
+    lr1itemsetclosure=Lr1ItemsetClosure.remerge symbols remergeable_index_map c0 c1;
     isocores_sn=is0;
     isocore_set_sn=Uns.min iss0 iss1;
-    transit_attribs_lst=List.concat tal0 tal1;
-    attribs=Attribs.union a0 a1
+    transit_attribs_lst=List.concat (remerge_transit_attribs tal0) (remerge_transit_attribs tal1);
+    attribs=Attribs.remerge remergeable_index_map a0 a1
   }
 
 let reindex index_map

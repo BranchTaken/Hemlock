@@ -61,9 +61,9 @@ val isocore_set_sn: t -> uns
 (** [isocore_set_sn t] returns the serial number of [t] with respect to its containing isocore set.
 *)
 
-val remerge: Symbols.t -> t -> t -> t
-(** [remerge symbols t0 t1] creates a merged state nub comprising remergeable state nubs [t0] and
-    [t1]. *)
+val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t -> t
+(** [remerge symbols remergeable_index_map t0 t1] creates a merged state nub comprising remergeable
+    state nubs [t0] and [t1]. *)
 
 val reindex: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates a state nub with all LR(1) item set closure and state nub indexes

@@ -93,6 +93,18 @@ module T = struct
   let to_lane_attrib {conflict_state_index; symbol_index; conflict; contrib; _} =
     init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib
 
+  let remerge1 remergeable_index_map ({conflict_state_index; _} as t) =
+    let conflict_state_index' = match Ordmap.get conflict_state_index remergeable_index_map with
+      | None -> conflict_state_index
+      | Some conflict_state_index' -> conflict_state_index'
+    in
+    {t with conflict_state_index=conflict_state_index'}
+
+  let reindex index_map ({conflict_state_index; _} as t) =
+    match Ordmap.get conflict_state_index index_map with
+    | None -> None
+    | Some conflict_state_index' -> Some {t with conflict_state_index=conflict_state_index'}
+
   let is_empty {contrib; _} =
     Contrib.is_empty contrib
 

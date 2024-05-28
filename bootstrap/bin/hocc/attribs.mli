@@ -67,6 +67,16 @@ val insert: Attrib.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of conflict attributions in [t0] and [t1]. *)
 
+val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
+(** [remerge1 remergeable_index_map t] creates attribs with remergeable attribs translated according
+    to [remergeable_index_map], where keys are the original indexes, and values are the reindexed
+    indexes. *)
+
+val remerge: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t -> t
+(** [remerge remergeable_index_map t0 t1] creates a merged set of reindexed attribs comprising
+    remergeable attribs [t0] and [t1], translated according to [remergeable_index_map], where keys
+    are the original indexes, and values are the reindexed indexes. *)
+
 val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates attribs with all state indexes translated according to
     [index_map], where keys are the original indexes, and values are the reindexed indexes. *)

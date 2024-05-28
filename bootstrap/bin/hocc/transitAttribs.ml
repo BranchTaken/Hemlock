@@ -61,6 +61,13 @@ let empty = {
 let is_empty {all; definite; kernel_attribs_all} =
   Attribs.is_empty all && Attribs.is_empty definite && KernelAttribs.is_empty kernel_attribs_all
 
+let remerge1 remergeable_index_map {all; definite; kernel_attribs_all} =
+  {
+    all=Attribs.remerge1 remergeable_index_map all;
+    definite=Attribs.remerge1 remergeable_index_map definite;
+    kernel_attribs_all=KernelAttribs.remerge1 remergeable_index_map kernel_attribs_all
+  }
+
 let reindex index_map {all; definite; kernel_attribs_all} =
   {
     all=Attribs.reindex index_map all;

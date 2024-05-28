@@ -149,52 +149,57 @@ let normalize_action_set remergeable_state_map t0 t1 action_set =
     Ordset.insert action' action_set'
   ) action_set
 
-let equivalent_indexes remergeable_state_map t0 t1 index0 index1 =
-  let normalized_index0 = normalize_index remergeable_state_map t0 t1 index0 in
-  let normalized_index1 = normalize_index remergeable_state_map t0 t1 index1 in
-  Index.(normalized_index0 = normalized_index1)
+let normalize_actions remergeable_state_map t0 t1 actions =
+  Ordmap.map ~f:(fun (_symbol_index, action_set) ->
+    normalize_action_set remergeable_state_map t0 t1 action_set
+  ) actions
 
 let remergeable_actions remergeable_state_map ({actions=a0; _} as t0) ({actions=a1; _} as t1) =
-  Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
-    let remergeable = match kv0_opt, kv1_opt with
-      | None, Some (_, action_set)
-      | Some (_, action_set), None -> begin
-          let open Action in
-          Ordset.fold_until ~init:true
-            ~f:(fun _remergeable action ->
-              let remergeable = match action with
-                | ShiftPrefix _
-                | ShiftAccept _
-                  -> false
-                | Reduce _
-                  -> true
-              in
-              remergeable, not remergeable
-            ) action_set
-        end
-      | Some (_, action_set0), Some (_, action_set1) -> begin
-          let normalized_action_set0 =
-            normalize_action_set remergeable_state_map t0 t1 action_set0 in
-          let normalized_action_set1 =
-            normalize_action_set remergeable_state_map t0 t1 action_set1 in
-          Ordset.equal normalized_action_set0 normalized_action_set1
-        end
-      | None, None -> not_reached ()
-    in
-    remergeable, not remergeable
-  ) a0 a1
+  let reduces_only action_set = begin
+    let open Action in
+    Ordset.for_all
+      ~f:(fun action ->
+        match action with
+        | ShiftPrefix _
+        | ShiftAccept _
+          -> false
+        | Reduce _
+          -> true
+      ) action_set
+  end in
+  let normalized_a0 = normalize_actions remergeable_state_map t0 t1 a0 in
+  let normalized_a1 = normalize_actions remergeable_state_map t0 t1 a1 in
+  Ordmap.for_all ~f:(fun (symbol_index, action_set0) ->
+    match Ordmap.get symbol_index normalized_a1 with
+    | None -> reduces_only action_set0
+    | Some action_set1 -> Ordset.equal action_set0 action_set1
+  ) normalized_a0
+  &&
+  Ordmap.for_all ~f:(fun (symbol_index, action_set1) ->
+    match Ordmap.get symbol_index normalized_a0 with
+    | None -> reduces_only action_set1
+    | Some action_set0 -> Ordset.equal action_set0 action_set1
+  ) normalized_a1
+
+let normalize_gotos remergeable_state_map t0 t1 gotos =
+  Ordmap.map ~f:(fun (_symbol_index, index) ->
+    normalize_index remergeable_state_map t0 t1 index
+  ) gotos
 
 let remergeable_gotos remergeable_state_map ({gotos=g0; _} as t0) ({gotos=g1; _} as t1) =
-  Ordmap.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
-    let remergeable = match kv0_opt, kv1_opt with
-      | None, Some _
-      | Some _, None -> true
-      | Some (_, index0), Some (_, index1) ->
-        equivalent_indexes remergeable_state_map t0 t1 index0 index1
-      | None, None -> not_reached ()
-    in
-    remergeable, not remergeable
-  ) g0 g1
+  let normalized_g0 = normalize_gotos remergeable_state_map t0 t1 g0 in
+  let normalized_g1 = normalize_gotos remergeable_state_map t0 t1 g1 in
+  Ordmap.for_all ~f:(fun (symbol_index, index) ->
+    match Ordmap.get symbol_index normalized_g1 with
+    | None -> true
+    | Some index' -> Index.(index = index')
+  ) normalized_g0
+  &&
+  Ordmap.for_all ~f:(fun (symbol_index, index) ->
+    match Ordmap.get symbol_index normalized_g0 with
+    | None -> true
+    | Some index' -> Index.(index = index')
+  ) normalized_g1
 
 let remergeable remergeable_state_map ({statenub=sn0; _} as t0) ({statenub=sn1; _} as t1) =
   let core0 = Lr1Itemset.core StateNub.(sn0.lr1itemsetclosure).kernel in
@@ -202,8 +207,37 @@ let remergeable remergeable_state_map ({statenub=sn0; _} as t0) ({statenub=sn1; 
   assert Lr0Itemset.(core0 = core1);
   remergeable_actions remergeable_state_map t0 t1 && remergeable_gotos remergeable_state_map t0 t1
 
-let remerge symbols {statenub=sn0; _} ({statenub=sn1; _} as t) =
-  {t with statenub=StateNub.remerge symbols sn0 sn1}
+let remerge symbols remergeable_index_map ({statenub=sn0; actions=a0; gotos=g0} as t0)
+  ({statenub=sn1; actions=a1; gotos=g1} as t1) =
+  let statenub = StateNub.remerge symbols remergeable_index_map sn0 sn1 in
+  let normalized_a0 = normalize_actions remergeable_index_map t0 t1 a0 in
+  let normalized_a1 = normalize_actions remergeable_index_map t0 t1 a1 in
+  let actions = Ordmap.fold2 ~init:(Ordmap.empty (module Symbol.Index))
+    ~f:(fun actions action_opt0 action_opt1 ->
+      let symbol_index, action_set = match action_opt0, action_opt1 with
+        | Some (symbol_index, action_set), None
+        | None, Some (symbol_index, action_set)
+          -> symbol_index, action_set
+        | Some (symbol_index, action_set0), Some (_, action_set1)
+          -> symbol_index, Ordset.union action_set0 action_set1
+        | None, None -> not_reached ()
+      in
+      Ordmap.insert ~k:symbol_index ~v:action_set actions
+    ) normalized_a0 normalized_a1 in
+  let normalized_g0 = normalize_gotos remergeable_index_map t0 t1 g0 in
+  let normalized_g1 = normalize_gotos remergeable_index_map t0 t1 g1 in
+  let gotos = Ordmap.fold2 ~init:(Ordmap.empty (module Symbol.Index))
+    ~f:(fun gotos goto_opt0 goto_opt1 ->
+      let symbol_index, goto = match goto_opt0, goto_opt1 with
+        | Some (symbol_index, goto), None
+        | None, Some (symbol_index, goto)
+        | Some (symbol_index, goto), Some _
+          -> symbol_index, goto
+        | None, None -> not_reached ()
+      in
+      Ordmap.insert ~k:symbol_index ~v:goto gotos
+    ) normalized_g0 normalized_g1 in
+  {statenub; actions; gotos}
 
 let reindex index_map {statenub; actions; gotos} =
   let statenub = StateNub.reindex index_map statenub in

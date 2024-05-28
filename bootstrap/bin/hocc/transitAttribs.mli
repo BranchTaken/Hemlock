@@ -28,6 +28,11 @@ val of_attribs_definite: Attribs.t -> t
     definite conflict attributions into the set of definite conflict attributions, as well as into
     the set of all conflict attributions. *)
 
+val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
+(** [remerge1 remergeable_index_map t] creates kernel attribs with all remergeable LR(1) item set
+    closure and state nub indexes translated according to [remergeable_index_map], where keys are
+    the original indexes, and values are the reindexed indexes. *)
+
 val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates kernel attribs with all LR(1) item set closure and state nub
     indexes translated according to [index_map], where keys are the original indexes, and values are

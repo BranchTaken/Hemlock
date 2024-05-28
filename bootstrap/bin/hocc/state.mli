@@ -44,8 +44,9 @@ val remergeable: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t -> b
     [remergeable_state_map] are indices of states already known to be remergeable, and the values
     are the indices for the states they will be remerged with. *)
 
-val remerge: Symbols.t -> t -> t -> t
-(** [remerge symbols t0 t1] creates a merged state comprising remergeable states [t0] and [t1]. *)
+val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t-> t -> t -> t
+(** [remerge symbols index_map t0 t1] creates a merged state comprising remergeable states
+    [t0] and [t1]. *)
 
 val reindex: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t
 (** [reindex index_map t] creates a state with all LR(1) item set closure, state nub, and state

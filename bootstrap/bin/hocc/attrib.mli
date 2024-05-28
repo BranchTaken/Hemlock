@@ -50,6 +50,16 @@ val init_lane: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t 
 val to_lane_attrib: t -> t
 (** [to_lane t] returns a derivative of [t] with empty [isucc_lr1itemset]. *)
 
+val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
+(** [remerge1 remergeable_index_map t] creates an attrib with all remergeable state indexes
+    translated according to [remergeable_index_map], where keys are the original indexes, and values
+    are the reindexed indexes. *)
+
+val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t option
+(** [reindex index_map t] creates an attrib with all state indexes translated according to
+    [index_map], where keys are the original indexes, and values are the reindexed indexes. If no
+    translation exists, returns [None] to indicate that the attrib is obsolete. *)
+
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)
 
