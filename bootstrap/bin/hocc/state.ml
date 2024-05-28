@@ -120,8 +120,8 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
   {statenub; actions; gotos}
 
 let normalize_index remergeable_state_map
-  {statenub={lr1itemsetclosure={index=t0_index; _}; _}; _}
-  {statenub={lr1itemsetclosure={index=t1_index; _}; _}; _} index =
+    {statenub={lr1itemsetclosure={index=t0_index; _}; _}; _}
+    {statenub={lr1itemsetclosure={index=t1_index; _}; _}; _} index =
   (* Normalize indexes that will be remerged. *)
   let remerged_index =
     Map.get index remergeable_state_map
@@ -206,7 +206,7 @@ let remergeable_gotos remergeable_state_map ({gotos=g0; _} as t0) ({gotos=g1; _}
       | None, Some _
       | Some _, None -> false
       | Some (_, index0), Some (_, index1) ->
-          equivalent_indexes remergeable_state_map t0 t1 index0 index1
+        equivalent_indexes remergeable_state_map t0 t1 index0 index1
       | None, None -> not_reached ()
     in
     remergeable, not remergeable
