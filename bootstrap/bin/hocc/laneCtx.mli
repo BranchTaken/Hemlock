@@ -74,6 +74,7 @@ val kernel_attribs_all: t -> KernelAttribs.t
 (** [kernel_attribs_all t] returns a map of all conflict attributions attributable to the lane(s)
     encompassing [t], i.e. both definite and potential conflict attributions. *)
 
+(* XXX Unused. *)
 val lane_attribs_all: t -> Attribs.t
 (** [lane_attribs_all t] returns a map of the merged lane conflict attributions attributable to
     the lanes encompassing [t], i.e. both definite and potential conflict attributions. *)
