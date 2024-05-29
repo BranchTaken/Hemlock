@@ -25,6 +25,9 @@ val equal: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. The keys must be
     equal. *)
 
+val diff: t -> t -> t
+(** [diff t0 t1] returns an attrib containing the contents of [t0] that are not in [t1]. *)
+
 val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter)
   -> (module Fmt.Formatter)
 (** [fmt_hr symbols prods ~alt ~width t formatter] formats a human-readable representation of [t].

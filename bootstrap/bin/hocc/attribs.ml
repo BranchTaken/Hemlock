@@ -151,6 +151,9 @@ let fold_until ~init ~f t =
 let fold ~init ~f t =
   Ordmap.fold ~init ~f:(fun accum (_symbol_index, attrib) -> f accum attrib) t
 
+let for_any ~f t =
+  Ordmap.for_any ~f:(fun (_symbol_index, attrib) -> f attrib) t
+
 let fold2_until ~init ~f t0 t1 =
   Ordmap.fold2_until ~init ~f:(fun accum k_kv_opt0 k_kv_opt1 ->
     let kv_opt0 = match k_kv_opt0 with

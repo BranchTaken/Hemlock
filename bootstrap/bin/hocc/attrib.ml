@@ -55,6 +55,12 @@ module T = struct
     assert (equal_keys t0 t1);
     Lr0Itemset.equal (Lr1Itemset.core is0) (Lr1Itemset.core is1) && Contrib.equal c0 c1
 
+  let diff
+      ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
+      ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
+    assert (equal_keys t0 t1);
+    {t0 with isucc_lr1itemset=Lr1Itemset.diff is0 is1; contrib=Contrib.diff c0 c1}
+
   let pp {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} formatter =
     formatter
     |> Fmt.fmt "{conflict_state_index=" |> StateIndex.pp conflict_state_index
@@ -105,7 +111,8 @@ module T = struct
     | None -> None
     | Some conflict_state_index' -> Some {t with conflict_state_index=conflict_state_index'}
 
-  let is_empty {contrib; _} =
+  let is_empty {isucc_lr1itemset; contrib; _} =
+    Lr1Itemset.is_empty isucc_lr1itemset &&
     Contrib.is_empty contrib
 
   let is_lane_attrib {isucc_lr1itemset; _} =

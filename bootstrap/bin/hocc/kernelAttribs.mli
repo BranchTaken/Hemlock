@@ -75,7 +75,7 @@ val fold: init:'accum -> f:('accum -> Lr1Item.t * Attribs.t -> 'accum) -> t -> '
     initial accumulator value. *)
 
 val for_any: f:(Lr1Item.t * Attribs.t -> bool) -> t -> bool
-(** [for_any ~f t] iterates over t and returns true if any invocation of f returns true, false
+(** [for_any ~f t] iterates over [t] and returns true if any invocation of [f] returns true, false
     otherwise. *)
 
 val fold2_until: init:'accum -> f:('accum -> (Lr1Item.t * Attribs.t) option

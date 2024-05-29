@@ -68,6 +68,9 @@ val union: t -> t -> t
 val inter: t -> t -> t
 (** [inter t0 t1] creates an LR(1) item set containing all the items in [t0] and [t1]. *)
 
+val diff: t -> t -> t
+(** [diff t0 t1] creates an LR(1) item set containing the items in [t0] that are not in [t1]. *)
+
 val fold_until: init:'accum -> f:('accum -> Lr1Item.t -> 'accum * bool) -> t -> 'accum
 (** [fold_until ~init ~f t] folds [t] using [init] as the initial accumulator value, continuing
     until [f] returns [accum, true], or until folding is complete if [f] always returns [accum,

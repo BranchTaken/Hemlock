@@ -90,6 +90,10 @@ val fold: init:'accum -> f:('accum -> Attrib.t -> 'accum) -> t -> 'accum
 (** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial accumulator value.
 *)
 
+val for_any: f:(Attrib.t -> bool) -> t -> bool
+(** [for_any ~f t] iterates over [t] and returns true if any invocation of [f] returns true, false
+    otherwise. *)
+
 val fold2_until: init:'accum -> f:('accum -> Attrib.t option -> Attrib.t option -> 'accum * bool)
   -> t -> t -> 'accum
 (** [fold2_until ~init ~f t0 t1] folds over the attribs in [t0] and [t1]. Folding terminates early

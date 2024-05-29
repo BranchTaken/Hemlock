@@ -19,15 +19,26 @@ let rec ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_tr
           |> Option.value ~default:TransitAttribs.empty
         in
         let kernel_attribs_all = TransitAttribs.kernel_attribs_all transit_attribs in
-        let transit_attribs' =
-          TransitAttribs.insert_kernel_attribs_all ipred_kernel_attribs transit_attribs in
-        let kernel_attribs_all' = TransitAttribs.kernel_attribs_all transit_attribs' in
-        (* Avoid recursing if no new transit attribs were inserted, since no additional insertions
+        (* Detect the no-op case as quickly as possible. The conceptually simpler approach of doing
+         * the insertion and diffing before/after kernel attribs is a lot more expensive. *)
+        let do_insert = KernelAttribs.for_any ~f:(fun (lr1item, attribs) ->
+          match KernelAttribs.get lr1item kernel_attribs_all with
+          | None -> true
+          | Some attribs_prev -> begin
+              Attribs.for_any ~f:(fun (Attrib.{conflict_state_index; symbol_index; _} as attrib) ->
+                match Attribs.get ~conflict_state_index ~symbol_index attribs_prev with
+                | None -> true
+                | Some attrib_prev -> not Attrib.(is_empty (diff attrib attrib_prev))
+              ) attribs
+            end
+        ) ipred_kernel_attribs in
+        (* Avoid recursing if no new transit attribs are inserted, since no additional insertions
          * will occur in the recursion. *)
-        let lalr1_transit_attribs =
-          match KernelAttribs.equal kernel_attribs_all' kernel_attribs_all with
-          | true -> lalr1_transit_attribs
-          | false -> begin
+        let lalr1_transit_attribs = match do_insert with
+          | false -> lalr1_transit_attribs
+          | true -> begin
+              let transit_attribs' =
+                TransitAttribs.insert_kernel_attribs_all ipred_kernel_attribs transit_attribs in
               let lalr1_transit_attribs =
                 Ordmap.upsert ~k:transit ~v:transit_attribs' lalr1_transit_attribs in
               (* Recurse if lanes may extend to predecessors. *)
@@ -95,16 +106,12 @@ let close_transit_attribs io adjs lalr1_transit_attribs =
         let in_transit_attribs_all = TransitAttribs.all in_transit_attribs in
         (* Detect the no-op case as quickly as possible. The conceptually simpler approach of
          * performing the union and diffing before/after transit attribs is a lot more expensive. *)
-        let do_union = Attribs.fold_until ~init:false
-            ~f:(fun _do_union
-              Attrib.{conflict_state_index; symbol_index; contrib=lane_contrib; _} ->
-              let do_union =
-                match Attribs.get ~conflict_state_index ~symbol_index in_transit_attribs_all with
-                | None -> true
-                | Some Attrib.{contrib=transit_contrib; _} ->
-                  not Contrib.(is_empty (diff lane_contrib transit_contrib))
-              in
-              do_union, do_union
+        let do_union = Attribs.for_any
+            ~f:(fun Attrib.{conflict_state_index; symbol_index; contrib=lane_contrib; _} ->
+              match Attribs.get ~conflict_state_index ~symbol_index in_transit_attribs_all with
+              | None -> true
+              | Some Attrib.{contrib=transit_contrib; _} ->
+                not Contrib.(is_empty (diff lane_contrib transit_contrib))
             ) lane_attribs_potential in
         match do_union with
         | false -> io, lalr1_transit_attribs, workq
