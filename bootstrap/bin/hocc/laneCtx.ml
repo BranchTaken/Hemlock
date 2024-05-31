@@ -51,39 +51,57 @@ module TraceKey = struct
     {symbol_index; conflict; action}
 end
 
-(* Interstitial lane trace association between transition source/destination items. The mapping
- * implementation is 1:N, which is a canonical decomposition of the logical M:N mapping. The source
- * is a kernel item for interstitial states, a kernel or added item for contributing states. *)
 module TraceVal = struct
   module T = struct
-    type t = (Lr1Item.t, Lr1Itemset.t, Lr1Item.cmper_witness) Ordmap.t
+    type t = {
+      (* Interstitial lane trace association between transition source/destination items. The
+       * mapping implementation is 1:N, which is a canonical decomposition of the logical M:N
+       * mapping. The source is a kernel item for interstitial states, a kernel or added item for
+       * contributing states. *)
+      trace: (Lr1Item.t, Lr1Itemset.t, Lr1Item.cmper_witness) Ordmap.t;
+      (* The lane trace hase a definite attribution in this lane context if the lane trace does not
+       * extend back to any predecessors. *)
+      lane_extends: bool;
+    }
 
-    let hash_fold t state =
-      state |> Ordmap.hash_fold Lr1Itemset.hash_fold t
+    let hash_fold {trace; lane_extends} state =
+      state
+      |> Uns.hash_fold 1L |> Ordmap.hash_fold Lr1Itemset.hash_fold trace
+      |> Uns.hash_fold 2L |> Bool.hash_fold lane_extends
 
-    let cmp t0 t1 =
+    let cmp {trace=t0; _} {trace=t1; _} =
       Ordmap.cmp Lr1Itemset.cmp t0 t1
 
-    let pp t formatter =
-      formatter |> Ordmap.pp Lr1Itemset.pp t
+    let pp {trace; lane_extends} formatter =
+      formatter
+      |> Fmt.fmt "{trace="
+      |> Ordmap.pp Lr1Itemset.pp trace
+      |> Fmt.fmt "; lane_extends="
+      |> Bool.pp lane_extends
+      |> Fmt.fmt "}"
 
-    let fmt_hr symbols ?(alt=false) ?(width=0L) t formatter =
-      List.fmt ~alt ~width (fun (lr1item, lr1itemset) formatter ->
+    let fmt_hr symbols ?(alt=false) ?(width=0L) {trace; lane_extends} formatter =
+      formatter
+      |> Fmt.fmt "{trace="
+      |> List.fmt ~alt ~width (fun (lr1item, lr1itemset) formatter ->
         formatter
         |> Fmt.fmt "(src="
         |> Lr1Item.pp_hr symbols lr1item
         |> Fmt.fmt ", dsts="
         |> Lr1Itemset.fmt_hr ~alt ~width:(width + 4L) symbols lr1itemset
-        |> Fmt.fmt ")"
-      ) (Ordmap.to_alist t) formatter
+      ) (Ordmap.to_alist trace)
+      |> Fmt.fmt "; lane_extends="
+      |> Bool.pp lane_extends
+      |> Fmt.fmt "}"
   end
   include T
   include Identifiable.Make(T)
 
-  let length = Ordmap.length
+  let length {trace; _} =
+    Ordmap.length trace
 
   let init symbol_index ~lr1itemset ~isucc_lr1itemset =
-    Lr1Itemset.fold ~init:(Ordmap.empty (module Lr1Item))
+    let trace = Lr1Itemset.fold ~init:(Ordmap.empty (module Lr1Item))
       ~f:(fun t Lr1Item.{lr0item; follow=follow_unfiltered} ->
         (* Filter the follow set to contain only `symbol_index`, since it is the only relevant
          * symbol in the context of kernel attribs. *)
@@ -91,21 +109,26 @@ module TraceVal = struct
         let follow = Ordset.singleton (module Symbol.Index) symbol_index in
         let lr1item = Lr1Item.init ~lr0item ~follow in
         Ordmap.insert_hlt ~k:lr1item ~v:isucc_lr1itemset t
-      ) lr1itemset
+      ) lr1itemset in
+    {trace; lane_extends=false}
 
-  let lr1itemset t =
+  let lr1itemset {trace; _} =
     Ordmap.fold ~init:Lr1Itemset.empty ~f:(fun lr1itemset (lr1item, _isucc_lr1itemset) ->
       Lr1Itemset.insert_hlt lr1item lr1itemset
-    ) t
+    ) trace
 
-  let union t0 t1 =
-    Ordmap.union ~f:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
+  let union {trace=t0; lane_extends=le0} {trace=t1; lane_extends=le1} =
+    let trace = Ordmap.union ~f:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
       Lr1Itemset.union isucc_lr1itemset0 isucc_lr1itemset1
-    ) t0 t1
+    ) t0 t1 in
+    let lane_extends = le0 || le1 in
+    {trace; lane_extends}
 
-  let fold_until = Ordmap.fold_until
+  let fold {trace; _} =
+    Ordmap.fold trace
 
-  let fold = Ordmap.fold
+  let for_any {trace; _} =
+    Ordmap.for_any trace
 end
 
 type t = {
@@ -425,13 +448,47 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
     lane_attribs_definite;
   }
 
-let post_init ipred_lanectxs ({conflict_state; traces; lane_attribs_definite; _} as t) =
+let incr_init ipred_lanectx ({traces; _} as t) =
+  (* A lane trace in this lane context has a definite attribution if the lane trace does not extend
+   * back to any predecessors. This situation is handled in `of_ipred` when the trace source is an
+   * added item, so it suffices here to process only traces with kernel items as sources. *)
+  let traces =
+    Ordmap.map ~f:(fun (TraceKey.{action; _}, (TraceVal.{lane_extends; _} as traceval)) ->
+      match action with
+      | State.Action.ShiftPrefix _
+      | ShiftAccept _ -> not_reached ()
+      | Reduce _prod_index -> begin
+          match lane_extends with
+          | true -> traceval
+          | false -> begin
+              let lane_extends = TraceVal.for_any ~f:(fun (src, _isucc_dsts) ->
+                match Lr1Item.(src.lr0item.dot) with
+                | 0L -> false (* Source is an added item. *)
+                | _ -> begin
+                    Ordmap.for_any ~f:(fun (_ipred_tracekey, ipred_traceval) ->
+                      TraceVal.for_any
+                        ~f:(fun (_ipred_src, dsts) ->
+                          Lr1Itemset.mem src dsts
+                        ) ipred_traceval
+                    ) ipred_lanectx.traces
+                  end
+              ) traceval in
+              match lane_extends with
+              | false -> traceval
+              | true -> {traceval with lane_extends}
+            end
+        end
+    ) traces in
+  {t with traces}
+
+let post_init ({conflict_state; traces; lane_attribs_definite; _} as t) =
   let conflict_state_index = State.index conflict_state in
   (* A lane trace in this lane context has a definite attribution if the lane trace does not extend
    * back to any predecessors. This situation is handled in `of_ipred` when the trace source is an
    * added item, so it suffices here to process only traces with kernel items as sources. *)
   let lane_attribs_definite = Ordmap.fold ~init:lane_attribs_definite
-      ~f:(fun lane_attribs_definite (TraceKey.{symbol_index; conflict; action}, traceval) ->
+      ~f:(fun lane_attribs_definite (TraceKey.{symbol_index; conflict; action},
+        (TraceVal.{lane_extends; _} as traceval)) ->
         match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
@@ -441,19 +498,6 @@ let post_init ipred_lanectxs ({conflict_state; traces; lane_attribs_definite; _}
                 match Lr1Item.(src.lr0item.dot) with
                 | 0L -> lane_attribs_definite (* Source is an added item. *)
                 | _ -> begin
-                    let lane_extends = List.fold_until ~init:false ~f:(fun _ ipred_lanectx ->
-                      let lane_extends = Ordmap.fold_until ~init:false
-                          ~f:(fun _ (_ipred_tracekey, ipred_traceval) ->
-                            let lane_extends = TraceVal.fold_until ~init:false
-                                ~f:(fun _ (_ipred_src, dsts) ->
-                                  let lane_extends = Lr1Itemset.mem src dsts in
-                                  lane_extends, lane_extends
-                                ) ipred_traceval in
-                            lane_extends, lane_extends
-                          ) ipred_lanectx.traces
-                      in
-                      lane_extends, lane_extends
-                    ) ipred_lanectxs in
                     match lane_extends with
                     | true -> lane_attribs_definite
                     | false -> begin
@@ -470,4 +514,4 @@ let post_init ipred_lanectxs ({conflict_state; traces; lane_attribs_definite; _}
               ) traceval
           end
       ) traces in
-  {t with lane_attribs_definite}
+  {t with traces; lane_attribs_definite}

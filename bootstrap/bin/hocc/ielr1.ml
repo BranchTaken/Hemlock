@@ -5,9 +5,9 @@ let rec ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_tr
     lanectx =
   let state_index = State.index (LaneCtx.state lanectx) in
   (* Accumulate transit attribs and ipred lane contexts of `lanectx`. *)
-  let lalr1_transit_attribs, ipred_lanectxs =
-    Array.fold ~init:(lalr1_transit_attribs, [])
-      ~f:(fun (lalr1_transit_attribs, ipred_lanectxs) ipred_state_index ->
+  let lalr1_transit_attribs, lanectx =
+    Array.fold ~init:(lalr1_transit_attribs, lanectx)
+      ~f:(fun (lalr1_transit_attribs, lanectx) ipred_state_index ->
         let ipred_state = Array.get ipred_state_index lalr1_states in
         let ipred_lanectx = LaneCtx.of_ipred ipred_state lanectx in
         let ipred_kernel_attribs = LaneCtx.kernel_attribs_all ipred_lanectx in
@@ -48,14 +48,14 @@ let rec ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_tr
                   ~lalr1_transit_attribs ipred_lanectx
             end
         in
-        let ipred_lanectxs = ipred_lanectx :: ipred_lanectxs in
-        lalr1_transit_attribs, ipred_lanectxs
+        let lanectx = LaneCtx.incr_init ipred_lanectx lanectx in
+        lalr1_transit_attribs, lanectx
       ) (Adjs.ipreds_of_state_index state_index adjs)
   in
   (* Finish computing definite attributions for `lanectx`. This is done post-order to detect
    * attributions for which there is a relevant kernel item in `lanectx`, but no relevant item in
    * any of its ipreds' lane contexts. *)
-  let lanectx = LaneCtx.post_init ipred_lanectxs lanectx in
+  let lanectx = LaneCtx.post_init lanectx in
   (* Accumulate definite attributions. *)
   let transit = LaneCtx.transit lanectx in
   let lane_attribs_definite = LaneCtx.lane_attribs_definite lanectx in
@@ -71,8 +71,7 @@ let rec ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_tr
     end
 
 let gather_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_transit_attribs
-    conflict_state_index =
-  let conflict_state = Array.get conflict_state_index lalr1_states in
+    conflict_state =
   let lanectx = LaneCtx.of_conflict_state ~resolve symbols prods conflict_state in
   ipred_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_transit_attribs lanectx
 
@@ -668,10 +667,9 @@ let lalr1_transit_attribs_init ~resolve io symbols prods lalr1_isocores lalr1_st
         | false -> io, lalr1_transit_attribs
         | true -> begin
             let io = io.log |> Fmt.fmt "." |> Io.with_log io in
-            let conflict_state_index = State.index state in
             let lalr1_transit_attribs =
-              gather_transit_attribs ~resolve symbols prods lalr1_states adjs
-                ~lalr1_transit_attribs conflict_state_index in
+              gather_transit_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_transit_attribs
+                state in
             io, lalr1_transit_attribs
           end
       ) lalr1_states
