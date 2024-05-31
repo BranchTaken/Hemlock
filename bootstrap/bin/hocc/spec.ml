@@ -773,8 +773,8 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
               let lr0item = Lr0Item.init ~prod ~dot in
               let lr1item = Lr1Item.init ~lr0item ~follow:symbol.follow in
               let goto = Lr1Itemset.singleton lr1item in
-              let transit_attribs = TransitAttribs.empty in
-              let gotonub = GotoNub.init ~isocores_sn_opt:None ~goto ~transit_attribs in
+              let kernel_attribs = KernelAttribs.empty in
+              let gotonub = GotoNub.init ~isocores_sn_opt:None ~goto ~kernel_attribs in
               let index, isocores' = Isocores.insert symbols gotonub isocores in
               let workq' = Workq.push_back index workq in
               isocores', workq'
@@ -863,7 +863,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
     | _ -> begin
         io,
         (fun _statenub goto ->
-            GotoNub.init ~isocores_sn_opt:None ~goto ~transit_attribs:TransitAttribs.empty)
+            GotoNub.init ~isocores_sn_opt:None ~goto ~kernel_attribs:KernelAttribs.empty)
       end
   in
   let io, compat = compat_init algorithm ~resolve io symbols prods in

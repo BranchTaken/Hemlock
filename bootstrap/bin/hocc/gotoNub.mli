@@ -11,18 +11,18 @@ type t = {
   isocores_sn_opt: uns option;
   (** Isocore set serial number for the set containing this goto nub. *)
 
-  transit_attribs: TransitAttribs.t;
+  kernel_attribs: KernelAttribs.t;
   (** Transit conflict attributions. *)
 
   attribs: Attribs.t;
-  (** Memoized attribs computed for [goto] in the context of [transit_attribs]. *)
+  (** Memoized attribs computed for [goto] in the context of [kernel_attribs]. *)
 }
 
 include IdentifiableIntf.S with type t := t
 
-val init: isocores_sn_opt:uns option -> goto:Lr1Itemset.t -> transit_attribs:TransitAttribs.t -> t
-(** [init ~isocores_sn_opt ~goto ~transit_attribs] initializes a goto nub with given
-    [isocores_sn_opt], [goto] kernel, and conflict [transit_attribs]. *)
+val init: isocores_sn_opt:uns option -> goto:Lr1Itemset.t -> kernel_attribs:KernelAttribs.t -> t
+(** [init ~isocores_sn_opt ~goto ~kernel_attribs] initializes a goto nub with given
+    [isocores_sn_opt], [goto] kernel, and conflict [kernel_attribs]. *)
 
 val core: t -> Lr0Itemset.t
 (** [core t] returns the LR(0) item set corresponding to the goto kernel in [t], i.e. the goto

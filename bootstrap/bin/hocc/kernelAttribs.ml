@@ -68,7 +68,6 @@ let union t0 t1 =
   Ordmap.union ~f:(fun _item attribs0 attribs1 ->
     Attribs.union attribs0 attribs1
   ) t0 t1
-
 let fold_until = Ordmap.fold_until
 
 let fold = Ordmap.fold
@@ -78,3 +77,40 @@ let for_any = Ordmap.for_any
 let fold2_until = Ordmap.fold2_until
 
 let fold2 = Ordmap.fold2
+
+let attribs lr1itemset t =
+  fold ~init:Attribs.empty
+    ~f:(fun attribs (_src_lr1item, src_lr1item_attribs) ->
+      Attribs.fold ~init:attribs
+        ~f:(fun attribs
+          (Attrib.{conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} as
+            attrib) ->
+          assert Contrib.(inter conflict contrib = contrib);
+          let shift_contrib = Contrib.(inter shift conflict) in
+          let shift_attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
+              ~isucc_lr1itemset ~contrib:shift_contrib in
+          let has_shift = Contrib.is_empty shift_contrib in
+          Lr1Itemset.fold ~init:attribs ~f:(fun attribs isucc_lr1item ->
+            match Lr1Itemset.get isucc_lr1item lr1itemset with
+            | None -> begin
+                match has_shift with
+                | false -> attribs
+                | true ->
+                  Attribs.insert shift_attrib attribs
+              end
+            | Some {follow; _} -> begin
+                match Ordset.mem symbol_index follow with
+                | false -> begin
+                    match has_shift with
+                    | false -> attribs
+                    | true ->
+                      Attribs.insert shift_attrib attribs
+                  end
+                | true -> begin
+                    let attrib' = Attrib.union shift_attrib attrib in
+                    Attribs.insert attrib' attribs
+                  end
+              end
+          ) isucc_lr1itemset
+        ) src_lr1item_attribs
+    ) t

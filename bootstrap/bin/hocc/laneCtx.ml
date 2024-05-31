@@ -53,55 +53,39 @@ end
 
 module TraceVal = struct
   module T = struct
-    type t = {
-      (* Interstitial lane trace association between transition source/destination items. The
-       * mapping implementation is 1:N, which is a canonical decomposition of the logical M:N
-       * mapping. The source is a kernel item for interstitial states, a kernel or added item for
-       * contributing states. *)
-      trace: (Lr1Item.t, Lr1Itemset.t, Lr1Item.cmper_witness) Ordmap.t;
-      (* The lane trace hase a definite attribution in this lane context if the lane trace does not
-       * extend back to any predecessors. *)
-      lane_extends: bool;
-    }
+    (* Interstitial lane trace association between transition source/destination items. The mapping
+     * implementation is 1:N, which is a canonical decomposition of the logical M:N mapping. The
+     * source is a kernel item for interstitial states, a kernel or added item for contributing
+     * states. *)
+    type t = (Lr1Item.t, Lr1Itemset.t, Lr1Item.cmper_witness) Ordmap.t
 
-    let hash_fold {trace; lane_extends} state =
-      state
-      |> Uns.hash_fold 1L |> Ordmap.hash_fold Lr1Itemset.hash_fold trace
-      |> Uns.hash_fold 2L |> Bool.hash_fold lane_extends
+    let hash_fold t state =
+      state |> Ordmap.hash_fold Lr1Itemset.hash_fold t
 
-    let cmp {trace=t0; _} {trace=t1; _} =
+    let cmp t0 t1 =
       Ordmap.cmp Lr1Itemset.cmp t0 t1
 
-    let pp {trace; lane_extends} formatter =
+    let pp t formatter =
       formatter
-      |> Fmt.fmt "{trace="
-      |> Ordmap.pp Lr1Itemset.pp trace
-      |> Fmt.fmt "; lane_extends="
-      |> Bool.pp lane_extends
-      |> Fmt.fmt "}"
+      |> Ordmap.pp Lr1Itemset.pp t
 
-    let fmt_hr symbols ?(alt=false) ?(width=0L) {trace; lane_extends} formatter =
+    let fmt_hr symbols ?(alt=false) ?(width=0L) t formatter =
       formatter
-      |> Fmt.fmt "{trace="
       |> List.fmt ~alt ~width (fun (lr1item, lr1itemset) formatter ->
         formatter
         |> Fmt.fmt "(src="
         |> Lr1Item.pp_hr symbols lr1item
         |> Fmt.fmt ", dsts="
         |> Lr1Itemset.fmt_hr ~alt ~width:(width + 4L) symbols lr1itemset
-      ) (Ordmap.to_alist trace)
-      |> Fmt.fmt "; lane_extends="
-      |> Bool.pp lane_extends
-      |> Fmt.fmt "}"
+      ) (Ordmap.to_alist t)
   end
   include T
   include Identifiable.Make(T)
 
-  let length {trace; _} =
-    Ordmap.length trace
+  let length = Ordmap.length
 
   let init symbol_index ~lr1itemset ~isucc_lr1itemset =
-    let trace = Lr1Itemset.fold ~init:(Ordmap.empty (module Lr1Item))
+    Lr1Itemset.fold ~init:(Ordmap.empty (module Lr1Item))
       ~f:(fun t Lr1Item.{lr0item; follow=follow_unfiltered} ->
         (* Filter the follow set to contain only `symbol_index`, since it is the only relevant
          * symbol in the context of kernel attribs. *)
@@ -109,26 +93,19 @@ module TraceVal = struct
         let follow = Ordset.singleton (module Symbol.Index) symbol_index in
         let lr1item = Lr1Item.init ~lr0item ~follow in
         Ordmap.insert_hlt ~k:lr1item ~v:isucc_lr1itemset t
-      ) lr1itemset in
-    {trace; lane_extends=false}
+      ) lr1itemset
 
-  let lr1itemset {trace; _} =
+  let lr1itemset t =
     Ordmap.fold ~init:Lr1Itemset.empty ~f:(fun lr1itemset (lr1item, _isucc_lr1itemset) ->
       Lr1Itemset.insert_hlt lr1item lr1itemset
-    ) trace
+    ) t
 
-  let union {trace=t0; lane_extends=le0} {trace=t1; lane_extends=le1} =
-    let trace = Ordmap.union ~f:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
+  let union t0 t1 =
+    Ordmap.union ~f:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
       Lr1Itemset.union isucc_lr1itemset0 isucc_lr1itemset1
-    ) t0 t1 in
-    let lane_extends = le0 || le1 in
-    {trace; lane_extends}
+    ) t0 t1
 
-  let fold {trace; _} =
-    Ordmap.fold trace
-
-  let for_any {trace; _} =
-    Ordmap.for_any trace
+  let fold = Ordmap.fold
 end
 
 type t = {
@@ -144,13 +121,9 @@ type t = {
   (* Interstitial lane traces. Note that each trace key may correspond to multiple lanes, because
    * multiple kernel items in the conflict state can induce the same added ε production. *)
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
-
-  (* Conflicts attributed to the `state`->`isucc` transition apply to all lanes, i.e. they are
-   * definite attributions. *)
-  lane_attribs_definite: Attribs.t;
 }
 
-let pp {conflict_state; isucc; state; traces; lane_attribs_definite} formatter =
+let pp {conflict_state; isucc; state; traces} formatter =
   formatter
   |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
   |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
@@ -159,11 +132,10 @@ let pp {conflict_state; isucc; state; traces; lane_attribs_definite} formatter =
   |> Uns.pp (Ordmap.fold ~init:0L ~f:(fun accum (_, traceval) ->
     accum + (TraceVal.length traceval)) traces
   )
-  |> Fmt.fmt "; lane_attribs_definite=" |> Attribs.pp lane_attribs_definite
   |> Fmt.fmt "}"
 
 let fmt_hr symbols prods ?(alt=false) ?(width=0L)
-  {conflict_state; isucc; state; traces; lane_attribs_definite} formatter =
+  {conflict_state; isucc; state; traces} formatter =
   formatter
   |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
   |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
@@ -175,8 +147,6 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L)
     |> Fmt.fmt "; traceval=" |> TraceVal.fmt_hr symbols ~alt ~width:(width + 4L) traceval
     |> Fmt.fmt "}"
   ) (Ordmap.to_alist traces)
-  |> Fmt.fmt "; lane_attribs_definite="
-  |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) lane_attribs_definite
   |> Fmt.fmt "}"
 
 let conflict_state {conflict_state; _} =
@@ -266,52 +236,28 @@ let kernel_lr1itemset_of_prod_index prods state symbol_index prod_index =
   let prod = Prods.prod_of_prod_index prod_index prods in
   kernel_lr1itemset_of_prod state symbol_index prod
 
-let kernel_attribs_all {conflict_state; traces; _} =
+let kernel_attribs {conflict_state; traces; _} =
   let conflict_state_index = State.index conflict_state in
   Ordmap.fold ~init:KernelAttribs.empty
-    ~f:(fun kernel_attribs_all (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
+    ~f:(fun kernel_attribs (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
       let contrib = match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
-      TraceVal.fold ~init:kernel_attribs_all
-        ~f:(fun kernel_attribs_all (lr1item, isucc_lr1itemset) ->
-          let attrib =
-            Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
-          let trace_attribs = Attribs.singleton attrib in
-          KernelAttribs.insert lr1item trace_attribs kernel_attribs_all
-        ) kernel_isuccs
+      TraceVal.fold ~init:kernel_attribs ~f:(fun kernel_attribs (lr1item, isucc_lr1itemset) ->
+        let attrib =
+          Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
+        let trace_attribs = Attribs.singleton attrib in
+        KernelAttribs.insert lr1item trace_attribs kernel_attribs
+      ) kernel_isuccs
     ) traces
 
-let lane_attribs_all ({lane_attribs_definite; _} as t) =
-  KernelAttribs.fold ~init:Attribs.empty ~f:(fun lane_attribs (_lr1item, attribs) ->
-    Attribs.fold ~init:Attribs.empty
-      ~f:(fun lane_attribs {conflict_state_index; symbol_index; conflict; contrib; _} ->
-        let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib in
-        Attribs.insert attrib lane_attribs
-      ) attribs
-    |> Attribs.union lane_attribs
-  ) (kernel_attribs_all t)
-  |> Attribs.union lane_attribs_definite
-
-let lane_attribs_definite {lane_attribs_definite; _} =
-  lane_attribs_definite
-
 let of_conflict_state ~resolve symbols prods conflict_state =
-  let conflict_state_index = State.index conflict_state in
-  let traces, lane_attribs_definite = Attribs.fold
-      ~init:(Ordmap.empty (module TraceKey), Attribs.empty)
-      ~f:(fun (traces, lane_attribs_definite) {symbol_index; conflict; contrib; _} ->
-        let lane_attribs_definite = match Contrib.mem_shift contrib with
-          | false -> lane_attribs_definite
-          | true -> begin
-              let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index ~conflict
-                  ~contrib:Contrib.shift in
-              Attribs.insert attrib lane_attribs_definite
-            end
-        in
-        let traces = Ordset.fold ~init:traces ~f:(fun traces prod_index ->
+  let traces = Attribs.fold
+      ~init:(Ordmap.empty (module TraceKey))
+      ~f:(fun traces {symbol_index; conflict; contrib; _} ->
+        Ordset.fold ~init:traces ~f:(fun traces prod_index ->
           let action = State.Action.Reduce prod_index in
           let tracekey = TraceKey.init ~symbol_index ~conflict ~action in
           let lr1itemset =
@@ -323,8 +269,7 @@ let of_conflict_state ~resolve symbols prods conflict_state =
             | None -> Some traceval
             | Some traceval_existing -> Some (TraceVal.union traceval traceval_existing)
           ) traces
-        ) (Contrib.reduces contrib) in
-        traces, lane_attribs_definite
+        ) (Contrib.reduces contrib)
       ) (State.conflict_attribs ~resolve symbols prods conflict_state) in
   assert (not (Ordmap.is_empty traces));
   {
@@ -332,29 +277,25 @@ let of_conflict_state ~resolve symbols prods conflict_state =
     isucc=conflict_state;
     state=conflict_state;
     traces;
-    lane_attribs_definite;
   }
 
 let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
-  let conflict_state_index = State.index conflict_state in
   (* Create traces incrementally derived from those in `isucc_traces`. Some traces may terminate at
    * the isucc state; others may continue or even lead to forks. *)
-  let traces, lane_attribs_definite = Ordmap.fold
-      ~init:(Ordmap.empty (module TraceKey), Attribs.empty)
-      ~f:(fun (traces, lane_attribs_definite)
-        (TraceKey.{symbol_index; conflict; action} as tracekey, isucc_traceval) ->
+  let traces = Ordmap.fold
+      ~init:(Ordmap.empty (module TraceKey))
+      ~f:(fun traces
+        (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
         match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
-        | Reduce prod_index -> begin
-            TraceVal.fold ~init:(traces, lane_attribs_definite)
-              ~f:(fun (traces, lane_attribs_definite) (isucc_lr1item, _isucc_isucc_lr1itemset) ->
+        | Reduce _ -> begin
+            TraceVal.fold ~init:traces
+              ~f:(fun traces (isucc_lr1item, _isucc_isucc_lr1itemset) ->
                 let isucc_lr0item = Lr1Item.(isucc_lr1item.lr0item) in
                 match isucc_lr0item.dot with
-                | 0L -> begin
-                    (* The lane trace terminates at a definite attribution by `isucc_lr1item`. *)
-                    traces, lane_attribs_definite
-                  end
+                | 0L -> (* The lane trace terminates at an attribution to `isucc_lr1item`. *)
+                  traces
                 | _ -> begin
                     let prod = isucc_lr0item.prod in
                     let dot = pred isucc_lr0item.dot in
@@ -370,7 +311,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                     in
                     match lr1item_opt with
                     | None -> (* Lane doesn't encompass this state. *)
-                      traces, lane_attribs_definite
+                      traces
                     | Some lr1item -> begin
                         match dot with
                         | 0L -> begin
@@ -392,18 +333,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                                     Some (TraceVal.union traceval traceval_existing)
                                 ) traces in
                                 (* Attributable to all lanes leading to this state. *)
-                                let lane_attribs_definite =
-                                  Attribs.amend ~conflict_state_index ~symbol_index
-                                    ~f:(fun attrib_opt ->
-                                      let contrib = Contrib.init_reduce prod_index in
-                                      let attrib = Attrib.init_lane ~conflict_state_index
-                                          ~symbol_index ~conflict ~contrib in
-                                      match attrib_opt with
-                                      | None -> Some attrib
-                                      | Some attrib_existing ->
-                                        Some (Attrib.union attrib attrib_existing)
-                                    ) lane_attribs_definite in
-                                traces, lane_attribs_definite
+                                traces
                               end
                             | false -> begin
                                 (* Interstitial state. The trace source is one or more kernel items.
@@ -417,7 +347,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                                   | Some traceval_existing ->
                                     Some (TraceVal.union traceval traceval_existing)
                                 ) traces in
-                                traces, lane_attribs_definite
+                                traces
                               end
                           end
                         | _ -> begin
@@ -432,7 +362,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                               | Some traceval_existing ->
                                 Some (TraceVal.union traceval traceval_existing)
                             ) traces in
-                            traces, lane_attribs_definite
+                            traces
                           end
                       end
                   end
@@ -445,73 +375,4 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
     isucc;
     state;
     traces;
-    lane_attribs_definite;
   }
-
-let incr_init ipred_lanectx ({traces; _} as t) =
-  (* A lane trace in this lane context has a definite attribution if the lane trace does not extend
-   * back to any predecessors. This situation is handled in `of_ipred` when the trace source is an
-   * added item, so it suffices here to process only traces with kernel items as sources. *)
-  let traces =
-    Ordmap.map ~f:(fun (TraceKey.{action; _}, (TraceVal.{lane_extends; _} as traceval)) ->
-      match action with
-      | State.Action.ShiftPrefix _
-      | ShiftAccept _ -> not_reached ()
-      | Reduce _prod_index -> begin
-          match lane_extends with
-          | true -> traceval
-          | false -> begin
-              let lane_extends = TraceVal.for_any ~f:(fun (src, _isucc_dsts) ->
-                match Lr1Item.(src.lr0item.dot) with
-                | 0L -> false (* Source is an added item. *)
-                | _ -> begin
-                    Ordmap.for_any ~f:(fun (_ipred_tracekey, ipred_traceval) ->
-                      TraceVal.for_any
-                        ~f:(fun (_ipred_src, dsts) ->
-                          Lr1Itemset.mem src dsts
-                        ) ipred_traceval
-                    ) ipred_lanectx.traces
-                  end
-              ) traceval in
-              match lane_extends with
-              | false -> traceval
-              | true -> {traceval with lane_extends}
-            end
-        end
-    ) traces in
-  {t with traces}
-
-let post_init ({conflict_state; traces; lane_attribs_definite; _} as t) =
-  let conflict_state_index = State.index conflict_state in
-  (* A lane trace in this lane context has a definite attribution if the lane trace does not extend
-   * back to any predecessors. This situation is handled in `of_ipred` when the trace source is an
-   * added item, so it suffices here to process only traces with kernel items as sources. *)
-  let lane_attribs_definite = Ordmap.fold ~init:lane_attribs_definite
-      ~f:(fun lane_attribs_definite (TraceKey.{symbol_index; conflict; action},
-        (TraceVal.{lane_extends; _} as traceval)) ->
-        match action with
-        | State.Action.ShiftPrefix _
-        | ShiftAccept _ -> not_reached ()
-        | Reduce prod_index -> begin
-            TraceVal.fold ~init:lane_attribs_definite
-              ~f:(fun lane_attribs_definite (src, _isucc_dsts) ->
-                match Lr1Item.(src.lr0item.dot) with
-                | 0L -> lane_attribs_definite (* Source is an added item. *)
-                | _ -> begin
-                    match lane_extends with
-                    | true -> lane_attribs_definite
-                    | false -> begin
-                        Attribs.amend ~conflict_state_index ~symbol_index ~f:(fun attrib_opt ->
-                          let contrib = Contrib.init_reduce prod_index in
-                          let attrib = Attrib.init_lane ~conflict_state_index ~symbol_index
-                              ~conflict ~contrib in
-                          match attrib_opt with
-                          | None -> Some attrib
-                          | Some contrib_existing -> Some (Attrib.union attrib contrib_existing)
-                        ) lane_attribs_definite
-                      end
-                  end
-              ) traceval
-          end
-      ) traces in
-  {t with traces; lane_attribs_definite}

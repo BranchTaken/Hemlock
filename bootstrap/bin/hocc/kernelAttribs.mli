@@ -64,6 +64,9 @@ val insert: Lr1Item.t -> Attribs.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of per kernel conflict attributions in [t0] and [t1]. *)
 
+val attribs: Lr1Itemset.t -> t -> Attribs.t
+(** [attribs lr1itemset t] computes the attribs made by [lr1itemset] in the context of [t]. *)
+
 val fold_until: init:'accum -> f:('accum -> Lr1Item.t * Attribs.t -> 'accum * bool) -> t
   -> 'accum
 (** [fold ~init ~f t] folds over the (kernel item, attribs) tuples in [t], using [init] as the

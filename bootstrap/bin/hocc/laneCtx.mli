@@ -66,25 +66,6 @@ val of_ipred: State.t -> t -> t
 (** [of_ipred ipred t] creates a lane context for the [ipred] state, where [t] is the lane context
     for the [ipred] state's immediate successor (isucc) state in the lane. *)
 
-val incr_init: t -> t -> t
-(** [incr_init ipred_lanectx t] incrementally initializes definite lane conflict attributions, given
-    an ipred's context and returns a derivative of [t]. *)
-
-val post_init: t -> t
-(** [post_init t] finishes initializing definite lane conflict attributions under the precondition
-    that [incr_init] was called for all (acyclic) ipreds' contexts, and returns a derivative of [t].
-*)
-
-val kernel_attribs_all: t -> KernelAttribs.t
-(** [kernel_attribs_all t] returns a map of all conflict attributions attributable to the lane(s)
-    encompassing [t], i.e. both definite and potential conflict attributions. *)
-
-(* XXX Unused. *)
-val lane_attribs_all: t -> Attribs.t
-(** [lane_attribs_all t] returns a map of the merged lane conflict attributions attributable to
-    the lanes encompassing [t], i.e. both definite and potential conflict attributions. *)
-
-val lane_attribs_definite: t -> Attribs.t
-(** [lane_attribs_definite t] returns a map of the merged lane conflict attributions definitely
-    attributable to lanes encompassing the transition from [state t] to [isucc t]. Conflict
-    attributions added by [post_init] are included in the map. *)
+val kernel_attribs: t -> KernelAttribs.t
+(** [kernel_attribs t] returns a map of conflict attributions attributable to the lane(s)
+    encompassing [t]. *)
