@@ -114,6 +114,7 @@ let amend ~conflict_state_index ~symbol_index ~f t =
   ) t
 
 let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
+  assert (not (Attrib.is_empty attrib));
   amend ~conflict_state_index ~symbol_index ~f:(function
     | None -> Some attrib
     | Some attrib_prev -> begin

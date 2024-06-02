@@ -55,12 +55,6 @@ module T = struct
     assert (equal_keys t0 t1);
     Lr0Itemset.equal (Lr1Itemset.core is0) (Lr1Itemset.core is1) && Contrib.equal c0 c1
 
-  let diff
-      ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
-      ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
-    assert (equal_keys t0 t1);
-    {t0 with isucc_lr1itemset=Lr1Itemset.diff is0 is1; contrib=Contrib.diff c0 c1}
-
   let pp {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} formatter =
     formatter
     |> Fmt.fmt "{conflict_state_index=" |> StateIndex.pp conflict_state_index
@@ -119,22 +113,31 @@ module T = struct
     Lr1Itemset.is_empty isucc_lr1itemset
 
   let union
-      {conflict_state_index=csi0; symbol_index=s0; conflict=x0; isucc_lr1itemset=is0; contrib=c0}
-      {conflict_state_index=csi1; symbol_index=s1; conflict=x1; isucc_lr1itemset=is1; contrib=c1} =
-    assert StateIndex.(csi0 = csi1);
-    assert Symbol.Index.(s0 = s1);
-    assert Contrib.(x0 = x1);
-    init ~conflict_state_index:csi0 ~symbol_index:s0 ~conflict:x0
-      ~isucc_lr1itemset:(Lr1Itemset.union is0 is1) ~contrib:(Contrib.union c0 c1)
+      ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
+      ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
+    assert (equal_keys t0 t1);
+    init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset:(Lr1Itemset.union is0 is1)
+      ~contrib:(Contrib.union c0 c1)
 
   let inter
-      {conflict_state_index=csi0; symbol_index=s0; conflict=x0; isucc_lr1itemset=is0; contrib=c0}
-      {conflict_state_index=csi1; symbol_index=s1; conflict=x1; isucc_lr1itemset=is1; contrib=c1} =
-    assert StateIndex.(csi0 = csi1);
-    assert Symbol.Index.(s0 = s1);
-    assert Contrib.(x0 = x1);
-    init ~conflict_state_index:csi0 ~symbol_index:s0 ~conflict:x0
-      ~isucc_lr1itemset:(Lr1Itemset.inter is0 is1) ~contrib:(Contrib.inter c0 c1)
+      ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
+      ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
+    assert (equal_keys t0 t1);
+    init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset:(Lr1Itemset.inter is0 is1)
+      ~contrib:(Contrib.inter c0 c1)
+
+  let diff
+      ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
+      ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
+    assert (equal_keys t0 t1);
+    assert Bool.(is_lane_attrib t0 = is_lane_attrib t1);
+    let isucc_lr1itemset' = Lr1Itemset.diff is0 is1 in
+    let contrib' = Contrib.diff c0 c1 in
+    match Lr1Itemset.is_empty isucc_lr1itemset', Contrib.is_empty contrib' with
+    | false, false -> {t0 with isucc_lr1itemset=isucc_lr1itemset'; contrib=contrib'}
+    | false, true -> {t0 with isucc_lr1itemset=isucc_lr1itemset'}
+    | true, false -> {t0 with contrib=Contrib.diff c0 c1}
+    | true, true -> empty ~conflict_state_index ~symbol_index ~conflict
 end
 include T
 include Identifiable.Make(T)

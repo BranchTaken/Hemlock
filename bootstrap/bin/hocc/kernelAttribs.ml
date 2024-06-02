@@ -86,29 +86,33 @@ let attribs lr1itemset t =
           (Attrib.{conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} as
             attrib) ->
           assert Contrib.(inter conflict contrib = contrib);
-          let shift_contrib = Contrib.(inter shift conflict) in
-          let shift_attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
-              ~isucc_lr1itemset ~contrib:shift_contrib in
-          let has_shift = Contrib.is_empty shift_contrib in
+          let has_shift = Contrib.mem_shift conflict in
+          let shift_attrib = match Contrib.mem_shift conflict with
+            | true -> Attrib.init ~conflict_state_index ~symbol_index ~conflict
+                ~isucc_lr1itemset ~contrib:Contrib.shift
+            |   false -> Attrib.empty ~conflict_state_index ~symbol_index ~conflict
+          in
           Lr1Itemset.fold ~init:attribs ~f:(fun attribs isucc_lr1item ->
             match Lr1Itemset.get isucc_lr1item lr1itemset with
             | None -> begin
                 match has_shift with
                 | false -> attribs
-                | true ->
-                  Attribs.insert shift_attrib attribs
+                | true -> Attribs.insert shift_attrib attribs
               end
             | Some {follow; _} -> begin
                 match Ordset.mem symbol_index follow with
                 | false -> begin
                     match has_shift with
                     | false -> attribs
-                    | true ->
-                      Attribs.insert shift_attrib attribs
+                    | true -> Attribs.insert shift_attrib attribs
                   end
                 | true -> begin
-                    let attrib' = Attrib.union shift_attrib attrib in
-                    Attribs.insert attrib' attribs
+                    match has_shift with
+                    | false -> Attribs.insert attrib attribs
+                    | true -> begin
+                        let attrib' = Attrib.union shift_attrib attrib in
+                        Attribs.insert attrib' attribs
+                      end
                   end
               end
           ) isucc_lr1itemset

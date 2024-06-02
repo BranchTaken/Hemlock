@@ -25,9 +25,6 @@ val equal: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. The keys must be
     equal. *)
 
-val diff: t -> t -> t
-(** [diff t0 t1] returns an attrib containing the contents of [t0] that are not in [t1]. *)
-
 val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter)
   -> (module Fmt.Formatter)
 (** [fmt_hr symbols prods ~alt ~width t formatter] formats a human-readable representation of [t].
@@ -76,6 +73,9 @@ val union: t -> t -> t
 val inter: t -> t -> t
 (** [inter t0 t1] returns an attribution with the intersection of attribution values in [t0] and
     [t1]. The keys must be equal. *)
+
+val diff: t -> t -> t
+(** [diff t0 t1] returns an attrib containing the contents of [t0] that are not in [t1]. *)
 
 val equal_ielr1: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
 (** [equal_ielr1 ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make equal
