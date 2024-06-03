@@ -181,36 +181,47 @@ let kernel_lr1itemset_of_leftmost state symbol_index prod =
    *   B ::= ·      {⊥}    added (reduce)
    *
    * Mark which symbols have been recursed on, in order to protect against infinite recursion on
-   * e.g. `E ::= · E {t}`, as well as on mutually recursive items. *)
-  let rec inner symbol_index prod State.{statenub={lr1itemsetclosure={kernel; added; _}; _}; _}
+   * e.g. `E ::= · E {t}`, as well as on mutually recursive items.
+   *
+   * This function is the hot spot for IELR(1), hence the hand-expanded code. *)
+  let rec inner State.{statenub={lr1itemsetclosure={kernel; added; _}; _}; _} symbol_index prod
     marks accum = begin
-    match Set.mem Prod.(prod.lhs_index) marks with
-    | true -> marks, accum
-    | false -> begin
-        let marks = Set.insert Prod.(prod.lhs_index) marks in
-        let accum = Lr1Itemset.fold ~init:accum ~f:(fun accum lr1item ->
-          let lr0item = lr1item.lr0item in
-          match Array.length lr0item.prod.rhs_indexes > lr0item.dot
-                && Array.get lr0item.dot lr0item.prod.rhs_indexes = Prod.(prod.lhs_index)
-                && Ordset.mem symbol_index lr1item.follow with
-          | false -> accum
-          | true -> Lr1Itemset.insert lr1item accum
-        ) kernel in
-        (* Search the added set for items with the LHS of prod just past the dot and symbol_index in
-         * the follow set, and recurse on the items. *)
-        let marks, accum = Lr1Itemset.fold ~init:(marks, accum) ~f:(fun (marks, accum) lr1item ->
-          let lr0item = lr1item.lr0item in
-          match Array.length lr0item.prod.rhs_indexes > lr0item.dot
-                && Array.get lr0item.dot lr0item.prod.rhs_indexes = Prod.(prod.lhs_index)
+    let prod_lhs_index = Prod.(prod.lhs_index) in
+    let marks = Ordset.insert prod_lhs_index marks in
+    let accum = Lr1Itemset.fold ~init:accum ~f:(fun accum lr1item ->
+      let lr0item = lr1item.lr0item in
+      let lr0item_prod = lr0item.prod in
+      let lr0item_prod_rhs_indexes = lr0item_prod.rhs_indexes in
+      let lr0item_dot = lr0item.dot in
+      match Array.length lr0item_prod_rhs_indexes > lr0item_dot
+            && Symbol.Index.( = ) (Array.get lr0item_dot lr0item_prod_rhs_indexes) prod_lhs_index
+            && Ordset.mem symbol_index lr1item.follow with
+      | false -> accum
+      | true -> Lr1Itemset.insert lr1item accum
+    ) kernel in
+    (* Search the added set for items with the LHS of prod just past the dot and symbol_index in
+     * the follow set, and recurse on the items. *)
+    let marks, accum = Lr1Itemset.fold ~init:(marks, accum) ~f:(fun (marks, accum) lr1item ->
+      let lr0item = lr1item.lr0item in
+      let lr0item_prod = lr0item.prod in
+      let lr0item_prod_lhs_index = lr0item_prod.lhs_index in
+      match Ordset.mem lr0item_prod_lhs_index marks with
+      | true -> marks, accum
+      | false -> begin
+          let lr0item_prod_rhs_indexes = lr0item_prod.rhs_indexes in
+          let lr0item_dot = lr0item.dot in
+          match Array.length lr0item_prod_rhs_indexes > lr0item_dot
+                && Symbol.Index.( = ) (Array.get lr0item_dot lr0item_prod.rhs_indexes)
+                  prod_lhs_index
                 && Ordset.mem symbol_index lr1item.follow with
           | false -> marks, accum
-          | true -> inner symbol_index lr0item.prod state marks accum
-        ) added in
-        marks, accum
-      end
+          | true -> inner state symbol_index lr0item_prod marks accum
+        end
+    ) added in
+    marks, accum
   end in
   let _marks, accum =
-    inner symbol_index prod state (Set.empty (module Symbol.Index)) Lr1Itemset.empty in
+    inner state symbol_index prod (Ordset.empty (module Symbol.Index)) Lr1Itemset.empty in
   accum
 
 let kernel_lr1itemset_of_rightmost state symbol_index prod =
