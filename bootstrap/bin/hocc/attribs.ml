@@ -56,7 +56,7 @@ module T = struct
       ~f:(fun attrib_lst (_, attrib) -> attrib :: attrib_lst) t in
     formatter
     |> (fun formatter ->
-      List.fmt ~alt ~width (Attrib.fmt_hr symbols prods ~alt ~width) attrib_lst formatter
+      List.fmt ~alt ~width (Attrib.fmt_hr symbols prods ~alt ~width:(width+4L)) attrib_lst formatter
     )
 end
 include T
