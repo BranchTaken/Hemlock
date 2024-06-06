@@ -288,89 +288,89 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
   (* Create traces incrementally derived from those in `isucc_traces`. Some traces may terminate at
    * the isucc state; others may continue or even lead to forks. *)
   let traces = Ordmap.fold ~init:(Ordmap.empty (module TraceKey))
-      ~f:(fun traces (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
-        match action with
-        | State.Action.ShiftPrefix _
-        | ShiftAccept _ -> not_reached ()
-        | Reduce _ -> begin
-            TraceVal.fold ~init:traces
-              ~f:(fun traces
-                (Lr1Item.{lr0item=Lr0Item.{prod; dot=isucc_dot}; _}, _isucc_isucc_lr1itemset) ->
-                match isucc_dot with
-                | 0L -> (* The lane trace terminates at an attribution to the isucc's lr1item. *)
-                  traces
-                | _ -> begin
-                    let dot = pred isucc_dot in
-                    let lr0item = Lr0Item.init ~prod ~dot in
-                    (* Search for an item in state based on lr0item that has `symbol_index` in its
-                     * follow set. *)
-                    let lr1item_opt = Lr1Itemset.get
-                        (Lr1Item.init ~lr0item
-                            ~follow:(Ordset.singleton (module Symbol.Index) symbol_index))
-                        (match dot with
-                          | 0L -> State.(state.statenub.lr1itemsetclosure.added)
-                          | _ -> State.(state.statenub.lr1itemsetclosure.kernel))
-                    in
-                    match lr1item_opt with
-                    | None -> (* Lane doesn't encompass this state. *)
-                      traces
-                    | Some lr1item -> begin
-                        match dot with
-                        | 0L -> begin
-                            (* Search for kernel items that have the item's LHS symbol just past
-                             * their dots and `symbol_index` in their follow sets. *)
-                            let lr1itemset = kernel_lr1itemset_of_leftmost state symbol_index
-                                prod in
-                            match Lr1Itemset.is_empty lr1itemset with
-                            | true -> begin
-                                (* Contributing state. The trace source is an added item. *)
-                                let lr1itemset = Lr1Itemset.singleton lr1item in
-                                let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
-                                  let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
-                                  let traceval =
-                                    TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
-                                  match traceval_opt with
-                                  | None -> Some traceval
-                                  | Some traceval_existing ->
-                                    Some (TraceVal.union traceval traceval_existing)
-                                ) traces in
-                                (* Attributable to all lanes leading to this state. *)
-                                traces
-                              end
-                            | false -> begin
-                                (* Interstitial state. The trace source is one or more kernel items.
-                                *)
-                                let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
-                                  let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
-                                  let traceval =
-                                    TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
-                                  match traceval_opt with
-                                  | None -> Some traceval
-                                  | Some traceval_existing ->
-                                    Some (TraceVal.union traceval traceval_existing)
-                                ) traces in
-                                traces
-                              end
-                          end
-                        | _ -> begin
-                            (* Interstitial state. The trace source is a kernel item. *)
-                            let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
+    ~f:(fun traces (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
+      match action with
+      | State.Action.ShiftPrefix _
+      | ShiftAccept _ -> not_reached ()
+      | Reduce _ -> begin
+          TraceVal.fold ~init:traces
+            ~f:(fun traces
+              (Lr1Item.{lr0item=Lr0Item.{prod; dot=isucc_dot}; _}, _isucc_isucc_lr1itemset) ->
+              match isucc_dot with
+              | 0L -> (* The lane trace terminates at an attribution to the isucc's lr1item. *)
+                traces
+              | _ -> begin
+                  let dot = pred isucc_dot in
+                  let lr0item = Lr0Item.init ~prod ~dot in
+                  (* Search for an item in state based on lr0item that has `symbol_index` in its
+                   * follow set. *)
+                  let lr1item_opt = Lr1Itemset.get
+                      (Lr1Item.init ~lr0item
+                          ~follow:(Ordset.singleton (module Symbol.Index) symbol_index))
+                      (match dot with
+                        | 0L -> State.(state.statenub.lr1itemsetclosure.added)
+                        | _ -> State.(state.statenub.lr1itemsetclosure.kernel))
+                  in
+                  match lr1item_opt with
+                  | None -> (* Lane doesn't encompass this state. *)
+                    traces
+                  | Some lr1item -> begin
+                      match dot with
+                      | 0L -> begin
+                          (* Search for kernel items that have the item's LHS symbol just past their
+                           * dots and `symbol_index` in their follow sets. *)
+                          let lr1itemset = kernel_lr1itemset_of_leftmost state symbol_index
+                              prod in
+                          match Lr1Itemset.is_empty lr1itemset with
+                          | true -> begin
+                              (* Contributing state. The trace source is an added item. *)
                               let lr1itemset = Lr1Itemset.singleton lr1item in
-                              let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
-                              let traceval =
-                                TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
-                              match traceval_opt with
-                              | None -> Some traceval
-                              | Some traceval_existing ->
-                                Some (TraceVal.union traceval traceval_existing)
-                            ) traces in
-                            traces
-                          end
-                      end
-                  end
-              ) isucc_traceval
-          end
-      ) isucc_traces
+                              let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
+                                let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
+                                let traceval =
+                                  TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
+                                match traceval_opt with
+                                | None -> Some traceval
+                                | Some traceval_existing ->
+                                  Some (TraceVal.union traceval traceval_existing)
+                              ) traces in
+                              (* Attributable to all lanes leading to this state. *)
+                              traces
+                            end
+                          | false -> begin
+                              (* Interstitial state. The trace source is one or more kernel items.
+                              *)
+                              let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
+                                let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
+                                let traceval =
+                                  TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
+                                match traceval_opt with
+                                | None -> Some traceval
+                                | Some traceval_existing ->
+                                  Some (TraceVal.union traceval traceval_existing)
+                              ) traces in
+                              traces
+                            end
+                        end
+                      | _ -> begin
+                          (* Interstitial state. The trace source is a kernel item. *)
+                          let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
+                            let lr1itemset = Lr1Itemset.singleton lr1item in
+                            let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
+                            let traceval =
+                              TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
+                            match traceval_opt with
+                            | None -> Some traceval
+                            | Some traceval_existing ->
+                              Some (TraceVal.union traceval traceval_existing)
+                          ) traces in
+                          traces
+                        end
+                    end
+                end
+            ) isucc_traceval
+        end
+    ) isucc_traces
   in
   {
     conflict_state;
