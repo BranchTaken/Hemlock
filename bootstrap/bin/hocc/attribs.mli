@@ -67,6 +67,12 @@ val insert: Attrib.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of conflict attributions in [t0] and [t1]. *)
 
+val inter: t -> t -> t
+(** [inter t0 t1] returns the intersection of conflict attributions in [t0] and [t1]. *)
+
+val diff: t -> t -> t
+(** [diff t0 t1] returns the conflict attributions present in [t0] but not present in [t1]. *)
+
 val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
 (** [remerge1 remergeable_index_map t] creates attribs with remergeable attribs translated according
     to [remergeable_index_map], where keys are the original indexes, and values are the reindexed

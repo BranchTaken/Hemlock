@@ -64,6 +64,13 @@ val insert: Lr1Item.t -> Attribs.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of per kernel conflict attributions in [t0] and [t1]. *)
 
+val inter: t -> t -> t
+(** [inter t0 t1] returns the intersection of per kernel conflict attributions in [t0] and [t1]. *)
+
+val diff: t -> t -> t
+(** [diff t0 t1] returns the set of per kernel conflict contributions present in [t0] but not
+    present in [t1]. *)
+
 val attribs: Lr1Itemset.t -> t -> Attribs.t
 (** [attribs lr1itemset t] computes the attribs made by [lr1itemset] in the context of [t]. *)
 
