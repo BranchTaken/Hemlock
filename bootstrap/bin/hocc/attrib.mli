@@ -42,14 +42,6 @@ val init: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> co
     attribution with key (conflict_state_index, symbol_index) that attributes [contrib] to
     [isucc_lr1itemset]. *)
 
-val init_lane: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
-  -> contrib:Contrib.t -> t
-(** [init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib] returns an attribution with
-    key (conflict_state_index, symbol_index) that attributes [contrib] to a lane. *)
-
-val to_lane_attrib: t -> t
-(** [to_lane t] returns a derivative of [t] with empty [isucc_lr1itemset]. *)
-
 val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
 (** [remerge1 remergeable_index_map t] creates an attrib with all remergeable state indexes
     translated according to [remergeable_index_map], where keys are the original indexes, and values
@@ -62,9 +54,6 @@ val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> 
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)
-
-val is_lane_attrib: t -> bool
-(** [is_lane t] returns true if [isucc_lr1itemset] is empty in [t]. *)
 
 val union: t -> t -> t
 (** [union t0 t1] returns an attribution with the union of attribution values in [t0] and [t1]. The

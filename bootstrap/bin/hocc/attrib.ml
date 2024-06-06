@@ -87,12 +87,6 @@ module T = struct
   let init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib}
 
-  let init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib =
-    {conflict_state_index; symbol_index; conflict; isucc_lr1itemset=Lr1Itemset.empty; contrib}
-
-  let to_lane_attrib {conflict_state_index; symbol_index; conflict; contrib; _} =
-    init_lane ~conflict_state_index ~symbol_index ~conflict ~contrib
-
   let remerge1 remergeable_index_map ({conflict_state_index; _} as t) =
     let conflict_state_index' = match Ordmap.get conflict_state_index remergeable_index_map with
       | None -> conflict_state_index
@@ -108,9 +102,6 @@ module T = struct
   let is_empty {isucc_lr1itemset; contrib; _} =
     Lr1Itemset.is_empty isucc_lr1itemset &&
     Contrib.is_empty contrib
-
-  let is_lane_attrib {isucc_lr1itemset; _} =
-    Lr1Itemset.is_empty isucc_lr1itemset
 
   let union
       ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
@@ -130,7 +121,7 @@ module T = struct
       ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
       ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
     assert (equal_keys t0 t1);
-    assert Bool.(is_lane_attrib t0 = is_lane_attrib t1);
+    assert (Bool.( = ) (Lr1Itemset.is_empty is0) (Lr1Itemset.is_empty is1));
     let isucc_lr1itemset' = Lr1Itemset.diff is0 is1 in
     let contrib' = Contrib.diff c0 c1 in
     match Lr1Itemset.is_empty isucc_lr1itemset', Contrib.is_empty contrib' with
