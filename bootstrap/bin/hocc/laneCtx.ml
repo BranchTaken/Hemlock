@@ -121,9 +121,13 @@ type t = {
   (* Interstitial lane traces. Note that each trace key may correspond to multiple lanes, because
    * multiple kernel items in the conflict state can induce the same added ε production. *)
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
+
+  (* Memoized map of conflict attributions attributable to the lane(s) incompassing state->isucc
+   * transit. *)
+  kernel_attribs: KernelAttribs.t;
 }
 
-let pp {conflict_state; isucc; state; traces} formatter =
+let pp {conflict_state; isucc; state; traces; kernel_attribs} formatter =
   formatter
   |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
   |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
@@ -132,10 +136,11 @@ let pp {conflict_state; isucc; state; traces} formatter =
   |> Uns.pp (Ordmap.fold ~init:0L ~f:(fun accum (_, traceval) ->
     accum + (TraceVal.length traceval)) traces
   )
+  |> Fmt.fmt "; kernel_attribs=" |> KernelAttribs.pp kernel_attribs
   |> Fmt.fmt "}"
 
 let fmt_hr symbols prods ?(alt=false) ?(width=0L)
-  {conflict_state; isucc; state; traces} formatter =
+  {conflict_state; isucc; state; traces; kernel_attribs} formatter =
   formatter
   |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
   |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
@@ -147,6 +152,8 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L)
     |> Fmt.fmt "; traceval=" |> TraceVal.fmt_hr symbols ~alt ~width:(width + 4L) traceval
     |> Fmt.fmt "}"
   ) (Ordmap.to_alist traces)
+  |> Fmt.fmt "; kernel_attribs="
+  |> KernelAttribs.fmt_hr symbols prods ~alt:true ~width:(width+4L) kernel_attribs
   |> Fmt.fmt "}"
 
 let conflict_state {conflict_state; _} =
@@ -241,7 +248,10 @@ let kernel_lr1itemset_of_prod_index prods state symbol_index prod_index =
   let prod = Prods.prod_of_prod_index prod_index prods in
   kernel_lr1itemset_of_prod state symbol_index prod
 
-let kernel_attribs {conflict_state; traces; _} =
+let kernel_attribs {kernel_attribs; _} =
+  kernel_attribs
+
+let compute_kernel_attribs conflict_state traces =
   let conflict_state_index = State.index conflict_state in
   Ordmap.fold ~init:KernelAttribs.empty
     ~f:(fun kernel_attribs (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
@@ -277,11 +287,13 @@ let of_conflict_state ~resolve symbols prods conflict_state =
         ) (Contrib.reduces contrib)
       ) (State.conflict_attribs ~resolve symbols prods conflict_state) in
   assert (not (Ordmap.is_empty traces));
+  let kernel_attribs = compute_kernel_attribs conflict_state traces in
   {
     conflict_state;
     isucc=conflict_state;
     state=conflict_state;
     traces;
+    kernel_attribs;
   }
 
 let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
@@ -347,9 +359,11 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
         end
     ) isucc_traces
   in
+  let kernel_attribs = compute_kernel_attribs conflict_state traces in
   {
     conflict_state;
     isucc;
     state;
     traces;
+    kernel_attribs
   }
