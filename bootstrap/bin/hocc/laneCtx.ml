@@ -321,17 +321,15 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                              * their dots and `symbol_index` in their follow sets. *)
                             let kernel_lr1itemset = kernel_lr1itemset_of_leftmost state symbol_index
                                 prod in
-                            let lr1itemset = match Lr1Itemset.is_empty kernel_lr1itemset with
-                              | true ->
-                                (* Contributing state. The trace source is an added item.
-                                 * Attributable to all lanes leading to this state. *)
-                                Lr1Itemset.singleton lr1item
-                              | false ->
-                                (* Interstitial state. The trace source is one or more kernel items.
-                                *)
-                                kernel_lr1itemset
-                            in
-                            lr1itemset
+                            match Lr1Itemset.is_empty kernel_lr1itemset with
+                            | true ->
+                              (* Contributing state. The trace source is an added item. Attributable
+                               * to all lanes leading to this state. *)
+                              Lr1Itemset.singleton lr1item
+                            | false ->
+                              (* Interstitial state. The trace source is one or more kernel items.
+                              *)
+                              kernel_lr1itemset
                           end
                         | _ -> (* Interstitial state. The trace source is a kernel item. *)
                           Lr1Itemset.singleton lr1item
@@ -341,8 +339,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                       Ordmap.amend tracekey ~f:(fun traceval_opt ->
                         match traceval_opt with
                         | None -> Some traceval
-                        | Some traceval_existing ->
-                          Some (TraceVal.union traceval traceval_existing)
+                        | Some traceval_existing -> Some (TraceVal.union traceval traceval_existing)
                       ) traces
                     end
                 end
