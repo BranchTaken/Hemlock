@@ -130,32 +130,42 @@ let union t0 t1 =
   ) t0 t1
 
 let inter t0 t1 =
-  Ordmap.fold2 ~init:empty ~f:(fun t k_attrib0_opt k_attrib1_opt ->
-    match k_attrib0_opt, k_attrib1_opt with
-    | Some _, None
-    | None, Some _ -> t
-    | Some (k, attrib0), Some (_k, attrib1) -> begin
-        let attrib = Attrib.inter attrib0 attrib1 in
-        match Attrib.is_empty attrib with
-        | true -> t
-        | false -> Ordmap.insert ~k ~v:attrib t
-      end
-    | None, None -> not_reached ()
-  ) t0 t1
+  match is_empty t0, is_empty t1 with
+  | true, _
+  | _, true -> empty
+  | false, false -> begin
+      Ordmap.fold2 ~init:empty ~f:(fun t k_attrib0_opt k_attrib1_opt ->
+        match k_attrib0_opt, k_attrib1_opt with
+        | Some _, None
+        | None, Some _ -> t
+        | Some (k, attrib0), Some (_k, attrib1) -> begin
+            let attrib = Attrib.inter attrib0 attrib1 in
+            match Attrib.is_empty attrib with
+            | true -> t
+            | false -> Ordmap.insert ~k ~v:attrib t
+          end
+        | None, None -> not_reached ()
+      ) t0 t1
+    end
 
 let diff t0 t1 =
-  Ordmap.fold2 ~init:empty ~f:(fun t k_attrib0_opt k_attrib1_opt ->
-    match k_attrib0_opt, k_attrib1_opt with
-    | Some (k, attrib), None -> Ordmap.insert ~k ~v:attrib t
-    | None, Some _ -> t
-    | Some (k, attrib0), Some (_k, attrib1) -> begin
-        let attrib = Attrib.diff attrib0 attrib1 in
-        match Attrib.is_empty attrib with
-        | true -> t
-        | false -> Ordmap.insert ~k ~v:attrib t
-      end
-    | None, None -> not_reached ()
-  ) t0 t1
+  match is_empty t0, is_empty t1 with
+  | true, _ -> empty
+  | _, true -> t0
+  | false, false -> begin
+      Ordmap.fold2 ~init:empty ~f:(fun t k_attrib0_opt k_attrib1_opt ->
+        match k_attrib0_opt, k_attrib1_opt with
+        | Some (k, attrib), None -> Ordmap.insert ~k ~v:attrib t
+        | None, Some _ -> t
+        | Some (k, attrib0), Some (_k, attrib1) -> begin
+            let attrib = Attrib.diff attrib0 attrib1 in
+            match Attrib.is_empty attrib with
+            | true -> t
+            | false -> Ordmap.insert ~k ~v:attrib t
+          end
+        | None, None -> not_reached ()
+      ) t0 t1
+    end
 
 let remerge1 remergeable_index_map t =
   Ordmap.fold ~init:empty
