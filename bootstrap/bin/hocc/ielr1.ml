@@ -52,7 +52,7 @@ let gather_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~lalr
   ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~lalr1_kernel_attribs
     lanectx
 
-let lalr1_kernel_attribs_init ~resolve io symbols prods _XXX_lalr1_isocores lalr1_states =
+let lalr1_kernel_attribs_init ~resolve io symbols prods lalr1_states =
   let adjs = Adjs.init lalr1_states in
   (* Gather transit attribs for all conflict states. *)
   let io =
@@ -80,8 +80,7 @@ let lalr1_kernel_attribs_init ~resolve io symbols prods _XXX_lalr1_isocores lalr
 (* Create lookup function for attribs that closes on the prerequisite LALR(1) inadequacy analysis.
 *)
 let gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr1_isocores lalr1_states =
-  let io, lalr1_kernel_attribs =
-    lalr1_kernel_attribs_init ~resolve io symbols prods lalr1_isocores lalr1_states in
+  let io, lalr1_kernel_attribs = lalr1_kernel_attribs_init ~resolve io symbols prods lalr1_states in
   let transit_of_statenub_goto statenub goto = begin
     let statenub_core = (Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure.kernel)) in
     let goto_core = Lr1Itemset.core goto in
