@@ -287,23 +287,20 @@ let of_conflict_state ~resolve symbols prods conflict_state =
 let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
   (* Create traces incrementally derived from those in `isucc_traces`. Some traces may terminate at
    * the isucc state; others may continue or even lead to forks. *)
-  let traces = Ordmap.fold
-      ~init:(Ordmap.empty (module TraceKey))
-      ~f:(fun traces
-        (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
+  let traces = Ordmap.fold ~init:(Ordmap.empty (module TraceKey))
+      ~f:(fun traces (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
         match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
         | Reduce _ -> begin
             TraceVal.fold ~init:traces
-              ~f:(fun traces (isucc_lr1item, _isucc_isucc_lr1itemset) ->
-                let isucc_lr0item = Lr1Item.(isucc_lr1item.lr0item) in
-                match isucc_lr0item.dot with
-                | 0L -> (* The lane trace terminates at an attribution to `isucc_lr1item`. *)
+              ~f:(fun traces
+                (Lr1Item.{lr0item=Lr0Item.{prod; dot=isucc_dot}; _}, _isucc_isucc_lr1itemset) ->
+                match isucc_dot with
+                | 0L -> (* The lane trace terminates at an attribution to the isucc's lr1item. *)
                   traces
                 | _ -> begin
-                    let prod = isucc_lr0item.prod in
-                    let dot = pred isucc_lr0item.dot in
+                    let dot = pred isucc_dot in
                     let lr0item = Lr0Item.init ~prod ~dot in
                     (* Search for an item in state based on lr0item that has `symbol_index` in its
                      * follow set. *)
@@ -323,7 +320,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                             (* Search for kernel items that have the item's LHS symbol just past
                              * their dots and `symbol_index` in their follow sets. *)
                             let lr1itemset = kernel_lr1itemset_of_leftmost state symbol_index
-                                lr1item.lr0item.prod in
+                                prod in
                             match Lr1Itemset.is_empty lr1itemset with
                             | true -> begin
                                 (* Contributing state. The trace source is an added item. *)
