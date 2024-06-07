@@ -67,9 +67,11 @@ val insert: Attrib.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of conflict attributions in [t0] and [t1]. *)
 
+(* XXX Not used. *)
 val inter: t -> t -> t
 (** [inter t0 t1] returns the intersection of conflict attributions in [t0] and [t1]. *)
 
+(* XXX Not used. *)
 val diff: t -> t -> t
 (** [diff t0 t1] returns the conflict attributions present in [t0] but not present in [t1]. *)
 
