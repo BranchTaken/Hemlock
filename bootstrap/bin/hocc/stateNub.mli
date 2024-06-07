@@ -37,8 +37,8 @@ type t = {
   isocore_set_sn: uns;
   (** Serial number for this state nub within its containing isocore set. *)
 
-  kernel_attribs_lst: KernelAttribs.t list;
-  (** List of transit conflict attributions, one for each merged in-transition. *)
+  kernel_attribs: KernelAttribs.t;
+  (** Union of merged in-transit conflict attributions. *)
 
   attribs: Attribs.t;
   (** Memoized merged attribs. *)

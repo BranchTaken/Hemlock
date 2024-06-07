@@ -189,7 +189,7 @@ module T = struct
     lr1itemsetclosure: Lr1ItemsetClosure.t;
     isocores_sn: uns;
     isocore_set_sn: uns;
-    kernel_attribs_lst: KernelAttribs.t list;
+    kernel_attribs: KernelAttribs.t;
     attribs: Attribs.t;
   }
 
@@ -199,12 +199,12 @@ module T = struct
   let cmp {lr1itemsetclosure=c0; _} {lr1itemsetclosure=c1; _} =
     Lr1ItemsetClosure.cmp c0 c1
 
-  let pp {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs_lst; attribs} formatter =
+  let pp {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs} formatter =
     formatter
     |> Fmt.fmt "{lr1itemsetclosure=" |> Lr1ItemsetClosure.pp  lr1itemsetclosure
     |> Fmt.fmt "; isocores_sn=" |> Uns.pp isocores_sn
     |> Fmt.fmt "; isocore_set_sn=" |> Uns.pp isocore_set_sn
-    |> Fmt.fmt "; kernel_attribs_lst=" |> List.pp KernelAttribs.pp kernel_attribs_lst
+    |> Fmt.fmt "; kernel_attribs=" |> KernelAttribs.pp kernel_attribs
     |> Fmt.fmt "; attribs=" |> Attribs.pp attribs
     |> Fmt.fmt "}"
 end
@@ -213,32 +213,27 @@ include Identifiable.Make(T)
 
 let init symbols ~index ~isocores_sn ~isocore_set_sn GotoNub.{goto; kernel_attribs; attribs; _} =
   let lr1itemsetclosure = Lr1ItemsetClosure.init symbols ~index goto in
-  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs_lst=[kernel_attribs]; attribs}
+  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
 let remerge symbols remergeable_index_map
-    {lr1itemsetclosure=c0; isocores_sn=is0; isocore_set_sn=iss0; kernel_attribs_lst=kal0;
-      attribs=a0}
-    {lr1itemsetclosure=c1; isocores_sn=is1; isocore_set_sn=iss1; kernel_attribs_lst=kal1;
-      attribs=a1} =
+    {lr1itemsetclosure=c0; isocores_sn=is0; isocore_set_sn=iss0; kernel_attribs=ka0; attribs=a0}
+    {lr1itemsetclosure=c1; isocores_sn=is1; isocore_set_sn=iss1; kernel_attribs=ka1; attribs=a1} =
   assert Uns.(is0 = is1);
-  let remerge_kernel_attribs =
-    List.map ~f:(fun ta -> KernelAttribs.remerge1 remergeable_index_map ta) in
   {
     lr1itemsetclosure=Lr1ItemsetClosure.remerge symbols remergeable_index_map c0 c1;
     isocores_sn=is0;
     isocore_set_sn=Uns.min iss0 iss1;
-    kernel_attribs_lst=List.concat (remerge_kernel_attribs kal0) (remerge_kernel_attribs kal1);
+    kernel_attribs=KernelAttribs.(union (remerge1 remergeable_index_map ka0)
+      (remerge1 remergeable_index_map ka1));
     attribs=Attribs.remerge remergeable_index_map a0 a1
   }
 
 let reindex index_map
-    {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs_lst; attribs} =
+    {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs} =
   let lr1itemsetclosure = Lr1ItemsetClosure.reindex index_map lr1itemsetclosure in
-  let kernel_attribs_lst = List.map ~f:(fun kernel_attribs ->
-    KernelAttribs.reindex index_map kernel_attribs
-  ) kernel_attribs_lst in
+  let kernel_attribs = KernelAttribs.reindex index_map kernel_attribs in
   let attribs = Attribs.reindex index_map attribs in
-  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs_lst; attribs}
+  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
 let index {lr1itemsetclosure; _} =
   lr1itemsetclosure.index
@@ -249,20 +244,16 @@ let isocores_sn {isocores_sn; _} =
 let isocore_set_sn {isocore_set_sn; _} =
   isocore_set_sn
 
-let merge symbols GotoNub.{goto; kernel_attribs; _}
-  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs_lst; attribs} =
+let merge symbols GotoNub.{goto; kernel_attribs=gotonub_ka; _}
+  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs=statenub_ka; attribs} =
   let merged, (Lr1ItemsetClosure.{kernel=lr1itemset; _} as lr1itemsetclosure) =
     Lr1ItemsetClosure.merge symbols goto lr1itemsetclosure in
-  let kernel_attribs_lst = kernel_attribs :: kernel_attribs_lst in
+  let kernel_attribs = KernelAttribs.union gotonub_ka statenub_ka in
   let attribs = match merged with
     | false -> attribs (* No-op merge means no change in attribs. *)
-    | true -> begin
-        List.fold ~init:Attribs.empty ~f:(fun attribs kernel_attribs ->
-          Attribs.union (KernelAttribs.attribs lr1itemset kernel_attribs) attribs
-        ) kernel_attribs_lst
-      end
+    | true -> Attribs.union (KernelAttribs.attribs lr1itemset kernel_attribs) attribs
   in
-  merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs_lst; attribs}
+  merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
 let next {lr1itemsetclosure; _} =
   Lr1ItemsetClosure.next lr1itemsetclosure
