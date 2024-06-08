@@ -171,7 +171,7 @@ let transit {state; isucc; _} =
 let traces_length {traces; _} =
   Ordmap.length traces
 
-let kernel_lr1itemset_of_leftmost state symbol_index prod =
+let kernel_of_leftmost state symbol_index prod =
   assert (not (Prod.is_synthetic prod));
   (* Accumulate kernel items with the LHS of prod just past the dot and symbol_index in the follow
    * set.
@@ -225,7 +225,7 @@ let kernel_lr1itemset_of_leftmost state symbol_index prod =
     inner state symbol_index prod (Ordset.empty (module Symbol.Index)) Lr1Itemset.empty in
   accum
 
-let kernel_lr1itemset_of_rightmost state symbol_index prod =
+let kernel_of_rightmost state symbol_index prod =
   (* Accumulate kernel items based on prod with the dot at the rightmost position and symbol_index
    * in the follow set. *)
   Lr1Itemset.fold ~init:Lr1Itemset.empty
@@ -238,15 +238,15 @@ let kernel_lr1itemset_of_rightmost state symbol_index prod =
       | true -> Lr1Itemset.insert lr1item accum
     ) State.(state.statenub.lr1itemsetclosure.kernel)
 
-let kernel_lr1itemset_of_prod state symbol_index prod =
+let kernel_of_prod state symbol_index prod =
   match Prod.(prod.rhs_indexes) with
   | [||] -> (* ε production, always associated with an added (non-kernel) item. *)
-    kernel_lr1itemset_of_leftmost state symbol_index prod
-  | _ -> kernel_lr1itemset_of_rightmost state symbol_index prod
+    kernel_of_leftmost state symbol_index prod
+  | _ -> kernel_of_rightmost state symbol_index prod
 
-let kernel_lr1itemset_of_prod_index prods state symbol_index prod_index =
+let kernel_of_prod_index prods state symbol_index prod_index =
   let prod = Prods.prod_of_prod_index prod_index prods in
-  kernel_lr1itemset_of_prod state symbol_index prod
+  kernel_of_prod state symbol_index prod
 
 let kernel_attribs {kernel_attribs; _} =
   kernel_attribs
@@ -275,8 +275,7 @@ let of_conflict_state ~resolve symbols prods conflict_state =
         Ordset.fold ~init:traces ~f:(fun traces prod_index ->
           let action = State.Action.Reduce prod_index in
           let tracekey = TraceKey.init ~symbol_index ~conflict ~action in
-          let lr1itemset =
-            kernel_lr1itemset_of_prod_index prods conflict_state symbol_index prod_index in
+          let lr1itemset = kernel_of_prod_index prods conflict_state symbol_index prod_index in
           let traceval =
             TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset:Lr1Itemset.empty in
           Ordmap.amend tracekey ~f:(fun kernel_isuccs_opt ->
@@ -331,9 +330,8 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                         | 0L -> begin
                             (* Search for kernel items that have the item's LHS symbol just past
                              * their dots and `symbol_index` in their follow sets. *)
-                            let kernel_lr1itemset = kernel_lr1itemset_of_leftmost state symbol_index
-                                prod in
-                            match Lr1Itemset.is_empty kernel_lr1itemset with
+                            let kernel = kernel_of_leftmost state symbol_index prod in
+                            match Lr1Itemset.is_empty kernel with
                             | true ->
                               (* Contributing state. The trace source is an added item. Attributable
                                * to all lanes leading to this state. *)
@@ -341,7 +339,7 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                             | false ->
                               (* Interstitial state. The trace source is one or more kernel items.
                               *)
-                              kernel_lr1itemset
+                              kernel
                           end
                         | _ -> (* Interstitial state. The trace source is a kernel item. *)
                           Lr1Itemset.singleton lr1item
