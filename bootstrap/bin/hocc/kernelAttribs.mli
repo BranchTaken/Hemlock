@@ -1,4 +1,4 @@
-(** Map of per kernel item conflict attributions. *)
+(** Map of per conflict state kernel item conflict attributions. *)
 
 open Basis
 open! Basis.Rudiments
