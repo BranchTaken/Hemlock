@@ -2,7 +2,6 @@ open Basis
 open! Basis.Rudiments
 
 let rec ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~annotations lanectx =
-  let state_index = State.index (LaneCtx.state lanectx) in
   (* Accumulate kernel attribs of ipred lane contexts. *)
   Array.fold ~init:annotations ~f:(fun annotations ipred_state_index ->
     let ipred_state = Array.get ipred_state_index lalr1_states in
@@ -27,7 +26,7 @@ let rec ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~a
         | _ -> ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~annotations
             ipred_lanectx
       end
-  ) (Adjs.ipreds_of_state_index state_index adjs)
+  ) (Adjs.ipreds_of_state (LaneCtx.state lanectx) adjs)
 
 let gather_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~annotations
     conflict_state =
