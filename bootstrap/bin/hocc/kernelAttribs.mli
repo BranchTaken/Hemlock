@@ -64,6 +64,10 @@ val insert: Lr1Item.t -> Attribs.t -> t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns the union of per kernel conflict attributions in [t0] and [t1]. *)
 
+val merge: t -> t -> bool * t
+(** [merge t0 t1] computes the union of [t0] and [t1], and returns the result along with a boolean
+    indicating whether the union is a strict superset of [t1]. *)
+
 (* XXX Not used. *)
 val inter: t -> t -> t
 (** [inter t0 t1] returns the intersection of per kernel conflict attributions in [t0] and [t1]. *)

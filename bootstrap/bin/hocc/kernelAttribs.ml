@@ -69,6 +69,30 @@ let union t0 t1 =
     Attribs.union attribs0 attribs1
   ) t0 t1
 
+let merge t0 t1 =
+  (* Manually compute the union of `t0` and `t1` such that `strict_superset` is false if the union
+   * equals `t1`. The conceptually simpler approach of computing the union via `union` and checking
+   * equality of before/after kernel attribs is a lot more expensive for the no-op (equal) case. *)
+  Ordmap.fold ~init:(false, t1)
+    ~f:(fun (strict_superset, t) (lr1item, attribs) ->
+      match Ordmap.get lr1item t1 with
+      | None -> true, insert lr1item attribs t
+      | Some attribs1 -> begin
+          Attribs.fold ~init:(strict_superset, t)
+            ~f:(fun (strict_superset, t)
+              (Attrib.{conflict_state_index; symbol_index; _} as attrib0) ->
+              match Attribs.get ~conflict_state_index ~symbol_index attribs1 with
+              | None -> true, insert lr1item (Attribs.singleton attrib0) t
+              | Some attrib1 -> begin
+                  let attrib = Attrib.diff attrib0 attrib1 in
+                  match Attrib.is_empty attrib with
+                  | true -> strict_superset, t
+                  | false -> true, insert lr1item (Attribs.singleton attrib) t
+                end
+            ) attribs
+        end
+    ) t0
+
 let inter t0 t1 =
   match is_empty t0, is_empty t1 with
   | true, _

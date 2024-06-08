@@ -15,39 +15,11 @@ let rec ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~a
       Ordmap.get transit annotations
       |> Option.value ~default:KernelAttribs.empty
     in
-    (* Manually compute the union of `kernel_attribs` and `ipred_kernel_attribs` such that
-     * `do_insert` is false if the union equals `kernel_attribs`, i.e. insertion into `annotations`
-     * would be a no-op. The conceptually simpler approach of computing the union via
-     * `KernelAttribs.union` and checking equality of before/after kernel attribs is a lot more
-     * expensive for the no-op (equal) case. *)
-    let do_insert, kernel_attribs' = KernelAttribs.fold ~init:(false, kernel_attribs)
-      ~f:(fun (do_insert, kernel_attribs') (lr1item, attribs) ->
-        match KernelAttribs.get lr1item kernel_attribs with
-        | None -> true, KernelAttribs.insert lr1item attribs kernel_attribs'
-        | Some attribs_prev -> begin
-            Attribs.fold ~init:(do_insert, kernel_attribs')
-              ~f:(fun (do_insert, kernel_attribs')
-                (Attrib.{conflict_state_index; symbol_index; _} as attrib) ->
-                match Attribs.get ~conflict_state_index ~symbol_index attribs_prev with
-                | None ->
-                  true, KernelAttribs.insert lr1item (Attribs.singleton attrib) kernel_attribs'
-                | Some attrib_prev -> begin
-                    let attrib' = Attrib.diff attrib attrib_prev in
-                    match Attrib.is_empty attrib' with
-                    | true -> do_insert, kernel_attribs'
-                    | false -> begin
-                        true,
-                        KernelAttribs.insert lr1item (Attribs.singleton attrib') kernel_attribs'
-                      end
-                  end
-              ) attribs
-          end
-      ) ipred_kernel_attribs in
     (* Avoid recursing if no new transit attribs are inserted, since no additional insertions will
      * occur in the recursion. *)
-    match do_insert with
-    | false -> annotations
-    | true -> begin
+    match KernelAttribs.merge ipred_kernel_attribs kernel_attribs with
+    | false, _ -> annotations
+    | true, kernel_attribs' -> begin
         let annotations = Ordmap.upsert ~k:transit ~v:kernel_attribs' annotations in
         (* Recurse if lanes may extend to predecessors. *)
         match LaneCtx.traces_length ipred_lanectx with
