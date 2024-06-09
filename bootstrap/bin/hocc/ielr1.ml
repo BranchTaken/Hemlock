@@ -34,45 +34,44 @@ let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_in
   let rec inner adjs annotations ~conflict_state_index ~symbol_index ~conflict marks dst = begin
     let ipreds = Adjs.ipreds_of_state_index dst adjs in
     (* There must be at least one explicit attrib for an implicit shift attrib to matter. *)
-    let present, lacking = Array.fold_until ~init:(false, false)
-      ~f:(fun (present, lacking) src ->
+    let present, lacking, marks = Array.fold_until ~init:(false, false, marks)
+      ~f:(fun (present, lacking, marks) src ->
         let transit = Transit.init ~src ~dst in
-        let present, lacking = match Ordmap.get transit annotations with
-          | None -> present, true
+        let present, lacking, marks = match Ordmap.get transit annotations with
+          | None -> present, true, marks
           | Some kernel_attribs -> begin
-              let present, lacking = KernelAttribs.fold_until ~init:(present, lacking)
-                ~f:(fun (present, lacking) (_kernel_item, attribs) ->
-                  let present, lacking =
+              let ka_present, ka_lacking = KernelAttribs.fold_until ~init:(false, false)
+                ~f:(fun (ka_present, ka_lacking) (_kernel_item, attribs) ->
+                  let ka_present, ka_lacking =
                     match Attribs.get ~conflict_state_index ~symbol_index attribs with
-                    | None -> present, true
-                    | Some _attrib -> true, lacking
+                    | None -> ka_present, true
+                    | Some _attrib -> true, ka_lacking
                   in
-                  (present, lacking), present && lacking
+                  (ka_present, ka_lacking), ka_present && ka_lacking
                 ) kernel_attribs in
-              assert (present || lacking);
-              present, lacking
+              let present, lacking, marks = match ka_present, lacking || ka_lacking with
+                | true, true -> true, true, marks
+                | true, false -> begin
+                    let ka_lacking, marks = match Ordset.mem src marks with
+                      | true -> false, marks
+                      | false -> begin
+                          let has_implicit_shift, marks = inner adjs annotations
+                              ~conflict_state_index ~symbol_index ~conflict
+                              (Ordset.insert src marks) src in
+                          has_implicit_shift, marks
+                        end
+                    in
+                    true, ka_lacking, marks
+                  end
+                | false, true -> present, true, marks
+                | false, false -> not_reached ()
+              in
+              present, lacking, marks
             end in
-        (present, lacking), present && lacking
+        (present, lacking, marks), present && lacking
       ) ipreds in
-    match present, lacking with
-    | false, _ -> false, marks
-    | true, true -> true, marks
-    | true, false -> begin
-        Array.fold_until ~init:(false, marks)
-          ~f:(fun (_has_implicit_shift, marks) src ->
-            let transit = Transit.init ~src ~dst in
-            let has_implicit_shift, marks = match Ordmap.get transit annotations with
-              | None -> false, marks
-              | Some _kernel_attribs -> begin
-                  match Ordset.mem src marks with
-                  | true -> false, marks
-                  | false -> inner adjs annotations ~conflict_state_index ~symbol_index ~conflict
-                      (Ordset.insert src marks) src
-                end
-            in
-            (has_implicit_shift, marks), has_implicit_shift
-          ) ipreds
-      end
+    let has_implicit_shift = present && lacking in
+    has_implicit_shift, marks
   end in
   match Contrib.mem_shift conflict with
   | false -> false
