@@ -32,7 +32,6 @@ let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_in
   (* dst has implicit shift-only attribs if the conflict contains shift, and at least one
    * (transitive) in-transit lacks an attrib on symbol_index. *)
   let rec inner adjs annotations ~conflict_state_index ~symbol_index ~conflict marks dst = begin
-    let ipreds = Adjs.ipreds_of_state_index dst adjs in
     (* There must be at least one explicit attrib for an implicit shift attrib to matter. *)
     let present, lacking, marks = Array.fold_until ~init:(false, false, marks)
       ~f:(fun (present, lacking, marks) src ->
@@ -69,7 +68,7 @@ let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_in
               present, lacking, marks
             end in
         (present, lacking, marks), present && lacking
-      ) ipreds in
+      ) (Adjs.ipreds_of_state_index dst adjs) in
     let has_implicit_shift = present && lacking in
     has_implicit_shift, marks
   end in
