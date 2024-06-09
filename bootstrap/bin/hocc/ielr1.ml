@@ -91,10 +91,10 @@ let attribset_compat ~resolve symbols prods attribset =
         | Some (attrib0', attribset_seq_base') ->
           inner ~resolve symbols prods attrib0' attribset_seq_base' attribset_seq_base'
       end
-    | Some (attribn, attribset_seq_cur') -> begin
-        match Attrib.compat_ielr1 ~resolve symbols prods attrib0 attribn with
+    | Some (attrib1, attribset_seq_cur') -> begin
+        match Attrib.compat_ielr1 ~resolve symbols prods attrib0 attrib1 with
         | false -> false
-        | true -> inner ~resolve symbols prods attribn attribset_seq_base attribset_seq_cur'
+        | true -> inner ~resolve symbols prods attrib1 attribset_seq_base attribset_seq_cur'
       end
   end in
   match Ordset.length attribset <= 1L with
