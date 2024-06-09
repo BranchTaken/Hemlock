@@ -1,7 +1,7 @@
 open Basis
 open! Basis.Rudiments
 
-let rec ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~annotations lanectx =
+let rec pred_annotations ~resolve symbols prods lalr1_states adjs annotations lanectx =
   (* Accumulate kernel attribs of ipred lane contexts. *)
   Array.fold ~init:annotations ~f:(fun annotations ipred_state_index ->
     let ipred_state = Array.get ipred_state_index lalr1_states in
@@ -23,15 +23,126 @@ let rec ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~a
         (* Recurse if lanes may extend to predecessors. *)
         match LaneCtx.traces_length ipred_lanectx with
         | 0L -> annotations
-        | _ -> ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~annotations
+        | _ -> pred_annotations ~resolve symbols prods lalr1_states adjs annotations
             ipred_lanectx
       end
   ) (Adjs.ipreds_of_state (LaneCtx.state lanectx) adjs)
 
-let gather_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~annotations
-    conflict_state =
-  let lanectx = LaneCtx.of_conflict_state ~resolve symbols prods conflict_state in
-  ipred_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs ~annotations lanectx
+let attribset_compat ~resolve symbols prods attribset =
+  let rec inner ~resolve symbols prods attrib0 attribset_seq_base attribset_seq_cur = begin
+    match Ordset.Seq.next_opt attribset_seq_cur with
+    | None -> begin
+        (* Advance attrib0. *)
+        match Ordset.Seq.next_opt attribset_seq_base with
+        | None -> true
+        | Some (attrib0', attribset_seq_base') ->
+          inner ~resolve symbols prods attrib0' attribset_seq_base' attribset_seq_base'
+      end
+    | Some (attribn, attribset_seq_cur') -> begin
+        match Attrib.compat_ielr1 ~resolve symbols prods attrib0 attribn with
+        | false -> false
+        | true -> inner ~resolve symbols prods attribn attribset_seq_base attribset_seq_cur'
+      end
+  end in
+  match Ordset.length attribset <= 1L with
+  | true -> true
+  | false -> begin
+      let attrib0, attribset_seq = Ordset.Seq.init attribset |> Ordset.Seq.next in
+      inner ~resolve symbols prods attrib0 attribset_seq attribset_seq
+    end
+
+let filter_useless_annotations ~resolve symbols prods annotations_all =
+  (* Create a per destination state map of per symbol attrib sets and use it to distinguish useful
+   * vs useless annotations. *)
+  let dst_sym_attribsets_shiftless = Ordmap.fold ~init:(Ordmap.empty (module State.Index))
+    ~f:(fun dst_sym_attribsets (Transit.{dst; _}, kernel_attribs) ->
+      Ordmap.amend dst ~f:(fun sym_attribset_opt ->
+        let sym_attribset = Option.value sym_attribset_opt
+            ~default:(Ordmap.empty (module Symbol.Index)) in
+        let sym_attribset' = KernelAttribs.fold ~init:sym_attribset
+            ~f:(fun sym_attribset' (_kernel_item, attribs) ->
+              Attribs.fold ~init:sym_attribset'
+                ~f:(fun sym_attribset'
+                  Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
+                  let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
+                      ~isucc_lr1itemset:Lr1Itemset.empty ~contrib in
+                  Ordmap.amend symbol_index ~f:(fun attribset_opt ->
+                    let attribset' = match attribset_opt with
+                      | None -> Ordset.singleton (module Attrib) attrib
+                      | Some attribset -> Ordset.insert attrib attribset
+                    in
+                    Some attribset'
+                  ) sym_attribset'
+                ) attribs
+            ) kernel_attribs in
+        Some sym_attribset'
+      ) dst_sym_attribsets
+    ) annotations_all in
+  (* Integrate any implicit shift attribs. *)
+  let dst_sym_attribsets = Ordmap.fold ~init:dst_sym_attribsets_shiftless
+    ~f:(fun dst_sym_attribsets (dst, sym_attribsets) ->
+      let sym_attribsets' = Ordmap.fold ~init:sym_attribsets
+        ~f:(fun sym_attribsets' (sym, attribset) ->
+          let Attrib.{conflict_state_index; symbol_index; conflict; _} =
+            Ordset.choose_hlt attribset in
+          assert Symbol.Index.(symbol_index = sym);
+          (* A shift attrib can flow in via an unannotated in-transit to any predecessor, thus
+           * making accurate determination of implicit shift attrib presence rather expensive to
+           * compute. This implementation takes the simpler conservative approach of assuming that
+           * an implicit shift attrib exists if the conflict contains shift. *)
+          match Contrib.mem_shift conflict with
+          | false -> sym_attribsets'
+          | true -> begin
+              let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
+                  ~isucc_lr1itemset:Lr1Itemset.empty ~contrib:Contrib.shift in
+              let attribset' = Ordset.insert attrib attribset in
+              Ordmap.update_hlt ~k:sym ~v:attribset' sym_attribsets'
+            end
+        ) sym_attribsets in
+      Ordmap.update_hlt ~k:dst ~v:sym_attribsets' dst_sym_attribsets
+    ) dst_sym_attribsets_shiftless in
+  (* Annotations regarding symbols for which any attribs are incompatible are useful; all other
+   * annotations are useless. *)
+  let dst_syms_useful = Ordmap.fold ~init:(Ordmap.empty (module State.Index))
+    ~f:(fun dst_syms_useful (dst, sym_attribsets) ->
+      Ordmap.fold ~init:dst_syms_useful
+        ~f:(fun dst_syms_useful (sym, attribset) ->
+          match attribset_compat ~resolve symbols prods attribset with
+          | true -> dst_syms_useful
+          | false -> begin
+              Ordmap.amend dst ~f:(fun syms_useful_opt ->
+                let syms_useful' = match syms_useful_opt with
+                  | None -> Ordset.singleton (module Symbol.Index) sym
+                  | Some syms_useful -> Ordset.insert sym syms_useful
+                in
+                Some syms_useful'
+              ) dst_syms_useful
+            end
+        ) sym_attribsets
+    ) dst_sym_attribsets in
+  Ordmap.fold ~init:(Ordmap.empty (module Transit))
+    ~f:(fun annotations_useful ((Transit.{dst; _} as transit), kernel_attribs) ->
+      match Ordmap.get dst dst_syms_useful with
+      | None -> annotations_useful
+      | Some syms_useful -> begin
+          let kernel_attribs' = KernelAttribs.fold ~init:KernelAttribs.empty
+            ~f:(fun kernel_attribs' ((Lr1Item.{follow; _} as kernel_item), attribs) ->
+              assert (Ordset.length follow = 1L);
+              let sym = Ordset.choose_hlt follow in
+              match Ordset.mem sym syms_useful with
+              | false -> kernel_attribs'
+              | true ->  KernelAttribs.insert kernel_item attribs kernel_attribs'
+            ) kernel_attribs in
+          match KernelAttribs.is_empty kernel_attribs' with
+          | true -> annotations_useful
+          | false -> Ordmap.insert ~k:transit ~v:kernel_attribs' annotations_useful
+        end
+    ) annotations_all
+
+let gather_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs conflict_state =
+  LaneCtx.of_conflict_state ~resolve symbols prods conflict_state
+  |> pred_annotations ~resolve symbols prods lalr1_states adjs (Ordmap.empty (module Transit))
+  |> filter_useless_annotations ~resolve symbols prods
 
 let annotations_init ~resolve io symbols prods lalr1_states =
   let adjs = Adjs.init lalr1_states in
@@ -48,8 +159,10 @@ let annotations_init ~resolve io symbols prods lalr1_states =
         | false -> io, annotations
         | true -> begin
             let io = io.log |> Fmt.fmt "." |> Io.with_log io in
-            let annotations = gather_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs
-                ~annotations state in
+            let state_annotations = gather_transit_kernel_attribs ~resolve symbols prods
+                lalr1_states adjs state in
+            let annotations = Ordmap.union ~f:(fun _transit ka0 ka1 -> KernelAttribs.union ka0 ka1)
+                state_annotations annotations in
             io, annotations
           end
       ) lalr1_states
