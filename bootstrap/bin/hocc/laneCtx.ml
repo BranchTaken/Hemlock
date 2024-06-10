@@ -189,9 +189,7 @@ let kernel_of_leftmost state symbol_index prod =
    *
    * Mark which symbols have been recursed on, in order to protect against infinite recursion on
    * e.g. `E ::= · E {t}`, as well as on mutually recursive items. *)
-  let rec inner State.{statenub={lr1itemsetclosure={kernel; added; _}; _}; _} symbol_index
-    Prod.{lhs_index=prod_lhs_index; _}
-    marks accum = begin
+  let rec inner kernel added symbol_index prod_lhs_index marks accum = begin
     let marks = Ordset.insert prod_lhs_index marks in
     let accum = Lr1Itemset.fold ~init:accum
         ~f:(fun accum
@@ -206,23 +204,24 @@ let kernel_of_leftmost state symbol_index prod =
      * follow set, and recurse on the items. *)
     let marks, accum = Lr1Itemset.fold ~init:(marks, accum)
       ~f:(fun (marks, accum)
-        (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; rhs_indexes; _} as prod; dot}; _} as
-          lr1item) ->
+        (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; rhs_indexes; _}; _}; follow}) ->
         match Ordset.mem lhs_index marks with
         | true -> marks, accum
         | false -> begin
-            match Array.length rhs_indexes > dot
-                  && Symbol.Index.( = ) (Array.get dot rhs_indexes)
-                    prod_lhs_index
-                  && Ordset.mem symbol_index lr1item.follow with
+            (* The dot is always at position 0 in added items. *)
+            match Array.length rhs_indexes > 0L
+                  && Symbol.Index.( = ) (Array.get 0L rhs_indexes) prod_lhs_index
+                  && Ordset.mem symbol_index follow with
             | false -> marks, accum
-            | true -> inner state symbol_index prod marks accum
+            | true -> inner kernel added symbol_index lhs_index marks accum
           end
       ) added in
     marks, accum
   end in
-  let _marks, accum =
-    inner state symbol_index prod (Ordset.empty (module Symbol.Index)) Lr1Itemset.empty in
+  let State.{statenub={lr1itemsetclosure={kernel; added; _}; _}; _} = state in
+  let Prod.{lhs_index=prod_lhs_index; _} = prod in
+  let _marks, accum = inner kernel added symbol_index prod_lhs_index
+      (Ordset.empty (module Symbol.Index)) Lr1Itemset.empty in
   accum
 
 let kernel_of_rightmost state symbol_index prod =
