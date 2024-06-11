@@ -171,327 +171,16 @@ let transit {state; isucc; _} =
 let traces_length {traces; _} =
   Ordmap.length traces
 
-(*
-let kernel_of_leftmost state symbol_index prod_lhs_index =
-  (* Accumulate kernel items with the LHS of prod just past the dot and symbol_index in the follow
-   * set.
-   *
-   * Beware recursive productions, as in the following example involving nested ε productions. All
-   * the reduces correspond to the same kernel item, but analysis of B needs to traverse A to reach
-   * S. (S' is not reached in this example due to the follow set not containing ⊥.)
-   *
-   *   S' ::= · S ⊥ {ε}    kernel
-   *   S ::= · A    {⊥}    added
-   *   S ::= ·      {⊥}    added (reduce)
-   *   A ::= · B    {⊥}    added
-   *   A ::= ·      {⊥}    added (reduce)
-   *   B ::= ·      {⊥}    added (reduce)
-   *
-   * Mark which symbols have been recursed on, in order to protect against infinite recursion on
-   * e.g. `E ::= · E {t}`, as well as on mutually recursive items. *)
-  let rec inner kernel added symbol_index prod_lhs_index marks accum = begin
-    let marks = Ordset.insert prod_lhs_index marks in
-    let accum = Lr1Itemset.fold ~init:accum
-        ~f:(fun accum
-          (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{rhs_indexes; _}; dot}; follow} as lr1item) ->
-          match Array.length rhs_indexes > dot
-                && Symbol.Index.( = ) (Array.get dot rhs_indexes) prod_lhs_index
-                && Ordset.mem symbol_index follow with
-          | false -> accum
-          | true -> Lr1Itemset.insert lr1item accum
-        ) kernel in
-    (* Search the added set for items with the LHS of prod just past the dot and symbol_index in the
-     * follow set, and recurse on the items. *)
-    let marks, accum = Lr1Itemset.fold ~init:(marks, accum)
-      ~f:(fun (marks, accum)
-        (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; rhs_indexes; _}; _}; follow}) ->
-        match Ordset.mem lhs_index marks with
-        | true -> marks, accum
-        | false -> begin
-            (* The dot is always at position 0 in added items. *)
-            match Array.length rhs_indexes > 0L
-                  && Symbol.Index.( = ) (Array.get 0L rhs_indexes) prod_lhs_index
-                  && Ordset.mem symbol_index follow with
-            | false -> marks, accum
-            | true -> inner kernel added symbol_index lhs_index marks accum
-          end
-      ) added in
-    marks, accum
-  end in
-  let State.{statenub={lr1itemsetclosure={kernel; added; _}; _}; _} = state in
-  let _marks, accum = inner kernel added symbol_index prod_lhs_index
-      (Ordset.empty (module Symbol.Index)) Lr1Itemset.empty in
-  accum
-*)
-
-module K = struct
-  module T = struct
-    type t = {
-      prod_lhs_index: Symbol.Index.t;
-      symbol_index: Symbol.Index.t;
-    }
-
-    let hash_fold {prod_lhs_index; symbol_index} state =
-      state
-      |> Symbol.Index.hash_fold prod_lhs_index
-      |> Symbol.Index.hash_fold symbol_index
-
-    let cmp {prod_lhs_index=pli0; symbol_index=si0} {prod_lhs_index=pli1; symbol_index=si1} =
-      let open Cmp in
-      match Symbol.Index.cmp pli0 pli1 with
-      | Lt -> Lt
-      | Eq -> Symbol.Index.cmp si0 si1
-      | Gt -> Gt
-
-    let pp {prod_lhs_index; symbol_index} formatter =
-      formatter
-      |> Fmt.fmt "{prod_lhs_index=" |> Symbol.Index.pp prod_lhs_index
-      |> Fmt.fmt "; symbol_index=" |> Symbol.Index.pp symbol_index
-      |> Fmt.fmt "}"
-
-    let init ~prod_lhs_index ~symbol_index =
-      {prod_lhs_index; symbol_index}
-  end
-  include T
-  include Identifiable.Make(T)
-end
-
-let kernels_of_leftmost state prod_lhs_index symbol_indexes =
-  (* Accumulate kernel items with the prod LHS just past the dot and symbol_index in the follow set.
-   *
-   * Beware recursive productions, as in the following example involving nested ε productions. All
-   * the reduces correspond to the same kernel item, but analysis of B needs to traverse A to reach
-   * S. (S' is not reached in this example due to the follow set not containing ⊥.)
-   *
-   *   S' ::= · S ⊥ {ε}    kernel
-   *   S ::= · A    {⊥}    added
-   *   S ::= ·      {⊥}    added (reduce)
-   *   A ::= · B    {⊥}    added
-   *   A ::= ·      {⊥}    added (reduce)
-   *   B ::= ·      {⊥}    added (reduce)
-   *
-   * Mark which symbols have been recursed on, in order to protect against infinite recursion on
-   * e.g. `E ::= · E {t}`, as well as on mutually recursive items. *)
-  let rec inner kernel added prod_lhs_index inner_lhs_index symbol_indexes marks accum = begin
-    let marks = Ordmap.amend inner_lhs_index ~f:(fun lhs_index_opt ->
-      match lhs_index_opt with
-      | None -> Some symbol_indexes
-      | Some symbol_indexes_prev -> Some (Ordset.union symbol_indexes symbol_indexes_prev)
-    ) marks in
-    let accum = Lr1Itemset.fold ~init:accum
-        ~f:(fun accum
-          (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{rhs_indexes; _}; dot}; follow} as lr1item) ->
-          match Array.length rhs_indexes > dot
-                && Symbol.Index.( = ) (Array.get dot rhs_indexes) inner_lhs_index with
-          | false -> accum
-          | true -> begin
-              Ordset.fold ~init:accum ~f:(fun accum symbol_index ->
-                match Ordset.mem symbol_index follow with
-                | false -> accum
-                | true -> begin
-                    let k = K.init ~prod_lhs_index ~symbol_index in
-                    Ordmap.amend k ~f:(fun kernel_opt ->
-                      match kernel_opt with
-                      | None -> Some (Lr1Itemset.singleton lr1item)
-                      | Some kernel -> Some (Lr1Itemset.insert lr1item kernel)
-                    ) accum
-                  end
-              ) symbol_indexes
-            end
-        ) kernel in
-    (* Search the added set for items with the prod LHS just past the dot and symbol_index in the
-     * follow set. *)
-    let found = Lr1Itemset.fold ~init:(Ordmap.empty (module Symbol.Index))
-      ~f:(fun found
-        (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; rhs_indexes; _}; _}; follow}) ->
-        let marked, symbol_indexes = match Ordmap.get lhs_index marks with
-          | None -> false, symbol_indexes
-          | Some marked_symbol_indexes -> begin
-              let symbol_indexes = Ordset.diff symbol_indexes marked_symbol_indexes in
-              Ordset.is_empty symbol_indexes, symbol_indexes
-            end
-        in
-        match marked with
-        | true -> found
-        | false -> begin
-            (* The dot is always at position 0 in added items. *)
-            match Array.length rhs_indexes > 0L
-                  && Symbol.Index.( = ) (Array.get 0L rhs_indexes) inner_lhs_index with
-            | false -> found
-            | true -> begin
-                let symbol_indexes' = Ordset.inter symbol_indexes follow in
-                match Ordset.is_empty symbol_indexes' with
-                | true -> found
-                | false -> begin
-                    Ordmap.amend lhs_index ~f:(fun symbol_indexes_opt ->
-                      match symbol_indexes_opt with
-                      | None -> Some symbol_indexes'
-                      | Some symbol_indexes -> Some (Ordset.union symbol_indexes' symbol_indexes)
-                    ) found
-                  end
-              end
-          end
-    ) added in
-    (* Recurse on the symbols corresponding to items found in the added set search. *)
-    let marks, accum = Ordmap.fold ~init:(marks, accum)
-      ~f:(fun (marks, accum) (lhs_index, symbol_indexes) ->
-        inner kernel added prod_lhs_index lhs_index symbol_indexes marks accum
-      ) found in
-    marks, accum
-  end in
-  let State.{statenub={lr1itemsetclosure={kernel; added; _}; _}; _} = state in
-  let marks = Ordmap.empty (module Symbol.Index) in
-  let accum = Ordmap.empty (module K) in
-  let _marks, accum = inner kernel added prod_lhs_index prod_lhs_index symbol_indexes marks accum in
-(*
-  File.Fmt.stderr
-  |> Fmt.fmt "XXX kernels_of_leftmost state_index="
-  |> State.Index.pp (State.index state)
-  |> Fmt.fmt "; prod_lhs_index=" |> Symbol.Index.pp prod_lhs_index
-  |> Fmt.fmt "; symbol_indexes=" |> Ordset.pp symbol_indexes
-  |> Fmt.fmt " -> " |> Ordmap.pp (fun _lr1itemset formatter -> formatter) accum
-  |> Fmt.fmt "\n"
-  |> ignore;
-*)
-  accum
-
-let state_lhs_symbol_indexes State.{statenub={lr1itemsetclosure={kernel; added; _}; _}; _} =
-  let lhs_symbol_indexes = Ordmap.empty (module Symbol.Index) in
-  let lhs_symbol_indexes = Lr1Itemset.fold ~init:lhs_symbol_indexes
-      ~f:(fun lhs_symbol_indexes
-        Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _} as prod; _}; follow} ->
-        match Prod.is_synthetic prod with
-        | true -> lhs_symbol_indexes
-        | false -> Ordmap.insert ~k:lhs_index ~v:follow lhs_symbol_indexes
-      ) kernel
-  in
-  let lhs_symbol_indexes = Lr1Itemset.fold ~init:lhs_symbol_indexes
-      ~f:(fun lhs_symbol_indexes Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _}; _}; follow} ->
-        Ordmap.insert ~k:lhs_index ~v:follow lhs_symbol_indexes
-      ) added
-  in
-  lhs_symbol_indexes
-
-let state_lhs_symbol_indexes_cache = ref (Ordmap.empty (module State.Index))
-let state_lhs_symbol_indexes
-    (State.{statenub={lr1itemsetclosure={index=state_index; _}; _}; _} as state) =
-  match Ordmap.get state_index !state_lhs_symbol_indexes_cache with
-  | Some state_lhs_symbol_indexes -> state_lhs_symbol_indexes
-  | None -> begin
-      let state_lhs_symbol_indexes = state_lhs_symbol_indexes state in
-      state_lhs_symbol_indexes_cache :=
-        Ordmap.insert ~k:state_index ~v:state_lhs_symbol_indexes !state_lhs_symbol_indexes_cache;
-      state_lhs_symbol_indexes
-    end
-
-let cached = ref (Ordmap.empty (module State.Index))
-let cache = ref (Ordmap.empty (module State.Index))
-let kernel_of_leftmost
-    (State.{statenub={lr1itemsetclosure={index=state_index; _}; _}; _} as state)
-    Prod.{lhs_index=prod_lhs_index; _}
-    symbol_index =
-  let kkmap = match Ordmap.get state_index !cache with
-    | None -> begin
-        let kkmap = Ordmap.empty (module K) in
-        let state_lhs_symbol_indexes = state_lhs_symbol_indexes state in
-        let kkmap = match Ordmap.get prod_lhs_index state_lhs_symbol_indexes with
-        | None -> kkmap
-        | Some symbol_indexes -> begin
-            kernels_of_leftmost state prod_lhs_index symbol_indexes
-            |> Ordmap.union ~f:(fun _k kernel0 kernel1 -> Lr1Itemset.union kernel0 kernel1) kkmap
-          end
-        in
-        cached := Ordmap.insert_hlt ~k:state_index
-          ~v:(Ordset.singleton (module Symbol.Index) prod_lhs_index) !cached;
-        cache := Ordmap.insert ~k:state_index ~v:kkmap !cache;
-(*
-        File.Fmt.stderr
-        |> Fmt.fmt "XXX A state_index=" |> State.Index.pp state_index
-        |> Fmt.fmt "; kkmap="
-        |> Ordmap.pp (fun _lr1itemset formatter -> formatter) kkmap
-        |> Fmt.fmt "\n"
-        |> ignore;
-*)
-        kkmap
-      end
-    | Some kkmap -> begin
-        match Ordset.mem prod_lhs_index (Ordmap.get_hlt state_index !cached) with
-        | true -> kkmap
-        | false -> begin
-            let state_lhs_symbol_indexes = state_lhs_symbol_indexes state in
-            let kkmap = match Ordmap.get prod_lhs_index state_lhs_symbol_indexes with
-            | None -> kkmap
-            | Some symbol_indexes -> begin
-                kernels_of_leftmost state prod_lhs_index symbol_indexes
-                |> Ordmap.union ~f:(fun _k kernel0 kernel1 -> Lr1Itemset.union kernel0 kernel1) kkmap
-              end
-            in
-            cached := Ordmap.amend state_index ~f:(fun prod_lhs_indexes_opt ->
-              match prod_lhs_indexes_opt with
-              | None -> not_reached ()
-              | Some prod_lhs_indexes -> Some (Ordset.insert prod_lhs_index prod_lhs_indexes)
-            ) !cached;
-            cache := Ordmap.update_hlt ~k:state_index ~v:kkmap !cache;
-(*
-            File.Fmt.stderr
-            |> Fmt.fmt "XXX B state_index=" |> State.Index.pp state_index
-            |> Fmt.fmt "; kkmap="
-            |> Ordmap.pp (fun _lr1itemset formatter -> formatter) kkmap
-            |> Fmt.fmt "\n"
-            |> ignore;
-*)
-            kkmap
-          end
-      end
-  in
-(*
-  File.Fmt.stderr
-  |> Fmt.fmt "XXX state_index=" |> State.Index.pp state_index
-  |> Fmt.fmt "; kkmap="
-  |> Ordmap.pp (fun _lr1itemset formatter -> formatter) kkmap
-  |> Fmt.fmt "\n"
-  |> ignore;
-*)
-  let k = K.init ~prod_lhs_index ~symbol_index in
-  let kernel = match Ordmap.get k kkmap with
-  | Some kernel -> begin
-(*
-      File.Fmt.stderr
-      |> Fmt.fmt "XXX Hit: state_index=" |> State.Index.pp state_index
-      |> Fmt.fmt "; k=" |> K.pp k
-      |> Fmt.fmt "\n"
-      |> ignore;
-*)
-      kernel
-    end
-  | None -> begin
-(*
-      File.Fmt.stderr
-      |> Fmt.fmt "XXX ---> Miss: state_index=" |> State.Index.pp state_index
-      |> Fmt.fmt "; k=" |> K.pp k
-      |> Fmt.fmt "\n"
-      |> ignore;
-*)
-      Lr1Itemset.empty
-    end
-  in
-(*
-  let xxx_kernel = kernel_of_leftmost state symbol_index prod_lhs_index in
-  let () = match Lr1Itemset.(kernel = xxx_kernel) with
-  | true -> ()
-  | false -> begin
-(*
-      File.Fmt.stderr
-      |> Fmt.fmt "XXX kernel length=" |> Uns.pp (Lr1Itemset.length kernel)
-      |> Fmt.fmt "; xxx_kernel length=" |> Uns.pp (Lr1Itemset.length xxx_kernel)
-      |> Fmt.fmt "\n"
-      |> ignore;
-*)
-    end
-  in
-  assert Lr1Itemset.(kernel = xxx_kernel);
-*)
-  kernel
+let cache_kernels_of_leftmost = true
+let kernel_of_leftmost State.{statenub={lr1itemsetclosure; _}; _} Prod.{lhs_index=prod_lhs_index; _}
+  symbol_index leftmost_cache =
+  match cache_kernels_of_leftmost with
+  | false ->
+    Lr1ItemsetClosure.kernel_of_leftmost ~symbol_index ~lhs_index:prod_lhs_index lr1itemsetclosure,
+    leftmost_cache
+  | true ->
+    Lr1ItemsetClosure.LeftmostCache.kernel_of_leftmost ~symbol_index ~lhs_index:prod_lhs_index
+      lr1itemsetclosure leftmost_cache
 
 let kernel_of_rightmost state prod symbol_index =
   (* Accumulate kernel items based on prod with the dot at the rightmost position and symbol_index
@@ -506,15 +195,15 @@ let kernel_of_rightmost state prod symbol_index =
       | true -> Lr1Itemset.insert lr1item accum
     ) State.(state.statenub.lr1itemsetclosure.kernel)
 
-let kernel_of_prod state symbol_index prod =
+let kernel_of_prod state symbol_index prod leftmost_cache =
   match Prod.(prod.rhs_indexes) with
   | [||] -> (* ε production, always associated with an added (non-kernel) item. *)
-    kernel_of_leftmost state prod symbol_index
-  | _ -> kernel_of_rightmost state prod symbol_index
+    kernel_of_leftmost state prod symbol_index leftmost_cache
+  | _ -> kernel_of_rightmost state prod symbol_index, leftmost_cache
 
-let kernel_of_prod_index prods state symbol_index prod_index =
+let kernel_of_prod_index prods state symbol_index prod_index leftmost_cache =
   let prod = Prods.prod_of_prod_index prod_index prods in
-  kernel_of_prod state symbol_index prod
+  kernel_of_prod state symbol_index prod leftmost_cache
 
 let kernel_attribs {kernel_attribs; _} =
   kernel_attribs
@@ -536,48 +225,52 @@ let compute_kernel_attribs conflict_state traces =
       ) kernel_isuccs
     ) traces
 
-let of_conflict_state ~resolve symbols prods conflict_state =
-  let traces = Attribs.fold
-      ~init:(Ordmap.empty (module TraceKey))
-      ~f:(fun traces {symbol_index; conflict; contrib; _} ->
-        Ordset.fold ~init:traces ~f:(fun traces prod_index ->
+let of_conflict_state ~resolve symbols prods leftmost_cache conflict_state =
+  let traces, leftmost_cache = Attribs.fold
+      ~init:(Ordmap.empty (module TraceKey), leftmost_cache)
+      ~f:(fun (traces, leftmost_cache) {symbol_index; conflict; contrib; _} ->
+        Ordset.fold ~init:(traces, leftmost_cache) ~f:(fun (traces, leftmost_cache) prod_index ->
           let action = State.Action.Reduce prod_index in
           let tracekey = TraceKey.init ~symbol_index ~conflict ~action in
-          let lr1itemset = kernel_of_prod_index prods conflict_state symbol_index prod_index in
+          let lr1itemset, leftmost_cache =
+            kernel_of_prod_index prods conflict_state symbol_index prod_index leftmost_cache in
           let traceval =
             TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset:Lr1Itemset.empty in
-          Ordmap.amend tracekey ~f:(fun kernel_isuccs_opt ->
+          let traces = Ordmap.amend tracekey ~f:(fun kernel_isuccs_opt ->
             match kernel_isuccs_opt with
             | None -> Some traceval
             | Some traceval_existing -> Some (TraceVal.union traceval traceval_existing)
-          ) traces
+          ) traces in
+          traces, leftmost_cache
         ) (Contrib.reduces contrib)
       ) (State.conflict_attribs ~resolve symbols prods conflict_state) in
   assert (not (Ordmap.is_empty traces));
   let kernel_attribs = compute_kernel_attribs conflict_state traces in
-  {
+  let t = {
     conflict_state;
     isucc=conflict_state;
     state=conflict_state;
     traces;
     kernel_attribs;
-  }
+  } in
+  t, leftmost_cache
 
-let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
+let of_ipred state leftmost_cache {conflict_state; state=isucc; traces=isucc_traces; _} =
   (* Create traces incrementally derived from those in `isucc_traces`. Some traces may terminate at
    * the isucc state; others may continue or even lead to forks. *)
-  let traces = Ordmap.fold ~init:(Ordmap.empty (module TraceKey))
-    ~f:(fun traces (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
+  let traces, leftmost_cache = Ordmap.fold ~init:(Ordmap.empty (module TraceKey), leftmost_cache)
+    ~f:(fun (traces, leftmost_cache)
+      (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
       match action with
       | State.Action.ShiftPrefix _
       | ShiftAccept _ -> not_reached ()
       | Reduce _ -> begin
-          TraceVal.fold ~init:traces
-            ~f:(fun traces
+          TraceVal.fold ~init:(traces, leftmost_cache)
+            ~f:(fun (traces, leftmost_cache)
               (Lr1Item.{lr0item=Lr0Item.{prod; dot=isucc_dot}; _}, _isucc_isucc_lr1itemset) ->
               match isucc_dot with
               | 0L -> (* The lane trace terminates at an attribution to the isucc's lr1item. *)
-                traces
+                traces, leftmost_cache
               | _ -> begin
                   let dot = pred isucc_dot in
                   let lr0item = Lr0Item.init ~prod ~dot in
@@ -592,33 +285,37 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
                   in
                   match lr1item_opt with
                   | None -> (* Lane doesn't encompass this state. *)
-                    traces
+                    traces, leftmost_cache
                   | Some lr1item -> begin
-                      let lr1itemset = match dot with
+                      let lr1itemset, leftmost_cache = match dot with
                         | 0L -> begin
                             (* Search for kernel items that have the item's LHS symbol just past
                              * their dots and `symbol_index` in their follow sets. *)
-                            let kernel = kernel_of_leftmost state prod symbol_index in
-                            match Lr1Itemset.is_empty kernel with
-                            | true ->
-                              (* Contributing state. The trace source is an added item. Attributable
-                               * to all lanes leading to this state. *)
-                              Lr1Itemset.singleton lr1item
-                            | false ->
-                              (* Interstitial state. The trace source is one or more kernel items.
-                              *)
-                              kernel
+                            let kernel, leftmost_cache =
+                              kernel_of_leftmost state prod symbol_index leftmost_cache in
+                            let kernel = match Lr1Itemset.is_empty kernel with
+                              | true ->
+                                (* Contributing state. The trace source is an added item.
+                                 * Attributable to all lanes leading to this state. *)
+                                Lr1Itemset.singleton lr1item
+                              | false ->
+                                (* Interstitial state. The trace source is one or more kernel items.
+                                *)
+                                kernel
+                            in
+                            kernel, leftmost_cache
                           end
                         | _ -> (* Interstitial state. The trace source is a kernel item. *)
-                          Lr1Itemset.singleton lr1item
+                          Lr1Itemset.singleton lr1item, leftmost_cache
                       in
                       let isucc_lr1itemset = TraceVal.lr1itemset isucc_traceval in
                       let traceval = TraceVal.init symbol_index ~lr1itemset ~isucc_lr1itemset in
-                      Ordmap.amend tracekey ~f:(fun traceval_opt ->
+                      let traces = Ordmap.amend tracekey ~f:(fun traceval_opt ->
                         match traceval_opt with
                         | None -> Some traceval
                         | Some traceval_existing -> Some (TraceVal.union traceval traceval_existing)
-                      ) traces
+                      ) traces in
+                      traces, leftmost_cache
                     end
                 end
             ) isucc_traceval
@@ -626,10 +323,11 @@ let of_ipred state {conflict_state; state=isucc; traces=isucc_traces; _} =
     ) isucc_traces
   in
   let kernel_attribs = compute_kernel_attribs conflict_state traces in
-  {
+  let t = {
     conflict_state;
     isucc;
     state;
     traces;
     kernel_attribs
-  }
+  } in
+  t, leftmost_cache

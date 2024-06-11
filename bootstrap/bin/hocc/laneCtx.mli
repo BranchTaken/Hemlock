@@ -58,13 +58,15 @@ val traces_length: t -> uns
 (** [traces_length t] returns the number of lane traces in [t]. If [t] contains no traces, its
     predecessors will contain no traces nor conflict attributions. *)
 
-val of_conflict_state: resolve:bool -> Symbols.t -> Prods.t -> State.t -> t
-(** [of_conflict_state ~resolve symbols prods conflict_state] creates a lane context for the
-    conflict state. *)
+val of_conflict_state: resolve:bool -> Symbols.t -> Prods.t -> Lr1ItemsetClosure.LeftmostCache.t
+  -> State.t -> t * Lr1ItemsetClosure.LeftmostCache.t
+(** [of_conflict_state ~resolve symbols prods leftmost_cache conflict_state] creates a lane context
+    for the conflict state. *)
 
-val of_ipred: State.t -> t -> t
-(** [of_ipred ipred t] creates a lane context for the [ipred] state, where [t] is the lane context
-    for the [ipred] state's immediate successor (isucc) state in the lane. *)
+val of_ipred: State.t -> Lr1ItemsetClosure.LeftmostCache.t -> t
+  -> t * Lr1ItemsetClosure.LeftmostCache.t
+(** [of_ipred ipred leftmost_cache t] creates a lane context for the [ipred] state, where [t] is the
+    lane context for the [ipred] state's immediate successor (isucc) state in the lane. *)
 
 val kernel_attribs: t -> KernelAttribs.t
 (** [kernel_attribs t] returns a map of conflict attributions attributable to the lane(s)

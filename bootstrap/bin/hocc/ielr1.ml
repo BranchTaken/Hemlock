@@ -1,32 +1,34 @@
 open Basis
 open! Basis.Rudiments
 
-let rec pred_annotations ~resolve symbols prods lalr1_states adjs annotations lanectx =
+let rec pred_annotations ~resolve symbols prods lalr1_states adjs leftmost_cache annotations
+    lanectx =
   (* Accumulate kernel attribs of ipred lane contexts. *)
-  Array.fold ~init:annotations ~f:(fun annotations ipred_state_index ->
-    let ipred_state = Array.get ipred_state_index lalr1_states in
-    let ipred_lanectx = LaneCtx.of_ipred ipred_state lanectx in
-    let ipred_kernel_attribs = LaneCtx.kernel_attribs ipred_lanectx in
-    let transit = LaneCtx.transit ipred_lanectx in
-    (* Load any existing kernel attribs, whether to other conflict states, or as a result of
-     * recursing into a lane cycle. *)
-    let kernel_attribs =
-      Ordmap.get transit annotations
-      |> Option.value ~default:KernelAttribs.empty
-    in
-    (* Avoid recursing if no new transit attribs are inserted, since no additional insertions will
-     * occur in the recursion. *)
-    match KernelAttribs.merge ipred_kernel_attribs kernel_attribs with
-    | false, _ -> annotations
-    | true, kernel_attribs' -> begin
-        let annotations = Ordmap.upsert ~k:transit ~v:kernel_attribs' annotations in
-        (* Recurse if lanes may extend to predecessors. *)
-        match LaneCtx.traces_length ipred_lanectx with
-        | 0L -> annotations
-        | _ -> pred_annotations ~resolve symbols prods lalr1_states adjs annotations
-            ipred_lanectx
-      end
-  ) (Adjs.ipreds_of_state (LaneCtx.state lanectx) adjs)
+  Array.fold ~init:(leftmost_cache, annotations)
+    ~f:(fun (leftmost_cache, annotations) ipred_state_index ->
+      let ipred_state = Array.get ipred_state_index lalr1_states in
+      let ipred_lanectx, leftmost_cache = LaneCtx.of_ipred ipred_state leftmost_cache lanectx in
+      let ipred_kernel_attribs = LaneCtx.kernel_attribs ipred_lanectx in
+      let transit = LaneCtx.transit ipred_lanectx in
+      (* Load any existing kernel attribs, whether to other conflict states, or as a result of
+       * recursing into a lane cycle. *)
+      let kernel_attribs =
+        Ordmap.get transit annotations
+        |> Option.value ~default:KernelAttribs.empty
+      in
+      (* Avoid recursing if no new transit attribs are inserted, since no additional insertions will
+       * occur in the recursion. *)
+      match KernelAttribs.merge ipred_kernel_attribs kernel_attribs with
+      | false, _ -> leftmost_cache, annotations
+      | true, kernel_attribs' -> begin
+          let annotations = Ordmap.upsert ~k:transit ~v:kernel_attribs' annotations in
+          (* Recurse if lanes may extend to predecessors. *)
+          match LaneCtx.traces_length ipred_lanectx with
+          | 0L -> leftmost_cache, annotations
+          | _ -> pred_annotations ~resolve symbols prods lalr1_states adjs leftmost_cache
+              annotations ipred_lanectx
+        end
+    ) (Adjs.ipreds_of_state (LaneCtx.state lanectx) adjs)
 
 let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_index ~conflict dst =
   (* dst has implicit shift-only attribs if the conflict contains shift, and at least one
@@ -189,10 +191,14 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
         end
     ) annotations_all
 
-let gather_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs conflict_state =
-  LaneCtx.of_conflict_state ~resolve symbols prods conflict_state
-  |> pred_annotations ~resolve symbols prods lalr1_states adjs (Ordmap.empty (module Transit))
-  |> filter_useless_annotations ~resolve symbols prods adjs
+let gather_transit_kernel_attribs ~resolve symbols prods lalr1_states adjs conflict_state
+    leftmost_cache =
+  let lanectx, leftmost_cache = LaneCtx.of_conflict_state ~resolve symbols prods leftmost_cache
+      conflict_state in
+  let leftmost_cache, annotations = pred_annotations ~resolve symbols prods lalr1_states adjs
+      leftmost_cache (Ordmap.empty (module Transit)) lanectx in
+  let annotations = filter_useless_annotations ~resolve symbols prods adjs annotations in
+  leftmost_cache, annotations
 
 let annotations_init ~resolve io symbols prods lalr1_states =
   let adjs = Adjs.init lalr1_states in
@@ -202,18 +208,18 @@ let annotations_init ~resolve io symbols prods lalr1_states =
     |> Fmt.fmt "hocc: Gathering IELR(1) conflict attributions"
     |> Io.with_log io
   in
-  let io, annotations =
-    Array.fold ~init:(io, Ordmap.empty (module Transit))
-      ~f:(fun (io, annotations) state ->
+  let io, _leftmost_cache, annotations =
+    Array.fold ~init:(io, Lr1ItemsetClosure.LeftmostCache.empty, Ordmap.empty (module Transit))
+      ~f:(fun (io, leftmost_cache, annotations) state ->
         match State.has_conflict_attribs ~resolve symbols prods state with
-        | false -> io, annotations
+        | false -> io, leftmost_cache, annotations
         | true -> begin
             let io = io.log |> Fmt.fmt "." |> Io.with_log io in
-            let state_annotations = gather_transit_kernel_attribs ~resolve symbols prods
-                lalr1_states adjs state in
+            let leftmost_cache, state_annotations = gather_transit_kernel_attribs ~resolve symbols
+                prods lalr1_states adjs state leftmost_cache in
             let annotations = Ordmap.union ~f:(fun _transit ka0 ka1 -> KernelAttribs.union ka0 ka1)
               state_annotations annotations in
-            io, annotations
+            io, leftmost_cache, annotations
           end
       ) lalr1_states
   in

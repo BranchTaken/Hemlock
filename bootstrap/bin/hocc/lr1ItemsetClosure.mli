@@ -63,6 +63,28 @@ val actions: Symbols.t -> t -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_
 val gotos: Symbols.t -> t -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
 (** [gotos symbols t] computes the map of per non-terminal symbol gotos for [t]. *)
 
+val lhs_symbol_indexes: t -> (Symbol.Index.t, (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t,
+  Symbol.Index.cmper_witness) Ordmap.t
+(** [lhs_symbol_indexes t] returns a map of all LHS symbols in [t] to their corresponding items'
+    follow sets. *)
+
+val kernel_of_leftmost: symbol_index:Symbol.Index.t -> lhs_index:Symbol.Index.t -> t -> Lr1Itemset.t
+(** [kernel_of_leftmost ~symbol_index ~lhs_index] returns the transitive closure of the kernel items
+    with [lhs_index] just past the dot and [symbol_index] in the follow set. *)
+
+module LeftmostCache : sig
+  type outer = t
+  type t
+
+  val empty: t
+
+  val kernel_of_leftmost: symbol_index:Symbol.Index.t -> lhs_index:Symbol.Index.t -> outer -> t
+    -> Lr1Itemset.t * t
+    (** [kernel_of_leftmost ~symbol_index ~lhs_index lr1itemset] returns the transitive closure of
+        the kernel items with [lhs_index] just past the dot and [symbol_index] in the follow set, as
+        well as an updated [t] with the result memoized. *)
+end
+
 val fold_until: init:'accum -> f:('accum -> Lr1Item.t -> 'accum * bool) -> t -> 'accum
 (** [fold_until ~init ~f t] folds over all kernel and added items in [t], continuing until [f]
     returns [(accum, true)], or until folding is complete. *)
