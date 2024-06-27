@@ -18,7 +18,7 @@ val pp_hr: Symbols.t -> Prods.t -> t -> (module Fmt.Formatter) -> (module Fmt.Fo
 (** Formatter which outputs contrib in human-readable form. *)
 
 val length: t -> uns
-(** [length t] returns the number of conflicts [t] contributes to. *)
+(** [length t] returns the number of contributions (actions) in [t]. *)
 
 val empty: t
 (** [empty] returns a contrib with no conflicts contributed to. *)

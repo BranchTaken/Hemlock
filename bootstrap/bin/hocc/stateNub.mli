@@ -88,6 +88,10 @@ val actions: Symbols.t -> t -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_
 val gotos: Symbols.t -> t -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
 (** [gotos symbols t] computes the map of per non-terminal symbol gotos for [t]. *)
 
+val filtered_kernel_attribs: t -> KernelAttribs.t
+(** [filtered_kernel_attribs t] returns the kernel attribs in [t], filtered to contain only attribs
+    which are relevant to the kernel follow sets. *)
+
 val resolve: Symbols.t -> Prods.t
   -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
   -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t

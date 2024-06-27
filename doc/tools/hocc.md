@@ -797,7 +797,7 @@ Non-terminals
         Follow: {"ε"}
         Productions
             Answer' ::= Answer "⊥"
-LR(1) States
+IELR(1) States
     State 0 [0.0]
         Kernel
             [Answer' ::= · Answer "⊥", {"ε"}]
@@ -831,6 +831,31 @@ LR(1) States
         Gotos
             MulOp : 9
             AddOp : 10
+        Conflict contributions
+            [Expr ::= Expr · MulOp Expr, {"*"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+            [Expr ::= Expr · MulOp Expr, {"/"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+            [Expr ::= Expr · MulOp Expr, {"+"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+                13 : Reduce Expr ::= Expr AddOp Expr
+            [Expr ::= Expr · MulOp Expr, {"-"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+                13 : Reduce Expr ::= Expr AddOp Expr
+            [Expr ::= Expr · AddOp Expr, {"*"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+            [Expr ::= Expr · AddOp Expr, {"/"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+            [Expr ::= Expr · AddOp Expr, {"+"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+                13 : Reduce Expr ::= Expr AddOp Expr
+            [Expr ::= Expr · AddOp Expr, {"-"}]
+                12 : Reduce Expr ::= Expr MulOp Expr
+                13 : Reduce Expr ::= Expr AddOp Expr
+            [Expr ::= Expr AddOp Expr ·, {"+"}]
+                13 : Reduce Expr ::= Expr AddOp Expr
+            [Expr ::= Expr AddOp Expr ·, {"-"}]
+                13 : Reduce Expr ::= Expr AddOp Expr
 ```
 
 Of note:
@@ -841,7 +866,7 @@ Of note:
 - Non-terminals, their first/follow sets, and their productions are enumerated in the
   `Non-terminals` section.
 - The algorithm used to generate the state machine is specified in the `States` section header,
-  `LR(1)` in this case.
+  `IELR(1)` in this case.
 - The n states are indexed [0..n-1], [0..14-1] in this case.
 - Isocore indexing is also reported for all algorithms that can generate non-singleton isocore
   sets, i.e. all algorithms besides LALR(1). For a more complex grammar, the IELR(1) algorithm might
@@ -853,6 +878,13 @@ Of note:
   These states are isocoric because they both have isocore index 234. Furthermore, IELR(1) generates
   LALR(1) states as preliminary metadata, and `hocc` assures that IELR(1) isocore indexes match
   LALR(1) state indexes.
+- Each state comprises the following subsections (empty subsections omitted in output):
+  + `Kernel`: Kernel LR(1) items
+  + `Added`: Added LR(1) items
+  + `Actions`: Map of per token actions, with conflicts prefixed by `CONFLICT`
+  + `Gotos`: Map of per non-terminal gotos
+  + `Conflict contributions`: Per {kernel item, follow symbol, conflict state} IELR(1) conflict
+    contributions that inform isocore (in)compatibility
 
 ## Grammar
 

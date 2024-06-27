@@ -1443,7 +1443,7 @@ let to_description conf io description t =
     |> Fmt.fmt ref_name
     |> html "</a>"
   end in
-  let pp_prod Prod.{lhs_index; rhs_indexes; prec; _} formatter = begin
+  let pp_prod ?(do_pp_prec=true) Prod.{lhs_index; rhs_indexes; prec; _} formatter = begin
     let lhs_name = Symbol.name (Symbols.symbol_of_symbol_index lhs_index t.symbols) in
     formatter
     |> html "<a href=\"#symbol-" |> html lhs_name |> html "\">"
@@ -1464,9 +1464,10 @@ let to_description conf io description t =
         end
     )
     |> (fun formatter ->
-      match prec with
-      | None -> formatter
-      | Some {index=prec_ind; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_ind
+      match do_pp_prec, prec with
+      | false, _
+      | _, None -> formatter
+      | true, Some {index=prec_ind; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_ind
     )
   end in
   let pp_lr0item lr0item formatter = begin
@@ -1492,7 +1493,7 @@ let to_description conf io description t =
       )
     )
   end in
-  let pp_lr1item lr1item formatter = begin
+  let pp_lr1item ?(do_pp_prec=true) lr1item formatter = begin
     let Lr1Item.{lr0item; _} = lr1item in
     let Lr0Item.{prod; _} = lr0item in
     let Prod.{prec; _} = prod in
@@ -1512,9 +1513,10 @@ let to_description conf io description t =
     )
     |> Fmt.fmt "}]"
     |> (fun formatter ->
-      match prec with
-      | None -> formatter
-      | Some {index=prec_index; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_index
+      match do_pp_prec, prec with
+      | false, _
+      | _, None -> formatter
+      | true, Some {index=prec_index; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_index
     )
   end in
   let pp_state_index state_index formatter = begin
@@ -1551,6 +1553,15 @@ let to_description conf io description t =
         formatter |> Fmt.fmt "Reduce " |> pp_prod prod
         |> pp_reduce_prec prod
       end
+  end in
+  let pp_contrib contrib formatter = begin
+    assert ((Contrib.length contrib) = 1L);
+    assert (not (Contrib.mem_shift contrib));
+    let prod_index = Contrib.reduces contrib |> Ordset.choose_hlt in
+    let prod = Prods.prod_of_prod_index prod_index t.prods in
+    formatter
+    |> Fmt.fmt "Reduce "
+    |> pp_prod ~do_pp_prec:false prod
   end in
   let io =
     io.log
@@ -1847,6 +1858,39 @@ let to_description conf io description t =
                   |> pp_symbol_index symbol_index |> Fmt.fmt " : " |> State.Index.pp state_index
                   |> html "</li>" |> Fmt.fmt "\n"
                 ) gotos
+              )
+              |> html "            </ul>\n"
+              |> html "        </li>\n"
+            end
+        )
+        |> (fun formatter ->
+          let kernel_attribs = StateNub.filtered_kernel_attribs statenub in
+          match KernelAttribs.length kernel_attribs with
+          | 0L -> formatter
+          | _ -> begin
+              let kernel_attribs = StateNub.filtered_kernel_attribs statenub in
+              formatter
+              |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Conflict contributions\n"
+              |> html "            <ul type=none>\n"
+              |> (fun formatter ->
+                KernelAttribs.fold ~init:formatter ~f:(fun formatter (kernel_item, attribs) ->
+                  formatter
+                  |> Fmt.fmt "            " |> pp_lr1item ~do_pp_prec:false kernel_item
+                  |> Fmt.fmt "\n"
+                  |> html "                <ul type=none>\n"
+                  |> (fun formatter ->
+                    Attribs.fold ~init:formatter
+                      ~f:(fun formatter Attrib.{conflict_state_index; contrib; _} ->
+                      formatter
+                      |> Fmt.fmt "                " |> html "<li>"
+                      |> pp_state_index conflict_state_index
+                      |> Fmt.fmt " : "
+                      |> pp_contrib contrib
+                      |> html "</li>" |> Fmt.fmt "\n"
+                    ) attribs
+                  )
+                  |> html "                </ul>\n"
+                ) kernel_attribs
               )
               |> html "            </ul>\n"
               |> html "        </li>\n"

@@ -283,6 +283,24 @@ let gotos symbols {lr1itemsetclosure; _} =
     Ordmap.insert_hlt ~k:nonterm_index ~v:goto gotos
   )
 
+let filtered_kernel_attribs {lr1itemsetclosure=Lr1ItemsetClosure.{kernel; _}; kernel_attribs; _} =
+  KernelAttribs.fold ~init:KernelAttribs.empty
+    ~f:(fun kernel_attribs (_src_lr1item, src_lr1item_attribs) ->
+      Attribs.fold ~init:kernel_attribs
+        ~f:(fun kernel_attribs (Attrib.{symbol_index; isucc_lr1itemset; _} as attrib) ->
+          Lr1Itemset.fold ~init:kernel_attribs ~f:(fun kernel_attribs isucc_lr1item ->
+            match Lr1Itemset.get isucc_lr1item kernel with
+            | None -> kernel_attribs
+            | Some {follow; _} -> begin
+                match Ordset.mem symbol_index follow with
+                | false -> kernel_attribs
+                | true ->
+                  KernelAttribs.insert isucc_lr1item (Attribs.singleton attrib) kernel_attribs
+              end
+          ) isucc_lr1itemset
+        ) src_lr1item_attribs
+    ) kernel_attribs
+
 let resolve symbols prods actions =
   Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index))
     ~f:(fun actions (symbol_index, action_set) ->
