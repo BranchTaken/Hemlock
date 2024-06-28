@@ -36,11 +36,12 @@ WORKDIR /home/hemlock/Hemlock
 COPY --chown=hemlock:hemlock /.git/ .git
 RUN git reset --hard
 
-FROM --platform=${HEMLOCK_PLATFORM} latest AS tested
+FROM --platform=${HEMLOCK_PLATFORM} latest AS test
 USER hemlock
 WORKDIR /home/hemlock/Hemlock/bootstrap
-RUN find . -type f -regex '.*\mli?' | xargs -- opam exec -- ocp-indent -i \
+CMD find . -type f -regex '.*\mli?' | xargs -- opam exec -- ocp-indent -i \
     && git diff --exit-code \
-    && opam exec -- dune build \
+    && opam exec -- dune build src \
     && opam exec -- dune runtest \
     && rm -rf _build
+
