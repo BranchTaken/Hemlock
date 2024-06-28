@@ -1,9 +1,9 @@
 # IELR(1) as implemented by `hocc`
 
 The `hocc` parser generator implements several LR(1)-family parser generation algorithms, namely
-[LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) [[^deremer1969]],
-[LR(1)](https://en.wikipedia.org/wiki/LR_parser) [[^knuth1965]], PGM(1) [[^pager1977,^fpottier]],
-and IELR(1) [[^denny2010]]. These algorithms are amply documented and (re-)implemented, with the
+[LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) [^deremer1969],
+[LR(1)](https://en.wikipedia.org/wiki/LR_parser) [^knuth1965], PGM(1) [^pager1977][^fpottier],
+and IELR(1) [^denny2010]. These algorithms are amply documented and (re-)implemented, with the
 notable exception of IELR(1), which is documented only in the original paper and implemented only by
 the original authors in [`bison`](https://www.gnu.org/software/bison/). This posed extreme
 implementation challenges in the context of `hocc`. The IELR(1) paper is very closely tied to the
@@ -16,7 +16,7 @@ implementation than that provided by the original paper.
 
 ## Introduction
 
-Knuth [[^knuth1965]] originated the "**L**eft to right, **R**ightmost recursive" (LR) family of
+Knuth [^knuth1965] originated the "**L**eft to right, **R**ightmost recursive" (LR) family of
 parser generation algorithms. The theories apply generally to languages recognizable by LR(k), where
 k denotes the number of tokens of lookahead. In practical use, k is almost always 1, in part because
 additional lookahead complicates implementation, but more importantly because most practical
@@ -203,7 +203,7 @@ compatibility tests always return true.
 ## IELR(1)
 
 The IELR(1) algorithm is substantially more complicated than canonical LR(1) or LALR(1). The IELR(1)
-paper [[^denny2010]] describes six stages as implemented by `bison`, three of which directly
+paper [^denny2010] describes six stages as implemented by `bison`, three of which directly
 correspond to stages in `hocc`:
 
 1) Generate the LALR(1) state machine, with conflict resolution disabled so that later analysis can
@@ -258,7 +258,7 @@ attributions can be propagated forward through all relevant lanes during state m
 iteration. These **_annotations_** are **_kernel attribs_** keyed by conflict state kernel items
 (one follow set symbol per key).
 
-For example, consider this transcription of Pager's G2 grammar [[^pager1977]]:
+For example, consider this transcription of Pager's G2 grammar [^pager1977]:
 
 ```hocc
 hocc
@@ -455,7 +455,7 @@ Although remerging was initially motivated by IELR(1) in `hocc`, it also minorly
 and majorly benefits canonical LR(1). Given the same grammar, canonical LR(1) tends to generate
 roughly ten times more states than does LALR(1)/PGM(1)/IELR(1). Initial results indicate that
 remerging reduces that from a factor of ~10 to a factor of ~4. For example, consider `hocc` results
-for the `Gpic` grammar originally analyzed in the IELR(1) paper [[^denny2010]].
+for the `Gpic` grammar originally analyzed in the IELR(1) paper [^denny2010].
 
 | Algoritm  | # of states | Ratio |
 |:----------|------------:|------:|
