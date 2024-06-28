@@ -1,0 +1,70 @@
+annotations=[({src=1; dst=5}, [
+    [Xn ::= At · Yn Dt, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Yn ::= Tt · Wn, {Dt}]
+          ]; contrib={Reduce [Vn ::= epsilon]}}
+      ]
+  ]); ({src=1; dst=6}, [
+    [Xn ::= At · Yn Dt, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Yn ::= Ut · Xn, {Dt}]
+            [Tn ::= Ut · Xn At, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}}
+      ]
+    [Xn ::= At · Tn, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Yn ::= Ut · Xn, {Dt}]
+            [Tn ::= Ut · Xn At, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}}
+      ]
+  ]); ({src=2; dst=5}, [
+    [Xn ::= Bt · Zn Dt, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Zn ::= Tt · Ut, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]}}
+      ]
+  ]); ({src=2; dst=6}, [
+    [Xn ::= Bt · Tn, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Yn ::= Ut · Xn, {Dt}]
+            [Tn ::= Ut · Xn At, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}}
+      ]
+  ]); ({src=5; dst=15}, [
+    [Yn ::= Tt · Wn, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Wn ::= Ut · Vn, {Dt}]
+          ]; contrib={Reduce [Vn ::= epsilon]}}
+      ]
+    [Zn ::= Tt · Ut, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Zn ::= Tt Ut ·, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]}}
+      ]
+  ]); ({src=6; dst=1}, [
+    [Yn ::= Ut · Xn, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Xn ::= At · Yn Dt, {Dt}]
+            [Xn ::= At · Tn, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}}
+      ]
+    [Tn ::= Ut · Xn At, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Xn ::= At · Yn Dt, {Dt}]
+            [Xn ::= At · Tn, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}}
+      ]
+  ]); ({src=6; dst=2}, [
+    [Yn ::= Ut · Xn, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Xn ::= Bt · Zn Dt, {Dt}]
+            [Xn ::= Bt · Tn, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}}
+      ]
+    [Tn ::= Ut · Xn At, {Dt}] = [
+        {conflict_state_index=15; symbol_index=5 (Dt); conflict={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}; isucc_lr1itemset=[
+            [Xn ::= Bt · Zn Dt, {Dt}]
+            [Xn ::= Bt · Tn, {Dt}]
+          ]; contrib={Reduce [Zn ::= Tt Ut]; Reduce [Vn ::= epsilon]}}
+      ]
+  ])]
