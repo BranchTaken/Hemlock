@@ -1,4 +1,17 @@
-(** IELR(1)-specific functionality. *)
+(** IELR(1)-specific functionality. Although this module drives IELR(1) automoton generation, the
+    implementation is in large part distributed across other modules, especially:
+
+    - {!module:Adjs} implements state adjacency computation and lookup.
+    - {!module:Transit} encapsulates directed transitions between states.
+    - {!module:LaneCtx} implements lane tracing.
+    - {!module:Contrib} encapsulates conflict contributions.
+    - {!module:Attrib} implements symbol-specific attribution of conflict contributions.
+    - {!module:Attribs} maps (conflict state, symbol) tuples to conflict attributions.
+    - {!module:KernelAttribs} maps kernel items to {!type:Attribs.t} maps.
+    - {!module:StateNub} and {!module:Attrib} implement isocore compatibility testing.
+    - {!module:GotoNub} and {!module:StateNub} dynamically carry kernel attribs and memoized attribs
+      through automoton generation.
+*)
 
 open! Basis
 open! Basis.Rudiments

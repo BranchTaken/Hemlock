@@ -21,10 +21,10 @@ val length: t -> uns
 (** [length t] returns the number of contributions (actions) in [t]. *)
 
 val empty: t
-(** [empty] returns a contrib with no conflicts contributed to. *)
+(** [empty] returns a contrib with no contributions. *)
 
 val is_empty: t -> bool
-(** [is_empty t] returns true if [t] contributes to no conflicts. *)
+(** [is_empty t] returns true if [t] contains no contributions. *)
 
 val shift: t
 (** [shift] returns a contrib with shift contribution. *)
