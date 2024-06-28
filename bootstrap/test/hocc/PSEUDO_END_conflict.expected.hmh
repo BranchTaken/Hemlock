@@ -1,0 +1,18 @@
+hocc
+    left mul
+    left add < mul
+    token STAR "*" prec mul
+    token SLASH "/" prec mul
+    token PLUS "+" prec add
+    token MINUS "-" prec add
+    token INT
+    nonterm MulOp ::=
+      | "*"
+      | "/"
+    nonterm AddOp ::=
+      | "+"
+      | "-"
+    start Expr ::=
+      | Expr MulOp Expr prec mul
+      | Expr AddOp Expr prec add
+      | INT

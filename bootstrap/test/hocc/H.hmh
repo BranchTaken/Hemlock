@@ -1,0 +1,30 @@
+# Extended from IelrFig5 to interpose diamonds in the `S`..`Y`..`Z`..`A` inadequacy-contributing
+# lanes.
+hocc
+    neutral p1
+    neutral p2 < p1
+    token Ta prec p2
+    token Tb
+    token Tc
+    token Ty0
+    token Ty1
+    token Tz0
+    token Tz1
+    start S ::=
+      | Ta Y Ta
+      | Tb Y Tb
+    nonterm Y ::=
+      | Ty0 Z
+      | Ty1 Z
+    nonterm Z ::=
+      | Tz0 A B
+      | Tz1 A B
+    nonterm A ::= Ta C D E
+    nonterm B ::=
+      | Tc
+      | epsilon
+    nonterm C ::= D
+    nonterm D ::= Ta
+    nonterm E ::=
+      | Ta
+      | epsilon prec p1

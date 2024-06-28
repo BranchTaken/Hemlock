@@ -1,0 +1,42 @@
+hocc: Parsing "./Parse_a.hmhi"
+hocc: Parsing "./Parse_a.hmh"
+hocc: Generating LR(1) specification
+hocc: 8 precedences, 8 tokens, 9 non-terminals, 14 productions
+hocc: LR(1) item set compatibility: lr1
+hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++
+hocc: Generating 6 LR(1) states
+hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unreachable states
+hocc: 0 remergeable states
+hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: 6 unused precedences:
+hocc:    right p3
+hocc:    neutral p4 < p1
+hocc:    left p5 < p1, p2
+hocc:    right p6 < p3, p4, p5
+hocc:    neutral mul
+hocc:    neutral add < mul
+hocc: 6 unused tokens:
+hocc:    token OP
+hocc:    token PLUS "+"
+hocc:    token UNS
+hocc:    token MINUS prec add
+hocc:    token STAR "*" prec mul
+hocc:    token SLASH "/" prec mul
+hocc: 5 unused non-terminals:
+hocc:    nonterm N1
+hocc:    nonterm N2
+hocc:    nonterm N4
+hocc:    nonterm N6
+hocc:    nonterm N7
+hocc: 10 unused productions:
+hocc:    N1 ::= epsilon
+hocc:    N2 ::= N1 N2
+hocc:    N2 ::= epsilon
+hocc:    N4 ::= epsilon
+hocc:    N6 ::= N2
+hocc:    N6 ::= OP N3
+hocc:    N6 ::= OP N4
+hocc:    N6 ::= N4 N5
+hocc:    N6 ::= epsilon
+hocc:    N7 ::= OP N1 N2

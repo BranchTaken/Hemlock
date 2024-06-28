@@ -576,6 +576,104 @@ module AbstractToken = struct
         formatter |> Fmt.fmt "Tok_error " |> (List.pp Rendition.Malformation.pp) mals
     )
     |> Fmt.fmt ">"
+
+  let malformations = function
+    (* Keywords. *)
+    | Tok_and | Tok_also | Tok_as | Tok_conceal | Tok_effect | Tok_else | Tok_expose | Tok_external
+    | Tok_false | Tok_fn | Tok_function | Tok_if | Tok_import | Tok_include | Tok_lazy | Tok_let
+    | Tok_match | Tok_mutability | Tok_of | Tok_open | Tok_or | Tok_rec | Tok_then | Tok_true
+    | Tok_type | Tok_when | Tok_with
+    (* Operators. *)
+    | Tok_tilde_op _ | Tok_qmark_op _ | Tok_star_star_op _ | Tok_star_op _ | Tok_slash_op _
+    | Tok_pct_op _ | Tok_plus_op _ | Tok_minus_op _ | Tok_at_op _ | Tok_caret_op _ | Tok_dollar_op _
+    | Tok_lt_op _ | Tok_eq_op _ | Tok_gt_op _ | Tok_bar_op _ | Tok_colon_op _ | Tok_dot_op _
+    (* Punctuation. *)
+    | Tok_tilde | Tok_qmark | Tok_minus | Tok_lt | Tok_lt_eq | Tok_eq | Tok_lt_gt | Tok_gt_eq
+    | Tok_gt | Tok_comma | Tok_dot | Tok_dot_dot | Tok_semi | Tok_colon | Tok_colon_colon
+    | Tok_colon_eq | Tok_lparen | Tok_rparen | Tok_lbrack | Tok_rbrack | Tok_lcurly | Tok_rcurly
+    | Tok_bar | Tok_lcapture | Tok_rcapture | Tok_larray | Tok_rarray | Tok_bslash | Tok_tick
+    | Tok_caret | Tok_amp | Tok_xmark | Tok_arrow | Tok_carrow
+    (* Miscellaneous. *)
+    | Tok_source_directive (Constant _)
+    | Tok_line_delim
+    | Tok_indent (Constant _)
+    | Tok_dedent (Constant _)
+    | Tok_whitespace|Tok_hash_comment
+    | Tok_paren_comment (Constant _)
+    | Tok_uscore
+    | Tok_uident (Constant _)
+    | Tok_cident _
+    | Tok_codepoint (Constant _)
+    | Tok_rstring (Constant _)
+    | Tok_istring (Constant _)
+    | Tok_fstring_lditto
+    | Tok_fstring_interpolated (Constant _)
+    | Tok_fstring_pct
+    | Tok_fstring_pad (Constant _)
+    | Tok_fstring_just _ | Tok_fstring_sign _ | Tok_fstring_alt | Tok_fstring_zpad
+    | Tok_fstring_width_star
+    | Tok_fstring_width (Constant _)
+    | Tok_fstring_pmode _ | Tok_fstring_precision_star
+    | Tok_fstring_precision (Constant _)
+    | Tok_fstring_radix _ | Tok_fstring_notation _ | Tok_fstring_pretty
+    | Tok_fstring_fmt (Constant _)
+    | Tok_fstring_sep (Constant _)
+    | Tok_fstring_label _ | Tok_fstring_lparen_caret | Tok_fstring_caret_rparen | Tok_fstring_rditto
+    | Tok_r32 (Constant _)
+    | Tok_r64 (Constant _)
+    | Tok_u8 (Constant _)
+    | Tok_i8 (Constant _)
+    | Tok_u16 (Constant _)
+    | Tok_i16 (Constant _)
+    | Tok_u32 (Constant _)
+    | Tok_i32 (Constant _)
+    | Tok_u64 (Constant _)
+    | Tok_i64 (Constant _)
+    | Tok_u128 (Constant _)
+    | Tok_i128 (Constant _)
+    | Tok_u256 (Constant _)
+    | Tok_i256 (Constant _)
+    | Tok_u512 (Constant _)
+    | Tok_i512 (Constant _)
+    | Tok_nat (Constant _)
+    | Tok_zint (Constant _)
+    | Tok_end_of_input | Tok_misaligned
+      -> []
+    (* Malformations. *)
+    | Tok_source_directive (Malformed mals)
+    | Tok_indent (Malformed mals)
+    | Tok_dedent (Malformed mals)
+    | Tok_paren_comment (Malformed mals)
+    | Tok_uident (Malformed mals)
+    | Tok_codepoint (Malformed mals)
+    | Tok_rstring (Malformed mals)
+    | Tok_istring (Malformed mals)
+    | Tok_fstring_interpolated (Malformed mals)
+    | Tok_fstring_pad (Malformed mals)
+    | Tok_fstring_width (Malformed mals)
+    | Tok_fstring_precision (Malformed mals)
+    | Tok_fstring_fmt (Malformed mals)
+    | Tok_fstring_sep (Malformed mals)
+    | Tok_r32 (Malformed mals)
+    | Tok_r64 (Malformed mals)
+    | Tok_u8 (Malformed mals)
+    | Tok_i8 (Malformed mals)
+    | Tok_u16 (Malformed mals)
+    | Tok_i16 (Malformed mals)
+    | Tok_u32 (Malformed mals)
+    | Tok_i32 (Malformed mals)
+    | Tok_u64 (Malformed mals)
+    | Tok_i64 (Malformed mals)
+    | Tok_u128 (Malformed mals)
+    | Tok_i128 (Malformed mals)
+    | Tok_u256 (Malformed mals)
+    | Tok_i256 (Malformed mals)
+    | Tok_u512 (Malformed mals)
+    | Tok_i512 (Malformed mals)
+    | Tok_nat (Malformed mals)
+    | Tok_zint (Malformed mals)
+    | Tok_error mals
+      -> mals
 end
 
 module ConcreteToken = struct
@@ -811,6 +909,9 @@ let view_of_t t =
 
 let text t =
   Source.(text (Cursor.container t.tok_base))
+
+let cursor {tok_base; _} =
+  tok_base
 
 let str_of_cursor cursor t =
   Source.Slice.to_string (Source.Slice.of_cursors ~base:t.tok_base ~past:cursor)

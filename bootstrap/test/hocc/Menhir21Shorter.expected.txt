@@ -1,0 +1,237 @@
+Menhir21Shorter grammar
+
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token PLUS "+"
+        First: {"+"}
+        Follow: {"in", EOF}
+    token NAME
+        First: {NAME}
+        Follow: {"+", "in", EOF}
+    token LET "let"
+        First: {"let"}
+        Follow: {NAME, "let", "rec"}
+    token REC "rec"
+        First: {"rec"}
+        Follow: {NAME, "let", "rec"}
+    token IN "in"
+        First: {"in"}
+        Follow: {NAME, "let", "rec"}
+    token EOF
+        First: {EOF}
+        Follow: {"⊥"}
+Non-terminals
+    start Commandline
+        First: {NAME, "let", "rec"}
+        Follow: {"⊥"}
+        Productions
+            Commandline ::= "let" Term EOF
+            Commandline ::= Term EOF
+    start Commandline'
+        First: {NAME, "let", "rec"}
+        Follow: {"ε"}
+        Productions
+            Commandline' ::= Commandline "⊥"
+    nonterm Term
+        First: {NAME, "let", "rec"}
+        Follow: {"in", EOF}
+        Productions
+            Term ::= NAME
+            Term ::= Name "+"
+            Term ::= "let" Name "in" Term
+            Term ::= "rec" Term "in" Term
+    nonterm Name
+        First: {NAME}
+        Follow: {"+", "in"}
+        Productions
+            Name ::= NAME
+PGM(1) States
+    State 0 [0.0]
+        Kernel
+            [Commandline' ::= · Commandline "⊥", {"ε"}]
+        Added
+            [Commandline ::= · "let" Term EOF, {"⊥"}]
+            [Commandline ::= · Term EOF, {"⊥"}]
+            [Term ::= · NAME, {EOF}]
+            [Term ::= · Name "+", {EOF}]
+            [Term ::= · "let" Name "in" Term, {EOF}]
+            [Term ::= · "rec" Term "in" Term, {EOF}]
+            [Name ::= · NAME, {"+"}]
+        Actions
+            NAME : ShiftPrefix 1
+            "let" : ShiftPrefix 2
+            "rec" : ShiftPrefix 3
+        Gotos
+            Commandline : 4
+            Term : 5
+            Name : 6
+    State 1 [1.0]
+        Kernel
+            [Term ::= NAME ·, {EOF}]
+            [Name ::= NAME ·, {"+", "in"}]
+        Actions
+            "+" : Reduce Name ::= NAME
+            "in" : Reduce Name ::= NAME
+            EOF : Reduce Term ::= NAME
+    State 2 [2.0]
+        Kernel
+            [Commandline ::= "let" · Term EOF, {"⊥"}]
+            [Term ::= "let" · Name "in" Term, {EOF}]
+        Added
+            [Term ::= · NAME, {EOF}]
+            [Term ::= · Name "+", {EOF}]
+            [Term ::= · "let" Name "in" Term, {EOF}]
+            [Term ::= · "rec" Term "in" Term, {EOF}]
+            [Name ::= · NAME, {"+", "in"}]
+        Actions
+            NAME : ShiftPrefix 1
+            "let" : ShiftPrefix 7
+            "rec" : ShiftPrefix 3
+        Gotos
+            Term : 8
+            Name : 9
+    State 3 [3.0]
+        Kernel
+            [Term ::= "rec" · Term "in" Term, {"in", EOF}]
+        Added
+            [Term ::= · NAME, {"in"}]
+            [Term ::= · Name "+", {"in"}]
+            [Term ::= · "let" Name "in" Term, {"in"}]
+            [Term ::= · "rec" Term "in" Term, {"in"}]
+            [Name ::= · NAME, {"+"}]
+        Actions
+            NAME : ShiftPrefix 10
+            "let" : ShiftPrefix 7
+            "rec" : ShiftPrefix 3
+        Gotos
+            Term : 11
+            Name : 6
+    State 4 [4.0]
+        Kernel
+            [Commandline' ::= Commandline · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 12
+    State 5 [5.0]
+        Kernel
+            [Commandline ::= Term · EOF, {"⊥"}]
+        Actions
+            EOF : ShiftAccept 13
+    State 6 [6.0]
+        Kernel
+            [Term ::= Name · "+", {"in", EOF}]
+        Actions
+            "+" : ShiftPrefix 14
+    State 7 [7.0]
+        Kernel
+            [Term ::= "let" · Name "in" Term, {"in", EOF}]
+        Added
+            [Name ::= · NAME, {"in"}]
+        Actions
+            NAME : ShiftPrefix 15
+        Gotos
+            Name : 16
+    State 8 [8.0]
+        Kernel
+            [Commandline ::= "let" Term · EOF, {"⊥"}]
+        Actions
+            EOF : ShiftAccept 17
+    State 9 [9.0]
+        Kernel
+            [Term ::= Name · "+", {EOF}]
+            [Term ::= "let" Name · "in" Term, {EOF}]
+        Actions
+            "+" : ShiftPrefix 14
+            "in" : ShiftPrefix 18
+    State 10 [1.1]
+        Kernel
+            [Term ::= NAME ·, {"in", EOF}]
+            [Name ::= NAME ·, {"+"}]
+        Actions
+            "+" : Reduce Name ::= NAME
+            "in" : Reduce Term ::= NAME
+            EOF : Reduce Term ::= NAME
+    State 11 [10.0]
+        Kernel
+            [Term ::= "rec" Term · "in" Term, {"in", EOF}]
+        Actions
+            "in" : ShiftPrefix 19
+    State 12 [11.0]
+        Kernel
+            [Commandline' ::= Commandline "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce Commandline' ::= Commandline "⊥"
+    State 13 [12.0]
+        Kernel
+            [Commandline ::= Term EOF ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Commandline ::= Term EOF
+    State 14 [13.0]
+        Kernel
+            [Term ::= Name "+" ·, {"in", EOF}]
+        Actions
+            "in" : Reduce Term ::= Name "+"
+            EOF : Reduce Term ::= Name "+"
+    State 15 [14.0]
+        Kernel
+            [Name ::= NAME ·, {"in"}]
+        Actions
+            "in" : Reduce Name ::= NAME
+    State 16 [15.0]
+        Kernel
+            [Term ::= "let" Name · "in" Term, {"in", EOF}]
+        Actions
+            "in" : ShiftPrefix 18
+    State 17 [16.0]
+        Kernel
+            [Commandline ::= "let" Term EOF ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Commandline ::= "let" Term EOF
+    State 18 [17.0]
+        Kernel
+            [Term ::= "let" Name "in" · Term, {"in", EOF}]
+        Added
+            [Term ::= · NAME, {"in", EOF}]
+            [Term ::= · Name "+", {"in", EOF}]
+            [Term ::= · "let" Name "in" Term, {"in", EOF}]
+            [Term ::= · "rec" Term "in" Term, {"in", EOF}]
+            [Name ::= · NAME, {"+"}]
+        Actions
+            NAME : ShiftPrefix 10
+            "let" : ShiftPrefix 7
+            "rec" : ShiftPrefix 3
+        Gotos
+            Term : 20
+            Name : 6
+    State 19 [18.0]
+        Kernel
+            [Term ::= "rec" Term "in" · Term, {"in", EOF}]
+        Added
+            [Term ::= · NAME, {"in", EOF}]
+            [Term ::= · Name "+", {"in", EOF}]
+            [Term ::= · "let" Name "in" Term, {"in", EOF}]
+            [Term ::= · "rec" Term "in" Term, {"in", EOF}]
+            [Name ::= · NAME, {"+"}]
+        Actions
+            NAME : ShiftPrefix 10
+            "let" : ShiftPrefix 7
+            "rec" : ShiftPrefix 3
+        Gotos
+            Term : 21
+            Name : 6
+    State 20 [19.0]
+        Kernel
+            [Term ::= "let" Name "in" Term ·, {"in", EOF}]
+        Actions
+            "in" : Reduce Term ::= "let" Name "in" Term
+            EOF : Reduce Term ::= "let" Name "in" Term
+    State 21 [20.0]
+        Kernel
+            [Term ::= "rec" Term "in" Term ·, {"in", EOF}]
+        Actions
+            "in" : Reduce Term ::= "rec" Term "in" Term
+            EOF : Reduce Term ::= "rec" Term "in" Term

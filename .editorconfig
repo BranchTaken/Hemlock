@@ -1,6 +1,6 @@
 # https://editorconfig.org/
 
-[*.{hm,hmi}]
+[*.{hm,hmi,hmh,hmhi}]
 indent_style = space
 indent_size = 4
 tab_width = 8

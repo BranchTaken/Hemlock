@@ -1,0 +1,177 @@
+PSEUDO_END_conflict grammar
+
+Precedences
+    left mul
+    left add < mul
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token STAR "*" prec mul
+        First: {"*"}
+        Follow: {INT}
+    token SLASH "/" prec mul
+        First: {"/"}
+        Follow: {INT}
+    token PLUS "+" prec add
+        First: {"+"}
+        Follow: {INT}
+    token MINUS "-" prec add
+        First: {"-"}
+        Follow: {INT}
+    token INT
+        First: {INT}
+        Follow: {"⊥", "*", "/", "+", "-"}
+Non-terminals
+    nonterm MulOp of Token.t
+        First: {"*", "/"}
+        Follow: {INT}
+        Productions
+            MulOp ::= "*"
+            MulOp ::= "/"
+    nonterm AddOp of Token.t
+        First: {"+", "-"}
+        Follow: {INT}
+        Productions
+            AddOp ::= "+"
+            AddOp ::= "-"
+    start Expr
+        First: {INT}
+        Follow: {"⊥", "*", "/", "+", "-"}
+        Productions
+            Expr ::= Expr MulOp Expr prec mul
+            Expr ::= Expr AddOp Expr prec add
+            Expr ::= INT
+    start Expr'
+        First: {INT}
+        Follow: {"ε"}
+        Productions
+            Expr' ::= Expr "⊥"
+LR(1) States
+    State 0 [0.0]
+        Kernel
+            [Expr' ::= · Expr "⊥", {"ε"}]
+        Added
+            [Expr ::= · Expr MulOp Expr, {"⊥", "*", "/", "+", "-"}] prec mul
+            [Expr ::= · Expr AddOp Expr, {"⊥", "*", "/", "+", "-"}] prec add
+            [Expr ::= · INT, {"⊥", "*", "/", "+", "-"}]
+        Actions
+            INT : ShiftPrefix 1
+        Gotos
+            Expr : 2
+    State 1 [1.0]
+        Kernel
+            [Expr ::= INT ·, {"⊥", "*", "/", "+", "-"}]
+        Actions
+CONFLICT    "⊥" : Reduce Expr ::= INT
+            "*" : Reduce Expr ::= INT
+            "/" : Reduce Expr ::= INT
+            "+" : Reduce Expr ::= INT
+            "-" : Reduce Expr ::= INT
+    State 2 [2.0]
+        Kernel
+            [Expr ::= Expr · MulOp Expr, {"⊥", "*", "/", "+", "-"}] prec mul
+            [Expr ::= Expr · AddOp Expr, {"⊥", "*", "/", "+", "-"}] prec add
+            [Expr' ::= Expr · "⊥", {"ε"}]
+        Added
+            [MulOp ::= · "*", {INT}]
+            [MulOp ::= · "/", {INT}]
+            [AddOp ::= · "+", {INT}]
+            [AddOp ::= · "-", {INT}]
+        Actions
+CONFLICT    "⊥" : ShiftPrefix 3
+            "*" : ShiftPrefix 4 prec mul
+            "/" : ShiftPrefix 5 prec mul
+            "+" : ShiftPrefix 6 prec add
+            "-" : ShiftPrefix 7 prec add
+        Gotos
+            MulOp : 8
+            AddOp : 9
+    State 3 [3.0]
+        Kernel
+            [Expr' ::= Expr "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce Expr' ::= Expr "⊥"
+    State 4 [4.0]
+        Kernel
+            [MulOp ::= "*" ·, {INT}]
+        Actions
+            INT : Reduce MulOp ::= "*"
+    State 5 [5.0]
+        Kernel
+            [MulOp ::= "/" ·, {INT}]
+        Actions
+            INT : Reduce MulOp ::= "/"
+    State 6 [6.0]
+        Kernel
+            [AddOp ::= "+" ·, {INT}]
+        Actions
+            INT : Reduce AddOp ::= "+"
+    State 7 [7.0]
+        Kernel
+            [AddOp ::= "-" ·, {INT}]
+        Actions
+            INT : Reduce AddOp ::= "-"
+    State 8 [8.0]
+        Kernel
+            [Expr ::= Expr MulOp · Expr, {"⊥", "*", "/", "+", "-"}] prec mul
+        Added
+            [Expr ::= · Expr MulOp Expr, {"⊥", "*", "/", "+", "-"}] prec mul
+            [Expr ::= · Expr AddOp Expr, {"⊥", "*", "/", "+", "-"}] prec add
+            [Expr ::= · INT, {"⊥", "*", "/", "+", "-"}]
+        Actions
+            INT : ShiftPrefix 1
+        Gotos
+            Expr : 10
+    State 9 [9.0]
+        Kernel
+            [Expr ::= Expr AddOp · Expr, {"⊥", "*", "/", "+", "-"}] prec add
+        Added
+            [Expr ::= · Expr MulOp Expr, {"⊥", "*", "/", "+", "-"}] prec mul
+            [Expr ::= · Expr AddOp Expr, {"⊥", "*", "/", "+", "-"}] prec add
+            [Expr ::= · INT, {"⊥", "*", "/", "+", "-"}]
+        Actions
+            INT : ShiftPrefix 1
+        Gotos
+            Expr : 11
+    State 10 [10.0]
+        Kernel
+            [Expr ::= Expr · MulOp Expr, {"⊥", "*", "/", "+", "-"}] prec mul
+            [Expr ::= Expr MulOp Expr ·, {"⊥", "*", "/", "+", "-"}] prec mul
+            [Expr ::= Expr · AddOp Expr, {"⊥", "*", "/", "+", "-"}] prec add
+        Added
+            [MulOp ::= · "*", {INT}]
+            [MulOp ::= · "/", {INT}]
+            [AddOp ::= · "+", {INT}]
+            [AddOp ::= · "-", {INT}]
+        Actions
+CONFLICT    "⊥" : Reduce Expr ::= Expr MulOp Expr prec mul
+            "*" : Reduce Expr ::= Expr MulOp Expr prec mul
+            "/" : Reduce Expr ::= Expr MulOp Expr prec mul
+            "+" : Reduce Expr ::= Expr MulOp Expr prec mul
+            "-" : Reduce Expr ::= Expr MulOp Expr prec mul
+        Gotos
+            MulOp : 8
+            AddOp : 9
+    State 11 [11.0]
+        Kernel
+            [Expr ::= Expr · MulOp Expr, {"⊥", "*", "/", "+", "-"}] prec mul
+            [Expr ::= Expr · AddOp Expr, {"⊥", "*", "/", "+", "-"}] prec add
+            [Expr ::= Expr AddOp Expr ·, {"⊥", "*", "/", "+", "-"}] prec add
+        Added
+            [MulOp ::= · "*", {INT}]
+            [MulOp ::= · "/", {INT}]
+            [AddOp ::= · "+", {INT}]
+            [AddOp ::= · "-", {INT}]
+        Actions
+CONFLICT    "⊥" : Reduce Expr ::= Expr AddOp Expr prec add
+            "*" : ShiftPrefix 4 prec mul
+            "/" : ShiftPrefix 5 prec mul
+            "+" : Reduce Expr ::= Expr AddOp Expr prec add
+            "-" : Reduce Expr ::= Expr AddOp Expr prec add
+        Gotos
+            MulOp : 8
+            AddOp : 9

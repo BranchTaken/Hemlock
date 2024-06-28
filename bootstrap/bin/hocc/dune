@@ -1,0 +1,7 @@
+(executables
+ (names hocc)
+ (libraries Basis Hmc))
+
+(install
+ (section bin)
+  (files (hocc.exe as hocc)))

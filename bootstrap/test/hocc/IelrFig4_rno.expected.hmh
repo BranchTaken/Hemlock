@@ -1,0 +1,11 @@
+hocc
+    token Ta
+    token Tb
+    start Sn ::=
+      | Ta A Ta
+      | Ta A Tb
+      | Ta B Ta
+      | Tb A Ta
+      | Tb B Tb
+    nonterm A ::= Ta
+    nonterm B ::= Ta

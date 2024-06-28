@@ -1,0 +1,14 @@
+hocc
+    neutral pUnusedA
+    neutral pUnusedB < pUnusedA
+    token T
+    token TUnusedA prec pUnusedA
+    token TUnusedB
+    start S ::=
+      | N
+      | epsilon
+    nonterm N ::= T
+    nonterm NUnusedA prec pUnusedA ::=
+      | NUnusedB
+      | epsilon
+    nonterm NUnusedB ::= TUnusedA

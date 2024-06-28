@@ -1,0 +1,363 @@
+Menhir21Longer grammar
+
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token INFIXOP0
+        First: {INFIXOP0}
+        Follow: {NUMERAL}
+    token EQUAL "="
+        First: {"="}
+        Follow: {NUMERAL, "let"}
+    token NAME
+        First: {NAME}
+        Follow: {"=", NUMERAL, "let"}
+    token NUMERAL
+        First: {NUMERAL}
+        Follow: {INFIXOP0, "in", "and", EOF}
+    token LET "let"
+        First: {"let"}
+        Follow: {NAME, "rec"}
+    token REC "rec"
+        First: {"rec"}
+        Follow: {NAME}
+    token IN "in"
+        First: {"in"}
+        Follow: {NUMERAL, "let"}
+    token AND "and"
+        First: {"and"}
+        Follow: {NAME}
+    token EOF
+        First: {EOF}
+        Follow: {"⊥"}
+Non-terminals
+    start Commandline
+        First: {NUMERAL, "let"}
+        Follow: {"⊥"}
+        Productions
+            Commandline ::= "let" NAME Term EOF
+            Commandline ::= Term EOF
+    start Commandline'
+        First: {NUMERAL, "let"}
+        Follow: {"ε"}
+        Productions
+            Commandline' ::= Commandline "⊥"
+    nonterm Term
+        First: {NUMERAL, "let"}
+        Follow: {"in", "and", EOF}
+        Productions
+            Term ::= InfixTerm_
+            Term ::= "let" NAME "=" InfixTerm "in" Term
+            Term ::= "let" "rec" Fs "in" Term
+    nonterm InfixTerm
+        First: {NUMERAL}
+        Follow: {INFIXOP0, "in", "and", EOF}
+        Productions
+            InfixTerm ::= NUMERAL
+    nonterm InfixTerm_
+        First: {NUMERAL}
+        Follow: {"in", "and", EOF}
+        Productions
+            InfixTerm_ ::= NUMERAL
+            InfixTerm_ ::= InfixTerm INFIXOP0 InfixTerm
+    nonterm Fs
+        First: {NAME}
+        Follow: {"in"}
+        Productions
+            Fs ::= RecursiveClause FsTl
+    nonterm FsTl
+        First: {"ε", "and"}
+        Follow: {"in"}
+        Productions
+            FsTl ::= "and" RecursiveClause FsTl
+            FsTl ::= epsilon
+    nonterm RecursiveClause
+        First: {NAME}
+        Follow: {"in", "and"}
+        Productions
+            RecursiveClause ::= NAME "=" Term
+PGM(1) States
+    State 0 [0.0]
+        Kernel
+            [Commandline' ::= · Commandline "⊥", {"ε"}]
+        Added
+            [Commandline ::= · "let" NAME Term EOF, {"⊥"}]
+            [Commandline ::= · Term EOF, {"⊥"}]
+            [Term ::= · InfixTerm_, {EOF}]
+            [Term ::= · "let" NAME "=" InfixTerm "in" Term, {EOF}]
+            [Term ::= · "let" "rec" Fs "in" Term, {EOF}]
+            [InfixTerm ::= · NUMERAL, {INFIXOP0}]
+            [InfixTerm_ ::= · NUMERAL, {EOF}]
+            [InfixTerm_ ::= · InfixTerm INFIXOP0 InfixTerm, {EOF}]
+        Actions
+            NUMERAL : ShiftPrefix 1
+            "let" : ShiftPrefix 2
+        Gotos
+            Commandline : 3
+            Term : 4
+            InfixTerm : 5
+            InfixTerm_ : 6
+    State 1 [1.0]
+        Kernel
+            [InfixTerm ::= NUMERAL ·, {INFIXOP0}]
+            [InfixTerm_ ::= NUMERAL ·, {"in", "and", EOF}]
+        Actions
+            INFIXOP0 : Reduce InfixTerm ::= NUMERAL
+            "in" : Reduce InfixTerm_ ::= NUMERAL
+            "and" : Reduce InfixTerm_ ::= NUMERAL
+            EOF : Reduce InfixTerm_ ::= NUMERAL
+    State 2 [2.0]
+        Kernel
+            [Commandline ::= "let" · NAME Term EOF, {"⊥"}]
+            [Term ::= "let" · NAME "=" InfixTerm "in" Term, {EOF}]
+            [Term ::= "let" · "rec" Fs "in" Term, {EOF}]
+        Actions
+            NAME : ShiftPrefix 7
+            "rec" : ShiftPrefix 8
+    State 3 [3.0]
+        Kernel
+            [Commandline' ::= Commandline · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 9
+    State 4 [4.0]
+        Kernel
+            [Commandline ::= Term · EOF, {"⊥"}]
+        Actions
+            EOF : ShiftAccept 10
+    State 5 [5.0]
+        Kernel
+            [InfixTerm_ ::= InfixTerm · INFIXOP0 InfixTerm, {"in", "and", EOF}]
+        Actions
+            INFIXOP0 : ShiftPrefix 11
+    State 6 [6.0]
+        Kernel
+            [Term ::= InfixTerm_ ·, {"in", "and", EOF}]
+        Actions
+            "in" : Reduce Term ::= InfixTerm_
+            "and" : Reduce Term ::= InfixTerm_
+            EOF : Reduce Term ::= InfixTerm_
+    State 7 [7.0]
+        Kernel
+            [Commandline ::= "let" NAME · Term EOF, {"⊥"}]
+            [Term ::= "let" NAME · "=" InfixTerm "in" Term, {EOF}]
+        Added
+            [Term ::= · InfixTerm_, {EOF}]
+            [Term ::= · "let" NAME "=" InfixTerm "in" Term, {EOF}]
+            [Term ::= · "let" "rec" Fs "in" Term, {EOF}]
+            [InfixTerm ::= · NUMERAL, {INFIXOP0}]
+            [InfixTerm_ ::= · NUMERAL, {EOF}]
+            [InfixTerm_ ::= · InfixTerm INFIXOP0 InfixTerm, {EOF}]
+        Actions
+            "=" : ShiftPrefix 12
+            NUMERAL : ShiftPrefix 1
+            "let" : ShiftPrefix 13
+        Gotos
+            Term : 14
+            InfixTerm : 5
+            InfixTerm_ : 6
+    State 8 [8.0]
+        Kernel
+            [Term ::= "let" "rec" · Fs "in" Term, {"in", "and", EOF}]
+        Added
+            [Fs ::= · RecursiveClause FsTl, {"in"}]
+            [RecursiveClause ::= · NAME "=" Term, {"in", "and"}]
+        Actions
+            NAME : ShiftPrefix 15
+        Gotos
+            Fs : 16
+            RecursiveClause : 17
+    State 9 [9.0]
+        Kernel
+            [Commandline' ::= Commandline "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce Commandline' ::= Commandline "⊥"
+    State 10 [10.0]
+        Kernel
+            [Commandline ::= Term EOF ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Commandline ::= Term EOF
+    State 11 [11.0]
+        Kernel
+            [InfixTerm_ ::= InfixTerm INFIXOP0 · InfixTerm, {"in", "and", EOF}]
+        Added
+            [InfixTerm ::= · NUMERAL, {"in", "and", EOF}]
+        Actions
+            NUMERAL : ShiftPrefix 18
+        Gotos
+            InfixTerm : 19
+    State 12 [12.0]
+        Kernel
+            [Term ::= "let" NAME "=" · InfixTerm "in" Term, {"in", "and", EOF}]
+        Added
+            [InfixTerm ::= · NUMERAL, {"in"}]
+        Actions
+            NUMERAL : ShiftPrefix 18
+        Gotos
+            InfixTerm : 20
+    State 13 [13.0]
+        Kernel
+            [Term ::= "let" · NAME "=" InfixTerm "in" Term, {"in", "and", EOF}]
+            [Term ::= "let" · "rec" Fs "in" Term, {"in", "and", EOF}]
+        Actions
+            NAME : ShiftPrefix 21
+            "rec" : ShiftPrefix 8
+    State 14 [14.0]
+        Kernel
+            [Commandline ::= "let" NAME Term · EOF, {"⊥"}]
+        Actions
+            EOF : ShiftAccept 22
+    State 15 [15.0]
+        Kernel
+            [RecursiveClause ::= NAME · "=" Term, {"in", "and"}]
+        Actions
+            "=" : ShiftPrefix 23
+    State 16 [16.0]
+        Kernel
+            [Term ::= "let" "rec" Fs · "in" Term, {"in", "and", EOF}]
+        Actions
+            "in" : ShiftPrefix 24
+    State 17 [17.0]
+        Kernel
+            [Fs ::= RecursiveClause · FsTl, {"in"}]
+        Added
+            [FsTl ::= · "and" RecursiveClause FsTl, {"in"}]
+            [FsTl ::= ·, {"in"}]
+        Actions
+            "in" : Reduce FsTl ::= epsilon
+            "and" : ShiftPrefix 25
+        Gotos
+            FsTl : 26
+    State 18 [18.0]
+        Kernel
+            [InfixTerm ::= NUMERAL ·, {"in", "and", EOF}]
+        Actions
+            "in" : Reduce InfixTerm ::= NUMERAL
+            "and" : Reduce InfixTerm ::= NUMERAL
+            EOF : Reduce InfixTerm ::= NUMERAL
+    State 19 [19.0]
+        Kernel
+            [InfixTerm_ ::= InfixTerm INFIXOP0 InfixTerm ·, {"in", "and", EOF}]
+        Actions
+            "in" : Reduce InfixTerm_ ::= InfixTerm INFIXOP0 InfixTerm
+            "and" : Reduce InfixTerm_ ::= InfixTerm INFIXOP0 InfixTerm
+            EOF : Reduce InfixTerm_ ::= InfixTerm INFIXOP0 InfixTerm
+    State 20 [20.0]
+        Kernel
+            [Term ::= "let" NAME "=" InfixTerm · "in" Term, {"in", "and", EOF}]
+        Actions
+            "in" : ShiftPrefix 27
+    State 21 [21.0]
+        Kernel
+            [Term ::= "let" NAME · "=" InfixTerm "in" Term, {"in", "and", EOF}]
+        Actions
+            "=" : ShiftPrefix 12
+    State 22 [22.0]
+        Kernel
+            [Commandline ::= "let" NAME Term EOF ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Commandline ::= "let" NAME Term EOF
+    State 23 [23.0]
+        Kernel
+            [RecursiveClause ::= NAME "=" · Term, {"in", "and"}]
+        Added
+            [Term ::= · InfixTerm_, {"in", "and"}]
+            [Term ::= · "let" NAME "=" InfixTerm "in" Term, {"in", "and"}]
+            [Term ::= · "let" "rec" Fs "in" Term, {"in", "and"}]
+            [InfixTerm ::= · NUMERAL, {INFIXOP0}]
+            [InfixTerm_ ::= · NUMERAL, {"in", "and"}]
+            [InfixTerm_ ::= · InfixTerm INFIXOP0 InfixTerm, {"in", "and"}]
+        Actions
+            NUMERAL : ShiftPrefix 1
+            "let" : ShiftPrefix 13
+        Gotos
+            Term : 28
+            InfixTerm : 5
+            InfixTerm_ : 6
+    State 24 [24.0]
+        Kernel
+            [Term ::= "let" "rec" Fs "in" · Term, {"in", "and", EOF}]
+        Added
+            [Term ::= · InfixTerm_, {"in", "and", EOF}]
+            [Term ::= · "let" NAME "=" InfixTerm "in" Term, {"in", "and", EOF}]
+            [Term ::= · "let" "rec" Fs "in" Term, {"in", "and", EOF}]
+            [InfixTerm ::= · NUMERAL, {INFIXOP0}]
+            [InfixTerm_ ::= · NUMERAL, {"in", "and", EOF}]
+            [InfixTerm_ ::= · InfixTerm INFIXOP0 InfixTerm, {"in", "and", EOF}]
+        Actions
+            NUMERAL : ShiftPrefix 1
+            "let" : ShiftPrefix 13
+        Gotos
+            Term : 29
+            InfixTerm : 5
+            InfixTerm_ : 6
+    State 25 [25.0]
+        Kernel
+            [FsTl ::= "and" · RecursiveClause FsTl, {"in"}]
+        Added
+            [RecursiveClause ::= · NAME "=" Term, {"in", "and"}]
+        Actions
+            NAME : ShiftPrefix 15
+        Gotos
+            RecursiveClause : 30
+    State 26 [26.0]
+        Kernel
+            [Fs ::= RecursiveClause FsTl ·, {"in"}]
+        Actions
+            "in" : Reduce Fs ::= RecursiveClause FsTl
+    State 27 [27.0]
+        Kernel
+            [Term ::= "let" NAME "=" InfixTerm "in" · Term, {"in", "and", EOF}]
+        Added
+            [Term ::= · InfixTerm_, {"in", "and", EOF}]
+            [Term ::= · "let" NAME "=" InfixTerm "in" Term, {"in", "and", EOF}]
+            [Term ::= · "let" "rec" Fs "in" Term, {"in", "and", EOF}]
+            [InfixTerm ::= · NUMERAL, {INFIXOP0}]
+            [InfixTerm_ ::= · NUMERAL, {"in", "and", EOF}]
+            [InfixTerm_ ::= · InfixTerm INFIXOP0 InfixTerm, {"in", "and", EOF}]
+        Actions
+            NUMERAL : ShiftPrefix 1
+            "let" : ShiftPrefix 13
+        Gotos
+            Term : 31
+            InfixTerm : 5
+            InfixTerm_ : 6
+    State 28 [28.0]
+        Kernel
+            [RecursiveClause ::= NAME "=" Term ·, {"in", "and"}]
+        Actions
+            "in" : Reduce RecursiveClause ::= NAME "=" Term
+            "and" : Reduce RecursiveClause ::= NAME "=" Term
+    State 29 [29.0]
+        Kernel
+            [Term ::= "let" "rec" Fs "in" Term ·, {"in", "and", EOF}]
+        Actions
+            "in" : Reduce Term ::= "let" "rec" Fs "in" Term
+            "and" : Reduce Term ::= "let" "rec" Fs "in" Term
+            EOF : Reduce Term ::= "let" "rec" Fs "in" Term
+    State 30 [30.0]
+        Kernel
+            [FsTl ::= "and" RecursiveClause · FsTl, {"in"}]
+        Added
+            [FsTl ::= · "and" RecursiveClause FsTl, {"in"}]
+            [FsTl ::= ·, {"in"}]
+        Actions
+            "in" : Reduce FsTl ::= epsilon
+            "and" : ShiftPrefix 25
+        Gotos
+            FsTl : 32
+    State 31 [31.0]
+        Kernel
+            [Term ::= "let" NAME "=" InfixTerm "in" Term ·, {"in", "and", EOF}]
+        Actions
+            "in" : Reduce Term ::= "let" NAME "=" InfixTerm "in" Term
+            "and" : Reduce Term ::= "let" NAME "=" InfixTerm "in" Term
+            EOF : Reduce Term ::= "let" NAME "=" InfixTerm "in" Term
+    State 32 [32.0]
+        Kernel
+            [FsTl ::= "and" RecursiveClause FsTl ·, {"in"}]
+        Actions
+            "in" : Reduce FsTl ::= "and" RecursiveClause FsTl

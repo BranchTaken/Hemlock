@@ -1,0 +1,24 @@
+hocc
+    left p1
+    left p2 < p1
+
+    token PLUS
+    token STAR
+    token LPAREN
+    token RPAREN prec p1
+    token ID
+    token EOI
+
+    start S ::= E EOI
+
+    nonterm E ::=
+      | E PLUS T prec p2
+      | T
+
+    nonterm T ::=
+      | T STAR F
+      | F
+
+    nonterm F prec p1 ::=
+      | LPAREN E RPAREN
+      | ID

@@ -1,0 +1,110 @@
+NestedEpsilon grammar
+
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token Tb
+        First: {Tb}
+        Follow: {EOI}
+    token EOI
+        First: {EOI}
+        Follow: {"⊥"}
+Non-terminals
+    start S
+        First: {Tb}
+        Follow: {"⊥"}
+        Productions
+            S ::= A EOI
+    start S'
+        First: {Tb}
+        Follow: {"ε"}
+        Productions
+            S' ::= S "⊥"
+    nonterm A
+        First: {Tb}
+        Follow: {EOI}
+        Productions
+            A ::= B C
+    nonterm B
+        First: {Tb}
+        Follow: {EOI}
+        Productions
+            B ::= Tb
+    nonterm C
+        First: {"ε"}
+        Follow: {EOI}
+        Productions
+            C ::= D
+            C ::= epsilon
+    nonterm D
+        First: {"ε"}
+        Follow: {EOI}
+        Productions
+            D ::= epsilon
+LR(1) States
+    State 0 [0.0]
+        Kernel
+            [S' ::= · S "⊥", {"ε"}]
+        Added
+            [S ::= · A EOI, {"⊥"}]
+            [A ::= · B C, {EOI}]
+            [B ::= · Tb, {EOI}]
+        Actions
+            Tb : ShiftPrefix 1
+        Gotos
+            S : 2
+            A : 3
+            B : 4
+    State 1 [1.0]
+        Kernel
+            [B ::= Tb ·, {EOI}]
+        Actions
+            EOI : Reduce B ::= Tb
+    State 2 [2.0]
+        Kernel
+            [S' ::= S · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 5
+    State 3 [3.0]
+        Kernel
+            [S ::= A · EOI, {"⊥"}]
+        Actions
+            EOI : ShiftAccept 6
+    State 4 [4.0]
+        Kernel
+            [A ::= B · C, {EOI}]
+        Added
+            [C ::= · D, {EOI}]
+            [C ::= ·, {EOI}]
+            [D ::= ·, {EOI}]
+        Actions
+            EOI :
+CONFLICT        Reduce C ::= epsilon
+CONFLICT        Reduce D ::= epsilon
+        Gotos
+            C : 7
+            D : 8
+    State 5 [5.0]
+        Kernel
+            [S' ::= S "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce S' ::= S "⊥"
+    State 6 [6.0]
+        Kernel
+            [S ::= A EOI ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= A EOI
+    State 7 [7.0]
+        Kernel
+            [A ::= B C ·, {EOI}]
+        Actions
+            EOI : Reduce A ::= B C
+    State 8 [8.0]
+        Kernel
+            [C ::= D ·, {EOI}]
+        Actions
+            EOI : Reduce C ::= D
