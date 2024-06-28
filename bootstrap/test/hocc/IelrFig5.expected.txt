@@ -104,6 +104,9 @@ IELR(1) States
         Gotos
             C : 10
             D : 11
+        Conflict contributions
+            [A ::= Ta · C D E, {Ta}]
+                14 : Reduce E ::= epsilon
     State 5 [5.0]
         Kernel
             [S ::= Ta A · B Ta, {"⊥"}]
@@ -158,6 +161,9 @@ IELR(1) States
             Ta : ShiftPrefix 9 prec p2
         Gotos
             D : 16
+        Conflict contributions
+            [A ::= Ta C · D E, {Ta}]
+                14 : Reduce E ::= epsilon
     State 11 [10.0]
         Kernel
             [C ::= D ·, {Ta}]
@@ -199,6 +205,9 @@ IELR(1) States
             Tc : Reduce E ::= epsilon prec p1
         Gotos
             E : 21
+        Conflict contributions
+            [A ::= Ta C D · E, {Ta}]
+                14 : Reduce E ::= epsilon
     State 17 [15.0]
         Kernel
             [S ::= Ta A B Ta ·, {"⊥"}]

@@ -106,6 +106,13 @@ IELR(1) States
             [C ::= Ta · Ta, {Ta}] prec p3
         Actions
             Ta : ShiftPrefix 13
+        Conflict contributions
+            [A ::= Ta · Ta, {Ta}]
+                12 : Reduce A ::= Ta Ta
+            [B ::= Ta · Ta, {Ta}]
+                12 : Reduce B ::= Ta Ta
+            [C ::= Ta · Ta, {Ta}]
+                12 : Reduce C ::= Ta Ta
     State 5 [5.0]
         Kernel
             [S ::= Ta A · Ta, {"⊥"}]
@@ -128,6 +135,11 @@ IELR(1) States
             [C ::= Ta · Ta, {Ta}] prec p3
         Actions
             Ta : ShiftPrefix 17
+        Conflict contributions
+            [B ::= Ta · Ta, {Ta}]
+                12 : Reduce B ::= Ta Ta
+            [C ::= Ta · Ta, {Ta}]
+                12 : Reduce C ::= Ta Ta
     State 9 [8.0]
         Kernel
             [S ::= Tb A · Tb, {"⊥"}]
@@ -155,6 +167,13 @@ IELR(1) States
             [C ::= Ta Ta ·, {Ta}] prec p3
         Actions
             Ta : Reduce A ::= Ta Ta prec p1
+        Conflict contributions
+            [A ::= Ta Ta ·, {Ta}]
+                12 : Reduce A ::= Ta Ta
+            [B ::= Ta Ta ·, {Ta}]
+                12 : Reduce B ::= Ta Ta
+            [C ::= Ta Ta ·, {Ta}]
+                12 : Reduce C ::= Ta Ta
     State 14 [13.0]
         Kernel
             [S ::= Ta A Ta ·, {"⊥"}]
@@ -178,6 +197,11 @@ IELR(1) States
         Actions
             Ta : Reduce B ::= Ta Ta prec p2
             Tb : Reduce A ::= Ta Ta prec p1
+        Conflict contributions
+            [B ::= Ta Ta ·, {Ta}]
+                12 : Reduce B ::= Ta Ta
+            [C ::= Ta Ta ·, {Ta}]
+                12 : Reduce C ::= Ta Ta
     State 18 [16.0]
         Kernel
             [S ::= Tb A Tb ·, {"⊥"}]

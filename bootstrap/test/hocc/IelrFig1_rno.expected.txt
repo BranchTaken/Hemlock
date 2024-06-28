@@ -78,6 +78,9 @@ IELR(1) States
             Ta :
 CONFLICT        ShiftPrefix 9 prec p
 CONFLICT        Reduce A ::= Ta prec p
+        Conflict contributions
+            [A ::= Ta ·, {Ta}]
+                4 : Reduce A ::= Ta
     State 5 [5.0]
         Kernel
             [S ::= Ta A · Ta, {"⊥"}] prec p
