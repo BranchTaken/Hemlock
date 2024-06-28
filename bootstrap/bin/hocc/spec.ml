@@ -1881,13 +1881,13 @@ let to_description conf io description t =
                   |> (fun formatter ->
                     Attribs.fold ~init:formatter
                       ~f:(fun formatter Attrib.{conflict_state_index; contrib; _} ->
-                      formatter
-                      |> Fmt.fmt "                " |> html "<li>"
-                      |> pp_state_index conflict_state_index
-                      |> Fmt.fmt " : "
-                      |> pp_contrib contrib
-                      |> html "</li>" |> Fmt.fmt "\n"
-                    ) attribs
+                        formatter
+                        |> Fmt.fmt "                " |> html "<li>"
+                        |> pp_state_index conflict_state_index
+                        |> Fmt.fmt " : "
+                        |> pp_contrib contrib
+                        |> html "</li>" |> Fmt.fmt "\n"
+                      ) attribs
                   )
                   |> html "                </ul>\n"
                 ) kernel_attribs
