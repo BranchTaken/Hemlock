@@ -9,15 +9,19 @@ services:
       target: base
     container_name: branchtaken__hemlock__base
     image: branchtaken/hemlock:base
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
   latest:
     build:
       target: latest
     container_name: branchtaken__hemlock__latest
     extends: base
     image: branchtaken/hemlock:latest
-  tested:
+  test:
     build:
-      target: tested
-    container_name: branchtaken__hemlock__tested
+      target: test
+    container_name: branchtaken__hemlock__test
     extends: latest
-    image: branchtaken/hemlock:tested
+    image: branchtaken/hemlock:test
+

@@ -8,5 +8,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@main
-    - name: docker_compose_build_tested
-      run: docker compose build tested
+    - name: docker_compose_run_test
+      run: docker compose run --build test
