@@ -1,11 +1,11 @@
 # IELR(1) as implemented by `hocc`
 
 The `hocc` parser generator implements several LR(1)-family parser generation algorithms, namely
-[LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) [^deremer1969],
-[LR(1)](https://en.wikipedia.org/wiki/LR_parser) [^knuth1965], PGM(1) [^pager1977][^fpottier],
-and IELR(1) [^denny2010]. These algorithms are amply documented and (re-)implemented, with the
-notable exception of IELR(1), which is documented only in the original paper and implemented only by
-the original authors in [`bison`](https://www.gnu.org/software/bison/). This posed extreme
+[LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) [^deremer1969], [canonical
+LR(1)](https://en.wikipedia.org/wiki/LR_parser) [^knuth1965], PGM(1) [^pager1977][^fpottier], and
+IELR(1) [^denny2010]. These algorithms are amply documented and (re-)implemented, with the notable
+exception of IELR(1), which is documented only in the original paper and implemented only by the
+original authors in [`bison`](https://www.gnu.org/software/bison/). This posed extreme
 implementation challenges in the context of `hocc`. The IELR(1) paper is very closely tied to the
 particulars of the `bison` implementation, and perhaps for that reason the terminology and structure
 are closely based on the idiosyncrasies of DeRemer's presentation of LALR(1). This terminology
