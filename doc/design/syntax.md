@@ -160,43 +160,42 @@ Pattern construction:
 
 Expressions:
 
-| Operator                                               | Associativity |
-| :----------------------------------------------------: | :-----------: |
-| `.`                                                    | —             |
-| Function/variant application, `lazy`                   | left          |
-| `-` (prefix), `~`..., `?`...                           | —             |
-| `'` (prefix), `^` (prefix), `>` (prefix)               | —             |
-| `**`...                                                | right         |
-| `*`..., `/`..., `%`...                                 | left          |
-| `+`..., `-`...                                         | left          |
-| `::`, `:`...                                           | right         |
-| `@`..., `^`...                                         | right         |
-| `=`..., `<`..., `>`..., `\|`..., `$`..., `.`...        | left          |
-| `and`                                                  | right         |
-| `or`                                                   | right         |
-| `,`                                                    | —             |
-| `:=`                                                   | right         |
-| `if`                                                   | —             |
-| `;`                                                    | right         |
-| `..`                                                   | —             |
-| `import`                                               | —             |
-| `open`                                                 | —             |
-| `let`, `match`, `fn`, `function`, `expose`, `conceal`  | —             |
+| Operator                                              | Associativity |
+| :---------------------------------------------------: | :-----------: |
+| `.`                                                   | —             |
+| Function/variant application, `lazy`                  | left          |
+| `-` (prefix), `~`..., `?`...                          | —             |
+| `'` (prefix), `^` (prefix), `>` (prefix)              | —             |
+| `**`...                                               | right         |
+| `*`..., `/`..., `%`...                                | left          |
+| `+`..., `-`...                                        | left          |
+| `::`, `:`...                                          | right         |
+| `@`..., `^`...                                        | right         |
+| `=`..., `<`..., `>`..., `\|`..., `$`..., `.`...       | left          |
+| `and`                                                 | right         |
+| `or`                                                  | right         |
+| `,`                                                   | —             |
+| `:=`                                                  | right         |
+| `if`                                                  | —             |
+| `;`                                                   | right         |
+| `..`                                                  | —             |
+| `import`                                              | —             |
+| `open`                                                | —             |
+| `let`, `match`, `fn`, `function`, `expose`, `conceal` | —             |
 
 ### Keyword
 
 The following words are keywords which are used as syntactic elements, and cannot be used for other
 purposes.
 
-```hemlock
-and         external    lazy        rec
-also        false       let         then
-as          fn          match       true
-conceal     function    mutability  type
-effect      if          of          when
-else        import      open        with
-expose      include     or
-```
+| Keywords   |          |              |           |          |
+| :--------- | :------- | :----------- | :-------- | :------- |
+| `and`      | `also`   | `as`         | `conceal` | `effect`
+| `else`     | `expose` | `external`   | `false`   | `fn`
+| `function` | `if`     | `import`     | `include` | `lazy`
+| `let`      | `match`  | `mutability` | `of`      | `open`
+| `or`       | `rec`    | `then`       | `true`    | `type`
+| `when`     | `with`
 
 ### Identifier
 

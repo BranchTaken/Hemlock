@@ -1,0 +1,41 @@
+# Implementation of `longer.mly` grammar from:
+#
+#   https://gitlab.inria.fr/fpottier/menhir/-/issues/21
+
+hocc
+    token INFIXOP0
+    token EQUAL "="
+    token NAME
+    token NUMERAL
+    token LET "let"
+    token REC "rec"
+    token IN "in"
+    token AND "and"
+    token EOF
+
+    start Commandline ::=
+      | "let" NAME Term EOF
+      | Term EOF
+
+    nonterm Term ::=
+      | InfixTerm_
+      | "let" NAME "=" InfixTerm "in" Term
+      | "let" "rec" Fs "in" Term
+
+    nonterm InfixTerm ::=
+      | NUMERAL
+
+    nonterm InfixTerm_ ::=
+      | NUMERAL
+      | InfixTerm INFIXOP0 InfixTerm
+
+    # Menhir's `separated_nonempty_list` is expanded here to `Fs` and `FsTl`.
+    nonterm Fs ::=
+      | RecursiveClause FsTl
+
+    nonterm FsTl ::=
+      | "and" RecursiveClause FsTl
+      | epsilon
+
+    nonterm RecursiveClause ::=
+      | NAME "=" Term

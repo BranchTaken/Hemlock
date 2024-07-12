@@ -1,0 +1,23 @@
+hocc
+    neutral p1
+    neutral p2 < p1
+    token Ta prec p2
+    token Tb
+    token Tc
+    token Tz
+    token Ty
+    start S ::=
+      | Ta Z Ta
+      | Tb Z Tb
+    nonterm Z ::=
+      | Tz A B
+      | Ty A B
+    nonterm A ::= Ta C D E
+    nonterm B ::=
+      | Tc
+      | epsilon
+    nonterm C ::= D
+    nonterm D ::= Ta
+    nonterm E ::=
+      | Ta
+      | epsilon prec p1

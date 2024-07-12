@@ -1,0 +1,368 @@
+# Transcribed Gawk 3.1.0 grammar, which is one of the studied grammars in:
+#
+#   The IELR(1) algorithm for generating minimal LR(1) parser tables for
+#   non-LR(1) grammars with conflict resolution
+#   Joel E. Denny and Brian A. Malloy
+#   Science of Computer Programming 75 (2010) 943-979
+#
+# This transcription semantically differs from the original in a few subtle ways:
+#
+# - `hocc` does not support "nonassoc" associativity. Using "neutral" in its place causes additional
+#   unresolvable conflicts.
+# - `hocc` does not support midrule actions, which are conceptually inlined non-terminals with
+#   single productions. Explicit `Midrule*` non-terminals simulate this.
+# - There are some odd artifacts in the original that are not faithfully preserved, e.g.:
+#   + The `ERROR` token is unused, yet there is heavy use of the built-in `error` token.
+#   + The `UNARY` and `CONCAT_OP` tokens are used only as `%prec` references.
+
+hocc
+    #
+    # Tokens with no precedence.
+    #
+
+    token NAME
+    token REGEXP
+
+    token ERROR
+
+    token NEWLINE
+
+    token LEX_BEGIN
+    token LEX_END
+    token LEX_IF
+    token LEX_ELSE
+    token LEX_RETURN
+    token LEX_DELETE
+
+    token LEX_WHILE
+    token LEX_DO
+    token LEX_FOR
+    token LEX_BREAK
+    token LEX_CONTINUE
+
+    token LEX_PRINT
+    token LEX_PRINTF
+    token LEX_NEXT
+    token LEX_EXIT
+    token LEX_FUNCTION
+
+    token LEX_NEXTFILE
+
+    token LBRACK "["
+    token RBRACK "]"
+    token LBRACE "{"
+    token RBRACE "}"
+    token SEMI ";"
+
+    #
+    # Tokens with precedence.
+    #
+
+    left pParen
+    token LPAREN "(" prec pParen
+    token RPAREN ")" prec pParen
+
+    left pDollar < pParen
+    token DOLLAR "$" prec pDollar
+
+    left pXcrement < pDollar
+    token INCREMENT prec pXcrement
+    token DECREMENT prec pXcrement
+
+    right pCarat < pXcrement
+    token CARAT "^" prec pCarat
+
+    right pUnary < pCarat
+    token XMARK "!" prec pUnary
+
+    left pMul < pUnary
+    token STAR "*" prec pMul
+    token SLASH "/" prec pMul
+    token PCT "\%" prec pMul
+
+    left pAdd < pMul
+    token PLUS "+" prec pAdd
+    token MINUS "-" prec pAdd
+
+    left pY < pAdd
+    token YSTRING prec pY
+    token YNUMBER prec pY
+
+    left pConcat < pY
+
+    (*nonassoc*)neutral pRel < pConcat
+    token RELOP prec pRel
+    token LT "<" prec pRel
+    token GT ">" prec pRel
+    token BAR "|" prec pRel
+    token APPEND_OP prec pRel
+    token TWOWAYIO prec pRel
+
+    (*nonassoc*)neutral pMatch < pRel
+    token MATCHOP prec pMatch
+
+    (*nonassoc*)neutral pComma < pMatch
+    token COMMA "," prec pComma
+
+    left pCall < pComma
+    token FUNC_CALL prec pCall
+    token LEX_BUILTIN prec pCall
+    token LEX_LENGTH prec pCall
+
+    (*nonassoc*)neutral pIn < pCall
+    token LEX_IN prec pIn
+
+    left pGetline < pIn
+    token LEX_GETLINE prec pGetline
+
+    left pAnd < pGetline
+    token LEX_AND prec pAnd
+
+    left pOr < pAnd
+    token LEX_OR prec pOr
+
+    right pIfElse < pOr
+    token QMARK "?" prec pIfElse
+    token COLON ":" prec pIfElse
+
+    right pAssign < pIfElse
+    token ASSIGNOP prec pAssign
+
+    start Start ::= Opt_nls Program Opt_nls
+
+    nonterm Program ::=
+      | Rule
+      | Program Rule
+      | ERROR
+      | Program ERROR
+      | epsilon
+
+    nonterm Rule ::=
+      | LEX_BEGIN Midrule1 Action
+      | LEX_END Midrule2 Action
+      | LEX_BEGIN Statement_term
+      | LEX_END Statement_term
+      | Pattern Action
+      | Action
+      | Pattern Statement_term
+      | Function_prologue Function_body
+
+    nonterm Midrule1 ::= epsilon
+    nonterm Midrule2 ::= epsilon
+
+    nonterm Func_name ::=
+      | NAME
+      | FUNC_CALL prec pCall
+      | Lex_builtin
+
+    nonterm Lex_builtin ::=
+      | LEX_BUILTIN prec pCall
+      | LEX_LENGTH prec pCall
+
+    nonterm Function_prologue ::=
+      | LEX_FUNCTION Midrule3 Func_name "(" Opt_param_list R_paren Opt_nls prec pParen
+
+    nonterm Midrule3 ::= epsilon
+
+    nonterm Function_body ::=
+      | L_brace Statements R_brace Opt_semi Opt_nls
+      | L_brace R_brace Opt_semi Opt_nls
+
+    nonterm Pattern ::=
+      | Exp
+      | Exp "," Exp prec pComma
+
+    nonterm Regexp ::= "/" Midrule4 REGEXP "/" prec pMul
+
+    nonterm Midrule4 ::= epsilon
+
+    nonterm Action ::=
+      | L_brace Statements R_brace Opt_semi Opt_nls
+      | L_brace R_brace Opt_semi Opt_nls
+
+    nonterm Statements ::=
+      | Statement
+      | Statements Statement
+      | ERROR
+      | Statements ERROR
+
+    nonterm Statement_term ::=
+      | Nls
+      | Semi Opt_nls
+
+    nonterm Statement ::=
+      | Semi Opt_nls
+      | L_brace R_brace
+      | L_brace Statements R_brace
+      | If_statement
+      | LEX_WHILE "(" Exp R_paren Opt_nls Statement prec pParen
+      | LEX_DO Opt_nls Statement LEX_WHILE "(" Exp R_paren Opt_nls prec pParen
+      | LEX_FOR "(" NAME LEX_IN NAME R_paren Opt_nls Statement
+      | LEX_FOR "(" Opt_exp Semi Opt_nls Exp Semi Opt_nls Opt_exp R_paren Opt_nls Statement
+      prec pParen
+      | LEX_FOR "(" Opt_exp Semi Opt_nls Semi Opt_nls Opt_exp R_paren Opt_nls Statement prec pParen
+      | LEX_BREAK Statement_term
+      | LEX_CONTINUE Statement_term
+      | Print "(" Expression_list R_paren Output_redir Statement_term prec pParen
+      | Print Opt_rexpression_list Output_redir Statement_term
+      | LEX_NEXT Statement_term
+      | LEX_NEXTFILE Statement_term
+      | LEX_EXIT Opt_exp Statement_term
+      | LEX_RETURN Midrule5 Opt_exp Statement_term
+      | LEX_DELETE NAME "[" Expression_list "]" Statement_term
+      | LEX_DELETE NAME Statement_term
+      | Exp Statement_term
+
+    nonterm Midrule5 ::= epsilon
+
+    nonterm Print ::=
+      | LEX_PRINT
+      | LEX_PRINTF
+
+    nonterm If_statement ::=
+      | LEX_IF "(" Exp R_paren Opt_nls Statement prec pComma
+      | LEX_IF "(" Exp R_paren Opt_nls Statement LEX_ELSE Opt_nls Statement
+
+    nonterm Nls ::=
+      | NEWLINE
+      | Nls NEWLINE
+
+    nonterm Opt_nls ::=
+      | epsilon
+      | Nls
+
+    nonterm Input_redir ::=
+      | epsilon
+      | "<" Simp_exp prec pRel
+
+    nonterm Output_redir ::=
+      | epsilon
+      | ">" Exp prec pRel
+      | APPEND_OP Exp prec pRel
+      | "|" Exp prec pRel
+      | TWOWAYIO Exp prec pRel
+
+    nonterm Opt_param_list ::=
+      | epsilon
+      | Param_list
+
+    nonterm Param_list ::=
+      | NAME
+      | Param_list Comma NAME
+      | ERROR
+      | Param_list ERROR
+      | Param_list Comma ERROR
+
+    nonterm Opt_exp ::=
+      | epsilon
+      | Exp
+
+    nonterm Opt_rexpression_list ::=
+      | epsilon
+      | Rexpression_list
+
+    nonterm Rexpression_list ::=
+      | Rexp
+      | Rexpression_list Comma Rexp
+      | ERROR
+      | Rexpression_list ERROR
+      | Rexpression_list ERROR Rexp
+      | Rexpression_list Comma ERROR
+
+    nonterm Opt_expression_list ::=
+      | epsilon
+      | Expression_list
+
+    nonterm Expression_list ::=
+      | Exp
+      | Expression_list Comma Exp
+      | ERROR
+      | Expression_list ERROR
+      | Expression_list ERROR Exp
+      | Expression_list Comma ERROR
+
+    nonterm Exp ::=
+      | Variable ASSIGNOP Midrule6 Exp prec pAssign
+      | "(" Expression_list R_paren LEX_IN NAME
+      | Exp "|" LEX_GETLINE Opt_variable prec pGetline
+      | Exp TWOWAYIO LEX_GETLINE Opt_variable prec pGetline
+      | LEX_GETLINE Opt_variable Input_redir prec pGetline
+      | Exp LEX_AND Exp prec pAnd
+      | Exp LEX_OR Exp prec pOr
+      | Exp MATCHOP Exp prec pMatch
+      | Regexp
+      | "!" Regexp prec pUnary
+      | Exp LEX_IN NAME
+      | Exp RELOP Exp prec pRel
+      | Exp "<" Exp prec pRel
+      | Exp ">" Exp prec pRel
+      | Exp "?" Exp ":" Exp prec pIfElse
+      | Simp_exp
+      | Exp Simp_exp prec pConcat
+
+    nonterm Midrule6 ::= epsilon
+
+    nonterm Rexp ::=
+      | Variable ASSIGNOP Midrule7 Rexp prec pAssign
+      | Rexp LEX_AND Rexp prec pAnd
+      | Rexp LEX_OR Rexp prec pOr
+      | LEX_GETLINE Opt_variable Input_redir prec pGetline
+      | Regexp
+      | "!" Regexp prec pUnary
+      | Rexp MATCHOP Rexp prec pMatch
+      | Rexp LEX_IN NAME
+      | Rexp RELOP Rexp prec pRel
+      | Rexp "?" Rexp ":" Rexp prec pIfElse
+      | Simp_exp
+      | Rexp Simp_exp prec pConcat
+
+    nonterm Midrule7 ::= epsilon
+
+    nonterm Simp_exp ::=
+      | Non_post_simp_exp
+      | Simp_exp "^" Simp_exp prec pCarat
+      | Simp_exp "*" Simp_exp prec pMul
+      | Simp_exp "/" Simp_exp prec pMul
+      | Simp_exp "\%" Simp_exp prec pMul
+      | Simp_exp "+" Simp_exp prec pAdd
+      | Simp_exp "-" Simp_exp prec pAdd
+      | Variable INCREMENT prec pXcrement
+      | Variable DECREMENT prec pXcrement
+
+    nonterm Non_post_simp_exp ::=
+      | "!" Simp_exp prec pUnary
+      | "(" Exp R_paren prec pParen
+      | LEX_BUILTIN "(" Opt_expression_list R_paren prec pParen
+      | LEX_LENGTH "(" Opt_expression_list R_paren prec pParen
+      | LEX_LENGTH prec pCall
+      | FUNC_CALL "(" Opt_expression_list R_paren prec pParen
+      | Variable
+      | INCREMENT Variable prec pXcrement
+      | DECREMENT Variable prec pXcrement
+      | YNUMBER prec pY
+      | YSTRING prec pY
+      | "-" Simp_exp prec pUnary
+      | "+" Simp_exp prec pUnary
+
+    nonterm Opt_variable ::=
+      | epsilon
+      | Variable
+
+    nonterm Variable ::=
+      | NAME
+      | NAME "[" Expression_list "]"
+      | "$" Non_post_simp_exp prec pDollar
+
+    nonterm L_brace ::= "{" Opt_nls
+
+    nonterm R_brace ::= "}" Opt_nls
+
+    nonterm R_paren ::= ")"
+
+    nonterm Opt_semi ::=
+      | epsilon
+      | Semi
+
+    nonterm Semi ::= ";"
+
+    nonterm Comma ::= "," Opt_nls prec pComma

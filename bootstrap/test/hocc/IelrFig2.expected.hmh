@@ -1,0 +1,16 @@
+hocc
+    neutral p1
+    neutral p2 < p1
+    token Ta
+    token Tb
+    token Tc
+    start S ::=
+      | Ta A Ta
+      | Ta B Tb
+      | Ta C Tc
+      | Tb A Tb
+      | Tb B Ta
+      | Tb C Ta
+    nonterm A ::= Ta Ta
+    nonterm B ::= Ta Ta prec p1
+    nonterm C ::= Ta Ta prec p2

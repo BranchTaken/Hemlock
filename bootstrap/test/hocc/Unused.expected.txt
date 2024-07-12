@@ -1,0 +1,83 @@
+Unused grammar
+
+Precedences
+    neutral pUnusedA
+    neutral pUnusedB < pUnusedA
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token T
+        First: {T}
+        Follow: {"⊥"}
+    token TUnusedA prec pUnusedA
+        First: {TUnusedA}
+        Follow: {}
+    token TUnusedB
+        First: {TUnusedB}
+        Follow: {}
+Non-terminals
+    start S
+        First: {"ε", T}
+        Follow: {"⊥"}
+        Productions
+            S ::= N
+            S ::= epsilon
+    start S'
+        First: {"⊥", T}
+        Follow: {"ε"}
+        Productions
+            S' ::= S "⊥"
+    nonterm N
+        First: {T}
+        Follow: {"⊥"}
+        Productions
+            N ::= T
+    nonterm NUnusedA
+        First: {"ε", TUnusedA}
+        Follow: {}
+        Productions
+            NUnusedA ::= NUnusedB prec pUnusedA
+            NUnusedA ::= epsilon prec pUnusedA
+    nonterm NUnusedB
+        First: {TUnusedA}
+        Follow: {}
+        Productions
+            NUnusedB ::= TUnusedA
+LR(1) States
+    State 0 [0.0]
+        Kernel
+            [S' ::= · S "⊥", {"ε"}]
+        Added
+            [S ::= · N, {"⊥"}]
+            [S ::= ·, {"⊥"}]
+            [N ::= · T, {"⊥"}]
+        Actions
+CONFLICT    "⊥" : Reduce S ::= epsilon
+            T : ShiftAccept 1
+        Gotos
+            S : 2
+            N : 3
+    State 1 [1.0]
+        Kernel
+            [N ::= T ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce N ::= T
+    State 2 [2.0]
+        Kernel
+            [S' ::= S · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 4
+    State 3 [3.0]
+        Kernel
+            [S ::= N ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= N
+    State 4 [4.0]
+        Kernel
+            [S' ::= S "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce S' ::= S "⊥"

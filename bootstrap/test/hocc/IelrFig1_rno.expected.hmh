@@ -1,0 +1,10 @@
+hocc
+    left p
+    token Ta prec p
+    token Tb
+    start S ::=
+      | Ta A Ta prec p
+      | Tb A Tb
+    nonterm A prec p ::=
+      | Ta
+      | Ta Ta

@@ -1,0 +1,1259 @@
+hocc
+    ################################################################################################
+    # Precedences.
+
+    neutral pGenericParamOne
+    left pColon < pGenericParamOne
+
+    neutral pProcParmBody
+    left pRparen < pProcParmBody
+    neutral pList < pRparen, pColon
+
+    neutral pId
+    neutral pOptionalGenericParamList < pId
+    left pLparen < pOptionalGenericParamList, pList
+    left pRarrow < pOptionalGenericParamList
+
+    neutral pProcParmRequired2
+    neutral pProcParmRequired1 < pProcParmRequired2
+
+    neutral pTypeName2
+    neutral pVarRestId
+    left pDot < pTypeName2, pVarRestId, pOptionalGenericParamList
+    left pLbrace
+    left pLbracket < pVarRestId, pOptionalGenericParamList
+    neutral pThis < pDot, pLbrace, pLbracket
+
+    neutral pUnaryExpr2 < pDot, pLbracket, pLparen
+    right pPowOp < pDot, pLbracket, pLparen, pUnaryExpr2
+    left pMulOp < pPowOp
+    left pPlusOp < pMulOp
+
+    neutral pLvalListBody < pLbracket, pPlusOp
+    left pEq < pLvalListBody
+    neutral pDoWhileExpr2
+
+    left pCmpOp1 < pPlusOp, pLvalListBody, pDoWhileExpr2
+    neutral pAssnExpr1 < pCmpOp1
+
+    neutral pExprListBodyA < pCmpOp1, pDot, pLbracket, pLparen
+    neutral pExprListBodyB < pLbracket, pCmpOp1, pPlusOp
+
+    neutral pDictElm
+    neutral pProcParmRequiredList
+    neutral pProcParmOptional
+    neutral pInitFieldList
+    neutral pCallNamed
+    neutral pCallPargs
+    neutral pCallThis
+    left pComma < pDictElm, pProcParmRequiredList, pProcParmOptional, pInitFieldList, pCallNamed,
+      pCallPargs, pCallThis, pLvalListBody, pUnaryExpr2, pPlusOp, pAssnExpr1, pExprListBodyA,
+      pExprListBodyB
+
+    left pCmpOp2 < pCmpOp1, pComma, pExprListBodyA
+    neutral pUnaryExpr1 < pDot, pCmpOp2
+    neutral pAssnExpr2 < pCmpOp2, pDot, pLparen, pPlusOp
+    left pCmpOp3 < pCmpOp2, pUnaryExpr1, pAssnExpr1, pAssnExpr2
+
+    neutral pAssnExpr3
+
+    left pCmpOp4 < pCmpOp3
+    left pCmpOp5 < pCmpOp4
+
+    neutral pTypeNameSuffixElm < pDot
+    neutral pTypeNameSuffix1 < pDot, pLbracket
+    neutral pTypeName1 < pTypeNameSuffix1
+    neutral pLvalPrefix1 < pDot, pLbracket
+    neutral pLvalPrefix2 < pLbracket
+    neutral pLvalSuffix < pTypeNameSuffix1
+    neutral pLval1 < pDot
+    neutral pLval2 < pRparen
+    neutral pAnnotations2
+    neutral pAnnotations1 < pAnnotations2
+    neutral pImplements
+    neutral pImplementsInterface < pImplements
+    neutral pImportModuleRelpath < pPowOp
+    neutral pImportModuleName < pDot
+    neutral pImportVars < pComma
+    neutral pImportLval < pComma
+    neutral pVar1 < pDot
+    neutral pVar2 < pVar1
+    neutral pElseClause < pCmpOp2
+    neutral pDoWhileExpr1 < pCmpOp5, pComma, pDot, pLbracket, pLparen, pCmpOp2
+    neutral pAssertExpr < pCmpOp5, pComma
+    left pRdangle
+    neutral pNondelimitedExpr1 < pRdangle
+    neutral pNondelimitedExpr2 < pRparen
+    neutral pLvalSubscript
+    neutral pExprSlice < pLvalSubscript
+    neutral pExprSuffix < pLbracket, pLvalSuffix
+
+    neutral pReturnStmt1
+    neutral pThrowStmt1
+    neutral pAssnExprLeft4
+    neutral pAssnExprLeft2 < pComma
+    neutral pAssnExprLeft1 < pAssnExprLeft2, pAssnExprLeft4
+    neutral pAssnExprLeft3 < pReturnStmt1, pThrowStmt1, pComma, pRparen
+    neutral pAssnExprLeft5 < pComma
+
+    neutral pExpr1
+    neutral pStmtList < pExpr1
+    neutral pExpr2 < pDot
+    neutral pStmt
+    left pRbrace < pStmt
+    neutral pExprList1 < pComma, pRparen, pRbrace
+    neutral pExprList2 < pAssnExpr3, pPlusOp, pPowOp, pMulOp
+
+    left pIs
+    left pBar
+    left pLdangle
+    left pRbracket
+
+    ################################################################################################
+    # Tokens.
+
+    token BOI
+    token EOI
+    token INT
+    token FLOAT
+    token STR
+    token BUF
+    token CBLOCK
+    token ID prec pId
+    token COMMENT
+    token WHITESPACE
+
+    # Keywords.
+    token AND "and" prec pCmpOp3
+    token ASSERT "assert"
+    token ATTR "attr"
+    token BLANK "_"
+    token BREAK "break"
+    token CATCH "catch"
+    token CLASS "class"
+    token CONST "const"
+    token CONTINUE "continue"
+    token DEBUG "$debug"
+    token DO "do"
+    token ELIF "elif"
+    token ELSE "else"
+    token ENUM "enum"
+    token EXTENDS "extends"
+    token FALSE "false"
+    token FILE "$file"
+    token FINAL "final"
+    token FOR "for"
+    token FROM "from"
+    token GUARD "guard"
+    token IF "if"
+    token IMPLEMENTS "implements" prec pImplements
+    token IMPORT "import"
+    token IN "in" prec pCmpOp2
+    token INF "Inf"
+    token INIT "init"
+    token INTERFACE "interface"
+    token IS "is" prec pIs
+    token LINE "$line"
+    token MEMBER "member"
+    token METH "meth"
+    token MODULE "module"
+    token NAN "NaN"
+    token NOT "not" prec pCmpOp2
+    token NULL "null"
+    token OR "or" prec pCmpOp5
+    token PRELUDE "prelude"
+    token PRIVATE "private"
+    token PROC "proc"
+    token PROTECTED "protected"
+    token PUBLIC "public"
+    token PURE "pure"
+    token RETURN "return"
+    token SELECT "select"
+    token STATIC "static"
+    token THIS "this" prec pThis
+    token THROW "throw"
+    token TRUE "true"
+    token VAR "var"
+    token VIRTUAL "virtual"
+    token WHERE "where"
+    token WHILE "while"
+    token XOR "xor" prec pCmpOp4
+
+    # Symbols.
+    token POW "^" prec pPowOp
+
+    token MUL "*" prec pMulOp
+    token DIV "/" prec pMulOp
+    token MOD "\%" prec pMulOp
+
+    token PLUS "+" prec pPlusOp
+    token MINUS "-" prec pPlusOp
+
+    token EQEQ "==" prec pCmpOp2
+    token NOTEQ "!=" prec pCmpOp2
+    token EQEQEQ "===" prec pCmpOp2
+    token NOTEQEQ "!==" prec pCmpOp2
+
+    token LT "<" prec pCmpOp1
+    token LE "<=" prec pCmpOp1
+    token GT ">" prec pCmpOp1
+    token GE ">=" prec pCmpOp1
+
+    token EQ "=" prec pEq
+
+    token PLUSEQ "+="
+    token MINUSEQ "-="
+    token MULEQ "*="
+    token DIVEQ "/="
+    token MODEQ "\%="
+    token POWEQ "^="
+
+    token BAR "|" prec pBar
+    token RARROW "->" prec pRarrow
+    token COMMA "," prec pComma
+    token LPAREN "(" prec pLparen
+    token LBRACE "{" prec pLbrace
+    token LBRACKET "[" prec pLbracket
+    token LDANGLE "«" prec pLdangle
+    token COLON ":" prec pColon
+    token SEMICOLON ";"
+    token RPAREN ")" prec pRparen
+    token RBRACE "}" prec pRbrace
+    token RBRACKET "]" prec pRbracket
+    token RDANGLE "»" prec pRdangle
+    token DOT "." prec pDot
+
+    ################################################################################################
+    # Non-terminals.
+
+    nonterm SliceTerm ::=
+      | Expr
+      | Lval
+      | epsilon
+
+    nonterm Slice ::=
+      | SliceTerm ":" SliceTerm ":" SliceTerm
+      | SliceTerm ":" SliceTerm
+      | Expr
+      | Lval
+
+    nonterm ParamTypeList ::=
+      | TypeSpec
+      | ParamTypeList "," TypeSpec
+
+    nonterm DerivationConstraint ::=
+      | ID "extends" TypeName ImplementsInterface
+      | ID "implements" InterfaceList
+
+    nonterm DerivationConstraintList ::=
+      | DerivationConstraint
+      | DerivationConstraintList "and" DerivationConstraint
+
+    nonterm GenericParamOne ::=
+      | "«" TypeSpec "»"
+      | "«" TypeSpec "where" DerivationConstraint "»"
+      | epsilon prec pGenericParamOne
+
+    nonterm GenericParamTwo ::=
+      | "«" TypeSpec "," TypeSpec "»"
+      | "«" TypeSpec "," TypeSpec "where" DerivationConstraintList "»"
+      | epsilon
+
+    nonterm OptionalGenericParamList prec pOptionalGenericParamList ::=
+      | "«" ParamTypeList "»"
+      | "«" ParamTypeList "where" DerivationConstraintList "»"
+      | epsilon
+
+    nonterm TypeNameSuffixElm ::=
+      | ID OptionalGenericParamList prec pTypeNameSuffixElm
+
+    nonterm TypeNameSuffix ::=
+      | TypeNameSuffixElm prec pTypeNameSuffix1
+      | TypeNameSuffix "." TypeNameSuffixElm
+
+    nonterm TypeName ::=
+      | ID OptionalGenericParamList prec pTypeName1
+      | ID OptionalGenericParamList "." TypeNameSuffix prec pTypeName2
+      | TypeName "." TypeNameSuffix prec pTypeName2
+
+    nonterm Proc ::=
+      | "proc"
+      | "meth"
+
+    nonterm ProtoType ::=
+      | Proc OptionalGenericParamList
+      | Proc OptionalGenericParamList "->" "(" ")"
+      | Proc OptionalGenericParamList "->" "(" ProcRetBody ")"
+
+      | Proc OptionalGenericParamList "(" ProcParmBody ")"
+      | Proc OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ")"
+      | Proc OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ProcRetBody ")"
+
+    nonterm TypeSpec ::=
+      | TypeName
+      | TypeSpec "|" TypeName
+
+      | ProtoType
+      | TypeSpec "|" ProtoType
+
+    nonterm Blank ::=
+      | "_"
+
+    nonterm LvalSubscript prec pLvalSubscript ::=
+      | "[" Slice "]"
+      | "[" "]"
+
+    nonterm LvalPrefix ::=
+      # TypeName-conforming syntax; may not actually refer to type name.
+      | TypeName prec pLvalPrefix1
+      | TypeName LvalSubscript
+
+      | "(" ImportLval ")" prec pLvalPrefix2
+      | "(" ImportLval ")" LvalSubscript
+
+      | "this" prec pThis
+      | "this" LvalSubscript
+
+    nonterm LvalSuffix ::=
+      | ID prec pLvalSuffix
+      | ID LvalSubscript
+
+      | LvalSuffix "." ID prec pLvalSuffix
+      | LvalSuffix "." ID LvalSubscript
+
+    nonterm Lval ::=
+      | ImportLval prec pLval2
+      | Blank
+      | LvalPrefix prec pLval1
+      | LvalPrefix "." LvalSuffix prec pLval1
+      | TypeName "." LvalSuffix prec pLval1
+      | "(" Lval ")"
+
+    nonterm LvalListBody prec pLvalListBody ::=
+      | Annotations Var "," Lval
+      | Var "," Lval
+      | Lval "," Lval
+      | Lval "," Annotations Var
+      | Lval "," Var
+      | Annotations Var "," Var
+      | Var "," Var
+
+      | LvalListBody "," Annotations Var
+      | LvalListBody "," Var
+      | LvalListBody "," Lval
+
+    nonterm DictElm prec pDictElm ::=
+      | Expr ":" Expr
+      | Expr ":" Lval
+      | Lval ":" Expr
+      | Lval ":" Lval
+    nonterm DictList ::=
+      | DictElm
+      | DictList "," DictElm
+    nonterm Dict ::=
+      | "{" ":" "}" GenericParamTwo
+      | "{" DictList "}" GenericParamTwo
+
+    nonterm List ::=
+      | "[" Expr "]" GenericParamOne
+      | "[" Lval "]" GenericParamOne
+      | "[" ExprListBody "]" GenericParamOne
+      | "[" "]" GenericParamOne prec pList
+
+    nonterm Annotation ::=
+      | "«" Expr "»"
+      | "«" Lval "»"
+      | "«" ExprListBody "»"
+      | "«" Str "»"
+      | "const"
+      | "final"
+      | "prelude"
+      | "private"
+      | "protected"
+      | "public"
+      | "pure"
+      | "static"
+      | "virtual"
+      | "«" "»"
+    nonterm Annotations ::=
+      | Annotation prec pAnnotations1
+      | Annotations Annotation prec pAnnotations2
+
+    nonterm ProcParmRequired ::=
+      | Annotations TypeSpec ID prec pProcParmRequired2
+      | TypeSpec ID prec pProcParmRequired1
+      | Annotations ID prec pProcParmRequired2
+      | ID prec pProcParmRequired1
+      | Annotations TypeSpec "_" prec pProcParmRequired2
+      | TypeSpec "_" prec pProcParmRequired1
+      | Annotations "_" prec pProcParmRequired2
+      | "_" prec pProcParmRequired1
+    nonterm ProcParmRequiredList ::=
+      | ProcParmRequired prec pProcParmRequiredList
+      | ProcParmRequiredList "," ProcParmRequired
+
+    nonterm ProcParmOptional prec pProcParmOptional ::=
+      | Annotations TypeSpec ID "=" Expr
+      | Annotations TypeSpec ID "=" Lval
+
+      | TypeSpec ID "=" Expr
+      | TypeSpec ID "=" Lval
+
+      | Annotations ID "=" Expr
+      | Annotations ID "=" Lval
+      | ID "=" Expr
+      | ID "=" Lval
+      | Annotations TypeSpec "_" "=" Expr
+      | Annotations TypeSpec "_" "=" Lval
+      | TypeSpec "_" "=" Expr
+      | TypeSpec "_" "=" Lval
+      | Annotations "_" "=" Expr
+      | Annotations "_" "=" Lval
+      | "_" "=" Expr
+      | "_" "=" Lval
+    nonterm ProcParmOptionalList ::=
+      | ProcParmOptional
+      | ProcParmOptionalList "," ProcParmOptional
+
+    nonterm ProcParmPargs ::=
+      | Annotations "[" "]" GenericParamOne ID
+      | "[" "]" GenericParamOne ID
+      | Annotations "[" "]" GenericParamOne "_"
+      | "[" "]" GenericParamOne "_"
+
+    nonterm ProcParmKargs ::=
+      | Annotations "{" ":" "}" GenericParamTwo ID
+      | "{" ":" "}" GenericParamTwo ID
+      | Annotations "{" ":" "}" GenericParamTwo "_"
+      | "{" ":" "}" GenericParamTwo "_"
+
+    nonterm ProcParmBody ::=
+      | ProcRetBody
+      | epsilon prec pProcParmBody
+
+    nonterm ProcRetBody ::=
+      | ProcParmRequiredList "," ProcParmOptionalList "," ProcParmPargs "," ProcParmKargs
+      | ProcParmRequiredList "," ProcParmOptionalList "," ProcParmPargs
+      | ProcParmRequiredList "," ProcParmOptionalList "," ProcParmKargs
+      | ProcParmRequiredList "," ProcParmOptionalList
+      | ProcParmRequiredList "," ProcParmPargs "," ProcParmKargs
+      | ProcParmRequiredList "," ProcParmPargs
+      | ProcParmRequiredList "," ProcParmKargs
+      | ProcParmRequiredList
+      | ProcParmOptionalList "," ProcParmPargs "," ProcParmKargs
+      | ProcParmOptionalList "," ProcParmPargs
+      | ProcParmOptionalList "," ProcParmKargs
+      | ProcParmOptionalList
+      | ProcParmPargs "," ProcParmKargs
+      | ProcParmPargs
+      | ProcParmKargs
+
+    nonterm Str ::=
+      | STR
+      | Str STR
+
+    nonterm Buf ::=
+      | BUF
+      | Buf BUF
+
+    nonterm ProcDecl ::=
+      | Annotations Proc OptionalGenericParamList
+      | Annotations Proc OptionalGenericParamList "->" ProcRetBody
+      | Annotations Proc OptionalGenericParamList "->" "(" ")"
+      | Annotations Proc OptionalGenericParamList "->" "(" ProcRetBody ")"
+
+      | Proc OptionalGenericParamList
+      | Proc OptionalGenericParamList "->" ProcRetBody
+      | Proc OptionalGenericParamList "->" "(" ")"
+      | Proc OptionalGenericParamList "->" "(" ProcRetBody ")"
+
+      | Annotations Proc ID OptionalGenericParamList
+      | Annotations Proc ID OptionalGenericParamList "->" ProcRetBody
+      | Annotations Proc ID OptionalGenericParamList "->" "(" ")"
+      | Annotations Proc ID OptionalGenericParamList "->" "(" ProcRetBody ")"
+
+      | Proc ID OptionalGenericParamList
+      | Proc ID OptionalGenericParamList "->" ProcRetBody
+      | Proc ID OptionalGenericParamList "->" "(" ")"
+      | Proc ID OptionalGenericParamList "->" "(" ProcRetBody ")"
+
+      | Annotations Proc OptionalGenericParamList "(" ProcParmBody ")"
+      | Annotations Proc OptionalGenericParamList "(" ProcParmBody ")" "->" ProcRetBody
+      | Annotations Proc OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ")"
+      | Annotations Proc OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ProcRetBody ")"
+
+      | Proc OptionalGenericParamList "(" ProcParmBody ")"
+      | Proc OptionalGenericParamList "(" ProcParmBody ")" "->" ProcRetBody
+      | Proc OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ")"
+      | Proc OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ProcRetBody ")"
+
+      | Annotations Proc ID OptionalGenericParamList "(" ProcParmBody ")"
+      | Annotations Proc ID OptionalGenericParamList "(" ProcParmBody ")" "->" ProcRetBody
+      | Annotations Proc ID OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ")"
+      | Annotations Proc ID OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ProcRetBody ")"
+
+      | Proc ID OptionalGenericParamList "(" ProcParmBody ")"
+      | Proc ID OptionalGenericParamList "(" ProcParmBody ")" "->" ProcRetBody
+      | Proc ID OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ")"
+      | Proc ID OptionalGenericParamList "(" ProcParmBody ")" "->" "(" ProcRetBody ")"
+
+    nonterm ProcDeclStmt ::=
+      | ProcDecl
+
+    nonterm ProcExpr ::=
+      | ProcDecl "{" Stmts "}"
+
+    nonterm GuardVariant ::=
+      | "continue"
+      | "throw"
+
+    nonterm GuardExpr ::=
+      | Annotations "guard" GuardVariant "{" Stmts "}"
+      | Annotations "guard" GuardVariant "->" ProcRetBody "{" Stmts "}"
+      | Annotations "guard" GuardVariant "->" "(" ")" "{" Stmts "}"
+      | Annotations "guard" GuardVariant "->" "(" ProcRetBody ")" "{" Stmts "}"
+
+      | "guard" GuardVariant "{" Stmts "}"
+      | "guard" GuardVariant "->" ProcRetBody "{" Stmts "}"
+      | "guard" GuardVariant "->" "(" ")" "{" Stmts "}"
+      | "guard" GuardVariant "->" "(" ProcRetBody ")" "{" Stmts "}"
+
+    nonterm CatchExpr ::=
+      | Annotations "catch" "{" Stmts "}"
+      | Annotations "catch" "->" ProcRetBody "{" Stmts "}"
+      | Annotations "catch" "->" "(" ")" "{" Stmts "}"
+      | Annotations "catch" "->" "(" ProcRetBody ")" "{" Stmts "}"
+      | "catch" "{" Stmts "}"
+      | "catch" "->" ProcRetBody "{" Stmts "}"
+      | "catch" "->" "(" ")" "{" Stmts "}"
+      | "catch" "->" "(" ProcRetBody ")" "{" Stmts "}"
+      | Annotations "catch" "(" ProcParmBody ")" "{" Stmts "}"
+      | Annotations "catch" "(" ProcParmBody ")" "->" ProcRetBody "{" Stmts "}"
+      | Annotations "catch" "(" ProcParmBody ")" "->" "(" ")" "{" Stmts "}"
+      | Annotations "catch" "(" ProcParmBody ")" "->" "(" ProcRetBody ")" "{" Stmts "}"
+      | "catch" "(" ProcParmBody ")" "{" Stmts "}"
+      | "catch" "(" ProcParmBody ")" "->" ProcRetBody "{" Stmts "}"
+      | "catch" "(" ProcParmBody ")" "->" "(" ")" "{" Stmts "}"
+      | "catch" "(" ProcParmBody ")" "->" "(" ProcRetBody ")" "{" Stmts "}"
+
+    nonterm InitFieldList prec pInitFieldList ::=
+      | ID "=" Expr
+      | ID "=" Lval
+      | InitFieldList "," ID "=" Expr
+      | InitFieldList "," ID "=" Lval
+
+    nonterm Inits ::=
+      | "init" "(" ")"
+      | "init" "(" CallList ")"
+      | "init" "(" Expr ")"
+      | "init" "(" Lval ")"
+      | "init" "(" ExprListBody ")"
+      | "init" "(" LvalListBody ")"
+      | "init" "(" ")" "," InitFieldList
+      | "init" "(" CallList ")" "," InitFieldList
+      | "init" "(" Expr ")" "," InitFieldList
+      | "init" "(" Lval ")" "," InitFieldList
+      | "init" "(" ExprListBody ")" "," InitFieldList
+      | "init" "(" LvalListBody ")" "," InitFieldList
+      | Lval "(" ")"
+      | Lval "(" CallList ")"
+      | Lval "(" Expr ")"
+      | Lval "(" Lval ")"
+      | Lval "(" ExprListBody ")"
+      | Lval "(" LvalListBody ")"
+      | Lval "(" ")" "," InitFieldList
+      | Lval "(" CallList ")" "," InitFieldList
+      | Lval "(" Expr ")" "," InitFieldList
+      | Lval "(" Lval ")" "," InitFieldList
+      | Lval "(" ExprListBody ")" "," InitFieldList
+      | Lval "(" LvalListBody ")" "," InitFieldList
+      | InitFieldList
+
+    nonterm MemberBlock ::=
+      | Annotations "member" "{" Stmts "}"
+      | "member" "{" Stmts "}"
+
+    nonterm InitDecl ::=
+      | Annotations "init"
+      | Annotations "init" ":" Inits
+      | Annotations "init" "(" ")"
+      | Annotations "init" "(" ")" ":" Inits
+
+      | "init"
+      | "init" ":" Inits
+      | "init" "(" ")"
+      | "init" "(" ")" ":" Inits
+
+      | Annotations "init" "(" ProcParmBody ")"
+      | Annotations "init" "(" ProcParmBody ")" ":" Inits
+
+      | "init" "(" ProcParmBody ")"
+      | "init" "(" ProcParmBody ")" ":" Inits
+
+    nonterm InitDeclStmt ::=
+      | InitDecl
+
+    nonterm InitExpr ::=
+      | InitDecl "{" Stmts "}"
+
+    nonterm ExtendsClass ::=
+      | epsilon
+      | "extends" TypeName
+
+    nonterm InterfaceList ::=
+      | TypeName
+      | InterfaceList "," TypeName
+    nonterm ImplementsInterface ::=
+      | epsilon prec pImplementsInterface
+      | "implements" InterfaceList
+
+    nonterm ClassDecl ::=
+      | Annotations "class" OptionalGenericParamList ExtendsClass ImplementsInterface
+      | "class" OptionalGenericParamList ExtendsClass ImplementsInterface
+      | Annotations "class" ID OptionalGenericParamList ExtendsClass ImplementsInterface
+      | "class" ID OptionalGenericParamList ExtendsClass ImplementsInterface
+
+    nonterm ClassExpr ::=
+      | ClassDecl "{" Stmts "}"
+
+    nonterm ExtendsInterface ::=
+      | epsilon
+      | "extends" InterfaceList
+    nonterm InterfaceDecl ::=
+      | Annotations "interface" OptionalGenericParamList ExtendsInterface
+      | "interface" OptionalGenericParamList ExtendsInterface
+      | Annotations "interface" ID OptionalGenericParamList ExtendsInterface
+      | "interface" ID OptionalGenericParamList ExtendsInterface
+    nonterm InterfaceExpr ::=
+      | InterfaceDecl "{" Stmts "}"
+
+    nonterm EnumDecl ::=
+      | Annotations "enum" ID
+      | "enum" ID
+    nonterm Enum ::=
+      | Annotations ID
+      | ID
+    nonterm Enums ::=
+      | Enum
+      | Enum "=" INT
+      | Enums "," Enum
+      | Enums "," Enum "=" INT
+    nonterm EnumExpr ::=
+      | EnumDecl "{" Enums "}"
+
+    nonterm ImportModuleRelpath ::=
+      | epsilon prec pImportModuleRelpath
+      | "^"
+      | ImportModuleRelpath "^"
+    # Use right recursion here in order to be able to specify that only the last
+    # component of the moduleName defines a lexical variable.
+    nonterm ImportModuleName ::=
+      | ID "." ImportModuleName
+      | ID prec pImportModuleName
+    nonterm ImportModule ::=
+      | ImportModuleRelpath "." ImportModuleName
+      | ImportModuleName
+
+    nonterm ImportListItem ::=
+      | ID OptionalGenericParamList
+
+    nonterm ImportList ::=
+      | ImportListItem
+      | ImportList "," ImportListItem
+    nonterm ImportVars ::=
+      | "*"
+      | ImportList prec pImportVars
+      | "(" ImportList ")"
+
+    nonterm ImportLval ::=
+      | Annotations "import" ImportModule
+      | "import" ImportModule
+      | Annotations "from" ImportModule "import" ImportVars prec pImportLval
+      | "from" ImportModule "import" ImportVars prec pImportLval
+
+    nonterm CallNamed prec pCallNamed ::=
+      | ID ":" Expr
+      | ID ":" Lval
+    nonterm CallNamedList ::=
+      | CallNamed
+      | CallNamedList "," CallNamed
+    nonterm CallPargs prec pCallPargs ::=
+      | ":" Expr
+      | ":" Lval
+    nonterm CallKargs ::=
+      | ":" ":" Expr
+      | ":" ":" Lval
+    nonterm CallList ::=
+      # 1111
+      | Expr "," CallNamedList "," CallPargs "," CallKargs
+      | Lval "," CallNamedList "," CallPargs "," CallKargs
+      | ExprListBody "," CallNamedList "," CallPargs "," CallKargs
+      | LvalListBody "," CallNamedList "," CallPargs "," CallKargs
+      # 1110
+      | Expr "," CallNamedList "," CallPargs
+      | Lval "," CallNamedList "," CallPargs
+      | ExprListBody "," CallNamedList "," CallPargs
+      | LvalListBody "," CallNamedList "," CallPargs
+      # 1101
+      | Expr "," CallNamedList "," CallKargs
+      | Lval "," CallNamedList "," CallKargs
+      | ExprListBody "," CallNamedList "," CallKargs
+      | LvalListBody "," CallNamedList "," CallKargs
+      # 1100
+      | Expr "," CallNamedList
+      | Lval "," CallNamedList
+      | ExprListBody "," CallNamedList
+      | LvalListBody "," CallNamedList
+      # 1011
+      | Expr "," CallPargs "," CallKargs
+      | Lval "," CallPargs "," CallKargs
+      | ExprListBody "," CallPargs "," CallKargs
+      | LvalListBody "," CallPargs "," CallKargs
+      # 1010
+      | Expr "," CallPargs
+      | Lval "," CallPargs
+      | ExprListBody "," CallPargs
+      | LvalListBody "," CallPargs
+      # 1001
+      | Expr "," CallKargs
+      | Lval "," CallKargs
+      | ExprListBody "," CallKargs
+      | LvalListBody "," CallKargs
+      # 1000
+      # Everywhere that CallList is used, there must be four companion productions with Expr, Lval,
+      # ExprListBody, and LvalListBody substituted, instead of the following productions. If the
+      # following productions were enabled, there would be no consistent way to resolve the
+      # resulting conflicts.
+      #
+      # | Expr
+      # | Lval
+      # | ExprListBody
+      # | LvalListBody
+      # 0111
+      | CallNamedList "," CallPargs "," CallKargs
+      # 0110
+      | CallNamedList "," CallPargs
+      # 0101
+      | CallNamedList "," CallKargs
+      # 0100
+      | CallNamedList
+      # 0011
+      | CallPargs "," CallKargs
+      # 0010
+      | CallPargs
+      # 0001
+      | CallKargs
+    nonterm CallThis prec pCallThis ::=
+      | "this" ":" Expr
+      | "this" ":" Lval
+    nonterm CallExpr ::=
+      | Expr "(" ")"
+      | Expr "(" CallThis ")"
+      | Expr "(" CallList ")"
+      | Expr "(" Expr ")"
+      | Expr "(" Lval ")"
+      | Expr "(" ExprListBody ")"
+      | Expr "(" LvalListBody ")"
+      | Expr "(" CallThis "," CallList ")"
+      | Expr "(" CallThis "," Expr ")"
+      | Expr "(" CallThis "," Lval ")"
+      | Expr "(" CallThis "," ExprListBody ")"
+      | Expr "(" CallThis "," LvalListBody ")"
+
+      | Lval "(" ")"
+      | Lval "(" CallThis ")"
+      | Lval "(" CallList ")"
+      | Lval "(" Expr ")"
+      | Lval "(" Lval ")"
+      | Lval "(" ExprListBody ")"
+      | Lval "(" LvalListBody ")"
+      | Lval "(" CallThis "," CallList ")"
+      | Lval "(" CallThis "," Expr ")"
+      | Lval "(" CallThis "," Lval ")"
+      | Lval "(" CallThis "," ExprListBody ")"
+      | Lval "(" CallThis "," LvalListBody ")"
+
+    nonterm UnaryExpr ::=
+      | "not" Expr prec pUnaryExpr1
+      | "not" Lval prec pUnaryExpr1
+      | "+" Expr prec pUnaryExpr2
+      | "+" Lval prec pUnaryExpr2
+      | "-" Expr prec pUnaryExpr2
+      | "-" Lval prec pUnaryExpr2
+
+    nonterm PowOp prec pPowOp ::=
+      | "^"
+    nonterm MulOp prec pMulOp ::=
+      | "*"
+      | "/"
+      | "\%"
+    nonterm PlusOp prec pPlusOp ::=
+      | "+"
+      | "-"
+
+    nonterm CmpOp1 prec pCmpOp1 ::=
+      | "<"
+      | "<="
+      | ">="
+      | ">"
+    nonterm CmpOp2 prec pCmpOp2 ::=
+      | "=="
+      | "!="
+
+      | "==="
+      | "!=="
+    nonterm CmpOp3 prec pCmpOp3 ::=
+      | "and"
+    nonterm CmpOp4 prec pCmpOp4 ::=
+      | "xor"
+    nonterm CmpOp5 prec pCmpOp5 ::=
+      | "or"
+
+    nonterm InExpr prec pCmpOp2 ::=
+      # in.
+      | Expr "in" Expr
+      | Expr "in" Lval
+      | Lval "in" Expr
+      | Lval "in" Lval
+      | Expr "in" ExprList
+      | Lval "in" ExprList
+      | ExprList "in" Expr
+      | ExprList "in" Lval
+      | ExprList "in" ExprList
+
+      # not in.
+      | Expr "not" "in" Expr
+      | Expr "not" "in" Lval
+      | Lval "not" "in" Expr
+      | Lval "not" "in" Lval
+      | Expr "not" "in" ExprList
+      | Lval "not" "in" ExprList
+      | ExprList "not" "in" Expr
+      | ExprList "not" "in" Lval
+      | ExprList "not" "in" ExprList
+
+    nonterm InfixExpr ::=
+      # PowOp.
+      | Expr PowOp Expr prec pPowOp
+      | Expr PowOp Lval prec pPowOp
+      | Expr PowOp "(" ")" prec pPowOp
+      | Expr PowOp "(" CallList ")" prec pPowOp
+      # | Expr PowOp "(" Expr ")" prec pPowOp
+      # | Expr PowOp "(" Lval ")" prec pPowOp
+      | Expr PowOp "(" ExprListBody ")" prec pPowOp
+      | Expr PowOp "(" LvalListBody ")" prec pPowOp
+
+      | Lval PowOp Expr prec pPowOp
+      | Lval PowOp Lval prec pPowOp
+      | Lval PowOp "(" ")" prec pPowOp
+      | Lval PowOp "(" CallList ")" prec pPowOp
+      # | Lval PowOp "(" Expr ")" prec pPowOp
+      # | Lval PowOp "(" Lval ")" prec pPowOp
+      | Lval PowOp "(" ExprListBody ")" prec pPowOp
+      | Lval PowOp "(" LvalListBody ")" prec pPowOp
+
+      # MulOp.
+      | Expr MulOp Expr prec pMulOp
+      | Expr MulOp Lval prec pMulOp
+      | Expr MulOp "(" ")" prec pMulOp
+      | Expr MulOp "(" CallList ")" prec pMulOp
+      # | Expr MulOp "(" Expr ")" prec pMulOp
+      # | Expr MulOp "(" Lval ")" prec pMulOp
+      | Expr MulOp "(" ExprListBody ")" prec pMulOp
+      | Expr MulOp "(" LvalListBody ")" prec pMulOp
+
+      | Lval MulOp Expr prec pMulOp
+      | Lval MulOp Lval prec pMulOp
+      | Lval MulOp "(" ")" prec pMulOp
+      | Lval MulOp "(" CallList ")" prec pMulOp
+      # | Lval MulOp "(" Expr ")" prec pMulOp
+      # | Lval MulOp "(" Lval ")" prec pMulOp
+      | Lval MulOp "(" ExprListBody ")" prec pMulOp
+      | Lval MulOp "(" LvalListBody ")" prec pMulOp
+
+      # PlusOp.
+      | Expr PlusOp Expr prec pPlusOp
+      | Expr PlusOp Lval prec pPlusOp
+      | Expr PlusOp "(" ")" prec pPlusOp
+      | Expr PlusOp "(" CallList ")" prec pPlusOp
+      # | Expr PlusOp "(" Expr ")" prec pPlusOp
+      # | Expr PlusOp "(" Lval ")" prec pPlusOp
+      | Expr PlusOp "(" ExprListBody ")" prec pPlusOp
+      | Expr PlusOp "(" LvalListBody ")" prec pPlusOp
+
+      | Lval PlusOp Expr prec pPlusOp
+      | Lval PlusOp Lval prec pPlusOp
+      | Lval PlusOp "(" ")" prec pPlusOp
+      | Lval PlusOp "(" CallList ")" prec pPlusOp
+      # | Lval PlusOp "(" Expr ")" prec pPlusOp
+      # | Lval PlusOp "(" Lval ")" prec pPlusOp
+      | Lval PlusOp "(" ExprListBody ")" prec pPlusOp
+      | Lval PlusOp "(" LvalListBody ")" prec pPlusOp
+
+      # CmpOp1.
+      | Expr CmpOp1 Expr prec pCmpOp1
+      | Expr CmpOp1 Lval prec pCmpOp1
+      | Lval CmpOp1 Expr prec pCmpOp1
+      | Lval CmpOp1 Lval prec pCmpOp1
+      | Expr CmpOp1 ExprList prec pCmpOp1
+      | Lval CmpOp1 ExprList prec pCmpOp1
+      | ExprList CmpOp1 Expr prec pCmpOp1
+      | ExprList CmpOp1 Lval prec pCmpOp1
+      | ExprList CmpOp1 ExprList prec pCmpOp1
+
+      # InExpr.
+      | InExpr
+
+      # CmpOp2.
+      | Expr CmpOp2 Expr prec pCmpOp2
+      | Expr CmpOp2 Lval prec pCmpOp2
+      | Lval CmpOp2 Expr prec pCmpOp2
+      | Lval CmpOp2 Lval prec pCmpOp2
+      | Expr CmpOp2 ExprList prec pCmpOp2
+      | Lval CmpOp2 ExprList prec pCmpOp2
+      | ExprList CmpOp2 Expr prec pCmpOp2
+      | ExprList CmpOp2 Lval prec pCmpOp2
+      | ExprList CmpOp2 ExprList prec pCmpOp2
+
+      # CmpOp3.
+      | Expr CmpOp3 Expr prec pCmpOp3
+      | Expr CmpOp3 Lval prec pCmpOp3
+      | Lval CmpOp3 Expr prec pCmpOp3
+      | Lval CmpOp3 Lval prec pCmpOp3
+
+      # CmpOp4.
+      | Expr CmpOp4 Expr prec pCmpOp4
+      | Expr CmpOp4 Lval prec pCmpOp4
+      | Lval CmpOp4 Expr prec pCmpOp4
+      | Lval CmpOp4 Lval prec pCmpOp4
+
+      # CmpOp5.
+      | Expr CmpOp5 Expr prec pCmpOp5
+      | Expr CmpOp5 Lval prec pCmpOp5
+      | Lval CmpOp5 Expr prec pCmpOp5
+      | Lval CmpOp5 Lval prec pCmpOp5
+
+    nonterm AssnExprLeft ::=
+      | "(" AssnExprLeft ")"
+
+      | Annotations Var "," VarRestId
+      | Var "," VarRestId
+      | Lval "," VarRestId prec pAssnExprLeft4
+      | LvalListBody "," VarRestId prec pAssnExprLeft4
+
+      | Annotations Var "," "[" "]" GenericParamOne ":" Lval prec pAssnExprLeft2
+      | Var "," "[" "]" GenericParamOne ":" Lval prec pAssnExprLeft2
+      | Lval "," "[" "]" GenericParamOne ":" Lval prec pAssnExprLeft2
+      | LvalListBody "," "[" "]" GenericParamOne ":" Lval prec pAssnExprLeft2
+
+      | VarRestId prec pAssnExprLeft1
+      | "[" "]" GenericParamOne ":" Lval prec pAssnExprLeft1
+
+      | Annotations Var prec pAssnExprLeft5
+      | Var prec pAssnExprLeft5
+      # Everywhere AssnExprLeft is used, there must be a companion production with Lval substituted,
+      # instead of the following production.
+      #
+      # | Lval
+      | LvalListBody prec pAssnExprLeft3
+
+    nonterm Var ::=
+      | Annotations "var" ID prec pVar1
+      | "var" ID prec pVar2
+      | Annotations TypeSpec ID prec pVar1
+      | TypeSpec ID prec pVar2
+
+    nonterm VarRestId ::=
+      | Annotations "[" "]" GenericParamOne ID
+      | "[" "]" GenericParamOne ID prec pVarRestId
+      | Annotations "[" "]" GenericParamOne "_"
+      | "[" "]" GenericParamOne "_" prec pVarRestId
+
+    nonterm AttrVar ::=
+      | Annotations ID
+      | ID
+
+    nonterm DelimitedAttrExpr ::=
+      | Annotations "attr" AttrVar "{" Stmts "}"
+      | "attr" AttrVar "{" Stmts "}"
+
+    # Assignment operators.  These can only be used with one left side Lval.
+    nonterm AssnOp ::=
+      | "+="
+      | "-="
+      | "*="
+      | "/="
+      | "\%="
+      | "^="
+
+    nonterm AssnExpr ::=
+      | Lval AssnOp Expr prec pAssnExpr1
+      | Lval AssnOp Lval prec pAssnExpr1
+      | Lval AssnOp "(" ")"
+      | Lval AssnOp "(" CallList ")"
+      # | Lval AssnOp "(" Expr ")"
+      # | Lval AssnOp "(" Lval ")"
+      | Lval AssnOp "(" ExprListBody ")" prec pAssnExpr3
+      | Lval AssnOp "(" LvalListBody ")"
+
+      | Lval "=" Expr prec pAssnExpr2
+      | Lval "=" Lval prec pAssnExpr2
+      | Lval "=" ExprList prec pAssnExpr2
+
+      | AssnExprLeft "=" Expr prec pAssnExpr2
+      | AssnExprLeft "=" Lval prec pAssnExpr2
+      # | Lval "=" Expr prec pAssnExpr2
+      | AssnExprLeft "=" ExprList prec pAssnExpr2
+      # | Lval "=" ExprList prec pAssnExpr2
+
+    nonterm ForClause ::=
+      | "for" AssnExprLeft "in" Expr
+      | "for" AssnExprLeft "in" Lval
+      | "for" Lval "in" Expr
+      | "for" Lval "in" Lval
+      | "for" AssnExprLeft "in" ExprList
+      | "for" Lval "in" ExprList
+    nonterm ForClauseList ::=
+      | ForClause
+      | ForClauseList ForClause
+    nonterm IfClause ::=
+      | "if" Expr
+      | "if" Lval
+    nonterm IfClauseList ::=
+      | IfClause
+      | IfClauseList IfClause
+    nonterm DictComprehensionExpr ::=
+      | "{" "in" ForClauseList "select" DictList "}" GenericParamTwo
+      | "{" "in" ForClauseList IfClauseList "select" DictList "}" GenericParamTwo
+    nonterm ListComprehensionExpr ::=
+      | "[" "in" ForClauseList "select" Expr "]" GenericParamOne
+      | "[" "in" ForClauseList "select" Lval "]" GenericParamOne
+      | "[" "in" ForClauseList "select" ExprList "]" GenericParamOne
+
+      | "[" "in" ForClauseList IfClauseList "select" Expr "]" GenericParamOne
+      | "[" "in" ForClauseList IfClauseList "select" Lval "]" GenericParamOne
+      | "[" "in" ForClauseList IfClauseList "select" ExprList "]" GenericParamOne
+
+    nonterm ElifClause ::=
+      | "elif" Expr "{" Stmts "}"
+      | "elif" Lval "{" Stmts "}"
+      | "elif" ExprList "{" Stmts "}"
+    nonterm ElifList ::=
+      | epsilon
+      | ElifList ElifClause
+    nonterm ElseClause ::=
+      | epsilon prec pElseClause
+      | "else" "{" Stmts "}"
+    nonterm IfExpr ::=
+      | "if" Expr "{" Stmts "}" ElifList ElseClause
+      | "if" Lval "{" Stmts "}" ElifList ElseClause
+      | "if" ExprList "{" Stmts "}" ElifList ElseClause
+
+    nonterm IsInListElm ::=
+      | "not" "in" Expr "{" Stmts "}"
+      | "not" "in" Lval "{" Stmts "}"
+      | "not" "in" ExprList "{" Stmts "}"
+
+      | "in" Expr "{" Stmts "}"
+      | "in" Lval "{" Stmts "}"
+      | "in" ExprList "{" Stmts "}"
+    nonterm IsInList ::=
+      | epsilon
+      | IsInList IsInListElm
+
+    nonterm IsExpr ::=
+      | "is" InExpr "{" Stmts "}" IsInList ElseClause
+
+    nonterm DoExpr ::=
+      | "{" Stmts "}"
+
+    nonterm ForExpr ::=
+      | ForClause "{" Stmts "}"
+
+    nonterm DoWhileExpr ::=
+      | "do" "{" Stmts "}" "while" Expr prec pDoWhileExpr1
+      | "do" "{" Stmts "}" "while" Lval prec pDoWhileExpr1
+      | "do" "{" Stmts "}" "while" ExprList prec pDoWhileExpr2
+
+    nonterm WhileExpr ::=
+      | "while" Expr "{" Stmts "}"
+      | "while" Lval "{" Stmts "}"
+      | "while" ExprList "{" Stmts "}"
+
+    nonterm AssertExpr prec pAssertExpr ::=
+      | "assert" Expr
+      | "assert" Lval
+      | "assert" ExprList
+
+    nonterm DelimitedExpr ::=
+      | IfExpr
+      | IsExpr
+      | DoExpr
+      | WhileExpr
+      | ClassExpr
+      | InterfaceExpr
+      | EnumExpr
+      | DelimitedAttrExpr
+      | ProcExpr
+      | GuardExpr
+      | CatchExpr
+      | InitExpr
+      | MemberBlock
+      | ForExpr
+
+    nonterm NondelimitedExpr ::=
+      | Str prec pNondelimitedExpr1
+      | Buf
+      | "false"
+      | "true"
+      | "null"
+      | INT
+      | FLOAT
+      | "Inf"
+      | "NaN"
+      | "$file"
+      | "$line"
+      | "$debug"
+
+      | "(" Expr ")"
+      # Everywhere that NondelimitedExpr is used, there must be a companion production with Lval
+      # substituted.
+      #
+      # | Lval
+      | Dict
+      | List
+      | CallExpr
+      | UnaryExpr
+      | InfixExpr
+      | AssnExpr
+      | AssnExprLeft prec pNondelimitedExpr2
+      | DictComprehensionExpr
+      | ListComprehensionExpr
+      | DoWhileExpr
+      | AssertExpr
+
+    nonterm ExprSlice prec pExprSlice ::=
+      | "[" Slice "]"
+      | "[" "]"
+
+    nonterm ExprSuffix ::=
+      | ID ExprSlice
+
+      | TypeName "." ID prec pExprSuffix
+
+      | LvalSuffix "." ID prec pExprSuffix
+      | LvalSuffix "." ID ExprSlice
+
+      | ExprSuffix "." ID prec pExprSuffix
+      | ExprSuffix "." ID ExprSlice
+
+    nonterm Expr ::=
+      | DelimitedExpr prec pExpr1
+      | NondelimitedExpr
+      # Every use of Expr must be accompanied by a companion Lval production
+      # | Lval
+
+      | Expr ExprSlice
+      | Lval ExprSlice
+
+      | Expr "." TypeNameSuffix prec pExpr2
+      | Lval "." TypeNameSuffix prec pExpr2
+
+      | Expr "." LvalSuffix prec pExpr2
+      | Lval "." LvalSuffix prec pExpr2
+
+      | Expr "." ExprSuffix prec pExpr2
+      | Lval "." ExprSuffix prec pExpr2
+
+    nonterm ExprListBody ::=
+      | Expr "," Expr prec pExprListBodyA
+      | Expr "," Lval prec pExprListBodyB
+      | Lval "," Expr prec pExprListBodyA
+      | ExprListBody "," Expr prec pExprListBodyA
+      | ExprListBody "," Lval prec pExprListBodyA
+      | LvalListBody "," Expr prec pExprListBodyA
+
+    nonterm ExprList ::=
+      | "(" ExprListBody ")" prec pExprList2
+      | ExprListBody prec pExprList1
+
+    nonterm ModuleStmt ::=
+      | Annotations "module"
+      | "module"
+
+    nonterm ReturnStmt ::=
+      | "return"
+      | "return" "(" ")"
+      | "return" CallList
+      | "return" Expr
+      | "return" Lval
+      | "return" ExprListBody
+      | "return" LvalListBody prec pReturnStmt1
+      | "return" "(" CallList ")"
+      # | "return" "(" Expr ")"
+      # | "return" "(" Lval ")"
+      | "return" "(" ExprListBody ")"
+      | "return" "(" LvalListBody ")"
+
+    nonterm BreakStmt ::=
+      | "break" INT
+      | "break"
+
+    nonterm ContinueStmt ::=
+      | "continue" INT
+      | "continue"
+
+    nonterm ThrowStmt ::=
+      | "throw"
+      | "throw" "(" ")"
+      | "throw" CallList
+      | "throw" Expr
+      | "throw" Lval
+      | "throw" ExprListBody
+      | "throw" LvalListBody prec pThrowStmt1
+      | "throw" "(" CallList ")"
+      # | "throw" "(" Expr ")"
+      # | "throw" "(" Lval ")"
+      | "throw" "(" ExprListBody ")"
+      | "throw" "(" LvalListBody ")"
+
+    nonterm CblockStmt ::=
+      | Annotations CBLOCK
+      | CBLOCK
+
+    nonterm Stmt ::=
+      | ModuleStmt
+      | ClassDecl
+      | InterfaceDecl
+      | EnumDecl
+      | InitDeclStmt
+      | ProcDeclStmt
+      | ReturnStmt
+      | BreakStmt
+      | ContinueStmt
+      | ThrowStmt
+
+      | NondelimitedExpr
+      | Lval
+      | ExprList prec pStmt
+
+    nonterm DelimitedStmt ::=
+      | CblockStmt
+
+    nonterm StmtList ::=
+      | Stmt ";"
+      | DelimitedStmt
+      | DelimitedExpr prec pStmtList
+
+      | StmtList Stmt ";"
+      | StmtList DelimitedStmt
+      | StmtList DelimitedExpr prec pStmtList
+      | StmtList ";"
+
+    nonterm Stmts ::=
+      | epsilon
+      | Stmt
+      | StmtList
+
+    start Module ::=
+      | BOI Stmts EOI

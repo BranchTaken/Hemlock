@@ -1,0 +1,55 @@
+# Matter.
+
+include hocc
+    neutral p1
+    left p2
+    right p3
+    neutral p4 < p1
+    left p5 < p1, p2
+    right p6 < p3, p4, p5
+
+    neutral mul
+    neutral add < mul
+    token OP
+    token PLUS "+"
+    token UNS of Uns.t
+    token MINUS prec add
+    token STAR "*" prec mul
+    token SLASH "/" of Unit.t prec mul
+
+    nonterm N1 of Unit.t ::= epsilon ->
+        (a b)
+        (|a b|)
+        [a b]
+        [|a b|]
+        {a b}
+        (a
+            (|a
+                [a [|a {a b} b|] b]
+              b|)
+            b
+          )
+        a; b; c
+
+    nonterm N2 ::= N1 N2 | epsilon
+
+    start N3 prec p1 ::= epsilon
+
+    nonterm N4 of Unit.t ::= epsilon -> ()
+
+    start N5 of Unit.t prec p2 ::= epsilon -> ()
+
+    nonterm N6 of Unit.t ::=
+      | N2
+      | OP N3 -> ()
+      | OP N4 -> ()
+      | N4 N5
+      | epsilon -> ()
+
+    nonterm N7 of Unit.t ::=
+      | o:OP _:N1 N2 -> foo
+
+    Code = {
+      }
+
+# Matter.
