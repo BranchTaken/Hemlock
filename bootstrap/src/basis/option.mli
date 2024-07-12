@@ -26,8 +26,8 @@ include FormattableIntf.SPoly with type 'a t := 'a t
 
 val fmt: ?alt:bool -> ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
   -> 'a t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [fmt ~alt fmt_a t] uses the formatter [fmt_a] to format a syntactically valid representation of
-    [t]. If [~alt=true], the value is enclosed by parentheses. *)
+(** [fmt ~alt fmt_a t formatter] uses the formatter [fmt_a] to format a syntactically valid
+    representation of [t]. If [~alt=true], the value is enclosed by parentheses. *)
 
 (** {1 Container} *)
 

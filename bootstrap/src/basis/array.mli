@@ -7,9 +7,9 @@ include FormattableIntf.SPoly with type 'a t := 'a t
 
 val fmt: ?alt:bool -> ?width:uns -> ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
   -> 'a t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [fmt ~alt ~width fmt_a t] uses the element formatter [fmt_a] to format a syntactically valid
-    array representation of [t]. If [~alt=true], the output is broken across multiple lines with
-    outermost indentation [~width] (elements are indented to [~width + 4]). *)
+(** [fmt ~alt ~width fmt_a t formatter] uses the element formatter [fmt_a] to format a syntactically
+    valid array representation of [t]. If [~alt=true], the output is broken across multiple lines
+    with outermost indentation [~width] (elements are indented to [~width + 4]). *)
 
 (* Seeming excess verbosity is necessary for destructive type substitution. *)
 (** Cursor that supports arbitrary array element access. All operations are O(1). *)
@@ -95,9 +95,9 @@ module Slice : sig
 
   val fmt: ?alt:bool -> ?width:uns -> ('a -> (module Fmt.Formatter) -> (module Fmt.Formatter))
     -> 'a t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** [fmt ~alt ~width fmt_a t] formats uses the element formatter [fmt_a] to format a syntactically
-      valid array representation of [t]. If [~alt=true], the output is broken across multiple lines
-      with outermost indentation [~width] (elements are indented to [~width + 4]). *)
+  (** [fmt ~alt ~width fmt_a t formatter] formats uses the element formatter [fmt_a] to format a
+      syntactically valid array representation of [t]. If [~alt=true], the output is broken across
+      multiple lines with outermost indentation [~width] (elements are indented to [~width + 4]). *)
 
   val is_empty: 'a t -> bool
   (** Return [true] if slice length is 0; [false] otherwise. *)
