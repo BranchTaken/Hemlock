@@ -1,0 +1,119 @@
+IelrFig1 grammar
+
+Precedences
+    left p
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token Ta prec p
+        First: {Ta}
+        Follow: {"⊥", Ta, Tb}
+    token Tb
+        First: {Tb}
+        Follow: {"⊥", Ta}
+Non-terminals
+    start S
+        First: {Ta, Tb}
+        Follow: {"⊥"}
+        Productions
+            S ::= Ta A Ta prec p
+            S ::= Tb A Tb
+    start S'
+        First: {Ta, Tb}
+        Follow: {"ε"}
+        Productions
+            S' ::= S "⊥"
+    nonterm A
+        First: {Ta}
+        Follow: {Ta, Tb}
+        Productions
+            A ::= Ta prec p
+            A ::= Ta Ta prec p
+IELR(1) States
+    State 0 [0.0]
+        Kernel
+            [S' ::= · S "⊥", {"ε"}]
+        Added
+            [S ::= · Ta A Ta, {"⊥"}] prec p
+            [S ::= · Tb A Tb, {"⊥"}]
+        Actions
+            Ta : ShiftPrefix 1 prec p
+            Tb : ShiftPrefix 2
+        Gotos
+            S : 3
+    State 1 [1.0]
+        Kernel
+            [S ::= Ta · A Ta, {"⊥"}] prec p
+        Added
+            [A ::= · Ta, {Ta}] prec p
+            [A ::= · Ta Ta, {Ta}] prec p
+        Actions
+            Ta : ShiftPrefix 4 prec p
+        Gotos
+            A : 5
+    State 2 [2.0]
+        Kernel
+            [S ::= Tb · A Tb, {"⊥"}]
+        Added
+            [A ::= · Ta, {Tb}] prec p
+            [A ::= · Ta Ta, {Tb}] prec p
+        Actions
+            Ta : ShiftPrefix 6 prec p
+        Gotos
+            A : 7
+    State 3 [3.0]
+        Kernel
+            [S' ::= S · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 8
+    State 4 [4.0]
+        Kernel
+            [A ::= Ta ·, {Ta}] prec p
+            [A ::= Ta · Ta, {Ta}] prec p
+        Actions
+            Ta : Reduce A ::= Ta prec p
+        Conflict contributions
+            [A ::= Ta ·, {Ta}]
+                4 : Reduce A ::= Ta
+    State 5 [5.0]
+        Kernel
+            [S ::= Ta A · Ta, {"⊥"}] prec p
+        Actions
+            Ta : ShiftAccept 10 prec p
+    State 6 [4.1]
+        Kernel
+            [A ::= Ta ·, {Tb}] prec p
+            [A ::= Ta · Ta, {Tb}] prec p
+        Actions
+            Ta : ShiftPrefix 9 prec p
+            Tb : Reduce A ::= Ta prec p
+    State 7 [6.0]
+        Kernel
+            [S ::= Tb A · Tb, {"⊥"}]
+        Actions
+            Tb : ShiftAccept 11
+    State 8 [7.0]
+        Kernel
+            [S' ::= S "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce S' ::= S "⊥"
+    State 9 [8.0]
+        Kernel
+            [A ::= Ta Ta ·, {Ta, Tb}] prec p
+        Actions
+            Ta : Reduce A ::= Ta Ta prec p
+            Tb : Reduce A ::= Ta Ta prec p
+    State 10 [9.0]
+        Kernel
+            [S ::= Ta A Ta ·, {"⊥"}] prec p
+        Actions
+            "⊥" : Reduce S ::= Ta A Ta prec p
+    State 11 [10.0]
+        Kernel
+            [S ::= Tb A Tb ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Tb A Tb

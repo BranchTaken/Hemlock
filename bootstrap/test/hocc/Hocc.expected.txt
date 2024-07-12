@@ -1,0 +1,2038 @@
+Hocc grammar
+
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token HOCC "hocc"
+        First: {"hocc"}
+        Follow: {INDENT, CODE_TOKEN, EOI}
+    token NONTERM "nonterm"
+        First: {"nonterm"}
+        Follow: {CIDENT}
+    token EPSILON_ "epsilon"
+        First: {"epsilon"}
+        Follow: {"prec", "->", "|", LINE_DELIM, DEDENT}
+    token START "start"
+        First: {"start"}
+        Follow: {CIDENT}
+    token TOKEN "token"
+        First: {"token"}
+        Follow: {CIDENT}
+    token NEUTRAL "neutral"
+        First: {"neutral"}
+        Follow: {UIDENT}
+    token LEFT "left"
+        First: {"left"}
+        Follow: {UIDENT}
+    token RIGHT "right"
+        First: {"right"}
+        Follow: {UIDENT}
+    token PREC "prec"
+        First: {"prec"}
+        Follow: {UIDENT}
+    token UIDENT
+        First: {UIDENT}
+        Follow: {"prec", "::=", ":", "->", "|", "<", ",", LINE_DELIM, DEDENT}
+    token CIDENT
+        First: {CIDENT}
+        Follow: {"prec", UIDENT, CIDENT, "_", STRING, "::=", "of", ":", ".", "->", "|", LINE_DELIM, DEDENT}
+    token USCORE "_"
+        First: {"_"}
+        Follow: {":"}
+    token STRING
+        First: {STRING}
+        Follow: {"prec", UIDENT, CIDENT, "_", STRING, "of", "->", "|", LINE_DELIM, DEDENT}
+    token COLON_COLON_EQ "::="
+        First: {"::="}
+        Follow: {"epsilon", UIDENT, CIDENT, "_", STRING, "|"}
+    token OF "of"
+        First: {"of"}
+        Follow: {CIDENT}
+    token COLON ":"
+        First: {":"}
+        Follow: {CIDENT, STRING}
+    token DOT "."
+        First: {"."}
+        Follow: {UIDENT}
+    token ARROW "->"
+        First: {"->"}
+        Follow: {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+    token BAR "|"
+        First: {"|"}
+        Follow: {"epsilon", UIDENT, CIDENT, "_", STRING, "|", INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+    token LT "<"
+        First: {"<"}
+        Follow: {UIDENT}
+    token COMMA ","
+        First: {","}
+        Follow: {UIDENT}
+    token SEMI ";"
+        First: {";"}
+        Follow: {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+    token LINE_DELIM
+        First: {LINE_DELIM}
+        Follow: {"nonterm", "start", "token", "neutral", "left", "right", INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+    token INDENT
+        First: {INDENT}
+        Follow: {"nonterm", "start", "token", "neutral", "left", "right", INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+    token DEDENT
+        First: {DEDENT}
+        Follow: {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN, EOI}
+    token LPAREN "("
+        First: {"("}
+        Follow: {INDENT, "(", ")", "(|", "[", "[|", "{", CODE_TOKEN}
+    token RPAREN ")"
+        First: {")"}
+        Follow: {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}
+    token LCAPTURE "(|"
+        First: {"(|"}
+        Follow: {INDENT, "(", "(|", "|)", "[", "[|", "{", CODE_TOKEN}
+    token RCAPTURE "|)"
+        First: {"|)"}
+        Follow: {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}
+    token LBRACK "["
+        First: {"["}
+        Follow: {INDENT, "(", "(|", "[", "]", "[|", "{", CODE_TOKEN}
+    token RBRACK "]"
+        First: {"]"}
+        Follow: {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}
+    token LARRAY "[|"
+        First: {"[|"}
+        Follow: {INDENT, "(", "(|", "[", "[|", "|]", "{", CODE_TOKEN}
+    token RARRAY "|]"
+        First: {"|]"}
+        Follow: {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}
+    token LCURLY "{"
+        First: {"{"}
+        Follow: {INDENT, "(", "(|", "[", "[|", "{", "}", CODE_TOKEN}
+    token RCURLY "}"
+        First: {"}"}
+        Follow: {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}
+    token CODE_TOKEN
+        First: {CODE_TOKEN}
+        Follow: {"hocc", "|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN, EOI}
+    token EOI
+        First: {EOI}
+        Follow: {"⊥"}
+Non-terminals
+    nonterm Ident
+        First: {UIDENT, CIDENT, "_"}
+        Follow: {":"}
+        Productions
+            Ident ::= UIDENT
+            Ident ::= CIDENT
+            Ident ::= "_"
+    nonterm PrecsTl
+        First: {"ε", ","}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            PrecsTl ::= "," UIDENT PrecsTl
+            PrecsTl ::= epsilon
+    nonterm Precs
+        First: {UIDENT}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            Precs ::= UIDENT PrecsTl
+    nonterm PrecRels
+        First: {"ε", "<"}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            PrecRels ::= "<" Precs
+            PrecRels ::= epsilon
+    nonterm PrecType
+        First: {"neutral", "left", "right"}
+        Follow: {UIDENT}
+        Productions
+            PrecType ::= "neutral"
+            PrecType ::= "left"
+            PrecType ::= "right"
+    nonterm Prec
+        First: {"neutral", "left", "right"}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            Prec ::= PrecType UIDENT PrecRels
+    nonterm OfType
+        First: {"of"}
+        Follow: {"prec", "::=", LINE_DELIM, DEDENT}
+        Productions
+            OfType ::= "of" CIDENT "." UIDENT
+    nonterm OfType0
+        First: {"ε", "of"}
+        Follow: {"prec", LINE_DELIM, DEDENT}
+        Productions
+            OfType0 ::= OfType
+            OfType0 ::= epsilon
+    nonterm PrecRef
+        First: {"ε", "prec"}
+        Follow: {"::=", "->", "|", LINE_DELIM, DEDENT}
+        Productions
+            PrecRef ::= "prec" UIDENT
+            PrecRef ::= epsilon
+    nonterm TokenAlias
+        First: {"ε", STRING}
+        Follow: {"prec", "of", LINE_DELIM, DEDENT}
+        Productions
+            TokenAlias ::= STRING
+            TokenAlias ::= epsilon
+    nonterm Token
+        First: {"token"}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            Token ::= "token" CIDENT TokenAlias OfType0 PrecRef
+    nonterm Sep
+        First: {"|", ";", LINE_DELIM}
+        Follow: {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+        Productions
+            Sep ::= LINE_DELIM
+            Sep ::= ";"
+            Sep ::= "|"
+    nonterm CodesTl
+        First: {"ε", "|", ";", LINE_DELIM}
+        Follow: {DEDENT, ")", "|)", "]", "|]", "}"}
+        Productions
+            CodesTl ::= Sep Code CodesTl
+            CodesTl ::= epsilon
+    nonterm Codes
+        First: {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+        Follow: {DEDENT, ")", "|)", "]", "|]", "}"}
+        Productions
+            Codes ::= Code CodesTl
+    nonterm Codes0
+        First: {"ε", INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+        Follow: {")", "|)", "]", "|]", "}"}
+        Productions
+            Codes0 ::= Codes
+            Codes0 ::= epsilon
+    nonterm Delimited
+        First: {INDENT, "(", "(|", "[", "[|", "{"}
+        Follow: {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}
+        Productions
+            Delimited ::= INDENT Codes DEDENT
+            Delimited ::= "(" Codes0 ")"
+            Delimited ::= "(|" Codes0 "|)"
+            Delimited ::= "[" Codes0 "]"
+            Delimited ::= "[|" Codes0 "|]"
+            Delimited ::= "{" Codes0 "}"
+    nonterm CodeTl
+        First: {"ε", INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+        Follow: {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}
+        Productions
+            CodeTl ::= Delimited CodeTl
+            CodeTl ::= CODE_TOKEN CodeTl
+            CodeTl ::= epsilon
+    nonterm Code
+        First: {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+        Follow: {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}
+        Productions
+            Code ::= Delimited CodeTl
+            Code ::= CODE_TOKEN CodeTl
+    nonterm ProdParamType
+        First: {CIDENT, STRING}
+        Follow: {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}
+        Productions
+            ProdParamType ::= CIDENT
+            ProdParamType ::= STRING
+    nonterm ProdParam
+        First: {UIDENT, CIDENT, "_", STRING}
+        Follow: {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}
+        Productions
+            ProdParam ::= Ident ":" ProdParamType
+            ProdParam ::= ProdParamType
+    nonterm ProdParamsTl
+        First: {"ε", UIDENT, CIDENT, "_", STRING}
+        Follow: {"prec", "->", "|", LINE_DELIM, DEDENT}
+        Productions
+            ProdParamsTl ::= ProdParam ProdParamsTl
+            ProdParamsTl ::= epsilon
+    nonterm ProdParams
+        First: {UIDENT, CIDENT, "_", STRING}
+        Follow: {"prec", "->", "|", LINE_DELIM, DEDENT}
+        Productions
+            ProdParams ::= ProdParam ProdParamsTl
+    nonterm ProdPattern
+        First: {"epsilon", UIDENT, CIDENT, "_", STRING}
+        Follow: {"prec", "->", "|", LINE_DELIM, DEDENT}
+        Productions
+            ProdPattern ::= ProdParams
+            ProdPattern ::= "epsilon"
+    nonterm Prod
+        First: {"epsilon", UIDENT, CIDENT, "_", STRING}
+        Follow: {"->", "|", LINE_DELIM, DEDENT}
+        Productions
+            Prod ::= ProdPattern PrecRef
+    nonterm ProdsTl
+        First: {"ε", "|"}
+        Follow: {"->", LINE_DELIM, DEDENT}
+        Productions
+            ProdsTl ::= "|" Prod ProdsTl
+            ProdsTl ::= epsilon
+    nonterm Prods
+        First: {"epsilon", UIDENT, CIDENT, "_", STRING, "|"}
+        Follow: {"->", LINE_DELIM, DEDENT}
+        Productions
+            Prods ::= "|" Prod ProdsTl
+            Prods ::= Prod ProdsTl
+    nonterm Reduction
+        First: {"epsilon", UIDENT, CIDENT, "_", STRING, "|"}
+        Follow: {"|", LINE_DELIM, DEDENT}
+        Productions
+            Reduction ::= Prods "->" Code
+    nonterm ReductionsTl
+        First: {"ε", "|"}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            ReductionsTl ::= "|" Reduction ReductionsTl
+            ReductionsTl ::= epsilon
+    nonterm Reductions
+        First: {"epsilon", UIDENT, CIDENT, "_", STRING, "|"}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            Reductions ::= Reduction ReductionsTl
+    nonterm NontermType
+        First: {"nonterm", "start"}
+        Follow: {CIDENT}
+        Productions
+            NontermType ::= "nonterm"
+            NontermType ::= "start"
+    nonterm Nonterm
+        First: {"nonterm", "start"}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            Nonterm ::= NontermType CIDENT PrecRef "::=" Prods
+            Nonterm ::= NontermType CIDENT OfType PrecRef "::=" Reductions
+    nonterm Stmt
+        First: {"nonterm", "start", "token", "neutral", "left", "right", INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+        Follow: {LINE_DELIM, DEDENT}
+        Productions
+            Stmt ::= Prec
+            Stmt ::= Token
+            Stmt ::= Nonterm
+            Stmt ::= Code
+    nonterm StmtsTl
+        First: {"ε", LINE_DELIM}
+        Follow: {DEDENT}
+        Productions
+            StmtsTl ::= LINE_DELIM Stmt StmtsTl
+            StmtsTl ::= epsilon
+    nonterm Stmts
+        First: {"nonterm", "start", "token", "neutral", "left", "right", INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}
+        Follow: {DEDENT}
+        Productions
+            Stmts ::= Stmt StmtsTl
+    nonterm Hocc
+        First: {"hocc"}
+        Follow: {CODE_TOKEN, EOI}
+        Productions
+            Hocc ::= "hocc" INDENT Stmts DEDENT
+    nonterm Matter
+        First: {"ε", CODE_TOKEN}
+        Follow: {"hocc", EOI}
+        Productions
+            Matter ::= CODE_TOKEN Matter
+            Matter ::= epsilon
+    start Hmh
+        First: {"hocc", CODE_TOKEN}
+        Follow: {"⊥"}
+        Productions
+            Hmh ::= Matter Hocc Matter EOI
+    start Hmh'
+        First: {"hocc", CODE_TOKEN}
+        Follow: {"ε"}
+        Productions
+            Hmh' ::= Hmh "⊥"
+    start Hmhi
+        First: {"hocc", CODE_TOKEN}
+        Follow: {"⊥"}
+        Productions
+            Hmhi ::= Matter "hocc" Matter EOI
+    start Hmhi'
+        First: {"hocc", CODE_TOKEN}
+        Follow: {"ε"}
+        Productions
+            Hmhi' ::= Hmhi "⊥"
+PGM(1) States
+    State 0 [0.0]
+        Kernel
+            [Hmh' ::= · Hmh "⊥", {"ε"}]
+        Added
+            [Matter ::= · CODE_TOKEN Matter, {"hocc"}]
+            [Matter ::= ·, {"hocc"}]
+            [Hmh ::= · Matter Hocc Matter EOI, {"⊥"}]
+        Actions
+            "hocc" : Reduce Matter ::= epsilon
+            CODE_TOKEN : ShiftPrefix 2
+        Gotos
+            Matter : 3
+            Hmh : 4
+    State 1 [1.0]
+        Kernel
+            [Hmhi' ::= · Hmhi "⊥", {"ε"}]
+        Added
+            [Matter ::= · CODE_TOKEN Matter, {"hocc"}]
+            [Matter ::= ·, {"hocc"}]
+            [Hmhi ::= · Matter "hocc" Matter EOI, {"⊥"}]
+        Actions
+            "hocc" : Reduce Matter ::= epsilon
+            CODE_TOKEN : ShiftPrefix 2
+        Gotos
+            Matter : 5
+            Hmhi : 6
+    State 2 [2.0]
+        Kernel
+            [Matter ::= CODE_TOKEN · Matter, {"hocc", EOI}]
+        Added
+            [Matter ::= · CODE_TOKEN Matter, {"hocc", EOI}]
+            [Matter ::= ·, {"hocc", EOI}]
+        Actions
+            "hocc" : Reduce Matter ::= epsilon
+            CODE_TOKEN : ShiftPrefix 2
+            EOI : Reduce Matter ::= epsilon
+        Gotos
+            Matter : 7
+    State 3 [3.0]
+        Kernel
+            [Hmh ::= Matter · Hocc Matter EOI, {"⊥"}]
+        Added
+            [Hocc ::= · "hocc" INDENT Stmts DEDENT, {CODE_TOKEN, EOI}]
+        Actions
+            "hocc" : ShiftPrefix 8
+        Gotos
+            Hocc : 9
+    State 4 [4.0]
+        Kernel
+            [Hmh' ::= Hmh · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 10
+    State 5 [5.0]
+        Kernel
+            [Hmhi ::= Matter · "hocc" Matter EOI, {"⊥"}]
+        Actions
+            "hocc" : ShiftPrefix 11
+    State 6 [6.0]
+        Kernel
+            [Hmhi' ::= Hmhi · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 12
+    State 7 [7.0]
+        Kernel
+            [Matter ::= CODE_TOKEN Matter ·, {"hocc", EOI}]
+        Actions
+            "hocc" : Reduce Matter ::= CODE_TOKEN Matter
+            EOI : Reduce Matter ::= CODE_TOKEN Matter
+    State 8 [8.0]
+        Kernel
+            [Hocc ::= "hocc" · INDENT Stmts DEDENT, {CODE_TOKEN, EOI}]
+        Actions
+            INDENT : ShiftPrefix 13
+    State 9 [9.0]
+        Kernel
+            [Hmh ::= Matter Hocc · Matter EOI, {"⊥"}]
+        Added
+            [Matter ::= · CODE_TOKEN Matter, {EOI}]
+            [Matter ::= ·, {EOI}]
+        Actions
+            CODE_TOKEN : ShiftPrefix 2
+            EOI : Reduce Matter ::= epsilon
+        Gotos
+            Matter : 14
+    State 10 [10.0]
+        Kernel
+            [Hmh' ::= Hmh "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce Hmh' ::= Hmh "⊥"
+    State 11 [11.0]
+        Kernel
+            [Hmhi ::= Matter "hocc" · Matter EOI, {"⊥"}]
+        Added
+            [Matter ::= · CODE_TOKEN Matter, {EOI}]
+            [Matter ::= ·, {EOI}]
+        Actions
+            CODE_TOKEN : ShiftPrefix 2
+            EOI : Reduce Matter ::= epsilon
+        Gotos
+            Matter : 15
+    State 12 [12.0]
+        Kernel
+            [Hmhi' ::= Hmhi "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce Hmhi' ::= Hmhi "⊥"
+    State 13 [13.0]
+        Kernel
+            [Hocc ::= "hocc" INDENT · Stmts DEDENT, {CODE_TOKEN, EOI}]
+        Added
+            [PrecType ::= · "neutral", {UIDENT}]
+            [PrecType ::= · "left", {UIDENT}]
+            [PrecType ::= · "right", {UIDENT}]
+            [Prec ::= · PrecType UIDENT PrecRels, {LINE_DELIM, DEDENT}]
+            [Token ::= · "token" CIDENT TokenAlias OfType0 PrecRef, {LINE_DELIM, DEDENT}]
+            [Delimited ::= · INDENT Codes DEDENT, {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {LINE_DELIM, DEDENT}]
+            [Code ::= · CODE_TOKEN CodeTl, {LINE_DELIM, DEDENT}]
+            [NontermType ::= · "nonterm", {CIDENT}]
+            [NontermType ::= · "start", {CIDENT}]
+            [Nonterm ::= · NontermType CIDENT PrecRef "::=" Prods, {LINE_DELIM, DEDENT}]
+            [Nonterm ::= · NontermType CIDENT OfType PrecRef "::=" Reductions, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Prec, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Token, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Nonterm, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Code, {LINE_DELIM, DEDENT}]
+            [Stmts ::= · Stmt StmtsTl, {DEDENT}]
+        Actions
+            "nonterm" : ShiftPrefix 16
+            "start" : ShiftPrefix 17
+            "token" : ShiftPrefix 18
+            "neutral" : ShiftPrefix 19
+            "left" : ShiftPrefix 20
+            "right" : ShiftPrefix 21
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            PrecType : 29
+            Prec : 30
+            Token : 31
+            Delimited : 32
+            Code : 33
+            NontermType : 34
+            Nonterm : 35
+            Stmt : 36
+            Stmts : 37
+    State 14 [14.0]
+        Kernel
+            [Hmh ::= Matter Hocc Matter · EOI, {"⊥"}]
+        Actions
+            EOI : ShiftAccept 38
+    State 15 [15.0]
+        Kernel
+            [Hmhi ::= Matter "hocc" Matter · EOI, {"⊥"}]
+        Actions
+            EOI : ShiftAccept 39
+    State 16 [16.0]
+        Kernel
+            [NontermType ::= "nonterm" ·, {CIDENT}]
+        Actions
+            CIDENT : Reduce NontermType ::= "nonterm"
+    State 17 [17.0]
+        Kernel
+            [NontermType ::= "start" ·, {CIDENT}]
+        Actions
+            CIDENT : Reduce NontermType ::= "start"
+    State 18 [18.0]
+        Kernel
+            [Token ::= "token" · CIDENT TokenAlias OfType0 PrecRef, {LINE_DELIM, DEDENT}]
+        Actions
+            CIDENT : ShiftPrefix 40
+    State 19 [19.0]
+        Kernel
+            [PrecType ::= "neutral" ·, {UIDENT}]
+        Actions
+            UIDENT : Reduce PrecType ::= "neutral"
+    State 20 [20.0]
+        Kernel
+            [PrecType ::= "left" ·, {UIDENT}]
+        Actions
+            UIDENT : Reduce PrecType ::= "left"
+    State 21 [21.0]
+        Kernel
+            [PrecType ::= "right" ·, {UIDENT}]
+        Actions
+            UIDENT : Reduce PrecType ::= "right"
+    State 22 [22.0]
+        Kernel
+            [Delimited ::= INDENT · Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Added
+            [Codes ::= · Code CodesTl, {DEDENT}]
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, DEDENT}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, DEDENT}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Codes : 41
+            Delimited : 32
+            Code : 42
+    State 23 [23.0]
+        Kernel
+            [Delimited ::= "(" · Codes0 ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Added
+            [Codes ::= · Code CodesTl, {")"}]
+            [Codes0 ::= · Codes, {")"}]
+            [Codes0 ::= ·, {")"}]
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, "(", ")", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, "(", ")", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, "(", ")", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, "(", ")", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, "(", ")", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, "(", ")", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, ")"}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, ")"}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            ")" : Reduce Codes0 ::= epsilon
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Codes : 43
+            Codes0 : 44
+            Delimited : 32
+            Code : 42
+    State 24 [24.0]
+        Kernel
+            [Delimited ::= "(|" · Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Added
+            [Codes ::= · Code CodesTl, {"|)"}]
+            [Codes0 ::= · Codes, {"|)"}]
+            [Codes0 ::= ·, {"|)"}]
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, "(", "(|", "|)", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "|)", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "|)", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "|)", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "|)", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "|)", "[", "[|", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, "|)"}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, "|)"}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "|)" : Reduce Codes0 ::= epsilon
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Codes : 43
+            Codes0 : 45
+            Delimited : 32
+            Code : 42
+    State 25 [25.0]
+        Kernel
+            [Delimited ::= "[" · Codes0 "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Added
+            [Codes ::= · Code CodesTl, {"]"}]
+            [Codes0 ::= · Codes, {"]"}]
+            [Codes0 ::= ·, {"]"}]
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "]", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "]", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "]", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "]", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "]", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "]", "[|", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, "]"}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, "]"}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "]" : Reduce Codes0 ::= epsilon
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Codes : 43
+            Codes0 : 46
+            Delimited : 32
+            Code : 42
+    State 26 [26.0]
+        Kernel
+            [Delimited ::= "[|" · Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Added
+            [Codes ::= · Code CodesTl, {"|]"}]
+            [Codes0 ::= · Codes, {"|]"}]
+            [Codes0 ::= ·, {"|]"}]
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "|]", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "|]", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "|]", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "|]", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "|]", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "|]", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, "|]"}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, "|]"}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "|]" : Reduce Codes0 ::= epsilon
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Codes : 43
+            Codes0 : 47
+            Delimited : 32
+            Code : 42
+    State 27 [27.0]
+        Kernel
+            [Delimited ::= "{" · Codes0 "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Added
+            [Codes ::= · Code CodesTl, {"}"}]
+            [Codes0 ::= · Codes, {"}"}]
+            [Codes0 ::= ·, {"}"}]
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, "(", "(|", "[", "[|", "{", "}", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, "}"}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, "}"}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            "}" : Reduce Codes0 ::= epsilon
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Codes : 43
+            Codes0 : 48
+            Delimited : 32
+            Code : 42
+    State 28 [28.0]
+        Kernel
+            [Code ::= CODE_TOKEN · CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Added
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [CodeTl ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce CodeTl ::= epsilon
+            ";" : Reduce CodeTl ::= epsilon
+            LINE_DELIM : Reduce CodeTl ::= epsilon
+            INDENT : ShiftPrefix 22
+            DEDENT : Reduce CodeTl ::= epsilon
+            "(" : ShiftPrefix 23
+            ")" : Reduce CodeTl ::= epsilon
+            "(|" : ShiftPrefix 24
+            "|)" : Reduce CodeTl ::= epsilon
+            "[" : ShiftPrefix 25
+            "]" : Reduce CodeTl ::= epsilon
+            "[|" : ShiftPrefix 26
+            "|]" : Reduce CodeTl ::= epsilon
+            "{" : ShiftPrefix 27
+            "}" : Reduce CodeTl ::= epsilon
+            CODE_TOKEN : ShiftPrefix 49
+        Gotos
+            Delimited : 50
+            CodeTl : 51
+    State 29 [29.0]
+        Kernel
+            [Prec ::= PrecType · UIDENT PrecRels, {LINE_DELIM, DEDENT}]
+        Actions
+            UIDENT : ShiftPrefix 52
+    State 30 [30.0]
+        Kernel
+            [Stmt ::= Prec ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Stmt ::= Prec
+            DEDENT : Reduce Stmt ::= Prec
+    State 31 [31.0]
+        Kernel
+            [Stmt ::= Token ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Stmt ::= Token
+            DEDENT : Reduce Stmt ::= Token
+    State 32 [32.0]
+        Kernel
+            [Code ::= Delimited · CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Added
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [CodeTl ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce CodeTl ::= epsilon
+            ";" : Reduce CodeTl ::= epsilon
+            LINE_DELIM : Reduce CodeTl ::= epsilon
+            INDENT : ShiftPrefix 22
+            DEDENT : Reduce CodeTl ::= epsilon
+            "(" : ShiftPrefix 23
+            ")" : Reduce CodeTl ::= epsilon
+            "(|" : ShiftPrefix 24
+            "|)" : Reduce CodeTl ::= epsilon
+            "[" : ShiftPrefix 25
+            "]" : Reduce CodeTl ::= epsilon
+            "[|" : ShiftPrefix 26
+            "|]" : Reduce CodeTl ::= epsilon
+            "{" : ShiftPrefix 27
+            "}" : Reduce CodeTl ::= epsilon
+            CODE_TOKEN : ShiftPrefix 49
+        Gotos
+            Delimited : 50
+            CodeTl : 53
+    State 33 [33.0]
+        Kernel
+            [Stmt ::= Code ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Stmt ::= Code
+            DEDENT : Reduce Stmt ::= Code
+    State 34 [34.0]
+        Kernel
+            [Nonterm ::= NontermType · CIDENT PrecRef "::=" Prods, {LINE_DELIM, DEDENT}]
+            [Nonterm ::= NontermType · CIDENT OfType PrecRef "::=" Reductions, {LINE_DELIM, DEDENT}]
+        Actions
+            CIDENT : ShiftPrefix 54
+    State 35 [35.0]
+        Kernel
+            [Stmt ::= Nonterm ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Stmt ::= Nonterm
+            DEDENT : Reduce Stmt ::= Nonterm
+    State 36 [36.0]
+        Kernel
+            [Stmts ::= Stmt · StmtsTl, {DEDENT}]
+        Added
+            [StmtsTl ::= · LINE_DELIM Stmt StmtsTl, {DEDENT}]
+            [StmtsTl ::= ·, {DEDENT}]
+        Actions
+            LINE_DELIM : ShiftPrefix 55
+            DEDENT : Reduce StmtsTl ::= epsilon
+        Gotos
+            StmtsTl : 56
+    State 37 [37.0]
+        Kernel
+            [Hocc ::= "hocc" INDENT Stmts · DEDENT, {CODE_TOKEN, EOI}]
+        Actions
+            DEDENT : ShiftPrefix 57
+    State 38 [38.0]
+        Kernel
+            [Hmh ::= Matter Hocc Matter EOI ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Hmh ::= Matter Hocc Matter EOI
+    State 39 [39.0]
+        Kernel
+            [Hmhi ::= Matter "hocc" Matter EOI ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Hmhi ::= Matter "hocc" Matter EOI
+    State 40 [40.0]
+        Kernel
+            [Token ::= "token" CIDENT · TokenAlias OfType0 PrecRef, {LINE_DELIM, DEDENT}]
+        Added
+            [TokenAlias ::= · STRING, {"prec", "of", LINE_DELIM, DEDENT}]
+            [TokenAlias ::= ·, {"prec", "of", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce TokenAlias ::= epsilon
+            STRING : ShiftPrefix 58
+            "of" : Reduce TokenAlias ::= epsilon
+            LINE_DELIM : Reduce TokenAlias ::= epsilon
+            DEDENT : Reduce TokenAlias ::= epsilon
+        Gotos
+            TokenAlias : 59
+    State 41 [41.0]
+        Kernel
+            [Delimited ::= INDENT Codes · DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            DEDENT : ShiftPrefix 60
+    State 42 [42.0]
+        Kernel
+            [Codes ::= Code · CodesTl, {DEDENT, ")", "|)", "]", "|]", "}"}]
+        Added
+            [Sep ::= · LINE_DELIM, {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Sep ::= · ";", {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Sep ::= · "|", {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [CodesTl ::= · Sep Code CodesTl, {DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodesTl ::= ·, {DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : ShiftPrefix 61
+            ";" : ShiftPrefix 62
+            LINE_DELIM : ShiftPrefix 63
+            DEDENT : Reduce CodesTl ::= epsilon
+            ")" : Reduce CodesTl ::= epsilon
+            "|)" : Reduce CodesTl ::= epsilon
+            "]" : Reduce CodesTl ::= epsilon
+            "|]" : Reduce CodesTl ::= epsilon
+            "}" : Reduce CodesTl ::= epsilon
+        Gotos
+            Sep : 64
+            CodesTl : 65
+    State 43 [43.0]
+        Kernel
+            [Codes0 ::= Codes ·, {")", "|)", "]", "|]", "}"}]
+        Actions
+            ")" : Reduce Codes0 ::= Codes
+            "|)" : Reduce Codes0 ::= Codes
+            "]" : Reduce Codes0 ::= Codes
+            "|]" : Reduce Codes0 ::= Codes
+            "}" : Reduce Codes0 ::= Codes
+    State 44 [44.0]
+        Kernel
+            [Delimited ::= "(" Codes0 · ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            ")" : ShiftPrefix 66
+    State 45 [45.0]
+        Kernel
+            [Delimited ::= "(|" Codes0 · "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|)" : ShiftPrefix 67
+    State 46 [46.0]
+        Kernel
+            [Delimited ::= "[" Codes0 · "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "]" : ShiftPrefix 68
+    State 47 [47.0]
+        Kernel
+            [Delimited ::= "[|" Codes0 · "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|]" : ShiftPrefix 69
+    State 48 [48.0]
+        Kernel
+            [Delimited ::= "{" Codes0 · "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "}" : ShiftPrefix 70
+    State 49 [49.0]
+        Kernel
+            [CodeTl ::= CODE_TOKEN · CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Added
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [CodeTl ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce CodeTl ::= epsilon
+            ";" : Reduce CodeTl ::= epsilon
+            LINE_DELIM : Reduce CodeTl ::= epsilon
+            INDENT : ShiftPrefix 22
+            DEDENT : Reduce CodeTl ::= epsilon
+            "(" : ShiftPrefix 23
+            ")" : Reduce CodeTl ::= epsilon
+            "(|" : ShiftPrefix 24
+            "|)" : Reduce CodeTl ::= epsilon
+            "[" : ShiftPrefix 25
+            "]" : Reduce CodeTl ::= epsilon
+            "[|" : ShiftPrefix 26
+            "|]" : Reduce CodeTl ::= epsilon
+            "{" : ShiftPrefix 27
+            "}" : Reduce CodeTl ::= epsilon
+            CODE_TOKEN : ShiftPrefix 49
+        Gotos
+            Delimited : 50
+            CodeTl : 71
+    State 50 [50.0]
+        Kernel
+            [CodeTl ::= Delimited · CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Added
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [CodeTl ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodeTl ::= ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce CodeTl ::= epsilon
+            ";" : Reduce CodeTl ::= epsilon
+            LINE_DELIM : Reduce CodeTl ::= epsilon
+            INDENT : ShiftPrefix 22
+            DEDENT : Reduce CodeTl ::= epsilon
+            "(" : ShiftPrefix 23
+            ")" : Reduce CodeTl ::= epsilon
+            "(|" : ShiftPrefix 24
+            "|)" : Reduce CodeTl ::= epsilon
+            "[" : ShiftPrefix 25
+            "]" : Reduce CodeTl ::= epsilon
+            "[|" : ShiftPrefix 26
+            "|]" : Reduce CodeTl ::= epsilon
+            "{" : ShiftPrefix 27
+            "}" : Reduce CodeTl ::= epsilon
+            CODE_TOKEN : ShiftPrefix 49
+        Gotos
+            Delimited : 50
+            CodeTl : 72
+    State 51 [51.0]
+        Kernel
+            [Code ::= CODE_TOKEN CodeTl ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce Code ::= CODE_TOKEN CodeTl
+            ";" : Reduce Code ::= CODE_TOKEN CodeTl
+            LINE_DELIM : Reduce Code ::= CODE_TOKEN CodeTl
+            DEDENT : Reduce Code ::= CODE_TOKEN CodeTl
+            ")" : Reduce Code ::= CODE_TOKEN CodeTl
+            "|)" : Reduce Code ::= CODE_TOKEN CodeTl
+            "]" : Reduce Code ::= CODE_TOKEN CodeTl
+            "|]" : Reduce Code ::= CODE_TOKEN CodeTl
+            "}" : Reduce Code ::= CODE_TOKEN CodeTl
+    State 52 [52.0]
+        Kernel
+            [Prec ::= PrecType UIDENT · PrecRels, {LINE_DELIM, DEDENT}]
+        Added
+            [PrecRels ::= · "<" Precs, {LINE_DELIM, DEDENT}]
+            [PrecRels ::= ·, {LINE_DELIM, DEDENT}]
+        Actions
+            "<" : ShiftPrefix 73
+            LINE_DELIM : Reduce PrecRels ::= epsilon
+            DEDENT : Reduce PrecRels ::= epsilon
+        Gotos
+            PrecRels : 74
+    State 53 [53.0]
+        Kernel
+            [Code ::= Delimited CodeTl ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce Code ::= Delimited CodeTl
+            ";" : Reduce Code ::= Delimited CodeTl
+            LINE_DELIM : Reduce Code ::= Delimited CodeTl
+            DEDENT : Reduce Code ::= Delimited CodeTl
+            ")" : Reduce Code ::= Delimited CodeTl
+            "|)" : Reduce Code ::= Delimited CodeTl
+            "]" : Reduce Code ::= Delimited CodeTl
+            "|]" : Reduce Code ::= Delimited CodeTl
+            "}" : Reduce Code ::= Delimited CodeTl
+    State 54 [54.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT · PrecRef "::=" Prods, {LINE_DELIM, DEDENT}]
+            [Nonterm ::= NontermType CIDENT · OfType PrecRef "::=" Reductions, {LINE_DELIM, DEDENT}]
+        Added
+            [OfType ::= · "of" CIDENT "." UIDENT, {"prec", "::="}]
+            [PrecRef ::= · "prec" UIDENT, {"::="}]
+            [PrecRef ::= ·, {"::="}]
+        Actions
+            "prec" : ShiftPrefix 75
+            "::=" : Reduce PrecRef ::= epsilon
+            "of" : ShiftPrefix 76
+        Gotos
+            OfType : 77
+            PrecRef : 78
+    State 55 [55.0]
+        Kernel
+            [StmtsTl ::= LINE_DELIM · Stmt StmtsTl, {DEDENT}]
+        Added
+            [PrecType ::= · "neutral", {UIDENT}]
+            [PrecType ::= · "left", {UIDENT}]
+            [PrecType ::= · "right", {UIDENT}]
+            [Prec ::= · PrecType UIDENT PrecRels, {LINE_DELIM, DEDENT}]
+            [Token ::= · "token" CIDENT TokenAlias OfType0 PrecRef, {LINE_DELIM, DEDENT}]
+            [Delimited ::= · INDENT Codes DEDENT, {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {LINE_DELIM, DEDENT}]
+            [Code ::= · CODE_TOKEN CodeTl, {LINE_DELIM, DEDENT}]
+            [NontermType ::= · "nonterm", {CIDENT}]
+            [NontermType ::= · "start", {CIDENT}]
+            [Nonterm ::= · NontermType CIDENT PrecRef "::=" Prods, {LINE_DELIM, DEDENT}]
+            [Nonterm ::= · NontermType CIDENT OfType PrecRef "::=" Reductions, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Prec, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Token, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Nonterm, {LINE_DELIM, DEDENT}]
+            [Stmt ::= · Code, {LINE_DELIM, DEDENT}]
+        Actions
+            "nonterm" : ShiftPrefix 16
+            "start" : ShiftPrefix 17
+            "token" : ShiftPrefix 18
+            "neutral" : ShiftPrefix 19
+            "left" : ShiftPrefix 20
+            "right" : ShiftPrefix 21
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            PrecType : 29
+            Prec : 30
+            Token : 31
+            Delimited : 32
+            Code : 33
+            NontermType : 34
+            Nonterm : 35
+            Stmt : 79
+    State 56 [56.0]
+        Kernel
+            [Stmts ::= Stmt StmtsTl ·, {DEDENT}]
+        Actions
+            DEDENT : Reduce Stmts ::= Stmt StmtsTl
+    State 57 [57.0]
+        Kernel
+            [Hocc ::= "hocc" INDENT Stmts DEDENT ·, {CODE_TOKEN, EOI}]
+        Actions
+            CODE_TOKEN : Reduce Hocc ::= "hocc" INDENT Stmts DEDENT
+            EOI : Reduce Hocc ::= "hocc" INDENT Stmts DEDENT
+    State 58 [58.0]
+        Kernel
+            [TokenAlias ::= STRING ·, {"prec", "of", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce TokenAlias ::= STRING
+            "of" : Reduce TokenAlias ::= STRING
+            LINE_DELIM : Reduce TokenAlias ::= STRING
+            DEDENT : Reduce TokenAlias ::= STRING
+    State 59 [59.0]
+        Kernel
+            [Token ::= "token" CIDENT TokenAlias · OfType0 PrecRef, {LINE_DELIM, DEDENT}]
+        Added
+            [OfType ::= · "of" CIDENT "." UIDENT, {"prec", LINE_DELIM, DEDENT}]
+            [OfType0 ::= · OfType, {"prec", LINE_DELIM, DEDENT}]
+            [OfType0 ::= ·, {"prec", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce OfType0 ::= epsilon
+            "of" : ShiftPrefix 76
+            LINE_DELIM : Reduce OfType0 ::= epsilon
+            DEDENT : Reduce OfType0 ::= epsilon
+        Gotos
+            OfType : 80
+            OfType0 : 81
+    State 60 [60.0]
+        Kernel
+            [Delimited ::= INDENT Codes DEDENT ·, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|" : Reduce Delimited ::= INDENT Codes DEDENT
+            ";" : Reduce Delimited ::= INDENT Codes DEDENT
+            LINE_DELIM : Reduce Delimited ::= INDENT Codes DEDENT
+            INDENT : Reduce Delimited ::= INDENT Codes DEDENT
+            DEDENT : Reduce Delimited ::= INDENT Codes DEDENT
+            "(" : Reduce Delimited ::= INDENT Codes DEDENT
+            ")" : Reduce Delimited ::= INDENT Codes DEDENT
+            "(|" : Reduce Delimited ::= INDENT Codes DEDENT
+            "|)" : Reduce Delimited ::= INDENT Codes DEDENT
+            "[" : Reduce Delimited ::= INDENT Codes DEDENT
+            "]" : Reduce Delimited ::= INDENT Codes DEDENT
+            "[|" : Reduce Delimited ::= INDENT Codes DEDENT
+            "|]" : Reduce Delimited ::= INDENT Codes DEDENT
+            "{" : Reduce Delimited ::= INDENT Codes DEDENT
+            "}" : Reduce Delimited ::= INDENT Codes DEDENT
+            CODE_TOKEN : Reduce Delimited ::= INDENT Codes DEDENT
+    State 61 [61.0]
+        Kernel
+            [Sep ::= "|" ·, {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+        Actions
+            INDENT : Reduce Sep ::= "|"
+            "(" : Reduce Sep ::= "|"
+            "(|" : Reduce Sep ::= "|"
+            "[" : Reduce Sep ::= "|"
+            "[|" : Reduce Sep ::= "|"
+            "{" : Reduce Sep ::= "|"
+            CODE_TOKEN : Reduce Sep ::= "|"
+    State 62 [62.0]
+        Kernel
+            [Sep ::= ";" ·, {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+        Actions
+            INDENT : Reduce Sep ::= ";"
+            "(" : Reduce Sep ::= ";"
+            "(|" : Reduce Sep ::= ";"
+            "[" : Reduce Sep ::= ";"
+            "[|" : Reduce Sep ::= ";"
+            "{" : Reduce Sep ::= ";"
+            CODE_TOKEN : Reduce Sep ::= ";"
+    State 63 [63.0]
+        Kernel
+            [Sep ::= LINE_DELIM ·, {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+        Actions
+            INDENT : Reduce Sep ::= LINE_DELIM
+            "(" : Reduce Sep ::= LINE_DELIM
+            "(|" : Reduce Sep ::= LINE_DELIM
+            "[" : Reduce Sep ::= LINE_DELIM
+            "[|" : Reduce Sep ::= LINE_DELIM
+            "{" : Reduce Sep ::= LINE_DELIM
+            CODE_TOKEN : Reduce Sep ::= LINE_DELIM
+    State 64 [64.0]
+        Kernel
+            [CodesTl ::= Sep · Code CodesTl, {DEDENT, ")", "|)", "]", "|]", "}"}]
+        Added
+            [Delimited ::= · INDENT Codes DEDENT, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Delimited : 32
+            Code : 82
+    State 65 [65.0]
+        Kernel
+            [Codes ::= Code CodesTl ·, {DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            DEDENT : Reduce Codes ::= Code CodesTl
+            ")" : Reduce Codes ::= Code CodesTl
+            "|)" : Reduce Codes ::= Code CodesTl
+            "]" : Reduce Codes ::= Code CodesTl
+            "|]" : Reduce Codes ::= Code CodesTl
+            "}" : Reduce Codes ::= Code CodesTl
+    State 66 [66.0]
+        Kernel
+            [Delimited ::= "(" Codes0 ")" ·, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|" : Reduce Delimited ::= "(" Codes0 ")"
+            ";" : Reduce Delimited ::= "(" Codes0 ")"
+            LINE_DELIM : Reduce Delimited ::= "(" Codes0 ")"
+            INDENT : Reduce Delimited ::= "(" Codes0 ")"
+            DEDENT : Reduce Delimited ::= "(" Codes0 ")"
+            "(" : Reduce Delimited ::= "(" Codes0 ")"
+            ")" : Reduce Delimited ::= "(" Codes0 ")"
+            "(|" : Reduce Delimited ::= "(" Codes0 ")"
+            "|)" : Reduce Delimited ::= "(" Codes0 ")"
+            "[" : Reduce Delimited ::= "(" Codes0 ")"
+            "]" : Reduce Delimited ::= "(" Codes0 ")"
+            "[|" : Reduce Delimited ::= "(" Codes0 ")"
+            "|]" : Reduce Delimited ::= "(" Codes0 ")"
+            "{" : Reduce Delimited ::= "(" Codes0 ")"
+            "}" : Reduce Delimited ::= "(" Codes0 ")"
+            CODE_TOKEN : Reduce Delimited ::= "(" Codes0 ")"
+    State 67 [67.0]
+        Kernel
+            [Delimited ::= "(|" Codes0 "|)" ·, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|" : Reduce Delimited ::= "(|" Codes0 "|)"
+            ";" : Reduce Delimited ::= "(|" Codes0 "|)"
+            LINE_DELIM : Reduce Delimited ::= "(|" Codes0 "|)"
+            INDENT : Reduce Delimited ::= "(|" Codes0 "|)"
+            DEDENT : Reduce Delimited ::= "(|" Codes0 "|)"
+            "(" : Reduce Delimited ::= "(|" Codes0 "|)"
+            ")" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "(|" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "|)" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "[" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "]" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "[|" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "|]" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "{" : Reduce Delimited ::= "(|" Codes0 "|)"
+            "}" : Reduce Delimited ::= "(|" Codes0 "|)"
+            CODE_TOKEN : Reduce Delimited ::= "(|" Codes0 "|)"
+    State 68 [68.0]
+        Kernel
+            [Delimited ::= "[" Codes0 "]" ·, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|" : Reduce Delimited ::= "[" Codes0 "]"
+            ";" : Reduce Delimited ::= "[" Codes0 "]"
+            LINE_DELIM : Reduce Delimited ::= "[" Codes0 "]"
+            INDENT : Reduce Delimited ::= "[" Codes0 "]"
+            DEDENT : Reduce Delimited ::= "[" Codes0 "]"
+            "(" : Reduce Delimited ::= "[" Codes0 "]"
+            ")" : Reduce Delimited ::= "[" Codes0 "]"
+            "(|" : Reduce Delimited ::= "[" Codes0 "]"
+            "|)" : Reduce Delimited ::= "[" Codes0 "]"
+            "[" : Reduce Delimited ::= "[" Codes0 "]"
+            "]" : Reduce Delimited ::= "[" Codes0 "]"
+            "[|" : Reduce Delimited ::= "[" Codes0 "]"
+            "|]" : Reduce Delimited ::= "[" Codes0 "]"
+            "{" : Reduce Delimited ::= "[" Codes0 "]"
+            "}" : Reduce Delimited ::= "[" Codes0 "]"
+            CODE_TOKEN : Reduce Delimited ::= "[" Codes0 "]"
+    State 69 [69.0]
+        Kernel
+            [Delimited ::= "[|" Codes0 "|]" ·, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|" : Reduce Delimited ::= "[|" Codes0 "|]"
+            ";" : Reduce Delimited ::= "[|" Codes0 "|]"
+            LINE_DELIM : Reduce Delimited ::= "[|" Codes0 "|]"
+            INDENT : Reduce Delimited ::= "[|" Codes0 "|]"
+            DEDENT : Reduce Delimited ::= "[|" Codes0 "|]"
+            "(" : Reduce Delimited ::= "[|" Codes0 "|]"
+            ")" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "(|" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "|)" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "[" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "]" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "[|" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "|]" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "{" : Reduce Delimited ::= "[|" Codes0 "|]"
+            "}" : Reduce Delimited ::= "[|" Codes0 "|]"
+            CODE_TOKEN : Reduce Delimited ::= "[|" Codes0 "|]"
+    State 70 [70.0]
+        Kernel
+            [Delimited ::= "{" Codes0 "}" ·, {"|", ";", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", CODE_TOKEN}]
+        Actions
+            "|" : Reduce Delimited ::= "{" Codes0 "}"
+            ";" : Reduce Delimited ::= "{" Codes0 "}"
+            LINE_DELIM : Reduce Delimited ::= "{" Codes0 "}"
+            INDENT : Reduce Delimited ::= "{" Codes0 "}"
+            DEDENT : Reduce Delimited ::= "{" Codes0 "}"
+            "(" : Reduce Delimited ::= "{" Codes0 "}"
+            ")" : Reduce Delimited ::= "{" Codes0 "}"
+            "(|" : Reduce Delimited ::= "{" Codes0 "}"
+            "|)" : Reduce Delimited ::= "{" Codes0 "}"
+            "[" : Reduce Delimited ::= "{" Codes0 "}"
+            "]" : Reduce Delimited ::= "{" Codes0 "}"
+            "[|" : Reduce Delimited ::= "{" Codes0 "}"
+            "|]" : Reduce Delimited ::= "{" Codes0 "}"
+            "{" : Reduce Delimited ::= "{" Codes0 "}"
+            "}" : Reduce Delimited ::= "{" Codes0 "}"
+            CODE_TOKEN : Reduce Delimited ::= "{" Codes0 "}"
+    State 71 [71.0]
+        Kernel
+            [CodeTl ::= CODE_TOKEN CodeTl ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            ";" : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            LINE_DELIM : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            DEDENT : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            ")" : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            "|)" : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            "]" : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            "|]" : Reduce CodeTl ::= CODE_TOKEN CodeTl
+            "}" : Reduce CodeTl ::= CODE_TOKEN CodeTl
+    State 72 [72.0]
+        Kernel
+            [CodeTl ::= Delimited CodeTl ·, {"|", ";", LINE_DELIM, DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : Reduce CodeTl ::= Delimited CodeTl
+            ";" : Reduce CodeTl ::= Delimited CodeTl
+            LINE_DELIM : Reduce CodeTl ::= Delimited CodeTl
+            DEDENT : Reduce CodeTl ::= Delimited CodeTl
+            ")" : Reduce CodeTl ::= Delimited CodeTl
+            "|)" : Reduce CodeTl ::= Delimited CodeTl
+            "]" : Reduce CodeTl ::= Delimited CodeTl
+            "|]" : Reduce CodeTl ::= Delimited CodeTl
+            "}" : Reduce CodeTl ::= Delimited CodeTl
+    State 73 [73.0]
+        Kernel
+            [PrecRels ::= "<" · Precs, {LINE_DELIM, DEDENT}]
+        Added
+            [Precs ::= · UIDENT PrecsTl, {LINE_DELIM, DEDENT}]
+        Actions
+            UIDENT : ShiftPrefix 83
+        Gotos
+            Precs : 84
+    State 74 [74.0]
+        Kernel
+            [Prec ::= PrecType UIDENT PrecRels ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Prec ::= PrecType UIDENT PrecRels
+            DEDENT : Reduce Prec ::= PrecType UIDENT PrecRels
+    State 75 [75.0]
+        Kernel
+            [PrecRef ::= "prec" · UIDENT, {"::=", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            UIDENT : ShiftPrefix 85
+    State 76 [76.0]
+        Kernel
+            [OfType ::= "of" · CIDENT "." UIDENT, {"prec", "::=", LINE_DELIM, DEDENT}]
+        Actions
+            CIDENT : ShiftPrefix 86
+    State 77 [77.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT OfType · PrecRef "::=" Reductions, {LINE_DELIM, DEDENT}]
+        Added
+            [PrecRef ::= · "prec" UIDENT, {"::="}]
+            [PrecRef ::= ·, {"::="}]
+        Actions
+            "prec" : ShiftPrefix 75
+            "::=" : Reduce PrecRef ::= epsilon
+        Gotos
+            PrecRef : 87
+    State 78 [78.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT PrecRef · "::=" Prods, {LINE_DELIM, DEDENT}]
+        Actions
+            "::=" : ShiftPrefix 88
+    State 79 [79.0]
+        Kernel
+            [StmtsTl ::= LINE_DELIM Stmt · StmtsTl, {DEDENT}]
+        Added
+            [StmtsTl ::= · LINE_DELIM Stmt StmtsTl, {DEDENT}]
+            [StmtsTl ::= ·, {DEDENT}]
+        Actions
+            LINE_DELIM : ShiftPrefix 55
+            DEDENT : Reduce StmtsTl ::= epsilon
+        Gotos
+            StmtsTl : 89
+    State 80 [80.0]
+        Kernel
+            [OfType0 ::= OfType ·, {"prec", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce OfType0 ::= OfType
+            LINE_DELIM : Reduce OfType0 ::= OfType
+            DEDENT : Reduce OfType0 ::= OfType
+    State 81 [81.0]
+        Kernel
+            [Token ::= "token" CIDENT TokenAlias OfType0 · PrecRef, {LINE_DELIM, DEDENT}]
+        Added
+            [PrecRef ::= · "prec" UIDENT, {LINE_DELIM, DEDENT}]
+            [PrecRef ::= ·, {LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : ShiftPrefix 75
+            LINE_DELIM : Reduce PrecRef ::= epsilon
+            DEDENT : Reduce PrecRef ::= epsilon
+        Gotos
+            PrecRef : 90
+    State 82 [82.0]
+        Kernel
+            [CodesTl ::= Sep Code · CodesTl, {DEDENT, ")", "|)", "]", "|]", "}"}]
+        Added
+            [Sep ::= · LINE_DELIM, {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Sep ::= · ";", {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Sep ::= · "|", {INDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [CodesTl ::= · Sep Code CodesTl, {DEDENT, ")", "|)", "]", "|]", "}"}]
+            [CodesTl ::= ·, {DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            "|" : ShiftPrefix 61
+            ";" : ShiftPrefix 62
+            LINE_DELIM : ShiftPrefix 63
+            DEDENT : Reduce CodesTl ::= epsilon
+            ")" : Reduce CodesTl ::= epsilon
+            "|)" : Reduce CodesTl ::= epsilon
+            "]" : Reduce CodesTl ::= epsilon
+            "|]" : Reduce CodesTl ::= epsilon
+            "}" : Reduce CodesTl ::= epsilon
+        Gotos
+            Sep : 64
+            CodesTl : 91
+    State 83 [83.0]
+        Kernel
+            [Precs ::= UIDENT · PrecsTl, {LINE_DELIM, DEDENT}]
+        Added
+            [PrecsTl ::= · "," UIDENT PrecsTl, {LINE_DELIM, DEDENT}]
+            [PrecsTl ::= ·, {LINE_DELIM, DEDENT}]
+        Actions
+            "," : ShiftPrefix 92
+            LINE_DELIM : Reduce PrecsTl ::= epsilon
+            DEDENT : Reduce PrecsTl ::= epsilon
+        Gotos
+            PrecsTl : 93
+    State 84 [84.0]
+        Kernel
+            [PrecRels ::= "<" Precs ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce PrecRels ::= "<" Precs
+            DEDENT : Reduce PrecRels ::= "<" Precs
+    State 85 [85.0]
+        Kernel
+            [PrecRef ::= "prec" UIDENT ·, {"::=", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "::=" : Reduce PrecRef ::= "prec" UIDENT
+            "->" : Reduce PrecRef ::= "prec" UIDENT
+            "|" : Reduce PrecRef ::= "prec" UIDENT
+            LINE_DELIM : Reduce PrecRef ::= "prec" UIDENT
+            DEDENT : Reduce PrecRef ::= "prec" UIDENT
+    State 86 [86.0]
+        Kernel
+            [OfType ::= "of" CIDENT · "." UIDENT, {"prec", "::=", LINE_DELIM, DEDENT}]
+        Actions
+            "." : ShiftPrefix 94
+    State 87 [87.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT OfType PrecRef · "::=" Reductions, {LINE_DELIM, DEDENT}]
+        Actions
+            "::=" : ShiftPrefix 95
+    State 88 [88.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT PrecRef "::=" · Prods, {LINE_DELIM, DEDENT}]
+        Added
+            [Ident ::= · UIDENT, {":"}]
+            [Ident ::= · CIDENT, {":"}]
+            [Ident ::= · "_", {":"}]
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "|", LINE_DELIM, DEDENT}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · Ident ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "|", LINE_DELIM, DEDENT}]
+            [ProdParams ::= · ProdParam ProdParamsTl, {"prec", "|", LINE_DELIM, DEDENT}]
+            [ProdPattern ::= · ProdParams, {"prec", "|", LINE_DELIM, DEDENT}]
+            [ProdPattern ::= · "epsilon", {"prec", "|", LINE_DELIM, DEDENT}]
+            [Prod ::= · ProdPattern PrecRef, {"|", LINE_DELIM, DEDENT}]
+            [Prods ::= · "|" Prod ProdsTl, {LINE_DELIM, DEDENT}]
+            [Prods ::= · Prod ProdsTl, {LINE_DELIM, DEDENT}]
+        Actions
+            "epsilon" : ShiftPrefix 96
+            UIDENT : ShiftPrefix 97
+            CIDENT : ShiftPrefix 98
+            "_" : ShiftPrefix 99
+            STRING : ShiftPrefix 100
+            "|" : ShiftPrefix 101
+        Gotos
+            Ident : 102
+            ProdParamType : 103
+            ProdParam : 104
+            ProdParams : 105
+            ProdPattern : 106
+            Prod : 107
+            Prods : 108
+    State 89 [89.0]
+        Kernel
+            [StmtsTl ::= LINE_DELIM Stmt StmtsTl ·, {DEDENT}]
+        Actions
+            DEDENT : Reduce StmtsTl ::= LINE_DELIM Stmt StmtsTl
+    State 90 [90.0]
+        Kernel
+            [Token ::= "token" CIDENT TokenAlias OfType0 PrecRef ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Token ::= "token" CIDENT TokenAlias OfType0 PrecRef
+            DEDENT : Reduce Token ::= "token" CIDENT TokenAlias OfType0 PrecRef
+    State 91 [91.0]
+        Kernel
+            [CodesTl ::= Sep Code CodesTl ·, {DEDENT, ")", "|)", "]", "|]", "}"}]
+        Actions
+            DEDENT : Reduce CodesTl ::= Sep Code CodesTl
+            ")" : Reduce CodesTl ::= Sep Code CodesTl
+            "|)" : Reduce CodesTl ::= Sep Code CodesTl
+            "]" : Reduce CodesTl ::= Sep Code CodesTl
+            "|]" : Reduce CodesTl ::= Sep Code CodesTl
+            "}" : Reduce CodesTl ::= Sep Code CodesTl
+    State 92 [92.0]
+        Kernel
+            [PrecsTl ::= "," · UIDENT PrecsTl, {LINE_DELIM, DEDENT}]
+        Actions
+            UIDENT : ShiftPrefix 109
+    State 93 [93.0]
+        Kernel
+            [Precs ::= UIDENT PrecsTl ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Precs ::= UIDENT PrecsTl
+            DEDENT : Reduce Precs ::= UIDENT PrecsTl
+    State 94 [94.0]
+        Kernel
+            [OfType ::= "of" CIDENT "." · UIDENT, {"prec", "::=", LINE_DELIM, DEDENT}]
+        Actions
+            UIDENT : ShiftPrefix 110
+    State 95 [95.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT OfType PrecRef "::=" · Reductions, {LINE_DELIM, DEDENT}]
+        Added
+            [Ident ::= · UIDENT, {":"}]
+            [Ident ::= · CIDENT, {":"}]
+            [Ident ::= · "_", {":"}]
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParam ::= · Ident ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParam ::= · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParams ::= · ProdParam ProdParamsTl, {"prec", "->", "|"}]
+            [ProdPattern ::= · ProdParams, {"prec", "->", "|"}]
+            [ProdPattern ::= · "epsilon", {"prec", "->", "|"}]
+            [Prod ::= · ProdPattern PrecRef, {"->", "|"}]
+            [Prods ::= · "|" Prod ProdsTl, {"->"}]
+            [Prods ::= · Prod ProdsTl, {"->"}]
+            [Reduction ::= · Prods "->" Code, {"|", LINE_DELIM, DEDENT}]
+            [Reductions ::= · Reduction ReductionsTl, {LINE_DELIM, DEDENT}]
+        Actions
+            "epsilon" : ShiftPrefix 96
+            UIDENT : ShiftPrefix 97
+            CIDENT : ShiftPrefix 98
+            "_" : ShiftPrefix 99
+            STRING : ShiftPrefix 100
+            "|" : ShiftPrefix 101
+        Gotos
+            Ident : 102
+            ProdParamType : 103
+            ProdParam : 104
+            ProdParams : 105
+            ProdPattern : 106
+            Prod : 107
+            Prods : 111
+            Reduction : 112
+            Reductions : 113
+    State 96 [96.0]
+        Kernel
+            [ProdPattern ::= "epsilon" ·, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdPattern ::= "epsilon"
+            "->" : Reduce ProdPattern ::= "epsilon"
+            "|" : Reduce ProdPattern ::= "epsilon"
+            LINE_DELIM : Reduce ProdPattern ::= "epsilon"
+            DEDENT : Reduce ProdPattern ::= "epsilon"
+    State 97 [97.0]
+        Kernel
+            [Ident ::= UIDENT ·, {":"}]
+        Actions
+            ":" : Reduce Ident ::= UIDENT
+    State 98 [98.0]
+        Kernel
+            [Ident ::= CIDENT ·, {":"}]
+            [ProdParamType ::= CIDENT ·, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParamType ::= CIDENT
+            UIDENT : Reduce ProdParamType ::= CIDENT
+            CIDENT : Reduce ProdParamType ::= CIDENT
+            "_" : Reduce ProdParamType ::= CIDENT
+            STRING : Reduce ProdParamType ::= CIDENT
+            ":" : Reduce Ident ::= CIDENT
+            "->" : Reduce ProdParamType ::= CIDENT
+            "|" : Reduce ProdParamType ::= CIDENT
+            LINE_DELIM : Reduce ProdParamType ::= CIDENT
+            DEDENT : Reduce ProdParamType ::= CIDENT
+    State 99 [99.0]
+        Kernel
+            [Ident ::= "_" ·, {":"}]
+        Actions
+            ":" : Reduce Ident ::= "_"
+    State 100 [100.0]
+        Kernel
+            [ProdParamType ::= STRING ·, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParamType ::= STRING
+            UIDENT : Reduce ProdParamType ::= STRING
+            CIDENT : Reduce ProdParamType ::= STRING
+            "_" : Reduce ProdParamType ::= STRING
+            STRING : Reduce ProdParamType ::= STRING
+            "->" : Reduce ProdParamType ::= STRING
+            "|" : Reduce ProdParamType ::= STRING
+            LINE_DELIM : Reduce ProdParamType ::= STRING
+            DEDENT : Reduce ProdParamType ::= STRING
+    State 101 [101.0]
+        Kernel
+            [Prods ::= "|" · Prod ProdsTl, {"->", LINE_DELIM, DEDENT}]
+        Added
+            [Ident ::= · UIDENT, {":"}]
+            [Ident ::= · CIDENT, {":"}]
+            [Ident ::= · "_", {":"}]
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · Ident ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParams ::= · ProdParam ProdParamsTl, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [ProdPattern ::= · ProdParams, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [ProdPattern ::= · "epsilon", {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [Prod ::= · ProdPattern PrecRef, {"->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "epsilon" : ShiftPrefix 96
+            UIDENT : ShiftPrefix 97
+            CIDENT : ShiftPrefix 98
+            "_" : ShiftPrefix 99
+            STRING : ShiftPrefix 100
+        Gotos
+            Ident : 102
+            ProdParamType : 103
+            ProdParam : 104
+            ProdParams : 105
+            ProdPattern : 106
+            Prod : 114
+    State 102 [102.0]
+        Kernel
+            [ProdParam ::= Ident · ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            ":" : ShiftPrefix 115
+    State 103 [103.0]
+        Kernel
+            [ProdParam ::= ProdParamType ·, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParam ::= ProdParamType
+            UIDENT : Reduce ProdParam ::= ProdParamType
+            CIDENT : Reduce ProdParam ::= ProdParamType
+            "_" : Reduce ProdParam ::= ProdParamType
+            STRING : Reduce ProdParam ::= ProdParamType
+            "->" : Reduce ProdParam ::= ProdParamType
+            "|" : Reduce ProdParam ::= ProdParamType
+            LINE_DELIM : Reduce ProdParam ::= ProdParamType
+            DEDENT : Reduce ProdParam ::= ProdParamType
+    State 104 [104.0]
+        Kernel
+            [ProdParams ::= ProdParam · ProdParamsTl, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Added
+            [Ident ::= · UIDENT, {":"}]
+            [Ident ::= · CIDENT, {":"}]
+            [Ident ::= · "_", {":"}]
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · Ident ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamsTl ::= · ProdParam ProdParamsTl, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamsTl ::= ·, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParamsTl ::= epsilon
+            UIDENT : ShiftPrefix 97
+            CIDENT : ShiftPrefix 98
+            "_" : ShiftPrefix 99
+            STRING : ShiftPrefix 100
+            "->" : Reduce ProdParamsTl ::= epsilon
+            "|" : Reduce ProdParamsTl ::= epsilon
+            LINE_DELIM : Reduce ProdParamsTl ::= epsilon
+            DEDENT : Reduce ProdParamsTl ::= epsilon
+        Gotos
+            Ident : 102
+            ProdParamType : 103
+            ProdParam : 116
+            ProdParamsTl : 117
+    State 105 [105.0]
+        Kernel
+            [ProdPattern ::= ProdParams ·, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdPattern ::= ProdParams
+            "->" : Reduce ProdPattern ::= ProdParams
+            "|" : Reduce ProdPattern ::= ProdParams
+            LINE_DELIM : Reduce ProdPattern ::= ProdParams
+            DEDENT : Reduce ProdPattern ::= ProdParams
+    State 106 [106.0]
+        Kernel
+            [Prod ::= ProdPattern · PrecRef, {"->", "|", LINE_DELIM, DEDENT}]
+        Added
+            [PrecRef ::= · "prec" UIDENT, {"->", "|", LINE_DELIM, DEDENT}]
+            [PrecRef ::= ·, {"->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : ShiftPrefix 75
+            "->" : Reduce PrecRef ::= epsilon
+            "|" : Reduce PrecRef ::= epsilon
+            LINE_DELIM : Reduce PrecRef ::= epsilon
+            DEDENT : Reduce PrecRef ::= epsilon
+        Gotos
+            PrecRef : 118
+    State 107 [107.0]
+        Kernel
+            [Prods ::= Prod · ProdsTl, {"->", LINE_DELIM, DEDENT}]
+        Added
+            [ProdsTl ::= · "|" Prod ProdsTl, {"->", LINE_DELIM, DEDENT}]
+            [ProdsTl ::= ·, {"->", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : Reduce ProdsTl ::= epsilon
+            "|" : ShiftPrefix 119
+            LINE_DELIM : Reduce ProdsTl ::= epsilon
+            DEDENT : Reduce ProdsTl ::= epsilon
+        Gotos
+            ProdsTl : 120
+    State 108 [108.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT PrecRef "::=" Prods ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Nonterm ::= NontermType CIDENT PrecRef "::=" Prods
+            DEDENT : Reduce Nonterm ::= NontermType CIDENT PrecRef "::=" Prods
+    State 109 [109.0]
+        Kernel
+            [PrecsTl ::= "," UIDENT · PrecsTl, {LINE_DELIM, DEDENT}]
+        Added
+            [PrecsTl ::= · "," UIDENT PrecsTl, {LINE_DELIM, DEDENT}]
+            [PrecsTl ::= ·, {LINE_DELIM, DEDENT}]
+        Actions
+            "," : ShiftPrefix 92
+            LINE_DELIM : Reduce PrecsTl ::= epsilon
+            DEDENT : Reduce PrecsTl ::= epsilon
+        Gotos
+            PrecsTl : 121
+    State 110 [110.0]
+        Kernel
+            [OfType ::= "of" CIDENT "." UIDENT ·, {"prec", "::=", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce OfType ::= "of" CIDENT "." UIDENT
+            "::=" : Reduce OfType ::= "of" CIDENT "." UIDENT
+            LINE_DELIM : Reduce OfType ::= "of" CIDENT "." UIDENT
+            DEDENT : Reduce OfType ::= "of" CIDENT "." UIDENT
+    State 111 [111.0]
+        Kernel
+            [Reduction ::= Prods · "->" Code, {"|", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : ShiftPrefix 122
+    State 112 [112.0]
+        Kernel
+            [Reductions ::= Reduction · ReductionsTl, {LINE_DELIM, DEDENT}]
+        Added
+            [ReductionsTl ::= · "|" Reduction ReductionsTl, {LINE_DELIM, DEDENT}]
+            [ReductionsTl ::= ·, {LINE_DELIM, DEDENT}]
+        Actions
+            "|" : ShiftPrefix 123
+            LINE_DELIM : Reduce ReductionsTl ::= epsilon
+            DEDENT : Reduce ReductionsTl ::= epsilon
+        Gotos
+            ReductionsTl : 124
+    State 113 [113.0]
+        Kernel
+            [Nonterm ::= NontermType CIDENT OfType PrecRef "::=" Reductions ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Nonterm ::= NontermType CIDENT OfType PrecRef "::=" Reductions
+            DEDENT : Reduce Nonterm ::= NontermType CIDENT OfType PrecRef "::=" Reductions
+    State 114 [114.0]
+        Kernel
+            [Prods ::= "|" Prod · ProdsTl, {"->", LINE_DELIM, DEDENT}]
+        Added
+            [ProdsTl ::= · "|" Prod ProdsTl, {"->", LINE_DELIM, DEDENT}]
+            [ProdsTl ::= ·, {"->", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : Reduce ProdsTl ::= epsilon
+            "|" : ShiftPrefix 119
+            LINE_DELIM : Reduce ProdsTl ::= epsilon
+            DEDENT : Reduce ProdsTl ::= epsilon
+        Gotos
+            ProdsTl : 125
+    State 115 [115.0]
+        Kernel
+            [ProdParam ::= Ident ":" · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Added
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            CIDENT : ShiftPrefix 126
+            STRING : ShiftPrefix 100
+        Gotos
+            ProdParamType : 127
+    State 116 [116.0]
+        Kernel
+            [ProdParamsTl ::= ProdParam · ProdParamsTl, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Added
+            [Ident ::= · UIDENT, {":"}]
+            [Ident ::= · CIDENT, {":"}]
+            [Ident ::= · "_", {":"}]
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · Ident ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamsTl ::= · ProdParam ProdParamsTl, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamsTl ::= ·, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParamsTl ::= epsilon
+            UIDENT : ShiftPrefix 97
+            CIDENT : ShiftPrefix 98
+            "_" : ShiftPrefix 99
+            STRING : ShiftPrefix 100
+            "->" : Reduce ProdParamsTl ::= epsilon
+            "|" : Reduce ProdParamsTl ::= epsilon
+            LINE_DELIM : Reduce ProdParamsTl ::= epsilon
+            DEDENT : Reduce ProdParamsTl ::= epsilon
+        Gotos
+            Ident : 102
+            ProdParamType : 103
+            ProdParam : 116
+            ProdParamsTl : 128
+    State 117 [117.0]
+        Kernel
+            [ProdParams ::= ProdParam ProdParamsTl ·, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParams ::= ProdParam ProdParamsTl
+            "->" : Reduce ProdParams ::= ProdParam ProdParamsTl
+            "|" : Reduce ProdParams ::= ProdParam ProdParamsTl
+            LINE_DELIM : Reduce ProdParams ::= ProdParam ProdParamsTl
+            DEDENT : Reduce ProdParams ::= ProdParam ProdParamsTl
+    State 118 [118.0]
+        Kernel
+            [Prod ::= ProdPattern PrecRef ·, {"->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : Reduce Prod ::= ProdPattern PrecRef
+            "|" : Reduce Prod ::= ProdPattern PrecRef
+            LINE_DELIM : Reduce Prod ::= ProdPattern PrecRef
+            DEDENT : Reduce Prod ::= ProdPattern PrecRef
+    State 119 [119.0]
+        Kernel
+            [ProdsTl ::= "|" · Prod ProdsTl, {"->", LINE_DELIM, DEDENT}]
+        Added
+            [Ident ::= · UIDENT, {":"}]
+            [Ident ::= · CIDENT, {":"}]
+            [Ident ::= · "_", {":"}]
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · Ident ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParam ::= · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+            [ProdParams ::= · ProdParam ProdParamsTl, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [ProdPattern ::= · ProdParams, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [ProdPattern ::= · "epsilon", {"prec", "->", "|", LINE_DELIM, DEDENT}]
+            [Prod ::= · ProdPattern PrecRef, {"->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "epsilon" : ShiftPrefix 96
+            UIDENT : ShiftPrefix 97
+            CIDENT : ShiftPrefix 98
+            "_" : ShiftPrefix 99
+            STRING : ShiftPrefix 100
+        Gotos
+            Ident : 102
+            ProdParamType : 103
+            ProdParam : 104
+            ProdParams : 105
+            ProdPattern : 106
+            Prod : 129
+    State 120 [120.0]
+        Kernel
+            [Prods ::= Prod ProdsTl ·, {"->", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : Reduce Prods ::= Prod ProdsTl
+            LINE_DELIM : Reduce Prods ::= Prod ProdsTl
+            DEDENT : Reduce Prods ::= Prod ProdsTl
+    State 121 [121.0]
+        Kernel
+            [PrecsTl ::= "," UIDENT PrecsTl ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce PrecsTl ::= "," UIDENT PrecsTl
+            DEDENT : Reduce PrecsTl ::= "," UIDENT PrecsTl
+    State 122 [122.0]
+        Kernel
+            [Reduction ::= Prods "->" · Code, {"|", LINE_DELIM, DEDENT}]
+        Added
+            [Delimited ::= · INDENT Codes DEDENT, {"|", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(" Codes0 ")", {"|", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "(|" Codes0 "|)", {"|", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[" Codes0 "]", {"|", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "[|" Codes0 "|]", {"|", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Delimited ::= · "{" Codes0 "}", {"|", LINE_DELIM, INDENT, DEDENT, "(", "(|", "[", "[|", "{", CODE_TOKEN}]
+            [Code ::= · Delimited CodeTl, {"|", LINE_DELIM, DEDENT}]
+            [Code ::= · CODE_TOKEN CodeTl, {"|", LINE_DELIM, DEDENT}]
+        Actions
+            INDENT : ShiftPrefix 22
+            "(" : ShiftPrefix 23
+            "(|" : ShiftPrefix 24
+            "[" : ShiftPrefix 25
+            "[|" : ShiftPrefix 26
+            "{" : ShiftPrefix 27
+            CODE_TOKEN : ShiftPrefix 28
+        Gotos
+            Delimited : 32
+            Code : 130
+    State 123 [123.0]
+        Kernel
+            [ReductionsTl ::= "|" · Reduction ReductionsTl, {LINE_DELIM, DEDENT}]
+        Added
+            [Ident ::= · UIDENT, {":"}]
+            [Ident ::= · CIDENT, {":"}]
+            [Ident ::= · "_", {":"}]
+            [ProdParamType ::= · CIDENT, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParamType ::= · STRING, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParam ::= · Ident ":" ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParam ::= · ProdParamType, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|"}]
+            [ProdParams ::= · ProdParam ProdParamsTl, {"prec", "->", "|"}]
+            [ProdPattern ::= · ProdParams, {"prec", "->", "|"}]
+            [ProdPattern ::= · "epsilon", {"prec", "->", "|"}]
+            [Prod ::= · ProdPattern PrecRef, {"->", "|"}]
+            [Prods ::= · "|" Prod ProdsTl, {"->"}]
+            [Prods ::= · Prod ProdsTl, {"->"}]
+            [Reduction ::= · Prods "->" Code, {"|", LINE_DELIM, DEDENT}]
+        Actions
+            "epsilon" : ShiftPrefix 96
+            UIDENT : ShiftPrefix 97
+            CIDENT : ShiftPrefix 98
+            "_" : ShiftPrefix 99
+            STRING : ShiftPrefix 100
+            "|" : ShiftPrefix 101
+        Gotos
+            Ident : 102
+            ProdParamType : 103
+            ProdParam : 104
+            ProdParams : 105
+            ProdPattern : 106
+            Prod : 107
+            Prods : 111
+            Reduction : 131
+    State 124 [124.0]
+        Kernel
+            [Reductions ::= Reduction ReductionsTl ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce Reductions ::= Reduction ReductionsTl
+            DEDENT : Reduce Reductions ::= Reduction ReductionsTl
+    State 125 [125.0]
+        Kernel
+            [Prods ::= "|" Prod ProdsTl ·, {"->", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : Reduce Prods ::= "|" Prod ProdsTl
+            LINE_DELIM : Reduce Prods ::= "|" Prod ProdsTl
+            DEDENT : Reduce Prods ::= "|" Prod ProdsTl
+    State 126 [126.0]
+        Kernel
+            [ProdParamType ::= CIDENT ·, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParamType ::= CIDENT
+            UIDENT : Reduce ProdParamType ::= CIDENT
+            CIDENT : Reduce ProdParamType ::= CIDENT
+            "_" : Reduce ProdParamType ::= CIDENT
+            STRING : Reduce ProdParamType ::= CIDENT
+            "->" : Reduce ProdParamType ::= CIDENT
+            "|" : Reduce ProdParamType ::= CIDENT
+            LINE_DELIM : Reduce ProdParamType ::= CIDENT
+            DEDENT : Reduce ProdParamType ::= CIDENT
+    State 127 [127.0]
+        Kernel
+            [ProdParam ::= Ident ":" ProdParamType ·, {"prec", UIDENT, CIDENT, "_", STRING, "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParam ::= Ident ":" ProdParamType
+            UIDENT : Reduce ProdParam ::= Ident ":" ProdParamType
+            CIDENT : Reduce ProdParam ::= Ident ":" ProdParamType
+            "_" : Reduce ProdParam ::= Ident ":" ProdParamType
+            STRING : Reduce ProdParam ::= Ident ":" ProdParamType
+            "->" : Reduce ProdParam ::= Ident ":" ProdParamType
+            "|" : Reduce ProdParam ::= Ident ":" ProdParamType
+            LINE_DELIM : Reduce ProdParam ::= Ident ":" ProdParamType
+            DEDENT : Reduce ProdParam ::= Ident ":" ProdParamType
+    State 128 [128.0]
+        Kernel
+            [ProdParamsTl ::= ProdParam ProdParamsTl ·, {"prec", "->", "|", LINE_DELIM, DEDENT}]
+        Actions
+            "prec" : Reduce ProdParamsTl ::= ProdParam ProdParamsTl
+            "->" : Reduce ProdParamsTl ::= ProdParam ProdParamsTl
+            "|" : Reduce ProdParamsTl ::= ProdParam ProdParamsTl
+            LINE_DELIM : Reduce ProdParamsTl ::= ProdParam ProdParamsTl
+            DEDENT : Reduce ProdParamsTl ::= ProdParam ProdParamsTl
+    State 129 [129.0]
+        Kernel
+            [ProdsTl ::= "|" Prod · ProdsTl, {"->", LINE_DELIM, DEDENT}]
+        Added
+            [ProdsTl ::= · "|" Prod ProdsTl, {"->", LINE_DELIM, DEDENT}]
+            [ProdsTl ::= ·, {"->", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : Reduce ProdsTl ::= epsilon
+            "|" : ShiftPrefix 119
+            LINE_DELIM : Reduce ProdsTl ::= epsilon
+            DEDENT : Reduce ProdsTl ::= epsilon
+        Gotos
+            ProdsTl : 132
+    State 130 [130.0]
+        Kernel
+            [Reduction ::= Prods "->" Code ·, {"|", LINE_DELIM, DEDENT}]
+        Actions
+            "|" : Reduce Reduction ::= Prods "->" Code
+            LINE_DELIM : Reduce Reduction ::= Prods "->" Code
+            DEDENT : Reduce Reduction ::= Prods "->" Code
+    State 131 [131.0]
+        Kernel
+            [ReductionsTl ::= "|" Reduction · ReductionsTl, {LINE_DELIM, DEDENT}]
+        Added
+            [ReductionsTl ::= · "|" Reduction ReductionsTl, {LINE_DELIM, DEDENT}]
+            [ReductionsTl ::= ·, {LINE_DELIM, DEDENT}]
+        Actions
+            "|" : ShiftPrefix 123
+            LINE_DELIM : Reduce ReductionsTl ::= epsilon
+            DEDENT : Reduce ReductionsTl ::= epsilon
+        Gotos
+            ReductionsTl : 133
+    State 132 [132.0]
+        Kernel
+            [ProdsTl ::= "|" Prod ProdsTl ·, {"->", LINE_DELIM, DEDENT}]
+        Actions
+            "->" : Reduce ProdsTl ::= "|" Prod ProdsTl
+            LINE_DELIM : Reduce ProdsTl ::= "|" Prod ProdsTl
+            DEDENT : Reduce ProdsTl ::= "|" Prod ProdsTl
+    State 133 [133.0]
+        Kernel
+            [ReductionsTl ::= "|" Reduction ReductionsTl ·, {LINE_DELIM, DEDENT}]
+        Actions
+            LINE_DELIM : Reduce ReductionsTl ::= "|" Reduction ReductionsTl
+            DEDENT : Reduce ReductionsTl ::= "|" Reduction ReductionsTl

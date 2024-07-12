@@ -1,0 +1,9 @@
+open import Basis
+
+# Export the parser API so that alternatives to `calculate` can be implemented. `hocc` expands to a
+# module signature.
+include hocc
+
+calulate: string -> zint
+  [@@doc "Calculate the result of a simple arithmetic expression comprising non-negative integers
+  and `+`, `-`, `*`, and `/` operators. Tokens must be separated by one or more spaces."]

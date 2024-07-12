@@ -1,0 +1,173 @@
+N grammar
+
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token A
+        First: {A}
+        Follow: {T}
+    token B
+        First: {B}
+        Follow: {T}
+    token C
+        First: {C}
+        Follow: {"⊥"}
+    token D
+        First: {D}
+        Follow: {"⊥"}
+    token E
+        First: {E}
+        Follow: {"⊥"}
+    token T
+        First: {T}
+        Follow: {U}
+    token U
+        First: {U}
+        Follow: {V, W}
+    token V
+        First: {V}
+        Follow: {D, E}
+    token W
+        First: {W}
+        Follow: {C, D}
+Non-terminals
+    start X
+        First: {A, B}
+        Follow: {"⊥"}
+        Productions
+            X ::= A Y D
+            X ::= A Z C
+            X ::= B Y E
+            X ::= B Z D
+    start X'
+        First: {A, B}
+        Follow: {"ε"}
+        Productions
+            X' ::= X "⊥"
+    nonterm Y
+        First: {T}
+        Follow: {D, E}
+        Productions
+            Y ::= T U V
+    nonterm Z
+        First: {T}
+        Follow: {C, D}
+        Productions
+            Z ::= T U W
+PGM(1) States
+    State 0 [0.0]
+        Kernel
+            [X' ::= · X "⊥", {"ε"}]
+        Added
+            [X ::= · A Y D, {"⊥"}]
+            [X ::= · A Z C, {"⊥"}]
+            [X ::= · B Y E, {"⊥"}]
+            [X ::= · B Z D, {"⊥"}]
+        Actions
+            A : ShiftPrefix 1
+            B : ShiftPrefix 2
+        Gotos
+            X : 3
+    State 1 [1.0]
+        Kernel
+            [X ::= A · Y D, {"⊥"}]
+            [X ::= A · Z C, {"⊥"}]
+        Added
+            [Y ::= · T U V, {D}]
+            [Z ::= · T U W, {C}]
+        Actions
+            T : ShiftPrefix 4
+        Gotos
+            Y : 5
+            Z : 6
+    State 2 [2.0]
+        Kernel
+            [X ::= B · Y E, {"⊥"}]
+            [X ::= B · Z D, {"⊥"}]
+        Added
+            [Y ::= · T U V, {E}]
+            [Z ::= · T U W, {D}]
+        Actions
+            T : ShiftPrefix 4
+        Gotos
+            Y : 7
+            Z : 8
+    State 3 [3.0]
+        Kernel
+            [X' ::= X · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 9
+    State 4 [4.0]
+        Kernel
+            [Y ::= T · U V, {D, E}]
+            [Z ::= T · U W, {C, D}]
+        Actions
+            U : ShiftPrefix 10
+    State 5 [5.0]
+        Kernel
+            [X ::= A Y · D, {"⊥"}]
+        Actions
+            D : ShiftAccept 11
+    State 6 [6.0]
+        Kernel
+            [X ::= A Z · C, {"⊥"}]
+        Actions
+            C : ShiftAccept 12
+    State 7 [7.0]
+        Kernel
+            [X ::= B Y · E, {"⊥"}]
+        Actions
+            E : ShiftAccept 13
+    State 8 [8.0]
+        Kernel
+            [X ::= B Z · D, {"⊥"}]
+        Actions
+            D : ShiftAccept 14
+    State 9 [9.0]
+        Kernel
+            [X' ::= X "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce X' ::= X "⊥"
+    State 10 [10.0]
+        Kernel
+            [Y ::= T U · V, {D, E}]
+            [Z ::= T U · W, {C, D}]
+        Actions
+            V : ShiftPrefix 15
+            W : ShiftPrefix 16
+    State 11 [11.0]
+        Kernel
+            [X ::= A Y D ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce X ::= A Y D
+    State 12 [12.0]
+        Kernel
+            [X ::= A Z C ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce X ::= A Z C
+    State 13 [13.0]
+        Kernel
+            [X ::= B Y E ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce X ::= B Y E
+    State 14 [14.0]
+        Kernel
+            [X ::= B Z D ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce X ::= B Z D
+    State 15 [15.0]
+        Kernel
+            [Y ::= T U V ·, {D, E}]
+        Actions
+            D : Reduce Y ::= T U V
+            E : Reduce Y ::= T U V
+    State 16 [16.0]
+        Kernel
+            [Z ::= T U W ·, {C, D}]
+        Actions
+            C : Reduce Z ::= T U W
+            D : Reduce Z ::= T U W

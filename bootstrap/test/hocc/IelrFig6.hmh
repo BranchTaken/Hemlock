@@ -1,0 +1,18 @@
+# Implementation of grammar in Figure 6 of:
+#
+#   The IELR(1) algorithm for generating minimal LR(1) parser tables for
+#   non-LR(1) grammars with conflict resolution
+#   Joel E. Denny and Brian A. Malloy
+#   Science of Computer Programming 75 (2010) 943-979
+
+hocc
+    token Ta
+    token Tb
+    start S ::=
+      | Ta A Ta
+      | Ta Ta Tb
+      | Tb A Tb
+    nonterm A ::= B C
+    nonterm B ::= Ta
+    nonterm C ::= D
+    nonterm D ::= epsilon

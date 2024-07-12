@@ -1,0 +1,14 @@
+hocc: Parsing "./Hocc.hmh"
+hocc: Generating PGM(1) specification
+hocc: 0 precedences, 39 tokens, 40 non-terminals, 75 productions
+hocc: LR(1) item set compatibility: weak
+hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++++++++.+.++++++++++++++++++++++++++.......+.+........++............+.............+..............+...............+........+++++++++++++++++++++++++++++++.++++++++++.+.+++++++++[11/100]+++++++++++..........+++++++.+.+++++++++++++++
+hocc: Generating 134 LR(1) states
+hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unreachable states
+hocc: 0 remergeable states
+hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Generating text report
+hocc: Generating hocc report
+hocc: Writing "./hocc/Hocc.txt"
+hocc: Writing "./hocc/Hocc.hmh"

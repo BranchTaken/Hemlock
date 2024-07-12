@@ -1,0 +1,198 @@
+IelrFig3_rno grammar
+
+Precedences (conflict resolution disabled)
+    neutral p1
+    neutral p2 < p1
+    neutral p3 < p1, p2
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token Ta
+        First: {Ta}
+        Follow: {"⊥", Ta, Tb}
+    token Tb
+        First: {Tb}
+        Follow: {"⊥", Ta}
+Non-terminals
+    start S
+        First: {Ta, Tb}
+        Follow: {"⊥"}
+        Productions
+            S ::= Ta A Ta
+            S ::= Ta B Ta
+            S ::= Ta C Ta
+            S ::= Tb A Tb
+            S ::= Tb B Ta
+            S ::= Tb C Ta
+    start S'
+        First: {Ta, Tb}
+        Follow: {"ε"}
+        Productions
+            S' ::= S "⊥"
+    nonterm A
+        First: {Ta}
+        Follow: {Ta, Tb}
+        Productions
+            A ::= Ta Ta prec p1
+    nonterm B
+        First: {Ta}
+        Follow: {Ta}
+        Productions
+            B ::= Ta Ta prec p2
+    nonterm C
+        First: {Ta}
+        Follow: {Ta}
+        Productions
+            C ::= Ta Ta prec p3
+IELR(1) States
+    State 0 [0.0]
+        Kernel
+            [S' ::= · S "⊥", {"ε"}]
+        Added
+            [S ::= · Ta A Ta, {"⊥"}]
+            [S ::= · Ta B Ta, {"⊥"}]
+            [S ::= · Ta C Ta, {"⊥"}]
+            [S ::= · Tb A Tb, {"⊥"}]
+            [S ::= · Tb B Ta, {"⊥"}]
+            [S ::= · Tb C Ta, {"⊥"}]
+        Actions
+            Ta : ShiftPrefix 1
+            Tb : ShiftPrefix 2
+        Gotos
+            S : 3
+    State 1 [1.0]
+        Kernel
+            [S ::= Ta · A Ta, {"⊥"}]
+            [S ::= Ta · B Ta, {"⊥"}]
+            [S ::= Ta · C Ta, {"⊥"}]
+        Added
+            [A ::= · Ta Ta, {Ta}] prec p1
+            [B ::= · Ta Ta, {Ta}] prec p2
+            [C ::= · Ta Ta, {Ta}] prec p3
+        Actions
+            Ta : ShiftPrefix 4
+        Gotos
+            A : 5
+            B : 6
+            C : 7
+    State 2 [2.0]
+        Kernel
+            [S ::= Tb · A Tb, {"⊥"}]
+            [S ::= Tb · B Ta, {"⊥"}]
+            [S ::= Tb · C Ta, {"⊥"}]
+        Added
+            [A ::= · Ta Ta, {Tb}] prec p1
+            [B ::= · Ta Ta, {Ta}] prec p2
+            [C ::= · Ta Ta, {Ta}] prec p3
+        Actions
+            Ta : ShiftPrefix 4
+        Gotos
+            A : 8
+            B : 9
+            C : 10
+    State 3 [3.0]
+        Kernel
+            [S' ::= S · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 11
+    State 4 [4.0]
+        Kernel
+            [A ::= Ta · Ta, {Ta, Tb}] prec p1
+            [B ::= Ta · Ta, {Ta}] prec p2
+            [C ::= Ta · Ta, {Ta}] prec p3
+        Actions
+            Ta : ShiftPrefix 12
+        Conflict contributions
+            [A ::= Ta · Ta, {Ta}]
+                12 : Reduce A ::= Ta Ta
+            [B ::= Ta · Ta, {Ta}]
+                12 : Reduce B ::= Ta Ta
+            [C ::= Ta · Ta, {Ta}]
+                12 : Reduce C ::= Ta Ta
+    State 5 [5.0]
+        Kernel
+            [S ::= Ta A · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 13
+    State 6 [6.0]
+        Kernel
+            [S ::= Ta B · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 14
+    State 7 [7.0]
+        Kernel
+            [S ::= Ta C · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 15
+    State 8 [8.0]
+        Kernel
+            [S ::= Tb A · Tb, {"⊥"}]
+        Actions
+            Tb : ShiftAccept 16
+    State 9 [9.0]
+        Kernel
+            [S ::= Tb B · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 17
+    State 10 [10.0]
+        Kernel
+            [S ::= Tb C · Ta, {"⊥"}]
+        Actions
+            Ta : ShiftAccept 18
+    State 11 [11.0]
+        Kernel
+            [S' ::= S "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce S' ::= S "⊥"
+    State 12 [12.0]
+        Kernel
+            [A ::= Ta Ta ·, {Ta, Tb}] prec p1
+            [B ::= Ta Ta ·, {Ta}] prec p2
+            [C ::= Ta Ta ·, {Ta}] prec p3
+        Actions
+            Ta :
+CONFLICT        Reduce A ::= Ta Ta prec p1
+CONFLICT        Reduce B ::= Ta Ta prec p2
+CONFLICT        Reduce C ::= Ta Ta prec p3
+            Tb : Reduce A ::= Ta Ta prec p1
+        Conflict contributions
+            [A ::= Ta Ta ·, {Ta}]
+                12 : Reduce A ::= Ta Ta
+            [B ::= Ta Ta ·, {Ta}]
+                12 : Reduce B ::= Ta Ta
+            [C ::= Ta Ta ·, {Ta}]
+                12 : Reduce C ::= Ta Ta
+    State 13 [13.0]
+        Kernel
+            [S ::= Ta A Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Ta A Ta
+    State 14 [14.0]
+        Kernel
+            [S ::= Ta B Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Ta B Ta
+    State 15 [15.0]
+        Kernel
+            [S ::= Ta C Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Ta C Ta
+    State 16 [16.0]
+        Kernel
+            [S ::= Tb A Tb ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Tb A Tb
+    State 17 [17.0]
+        Kernel
+            [S ::= Tb B Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Tb B Ta
+    State 18 [18.0]
+        Kernel
+            [S ::= Tb C Ta ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Tb C Ta

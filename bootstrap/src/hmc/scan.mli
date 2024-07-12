@@ -184,6 +184,7 @@ module AbstractToken : sig
     | Tok_arrow
     | Tok_carrow
 
+    (* Miscellaneous. *)
     | Tok_source_directive of source_directive Rendition.t
     | Tok_line_delim
     | Tok_indent of unit Rendition.t
@@ -242,11 +243,19 @@ module AbstractToken : sig
     | Tok_error of Rendition.Malformation.t list
 
   val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+
+  val malformations: t -> Rendition.Malformation.t list
+  (** [malformations t] returns a list of malformations associated with [t], or an empty list if
+      there are no malformations. This function can be used on any token variant, even if no
+      malformations are possible. *)
 end
 
 (** Concrete tokens augment abstract tokens with source locations. *)
 module ConcreteToken : sig
-  type t
+  type t = {
+    atok: AbstractToken.t;
+    source: Source.Slice.t;
+  }
 
   val atok: t -> AbstractToken.t
   val source: t -> Source.Slice.t
@@ -256,11 +265,17 @@ end
 
 type t
 
+include FormattableIntf.SMono with type t := t
+
 val init: Text.t -> t
 (** [init text] initializes scanner to scan [text]. *)
 
 val text: t -> Text.t
 (** [text t] returns the source text for [t]. *)
+
+val cursor: t -> Source.Cursor.t
+(** [cursor t] returns the cursor at the scanner's current position. This cursor is equivalent to
+    the base of the token returned by [next t]. *)
 
 val next: t -> t * ConcreteToken.t
 (** [next t] scans the next token past the tokens scanned by [t]'s predecessor state(s) and returns

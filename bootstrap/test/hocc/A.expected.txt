@@ -1,0 +1,200 @@
+A grammar
+
+Precedences
+    left p1
+    left p2 < p1
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token PLUS
+        First: {PLUS}
+        Follow: {LPAREN, ID}
+    token STAR
+        First: {STAR}
+        Follow: {LPAREN, ID}
+    token LPAREN
+        First: {LPAREN}
+        Follow: {LPAREN, ID}
+    token RPAREN prec p1
+        First: {RPAREN}
+        Follow: {PLUS, STAR, RPAREN, EOI}
+    token ID
+        First: {ID}
+        Follow: {PLUS, STAR, RPAREN, EOI}
+    token EOI
+        First: {EOI}
+        Follow: {"⊥"}
+Non-terminals
+    start S
+        First: {LPAREN, ID}
+        Follow: {"⊥"}
+        Productions
+            S ::= E EOI
+    start S'
+        First: {LPAREN, ID}
+        Follow: {"ε"}
+        Productions
+            S' ::= S "⊥"
+    nonterm E
+        First: {LPAREN, ID}
+        Follow: {PLUS, RPAREN, EOI}
+        Productions
+            E ::= E PLUS T prec p2
+            E ::= T
+    nonterm T
+        First: {LPAREN, ID}
+        Follow: {PLUS, STAR, RPAREN, EOI}
+        Productions
+            T ::= T STAR F
+            T ::= F
+    nonterm F
+        First: {LPAREN, ID}
+        Follow: {PLUS, STAR, RPAREN, EOI}
+        Productions
+            F ::= LPAREN E RPAREN prec p1
+            F ::= ID prec p1
+LR(1) States
+    State 0 [0.0]
+        Kernel
+            [S' ::= · S "⊥", {"ε"}]
+        Added
+            [S ::= · E EOI, {"⊥"}]
+            [E ::= · E PLUS T, {PLUS, EOI}] prec p2
+            [E ::= · T, {PLUS, EOI}]
+            [T ::= · T STAR F, {PLUS, STAR, EOI}]
+            [T ::= · F, {PLUS, STAR, EOI}]
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, EOI}] prec p1
+            [F ::= · ID, {PLUS, STAR, EOI}] prec p1
+        Actions
+            LPAREN : ShiftPrefix 1
+            ID : ShiftPrefix 2
+        Gotos
+            S : 3
+            E : 4
+            T : 5
+            F : 6
+    State 1 [1.0]
+        Kernel
+            [F ::= LPAREN · E RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
+        Added
+            [E ::= · E PLUS T, {PLUS, RPAREN}] prec p2
+            [E ::= · T, {PLUS, RPAREN}]
+            [T ::= · T STAR F, {PLUS, STAR, RPAREN}]
+            [T ::= · F, {PLUS, STAR, RPAREN}]
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN}] prec p1
+            [F ::= · ID, {PLUS, STAR, RPAREN}] prec p1
+        Actions
+            LPAREN : ShiftPrefix 1
+            ID : ShiftPrefix 2
+        Gotos
+            E : 7
+            T : 5
+            F : 6
+    State 2 [2.0]
+        Kernel
+            [F ::= ID ·, {PLUS, STAR, RPAREN, EOI}] prec p1
+        Actions
+            PLUS : Reduce F ::= ID prec p1
+            STAR : Reduce F ::= ID prec p1
+            RPAREN : Reduce F ::= ID prec p1
+            EOI : Reduce F ::= ID prec p1
+    State 3 [3.0]
+        Kernel
+            [S' ::= S · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 8
+    State 4 [4.0]
+        Kernel
+            [S ::= E · EOI, {"⊥"}]
+            [E ::= E · PLUS T, {PLUS, EOI}] prec p2
+        Actions
+            PLUS : ShiftPrefix 9
+            EOI : ShiftAccept 10
+    State 5 [5.0]
+        Kernel
+            [E ::= T ·, {PLUS, RPAREN, EOI}]
+            [T ::= T · STAR F, {PLUS, STAR, RPAREN, EOI}]
+        Actions
+            PLUS : Reduce E ::= T
+            STAR : ShiftPrefix 11
+            RPAREN : Reduce E ::= T
+            EOI : Reduce E ::= T
+    State 6 [6.0]
+        Kernel
+            [T ::= F ·, {PLUS, STAR, RPAREN, EOI}]
+        Actions
+            PLUS : Reduce T ::= F
+            STAR : Reduce T ::= F
+            RPAREN : Reduce T ::= F
+            EOI : Reduce T ::= F
+    State 7 [7.0]
+        Kernel
+            [E ::= E · PLUS T, {PLUS, RPAREN}] prec p2
+            [F ::= LPAREN E · RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
+        Actions
+            PLUS : ShiftPrefix 9
+            RPAREN : ShiftPrefix 12 prec p1
+    State 8 [8.0]
+        Kernel
+            [S' ::= S "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce S' ::= S "⊥"
+    State 9 [9.0]
+        Kernel
+            [E ::= E PLUS · T, {PLUS, RPAREN, EOI}] prec p2
+        Added
+            [T ::= · T STAR F, {PLUS, STAR, RPAREN, EOI}]
+            [T ::= · F, {PLUS, STAR, RPAREN, EOI}]
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
+            [F ::= · ID, {PLUS, STAR, RPAREN, EOI}] prec p1
+        Actions
+            LPAREN : ShiftPrefix 1
+            ID : ShiftPrefix 2
+        Gotos
+            T : 13
+            F : 6
+    State 10 [10.0]
+        Kernel
+            [S ::= E EOI ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= E EOI
+    State 11 [11.0]
+        Kernel
+            [T ::= T STAR · F, {PLUS, STAR, RPAREN, EOI}]
+        Added
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
+            [F ::= · ID, {PLUS, STAR, RPAREN, EOI}] prec p1
+        Actions
+            LPAREN : ShiftPrefix 1
+            ID : ShiftPrefix 2
+        Gotos
+            F : 14
+    State 12 [12.0]
+        Kernel
+            [F ::= LPAREN E RPAREN ·, {PLUS, STAR, RPAREN, EOI}] prec p1
+        Actions
+            PLUS : Reduce F ::= LPAREN E RPAREN prec p1
+            STAR : Reduce F ::= LPAREN E RPAREN prec p1
+            RPAREN : Reduce F ::= LPAREN E RPAREN prec p1
+            EOI : Reduce F ::= LPAREN E RPAREN prec p1
+    State 13 [13.0]
+        Kernel
+            [E ::= E PLUS T ·, {PLUS, RPAREN, EOI}] prec p2
+            [T ::= T · STAR F, {PLUS, STAR, RPAREN, EOI}]
+        Actions
+            PLUS : Reduce E ::= E PLUS T prec p2
+            STAR : ShiftPrefix 11
+            RPAREN : Reduce E ::= E PLUS T prec p2
+            EOI : Reduce E ::= E PLUS T prec p2
+    State 14 [14.0]
+        Kernel
+            [T ::= T STAR F ·, {PLUS, STAR, RPAREN, EOI}]
+        Actions
+            PLUS : Reduce T ::= T STAR F
+            STAR : Reduce T ::= T STAR F
+            RPAREN : Reduce T ::= T STAR F
+            EOI : Reduce T ::= T STAR F

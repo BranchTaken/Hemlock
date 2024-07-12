@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Usage: hocc_test <hocc> <src> [-algorithm lr1|ielr1|pgm1|lalr1] [-resolve yes|no] [<parameter>]*
+
+hocc="$1"
+src="$2"
+shift 2
+
+mangled_src="${src}"
+
+case "$1" in
+    '-algorithm')
+        algorithm="$2"
+        mangled_src="${mangled_src}_a${algorithm}"
+        shift 2
+        ;;
+    *)
+        algorithm="lr1"
+esac
+
+case "$1" in
+    '-resolve')
+        resolve="$2"
+        mangled_src="${mangled_src}_r${resolve}"
+        shift 2
+        ;;
+    *)
+        resolve="yes"
+esac
+
+if [ "x${mangled_src}" != "x${src}" ] ; then
+    # Mangle the source path so that generated files from parallel test runs don't clobber each
+    # other.
+    ln -s "${src}.hmh" "${mangled_src}.hmh"
+    src="${mangled_src}"
+fi
+
+"${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" $@
+
+# Usage: mv_report <suffix>
+#
+# Move `hocc` report to a file in the test directory, to work around `dune`'s inability to deal with
+# files outside the test directory.
+mv_report() {
+    suffix=$1
+    if [ -f "hocc/${src}.${suffix}" ] ; then
+        mv "hocc/${src}.${suffix}" "./${src}.out.${suffix}"
+    else
+        # Touch report name so that `dune` will report stdout/stderr diffs even if `hocc` failed.
+        touch "${src}.out.${suffix}"
+    fi
+}
+mv_report txt
+mv_report html
+mv_report hmh

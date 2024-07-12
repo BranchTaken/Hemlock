@@ -1,0 +1,2 @@
+hocc: Parsing "./Parse_error_hmhi.hmhi"
+hocc: At ["./Parse_error_hmhi.hmhi":1:3.."./Parse_error_hmhi.hmhi":1:3): Expected 'hocc' keyword

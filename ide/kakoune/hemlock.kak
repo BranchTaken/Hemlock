@@ -29,7 +29,7 @@ provide-module hemlock %{
 
 add-highlighter shared/hemlock regions
 add-highlighter shared/hemlock/code default-region group
- 
+
 add-highlighter shared/hemlock/code/cident regex \b[_]*[A-Z][A-Za-z0-9_']*\b 0:module
 add-highlighter shared/hemlock/code/uident regex \b[_]*[a-z][A-Za-z0-9_']*\b 0:Default
 add-highlighter shared/hemlock/code/tab regex \t 0:Error
@@ -118,4 +118,29 @@ evaluate-commands %sh{
   "
 }
 
+# Conveniences
+# ‾‾‾‾‾‾‾‾‾‾‾‾
+
+# Switch between .hm and .hmi files.
+define-command hemlock-alternative-file -docstring 'Switch between <module>.hm <-> <module>.hmi' %{
+    evaluate-commands %sh{
+        if [ "${kak_buffile##*.}" = 'hm' ]; then
+            printf "edit -- '%s'" "$(printf %s "${kak_buffile}i" | sed "s/'/''/g")"
+        elif [ "${kak_buffile##*.}" = 'hmi' ]; then
+            printf "edit -- '%s'" "$(printf %s "${kak_buffile%i}" | sed "s/'/''/g")"
+        fi
+    }
+}
+
+}
+
+# Expand '(*' to '(*  *)' in input mode. Enter input mode with '\' prefix to avoid this hook.
+#                   /\
+hook global WinSetOption filetype=hemlock %{
+    hook window InsertChar '\*' %{
+        try %{
+            execute-keys -draft 'HH<a-k>\(\*<ret>'
+            execute-keys '  *)<left><left><left>'
+        }
+    }
 }

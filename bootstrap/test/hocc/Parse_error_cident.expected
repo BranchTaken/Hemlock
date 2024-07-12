@@ -1,0 +1,2 @@
+hocc: Parsing "./Parse_error_cident.hmh"
+hocc: At ["./Parse_error_cident.hmh":2:10.."./Parse_error_cident.hmh":2:16): Expected cident

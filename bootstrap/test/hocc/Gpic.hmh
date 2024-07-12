@@ -1,0 +1,527 @@
+# Transcribed gpic grammar (groff version 1.18.1), which is one of the studied grammars in:
+#
+#   The IELR(1) algorithm for generating minimal LR(1) parser tables for
+#   non-LR(1) grammars with conflict resolution
+#   Joel E. Denny and Brian A. Malloy
+#   Science of Computer Programming 75 (2010) 943-979
+#
+# This transcription differs from the original as follows:
+# - `hocc` does not support midrule actions, which are conceptually inlined non-terminals with
+#   single productions. Explicit `Midrule*` non-terminals simulate this.
+# - The unused DEFINE and UNDEF tokens are omitted.
+
+hocc
+    #
+    # Tokens without precedence.
+    #
+
+    token COMMAND_LINE
+    token DELIMITED
+    token TH
+    token LEFT_ARROW_HEAD
+    token RIGHT_ARROW_HEAD
+    token DOUBLE_ARROW_HEAD
+    token MOVE
+    token WITH
+    token BY
+    token THEN
+    token SAME
+    token INVISIBLE
+    token THE
+    token WAY
+    token DOT_X
+    token DOT_Y
+    token DOT_HT
+    token DOT_WID
+    token DOT_RAD
+    token COPY
+    token THRU
+    token SH
+    token PRINT
+    token CW
+    token CCW
+    token FOR
+    token DO
+    token IF
+    token ELSE
+    token RESET
+    token UNTIL
+    token SHADED
+    token ALIGNED
+    token COMMAND
+
+    token EQ "="
+    token COLON ":"
+    token SEMI ";"
+    token LBRACE "{"
+    token RBRACE "}"
+    token RBRACK "]"
+    token RPAREN ")"
+
+    #
+    # Tokens with precedence.
+    #
+
+    right pCarat
+    token CARAT "^" prec pCarat
+
+    right pXmark < pCarat
+    token XMARK "!" prec pXmark
+
+    left pMul < pXmark
+    token MUL "*" prec pMul
+    token DIV "/" prec pMul
+    token MOD "\%" prec pMul
+
+    left pAdd < pMul
+    token PLUS "+" prec pAdd
+    token MINUS "-" prec pAdd
+
+    left pAnd < pAdd
+    token AND prec pAnd
+
+    left pBetween < pAnd
+    token BETWEEN prec pBetween
+    token OF prec pBetween
+
+    left pRel < pBetween
+    token LT "<" prec pRel
+    token GT ">" prec pRel
+    token LESSEQUAL prec pRel
+    token GREATEREQUAL prec pRel
+
+    left pEq < pRel
+    token EQUALEQUAL prec pEq
+    token NOTEQUAL prec pEq
+
+    left pAndand < pEq
+    token ANDAND prec pAndand
+
+    left pOror < pAndand
+    token OROR prec pOror
+
+    left pComma < pOror
+    token COMMA "," prec pComma
+
+    left pRelative < pComma
+    token UPPER prec pRelative
+    token LOWER prec pRelative
+    token NORTH prec pRelative
+    token SOUTH prec pRelative
+    token EAST prec pRelative
+    token WEST prec pRelative
+    token CENTER prec pRelative
+    token START prec pRelative
+    token END prec pRelative
+
+    left pObjectRelative < pRelative
+    token DOT_START prec pObjectRelative
+    token DOT_END prec pObjectRelative
+    token TOP prec pObjectRelative
+    token BOTTOM prec pObjectRelative
+    token LEFT_CORNER prec pObjectRelative
+    token RIGHT_CORNER prec pObjectRelative
+
+    left pDir < pObjectRelative
+    token DOT_N prec pDir
+    token DOT_E prec pDir
+    token DOT_W prec pDir
+    token DOT_S prec pDir
+    token DOT_NE prec pDir
+    token DOT_SE prec pDir
+    token DOT_NW prec pDir
+    token DOT_SW prec pDir
+    token DOT_C prec pDir
+
+    left pDim < pDir
+    token HEIGHT prec pDim
+    token RADIUS prec pDim
+    token WIDTH prec pDim
+    token DIAMETER prec pDim
+    token FROM prec pDim
+    token TO prec pDim
+    token AT prec pDim
+    token THICKNESS prec pDim
+
+    left pObject < pDim
+    token BOX prec pObject
+    token CIRCLE prec pObject
+    token ELLIPSE prec pObject
+    token ARC prec pObject
+    token LINE prec pObject
+    token ARROW prec pObject
+    token SPLINE prec pObject
+    token LBRACK "[" prec pObject
+
+    left pOrd < pObject
+    token ORDINAL prec pOrd
+    token HERE prec pOrd
+    token BTICK "`" prec pOrd
+
+    left pTrig < pOrd
+    token VARIABLE prec pTrig
+    token NUMBER prec pTrig
+    token LPAREN "(" prec pTrig
+    token SIN prec pTrig
+    token COS prec pTrig
+    token ATAN2 prec pTrig
+    token LOG prec pTrig
+    token EXP prec pTrig
+    token SQRT prec pTrig
+    token K_MAX prec pTrig
+    token K_MIN prec pTrig
+    token INT prec pTrig
+    token RAND prec pTrig
+    token SRAND prec pTrig
+    token LAST prec pTrig
+
+    left pLabel < pTrig
+    token LABEL prec pLabel
+
+    left pStyle < pLabel
+    token CHOP prec pStyle
+    token SOLID prec pStyle
+    token DASHED prec pStyle
+    token DOTTED prec pStyle
+    token UP prec pStyle
+    token DOWN prec pStyle
+    token FILL prec pStyle
+    token COLORED prec pStyle
+    token OUTLINED prec pStyle
+
+    left pLr < pStyle
+    token LEFT prec pLr
+    token RIGHT prec pLr
+
+    left pJust < pLr
+    token LJUST prec pJust
+    token RJUST prec pJust
+    token ABOVE prec pJust
+    token BELOW prec pJust
+
+    left pText < pJust
+    token TEXT prec pText
+    token SPRINTF prec pText
+
+    left pPlot < pText
+    token PLOT prec pPlot
+
+    left pDot < pPlot
+    token DOT "." prec pDot
+
+    start Top ::=
+      | Optional_separator
+      | Element_list
+
+    nonterm Element_list ::= Optional_separator Middle_element_list Optional_separator
+
+    nonterm Middle_element_list ::=
+      | Element
+      | Middle_element_list Separator Element
+
+    nonterm Optional_separator ::=
+      | epsilon
+      | Separator
+
+    nonterm Separator ::=
+      | ";"
+      | Separator ";"
+
+    nonterm Placeless_element ::=
+      | VARIABLE "=" Any_expr
+      | VARIABLE ":" "=" Any_expr
+      | UP prec pStyle
+      | DOWN prec pStyle
+      | LEFT prec pLr
+      | RIGHT prec pLr
+      | COMMAND_LINE
+      | COMMAND Print_args
+      | PRINT Print_args
+      | SH Midrule1 DELIMITED
+      | COPY TEXT prec pText
+      | COPY TEXT THRU Midrule2 DELIMITED Midrule3 Until
+      | COPY THRU Midrule4 DELIMITED Midrule5 Until
+      | FOR VARIABLE "=" Expr TO Expr Optional_by DO Midrule6 DELIMITED
+      | Simple_if
+      | Simple_if ELSE Midrule7 DELIMITED
+      | Reset_variables
+      | RESET
+
+    nonterm Midrule1 ::= epsilon
+    nonterm Midrule2 ::= epsilon
+    nonterm Midrule3 ::= epsilon
+    nonterm Midrule4 ::= epsilon
+    nonterm Midrule5 ::= epsilon
+    nonterm Midrule6 ::= epsilon
+    nonterm Midrule7 ::= epsilon
+
+    nonterm Reset_variables ::=
+      | RESET VARIABLE prec pTrig
+      | Reset_variables VARIABLE prec pTrig
+      | Reset_variables "," VARIABLE prec pTrig
+
+    nonterm Print_args ::=
+      | Print_arg
+      | Print_args Print_arg
+
+    nonterm Print_arg ::=
+      | Expr prec pComma
+      | Text
+      | Position prec pComma
+
+    nonterm Simple_if ::= IF Any_expr THEN Midrule8 DELIMITED
+
+    nonterm Midrule8 ::= epsilon
+
+    nonterm Until ::=
+      | epsilon
+      | UNTIL TEXT prec pText
+
+    nonterm Any_expr ::=
+      | Expr
+      | Text_expr
+
+    nonterm Text_expr ::=
+      | Text EQUALEQUAL Text prec pEq
+      | Text NOTEQUAL Text prec pEq
+      | Text_expr ANDAND Text_expr prec pAndand
+      | Text_expr ANDAND Expr prec pAndand
+      | Expr ANDAND Text_expr prec pAndand
+      | Text_expr OROR Text_expr prec pOror
+      | Text_expr OROR Expr prec pOror
+      | Expr OROR Text_expr prec pOror
+      | "!" Text_expr prec pXmark
+
+    nonterm Optional_by ::=
+      | epsilon
+      | BY Expr
+      | BY "*" Expr prec pMul
+
+    nonterm Element ::=
+      | Object_spec
+      | LABEL ":" Optional_separator Element
+      | LABEL ":" Optional_separator Position_not_place
+      | LABEL ":" Optional_separator Place
+      | "{" Midrule9 Element_list "}" Midrule10 Optional_element
+      | Placeless_element
+
+    nonterm Midrule9 ::= epsilon
+    nonterm Midrule10 ::= epsilon
+
+    nonterm Optional_element ::=
+      | epsilon
+      | Element
+
+    nonterm Object_spec ::=
+      | BOX prec pObject
+      | CIRCLE prec pObject
+      | ELLIPSE prec pObject
+      | ARC prec pObject
+      | LINE prec pObject
+      | ARROW prec pObject
+      | MOVE
+      | SPLINE prec pObject
+      | Text prec pText
+      | PLOT Expr prec pPlot
+      | PLOT Expr Text prec pPlot
+      | "[" Midrule11 Element_list "]"
+      | Object_spec HEIGHT Expr prec pDim
+      | Object_spec RADIUS Expr prec pDim
+      | Object_spec WIDTH Expr prec pDim
+      | Object_spec DIAMETER Expr prec pDim
+      | Object_spec Expr prec pDim
+      | Object_spec UP prec pStyle
+      | Object_spec UP Expr prec pStyle
+      | Object_spec DOWN prec pStyle
+      | Object_spec DOWN Expr prec pStyle
+      | Object_spec RIGHT prec pLr
+      | Object_spec RIGHT Expr prec pLr
+      | Object_spec LEFT prec pLr
+      | Object_spec LEFT Expr prec pLr
+      | Object_spec FROM Position prec pDim
+      | Object_spec TO Position prec pDim
+      | Object_spec AT Position prec pDim
+      | Object_spec WITH Path
+      | Object_spec WITH Position prec pComma
+      | Object_spec BY Expr_pair
+      | Object_spec THEN
+      | Object_spec SOLID prec pStyle
+      | Object_spec DOTTED prec pStyle
+      | Object_spec DOTTED Expr prec pStyle
+      | Object_spec DASHED prec pStyle
+      | Object_spec DASHED Expr prec pStyle
+      | Object_spec FILL prec pStyle
+      | Object_spec FILL Expr prec pStyle
+      | Object_spec SHADED Text
+      | Object_spec COLORED Text prec pStyle
+      | Object_spec OUTLINED Text prec pStyle
+      | Object_spec CHOP prec pStyle
+      | Object_spec CHOP Expr prec pStyle
+      | Object_spec SAME
+      | Object_spec INVISIBLE
+      | Object_spec LEFT_ARROW_HEAD
+      | Object_spec RIGHT_ARROW_HEAD
+      | Object_spec DOUBLE_ARROW_HEAD
+      | Object_spec CW
+      | Object_spec CCW
+      | Object_spec Text prec pText
+      | Object_spec LJUST prec pJust
+      | Object_spec RJUST prec pJust
+      | Object_spec ABOVE prec pJust
+      | Object_spec BELOW prec pJust
+      | Object_spec THICKNESS Expr prec pDim
+      | Object_spec ALIGNED
+
+    nonterm Midrule11 ::= epsilon
+
+    nonterm Text ::=
+      | TEXT prec pText
+      | SPRINTF "(" TEXT Sprintf_args ")"
+
+    nonterm Sprintf_args ::=
+      | epsilon
+      | Sprintf_args "," Expr prec pComma
+
+    nonterm Position ::=
+      | Position_not_place
+      | Place
+
+    nonterm Position_not_place ::=
+      | Expr_pair
+      | Position "+" Expr_pair prec pAdd
+      | Position "-" Expr_pair prec pAdd
+      | "(" Position "," Position ")"
+      | Expr Between Position AND Position prec pAnd
+      | Expr "<" Position "," Position ">" prec pRel
+
+    nonterm Between ::=
+      | BETWEEN prec pBetween
+      | OF THE WAY BETWEEN prec pBetween
+
+    nonterm Expr_pair ::=
+      | Expr "," Expr prec pComma
+      | "(" Expr_pair ")"
+
+    nonterm Place ::=
+      | Label prec pStyle
+      | Label Corner
+      | Corner Label
+      | Corner OF Label prec pBetween
+      | HERE prec pOrd
+
+    nonterm Label ::=
+      | LABEL prec pLabel
+      | Nth_primitive
+      | Label "." LABEL prec pLabel
+
+    nonterm Ordinal ::=
+      | ORDINAL prec pOrd
+      | "`" Any_expr TH
+
+    nonterm Optional_ordinal_last ::=
+      | LAST prec pTrig
+      | Ordinal LAST prec pTrig
+
+    nonterm Nth_primitive ::=
+      | Ordinal Object_type
+      | Optional_ordinal_last Object_type
+
+    nonterm Object_type ::=
+      | BOX prec pObject
+      | CIRCLE prec pObject
+      | ELLIPSE prec pObject
+      | ARC prec pObject
+      | LINE prec pObject
+      | ARROW prec pObject
+      | SPLINE prec pObject
+      | "[" "]"
+      | TEXT prec pText
+
+    nonterm Label_path ::=
+      | "." LABEL prec pLabel
+      | Label_path "." LABEL prec pLabel
+
+    nonterm Relative_path ::=
+      | Corner prec pStyle
+      | Label_path prec pText
+      | Label_path Corner
+
+    nonterm Path ::=
+      | Relative_path
+      | "(" Relative_path "," Relative_path ")"
+      | ORDINAL LAST Object_type Relative_path prec pTrig
+      | LAST Object_type Relative_path prec pTrig
+      | ORDINAL Object_type Relative_path prec pOrd
+      | LABEL Relative_path prec pLabel
+
+    nonterm Corner ::=
+      | DOT_N prec pDir
+      | DOT_E prec pDir
+      | DOT_W prec pDir
+      | DOT_S prec pDir
+      | DOT_NE prec pDir
+      | DOT_SE prec pDir
+      | DOT_NW prec pDir
+      | DOT_SW prec pDir
+      | DOT_C prec pDir
+      | DOT_START prec pObjectRelative
+      | DOT_END prec pObjectRelative
+      | TOP prec pObjectRelative
+      | BOTTOM prec pObjectRelative
+      | LEFT prec pLr
+      | RIGHT prec pLr
+      | UPPER LEFT prec pLr
+      | LOWER LEFT prec pLr
+      | UPPER RIGHT prec pLr
+      | LOWER RIGHT prec pLr
+      | LEFT_CORNER prec pObjectRelative
+      | RIGHT_CORNER prec pObjectRelative
+      | UPPER LEFT_CORNER prec pObjectRelative
+      | LOWER LEFT_CORNER prec pObjectRelative
+      | UPPER RIGHT_CORNER prec pObjectRelative
+      | LOWER RIGHT_CORNER prec pObjectRelative
+      | NORTH prec pRelative
+      | SOUTH prec pRelative
+      | EAST prec pRelative
+      | WEST prec pRelative
+      | CENTER prec pRelative
+      | START prec pRelative
+      | END prec pRelative
+
+    nonterm Expr ::=
+      | VARIABLE prec pTrig
+      | NUMBER prec pTrig
+      | Place DOT_X
+      | Place DOT_Y
+      | Place DOT_HT
+      | Place DOT_WID
+      | Place DOT_RAD
+      | Expr "+" Expr prec pAdd
+      | Expr "-" Expr prec pAdd
+      | Expr "*" Expr prec pMul
+      | Expr "/" Expr prec pMul
+      | Expr "\%" Expr prec pMul
+      | Expr "^" Expr prec pCarat
+      | "-" Expr prec pXmark
+      | "(" Any_expr ")"
+      | SIN "(" Any_expr ")"
+      | COS "(" Any_expr ")"
+      | ATAN2 "(" Any_expr "," Any_expr ")"
+      | LOG "(" Any_expr ")"
+      | EXP "(" Any_expr ")"
+      | SQRT "(" Any_expr ")"
+      | K_MAX "(" Any_expr "," Any_expr ")"
+      | K_MIN "(" Any_expr "," Any_expr ")"
+      | INT "(" Any_expr ")"
+      | RAND "(" Any_expr ")"
+      | RAND "(" ")"
+      | SRAND "(" Any_expr ")"
+      | Expr "<" Expr prec pRel
+      | Expr LESSEQUAL Expr prec pRel
+      | Expr ">" Expr prec pRel
+      | Expr GREATEREQUAL Expr prec pRel
+      | Expr EQUALEQUAL Expr prec pEq
+      | Expr NOTEQUAL Expr prec pEq
+      | Expr ANDAND Expr prec pAndand
+      | Expr OROR Expr prec pOror
+      | "!" Expr prec pXmark
