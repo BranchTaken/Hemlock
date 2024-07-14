@@ -28,7 +28,7 @@ grammars can be easily rewritten to avoid the need for multi-token lookahead.
 In 1965, canonical LR(1) in all its elegance posed serious implementation challenges due to ~10X
 state redundancy in the generated state machines. **L**ook**a**head LR(1) (LALR(1)) came along in
 1969 as a practical compromise that collapses isocore sets (described later), even if doing so
-introduces parser inadequacies relative to the grammar specification. The **P**ager **G**eneral
+introduces parser inadequacies relative to the grammar specification. The **P**ractical **G**eneral
 **M**ethod (PGM(1)) was presented in its full form in 1977, and it dramatically improves on LALR(1)
 by avoiding parser inadequacies, with the important caveat that the algorithm can only provide those
 guarantees in the absence of disambiguation via precedence/associativity rules. PGM(1) never saw
