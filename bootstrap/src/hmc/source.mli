@@ -85,15 +85,15 @@ module Slice : sig
   (** [of_cursors ~base ~past] creates a slice with contents \[[base .. past)]. *)
 
   val line_context: ?lookahead:Cursor.t -> t -> t list
-  (** [line_context ~lookahead t] returns an expanded context that encompasses the
-      entirety of the line(s) on which [t] resides. The result is a non-empty list of slices, where
-      each slice has a single source. The result typically comprises a single slice, but due to the
-      potential for [t] be split into multiple slices if it crosses source transitions, there is not
-      necessarily a direct correspondence between [t] and one of the resulting slices. If
-      [lookahead] is specified, it must satisfy [Cursor.((past t) <= lookahead], and it is used as
-      the starting position for the result's right bound; otherwise [past t] is used as the starting
-      point. If [lookahead] is not specified or it precedes the end of the line on which [t] ends,
-      all codepoints past the starting position of the right bound search are considered to have
+  (** [line_context ~lookahead t] returns an expanded context that encompasses the entirety of the
+      line(s) on which [t] resides. The result is a non-empty list of slices, where each slice has a
+      single source. The result typically comprises a single slice, but due to the potential for [t]
+      be split into multiple slices if it crosses source transitions, there is not necessarily a
+      direct correspondence between [t] and one of the resulting slices. If [lookahead] is
+      specified, it must satisfy [Cursor.((past t) <= lookahead], and it is used as the starting
+      position for the result's right bound; otherwise [past t] is used as the starting point. If
+      [lookahead] is not specified or it precedes the end of the line on which [t] ends, all
+      codepoints past the starting position of the right bound search are considered to have
       unbiased source. Ideally the caller will specify [lookahead] by extracting a cursor from a
       token far enough to the right of [t] to encompass the remainder of the line on which [t] ends
       so that the search for the right bound is a leftward search, but during scanning there may not
