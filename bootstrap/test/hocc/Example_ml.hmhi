@@ -1,0 +1,10 @@
+open! Basis
+open! Basis.Rudiments
+
+(* Export the parser API so that alternatives to `calculate` can be implemented. `hocc` expands to a
+ * module signature. *)
+include hocc
+
+val calculate: string -> Zint.t
+  (** Calculate the result of a simple arithmetic expression comprising non-negative integers and
+      `+`, `-`, `*`, and `/` operators. Tokens must be separated by one or more spaces. *)

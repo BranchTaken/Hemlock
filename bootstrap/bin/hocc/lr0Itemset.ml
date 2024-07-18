@@ -4,15 +4,11 @@ open! Basis.Rudiments
 module T = struct
   type t = (Lr0Item.t, Lr0Item.cmper_witness) Ordset.t
 
-  let hash_fold t =
-    Ordset.hash_fold t
+  let hash_fold = Ordset.hash_fold
 
-  let cmp t0 t1 =
-    Ordset.cmp t0 t1
+  let cmp = Ordset.cmp
 
-  let pp t formatter =
-    formatter
-    |> Ordset.pp t
+  let pp = Ordset.pp
 end
 include T
 include Identifiable.Make(T)

@@ -11,7 +11,7 @@ val empty: t
 (** [empty] returns an empty set of precedences. *)
 
 val insert: name:string -> assoc:(Assoc.t option)
-  -> doms:(Prec.Index.t, Prec.Index.cmper_witness) Ordset.t -> stmt:Parse.prec -> t -> t
+  -> doms:(Prec.Index.t, Prec.Index.cmper_witness) Ordset.t -> stmt:Parse.nonterm_prec -> t -> t
 (** [insert ~name ~assoc ~doms ~stmt t] creates a [Prec.t] with unique index and returns a new [t]
     with the production inserted. *)
 

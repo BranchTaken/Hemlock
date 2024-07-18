@@ -19,7 +19,7 @@ type t = {
   doms: (Index.t, Index.cmper_witness) Ordset.t;
   (** Set of precedences which dominate this precedence. *)
 
-  stmt: Parse.prec;
+  stmt: Parse.nonterm_prec;
   (** Declaration AST. *)
 }
 
@@ -32,5 +32,5 @@ val src_fmt: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs precedence in hocc syntax. *)
 
 val init: index:Index.t -> name:string -> assoc:(Assoc.t option)
-  -> doms:(Index.t, Index.cmper_witness) Ordset.t -> stmt:Parse.prec -> t
+  -> doms:(Index.t, Index.cmper_witness) Ordset.t -> stmt:Parse.nonterm_prec -> t
 (** Used only by [Precs.init]. *)

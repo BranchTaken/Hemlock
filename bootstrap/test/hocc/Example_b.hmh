@@ -1,0 +1,74 @@
+open import Basis
+
+# The `hocc` keyword is on a continued line. Indentation should remain a multiple of 4.
+include
+  hocc
+    left mul
+    token STAR "*" prec mul
+    token SLASH "/" prec mul
+    nonterm MulOp of Token.t ::=
+      | "*" -> STAR
+      | "/" -> SLASH
+
+    left add < mul
+    token PLUS "+" prec add
+    token MINUS "-" prec add
+    nonterm AddOp of Token.t ::=
+      | "+" -> PLUS
+      | "-" -> MINUS
+
+    token INT of Zint.t
+    nonterm Expr of Zint.t ::=
+      | e0:Expr op:MulOp e1:Expr prec mul ->
+        match op with
+          | STAR -> Zint.(e0 * e1)
+          | SLASH -> Zint.(e0 / e1)
+          | _ -> not_reached ()
+      | e0:Expr op:AddOp e1:Expr prec add ->
+        match op with
+          | PLUS -> Zint.(e0 + e1)
+          | MINUS -> Zint.(e0 - e1)
+          | _ -> not_reached ()
+      | x:INT -> x
+
+    token EOI
+    start Answer of Zint.t ::=
+      | e:Expr EOI -> e (* A comment that should be excluded from postlude. *) # And another.
+      # In `hocc` block; exclude from postlude
+     # In `hocc` block; exclude from postlude
+    # In `hocc` block; exclude from postlude
+   # [First] Outside `hocc` block; include in postlude
+  # Outside `hocc` block; include in postlude
+ # Outside `hocc` block; include in postlude
+# Outside `hocc` block; include in postlude
+
+# Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
+tokenize s =
+    s |> String.split_rev ~f:(fn cp -> Codepoint.(cp = ' '))
+      |> List.rev_filter ~f:(fn s -> not (String.is_empty s))
+      |> List.rev_map ~f:fn s ->
+        let open Token
+        match s with
+          | "*" -> STAR
+          | "/" -> SLASH
+          | "+" -> PLUS
+          | "-" -> MINUS
+          | _ -> INT (Zint.of_string s)
+      |> List.push Token.EOI
+      |> List.rev
+
+# Calculate the result of the arithmetic expression expressed in `s`, e.g. "2 + 3 * 4".
+calculate s =
+    let {status; _} = List.fold_until (tokenize s) ~init:Start.Answer.boi ~f:fn parser tok ->
+        let {status; _} as parser' = Start.Answer.next tok parser
+        let done = match status with
+          | Prefix -> false
+          | Accept _
+          | Error _ -> true
+          | _ -> not_reached ()
+        parser', done
+    match status with
+      | Accept (Answer answer) -> answer
+      | Prefix _ -> halt "Partial input"
+      | Error _ -> halt "Parse error"
+      | _ -> not_reached ()

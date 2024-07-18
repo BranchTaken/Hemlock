@@ -22,7 +22,7 @@ interoperating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather tha
   supports arbitrarily many directed acyclic precedence graphs. Given this more powerful conflict
   resolution mechanism, `hocc` refuses to generate parsers for ambiguous grammars.
 - `hocc` supports an automated error recovery algorithm [^diekmann2020] based on minimum-cost repair
-  sequences.
+  sequences. [XXX Not implemented.]
 
 ## Command usage
 
@@ -33,11 +33,11 @@ Parameters:
 - `-h[elp]`: Print command usage and exit.
 - `-v[erbose]`: Print progress information during parser generation.
 - `-txt` | `-text`: Write a detailed automoton description in plain text format to
-  `<dstdir>/hocc/<basename>.txt`.
+  `<dstdir>/hocc/<module>.txt`.
 - `-html`: Write a detailed automoton description in internally hyperlinked HTML format to
-  `<dstdir>/hocc/<basename>.html`.
+  `<dstdir>/hocc/<module>.html`.
 - `-hmh` | `-hocc`: Write a complete grammar specification in `hocc` format to
-  `<dstdir>/hocc/<basename>.hmh`, but with all non-terminal types and reduction code omitted.
+  `<dstdir>/hocc/<module>.hmh`, but with all non-terminal types and reduction code omitted.
 - `-a[lgorithm] <alg>`: Use the specified `<alg>`orithm for generating an automoton. Defaults to
   `lr1`.
   + `lr1`: Canonical LR(1) automoton [^knuth1965].
@@ -48,9 +48,9 @@ Parameters:
   + `lalr1`: LALR(1) automoton [^deremer1969].
 - `-r[esolve] (yes|no)`: Control whether conflict resolution is enabled. Defaults to `yes`.
 - `-hm` | `-hemlock`: Generate a Hemlock-based parser implementation and write it to
-  `<dstdir>/<basename>.hm[i]`.
+  `<dstdir>/<module>.hm[i]`.
 - `-ml` | `-ocaml`: Generate an OCaml-based parser implementation and write it to
-  `<dstdir>/<basename>.ml[i]`. This is brittle functionality intended only for Hemlock
+  `<dstdir>/<module>.ml[i]`. This is brittle functionality intended only for Hemlock
   bootstrapping.
 - `-s[rc] <src>`: Path and module name of input source, where inputs match `<src>.hmh[i]` and
   `<src>` comprises the source directory and module name, `[<srcdir>/]<module>`.
@@ -71,12 +71,12 @@ Example invocations:
 ## Parser specification
 
 The `hocc` specification grammar is layered onto Hemlock's grammar via the addition of several
-keywords:
+keywords and one operator:
 
 - Parser: `hocc`
 - Symbols:
   + [Tokens](#tokens): `token`
-  + [Non-terminals](#non-terminals): `nonterm`, `start`
+  + [Non-terminals](#non-terminals): `nonterm`, `start`, `::=`
   + [Productions](#productions): `epsilon`
 - [Precedence](#precedence): `neutral`, `left`, `right`, `prec`
 
@@ -441,7 +441,7 @@ open import Basis
 # module signature.
 include hocc
 
-calulate: string -> zint
+calculate: string -> zint
   [@@doc "Calculate the result of a simple arithmetic expression comprising non-negative integers
   and `+`, `-`, `*`, and `/` operators. Tokens must be separated by one or more spaces."]
 ```
@@ -471,12 +471,14 @@ include hocc
     nonterm Expr of Zint.t ::=
       | e0:Expr op:MulOp e1:Expr prec mul ->
         match op with
-          | MulOp STAR -> Zint.(e0 * e1)
-          | MulOp SLASH -> Zint.(e0 / e1)
+          | STAR -> Zint.(e0 * e1)
+          | SLASH -> Zint.(e0 / e1)
+          | _ -> not_reached ()
       | e0:Expr op:AddOp e1:Expr prec add ->
         match op with
-          | AddOp PLUS -> Zint.(e0 + e1)
-          | AddOp MINUS -> Zint.(e0 - e1)
+          | PLUS -> Zint.(e0 + e1)
+          | MINUS -> Zint.(e0 - e1)
+          | _ -> not_reached ()
       | x:INT -> x
 
     token EOI
@@ -485,8 +487,8 @@ include hocc
 
 # Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
 tokenize s =
-    s |> String.split_rev ~f:(fn cp -> Codepoint.O.(cp = ' '))
-      |> List.rev_filter ~f:(fn s -> String.length s <> 0)
+    s |> String.split_rev ~f:(fn cp -> Codepoint.(cp = ' '))
+      |> List.rev_filter ~f:(fn s -> not (String.is_empty s))
       |> List.rev_map ~f:fn s ->
         let open Token
         match s with
@@ -500,18 +502,19 @@ tokenize s =
 
 # Calculate the result of the arithmetic expression expressed in `s`, e.g. "2 + 3 * 4".
 calculate s =
-    List.fold_until (tokenize s) ~init:Start.Answer.boi ~f:fn parser tok ->
-        let parser' = Start.Answer.next tok parser
-        let done = match status parser' with
+    let {status; _} = List.fold_until (tokenize s) ~init:Start.Answer.boi ~f:fn parser tok ->
+        let {status; _} as parser' = Start.Answer.next tok parser
+        let done = match status with
           | Prefix -> false
           | Accept _
           | Error _ -> true
+          | _ -> not_reached ()
         parser', done
-      |>
-        function
-          | Accept answer -> answer
-          | Prefix _ -> halt "Partial input"
-          | Error _ -> halt "Parse error"
+    match status with
+      | Accept (Answer answer) -> answer
+      | Prefix _ -> halt "Partial input"
+      | Error _ -> halt "Parse error"
+      | _ -> not_reached ()
 ```
 
 To generate Hemlock code from the above inputs, run `hocc -hm -s Example`.
@@ -534,12 +537,25 @@ parser states can be used as persistent reusable snapshots.
 ```hemlock
 {
     Spec = {
+        Algorithm = {
+            type t: t =
+              | Lr1 [@doc "LR(1) algorithm."]
+              | Ielr1 [@doc "IELR(1) algorithm."]
+              | Pgm1 [@doc "PGM(1) algorithm."]
+              | Lalr1 [@doc "LALR(1) algorithm."]
+
+            include IdentifiableIntf.S with type t := t
+          }
+
+        algorithm: Algorithm.t
+          [@@doc "Algorithm used to generate parser."]
+
         Assoc = {
             type t: t =
               | Left
               | Right
 
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         Prec = {
@@ -547,10 +563,11 @@ parser states can be used as persistent reusable snapshots.
                 index: uns # Index in `precs` array.
                 name: string
                 assoc: option Assoc.t
-                doms: Ordset.t uns # Indices in `precs` array of dominator precedences.
+                doms: Ordset.t uns Uns.cmper_witness (* Indices in `precs` array of dominator
+                                                      * precedences. *)
               }
 
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         precs: array Prec.t
@@ -563,12 +580,10 @@ parser states can be used as persistent reusable snapshots.
                 lhs_index: uns
                 rhs_indexes: array uns
                 prec: option Prec.t
-                reduction: uns # Index of corresponding reduction function in `reductions` array.
+                callback: uns # Index of reduction callback in `Stack.Reduction.callbacks`.
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
-            cmp: t -> t -> Cmp.t
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         prods: array Prod.t
@@ -587,9 +602,7 @@ parser states can be used as persistent reusable snapshots.
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
-            cmp: t -> t -> Cmp.t
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         symbols: array Symbol.t
@@ -602,17 +615,7 @@ parser states can be used as persistent reusable snapshots.
                 dot: uns
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
-            cmp: t -> t -> Cmp.t
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
-          }
-
-        Lr0Itemset = {
-            type t: t = Ordset.t Lr0Item.t Lr0Item.cmper_witness
-
-            hash_map: t -> Hash.State.t -> Hash.State.t
-            cmp: t -> t -> Cmp.t
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         Lr1Item = {
@@ -621,17 +624,13 @@ parser states can be used as persistent reusable snapshots.
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
-            cmp: t -> t -> Cmp.t
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         Lr1Itemset = {
             type t: t = Ordmap.t Lr0Item.t Lr1Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
-            cmp: t -> t -> Cmp.t
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         Lr1ItemsetClosure = {
@@ -641,9 +640,7 @@ parser states can be used as persistent reusable snapshots.
                 added: Lr1Itemset.t
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
-            cmp: t -> t -> Cmp.t
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         Action = {
@@ -652,7 +649,7 @@ parser states can be used as persistent reusable snapshots.
               | ShiftAccept of uns # `states` index.
               | Reduce of uns # `prods` index.
 
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         State = {
@@ -662,7 +659,7 @@ parser states can be used as persistent reusable snapshots.
                 gotos: Map.t uns uns Uns.cmper_witness
               }
 
-            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+            include IdentifiableIntf.S with type t := t
           }
 
         states: array State.t
@@ -673,13 +670,13 @@ parser states can be used as persistent reusable snapshots.
     Token = {
         type t: t =
           # Built-in tokens with reserved names.
-          | EPSILON of unit
-          | PSEUDO_END of unit
+          | EPSILON # ε
+          | PSEUDO_END # ⊥
           # One variant per `token` statement, e.g. `A` and `B`.
           | A of TypeA.t
           | B of TypeB.t
 
-        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+        include IdentifiableIntf.S with type t := t
 
         spec: t -> Spec.Symbol.t
       }
@@ -687,10 +684,12 @@ parser states can be used as persistent reusable snapshots.
     Nonterm = {
         type t: t =
           # One variant per `nonterm`/`start` statement, e.g. `S` and `N`.
-          | S of TypeS.t
           | N of TypeN.t
+          | S of TypeS.t
+          # One variant per start symbol wrapper.
+          | S' of TypeS.t
 
-        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+        include IdentifiableIntf.S with type t := t
 
         spec: t -> Spec.Symbol.t
       }
@@ -700,7 +699,7 @@ parser states can be used as persistent reusable snapshots.
           | Token of Token.t
           | Nonterm of Nonterm.t
 
-        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+        include IdentifiableIntf.S with type t := t
 
         spec: t -> Spec.Symbol.t
       }
@@ -708,40 +707,63 @@ parser states can be used as persistent reusable snapshots.
     State = {
         type t: t = uns
 
-        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+        include IdentifiableIntf.S with type t := t
 
         spec: t -> Spec.State.t
       }
 
-    type stack_elm: stack_elm = {
-        symbol: Symbol.t
-        symbol_index: uns
-        state_index: uns
-      }
-    type stack: stack = list stack_elm
-    type reduction: reduction = stack -> stack
+    Stack = {
+        module Elm : sig
+            type t: t = {
+                symbol: Symbol.t;
+                state: State.t;
+              }
 
-    reductions: array reduction
-      [@@doc "Array of reductions, where each element's `index` field corresponds to the element's
-      array index."]
+            include IdentifiableIntf.S with type t := t
+          end
+
+        type t: t = Elm.t list
+
+        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+        fmt >e: ?alt:bool -> ?width:uns -> t -> Fmt.Formatter e >e-> Fmt.Formatter e
+
+        Reduction = {
+            type stack: stack = t
+            type t: t
+            type callback: callback = stack -> Symbol.t * stack
+
+            include IdentifiableIntf.S with type t := t
+
+            callbacks: array callback
+              [@@doc "Array of reduction callback functions containing embedded parser code."]
+
+            callback: t -> callback
+          }
+
+        shift: symbol:Symbol.t -> state:State.t -> t -> t
+          [@@doc "Perform a shift."]
+
+        reduce: reduction:Reduction.t -> t -> t
+          [@@doc "Perform a reduction."]
+      }
 
     Status = {
         type t: t =
           # `feed`/`step` may produce these variants; `next` fast-forwards over them.
-          | ShiftPrefix of (Token.t, State.t)
-          | ShiftAccept of (Token.t, State.t)
-          | Reduce of reduction
+          | ShiftPrefix of Token.t * State.t
+          | ShiftAccept of Token.t * State.t
+          | Reduce of Token.t * Stack.Reduction.t
           # Common variants.
           | Prefix # Valid parse prefix; more input needed.
           | Accept of Nonterm.t # Successful parse result.
           | Reject of Token.t # Syntax error due to unexpected token.
 
-        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+        include IdentifiableIntf.S with type t := t
       }
 
     type t: t = {
-        stack: stack
-        status: status
+        stack: Stack.t
+        status: Status.t
       }
 
     Start = {
@@ -753,7 +775,7 @@ parser states can be used as persistent reusable snapshots.
 
     feed: Token.t -> t -> t
       [@@doc "`feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`,
-      `Reject`}. `t.status` must be `Prefix`."]
+      `Reduce`, `Reject`}. `t.status` must be `Prefix`."]
 
     step: t -> t
       [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
@@ -910,7 +932,7 @@ hocc
     token USCORE "_"
 
     # Token alias
-    token STRING
+    token ISTRING
 
     # Punctuation/separators
     token COLON_COLON_EQ "::="
@@ -944,13 +966,17 @@ hocc
     # End of input, used to terminate start symbols
     token EOI
 
-    nonterm Ident ::= UIDENT | CIDENT | "_"
+    nonterm Uident ::= UIDENT
+
+    nonterm Cident ::= CIDENT
+
+    nonterm Ident ::= Uident | Cident | "_"
 
     nonterm PrecsTl ::=
-      | "," UIDENT PrecsTl
+      | "," Uident PrecsTl
       | epsilon
 
-    nonterm Precs ::= UIDENT PrecsTl
+    nonterm Precs ::= Uident PrecsTl
 
     nonterm PrecRels ::=
       | "<" Precs
@@ -958,23 +984,23 @@ hocc
 
     nonterm PrecType ::= "neutral" | "left" | "right"
 
-    nonterm Prec ::= PrecType UIDENT PrecRels
+    nonterm Prec ::= PrecType Uident PrecRels
 
-    nonterm OfType ::= "of" CIDENT "." UIDENT
+    nonterm OfType ::= "of" Cident "." Uident
 
     nonterm OfType0 ::=
       | OfType
       | epsilon
 
     nonterm PrecRef ::=
-      | "prec" UIDENT
+      | "prec" Uident
       | epsilon
 
     nonterm TokenAlias ::=
-      | STRING
+      | ISTRING
       | epsilon
 
-    nonterm Token ::= "token" CIDENT TokenAlias OfType0 PrecRef
+    nonterm Token ::= "token" Cident TokenAlias OfType0 PrecRef
 
     nonterm Sep ::= LINE_DELIM | ";" | "|"
 
@@ -1005,13 +1031,13 @@ hocc
       | Delimited CodeTl
       | CODE_TOKEN CodeTl
 
-    nonterm ProdParamType ::=
-      | CIDENT
-      | STRING
+    nonterm ProdParamSymbol ::=
+      | Cident
+      | ISTRING
 
     nonterm ProdParam ::=
-      | Ident ":" ProdParamType
-      | ProdParamType
+      | Ident ":" ProdParamSymbol
+      | ProdParamSymbol
 
     nonterm ProdParamsTl ::=
       | ProdParam ProdParamsTl
@@ -1045,8 +1071,8 @@ hocc
     nonterm NontermType ::= "nonterm" | "start"
 
     nonterm Nonterm ::=
-      | NontermType CIDENT PrecRef "::=" Prods
-      | NontermType CIDENT OfType PrecRef "::=" Reductions
+      | NontermType Cident PrecRef "::=" Prods
+      | NontermType Cident OfType PrecRef "::=" Reductions
 
     nonterm Stmt ::=
       | Prec

@@ -11,3 +11,5 @@ hocc: 0 remergeable states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Writing "./hocc/Example.txt"
+hocc: Writing "./Example.hmi"
+hocc: Writing "./Example.hm"

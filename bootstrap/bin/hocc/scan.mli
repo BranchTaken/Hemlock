@@ -14,6 +14,7 @@ module AbstractToken: sig
     | Tok_left
     | Tok_right
     | Tok_prec
+    | Tok_colon_colon_eq
 
   val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 

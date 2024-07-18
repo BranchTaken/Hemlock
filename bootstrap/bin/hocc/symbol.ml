@@ -3,8 +3,8 @@ open! Basis.Rudiments
 
 module T = struct
   type stmt =
-    | Token of Parse.token
-    | Nonterm of Parse.nonterm
+    | Token of Parse.nonterm_token
+    | Nonterm of Parse.nonterm_nonterm
 
   let pp_stmt stmt formatter =
     match stmt with
@@ -69,12 +69,13 @@ let init_token ~index ~name ~qtype ~prec ~stmt ~alias =
   let follow = Ordset.empty (module Index) in
   {index; name; qtype; prec; stmt; alias; start; prods; first; follow}
 
-let init_implicit ~index ~name ~alias =
-  init_token ~index ~name ~qtype:QualifiedType.implicit ~prec:None ~stmt:None ~alias:(Some alias)
+let init_synthetic_token ~index ~name ~alias =
+  init_token ~index ~name ~qtype:QualifiedType.synthetic_implicit ~prec:None ~stmt:None
+    ~alias:(Some alias)
 
-let epsilon = init_implicit ~index:0L ~name:"EPSILON" ~alias:"ε"
+let epsilon = init_synthetic_token ~index:0L ~name:"EPSILON" ~alias:"ε"
 
-let pseudo_end = init_implicit ~index:1L ~name:"PSEUDO_END" ~alias:"⊥"
+let pseudo_end = init_synthetic_token ~index:1L ~name:"PSEUDO_END" ~alias:"⊥"
 
 let init_nonterm ~index ~name ~qtype ~prec ~stmt ~start ~prods =
   let stmt = match stmt with

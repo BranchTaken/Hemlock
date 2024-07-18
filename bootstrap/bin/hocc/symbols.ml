@@ -43,6 +43,9 @@ let info_of_alias alias ({aliases; tokens; _} as t) =
   | None -> None
   | Some symbol_index -> info_of_name Symbol.((Ordmap.get_hlt symbol_index tokens).name) t
 
+let info_of_alias_hlt alias t =
+  Option.value_hlt (info_of_alias alias t)
+
 let insert_token ~name ~qtype ~prec ~stmt ~alias
     ({infos; names; aliases; symbols; tokens; _} as t) =
   let index = Map.length infos in

@@ -5,12 +5,11 @@ Parameters:
             -h[elp] : Print command usage and exit.
          -v[erbose] : Print progress information during parser generation.
        -txt | -text : Write a detailed automoton description in plain text
-                      format to "<dstdir>/hocc/<basename>.txt".
+                      format to "<dstdir>/hocc/<module>.txt".
               -html : Write a detailed automoton description in internally
-                      hyperlinked HTML format to
-                      "<dstdir>/hocc/<basename>.html".
+                      hyperlinked HTML format to "<dstdir>/hocc/<module>.html".
        -hmh | -hocc : Write a complete grammar specification in hocc format to
-                      "<dstdir>/hocc/<basename>.hmh", but with all non-terminal
+                      "<dstdir>/hocc/<module>.hmh", but with all non-terminal
                       types and reduction code omitted.
  -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an automoton.
                       Defaults to lr1.
@@ -26,9 +25,9 @@ Parameters:
 -r[esolve] (yes|no) : Control whether conflict resolution is enabled. Defaults
                       to yes.
      -hm | -hemlock : Generate a Hemlock-based parser implementation and write
-                      it to "<dstdir>/<basename>.hm[i]".
+                      it to "<dstdir>/<module>.hm[i]".
        -ml | -ocaml : Generate an OCaml-based parser implementation and write it
-                      to "<dstdir>/<basename>.ml[i]". This is brittle
+                      to "<dstdir>/<module>.ml[i]". This is brittle
                       functionality intended only for Hemlock bootstrapping.
        -s[rc] <src> : Path and module name of input source, where inputs match
                       "<src>.hmh[i]" and "<src>" comprises the source directory

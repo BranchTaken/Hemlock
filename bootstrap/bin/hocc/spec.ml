@@ -6,7 +6,7 @@ type t = {
   precs: Precs.t;
   symbols: Symbols.t;
   prods: Prods.t;
-  reductions: Reductions.t;
+  callbacks: Callbacks.t;
   states: State.t array;
 }
 
@@ -17,6 +17,9 @@ let string_of_alias_token token =
   match token with
   | Scan.Token.HmcToken {atok=Tok_istring (Constant istring); _} -> istring
   | _ -> not_reached ()
+
+let synthetic_name_of_start_name start_name =
+  start_name ^ "'"
 
 let precs_init io hmh =
   let rec fold_precs_tl io precs rels doms precs_tl = begin
@@ -101,7 +104,7 @@ let precs_init io hmh =
   end in
   let fold_stmt io precs stmt = begin
     match stmt with
-    | Parse.StmtPrec {prec=parse_prec} -> fold_prec io precs parse_prec
+    | Parse.StmtPrec {prec_=parse_prec} -> fold_prec io precs parse_prec
     | _ -> io, precs
   end in
   let rec fold_stmts_tl io precs stmts_tl = begin
@@ -119,7 +122,7 @@ let precs_init io hmh =
         fold_stmts_tl io precs stmts_tl
       end
   end in
-  let io, precs = match hmh with Parse.Hmh {hocc=Hocc {stmts; _}; _} ->
+  let io, precs = match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
     fold_stmts io Precs.empty stmts
   in
   io, precs
@@ -134,7 +137,7 @@ let tokens_init io precs hmh =
             type_module=Cident {cident}; type_type=Uident {uident}; _}} -> begin
               let module_ = string_of_token cident in
               let type_ = string_of_token uident in
-              QualifiedType.init ~module_ ~type_
+              QualifiedType.explicit ~module_ ~type_
             end
           | OfType0Epsilon -> QualifiedType.implicit
         in
@@ -192,7 +195,7 @@ let tokens_init io precs hmh =
   end in
   let fold_stmt io precs symbols stmt = begin
     match stmt with
-    | Parse.StmtToken {token} -> fold_token io precs symbols token
+    | Parse.StmtToken {token_} -> fold_token io precs symbols token_
     | _ -> io, symbols
   end in
   let rec fold_stmts_tl io precs symbols stmts_tl = begin
@@ -210,7 +213,7 @@ let tokens_init io precs hmh =
         fold_stmts_tl io precs symbols stmts_tl
       end
   end in
-  let io, symbols = match hmh with Parse.Hmh {hocc=Hocc {stmts; _}; _} ->
+  let io, symbols = match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
     fold_stmts io precs Symbols.empty stmts
   in
   io, symbols
@@ -238,7 +241,7 @@ let symbol_infos_init io symbols hmh =
           let name = string_of_token nonterm_cident in
           let module_ = string_of_token cident in
           let type_ = string_of_token uident in
-          name, QualifiedType.init ~module_ ~type_
+          name, QualifiedType.explicit ~module_ ~type_
         end
     in
     match nonterm with
@@ -249,8 +252,8 @@ let symbol_infos_init io symbols hmh =
           | NontermTypeNonterm _ -> io, symbols
           | NontermTypeStart _ -> begin
               (* Synthesize start symbol wrapper. *)
-              let name' = name ^ "'" in
-              let qtype' = QualifiedType.Synthetic in
+              let name' = synthetic_name_of_start_name name in
+              let qtype' = QualifiedType.synthetic_wrapper qtype in
               let symbols = insert_symbol_info name' qtype' cident symbols in
               io, symbols
             end
@@ -260,7 +263,7 @@ let symbol_infos_init io symbols hmh =
   end in
   let fold_stmt io symbols stmt = begin
     match stmt with
-    | Parse.StmtNonterm {nonterm} -> fold_nonterm io symbols nonterm
+    | Parse.StmtNonterm {nonterm_} -> fold_nonterm io symbols nonterm_
     | _ -> io, symbols
   end in
   let rec fold_stmts_tl io symbols stmts_tl = begin
@@ -278,7 +281,7 @@ let symbol_infos_init io symbols hmh =
         fold_stmts_tl io symbols stmts_tl
       end
   end in
-  let io, symbols = match hmh with Parse.Hmh {hocc=Hocc {stmts; _}; _} ->
+  let io, symbols = match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
     fold_stmts io symbols stmts
   in
   io, symbols
@@ -288,13 +291,6 @@ let symbols_init io precs symbols hmh =
     match prod_param with
     | Parse.ProdParamBinding {prod_param_symbol; _}
     | Parse.ProdParam {prod_param_symbol} -> begin
-        let binding = match prod_param with
-          | Parse.ProdParamBinding {ident=IdentUident {uident=Uident {uident=ident}}; _}
-          | Parse.ProdParamBinding {ident=IdentCident {cident=Cident {cident=ident}}; _} ->
-            Some (string_of_token ident)
-          | Parse.ProdParamBinding {ident=IdentUscore _; _}
-          | Parse.ProdParam _ -> None
-        in
         let io, symbol_name, qtype = match prod_param_symbol with
           | ProdParamSymbolCident {cident=Cident {cident}} -> begin
               let symbol_name = string_of_token cident in
@@ -338,8 +334,44 @@ let symbols_init io precs symbols hmh =
               | Some Symbols.{name; qtype; _} -> io, name, qtype
             end
         in
+        let io, binding = match prod_param with
+          | Parse.ProdParamBinding
+              {ident=IdentUident {uident=Uident {uident=ident}}; colon; prod_param_symbol}
+          | Parse.ProdParamBinding
+              {ident=IdentCident {cident=Cident {cident=ident}}; colon; prod_param_symbol} -> begin
+              let Symbols.{name; qtype; _} = match prod_param_symbol with
+                | ProdParamSymbolCident {cident=Cident {cident}} -> begin
+                    Symbols.info_of_name_hlt (Hmc.Source.Slice.to_string (Scan.Token.source cident))
+                      symbols
+                  end
+                | ProdParamSymbolAlias {alias} ->
+                  Symbols.info_of_alias_hlt (string_of_alias_token alias) symbols
+              in
+              let io = match qtype with
+                | {explicit_opt=None; _} -> begin
+                    let base = Scan.Token.source ident |> Hmc.Source.Slice.base in
+                    let past = Scan.Token.source colon |> Hmc.Source.Slice.past in
+                    let source = Hmc.Source.Slice.of_cursors ~base ~past in
+                    let io =
+                      io.err
+                      |> Fmt.fmt "hocc: At "
+                      |> Hmc.Source.Slice.pp source
+                      |> Fmt.fmt ": Cannot bind to empty symbol variant: "
+                      |> Fmt.fmt (Hmc.Source.Slice.to_string (Scan.Token.source ident))
+                      |> Fmt.fmt ":" |> Fmt.fmt name |> Fmt.fmt "\n"
+                      |> Io.with_err io
+                    in
+                    Io.fatal io
+                  end
+                | {explicit_opt=Some _; _} -> io
+              in
+              io, Some (string_of_token ident)
+            end
+          | Parse.ProdParamBinding {ident=IdentUscore _; _}
+          | Parse.ProdParam _ -> io, None
+        in
         let param =
-          Reduction.Param.init ~binding ~symbol_name ~qtype ~prod_param:(Some prod_param) in
+          Callback.Param.init ~binding ~symbol_name ~qtype ~prod_param:(Some prod_param) in
         io, param :: prod_params
       end
   end in
@@ -350,7 +382,7 @@ let symbols_init io precs symbols hmh =
         let io, prod_params = fold_prod_param io symbols prod_params prod_param in
         fold_prod_params_tl io symbols prod_params prod_params_tl
       end
-    | ProdParamsTlEpsilon -> Reduction.Params.init io (Array.of_list_rev prod_params)
+    | ProdParamsTlEpsilon -> Callback.Params.init io (Array.of_list_rev prod_params)
   end in
   let fold_prod_pattern io symbols prod_pattern = begin
     match prod_pattern with
@@ -359,9 +391,9 @@ let symbols_init io precs symbols hmh =
           let io, prod_params = fold_prod_param io symbols [] prod_param in
           fold_prod_params_tl io symbols prod_params prod_params_tl
         end
-    | ProdPatternEpsilon _ -> Reduction.Params.init io [||]
+    | ProdPatternEpsilon _ -> Callback.Params.init io [||]
   end in
-  let fold_prod io precs symbols prods reductions ~nonterm_info ~nonterm_prec ~code ~reduction
+  let fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
       nonterm_prods_set prod = begin
     match prod with
     | Parse.Prod {prod_pattern; prec_ref} -> begin
@@ -371,7 +403,7 @@ let symbols_init io precs symbols hmh =
           | Some _ -> io
           | None -> begin
               (* Codeless productions have no use for parameter bindings. *)
-              Reduction.Params.fold ~init:io ~f:(fun io Reduction.Param.{binding; prod_param; _} ->
+              Callback.Params.fold ~init:io ~f:(fun io Callback.Param.{binding; prod_param; _} ->
                 match binding with
                 | Some binding -> begin
                     let binding_token = match prod_param with
@@ -390,7 +422,7 @@ let symbols_init io precs symbols hmh =
               ) rhs
             end
         in
-        let rhs_indexes = Reduction.Params.map ~f:(fun Reduction.Param.{symbol_name; _} ->
+        let rhs_indexes = Callback.Params.map ~f:(fun Callback.Param.{symbol_name; _} ->
           match Symbols.info_of_name_hlt symbol_name symbols with Symbols.{index; _} -> index
         ) rhs in
         let prec = match prec_ref with
@@ -422,68 +454,64 @@ let symbols_init io precs symbols hmh =
             end
           | PrecRefEpsilon -> nonterm_prec
         in
-        let lhs = nonterm_info.qtype in
-        let reduction, reductions = match reduction with
-          | Some reduction -> reduction, reductions
-          | None -> begin
-              let reduction, reductions = Reductions.insert ~lhs ~rhs ~code reductions in
-              reduction, reductions
-            end
+        let lhs = nonterm_info in
+        let callback, callbacks = match callback with
+          | Some callback -> callback, callbacks
+          | None -> Callbacks.insert ~lhs ~rhs ~code callbacks
         in
         let prod, prods =
-          Prods.insert ~lhs_index ~rhs_indexes ~prec ~stmt:(Some prod) ~reduction prods in
+          Prods.insert ~lhs_index ~rhs_indexes ~prec ~stmt:(Some prod) ~callback prods in
         let nonterm_prods_set = Ordset.insert prod nonterm_prods_set in
-        io, nonterm_prods_set, prods, reductions, prod
+        io, nonterm_prods_set, prods, callbacks, prod
       end
   end in
-  let rec fold_prods_tl io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-      ~code ~reduction nonterm_prods_set prods_tl = begin
+  let rec fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+      nonterm_prods_set prods_tl = begin
     match prods_tl with
     | Parse.ProdsTlBarProd {prod; prods_tl; _} -> begin
-        let io, nonterm_prods_set, prods, reductions, _prod =
-          fold_prod io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-            ~code ~reduction nonterm_prods_set prod in
-        fold_prods_tl io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-          ~code ~reduction nonterm_prods_set prods_tl
+        let io, nonterm_prods_set, prods, callbacks, _prod =
+          fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+            nonterm_prods_set prod in
+        fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+          nonterm_prods_set prods_tl
       end
-    | ProdsTlEpsilon -> io, nonterm_prods_set, prods, reductions
+    | ProdsTlEpsilon -> io, nonterm_prods_set, prods, callbacks
   end in
-  let fold_prods io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-      parse_prods = begin
+  let fold_prods io precs symbols prods callbacks ~nonterm_info ~nonterm_prec parse_prods = begin
     match parse_prods with
     | Parse.ProdsBarProd {prod; prods_tl; _}
     | ProdsProd {prod; prods_tl} -> begin
         let code = None in
-        let reduction = None in
+        let callback = None in
         let nonterm_prods_set = Ordset.empty (module Prod) in
-        let io, nonterm_prods_set, prods, reductions, _prod =
-          fold_prod io precs symbols prods reductions ~nonterm_info ~nonterm_prec ~code
-            ~reduction nonterm_prods_set prod in
-        fold_prods_tl io precs symbols prods reductions ~nonterm_info ~nonterm_prec ~code
-          ~reduction nonterm_prods_set prods_tl
+        let io, nonterm_prods_set, prods, callbacks, _prod =
+          fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+            nonterm_prods_set prod in
+        fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+          nonterm_prods_set prods_tl
       end
   end in
-  let fold_reduction io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-      nonterm_prods_set reduction = begin
+  let fold_reduction io precs symbols prods callbacks ~nonterm_info ~nonterm_prec nonterm_prods_set
+      reduction = begin
     match reduction with
     | Parse.Reduction {prods=parse_prods; code; _} -> begin
-        (* Map one or more prods to a single reduction. *)
+        (* Map one or more prods to a single reduction callback. *)
         match parse_prods with
         | ProdsBarProd {prod=parse_prod; prods_tl; _}
         | ProdsProd {prod=parse_prod; prods_tl} -> begin
             let reduction_prods = Ordset.empty (module Prod) in
-            let io, reduction_prods_merge, prods, reductions, prod =
-              fold_prod io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-                ~code:(Some code) ~reduction:None reduction_prods parse_prod in
+            let io, reduction_prods_merge, prods, callbacks, prod =
+              fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
+                ~code:(Some code) ~callback:None reduction_prods parse_prod in
             let reduction_prods = Ordset.union reduction_prods_merge reduction_prods in
-            let io, reduction_prods_merge, prods, reductions =
-              fold_prods_tl io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-                ~code:(Some code) ~reduction:(Some prod.reduction) reduction_prods prods_tl in
+            let io, reduction_prods_merge, prods, callbacks =
+              fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
+                ~code:(Some code) ~callback:(Some prod.callback) reduction_prods prods_tl in
             let reduction_prods = Ordset.union reduction_prods_merge reduction_prods in
             (* Verify that the prods' parameters are uniform. *)
             let () = Ordset.iter ~f:(fun prod1 ->
               let open Cmp in
-              match Reduction.Params.cmp Prod.(prod.reduction.rhs) Prod.(prod1.reduction.rhs) with
+              match Callback.Params.cmp Prod.(prod.callback.rhs) Prod.(prod1.callback.rhs) with
               | Lt
               | Gt -> begin
                   let pattern_source = Option.value_hlt (
@@ -502,35 +530,35 @@ let symbols_init io precs symbols hmh =
               | Eq -> ()
             ) reduction_prods in
             let nonterm_prods_set = Ordset.union reduction_prods nonterm_prods_set in
-            io, nonterm_prods_set, prods, reductions
+            io, nonterm_prods_set, prods, callbacks
           end
       end
   end in
-  let rec fold_reductions_tl io precs symbols prods reductions ~nonterm_info ~nonterm_prec
+  let rec fold_reductions_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
       nonterm_prods_set reductions_tl = begin
     match reductions_tl with
     | Parse.ReductionsTlBarReduction {reduction; reductions_tl; _} -> begin
-        let io, nonterm_prods_set, prods, reductions =
-          fold_reduction io precs symbols prods reductions ~nonterm_info ~nonterm_prec
+        let io, nonterm_prods_set, prods, callbacks =
+          fold_reduction io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
             nonterm_prods_set reduction in
-        fold_reductions_tl io precs symbols prods reductions ~nonterm_info ~nonterm_prec
+        fold_reductions_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
           nonterm_prods_set reductions_tl
       end
-    | ReductionsTlEpsilon -> io, nonterm_prods_set, prods, reductions
+    | ReductionsTlEpsilon -> io, nonterm_prods_set, prods, callbacks
   end in
-  let fold_reductions io precs symbols prods reductions ~nonterm_info ~nonterm_prec
+  let fold_reductions io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
       parse_reductions = begin
     match parse_reductions with
     | Parse.ReductionsReduction {reduction; reductions_tl} -> begin
         let nonterm_prods_set = Ordset.empty (module Prod) in
-        let io, nonterm_prods_set, prods, reductions =
-          fold_reduction io precs symbols prods reductions ~nonterm_info ~nonterm_prec
+        let io, nonterm_prods_set, prods, callbacks =
+          fold_reduction io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
             nonterm_prods_set reduction in
-        fold_reductions_tl io precs symbols prods reductions ~nonterm_info ~nonterm_prec
+        fold_reductions_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
           nonterm_prods_set reductions_tl
       end
   end in
-  let fold_nonterm io precs symbols prods reductions nonterm = begin
+  let fold_nonterm io precs symbols prods callbacks nonterm = begin
     let start, name, prec = match nonterm with
       | Parse.NontermProds {nonterm_type; cident=Cident {cident}; prec_ref; _}
       | NontermReductions {nonterm_type; cident=Cident {cident}; prec_ref; _} -> begin
@@ -561,57 +589,61 @@ let symbols_init io precs symbols hmh =
     in
     let (Symbols.{index; qtype; _} as nonterm_info) = Symbols.info_of_name_hlt name symbols in
     let nonterm_prec = prec in
-    let io, nonterm_prods, prods, reductions = match nonterm with
+    let io, nonterm_prods, prods, callbacks = match nonterm with
       | NontermProds {prods=parse_prods; _} ->
-        fold_prods io precs symbols prods reductions ~nonterm_info ~nonterm_prec parse_prods
-      | NontermReductions {reductions=parse_reductions; _} ->
-        fold_reductions io precs symbols prods reductions ~nonterm_info ~nonterm_prec
-          parse_reductions
+        fold_prods io precs symbols prods callbacks ~nonterm_info ~nonterm_prec parse_prods
+      | NontermReductions {reductions; _} ->
+        fold_reductions io precs symbols prods callbacks ~nonterm_info ~nonterm_prec reductions
     in
     let symbols =
       Symbols.insert_nonterm ~name ~prec ~stmt:(Some nonterm) ~start ~prods:nonterm_prods symbols in
-    let io, symbols, prods, reductions = match start with
-      | false -> io, symbols, prods, reductions
+    let io, symbols, prods, callbacks = match start with
+      | false -> io, symbols, prods, callbacks
       | true -> begin
           (* Synthesize wrapper for start symbol. *)
           let name' = name ^ "'" in
           let Symbols.{index=index'; _} = Symbols.info_of_name_hlt name' symbols in
+          let lhs = Symbols.{
+            index=index';
+            name=name';
+            alias=None;
+            qtype=QualifiedType.synthetic_wrapper qtype;
+          } in
           let Symbol.{index=pe_index; name=pe_name; qtype=pe_qtype; _} = Symbol.pseudo_end in
-          let io, rhs = Reduction.Params.init io [|
-            Reduction.Param.init ~binding:(Some "start") ~symbol_name:name ~qtype ~prod_param:None;
-            Reduction.Param.init ~binding:None ~symbol_name:pe_name ~qtype:pe_qtype
+          let io, rhs = Callback.Params.init io [|
+            Callback.Param.init ~binding:(Some "start") ~symbol_name:name ~qtype ~prod_param:None;
+            Callback.Param.init ~binding:None ~symbol_name:pe_name ~qtype:pe_qtype
               ~prod_param:None;
           |] in
-          let reduction, reductions =
-            Reductions.insert ~lhs:QualifiedType.synthetic ~rhs ~code:None reductions in
+          let callback, callbacks = Callbacks.insert ~lhs ~rhs ~code:None callbacks in
           let prod, prods = Prods.insert ~lhs_index:index' ~rhs_indexes:[|index; pe_index|]
-            ~prec:None ~stmt:None ~reduction prods in
+            ~prec:None ~stmt:None ~callback prods in
           let nonterm_prods = Ordset.singleton (module Prod) prod in
           let symbols = Symbols.insert_nonterm ~name:name' ~prec:None ~stmt:None ~start
               ~prods:nonterm_prods symbols in
-          io, symbols, prods, reductions
+          io, symbols, prods, callbacks
         end
     in
-    io, symbols, prods, reductions
+    io, symbols, prods, callbacks
   end in
-  let fold_stmt io precs symbols prods reductions stmt = begin
+  let fold_stmt io precs symbols prods callbacks stmt = begin
     match stmt with
-    | Parse.StmtNonterm {nonterm} -> fold_nonterm io precs symbols prods reductions nonterm
-    | _ -> io, symbols, prods, reductions
+    | Parse.StmtNonterm {nonterm_} -> fold_nonterm io precs symbols prods callbacks nonterm_
+    | _ -> io, symbols, prods, callbacks
   end in
-  let rec fold_stmts_tl io precs symbols prods reductions stmts_tl = begin
+  let rec fold_stmts_tl io precs symbols prods callbacks stmts_tl = begin
     match stmts_tl with
     | Parse.StmtsTl {stmt; stmts_tl; _} -> begin
-        let io, symbols, prods, reductions = fold_stmt io precs symbols prods reductions stmt in
-        fold_stmts_tl io precs symbols prods reductions stmts_tl
+        let io, symbols, prods, callbacks = fold_stmt io precs symbols prods callbacks stmt in
+        fold_stmts_tl io precs symbols prods callbacks stmts_tl
       end
-    | StmtsTlEpsilon -> io, symbols, prods, reductions
+    | StmtsTlEpsilon -> io, symbols, prods, callbacks
   end in
-  let fold_stmts io precs symbols prods reductions stmts = begin
+  let fold_stmts io precs symbols prods callbacks stmts = begin
     match stmts with
     | Parse.Stmts {stmt; stmts_tl} -> begin
-        let io, symbols, prods, reductions = fold_stmt io precs symbols prods reductions stmt in
-        fold_stmts_tl io precs symbols prods reductions stmts_tl
+        let io, symbols, prods, callbacks = fold_stmt io precs symbols prods callbacks stmt in
+        fold_stmts_tl io precs symbols prods callbacks stmts_tl
       end
   end in
   (* Compute first/follow sets for all symbols. *)
@@ -704,16 +736,16 @@ let symbols_init io precs symbols hmh =
   (* Extract the non-terminal specifications from the AST. The end result will be:
    *
    * - `symbols`: Opaquely managed symbols collection
-   * - `prods`/`reductions` arrays: Each element encodes its own array offset
+   * - `prods`/`callbacks` arrays: Each element encodes its own array offset
    *
    * Tokens have already been fully extracted into `symbols`, and basic info for non-terminals has
-   * already been extracted into `symbols`; prod/reduction indexes are incrementally assigned during
+   * already been extracted into `symbols`; prod/callback indexes are incrementally assigned during
    * AST traversal. *)
-  let reductions = Reductions.empty in
+  let callbacks = Callbacks.empty in
   let prods = Prods.empty in
-  let io, symbols, prods, reductions =
-    match hmh with Parse.Hmh {hocc=Hocc {stmts; _}; _} ->
-      fold_stmts io precs symbols prods reductions stmts
+  let io, symbols, prods, callbacks =
+    match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
+      fold_stmts io precs symbols prods callbacks stmts
   in
   (* Close on symbols' first/follow sets. *)
   let symbols = close_symbols symbols in
@@ -741,7 +773,7 @@ let symbols_init io precs symbols hmh =
     |> Fmt.fmt "\n"
     |> Io.with_log io
   in
-  io, symbols, prods, reductions
+  io, symbols, prods, callbacks
 
 let compat_init algorithm ~resolve io symbols prods =
   let io, compat_string, compat = match algorithm with
@@ -757,7 +789,7 @@ let compat_init algorithm ~resolve io symbols prods =
   in
   io, compat
 
-let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
+let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
   (* Collect the LR(1) item set closures that comprise the initial work queue. There is one such
    * closure for each synthetic start symbol. *)
   let init symbols ~compat = begin
@@ -857,7 +889,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods reductions =
           |> Io.with_log io
         in
         let io, lalr1_isocores, lalr1_states =
-          init_inner Conf.Lalr1 ~resolve:false io precs symbols prods reductions in
+          init_inner Conf.Lalr1 ~resolve:false io precs symbols prods callbacks in
         Ielr1.gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr1_isocores lalr1_states
       end
     | _ -> begin
@@ -1145,8 +1177,8 @@ and hmh_extract io hmh =
   let io, precs = precs_init io hmh in
   let io, symbols = tokens_init io precs hmh in
   let io, symbols = symbol_infos_init io symbols hmh in
-  let io, symbols, prods, reductions = symbols_init io precs symbols hmh in
-  io, precs, symbols, prods, reductions
+  let io, symbols, prods, callbacks = symbols_init io precs symbols hmh in
+  io, precs, symbols, prods, callbacks
 
 and gc_states io isocores states =
   let state_indexes_reachable states = begin
@@ -1363,9 +1395,9 @@ and remerge_states io symbols isocores states =
       io, reindexed_isocores, reindexed_states
     end
 
-and init_inner algorithm ~resolve io precs symbols prods reductions =
+and init_inner algorithm ~resolve io precs symbols prods callbacks =
   let io, isocores, gotonub_of_statenub_goto =
-    isocores_init algorithm ~resolve io precs symbols prods reductions in
+    isocores_init algorithm ~resolve io precs symbols prods callbacks in
   let io, states = states_init io ~resolve symbols prods isocores ~gotonub_of_statenub_goto in
   io, isocores, states
 
@@ -1382,585 +1414,15 @@ and init algorithm ~resolve io hmh =
     |> Fmt.fmt " specification\n"
     |> Io.with_log io
   in
-  let io, precs, symbols, prods, reductions = hmh_extract io hmh in
-  let io, isocores, states = init_inner algorithm ~resolve io precs symbols prods reductions in
+  let io, precs, symbols, prods, callbacks = hmh_extract io hmh in
+  let io, isocores, states = init_inner algorithm ~resolve io precs symbols prods callbacks in
   let io, isocores, states = gc_states io isocores states in
   let io, _isocores, states = remerge_states io symbols isocores states in
   let io = log_unused io precs symbols prods states in
-  io, {algorithm; precs; symbols; prods; reductions; states}
+  io, {algorithm; precs; symbols; prods; callbacks; states}
 
 let conflicts {states; _} =
   match Array.reduce ~f:Uns.(+)
     (Array.map ~f:(fun state -> State.conflicts ~filter_pseudo_end:false state) states) with
   | None -> 0L
   | Some conflicts -> conflicts
-
-type description =
-  | DescriptionTxt
-  | DescriptionHtml
-
-let to_description conf io description t =
-  let sink _ formatter = formatter in
-  let passthrough s formatter = formatter |> Fmt.fmt s in
-  let txt = match description with
-    | DescriptionTxt -> passthrough
-    | DescriptionHtml -> sink
-  in
-  let html = match description with
-    | DescriptionTxt -> sink
-    | DescriptionHtml -> passthrough
-  in
-  let pp_symbol_index symbol_index formatter = begin
-    let symbol = Symbols.symbol_of_symbol_index symbol_index t.symbols in
-    let pretty_name = match symbol.alias with
-      | None -> symbol.name
-      | Some alias ->
-        String.Fmt.empty
-        |> txt "\"" |> html "“"
-        |> Fmt.fmt alias
-        |> txt "\"" |> html "”"
-        |> Fmt.to_string
-    in
-    formatter |> html "<a href=\"#symbol-" |> html symbol.name |> html "\">"
-    |> Fmt.fmt pretty_name |> html "</a>"
-  end in
-  let pp_symbol_set symbol_set formatter = begin
-    formatter
-    |> Fmt.fmt "{"
-    |> (fun formatter ->
-      Ordset.foldi ~init:formatter ~f:(fun i formatter symbol_index ->
-        formatter
-        |> (fun formatter -> match i with 0L -> formatter | _ -> formatter |> Fmt.fmt ", ")
-        |> pp_symbol_index symbol_index
-      ) symbol_set
-    )
-    |> Fmt.fmt "}"
-  end in
-  let pp_prec prec_ind formatter = begin
-    let ref_name = (Precs.prec_of_prec_index prec_ind t.precs).name in
-    formatter
-    |> Fmt.fmt "prec " |> html "<a href=\"#prec-" |> html ref_name |> html "\">"
-    |> Fmt.fmt ref_name
-    |> html "</a>"
-  end in
-  let pp_prod ?(do_pp_prec=true) Prod.{lhs_index; rhs_indexes; prec; _} formatter = begin
-    let lhs_name = Symbol.name (Symbols.symbol_of_symbol_index lhs_index t.symbols) in
-    formatter
-    |> html "<a href=\"#symbol-" |> html lhs_name |> html "\">"
-    |> Fmt.fmt lhs_name
-    |> html "</a>" |> Fmt.fmt " ::="
-    |> (fun formatter ->
-      match Array.length rhs_indexes with
-      | 0L -> formatter |> Fmt.fmt " epsilon"
-      | _ -> begin
-          Array.fold ~init:formatter ~f:(fun formatter rhs_index ->
-            let rhs_name = Symbol.name (Symbols.symbol_of_symbol_index rhs_index t.symbols) in
-            formatter
-            |> Fmt.fmt " "
-            |> html "<a href=\"#symbol-" |> html rhs_name |> html "\">"
-            |> pp_symbol_index rhs_index
-            |> html "</a>"
-          ) rhs_indexes
-        end
-    )
-    |> (fun formatter ->
-      match do_pp_prec, prec with
-      | false, _
-      | _, None -> formatter
-      | true, Some {index=prec_ind; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_ind
-    )
-  end in
-  let pp_lr0item lr0item formatter = begin
-    let Lr0Item.{prod; dot} = lr0item in
-    let Prod.{lhs_index; rhs_indexes; _} = prod in
-    formatter
-    |> Fmt.fmt (Symbol.name (Symbols.symbol_of_symbol_index lhs_index t.symbols))
-    |> Fmt.fmt " ::="
-    |> (fun formatter ->
-      Array.foldi ~init:formatter ~f:(fun i formatter rhs_index ->
-        formatter
-        |> Fmt.fmt (match i = dot with
-          | false -> ""
-          | true -> " ·"
-        )
-        |> Fmt.fmt " "
-        |> pp_symbol_index rhs_index
-      ) rhs_indexes
-      |> Fmt.fmt (
-        match Array.length rhs_indexes = dot with
-        | false -> ""
-        | true -> " ·"
-      )
-    )
-  end in
-  let pp_lr1item ?(do_pp_prec=true) lr1item formatter = begin
-    let Lr1Item.{lr0item; _} = lr1item in
-    let Lr0Item.{prod; _} = lr0item in
-    let Prod.{prec; _} = prod in
-    formatter
-    |> Fmt.fmt "["
-    |> pp_lr0item lr0item
-    |> Fmt.fmt ", {"
-    |> (fun formatter ->
-      Array.foldi ~init:formatter ~f:(fun i formatter symbol_index ->
-        formatter
-        |> Fmt.fmt (match i with
-          | 0L -> ""
-          | _ -> ", "
-        )
-        |> pp_symbol_index symbol_index
-      ) (Ordset.to_array Lr1Item.(lr1item.follow))
-    )
-    |> Fmt.fmt "}]"
-    |> (fun formatter ->
-      match do_pp_prec, prec with
-      | false, _
-      | _, None -> formatter
-      | true, Some {index=prec_index; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_index
-    )
-  end in
-  let pp_state_index state_index formatter = begin
-    let state_index_string = String.Fmt.empty |> State.Index.pp state_index |> Fmt.to_string in
-    formatter
-    |> html "<a href=\"#state-" |> html state_index_string |> html "\">"
-    |> Fmt.fmt state_index_string
-    |> html "</a>"
-  end in
-  let pp_action symbol_index action formatter = begin
-    let pp_symbol_prec symbol_index formatter = begin
-      let symbol = Symbols.symbol_of_symbol_index symbol_index t.symbols in
-      match symbol.prec with
-      | None -> formatter
-      | Some Prec.{index; _} -> formatter |> Fmt.fmt " " |> pp_prec index
-    end in
-    let pp_reduce_prec Prod.{lhs_index; prec; _} formatter = begin
-      match prec with
-      | Some _ -> formatter
-      | None -> formatter |> pp_symbol_prec lhs_index
-    end in
-    let open State.Action in
-    match action with
-    | ShiftPrefix state_index ->
-      formatter
-      |> Fmt.fmt "ShiftPrefix " |> pp_state_index state_index
-      |> pp_symbol_prec symbol_index
-    | ShiftAccept state_index ->
-      formatter
-      |> Fmt.fmt "ShiftAccept " |> pp_state_index state_index
-      |> pp_symbol_prec symbol_index
-    | Reduce prod_index -> begin
-        let prod = Prods.prod_of_prod_index prod_index t.prods in
-        formatter |> Fmt.fmt "Reduce " |> pp_prod prod
-        |> pp_reduce_prec prod
-      end
-  end in
-  let pp_contrib contrib formatter = begin
-    assert ((Contrib.length contrib) = 1L);
-    assert (not (Contrib.mem_shift contrib));
-    let prod_index = Contrib.reduces contrib |> Ordset.choose_hlt in
-    let prod = Prods.prod_of_prod_index prod_index t.prods in
-    formatter
-    |> Fmt.fmt "Reduce "
-    |> pp_prod ~do_pp_prec:false prod
-  end in
-  let io =
-    io.log
-    |> Fmt.fmt "hocc: Generating "
-    |> txt "text" |> html "html"
-    |> Fmt.fmt " report\n"
-    |> Io.with_log io
-  in
-  let nprecs = Precs.length t.precs in
-  let states_algorithm = match Conf.algorithm conf with
-    | Lr1 -> "LR(1)"
-    | Ielr1 -> "IELR(1)"
-    | Pgm1 -> "PGM(1)"
-    | Lalr1 -> "LALR(1)"
-  in
-  (match description with
-    | DescriptionTxt -> io.txt
-    | DescriptionHtml -> io.html
-  )
-  |> html "<html>\n"
-  |> html "<body>\n"
-  |> html "<h1>" |> Fmt.fmt (Path.Segment.to_string_hlt (Conf.module_ conf))
-  |> Fmt.fmt " grammar" |> html "</h1>" |> Fmt.fmt "\n"
-  |> Fmt.fmt "\n"
-  |> html "<h2>Sections</h2>\n"
-  |> html "    <ul type=none>\n"
-  |> (fun formatter -> match nprecs with
-    | 0L -> formatter
-    | _ -> formatter |> html "    <li><a href=\"#precedences\">Precedences</a></li>\n"
-  )
-  |> html "    <li><a href=\"#tokens\">Tokens</a></li>\n"
-  |> html "    <li><a href=\"#nonterms\">Non-terminals</a></li>\n"
-  |> html "    <li><a href=\"#states\">" |> html states_algorithm |> html " States</a></li>\n"
-  |> html "    </ul>\n"
-  |> html "<hr>\n"
-  |> (fun formatter -> match nprecs with
-    | 0L -> formatter
-    | _ ->
-      formatter |> html "<h2 id=\"precedences\">" |> Fmt.fmt "Precedences"
-      |> (fun formatter -> match (Conf.resolve conf) with
-        | true -> formatter
-        | false -> formatter |> Fmt.fmt " (conflict resolution disabled)"
-      )
-      |> html "</h2>"
-      |> Fmt.fmt"\n"
-  )
-  |> html "    <ul>\n"
-  |> (fun formatter ->
-    Precs.fold ~init:formatter ~f:(fun formatter Prec.{name; assoc; doms; _} ->
-      formatter
-      |> Fmt.fmt "    " |> html "<li>"
-      |> Fmt.fmt (match assoc with
-        | None -> "neutral"
-        | Some Left -> "left"
-        | Some Right -> "right"
-      )
-      |> Fmt.fmt " " |> html "<a id=\"prec-" |> html name |> html "\">"
-      |> Fmt.fmt name
-      |> html "</a>"
-      |> (fun formatter ->
-        match Ordset.is_empty doms with
-        | true -> formatter
-        | false -> begin
-            let _, formatter = Ordset.fold ~init:(true, formatter)
-              ~f:(fun (first, formatter) prec_ind ->
-                let ref_name = (Precs.prec_of_prec_index prec_ind t.precs).name in
-                let formatter =
-                  formatter
-                  |> Fmt.fmt (match first with
-                    | true -> " < "
-                    | false -> ", "
-                  )
-                  |> html "<a href=\"#prec-" |> html ref_name |> html "\">"
-                  |> Fmt.fmt ref_name
-                  |> html "</a>"
-                in
-                (false, formatter)
-              ) doms
-            in
-            formatter
-          end
-      )
-      |> html "</li>" |> Fmt.fmt "\n"
-    ) t.precs
-  )
-  |> html "    </ul>\n"
-  |> html "<h2 id=\"tokens\">" |> Fmt.fmt "Tokens" |> html "</h2>" |> Fmt.fmt "\n"
-  |> html "    <ul>\n"
-  |> (fun formatter ->
-    Symbols.symbols_fold ~init:formatter
-      ~f:(fun formatter (Symbol.{name; alias; qtype; prec; first; follow; _} as symbol) ->
-        match Symbol.is_token symbol with
-        | false -> formatter
-        | true -> begin
-            formatter
-            |> Fmt.fmt "    " |> html "<li>" |> Fmt.fmt "token "
-            |> html "<a id=\"symbol-" |> html name |> html "\">"
-            |> Fmt.fmt name
-            |> html "</a>"
-            |> (fun formatter ->
-              match alias with
-              | None -> formatter
-              | Some alias -> formatter |> Fmt.fmt " " |> String.pp alias
-            )
-            |> (fun formatter ->
-              match qtype with
-              | Synthetic
-              | Implicit -> formatter
-              | Explicit {module_; type_} ->
-                formatter |> Fmt.fmt " of " |> Fmt.fmt module_ |> Fmt.fmt "." |> Fmt.fmt type_
-            )
-            |> (fun formatter ->
-              match prec with
-              | None -> formatter
-              | Some {index=prec_index; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_index
-            )
-            |> Fmt.fmt "\n"
-            |> html "        <ul type=none>\n"
-            |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "First: "
-            |> pp_symbol_set first
-            |> html "</li>" |> Fmt.fmt "\n"
-            |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Follow: "
-            |> pp_symbol_set follow
-            |> html "</li>" |> Fmt.fmt "\n"
-            |> html "        </ul>\n"
-            |> html "    </li>\n"
-          end
-      ) t.symbols
-  )
-  |> html "    </ul>\n"
-  |> html "<h2 id=\"nonterms\">" |> Fmt.fmt "Non-terminals" |> html "</h2>" |> Fmt.fmt "\n"
-  |> html "    <ul>\n"
-  |> (fun formatter ->
-    Symbols.symbols_fold ~init:formatter
-      ~f:(fun formatter (Symbol.{name; start; qtype; prods; first; follow; _} as symbol) ->
-        match Symbol.is_nonterm symbol with
-        | false -> formatter
-        | true -> begin
-            formatter
-            |> Fmt.fmt "    " |> html "<li>"
-            |> Fmt.fmt (match start with
-              | true -> "start "
-              | false -> "nonterm "
-            )
-            |> html "<a id=\"symbol-" |> html name |> html "\">"
-            |> Fmt.fmt name
-            |> html "</a>"
-            |> (fun formatter ->
-              match qtype with
-              | Synthetic
-              | Implicit -> formatter
-              | Explicit {module_; type_} ->
-                formatter |> Fmt.fmt " of " |> Fmt.fmt module_ |> Fmt.fmt "." |> Fmt.fmt type_
-            )
-            |> Fmt.fmt "\n"
-            |> html "            <ul type=none>\n"
-            |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "First: "
-            |> pp_symbol_set first
-            |> html "</li>" |> Fmt.fmt "\n"
-            |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Follow: "
-            |> pp_symbol_set follow
-            |> html "</li>" |> Fmt.fmt "\n"
-            |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Productions\n"
-            |> html "            <ul type=none>\n"
-            |> (fun formatter ->
-              Ordset.fold ~init:formatter
-                ~f:(fun formatter prod ->
-                  formatter
-                  |> Fmt.fmt "            " |> html "<li>"
-                  |> pp_prod prod
-                  |> html "</li>" |> Fmt.fmt "\n"
-                ) prods
-              |> html "            </ul>\n"
-              |> html "        </li>\n"
-            )
-            |> html "        </ul>\n"
-            |> html "    </li>\n"
-          end
-      ) t.symbols
-  )
-  |> html "    </ul>\n"
-  |> html "<h2 id=\"states\">" |> Fmt.fmt states_algorithm |> Fmt.fmt " States" |> html "</h2>"
-  |> Fmt.fmt "\n"
-  |> html "    <ul>\n"
-  |> (fun formatter ->
-    Array.fold ~init:formatter
-      ~f:(fun formatter (State.{statenub; actions; gotos; _} as state) ->
-        let state_index_string =
-          String.Fmt.empty |> StateNub.Index.pp (StateNub.index statenub)
-          |> Fmt.to_string in
-        formatter
-        |> Fmt.fmt "    " |> html "<li>" |> Fmt.fmt "State "
-        |> html "<a id=\"state-" |> html state_index_string |> html "\">"
-        |> Fmt.fmt state_index_string
-        |> (fun formatter ->
-          match t.algorithm with
-          | Lr1
-          | Ielr1
-          | Pgm1 -> begin
-              formatter
-              |> Fmt.fmt " ["
-              |> Uns.pp (StateNub.isocores_sn statenub)
-              |> Fmt.fmt "."
-              |> Uns.pp (StateNub.isocore_set_sn statenub)
-              |> Fmt.fmt "]"
-            end
-          | Lalr1 -> formatter
-        )
-        |> html "</a>" |> Fmt.fmt "\n"
-        |> html "        <ul type=none>\n"
-        |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Kernel\n"
-        |> html "            <ul type=none>\n"
-        |> (fun formatter ->
-          Lr1Itemset.fold ~init:formatter ~f:(fun formatter lr1itemset ->
-            formatter
-            |> Fmt.fmt "            " |> html "<li>"
-            |> pp_lr1item lr1itemset
-            |> html "</li>" |> Fmt.fmt "\n"
-          ) statenub.lr1itemsetclosure.kernel
-        )
-        |> html "            </ul>\n"
-        |> html "        </li>\n"
-        |> (fun formatter ->
-          match Lr1Itemset.is_empty statenub.lr1itemsetclosure.added with
-          | true -> formatter
-          | false -> begin
-              formatter
-              |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Added\n"
-              |> html "            <ul type=none>\n"
-              |> (fun formatter ->
-                Lr1Itemset.fold ~init:formatter ~f:(fun formatter lr1itemset ->
-                  formatter |> Fmt.fmt "            " |> html "<li>"
-                  |> pp_lr1item lr1itemset
-                  |> html "</li>" |> Fmt.fmt "\n"
-                ) statenub.lr1itemsetclosure.added
-              )
-              |> html "            </ul>\n"
-              |> html "        </li>\n"
-            end
-        )
-        |> (fun formatter ->
-          let has_pseudo_end_conflict = State.has_pseudo_end_conflict state in
-          formatter
-          |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Actions\n"
-          |> html "            <ul type=none>\n"
-          |> (fun formatter ->
-            Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, action_set) ->
-              formatter
-              |> (fun formatter ->
-                match has_pseudo_end_conflict && symbol_index = Symbol.pseudo_end.index with
-                | false -> formatter |> Fmt.fmt "            " |> html "<li>"
-                | true -> formatter |> txt "CONFLICT    " |> html "            <li>CONFLICT "
-              )
-              |> pp_symbol_index symbol_index |> Fmt.fmt " :"
-              |> (fun formatter ->
-                match Ordset.length action_set with
-                | 1L -> begin
-                    formatter
-                    |> Fmt.fmt " "
-                    |> pp_action symbol_index (Ordset.choose_hlt action_set)
-                    |> html "</li>" |> Fmt.fmt "\n"
-                  end
-                | _ -> begin
-                    formatter
-                    |> html " CONFLICT" |> Fmt.fmt "\n"
-                    |> html "                <ul type=none>\n"
-                    |> (fun formatter ->
-                      Ordset.fold ~init:formatter ~f:(fun formatter action ->
-                        formatter
-                        |> txt "CONFLICT        " |> html "                <li>"
-                        |> pp_action symbol_index action
-                        |> html "</li>" |> Fmt.fmt "\n"
-                      ) action_set
-                    )
-                    |> html "                </ul>\n"
-                  end
-              )
-            ) actions
-          )
-          |> html "            </ul>\n"
-          |> html "        </li>\n"
-        )
-        |> (fun formatter ->
-          match Ordmap.is_empty gotos with
-          | true -> formatter
-          | false -> begin
-              formatter
-              |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Gotos\n"
-              |> html "            <ul type=none>\n"
-              |> (fun formatter ->
-                Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, state_index) ->
-                  formatter
-                  |> Fmt.fmt "            " |> html "<li>"
-                  |> pp_symbol_index symbol_index |> Fmt.fmt " : " |> State.Index.pp state_index
-                  |> html "</li>" |> Fmt.fmt "\n"
-                ) gotos
-              )
-              |> html "            </ul>\n"
-              |> html "        </li>\n"
-            end
-        )
-        |> (fun formatter ->
-          let kernel_attribs = StateNub.filtered_kernel_attribs statenub in
-          match KernelAttribs.length kernel_attribs with
-          | 0L -> formatter
-          | _ -> begin
-              let kernel_attribs = StateNub.filtered_kernel_attribs statenub in
-              formatter
-              |> Fmt.fmt "        " |> html "<li>" |> Fmt.fmt "Conflict contributions\n"
-              |> html "            <ul type=none>\n"
-              |> (fun formatter ->
-                KernelAttribs.fold ~init:formatter ~f:(fun formatter (kernel_item, attribs) ->
-                  formatter
-                  |> Fmt.fmt "            " |> pp_lr1item ~do_pp_prec:false kernel_item
-                  |> Fmt.fmt "\n"
-                  |> html "                <ul type=none>\n"
-                  |> (fun formatter ->
-                    Attribs.fold ~init:formatter
-                      ~f:(fun formatter Attrib.{conflict_state_index; contrib; _} ->
-                        formatter
-                        |> Fmt.fmt "                " |> html "<li>"
-                        |> pp_state_index conflict_state_index
-                        |> Fmt.fmt " : "
-                        |> pp_contrib contrib
-                        |> html "</li>" |> Fmt.fmt "\n"
-                      ) attribs
-                  )
-                  |> html "                </ul>\n"
-                ) kernel_attribs
-              )
-              |> html "            </ul>\n"
-              |> html "        </li>\n"
-            end
-        )
-        |> html "        </ul>\n"
-        |> html "    </li>\n"
-      ) t.states
-  )
-  |> html "    </ul>\n"
-  |> html "</body>\n"
-  |> html "</html>\n"
-  |> (match description with
-    | DescriptionTxt -> Io.with_txt io
-    | DescriptionHtml -> Io.with_html io
-  )
-
-let to_txt conf io t =
-  to_description conf io DescriptionTxt t
-
-let to_html conf io t =
-  to_description conf io DescriptionHtml t
-
-let to_hocc io t =
-  let io = io.log |> Fmt.fmt "hocc: Generating hocc report\n" |> Io.with_log io in
-  io.hocc
-  |> Fmt.fmt "hocc\n"
-  |> (fun formatter ->
-    Precs.fold ~init:formatter ~f:(fun formatter prec ->
-      formatter |> Prec.src_fmt prec
-    ) t.precs
-  )
-  |> (fun formatter ->
-    Symbols.symbols_fold ~init:formatter ~f:(fun formatter symbol ->
-      match Symbol.is_token symbol && not (Symbol.is_synthetic symbol) with
-      | false -> formatter
-      | true -> formatter |> Symbols.src_fmt symbol t.symbols
-    ) t.symbols
-  )
-  |> (fun formatter ->
-    Symbols.symbols_fold ~init:formatter ~f:(fun formatter symbol ->
-      match Symbol.is_nonterm symbol && not (Symbol.is_synthetic symbol) with
-      | false -> formatter
-      | true -> formatter |> Symbols.src_fmt symbol t.symbols
-    ) t.symbols
-  )
-  |> Io.with_hocc io
-
-let to_hmi conf _hmhi io _t =
-  let io =
-    io.hmi
-    |> Fmt.fmt "XXX not implemented\n"
-    |> Fmt.fmt (Path.Segment.to_string_hlt (Conf.module_ conf))
-    |> Fmt.fmt ".hmi\n"
-    |> Io.with_hmi io
-  in
-  io
-
-let to_hm conf _hmh io _t =
-  let io =
-    io.hm
-    |> Fmt.fmt "XXX not implemented\n"
-    |> Fmt.fmt (Path.Segment.to_string_hlt (Conf.module_ conf))
-    |> Fmt.fmt ".hm\n"
-    |> Io.with_hm io
-  in
-  io
-
-let to_mli _conf _hmhi _io _t =
-  not_implemented "XXX"
-
-let to_ml _conf _hmh _io _t =
-  not_implemented "XXX"

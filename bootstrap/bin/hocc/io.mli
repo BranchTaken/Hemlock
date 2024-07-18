@@ -6,6 +6,7 @@
     conditional output logic. *)
 
 open Basis
+open! Basis.Rudiments
 
 type t = {
   err: (module Fmt.Formatter);
@@ -24,8 +25,9 @@ type t = {
 val init: Conf.t -> t
 (** [init conf] initializes formatters according to [conf]. *)
 
-val fini: Conf.t -> t -> t
-(** Write and flush results to files. *)
+val fini: Conf.t -> bool -> t -> t
+(** [fini conf conflicts t] writes and flushes results to files. If there are conflicts, only report
+    files are written. *)
 
 val fatal: t -> 'a
 (** Flush error output and exit. *)

@@ -53,127 +53,133 @@ module Error = struct
     {source; msg}
 end
 
-type uident =
+type nonterm_uident =
   | Uident of {uident: Scan.Token.t}
-and cident =
+and nonterm_cident =
   | Cident of {cident: Scan.Token.t}
-and ident =
-  | IdentUident of {uident: uident}
-  | IdentCident of {cident: cident}
+and nonterm_ident =
+  | IdentUident of {uident: nonterm_uident}
+  | IdentCident of {cident: nonterm_cident}
   | IdentUscore of {uscore: Scan.Token.t}
-and precs_tl =
-  | PrecsTlCommaUident of {comma: Scan.Token.t; uident: uident; precs_tl: precs_tl}
+and nonterm_precs_tl =
+  | PrecsTlCommaUident of {comma: Scan.Token.t; uident: nonterm_uident; precs_tl: nonterm_precs_tl}
   | PrecsTlEpsilon
-and precs =
-  | Precs of {uident: uident; precs_tl: precs_tl}
-and prec_rels =
-  | PrecRelsLtPrecs of {lt: Scan.Token.t; precs: precs}
+and nonterm_precs =
+  | Precs of {uident: nonterm_uident; precs_tl: nonterm_precs_tl}
+and nonterm_prec_rels =
+  | PrecRelsLtPrecs of {lt: Scan.Token.t; precs: nonterm_precs}
   | PrecRelsEpsilon
-and prec_type =
-  | PrecTypeNeutral of {neutral: Scan.Token.t}
-  | PrecTypeLeft of {left: Scan.Token.t}
-  | PrecTypeRight of {right: Scan.Token.t}
-and prec =
-  | Prec of {prec_type: prec_type; uident: uident; prec_rels: prec_rels}
-and of_type =
-  | OfType of {of_: Scan.Token.t; type_module: cident; dot: Scan.Token.t; type_type: uident}
-and of_type0 =
-  | OfType0OfType of {of_type: of_type}
+and nonterm_prec_type =
+  | PrecTypeNeutral of {neutral_: Scan.Token.t}
+  | PrecTypeLeft of {left_: Scan.Token.t}
+  | PrecTypeRight of {right_: Scan.Token.t}
+and nonterm_prec =
+  | Prec of {prec_type: nonterm_prec_type; uident: nonterm_uident; prec_rels: nonterm_prec_rels}
+and nonterm_of_type =
+  | OfType of {of_: Scan.Token.t; type_module: nonterm_cident; dot: Scan.Token.t;
+    type_type: nonterm_uident}
+and nonterm_of_type0 =
+  | OfType0OfType of {of_type: nonterm_of_type}
   | OfType0Epsilon
-and prec_ref =
-  | PrecRefPrecUident of {prec: Scan.Token.t; uident: uident}
+and nonterm_prec_ref =
+  | PrecRefPrecUident of {prec_: Scan.Token.t; uident: nonterm_uident}
   | PrecRefEpsilon
-and token_alias =
+and nonterm_token_alias =
   | TokenAlias of {alias: Scan.Token.t}
   | TokenAliasEpsilon
-and token =
-  | Token of {token: Scan.Token.t; cident: cident; token_alias: token_alias; of_type0: of_type0;
-    prec_ref: prec_ref}
-and sep =
+and nonterm_token =
+  | Token of {token_: Scan.Token.t; cident: nonterm_cident; token_alias: nonterm_token_alias;
+    of_type0: nonterm_of_type0; prec_ref: nonterm_prec_ref}
+and nonterm_sep =
   | SepLineDelim of {line_delim: Scan.Token.t}
   | SepSemi of {semi: Scan.Token.t}
   | SepBar of {bar: Scan.Token.t}
-and codes_tl =
-  | CodesTlSepCode of {sep: sep; code: code; codes_tl: codes_tl}
+and nonterm_codes_tl =
+  | CodesTlSepCode of {sep: nonterm_sep; code: nonterm_code; codes_tl: nonterm_codes_tl}
   | CodesTlEpsilon
-and codes =
-  | Codes of {code: code; codes_tl: codes_tl}
-and codes0 =
-  | Codes0Codes of {codes: codes}
+and nonterm_codes =
+  | Codes of {code: nonterm_code; codes_tl: nonterm_codes_tl}
+and nonterm_codes0 =
+  | Codes0Codes of {codes: nonterm_codes}
   | Codes0Epsilon
-and delimited =
-  | DelimitedBlock of {indent: Scan.Token.t; codes: codes; dedent: Scan.Token.t}
-  | DelimitedParen of {lparen: Scan.Token.t; codes0: codes0; rparen: Scan.Token.t}
-  | DelimitedCapture of {lcapture: Scan.Token.t; codes0: codes0; rcapture: Scan.Token.t}
-  | DelimitedList of {lbrack: Scan.Token.t; codes0: codes0; rbrack: Scan.Token.t}
-  | DelimitedArray of {larray: Scan.Token.t; codes0: codes0; rarray: Scan.Token.t}
-  | DelimitedModule of {lcurly: Scan.Token.t; codes0: codes0; rcurly: Scan.Token.t}
-and code_tl =
-  | CodeTlDelimited of {delimited: delimited; code_tl: code_tl}
-  | CodeTlToken of {token: Scan.Token.t; code_tl: code_tl}
+and nonterm_delimited =
+  | DelimitedBlock of {indent: Scan.Token.t; codes: nonterm_codes; dedent: Scan.Token.t}
+  | DelimitedParen of {lparen: Scan.Token.t; codes0: nonterm_codes0; rparen: Scan.Token.t}
+  | DelimitedCapture of {lcapture: Scan.Token.t; codes0: nonterm_codes0; rcapture: Scan.Token.t}
+  | DelimitedList of {lbrack: Scan.Token.t; codes0: nonterm_codes0; rbrack: Scan.Token.t}
+  | DelimitedArray of {larray: Scan.Token.t; codes0: nonterm_codes0; rarray: Scan.Token.t}
+  | DelimitedModule of {lcurly: Scan.Token.t; codes0: nonterm_codes0; rcurly: Scan.Token.t}
+and nonterm_code_tl =
+  | CodeTlDelimited of {delimited: nonterm_delimited; code_tl: nonterm_code_tl}
+  | CodeTlToken of {token_: Scan.Token.t; code_tl: nonterm_code_tl}
   | CodeTlEpsilon
-and code =
-  | CodeDelimited of {delimited: delimited; code_tl: code_tl}
-  | CodeToken of {token: Scan.Token.t; code_tl: code_tl}
-and prod_param_symbol =
-  | ProdParamSymbolCident of {cident: cident}
+and nonterm_code =
+  | CodeDelimited of {delimited: nonterm_delimited; code_tl: nonterm_code_tl}
+  | CodeToken of {token_: Scan.Token.t; code_tl: nonterm_code_tl}
+and nonterm_prod_param_symbol =
+  | ProdParamSymbolCident of {cident: nonterm_cident}
   | ProdParamSymbolAlias of {alias: Scan.Token.t}
-and prod_param =
-  | ProdParamBinding of {ident: ident; colon: Scan.Token.t; prod_param_symbol: prod_param_symbol}
-  | ProdParam of {prod_param_symbol: prod_param_symbol}
-and prod_params_tl =
-  | ProdParamsTlProdParam of {prod_param: prod_param; prod_params_tl: prod_params_tl}
+and nonterm_prod_param =
+  | ProdParamBinding of {ident: nonterm_ident; colon: Scan.Token.t;
+    prod_param_symbol: nonterm_prod_param_symbol}
+  | ProdParam of {prod_param_symbol: nonterm_prod_param_symbol}
+and nonterm_prod_params_tl =
+  | ProdParamsTlProdParam of {prod_param: nonterm_prod_param;
+    prod_params_tl: nonterm_prod_params_tl}
   | ProdParamsTlEpsilon
-and prod_params =
-  | ProdParamsProdParam of {prod_param: prod_param; prod_params_tl: prod_params_tl}
-and prod_pattern =
-  | ProdPatternParams of {prod_params: prod_params}
-  | ProdPatternEpsilon of {epsilon: Scan.Token.t}
-and prod =
-  | Prod of {prod_pattern: prod_pattern; prec_ref: prec_ref}
-and prods_tl =
-  | ProdsTlBarProd of {bar: Scan.Token.t; prod: prod; prods_tl: prods_tl}
+and nonterm_prod_params =
+  | ProdParamsProdParam of {prod_param: nonterm_prod_param; prod_params_tl: nonterm_prod_params_tl}
+and nonterm_prod_pattern =
+  | ProdPatternParams of {prod_params: nonterm_prod_params}
+  | ProdPatternEpsilon of {epsilon_: Scan.Token.t}
+and nonterm_prod =
+  | Prod of {prod_pattern: nonterm_prod_pattern; prec_ref: nonterm_prec_ref}
+and nonterm_prods_tl =
+  | ProdsTlBarProd of {bar: Scan.Token.t; prod: nonterm_prod; prods_tl: nonterm_prods_tl}
   | ProdsTlEpsilon
-and prods =
-  | ProdsBarProd of {bar: Scan.Token.t; prod: prod; prods_tl: prods_tl}
-  | ProdsProd of {prod: prod; prods_tl: prods_tl}
-and reduction =
-  | Reduction of {prods: prods; arrow: Scan.Token.t; code: code}
-and reductions_tl =
-  | ReductionsTlBarReduction of {bar: Scan.Token.t; reduction: reduction;
-    reductions_tl: reductions_tl}
+and nonterm_prods =
+  | ProdsBarProd of {bar: Scan.Token.t; prod: nonterm_prod; prods_tl: nonterm_prods_tl}
+  | ProdsProd of {prod: nonterm_prod; prods_tl: nonterm_prods_tl}
+and nonterm_reduction =
+  | Reduction of {prods: nonterm_prods; arrow: Scan.Token.t; code: nonterm_code}
+and nonterm_reductions_tl =
+  | ReductionsTlBarReduction of {bar: Scan.Token.t; reduction: nonterm_reduction;
+    reductions_tl: nonterm_reductions_tl}
   | ReductionsTlEpsilon
-and reductions =
-  | ReductionsReduction of {reduction: reduction; reductions_tl: reductions_tl}
-and nonterm_type =
-  | NontermTypeNonterm of {nonterm: Scan.Token.t}
-  | NontermTypeStart of {start: Scan.Token.t}
-and nonterm =
-  | NontermProds of {nonterm_type: nonterm_type; cident: cident; prec_ref: prec_ref;
-    cce: Scan.Token.t; prods: prods}
-  | NontermReductions of {nonterm_type: nonterm_type; cident: cident; of_type: of_type;
-      prec_ref: prec_ref; cce: Scan.Token.t; reductions: reductions}
-and stmt =
-  | StmtPrec of {prec: prec}
-  | StmtToken of {token: token}
-  | StmtNonterm of {nonterm: nonterm}
-  | StmtCode of {code: code}
-and stmts_tl =
-  | StmtsTl of {line_delim: Scan.Token.t; stmt: stmt; stmts_tl: stmts_tl}
+and nonterm_reductions =
+  | ReductionsReduction of {reduction: nonterm_reduction; reductions_tl: nonterm_reductions_tl}
+and nonterm_nonterm_type =
+  | NontermTypeNonterm of {nonterm_: Scan.Token.t}
+  | NontermTypeStart of {start_: Scan.Token.t}
+and nonterm_nonterm =
+  | NontermProds of {nonterm_type: nonterm_nonterm_type; cident: nonterm_cident;
+    prec_ref: nonterm_prec_ref; cce: Scan.Token.t; prods: nonterm_prods}
+  | NontermReductions of {nonterm_type: nonterm_nonterm_type; cident: nonterm_cident;
+    of_type: nonterm_of_type; prec_ref: nonterm_prec_ref; cce: Scan.Token.t;
+    reductions: nonterm_reductions}
+and nonterm_stmt =
+  | StmtPrec of {prec_: nonterm_prec}
+  | StmtToken of {token_: nonterm_token}
+  | StmtNonterm of {nonterm_: nonterm_nonterm}
+  | StmtCode of {code: nonterm_code}
+and nonterm_stmts_tl =
+  | StmtsTl of {line_delim: Scan.Token.t; stmt: nonterm_stmt; stmts_tl: nonterm_stmts_tl}
   | StmtsTlEpsilon
-and stmts =
-  | Stmts of {stmt: stmt; stmts_tl: stmts_tl}
-and hocc =
-  | Hocc of {hocc: Scan.Token.t; indent: Scan.Token.t; stmts: stmts; dedent: Scan.Token.t}
-and eoi =
+and nonterm_stmts =
+  | Stmts of {stmt: nonterm_stmt; stmts_tl: nonterm_stmts_tl}
+and nonterm_hocc =
+  | Hocc of {hocc_: Scan.Token.t; indent: Scan.Token.t; stmts: nonterm_stmts; dedent: Scan.Token.t}
+and nonterm_eoi =
   | Eoi of {eoi: Scan.Token.t}
-and matter =
-  | Matter of {token: Scan.Token.t; matter: matter}
+and nonterm_matter =
+  | Matter of {token_: Scan.Token.t; matter: nonterm_matter}
   | MatterEpsilon
-and hmh =
-  | Hmh of {prelude: matter; hocc: hocc; postlude: matter; eoi: eoi}
-and hmhi =
-  | Hmhi of {prelude: matter; hocc: Scan.Token.t; postlude: matter; eoi: eoi}
+and nonterm_hmh =
+  | Hmh of {prelude: nonterm_matter; hocc_: nonterm_hocc; postlude: nonterm_matter;
+    eoi: Scan.Token.t}
+and nonterm_hmhi =
+  | Hmhi of {prelude: nonterm_matter; hocc_: Scan.Token.t; postlude: nonterm_matter;
+    eoi: Scan.Token.t}
 
 (**************************************************************************************************)
 (* source_of_* functions. *)
@@ -236,9 +242,9 @@ and source_of_prec_rels = function
   | PrecRelsEpsilon -> None
 
 and source_of_prec_type = function
-  | PrecTypeNeutral {neutral} -> token_source neutral
-  | PrecTypeLeft {left} -> token_source left
-  | PrecTypeRight {right} -> token_source right
+  | PrecTypeNeutral {neutral_} -> token_source neutral_
+  | PrecTypeLeft {left_} -> token_source left_
+  | PrecTypeRight {right_} -> token_source right_
 
 and source_of_prec = function
   | Prec {prec_type; uident; prec_rels} ->
@@ -257,8 +263,8 @@ and source_of_of_type0 = function
   | OfType0Epsilon -> None
 
 and source_of_prec_ref = function
-  | PrecRefPrecUident {prec; uident} ->
-    token_source prec
+  | PrecRefPrecUident {prec_; uident} ->
+    token_source prec_
     |> join_sources (source_of_uident uident)
   | PrecRefEpsilon -> None
 
@@ -267,8 +273,8 @@ and source_of_token_alias = function
   | TokenAliasEpsilon -> None
 
 and source_of_token = function
-  | Token {token; cident; token_alias; of_type0; prec_ref} ->
-    token_source token
+  | Token {token_; cident; token_alias; of_type0; prec_ref} ->
+    token_source token_
     |> join_sources (source_of_cident cident)
     |> join_sources (source_of_token_alias token_alias)
     |> join_sources (source_of_of_type0 of_type0)
@@ -309,8 +315,8 @@ and source_of_code_tl = function
   | CodeTlDelimited {delimited; code_tl} ->
     source_of_delimited delimited
     |> join_sources (source_of_code_tl code_tl)
-  | CodeTlToken {token; code_tl} ->
-    token_source token
+  | CodeTlToken {token_; code_tl} ->
+    token_source token_
     |> join_sources (source_of_code_tl code_tl)
   | CodeTlEpsilon -> None
 
@@ -318,8 +324,8 @@ and source_of_code = function
   | CodeDelimited {delimited; code_tl} ->
     source_of_delimited delimited
     |> join_sources (source_of_code_tl code_tl)
-  | CodeToken {token; code_tl} ->
-    token_source token
+  | CodeToken {token_; code_tl} ->
+    token_source token_
     |> join_sources (source_of_code_tl code_tl)
 
 and source_of_prod_param_symbol = function
@@ -346,7 +352,7 @@ and source_of_prod_params = function
 
 and source_of_prod_pattern = function
   | ProdPatternParams {prod_params} -> source_of_prod_params prod_params
-  | ProdPatternEpsilon {epsilon} -> token_source epsilon
+  | ProdPatternEpsilon {epsilon_} -> token_source epsilon_
 
 and source_of_prod = function
   | Prod {prod_pattern; prec_ref} ->
@@ -387,8 +393,8 @@ and source_of_reductions = function
     |> join_sources (source_of_reductions_tl reductions_tl)
 
 and source_of_nonterm_type = function
-  | NontermTypeNonterm {nonterm} -> token_source nonterm
-  | NontermTypeStart {start} -> token_source start
+  | NontermTypeNonterm {nonterm_} -> token_source nonterm_
+  | NontermTypeStart {start_} -> token_source start_
 
 and source_of_nonterm = function
   | NontermProds {nonterm_type; cident=_; prec_ref=_; cce=_; prods} ->
@@ -399,9 +405,9 @@ and source_of_nonterm = function
     |> join_sources (source_of_reductions reductions)
 
 and source_of_stmt = function
-  | StmtPrec {prec} -> source_of_prec prec
-  | StmtToken {token} -> source_of_token token
-  | StmtNonterm {nonterm} -> source_of_nonterm nonterm
+  | StmtPrec {prec_} -> source_of_prec prec_
+  | StmtToken {token_} -> source_of_token token_
+  | StmtNonterm {nonterm_} -> source_of_nonterm nonterm_
   | StmtCode {code} -> source_of_code code
 
 and source_of_stmts_tl = function
@@ -417,35 +423,35 @@ and source_of_stmts = function
     |> join_sources (source_of_stmts_tl stmts_tl)
 
 and source_of_hocc = function
-  | Hocc {hocc; indent=_; stmts=_; dedent} ->
-    token_source hocc
+  | Hocc {hocc_; indent=_; stmts=_; dedent} ->
+    token_source hocc_
     |> join_sources (token_source dedent)
 
 and source_of_eoi = function
   | Eoi {eoi} -> token_source eoi
 
 and source_of_matter = function
-  | Matter {token; matter} ->
-    token_source token
+  | Matter {token_; matter} ->
+    token_source token_
     |> join_sources (source_of_matter matter)
   | MatterEpsilon -> None
 
 and source_of_hmh = function
-  | Hmh {prelude; hocc; postlude=_; eoi} ->
+  | Hmh {prelude; hocc_; postlude=_; eoi} ->
     source_of_matter prelude
-    |> join_sources (source_of_hocc hocc)
-    |> join_sources (source_of_eoi eoi)
+    |> join_sources (source_of_hocc hocc_)
+    |> join_sources (token_source eoi)
 
 and source_of_hmhi = function
-  | Hmhi {prelude; hocc; postlude=_; eoi} ->
+  | Hmhi {prelude; hocc_; postlude=_; eoi} ->
     source_of_matter prelude
-    |> join_sources (token_source hocc)
-    |> join_sources (source_of_eoi eoi)
+    |> join_sources (token_source hocc_)
+    |> join_sources (token_source eoi)
 
 (**************************************************************************************************)
 (* fmt_* functions. *)
 
-let fmt_lcurly ~alt ~width formatter =
+let rec fmt_lcurly ~alt ~width formatter =
   match alt with
   | false -> formatter |> Fmt.fmt "{"
   | true ->
@@ -453,7 +459,7 @@ let fmt_lcurly ~alt ~width formatter =
     |> Fmt.fmt "{\n"
     |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:(width + 4L) ""
 
-let fmt_semi ~alt ~width formatter =
+and fmt_semi ~alt ~width formatter =
   match alt with
   | false -> formatter |> Fmt.fmt "; "
   | true ->
@@ -461,7 +467,7 @@ let fmt_semi ~alt ~width formatter =
     |> Fmt.fmt "\n"
     |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:(width + 4L) ""
 
-let fmt_rcurly ~alt ~width formatter =
+and fmt_rcurly ~alt ~width formatter =
   match alt with
   | false -> formatter |> Fmt.fmt "}"
   | true ->
@@ -470,7 +476,7 @@ let fmt_rcurly ~alt ~width formatter =
     |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:(width + 2L) ""
     |> Fmt.fmt "}"
 
-let rec fmt_uident ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) uident formatter =
+and fmt_uident ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) uident formatter =
   match uident with
   | Uident {uident} ->
     formatter
@@ -481,7 +487,7 @@ let rec fmt_uident ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) uident form
 and pp_uident uident formatter =
   fmt_uident uident formatter
 
-let rec fmt_cident ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) cident formatter =
+and fmt_cident ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) cident formatter =
   match cident with
   | Cident {cident} ->
     formatter
@@ -512,8 +518,7 @@ and fmt_ident ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) ident formatter 
 and pp_ident ident formatter =
   fmt_ident ident formatter
 
-and fmt_precs_tl ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) precs_tl
-  formatter =
+and fmt_precs_tl ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) precs_tl formatter =
   let width' = width + 4L in
   match precs_tl with
   | PrecsTlCommaUident {comma; uident; precs_tl} ->
@@ -560,20 +565,20 @@ and pp_prec_rels prec_rels formatter =
 
 and fmt_prec_type ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec_type formatter =
   match prec_type with
-  | PrecTypeNeutral {neutral} ->
+  | PrecTypeNeutral {neutral_} ->
     formatter |> Fmt.fmt "PrecTypeNeutral "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "neutral=" |> Scan.Token.pp neutral
+    |> Fmt.fmt "neutral_=" |> Scan.Token.pp neutral_
     |> fmt_rcurly ~alt ~width
-  | PrecTypeLeft {left} ->
+  | PrecTypeLeft {left_} ->
     formatter |> Fmt.fmt "PrecTypeLeft "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "left=" |> Scan.Token.pp left
+    |> Fmt.fmt "left_=" |> Scan.Token.pp left_
     |> fmt_rcurly ~alt ~width
-  | PrecTypeRight {right} ->
+  | PrecTypeRight {right_} ->
     formatter |> Fmt.fmt "PrecTypeRight "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "right=" |> Scan.Token.pp right
+    |> Fmt.fmt "right_=" |> Scan.Token.pp right_
     |> fmt_rcurly ~alt ~width
 and pp_prec_type prec_type formatter =
   fmt_prec_type prec_type formatter
@@ -626,10 +631,10 @@ and pp_of_type0 of_type0 formatter =
 and fmt_prec_ref ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec_ref formatter =
   let width' = width + 4L in
   match prec_ref with
-  | PrecRefPrecUident {prec; uident} ->
+  | PrecRefPrecUident {prec_; uident} ->
     formatter |> Fmt.fmt "PrecRefPrecUident "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "prec=" |> Scan.Token.pp prec
+    |> Fmt.fmt "prec_=" |> Scan.Token.pp prec_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "uident=" |> fmt_uident ~alt ~width:width' uident
     |> fmt_rcurly ~alt ~width
@@ -653,10 +658,10 @@ and pp_token_alias token_alias formatter =
 and fmt_token ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token formatter =
   let width' = width + 4L in
   match token with
-  | Token {token; cident; token_alias; of_type0; prec_ref} ->
+  | Token {token_; cident; token_alias; of_type0; prec_ref} ->
     formatter |> Fmt.fmt "Token "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "token=" |> Scan.Token.pp token
+    |> Fmt.fmt "token_=" |> Scan.Token.pp token_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "cident=" |> fmt_cident ~alt ~width:width' cident
     |> fmt_semi ~alt ~width
@@ -801,10 +806,10 @@ and fmt_code_tl ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) code_tl format
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "code_tl=" |> fmt_code_tl ~alt ~width:width' code_tl
     |> fmt_rcurly ~alt ~width
-  | CodeTlToken {token; code_tl} ->
+  | CodeTlToken {token_; code_tl} ->
     formatter |> Fmt.fmt "CodeTlToken "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "token=" |> Scan.Token.pp token
+    |> Fmt.fmt "token_=" |> Scan.Token.pp token_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "code_tl=" |> fmt_code_tl ~alt ~width:width' code_tl
     |> fmt_rcurly ~alt ~width
@@ -823,10 +828,10 @@ and fmt_code ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) code formatter =
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "code_tl=" |> fmt_code_tl ~alt ~width:width' code_tl
     |> fmt_rcurly ~alt ~width
-  | CodeToken {token; code_tl} ->
+  | CodeToken {token_; code_tl} ->
     formatter |> Fmt.fmt "CodeToken "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "token=" |> Scan.Token.pp token
+    |> Fmt.fmt "token_=" |> Scan.Token.pp token_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "code_tl=" |> fmt_code_tl ~alt ~width:width' code_tl
     |> fmt_rcurly ~alt ~width
@@ -861,7 +866,8 @@ and fmt_prod_param ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prod_param 
     |> Fmt.fmt "colon=" |> Scan.Token.pp colon
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "prod_param_symbol=" |> fmt_prod_param_symbol ~alt ~width:width' prod_param_symbol
-    |> fmt_rcurly ~alt ~width  | ProdParam {prod_param_symbol} ->
+    |> fmt_rcurly ~alt ~width
+  | ProdParam {prod_param_symbol} ->
     formatter |> Fmt.fmt "ProdParam "
     |> fmt_lcurly ~alt ~width
     |> Fmt.fmt "prod_param_symbol=" |> fmt_prod_param_symbol ~alt ~width:width' prod_param_symbol
@@ -905,10 +911,10 @@ and fmt_prod_pattern ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prod_patt
     |> fmt_lcurly ~alt ~width
     |> Fmt.fmt "prod_params=" |> fmt_prod_params ~alt ~width:width' prod_params
     |> fmt_rcurly ~alt ~width
-  | ProdPatternEpsilon {epsilon} ->
+  | ProdPatternEpsilon {epsilon_} ->
     formatter |> Fmt.fmt "ProdPatternEpsilon "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "epsilon=" |> Scan.Token.pp epsilon
+    |> Fmt.fmt "epsilon_=" |> Scan.Token.pp epsilon_
     |> fmt_rcurly ~alt ~width
 and pp_prod_pattern prod_pattern formatter =
   fmt_prod_pattern prod_pattern formatter
@@ -1012,15 +1018,15 @@ and pp_reductions reductions formatter =
 
 and fmt_nonterm_type ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) nonterm_type formatter =
   match nonterm_type with
-  | NontermTypeNonterm {nonterm} ->
+  | NontermTypeNonterm {nonterm_} ->
     formatter |> Fmt.fmt "NontermTypeNonterm "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "nonterm=" |> Scan.Token.pp nonterm
+    |> Fmt.fmt "nonterm_=" |> Scan.Token.pp nonterm_
     |> fmt_rcurly ~alt ~width
-  | NontermTypeStart {start} ->
+  | NontermTypeStart {start_} ->
     formatter |> Fmt.fmt "NontermTypeStart "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "start=" |> Scan.Token.pp start
+    |> Fmt.fmt "start_=" |> Scan.Token.pp start_
     |> fmt_rcurly ~alt ~width
 and pp_nonterm_type nonterm_type formatter =
   fmt_nonterm_type nonterm_type formatter
@@ -1062,20 +1068,20 @@ and pp_nonterm nonterm formatter =
 and fmt_stmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) stmt formatter =
   let width' = width + 4L in
   match stmt with
-  | StmtPrec {prec} ->
+  | StmtPrec {prec_} ->
     formatter |> Fmt.fmt "StmtPrec "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "prec=" |> fmt_prec ~alt ~width:width' prec
+    |> Fmt.fmt "prec_=" |> fmt_prec ~alt ~width:width' prec_
     |> fmt_rcurly ~alt ~width
-  | StmtToken {token} ->
+  | StmtToken {token_} ->
     formatter |> Fmt.fmt "StmtToken "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "token=" |> fmt_token ~alt ~width:width' token
+    |> Fmt.fmt "token_=" |> fmt_token ~alt ~width:width' token_
     |> fmt_rcurly ~alt ~width
-  | StmtNonterm {nonterm} ->
+  | StmtNonterm {nonterm_} ->
     formatter |> Fmt.fmt "StmtNonterm "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "nonterm=" |> fmt_nonterm ~alt ~width:width' nonterm
+    |> Fmt.fmt "nonterm_=" |> fmt_nonterm ~alt ~width:width' nonterm_
     |> fmt_rcurly ~alt ~width
   | StmtCode {code} ->
     formatter |> Fmt.fmt "StmtCode "
@@ -1118,10 +1124,10 @@ and pp_stmts stmts formatter =
 and fmt_hocc ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) hocc formatter =
   let width' = width + 4L in
   match hocc with
-  | Hocc {hocc; indent; stmts; dedent} ->
+  | Hocc {hocc_; indent; stmts; dedent} ->
     formatter |> Fmt.fmt "Hocc "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "hocc=" |> Scan.Token.pp hocc
+    |> Fmt.fmt "hocc_=" |> Scan.Token.pp hocc_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "indent=" |> Scan.Token.pp indent
     |> fmt_semi ~alt ~width
@@ -1145,10 +1151,10 @@ and pp_eoi eoi formatter =
 and fmt_matter ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) matter formatter =
   let width' = width + 4L in
   match matter with
-  | Matter {token; matter} ->
+  | Matter {token_; matter} ->
     formatter |> Fmt.fmt "Matter "
     |> fmt_lcurly ~alt ~width
-    |> Fmt.fmt "token=" |> Scan.Token.pp token
+    |> Fmt.fmt "token_=" |> Scan.Token.pp token_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "matter=" |> fmt_matter ~alt ~width:width' matter
     |> fmt_rcurly ~alt ~width
@@ -1160,33 +1166,32 @@ and pp_matter matter formatter =
 and fmt_hmh ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) hmh formatter =
   let width' = width + 4L in
   match hmh with
-  | Hmh {prelude; hocc; postlude; eoi} ->
+  | Hmh {prelude; hocc_; postlude; eoi} ->
     formatter |> Fmt.fmt "Hmh "
     |> fmt_lcurly ~alt ~width
     |> Fmt.fmt "prelude=" |> pp_matter prelude
     |> fmt_semi ~alt ~width
-    |> Fmt.fmt "hocc=" |> fmt_hocc ~alt ~width:width' hocc
+    |> Fmt.fmt "hocc_=" |> fmt_hocc ~alt ~width:width' hocc_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "postlude=" |> pp_matter postlude
     |> fmt_semi ~alt ~width
-    |> Fmt.fmt "eoi=" |> fmt_eoi ~alt ~width:width' eoi
+    |> Fmt.fmt "eoi=" |> Scan.Token.pp eoi
     |> fmt_rcurly ~alt ~width
 and pp_hmh hmh formatter =
   fmt_hmh hmh formatter
 
 and fmt_hmhi ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) hmhi formatter =
-  let width' = width + 4L in
   match hmhi with
-  | Hmhi {prelude; hocc; postlude; eoi} ->
+  | Hmhi {prelude; hocc_; postlude; eoi} ->
     formatter |> Fmt.fmt "Hmhi "
     |> fmt_lcurly ~alt ~width
     |> Fmt.fmt "prelude=" |> pp_matter prelude
     |> fmt_semi ~alt ~width
-    |> Fmt.fmt "hocc=" |> Scan.Token.pp hocc
+    |> Fmt.fmt "hocc_=" |> Scan.Token.pp hocc_
     |> fmt_semi ~alt ~width
     |> Fmt.fmt "postlude=" |> pp_matter postlude
     |> fmt_semi ~alt ~width
-    |> Fmt.fmt "eoi=" |> fmt_eoi ~alt ~width:width' eoi
+    |> Fmt.fmt "eoi=" |> Scan.Token.pp eoi
     |> fmt_rcurly ~alt ~width
 and pp_hmhi hmhi formatter =
   fmt_hmhi hmhi formatter
@@ -1215,8 +1220,44 @@ let rec next ?(all=false) spine ({scanner; errs} as ctx) =
       |> Fmt.fmt " " |> (List.pp String.pp) (List.rev spine)
       |> Fmt.fmt " " |> pp_ctx ctx |> ignore
   in
-  let errs' = List.fold (Scan.Token.malformations tok) ~init:errs ~f:(fun accum mal ->
-    Error.init_mal mal :: accum) in
+  let malformations = Scan.Token.malformations tok in
+  let tok, errs' = match malformations with
+    | [] -> tok, errs
+    | mal :: [] -> begin
+      (* Try to pass e.g. 42L through as a u64 token to support OCaml syntax. *)
+      let u64_opt = match Hmc.Scan.AbstractToken.Rendition.Malformation.description mal with
+        | "Invalid numerical constant" -> begin
+          let source = Scan.Token.source tok in
+          Hmc.Source.Slice.to_string source
+            |> String.chop_suffix ~suffix:"L"
+            |> (fun s_opt ->
+                match s_opt with
+                  | None -> None
+                  | Some s -> Stdlib.Int64.of_string_opt s
+              )
+        end
+        | _ -> None
+      in
+      match u64_opt with
+        | Some x -> begin
+          let rendition = Hmc.Scan.AbstractToken.Rendition.Constant x in
+          let ctok = Hmc.Scan.ConcreteToken.{
+            atok=Hmc.Scan.AbstractToken.Tok_u64 rendition;
+            source=Scan.Token.source tok
+            } in
+          let tok = Scan.Token.HmcToken ctok in
+          tok, errs
+        end
+        | None -> begin
+          let errs' = Error.init_mal mal :: errs in
+          tok, errs'
+        end
+    end
+    | _ -> begin
+      let errs' = List.fold malformations ~init:errs ~f:(fun accum mal ->
+        Error.init_mal mal :: accum) in
+      tok, errs'
+    end in
   let ctx' = {scanner=scanner'; errs=errs'} in
   match all, tok with
   | _, HmcToken {atok=Tok_whitespace; _}
@@ -1321,12 +1362,12 @@ and prec_type spine ctx =
   let spine = "prec_type" :: spine in
   let ctx', tok = next spine ctx in
   match tok with
-  | HoccToken {atok=Scan.AbstractToken.Tok_neutral; _} as neutral ->
-    reduce spine ctx' fmt_prec_type (PrecTypeNeutral {neutral})
-  | HoccToken {atok=Scan.AbstractToken.Tok_left; _} as left ->
-    reduce spine ctx' fmt_prec_type (PrecTypeLeft {left})
-  | HoccToken {atok=Scan.AbstractToken.Tok_right; _} as right ->
-    reduce spine ctx' fmt_prec_type (PrecTypeRight {right})
+  | HoccToken {atok=Scan.AbstractToken.Tok_neutral; _} as neutral_ ->
+    reduce spine ctx' fmt_prec_type (PrecTypeNeutral {neutral_})
+  | HoccToken {atok=Scan.AbstractToken.Tok_left; _} as left_ ->
+    reduce spine ctx' fmt_prec_type (PrecTypeLeft {left_})
+  | HoccToken {atok=Scan.AbstractToken.Tok_right; _} as right_ ->
+    reduce spine ctx' fmt_prec_type (PrecTypeRight {right_})
   | _ -> err_token tok "Expected precedence type" ctx, None
 
 and prec spine ctx =
@@ -1374,9 +1415,9 @@ and prec_ref spine ctx =
   let spine = "prec_ref" :: spine in
   let ctx', tok = next spine ctx in
   match tok with
-  | HoccToken {atok=Scan.AbstractToken.Tok_prec; _} as prec ->
+  | HoccToken {atok=Scan.AbstractToken.Tok_prec; _} as prec_ ->
     map ~child:uident ~f:(fun uident ->
-      PrecRefPrecUident {prec; uident}
+      PrecRefPrecUident {prec_; uident}
     ) ~fmt_child:fmt_prec_ref spine ctx'
   | _ -> reduce spine ctx fmt_prec_ref PrecRefEpsilon
 
@@ -1391,12 +1432,12 @@ and token_alias spine ctx =
 and token spine ctx =
   let ctx', tok = next spine ctx in
   match tok with
-  | HoccToken {atok=Scan.AbstractToken.Tok_token; _} as token ->
+  | HoccToken {atok=Scan.AbstractToken.Tok_token; _} as token_ ->
     mapr ~child:cident ~f:(fun spine ctx' cident ->
       mapr ~child:token_alias ~f:(fun spine ctx' token_alias ->
         mapr ~child:of_type0 ~f:(fun spine ctx' of_type0 ->
           map ~child:prec_ref ~f:(fun prec_ref ->
-            Token {token; cident; token_alias; of_type0; prec_ref}
+            Token {token_; cident; token_alias; of_type0; prec_ref}
           ) ~fmt_child:fmt_token spine ctx'
         ) spine ctx'
       ) spine ctx'
@@ -1552,9 +1593,9 @@ and code_tl spine ctx =
                                           |Tok_rarray|Tok_rcurly
                                           |Tok_line_delim|Tok_semi|Tok_bar); _} ->
     reduce spine ctx fmt_code_tl CodeTlEpsilon
-  | HmcToken _ as token ->
+  | HmcToken _ as token_ ->
     map ~child:code_tl ~f:(fun code_tl ->
-      CodeTlToken {token; code_tl}
+      CodeTlToken {token_; code_tl}
     ) ~fmt_child:fmt_code_tl spine ctx'
   | _ -> reduce spine ctx fmt_code_tl CodeTlEpsilon
 
@@ -1573,9 +1614,9 @@ and code spine ctx =
                                           |Tok_rarray|Tok_rcurly
                                           |Tok_line_delim|Tok_semi|Tok_bar); _} ->
     err_token tok "Expected Hemlock code" ctx, None
-  | HmcToken _ as token ->
+  | HmcToken _ as token_ ->
     map ~child:code_tl ~f:(fun code_tl ->
-      CodeToken {token; code_tl}
+      CodeToken {token_; code_tl}
     ) ~fmt_child:fmt_code spine ctx'
   | _ -> err_token tok "Expected Hemlock code" ctx, None
 
@@ -1636,8 +1677,8 @@ and prod_pattern spine ctx =
   let spine = "prod_pattern" :: spine in
   let ctx', tok = next spine ctx in
   match tok with
-  | HoccToken {atok=Scan.AbstractToken.Tok_epsilon; _} as epsilon ->
-    reduce spine ctx' fmt_prod_pattern (ProdPatternEpsilon {epsilon})
+  | HoccToken {atok=Scan.AbstractToken.Tok_epsilon; _} as epsilon_ ->
+    reduce spine ctx' fmt_prod_pattern (ProdPatternEpsilon {epsilon_})
   | _ ->
     map ~child:prod_params ~f:(fun prod_params ->
       ProdPatternParams {prod_params}
@@ -1721,10 +1762,10 @@ and nonterm_type spine ctx =
   let spine = "nonterm_type" :: spine in
   let ctx', tok = next spine ctx in
   match tok with
-  | HoccToken {atok=Scan.AbstractToken.Tok_nonterm; _} as nonterm ->
-    reduce spine ctx' fmt_nonterm_type (NontermTypeNonterm {nonterm})
-  | HoccToken {atok=Scan.AbstractToken.Tok_start; _} as start ->
-    reduce spine ctx' fmt_nonterm_type (NontermTypeStart {start})
+  | HoccToken {atok=Scan.AbstractToken.Tok_nonterm; _} as nonterm_ ->
+    reduce spine ctx' fmt_nonterm_type (NontermTypeNonterm {nonterm_})
+  | HoccToken {atok=Scan.AbstractToken.Tok_start; _} as start_ ->
+    reduce spine ctx' fmt_nonterm_type (NontermTypeStart {start_})
   | _ -> err_token tok "Expected 'nonterm'/'start'" ctx, None
 
 and nonterm spine ctx =
@@ -1733,7 +1774,7 @@ and nonterm spine ctx =
     let spine = "cce" :: spine in
     let ctx', tok = next spine ctx in
     match tok with
-    | HmcToken {atok=Hmc.Scan.AbstractToken.Tok_colon_op "::="; _} -> ctx', Some tok
+    | HoccToken {atok=Scan.AbstractToken.Tok_colon_colon_eq; _} -> ctx', Some tok
     | _ -> err_token tok "Expected '::='" ctx, None
   end in
   mapr ~child:nonterm_type ~f:(fun spine ctx' nonterm_type ->
@@ -1766,11 +1807,11 @@ and stmt spine ctx =
   let _ctx', tok = next spine ctx in
   match tok with
   | HoccToken {atok=Scan.AbstractToken.(Tok_neutral|Tok_left|Tok_right); _} ->
-    map ~child:prec ~f:(fun prec -> StmtPrec {prec}) ~fmt_child:fmt_stmt spine ctx
+    map ~child:prec ~f:(fun prec_ -> StmtPrec {prec_}) ~fmt_child:fmt_stmt spine ctx
   | HoccToken {atok=Scan.AbstractToken.Tok_token; _} ->
-    map ~child:token ~f:(fun token -> StmtToken {token}) ~fmt_child:fmt_stmt spine ctx
+    map ~child:token ~f:(fun token_ -> StmtToken {token_}) ~fmt_child:fmt_stmt spine ctx
   | HoccToken {atok=Scan.AbstractToken.(Tok_nonterm|Tok_start); _} ->
-    map ~child:nonterm ~f:(fun nonterm -> StmtNonterm {nonterm}) ~fmt_child:fmt_stmt spine ctx
+    map ~child:nonterm ~f:(fun nonterm_ -> StmtNonterm {nonterm_}) ~fmt_child:fmt_stmt spine ctx
   | _ -> map ~child:code ~f:(fun code -> StmtCode {code}) ~fmt_child:fmt_stmt spine ctx
 
 and stmts_tl spine ctx =
@@ -1805,11 +1846,11 @@ and hocc spine ctx =
   let spine = "hocc" :: spine in
   let ctx', tok = next spine ctx in
   match tok with
-  | HoccToken {atok=Scan.AbstractToken.Tok_hocc; _} as hocc ->
+  | HoccToken {atok=Scan.AbstractToken.Tok_hocc; _} as hocc_ ->
     mapr ~child:indent ~f:(fun spine ctx' indent ->
       mapr ~child:stmts ~f:(fun spine ctx' stmts ->
         map ~child:dedent ~f:(fun dedent ->
-          Hocc {hocc; indent; stmts; dedent}
+          Hocc {hocc_; indent; stmts; dedent}
         ) ~fmt_child:fmt_hocc spine ctx'
       ) spine ctx'
     ) spine ctx'
@@ -1832,7 +1873,7 @@ and matter spine ctx =
     | HmcToken {atok=Hmc.Scan.AbstractToken.Tok_end_of_input; _} -> ctx, MatterEpsilon
     | HmcToken _ -> begin
         let ctx', matter_rchild = f ctx' in
-        ctx', Matter {token=tok; matter=matter_rchild}
+        ctx', Matter {token_=tok; matter=matter_rchild}
       end
   end in
   let ctx', matter = f ctx in
@@ -1843,10 +1884,10 @@ and hmh scanner =
   let ctx = {scanner; errs=[]} in
   let ctx', hmh_opt =
     mapr ~child:matter ~f:(fun spine ctx' prelude ->
-      mapr ~child:hocc ~f:(fun spine ctx' hocc ->
+      mapr ~child:hocc ~f:(fun spine ctx' hocc_ ->
         mapr ~child:matter ~f:(fun spine ctx' postlude ->
-          map ~child:eoi ~f:(fun eoi ->
-            Hmh {prelude; hocc; postlude; eoi}
+          map ~child:eoi ~f:(fun (Eoi {eoi}) ->
+            Hmh {prelude; hocc_; postlude; eoi}
           ) ~fmt_child:fmt_hmh spine ctx'
         ) spine ctx'
       ) spine ctx'
@@ -1869,10 +1910,10 @@ and hmhi scanner =
   let ctx = {scanner; errs=[]} in
   let ctx', hmh_opt =
     mapr ~child:matter ~f:(fun spine ctx' prelude ->
-      mapr ~child:hocc ~f:(fun spine ctx' hocc ->
+      mapr ~child:hocc ~f:(fun spine ctx' hocc_ ->
         mapr ~child:matter ~f:(fun spine ctx' postlude ->
-          map ~child:eoi ~f:(fun eoi ->
-            Hmhi {prelude; hocc; postlude; eoi}
+          map ~child:eoi ~f:(fun (Eoi {eoi}) ->
+            Hmhi {prelude; hocc_; postlude; eoi}
           ) ~fmt_child:fmt_hmhi spine ctx'
         ) spine ctx'
       ) spine ctx'
@@ -1882,3 +1923,232 @@ and hmhi scanner =
   | {errs=(_ :: _); _}, _
   | _, None -> ctx'.scanner, Error ctx'.errs
   | {errs=[]; _}, Some hmh -> ctx'.scanner, Ok hmh
+
+(**************************************************************************************************)
+(* Miscellaneous helper functions. *)
+
+let min_comment_indentation_of_hocc_block = function
+  | Hocc {indent; _} ->
+    Scan.Token.source indent
+    |> Hmc.Source.Slice.base
+    |> Hmc.Source.Cursor.pos
+    |> Text.Pos.col
+
+let base_of_code code =
+  let of_token token =
+    let open Scan.Token in
+    let source = match token with
+      | HmcToken ctok -> ctok |> Hmc.Scan.ConcreteToken.source
+      | HoccToken ctok -> ctok |> Scan.ConcreteToken.source
+    in
+    Hmc.Source.Slice.base source
+  in
+  let rec of_delimited = function
+    | DelimitedBlock {indent=token; _}
+    | DelimitedParen {lparen=token; _}
+    | DelimitedCapture {lcapture=token; _}
+    | DelimitedList {lbrack=token; _}
+    | DelimitedArray {larray=token; _}
+    | DelimitedModule {lcurly=token; _} -> of_token token
+  and of_code = function
+    | CodeDelimited {delimited; _} -> of_delimited delimited
+    | CodeToken {token_; _} -> of_token token_
+  in
+  of_code code
+
+let last_token_of_code hocc_block code =
+  let min_comment_indentation = min_comment_indentation_of_hocc_block hocc_block in
+  let rec of_codes_tl = function
+    | CodesTlSepCode {code; codes_tl; _} -> begin
+        of_codes_tl codes_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_code code))
+      end
+    | CodesTlEpsilon -> None
+  and of_codes = function
+    | Codes {code; codes_tl} -> begin
+        of_codes_tl codes_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_code code)
+      end
+  and of_delimited = function
+    | DelimitedBlock {codes; dedent; _} -> begin
+        of_codes codes
+        |> Option.some_or_thunk ~f:(fun () -> Some dedent)
+        |> Option.value_hlt
+      end
+    | DelimitedParen {rparen=token; _}
+    | DelimitedCapture {rcapture=token; _}
+    | DelimitedList {rbrack=token; _}
+    | DelimitedArray {rarray=token; _}
+    | DelimitedModule {rcurly=token; _} -> token
+  and of_code_tl = function
+    | CodeTlDelimited {delimited; code_tl} ->
+      of_code_tl code_tl
+      |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
+    | CodeTlToken {token_; code_tl} -> begin
+        of_code_tl code_tl
+        |> Option.some_or_thunk ~f:(fun () ->
+          (* Exclude comments less indented than `hocc` block from the tail. *)
+          match token_ with
+          | HmcToken ctok -> begin
+              match Hmc.Scan.ConcreteToken.atok ctok with
+              | Tok_hash_comment
+              | Tok_paren_comment _ -> begin
+                  let ctok_indentation =
+                    ctok
+                    |> Hmc.Scan.ConcreteToken.source
+                    |> Hmc.Source.Slice.base
+                    |> Hmc.Source.Cursor.pos
+                    |> Text.Pos.col
+                  in
+                  match ctok_indentation >= min_comment_indentation with
+                  | true -> Some token_
+                  | false -> None
+                end
+              | _ -> Some token_
+            end
+          | HoccToken _ -> Some token_
+        )
+      end
+    | CodeTlEpsilon -> None
+  and of_code = function
+    | CodeDelimited {delimited; code_tl} ->
+      of_code_tl code_tl |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
+    | CodeToken {token_; code_tl} ->
+      of_code_tl code_tl |> Option.some_or_thunk ~f:(fun () -> Some token_)
+  in
+  of_code code
+  |> Option.value_hlt
+
+let past_of_code hocc_block code =
+  let of_token token =
+    let open Scan.Token in
+    let source = match token with
+      | HmcToken ctok -> ctok |> Hmc.Scan.ConcreteToken.source
+      | HoccToken ctok -> ctok |> Scan.ConcreteToken.source
+    in
+    Hmc.Source.Slice.past source
+  in
+  last_token_of_code hocc_block code
+  |> of_token
+
+let source_of_code hocc_block code =
+  let base = base_of_code code in
+  let past = past_of_code hocc_block code in
+  Hmc.Source.Slice.of_cursors ~base ~past
+
+let indentation_of_code hocc_block code =
+  let min_comment_indentation = min_comment_indentation_of_hocc_block hocc_block in
+  match code with
+  | CodeDelimited _ -> min_comment_indentation + 4L
+  | CodeToken _ -> min_comment_indentation
+
+(* Find the base cursor for the postlude that preserves comments/whitespace that fall outside the
+ * `hocc` block. *)
+let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _} as hocc_block) =
+  let rec of_uident = function
+    | Uident {uident} -> uident
+  and of_cident = function
+    | Cident {cident} -> cident
+  and of_precs_tl = function
+    | PrecsTlCommaUident {uident; precs_tl; _} ->
+      Some (
+        of_precs_tl precs_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
+      )
+    | PrecsTlEpsilon -> None
+  and of_precs = function
+    | Precs {uident; precs_tl} -> begin
+        of_precs_tl precs_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
+      end
+  and of_prec_rels = function
+    | PrecRelsLtPrecs {precs; _} -> Some (of_precs precs)
+    | PrecRelsEpsilon -> None
+  and of_of_type = function
+    | OfType {type_type; _} -> of_uident type_type
+  and of_of_type0 = function
+    | OfType0OfType {of_type} -> Some (of_of_type of_type)
+    | OfType0Epsilon -> None
+  and of_prec_ref = function
+    | PrecRefPrecUident {uident; _} -> Some (of_uident uident)
+    | PrecRefEpsilon -> None
+  and of_token_alias = function
+    | TokenAlias {alias} -> Some alias
+    | TokenAliasEpsilon -> None
+  and of_prod_param_symbol = function
+    | ProdParamSymbolCident {cident} -> of_cident cident
+    | ProdParamSymbolAlias {alias} -> alias
+  and of_prod_param = function
+    | ProdParamBinding {prod_param_symbol; _}
+    | ProdParam {prod_param_symbol} -> of_prod_param_symbol prod_param_symbol
+  and of_prod_params_tl = function
+    | ProdParamsTlProdParam {prod_param; prod_params_tl} -> begin
+        of_prod_params_tl prod_params_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod_param prod_param))
+      end
+    | ProdParamsTlEpsilon -> None
+  and of_prod_params = function
+    | ProdParamsProdParam {prod_param; prod_params_tl} -> begin
+        of_prod_params_tl prod_params_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_prod_param prod_param)
+      end
+  and of_prod_pattern = function
+    | ProdPatternParams {prod_params} -> of_prod_params prod_params
+    | ProdPatternEpsilon {epsilon_} -> epsilon_
+  and of_prod = function
+    | Prod {prod_pattern; prec_ref} -> begin
+        of_prec_ref prec_ref
+        |> Option.value_or_thunk ~f:(fun () -> of_prod_pattern prod_pattern)
+      end
+  and of_prods_tl = function
+    | ProdsTlBarProd {prod; prods_tl; _} -> begin
+        of_prods_tl prods_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod prod))
+      end
+    | ProdsTlEpsilon -> None
+  and of_prods = function
+    | ProdsBarProd {prod; prods_tl; _}
+    | ProdsProd {prod; prods_tl} -> begin
+        of_prods_tl prods_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_prod prod)
+      end
+  and of_reduction = function
+    | Reduction {code; _} -> last_token_of_code hocc_block code
+  and of_reductions_tl = function
+    | ReductionsTlBarReduction {reduction; reductions_tl; _} -> begin
+        of_reductions_tl reductions_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_reduction reduction))
+      end
+    | ReductionsTlEpsilon -> None
+  and of_reductions = function
+    | ReductionsReduction {reduction; reductions_tl} -> begin
+        of_reductions_tl reductions_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_reduction reduction)
+      end
+  and of_nonterm = function
+    | NontermProds {prods; _} -> of_prods prods
+    | NontermReductions {reductions; _} -> of_reductions reductions
+  and of_stmt = function
+    | StmtPrec {prec_=Prec {uident; prec_rels; _}} -> begin
+        of_prec_rels prec_rels
+        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
+      end
+    | StmtToken {token_=Token {cident; token_alias; of_type0; prec_ref; _}} -> begin
+        of_prec_ref prec_ref
+        |> Option.some_or_thunk ~f:(fun () -> of_of_type0 of_type0)
+        |> Option.some_or_thunk ~f:(fun () -> of_token_alias token_alias)
+        |> Option.value_or_thunk ~f:(fun () -> of_cident cident)
+      end
+    | StmtNonterm {nonterm_} -> of_nonterm nonterm_
+    | StmtCode {code} -> last_token_of_code hocc_block code
+  and of_stmts_tl = function
+    | StmtsTl {stmt; stmts_tl; _} -> begin
+        (of_stmts_tl stmts_tl)
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_stmt stmt))
+      end
+    | StmtsTlEpsilon -> None
+  in
+  of_stmts_tl stmts_tl
+  |> Option.value_or_thunk ~f:(fun () -> of_stmt stmt)
+  |> Scan.Token.source
+  |> Hmc.Source.Slice.past
