@@ -673,8 +673,8 @@ parser states can be used as persistent reusable snapshots.
     Token = {
         type t: t =
           # Built-in tokens with reserved names.
-          | EPSILON of unit
-          | PSEUDO_END of unit
+          | EPSILON of unit # ε
+          | PSEUDO_END of unit # ⊥
           # One variant per `token` statement, e.g. `A` and `B`.
           | A of TypeA.t
           | B of TypeB.t

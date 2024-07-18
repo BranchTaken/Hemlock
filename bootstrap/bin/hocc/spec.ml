@@ -1939,12 +1939,276 @@ let to_hocc io t =
   )
   |> Io.with_hocc io
 
-let to_hmi conf _hmhi io _t =
+let hmi_template = {|{
+    Spec = {
+        Assoc = {
+            type t: t =
+              | Left
+              | Right
+
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        Prec = {
+            type t: t = {
+                index: uns # Index in `precs` array.
+                name: string
+                assoc: option Assoc.t
+                doms: Ordset.t uns # Indices in `precs` array of dominator precedences.
+              }
+
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        precs: array Prec.t
+          [@@doc "Array of precedences, where each element's `index` field corresponds to the
+          element's array index."]
+
+        Prod = {
+            type t: t = {
+                index: uns # Index in `prods` array.
+                lhs_index: uns
+                rhs_indexes: array uns
+                prec: option Prec.t
+                reduction: uns # Index of corresponding reduction function in `reductions` array.
+              }
+
+            hash_map: t -> Hash.State.t -> Hash.State.t
+            cmp: t -> t -> Cmp.t
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        prods: array Prod.t
+          [@@doc "Array of productions, where each element's `index` field corresponds to the
+          element's array index."]
+
+        Symbol = {
+            type t: t = {
+                index: uns # Index in `symbols` array.
+                name: string
+                prec: option Prec.t
+                alias: option string
+                start: bool
+                prods: Ordset.t Prod.t Prod.cmper_witness # empty ≡ token
+                first: Ordset.t uns Uns.cmper_witness
+                follow: Ordset.t uns Uns.cmper_witness
+              }
+
+            hash_map: t -> Hash.State.t -> Hash.State.t
+            cmp: t -> t -> Cmp.t
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        symbols: array Symbol.t
+          [@@doc "Array of symbols, where each element's `index` field corresponds to the element's
+          array index."]
+
+        Lr0Item = {
+            type t: t = {
+                prod: Prod.t
+                dot: uns
+              }
+
+            hash_map: t -> Hash.State.t -> Hash.State.t
+            cmp: t -> t -> Cmp.t
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        Lr0Itemset = {
+            type t: t = Ordset.t Lr0Item.t Lr0Item.cmper_witness
+
+            hash_map: t -> Hash.State.t -> Hash.State.t
+            cmp: t -> t -> Cmp.t
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        Lr1Item = {
+            type t: t = {
+                lr0item: Lr0Item.t
+                follow: Ordset.t uns Uns.cmper_witness
+              }
+
+            hash_map: t -> Hash.State.t -> Hash.State.t
+            cmp: t -> t -> Cmp.t
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        Lr1Itemset = {
+            type t: t = Ordmap.t Lr0Item.t Lr1Item.t Lr0Item.cmper_witness
+
+            hash_map: t -> Hash.State.t -> Hash.State.t
+            cmp: t -> t -> Cmp.t
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        Lr1ItemsetClosure = {
+            type t: t = {
+                index: uns # Index of corresponding `State.t` in `states` array.
+                kernel: Lr1Itemset.t
+                added: Lr1Itemset.t
+              }
+
+            hash_map: t -> Hash.State.t -> Hash.State.t
+            cmp: t -> t -> Cmp.t
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        Action = {
+            type t: t =
+              | ShiftPrefix of uns # `states` index.
+              | ShiftAccept of uns # `states` index.
+              | Reduce of uns # `prods` index.
+
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        State = {
+            type t: t = {
+                lr1ItemsetClosure: Lr1ItemsetClosure.t
+                actions: Map.t uns Action.t Uns.cmper_witness
+                gotos: Map.t uns uns Uns.cmper_witness
+              }
+
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        states: array State.t
+          [@@doc "Array of CFSM states, where each element's `lr1ItemsetClosure.index` field
+          corresponds to the element's array index."]
+      }
+
+    Token = {
+        type t: t =
+          # Built-in tokens with reserved names.
+          | EPSILON of unit # ε
+          | PSEUDO_END of unit # ⊥
+          # One variant per `token` statement.
+          «tokens»
+
+        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+
+        spec: t -> Spec.Symbol.t
+      }
+
+    Nonterm = {
+        type t: t =
+          # One variant per `nonterm`/`start` statement.
+          «nonterms»
+
+        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+
+        spec: t -> Spec.Symbol.t
+      }
+
+    Symbol = {
+        type t: t =
+          | Token of Token.t
+          | Nonterm of Nonterm.t
+
+        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+
+        spec: t -> Spec.Symbol.t
+      }
+
+    State = {
+        type t: t = uns
+
+        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+
+        spec: t -> Spec.State.t
+      }
+
+    type stack_elm: stack_elm = {
+        symbol: Symbol.t
+        symbol_index: uns
+        state_index: uns
+      }
+    type stack: stack = list stack_elm
+    type reduction: reduction = stack -> stack
+
+    reductions: array reduction
+      [@@doc "Array of reductions, where each element's `index` field corresponds to the element's
+      array index."]
+
+    Status = {
+        type t: t =
+          # `feed`/`step` may produce these variants; `next` fast-forwards over them.
+          | ShiftPrefix of (Token.t, State.t)
+          | ShiftAccept of (Token.t, State.t)
+          | Reduce of reduction
+          # Common variants.
+          | Prefix # Valid parse prefix; more input needed.
+          | Accept of Nonterm.t # Successful parse result.
+          | Reject of Token.t # Syntax error due to unexpected token.
+
+        pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+      }
+
+    type t: t = {
+        stack: stack
+        status: status
+      }
+
+    Start = {
+        # One submodule per `start` symbol.
+        «starts»
+      }
+
+    feed: Token.t -> t -> t
+      [@@doc "`feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`,
+      `Reject`}. `t.status` must be `Prefix`."]
+
+    step: t -> t
+      [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
+      be in {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
+
+    next: -> Token.t -> t -> t
+      [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
+      result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
+  }|}
+
+let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io _t =
+  let module_name = Path.Segment.to_string_hlt (Conf.module_ conf) in
   let io =
     io.hmi
-    |> Fmt.fmt "XXX not implemented\n"
-    |> Fmt.fmt (Path.Segment.to_string_hlt (Conf.module_ conf))
-    |> Fmt.fmt ".hmi\n"
+    |> Fmt.fmt "# This file was generated by `hocc`; edit "
+    |> Fmt.fmt String.(module_name ^ ".hmhi" |> to_string ~pretty:true)
+    |> Fmt.fmt " rather than "
+    |> Fmt.fmt String.(module_name ^ ".hmi" |> to_string ~pretty:true)
+    |> Fmt.fmt "\n"
+    |> (fun formatter ->
+      match prelude with
+      | Parse.Matter {token; _} -> begin
+          let base = match token with
+            | HmcToken {source; _} -> Hmc.Source.Slice.base source
+            | HoccToken _ -> not_reached ()
+          in
+          let past = match hocc with
+            | HmcToken _ -> not_reached ()
+            | HoccToken {source; _} -> Hmc.Source.Slice.base source
+          in
+          let source = Hmc.Source.Slice.of_cursors ~base ~past in
+          formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
+        end
+      | MatterEpsilon -> formatter
+    )
+    |> Fmt.fmt hmi_template
+    |> (fun formatter ->
+      match postlude with
+      | Parse.Matter _ -> begin
+          let base = match hocc with
+            | HmcToken _ -> not_reached ()
+            | HoccToken {source; _} -> Hmc.Source.Slice.past source
+          in
+          let past = match eoi with
+            | HmcToken {source; _} -> Hmc.Source.Slice.past source
+            | HoccToken _ -> not_reached ()
+          in
+          let source = Hmc.Source.Slice.of_cursors ~base ~past in
+          formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
+        end
+      | MatterEpsilon -> formatter
+    )
     |> Io.with_hmi io
   in
   io
