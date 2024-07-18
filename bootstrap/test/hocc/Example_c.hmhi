@@ -1,0 +1,8 @@
+open import Basis
+
+Parser = {
+    # Better written as `Parser = hocc`, but this is an indentation test.
+    include hocc
+  }
+
+calculate: string -> zint

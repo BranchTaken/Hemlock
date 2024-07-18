@@ -4,6 +4,6 @@ open import Basis
 # module signature.
 include hocc
 
-calulate: string -> zint
+calculate: string -> zint
   [@@doc "Calculate the result of a simple arithmetic expression comprising non-negative integers
   and `+`, `-`, `*`, and `/` operators. Tokens must be separated by one or more spaces."]

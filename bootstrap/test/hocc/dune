@@ -250,6 +250,18 @@
 
 (rule
  (deps
+  (glob_files Binding_error.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Binding_error.out (run ./hocc_test %{bin:hocc} Binding_error -v)))))
+(rule
+ (alias runtest)
+ (action (diff Binding_error.expected Binding_error.out)))
+
+(rule
+ (deps
   (glob_files Unused.hmh*)
   %{bin:hocc})
  (targets Unused.out.txt Unused.out.hmh)
@@ -523,17 +535,53 @@
  (deps
   (glob_files Example.hmh*)
   %{bin:hocc})
- (targets Example.out.txt)
+ (targets Example.out.txt Example.hmi Example.hm)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Example.out (run ./hocc_test %{bin:hocc} Example -v -txt)))))
+   (with-outputs-to Example.out (run ./hocc_test %{bin:hocc} Example -v -txt -hm)))))
 (rule
  (alias runtest)
  (action
   (progn
    (diff Example.expected Example.out)
-   (diff Example.expected.txt Example.out.txt))))
+   (diff Example.expected.txt Example.out.txt)
+   (diff Example.expected.hmi Example.hmi)
+   (diff Example.expected.hm Example.hm))))
+
+(rule
+ (deps
+  (glob_files Example_b.hmh*)
+  %{bin:hocc})
+ (targets Example_b.out.txt Example_b.hmi Example_b.hm)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Example_b.out (run ./hocc_test %{bin:hocc} Example_b -v -hm)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Example_b.expected Example_b.out)
+   (diff Example_b.expected.hmi Example_b.hmi)
+   (diff Example_b.expected.hm Example_b.hm))))
+
+(rule
+ (deps
+  (glob_files Example_c.hmh*)
+  %{bin:hocc})
+ (targets Example_c.out.txt Example_c.hmi Example_c.hm)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Example_c.out (run ./hocc_test %{bin:hocc} Example_c -v -hm)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Example_c.expected Example_c.out)
+   (diff Example_c.expected.hmi Example_c.hmi)
+   (diff Example_c.expected.hm Example_c.hm))))
 
 (rule
  (deps
@@ -550,6 +598,27 @@
   (progn
    (diff Example_rno.expected Example_rno.out)
    (diff Example_rno.expected.txt Example_rno.out.txt))))
+
+(rule
+ (deps
+  (glob_files Example_ml.hmh*)
+  %{bin:hocc})
+ (targets Example_ml.out.txt Example_ml.mli Example_ml.ml)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Example_ml.out (run ./hocc_test %{bin:hocc} Example_ml -txt -ml)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Example_ml.expected.txt Example_ml.out.txt)
+   (diff Example_ml.expected.mli Example_ml.mli)
+   (diff Example_ml.expected.ml Example_ml.ml))))
+(tests
+ (names
+  Example_ml)
+ (libraries Basis))
 
 (rule
  (deps

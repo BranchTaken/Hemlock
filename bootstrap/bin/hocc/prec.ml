@@ -7,7 +7,7 @@ type t = {
   name: string;
   assoc: Assoc.t option;
   doms: (Index.t, Index.cmper_witness) Ordset.t;
-  stmt: Parse.prec;
+  stmt: Parse.nonterm_prec;
 }
 
 let pp {index; name; assoc; doms; stmt} formatter =

@@ -5,8 +5,8 @@ open! Basis.Rudiments
 
 (** Declaration AST. *)
 type stmt =
-  | Token of Parse.token
-  | Nonterm of Parse.nonterm
+  | Token of Parse.nonterm_token
+  | Nonterm of Parse.nonterm_nonterm
 
 module Index = SymbolIndex
 type t = {
@@ -50,11 +50,12 @@ val pseudo_end: t
 (** [pseudo_end] returns a pseudo-end (⊥) symbol. *)
 
 val init_token: index:Index.t -> name:string -> qtype:QualifiedType.t -> prec:Prec.t option
-  -> stmt:Parse.token option -> alias:string option -> t
+  -> stmt:Parse.nonterm_token option -> alias:string option -> t
 (** Used only by [Symbols.insert_token]. *)
 
 val init_nonterm: index:Index.t -> name:string -> qtype:QualifiedType.t -> prec:Prec.t option
-  -> stmt:Parse.nonterm option -> start:bool -> prods:(Prod.t, Prod.cmper_witness) Ordset.t -> t
+  -> stmt:Parse.nonterm_nonterm option -> start:bool -> prods:(Prod.t, Prod.cmper_witness) Ordset.t
+  -> t
 (** Used only by [Symbols.insert_nonterm]. *)
 
 val is_token: t -> bool

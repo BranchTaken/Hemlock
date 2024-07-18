@@ -59,6 +59,10 @@ val index: t -> Index.t
 val is_start: t -> bool
 (** [is_start t] returns true if [t] is a start state. *)
 
+val start_symbol_index: t -> Symbol.Index.t
+(** [start_symbol_index t] returns the start symbol index of [t], where [t] must be a start state.
+*)
+
 val has_pseudo_end_conflict: t -> bool
 (** [has_pseudo_end_conflict t] returns true if the state conflicts on the pseudo-end (⊥) symbol. *)
 

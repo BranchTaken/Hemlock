@@ -19,17 +19,17 @@ type t = {
       is [Some p] regardless of whether precedence is specified for just this prod versus all of the
       nonterm (LHS symbol) prods. *)
 
-  stmt: Parse.prod option;
+  stmt: Parse.nonterm_prod option;
   (** Declaration AST. *)
 
-  reduction: Reduction.t;
-  (** Reduction code. *)
+  callback: Callback.t;
+  (** Reduction callback code. *)
 }
 
 include IdentifiableIntf.S with type t := t
 
 val init: index:Index.t -> lhs_index:SymbolIndex.t -> rhs_indexes:SymbolIndex.t array
-  -> prec:Prec.t option -> stmt:Parse.prod option -> reduction:Reduction.t -> t
+  -> prec:Prec.t option -> stmt:Parse.nonterm_prod option -> callback:Callback.t -> t
 (** Used only by [Prods.init]. *)
 
 val is_synthetic: t -> bool

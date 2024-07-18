@@ -10,8 +10,8 @@ val empty: t
 (** [empty] returns an empty set of productions. *)
 
 val insert: lhs_index:Symbol.Index.t -> rhs_indexes:Symbol.Index.t array -> prec:Prec.t option
-  -> stmt:Parse.prod option -> reduction:Reduction.t -> t -> Prod.t * t
-(** [insert ~lhs_index ~rhs_indexes ~prec ~stmt ~reduction t] creates a [Prod.t] with unique index
+  -> stmt:Parse.nonterm_prod option -> callback:Callback.t -> t -> Prod.t * t
+(** [insert ~lhs_index ~rhs_indexes ~prec ~stmt ~callback t] creates a [Prod.t] with unique index
     and returns both the production and a new [t] with the production inserted. *)
 
 val length: t -> uns

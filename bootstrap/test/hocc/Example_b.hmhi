@@ -1,0 +1,7 @@
+open import Basis
+
+# The `hocc` keyword is on a continued line. Indentation should remain a multiple of 4.
+include
+  hocc
+
+calculate: string -> zint

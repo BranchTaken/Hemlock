@@ -126,25 +126,30 @@ let open_outfile_as_formatter ~is_report ~err path =
   | Ok f -> File.Fmt.of_t f
   | Error error -> open_error ~err path error
 
-let fini_formatter ?(is_report=false) conf ~err ~log formatter suffix =
-  match Fmt.sync formatter with
-  | To_string s -> begin
-      let path = path_with_suffix ~is_report conf suffix in
-      let log' = log |> Fmt.fmt "hocc: Writing " |> Path.pp path |> Fmt.fmt "\n" in
-      let formatter = open_outfile_as_formatter ~is_report ~err path in
-      let formatter' = formatter |> Fmt.fmt s |> Fmt.flush in
-      log', formatter'
+let fini_formatter ?(is_report=false) conf conflicts ~err ~log formatter suffix =
+  match is_report || (not conflicts) with
+  | true -> begin
+      match Fmt.sync formatter with
+      | To_string s -> begin
+          let path = path_with_suffix ~is_report conf suffix in
+          let log' = log |> Fmt.fmt "hocc: Writing " |> Path.pp path |> Fmt.fmt "\n" in
+          let formatter = open_outfile_as_formatter ~is_report ~err path in
+          let formatter' = formatter |> Fmt.fmt s |> Fmt.flush in
+          log', formatter'
+        end
+      | Synced formatter' -> log, formatter'
     end
-  | Synced formatter' -> log, formatter'
+  | false -> log, formatter
 
-let fini conf ({err; log; txt; html; hocc; hmi; hm; mli; ml; _} as t) =
-  let log, txt = fini_formatter ~is_report:true conf ~err ~log txt ".txt" in
-  let log, html = fini_formatter ~is_report:true conf ~err ~log html ".html" in
-  let log, hocc = fini_formatter ~is_report:true conf ~err ~log hocc ".hmh" in
-  let log, hmi = fini_formatter conf ~err ~log hmi ".hmi" in
-  let log, hm = fini_formatter conf ~err ~log hm ".hm" in
-  let log, mli = fini_formatter conf ~err ~log mli ".mli" in
-  let log, ml = fini_formatter conf ~err ~log ml ".ml" in
+let fini conf conflicts ({err; log; txt; html; hocc; hmi; hm; mli; ml; _} as t) =
+  let log, txt = fini_formatter ~is_report:true conf conflicts ~err ~log txt ".txt" in
+  let log, html = fini_formatter ~is_report:true conf conflicts ~err ~log html ".html" in
+  let log, hocc = fini_formatter ~is_report:true conf conflicts ~err ~log hocc ".hmh" in
+
+  let log, hmi = fini_formatter conf conflicts ~err ~log hmi ".hmi" in
+  let log, hm = fini_formatter conf conflicts ~err ~log hm ".hm" in
+  let log, mli = fini_formatter conf conflicts ~err ~log mli ".mli" in
+  let log, ml = fini_formatter conf conflicts ~err ~log ml ".ml" in
   let log = Fmt.flush log in
   {t with log; txt; html; hocc; hmi; hm; mli; ml}
 

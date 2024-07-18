@@ -36,6 +36,10 @@ val is_start: t -> bool
     position of 0. Other LR(1) items can (and often do) exist in a grammar, but they are never
     inserted into an LR(1) item set. *)
 
+val start_symbol_index: t -> Symbol.Index.t
+(** [start_symbol_index t] returns the start symbol index of [t], where [t] must be a start state.
+*)
+
 val is_empty: t -> bool
 (** [is_empty t] returns true if [t] contains no LR(1) items. *)
 
