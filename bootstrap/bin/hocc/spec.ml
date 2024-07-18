@@ -2198,7 +2198,21 @@ let format_template indentation template formatter =
   )
 
 let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io _t =
-  let indent = 0L in (* XXX *)
+  let indent = match hocc with
+    | HmcToken _ -> not_reached ()
+    | HoccToken {source; _} -> begin
+        let linestr =
+          Hmc.Source.Slice.line_context source
+          |> List.map ~f:Hmc.Source.Slice.to_string
+          |> String.join
+        in
+        String.fold_until ~init:0L ~f:(fun col cp ->
+          match cp with
+          | cp when Codepoint.(cp = of_char ' ') -> succ col, false
+          | _ -> col, true
+        ) linestr
+      end
+  in
   let module_name = module_name conf in
   let hmhi_path =
     Path.(join [Conf.srcdir conf; of_string (module_name ^ ".hmhi")] |> to_string_replace) in
