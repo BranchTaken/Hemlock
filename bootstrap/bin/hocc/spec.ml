@@ -2207,10 +2207,10 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io _t =
           |> String.join
         in
         let leading_spaces = String.fold_until ~init:0L ~f:(fun col cp ->
-            match cp with
-            | cp when Codepoint.(cp = of_char ' ') -> succ col, false
-            | _ -> col, true
-          ) linestr in
+          match cp with
+          | cp when Codepoint.(cp = of_char ' ') -> succ col, false
+          | _ -> col, true
+        ) linestr in
         leading_spaces - (leading_spaces % 4L)
       end
   in
