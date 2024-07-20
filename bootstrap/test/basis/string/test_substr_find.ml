@@ -2,6 +2,27 @@ open! Basis.Rudiments
 open! Basis
 open String
 
+let print_matches matches =
+  match matches with
+  | [] -> ()
+  | matches -> begin
+      let _ = List.fold matches ~init:None ~f:(fun prev cursor ->
+        assert (match prev with
+          | None -> true
+          | Some c -> Uns.((C.Cursor.bindex c) < (C.Cursor.bindex cursor))
+        );
+        let offset = match prev with
+          | None -> (C.Cursor.bindex cursor) + 2L
+          | Some c -> (C.Cursor.bindex cursor) - (C.Cursor.bindex c)
+        in
+        File.Fmt.stdout
+        |> Basis.Fmt.fmt ~width:offset "|"
+        |> ignore;
+        Some cursor
+      ) in
+      ()
+    end
+
 let test () =
   let patterns = [
     "";
@@ -22,7 +43,7 @@ let test () =
   ] in
   let s = join patterns in
   List.iter patterns ~f:(fun pattern ->
-    let p = C.Slice.Pattern.create (C.Slice.of_string pattern) in
+    let p = C.Slice.(Pattern.create (of_string pattern)) in
     File.Fmt.stdout
     |> slice_pattern_pp p
     |> Basis.Fmt.fmt "\n"
@@ -30,28 +51,6 @@ let test () =
     |> pp s
     |> Basis.Fmt.fmt "\n"
     |> ignore;
-
-    let print_matches matches = begin
-      match matches with
-      | [] -> ()
-      | matches -> begin
-          let _ = List.fold matches ~init:None ~f:(fun prev cursor ->
-            assert (match prev with
-              | None -> true
-              | Some c -> Uns.((C.Cursor.bindex c) < (C.Cursor.bindex cursor))
-            );
-            let offset = match prev with
-              | None -> (C.Cursor.bindex cursor) + 2L
-              | Some c -> (C.Cursor.bindex cursor) - (C.Cursor.bindex c)
-            in
-            File.Fmt.stdout
-            |> Basis.Fmt.fmt ~width:offset "|"
-            |> ignore;
-            Some cursor
-          ) in
-          ()
-        end
-    end in
 
     File.Fmt.stdout |> Basis.Fmt.fmt "     all:" |> ignore;
     print_matches (substr_find_all s ~may_overlap:true ~pattern);
