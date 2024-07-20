@@ -143,11 +143,14 @@ include [:]{
 
     Token = {
         type t: t =
-          # Built-in tokens with reserved names.
-          | EPSILON of unit # ε
-          | PSEUDO_END of unit # ⊥
-          # One variant per `token` statement.
-          «tokens»
+          | EPSILON # "ε"
+          | PSEUDO_END # "⊥"
+          | STAR # "*"
+          | SLASH # "/"
+          | PLUS # "+"
+          | MINUS # "-"
+          | INT of Zint.t
+          | EOI
 
         pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
 
@@ -156,8 +159,11 @@ include [:]{
 
     Nonterm = {
         type t: t =
-          # One variant per `nonterm`/`start` statement.
-          «nonterms»
+          | MulOp of Token.t
+          | AddOp of Token.t
+          | Expr of Zint.t
+          | Answer of Zint.t
+          | Answer'
 
         pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
 

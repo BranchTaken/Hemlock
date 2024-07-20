@@ -673,8 +673,8 @@ parser states can be used as persistent reusable snapshots.
     Token = {
         type t: t =
           # Built-in tokens with reserved names.
-          | EPSILON of unit # ε
-          | PSEUDO_END of unit # ⊥
+          | EPSILON # ε
+          | PSEUDO_END # ⊥
           # One variant per `token` statement, e.g. `A` and `B`.
           | A of TypeA.t
           | B of TypeB.t
@@ -687,8 +687,10 @@ parser states can be used as persistent reusable snapshots.
     Nonterm = {
         type t: t =
           # One variant per `nonterm`/`start` statement, e.g. `S` and `N`.
-          | S of TypeS.t
           | N of TypeN.t
+          | S of TypeS.t
+          # One variant per start symbol wrapper.
+          | S'
 
         pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
 

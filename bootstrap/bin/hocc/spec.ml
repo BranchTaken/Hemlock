@@ -2079,10 +2079,6 @@ let hmi_template = {|{
 
     Token = {
         type t: t =
-          # Built-in tokens with reserved names.
-          | EPSILON of unit # ε
-          | PSEUDO_END of unit # ⊥
-          # One variant per `token` statement.
           «tokens»
 
         pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
@@ -2092,7 +2088,6 @@ let hmi_template = {|{
 
     Nonterm = {
         type t: t =
-          # One variant per `nonterm`/`start` statement.
           «nonterms»
 
         pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
@@ -2167,58 +2162,166 @@ let hmi_template = {|{
       result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
   }|}
 
-let module_name conf =
-  Path.Segment.to_string_hlt (Conf.module_ conf)
+let line_raw_indentation line =
+  String.fold_until ~init:0L ~f:(fun col cp ->
+    match cp with
+    | cp when Codepoint.(cp = of_char ' ') -> succ col, false
+    | _ -> col, true
+  ) line
 
-let format_template indentation template formatter =
+let line_context_raw_indentation line_context =
+  let line =
+    line_context
+    |> List.map ~f:Hmc.Source.Slice.to_string
+    |> String.join
+  in
+  line_raw_indentation line
+
+let line_context_indentation line_context =
+  let raw_indentation = line_context_raw_indentation line_context in
+  (* Continuation have an extra 2 spaces; omit them from the result if present. *)
+  raw_indentation - (raw_indentation % 4L)
+
+(* XXX
+   module Expander = struct
+   type t = {
+    key: string;
+    expand: template_indentation:uns -> line:string -> (module Fmt.Formatter)
+      -> (module Fmt.Formatter)
+   }
+
+   let init ~key ~expand =
+    {key; expand}
+   end
+*)
+
+let format_template template_indentation template t formatter =
+  let tokens_expand ~template_indentation ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let symbols = t.symbols in
+    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) token ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          match token.qtype with
+          | Synthetic
+          | Implicit -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt (Symbol.name token)
+            end
+          | Explicit {module_; type_} -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt (Symbol.name token)
+              |> Fmt.fmt " of "
+              |> Fmt.fmt module_
+              |> Fmt.fmt "."
+              |> Fmt.fmt type_
+            end
+        )
+        |> (fun formatter ->
+          match token.alias with
+          | None -> formatter
+          | Some alias -> formatter |> Fmt.fmt " # " |> String.fmt ~pretty:true alias
+        ),
+        false
+      ) symbols
+    in formatter
+  end in
+  let tokens_pattern = String.C.Slice.(Pattern.create (of_string "«tokens»")) in
+  let nonterms_expand ~template_indentation ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let symbols = t.symbols in
+    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) nonterm ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          match nonterm.qtype with
+          | Synthetic
+          | Implicit -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt (Symbol.name nonterm)
+            end
+          | Explicit {module_; type_} -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt (Symbol.name nonterm)
+              |> Fmt.fmt " of "
+              |> Fmt.fmt module_
+              |> Fmt.fmt "."
+              |> Fmt.fmt type_
+            end
+        ),
+        false
+      ) symbols
+    in formatter
+  end in
+  let nonterms_pattern = String.C.Slice.(Pattern.create (of_string "«nonterms»")) in
   formatter
   |> (fun formatter ->
     let formatter, _first =
       String.C.Slice.lines_fold ~init:(formatter, true) ~f:(fun (formatter, first) line ->
-        let formatter, first =
-          match first with
-          | true -> formatter, false
-          | false -> begin
-              formatter
-              |> Fmt.fmt "\n"
-              |> (fun formatter ->
-                match String.C.Slice.length line with
-                | 0L -> formatter
-                | _ -> Fmt.fmt ~width:indentation "" formatter
-              ),
-              first
-            end
-        in
         formatter
-        |> Fmt.fmt (String.C.Slice.to_string line),
-        first
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        (* XXX Refactor, add «starts» expansion. *)
+        |> (fun formatter ->
+          (match String.C.Slice.Pattern.find ~in_:line tokens_pattern,
+              String.C.Slice.Pattern.find ~in_:line nonterms_pattern with
+          | None, None -> begin
+              formatter
+              |> (fun formatter ->
+                match first, String.C.Slice.length line with
+                | true, _
+                | _, 0L -> formatter
+                | _, _ -> Fmt.fmt ~width:template_indentation "" formatter
+              )
+              |> Fmt.fmt (String.C.Slice.to_string line)
+            end
+          | Some _, None ->
+            formatter |> tokens_expand ~template_indentation ~line:(String.C.Slice.to_string line)
+          | None, Some _ ->
+            formatter |> nonterms_expand ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some _, Some _ -> not_reached ()
+          )
+        ),
+        false
       ) (String.C.Slice.of_string template)
     in
     formatter
   )
 
-let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io _t =
-  let indent = match hocc with
+let module_name conf =
+  Path.Segment.to_string_hlt (Conf.module_ conf)
+
+let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
+  let indentation = match hocc with
     | HmcToken _ -> not_reached ()
-    | HoccToken {source; _} -> begin
-        let linestr =
-          Hmc.Source.Slice.line_context source
-          |> List.map ~f:Hmc.Source.Slice.to_string
-          |> String.join
-        in
-        let leading_spaces = String.fold_until ~init:0L ~f:(fun col cp ->
-          match cp with
-          | cp when Codepoint.(cp = of_char ' ') -> succ col, false
-          | _ -> col, true
-        ) linestr in
-        leading_spaces - (leading_spaces % 4L)
-      end
+    | HoccToken {source; _} -> Hmc.Source.Slice.line_context source |> line_context_indentation
   in
   let module_name = module_name conf in
   let hmhi_name = module_name ^ ".hmhi" in
   let hmi_name = module_name ^ ".hmi" in
-  let hmhi_path =
-    Path.(join [Conf.srcdir conf; of_string hmhi_name] |> to_string_replace) in
+  let hmhi_path = Path.(join [Conf.srcdir conf; of_string hmhi_name] |> to_string_replace) in
   let directive_pathstr = String.(hmhi_path |> to_string ~pretty:true) in
   let io =
     io.hmi
@@ -2245,7 +2348,7 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io _t =
       | MatterEpsilon -> formatter
     )
     |> Fmt.fmt "[:]"
-    |> format_template indent hmi_template
+    |> format_template indentation hmi_template t
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
@@ -2267,7 +2370,7 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io _t =
           formatter
           |> Fmt.fmt "[:" |> Fmt.fmt directive_pathstr
           |> Fmt.fmt ":" |> Uns.fmt line
-          |> Fmt.fmt ":" |> Uns.fmt indent |> Fmt.fmt "+" |> Uns.fmt (col - indent)
+          |> Fmt.fmt ":" |> Uns.fmt indentation |> Fmt.fmt "+" |> Uns.fmt (col - indentation)
           |> Fmt.fmt "]"
           |> Fmt.fmt (Hmc.Source.Slice.to_string source)
         end
