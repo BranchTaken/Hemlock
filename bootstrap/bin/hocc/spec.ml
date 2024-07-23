@@ -2144,7 +2144,6 @@ let hmi_template = {|{
       }
 
     Start = {
-        # One submodule per `start` symbol.
         «starts»
       }
 
@@ -2270,6 +2269,33 @@ let format_template template_indentation template t formatter =
     in formatter
   end in
   let nonterms_pattern = String.C.Slice.(Pattern.create (of_string "«nonterms»")) in
+  let starts_expand ~template_indentation ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let symbols = t.symbols in
+    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
+        (match start && (not synthetic) with
+            | false -> formatter, first
+            | true -> begin
+                formatter
+                |> (fun formatter ->
+                  match first with
+                  | true -> formatter
+                  | false -> formatter |> Fmt.fmt "\n"
+                )
+                |> (fun formatter ->
+                  formatter
+                  |> Fmt.fmt ~width:indentation "" |> String.fmt name |> Fmt.fmt " = {\n"
+                  |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "    boi: t\n"
+                  |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  }"
+                ),
+                false
+              end
+        )
+      ) symbols
+    in formatter
+  end in
+  let starts_pattern = String.C.Slice.(Pattern.create (of_string "«starts»")) in
   formatter
   |> (fun formatter ->
     let formatter, _first =
@@ -2280,11 +2306,12 @@ let format_template template_indentation template t formatter =
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
-        (* XXX Refactor, add «starts» expansion. *)
+        (* XXX Refactor. *)
         |> (fun formatter ->
           (match String.C.Slice.Pattern.find ~in_:line tokens_pattern,
-              String.C.Slice.Pattern.find ~in_:line nonterms_pattern with
-          | None, None -> begin
+              String.C.Slice.Pattern.find ~in_:line nonterms_pattern,
+              String.C.Slice.Pattern.find ~in_:line starts_pattern with
+          | None, None, None -> begin
               formatter
               |> (fun formatter ->
                 match first, String.C.Slice.length line with
@@ -2294,11 +2321,17 @@ let format_template template_indentation template t formatter =
               )
               |> Fmt.fmt (String.C.Slice.to_string line)
             end
-          | Some _, None ->
+          | Some _, None, None ->
             formatter |> tokens_expand ~template_indentation ~line:(String.C.Slice.to_string line)
-          | None, Some _ ->
+          | None, Some _, None ->
             formatter |> nonterms_expand ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some _, Some _ -> not_reached ()
+          | None, None, Some _ ->
+            formatter |> starts_expand ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some _, Some _, None
+          | Some _, None, Some _
+          | None, Some _, Some _
+          | Some _, Some _, Some _
+            -> not_reached ()
           )
         ),
         false
