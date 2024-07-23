@@ -163,7 +163,7 @@ Parser = {
               | AddOp of Token.t
               | Expr of Zint.t
               | Answer of Zint.t
-              | Answer'
+              | Answer' of Zint.t
 
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
 

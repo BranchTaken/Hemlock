@@ -690,7 +690,7 @@ parser states can be used as persistent reusable snapshots.
           | N of TypeN.t
           | S of TypeS.t
           # One variant per start symbol wrapper.
-          | S'
+          | S' of TypeS.t
 
         pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
 

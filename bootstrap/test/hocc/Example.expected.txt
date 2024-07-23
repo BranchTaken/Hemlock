@@ -53,7 +53,7 @@ Non-terminals
         Follow: {"⊥"}
         Productions
             Answer ::= Expr EOI
-    start Answer'
+    start Answer' of Zint.t
         First: {INT}
         Follow: {"ε"}
         Productions

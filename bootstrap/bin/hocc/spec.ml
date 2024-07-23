@@ -134,7 +134,7 @@ let tokens_init io precs hmh =
             type_module=Cident {cident}; type_type=Uident {uident}; _}} -> begin
               let module_ = string_of_token cident in
               let type_ = string_of_token uident in
-              QualifiedType.init ~module_ ~type_
+              QualifiedType.explicit ~module_ ~type_
             end
           | OfType0Epsilon -> QualifiedType.implicit
         in
@@ -238,7 +238,7 @@ let symbol_infos_init io symbols hmh =
           let name = string_of_token nonterm_cident in
           let module_ = string_of_token cident in
           let type_ = string_of_token uident in
-          name, QualifiedType.init ~module_ ~type_
+          name, QualifiedType.explicit ~module_ ~type_
         end
     in
     match nonterm with
@@ -250,7 +250,7 @@ let symbol_infos_init io symbols hmh =
           | NontermTypeStart _ -> begin
               (* Synthesize start symbol wrapper. *)
               let name' = name ^ "'" in
-              let qtype' = QualifiedType.Synthetic in
+              let qtype' = QualifiedType.synthetic_wrapper qtype in
               let symbols = insert_symbol_info name' qtype' cident symbols in
               io, symbols
             end
@@ -582,8 +582,9 @@ let symbols_init io precs symbols hmh =
             Reduction.Param.init ~binding:None ~symbol_name:pe_name ~qtype:pe_qtype
               ~prod_param:None;
           |] in
+          let qtype' = QualifiedType.synthetic_wrapper qtype in
           let reduction, reductions =
-            Reductions.insert ~lhs:QualifiedType.synthetic ~rhs ~code:None reductions in
+            Reductions.insert ~lhs:qtype' ~rhs ~code:None reductions in
           let prod, prods = Prods.insert ~lhs_index:index' ~rhs_indexes:[|index; pe_index|]
             ~prec:None ~stmt:None ~reduction prods in
           let nonterm_prods = Ordset.singleton (module Prod) prod in
@@ -1668,9 +1669,8 @@ let to_description conf io description t =
             )
             |> (fun formatter ->
               match qtype with
-              | Synthetic
-              | Implicit -> formatter
-              | Explicit {module_; type_} ->
+              | {explicit_opt=None; _} -> formatter
+              | {explicit_opt=Some {module_; type_}; _} ->
                 formatter |> Fmt.fmt " of " |> Fmt.fmt module_ |> Fmt.fmt "." |> Fmt.fmt type_
             )
             |> (fun formatter ->
@@ -1711,9 +1711,8 @@ let to_description conf io description t =
             |> html "</a>"
             |> (fun formatter ->
               match qtype with
-              | Synthetic
-              | Implicit -> formatter
-              | Explicit {module_; type_} ->
+              | {explicit_opt=None; _} -> formatter
+              | {explicit_opt=Some {module_; type_}; _} ->
                 formatter |> Fmt.fmt " of " |> Fmt.fmt module_ |> Fmt.fmt "." |> Fmt.fmt type_
             )
             |> Fmt.fmt "\n"
@@ -2209,14 +2208,13 @@ let format_template template_indentation template t formatter =
         )
         |> (fun formatter ->
           match token.qtype with
-          | Synthetic
-          | Implicit -> begin
+          | {explicit_opt=None; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
               |> Fmt.fmt (Symbol.name token)
             end
-          | Explicit {module_; type_} -> begin
+          | {explicit_opt=Some {module_; type_}; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
@@ -2250,14 +2248,13 @@ let format_template template_indentation template t formatter =
         )
         |> (fun formatter ->
           match nonterm.qtype with
-          | Synthetic
-          | Implicit -> begin
+          | {explicit_opt=None; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
               |> Fmt.fmt (Symbol.name nonterm)
             end
-          | Explicit {module_; type_} -> begin
+          | {explicit_opt=Some {module_; type_}; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
