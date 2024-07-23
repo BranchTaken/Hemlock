@@ -2177,24 +2177,28 @@ let line_context_raw_indentation line_context =
 
 let line_context_indentation line_context =
   let raw_indentation = line_context_raw_indentation line_context in
-  (* Continuation have an extra 2 spaces; omit them from the result if present. *)
+  (* Continuation lines have an extra 2 spaces; omit them from the result if present. *)
   raw_indentation - (raw_indentation % 4L)
 
-(* XXX
-   module Expander = struct
-   type t = {
-    key: string;
-    expand: template_indentation:uns -> line:string -> (module Fmt.Formatter)
-      -> (module Fmt.Formatter)
-   }
+let macro_of_line line =
+  let open String.C in
+  let ldangle = (Codepoint.kv 0xabL) (*"«"*) in
+  let rdangle = (Codepoint.kv 0xbbL) (*"»"*) in
+  match Slice.lfind ldangle line with
+  | None -> None
+  | Some base -> begin
+      let slice = Slice.of_cursors ~base ~past:(Slice.past line) in
+      match Slice.rfind rdangle slice with
+      | None -> None
+      | Some rdangle_base -> begin
+          let past = Cursor.succ rdangle_base in
+          let macro = Slice.of_cursors ~base ~past |> Slice.to_string in
+          Some macro
+        end
+    end
 
-   let init ~key ~expand =
-    {key; expand}
-   end
-*)
-
-let format_template template_indentation template t formatter =
-  let tokens_expand ~template_indentation ~line formatter = begin
+let expand_hmi_template template_indentation template t formatter =
+  let expand_tokens ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let symbols = t.symbols in
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
@@ -2233,8 +2237,7 @@ let format_template template_indentation template t formatter =
       ) symbols
     in formatter
   end in
-  let tokens_pattern = String.C.Slice.(Pattern.create (of_string "«tokens»")) in
-  let nonterms_expand ~template_indentation ~line formatter = begin
+  let expand_nonterms ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let symbols = t.symbols in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
@@ -2268,8 +2271,7 @@ let format_template template_indentation template t formatter =
       ) symbols
     in formatter
   end in
-  let nonterms_pattern = String.C.Slice.(Pattern.create (of_string "«nonterms»")) in
-  let starts_expand ~template_indentation ~line formatter = begin
+  let expand_starts ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let symbols = t.symbols in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
@@ -2295,7 +2297,6 @@ let format_template template_indentation template t formatter =
       ) symbols
     in formatter
   end in
-  let starts_pattern = String.C.Slice.(Pattern.create (of_string "«starts»")) in
   formatter
   |> (fun formatter ->
     let formatter, _first =
@@ -2306,12 +2307,15 @@ let format_template template_indentation template t formatter =
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
-        (* XXX Refactor. *)
         |> (fun formatter ->
-          (match String.C.Slice.Pattern.find ~in_:line tokens_pattern,
-              String.C.Slice.Pattern.find ~in_:line nonterms_pattern,
-              String.C.Slice.Pattern.find ~in_:line starts_pattern with
-          | None, None, None -> begin
+          match macro_of_line line with
+          | Some "«tokens»" ->
+            formatter |> expand_tokens ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«nonterms»" ->
+            formatter |> expand_nonterms ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«starts»" ->
+            formatter |> expand_starts ~template_indentation ~line:(String.C.Slice.to_string line)
+          | None -> begin
               formatter
               |> (fun formatter ->
                 match first, String.C.Slice.length line with
@@ -2321,18 +2325,7 @@ let format_template template_indentation template t formatter =
               )
               |> Fmt.fmt (String.C.Slice.to_string line)
             end
-          | Some _, None, None ->
-            formatter |> tokens_expand ~template_indentation ~line:(String.C.Slice.to_string line)
-          | None, Some _, None ->
-            formatter |> nonterms_expand ~template_indentation ~line:(String.C.Slice.to_string line)
-          | None, None, Some _ ->
-            formatter |> starts_expand ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some _, Some _, None
-          | Some _, None, Some _
-          | None, Some _, Some _
-          | Some _, Some _, Some _
-            -> not_reached ()
-          )
+          | Some _ -> not_reached ()
         ),
         false
       ) (String.C.Slice.of_string template)
@@ -2378,7 +2371,7 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
       | MatterEpsilon -> formatter
     )
     |> Fmt.fmt "[:]"
-    |> format_template indentation hmi_template t
+    |> expand_hmi_template indentation hmi_template t
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
