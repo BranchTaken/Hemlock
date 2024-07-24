@@ -2403,10 +2403,189 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
   in
   io
 
-let to_hm conf _hmh io _t =
+(* XXX Move into Option. *)
+let value_or_thunk ~thunk = function
+  | Some value -> value
+  | None -> thunk ()
+
+(* XXX Move into Option. *)
+let some_or_thunk ~thunk = function
+  | Some _ as some_value -> some_value
+  | None -> thunk ()
+
+let postlude_base_of_hocc_stmts (Parse.Stmts {stmt; stmts_tl}) =
+  let rec of_uident = function
+    | Parse.Uident {uident} -> uident
+  and of_cident = function
+    | Parse.Cident {cident} -> cident
+  and of_precs_tl = function
+    | Parse.PrecsTlCommaUident {uident; precs_tl; _} ->
+      Some (
+        of_precs_tl precs_tl
+        |> value_or_thunk ~thunk:(fun () -> of_uident uident)
+      )
+    | Parse.PrecsTlEpsilon -> None
+  and of_precs = function
+    | Parse.Precs {uident; precs_tl} -> begin
+        of_precs_tl precs_tl
+        |> value_or_thunk ~thunk:(fun () -> of_uident uident)
+      end
+  and of_prec_rels = function
+    | Parse.PrecRelsLtPrecs {precs; _} -> Some (of_precs precs)
+    | Parse.PrecRelsEpsilon -> None
+  and of_of_type = function
+    | Parse.OfType {type_type; _} -> of_uident type_type
+  and of_of_type0 = function
+    | Parse.OfType0OfType {of_type} -> Some (of_of_type of_type)
+    | Parse.OfType0Epsilon -> None
+  and of_prec_ref = function
+    | Parse.PrecRefPrecUident {uident; _} -> Some (of_uident uident)
+    | Parse.PrecRefEpsilon -> None
+  and of_token_alias = function
+    | Parse.TokenAlias {alias} -> Some alias
+    | Parse.TokenAliasEpsilon -> None
+  and of_codes_tl = function
+    | Parse.CodesTlSepCode {code; codes_tl; _} -> begin
+        of_codes_tl codes_tl
+        |> some_or_thunk ~thunk:(fun () -> Some (of_code code))
+      end
+    | Parse.CodesTlEpsilon -> None
+  and of_codes = function
+    | Parse.Codes {code; codes_tl} -> begin
+        of_codes_tl codes_tl
+        |> value_or_thunk ~thunk:(fun () -> of_code code)
+      end
+  and of_delimited = function
+    | Parse.DelimitedBlock {codes; _} -> of_codes codes
+    | Parse.DelimitedParen {rparen; _} -> rparen
+    | Parse.DelimitedCapture {rcapture; _} -> rcapture
+    | Parse.DelimitedList {rbrack; _} -> rbrack
+    | Parse.DelimitedArray {rarray; _} -> rarray
+    | Parse.DelimitedModule {rcurly; _} -> rcurly
+  and of_code_tl = function
+    | Parse.CodeTlDelimited {delimited; code_tl} -> begin
+        of_code_tl code_tl
+        |> some_or_thunk ~thunk:(fun () -> Some (of_delimited delimited))
+      end
+    | Parse.CodeTlToken {token; code_tl} -> begin
+        of_code_tl code_tl
+        |> some_or_thunk ~thunk:(fun () ->
+          (* Exclude space (but not line delimiters) and comments from the tail. *)
+          match token with
+          | HmcToken ctok -> begin
+              match Hmc.Scan.ConcreteToken.atok ctok with
+              | Tok_whitespace
+              | Tok_hash_comment
+              | Tok_paren_comment _ -> None
+              | _ -> Some token
+            end
+          | HoccToken _ -> Some token
+        )
+      end
+    | Parse.CodeTlEpsilon -> None
+  and of_code = function
+    | Parse.CodeDelimited {delimited; code_tl} -> begin
+        of_code_tl code_tl
+        |> value_or_thunk ~thunk:(fun () -> of_delimited delimited)
+      end
+    | Parse.CodeToken {token; code_tl} -> begin
+        of_code_tl code_tl
+        |> Option.value ~default:token
+      end
+  and of_prod_param_symbol = function
+    | Parse.ProdParamSymbolCident {cident} -> of_cident cident
+    | Parse.ProdParamSymbolAlias {alias} -> alias
+  and of_prod_param = function
+    | Parse.ProdParamBinding {prod_param_symbol; _}
+    | Parse.ProdParam {prod_param_symbol} -> of_prod_param_symbol prod_param_symbol
+  and of_prod_params_tl = function
+    | Parse.ProdParamsTlProdParam {prod_param; prod_params_tl} -> begin
+        of_prod_params_tl prod_params_tl
+        |> some_or_thunk ~thunk:(fun () -> Some (of_prod_param prod_param))
+      end
+    | Parse.ProdParamsTlEpsilon -> None
+  and of_prod_params = function
+    | Parse.ProdParamsProdParam {prod_param; prod_params_tl} -> begin
+        of_prod_params_tl prod_params_tl
+        |> value_or_thunk ~thunk:(fun () -> of_prod_param prod_param)
+      end
+  and of_prod_pattern = function
+    | Parse.ProdPatternParams {prod_params} -> of_prod_params prod_params
+    | Parse.ProdPatternEpsilon {epsilon} -> epsilon
+  and of_prod = function
+    | Parse.Prod {prod_pattern; prec_ref} -> begin
+        of_prec_ref prec_ref
+        |> value_or_thunk ~thunk:(fun () -> of_prod_pattern prod_pattern)
+      end
+  and of_prods_tl = function
+    | Parse.ProdsTlBarProd {prod; prods_tl; _} -> begin
+        of_prods_tl prods_tl
+        |> some_or_thunk ~thunk:(fun () -> Some (of_prod prod))
+      end
+    | Parse.ProdsTlEpsilon -> None
+  and of_prods = function
+    | Parse.ProdsBarProd {prod; prods_tl; _}
+    | ProdsProd {prod; prods_tl} -> begin
+        of_prods_tl prods_tl
+        |> value_or_thunk ~thunk:(fun () -> of_prod prod)
+      end
+  and of_reduction = function
+    | Parse.Reduction {code; _} -> of_code code
+  and of_reductions_tl = function
+    | Parse.ReductionsTlBarReduction {reduction; reductions_tl; _} -> begin
+        of_reductions_tl reductions_tl
+        |> some_or_thunk ~thunk:(fun () -> Some (of_reduction reduction))
+      end
+    | Parse.ReductionsTlEpsilon -> None
+  and of_reductions = function
+    | Parse.ReductionsReduction {reduction; reductions_tl} -> begin
+        of_reductions_tl reductions_tl
+        |> value_or_thunk ~thunk:(fun () -> of_reduction reduction)
+      end
+  and of_nonterm = function
+    | Parse.NontermProds {prods; _} -> of_prods prods
+    | Parse.NontermReductions {reductions; _} -> of_reductions reductions
+  and of_stmt = function
+    | Parse.StmtPrec {prec=Prec {uident; prec_rels; _}} ->
+      of_prec_rels prec_rels
+      |> value_or_thunk ~thunk:(fun () -> of_uident uident)
+    | Parse.StmtToken {token=Token {cident; token_alias; of_type0; prec_ref; _}} -> begin
+        of_prec_ref prec_ref
+        |> some_or_thunk ~thunk:(fun () -> of_of_type0 of_type0)
+        |> some_or_thunk ~thunk:(fun () -> of_token_alias token_alias)
+        |> value_or_thunk ~thunk:(fun () -> of_cident cident)
+      end
+    | Parse.StmtNonterm {nonterm} -> of_nonterm nonterm
+    | Parse.StmtCode {code} -> of_code code
+  and of_stmts_tl = function
+    | Parse.StmtsTl {stmt; stmts_tl; _} -> begin
+        (of_stmts_tl stmts_tl)
+        |> some_or_thunk ~thunk:(fun () -> Some (of_stmt stmt))
+      end
+    | Parse.StmtsTlEpsilon -> None
+  in
+  of_stmts_tl stmts_tl
+  |> value_or_thunk ~thunk:(fun () -> of_stmt stmt)
+  |> Scan.Token.source
+  |> Hmc.Source.Slice.line_context
+  |> List.hd
+  |> Hmc.Source.Slice.past
+
+let to_hm conf Parse.(Hmh {prelude; hocc=Hocc {hocc; stmts; _}; postlude; eoi=Eoi {eoi}}(*XXX as hmh*)) io _t =
+  (*XXX
+    File.Fmt.stderr
+    |> Parse.fmt_hmh ~alt:true hmh
+    |> ignore;
+  *)
+  let indentation = match hocc with
+    | HmcToken _ -> not_reached ()
+    | HoccToken {source; _} -> Hmc.Source.Slice.line_context source |> line_context_indentation
+  in
   let module_name = module_name conf in
   let hmh_name = module_name ^ ".hmh" in
   let hm_name = module_name ^ ".hm" in
+  let hmh_path = Path.(join [Conf.srcdir conf; of_string hmh_name] |> to_string_replace) in
+  let directive_pathstr = String.(hmh_path |> to_string ~pretty:true) in
   let io =
     io.hm
     |> Fmt.fmt "# This file was generated by `hocc`; edit "
@@ -2414,7 +2593,46 @@ let to_hm conf _hmh io _t =
     |> Fmt.fmt " rather than "
     |> Fmt.fmt (String.to_string ~pretty:true hm_name)
     |> Fmt.fmt "\n"
-    |> Fmt.fmt "XXX not implemented\n"
+    |> Fmt.fmt "[:" |> Fmt.fmt directive_pathstr |> Fmt.fmt ":1]"
+    |> (fun formatter ->
+      match prelude with
+      | Parse.Matter {token; _} -> begin
+          let base = match token with
+            | HmcToken {source; _} -> Hmc.Source.Slice.base source
+            | HoccToken _ -> not_reached ()
+          in
+          let past = match hocc with
+            | HmcToken _ -> not_reached ()
+            | HoccToken {source; _} -> Hmc.Source.Slice.base source
+          in
+          let source = Hmc.Source.Slice.of_cursors ~base ~past in
+          formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
+        end
+      | MatterEpsilon -> formatter
+    )
+    |> Fmt.fmt "[:]"
+    |> Fmt.fmt "{XXX not implemented}\n"
+    |> (fun formatter ->
+      match postlude with
+      | Parse.Matter _ -> begin
+          let base = postlude_base_of_hocc_stmts stmts in
+          let pos = Hmc.Source.Cursor.pos base in
+          let line = Text.Pos.line pos in
+          let col = Text.Pos.col pos in
+          let past = match eoi with
+            | HmcToken {source; _} -> Hmc.Source.Slice.past source
+            | HoccToken _ -> not_reached ()
+          in
+          let source = Hmc.Source.Slice.of_cursors ~base ~past in
+          formatter
+          |> Fmt.fmt "[:" |> Fmt.fmt directive_pathstr
+          |> Fmt.fmt ":" |> Uns.fmt line
+          |> Fmt.fmt ":" |> Uns.fmt indentation |> Fmt.fmt "+" |> Uns.fmt (col - indentation)
+          |> Fmt.fmt "]"
+          |> Fmt.fmt (Hmc.Source.Slice.to_string source)
+        end
+      | MatterEpsilon -> formatter
+    )
     |> Io.with_hm io
   in
   io
