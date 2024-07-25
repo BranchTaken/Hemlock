@@ -4,7 +4,10 @@
 # The `hocc` keyword is on a continued line. Indentation should remain a multiple of 4.
 include
   [:]{XXX not implemented}
-[:"./Example_b.hmh":34:0+93]
+[:"./Example_b.hmh":38:0+0]   # [First] Outside `hocc` block; include in postlude
+  # Outside `hocc` block; include in postlude
+ # Outside `hocc` block; include in postlude
+# Outside `hocc` block; include in postlude
 
 # Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
 tokenize s =

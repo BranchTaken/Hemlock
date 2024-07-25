@@ -2413,7 +2413,13 @@ let some_or_thunk ~thunk = function
   | Some _ as some_value -> some_value
   | None -> thunk ()
 
-let postlude_base_of_hocc_stmts (Parse.Stmts {stmt; stmts_tl}) =
+let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _}) =
+  let min_comment_indentation =
+    Scan.Token.source indent
+    |> Hmc.Source.Slice.base
+    |> Hmc.Source.Cursor.pos
+    |> Text.Pos.col
+  in
   let rec of_uident = function
     | Parse.Uident {uident} -> uident
   and of_cident = function
@@ -2470,13 +2476,23 @@ let postlude_base_of_hocc_stmts (Parse.Stmts {stmt; stmts_tl}) =
     | Parse.CodeTlToken {token; code_tl} -> begin
         of_code_tl code_tl
         |> some_or_thunk ~thunk:(fun () ->
-          (* Exclude space (but not line delimiters) and comments from the tail. *)
+          (* Exclude comments less indented than `hocc` block from the tail. *)
           match token with
           | HmcToken ctok -> begin
               match Hmc.Scan.ConcreteToken.atok ctok with
-              | Tok_whitespace
               | Tok_hash_comment
-              | Tok_paren_comment _ -> None
+              | Tok_paren_comment _ -> begin
+                  let ctok_indentation =
+                    ctok
+                    |> Hmc.Scan.ConcreteToken.source
+                    |> Hmc.Source.Slice.base
+                    |> Hmc.Source.Cursor.pos
+                    |> Text.Pos.col
+                  in
+                  match ctok_indentation >= min_comment_indentation with
+                  | true -> Some token
+                  | false -> None
+                end
               | _ -> Some token
             end
           | HoccToken _ -> Some token
@@ -2567,16 +2583,14 @@ let postlude_base_of_hocc_stmts (Parse.Stmts {stmt; stmts_tl}) =
   of_stmts_tl stmts_tl
   |> value_or_thunk ~thunk:(fun () -> of_stmt stmt)
   |> Scan.Token.source
-  |> Hmc.Source.Slice.line_context
-  |> List.hd
   |> Hmc.Source.Slice.past
 
-let to_hm conf Parse.(Hmh {prelude; hocc=Hocc {hocc; stmts; _}; postlude; eoi=Eoi {eoi}}(*XXX as hmh*)) io _t =
-  (*XXX
-    File.Fmt.stderr
-    |> Parse.fmt_hmh ~alt:true hmh
-    |> ignore;
-  *)
+let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlude; eoi=Eoi {eoi}}(*XXX as hmh*)) io _t =
+(*
+  File.Fmt.stderr
+  |> Parse.fmt_hmh ~alt:true hmh
+  |> ignore;
+*)
   let indentation = match hocc with
     | HmcToken _ -> not_reached ()
     | HoccToken {source; _} -> Hmc.Source.Slice.line_context source |> line_context_indentation
@@ -2615,7 +2629,7 @@ let to_hm conf Parse.(Hmh {prelude; hocc=Hocc {hocc; stmts; _}; postlude; eoi=Eo
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
-          let base = postlude_base_of_hocc_stmts stmts in
+          let base = postlude_base_of_hocc hocc_block in
           let pos = Hmc.Source.Cursor.pos base in
           let line = Text.Pos.line pos in
           let col = Text.Pos.col pos in
