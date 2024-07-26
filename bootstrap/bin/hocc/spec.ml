@@ -2173,6 +2173,7 @@ let hmi_template = {|{
       result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
   }|}
 
+(* XXX Refactor to make `line` a string slice. *)
 let line_raw_indentation line =
   String.fold_until ~init:0L ~f:(fun col cp ->
     match cp with
@@ -2210,10 +2211,9 @@ let macro_of_line line =
         end
     end
 
-let expand_hmi_template template_indentation template t formatter =
+let expand_hmi_template template_indentation template {symbols; _} formatter =
   let expand_tokens ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
-    let symbols = t.symbols in
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) token ->
         formatter
@@ -2248,11 +2248,11 @@ let expand_hmi_template template_indentation template t formatter =
         ),
         false
       ) symbols
-    in formatter
+    in
+    formatter
   end in
   let expand_nonterms ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
-    let symbols = t.symbols in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) nonterm ->
         formatter
@@ -2282,11 +2282,11 @@ let expand_hmi_template template_indentation template t formatter =
         ),
         false
       ) symbols
-    in formatter
+    in
+    formatter
   end in
   let expand_starts ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
-    let symbols = t.symbols in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
         (match start && (not synthetic) with
@@ -2308,7 +2308,8 @@ let expand_hmi_template template_indentation template t formatter =
               end
         )
       ) symbols
-    in formatter
+    in
+    formatter
   end in
   formatter
   |> (fun formatter ->
@@ -2598,7 +2599,352 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
   |> Scan.Token.source
   |> Hmc.Source.Slice.past
 
-let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlude; eoi=Eoi {eoi}}(*XXX as hmh*)) io _t =
+let hm_template = {|{
+    Spec = {
+        Algorithm = {
+            type t: t =
+              | Lr1 (** LR(1) algorithm. *)
+              | Ielr1 (** IELR(1) algorithm. *)
+              | Pgm1 (** PGM(1) algorithm. *)
+              | Lalr1 (** LALR(1) algorithm. *)
+
+            to_string = function
+              | Lr1 -> "Lr1"
+              | Ielr1 -> "Ielr1"
+              | Pgm1 -> "Pgm1"
+              | Lalr1 -> "Lalr1"
+
+            pp t formatter =
+                formatter |> Fmt.fmt (to_string t)
+          }
+
+        algorithm = Algorithm.«algorithm»
+
+        Assoc = {
+            type t: t =
+              | Left
+              | Right
+
+            to_string = function
+              | Left -> "Left"
+              | Right -> "Right"
+
+            pp t formatter =
+                formatter |> Fmt.fmt (to_string t)
+          }
+
+        Prec = {
+            type t: t = {
+                index: uns
+                name: string
+                assoc: option Assoc.t
+                doms: Ordset.t uns
+              }
+
+            pp {index; name; assoc; doms} formatter =
+                formatter
+                  |> "{%u=(^index^)"
+                  |> "; %s=(^name^)"
+                  |> "; %f(^Option.pp Assoc.pp^)=(^assoc^)"
+                  |> "; %f(^Ordset.pp^)=(^doms^)"
+                  |> "}"
+
+            init ~index ~name ~assoc ~doms =
+                {index; name; assoc; doms}
+          }
+
+        precs = [|
+            «precs»
+          |]
+
+        Prod = {
+            type t: t = {
+                index: uns
+                lhs_index: uns
+                rhs_indexes: array uns
+                prec: option Prec.t
+                reduction: uns
+              }
+
+            hash_map {index; _} state =
+                Uns.hash_fold index state
+
+            cmp {index=i0; _} {index=i1; _} =
+                Uns.cmp i0 i1
+
+            pp {index; lhs_index; rhs_indexes; prec; reduction} formatter =
+                formatter
+                  |> "{%u=(^index^)"
+                  |> "; %u=(^lhs_index^)"
+                  |> "; %f(^Array.pp Uns.pp^)=(^rhs_indexes^)"
+                  |> "; %f(^Option.pp Prec.pp^)=(^prec^)"
+                  |> "; %u=(^reduction^)"
+                  |> "}"
+
+            init ~index ~lhs_index ~rhs_indexes ~prec ~reduction =
+                {index; lhs_index; rhs_indexes; prec; reduction}
+          }
+
+        prods = [|
+            «prods»
+          |]
+
+        Symbol = {
+            type t: t = {
+                index: uns
+                name: string
+                prec: option Prec.t
+                alias: option string
+                start: bool
+                prods: Ordset.t Prod.t Prod.cmper_witness
+                first: Ordset.t uns Uns.cmper_witness
+                follow: Ordset.t uns Uns.cmper_witness
+              }
+
+            hash_map {index; _} state =
+                Uns.hash_fold index state
+
+            cmp {index=i0; _} {index=i1; _} =
+                Uns.cmp i0 i1
+
+            pp {index; name; prec; alias; start; prods; first; follow} formatter =
+                formatter
+                  |> "{%u=(^index^)"
+                  |> "; %s=(^name^)"
+                  |> "; %f(^Option.pp Prec.pp^)=(^prec^)"
+                  |> "; %f(^Option.pp String.pp^)=(^alias^)"
+                  |> "; %b=(^start^)"
+                  |> "; %f(^Ordset.pp^)=(^prods^)"
+                  |> "; %f(^Ordset.pp^)=(^first^)"
+                  |> "; %f(^Ordset.pp^)=(^follow^)"
+                  |> "}"
+
+            init ~index ~name ~prec ~alias ~start ~prods ~first ~follow =
+                {index; name; prec; alias; start; prods; first; follow}
+          }
+
+        symbols = [|
+            «symbols»
+          |]
+
+        # XXX not implemented
+      }
+  }|}
+
+let expand_hm_template template_indentation template
+    {algorithm; precs; prods; symbols; _} formatter =
+  let expand_algorithm ~line formatter = begin
+    let p = String.C.Slice.(of_string "«algorithm»" |> Pattern.create) in
+    let algorithm =
+      String.Fmt.empty
+      |> Conf.pp_algorithm algorithm
+      |> Fmt.to_string
+      |> String.C.Slice.of_string
+    in
+    let line' = String.C.Slice.(Pattern.replace_all ~in_:line ~with_:algorithm p |> to_string) in
+    formatter
+    |> Fmt.fmt line'
+  end in
+  let expand_precs ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Precs.fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) Prec.{index; name; assoc; doms; _} ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "Prec.init"
+          |> Fmt.fmt " ~index:" |> Prod.Index.pp index
+          |> Fmt.fmt " ~name:" |> String.pp name
+          |> Fmt.fmt " ~assoc:"
+          |> (fun formatter ->
+            match assoc with
+            | None -> formatter |> Fmt.fmt "None"
+            | Some assoc -> formatter |> Fmt.fmt "(Some " |> Assoc.pp assoc |> Fmt.fmt ")"
+          )
+          |> Fmt.fmt " ~doms:(Ordset."
+          |> (fun formatter ->
+            match Ordset.length doms with
+            | 0L -> formatter |> Fmt.fmt "empty Uns"
+            | 1L ->
+              formatter |> Fmt.fmt "singleton Uns " |> (Ordset.choose_hlt doms |> Prec.Index.pp)
+            | _ -> begin
+                formatter
+                |> Fmt.fmt "of_list "
+                |> (Ordset.to_list doms |> List.fmt ~alt:true ~width:indentation Prec.Index.pp)
+              end
+          )
+          |> Fmt.fmt ")"
+        ),
+        false
+      ) precs
+    in
+    formatter
+  end in
+  let expand_prods ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Prods.fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) Prod.{index; lhs_index; rhs_indexes; prec; reduction; _} ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "Prod.init"
+          |> Fmt.fmt " ~index:" |> Prod.Index.pp index
+          |> Fmt.fmt " ~lhs_index:" |> Symbol.Index.pp lhs_index
+          |> Fmt.fmt " ~rhs_indexes:" |> Array.pp Symbol.Index.pp rhs_indexes
+          |> Fmt.fmt "\n" |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  ~prec:"
+          |> (fun formatter ->
+            match prec with
+            | None -> formatter |> Fmt.fmt "None"
+            | Some prec -> begin
+                formatter
+                |> Fmt.fmt "(Some (Array.get " |> Prec.Index.pp prec.index |> Fmt.fmt " precs))"
+              end
+          )
+          |> Fmt.fmt " ~reduction:" |> Reduction.Index.pp reduction.index
+        ),
+        false
+      ) prods
+    in
+    formatter
+  end in
+  let expand_symbols ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first_line = Symbols.symbols_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first_line)
+        Symbol.{index; name; prec; alias; start; prods; first; follow; _} ->
+        formatter
+        |> (fun formatter ->
+          match first_line with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "Symbol.init"
+          |> Fmt.fmt " ~index:" |> Symbol.Index.pp index
+          |> Fmt.fmt " ~name:" |> String.pp name
+          |> Fmt.fmt "\n" |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  ~prec:"
+          |> (fun formatter ->
+            match prec with
+            | None -> formatter |> Fmt.fmt "None"
+            | Some prec -> begin
+                formatter
+                |> Fmt.fmt "(Some (Array.get " |> Prec.Index.pp prec.index |> Fmt.fmt " precs))"
+              end
+          )
+          |> Fmt.fmt " ~alias:"
+          |> (fun formatter ->
+            match alias with
+            | None -> formatter |> Fmt.fmt "None"
+            | Some alias -> formatter |> Fmt.fmt "(Some " |> String.pp alias |> Fmt.fmt ")"
+          )
+          |> Fmt.fmt " ~start:" |> Bool.pp start
+          |> Fmt.fmt "\n" |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  ~prods:("
+          |> (fun formatter ->
+            match Ordset.length prods with
+            | 0L -> formatter |> Fmt.fmt "Ordset.empty Prod"
+            | 1L -> begin
+                let Prod.{index; _} = Ordset.choose_hlt prods in
+                formatter |> Fmt.fmt "Ordset.singleton Prod " |> Prod.Index.pp index
+              end
+            | _ -> begin
+                formatter
+                |> Fmt.fmt "Ordset.of_list Prod "
+                |> List.fmt ~alt:true ~width:indentation (fun Prod.{index; _} formatter ->
+                  formatter
+                  |> Fmt.fmt "Array.get " |> Prod.Index.pp index |> Fmt.fmt " prods"
+                ) (Ordset.to_list prods)
+              end
+          )
+          |> Fmt.fmt ")"
+          |> Fmt.fmt " ~first:("
+          |> (fun formatter ->
+            match Ordset.length first with
+            | 0L -> formatter |> Fmt.fmt "Ordset.empty Uns"
+            | 1L -> begin
+                let symbol_index = Ordset.choose_hlt first in
+                formatter |> Fmt.fmt "Ordset.singleton Uns " |> Prod.Index.pp symbol_index
+              end
+            | _ -> begin
+                formatter
+                |> Fmt.fmt "Ordset.of_list Uns "
+                |> List.fmt ~alt:true ~width:indentation Symbol.Index.pp (Ordset.to_list first)
+              end
+          )
+          |> Fmt.fmt ")"
+          |> Fmt.fmt "\n" |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  ~follow:("
+          |> (fun formatter ->
+            match Ordset.length follow with
+            | 0L -> formatter |> Fmt.fmt "Ordset.empty Uns"
+            | 1L -> begin
+                let symbol_index = Ordset.choose_hlt follow in
+                formatter |> Fmt.fmt "Ordset.singleton Uns " |> Prod.Index.pp symbol_index
+              end
+            | _ -> begin
+                formatter
+                |> Fmt.fmt "Ordset.of_list Uns "
+                |> List.fmt ~alt:true ~width:indentation Symbol.Index.pp (Ordset.to_list follow)
+              end
+          )
+          |> Fmt.fmt ")"
+        ),
+        false
+      ) symbols
+    in
+    formatter
+  end in
+  formatter
+  |> (fun formatter ->
+    let formatter, _first =
+      String.C.Slice.lines_fold ~init:(formatter, true) ~f:(fun (formatter, first) line ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          match macro_of_line line with
+          | Some "«algorithm»" ->
+            formatter |> expand_algorithm ~line
+          | Some "«precs»" ->
+            formatter |> expand_precs ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«prods»" ->
+            formatter |> expand_prods ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«symbols»" ->
+            formatter |> expand_symbols ~template_indentation ~line:(String.C.Slice.to_string line)
+          | None -> begin
+              formatter
+              |> (fun formatter ->
+                match first, String.C.Slice.length line with
+                | true, _
+                | _, 0L -> formatter
+                | _, _ -> Fmt.fmt ~width:template_indentation "" formatter
+              )
+              |> Fmt.fmt (String.C.Slice.to_string line)
+            end
+          | Some _ -> not_reached ()
+        ),
+        false
+      ) (String.C.Slice.of_string template)
+    in
+    formatter
+  )
+
+let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlude; eoi=Eoi {eoi}}(*XXX as hmh*)) io t =
 (*
   File.Fmt.stderr
   |> Parse.fmt_hmh ~alt:true hmh
@@ -2638,7 +2984,7 @@ let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlud
       | MatterEpsilon -> formatter
     )
     |> Fmt.fmt "[:]"
-    |> Fmt.fmt "{XXX not implemented}\n"
+    |> expand_hm_template indentation hm_template t
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin

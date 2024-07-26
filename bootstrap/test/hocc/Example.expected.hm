@@ -2,8 +2,234 @@
 [:"./Example.hmh":1]open import Basis
 
 # Specify the parser. `hocc ...` expands to a module implementation, `{ ... }`.
-include [:]{XXX not implemented}
-[:"./Example.hmh":33:0+23]
+include [:]{
+    Spec = {
+        Algorithm = {
+            type t: t =
+              | Lr1 (** LR(1) algorithm. *)
+              | Ielr1 (** IELR(1) algorithm. *)
+              | Pgm1 (** PGM(1) algorithm. *)
+              | Lalr1 (** LALR(1) algorithm. *)
+
+            to_string = function
+              | Lr1 -> "Lr1"
+              | Ielr1 -> "Ielr1"
+              | Pgm1 -> "Pgm1"
+              | Lalr1 -> "Lalr1"
+
+            pp t formatter =
+                formatter |> Fmt.fmt (to_string t)
+          }
+
+        algorithm = Algorithm.Lr1
+
+        Assoc = {
+            type t: t =
+              | Left
+              | Right
+
+            to_string = function
+              | Left -> "Left"
+              | Right -> "Right"
+
+            pp t formatter =
+                formatter |> Fmt.fmt (to_string t)
+          }
+
+        Prec = {
+            type t: t = {
+                index: uns
+                name: string
+                assoc: option Assoc.t
+                doms: Ordset.t uns
+              }
+
+            pp {index; name; assoc; doms} formatter =
+                formatter
+                  |> "{%u=(^index^)"
+                  |> "; %s=(^name^)"
+                  |> "; %f(^Option.pp Assoc.pp^)=(^assoc^)"
+                  |> "; %f(^Ordset.pp^)=(^doms^)"
+                  |> "}"
+
+            init ~index ~name ~assoc ~doms =
+                {index; name; assoc; doms}
+          }
+
+        precs = [|
+            Prec.init ~index:0 ~name:"mul" ~assoc:(Some Left) ~doms:(Ordset.empty Uns)
+            Prec.init ~index:1 ~name:"add" ~assoc:(Some Left) ~doms:(Ordset.singleton Uns 0)
+          |]
+
+        Prod = {
+            type t: t = {
+                index: uns
+                lhs_index: uns
+                rhs_indexes: array uns
+                prec: option Prec.t
+                reduction: uns
+              }
+
+            hash_map {index; _} state =
+                Uns.hash_fold index state
+
+            cmp {index=i0; _} {index=i1; _} =
+                Uns.cmp i0 i1
+
+            pp {index; lhs_index; rhs_indexes; prec; reduction} formatter =
+                formatter
+                  |> "{%u=(^index^)"
+                  |> "; %u=(^lhs_index^)"
+                  |> "; %f(^Array.pp Uns.pp^)=(^rhs_indexes^)"
+                  |> "; %f(^Option.pp Prec.pp^)=(^prec^)"
+                  |> "; %u=(^reduction^)"
+                  |> "}"
+
+            init ~index ~lhs_index ~rhs_indexes ~prec ~reduction =
+                {index; lhs_index; rhs_indexes; prec; reduction}
+          }
+
+        prods = [|
+            Prod.init ~index:0 ~lhs_index:8 ~rhs_indexes:[|2|]
+              ~prec:None ~reduction:0
+            Prod.init ~index:1 ~lhs_index:8 ~rhs_indexes:[|3|]
+              ~prec:None ~reduction:1
+            Prod.init ~index:2 ~lhs_index:9 ~rhs_indexes:[|4|]
+              ~prec:None ~reduction:2
+            Prod.init ~index:3 ~lhs_index:9 ~rhs_indexes:[|5|]
+              ~prec:None ~reduction:3
+            Prod.init ~index:4 ~lhs_index:10 ~rhs_indexes:[|10; 8; 10|]
+              ~prec:(Some (Array.get 0 precs)) ~reduction:4
+            Prod.init ~index:5 ~lhs_index:10 ~rhs_indexes:[|10; 9; 10|]
+              ~prec:(Some (Array.get 1 precs)) ~reduction:5
+            Prod.init ~index:6 ~lhs_index:10 ~rhs_indexes:[|6|]
+              ~prec:None ~reduction:6
+            Prod.init ~index:7 ~lhs_index:11 ~rhs_indexes:[|10; 7|]
+              ~prec:None ~reduction:7
+            Prod.init ~index:8 ~lhs_index:12 ~rhs_indexes:[|11; 1|]
+              ~prec:None ~reduction:8
+          |]
+
+        Symbol = {
+            type t: t = {
+                index: uns
+                name: string
+                prec: option Prec.t
+                alias: option string
+                start: bool
+                prods: Ordset.t Prod.t Prod.cmper_witness
+                first: Ordset.t uns Uns.cmper_witness
+                follow: Ordset.t uns Uns.cmper_witness
+              }
+
+            hash_map {index; _} state =
+                Uns.hash_fold index state
+
+            cmp {index=i0; _} {index=i1; _} =
+                Uns.cmp i0 i1
+
+            pp {index; name; prec; alias; start; prods; first; follow} formatter =
+                formatter
+                  |> "{%u=(^index^)"
+                  |> "; %s=(^name^)"
+                  |> "; %f(^Option.pp Prec.pp^)=(^prec^)"
+                  |> "; %f(^Option.pp String.pp^)=(^alias^)"
+                  |> "; %b=(^start^)"
+                  |> "; %f(^Ordset.pp^)=(^prods^)"
+                  |> "; %f(^Ordset.pp^)=(^first^)"
+                  |> "; %f(^Ordset.pp^)=(^follow^)"
+                  |> "}"
+
+            init ~index ~name ~prec ~alias ~start ~prods ~first ~follow =
+                {index; name; prec; alias; start; prods; first; follow}
+          }
+
+        symbols = [|
+            Symbol.init ~index:0 ~name:"EPSILON"
+              ~prec:None ~alias:(Some "ε") ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 0)
+              ~follow:(Ordset.empty Uns)
+            Symbol.init ~index:1 ~name:"PSEUDO_END"
+              ~prec:None ~alias:(Some "⊥") ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 1)
+              ~follow:(Ordset.singleton Uns 0)
+            Symbol.init ~index:2 ~name:"STAR"
+              ~prec:(Some (Array.get 0 precs)) ~alias:(Some "*") ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 2)
+              ~follow:(Ordset.singleton Uns 6)
+            Symbol.init ~index:3 ~name:"SLASH"
+              ~prec:(Some (Array.get 0 precs)) ~alias:(Some "/") ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 3)
+              ~follow:(Ordset.singleton Uns 6)
+            Symbol.init ~index:4 ~name:"PLUS"
+              ~prec:(Some (Array.get 1 precs)) ~alias:(Some "+") ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 4)
+              ~follow:(Ordset.singleton Uns 6)
+            Symbol.init ~index:5 ~name:"MINUS"
+              ~prec:(Some (Array.get 1 precs)) ~alias:(Some "-") ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 5)
+              ~follow:(Ordset.singleton Uns 6)
+            Symbol.init ~index:6 ~name:"INT"
+              ~prec:None ~alias:None ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 6)
+              ~follow:(Ordset.of_list Uns [
+                2
+                3
+                4
+                5
+                7
+              ])
+            Symbol.init ~index:7 ~name:"EOI"
+              ~prec:None ~alias:None ~start:false
+              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 7)
+              ~follow:(Ordset.singleton Uns 1)
+            Symbol.init ~index:8 ~name:"MulOp"
+              ~prec:None ~alias:None ~start:false
+              ~prods:(Ordset.of_list Prod [
+                Array.get 0 prods
+                Array.get 1 prods
+              ]) ~first:(Ordset.of_list Uns [
+                2
+                3
+              ])
+              ~follow:(Ordset.singleton Uns 6)
+            Symbol.init ~index:9 ~name:"AddOp"
+              ~prec:None ~alias:None ~start:false
+              ~prods:(Ordset.of_list Prod [
+                Array.get 2 prods
+                Array.get 3 prods
+              ]) ~first:(Ordset.of_list Uns [
+                4
+                5
+              ])
+              ~follow:(Ordset.singleton Uns 6)
+            Symbol.init ~index:10 ~name:"Expr"
+              ~prec:None ~alias:None ~start:false
+              ~prods:(Ordset.of_list Prod [
+                Array.get 4 prods
+                Array.get 5 prods
+                Array.get 6 prods
+              ]) ~first:(Ordset.singleton Uns 6)
+              ~follow:(Ordset.of_list Uns [
+                2
+                3
+                4
+                5
+                7
+              ])
+            Symbol.init ~index:11 ~name:"Answer"
+              ~prec:None ~alias:None ~start:true
+              ~prods:(Ordset.singleton Prod 7) ~first:(Ordset.singleton Uns 6)
+              ~follow:(Ordset.singleton Uns 1)
+            Symbol.init ~index:12 ~name:"Answer'"
+              ~prec:None ~alias:None ~start:true
+              ~prods:(Ordset.singleton Prod 8) ~first:(Ordset.singleton Uns 6)
+              ~follow:(Ordset.singleton Uns 0)
+          |]
+
+        # XXX not implemented
+      }
+  }[:"./Example.hmh":33:0+23]
 
 # Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
 tokenize s =
