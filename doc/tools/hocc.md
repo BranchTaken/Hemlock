@@ -579,7 +579,7 @@ parser states can be used as persistent reusable snapshots.
                 reduction: uns # Index of corresponding reduction function in `reductions` array.
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -600,7 +600,7 @@ parser states can be used as persistent reusable snapshots.
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -615,7 +615,7 @@ parser states can be used as persistent reusable snapshots.
                 dot: uns
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -623,7 +623,7 @@ parser states can be used as persistent reusable snapshots.
         Lr0Itemset = {
             type t: t = Ordset.t Lr0Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -634,7 +634,7 @@ parser states can be used as persistent reusable snapshots.
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -642,7 +642,7 @@ parser states can be used as persistent reusable snapshots.
         Lr1Itemset = {
             type t: t = Ordmap.t Lr0Item.t Lr1Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -654,7 +654,7 @@ parser states can be used as persistent reusable snapshots.
                 added: Lr1Itemset.t
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }

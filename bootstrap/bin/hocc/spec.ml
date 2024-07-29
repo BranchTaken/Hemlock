@@ -1985,7 +1985,7 @@ let hmi_template = {|{
                 reduction: uns # Index of corresponding reduction function in `reductions` array.
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -2006,7 +2006,7 @@ let hmi_template = {|{
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -2021,7 +2021,7 @@ let hmi_template = {|{
                 dot: uns
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -2029,7 +2029,7 @@ let hmi_template = {|{
         Lr0Itemset = {
             type t: t = Ordset.t Lr0Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -2040,7 +2040,7 @@ let hmi_template = {|{
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -2048,7 +2048,7 @@ let hmi_template = {|{
         Lr1Itemset = {
             type t: t = Ordmap.t Lr0Item.t Lr1Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -2060,7 +2060,7 @@ let hmi_template = {|{
                 added: Lr1Itemset.t
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -2215,7 +2215,7 @@ let expand_hmi_template template_indentation template {symbols; _} formatter =
   let expand_tokens ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) token ->
+      ~f:(fun (formatter, first) {name; alias; qtype; _}->
         formatter
         |> (fun formatter ->
           match first with
@@ -2223,18 +2223,18 @@ let expand_hmi_template template_indentation template {symbols; _} formatter =
           | false -> formatter |> Fmt.fmt "\n"
         )
         |> (fun formatter ->
-          match token.qtype with
+          match qtype with
           | {explicit_opt=None; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
-              |> Fmt.fmt (Symbol.name token)
+              |> Fmt.fmt name
             end
           | {explicit_opt=Some {module_; type_}; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
-              |> Fmt.fmt (Symbol.name token)
+              |> Fmt.fmt name
               |> Fmt.fmt " of "
               |> Fmt.fmt module_
               |> Fmt.fmt "."
@@ -2242,7 +2242,7 @@ let expand_hmi_template template_indentation template {symbols; _} formatter =
             end
         )
         |> (fun formatter ->
-          match token.alias with
+          match alias with
           | None -> formatter
           | Some alias -> formatter |> Fmt.fmt " # " |> String.fmt ~pretty:true alias
         ),
@@ -2254,7 +2254,7 @@ let expand_hmi_template template_indentation template {symbols; _} formatter =
   let expand_nonterms ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) nonterm ->
+      ~f:(fun (formatter, first) {name; qtype; _} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -2262,18 +2262,18 @@ let expand_hmi_template template_indentation template {symbols; _} formatter =
           | false -> formatter |> Fmt.fmt "\n"
         )
         |> (fun formatter ->
-          match nonterm.qtype with
+          match qtype with
           | {explicit_opt=None; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
-              |> Fmt.fmt (Symbol.name nonterm)
+              |> Fmt.fmt name
             end
           | {explicit_opt=Some {module_; type_}; _} -> begin
               formatter
               |> Fmt.fmt ~width:indentation ""
               |> Fmt.fmt "| "
-              |> Fmt.fmt (Symbol.name nonterm)
+              |> Fmt.fmt name
               |> Fmt.fmt " of "
               |> Fmt.fmt module_
               |> Fmt.fmt "."
@@ -2643,11 +2643,12 @@ let hm_template = {|{
 
             pp {index; name; assoc; doms} formatter =
                 formatter
-                  |> "{%u=(^index^)"
-                  |> "; %s=(^name^)"
-                  |> "; %f(^Option.pp Assoc.pp^)=(^assoc^)"
-                  |> "; %f(^Ordset.pp^)=(^doms^)"
-                  |> "}"
+                  |> Fmt.fmt
+                  "{%u=(^index
+                  ^); %s=(^name
+                  ^); %f(^Option.pp Assoc.pp^)=(^assoc
+                  ^); %f(^Ordset.pp^)=(^doms
+                  ^)}"
 
             init ~index ~name ~assoc ~doms =
                 {index; name; assoc; doms}
@@ -2666,7 +2667,7 @@ let hm_template = {|{
                 reduction: uns
               }
 
-            hash_map {index; _} state =
+            hash_fold {index; _} state =
                 Uns.hash_fold index state
 
             cmp {index=i0; _} {index=i1; _} =
@@ -2674,12 +2675,13 @@ let hm_template = {|{
 
             pp {index; lhs_index; rhs_indexes; prec; reduction} formatter =
                 formatter
-                  |> "{%u=(^index^)"
-                  |> "; %u=(^lhs_index^)"
-                  |> "; %f(^Array.pp Uns.pp^)=(^rhs_indexes^)"
-                  |> "; %f(^Option.pp Prec.pp^)=(^prec^)"
-                  |> "; %u=(^reduction^)"
-                  |> "}"
+                  |> Fmt.fmt
+                  "{%u=(^index
+                  ^); %u=(^lhs_index
+                  ^); %f(^Array.pp Uns.pp^)=(^rhs_indexes
+                  ^); %f(^Option.pp Prec.pp^)=(^prec
+                  ^); %u=(^reduction
+                  ^)}"
 
             init ~index ~lhs_index ~rhs_indexes ~prec ~reduction =
                 {index; lhs_index; rhs_indexes; prec; reduction}
@@ -2701,7 +2703,7 @@ let hm_template = {|{
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map {index; _} state =
+            hash_fold {index; _} state =
                 Uns.hash_fold index state
 
             cmp {index=i0; _} {index=i1; _} =
@@ -2709,15 +2711,16 @@ let hm_template = {|{
 
             pp {index; name; prec; alias; start; prods; first; follow} formatter =
                 formatter
-                  |> "{%u=(^index^)"
-                  |> "; %s=(^name^)"
-                  |> "; %f(^Option.pp Prec.pp^)=(^prec^)"
-                  |> "; %f(^Option.pp String.pp^)=(^alias^)"
-                  |> "; %b=(^start^)"
-                  |> "; %f(^Ordset.pp^)=(^prods^)"
-                  |> "; %f(^Ordset.pp^)=(^first^)"
-                  |> "; %f(^Ordset.pp^)=(^follow^)"
-                  |> "}"
+                  |> Fmt.fmt
+                  "{%u=(^index
+                  ^); %s=(^name
+                  ^); %f(^Option.pp Prec.pp^)=(^prec
+                  ^); %f(^Option.pp String.pp^)=(^alias
+                  ^); %b=(^start
+                  ^); %f(^Ordset.pp^)=(^prods
+                  ^); %f(^Ordset.pp^)=(^first
+                  ^); %f(^Ordset.pp^)=(^follow
+                  ^)}"
 
             init ~index ~name ~prec ~alias ~start ~prods ~first ~follow =
                 {index; name; prec; alias; start; prods; first; follow}
@@ -2727,12 +2730,261 @@ let hm_template = {|{
             «symbols»
           |]
 
-        # XXX not implemented
+        Lr0Item = {
+            type t: t = {
+                prod: Prod.t
+                dot: uns
+              }
+
+            hash_fold {prod; dot} state =
+                state
+                  |> Prod.hash_fold prod
+                  |> Uns.hash_fold dot
+
+            cmp {prod=p0; dot=d0} {prod=p1; dot=d1} =
+                let open Cmp
+                match Prod.cmp p0 p1 with
+                  | Lt -> Lt
+                  | Eq -> Uns.cmp d0 d1
+                  | Gt -> Gt
+
+            pp {prod; dot} formatter =
+                formatter |> Fmt.fmt "{%f(^Prod.pp^)=(^prod^); %u=(^dot^)}"
+
+            init ~prod ~dot =
+                {prod; dot}
+          }
+
+        Lr0Itemset = {
+            type t: t = Ordset.t Lr0Item.t Lr0Item.cmper_witness
+
+            hash_fold = Ordset.hash_fold
+            cmp = Ordset.cmp
+            pp = Ordset.pp
+
+            init = Ordset.of_alist Lr0Item
+          }
+
+        Lr1Item = {
+            type t: t = {
+                lr0item: Lr0Item.t
+                follow: Ordset.t uns Uns.cmper_witness
+              }
+
+            hash_fold {lr0item; follow} state =
+                state
+                  |> Lr0Item.hash_fold lr0item
+                  |> Ordset.hash_fold follow
+
+            cmp {lr0item=l0; follow=f0} {lr0item=l1; follow=f1} =
+                let open Cmp
+                match Lr0Item.cmp l0 l1 with
+                  | Lt -> Lt
+                  | Eq -> Ordset.cmp f0 f1
+                  | Gt -> Gt
+
+            pp {lr0item; follow} formatter =
+                formatter |> Fmt.fmt "{%f(^Lr0Item.pp^)=(^lr0item^); %f(^Ordset.pp^)=(^follow^)}"
+
+            init ~lr0item ~follow =
+                {lr0item; follow}
+          }
+
+        Lr1Itemset = {
+            type t: t = Ordmap.t Lr0Item.t Lr1Item.t Lr0Item.cmper_witness
+
+            hash_fold = Ordmap.hash_fold Lr1Item.hash_fold
+            cmp = Ordmap.cmp Lr1Item.cmp
+            pp = Ordmap.pp Lr1Item.pp
+
+            init = Ordmap.of_alist Lr0Item
+          }
+
+        Lr1ItemsetClosure = {
+            type t: t = {
+                index: uns
+                kernel: Lr1Itemset.t
+                added: Lr1Itemset.t
+              }
+
+            hash_fold {index; _} state =
+                state |> Uns.hash_fold index
+
+            cmp {index=i0; _} {index=i1; _} =
+                Uns.cmp i0 i1
+
+            pp {index; kernel; added} formatter =
+                formatter
+                  |> Fmt.fmt
+                  "{%u=(^index
+                  ^); %f(^Lr1Itemset.pp^)=(^kernel
+                  ^); %f(^Lr1Itemset.pp^)=(^added
+                  ^)}"
+
+            init ~index ~kernel ~added =
+                {index; kernel; added}
+          }
+
+        Action = {
+            type t: t =
+              | ShiftPrefix of uns
+              | ShiftAccept of uns
+              | Reduce of uns
+
+            to_string = function
+              | ShiftPrefix state_index -> "ShiftPrefix %u(^state_index^)"
+              | ShiftAccept state_index -> "ShiftAccept %u(^state_index^)"
+              | Reduce prod_index -> "Reduce %u(^prod_index^)"
+
+            pp t formatter =
+                formatter |> Fmt.fmt (to_string t)
+          }
+
+        State = {
+            type t: t = {
+                lr1ItemsetClosure: Lr1ItemsetClosure.t
+                actions: Map.t uns Action.t Uns.cmper_witness
+                gotos: Map.t uns uns Uns.cmper_witness
+              }
+
+            pp {lr1ItemsetClosure; actions; gotos} formatter =
+                formatter
+                  |> Fmt.fmt
+                  "{%f(^Lr1ItemsetClosure.pp^)=(^lr1ItemsetClosure
+                  ^); %f(^Map.pp Action.pp^)=(^actions
+                  ^); %f(^Map.pp Uns.pp^)=(^gotos
+                  ^)}"
+
+            init ~lr1ItemsetClosure ~actions ~gotos =
+                {lr1ItemsetClosure; actions; gotos}
+          }
+
+        states = [|
+            «states»
+          |]
       }
+
+    Token = {
+        type t: t =
+          «tokens»
+
+        index = function
+          «token_index»
+
+        spec t =
+            Array.get (index t) Spec.symbols
+
+        pp t formatter =
+            formatter
+              |> Spec.Token.pp (spec t)
+      }
+
+    Nonterm = {
+        type t: t =
+          «nonterms»
+
+        index = function
+          «nonterm_index»
+
+        spec t =
+            Array.get (index t) Spec.symbols
+
+        pp t formatter =
+            formatter
+              |> Spec.Token.pp (spec t)
+      }
+
+    Symbol = {
+        type t: t =
+          | Token of Token.t
+          | Nonterm of Nonterm.t
+
+        spec t =
+            match t with
+              | Token token -> Token.spec token
+              | Nonterm nonterm -> Nonterm.spec nonterm
+
+        pp t formatter =
+            formatter
+              |> Spec.Symbol.pp (spec t)
+      }
+
+    State = {
+        type t: t = uns
+
+        spec t =
+            Array.get t Spec.states
+
+        pp t formatter =
+            formatter
+              |> Spec.State.pp (spec t)
+      }
+
+    type stack_elm: stack_elm = {
+        symbol: Symbol.t
+        symbol_index: uns
+        state_index: uns
+      }
+    type stack: stack = list stack_elm
+    type reduction: reduction = stack -> stack
+
+    reductions = [|
+        «reductions»
+      |]
+
+    Status = {
+        type t: t =
+          | ShiftPrefix of (Token.t, State.t)
+          | ShiftAccept of (Token.t, State.t)
+          | Reduce of reduction
+          | Prefix
+          | Accept of Nonterm.t
+          | Reject of Token.t
+
+        pp t formatter =
+            formatter
+              |> fn formatter ->
+                match t with
+                  | ShiftPrefix (token, state) ->
+                    formatter
+                      |> Fmt.fmt "ShiftPrefix (%f(^Token.pp^)(^token^), %u(^State.index state^))"
+                  | ShiftAccept (token, state) ->
+                    formatter
+                      |> Fmt.fmt "ShiftAccept (%f(^Token.pp^)(^token^), %u(^State.index state^))"
+                  | Reduce reduction ->
+                    formatter |> Fmt.fmt "Reduce (stack -> stack)"
+                  | Prefix ->
+                    formatter |> Fmt.fmt "Prefix"
+                  | Accept nonterm ->
+                    formatter |> Fmt.fmt "Accept %f(^Nonterm.pp^)(^nonterm^)"
+                  | Reject token ->
+                    formatter |> Fmt.fmt "Reject %f(^Token.pp^)(^token^)"
+      }
+
+    type t: t = {
+        stack: stack
+        status: status
+      }
+
+    Start = {
+        «starts»
+      }
+
+    feed: Token.t -> t -> t
+      [@@doc "`feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`,
+      `Reject`}. `t.status` must be `Prefix`."]
+
+    step: t -> t
+      [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
+      be in {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
+
+    next: -> Token.t -> t -> t
+      [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
+      result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
   }|}
 
 let expand_hm_template template_indentation template
-    {algorithm; precs; prods; symbols; _} formatter =
+    {algorithm; precs; symbols; prods; reductions; states} formatter =
   let expand_algorithm ~line formatter = begin
     let p = String.C.Slice.(of_string "«algorithm»" |> Pattern.create) in
     let algorithm =
@@ -2906,6 +3158,167 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
+  let expand_states ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Array.fold ~init:(formatter, true)
+      ~f:(fun (formatter, first)
+        State.{statenub={lr1itemsetclosure={index; kernel=_XXX1; added=_XXX2}; _}; actions=_XXX3; gotos=_XXX4} ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "XXX State.init"
+          |> Fmt.fmt " ~index:" |> Lr1ItemsetClosure.Index.pp index
+        ),
+        false
+      ) states
+    in
+    formatter
+  end in
+  let expand_tokens ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) token ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "XXX Token.init"
+          |> Fmt.fmt " ~index:" |> Symbol.Index.pp (Symbol.index token)
+        ),
+        false
+      ) symbols
+    in
+    formatter
+  end in
+  let expand_token_index ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) {index; name; qtype; _} ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "| "
+          |> Fmt.fmt name
+          |> (fun formatter ->
+            match qtype.explicit_opt with
+            | None -> formatter
+            | Some _ -> formatter |> Fmt.fmt " _"
+          )
+          |> Fmt.fmt " -> "
+          |> Uns.pp index
+        ),
+        false
+      ) symbols
+    in
+    formatter
+  end in
+  let expand_nonterms ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) nonterm ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "XXX Nonterm.init"
+          |> Fmt.fmt " ~index:" |> Symbol.Index.pp (Symbol.index nonterm)
+        ),
+        false
+      ) symbols
+    in
+    formatter
+  end in
+  let expand_nonterm_index ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) {index; name; _} ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "| "
+          |> Fmt.fmt name
+          |> Fmt.fmt " _ -> "
+          |> Uns.pp index
+        ),
+        false
+      ) symbols
+    in
+    formatter
+  end in
+  let expand_reductions ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Reductions.fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) Reduction.{index; lhs=_XXX1; rhs=_XXX2; code=_XXX3} ->
+        formatter
+        |> (fun formatter ->
+          match first with
+          | true -> formatter
+          | false -> formatter |> Fmt.fmt "\n"
+        )
+        |> (fun formatter ->
+          formatter
+          |> Fmt.fmt ~width:indentation ""
+          |> Fmt.fmt "XXX Reduction.init"
+          |> Fmt.fmt " ~index:" |> Reduction.Index.pp index
+        ),
+        false
+      ) reductions
+    in
+    formatter
+  end in
+  let expand_starts ~template_indentation:_ ~line formatter = begin
+    let indentation = template_indentation + (line_raw_indentation line) in
+    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
+      ~f:(fun (formatter, first) {index; qtype={synthetic; _}; start; _} ->
+        match (start && (not synthetic)) with
+        | false -> formatter, first
+        | true -> begin
+            formatter
+            |> (fun formatter ->
+              match first with
+              | true -> formatter
+              | false -> formatter |> Fmt.fmt "\n"
+            )
+            |> (fun formatter ->
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "XXX Start.init"
+              |> Fmt.fmt " ~index:" |> Symbol.Index.pp index
+            ),
+            false
+          end
+      ) symbols
+    in
+    formatter
+  end in
   formatter
   |> (fun formatter ->
     let formatter, _first =
@@ -2926,6 +3339,20 @@ let expand_hm_template template_indentation template
             formatter |> expand_prods ~template_indentation ~line:(String.C.Slice.to_string line)
           | Some "«symbols»" ->
             formatter |> expand_symbols ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«states»" ->
+            formatter |> expand_states ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«tokens»" ->
+            formatter |> expand_tokens ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«token_index»" ->
+            formatter |> expand_token_index ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«nonterms»" ->
+            formatter |> expand_nonterms ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«nonterm_index»" ->
+            formatter |> expand_nonterm_index ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«reductions»" ->
+            formatter |> expand_reductions ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«starts»" ->
+            formatter |> expand_starts ~template_indentation ~line:(String.C.Slice.to_string line)
           | None -> begin
               formatter
               |> (fun formatter ->

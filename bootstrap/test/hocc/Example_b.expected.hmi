@@ -50,7 +50,7 @@ include
                 reduction: uns # Index of corresponding reduction function in `reductions` array.
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -71,7 +71,7 @@ include
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -86,7 +86,7 @@ include
                 dot: uns
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -94,7 +94,7 @@ include
         Lr0Itemset = {
             type t: t = Ordset.t Lr0Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -105,7 +105,7 @@ include
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -113,7 +113,7 @@ include
         Lr1Itemset = {
             type t: t = Ordmap.t Lr0Item.t Lr1Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -125,7 +125,7 @@ include
                 added: Lr1Itemset.t
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
