@@ -59,6 +59,14 @@ val value: default:'a -> 'a t -> 'a
 val value_hlt: 'a t -> 'a
 (** [value t ~default] returns [a] if [t = Some a], halts otherwise. *)
 
+val value_or_thunk: f:(unit -> 'a) -> 'a t -> 'a
+(** [value_or_thunk ~f t] returns [a] if [t = Some a], returns the result of calling [f] otherwise.
+*)
+
+val some_or_thunk: f:(unit -> 'a t) -> 'a t -> 'a t
+(** [some_or_thunk ~f t] returns [Some a] if [t = Some a], returns the result of calling [f]
+    otherwise. *)
+
 (** {1 Mapping and filtering} *)
 
 val some_if: bool -> 'a -> 'a t
