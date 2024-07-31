@@ -506,12 +506,14 @@ calculate s =
           | Prefix -> false
           | Accept _
           | Error _ -> true
+          | _ -> not_reached ()
         parser', done
       |>
         function
           | Accept answer -> answer
           | Prefix _ -> halt "Partial input"
           | Error _ -> halt "Parse error"
+          | _ -> not_reached ()
 ```
 
 To generate Hemlock code from the above inputs, run `hocc -hm -s Example`.
@@ -730,8 +732,7 @@ parser states can be used as persistent reusable snapshots.
 
     type stack_elm: stack_elm = {
         symbol: Symbol.t
-        symbol_index: uns
-        state_index: uns
+        state_index: State.t
       }
     type stack: stack = list stack_elm
     type reduction: reduction = stack -> stack

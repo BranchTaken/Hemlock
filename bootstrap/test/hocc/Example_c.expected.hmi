@@ -203,8 +203,7 @@ Parser = {
 
         type stack_elm: stack_elm = {
             symbol: Symbol.t
-            symbol_index: uns
-            state_index: uns
+            state: State.t
           }
         type stack: stack = list stack_elm
         type reduction: reduction = stack -> stack

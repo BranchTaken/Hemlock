@@ -18,6 +18,23 @@ let string_of_alias_token token =
   | Scan.Token.HmcToken {atok=Tok_istring (Constant istring); _} -> istring
   | _ -> not_reached ()
 
+let synthetic_name_of_start_name start_name =
+  start_name ^ "'"
+
+let state_of_synthetic_start_symbol symbols states synthetic_start_symbol =
+  assert (Symbol.is_synthetic synthetic_start_symbol);
+  assert (synthetic_start_symbol.start);
+  Array.find ~f:(fun state ->
+    match State.is_start state with
+    | false -> false
+    | true -> begin
+        let start_symbol_index = State.start_symbol_index state in
+        let start_symbol = Symbols.symbol_of_symbol_index start_symbol_index symbols in
+        Symbol.(start_symbol = synthetic_start_symbol)
+      end
+  ) states
+  |> Option.value_hlt
+
 let precs_init io hmh =
   let rec fold_precs_tl io precs rels doms precs_tl = begin
     match precs_tl with
@@ -249,7 +266,7 @@ let symbol_infos_init io symbols hmh =
           | NontermTypeNonterm _ -> io, symbols
           | NontermTypeStart _ -> begin
               (* Synthesize start symbol wrapper. *)
-              let name' = name ^ "'" in
+              let name' = synthetic_name_of_start_name name in
               let qtype' = QualifiedType.synthetic_wrapper qtype in
               let symbols = insert_symbol_info name' qtype' cident symbols in
               io, symbols
@@ -2127,8 +2144,7 @@ let hmi_template = {|{
 
     type stack_elm: stack_elm = {
         symbol: Symbol.t
-        symbol_index: uns
-        state_index: uns
+        state: State.t
       }
     type stack: stack = list stack_elm
     type reduction: reduction = stack -> stack
@@ -2899,10 +2915,13 @@ let hm_template = {|{
           | Token of Token.t
           | Nonterm of Nonterm.t
 
-        spec t =
-            match t with
-              | Token token -> Token.spec token
-              | Nonterm nonterm -> Nonterm.spec nonterm
+        index = function
+          | Token token -> Token.index token
+          | Nonterm nonterm -> Nonterm.index nonterm
+
+        spec = function
+          | Token token -> Token.spec token
+          | Nonterm nonterm -> Nonterm.spec nonterm
 
         pp t formatter =
             formatter
@@ -2916,14 +2935,15 @@ let hm_template = {|{
             Array.get t Spec.states
 
         pp t formatter =
-            formatter
-              |> Spec.State.pp (spec t)
+            formatter |> Uns.pp t
+
+        init state_index =
+            state_index
       }
 
     type stack_elm: stack_elm = {
         symbol: Symbol.t
-        symbol_index: uns
-        state_index: uns
+        state: State.t
       }
     type stack: stack = list stack_elm
     type reduction: reduction = stack -> stack
@@ -2947,10 +2967,10 @@ let hm_template = {|{
                 match t with
                   | ShiftPrefix (token, state) ->
                     formatter
-                      |> Fmt.fmt "ShiftPrefix (%f(^Token.pp^)(^token^), %u(^State.index state^))"
+                      |> Fmt.fmt "ShiftPrefix (%f(^Token.pp^)(^token^), %f(^State.pp^)(^state^))"
                   | ShiftAccept (token, state) ->
                     formatter
-                      |> Fmt.fmt "ShiftAccept (%f(^Token.pp^)(^token^), %u(^State.index state^))"
+                      |> Fmt.fmt "ShiftAccept (%f(^Token.pp^)(^token^), %f(^State.pp^)(^state^))"
                   | Reduce reduction ->
                     formatter |> Fmt.fmt "Reduce (stack -> stack)"
                   | Prefix ->
@@ -2970,17 +2990,60 @@ let hm_template = {|{
         «starts»
       }
 
-    feed: Token.t -> t -> t
-      [@@doc "`feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`,
-      `Reject`}. `t.status` must be `Prefix`."]
+    feed token = function
+      | {stack=[{symbol; state}; _]; Prefix} ->
+        let token_index = Token.index token
+        let Spec.State.{actions; _} = Array.get state Spec.states
+        let status = match Map.get token_index actions with
+          | Some (Action.ShiftPrefix state') -> Status.ShiftPrefix (token, state')
+          | Some (Action.ShiftAccept state') -> Status.ShiftAccept (token, state')
+          | Some (Action.Reduce prod_index) ->
+            let reduction = Array.get prod_index reductions
+            Status.Reduce reduction
+          | None -> Status.Reject token
+        {t with status}
+      | _ -> not_reached ()
 
-    step: t -> t
-      [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
-      be in {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
+    shift token state stack =
+        {symbol=token; state} :: stack
 
-    next: -> Token.t -> t -> t
-      [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
-      result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
+    reduce reduction stack =
+        reduction stack
+
+    step {stack; status} =
+        let open Status
+        match status with
+          | ShiftPrefix (token, state) -> {stack=shift token state stack; status=Prefix}
+          | ShiftAccept (token, state) ->
+            # Shift, perform the ⊥ reduction, and extract the accepted symbol from the stack.
+            let stack = shift token state stack
+            let pseudo_end_index = Token.index Token.PSEUDO_END
+            let Spec.State.{actions; _} = Array.get state Spec.states
+            match Map.get pseudo_end_index actions with
+              | Some (Action.Reduce prod_index) ->
+                let reduction = Array.get prod_index reductions
+                let stack = reduce reduction stack
+                match stack with
+                  | {symbol; _} :: _ -> {stack=[]; status=Accept symbol}
+                  | _ -> not_reached ()
+              | _ -> not_reached ()
+          | Reduce reduction -> {stack=reduce reduction stack; Prefix}
+          | _ -> not_reached ()
+
+    rec walk ({status; _} as t) =
+        let open Status
+        match status with
+          | ShiftPrefix _
+          | ShiftAccept _
+          | Reduce _ -> t |> step |> walk
+          | Prefix
+          | Accept _
+          | Reject _ -> t
+
+    next token ({status; _} as t) =
+        match status with
+          | Status.Prefix -> t |> feed token |> walk
+          | _ -> not_reached ()
   }|}
 
 let expand_hm_template template_indentation template
@@ -3297,10 +3360,14 @@ let expand_hm_template template_indentation template
   let expand_starts ~template_indentation:_ ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {index; qtype={synthetic; _}; start; _} ->
+      ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
         match (start && (not synthetic)) with
         | false -> formatter, first
         | true -> begin
+            let synthetic_name = synthetic_name_of_start_name name in
+            let synthetic_start_symbol =
+              Symbols.symbol_of_name synthetic_name symbols |> Option.value_hlt in
+            let state = state_of_synthetic_start_symbol symbols states synthetic_start_symbol in
             formatter
             |> (fun formatter ->
               match first with
@@ -3309,9 +3376,16 @@ let expand_hm_template template_indentation template
             )
             |> (fun formatter ->
               formatter
-              |> Fmt.fmt ~width:indentation ""
-              |> Fmt.fmt "XXX Start.init"
-              |> Fmt.fmt " ~index:" |> Symbol.Index.pp index
+              |> Fmt.fmt ~width:indentation "" |> String.fmt name |> Fmt.fmt " = {\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "    boi = {\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "        stack=[{\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "            symbol=Token.EPSILON\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "            state_index="
+              |> State.(index state |> Index.pp) |> Fmt.fmt "\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "          }]\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "        status=Prefix\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "      }\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  }"
             ),
             false
           end

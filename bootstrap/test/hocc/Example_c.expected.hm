@@ -435,10 +435,13 @@ Parser = {
               | Token of Token.t
               | Nonterm of Nonterm.t
 
-            spec t =
-                match t with
-                  | Token token -> Token.spec token
-                  | Nonterm nonterm -> Nonterm.spec nonterm
+            index = function
+              | Token token -> Token.index token
+              | Nonterm nonterm -> Nonterm.index nonterm
+
+            spec = function
+              | Token token -> Token.spec token
+              | Nonterm nonterm -> Nonterm.spec nonterm
 
             pp t formatter =
                 formatter
@@ -452,14 +455,15 @@ Parser = {
                 Array.get t Spec.states
 
             pp t formatter =
-                formatter
-                  |> Spec.State.pp (spec t)
+                formatter |> Uns.pp t
+
+            init state_index =
+                state_index
           }
 
         type stack_elm: stack_elm = {
             symbol: Symbol.t
-            symbol_index: uns
-            state_index: uns
+            state: State.t
           }
         type stack: stack = list stack_elm
         type reduction: reduction = stack -> stack
@@ -491,10 +495,10 @@ Parser = {
                     match t with
                       | ShiftPrefix (token, state) ->
                         formatter
-                          |> Fmt.fmt "ShiftPrefix (%f(^Token.pp^)(^token^), %u(^State.index state^))"
+                          |> Fmt.fmt "ShiftPrefix (%f(^Token.pp^)(^token^), %f(^State.pp^)(^state^))"
                       | ShiftAccept (token, state) ->
                         formatter
-                          |> Fmt.fmt "ShiftAccept (%f(^Token.pp^)(^token^), %u(^State.index state^))"
+                          |> Fmt.fmt "ShiftAccept (%f(^Token.pp^)(^token^), %f(^State.pp^)(^state^))"
                       | Reduce reduction ->
                         formatter |> Fmt.fmt "Reduce (stack -> stack)"
                       | Prefix ->
@@ -511,20 +515,71 @@ Parser = {
           }
 
         Start = {
-            XXX Start.init ~index:11
+            Answer = {
+                boi = {
+                    stack=[{
+                        symbol=Token.EPSILON
+                        state_index=0
+                      }]
+                    status=Prefix
+                  }
+              }
           }
 
-        feed: Token.t -> t -> t
-          [@@doc "`feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`,
-          `Reject`}. `t.status` must be `Prefix`."]
+        feed token = function
+          | {stack=[{symbol; state}; _]; Prefix} ->
+            let token_index = Token.index token
+            let Spec.State.{actions; _} = Array.get state Spec.states
+            let status = match Map.get token_index actions with
+              | Some (Action.ShiftPrefix state') -> Status.ShiftPrefix (token, state')
+              | Some (Action.ShiftAccept state') -> Status.ShiftAccept (token, state')
+              | Some (Action.Reduce prod_index) ->
+                let reduction = Array.get prod_index reductions
+                Status.Reduce reduction
+              | None -> Status.Reject token
+            {t with status}
+          | _ -> not_reached ()
 
-        step: t -> t
-          [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
-          be in {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
+        shift token state stack =
+            {symbol=token; state} :: stack
 
-        next: -> Token.t -> t -> t
-          [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
-          result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
+        reduce reduction stack =
+            reduction stack
+
+        step {stack; status} =
+            let open Status
+            match status with
+              | ShiftPrefix (token, state) -> {stack=shift token state stack; status=Prefix}
+              | ShiftAccept (token, state) ->
+                # Shift, perform the ⊥ reduction, and extract the accepted symbol from the stack.
+                let stack = shift token state stack
+                let pseudo_end_index = Token.index Token.PSEUDO_END
+                let Spec.State.{actions; _} = Array.get state Spec.states
+                match Map.get pseudo_end_index actions with
+                  | Some (Action.Reduce prod_index) ->
+                    let reduction = Array.get prod_index reductions
+                    let stack = reduce reduction stack
+                    match stack with
+                      | {symbol; _} :: _ -> {stack=[]; status=Accept symbol}
+                      | _ -> not_reached ()
+                  | _ -> not_reached ()
+              | Reduce reduction -> {stack=reduce reduction stack; Prefix}
+              | _ -> not_reached ()
+
+        rec walk ({status; _} as t) =
+            let open Status
+            match status with
+              | ShiftPrefix _
+              | ShiftAccept _
+              | Reduce _ -> t |> step |> walk
+              | Prefix
+              | Accept _
+              | Reject _ -> t
+
+        next token ({status; _} as t) =
+            match status with
+              | Status.Prefix -> t |> feed token |> walk
+              | _ -> not_reached ()
       }[:"./Example_c.hmh":34:4+23]
   }
 
@@ -551,9 +606,11 @@ calculate s =
           | Prefix -> false
           | Accept _
           | Error _ -> true
+          | _ -> not_reached ()
         parser', done
       |>
         function
           | Accept answer -> answer
           | Prefix _ -> halt "Partial input"
           | Error _ -> halt "Parse error"
+          | _ -> not_reached ()

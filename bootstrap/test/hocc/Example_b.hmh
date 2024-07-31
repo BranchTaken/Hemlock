@@ -63,9 +63,11 @@ calculate s =
           | Prefix -> false
           | Accept _
           | Error _ -> true
+          | _ -> not_reached ()
         parser', done
       |>
         function
           | Accept answer -> answer
           | Prefix _ -> halt "Partial input"
           | Error _ -> halt "Parse error"
+          | _ -> not_reached ()

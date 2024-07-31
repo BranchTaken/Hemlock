@@ -259,6 +259,9 @@ let index {statenub={lr1itemsetclosure={index; _}; _}; _} =
 let is_start {statenub={lr1itemsetclosure={kernel; _}; _}; _} =
   Lr1Itemset.is_start kernel
 
+let start_symbol_index {statenub={lr1itemsetclosure={kernel; _}; _}; _} =
+  Lr1Itemset.start_symbol_index kernel
+
 let has_pseudo_end_conflict {actions; _} =
   match Ordmap.mem Symbol.pseudo_end.index actions, Ordmap.length actions with
   | false, _
