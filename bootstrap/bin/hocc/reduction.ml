@@ -139,3 +139,6 @@ include Identifiable.Make(T)
 
 let init ~index ~lhs ~rhs ~code =
   {index; lhs; rhs; code}
+
+let is_epsilon {rhs; _} =
+  Params.is_empty rhs

@@ -62,3 +62,6 @@ include IdentifiableIntf.S with type t := t
 
 val init: index:Index.t -> lhs:QualifiedType.t -> rhs:Params.t -> code:Parse.code option -> t
 (** Used only by [Reductions.init]. *)
+
+val is_epsilon: t -> bool
+(** [is_epsilon t] returns true if [t] is an ε reduction, i.e. it has an empty RHS. *)

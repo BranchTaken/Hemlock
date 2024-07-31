@@ -3352,7 +3352,7 @@ let expand_hm_template template_indentation template
   let expand_reductions ~template_indentation:_ ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Reductions.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) Reduction.{index; lhs=_XXX1; rhs=_XXX2; code=_XXX3} ->
+      ~f:(fun (formatter, first) (Reduction.{index; lhs=_XXX1; rhs; code=_XXX2} as reduction) ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3361,9 +3361,39 @@ let expand_hm_template template_indentation template
         )
         |> (fun formatter ->
           formatter
-          |> Fmt.fmt ~width:indentation ""
-          |> Fmt.fmt "XXX Reduction.init"
-          |> Fmt.fmt " ~index:" |> Reduction.Index.pp index
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "(* " |> Reduction.Index.pp index
+          |> Fmt.fmt " *) "
+          |> (fun formatter ->
+            match Reduction.is_epsilon reduction with
+            | false -> begin
+                formatter
+                |> Fmt.fmt "function\n"
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  | "
+                |> (fun formatter ->
+                  Reduction.Params.foldi ~init:formatter
+                    ~f:(fun i formatter Reduction.Param.{binding; _} ->
+                    formatter
+                    |> (fun formatter ->
+                      match i with
+                      | 0L -> formatter
+                      | _ -> formatter |> Fmt.fmt " :: "
+                    )
+                    |> (fun formatter ->
+                      match binding with
+                      | Some uname -> formatter |> Fmt.fmt uname
+                      | None -> formatter |> Fmt.fmt "_"
+                    )
+                  ) rhs
+                )
+                |> Fmt.fmt " :: _tl ->\n"
+                (* XXX *)
+(*
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "\n"
+*)
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  | _ -> not_reached ()"
+              end
+            | true -> formatter |> Fmt.fmt "fn stack -> stack\n" (* XXX Add test. *)
+          )
         ),
         false
       ) reductions
