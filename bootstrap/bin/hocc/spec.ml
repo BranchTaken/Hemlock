@@ -2433,16 +2433,6 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
   in
   io
 
-(* XXX Move into Option. *)
-let value_or_thunk ~thunk = function
-  | Some value -> value
-  | None -> thunk ()
-
-(* XXX Move into Option. *)
-let some_or_thunk ~thunk = function
-  | Some _ as some_value -> some_value
-  | None -> thunk ()
-
 let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _}) =
   let min_comment_indentation =
     Scan.Token.source indent
@@ -2458,13 +2448,13 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
     | Parse.PrecsTlCommaUident {uident; precs_tl; _} ->
       Some (
         of_precs_tl precs_tl
-        |> value_or_thunk ~thunk:(fun () -> of_uident uident)
+        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
       )
     | Parse.PrecsTlEpsilon -> None
   and of_precs = function
     | Parse.Precs {uident; precs_tl} -> begin
         of_precs_tl precs_tl
-        |> value_or_thunk ~thunk:(fun () -> of_uident uident)
+        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
       end
   and of_prec_rels = function
     | Parse.PrecRelsLtPrecs {precs; _} -> Some (of_precs precs)
@@ -2483,13 +2473,13 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
   and of_codes_tl = function
     | Parse.CodesTlSepCode {code; codes_tl; _} -> begin
         of_codes_tl codes_tl
-        |> some_or_thunk ~thunk:(fun () -> Some (of_code code))
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_code code))
       end
     | Parse.CodesTlEpsilon -> None
   and of_codes = function
     | Parse.Codes {code; codes_tl} -> begin
         of_codes_tl codes_tl
-        |> value_or_thunk ~thunk:(fun () -> of_code code)
+        |> Option.value_or_thunk ~f:(fun () -> of_code code)
       end
   and of_delimited = function
     | Parse.DelimitedBlock {codes; _} -> of_codes codes
@@ -2501,11 +2491,11 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
   and of_code_tl = function
     | Parse.CodeTlDelimited {delimited; code_tl} -> begin
         of_code_tl code_tl
-        |> some_or_thunk ~thunk:(fun () -> Some (of_delimited delimited))
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
       end
     | Parse.CodeTlToken {token; code_tl} -> begin
         of_code_tl code_tl
-        |> some_or_thunk ~thunk:(fun () ->
+        |> Option.some_or_thunk ~f:(fun () ->
           (* Exclude comments less indented than `hocc` block from the tail. *)
           match token with
           | HmcToken ctok -> begin
@@ -2532,7 +2522,7 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
   and of_code = function
     | Parse.CodeDelimited {delimited; code_tl} -> begin
         of_code_tl code_tl
-        |> value_or_thunk ~thunk:(fun () -> of_delimited delimited)
+        |> Option.value_or_thunk ~f:(fun () -> of_delimited delimited)
       end
     | Parse.CodeToken {token; code_tl} -> begin
         of_code_tl code_tl
@@ -2547,13 +2537,13 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
   and of_prod_params_tl = function
     | Parse.ProdParamsTlProdParam {prod_param; prod_params_tl} -> begin
         of_prod_params_tl prod_params_tl
-        |> some_or_thunk ~thunk:(fun () -> Some (of_prod_param prod_param))
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod_param prod_param))
       end
     | Parse.ProdParamsTlEpsilon -> None
   and of_prod_params = function
     | Parse.ProdParamsProdParam {prod_param; prod_params_tl} -> begin
         of_prod_params_tl prod_params_tl
-        |> value_or_thunk ~thunk:(fun () -> of_prod_param prod_param)
+        |> Option.value_or_thunk ~f:(fun () -> of_prod_param prod_param)
       end
   and of_prod_pattern = function
     | Parse.ProdPatternParams {prod_params} -> of_prod_params prod_params
@@ -2561,32 +2551,32 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
   and of_prod = function
     | Parse.Prod {prod_pattern; prec_ref} -> begin
         of_prec_ref prec_ref
-        |> value_or_thunk ~thunk:(fun () -> of_prod_pattern prod_pattern)
+        |> Option.value_or_thunk ~f:(fun () -> of_prod_pattern prod_pattern)
       end
   and of_prods_tl = function
     | Parse.ProdsTlBarProd {prod; prods_tl; _} -> begin
         of_prods_tl prods_tl
-        |> some_or_thunk ~thunk:(fun () -> Some (of_prod prod))
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod prod))
       end
     | Parse.ProdsTlEpsilon -> None
   and of_prods = function
     | Parse.ProdsBarProd {prod; prods_tl; _}
     | ProdsProd {prod; prods_tl} -> begin
         of_prods_tl prods_tl
-        |> value_or_thunk ~thunk:(fun () -> of_prod prod)
+        |> Option.value_or_thunk ~f:(fun () -> of_prod prod)
       end
   and of_reduction = function
     | Parse.Reduction {code; _} -> of_code code
   and of_reductions_tl = function
     | Parse.ReductionsTlBarReduction {reduction; reductions_tl; _} -> begin
         of_reductions_tl reductions_tl
-        |> some_or_thunk ~thunk:(fun () -> Some (of_reduction reduction))
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_reduction reduction))
       end
     | Parse.ReductionsTlEpsilon -> None
   and of_reductions = function
     | Parse.ReductionsReduction {reduction; reductions_tl} -> begin
         of_reductions_tl reductions_tl
-        |> value_or_thunk ~thunk:(fun () -> of_reduction reduction)
+        |> Option.value_or_thunk ~f:(fun () -> of_reduction reduction)
       end
   and of_nonterm = function
     | Parse.NontermProds {prods; _} -> of_prods prods
@@ -2594,24 +2584,24 @@ let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _})
   and of_stmt = function
     | Parse.StmtPrec {prec=Prec {uident; prec_rels; _}} ->
       of_prec_rels prec_rels
-      |> value_or_thunk ~thunk:(fun () -> of_uident uident)
+      |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
     | Parse.StmtToken {token=Token {cident; token_alias; of_type0; prec_ref; _}} -> begin
         of_prec_ref prec_ref
-        |> some_or_thunk ~thunk:(fun () -> of_of_type0 of_type0)
-        |> some_or_thunk ~thunk:(fun () -> of_token_alias token_alias)
-        |> value_or_thunk ~thunk:(fun () -> of_cident cident)
+        |> Option.some_or_thunk ~f:(fun () -> of_of_type0 of_type0)
+        |> Option.some_or_thunk ~f:(fun () -> of_token_alias token_alias)
+        |> Option.value_or_thunk ~f:(fun () -> of_cident cident)
       end
     | Parse.StmtNonterm {nonterm} -> of_nonterm nonterm
     | Parse.StmtCode {code} -> of_code code
   and of_stmts_tl = function
     | Parse.StmtsTl {stmt; stmts_tl; _} -> begin
         (of_stmts_tl stmts_tl)
-        |> some_or_thunk ~thunk:(fun () -> Some (of_stmt stmt))
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_stmt stmt))
       end
     | Parse.StmtsTlEpsilon -> None
   in
   of_stmts_tl stmts_tl
-  |> value_or_thunk ~thunk:(fun () -> of_stmt stmt)
+  |> Option.value_or_thunk ~f:(fun () -> of_stmt stmt)
   |> Scan.Token.source
   |> Hmc.Source.Slice.past
 
