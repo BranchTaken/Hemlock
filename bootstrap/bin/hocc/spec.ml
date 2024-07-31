@@ -2948,6 +2948,16 @@ let hm_template = {|{
     type stack: stack = list stack_elm
     type reduction: reduction = stack -> stack
 
+    # goto: Symbol.t -> stack -> stack
+    goto symbol stack =
+        match stack with
+          | [] -> not_reached ()
+          | {state; _} :: _ ->
+            let symbol_index = Symbol.index symbol
+            let Spec.State.{goto; _} = Array.get state Spec.states
+            let state' = Map.get_hlt symbol_index goto |> State.init
+            {symbol; state=state'} :: stack
+
     reductions = [|
         «reductions»
       |]
@@ -2991,7 +3001,7 @@ let hm_template = {|{
       }
 
     feed token = function
-      | {stack=[{symbol; state}; _]; Prefix} ->
+      | {stack={symbol; state} :: _; Prefix}
         let token_index = Token.index token
         let Spec.State.{actions; _} = Array.get state Spec.states
         let status = match Map.get token_index actions with
@@ -3004,9 +3014,11 @@ let hm_template = {|{
         {t with status}
       | _ -> not_reached ()
 
+    # shift: Symbol.t -> State.t -> stack -> stack
     shift token state stack =
         {symbol=token; state} :: stack
 
+    # reduce: reduction -> stack -> stack
     reduce reduction stack =
         reduction stack
 
@@ -3019,17 +3031,18 @@ let hm_template = {|{
             let stack = shift token state stack
             let pseudo_end_index = Token.index Token.PSEUDO_END
             let Spec.State.{actions; _} = Array.get state Spec.states
-            match Map.get pseudo_end_index actions with
-              | Some (Action.Reduce prod_index) ->
+            match Map.get_hlt pseudo_end_index actions with
+              | Action.Reduce prod_index ->
                 let reduction = Array.get prod_index reductions
                 let stack = reduce reduction stack
                 match stack with
+                  | [] -> not_reached ()
                   | {symbol; _} :: _ -> {stack=[]; status=Accept symbol}
-                  | _ -> not_reached ()
               | _ -> not_reached ()
           | Reduce reduction -> {stack=reduce reduction stack; Prefix}
           | _ -> not_reached ()
 
+    # rec walk: t -> t
     rec walk ({status; _} as t) =
         let open Status
         match status with
