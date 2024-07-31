@@ -12,6 +12,8 @@
   test_merge
   test_pp
   test_some_if
+  test_some_or_thunk
   test_value
-  test_value_map)
+  test_value_map
+  test_value_or_thunk)
  (libraries Basis))

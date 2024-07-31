@@ -1,0 +1,2 @@
+some_or_thunk ~f Some (42) -> Some (42)
+some_or_thunk ~f None -> Some (43)

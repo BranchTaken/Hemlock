@@ -1,0 +1,2 @@
+value_or_thunk ~f Some (42) -> 42
+value_or_thunk ~f None -> 43
