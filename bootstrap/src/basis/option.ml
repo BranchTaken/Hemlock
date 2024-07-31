@@ -136,6 +136,14 @@ let value_hlt = function
   | Some a -> a
   | None -> halt "No value"
 
+let value_or_thunk ~f = function
+  | Some a -> a
+  | None -> f ()
+
+let some_or_thunk ~f = function
+  | Some _ as some_a -> some_a
+  | None -> f ()
+
 let some_if b a =
   match b with
   | true -> Some a
