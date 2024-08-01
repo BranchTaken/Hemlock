@@ -2366,6 +2366,23 @@ let expand_hmi_template template_indentation template {symbols; _} formatter =
 let module_name conf =
   Path.Segment.to_string_hlt (Conf.module_ conf)
 
+let fmt_source_directive indentation source formatter =
+  let directive_pathstr =
+    Hmc.Source.Slice.container source
+    |> Hmc.Source.path
+    |> Option.value_hlt
+    |> Path.to_string_hlt
+  in
+  let base = Hmc.Source.Slice.base source in
+  let pos = Hmc.Source.Cursor.pos base in
+  let line = Text.Pos.line pos in
+  let col = Text.Pos.col pos in
+  formatter
+  |> Fmt.fmt "[:" |> String.pp directive_pathstr
+  |> Fmt.fmt ":" |> Uns.fmt line
+  |> Fmt.fmt ":" |> Uns.fmt indentation |> Fmt.fmt "+" |> Uns.fmt (col - indentation)
+  |> Fmt.fmt "]"
+
 let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
   let indentation = match hocc with
     | HmcToken _ -> not_reached ()
@@ -2405,15 +2422,9 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
-          let line, col, base = match hocc with
+          let base = match hocc with
             | HmcToken _ -> not_reached ()
-            | HoccToken {source; _} -> begin
-                let base = Hmc.Source.Slice.past source in
-                let pos = Hmc.Source.Cursor.pos base in
-                let line = Text.Pos.line pos in
-                let col = Text.Pos.col pos in
-                line, col, base
-              end
+            | HoccToken {source; _} -> Hmc.Source.Slice.past source
           in
           let past = match eoi with
             | HmcToken {source; _} -> Hmc.Source.Slice.past source
@@ -2421,10 +2432,7 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
           in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter
-          |> Fmt.fmt "[:" |> Fmt.fmt directive_pathstr
-          |> Fmt.fmt ":" |> Uns.fmt line
-          |> Fmt.fmt ":" |> Uns.fmt indentation |> Fmt.fmt "+" |> Uns.fmt (col - indentation)
-          |> Fmt.fmt "]"
+          |> fmt_source_directive indentation source
           |> Fmt.fmt (Hmc.Source.Slice.to_string source)
         end
       | MatterEpsilon -> formatter
@@ -2432,178 +2440,6 @@ let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
     |> Io.with_hmi io
   in
   io
-
-let postlude_base_of_hocc Parse.(Hocc {indent; stmts=Stmts {stmt; stmts_tl}; _}) =
-  let min_comment_indentation =
-    Scan.Token.source indent
-    |> Hmc.Source.Slice.base
-    |> Hmc.Source.Cursor.pos
-    |> Text.Pos.col
-  in
-  let rec of_uident = function
-    | Parse.Uident {uident} -> uident
-  and of_cident = function
-    | Parse.Cident {cident} -> cident
-  and of_precs_tl = function
-    | Parse.PrecsTlCommaUident {uident; precs_tl; _} ->
-      Some (
-        of_precs_tl precs_tl
-        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
-      )
-    | Parse.PrecsTlEpsilon -> None
-  and of_precs = function
-    | Parse.Precs {uident; precs_tl} -> begin
-        of_precs_tl precs_tl
-        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
-      end
-  and of_prec_rels = function
-    | Parse.PrecRelsLtPrecs {precs; _} -> Some (of_precs precs)
-    | Parse.PrecRelsEpsilon -> None
-  and of_of_type = function
-    | Parse.OfType {type_type; _} -> of_uident type_type
-  and of_of_type0 = function
-    | Parse.OfType0OfType {of_type} -> Some (of_of_type of_type)
-    | Parse.OfType0Epsilon -> None
-  and of_prec_ref = function
-    | Parse.PrecRefPrecUident {uident; _} -> Some (of_uident uident)
-    | Parse.PrecRefEpsilon -> None
-  and of_token_alias = function
-    | Parse.TokenAlias {alias} -> Some alias
-    | Parse.TokenAliasEpsilon -> None
-  and of_codes_tl = function
-    | Parse.CodesTlSepCode {code; codes_tl; _} -> begin
-        of_codes_tl codes_tl
-        |> Option.some_or_thunk ~f:(fun () -> Some (of_code code))
-      end
-    | Parse.CodesTlEpsilon -> None
-  and of_codes = function
-    | Parse.Codes {code; codes_tl} -> begin
-        of_codes_tl codes_tl
-        |> Option.value_or_thunk ~f:(fun () -> of_code code)
-      end
-  and of_delimited = function
-    | Parse.DelimitedBlock {codes; _} -> of_codes codes
-    | Parse.DelimitedParen {rparen; _} -> rparen
-    | Parse.DelimitedCapture {rcapture; _} -> rcapture
-    | Parse.DelimitedList {rbrack; _} -> rbrack
-    | Parse.DelimitedArray {rarray; _} -> rarray
-    | Parse.DelimitedModule {rcurly; _} -> rcurly
-  and of_code_tl = function
-    | Parse.CodeTlDelimited {delimited; code_tl} -> begin
-        of_code_tl code_tl
-        |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
-      end
-    | Parse.CodeTlToken {token; code_tl} -> begin
-        of_code_tl code_tl
-        |> Option.some_or_thunk ~f:(fun () ->
-          (* Exclude comments less indented than `hocc` block from the tail. *)
-          match token with
-          | HmcToken ctok -> begin
-              match Hmc.Scan.ConcreteToken.atok ctok with
-              | Tok_hash_comment
-              | Tok_paren_comment _ -> begin
-                  let ctok_indentation =
-                    ctok
-                    |> Hmc.Scan.ConcreteToken.source
-                    |> Hmc.Source.Slice.base
-                    |> Hmc.Source.Cursor.pos
-                    |> Text.Pos.col
-                  in
-                  match ctok_indentation >= min_comment_indentation with
-                  | true -> Some token
-                  | false -> None
-                end
-              | _ -> Some token
-            end
-          | HoccToken _ -> Some token
-        )
-      end
-    | Parse.CodeTlEpsilon -> None
-  and of_code = function
-    | Parse.CodeDelimited {delimited; code_tl} -> begin
-        of_code_tl code_tl
-        |> Option.value_or_thunk ~f:(fun () -> of_delimited delimited)
-      end
-    | Parse.CodeToken {token; code_tl} -> begin
-        of_code_tl code_tl
-        |> Option.value ~default:token
-      end
-  and of_prod_param_symbol = function
-    | Parse.ProdParamSymbolCident {cident} -> of_cident cident
-    | Parse.ProdParamSymbolAlias {alias} -> alias
-  and of_prod_param = function
-    | Parse.ProdParamBinding {prod_param_symbol; _}
-    | Parse.ProdParam {prod_param_symbol} -> of_prod_param_symbol prod_param_symbol
-  and of_prod_params_tl = function
-    | Parse.ProdParamsTlProdParam {prod_param; prod_params_tl} -> begin
-        of_prod_params_tl prod_params_tl
-        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod_param prod_param))
-      end
-    | Parse.ProdParamsTlEpsilon -> None
-  and of_prod_params = function
-    | Parse.ProdParamsProdParam {prod_param; prod_params_tl} -> begin
-        of_prod_params_tl prod_params_tl
-        |> Option.value_or_thunk ~f:(fun () -> of_prod_param prod_param)
-      end
-  and of_prod_pattern = function
-    | Parse.ProdPatternParams {prod_params} -> of_prod_params prod_params
-    | Parse.ProdPatternEpsilon {epsilon} -> epsilon
-  and of_prod = function
-    | Parse.Prod {prod_pattern; prec_ref} -> begin
-        of_prec_ref prec_ref
-        |> Option.value_or_thunk ~f:(fun () -> of_prod_pattern prod_pattern)
-      end
-  and of_prods_tl = function
-    | Parse.ProdsTlBarProd {prod; prods_tl; _} -> begin
-        of_prods_tl prods_tl
-        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod prod))
-      end
-    | Parse.ProdsTlEpsilon -> None
-  and of_prods = function
-    | Parse.ProdsBarProd {prod; prods_tl; _}
-    | ProdsProd {prod; prods_tl} -> begin
-        of_prods_tl prods_tl
-        |> Option.value_or_thunk ~f:(fun () -> of_prod prod)
-      end
-  and of_reduction = function
-    | Parse.Reduction {code; _} -> of_code code
-  and of_reductions_tl = function
-    | Parse.ReductionsTlBarReduction {reduction; reductions_tl; _} -> begin
-        of_reductions_tl reductions_tl
-        |> Option.some_or_thunk ~f:(fun () -> Some (of_reduction reduction))
-      end
-    | Parse.ReductionsTlEpsilon -> None
-  and of_reductions = function
-    | Parse.ReductionsReduction {reduction; reductions_tl} -> begin
-        of_reductions_tl reductions_tl
-        |> Option.value_or_thunk ~f:(fun () -> of_reduction reduction)
-      end
-  and of_nonterm = function
-    | Parse.NontermProds {prods; _} -> of_prods prods
-    | Parse.NontermReductions {reductions; _} -> of_reductions reductions
-  and of_stmt = function
-    | Parse.StmtPrec {prec=Prec {uident; prec_rels; _}} ->
-      of_prec_rels prec_rels
-      |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
-    | Parse.StmtToken {token=Token {cident; token_alias; of_type0; prec_ref; _}} -> begin
-        of_prec_ref prec_ref
-        |> Option.some_or_thunk ~f:(fun () -> of_of_type0 of_type0)
-        |> Option.some_or_thunk ~f:(fun () -> of_token_alias token_alias)
-        |> Option.value_or_thunk ~f:(fun () -> of_cident cident)
-      end
-    | Parse.StmtNonterm {nonterm} -> of_nonterm nonterm
-    | Parse.StmtCode {code} -> of_code code
-  and of_stmts_tl = function
-    | Parse.StmtsTl {stmt; stmts_tl; _} -> begin
-        (of_stmts_tl stmts_tl)
-        |> Option.some_or_thunk ~f:(fun () -> Some (of_stmt stmt))
-      end
-    | Parse.StmtsTlEpsilon -> None
-  in
-  of_stmts_tl stmts_tl
-  |> Option.value_or_thunk ~f:(fun () -> of_stmt stmt)
-  |> Scan.Token.source
-  |> Hmc.Source.Slice.past
 
 let hm_template = {|{
     Spec = {
@@ -3049,7 +2885,7 @@ let hm_template = {|{
           | _ -> not_reached ()
   }|}
 
-let expand_hm_template template_indentation template
+let expand_hm_template template_indentation template hocc_block
     {algorithm; precs; symbols; prods; reductions; states} formatter =
   let expand_algorithm ~line formatter = begin
     let p = String.C.Slice.(of_string "«algorithm»" |> Pattern.create) in
@@ -3063,7 +2899,7 @@ let expand_hm_template template_indentation template
     formatter
     |> Fmt.fmt line'
   end in
-  let expand_precs ~template_indentation:_ ~line formatter = begin
+  let expand_precs ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Precs.fold ~init:(formatter, true)
       ~f:(fun (formatter, first) Prec.{index; name; assoc; doms; _} ->
@@ -3104,7 +2940,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_prods ~template_indentation:_ ~line formatter = begin
+  let expand_prods ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Prods.fold ~init:(formatter, true)
       ~f:(fun (formatter, first) Prod.{index; lhs_index; rhs_indexes; prec; reduction; _} ->
@@ -3137,7 +2973,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_symbols ~template_indentation:_ ~line formatter = begin
+  let expand_symbols ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first_line = Symbols.symbols_fold ~init:(formatter, true)
       ~f:(fun (formatter, first_line)
@@ -3224,7 +3060,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_states ~template_indentation:_ ~line formatter = begin
+  let expand_states ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Array.fold ~init:(formatter, true)
       ~f:(fun (formatter, first)
@@ -3246,7 +3082,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_tokens ~template_indentation:_ ~line formatter = begin
+  let expand_tokens ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) token ->
@@ -3267,7 +3103,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_token_index ~template_indentation:_ ~line formatter = begin
+  let expand_token_index ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {index; name; qtype; _} ->
@@ -3295,7 +3131,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_nonterms ~template_indentation:_ ~line formatter = begin
+  let expand_nonterms ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) nonterm ->
@@ -3316,7 +3152,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_nonterm_index ~template_indentation:_ ~line formatter = begin
+  let expand_nonterm_index ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {index; name; _} ->
@@ -3339,10 +3175,10 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_reductions ~template_indentation:_ ~line formatter = begin
+  let expand_reductions ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Reductions.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) (Reduction.{index; lhs=_XXX1; rhs; code=_XXX2} as reduction) ->
+      ~f:(fun (formatter, first) (Reduction.{index; lhs=_XXX1; rhs; code} as reduction) ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3354,35 +3190,63 @@ let expand_hm_template template_indentation template
           |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "(* " |> Reduction.Index.pp index
           |> Fmt.fmt " *) "
           |> (fun formatter ->
-            match Reduction.is_epsilon reduction with
+            match Reduction.is_epsilon reduction || Option.is_empty code with
             | false -> begin
+                let underline_cp = Codepoint.of_char '_' in
+                let overline_cp = String.C.Cursor.(hd "‾" |> rget) in
+                let code = Option.value_hlt code in
+                let source = Parse.source_of_code hocc_block code in
                 formatter
                 |> Fmt.fmt "function\n"
                 |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  | "
                 |> (fun formatter ->
                   Reduction.Params.foldi ~init:formatter
-                    ~f:(fun i formatter Reduction.Param.{binding; _} ->
-                    formatter
-                    |> (fun formatter ->
-                      match i with
-                      | 0L -> formatter
-                      | _ -> formatter |> Fmt.fmt " :: "
-                    )
-                    |> (fun formatter ->
-                      match binding with
-                      | Some uname -> formatter |> Fmt.fmt uname
-                      | None -> formatter |> Fmt.fmt "_"
-                    )
-                  ) rhs
+                    ~f:(fun i formatter
+                      Reduction.Param.{binding; symbol_name; qtype={explicit_opt; _}; _} ->
+                      let symbol_constructor = match explicit_opt with
+                        | None -> "Token"
+                        | Some _ -> "Nonterm"
+                      in
+                      formatter
+                      |> (fun formatter ->
+                        match i with
+                        | 0L -> formatter
+                        | _ -> begin
+                            formatter
+                            |> Fmt.fmt "\n"
+                            |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  :: "
+                          end
+                      )
+                      |> (fun formatter ->
+                        match binding with
+                        | Some uname -> begin
+                            formatter
+                            |> Fmt.fmt "{symbol=Symbol."
+                            |> Fmt.fmt symbol_constructor
+                            |> Fmt.fmt " ("
+                            |> Fmt.fmt symbol_name
+                            |> Fmt.fmt " "
+                            |> Fmt.fmt uname
+                            |> Fmt.fmt "); _}"
+                          end
+                        | None -> formatter |> Fmt.fmt "_"
+                      )
+                    ) rhs
                 )
                 |> Fmt.fmt " :: _tl ->\n"
-                (* XXX *)
-(*
-                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "\n"
-*)
+                |> Fmt.fmt ~width:indentation ""
+                |> String.fmt ~pad:underline_cp ~just:Fmt.Left ~width:(100L - indentation) "  # "
+                |> Fmt.fmt "\n"
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  "
+                |> fmt_source_directive (Parse.indentation_of_code hocc_block code) source
+                |> Fmt.fmt (Hmc.Source.Slice.to_string source)
+                |> Fmt.fmt "[:]\n"
+                |> Fmt.fmt ~width:indentation ""
+                |> String.fmt ~pad:overline_cp ~just:Fmt.Left ~width:(100L - indentation) "  # "
+                |> Fmt.fmt "\n"
                 |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  | _ -> not_reached ()"
               end
-            | true -> formatter |> Fmt.fmt "fn stack -> stack\n" (* XXX Add test. *)
+            | true -> formatter |> Fmt.fmt "fn stack -> stack"
           )
         ),
         false
@@ -3390,7 +3254,7 @@ let expand_hm_template template_indentation template
     in
     formatter
   end in
-  let expand_starts ~template_indentation:_ ~line formatter = begin
+  let expand_starts ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
@@ -3478,10 +3342,10 @@ let expand_hm_template template_indentation template
     formatter
   )
 
-let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlude; eoi=Eoi {eoi}}(*XXX as hmh*)) io t =
+let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlude; eoi=Eoi {eoi}} as _XXX_hmh) io t =
 (*
   File.Fmt.stderr
-  |> Parse.fmt_hmh ~alt:true hmh
+  |> Parse.fmt_hmh ~alt:true _XXX_hmh
   |> ignore;
 *)
   let indentation = match hocc with
@@ -3518,24 +3382,18 @@ let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlud
       | MatterEpsilon -> formatter
     )
     |> Fmt.fmt "[:]"
-    |> expand_hm_template indentation hm_template t
+    |> expand_hm_template indentation hm_template hocc_block t
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
-          let base = postlude_base_of_hocc hocc_block in
-          let pos = Hmc.Source.Cursor.pos base in
-          let line = Text.Pos.line pos in
-          let col = Text.Pos.col pos in
+          let base = Parse.postlude_base_of_hocc hocc_block in
           let past = match eoi with
             | HmcToken {source; _} -> Hmc.Source.Slice.past source
             | HoccToken _ -> not_reached ()
           in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter
-          |> Fmt.fmt "[:" |> Fmt.fmt directive_pathstr
-          |> Fmt.fmt ":" |> Uns.fmt line
-          |> Fmt.fmt ":" |> Uns.fmt indentation |> Fmt.fmt "+" |> Uns.fmt (col - indentation)
-          |> Fmt.fmt "]"
+          |> fmt_source_directive indentation source
           |> Fmt.fmt (Hmc.Source.Slice.to_string source)
         end
       | MatterEpsilon -> formatter

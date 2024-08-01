@@ -15,7 +15,7 @@ module Param : sig
     (** Symbol name corresponding to a [start]/[nonterm] or [token] declaration. *)
 
     qtype: QualifiedType.t;
-    (** Qualified type of parameter, e.g. [Explicit {module_:"SomeToken"; type_:"t"}]. *)
+    (** Qualified type of parameter, e.g. [explicit_opt=Some {module_:"SomeToken"; type_:"t"}]. *)
 
     prod_param: Parse.prod_param option;
     (** Declaration AST. *)
