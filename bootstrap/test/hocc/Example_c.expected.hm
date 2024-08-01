@@ -176,13 +176,7 @@ Parser = {
                 Symbol.init ~index:6 ~name:"INT"
                   ~prec:None ~alias:None ~start:false
                   ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 6)
-                  ~follow:(Ordset.of_list Uns [
-                    2
-                    3
-                    4
-                    5
-                    7
-                  ])
+                  ~follow:(Ordset.of_list Uns [2; 3; 4; 5; 7])
                 Symbol.init ~index:7 ~name:"EOI"
                   ~prec:None ~alias:None ~start:false
                   ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 7)
@@ -192,20 +186,14 @@ Parser = {
                   ~prods:(Ordset.of_list Prod [
                     Array.get 0 prods
                     Array.get 1 prods
-                  ]) ~first:(Ordset.of_list Uns [
-                    2
-                    3
-                  ])
+                  ]) ~first:(Ordset.of_list Uns [2; 3])
                   ~follow:(Ordset.singleton Uns 6)
                 Symbol.init ~index:9 ~name:"AddOp"
                   ~prec:None ~alias:None ~start:false
                   ~prods:(Ordset.of_list Prod [
                     Array.get 2 prods
                     Array.get 3 prods
-                  ]) ~first:(Ordset.of_list Uns [
-                    4
-                    5
-                  ])
+                  ]) ~first:(Ordset.of_list Uns [4; 5])
                   ~follow:(Ordset.singleton Uns 6)
                 Symbol.init ~index:10 ~name:"Expr"
                   ~prec:None ~alias:None ~start:false
@@ -214,13 +202,7 @@ Parser = {
                     Array.get 5 prods
                     Array.get 6 prods
                   ]) ~first:(Ordset.singleton Uns 6)
-                  ~follow:(Ordset.of_list Uns [
-                    2
-                    3
-                    4
-                    5
-                    7
-                  ])
+                  ~follow:(Ordset.of_list Uns [2; 3; 4; 5; 7])
                 Symbol.init ~index:11 ~name:"Answer"
                   ~prec:None ~alias:None ~start:true
                   ~prods:(Ordset.singleton Prod 7) ~first:(Ordset.singleton Uns 6)
@@ -380,14 +362,14 @@ Parser = {
 
         Token = {
             type t: t =
-              XXX Token.init ~index:0
-              XXX Token.init ~index:1
-              XXX Token.init ~index:2
-              XXX Token.init ~index:3
-              XXX Token.init ~index:4
-              XXX Token.init ~index:5
-              XXX Token.init ~index:6
-              XXX Token.init ~index:7
+              | EPSILON # "ε"
+              | PSEUDO_END # "⊥"
+              | STAR # "*"
+              | SLASH # "/"
+              | PLUS # "+"
+              | MINUS # "-"
+              | INT of Zint.t
+              | EOI
 
             index = function
               | EPSILON -> 0
@@ -409,11 +391,11 @@ Parser = {
 
         Nonterm = {
             type t: t =
-              XXX Nonterm.init ~index:8
-              XXX Nonterm.init ~index:9
-              XXX Nonterm.init ~index:10
-              XXX Nonterm.init ~index:11
-              XXX Nonterm.init ~index:12
+              | MulOp of Token.t
+              | AddOp of Token.t
+              | Expr of Zint.t
+              | Answer of Zint.t
+              | Answer' of Zint.t
 
             index = function
               | MulOp _ -> 8

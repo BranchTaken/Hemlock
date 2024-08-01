@@ -2212,8 +2212,8 @@ let line_context_indentation line_context =
 
 let macro_of_line line =
   let open String.C in
-  let ldangle = (Codepoint.kv 0xabL) (*"«"*) in
-  let rdangle = (Codepoint.kv 0xbbL) (*"»"*) in
+  let ldangle = Codepoint.kv 0xabL (*'«'*) in
+  let rdangle = Codepoint.kv 0xbbL (*'»'*) in
   match Slice.lfind ldangle line with
   | None -> None
   | Some base -> begin
@@ -3035,7 +3035,7 @@ let expand_hm_template template_indentation template hocc_block
             | _ -> begin
                 formatter
                 |> Fmt.fmt "Ordset.of_list Uns "
-                |> List.fmt ~alt:true ~width:indentation Symbol.Index.pp (Ordset.to_list first)
+                |> List.fmt Symbol.Index.pp (Ordset.to_list first)
               end
           )
           |> Fmt.fmt ")"
@@ -3050,7 +3050,7 @@ let expand_hm_template template_indentation template hocc_block
             | _ -> begin
                 formatter
                 |> Fmt.fmt "Ordset.of_list Uns "
-                |> List.fmt ~alt:true ~width:indentation Symbol.Index.pp (Ordset.to_list follow)
+                |> List.pp Symbol.Index.pp (Ordset.to_list follow)
               end
           )
           |> Fmt.fmt ")"
@@ -3085,7 +3085,7 @@ let expand_hm_template template_indentation template hocc_block
   let expand_tokens ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) token ->
+      ~f:(fun (formatter, first) {name; alias; qtype; _} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3093,10 +3093,28 @@ let expand_hm_template template_indentation template hocc_block
           | false -> formatter |> Fmt.fmt "\n"
         )
         |> (fun formatter ->
-          formatter
-          |> Fmt.fmt ~width:indentation ""
-          |> Fmt.fmt "XXX Token.init"
-          |> Fmt.fmt " ~index:" |> Symbol.Index.pp (Symbol.index token)
+          match qtype with
+          | {explicit_opt=None; _} -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt name
+            end
+          | {explicit_opt=Some {module_; type_}; _} -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt name
+              |> Fmt.fmt " of "
+              |> Fmt.fmt module_
+              |> Fmt.fmt "."
+              |> Fmt.fmt type_
+            end
+        )
+        |> (fun formatter ->
+          match alias with
+          | None -> formatter
+          | Some alias -> formatter |> Fmt.fmt " # " |> String.fmt ~pretty:true alias
         ),
         false
       ) symbols
@@ -3134,7 +3152,7 @@ let expand_hm_template template_indentation template hocc_block
   let expand_nonterms ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) nonterm ->
+      ~f:(fun (formatter, first) {name; qtype; _} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3142,10 +3160,23 @@ let expand_hm_template template_indentation template hocc_block
           | false -> formatter |> Fmt.fmt "\n"
         )
         |> (fun formatter ->
-          formatter
-          |> Fmt.fmt ~width:indentation ""
-          |> Fmt.fmt "XXX Nonterm.init"
-          |> Fmt.fmt " ~index:" |> Symbol.Index.pp (Symbol.index nonterm)
+          match qtype with
+          | {explicit_opt=None; _} -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt name
+            end
+          | {explicit_opt=Some {module_; type_}; _} -> begin
+              formatter
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "| "
+              |> Fmt.fmt name
+              |> Fmt.fmt " of "
+              |> Fmt.fmt module_
+              |> Fmt.fmt "."
+              |> Fmt.fmt type_
+            end
         ),
         false
       ) symbols
@@ -3192,8 +3223,8 @@ let expand_hm_template template_indentation template hocc_block
           |> (fun formatter ->
             match Reduction.is_epsilon reduction || Option.is_empty code with
             | false -> begin
-                let underline_cp = Codepoint.of_char '_' in
-                let overline_cp = String.C.Cursor.(hd "‾" |> rget) in
+                let underline = Codepoint.of_char '_' in
+                let overline = Codepoint.kv 0x203eL (*'‾'*) in
                 let code = Option.value_hlt code in
                 let source = Parse.source_of_code hocc_block code in
                 formatter
@@ -3235,14 +3266,14 @@ let expand_hm_template template_indentation template hocc_block
                 )
                 |> Fmt.fmt " :: _tl ->\n"
                 |> Fmt.fmt ~width:indentation ""
-                |> String.fmt ~pad:underline_cp ~just:Fmt.Left ~width:(100L - indentation) "  # "
+                |> String.fmt ~pad:underline ~just:Fmt.Left ~width:(100L - indentation) "  # "
                 |> Fmt.fmt "\n"
                 |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  "
                 |> fmt_source_directive (Parse.indentation_of_code hocc_block code) source
                 |> Fmt.fmt (Hmc.Source.Slice.to_string source)
                 |> Fmt.fmt "[:]\n"
                 |> Fmt.fmt ~width:indentation ""
-                |> String.fmt ~pad:overline_cp ~just:Fmt.Left ~width:(100L - indentation) "  # "
+                |> String.fmt ~pad:overline ~just:Fmt.Left ~width:(100L - indentation) "  # "
                 |> Fmt.fmt "\n"
                 |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  | _ -> not_reached ()"
               end
