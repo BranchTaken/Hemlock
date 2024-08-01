@@ -538,10 +538,10 @@ parser states can be used as persistent reusable snapshots.
     Spec = {
         Algorithm = {
             type t: t =
-              | Lr1 (** LR(1) algorithm. *)
-              | Ielr1 (** IELR(1) algorithm. *)
-              | Pgm1 (** PGM(1) algorithm. *)
-              | Lalr1 (** LALR(1) algorithm. *)
+              | Lr1 [@doc "LR(1) algorithm."]
+              | Ielr1 [@doc "IELR(1) algorithm."]
+              | Pgm1 [@doc "PGM(1) algorithm."]
+              | Lalr1 [@doc "LALR(1) algorithm."]
 
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
