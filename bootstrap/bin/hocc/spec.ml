@@ -3060,11 +3060,40 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
+  let expand_lr1Itemset ~indentation lr1itemset formatter = begin
+    match Lr1Itemset.is_empty lr1itemset with
+    | false -> begin
+        formatter
+        |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "        Lr1Itemset.init [\n"
+        |> (fun formatter ->
+          Lr1Itemset.fold ~init:formatter
+            ~f:(fun formatter {lr0item={prod={index=prod_index; _}; dot}; follow} ->
+              formatter
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "            (\n"
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "                let lr0item = Lr0Item.init ~prod:"
+              |> Fmt.fmt "(Array.get " |> Prod.Index.pp prod_index |> Fmt.fmt " prods)"
+              |> Fmt.fmt " ~dot:" |> Uns.pp dot |> Fmt.fmt "\n"
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "                let lr1item = Lr1Item.init ~lr0item ~follow:\n"
+              |> Fmt.fmt ~width:indentation ""
+              |> Fmt.fmt "                    Ordset.of_alist " |> Ordset.pp follow |> Fmt.fmt "\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "                lr0item, lr1item\n"
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "              )\n"
+            ) lr1itemset
+        )
+        |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "          ]\n"
+      end
+    | true -> begin
+        formatter
+        |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "        Lr1Itemset.empty\n"
+      end
+  end in
   let expand_states ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Array.fold ~init:(formatter, true)
       ~f:(fun (formatter, first)
-        State.{statenub={lr1itemsetclosure={index; kernel=_XXX1; added=_XXX2}; _}; actions=_XXX3; gotos=_XXX4} ->
+        State.{statenub={lr1itemsetclosure={index; kernel; added}; _}; actions; gotos} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3073,9 +3102,51 @@ let expand_hm_template template_indentation template hocc_block
         )
         |> (fun formatter ->
           formatter
-          |> Fmt.fmt ~width:indentation ""
-          |> Fmt.fmt "XXX State.init"
-          |> Fmt.fmt " ~index:" |> Lr1ItemsetClosure.Index.pp index
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "(* " |> Lr1ItemsetClosure.Index.pp index
+          |> Fmt.fmt " *) State.init\n"
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  ~lr1ItemsetClosure:\n"
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "    Lr1ItemsetClosure.init\n"
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "      ~index:"
+          |> Lr1ItemsetClosure.Index.pp index |> Fmt.fmt "\n"
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "      ~kernel:\n"
+          |> expand_lr1Itemset ~indentation kernel
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "      ~added:\n"
+          |> expand_lr1Itemset ~indentation added
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  ~actions:\n"
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "    Map.of_alist Action [\n"
+          |> (fun formatter ->
+            Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, action_set) ->
+              assert (Ordset.length action_set = 1L);
+              let action = Ordset.choose_hlt action_set in
+              formatter
+              |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "        "
+              |> Symbol.Index.pp symbol_index
+              |> Fmt.fmt ", Action."
+              |> State.Action.pp action
+              |> Fmt.fmt "\n"
+            ) actions
+          )
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "      ]\n"
+          |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  ~gotos:\n"
+          |> (fun formatter ->
+            match Ordmap.is_empty gotos with
+            | false -> begin
+                formatter
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "    Map.of_alist Uns [\n"
+                |> (fun formatter ->
+                  Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, state_index) ->
+                    formatter
+                    |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "        "
+                    |> Symbol.Index.pp symbol_index
+                    |> Fmt.fmt ", Action."
+                    |> State.Index.pp state_index
+                    |> Fmt.fmt "\n"
+                  ) gotos
+                )
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "      ]"
+              end
+            | true -> formatter |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "    Map.empty Uns"
+          )
         ),
         false
       ) states
@@ -3209,7 +3280,7 @@ let expand_hm_template template_indentation template hocc_block
   let expand_reductions ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Reductions.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) (Reduction.{index; lhs=_XXX1; rhs; code} as reduction) ->
+      ~f:(fun (formatter, first) (Reduction.{index; rhs; code; _} as reduction) ->
         formatter
         |> (fun formatter ->
           match first with

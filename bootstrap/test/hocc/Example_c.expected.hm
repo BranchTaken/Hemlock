@@ -343,20 +343,506 @@ Parser = {
               }
 
             states = [|
-                XXX State.init ~index:0
-                XXX State.init ~index:1
-                XXX State.init ~index:2
-                XXX State.init ~index:3
-                XXX State.init ~index:4
-                XXX State.init ~index:5
-                XXX State.init ~index:6
-                XXX State.init ~index:7
-                XXX State.init ~index:8
-                XXX State.init ~index:9
-                XXX State.init ~index:10
-                XXX State.init ~index:11
-                XXX State.init ~index:12
-                XXX State.init ~index:13
+                (* 0 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:0
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 8 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [0]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 7 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [1]
+                                lr0item, lr1item
+                              )
+                          ]
+                  ~actions:
+                    Map.of_alist Action [
+                        6, Action.ShiftPrefix 1
+                      ]
+                  ~gotos:
+                    Map.of_alist Uns [
+                        10, Action.2
+                        11, Action.3
+                      ]
+                (* 1 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:1
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        2, Action.Reduce 6
+                        3, Action.Reduce 6
+                        4, Action.Reduce 6
+                        5, Action.Reduce 6
+                        7, Action.Reduce 6
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 2 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:2
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 7 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [1]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                          ]
+                  ~actions:
+                    Map.of_alist Action [
+                        2, Action.ShiftPrefix 4
+                        3, Action.ShiftPrefix 5
+                        4, Action.ShiftPrefix 6
+                        5, Action.ShiftPrefix 7
+                        7, Action.ShiftAccept 8
+                      ]
+                  ~gotos:
+                    Map.of_alist Uns [
+                        8, Action.9
+                        9, Action.10
+                      ]
+                (* 3 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:3
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 8 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [0]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        1, Action.ShiftPrefix 11
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 4 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:4
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        6, Action.Reduce 0
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 5 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:5
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        6, Action.Reduce 1
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 6 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:6
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        6, Action.Reduce 2
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 7 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:7
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        6, Action.Reduce 3
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 8 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:8
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 7 prods) ~dot:2
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [1]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        1, Action.Reduce 7
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 9 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:9
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:2
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                          ]
+                  ~actions:
+                    Map.of_alist Action [
+                        6, Action.ShiftPrefix 1
+                      ]
+                  ~gotos:
+                    Map.of_alist Uns [
+                        10, Action.12
+                      ]
+                (* 10 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:10
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:2
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                          ]
+                  ~actions:
+                    Map.of_alist Action [
+                        6, Action.ShiftPrefix 1
+                      ]
+                  ~gotos:
+                    Map.of_alist Uns [
+                        10, Action.13
+                      ]
+                (* 11 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:11
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 8 prods) ~dot:2
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [0]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.empty
+                  ~actions:
+                    Map.of_alist Action [
+                        0, Action.Reduce 8
+                      ]
+                  ~gotos:
+                    Map.empty Uns
+                (* 12 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:12
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:3
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                          ]
+                  ~actions:
+                    Map.of_alist Action [
+                        2, Action.Reduce 4
+                        3, Action.Reduce 4
+                        4, Action.Reduce 4
+                        5, Action.Reduce 4
+                        7, Action.Reduce 4
+                      ]
+                  ~gotos:
+                    Map.of_alist Uns [
+                        8, Action.9
+                        9, Action.10
+                      ]
+                (* 13 *) State.init
+                  ~lr1ItemsetClosure:
+                    Lr1ItemsetClosure.init
+                      ~index:13
+                      ~kernel:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:1
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:3
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [2; 3; 4; 5; 7]
+                                lr0item, lr1item
+                              )
+                          ]
+                      ~added:
+                        Lr1Itemset.init [
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                            (
+                                let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
+                                let lr1item = Lr1Item.init ~lr0item ~follow:
+                                    Ordset.of_alist [6]
+                                lr0item, lr1item
+                              )
+                          ]
+                  ~actions:
+                    Map.of_alist Action [
+                        2, Action.ShiftPrefix 4
+                        3, Action.ShiftPrefix 5
+                        4, Action.Reduce 5
+                        5, Action.Reduce 5
+                        7, Action.Reduce 5
+                      ]
+                  ~gotos:
+                    Map.of_alist Uns [
+                        8, Action.9
+                        9, Action.10
+                      ]
               |]
           }
 
