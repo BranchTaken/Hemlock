@@ -2384,6 +2384,7 @@ let fmt_source_directive indentation source formatter =
   |> Fmt.fmt "]"
 
 let to_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io t =
+  assert (conflicts t = 0L);
   let indentation = match hocc with
     | HmcToken _ -> not_reached ()
     | HoccToken {source; _} -> Hmc.Source.Slice.line_context source |> line_context_indentation
@@ -3450,6 +3451,7 @@ let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlud
   |> Parse.fmt_hmh ~alt:true _XXX_hmh
   |> ignore;
 *)
+  assert (conflicts t = 0L);
   let indentation = match hocc with
     | HmcToken _ -> not_reached ()
     | HoccToken {source; _} -> Hmc.Source.Slice.line_context source |> line_context_indentation
@@ -3504,8 +3506,10 @@ let to_hm conf Parse.(Hmh {prelude; hocc=(Hocc {hocc; _} as hocc_block); postlud
   in
   io
 
-let to_mli _conf _hmhi _io _t =
+let to_mli _conf _hmhi _io t =
+  assert (conflicts t = 0L);
   not_implemented "XXX"
 
-let to_ml _conf _hmh _io _t =
+let to_ml _conf _hmh _io t =
+  assert (conflicts t = 0L);
   not_implemented "XXX"

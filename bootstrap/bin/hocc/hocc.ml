@@ -55,25 +55,47 @@ let _ =
     | false -> io
     | true -> Spec.to_hocc io spec
   in
+  let nconflicts = Spec.conflicts spec in
+  let conflicts = nconflicts <> 0L in
   let io = match Conf.hemlock conf with
     | false -> io
     | true -> begin
-        let io = match hmhi_opt with
-          | None -> io
-          | Some hmhi -> Spec.to_hmi conf hmhi io spec
-        in
-        Spec.to_hm conf hmh io spec
+        match conflicts with
+        | false -> begin
+            let io = match hmhi_opt with
+              | None -> io
+              | Some hmhi -> Spec.to_hmi conf hmhi io spec
+            in
+            Spec.to_hm conf hmh io spec
+          end
+        | true -> begin
+            io.err
+            |> Fmt.fmt "hocc: Hemlock code not generated due to conflict"
+            |> Fmt.fmt (match nconflicts with 1L -> "" | _ -> "s")
+            |> Fmt.fmt "\n"
+            |> Io.with_err io
+          end
       end
   in
   let io = match Conf.ocaml conf with
     | false -> io
     | true -> begin
-        let io = match hmhi_opt with
-          | None -> io
-          | Some hmhi -> Spec.to_mli conf hmhi io spec
-        in
-        Spec.to_ml conf hmh io spec
+        match conflicts with
+        | false -> begin
+            let io = match hmhi_opt with
+              | None -> io
+              | Some hmhi -> Spec.to_mli conf hmhi io spec
+            in
+            Spec.to_ml conf hmh io spec
+          end
+        | true -> begin
+            io.err
+            |> Fmt.fmt "hocc: OCaml code not generated due to conflict"
+            |> Fmt.fmt (match nconflicts with 1L -> "" | _ -> "s")
+            |> Fmt.fmt "\n"
+            |> Io.with_err io
+          end
       end
   in
-  let _io = Io.fini conf io in
+  let _io = Io.fini conf conflicts io in
   ()
