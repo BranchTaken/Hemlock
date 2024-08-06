@@ -45,15 +45,15 @@ let _ =
   let io, spec = Spec.init (Conf.algorithm conf) ~resolve:(Conf.resolve conf) io hmh in
   let io = match Conf.text conf with
     | false -> io
-    | true -> Spec.to_txt conf io spec
+    | true -> Description.generate_txt conf io spec
   in
   let io = match Conf.html conf with
     | false -> io
-    | true -> Spec.to_html conf io spec
+    | true -> Description.generate_html conf io spec
   in
   let io = match Conf.hocc conf with
     | false -> io
-    | true -> Spec.to_hocc io spec
+    | true -> Grammar.generate_hocc io spec
   in
   let nconflicts = Spec.conflicts spec in
   let conflicts = nconflicts <> 0L in
@@ -64,9 +64,9 @@ let _ =
         | false -> begin
             let io = match hmhi_opt with
               | None -> io
-              | Some hmhi -> Spec.to_hmi conf hmhi io spec
+              | Some hmhi -> Code.generate_hmi conf hmhi io spec
             in
-            Spec.to_hm conf hmh io spec
+            Code.generate_hm conf hmh io spec
           end
         | true -> begin
             io.err
@@ -84,9 +84,9 @@ let _ =
         | false -> begin
             let io = match hmhi_opt with
               | None -> io
-              | Some hmhi -> Spec.to_mli conf hmhi io spec
+              | Some hmhi -> Code.generate_mli conf hmhi io spec
             in
-            Spec.to_ml conf hmh io spec
+            Code.generate_ml conf hmh io spec
           end
         | true -> begin
             io.err
