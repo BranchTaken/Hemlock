@@ -22,7 +22,7 @@ Parser = {
                     formatter |> Fmt.fmt (to_string t)
               }
 
-        algorithm = Algorithm.Lr1
+            algorithm = Algorithm.Lr1
 
             Assoc = {
                 type t: t =
