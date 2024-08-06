@@ -1,19 +1,63 @@
 open Basis
 open! Basis.Rudiments
 
-let state_of_synthetic_start_symbol symbols states synthetic_start_symbol =
-  assert (Symbol.is_synthetic synthetic_start_symbol);
-  assert (synthetic_start_symbol.start);
-  Array.find ~f:(fun state ->
-    match State.is_start state with
-    | false -> false
-    | true -> begin
-        let start_symbol_index = State.start_symbol_index state in
-        let start_symbol = Symbols.symbol_of_symbol_index start_symbol_index symbols in
-        Symbol.(start_symbol = synthetic_start_symbol)
-      end
-  ) states
-  |> Option.value_hlt
+let line_raw_indentation line =
+  String.C.Slice.fold_until ~init:0L ~f:(fun col cp ->
+    match cp with
+    | cp when Codepoint.(cp = of_char ' ') -> succ col, false
+    | _ -> col, true
+  ) line
+
+let line_context_raw_indentation line_context =
+  let line =
+    line_context
+    |> List.map ~f:Hmc.Source.Slice.to_string
+    |> String.join
+    |> String.C.Slice.of_string
+  in
+  line_raw_indentation line
+
+let line_context_indentation line_context =
+  let raw_indentation = line_context_raw_indentation line_context in
+  (* Continuation lines have an extra 2 spaces; omit them from the result if present. *)
+  raw_indentation - (raw_indentation % 4L)
+
+let macro_of_line line =
+  let open String.C in
+  let ldangle = Codepoint.kv 0xabL (*'«'*) in
+  let rdangle = Codepoint.kv 0xbbL (*'»'*) in
+  match Slice.lfind ldangle line with
+  | None -> None
+  | Some base -> begin
+      let slice = Slice.of_cursors ~base ~past:(Slice.past line) in
+      match Slice.rfind rdangle slice with
+      | None -> None
+      | Some rdangle_base -> begin
+          let past = Cursor.succ rdangle_base in
+          let macro = Slice.of_cursors ~base ~past |> Slice.to_string in
+          Some macro
+        end
+    end
+
+let module_name conf =
+  Path.Segment.to_string_hlt (Conf.module_ conf)
+
+let fmt_source_directive indentation source formatter =
+  let directive_pathstr =
+    Hmc.Source.Slice.container source
+    |> Hmc.Source.path
+    |> Option.value_hlt
+    |> Path.to_string_hlt
+  in
+  let base = Hmc.Source.Slice.base source in
+  let pos = Hmc.Source.Cursor.pos base in
+  let line = Text.Pos.line pos in
+  let col = Text.Pos.col pos in
+  formatter
+  |> Fmt.fmt "[:" |> String.pp directive_pathstr
+  |> Fmt.fmt ":" |> Uns.fmt line
+  |> Fmt.fmt ":" |> Uns.fmt indentation |> Fmt.fmt "+" |> Uns.fmt (col - indentation)
+  |> Fmt.fmt "]"
 
 let hmi_template = {|{
     Spec = {
@@ -249,47 +293,8 @@ let hmi_template = {|{
       result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
   }|}
 
-(* XXX Refactor to make `line` a string slice. *)
-let line_raw_indentation line =
-  String.fold_until ~init:0L ~f:(fun col cp ->
-    match cp with
-    | cp when Codepoint.(cp = of_char ' ') -> succ col, false
-    | _ -> col, true
-  ) line
-
-let line_context_raw_indentation line_context =
-  let line =
-    line_context
-    |> List.map ~f:Hmc.Source.Slice.to_string
-    |> String.join
-  in
-  line_raw_indentation line
-
-let line_context_indentation line_context =
-  let raw_indentation = line_context_raw_indentation line_context in
-  (* Continuation lines have an extra 2 spaces; omit them from the result if present. *)
-  raw_indentation - (raw_indentation % 4L)
-
-let macro_of_line line =
-  let open String.C in
-  let ldangle = Codepoint.kv 0xabL (*'«'*) in
-  let rdangle = Codepoint.kv 0xbbL (*'»'*) in
-  match Slice.lfind ldangle line with
-  | None -> None
-  | Some base -> begin
-      let slice = Slice.of_cursors ~base ~past:(Slice.past line) in
-      match Slice.rfind rdangle slice with
-      | None -> None
-      | Some rdangle_base -> begin
-          let past = Cursor.succ rdangle_base in
-          let macro = Slice.of_cursors ~base ~past |> Slice.to_string in
-          Some macro
-        end
-    end
-
 let expand_hmi_template template_indentation template Spec.{symbols; _} formatter =
-  let expand_tokens ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_tokens ~indentation formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; alias; qtype; _}->
         formatter
@@ -327,8 +332,7 @@ let expand_hmi_template template_indentation template Spec.{symbols; _} formatte
     in
     formatter
   end in
-  let expand_nonterms ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_nonterms ~indentation formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; qtype; _} ->
         formatter
@@ -361,8 +365,7 @@ let expand_hmi_template template_indentation template Spec.{symbols; _} formatte
     in
     formatter
   end in
-  let expand_starts ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_starts ~indentation formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
         (match start && (not synthetic) with
@@ -398,13 +401,11 @@ let expand_hmi_template template_indentation template Spec.{symbols; _} formatte
           | false -> formatter |> Fmt.fmt "\n"
         )
         |> (fun formatter ->
+          let indentation = template_indentation + (line_raw_indentation line) in
           match macro_of_line line with
-          | Some "«tokens»" ->
-            formatter |> expand_tokens ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«nonterms»" ->
-            formatter |> expand_nonterms ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«starts»" ->
-            formatter |> expand_starts ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«tokens»" -> formatter |> expand_tokens ~indentation
+          | Some "«nonterms»" -> formatter |> expand_nonterms ~indentation
+          | Some "«starts»" -> formatter |> expand_starts ~indentation
           | None -> begin
               formatter
               |> (fun formatter ->
@@ -422,26 +423,6 @@ let expand_hmi_template template_indentation template Spec.{symbols; _} formatte
     in
     formatter
   )
-
-let module_name conf =
-  Path.Segment.to_string_hlt (Conf.module_ conf)
-
-let fmt_source_directive indentation source formatter =
-  let directive_pathstr =
-    Hmc.Source.Slice.container source
-    |> Hmc.Source.path
-    |> Option.value_hlt
-    |> Path.to_string_hlt
-  in
-  let base = Hmc.Source.Slice.base source in
-  let pos = Hmc.Source.Cursor.pos base in
-  let line = Text.Pos.line pos in
-  let col = Text.Pos.col pos in
-  formatter
-  |> Fmt.fmt "[:" |> String.pp directive_pathstr
-  |> Fmt.fmt ":" |> Uns.fmt line
-  |> Fmt.fmt ":" |> Uns.fmt indentation |> Fmt.fmt "+" |> Uns.fmt (col - indentation)
-  |> Fmt.fmt "]"
 
 let generate_hmi conf Parse.(Hmhi {prelude; hocc; postlude; eoi=Eoi {eoi}}) io spec =
   assert (Spec.conflicts spec = 0L);
@@ -946,6 +927,20 @@ let hm_template = {|{
           | _ -> not_reached ()
   }|}
 
+let state_of_synthetic_start_symbol symbols states synthetic_start_symbol =
+  assert (Symbol.is_synthetic synthetic_start_symbol);
+  assert (synthetic_start_symbol.start);
+  Array.find ~f:(fun state ->
+    match State.is_start state with
+    | false -> false
+    | true -> begin
+        let start_symbol_index = State.start_symbol_index state in
+        let start_symbol = Symbols.symbol_of_symbol_index start_symbol_index symbols in
+        Symbol.(start_symbol = synthetic_start_symbol)
+      end
+  ) states
+  |> Option.value_hlt
+
 let expand_hm_template template_indentation template hocc_block
     Spec.{algorithm; precs; symbols; prods; reductions; states} formatter =
   let expand_algorithm ~line formatter = begin
@@ -960,8 +955,7 @@ let expand_hm_template template_indentation template hocc_block
     formatter
     |> Fmt.fmt line'
   end in
-  let expand_precs ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_precs ~indentation formatter = begin
     let formatter, _first = Precs.fold ~init:(formatter, true)
       ~f:(fun (formatter, first) Prec.{index; name; assoc; doms; _} ->
         formatter
@@ -1001,8 +995,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_prods ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_prods ~indentation formatter = begin
     let formatter, _first = Prods.fold ~init:(formatter, true)
       ~f:(fun (formatter, first) Prod.{index; lhs_index; rhs_indexes; prec; reduction; _} ->
         formatter
@@ -1034,8 +1027,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_symbols ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_symbols ~indentation formatter = begin
     let formatter, _first_line = Symbols.symbols_fold ~init:(formatter, true)
       ~f:(fun (formatter, first_line)
         Symbol.{index; name; prec; alias; start; prods; first; follow; _} ->
@@ -1150,8 +1142,7 @@ let expand_hm_template template_indentation template hocc_block
         |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "        Lr1Itemset.empty\n"
       end
   end in
-  let expand_states ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_states ~indentation formatter = begin
     let formatter, _first = Array.fold ~init:(formatter, true)
       ~f:(fun (formatter, first)
         State.{statenub={lr1itemsetclosure={index; kernel; added}; _}; actions; gotos} ->
@@ -1214,8 +1205,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_tokens ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_tokens ~indentation formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; alias; qtype; _} ->
         formatter
@@ -1253,8 +1243,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_token_index ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_token_index ~indentation formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {index; name; qtype; _} ->
         formatter
@@ -1281,8 +1270,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_nonterms ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_nonterms ~indentation formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; qtype; _} ->
         formatter
@@ -1315,8 +1303,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_nonterm_index ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_nonterm_index ~indentation formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {index; name; _} ->
         formatter
@@ -1338,8 +1325,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_reductions ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_reductions ~indentation formatter = begin
     let formatter, _first = Reductions.fold ~init:(formatter, true)
       ~f:(fun (formatter, first) (Reduction.{index; lhs_name; rhs; code; _} as reduction) ->
         formatter
@@ -1419,8 +1405,7 @@ let expand_hm_template template_indentation template hocc_block
     in
     formatter
   end in
-  let expand_starts ~template_indentation ~line formatter = begin
-    let indentation = template_indentation + (line_raw_indentation line) in
+  let expand_starts ~indentation formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
       ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
         match (start && (not synthetic)) with
@@ -1467,29 +1452,20 @@ let expand_hm_template template_indentation template hocc_block
           | false -> formatter |> Fmt.fmt "\n"
         )
         |> (fun formatter ->
+          let indentation = template_indentation + (line_raw_indentation line) in
           match macro_of_line line with
           | Some "«algorithm»" ->
             formatter |> expand_algorithm ~line
-          | Some "«precs»" ->
-            formatter |> expand_precs ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«prods»" ->
-            formatter |> expand_prods ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«symbols»" ->
-            formatter |> expand_symbols ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«states»" ->
-            formatter |> expand_states ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«tokens»" ->
-            formatter |> expand_tokens ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«token_index»" ->
-            formatter |> expand_token_index ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«nonterms»" ->
-            formatter |> expand_nonterms ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«nonterm_index»" ->
-            formatter |> expand_nonterm_index ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«reductions»" ->
-            formatter |> expand_reductions ~template_indentation ~line:(String.C.Slice.to_string line)
-          | Some "«starts»" ->
-            formatter |> expand_starts ~template_indentation ~line:(String.C.Slice.to_string line)
+          | Some "«precs»" -> formatter |> expand_precs ~indentation
+          | Some "«prods»" -> formatter |> expand_prods ~indentation
+          | Some "«symbols»" -> formatter |> expand_symbols ~indentation
+          | Some "«states»" -> formatter |> expand_states ~indentation
+          | Some "«tokens»" -> formatter |> expand_tokens ~indentation
+          | Some "«token_index»" -> formatter |> expand_token_index ~indentation
+          | Some "«nonterms»" -> formatter |> expand_nonterms ~indentation
+          | Some "«nonterm_index»" -> formatter |> expand_nonterm_index ~indentation
+          | Some "«reductions»" -> formatter |> expand_reductions ~indentation
+          | Some "«starts»" -> formatter |> expand_starts ~indentation
           | None -> begin
               formatter
               |> (fun formatter ->
