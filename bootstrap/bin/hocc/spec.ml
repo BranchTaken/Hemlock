@@ -439,7 +439,7 @@ let symbols_init io precs symbols hmh =
             end
           | PrecRefEpsilon -> nonterm_prec
         in
-        let lhs = nonterm_info.qtype in
+        let lhs = nonterm_info in
         let reduction, reductions = match reduction with
           | Some reduction -> reduction, reductions
           | None -> begin
@@ -593,15 +593,20 @@ let symbols_init io precs symbols hmh =
           (* Synthesize wrapper for start symbol. *)
           let name' = name ^ "'" in
           let Symbols.{index=index'; _} = Symbols.info_of_name_hlt name' symbols in
+          let lhs = Symbols.{
+            index=index';
+            name=name';
+            alias=None;
+            qtype=QualifiedType.synthetic_wrapper qtype;
+          } in
           let Symbol.{index=pe_index; name=pe_name; qtype=pe_qtype; _} = Symbol.pseudo_end in
           let io, rhs = Reduction.Params.init io [|
             Reduction.Param.init ~binding:(Some "start") ~symbol_name:name ~qtype ~prod_param:None;
             Reduction.Param.init ~binding:None ~symbol_name:pe_name ~qtype:pe_qtype
               ~prod_param:None;
           |] in
-          let qtype' = QualifiedType.synthetic_wrapper qtype in
           let reduction, reductions =
-            Reductions.insert ~lhs:qtype' ~rhs ~code:None reductions in
+            Reductions.insert ~lhs ~rhs ~code:None reductions in
           let prod, prods = Prods.insert ~lhs_index:index' ~rhs_indexes:[|index; pe_index|]
             ~prec:None ~stmt:None ~reduction prods in
           let nonterm_prods = Ordset.singleton (module Prod) prod in
@@ -3281,7 +3286,7 @@ let expand_hm_template template_indentation template hocc_block
   let expand_reductions ~template_indentation ~line formatter = begin
     let indentation = template_indentation + (line_raw_indentation line) in
     let formatter, _first = Reductions.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) (Reduction.{index; rhs; code; _} as reduction) ->
+      ~f:(fun (formatter, first) (Reduction.{index; lhs_name; rhs; code; _} as reduction) ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3301,42 +3306,44 @@ let expand_hm_template template_indentation template hocc_block
                 let source = Parse.source_of_code hocc_block code in
                 formatter
                 |> Fmt.fmt "function\n"
-                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  | "
                 |> (fun formatter ->
-                  Reduction.Params.foldi ~init:formatter
-                    ~f:(fun i formatter
-                      Reduction.Param.{binding; symbol_name; qtype={explicit_opt; _}; _} ->
-                      let symbol_constructor = match explicit_opt with
-                        | None -> "Token"
-                        | Some _ -> "Nonterm"
-                      in
-                      formatter
-                      |> (fun formatter ->
-                        match i with
-                        | 0L -> formatter
-                        | _ -> begin
-                            formatter
-                            |> Fmt.fmt "\n"
-                            |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  :: "
-                          end
-                      )
-                      |> (fun formatter ->
-                        match binding with
-                        | Some uname -> begin
-                            formatter
-                            |> Fmt.fmt "{symbol=Symbol."
-                            |> Fmt.fmt symbol_constructor
-                            |> Fmt.fmt " ("
-                            |> Fmt.fmt symbol_name
-                            |> Fmt.fmt " "
-                            |> Fmt.fmt uname
-                            |> Fmt.fmt "); _}"
-                          end
-                        | None -> formatter |> Fmt.fmt "_"
-                      )
-                    ) rhs
+                  let formatter, _first =
+                    Reduction.Params.fold_right ~init:(formatter, true)
+                      ~f:(fun (formatter, first)
+                        Reduction.Param.{binding; symbol_name; qtype={explicit_opt; _}; _} ->
+                        let symbol_constructor = match explicit_opt with
+                          | None -> "Token"
+                          | Some _ -> "Nonterm"
+                        in
+                        formatter
+                        |> Fmt.fmt ~width:indentation ""
+                        |> Fmt.fmt (match first with
+                          | true -> "  | "
+                          | false -> "  :: "
+                        )
+                        |> (fun formatter ->
+                          match binding with
+                          | Some uname -> begin
+                              (* XXX Binding to a payload-free token should be an error. *)
+                              formatter
+                              |> Fmt.fmt "{symbol=Symbol."
+                              |> Fmt.fmt symbol_constructor
+                              |> Fmt.fmt " ("
+                              |> Fmt.fmt symbol_name
+                              |> Fmt.fmt " "
+                              |> Fmt.fmt uname
+                              |> Fmt.fmt "); _}"
+                            end
+                          | None -> formatter |> Fmt.fmt "_"
+                        )
+                        |> Fmt.fmt "\n"
+                      , false
+                      ) rhs
+                  in
+                  formatter
                 )
-                |> Fmt.fmt " :: _tl ->\n"
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  :: tl -> Symbol.Nonterm ("
+                |> Fmt.fmt lhs_name |> Fmt.fmt " (\n"
                 |> Fmt.fmt ~width:indentation ""
                 |> String.fmt ~pad:underline ~just:Fmt.Left ~width:(100L - indentation) "  # "
                 |> Fmt.fmt "\n"
@@ -3347,6 +3354,7 @@ let expand_hm_template template_indentation template hocc_block
                 |> Fmt.fmt ~width:indentation ""
                 |> String.fmt ~pad:overline ~just:Fmt.Left ~width:(100L - indentation) "  # "
                 |> Fmt.fmt "\n"
+                |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  )) :: tl\n"
                 |> Fmt.fmt ~width:indentation "" |> Fmt.fmt "  | _ -> not_reached ()"
               end
             | true -> formatter |> Fmt.fmt "fn stack -> stack"

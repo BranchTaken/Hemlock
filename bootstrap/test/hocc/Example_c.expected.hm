@@ -948,61 +948,79 @@ Parser = {
 
         reductions = [|
             (* 0 *) function
-              | _ :: _tl ->
+              | _
+              :: tl -> Symbol.Nonterm (MulOp (
               # ____________________________________________________________________________________
               [:"./Example_c.hmh":10:8+11]STAR[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 1 *) function
-              | _ :: _tl ->
+              | _
+              :: tl -> Symbol.Nonterm (MulOp (
               # ____________________________________________________________________________________
               [:"./Example_c.hmh":11:8+11]SLASH[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 2 *) function
-              | _ :: _tl ->
+              | _
+              :: tl -> Symbol.Nonterm (AddOp (
               # ____________________________________________________________________________________
               [:"./Example_c.hmh":17:8+11]PLUS[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 3 *) function
-              | _ :: _tl ->
+              | _
+              :: tl -> Symbol.Nonterm (AddOp (
               # ____________________________________________________________________________________
               [:"./Example_c.hmh":18:8+11]MINUS[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 4 *) function
-              | {symbol=Symbol.Nonterm (Expr e0); _}
+              | {symbol=Symbol.Nonterm (Expr e1); _}
               :: {symbol=Symbol.Nonterm (MulOp op); _}
-              :: {symbol=Symbol.Nonterm (Expr e1); _} :: _tl ->
+              :: {symbol=Symbol.Nonterm (Expr e0); _}
+              :: tl -> Symbol.Nonterm (Expr (
               # ____________________________________________________________________________________
               [:"./Example_c.hmh":23:12+0]match op with
-              | MulOp STAR -> Zint.(e0 * e1)
-              | MulOp SLASH -> Zint.(e0 / e1)[:]
+              | STAR -> Zint.(e0 * e1)
+              | SLASH -> Zint.(e0 / e1)
+              | _ -> not_reached ()[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 5 *) function
-              | {symbol=Symbol.Nonterm (Expr e0); _}
+              | {symbol=Symbol.Nonterm (Expr e1); _}
               :: {symbol=Symbol.Nonterm (AddOp op); _}
-              :: {symbol=Symbol.Nonterm (Expr e1); _} :: _tl ->
+              :: {symbol=Symbol.Nonterm (Expr e0); _}
+              :: tl -> Symbol.Nonterm (Expr (
               # ____________________________________________________________________________________
-              [:"./Example_c.hmh":27:12+0]match op with
-              | AddOp PLUS -> Zint.(e0 + e1)
-              | AddOp MINUS -> Zint.(e0 - e1)[:]
+              [:"./Example_c.hmh":28:12+0]match op with
+              | PLUS -> Zint.(e0 + e1)
+              | MINUS -> Zint.(e0 - e1)
+              | _ -> not_reached ()[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 6 *) function
-              | {symbol=Symbol.Nonterm (INT x); _} :: _tl ->
+              | {symbol=Symbol.Nonterm (INT x); _}
+              :: tl -> Symbol.Nonterm (Expr (
               # ____________________________________________________________________________________
-              [:"./Example_c.hmh":30:8+13]x[:]
+              [:"./Example_c.hmh":32:8+13]x[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 7 *) function
-              | {symbol=Symbol.Nonterm (Expr e); _}
-              :: _ :: _tl ->
+              | _
+              :: {symbol=Symbol.Nonterm (Expr e); _}
+              :: tl -> Symbol.Nonterm (Answer (
               # ____________________________________________________________________________________
-              [:"./Example_c.hmh":34:8+18]e[:]
+              [:"./Example_c.hmh":36:8+18]e[:]
               # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+              )) :: tl
               | _ -> not_reached ()
             (* 8 *) fn stack -> stack
           |]
@@ -1110,7 +1128,7 @@ Parser = {
             match status with
               | Status.Prefix -> t |> feed token |> walk
               | _ -> not_reached ()
-      }[:"./Example_c.hmh":34:4+23]
+      }[:"./Example_c.hmh":36:4+23]
   }
 
 # Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.

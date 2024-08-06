@@ -21,12 +21,14 @@ include
     nonterm Expr of Zint.t ::=
       | e0:Expr op:MulOp e1:Expr prec mul ->
         match op with
-          | MulOp STAR -> Zint.(e0 * e1)
-          | MulOp SLASH -> Zint.(e0 / e1)
+          | STAR -> Zint.(e0 * e1)
+          | SLASH -> Zint.(e0 / e1)
+          | _ -> not_reached ()
       | e0:Expr op:AddOp e1:Expr prec add ->
         match op with
-          | AddOp PLUS -> Zint.(e0 + e1)
-          | AddOp MINUS -> Zint.(e0 - e1)
+          | PLUS -> Zint.(e0 + e1)
+          | MINUS -> Zint.(e0 - e1)
+          | _ -> not_reached ()
       | x:INT -> x
 
     token EOI

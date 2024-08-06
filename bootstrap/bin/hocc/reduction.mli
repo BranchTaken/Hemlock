@@ -48,7 +48,10 @@ type t = {
   index: Index.t;
   (** Unique reduction index. *)
 
-  lhs: QualifiedType.t;
+  lhs_name: string;
+  (** Name of enclosing nonterm. *)
+
+  lhs_qtype: QualifiedType.t;
   (** Qualified type of LHS. *)
 
   rhs: Params.t;
@@ -60,7 +63,8 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
-val init: index:Index.t -> lhs:QualifiedType.t -> rhs:Params.t -> code:Parse.code option -> t
+val init: index:Index.t -> lhs_name:string -> lhs_qtype:QualifiedType.t -> rhs:Params.t
+  -> code:Parse.code option -> t
 (** Used only by [Reductions.init]. *)
 
 val is_epsilon: t -> bool
