@@ -305,13 +305,6 @@ let symbols_init io precs symbols hmh =
     match prod_param with
     | Parse.ProdParamBinding {prod_param_symbol; _}
     | Parse.ProdParam {prod_param_symbol} -> begin
-        let binding = match prod_param with
-          | Parse.ProdParamBinding {ident=IdentUident {uident=Uident {uident=ident}}; _}
-          | Parse.ProdParamBinding {ident=IdentCident {cident=Cident {cident=ident}}; _} ->
-            Some (string_of_token ident)
-          | Parse.ProdParamBinding {ident=IdentUscore _; _}
-          | Parse.ProdParam _ -> None
-        in
         let io, symbol_name, qtype = match prod_param_symbol with
           | ProdParamSymbolCident {cident=Cident {cident}} -> begin
               let symbol_name = string_of_token cident in
@@ -354,6 +347,44 @@ let symbols_init io precs symbols hmh =
                 end
               | Some Symbols.{name; qtype; _} -> io, name, qtype
             end
+        in
+        let io, binding = match prod_param with
+          | Parse.ProdParamBinding
+              {ident=IdentUident {uident=Uident {uident=ident}}; colon; prod_param_symbol}
+          | Parse.ProdParamBinding
+              {ident=IdentCident {cident=Cident {cident=ident}}; colon; prod_param_symbol} -> begin
+              let Symbols.{name; qtype; _} = match prod_param_symbol with
+                | ProdParamSymbolCident {cident=Cident {cident}} -> begin
+                    Symbols.info_of_name_hlt (Hmc.Source.Slice.to_string (Scan.Token.source cident))
+                      symbols
+                  end
+                | ProdParamSymbolAlias {alias} -> begin
+                    Symbols.info_of_alias_hlt (Hmc.Source.Slice.to_string (Scan.Token.source alias))
+                      symbols
+                  end
+              in
+              let io = match qtype with
+                | {explicit_opt=None; _} -> begin
+                    let base = Scan.Token.source ident |> Hmc.Source.Slice.base in
+                    let past = Scan.Token.source colon |> Hmc.Source.Slice.past in
+                    let source = Hmc.Source.Slice.of_cursors ~base ~past in
+                    let io =
+                      io.err
+                      |> Fmt.fmt "hocc: At "
+                      |> Hmc.Source.Slice.pp source
+                      |> Fmt.fmt ": Cannot bind to empty token variant: "
+                      |> Fmt.fmt (Hmc.Source.Slice.to_string (Scan.Token.source ident))
+                      |> Fmt.fmt ":" |> Fmt.fmt name |> Fmt.fmt "\n"
+                      |> Io.with_err io
+                    in
+                    Io.fatal io
+                  end
+                | {explicit_opt=Some _; _} -> io
+              in
+              io, Some (string_of_token ident)
+            end
+          | Parse.ProdParamBinding {ident=IdentUscore _; _}
+          | Parse.ProdParam _ -> io, None
         in
         let param =
           Reduction.Param.init ~binding ~symbol_name ~qtype ~prod_param:(Some prod_param) in
@@ -3324,7 +3355,6 @@ let expand_hm_template template_indentation template hocc_block
                         |> (fun formatter ->
                           match binding with
                           | Some uname -> begin
-                              (* XXX Binding to a payload-free token should be an error. *)
                               formatter
                               |> Fmt.fmt "{symbol=Symbol."
                               |> Fmt.fmt symbol_constructor

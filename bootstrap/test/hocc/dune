@@ -250,6 +250,18 @@
 
 (rule
  (deps
+  (glob_files Binding_error.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Binding_error.out (run ./hocc_test %{bin:hocc} Binding_error -v)))))
+(rule
+ (alias runtest)
+ (action (diff Binding_error.expected Binding_error.out)))
+
+(rule
+ (deps
   (glob_files Unused.hmh*)
   %{bin:hocc})
  (targets Unused.out.txt Unused.out.hmh)
