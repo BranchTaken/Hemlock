@@ -168,6 +168,15 @@ let is_start {items; _} =
     is_start, is_start
   ) items
 
+let start_symbol_index {items; _} =
+  Ordmap.fold_until ~init:None ~f:(fun _ (Lr0Item.{prod={lhs_index; _}; dot}, _lr1item) ->
+    let is_start = Uns.(dot = 0L) in
+    match is_start with
+    | false -> None, false
+    | true -> Some lhs_index, true
+  ) items
+  |> Option.value_hlt
+
 let is_accept t =
   fold_until ~init:true ~f:(fun _ lr1item ->
     match Lr1Item.is_accept lr1item with is_accept -> is_accept, not is_accept

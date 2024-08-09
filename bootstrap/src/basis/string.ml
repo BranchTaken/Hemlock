@@ -1160,8 +1160,8 @@ module C = struct
           match max_matches, Cursor.(q.cursor = m.cursor) with
           | Some n, _ when Uns.(nmatches = n) -> List.rev matches
           | _, true -> begin
-              let cursor = Cursor.at (B.Cursor.init ((Cursor.bindex (base in_)) + (Cursor.bindex i)
-                - (Cursor.bindex m.cursor)) (string in_)) in
+              let cursor = Cursor.at (B.Cursor.init ((Cursor.bindex i) - (Cursor.bindex m.cursor))
+                (string in_)) in
               let matches' = cursor :: matches in
               let nmatches' = Uns.succ nmatches in
               match may_overlap, Uns.(m.index = 0L), Cursor.(i = past) with

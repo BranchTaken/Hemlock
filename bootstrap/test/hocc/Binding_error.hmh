@@ -1,0 +1,8 @@
+hocc
+    token T
+    token U of Unit.t
+    token EOI
+    start S of Token.t ::=
+      | T EOI -> T
+      | u:U EOI -> U u
+      | t:T U EOI -> U t # Invalid binding; `T` has no payload.

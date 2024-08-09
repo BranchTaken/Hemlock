@@ -15,7 +15,7 @@ module Param : sig
     (** Symbol name corresponding to a [start]/[nonterm] or [token] declaration. *)
 
     qtype: QualifiedType.t;
-    (** Qualified type of parameter, e.g. [Explicit {module_:"SomeToken"; type_:"t"}]. *)
+    (** Qualified type of parameter, e.g. [explicit_opt=Some {module_:"SomeToken"; type_:"t"}]. *)
 
     prod_param: Parse.prod_param option;
     (** Declaration AST. *)
@@ -48,7 +48,10 @@ type t = {
   index: Index.t;
   (** Unique reduction index. *)
 
-  lhs: QualifiedType.t;
+  lhs_name: string;
+  (** Name of enclosing nonterm. *)
+
+  lhs_qtype: QualifiedType.t;
   (** Qualified type of LHS. *)
 
   rhs: Params.t;
@@ -60,5 +63,9 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
-val init: index:Index.t -> lhs:QualifiedType.t -> rhs:Params.t -> code:Parse.code option -> t
+val init: index:Index.t -> lhs_name:string -> lhs_qtype:QualifiedType.t -> rhs:Params.t
+  -> code:Parse.code option -> t
 (** Used only by [Reductions.init]. *)
+
+val is_epsilon: t -> bool
+(** [is_epsilon t] returns true if [t] is an ε reduction, i.e. it has an empty RHS. *)

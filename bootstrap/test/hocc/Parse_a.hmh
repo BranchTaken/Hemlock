@@ -47,7 +47,7 @@ include hocc
       | epsilon -> ()
 
     nonterm N7 of Unit.t ::=
-      | o:OP _:N1 N2 -> foo
+      | OP n:N1 _:N2 -> foo
 
     Code = {
       }

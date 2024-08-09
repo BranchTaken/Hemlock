@@ -7,9 +7,9 @@ let empty = Ordmap.empty (module Reduction.Index)
 
 let length = Ordmap.length
 
-let insert ~lhs ~rhs ~code t =
+let insert ~lhs:Symbols.{name; qtype; _} ~rhs ~code t =
   let index = length t in
-  let reduction = Reduction.init ~index ~lhs ~rhs ~code in
+  let reduction = Reduction.init ~index ~lhs_name:name ~lhs_qtype:qtype ~rhs ~code in
   reduction, Ordmap.insert_hlt ~k:index ~v:reduction t
 
 let fold ~init ~f t =

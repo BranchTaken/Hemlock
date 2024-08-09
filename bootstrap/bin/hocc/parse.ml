@@ -1882,3 +1882,228 @@ and hmhi scanner =
   | {errs=(_ :: _); _}, _
   | _, None -> ctx'.scanner, Error ctx'.errs
   | {errs=[]; _}, Some hmh -> ctx'.scanner, Ok hmh
+
+let min_comment_indentation_of_hocc_block = function
+  | Hocc {indent; _} ->
+    Scan.Token.source indent
+    |> Hmc.Source.Slice.base
+    |> Hmc.Source.Cursor.pos
+    |> Text.Pos.col
+
+let base_of_code code =
+  let of_token token =
+    let open Scan.Token in
+    let source = match token with
+      | HmcToken ctok -> ctok |> Hmc.Scan.ConcreteToken.source
+      | HoccToken ctok -> ctok |> Scan.ConcreteToken.source
+    in
+    Hmc.Source.Slice.base source
+  in
+  let rec of_delimited = function
+    | DelimitedBlock {indent=token; _}
+    | DelimitedParen {lparen=token; _}
+    | DelimitedCapture {lcapture=token; _}
+    | DelimitedList {lbrack=token; _}
+    | DelimitedArray {larray=token; _}
+    | DelimitedModule {lcurly=token; _} -> of_token token
+  and of_code = function
+    | CodeDelimited {delimited; _} -> of_delimited delimited
+    | CodeToken {token; _} -> of_token token
+  in
+  of_code code
+
+let last_token_of_code hocc_block code =
+  let min_comment_indentation = min_comment_indentation_of_hocc_block hocc_block in
+  let rec of_codes_tl = function
+    | CodesTlSepCode {code; codes_tl; _} -> begin
+        of_codes_tl codes_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_code code))
+      end
+    | CodesTlEpsilon -> None
+  and of_codes = function
+    | Codes {code; codes_tl} -> begin
+        of_codes_tl codes_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_code code)
+      end
+  and of_delimited = function
+    | DelimitedBlock {codes; dedent; _} -> begin
+        of_codes codes
+        |> Option.some_or_thunk ~f:(fun () -> Some dedent)
+        |> Option.value_hlt
+      end
+    | DelimitedParen {rparen=token; _}
+    | DelimitedCapture {rcapture=token; _}
+    | DelimitedList {rbrack=token; _}
+    | DelimitedArray {rarray=token; _}
+    | DelimitedModule {rcurly=token; _} -> token
+  and of_code_tl = function
+    | CodeTlDelimited {delimited; code_tl} ->
+      of_code_tl code_tl
+      |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
+    | CodeTlToken {token; code_tl} -> begin
+        of_code_tl code_tl
+        |> Option.some_or_thunk ~f:(fun () ->
+          (* Exclude comments less indented than `hocc` block from the tail. *)
+          match token with
+          | HmcToken ctok -> begin
+              match Hmc.Scan.ConcreteToken.atok ctok with
+              | Tok_hash_comment
+              | Tok_paren_comment _ -> begin
+                  let ctok_indentation =
+                    ctok
+                    |> Hmc.Scan.ConcreteToken.source
+                    |> Hmc.Source.Slice.base
+                    |> Hmc.Source.Cursor.pos
+                    |> Text.Pos.col
+                  in
+                  match ctok_indentation >= min_comment_indentation with
+                  | true -> Some token
+                  | false -> None
+                end
+              | _ -> Some token
+            end
+          | HoccToken _ -> Some token
+        )
+      end
+    | CodeTlEpsilon -> None
+  and of_code = function
+    | CodeDelimited {delimited; code_tl} ->
+      of_code_tl code_tl |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
+    | CodeToken {token; code_tl} ->
+      of_code_tl code_tl |> Option.some_or_thunk ~f:(fun () -> Some token)
+  in
+  of_code code
+  |> Option.value_hlt
+
+let past_of_code hocc_block code =
+  let of_token token =
+    let open Scan.Token in
+    let source = match token with
+      | HmcToken ctok -> ctok |> Hmc.Scan.ConcreteToken.source
+      | HoccToken ctok -> ctok |> Scan.ConcreteToken.source
+    in
+    Hmc.Source.Slice.past source
+  in
+  last_token_of_code hocc_block code
+  |> of_token
+
+let source_of_code hocc_block code =
+  let base = base_of_code code in
+  let past = past_of_code hocc_block code in
+  Hmc.Source.Slice.of_cursors ~base ~past
+
+let indentation_of_code hocc_block code =
+  let min_comment_indentation = min_comment_indentation_of_hocc_block hocc_block in
+  match code with
+  | CodeDelimited _ -> min_comment_indentation + 4L
+  | CodeToken _ -> min_comment_indentation
+
+(* Find the base cursor for the postlude that preserves comments/whitespace that fall outside the
+ * `hocc` block. *)
+let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _} as hocc_block) =
+  let rec of_uident = function
+    | Uident {uident} -> uident
+  and of_cident = function
+    | Cident {cident} -> cident
+  and of_precs_tl = function
+    | PrecsTlCommaUident {uident; precs_tl; _} ->
+      Some (
+        of_precs_tl precs_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
+      )
+    | PrecsTlEpsilon -> None
+  and of_precs = function
+    | Precs {uident; precs_tl} -> begin
+        of_precs_tl precs_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
+      end
+  and of_prec_rels = function
+    | PrecRelsLtPrecs {precs; _} -> Some (of_precs precs)
+    | PrecRelsEpsilon -> None
+  and of_of_type = function
+    | OfType {type_type; _} -> of_uident type_type
+  and of_of_type0 = function
+    | OfType0OfType {of_type} -> Some (of_of_type of_type)
+    | OfType0Epsilon -> None
+  and of_prec_ref = function
+    | PrecRefPrecUident {uident; _} -> Some (of_uident uident)
+    | PrecRefEpsilon -> None
+  and of_token_alias = function
+    | TokenAlias {alias} -> Some alias
+    | TokenAliasEpsilon -> None
+  and of_prod_param_symbol = function
+    | ProdParamSymbolCident {cident} -> of_cident cident
+    | ProdParamSymbolAlias {alias} -> alias
+  and of_prod_param = function
+    | ProdParamBinding {prod_param_symbol; _}
+    | ProdParam {prod_param_symbol} -> of_prod_param_symbol prod_param_symbol
+  and of_prod_params_tl = function
+    | ProdParamsTlProdParam {prod_param; prod_params_tl} -> begin
+        of_prod_params_tl prod_params_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod_param prod_param))
+      end
+    | ProdParamsTlEpsilon -> None
+  and of_prod_params = function
+    | ProdParamsProdParam {prod_param; prod_params_tl} -> begin
+        of_prod_params_tl prod_params_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_prod_param prod_param)
+      end
+  and of_prod_pattern = function
+    | ProdPatternParams {prod_params} -> of_prod_params prod_params
+    | ProdPatternEpsilon {epsilon} -> epsilon
+  and of_prod = function
+    | Prod {prod_pattern; prec_ref} -> begin
+        of_prec_ref prec_ref
+        |> Option.value_or_thunk ~f:(fun () -> of_prod_pattern prod_pattern)
+      end
+  and of_prods_tl = function
+    | ProdsTlBarProd {prod; prods_tl; _} -> begin
+        of_prods_tl prods_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_prod prod))
+      end
+    | ProdsTlEpsilon -> None
+  and of_prods = function
+    | ProdsBarProd {prod; prods_tl; _}
+    | ProdsProd {prod; prods_tl} -> begin
+        of_prods_tl prods_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_prod prod)
+      end
+  and of_reduction = function
+    | Reduction {code; _} -> last_token_of_code hocc_block code
+  and of_reductions_tl = function
+    | ReductionsTlBarReduction {reduction; reductions_tl; _} -> begin
+        of_reductions_tl reductions_tl
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_reduction reduction))
+      end
+    | ReductionsTlEpsilon -> None
+  and of_reductions = function
+    | ReductionsReduction {reduction; reductions_tl} -> begin
+        of_reductions_tl reductions_tl
+        |> Option.value_or_thunk ~f:(fun () -> of_reduction reduction)
+      end
+  and of_nonterm = function
+    | NontermProds {prods; _} -> of_prods prods
+    | NontermReductions {reductions; _} -> of_reductions reductions
+  and of_stmt = function
+    | StmtPrec {prec=Prec {uident; prec_rels; _}} ->
+      of_prec_rels prec_rels
+      |> Option.value_or_thunk ~f:(fun () -> of_uident uident)
+    | StmtToken {token=Token {cident; token_alias; of_type0; prec_ref; _}} -> begin
+        of_prec_ref prec_ref
+        |> Option.some_or_thunk ~f:(fun () -> of_of_type0 of_type0)
+        |> Option.some_or_thunk ~f:(fun () -> of_token_alias token_alias)
+        |> Option.value_or_thunk ~f:(fun () -> of_cident cident)
+      end
+    | StmtNonterm {nonterm} -> of_nonterm nonterm
+    | StmtCode {code} -> last_token_of_code hocc_block code
+  and of_stmts_tl = function
+    | StmtsTl {stmt; stmts_tl; _} -> begin
+        (of_stmts_tl stmts_tl)
+        |> Option.some_or_thunk ~f:(fun () -> Some (of_stmt stmt))
+      end
+    | StmtsTlEpsilon -> None
+  in
+  of_stmts_tl stmts_tl
+  |> Option.value_or_thunk ~f:(fun () -> of_stmt stmt)
+  |> Scan.Token.source
+  |> Hmc.Source.Slice.past

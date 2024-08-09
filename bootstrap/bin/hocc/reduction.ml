@@ -115,7 +115,8 @@ module T = struct
   module Index = Uns
   type t = {
     index: Index.t;
-    lhs: QualifiedType.t;
+    lhs_name: string;
+    lhs_qtype: QualifiedType.t;
     rhs: Params.t;
     code: Parse.code option;
   }
@@ -126,10 +127,11 @@ module T = struct
   let cmp {index=index0; _} {index=index1; _} =
     Index.cmp index0 index1
 
-  let pp {index; lhs; rhs; code} formatter =
+  let pp {index; lhs_name; lhs_qtype; rhs; code} formatter =
     formatter
     |> Fmt.fmt "{index=" |> Index.pp index
-    |> Fmt.fmt "; lhs=" |> QualifiedType.pp lhs
+    |> Fmt.fmt "; lhs_name=" |> String.pp lhs_name
+    |> Fmt.fmt "; lhs_qtype=" |> QualifiedType.pp lhs_qtype
     |> Fmt.fmt "; rhs=" |> Params.pp rhs
     |> Fmt.fmt "; code=" |> (Option.pp Parse.fmt_code) code
     |> Fmt.fmt "}"
@@ -137,5 +139,8 @@ end
 include T
 include Identifiable.Make(T)
 
-let init ~index ~lhs ~rhs ~code =
-  {index; lhs; rhs; code}
+let init ~index ~lhs_name ~lhs_qtype ~rhs ~code =
+  {index; lhs_name; lhs_qtype; rhs; code}
+
+let is_epsilon {rhs; _} =
+  Params.is_empty rhs

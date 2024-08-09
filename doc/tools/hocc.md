@@ -471,12 +471,14 @@ include hocc
     nonterm Expr of Zint.t ::=
       | e0:Expr op:MulOp e1:Expr prec mul ->
         match op with
-          | MulOp STAR -> Zint.(e0 * e1)
-          | MulOp SLASH -> Zint.(e0 / e1)
+          | STAR -> Zint.(e0 * e1)
+          | SLASH -> Zint.(e0 / e1)
+          | _ -> not_reached ()
       | e0:Expr op:AddOp e1:Expr prec add ->
         match op with
-          | AddOp PLUS -> Zint.(e0 + e1)
-          | AddOp MINUS -> Zint.(e0 - e1)
+          | PLUS -> Zint.(e0 + e1)
+          | MINUS -> Zint.(e0 - e1)
+          | _ -> not_reached ()
       | x:INT -> x
 
     token EOI
@@ -506,12 +508,14 @@ calculate s =
           | Prefix -> false
           | Accept _
           | Error _ -> true
+          | _ -> not_reached ()
         parser', done
       |>
         function
           | Accept answer -> answer
           | Prefix _ -> halt "Partial input"
           | Error _ -> halt "Parse error"
+          | _ -> not_reached ()
 ```
 
 To generate Hemlock code from the above inputs, run `hocc -hm -s Example`.
@@ -534,6 +538,19 @@ parser states can be used as persistent reusable snapshots.
 ```hemlock
 {
     Spec = {
+        Algorithm = {
+            type t: t =
+              | Lr1 [@doc "LR(1) algorithm."]
+              | Ielr1 [@doc "IELR(1) algorithm."]
+              | Pgm1 [@doc "PGM(1) algorithm."]
+              | Lalr1 [@doc "LALR(1) algorithm."]
+
+            pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
+          }
+
+        algorithm: Algorithm.t
+          [@@doc "Algorithm used to generate parser."]
+
         Assoc = {
             type t: t =
               | Left
@@ -566,7 +583,7 @@ parser states can be used as persistent reusable snapshots.
                 reduction: uns # Index of corresponding reduction function in `reductions` array.
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -587,7 +604,7 @@ parser states can be used as persistent reusable snapshots.
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -602,7 +619,7 @@ parser states can be used as persistent reusable snapshots.
                 dot: uns
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -610,7 +627,7 @@ parser states can be used as persistent reusable snapshots.
         Lr0Itemset = {
             type t: t = Ordset.t Lr0Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -621,7 +638,7 @@ parser states can be used as persistent reusable snapshots.
                 follow: Ordset.t uns Uns.cmper_witness
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -629,7 +646,7 @@ parser states can be used as persistent reusable snapshots.
         Lr1Itemset = {
             type t: t = Ordmap.t Lr0Item.t Lr1Item.t Lr0Item.cmper_witness
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -641,7 +658,7 @@ parser states can be used as persistent reusable snapshots.
                 added: Lr1Itemset.t
               }
 
-            hash_map: t -> Hash.State.t -> Hash.State.t
+            hash_fold: t -> Hash.State.t -> Hash.State.t
             cmp: t -> t -> Cmp.t
             pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
           }
@@ -673,8 +690,8 @@ parser states can be used as persistent reusable snapshots.
     Token = {
         type t: t =
           # Built-in tokens with reserved names.
-          | EPSILON of unit
-          | PSEUDO_END of unit
+          | EPSILON # ε
+          | PSEUDO_END # ⊥
           # One variant per `token` statement, e.g. `A` and `B`.
           | A of TypeA.t
           | B of TypeB.t
@@ -687,8 +704,10 @@ parser states can be used as persistent reusable snapshots.
     Nonterm = {
         type t: t =
           # One variant per `nonterm`/`start` statement, e.g. `S` and `N`.
-          | S of TypeS.t
           | N of TypeN.t
+          | S of TypeS.t
+          # One variant per start symbol wrapper.
+          | S' of TypeS.t
 
         pp >e: t -> Fmt.Formatter e >e-> Fmt.Formatter e
 
@@ -715,8 +734,7 @@ parser states can be used as persistent reusable snapshots.
 
     type stack_elm: stack_elm = {
         symbol: Symbol.t
-        symbol_index: uns
-        state_index: uns
+        state_index: State.t
       }
     type stack: stack = list stack_elm
     type reduction: reduction = stack -> stack

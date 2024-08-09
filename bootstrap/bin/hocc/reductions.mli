@@ -7,7 +7,7 @@ type t
 val empty: t
 (** [empty] returns an empty set of reductions. *)
 
-val insert: lhs:QualifiedType.t -> rhs:Reduction.Params.t -> code:Parse.code option -> t
+val insert: lhs:Symbols.info -> rhs:Reduction.Params.t -> code:Parse.code option -> t
   -> Reduction.t * t
 (** [insert ~lhs ~rhs ~code t] creates a [Reduction.t] with unique index and returns both the
     reduction and a new [t] with the reduction inserted. *)

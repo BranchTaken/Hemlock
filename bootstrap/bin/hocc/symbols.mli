@@ -16,8 +16,8 @@ type info = {
   (** Optional token alias. *)
 
   qtype: QualifiedType.t;
-  (** Qualified type, e.g. [Implicit] for [token SOME_TOKEN], or [Explicit {module_:Zint; type:t}]
-      for [token INT of Zint.t. *)
+  (** Qualified type, e.g. [explicit_opt=None] for [token SOME_TOKEN], or [explicit_opt=Some
+      {module_:Zint; type:t}] for [token INT of Zint.t. *)
 }
 
 type t
@@ -55,6 +55,10 @@ val info_of_name_hlt: string -> t -> info
 val info_of_alias: string -> t -> info option
 (** [info_of_alias alias t] returns [Some info] if a symbol with the specified [alias] exists,
     [None] otherwise. Note that names and aliases are in separate namespaces. *)
+
+val info_of_alias_hlt: string -> t -> info
+(** [info_of_alias alias t] returns [Some info] if a symbol with the specified [alias] exists, halts
+    otherwise. Note that names and aliases are in separate namespaces. *)
 
 val symbol_index_of_name: string -> t -> Symbol.Index.t option
 (** [symbol_index_of_name name t] returns [Some index] if a symbol with the specified [name] exists,
