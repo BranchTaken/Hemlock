@@ -373,7 +373,7 @@ makeMono: (T : SeqIntf.IMonoDef) : SMono
 
 # makeMono produces a result of type roughly equivalent to type Mono, but it is common to use an
 # anonymous type as above in order to specify constraints in terms of function input types.
-type Mono = SMono
+type Mono: Mono = SMono
   with type t ^t: ^&t := SeqIntf.IMonoDef.^&t
   with type elm ^elm: ^&elm := SeqIntf.IMonoDef.^&elm
 ```
@@ -469,7 +469,7 @@ Tree :
     root_value 'a: t a -> a
     rchild 'a: t a -> t a
 
-type TreeSig = type of Tree
+type TreeSig: TreeSig = type of Tree
 ```
 
 Hemlock infers the type of a module expression `{...}` to divulge all type and value bindings. Often
@@ -490,7 +490,7 @@ TreeConstrained : {
     rchild 'a: t a -> t a
   } = Tree
 
-type TreeConstrainedSig = type of TreeConstrained
+type TreeConstrainedSig: TreeConstrainedSig = type of TreeConstrained
 ```
 
 Type ascription by itself cannot augment the resulting module type; for that a function can be
