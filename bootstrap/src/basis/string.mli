@@ -418,8 +418,8 @@ val of_array: ?blength:uns -> codepoint array -> t
 include ContainerIntf.SMonoIndex with type t := t with type elm := codepoint
 include ContainerIntf.SMonoMem with type t := t with type elm := codepoint
 
-val length: t -> uns [@@ocaml.deprecated "Use [bc]length instead"]
-(** Use {!blength} instead of [length], to keep the difference between byte length and codepoint
+val length: t -> uns [@@ocaml.deprecated "Use [BC].length instead"]
+(** Use {!B.length} instead of [length], to keep the difference between byte length and codepoint
     length explicit. *)
 
 val map: f:(codepoint -> codepoint) -> t -> t
