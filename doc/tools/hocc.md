@@ -961,7 +961,7 @@ hocc
     token RCURLY "}"
 
     # Miscellaneous Hemlock token in embedded code
-    token CODE_TOKEN
+    token OTHER_TOKEN
 
     # End of input, used to terminate start symbols
     token EOI
@@ -1022,14 +1022,27 @@ hocc
       | "[|" Codes0 "|]"
       | "{" Codes0 "}"
 
+    nonterm CodeToken ::=
+      | OTHER_TOKEN
+      | UIDENT
+      | CIDENT
+      | "_"
+      | ISTRING
+      | "of"
+      | ":"
+      | "."
+      | "->"
+      | "<"
+      | ","
+
     nonterm CodeTl ::=
       | Delimited CodeTl
-      | CODE_TOKEN CodeTl
+      | OTHER_TOKEN CodeTl
       | epsilon
 
     nonterm Code ::=
       | Delimited CodeTl
-      | CODE_TOKEN CodeTl
+      | CodeToken CodeTl
 
     nonterm ProdParamSymbol ::=
       | Cident
@@ -1088,8 +1101,24 @@ hocc
 
     nonterm Hocc ::= "hocc" INDENT Stmts DEDENT
 
+    nonterm MatterToken ::=
+      | CodeToken
+      | Sep
+      | INDENT
+      | DEDENT
+      | "("
+      | ")"
+      | "(|"
+      | "|)"
+      | "["
+      | "]"
+      | "[|"
+      | "|]"
+      | "{"
+      | "}"
+
     nonterm Matter ::=
-      | CODE_TOKEN Matter
+      | MatterToken Matter
       | epsilon
 
     start Hmh ::= Matter Hocc Matter EOI

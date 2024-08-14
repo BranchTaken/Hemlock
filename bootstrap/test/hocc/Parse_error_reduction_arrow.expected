@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_reduction_arrow.hmh"
-hocc: At ["./Parse_error_reduction_arrow.hmh":4:0.."./Parse_error_reduction_arrow.hmh":4:0): Expected '->'
+hocc: At ["./Parse_error_reduction_arrow.hmh":4:0.."./Parse_error_reduction_arrow.hmh":4:0): Unexpected token

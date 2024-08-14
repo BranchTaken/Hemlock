@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_code.hmh"
-hocc: At ["./Parse_error_code.hmh":3:0.."./Parse_error_code.hmh":3:0): Expected Hemlock code
+hocc: At ["./Parse_error_code.hmh":3:0.."./Parse_error_code.hmh":3:0): Unexpected token

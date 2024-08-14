@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_precs.hmh"
-hocc: At ["./Parse_error_precs.hmh":3:0.."./Parse_error_precs.hmh":3:0): Expected uident
+hocc: At ["./Parse_error_precs.hmh":3:0.."./Parse_error_precs.hmh":3:0): Unexpected token

@@ -1690,7 +1690,7 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
                 let underline = Codepoint.of_char '_' in
                 let overline = Codepoint.kv 0x203eL (*'‾'*) in
                 let code = Option.value_hlt code in
-                let source = Parse.source_of_code hocc_block code in
+                let source = Parse.source_of_code code in
                 formatter
                 |> Fmt.fmt "function\n"
                 |> (fun formatter ->
@@ -3531,7 +3531,7 @@ let expand_ml_nonterms symbols ~indentation formatter =
   |> Fmt.fmt "\n"
   |> expand_ml_nonterm_index symbols ~indentation
 
-let expand_ml_callbacks hocc_block symbols callbacks ~indentation formatter =
+let expand_ml_callbacks symbols callbacks ~indentation formatter =
   let fmt_callbacks ~indentation formatter = begin
     let indent = mk_indent indentation in
     let formatter, _first = Callbacks.fold ~init:(formatter, true)
@@ -3552,7 +3552,7 @@ let expand_ml_callbacks hocc_block symbols callbacks ~indentation formatter =
                 let underline = Codepoint.of_char '_' in
                 let overline = Codepoint.kv 0x203eL (*'‾'*) in
                 let code = Option.value_hlt code in
-                let source = Parse.source_of_code hocc_block code in
+                let source = Parse.source_of_code code in
                 formatter
                 |> Fmt.fmt "(function\n"
                 |> (fun formatter ->
@@ -3682,7 +3682,7 @@ let expand_ml_starts symbols states ~indentation formatter =
   in
   formatter
 
-let expand_ml_template template_indentation template hocc_block
+let expand_ml_template template_indentation template
     Spec.{algorithm; precs; symbols; prods; callbacks; states} formatter =
   let expanders = Map.of_alist (module String) [
     ("«algorithm»", expand_ml_algorithm algorithm);
@@ -3692,7 +3692,7 @@ let expand_ml_template template_indentation template hocc_block
     ("«states»", expand_ml_states states);
     ("«tokens»", expand_ml_tokens symbols);
     ("«nonterms»", expand_ml_nonterms symbols);
-    ("«callbacks»", expand_ml_callbacks hocc_block symbols callbacks);
+    ("«callbacks»", expand_ml_callbacks symbols callbacks);
     ("«starts»", expand_ml_starts symbols states)
   ] in
   formatter |> expand ~template_indentation template expanders
@@ -3725,7 +3725,7 @@ let generate_ml conf
         end
       | MatterEpsilon -> formatter
     )
-    |> expand_ml_template indentation ml_template hocc_block spec
+    |> expand_ml_template indentation ml_template spec
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
