@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_delimited_rcurly.hmh"
-hocc: At ["./Parse_error_delimited_rcurly.hmh":4:0.."./Parse_error_delimited_rcurly.hmh":4:0): Expected '}'
+hocc: At ["./Parse_error_delimited_rcurly.hmh":4:0.."./Parse_error_delimited_rcurly.hmh":4:0): Unexpected token

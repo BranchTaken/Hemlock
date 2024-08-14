@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_prod_param_type.hmh"
-hocc: At ["./Parse_error_prod_param_type.hmh":3:8.."./Parse_error_prod_param_type.hmh":3:9): Expected production parameter symbol
+hocc: At ["./Parse_error_prod_param_type.hmh":3:10.."./Parse_error_prod_param_type.hmh":3:12): Unexpected token

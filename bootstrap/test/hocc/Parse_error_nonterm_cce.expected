@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_nonterm_cce.hmh"
-hocc: At ["./Parse_error_nonterm_cce.hmh":3:0.."./Parse_error_nonterm_cce.hmh":3:0): Expected '::='
+hocc: At ["./Parse_error_nonterm_cce.hmh":3:0.."./Parse_error_nonterm_cce.hmh":3:0): Unexpected token

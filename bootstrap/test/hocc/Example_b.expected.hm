@@ -1193,11 +1193,7 @@ include
                   :: {symbol=Symbol.Nonterm (Expr e); _}
                   :: tl -> Symbol.Nonterm (Answer (
                   # ________________________________________________________________________________
-                  [:"./Example_b.hmh":36:4+18]e (* A comment that should be excluded from postlude. *) # And another.
-      # In `hocc` block; exclude from postlude
-     # In `hocc` block; exclude from postlude
-    # In `hocc` block; exclude from postlude
-[:]
+                  [:"./Example_b.hmh":36:4+18]e[:]
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl
                   | _ -> not_reached ()
@@ -1379,10 +1375,7 @@ include
         match status with
           | Status.Prefix -> t |> feed token |> walk
           | _ -> not_reached ()
-  }[:"./Example_b.hmh":40:0+0]   # [First] Outside `hocc` block; include in postlude
-  # Outside `hocc` block; include in postlude
- # Outside `hocc` block; include in postlude
-# Outside `hocc` block; include in postlude
+  }[:"./Example_b.hmh":36:0+23]
 
 # Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
 tokenize s =

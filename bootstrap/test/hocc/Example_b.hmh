@@ -33,14 +33,7 @@ include
 
     token EOI
     start Answer of Zint.t ::=
-      | e:Expr EOI -> e (* A comment that should be excluded from postlude. *) # And another.
-      # In `hocc` block; exclude from postlude
-     # In `hocc` block; exclude from postlude
-    # In `hocc` block; exclude from postlude
-   # [First] Outside `hocc` block; include in postlude
-  # Outside `hocc` block; include in postlude
- # Outside `hocc` block; include in postlude
-# Outside `hocc` block; include in postlude
+      | e:Expr EOI -> e
 
 # Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
 tokenize s =
