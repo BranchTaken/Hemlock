@@ -1,246 +1,246 @@
 ``, ,,``
-  [1:0..1:1) : <Tok_comma>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:3) : <Tok_comma>
-  [1:3..1:4) : <Tok_comma>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_comma {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_comma {source=[1:2..1:3)})
+  (Tok_comma {source=[1:3..1:4)})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``. .. ...``
-  [1:0..1:1) : <Tok_dot>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_dot_dot>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_dot_op "...">
-  [1:8..1:8) : <Tok_end_of_input>
+  (Tok_dot {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_dot_dot {source=[1:2..1:4)})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_dot_op {source=[1:5..1:8); dot_op="..."})
+  (Tok_end_of_input {source=[1:8..1:8)})
 ``; ;;``
-  [1:0..1:1) : <Tok_semi>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:3) : <Tok_semi>
-  [1:3..1:4) : <Tok_semi>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_semi {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_semi {source=[1:2..1:3)})
+  (Tok_semi {source=[1:3..1:4)})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``: := :: :::``
-  [1:0..1:1) : <Tok_colon>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_colon_eq>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:7) : <Tok_colon_colon>
-  [1:7..1:8) : <Tok_whitespace>
-  [1:8..1:11) : <Tok_colon_op ":::">
-  [1:11..1:11) : <Tok_end_of_input>
+  (Tok_colon {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_colon_eq {source=[1:2..1:4)})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_colon_colon {source=[1:5..1:7)})
+  (Tok_whitespace {source=[1:7..1:8)})
+  (Tok_colon_op {source=[1:8..1:11); colon_op=":::"})
+  (Tok_end_of_input {source=[1:11..1:11)})
 ``< <= = <> >= >``
-  [1:0..1:1) : <Tok_lt>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_lt_eq>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:6) : <Tok_eq>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:9) : <Tok_lt_gt>
-  [1:9..1:10) : <Tok_whitespace>
-  [1:10..1:12) : <Tok_gt_eq>
-  [1:12..1:13) : <Tok_whitespace>
-  [1:13..1:14) : <Tok_gt>
-  [1:14..1:14) : <Tok_end_of_input>
+  (Tok_lt {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_lt_eq {source=[1:2..1:4)})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_eq {source=[1:5..1:6)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_lt_gt {source=[1:7..1:9)})
+  (Tok_whitespace {source=[1:9..1:10)})
+  (Tok_gt_eq {source=[1:10..1:12)})
+  (Tok_whitespace {source=[1:12..1:13)})
+  (Tok_gt {source=[1:13..1:14)})
+  (Tok_end_of_input {source=[1:14..1:14)})
 ``)|)|(|(``
-  [1:0..1:1) : <Tok_rparen>
-  [1:1..1:3) : <Tok_rcapture>
-  [1:3..1:4) : <Tok_bar>
-  [1:4..1:6) : <Tok_lcapture>
-  [1:6..1:7) : <Tok_lparen>
-  [1:7..1:7) : <Tok_end_of_input>
+  (Tok_rparen {source=[1:0..1:1)})
+  (Tok_rcapture {source=[1:1..1:3)})
+  (Tok_bar {source=[1:3..1:4)})
+  (Tok_lcapture {source=[1:4..1:6)})
+  (Tok_lparen {source=[1:6..1:7)})
+  (Tok_end_of_input {source=[1:7..1:7)})
 ``]|]|[|[``
-  [1:0..1:1) : <Tok_rbrack>
-  [1:1..1:3) : <Tok_rarray>
-  [1:3..1:4) : <Tok_bar>
-  [1:4..1:6) : <Tok_larray>
-  [1:6..1:7) : <Tok_lbrack>
-  [1:7..1:7) : <Tok_end_of_input>
+  (Tok_rbrack {source=[1:0..1:1)})
+  (Tok_rarray {source=[1:1..1:3)})
+  (Tok_bar {source=[1:3..1:4)})
+  (Tok_larray {source=[1:4..1:6)})
+  (Tok_lbrack {source=[1:6..1:7)})
+  (Tok_end_of_input {source=[1:7..1:7)})
 ``}{``
-  [1:0..1:1) : <Tok_rcurly>
-  [1:1..1:2) : <Tok_lcurly>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_rcurly {source=[1:0..1:1)})
+  (Tok_lcurly {source=[1:1..1:2)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``() (||)``
-  [1:0..1:1) : <Tok_lparen>
-  [1:1..1:2) : <Tok_rparen>
-  [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:5) : <Tok_lcapture>
-  [1:5..1:7) : <Tok_rcapture>
-  [1:7..1:7) : <Tok_end_of_input>
+  (Tok_lparen {source=[1:0..1:1)})
+  (Tok_rparen {source=[1:1..1:2)})
+  (Tok_whitespace {source=[1:2..1:3)})
+  (Tok_lcapture {source=[1:3..1:5)})
+  (Tok_rcapture {source=[1:5..1:7)})
+  (Tok_end_of_input {source=[1:7..1:7)})
 ``[] [||]``
-  [1:0..1:1) : <Tok_lbrack>
-  [1:1..1:2) : <Tok_rbrack>
-  [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:5) : <Tok_larray>
-  [1:5..1:7) : <Tok_rarray>
-  [1:7..1:7) : <Tok_end_of_input>
+  (Tok_lbrack {source=[1:0..1:1)})
+  (Tok_rbrack {source=[1:1..1:2)})
+  (Tok_whitespace {source=[1:2..1:3)})
+  (Tok_larray {source=[1:3..1:5)})
+  (Tok_rarray {source=[1:5..1:7)})
+  (Tok_end_of_input {source=[1:7..1:7)})
 ``{}``
-  [1:0..1:1) : <Tok_lcurly>
-  [1:1..1:2) : <Tok_rcurly>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_lcurly {source=[1:0..1:1)})
+  (Tok_rcurly {source=[1:1..1:2)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``\^&\&_&\``
-  [1:0..1:1) : <Tok_bslash>
-  [1:1..1:2) : <Tok_caret>
-  [1:2..1:3) : <Tok_amp>
-  [1:3..1:4) : <Tok_bslash>
-  [1:4..1:5) : <Tok_amp>
-  [1:5..1:6) : <Tok_uscore>
-  [1:6..1:7) : <Tok_amp>
-  [1:7..1:8) : <Tok_bslash>
-  [1:8..1:8) : <Tok_end_of_input>
+  (Tok_bslash {source=[1:0..1:1)})
+  (Tok_caret {source=[1:1..1:2)})
+  (Tok_amp {source=[1:2..1:3)})
+  (Tok_bslash {source=[1:3..1:4)})
+  (Tok_amp {source=[1:4..1:5)})
+  (Tok_uscore {source=[1:5..1:6)})
+  (Tok_amp {source=[1:6..1:7)})
+  (Tok_bslash {source=[1:7..1:8)})
+  (Tok_end_of_input {source=[1:8..1:8)})
 ``!&!!\``
-  [1:0..1:1) : <Tok_xmark>
-  [1:1..1:2) : <Tok_amp>
-  [1:2..1:3) : <Tok_xmark>
-  [1:3..1:4) : <Tok_xmark>
-  [1:4..1:5) : <Tok_bslash>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_xmark {source=[1:0..1:1)})
+  (Tok_amp {source=[1:1..1:2)})
+  (Tok_xmark {source=[1:2..1:3)})
+  (Tok_xmark {source=[1:3..1:4)})
+  (Tok_bslash {source=[1:4..1:5)})
+  (Tok_end_of_input {source=[1:5..1:5)})
 ``- -> ->> ->``
-  [1:0..1:1) : <Tok_minus>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_arrow>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_minus_op "->>">
-  [1:8..1:9) : <Tok_whitespace>
-  [1:9..1:11) : <Tok_arrow>
-  [1:11..1:11) : <Tok_end_of_input>
+  (Tok_minus {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_arrow {source=[1:2..1:4)})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_minus_op {source=[1:5..1:8); minus_op="->>"})
+  (Tok_whitespace {source=[1:8..1:9)})
+  (Tok_arrow {source=[1:9..1:11)})
+  (Tok_end_of_input {source=[1:11..1:11)})
 ``~- ~-> ~->> -~->``
-  [1:0..1:2) : <Tok_tilde_op "~-">
-  [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:6) : <Tok_carrow>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:11) : <Tok_tilde_op "~->>">
-  [1:11..1:12) : <Tok_whitespace>
-  [1:12..1:16) : <Tok_minus_op "-~->">
-  [1:16..1:16) : <Tok_end_of_input>
+  (Tok_tilde_op {source=[1:0..1:2); tilde_op="~-"})
+  (Tok_whitespace {source=[1:2..1:3)})
+  (Tok_carrow {source=[1:3..1:6)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_tilde_op {source=[1:7..1:11); tilde_op="~->>"})
+  (Tok_whitespace {source=[1:11..1:12)})
+  (Tok_minus_op {source=[1:12..1:16); minus_op="-~->"})
+  (Tok_end_of_input {source=[1:16..1:16)})
 ``type 'a 'ty ^m >e``
-  [1:0..1:4) : <Tok_type>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:6) : <Tok_tick>
-  [1:6..1:7) : <Tok_uident (Constant "a")>
-  [1:7..1:8) : <Tok_whitespace>
-  [1:8..1:9) : <Tok_tick>
-  [1:9..1:11) : <Tok_uident (Constant "ty")>
-  [1:11..1:12) : <Tok_whitespace>
-  [1:12..1:13) : <Tok_caret>
-  [1:13..1:14) : <Tok_uident (Constant "m")>
-  [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:16) : <Tok_gt>
-  [1:16..1:17) : <Tok_uident (Constant "e")>
-  [1:17..1:17) : <Tok_end_of_input>
+  (Tok_type {source=[1:0..1:4)})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_tick {source=[1:5..1:6)})
+  (Tok_uident {source=[1:6..1:7); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:7..1:8)})
+  (Tok_tick {source=[1:8..1:9)})
+  (Tok_uident {source=[1:9..1:11); uident=(Constant "ty")})
+  (Tok_whitespace {source=[1:11..1:12)})
+  (Tok_caret {source=[1:12..1:13)})
+  (Tok_uident {source=[1:13..1:14); uident=(Constant "m")})
+  (Tok_whitespace {source=[1:14..1:15)})
+  (Tok_gt {source=[1:15..1:16)})
+  (Tok_uident {source=[1:16..1:17); uident=(Constant "e")})
+  (Tok_end_of_input {source=[1:17..1:17)})
 ``^ ^t ^&t``
-  [1:0..1:1) : <Tok_caret>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:3) : <Tok_caret>
-  [1:3..1:4) : <Tok_uident (Constant "t")>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:6) : <Tok_caret>
-  [1:6..1:7) : <Tok_amp>
-  [1:7..1:8) : <Tok_uident (Constant "t")>
-  [1:8..1:8) : <Tok_end_of_input>
+  (Tok_caret {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_caret {source=[1:2..1:3)})
+  (Tok_uident {source=[1:3..1:4); uident=(Constant "t")})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_caret {source=[1:5..1:6)})
+  (Tok_amp {source=[1:6..1:7)})
+  (Tok_uident {source=[1:7..1:8); uident=(Constant "t")})
+  (Tok_end_of_input {source=[1:8..1:8)})
 ``> >- >-> >->> >>-> >e-> >{e|mut}->``
-  [1:0..1:1) : <Tok_gt>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:4) : <Tok_gt_op ">-">
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:8) : <Tok_gt_op ">->">
-  [1:8..1:9) : <Tok_whitespace>
-  [1:9..1:13) : <Tok_gt_op ">->>">
-  [1:13..1:14) : <Tok_whitespace>
-  [1:14..1:18) : <Tok_gt_op ">>->">
-  [1:18..1:19) : <Tok_whitespace>
-  [1:19..1:20) : <Tok_gt>
-  [1:20..1:21) : <Tok_uident (Constant "e")>
-  [1:21..1:23) : <Tok_arrow>
-  [1:23..1:24) : <Tok_whitespace>
-  [1:24..1:25) : <Tok_gt>
-  [1:25..1:26) : <Tok_lcurly>
-  [1:26..1:27) : <Tok_uident (Constant "e")>
-  [1:27..1:28) : <Tok_bar>
-  [1:28..1:31) : <Tok_uident (Constant "mut")>
-  [1:31..1:32) : <Tok_rcurly>
-  [1:32..1:34) : <Tok_arrow>
-  [1:34..1:34) : <Tok_end_of_input>
+  (Tok_gt {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_gt_op {source=[1:2..1:4); gt_op=">-"})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_gt_op {source=[1:5..1:8); gt_op=">->"})
+  (Tok_whitespace {source=[1:8..1:9)})
+  (Tok_gt_op {source=[1:9..1:13); gt_op=">->>"})
+  (Tok_whitespace {source=[1:13..1:14)})
+  (Tok_gt_op {source=[1:14..1:18); gt_op=">>->"})
+  (Tok_whitespace {source=[1:18..1:19)})
+  (Tok_gt {source=[1:19..1:20)})
+  (Tok_uident {source=[1:20..1:21); uident=(Constant "e")})
+  (Tok_arrow {source=[1:21..1:23)})
+  (Tok_whitespace {source=[1:23..1:24)})
+  (Tok_gt {source=[1:24..1:25)})
+  (Tok_lcurly {source=[1:25..1:26)})
+  (Tok_uident {source=[1:26..1:27); uident=(Constant "e")})
+  (Tok_bar {source=[1:27..1:28)})
+  (Tok_uident {source=[1:28..1:31); uident=(Constant "mut")})
+  (Tok_rcurly {source=[1:31..1:32)})
+  (Tok_arrow {source=[1:32..1:34)})
+  (Tok_end_of_input {source=[1:34..1:34)})
 ``>e~-> >{e|mut}~-> ~hlt-> ~{hlt|alloc}-> >e~hlt-> >{e|os}~{hlt|alloc}->``
-  [1:0..1:1) : <Tok_gt>
-  [1:1..1:2) : <Tok_uident (Constant "e")>
-  [1:2..1:5) : <Tok_carrow>
-  [1:5..1:6) : <Tok_whitespace>
-  [1:6..1:7) : <Tok_gt>
-  [1:7..1:8) : <Tok_lcurly>
-  [1:8..1:9) : <Tok_uident (Constant "e")>
-  [1:9..1:10) : <Tok_bar>
-  [1:10..1:13) : <Tok_uident (Constant "mut")>
-  [1:13..1:14) : <Tok_rcurly>
-  [1:14..1:17) : <Tok_carrow>
-  [1:17..1:18) : <Tok_whitespace>
-  [1:18..1:19) : <Tok_tilde>
-  [1:19..1:22) : <Tok_uident (Constant "hlt")>
-  [1:22..1:24) : <Tok_arrow>
-  [1:24..1:25) : <Tok_whitespace>
-  [1:25..1:26) : <Tok_tilde>
-  [1:26..1:27) : <Tok_lcurly>
-  [1:27..1:30) : <Tok_uident (Constant "hlt")>
-  [1:30..1:31) : <Tok_bar>
-  [1:31..1:36) : <Tok_uident (Constant "alloc")>
-  [1:36..1:37) : <Tok_rcurly>
-  [1:37..1:39) : <Tok_arrow>
-  [1:39..1:40) : <Tok_whitespace>
-  [1:40..1:41) : <Tok_gt>
-  [1:41..1:42) : <Tok_uident (Constant "e")>
-  [1:42..1:43) : <Tok_tilde>
-  [1:43..1:46) : <Tok_uident (Constant "hlt")>
-  [1:46..1:48) : <Tok_arrow>
-  [1:48..1:49) : <Tok_whitespace>
-  [1:49..1:50) : <Tok_gt>
-  [1:50..1:51) : <Tok_lcurly>
-  [1:51..1:52) : <Tok_uident (Constant "e")>
-  [1:52..1:53) : <Tok_bar>
-  [1:53..1:55) : <Tok_uident (Constant "os")>
-  [1:55..1:56) : <Tok_rcurly>
-  [1:56..1:57) : <Tok_tilde>
-  [1:57..1:58) : <Tok_lcurly>
-  [1:58..1:61) : <Tok_uident (Constant "hlt")>
-  [1:61..1:62) : <Tok_bar>
-  [1:62..1:67) : <Tok_uident (Constant "alloc")>
-  [1:67..1:68) : <Tok_rcurly>
-  [1:68..1:70) : <Tok_arrow>
-  [1:70..1:70) : <Tok_end_of_input>
+  (Tok_gt {source=[1:0..1:1)})
+  (Tok_uident {source=[1:1..1:2); uident=(Constant "e")})
+  (Tok_carrow {source=[1:2..1:5)})
+  (Tok_whitespace {source=[1:5..1:6)})
+  (Tok_gt {source=[1:6..1:7)})
+  (Tok_lcurly {source=[1:7..1:8)})
+  (Tok_uident {source=[1:8..1:9); uident=(Constant "e")})
+  (Tok_bar {source=[1:9..1:10)})
+  (Tok_uident {source=[1:10..1:13); uident=(Constant "mut")})
+  (Tok_rcurly {source=[1:13..1:14)})
+  (Tok_carrow {source=[1:14..1:17)})
+  (Tok_whitespace {source=[1:17..1:18)})
+  (Tok_tilde {source=[1:18..1:19)})
+  (Tok_uident {source=[1:19..1:22); uident=(Constant "hlt")})
+  (Tok_arrow {source=[1:22..1:24)})
+  (Tok_whitespace {source=[1:24..1:25)})
+  (Tok_tilde {source=[1:25..1:26)})
+  (Tok_lcurly {source=[1:26..1:27)})
+  (Tok_uident {source=[1:27..1:30); uident=(Constant "hlt")})
+  (Tok_bar {source=[1:30..1:31)})
+  (Tok_uident {source=[1:31..1:36); uident=(Constant "alloc")})
+  (Tok_rcurly {source=[1:36..1:37)})
+  (Tok_arrow {source=[1:37..1:39)})
+  (Tok_whitespace {source=[1:39..1:40)})
+  (Tok_gt {source=[1:40..1:41)})
+  (Tok_uident {source=[1:41..1:42); uident=(Constant "e")})
+  (Tok_tilde {source=[1:42..1:43)})
+  (Tok_uident {source=[1:43..1:46); uident=(Constant "hlt")})
+  (Tok_arrow {source=[1:46..1:48)})
+  (Tok_whitespace {source=[1:48..1:49)})
+  (Tok_gt {source=[1:49..1:50)})
+  (Tok_lcurly {source=[1:50..1:51)})
+  (Tok_uident {source=[1:51..1:52); uident=(Constant "e")})
+  (Tok_bar {source=[1:52..1:53)})
+  (Tok_uident {source=[1:53..1:55); uident=(Constant "os")})
+  (Tok_rcurly {source=[1:55..1:56)})
+  (Tok_tilde {source=[1:56..1:57)})
+  (Tok_lcurly {source=[1:57..1:58)})
+  (Tok_uident {source=[1:58..1:61); uident=(Constant "hlt")})
+  (Tok_bar {source=[1:61..1:62)})
+  (Tok_uident {source=[1:62..1:67); uident=(Constant "alloc")})
+  (Tok_rcurly {source=[1:67..1:68)})
+  (Tok_arrow {source=[1:68..1:70)})
+  (Tok_end_of_input {source=[1:70..1:70)})
 ``~f ~- ~-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_tilde>
-  [1:1..1:2) : <Tok_uident (Constant "f")>
-  [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:5) : <Tok_tilde_op "~-">
-  [1:5..1:6) : <Tok_whitespace>
-  [1:6..1:23) : <Tok_tilde_op "~-+*/\%@^$<=>|:.~?">
-  [1:23..1:23) : <Tok_end_of_input>
+  (Tok_tilde {source=[1:0..1:1)})
+  (Tok_uident {source=[1:1..1:2); uident=(Constant "f")})
+  (Tok_whitespace {source=[1:2..1:3)})
+  (Tok_tilde_op {source=[1:3..1:5); tilde_op="~-"})
+  (Tok_whitespace {source=[1:5..1:6)})
+  (Tok_tilde_op {source=[1:6..1:23); tilde_op="~-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:23..1:23)})
 ``?x ?? ?-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_qmark>
-  [1:1..1:2) : <Tok_uident (Constant "x")>
-  [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:5) : <Tok_qmark_op "??">
-  [1:5..1:6) : <Tok_whitespace>
-  [1:6..1:23) : <Tok_qmark_op "?-+*/\%@^$<=>|:.~?">
-  [1:23..1:23) : <Tok_end_of_input>
+  (Tok_qmark {source=[1:0..1:1)})
+  (Tok_uident {source=[1:1..1:2); uident=(Constant "x")})
+  (Tok_whitespace {source=[1:2..1:3)})
+  (Tok_qmark_op {source=[1:3..1:5); qmark_op="??"})
+  (Tok_whitespace {source=[1:5..1:6)})
+  (Tok_qmark_op {source=[1:6..1:23); qmark_op="?-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:23..1:23)})
 ``[0..n) [0x3..n) [1..n] [i..n)``
-  [1:0..1:1) : <Tok_lbrack>
-  [1:1..1:2) : <Tok_u64 (Constant 0)>
-  [1:2..1:4) : <Tok_dot_dot>
-  [1:4..1:5) : <Tok_uident (Constant "n")>
-  [1:5..1:6) : <Tok_rparen>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:8) : <Tok_lbrack>
-  [1:8..1:11) : <Tok_u64 (Constant 3)>
-  [1:11..1:13) : <Tok_dot_dot>
-  [1:13..1:14) : <Tok_uident (Constant "n")>
-  [1:14..1:15) : <Tok_rparen>
-  [1:15..1:16) : <Tok_whitespace>
-  [1:16..1:17) : <Tok_lbrack>
-  [1:17..1:18) : <Tok_u64 (Constant 1)>
-  [1:18..1:20) : <Tok_dot_dot>
-  [1:20..1:21) : <Tok_uident (Constant "n")>
-  [1:21..1:22) : <Tok_rbrack>
-  [1:22..1:23) : <Tok_whitespace>
-  [1:23..1:24) : <Tok_lbrack>
-  [1:24..1:25) : <Tok_uident (Constant "i")>
-  [1:25..1:27) : <Tok_dot_dot>
-  [1:27..1:28) : <Tok_uident (Constant "n")>
-  [1:28..1:29) : <Tok_rparen>
-  [1:29..1:29) : <Tok_end_of_input>
+  (Tok_lbrack {source=[1:0..1:1)})
+  (Tok_u64 {source=[1:1..1:2); u64=(Constant 0)})
+  (Tok_dot_dot {source=[1:2..1:4)})
+  (Tok_uident {source=[1:4..1:5); uident=(Constant "n")})
+  (Tok_rparen {source=[1:5..1:6)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_lbrack {source=[1:7..1:8)})
+  (Tok_u64 {source=[1:8..1:11); u64=(Constant 3)})
+  (Tok_dot_dot {source=[1:11..1:13)})
+  (Tok_uident {source=[1:13..1:14); uident=(Constant "n")})
+  (Tok_rparen {source=[1:14..1:15)})
+  (Tok_whitespace {source=[1:15..1:16)})
+  (Tok_lbrack {source=[1:16..1:17)})
+  (Tok_u64 {source=[1:17..1:18); u64=(Constant 1)})
+  (Tok_dot_dot {source=[1:18..1:20)})
+  (Tok_uident {source=[1:20..1:21); uident=(Constant "n")})
+  (Tok_rbrack {source=[1:21..1:22)})
+  (Tok_whitespace {source=[1:22..1:23)})
+  (Tok_lbrack {source=[1:23..1:24)})
+  (Tok_uident {source=[1:24..1:25); uident=(Constant "i")})
+  (Tok_dot_dot {source=[1:25..1:27)})
+  (Tok_uident {source=[1:27..1:28); uident=(Constant "n")})
+  (Tok_rparen {source=[1:28..1:29)})
+  (Tok_end_of_input {source=[1:29..1:29)})

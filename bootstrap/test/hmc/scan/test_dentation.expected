@@ -1,14 +1,14 @@
 ````
-  [1:0..1:0) : <Tok_end_of_input>
+  (Tok_end_of_input {source=[1:0..1:0)})
 ``a``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..1:1) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_end_of_input {source=[1:1..1:1)})
 ``
 
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..2:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_end_of_input {source=[2:0..2:0)})
 ``a
 b
 c
@@ -20,37 +20,37 @@ h
 i
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:0) : <Tok_line_delim>
-  [2:0..2:1) : <Tok_uident (Constant "b")>
-  [2:1..3:0) : <Tok_whitespace>
-  [3:0..3:0) : <Tok_line_delim>
-  [3:0..3:1) : <Tok_uident (Constant "c")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "d")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_line_delim>
-  [5:4..5:5) : <Tok_uident (Constant "e")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:4) : <Tok_whitespace>
-  [6:4..6:4) : <Tok_line_delim>
-  [6:4..6:5) : <Tok_uident (Constant "f")>
-  [6:5..7:0) : <Tok_whitespace>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_line_delim>
-  [7:0..7:1) : <Tok_uident (Constant "g")>
-  [7:1..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_line_delim>
-  [8:0..8:1) : <Tok_uident (Constant "h")>
-  [8:1..9:0) : <Tok_whitespace>
-  [9:0..9:0) : <Tok_line_delim>
-  [9:0..9:1) : <Tok_uident (Constant "i")>
-  [9:1..10:0) : <Tok_whitespace>
-  [10:0..10:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_line_delim {source=[2:0..2:0)})
+  (Tok_uident {source=[2:0..2:1); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:1..3:0)})
+  (Tok_line_delim {source=[3:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_line_delim {source=[5:4..5:4)})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "e")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_whitespace {source=[6:0..6:4)})
+  (Tok_line_delim {source=[6:4..6:4)})
+  (Tok_uident {source=[6:4..6:5); uident=(Constant "f")})
+  (Tok_whitespace {source=[6:5..7:0)})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[7:0..7:0)})
+  (Tok_uident {source=[7:0..7:1); uident=(Constant "g")})
+  (Tok_whitespace {source=[7:1..8:0)})
+  (Tok_line_delim {source=[8:0..8:0)})
+  (Tok_uident {source=[8:0..8:1); uident=(Constant "h")})
+  (Tok_whitespace {source=[8:1..9:0)})
+  (Tok_line_delim {source=[9:0..9:0)})
+  (Tok_uident {source=[9:0..9:1); uident=(Constant "i")})
+  (Tok_whitespace {source=[9:1..10:0)})
+  (Tok_end_of_input {source=[10:0..10:0)})
 ``a
     b
       c
@@ -58,24 +58,24 @@ i
 e
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:6) : <Tok_whitespace>
-  [3:6..3:7) : <Tok_uident (Constant "c")>
-  [3:7..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_line_delim>
-  [4:4..4:5) : <Tok_uident (Constant "d")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_dedent>
-  [5:0..5:0) : <Tok_line_delim>
-  [5:0..5:1) : <Tok_uident (Constant "e")>
-  [5:1..6:0) : <Tok_whitespace>
-  [6:0..6:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:6)})
+  (Tok_uident {source=[3:6..3:7); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:7..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_line_delim {source=[4:4..4:4)})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_dedent {source=[5:0..5:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[5:0..5:0)})
+  (Tok_uident {source=[5:0..5:1); uident=(Constant "e")})
+  (Tok_whitespace {source=[5:1..6:0)})
+  (Tok_end_of_input {source=[6:0..6:0)})
 ``
 
 a
@@ -84,21 +84,21 @@ b
 d
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..2:1) : <Tok_uident (Constant "a")>
-  [2:1..3:0) : <Tok_whitespace>
-  [3:0..3:0) : <Tok_line_delim>
-  [3:0..3:1) : <Tok_uident (Constant "b")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "c")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_dedent>
-  [5:0..5:0) : <Tok_line_delim>
-  [5:0..5:1) : <Tok_uident (Constant "d")>
-  [5:1..6:0) : <Tok_whitespace>
-  [6:0..6:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_uident {source=[2:0..2:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[2:1..3:0)})
+  (Tok_line_delim {source=[3:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "b")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_dedent {source=[5:0..5:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[5:0..5:0)})
+  (Tok_uident {source=[5:0..5:1); uident=(Constant "d")})
+  (Tok_whitespace {source=[5:1..6:0)})
+  (Tok_end_of_input {source=[6:0..6:0)})
 ``
 
 a
@@ -107,23 +107,23 @@ a
     d
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..2:1) : <Tok_uident (Constant "a")>
-  [2:1..3:0) : <Tok_whitespace>
-  [3:0..3:4) : <Tok_whitespace>
-  [3:4..3:4) : <Tok_indent>
-  [3:4..3:5) : <Tok_uident (Constant "b")>
-  [3:5..4:0) : <Tok_whitespace>
-  [4:0..4:2) : <Tok_whitespace>
-  [4:2..4:2) : <Tok_dedent>
-  [4:2..4:3) : <Tok_uident (Constant "c")>
-  [4:3..5:0) : <Tok_whitespace>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_indent>
-  [5:4..5:5) : <Tok_uident (Constant "d")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:0) : <Tok_dedent>
-  [6:0..6:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_uident {source=[2:0..2:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[2:1..3:0)})
+  (Tok_whitespace {source=[3:0..3:4)})
+  (Tok_indent {source=[3:4..3:4); indent=(Constant ())})
+  (Tok_uident {source=[3:4..3:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[3:5..4:0)})
+  (Tok_whitespace {source=[4:0..4:2)})
+  (Tok_dedent {source=[4:2..4:2); dedent=(Constant ())})
+  (Tok_uident {source=[4:2..4:3); uident=(Constant "c")})
+  (Tok_whitespace {source=[4:3..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_indent {source=[5:4..5:4); indent=(Constant ())})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "d")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_dedent {source=[6:0..6:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[6:0..6:0)})
 ``a
     b
     c
@@ -131,89 +131,89 @@ a
     d
         e
         f``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:4) : <Tok_whitespace>
-  [3:4..3:4) : <Tok_line_delim>
-  [3:4..3:5) : <Tok_uident (Constant "c")>
-  [3:5..4:0) : <Tok_whitespace>
-  [4:0..5:0) : <Tok_whitespace>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_line_delim>
-  [5:4..5:5) : <Tok_uident (Constant "d")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:8) : <Tok_whitespace>
-  [6:8..6:8) : <Tok_indent>
-  [6:8..6:9) : <Tok_uident (Constant "e")>
-  [6:9..7:0) : <Tok_whitespace>
-  [7:0..7:8) : <Tok_whitespace>
-  [7:8..7:8) : <Tok_line_delim>
-  [7:8..7:9) : <Tok_uident (Constant "f")>
-  [7:9..7:9) : <Tok_dedent>
-  [7:9..7:9) : <Tok_dedent>
-  [7:9..7:9) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:4)})
+  (Tok_line_delim {source=[3:4..3:4)})
+  (Tok_uident {source=[3:4..3:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:5..4:0)})
+  (Tok_whitespace {source=[4:0..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_line_delim {source=[5:4..5:4)})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "d")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_whitespace {source=[6:0..6:8)})
+  (Tok_indent {source=[6:8..6:8); indent=(Constant ())})
+  (Tok_uident {source=[6:8..6:9); uident=(Constant "e")})
+  (Tok_whitespace {source=[6:9..7:0)})
+  (Tok_whitespace {source=[7:0..7:8)})
+  (Tok_line_delim {source=[7:8..7:8)})
+  (Tok_uident {source=[7:8..7:9); uident=(Constant "f")})
+  (Tok_dedent {source=[7:9..7:9); dedent=(Constant ())})
+  (Tok_dedent {source=[7:9..7:9); dedent=(Constant ())})
+  (Tok_end_of_input {source=[7:9..7:9)})
 ``a
     b
     c``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:4) : <Tok_whitespace>
-  [3:4..3:4) : <Tok_line_delim>
-  [3:4..3:5) : <Tok_uident (Constant "c")>
-  [3:5..3:5) : <Tok_dedent>
-  [3:5..3:5) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:4)})
+  (Tok_line_delim {source=[3:4..3:4)})
+  (Tok_uident {source=[3:4..3:5); uident=(Constant "c")})
+  (Tok_dedent {source=[3:5..3:5); dedent=(Constant ())})
+  (Tok_end_of_input {source=[3:5..3:5)})
 ``a
     b
     c d``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:4) : <Tok_whitespace>
-  [3:4..3:4) : <Tok_line_delim>
-  [3:4..3:5) : <Tok_uident (Constant "c")>
-  [3:5..3:6) : <Tok_whitespace>
-  [3:6..3:7) : <Tok_uident (Constant "d")>
-  [3:7..3:7) : <Tok_dedent>
-  [3:7..3:7) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:4)})
+  (Tok_line_delim {source=[3:4..3:4)})
+  (Tok_uident {source=[3:4..3:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:5..3:6)})
+  (Tok_uident {source=[3:6..3:7); uident=(Constant "d")})
+  (Tok_dedent {source=[3:7..3:7); dedent=(Constant ())})
+  (Tok_end_of_input {source=[3:7..3:7)})
 ``a b c
     d``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:3) : <Tok_uident (Constant "b")>
-  [1:3..1:4) : <Tok_whitespace>
-  [1:4..1:5) : <Tok_uident (Constant "c")>
-  [1:5..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "d")>
-  [2:5..2:5) : <Tok_dedent>
-  [2:5..2:5) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_uident {source=[1:2..1:3); uident=(Constant "b")})
+  (Tok_whitespace {source=[1:3..1:4)})
+  (Tok_uident {source=[1:4..1:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[1:5..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "d")})
+  (Tok_dedent {source=[2:5..2:5); dedent=(Constant ())})
+  (Tok_end_of_input {source=[2:5..2:5)})
 ``	|``
-  [1:0..1:8) : <Tok_error ["[1:0..1:8): Unsupported codepoint"]>
-  [1:8..1:9) : <Tok_bar>
-  [1:9..1:9) : <Tok_end_of_input>
+  (Tok_error {source=[1:0..1:8); error=["[1:0..1:8): Unsupported codepoint"]})
+  (Tok_bar {source=[1:8..1:9)})
+  (Tok_end_of_input {source=[1:9..1:9)})
 ``  ``
-  [1:0..1:2) : <Tok_whitespace>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..1:2)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``
 
   
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_whitespace>
-  [3:0..3:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_whitespace {source=[2:0..3:0)})
+  (Tok_end_of_input {source=[3:0..3:0)})
 ``# a
 b
     c
@@ -223,56 +223,56 @@ b
 g
 
 ``
-  [1:0..2:0) : <Tok_hash_comment>
-  [2:0..2:1) : <Tok_uident (Constant "b")>
-  [2:1..3:0) : <Tok_whitespace>
-  [3:0..3:4) : <Tok_whitespace>
-  [3:4..3:4) : <Tok_indent>
-  [3:4..3:5) : <Tok_uident (Constant "c")>
-  [3:5..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..5:0) : <Tok_hash_comment>
-  [5:0..6:0) : <Tok_hash_comment>
-  [6:0..6:4) : <Tok_whitespace>
-  [6:4..6:4) : <Tok_line_delim>
-  [6:4..6:5) : <Tok_uident (Constant "f")>
-  [6:5..7:0) : <Tok_whitespace>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_line_delim>
-  [7:0..7:1) : <Tok_uident (Constant "g")>
-  [7:1..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_hash_comment {source=[1:0..2:0)})
+  (Tok_uident {source=[2:0..2:1); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:1..3:0)})
+  (Tok_whitespace {source=[3:0..3:4)})
+  (Tok_indent {source=[3:4..3:4); indent=(Constant ())})
+  (Tok_uident {source=[3:4..3:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:5..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_hash_comment {source=[4:4..5:0)})
+  (Tok_hash_comment {source=[5:0..6:0)})
+  (Tok_whitespace {source=[6:0..6:4)})
+  (Tok_line_delim {source=[6:4..6:4)})
+  (Tok_uident {source=[6:4..6:5); uident=(Constant "f")})
+  (Tok_whitespace {source=[6:5..7:0)})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[7:0..7:0)})
+  (Tok_uident {source=[7:0..7:1); uident=(Constant "g")})
+  (Tok_whitespace {source=[7:1..8:0)})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``a
   
   
 b``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_whitespace>
-  [3:0..4:0) : <Tok_whitespace>
-  [4:0..4:0) : <Tok_line_delim>
-  [4:0..4:1) : <Tok_uident (Constant "b")>
-  [4:1..4:1) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..3:0)})
+  (Tok_whitespace {source=[3:0..4:0)})
+  (Tok_line_delim {source=[4:0..4:0)})
+  (Tok_uident {source=[4:0..4:1); uident=(Constant "b")})
+  (Tok_end_of_input {source=[4:1..4:1)})
 ``a
     b
 (* Ignore. *)
     c
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:13) : <Tok_paren_comment>
-  [3:13..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_line_delim>
-  [4:4..4:5) : <Tok_uident (Constant "c")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_dedent>
-  [5:0..5:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_paren_comment {source=[3:0..3:13); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:13..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_line_delim {source=[4:4..4:4)})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_dedent {source=[5:0..5:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[5:0..5:0)})
 ``a
     b
 (* Ignore. *) (* ... *) # ...
@@ -291,107 +291,107 @@ b``
         i
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:13) : <Tok_paren_comment>
-  [3:13..3:14) : <Tok_whitespace>
-  [3:14..3:23) : <Tok_paren_comment>
-  [3:23..3:24) : <Tok_whitespace>
-  [3:24..4:0) : <Tok_hash_comment>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_line_delim>
-  [4:4..4:5) : <Tok_uident (Constant "c")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:1) : <Tok_whitespace>
-  [5:1..5:14) : <Tok_paren_comment>
-  [5:14..5:15) : <Tok_whitespace>
-  [5:15..5:24) : <Tok_paren_comment>
-  [5:24..5:25) : <Tok_whitespace>
-  [5:25..6:0) : <Tok_hash_comment>
-  [6:0..6:4) : <Tok_whitespace>
-  [6:4..6:4) : <Tok_line_delim>
-  [6:4..6:5) : <Tok_uident (Constant "d")>
-  [6:5..7:0) : <Tok_whitespace>
-  [7:0..7:2) : <Tok_whitespace>
-  [7:2..7:15) : <Tok_paren_comment>
-  [7:15..7:16) : <Tok_whitespace>
-  [7:16..7:25) : <Tok_paren_comment>
-  [7:25..7:26) : <Tok_whitespace>
-  [7:26..8:0) : <Tok_hash_comment>
-  [8:0..8:4) : <Tok_whitespace>
-  [8:4..8:4) : <Tok_line_delim>
-  [8:4..8:5) : <Tok_uident (Constant "e")>
-  [8:5..9:0) : <Tok_whitespace>
-  [9:0..9:3) : <Tok_whitespace>
-  [9:3..9:16) : <Tok_paren_comment>
-  [9:16..9:17) : <Tok_whitespace>
-  [9:17..9:26) : <Tok_paren_comment>
-  [9:26..9:27) : <Tok_whitespace>
-  [9:27..10:0) : <Tok_hash_comment>
-  [10:0..10:4) : <Tok_whitespace>
-  [10:4..10:4) : <Tok_line_delim>
-  [10:4..10:5) : <Tok_uident (Constant "f")>
-  [10:5..11:0) : <Tok_whitespace>
-  [11:0..11:4) : <Tok_whitespace>
-  [11:4..11:17) : <Tok_paren_comment>
-  [11:17..11:18) : <Tok_whitespace>
-  [11:18..11:27) : <Tok_paren_comment>
-  [11:27..11:28) : <Tok_whitespace>
-  [11:28..12:0) : <Tok_hash_comment>
-  [12:0..12:4) : <Tok_whitespace>
-  [12:4..12:4) : <Tok_line_delim>
-  [12:4..12:5) : <Tok_uident (Constant "g")>
-  [12:5..13:0) : <Tok_whitespace>
-  [13:0..13:5) : <Tok_whitespace>
-  [13:5..13:18) : <Tok_paren_comment>
-  [13:18..13:19) : <Tok_whitespace>
-  [13:19..13:28) : <Tok_paren_comment>
-  [13:28..13:29) : <Tok_whitespace>
-  [13:29..14:0) : <Tok_hash_comment>
-  [14:0..14:8) : <Tok_whitespace>
-  [14:8..14:8) : <Tok_indent>
-  [14:8..14:9) : <Tok_uident (Constant "h")>
-  [14:9..15:0) : <Tok_whitespace>
-  [15:0..15:12) : <Tok_whitespace>
-  [15:12..15:25) : <Tok_paren_comment>
-  [15:25..15:26) : <Tok_whitespace>
-  [15:26..15:35) : <Tok_paren_comment>
-  [15:35..15:36) : <Tok_whitespace>
-  [15:36..16:0) : <Tok_hash_comment>
-  [16:0..16:8) : <Tok_whitespace>
-  [16:8..16:8) : <Tok_line_delim>
-  [16:8..16:9) : <Tok_uident (Constant "i")>
-  [16:9..17:0) : <Tok_whitespace>
-  [17:0..17:0) : <Tok_dedent>
-  [17:0..17:0) : <Tok_dedent>
-  [17:0..17:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_paren_comment {source=[3:0..3:13); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:13..3:14)})
+  (Tok_paren_comment {source=[3:14..3:23); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:23..3:24)})
+  (Tok_hash_comment {source=[3:24..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_line_delim {source=[4:4..4:4)})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:1)})
+  (Tok_paren_comment {source=[5:1..5:14); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[5:14..5:15)})
+  (Tok_paren_comment {source=[5:15..5:24); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[5:24..5:25)})
+  (Tok_hash_comment {source=[5:25..6:0)})
+  (Tok_whitespace {source=[6:0..6:4)})
+  (Tok_line_delim {source=[6:4..6:4)})
+  (Tok_uident {source=[6:4..6:5); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:5..7:0)})
+  (Tok_whitespace {source=[7:0..7:2)})
+  (Tok_paren_comment {source=[7:2..7:15); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[7:15..7:16)})
+  (Tok_paren_comment {source=[7:16..7:25); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[7:25..7:26)})
+  (Tok_hash_comment {source=[7:26..8:0)})
+  (Tok_whitespace {source=[8:0..8:4)})
+  (Tok_line_delim {source=[8:4..8:4)})
+  (Tok_uident {source=[8:4..8:5); uident=(Constant "e")})
+  (Tok_whitespace {source=[8:5..9:0)})
+  (Tok_whitespace {source=[9:0..9:3)})
+  (Tok_paren_comment {source=[9:3..9:16); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[9:16..9:17)})
+  (Tok_paren_comment {source=[9:17..9:26); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[9:26..9:27)})
+  (Tok_hash_comment {source=[9:27..10:0)})
+  (Tok_whitespace {source=[10:0..10:4)})
+  (Tok_line_delim {source=[10:4..10:4)})
+  (Tok_uident {source=[10:4..10:5); uident=(Constant "f")})
+  (Tok_whitespace {source=[10:5..11:0)})
+  (Tok_whitespace {source=[11:0..11:4)})
+  (Tok_paren_comment {source=[11:4..11:17); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[11:17..11:18)})
+  (Tok_paren_comment {source=[11:18..11:27); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[11:27..11:28)})
+  (Tok_hash_comment {source=[11:28..12:0)})
+  (Tok_whitespace {source=[12:0..12:4)})
+  (Tok_line_delim {source=[12:4..12:4)})
+  (Tok_uident {source=[12:4..12:5); uident=(Constant "g")})
+  (Tok_whitespace {source=[12:5..13:0)})
+  (Tok_whitespace {source=[13:0..13:5)})
+  (Tok_paren_comment {source=[13:5..13:18); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[13:18..13:19)})
+  (Tok_paren_comment {source=[13:19..13:28); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[13:28..13:29)})
+  (Tok_hash_comment {source=[13:29..14:0)})
+  (Tok_whitespace {source=[14:0..14:8)})
+  (Tok_indent {source=[14:8..14:8); indent=(Constant ())})
+  (Tok_uident {source=[14:8..14:9); uident=(Constant "h")})
+  (Tok_whitespace {source=[14:9..15:0)})
+  (Tok_whitespace {source=[15:0..15:12)})
+  (Tok_paren_comment {source=[15:12..15:25); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[15:25..15:26)})
+  (Tok_paren_comment {source=[15:26..15:35); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[15:35..15:36)})
+  (Tok_hash_comment {source=[15:36..16:0)})
+  (Tok_whitespace {source=[16:0..16:8)})
+  (Tok_line_delim {source=[16:8..16:8)})
+  (Tok_uident {source=[16:8..16:9); uident=(Constant "i")})
+  (Tok_whitespace {source=[16:9..17:0)})
+  (Tok_dedent {source=[17:0..17:0); dedent=(Constant ())})
+  (Tok_dedent {source=[17:0..17:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[17:0..17:0)})
 ``a
     b
 (* Ignore. *) (* ... *) # ...
     c
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:13) : <Tok_paren_comment>
-  [3:13..3:14) : <Tok_whitespace>
-  [3:14..3:23) : <Tok_paren_comment>
-  [3:23..3:24) : <Tok_whitespace>
-  [3:24..4:0) : <Tok_hash_comment>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_line_delim>
-  [4:4..4:5) : <Tok_uident (Constant "c")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_dedent>
-  [5:0..5:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_paren_comment {source=[3:0..3:13); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:13..3:14)})
+  (Tok_paren_comment {source=[3:14..3:23); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:23..3:24)})
+  (Tok_hash_comment {source=[3:24..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_line_delim {source=[4:4..4:4)})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_dedent {source=[5:0..5:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[5:0..5:0)})
 ``a
     b
 (* Ignore. *) (*
@@ -399,47 +399,47 @@ b``
     c
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:13) : <Tok_paren_comment>
-  [3:13..3:14) : <Tok_whitespace>
-  [3:14..4:7) : <Tok_paren_comment>
-  [4:7..4:8) : <Tok_whitespace>
-  [4:8..5:0) : <Tok_hash_comment>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_line_delim>
-  [5:4..5:5) : <Tok_uident (Constant "c")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:0) : <Tok_dedent>
-  [6:0..6:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_paren_comment {source=[3:0..3:13); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:13..3:14)})
+  (Tok_paren_comment {source=[3:14..4:7); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[4:7..4:8)})
+  (Tok_hash_comment {source=[4:8..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_line_delim {source=[5:4..5:4)})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_dedent {source=[6:0..6:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[6:0..6:0)})
 ``a
     b
 (* Don't ignore. *) true
     c
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:19) : <Tok_paren_comment>
-  [3:19..3:20) : <Tok_whitespace>
-  [3:20..3:20) : <Tok_dedent>
-  [3:20..3:20) : <Tok_line_delim>
-  [3:20..3:24) : <Tok_true>
-  [3:24..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "c")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_dedent>
-  [5:0..5:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_paren_comment {source=[3:0..3:19); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:19..3:20)})
+  (Tok_dedent {source=[3:20..3:20); dedent=(Constant ())})
+  (Tok_line_delim {source=[3:20..3:20)})
+  (Tok_true {source=[3:20..3:24)})
+  (Tok_whitespace {source=[3:24..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_dedent {source=[5:0..5:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[5:0..5:0)})
 ``a
     b
 (* Don't ignore. *) (* ...
@@ -447,26 +447,26 @@ b``
     c
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:19) : <Tok_paren_comment>
-  [3:19..3:20) : <Tok_whitespace>
-  [3:20..4:3) : <Tok_paren_comment>
-  [4:3..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_dedent>
-  [4:4..4:4) : <Tok_line_delim>
-  [4:4..4:8) : <Tok_true>
-  [4:8..5:0) : <Tok_whitespace>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_indent>
-  [5:4..5:5) : <Tok_uident (Constant "c")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:0) : <Tok_dedent>
-  [6:0..6:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_paren_comment {source=[3:0..3:19); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:19..3:20)})
+  (Tok_paren_comment {source=[3:20..4:3); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[4:3..4:4)})
+  (Tok_dedent {source=[4:4..4:4); dedent=(Constant ())})
+  (Tok_line_delim {source=[4:4..4:4)})
+  (Tok_true {source=[4:4..4:8)})
+  (Tok_whitespace {source=[4:8..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_indent {source=[5:4..5:4); indent=(Constant ())})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_dedent {source=[6:0..6:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[6:0..6:0)})
 ``a
     b
 (* Don't ignore. *) (*
@@ -474,26 +474,26 @@ b``
     c
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:19) : <Tok_paren_comment>
-  [3:19..3:20) : <Tok_whitespace>
-  [3:20..4:7) : <Tok_paren_comment>
-  [4:7..4:8) : <Tok_whitespace>
-  [4:8..4:8) : <Tok_dedent>
-  [4:8..4:8) : <Tok_line_delim>
-  [4:8..4:12) : <Tok_true>
-  [4:12..5:0) : <Tok_whitespace>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_indent>
-  [5:4..5:5) : <Tok_uident (Constant "c")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:0) : <Tok_dedent>
-  [6:0..6:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_paren_comment {source=[3:0..3:19); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[3:19..3:20)})
+  (Tok_paren_comment {source=[3:20..4:7); paren_comment=(Constant ())})
+  (Tok_whitespace {source=[4:7..4:8)})
+  (Tok_dedent {source=[4:8..4:8); dedent=(Constant ())})
+  (Tok_line_delim {source=[4:8..4:8)})
+  (Tok_true {source=[4:8..4:12)})
+  (Tok_whitespace {source=[4:12..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_indent {source=[5:4..5:4); indent=(Constant ())})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_dedent {source=[6:0..6:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[6:0..6:0)})
 ``a
     b
         c
@@ -501,28 +501,28 @@ b``
     e
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:8) : <Tok_whitespace>
-  [3:8..3:8) : <Tok_indent>
-  [3:8..3:9) : <Tok_uident (Constant "c")>
-  [3:9..4:0) : <Tok_whitespace>
-  [4:0..4:12) : <Tok_whitespace>
-  [4:12..4:12) : <Tok_indent>
-  [4:12..4:13) : <Tok_uident (Constant "d")>
-  [4:13..5:0) : <Tok_whitespace>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_dedent>
-  [5:4..5:4) : <Tok_dedent>
-  [5:4..5:4) : <Tok_line_delim>
-  [5:4..5:5) : <Tok_uident (Constant "e")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:0) : <Tok_dedent>
-  [6:0..6:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:8)})
+  (Tok_indent {source=[3:8..3:8); indent=(Constant ())})
+  (Tok_uident {source=[3:8..3:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:9..4:0)})
+  (Tok_whitespace {source=[4:0..4:12)})
+  (Tok_indent {source=[4:12..4:12); indent=(Constant ())})
+  (Tok_uident {source=[4:12..4:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:13..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_dedent {source=[5:4..5:4); dedent=(Constant ())})
+  (Tok_dedent {source=[5:4..5:4); dedent=(Constant ())})
+  (Tok_line_delim {source=[5:4..5:4)})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "e")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_dedent {source=[6:0..6:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[6:0..6:0)})
 ``a
     b
         c
@@ -531,31 +531,31 @@ b``
     f
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:8) : <Tok_whitespace>
-  [3:8..3:8) : <Tok_indent>
-  [3:8..3:9) : <Tok_uident (Constant "c")>
-  [3:9..4:0) : <Tok_whitespace>
-  [4:0..4:12) : <Tok_whitespace>
-  [4:12..4:12) : <Tok_indent>
-  [4:12..4:13) : <Tok_uident (Constant "d")>
-  [4:13..5:0) : <Tok_whitespace>
-  [5:0..5:6) : <Tok_whitespace>
-  [5:6..5:6) : <Tok_dedent>
-  [5:6..5:6) : <Tok_dedent>
-  [5:6..5:7) : <Tok_uident (Constant "e")>
-  [5:7..6:0) : <Tok_whitespace>
-  [6:0..6:4) : <Tok_whitespace>
-  [6:4..6:4) : <Tok_line_delim>
-  [6:4..6:5) : <Tok_uident (Constant "f")>
-  [6:5..7:0) : <Tok_whitespace>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:8)})
+  (Tok_indent {source=[3:8..3:8); indent=(Constant ())})
+  (Tok_uident {source=[3:8..3:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:9..4:0)})
+  (Tok_whitespace {source=[4:0..4:12)})
+  (Tok_indent {source=[4:12..4:12); indent=(Constant ())})
+  (Tok_uident {source=[4:12..4:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:13..5:0)})
+  (Tok_whitespace {source=[5:0..5:6)})
+  (Tok_dedent {source=[5:6..5:6); dedent=(Constant ())})
+  (Tok_dedent {source=[5:6..5:6); dedent=(Constant ())})
+  (Tok_uident {source=[5:6..5:7); uident=(Constant "e")})
+  (Tok_whitespace {source=[5:7..6:0)})
+  (Tok_whitespace {source=[6:0..6:4)})
+  (Tok_line_delim {source=[6:4..6:4)})
+  (Tok_uident {source=[6:4..6:5); uident=(Constant "f")})
+  (Tok_whitespace {source=[6:5..7:0)})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[7:0..7:0)})
 ``a
     b
     c
@@ -567,83 +567,83 @@ b``
     i
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:4) : <Tok_whitespace>
-  [3:4..3:4) : <Tok_line_delim>
-  [3:4..3:5) : <Tok_uident (Constant "c")>
-  [3:5..4:0) : <Tok_whitespace>
-  [4:0..4:2) : <Tok_whitespace>
-  [4:2..4:2) : <Tok_dedent>
-  [4:2..4:3) : <Tok_uident (Constant "d")>
-  [4:3..5:0) : <Tok_whitespace>
-  [5:0..5:4) : <Tok_whitespace>
-  [5:4..5:4) : <Tok_indent>
-  [5:4..5:5) : <Tok_uident (Constant "e")>
-  [5:5..6:0) : <Tok_whitespace>
-  [6:0..6:8) : <Tok_whitespace>
-  [6:8..6:8) : <Tok_indent>
-  [6:8..6:9) : <Tok_uident (Constant "f")>
-  [6:9..7:0) : <Tok_whitespace>
-  [7:0..7:6) : <Tok_whitespace>
-  [7:6..7:6) : <Tok_dedent>
-  [7:6..7:7) : <Tok_uident (Constant "g")>
-  [7:7..8:0) : <Tok_whitespace>
-  [8:0..8:8) : <Tok_whitespace>
-  [8:8..8:8) : <Tok_indent>
-  [8:8..8:9) : <Tok_uident (Constant "h")>
-  [8:9..9:0) : <Tok_whitespace>
-  [9:0..9:4) : <Tok_whitespace>
-  [9:4..9:4) : <Tok_dedent>
-  [9:4..9:4) : <Tok_line_delim>
-  [9:4..9:5) : <Tok_uident (Constant "i")>
-  [9:5..10:0) : <Tok_whitespace>
-  [10:0..10:0) : <Tok_dedent>
-  [10:0..10:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:4)})
+  (Tok_line_delim {source=[3:4..3:4)})
+  (Tok_uident {source=[3:4..3:5); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:5..4:0)})
+  (Tok_whitespace {source=[4:0..4:2)})
+  (Tok_dedent {source=[4:2..4:2); dedent=(Constant ())})
+  (Tok_uident {source=[4:2..4:3); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:3..5:0)})
+  (Tok_whitespace {source=[5:0..5:4)})
+  (Tok_indent {source=[5:4..5:4); indent=(Constant ())})
+  (Tok_uident {source=[5:4..5:5); uident=(Constant "e")})
+  (Tok_whitespace {source=[5:5..6:0)})
+  (Tok_whitespace {source=[6:0..6:8)})
+  (Tok_indent {source=[6:8..6:8); indent=(Constant ())})
+  (Tok_uident {source=[6:8..6:9); uident=(Constant "f")})
+  (Tok_whitespace {source=[6:9..7:0)})
+  (Tok_whitespace {source=[7:0..7:6)})
+  (Tok_dedent {source=[7:6..7:6); dedent=(Constant ())})
+  (Tok_uident {source=[7:6..7:7); uident=(Constant "g")})
+  (Tok_whitespace {source=[7:7..8:0)})
+  (Tok_whitespace {source=[8:0..8:8)})
+  (Tok_indent {source=[8:8..8:8); indent=(Constant ())})
+  (Tok_uident {source=[8:8..8:9); uident=(Constant "h")})
+  (Tok_whitespace {source=[8:9..9:0)})
+  (Tok_whitespace {source=[9:0..9:4)})
+  (Tok_dedent {source=[9:4..9:4); dedent=(Constant ())})
+  (Tok_line_delim {source=[9:4..9:4)})
+  (Tok_uident {source=[9:4..9:5); uident=(Constant "i")})
+  (Tok_whitespace {source=[9:5..10:0)})
+  (Tok_dedent {source=[10:0..10:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[10:0..10:0)})
 ``a
   b
   c
 d
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:2) : <Tok_whitespace>
-  [2:2..2:3) : <Tok_uident (Constant "b")>
-  [2:3..3:0) : <Tok_whitespace>
-  [3:0..3:2) : <Tok_whitespace>
-  [3:2..3:3) : <Tok_uident (Constant "c")>
-  [3:3..4:0) : <Tok_whitespace>
-  [4:0..4:0) : <Tok_line_delim>
-  [4:0..4:1) : <Tok_uident (Constant "d")>
-  [4:1..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:2)})
+  (Tok_uident {source=[2:2..2:3); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:3..3:0)})
+  (Tok_whitespace {source=[3:0..3:2)})
+  (Tok_uident {source=[3:2..3:3); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:3..4:0)})
+  (Tok_line_delim {source=[4:0..4:0)})
+  (Tok_uident {source=[4:0..4:1); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:1..5:0)})
+  (Tok_end_of_input {source=[5:0..5:0)})
 ``a
     b
         c
 d
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:8) : <Tok_whitespace>
-  [3:8..3:8) : <Tok_indent>
-  [3:8..3:9) : <Tok_uident (Constant "c")>
-  [3:9..4:0) : <Tok_whitespace>
-  [4:0..4:0) : <Tok_dedent>
-  [4:0..4:0) : <Tok_dedent>
-  [4:0..4:0) : <Tok_line_delim>
-  [4:0..4:1) : <Tok_uident (Constant "d")>
-  [4:1..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:8)})
+  (Tok_indent {source=[3:8..3:8); indent=(Constant ())})
+  (Tok_uident {source=[3:8..3:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:9..4:0)})
+  (Tok_dedent {source=[4:0..4:0); dedent=(Constant ())})
+  (Tok_dedent {source=[4:0..4:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[4:0..4:0)})
+  (Tok_uident {source=[4:0..4:1); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:1..5:0)})
+  (Tok_end_of_input {source=[5:0..5:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -654,29 +654,29 @@ a
 a2
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_line_delim>
-  [7:0..7:2) : <Tok_uident (Constant "a2")>
-  [7:2..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[7:0..7:0)})
+  (Tok_uident {source=[7:0..7:2); uident=(Constant "a2")})
+  (Tok_whitespace {source=[7:2..8:0)})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -687,30 +687,30 @@ a
  x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:1) : <Tok_whitespace>
-  [7:1..7:1) : <Tok_dedent (Malformed ["[7:1..7:1): Missing dedent"])>
-  [7:1..7:1) : <Tok_dedent (Malformed ["[7:1..7:1): Missing dedent"])>
-  [7:1..7:1) : <Tok_dedent (Malformed ["[7:1..7:1): Missing dedent"])>
-  [7:1..7:1) : <Tok_misaligned>
-  [7:1..7:2) : <Tok_uident (Constant "x")>
-  [7:2..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:1)})
+  (Tok_dedent {source=[7:1..7:1); dedent=(Malformed ["[7:1..7:1): Missing dedent"])})
+  (Tok_dedent {source=[7:1..7:1); dedent=(Malformed ["[7:1..7:1): Missing dedent"])})
+  (Tok_dedent {source=[7:1..7:1); dedent=(Malformed ["[7:1..7:1): Missing dedent"])})
+  (Tok_misaligned {source=[7:1..7:1)})
+  (Tok_uident {source=[7:1..7:2); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:2..8:0)})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -721,29 +721,29 @@ a
   a'
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:2) : <Tok_whitespace>
-  [7:2..7:2) : <Tok_dedent>
-  [7:2..7:2) : <Tok_dedent>
-  [7:2..7:2) : <Tok_dedent>
-  [7:2..7:4) : <Tok_uident (Constant "a'")>
-  [7:4..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:2)})
+  (Tok_dedent {source=[7:2..7:2); dedent=(Constant ())})
+  (Tok_dedent {source=[7:2..7:2); dedent=(Constant ())})
+  (Tok_dedent {source=[7:2..7:2); dedent=(Constant ())})
+  (Tok_uident {source=[7:2..7:4); uident=(Constant "a'")})
+  (Tok_whitespace {source=[7:4..8:0)})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -754,30 +754,30 @@ a
    x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:3) : <Tok_whitespace>
-  [7:3..7:3) : <Tok_dedent (Malformed ["[7:3..7:3): Missing dedent"])>
-  [7:3..7:3) : <Tok_dedent (Malformed ["[7:3..7:3): Missing dedent"])>
-  [7:3..7:3) : <Tok_misaligned>
-  [7:3..7:4) : <Tok_uident (Constant "x")>
-  [7:4..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:3)})
+  (Tok_dedent {source=[7:3..7:3); dedent=(Malformed ["[7:3..7:3): Missing dedent"])})
+  (Tok_dedent {source=[7:3..7:3); dedent=(Malformed ["[7:3..7:3): Missing dedent"])})
+  (Tok_misaligned {source=[7:3..7:3)})
+  (Tok_uident {source=[7:3..7:4); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:4..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -788,30 +788,30 @@ a
     b2
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:4) : <Tok_whitespace>
-  [7:4..7:4) : <Tok_dedent>
-  [7:4..7:4) : <Tok_dedent>
-  [7:4..7:4) : <Tok_line_delim>
-  [7:4..7:6) : <Tok_uident (Constant "b2")>
-  [7:6..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:4)})
+  (Tok_dedent {source=[7:4..7:4); dedent=(Constant ())})
+  (Tok_dedent {source=[7:4..7:4); dedent=(Constant ())})
+  (Tok_line_delim {source=[7:4..7:4)})
+  (Tok_uident {source=[7:4..7:6); uident=(Constant "b2")})
+  (Tok_whitespace {source=[7:6..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -822,30 +822,30 @@ a
      x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:5) : <Tok_whitespace>
-  [7:5..7:5) : <Tok_dedent (Malformed ["[7:5..7:5): Missing dedent"])>
-  [7:5..7:5) : <Tok_dedent (Malformed ["[7:5..7:5): Missing dedent"])>
-  [7:5..7:5) : <Tok_misaligned>
-  [7:5..7:6) : <Tok_uident (Constant "x")>
-  [7:6..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:5)})
+  (Tok_dedent {source=[7:5..7:5); dedent=(Malformed ["[7:5..7:5): Missing dedent"])})
+  (Tok_dedent {source=[7:5..7:5); dedent=(Malformed ["[7:5..7:5): Missing dedent"])})
+  (Tok_misaligned {source=[7:5..7:5)})
+  (Tok_uident {source=[7:5..7:6); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:6..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -856,29 +856,29 @@ a
       b'
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:6) : <Tok_whitespace>
-  [7:6..7:6) : <Tok_dedent>
-  [7:6..7:6) : <Tok_dedent>
-  [7:6..7:8) : <Tok_uident (Constant "b'")>
-  [7:8..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:6)})
+  (Tok_dedent {source=[7:6..7:6); dedent=(Constant ())})
+  (Tok_dedent {source=[7:6..7:6); dedent=(Constant ())})
+  (Tok_uident {source=[7:6..7:8); uident=(Constant "b'")})
+  (Tok_whitespace {source=[7:8..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -889,30 +889,30 @@ a
        x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:7) : <Tok_whitespace>
-  [7:7..7:7) : <Tok_dedent (Malformed ["[7:7..7:7): Missing dedent"])>
-  [7:7..7:7) : <Tok_misaligned>
-  [7:7..7:8) : <Tok_uident (Constant "x")>
-  [7:8..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:7)})
+  (Tok_dedent {source=[7:7..7:7); dedent=(Malformed ["[7:7..7:7): Missing dedent"])})
+  (Tok_misaligned {source=[7:7..7:7)})
+  (Tok_uident {source=[7:7..7:8); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:8..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -923,30 +923,30 @@ a
         c2
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:8) : <Tok_whitespace>
-  [7:8..7:8) : <Tok_dedent>
-  [7:8..7:8) : <Tok_line_delim>
-  [7:8..7:10) : <Tok_uident (Constant "c2")>
-  [7:10..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:8)})
+  (Tok_dedent {source=[7:8..7:8); dedent=(Constant ())})
+  (Tok_line_delim {source=[7:8..7:8)})
+  (Tok_uident {source=[7:8..7:10); uident=(Constant "c2")})
+  (Tok_whitespace {source=[7:10..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -957,30 +957,30 @@ a
          x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:9) : <Tok_whitespace>
-  [7:9..7:9) : <Tok_dedent (Malformed ["[7:9..7:9): Missing dedent"])>
-  [7:9..7:9) : <Tok_misaligned>
-  [7:9..7:10) : <Tok_uident (Constant "x")>
-  [7:10..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:9)})
+  (Tok_dedent {source=[7:9..7:9); dedent=(Malformed ["[7:9..7:9): Missing dedent"])})
+  (Tok_misaligned {source=[7:9..7:9)})
+  (Tok_uident {source=[7:9..7:10); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:10..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -991,29 +991,29 @@ a
           c'
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:10) : <Tok_whitespace>
-  [7:10..7:10) : <Tok_dedent>
-  [7:10..7:12) : <Tok_uident (Constant "c'")>
-  [7:12..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:10)})
+  (Tok_dedent {source=[7:10..7:10); dedent=(Constant ())})
+  (Tok_uident {source=[7:10..7:12); uident=(Constant "c'")})
+  (Tok_whitespace {source=[7:12..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1024,30 +1024,30 @@ a
            x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:11) : <Tok_whitespace>
-  [7:11..7:11) : <Tok_misaligned>
-  [7:11..7:12) : <Tok_uident (Constant "x")>
-  [7:12..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:11)})
+  (Tok_misaligned {source=[7:11..7:11)})
+  (Tok_uident {source=[7:11..7:12); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:12..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1058,30 +1058,30 @@ a
             d2
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:12) : <Tok_whitespace>
-  [7:12..7:12) : <Tok_line_delim>
-  [7:12..7:14) : <Tok_uident (Constant "d2")>
-  [7:14..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:12)})
+  (Tok_line_delim {source=[7:12..7:12)})
+  (Tok_uident {source=[7:12..7:14); uident=(Constant "d2")})
+  (Tok_whitespace {source=[7:14..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1092,30 +1092,30 @@ a
              x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:13) : <Tok_whitespace>
-  [7:13..7:13) : <Tok_misaligned>
-  [7:13..7:14) : <Tok_uident (Constant "x")>
-  [7:14..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:13)})
+  (Tok_misaligned {source=[7:13..7:13)})
+  (Tok_uident {source=[7:13..7:14); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:14..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1126,29 +1126,29 @@ a
               d'
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:14) : <Tok_whitespace>
-  [7:14..7:16) : <Tok_uident (Constant "d'")>
-  [7:16..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:14)})
+  (Tok_uident {source=[7:14..7:16); uident=(Constant "d'")})
+  (Tok_whitespace {source=[7:16..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1159,32 +1159,32 @@ a
                x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:15) : <Tok_whitespace>
-  [7:15..7:15) : <Tok_indent (Malformed ["[7:15..7:15): Missing indent"])>
-  [7:15..7:15) : <Tok_misaligned>
-  [7:15..7:16) : <Tok_uident (Constant "x")>
-  [7:16..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:15)})
+  (Tok_indent {source=[7:15..7:15); indent=(Malformed ["[7:15..7:15): Missing indent"])})
+  (Tok_misaligned {source=[7:15..7:15)})
+  (Tok_uident {source=[7:15..7:16); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:16..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1195,31 +1195,31 @@ a
                 e
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:16) : <Tok_whitespace>
-  [7:16..7:16) : <Tok_indent>
-  [7:16..7:17) : <Tok_uident (Constant "e")>
-  [7:17..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:16)})
+  (Tok_indent {source=[7:16..7:16); indent=(Constant ())})
+  (Tok_uident {source=[7:16..7:17); uident=(Constant "e")})
+  (Tok_whitespace {source=[7:17..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1230,32 +1230,32 @@ a
                  x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:17) : <Tok_whitespace>
-  [7:17..7:17) : <Tok_indent (Malformed ["[7:17..7:17): Missing indent"])>
-  [7:17..7:17) : <Tok_misaligned>
-  [7:17..7:18) : <Tok_uident (Constant "x")>
-  [7:18..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:17)})
+  (Tok_indent {source=[7:17..7:17); indent=(Malformed ["[7:17..7:17): Missing indent"])})
+  (Tok_misaligned {source=[7:17..7:17)})
+  (Tok_uident {source=[7:17..7:18); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:18..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1266,31 +1266,31 @@ a
                   x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:18) : <Tok_whitespace>
-  [7:18..7:18) : <Tok_indent (Malformed ["[7:18..7:18): Missing indent"])>
-  [7:18..7:19) : <Tok_uident (Constant "x")>
-  [7:19..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:18)})
+  (Tok_indent {source=[7:18..7:18); indent=(Malformed ["[7:18..7:18): Missing indent"])})
+  (Tok_uident {source=[7:18..7:19); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:19..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1301,34 +1301,34 @@ a
                    x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:19) : <Tok_whitespace>
-  [7:19..7:19) : <Tok_indent (Malformed ["[7:19..7:19): Missing indent"])>
-  [7:19..7:19) : <Tok_indent (Malformed ["[7:19..7:19): Missing indent"])>
-  [7:19..7:19) : <Tok_misaligned>
-  [7:19..7:20) : <Tok_uident (Constant "x")>
-  [7:20..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:19)})
+  (Tok_indent {source=[7:19..7:19); indent=(Malformed ["[7:19..7:19): Missing indent"])})
+  (Tok_indent {source=[7:19..7:19); indent=(Malformed ["[7:19..7:19): Missing indent"])})
+  (Tok_misaligned {source=[7:19..7:19)})
+  (Tok_uident {source=[7:19..7:20); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:20..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1339,33 +1339,33 @@ a
                     x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:20) : <Tok_whitespace>
-  [7:20..7:20) : <Tok_indent (Malformed ["[7:20..7:20): Missing indent"])>
-  [7:20..7:20) : <Tok_indent>
-  [7:20..7:21) : <Tok_uident (Constant "x")>
-  [7:21..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:20)})
+  (Tok_indent {source=[7:20..7:20); indent=(Malformed ["[7:20..7:20): Missing indent"])})
+  (Tok_indent {source=[7:20..7:20); indent=(Constant ())})
+  (Tok_uident {source=[7:20..7:21); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:21..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1376,34 +1376,34 @@ a
                      x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:21) : <Tok_whitespace>
-  [7:21..7:21) : <Tok_indent (Malformed ["[7:21..7:21): Missing indent"])>
-  [7:21..7:21) : <Tok_indent (Malformed ["[7:21..7:21): Missing indent"])>
-  [7:21..7:21) : <Tok_misaligned>
-  [7:21..7:22) : <Tok_uident (Constant "x")>
-  [7:22..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:21)})
+  (Tok_indent {source=[7:21..7:21); indent=(Malformed ["[7:21..7:21): Missing indent"])})
+  (Tok_indent {source=[7:21..7:21); indent=(Malformed ["[7:21..7:21): Missing indent"])})
+  (Tok_misaligned {source=[7:21..7:21)})
+  (Tok_uident {source=[7:21..7:22); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:22..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1414,33 +1414,33 @@ a
                       x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:22) : <Tok_whitespace>
-  [7:22..7:22) : <Tok_indent (Malformed ["[7:22..7:22): Missing indent"])>
-  [7:22..7:22) : <Tok_indent (Malformed ["[7:22..7:22): Missing indent"])>
-  [7:22..7:23) : <Tok_uident (Constant "x")>
-  [7:23..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:22)})
+  (Tok_indent {source=[7:22..7:22); indent=(Malformed ["[7:22..7:22): Missing indent"])})
+  (Tok_indent {source=[7:22..7:22); indent=(Malformed ["[7:22..7:22): Missing indent"])})
+  (Tok_uident {source=[7:22..7:23); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:23..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1451,36 +1451,36 @@ a
                        x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:23) : <Tok_whitespace>
-  [7:23..7:23) : <Tok_indent (Malformed ["[7:23..7:23): Missing indent"])>
-  [7:23..7:23) : <Tok_indent (Malformed ["[7:23..7:23): Missing indent"])>
-  [7:23..7:23) : <Tok_indent (Malformed ["[7:23..7:23): Missing indent"])>
-  [7:23..7:23) : <Tok_misaligned>
-  [7:23..7:24) : <Tok_uident (Constant "x")>
-  [7:24..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:23)})
+  (Tok_indent {source=[7:23..7:23); indent=(Malformed ["[7:23..7:23): Missing indent"])})
+  (Tok_indent {source=[7:23..7:23); indent=(Malformed ["[7:23..7:23): Missing indent"])})
+  (Tok_indent {source=[7:23..7:23); indent=(Malformed ["[7:23..7:23): Missing indent"])})
+  (Tok_misaligned {source=[7:23..7:23)})
+  (Tok_uident {source=[7:23..7:24); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:24..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1491,35 +1491,35 @@ a
                         x
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:1) : <Tok_uident (Constant "a")>
-  [3:1..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_indent>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:8) : <Tok_whitespace>
-  [5:8..5:8) : <Tok_indent>
-  [5:8..5:9) : <Tok_uident (Constant "c")>
-  [5:9..6:0) : <Tok_whitespace>
-  [6:0..6:12) : <Tok_whitespace>
-  [6:12..6:12) : <Tok_indent>
-  [6:12..6:13) : <Tok_uident (Constant "d")>
-  [6:13..7:0) : <Tok_whitespace>
-  [7:0..7:24) : <Tok_whitespace>
-  [7:24..7:24) : <Tok_indent (Malformed ["[7:24..7:24): Missing indent"])>
-  [7:24..7:24) : <Tok_indent (Malformed ["[7:24..7:24): Missing indent"])>
-  [7:24..7:24) : <Tok_indent>
-  [7:24..7:25) : <Tok_uident (Constant "x")>
-  [7:25..8:0) : <Tok_whitespace>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_dedent>
-  [8:0..8:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_uident {source=[3:0..3:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:1..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_indent {source=[4:4..4:4); indent=(Constant ())})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:8)})
+  (Tok_indent {source=[5:8..5:8); indent=(Constant ())})
+  (Tok_uident {source=[5:8..5:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:9..6:0)})
+  (Tok_whitespace {source=[6:0..6:12)})
+  (Tok_indent {source=[6:12..6:12); indent=(Constant ())})
+  (Tok_uident {source=[6:12..6:13); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:13..7:0)})
+  (Tok_whitespace {source=[7:0..7:24)})
+  (Tok_indent {source=[7:24..7:24); indent=(Malformed ["[7:24..7:24): Missing indent"])})
+  (Tok_indent {source=[7:24..7:24); indent=(Malformed ["[7:24..7:24): Missing indent"])})
+  (Tok_indent {source=[7:24..7:24); indent=(Constant ())})
+  (Tok_uident {source=[7:24..7:25); uident=(Constant "x")})
+  (Tok_whitespace {source=[7:25..8:0)})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_dedent {source=[8:0..8:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[8:0..8:0)})
 ``
 
 # : | : | : | : | : | : |
@@ -1529,166 +1529,166 @@ a
                         d
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..3:0) : <Tok_hash_comment>
-  [3:0..3:8) : <Tok_whitespace>
-  [3:8..3:8) : <Tok_indent (Malformed ["[3:8..3:8): Missing indent"])>
-  [3:8..3:8) : <Tok_indent>
-  [3:8..3:9) : <Tok_uident (Constant "a")>
-  [3:9..4:0) : <Tok_whitespace>
-  [4:0..4:4) : <Tok_whitespace>
-  [4:4..4:4) : <Tok_dedent>
-  [4:4..4:4) : <Tok_line_delim>
-  [4:4..4:5) : <Tok_uident (Constant "b")>
-  [4:5..5:0) : <Tok_whitespace>
-  [5:0..5:12) : <Tok_whitespace>
-  [5:12..5:12) : <Tok_indent (Malformed ["[5:12..5:12): Missing indent"])>
-  [5:12..5:12) : <Tok_indent>
-  [5:12..5:13) : <Tok_uident (Constant "c")>
-  [5:13..6:0) : <Tok_whitespace>
-  [6:0..6:24) : <Tok_whitespace>
-  [6:24..6:24) : <Tok_indent (Malformed ["[6:24..6:24): Missing indent"])>
-  [6:24..6:24) : <Tok_indent (Malformed ["[6:24..6:24): Missing indent"])>
-  [6:24..6:24) : <Tok_indent>
-  [6:24..6:25) : <Tok_uident (Constant "d")>
-  [6:25..7:0) : <Tok_whitespace>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_dedent>
-  [7:0..7:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_hash_comment {source=[2:0..3:0)})
+  (Tok_whitespace {source=[3:0..3:8)})
+  (Tok_indent {source=[3:8..3:8); indent=(Malformed ["[3:8..3:8): Missing indent"])})
+  (Tok_indent {source=[3:8..3:8); indent=(Constant ())})
+  (Tok_uident {source=[3:8..3:9); uident=(Constant "a")})
+  (Tok_whitespace {source=[3:9..4:0)})
+  (Tok_whitespace {source=[4:0..4:4)})
+  (Tok_dedent {source=[4:4..4:4); dedent=(Constant ())})
+  (Tok_line_delim {source=[4:4..4:4)})
+  (Tok_uident {source=[4:4..4:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[4:5..5:0)})
+  (Tok_whitespace {source=[5:0..5:12)})
+  (Tok_indent {source=[5:12..5:12); indent=(Malformed ["[5:12..5:12): Missing indent"])})
+  (Tok_indent {source=[5:12..5:12); indent=(Constant ())})
+  (Tok_uident {source=[5:12..5:13); uident=(Constant "c")})
+  (Tok_whitespace {source=[5:13..6:0)})
+  (Tok_whitespace {source=[6:0..6:24)})
+  (Tok_indent {source=[6:24..6:24); indent=(Malformed ["[6:24..6:24): Missing indent"])})
+  (Tok_indent {source=[6:24..6:24); indent=(Malformed ["[6:24..6:24): Missing indent"])})
+  (Tok_indent {source=[6:24..6:24); indent=(Constant ())})
+  (Tok_uident {source=[6:24..6:25); uident=(Constant "d")})
+  (Tok_whitespace {source=[6:25..7:0)})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_dedent {source=[7:0..7:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[7:0..7:0)})
 ``(``
-  [1:0..1:1) : <Tok_lparen>
-  [1:1..1:1) : <Tok_end_of_input>
+  (Tok_lparen {source=[1:0..1:1)})
+  (Tok_end_of_input {source=[1:1..1:1)})
 ``    ``
-  [1:0..1:4) : <Tok_whitespace>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..1:4)})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``    a``
-  [1:0..1:4) : <Tok_whitespace>
-  [1:4..1:4) : <Tok_indent (Malformed ["[1:4..1:4): Missing indent"])>
-  [1:4..1:5) : <Tok_uident (Constant "a")>
-  [1:5..1:5) : <Tok_dedent>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..1:4)})
+  (Tok_indent {source=[1:4..1:4); indent=(Malformed ["[1:4..1:4): Missing indent"])})
+  (Tok_uident {source=[1:4..1:5); uident=(Constant "a")})
+  (Tok_dedent {source=[1:5..1:5); dedent=(Constant ())})
+  (Tok_end_of_input {source=[1:5..1:5)})
 ``    a
 
 ``
-  [1:0..1:4) : <Tok_whitespace>
-  [1:4..1:4) : <Tok_indent (Malformed ["[1:4..1:4): Missing indent"])>
-  [1:4..1:5) : <Tok_uident (Constant "a")>
-  [1:5..2:0) : <Tok_whitespace>
-  [2:0..2:0) : <Tok_dedent>
-  [2:0..2:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..1:4)})
+  (Tok_indent {source=[1:4..1:4); indent=(Malformed ["[1:4..1:4): Missing indent"])})
+  (Tok_uident {source=[1:4..1:5); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:5..2:0)})
+  (Tok_dedent {source=[2:0..2:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[2:0..2:0)})
 ``    a
 b
 
 ``
-  [1:0..1:4) : <Tok_whitespace>
-  [1:4..1:4) : <Tok_indent (Malformed ["[1:4..1:4): Missing indent"])>
-  [1:4..1:5) : <Tok_uident (Constant "a")>
-  [1:5..2:0) : <Tok_whitespace>
-  [2:0..2:0) : <Tok_dedent>
-  [2:0..2:0) : <Tok_line_delim>
-  [2:0..2:1) : <Tok_uident (Constant "b")>
-  [2:1..3:0) : <Tok_whitespace>
-  [3:0..3:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..1:4)})
+  (Tok_indent {source=[1:4..1:4); indent=(Malformed ["[1:4..1:4): Missing indent"])})
+  (Tok_uident {source=[1:4..1:5); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:5..2:0)})
+  (Tok_dedent {source=[2:0..2:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[2:0..2:0)})
+  (Tok_uident {source=[2:0..2:1); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:1..3:0)})
+  (Tok_end_of_input {source=[3:0..3:0)})
 ``
 
     a
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent (Malformed ["[2:4..2:4): Missing indent"])>
-  [2:4..2:5) : <Tok_uident (Constant "a")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:0) : <Tok_dedent>
-  [3:0..3:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Malformed ["[2:4..2:4): Missing indent"])})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "a")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_dedent {source=[3:0..3:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[3:0..3:0)})
 ``
 
 a
         b
 
 ``
-  [1:0..2:0) : <Tok_whitespace>
-  [2:0..2:1) : <Tok_uident (Constant "a")>
-  [2:1..3:0) : <Tok_whitespace>
-  [3:0..3:8) : <Tok_whitespace>
-  [3:8..3:8) : <Tok_indent (Malformed ["[3:8..3:8): Missing indent"])>
-  [3:8..3:8) : <Tok_indent>
-  [3:8..3:9) : <Tok_uident (Constant "b")>
-  [3:9..4:0) : <Tok_whitespace>
-  [4:0..4:0) : <Tok_dedent>
-  [4:0..4:0) : <Tok_dedent>
-  [4:0..4:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..2:0)})
+  (Tok_uident {source=[2:0..2:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[2:1..3:0)})
+  (Tok_whitespace {source=[3:0..3:8)})
+  (Tok_indent {source=[3:8..3:8); indent=(Malformed ["[3:8..3:8): Missing indent"])})
+  (Tok_indent {source=[3:8..3:8); indent=(Constant ())})
+  (Tok_uident {source=[3:8..3:9); uident=(Constant "b")})
+  (Tok_whitespace {source=[3:9..4:0)})
+  (Tok_dedent {source=[4:0..4:0); dedent=(Constant ())})
+  (Tok_dedent {source=[4:0..4:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[4:0..4:0)})
 ``  a
   b
       c
       d
 
 ``
-  [1:0..1:2) : <Tok_whitespace>
-  [1:2..1:2) : <Tok_misaligned>
-  [1:2..1:3) : <Tok_uident (Constant "a")>
-  [1:3..2:0) : <Tok_whitespace>
-  [2:0..2:2) : <Tok_whitespace>
-  [2:2..2:3) : <Tok_uident (Constant "b")>
-  [2:3..3:0) : <Tok_whitespace>
-  [3:0..3:6) : <Tok_whitespace>
-  [3:6..3:6) : <Tok_indent (Malformed ["[3:6..3:6): Missing indent"])>
-  [3:6..3:7) : <Tok_uident (Constant "c")>
-  [3:7..4:0) : <Tok_whitespace>
-  [4:0..4:6) : <Tok_whitespace>
-  [4:6..4:7) : <Tok_uident (Constant "d")>
-  [4:7..5:0) : <Tok_whitespace>
-  [5:0..5:0) : <Tok_dedent>
-  [5:0..5:0) : <Tok_end_of_input>
+  (Tok_whitespace {source=[1:0..1:2)})
+  (Tok_misaligned {source=[1:2..1:2)})
+  (Tok_uident {source=[1:2..1:3); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:3..2:0)})
+  (Tok_whitespace {source=[2:0..2:2)})
+  (Tok_uident {source=[2:2..2:3); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:3..3:0)})
+  (Tok_whitespace {source=[3:0..3:6)})
+  (Tok_indent {source=[3:6..3:6); indent=(Malformed ["[3:6..3:6): Missing indent"])})
+  (Tok_uident {source=[3:6..3:7); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:7..4:0)})
+  (Tok_whitespace {source=[4:0..4:6)})
+  (Tok_uident {source=[4:6..4:7); uident=(Constant "d")})
+  (Tok_whitespace {source=[4:7..5:0)})
+  (Tok_dedent {source=[5:0..5:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[5:0..5:0)})
 ``a
     b
 	c``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:0) : <Tok_dedent>
-  [3:0..3:0) : <Tok_line_delim>
-  [3:0..3:8) : <Tok_error ["[3:0..3:8): Unsupported codepoint"]>
-  [3:8..3:9) : <Tok_uident (Constant "c")>
-  [3:9..3:9) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_dedent {source=[3:0..3:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[3:0..3:0)})
+  (Tok_error {source=[3:0..3:8); error=["[3:0..3:8): Unsupported codepoint"]})
+  (Tok_uident {source=[3:8..3:9); uident=(Constant "c")})
+  (Tok_end_of_input {source=[3:9..3:9)})
 ``a
     b
         c
 	d``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:4) : <Tok_whitespace>
-  [2:4..2:4) : <Tok_indent>
-  [2:4..2:5) : <Tok_uident (Constant "b")>
-  [2:5..3:0) : <Tok_whitespace>
-  [3:0..3:8) : <Tok_whitespace>
-  [3:8..3:8) : <Tok_indent>
-  [3:8..3:9) : <Tok_uident (Constant "c")>
-  [3:9..4:0) : <Tok_whitespace>
-  [4:0..4:0) : <Tok_dedent>
-  [4:0..4:0) : <Tok_dedent>
-  [4:0..4:0) : <Tok_line_delim>
-  [4:0..4:8) : <Tok_error ["[4:0..4:8): Unsupported codepoint"]>
-  [4:8..4:9) : <Tok_uident (Constant "d")>
-  [4:9..4:9) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:4)})
+  (Tok_indent {source=[2:4..2:4); indent=(Constant ())})
+  (Tok_uident {source=[2:4..2:5); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:5..3:0)})
+  (Tok_whitespace {source=[3:0..3:8)})
+  (Tok_indent {source=[3:8..3:8); indent=(Constant ())})
+  (Tok_uident {source=[3:8..3:9); uident=(Constant "c")})
+  (Tok_whitespace {source=[3:9..4:0)})
+  (Tok_dedent {source=[4:0..4:0); dedent=(Constant ())})
+  (Tok_dedent {source=[4:0..4:0); dedent=(Constant ())})
+  (Tok_line_delim {source=[4:0..4:0)})
+  (Tok_error {source=[4:0..4:8); error=["[4:0..4:8): Unsupported codepoint"]})
+  (Tok_uident {source=[4:8..4:9); uident=(Constant "d")})
+  (Tok_end_of_input {source=[4:9..4:9)})
 ``a
         b
 
 ``
-  [1:0..1:1) : <Tok_uident (Constant "a")>
-  [1:1..2:0) : <Tok_whitespace>
-  [2:0..2:8) : <Tok_whitespace>
-  [2:8..2:8) : <Tok_indent (Malformed ["[2:8..2:8): Missing indent"])>
-  [2:8..2:8) : <Tok_indent>
-  [2:8..2:9) : <Tok_uident (Constant "b")>
-  [2:9..3:0) : <Tok_whitespace>
-  [3:0..3:0) : <Tok_dedent>
-  [3:0..3:0) : <Tok_dedent>
-  [3:0..3:0) : <Tok_end_of_input>
+  (Tok_uident {source=[1:0..1:1); uident=(Constant "a")})
+  (Tok_whitespace {source=[1:1..2:0)})
+  (Tok_whitespace {source=[2:0..2:8)})
+  (Tok_indent {source=[2:8..2:8); indent=(Malformed ["[2:8..2:8): Missing indent"])})
+  (Tok_indent {source=[2:8..2:8); indent=(Constant ())})
+  (Tok_uident {source=[2:8..2:9); uident=(Constant "b")})
+  (Tok_whitespace {source=[2:9..3:0)})
+  (Tok_dedent {source=[3:0..3:0); dedent=(Constant ())})
+  (Tok_dedent {source=[3:0..3:0); dedent=(Constant ())})
+  (Tok_end_of_input {source=[3:0..3:0)})

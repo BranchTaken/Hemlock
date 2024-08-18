@@ -15,7 +15,7 @@ let string_of_token token =
 
 let string_of_alias_token token =
   match token with
-  | Scan.Token.HmcToken {atok=Tok_istring (Constant istring); _} -> istring
+  | Scan.Token.HmcToken (Tok_istring {istring=Constant istring; _}) -> istring
   | _ -> not_reached ()
 
 let synthetic_name_of_start_name start_name =

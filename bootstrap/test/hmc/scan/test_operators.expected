@@ -1,83 +1,83 @@
 ``~ ~-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_tilde>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_tilde_op "~-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_tilde {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_tilde_op {source=[1:2..1:19); tilde_op="~-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``? ?-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_qmark>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_qmark_op "?-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_qmark {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_qmark_op {source=[1:2..1:19); qmark_op="?-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``* *-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_star_op "*">
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_star_op "*-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_star_op {source=[1:0..1:1); star_op="*"})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_star_op {source=[1:2..1:19); star_op="*-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``** **-+*/%@^$<=>|:.~?``
-  [1:0..1:2) : <Tok_star_star_op "**">
-  [1:2..1:3) : <Tok_whitespace>
-  [1:3..1:21) : <Tok_star_star_op "**-+*/\%@^$<=>|:.~?">
-  [1:21..1:21) : <Tok_end_of_input>
+  (Tok_star_star_op {source=[1:0..1:2); star_star_op="**"})
+  (Tok_whitespace {source=[1:2..1:3)})
+  (Tok_star_star_op {source=[1:3..1:21); star_star_op="**-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:21..1:21)})
 ``% %-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_pct_op "\%">
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_pct_op "\%-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_pct_op {source=[1:0..1:1); pct_op="\%"})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_pct_op {source=[1:2..1:19); pct_op="\%-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``+ +-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_plus_op "+">
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_plus_op "+-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_plus_op {source=[1:0..1:1); plus_op="+"})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_plus_op {source=[1:2..1:19); plus_op="+-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``- --+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_minus>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_minus_op "--+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_minus {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_minus_op {source=[1:2..1:19); minus_op="--+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``@ @-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_at_op "@">
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_at_op "@-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_at_op {source=[1:0..1:1); at_op="@"})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_at_op {source=[1:2..1:19); at_op="@-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``^ ^-+*/%@^$<=>|:.~? ^)``
-  [1:0..1:1) : <Tok_caret>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_caret_op "^-+*/\%@^$<=>|:.~?">
-  [1:19..1:20) : <Tok_whitespace>
-  [1:20..1:21) : <Tok_caret>
-  [1:21..1:22) : <Tok_rparen>
-  [1:22..1:22) : <Tok_end_of_input>
+  (Tok_caret {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_caret_op {source=[1:2..1:19); caret_op="^-+*/\%@^$<=>|:.~?"})
+  (Tok_whitespace {source=[1:19..1:20)})
+  (Tok_caret {source=[1:20..1:22)})
+  (Tok_rparen {source=[1:21..1:22)})
+  (Tok_end_of_input {source=[1:22..1:22)})
 ``$ $-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_dollar_op "$">
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_dollar_op "$-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_dollar_op {source=[1:0..1:1); dollar_op="$"})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_dollar_op {source=[1:2..1:19); dollar_op="$-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``< <-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_lt>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_lt_op "<-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_lt {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_lt_op {source=[1:2..1:19); lt_op="<-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``= =-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_eq>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_eq_op "=-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_eq {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_eq_op {source=[1:2..1:19); eq_op="=-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``> >-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_gt>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_gt_op ">-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_gt {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_gt_op {source=[1:2..1:19); gt_op=">-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``| |-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_bar>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_bar_op "|-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_bar {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_bar_op {source=[1:2..1:19); bar_op="|-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``: :-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_colon>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_colon_op ":-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_colon {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_colon_op {source=[1:2..1:19); colon_op=":-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})
 ``. .-+*/%@^$<=>|:.~?``
-  [1:0..1:1) : <Tok_dot>
-  [1:1..1:2) : <Tok_whitespace>
-  [1:2..1:19) : <Tok_dot_op ".-+*/\%@^$<=>|:.~?">
-  [1:19..1:19) : <Tok_end_of_input>
+  (Tok_dot {source=[1:0..1:1)})
+  (Tok_whitespace {source=[1:1..1:2)})
+  (Tok_dot_op {source=[1:2..1:19); dot_op=".-+*/\%@^$<=>|:.~?"})
+  (Tok_end_of_input {source=[1:19..1:19)})

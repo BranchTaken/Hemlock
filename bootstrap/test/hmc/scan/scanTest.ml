@@ -5,18 +5,14 @@ open Hmc.Scan
 
 let scan_str s =
   let rec fn t = begin
-    let t', ctok = next t in
-    let atok = ConcreteToken.atok ctok in
-    let source = ConcreteToken.source ctok in
+    let t', tok = next t in
     File.Fmt.stdout
     |> Fmt.fmt "  "
-    |> Source.Slice.pp source
-    |> Fmt.fmt " : "
-    |> AbstractToken.pp atok
+    |> Token.pp tok
     |> Fmt.fmt "\n"
     |> ignore;
-    match atok with
-    | Tok_end_of_input -> ()
+    match tok with
+    | Tok_end_of_input _ -> ()
     | _ -> fn t'
   end in
   File.Fmt.stdout

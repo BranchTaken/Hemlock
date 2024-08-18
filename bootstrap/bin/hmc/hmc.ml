@@ -4,18 +4,14 @@ open Hmc
 
 let scan_file path =
   let rec fn scanner = begin
-    let scanner', ctok = Scan.next scanner in
-    let atok = Scan.ConcreteToken.atok ctok in
-    let source = Scan.ConcreteToken.source ctok in
+    let scanner', tok = Scan.next scanner in
     File.Fmt.stdout
     |> Fmt.fmt "  "
-    |> Source.Slice.pp source
-    |> Fmt.fmt " : "
-    |> Scan.AbstractToken.pp atok
+    |> Scan.Token.pp tok
     |> Fmt.fmt "\n"
     |> ignore;
-    match atok with
-    | Scan.AbstractToken.Tok_end_of_input -> ()
+    match tok with
+    | Scan.Token.Tok_end_of_input _ -> ()
     | _ -> fn scanner'
   end in
   let () = match File.of_path path with

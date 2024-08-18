@@ -1,338 +1,338 @@
 ``0``
-  [1:0..1:1) : <Tok_u64 (Constant 0)>
-  [1:1..1:1) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:1); u64=(Constant 0)})
+  (Tok_end_of_input {source=[1:1..1:1)})
 ``00_``
-  [1:0..1:3) : <Tok_u64 (Constant 0)>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Constant 0)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``01234567890_``
-  [1:0..1:12) : <Tok_u64 (Constant 1_234_567_890)>
-  [1:12..1:12) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:12); u64=(Constant 1_234_567_890)})
+  (Tok_end_of_input {source=[1:12..1:12)})
 ``11``
-  [1:0..1:2) : <Tok_u64 (Constant 11)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 11)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``22``
-  [1:0..1:2) : <Tok_u64 (Constant 22)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 22)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``33``
-  [1:0..1:2) : <Tok_u64 (Constant 33)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 33)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``44``
-  [1:0..1:2) : <Tok_u64 (Constant 44)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 44)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``55``
-  [1:0..1:2) : <Tok_u64 (Constant 55)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 55)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``66``
-  [1:0..1:2) : <Tok_u64 (Constant 66)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 66)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``77``
-  [1:0..1:2) : <Tok_u64 (Constant 77)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 77)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``88``
-  [1:0..1:2) : <Tok_u64 (Constant 88)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 88)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``99``
-  [1:0..1:2) : <Tok_u64 (Constant 99)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 99)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0b_01_01``
-  [1:0..1:8) : <Tok_u64 (Constant 5)>
-  [1:8..1:8) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:8); u64=(Constant 5)})
+  (Tok_end_of_input {source=[1:8..1:8)})
 ``0o_0123_4567``
-  [1:0..1:12) : <Tok_u64 (Constant 342_391)>
-  [1:12..1:12) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:12); u64=(Constant 342_391)})
+  (Tok_end_of_input {source=[1:12..1:12)})
 ``0x_0123_4567_89ab_cdef``
-  [1:0..1:22) : <Tok_u64 (Constant 81_985_529_216_486_895)>
-  [1:22..1:22) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:22); u64=(Constant 81_985_529_216_486_895)})
+  (Tok_end_of_input {source=[1:22..1:22)})
 ``0b10u8 0b10u16 0b10u32 0b10 0b10u 0b10u64 0b10u128 0b10u256 0b10u512 0b10n``
-  [1:0..1:6) : <Tok_u8 (Constant 2u8)>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:14) : <Tok_u16 (Constant 2u16)>
-  [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:22) : <Tok_u32 (Constant 2u32)>
-  [1:22..1:23) : <Tok_whitespace>
-  [1:23..1:27) : <Tok_u64 (Constant 2)>
-  [1:27..1:28) : <Tok_whitespace>
-  [1:28..1:33) : <Tok_u64 (Constant 2)>
-  [1:33..1:34) : <Tok_whitespace>
-  [1:34..1:41) : <Tok_u64 (Constant 2)>
-  [1:41..1:42) : <Tok_whitespace>
-  [1:42..1:50) : <Tok_u128 (Constant 2u128)>
-  [1:50..1:51) : <Tok_whitespace>
-  [1:51..1:59) : <Tok_u256 (Constant 2u256)>
-  [1:59..1:60) : <Tok_whitespace>
-  [1:60..1:68) : <Tok_u512 (Constant 2u512)>
-  [1:68..1:69) : <Tok_whitespace>
-  [1:69..1:74) : <Tok_nat (Constant 2n)>
-  [1:74..1:74) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:6); u8=(Constant 2u8)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_u16 {source=[1:7..1:14); u16=(Constant 2u16)})
+  (Tok_whitespace {source=[1:14..1:15)})
+  (Tok_u32 {source=[1:15..1:22); u32=(Constant 2u32)})
+  (Tok_whitespace {source=[1:22..1:23)})
+  (Tok_u64 {source=[1:23..1:27); u64=(Constant 2)})
+  (Tok_whitespace {source=[1:27..1:28)})
+  (Tok_u64 {source=[1:28..1:33); u64=(Constant 2)})
+  (Tok_whitespace {source=[1:33..1:34)})
+  (Tok_u64 {source=[1:34..1:41); u64=(Constant 2)})
+  (Tok_whitespace {source=[1:41..1:42)})
+  (Tok_u128 {source=[1:42..1:50); u128=(Constant 2u128)})
+  (Tok_whitespace {source=[1:50..1:51)})
+  (Tok_u256 {source=[1:51..1:59); u256=(Constant 2u256)})
+  (Tok_whitespace {source=[1:59..1:60)})
+  (Tok_u512 {source=[1:60..1:68); u512=(Constant 2u512)})
+  (Tok_whitespace {source=[1:68..1:69)})
+  (Tok_nat {source=[1:69..1:74); nat=(Constant 2n)})
+  (Tok_end_of_input {source=[1:74..1:74)})
 ``0b10i8 0b10i16 0b10i32 0b10i 0b10i64 0b10i128 0b10i256 0b10i512 0b10z``
-  [1:0..1:6) : <Tok_i8 (Constant 2i8)>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:14) : <Tok_i16 (Constant 2i16)>
-  [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:22) : <Tok_i32 (Constant 2i32)>
-  [1:22..1:23) : <Tok_whitespace>
-  [1:23..1:28) : <Tok_i64 (Constant 2i)>
-  [1:28..1:29) : <Tok_whitespace>
-  [1:29..1:36) : <Tok_i64 (Constant 2i)>
-  [1:36..1:37) : <Tok_whitespace>
-  [1:37..1:45) : <Tok_i128 (Constant 2i128)>
-  [1:45..1:46) : <Tok_whitespace>
-  [1:46..1:54) : <Tok_i256 (Constant 2i256)>
-  [1:54..1:55) : <Tok_whitespace>
-  [1:55..1:63) : <Tok_i512 (Constant 2i512)>
-  [1:63..1:64) : <Tok_whitespace>
-  [1:64..1:69) : <Tok_zint (Constant 2z)>
-  [1:69..1:69) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:6); i8=(Constant 2i8)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_i16 {source=[1:7..1:14); i16=(Constant 2i16)})
+  (Tok_whitespace {source=[1:14..1:15)})
+  (Tok_i32 {source=[1:15..1:22); i32=(Constant 2i32)})
+  (Tok_whitespace {source=[1:22..1:23)})
+  (Tok_i64 {source=[1:23..1:28); i64=(Constant 2i)})
+  (Tok_whitespace {source=[1:28..1:29)})
+  (Tok_i64 {source=[1:29..1:36); i64=(Constant 2i)})
+  (Tok_whitespace {source=[1:36..1:37)})
+  (Tok_i128 {source=[1:37..1:45); i128=(Constant 2i128)})
+  (Tok_whitespace {source=[1:45..1:46)})
+  (Tok_i256 {source=[1:46..1:54); i256=(Constant 2i256)})
+  (Tok_whitespace {source=[1:54..1:55)})
+  (Tok_i512 {source=[1:55..1:63); i512=(Constant 2i512)})
+  (Tok_whitespace {source=[1:63..1:64)})
+  (Tok_zint {source=[1:64..1:69); zint=(Constant 2z)})
+  (Tok_end_of_input {source=[1:69..1:69)})
 ``0o76u8 0o76u16 0o76u32 0o76 0o76u 0o76u64 0o76u128 0o76u256 0o76u512 0o76n``
-  [1:0..1:6) : <Tok_u8 (Constant 62u8)>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:14) : <Tok_u16 (Constant 62u16)>
-  [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:22) : <Tok_u32 (Constant 62u32)>
-  [1:22..1:23) : <Tok_whitespace>
-  [1:23..1:27) : <Tok_u64 (Constant 62)>
-  [1:27..1:28) : <Tok_whitespace>
-  [1:28..1:33) : <Tok_u64 (Constant 62)>
-  [1:33..1:34) : <Tok_whitespace>
-  [1:34..1:41) : <Tok_u64 (Constant 62)>
-  [1:41..1:42) : <Tok_whitespace>
-  [1:42..1:50) : <Tok_u128 (Constant 62u128)>
-  [1:50..1:51) : <Tok_whitespace>
-  [1:51..1:59) : <Tok_u256 (Constant 62u256)>
-  [1:59..1:60) : <Tok_whitespace>
-  [1:60..1:68) : <Tok_u512 (Constant 62u512)>
-  [1:68..1:69) : <Tok_whitespace>
-  [1:69..1:74) : <Tok_nat (Constant 62n)>
-  [1:74..1:74) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:6); u8=(Constant 62u8)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_u16 {source=[1:7..1:14); u16=(Constant 62u16)})
+  (Tok_whitespace {source=[1:14..1:15)})
+  (Tok_u32 {source=[1:15..1:22); u32=(Constant 62u32)})
+  (Tok_whitespace {source=[1:22..1:23)})
+  (Tok_u64 {source=[1:23..1:27); u64=(Constant 62)})
+  (Tok_whitespace {source=[1:27..1:28)})
+  (Tok_u64 {source=[1:28..1:33); u64=(Constant 62)})
+  (Tok_whitespace {source=[1:33..1:34)})
+  (Tok_u64 {source=[1:34..1:41); u64=(Constant 62)})
+  (Tok_whitespace {source=[1:41..1:42)})
+  (Tok_u128 {source=[1:42..1:50); u128=(Constant 62u128)})
+  (Tok_whitespace {source=[1:50..1:51)})
+  (Tok_u256 {source=[1:51..1:59); u256=(Constant 62u256)})
+  (Tok_whitespace {source=[1:59..1:60)})
+  (Tok_u512 {source=[1:60..1:68); u512=(Constant 62u512)})
+  (Tok_whitespace {source=[1:68..1:69)})
+  (Tok_nat {source=[1:69..1:74); nat=(Constant 62n)})
+  (Tok_end_of_input {source=[1:74..1:74)})
 ``0o76i8 0o76i16 0o76i32 0o76i 0o76i64 0o76i128 0o76i256 0o76i512 0o76z``
-  [1:0..1:6) : <Tok_i8 (Constant 62i8)>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:14) : <Tok_i16 (Constant 62i16)>
-  [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:22) : <Tok_i32 (Constant 62i32)>
-  [1:22..1:23) : <Tok_whitespace>
-  [1:23..1:28) : <Tok_i64 (Constant 62i)>
-  [1:28..1:29) : <Tok_whitespace>
-  [1:29..1:36) : <Tok_i64 (Constant 62i)>
-  [1:36..1:37) : <Tok_whitespace>
-  [1:37..1:45) : <Tok_i128 (Constant 62i128)>
-  [1:45..1:46) : <Tok_whitespace>
-  [1:46..1:54) : <Tok_i256 (Constant 62i256)>
-  [1:54..1:55) : <Tok_whitespace>
-  [1:55..1:63) : <Tok_i512 (Constant 62i512)>
-  [1:63..1:64) : <Tok_whitespace>
-  [1:64..1:69) : <Tok_zint (Constant 62z)>
-  [1:69..1:69) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:6); i8=(Constant 62i8)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_i16 {source=[1:7..1:14); i16=(Constant 62i16)})
+  (Tok_whitespace {source=[1:14..1:15)})
+  (Tok_i32 {source=[1:15..1:22); i32=(Constant 62i32)})
+  (Tok_whitespace {source=[1:22..1:23)})
+  (Tok_i64 {source=[1:23..1:28); i64=(Constant 62i)})
+  (Tok_whitespace {source=[1:28..1:29)})
+  (Tok_i64 {source=[1:29..1:36); i64=(Constant 62i)})
+  (Tok_whitespace {source=[1:36..1:37)})
+  (Tok_i128 {source=[1:37..1:45); i128=(Constant 62i128)})
+  (Tok_whitespace {source=[1:45..1:46)})
+  (Tok_i256 {source=[1:46..1:54); i256=(Constant 62i256)})
+  (Tok_whitespace {source=[1:54..1:55)})
+  (Tok_i512 {source=[1:55..1:63); i512=(Constant 62i512)})
+  (Tok_whitespace {source=[1:63..1:64)})
+  (Tok_zint {source=[1:64..1:69); zint=(Constant 62z)})
+  (Tok_end_of_input {source=[1:69..1:69)})
 ``98u8 98u16 98u32 98 98u 98u64 98u128 98u256 98u512 98n``
-  [1:0..1:4) : <Tok_u8 (Constant 98u8)>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:10) : <Tok_u16 (Constant 98u16)>
-  [1:10..1:11) : <Tok_whitespace>
-  [1:11..1:16) : <Tok_u32 (Constant 98u32)>
-  [1:16..1:17) : <Tok_whitespace>
-  [1:17..1:19) : <Tok_u64 (Constant 98)>
-  [1:19..1:20) : <Tok_whitespace>
-  [1:20..1:23) : <Tok_u64 (Constant 98)>
-  [1:23..1:24) : <Tok_whitespace>
-  [1:24..1:29) : <Tok_u64 (Constant 98)>
-  [1:29..1:30) : <Tok_whitespace>
-  [1:30..1:36) : <Tok_u128 (Constant 98u128)>
-  [1:36..1:37) : <Tok_whitespace>
-  [1:37..1:43) : <Tok_u256 (Constant 98u256)>
-  [1:43..1:44) : <Tok_whitespace>
-  [1:44..1:50) : <Tok_u512 (Constant 98u512)>
-  [1:50..1:51) : <Tok_whitespace>
-  [1:51..1:54) : <Tok_nat (Constant 98n)>
-  [1:54..1:54) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:4); u8=(Constant 98u8)})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_u16 {source=[1:5..1:10); u16=(Constant 98u16)})
+  (Tok_whitespace {source=[1:10..1:11)})
+  (Tok_u32 {source=[1:11..1:16); u32=(Constant 98u32)})
+  (Tok_whitespace {source=[1:16..1:17)})
+  (Tok_u64 {source=[1:17..1:19); u64=(Constant 98)})
+  (Tok_whitespace {source=[1:19..1:20)})
+  (Tok_u64 {source=[1:20..1:23); u64=(Constant 98)})
+  (Tok_whitespace {source=[1:23..1:24)})
+  (Tok_u64 {source=[1:24..1:29); u64=(Constant 98)})
+  (Tok_whitespace {source=[1:29..1:30)})
+  (Tok_u128 {source=[1:30..1:36); u128=(Constant 98u128)})
+  (Tok_whitespace {source=[1:36..1:37)})
+  (Tok_u256 {source=[1:37..1:43); u256=(Constant 98u256)})
+  (Tok_whitespace {source=[1:43..1:44)})
+  (Tok_u512 {source=[1:44..1:50); u512=(Constant 98u512)})
+  (Tok_whitespace {source=[1:50..1:51)})
+  (Tok_nat {source=[1:51..1:54); nat=(Constant 98n)})
+  (Tok_end_of_input {source=[1:54..1:54)})
 ``98i8 98i16 98i32 98i 98i64 98i128 98i256 98i512 98z``
-  [1:0..1:4) : <Tok_i8 (Constant 98i8)>
-  [1:4..1:5) : <Tok_whitespace>
-  [1:5..1:10) : <Tok_i16 (Constant 98i16)>
-  [1:10..1:11) : <Tok_whitespace>
-  [1:11..1:16) : <Tok_i32 (Constant 98i32)>
-  [1:16..1:17) : <Tok_whitespace>
-  [1:17..1:20) : <Tok_i64 (Constant 98i)>
-  [1:20..1:21) : <Tok_whitespace>
-  [1:21..1:26) : <Tok_i64 (Constant 98i)>
-  [1:26..1:27) : <Tok_whitespace>
-  [1:27..1:33) : <Tok_i128 (Constant 98i128)>
-  [1:33..1:34) : <Tok_whitespace>
-  [1:34..1:40) : <Tok_i256 (Constant 98i256)>
-  [1:40..1:41) : <Tok_whitespace>
-  [1:41..1:47) : <Tok_i512 (Constant 98i512)>
-  [1:47..1:48) : <Tok_whitespace>
-  [1:48..1:51) : <Tok_zint (Constant 98z)>
-  [1:51..1:51) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:4); i8=(Constant 98i8)})
+  (Tok_whitespace {source=[1:4..1:5)})
+  (Tok_i16 {source=[1:5..1:10); i16=(Constant 98i16)})
+  (Tok_whitespace {source=[1:10..1:11)})
+  (Tok_i32 {source=[1:11..1:16); i32=(Constant 98i32)})
+  (Tok_whitespace {source=[1:16..1:17)})
+  (Tok_i64 {source=[1:17..1:20); i64=(Constant 98i)})
+  (Tok_whitespace {source=[1:20..1:21)})
+  (Tok_i64 {source=[1:21..1:26); i64=(Constant 98i)})
+  (Tok_whitespace {source=[1:26..1:27)})
+  (Tok_i128 {source=[1:27..1:33); i128=(Constant 98i128)})
+  (Tok_whitespace {source=[1:33..1:34)})
+  (Tok_i256 {source=[1:34..1:40); i256=(Constant 98i256)})
+  (Tok_whitespace {source=[1:40..1:41)})
+  (Tok_i512 {source=[1:41..1:47); i512=(Constant 98i512)})
+  (Tok_whitespace {source=[1:47..1:48)})
+  (Tok_zint {source=[1:48..1:51); zint=(Constant 98z)})
+  (Tok_end_of_input {source=[1:51..1:51)})
 ``0xfeu8 0xfeu16 0xfeu32 0xfe 0xfeu 0xfeu64 0xfeu128 0xfeu256 0xfeu512 0xfen``
-  [1:0..1:6) : <Tok_u8 (Constant 254u8)>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:14) : <Tok_u16 (Constant 254u16)>
-  [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:22) : <Tok_u32 (Constant 254u32)>
-  [1:22..1:23) : <Tok_whitespace>
-  [1:23..1:27) : <Tok_u64 (Constant 254)>
-  [1:27..1:28) : <Tok_whitespace>
-  [1:28..1:33) : <Tok_u64 (Constant 254)>
-  [1:33..1:34) : <Tok_whitespace>
-  [1:34..1:41) : <Tok_u64 (Constant 254)>
-  [1:41..1:42) : <Tok_whitespace>
-  [1:42..1:50) : <Tok_u128 (Constant 254u128)>
-  [1:50..1:51) : <Tok_whitespace>
-  [1:51..1:59) : <Tok_u256 (Constant 254u256)>
-  [1:59..1:60) : <Tok_whitespace>
-  [1:60..1:68) : <Tok_u512 (Constant 254u512)>
-  [1:68..1:69) : <Tok_whitespace>
-  [1:69..1:74) : <Tok_nat (Constant 254n)>
-  [1:74..1:74) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:6); u8=(Constant 254u8)})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_u16 {source=[1:7..1:14); u16=(Constant 254u16)})
+  (Tok_whitespace {source=[1:14..1:15)})
+  (Tok_u32 {source=[1:15..1:22); u32=(Constant 254u32)})
+  (Tok_whitespace {source=[1:22..1:23)})
+  (Tok_u64 {source=[1:23..1:27); u64=(Constant 254)})
+  (Tok_whitespace {source=[1:27..1:28)})
+  (Tok_u64 {source=[1:28..1:33); u64=(Constant 254)})
+  (Tok_whitespace {source=[1:33..1:34)})
+  (Tok_u64 {source=[1:34..1:41); u64=(Constant 254)})
+  (Tok_whitespace {source=[1:41..1:42)})
+  (Tok_u128 {source=[1:42..1:50); u128=(Constant 254u128)})
+  (Tok_whitespace {source=[1:50..1:51)})
+  (Tok_u256 {source=[1:51..1:59); u256=(Constant 254u256)})
+  (Tok_whitespace {source=[1:59..1:60)})
+  (Tok_u512 {source=[1:60..1:68); u512=(Constant 254u512)})
+  (Tok_whitespace {source=[1:68..1:69)})
+  (Tok_nat {source=[1:69..1:74); nat=(Constant 254n)})
+  (Tok_end_of_input {source=[1:74..1:74)})
 ``0xfei8 0xfei16 0xfei32 0xfei 0xfei64 0xfei128 0xfei256 0xfei512 0xfez``
-  [1:0..1:6) : <Tok_i8 (Malformed ["[1:0..1:6): Numerical constant exceeds 0x80"])>
-  [1:6..1:7) : <Tok_whitespace>
-  [1:7..1:14) : <Tok_i16 (Constant 254i16)>
-  [1:14..1:15) : <Tok_whitespace>
-  [1:15..1:22) : <Tok_i32 (Constant 254i32)>
-  [1:22..1:23) : <Tok_whitespace>
-  [1:23..1:28) : <Tok_i64 (Constant 254i)>
-  [1:28..1:29) : <Tok_whitespace>
-  [1:29..1:36) : <Tok_i64 (Constant 254i)>
-  [1:36..1:37) : <Tok_whitespace>
-  [1:37..1:45) : <Tok_i128 (Constant 254i128)>
-  [1:45..1:46) : <Tok_whitespace>
-  [1:46..1:54) : <Tok_i256 (Constant 254i256)>
-  [1:54..1:55) : <Tok_whitespace>
-  [1:55..1:63) : <Tok_i512 (Constant 254i512)>
-  [1:63..1:64) : <Tok_whitespace>
-  [1:64..1:69) : <Tok_zint (Constant 254z)>
-  [1:69..1:69) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:6); i8=(Malformed ["[1:0..1:6): Numerical constant exceeds 0x80"])})
+  (Tok_whitespace {source=[1:6..1:7)})
+  (Tok_i16 {source=[1:7..1:14); i16=(Constant 254i16)})
+  (Tok_whitespace {source=[1:14..1:15)})
+  (Tok_i32 {source=[1:15..1:22); i32=(Constant 254i32)})
+  (Tok_whitespace {source=[1:22..1:23)})
+  (Tok_i64 {source=[1:23..1:28); i64=(Constant 254i)})
+  (Tok_whitespace {source=[1:28..1:29)})
+  (Tok_i64 {source=[1:29..1:36); i64=(Constant 254i)})
+  (Tok_whitespace {source=[1:36..1:37)})
+  (Tok_i128 {source=[1:37..1:45); i128=(Constant 254i128)})
+  (Tok_whitespace {source=[1:45..1:46)})
+  (Tok_i256 {source=[1:46..1:54); i256=(Constant 254i256)})
+  (Tok_whitespace {source=[1:54..1:55)})
+  (Tok_i512 {source=[1:55..1:63); i512=(Constant 254i512)})
+  (Tok_whitespace {source=[1:63..1:64)})
+  (Tok_zint {source=[1:64..1:69); zint=(Constant 254z)})
+  (Tok_end_of_input {source=[1:69..1:69)})
 ``0u``
-  [1:0..1:2) : <Tok_u64 (Constant 0)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 0)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0i``
-  [1:0..1:2) : <Tok_i64 (Constant 0i)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_i64 {source=[1:0..1:2); i64=(Constant 0i)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0u8``
-  [1:0..1:3) : <Tok_u8 (Constant 0u8)>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:3); u8=(Constant 0u8)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0i8``
-  [1:0..1:3) : <Tok_i8 (Constant 0i8)>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:3); i8=(Constant 0i8)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0n``
-  [1:0..1:2) : <Tok_nat (Constant 0n)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_nat {source=[1:0..1:2); nat=(Constant 0n)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0z``
-  [1:0..1:2) : <Tok_zint (Constant 0z)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_zint {source=[1:0..1:2); zint=(Constant 0z)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``42u``
-  [1:0..1:3) : <Tok_u64 (Constant 42)>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Constant 42)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``42i``
-  [1:0..1:3) : <Tok_i64 (Constant 42i)>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_i64 {source=[1:0..1:3); i64=(Constant 42i)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``42u8``
-  [1:0..1:4) : <Tok_u8 (Constant 42u8)>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:4); u8=(Constant 42u8)})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``42i8``
-  [1:0..1:4) : <Tok_i8 (Constant 42i8)>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:4); i8=(Constant 42i8)})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``0xffu8``
-  [1:0..1:6) : <Tok_u8 (Constant 255u8)>
-  [1:6..1:6) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:6); u8=(Constant 255u8)})
+  (Tok_end_of_input {source=[1:6..1:6)})
 ``0x80i8``
-  [1:0..1:6) : <Tok_i8 (Constant -128i8)>
-  [1:6..1:6) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:6); i8=(Constant -128i8)})
+  (Tok_end_of_input {source=[1:6..1:6)})
 ``0a``
-  [1:0..1:2) : <Tok_u64 (Malformed ["[1:0..1:2): Invalid numerical constant"])>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Malformed ["[1:0..1:2): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0AB42CD77``
-  [1:0..1:9) : <Tok_u64 (Malformed ["[1:0..1:9): Invalid numerical constant"])>
-  [1:9..1:9) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:9); u64=(Malformed ["[1:0..1:9): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:9..1:9)})
 ``0AB42CD77i``
-  [1:0..1:10) : <Tok_u64 (Malformed ["[1:0..1:10): Invalid numerical constant"])>
-  [1:10..1:10) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:10); u64=(Malformed ["[1:0..1:10): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:10..1:10)})
 ``0b2``
-  [1:0..1:3) : <Tok_u64 (Malformed ["[1:0..1:3): Invalid numerical constant"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0o8``
-  [1:0..1:3) : <Tok_u64 (Malformed ["[1:0..1:3): Invalid numerical constant"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0xg``
-  [1:0..1:3) : <Tok_u64 (Malformed ["[1:0..1:3): Invalid numerical constant"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0u7``
-  [1:0..1:3) : <Tok_u64 (Malformed ["[1:0..1:3): Unsupported bitwidth"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Unsupported bitwidth"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0n1``
-  [1:0..1:3) : <Tok_u64 (Malformed ["[1:0..1:3): Invalid numerical constant"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0z1``
-  [1:0..1:3) : <Tok_u64 (Malformed ["[1:0..1:3): Invalid numerical constant"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``0x100u8``
-  [1:0..1:7) : <Tok_u8 (Malformed ["[1:0..1:7): Numerical constant exceeds 0xff"])>
-  [1:7..1:7) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:7); u8=(Malformed ["[1:0..1:7): Numerical constant exceeds 0xff"])})
+  (Tok_end_of_input {source=[1:7..1:7)})
 ``0x81i8``
-  [1:0..1:6) : <Tok_i8 (Malformed ["[1:0..1:6): Numerical constant exceeds 0x80"])>
-  [1:6..1:6) : <Tok_end_of_input>
+  (Tok_i8 {source=[1:0..1:6); i8=(Malformed ["[1:0..1:6): Numerical constant exceeds 0x80"])})
+  (Tok_end_of_input {source=[1:6..1:6)})
 ``0b``
-  [1:0..1:2) : <Tok_u64 (Malformed ["[1:0..1:2): Invalid numerical constant"])>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Malformed ["[1:0..1:2): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0o``
-  [1:0..1:2) : <Tok_u64 (Malformed ["[1:0..1:2): Invalid numerical constant"])>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Malformed ["[1:0..1:2): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0x``
-  [1:0..1:2) : <Tok_u64 (Malformed ["[1:0..1:2): Invalid numerical constant"])>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Malformed ["[1:0..1:2): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0``
-  [1:0..1:1) : <Tok_u64 (Constant 0)>
-  [1:1..1:1) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:1); u64=(Constant 0)})
+  (Tok_end_of_input {source=[1:1..1:1)})
 ``1``
-  [1:0..1:1) : <Tok_u64 (Constant 1)>
-  [1:1..1:1) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:1); u64=(Constant 1)})
+  (Tok_end_of_input {source=[1:1..1:1)})
 ``-1``
-  [1:0..1:1) : <Tok_minus>
-  [1:1..1:2) : <Tok_u64 (Constant 1)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_minus {source=[1:0..1:1)})
+  (Tok_u64 {source=[1:1..1:2); u64=(Constant 1)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``42``
-  [1:0..1:2) : <Tok_u64 (Constant 42)>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:2); u64=(Constant 42)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0b1010_1011u8``
-  [1:0..1:13) : <Tok_u8 (Constant 171u8)>
-  [1:13..1:13) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:13); u8=(Constant 171u8)})
+  (Tok_end_of_input {source=[1:13..1:13)})
 ``0o253u8``
-  [1:0..1:7) : <Tok_u8 (Constant 171u8)>
-  [1:7..1:7) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:7); u8=(Constant 171u8)})
+  (Tok_end_of_input {source=[1:7..1:7)})
 ``0xabu8``
-  [1:0..1:6) : <Tok_u8 (Constant 171u8)>
-  [1:6..1:6) : <Tok_end_of_input>
+  (Tok_u8 {source=[1:0..1:6); u8=(Constant 171u8)})
+  (Tok_end_of_input {source=[1:6..1:6)})
 ``15u``
-  [1:0..1:3) : <Tok_u64 (Constant 15)>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:3); u64=(Constant 15)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``17u64``
-  [1:0..1:5) : <Tok_u64 (Constant 17)>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:5); u64=(Constant 17)})
+  (Tok_end_of_input {source=[1:5..1:5)})
 ``0x0123_4567_89ab_cdef``
-  [1:0..1:21) : <Tok_u64 (Constant 81_985_529_216_486_895)>
-  [1:21..1:21) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:21); u64=(Constant 81_985_529_216_486_895)})
+  (Tok_end_of_input {source=[1:21..1:21)})
 ``0o660``
-  [1:0..1:5) : <Tok_u64 (Constant 432)>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:5); u64=(Constant 432)})
+  (Tok_end_of_input {source=[1:5..1:5)})
 ``0b10_0001``
-  [1:0..1:9) : <Tok_u64 (Constant 33)>
-  [1:9..1:9) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:9); u64=(Constant 33)})
+  (Tok_end_of_input {source=[1:9..1:9)})
 ``0b0100_0001``
-  [1:0..1:11) : <Tok_u64 (Constant 65)>
-  [1:11..1:11) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:11); u64=(Constant 65)})
+  (Tok_end_of_input {source=[1:11..1:11)})
 ``1_000_000``
-  [1:0..1:9) : <Tok_u64 (Constant 1_000_000)>
-  [1:9..1:9) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:9); u64=(Constant 1_000_000)})
+  (Tok_end_of_input {source=[1:9..1:9)})
 ``0x___1_fffd``
-  [1:0..1:11) : <Tok_u64 (Constant 131_069)>
-  [1:11..1:11) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:11); u64=(Constant 131_069)})
+  (Tok_end_of_input {source=[1:11..1:11)})
 ``17i64``
-  [1:0..1:5) : <Tok_i64 (Constant 17i)>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_i64 {source=[1:0..1:5); i64=(Constant 17i)})
+  (Tok_end_of_input {source=[1:5..1:5)})
 ``0x_ab__c_i``
-  [1:0..1:10) : <Tok_i64 (Constant 2_748i)>
-  [1:10..1:10) : <Tok_end_of_input>
+  (Tok_i64 {source=[1:0..1:10); i64=(Constant 2_748i)})
+  (Tok_end_of_input {source=[1:10..1:10)})
 ``0o777``
-  [1:0..1:5) : <Tok_u64 (Constant 511)>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_u64 {source=[1:0..1:5); u64=(Constant 511)})
+  (Tok_end_of_input {source=[1:5..1:5)})

@@ -36,7 +36,7 @@ module Error = struct
         {source=Scan.Token.source token_; msg}
 
     let init_mal mal =
-        let open Hmc.Scan.AbstractToken.Rendition.Malformation in
+        let open Hmc.Scan.Token.Rendition.Malformation in
         {source=source mal; msg=description mal}
 
     let init_scanner scanner msg =
@@ -641,60 +641,57 @@ let rec scan scanner =
     match Scan.Token.malformations scan_token with
       | [] -> begin
         let token_opt = match scan_token with
-          | Scan.Token.HmcToken {atok; _} -> begin
-            match atok with
-              | Tok_whitespace
-              | Tok_hash_comment
+          | Scan.Token.HmcToken tok -> begin
+            match tok with
+              | Tok_whitespace _
+              | Tok_hash_comment _
               | Tok_paren_comment _ -> None (* Swallow. *)
               | Tok_uident _ -> Some (Token.UIDENT (UIDENT {token_=scan_token}))
               | Tok_cident _ -> Some (Token.CIDENT (CIDENT {token_=scan_token}))
-              | Tok_uscore -> Some (Token.USCORE (USCORE {token_=scan_token}))
+              | Tok_uscore _ -> Some (Token.USCORE (USCORE {token_=scan_token}))
               | Tok_istring _ -> Some (Token.ISTRING (ISTRING {token_=scan_token}))
-              | Tok_of -> Some (Token.OF (OF {token_=scan_token}))
-              | Tok_colon -> Some (Token.COLON (COLON {token_=scan_token}))
-              | Tok_dot -> Some (Token.DOT (DOT {token_=scan_token}))
-              | Tok_arrow -> Some (Token.ARROW (ARROW {token_=scan_token}))
-              | Tok_bar -> Some (Token.BAR (BAR {token_=scan_token}))
-              | Tok_lt -> Some (Token.LT (LT {token_=scan_token}))
-              | Tok_comma -> Some (Token.COMMA (COMMA {token_=scan_token}))
-              | Tok_semi -> Some (Token.SEMI (SEMI {token_=scan_token}))
-              | Tok_line_delim -> Some (Token.LINE_DELIM (LINE_DELIM {token_=scan_token}))
+              | Tok_of _ -> Some (Token.OF (OF {token_=scan_token}))
+              | Tok_colon _ -> Some (Token.COLON (COLON {token_=scan_token}))
+              | Tok_dot _ -> Some (Token.DOT (DOT {token_=scan_token}))
+              | Tok_arrow _ -> Some (Token.ARROW (ARROW {token_=scan_token}))
+              | Tok_bar _ -> Some (Token.BAR (BAR {token_=scan_token}))
+              | Tok_lt _ -> Some (Token.LT (LT {token_=scan_token}))
+              | Tok_comma _ -> Some (Token.COMMA (COMMA {token_=scan_token}))
+              | Tok_semi _ -> Some (Token.SEMI (SEMI {token_=scan_token}))
+              | Tok_line_delim _ -> Some (Token.LINE_DELIM (LINE_DELIM {token_=scan_token}))
               | Tok_indent _ -> Some (Token.INDENT (INDENT {token_=scan_token}))
               | Tok_dedent _ -> Some (Token.DEDENT (DEDENT {token_=scan_token}))
-              | Tok_lparen -> Some (Token.LPAREN (LPAREN {token_=scan_token}))
-              | Tok_rparen -> Some (Token.RPAREN (RPAREN {token_=scan_token}))
-              | Tok_lcapture -> Some (Token.LCAPTURE (LCAPTURE {token_=scan_token}))
-              | Tok_rcapture -> Some (Token.RCAPTURE (RCAPTURE {token_=scan_token}))
-              | Tok_lbrack -> Some (Token.LBRACK (LBRACK {token_=scan_token}))
-              | Tok_rbrack -> Some (Token.RBRACK (RBRACK {token_=scan_token}))
-              | Tok_larray -> Some (Token.LARRAY (LARRAY {token_=scan_token}))
-              | Tok_rarray -> Some (Token.RARRAY (RARRAY {token_=scan_token}))
-              | Tok_lcurly -> Some (Token.LCURLY (LCURLY {token_=scan_token}))
-              | Tok_rcurly -> Some (Token.RCURLY (RCURLY {token_=scan_token}))
-              | Tok_end_of_input -> Some (Token.EOI (EOI {token_=scan_token}))
+              | Tok_lparen _ -> Some (Token.LPAREN (LPAREN {token_=scan_token}))
+              | Tok_rparen _ -> Some (Token.RPAREN (RPAREN {token_=scan_token}))
+              | Tok_lcapture _ -> Some (Token.LCAPTURE (LCAPTURE {token_=scan_token}))
+              | Tok_rcapture _ -> Some (Token.RCAPTURE (RCAPTURE {token_=scan_token}))
+              | Tok_lbrack _ -> Some (Token.LBRACK (LBRACK {token_=scan_token}))
+              | Tok_rbrack _ -> Some (Token.RBRACK (RBRACK {token_=scan_token}))
+              | Tok_larray _ -> Some (Token.LARRAY (LARRAY {token_=scan_token}))
+              | Tok_rarray _ -> Some (Token.RARRAY (RARRAY {token_=scan_token}))
+              | Tok_lcurly _ -> Some (Token.LCURLY (LCURLY {token_=scan_token}))
+              | Tok_rcurly _ -> Some (Token.RCURLY (RCURLY {token_=scan_token}))
+              | Tok_end_of_input _ -> Some (Token.EOI (EOI {token_=scan_token}))
               | _ -> Some (Token.OTHER_TOKEN (OTHER_TOKEN {token_=scan_token}))
           end
-          | HoccToken {atok; _} -> begin
-            match atok with
-              | Tok_hocc -> Some (Token.HOCC (HOCC {token_=scan_token}))
-              | Tok_token -> Some (Token.TOKEN (TOKEN {token_=scan_token}))
-              | Tok_nonterm -> Some (Token.NONTERM (NONTERM {token_=scan_token}))
-              | Tok_start -> Some (Token.START (START {token_=scan_token}))
-              | Tok_epsilon -> Some (Token.EPSILON_ (EPSILON {token_=scan_token}))
-              | Tok_neutral -> Some (Token.NEUTRAL (NEUTRAL {token_=scan_token}))
-              | Tok_left -> Some (Token.LEFT (LEFT {token_=scan_token}))
-              | Tok_right -> Some (Token.RIGHT (RIGHT {token_=scan_token}))
-              | Tok_prec -> Some (Token.PREC (PREC {token_=scan_token}))
-              | Tok_colon_colon_eq ->
-                Some (Token.COLON_COLON_EQ (COLON_COLON_EQ {token_=scan_token}))
-          end in
+          | Tok_hocc _ -> Some (Token.HOCC (HOCC {token_=scan_token}))
+          | Tok_token _ -> Some (Token.TOKEN (TOKEN {token_=scan_token}))
+          | Tok_nonterm _ -> Some (Token.NONTERM (NONTERM {token_=scan_token}))
+          | Tok_start _ -> Some (Token.START (START {token_=scan_token}))
+          | Tok_epsilon _ -> Some (Token.EPSILON_ (EPSILON {token_=scan_token}))
+          | Tok_neutral _ -> Some (Token.NEUTRAL (NEUTRAL {token_=scan_token}))
+          | Tok_left _ -> Some (Token.LEFT (LEFT {token_=scan_token}))
+          | Tok_right _ -> Some (Token.RIGHT (RIGHT {token_=scan_token}))
+          | Tok_prec _ -> Some (Token.PREC (PREC {token_=scan_token}))
+          | Tok_colon_colon_eq _ -> Some (Token.COLON_COLON_EQ (COLON_COLON_EQ {token_=scan_token}))
+          in
         match token_opt with
           | Some token_ -> scanner, scan_token, token_, []
           | None -> scan scanner
       end
       | mal :: [] -> begin
         (* Try to pass e.g. 42L through as a u64 token to support OCaml syntax. *)
-        let u64_opt = match Hmc.Scan.AbstractToken.Rendition.Malformation.description mal with
+        let u64_opt = match Hmc.Scan.Token.Rendition.Malformation.description mal with
           | "Invalid numerical constant" -> begin
             let source = Scan.Token.source scan_token in
             Hmc.Source.Slice.to_string source
@@ -709,12 +706,12 @@ let rec scan scanner =
           in
         match u64_opt with
           | Some x -> begin
-            let rendition = Hmc.Scan.AbstractToken.Rendition.Constant x in
-            let ctok = Hmc.Scan.ConcreteToken.{
-              atok=Hmc.Scan.AbstractToken.Tok_u64 rendition;
-              source=Scan.Token.source scan_token
+            let rendition = Hmc.Scan.Token.Rendition.Constant x in
+            let tok = Hmc.Scan.Token.Tok_u64 {
+                source=Scan.Token.source scan_token;
+                u64=rendition
               } in
-            let scan_token = Scan.Token.HmcToken ctok in
+            let scan_token = Scan.Token.HmcToken tok in
             scanner, scan_token, Token.OTHER_TOKEN (OTHER_TOKEN {token_=scan_token}), []
           end
           | None -> scanner, scan_token, Token.OTHER_TOKEN (OTHER_TOKEN {token_=scan_token}), [mal]
@@ -1800,11 +1797,7 @@ let min_comment_indentation_of_hocc_block = function
 
 let base_of_code code =
     let of_token token_ =
-        let open Scan.Token in
-        let source = match token_ with
-          | HmcToken ctok -> ctok |> Hmc.Scan.ConcreteToken.source
-          | HoccToken ctok -> ctok |> Scan.ConcreteToken.source
-        in
+        let source = Scan.Token.source token_ in
         Hmc.Source.Slice.base source
       in
     let rec of_delimited = function
@@ -1860,11 +1853,7 @@ let last_token_of_code code =
 
 let past_of_code code =
     let of_token token_ =
-        let open Scan.Token in
-        let source = match token_ with
-          | HmcToken ctok -> ctok |> Hmc.Scan.ConcreteToken.source
-          | HoccToken ctok -> ctok |> Scan.ConcreteToken.source
-        in
+        let source = Scan.Token.source token_ in
         Hmc.Source.Slice.past source
       in
     last_token_of_code code |> of_token

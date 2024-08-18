@@ -1,104 +1,104 @@
 `_``````_`
-  [1:0..1:4) : <Tok_rstring (Constant "")>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:4); rstring=(Constant "")})
+  (Tok_end_of_input {source=[1:4..1:4)})
 `_```
 ```_`
-  [1:0..2:2) : <Tok_rstring (Constant "\n")>
-  [2:2..2:2) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..2:2); rstring=(Constant "\n")})
+  (Tok_end_of_input {source=[2:2..2:2)})
 `_```
 
 ```_`
-  [1:0..3:2) : <Tok_rstring (Constant "\n\n")>
-  [3:2..3:2) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..3:2); rstring=(Constant "\n\n")})
+  (Tok_end_of_input {source=[3:2..3:2)})
 `_```
 
 
 ```_`
-  [1:0..4:2) : <Tok_rstring (Constant "\n\n\n")>
-  [4:2..4:2) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..4:2); rstring=(Constant "\n\n\n")})
+  (Tok_end_of_input {source=[4:2..4:2)})
 `_```a
 b```_`
-  [1:0..2:3) : <Tok_rstring (Constant "a\nb")>
-  [2:3..2:3) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..2:3); rstring=(Constant "a\nb")})
+  (Tok_end_of_input {source=[2:3..2:3)})
 `_```
 a
 b
 ```_`
-  [1:0..4:2) : <Tok_rstring (Constant "\na\nb\n")>
-  [4:2..4:2) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..4:2); rstring=(Constant "\na\nb\n")})
+  (Tok_end_of_input {source=[4:2..4:2)})
 `_```a```_`
-  [1:0..1:5) : <Tok_rstring (Constant "a")>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:5); rstring=(Constant "a")})
+  (Tok_end_of_input {source=[1:5..1:5)})
 `_``aoeu_``htns`gcrl`htns``aoeu_``_`
-  [1:0..1:30) : <Tok_rstring (Constant "`htns`gcrl`htns`")>
-  [1:30..1:30) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:30); rstring=(Constant "`htns`gcrl`htns`")})
+  (Tok_end_of_input {source=[1:30..1:30)})
 `_```a\u{0}\t\n\r\"\\\
 b```_`
-  [1:0..2:3) : <Tok_rstring (Constant "a\\u{0}\\t\\n\\r\\\"\\\\\\\nb")>
-  [2:3..2:3) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..2:3); rstring=(Constant "a\\u{0}\\t\\n\\r\\\"\\\\\\\nb")})
+  (Tok_end_of_input {source=[2:3..2:3)})
 `_```...```_`
-  [1:0..1:7) : <Tok_rstring (Constant "...")>
-  [1:7..1:7) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:7); rstring=(Constant "...")})
+  (Tok_end_of_input {source=[1:7..1:7)})
 `_```...`...```_`
-  [1:0..1:11) : <Tok_rstring (Constant "...`...")>
-  [1:11..1:11) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:11); rstring=(Constant "...`...")})
+  (Tok_end_of_input {source=[1:11..1:11)})
 `__``_`...``...`_``__`
-  [1:0..1:14) : <Tok_rstring (Constant "...``...")>
-  [1:14..1:14) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:14); rstring=(Constant "...``...")})
+  (Tok_end_of_input {source=[1:14..1:14)})
 `__``_``...`_``__`
-  [1:0..1:10) : <Tok_rstring (Constant "`...")>
-  [1:10..1:10) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:10); rstring=(Constant "`...")})
+  (Tok_end_of_input {source=[1:10..1:10)})
 `__``_`...``_``__`
-  [1:0..1:10) : <Tok_rstring (Constant "...`")>
-  [1:10..1:10) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:10); rstring=(Constant "...`")})
+  (Tok_end_of_input {source=[1:10..1:10)})
 `_e_``__`...``...`_`...`__``_e_`
-  [1:0..1:22) : <Tok_rstring (Constant "...``...`_`...")>
-  [1:22..1:22) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:22); rstring=(Constant "...``...`_`...")})
+  (Tok_end_of_input {source=[1:22..1:22)})
 `_7_``__`_`...``...`__``_7_`
-  [1:0..1:18) : <Tok_rstring (Constant "_`...``...")>
-  [1:18..1:18) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:18); rstring=(Constant "_`...``...")})
+  (Tok_end_of_input {source=[1:18..1:18)})
 `_c_``__`...``...`_`__``_c_`
-  [1:0..1:18) : <Tok_rstring (Constant "...``...`_")>
-  [1:18..1:18) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:18); rstring=(Constant "...``...`_")})
+  (Tok_end_of_input {source=[1:18..1:18)})
 `_8_``_x_`...``...`_`...`__`...`_x_``_8_`
-  [1:0..1:31) : <Tok_rstring (Constant "...``...`_`...`__`...")>
-  [1:31..1:31) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:31); rstring=(Constant "...``...`_`...`__`...")})
+  (Tok_end_of_input {source=[1:31..1:31)})
 `_2_``_x_`__`...``...`_`...`_x_``_2_`
-  [1:0..1:27) : <Tok_rstring (Constant "__`...``...`_`...")>
-  [1:27..1:27) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:27); rstring=(Constant "__`...``...`_`...")})
+  (Tok_end_of_input {source=[1:27..1:27)})
 `_2_``_x_`...``...`_`...`__`_x_``_2_`
-  [1:0..1:27) : <Tok_rstring (Constant "...``...`_`...`__")>
-  [1:27..1:27) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:27); rstring=(Constant "...``...`_`...`__")})
+  (Tok_end_of_input {source=[1:27..1:27)})
 `_c9_``_xx_`...``...`_`...`__`...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_...`_xx_``_c9_`
-  [1:0..1:103) : <Tok_rstring (Constant "...``...`_`...`__`...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_...")>
-  [1:103..1:103) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:103); rstring=(Constant "...``...`_`...`__`...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_...")})
+  (Tok_end_of_input {source=[1:103..1:103)})
 `_`` `aoeu` ``_`
-  [1:0..1:10) : <Tok_rstring (Malformed ["[1:1..1:2): Invalid codepoint in raw string tag"])>
-  [1:10..1:10) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:10); rstring=(Malformed ["[1:1..1:2): Invalid codepoint in raw string tag"])})
+  (Tok_end_of_input {source=[1:10..1:10)})
 `_``*`aoeu`*``_`
-  [1:0..1:10) : <Tok_rstring (Malformed ["[1:1..1:2): Invalid codepoint in raw string tag"])>
-  [1:10..1:10) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:10); rstring=(Malformed ["[1:1..1:2): Invalid codepoint in raw string tag"])})
+  (Tok_end_of_input {source=[1:10..1:10)})
 `_```_`
-  [1:0..1:1) : <Tok_rstring (Malformed ["[1:0..1:1): Unterminated string literal"])>
-  [1:1..1:1) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:1); rstring=(Malformed ["[1:0..1:1): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:1..1:1)})
 `_````_`
-  [1:0..1:2) : <Tok_rstring (Malformed ["[1:0..1:2): Unterminated string literal"])>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:2); rstring=(Malformed ["[1:0..1:2): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:2..1:2)})
 `_`````_`
-  [1:0..1:3) : <Tok_rstring (Malformed ["[1:0..1:3): Unterminated string literal"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:3); rstring=(Malformed ["[1:0..1:3): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 `_``tag``tag`_`
-  [1:0..1:9) : <Tok_rstring (Malformed ["[1:0..1:9): Unterminated string literal"])>
-  [1:9..1:9) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:9); rstring=(Malformed ["[1:0..1:9): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:9..1:9)})
 `_``tag``ta`_`
-  [1:0..1:8) : <Tok_rstring (Malformed ["[1:0..1:8): Unterminated string literal"])>
-  [1:8..1:8) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:8); rstring=(Malformed ["[1:0..1:8): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:8..1:8)})
 `_``tag```_`
-  [1:0..1:6) : <Tok_rstring (Malformed ["[1:0..1:6): Unterminated string literal"])>
-  [1:6..1:6) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:6); rstring=(Malformed ["[1:0..1:6): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:6..1:6)})
 `_``tag``_`
-  [1:0..1:5) : <Tok_rstring (Malformed ["[1:0..1:5): Unterminated string literal"])>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:5); rstring=(Malformed ["[1:0..1:5): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:5..1:5)})
 `_``tag`_`
-  [1:0..1:4) : <Tok_rstring (Malformed ["[1:0..1:4): Unterminated string literal"])>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_rstring {source=[1:0..1:4); rstring=(Malformed ["[1:0..1:4): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:4..1:4)})

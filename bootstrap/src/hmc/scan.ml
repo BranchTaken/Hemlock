@@ -113,7 +113,7 @@ module Radix = struct
     Nat.(nat * (to_nat t) + digit)
 end
 
-module AbstractToken = struct
+module Token = struct
   module Rendition = struct
     module Malformation = struct
       type t = {
@@ -158,14 +158,6 @@ module AbstractToken = struct
         |> Fmt.fmt "(Malformed "
         |> (List.pp Malformation.pp) malformations
         |> Fmt.fmt ")"
-
-    let pp_unit tok_name t formatter =
-      formatter
-      |> Fmt.fmt tok_name
-      |> (function formatter -> match t with
-        | Constant _ -> formatter
-        | Malformed _ -> formatter |> Fmt.fmt " " |> pp Unit.pp t
-      )
 
     let of_mals mals =
       Malformed (List.sort ~cmp:Malformation.cmp mals)
@@ -254,452 +246,1030 @@ module AbstractToken = struct
 
   type t =
     (* Keywords. *)
-    | Tok_and
-    | Tok_also
-    | Tok_as
-    | Tok_conceal
-    | Tok_effect
-    | Tok_else
-    | Tok_expose
-    | Tok_external
-    | Tok_false
-    | Tok_fn
-    | Tok_function
-    | Tok_if
-    | Tok_import
-    | Tok_include
-    | Tok_lazy
-    | Tok_let
-    | Tok_match
-    | Tok_mutability
-    | Tok_of
-    | Tok_open
-    | Tok_or
-    | Tok_rec
-    | Tok_then
-    | Tok_true
-    | Tok_type
-    | Tok_when
-    | Tok_with
+    | Tok_and of {source: Source.Slice.t}
+    | Tok_also of {source: Source.Slice.t}
+    | Tok_as of {source: Source.Slice.t}
+    | Tok_conceal of {source: Source.Slice.t}
+    | Tok_effect of {source: Source.Slice.t}
+    | Tok_else of {source: Source.Slice.t}
+    | Tok_expose of {source: Source.Slice.t}
+    | Tok_external of {source: Source.Slice.t}
+    | Tok_false of {source: Source.Slice.t}
+    | Tok_fn of {source: Source.Slice.t}
+    | Tok_function of {source: Source.Slice.t}
+    | Tok_if of {source: Source.Slice.t}
+    | Tok_import of {source: Source.Slice.t}
+    | Tok_include of {source: Source.Slice.t}
+    | Tok_lazy of {source: Source.Slice.t}
+    | Tok_let of {source: Source.Slice.t}
+    | Tok_match of {source: Source.Slice.t}
+    | Tok_mutability of {source: Source.Slice.t}
+    | Tok_of of {source: Source.Slice.t}
+    | Tok_open of {source: Source.Slice.t}
+    | Tok_or of {source: Source.Slice.t}
+    | Tok_rec of {source: Source.Slice.t}
+    | Tok_then of {source: Source.Slice.t}
+    | Tok_true of {source: Source.Slice.t}
+    | Tok_type of {source: Source.Slice.t}
+    | Tok_when of {source: Source.Slice.t}
+    | Tok_with of {source: Source.Slice.t}
 
     (* Operators. *)
-    | Tok_tilde_op of string
-    | Tok_qmark_op of string
-    | Tok_star_star_op of string
-    | Tok_star_op of string
-    | Tok_slash_op of string
-    | Tok_pct_op of string
-    | Tok_plus_op of string
-    | Tok_minus_op of string
-    | Tok_at_op of string
-    | Tok_caret_op of string
-    | Tok_dollar_op of string
-    | Tok_lt_op of string
-    | Tok_eq_op of string
-    | Tok_gt_op of string
-    | Tok_bar_op of string
-    | Tok_colon_op of string
-    | Tok_dot_op of string
+    | Tok_tilde_op of {source: Source.Slice.t; tilde_op: string}
+    | Tok_qmark_op of {source: Source.Slice.t; qmark_op: string}
+    | Tok_star_star_op of {source: Source.Slice.t; star_star_op: string}
+    | Tok_star_op of {source: Source.Slice.t; star_op: string}
+    | Tok_slash_op of {source: Source.Slice.t; slash_op: string}
+    | Tok_pct_op of {source: Source.Slice.t; pct_op: string}
+    | Tok_plus_op of {source: Source.Slice.t; plus_op: string}
+    | Tok_minus_op of {source: Source.Slice.t; minus_op: string}
+    | Tok_at_op of {source: Source.Slice.t; at_op: string}
+    | Tok_caret_op of {source: Source.Slice.t; caret_op: string}
+    | Tok_dollar_op of {source: Source.Slice.t; dollar_op: string}
+    | Tok_lt_op of {source: Source.Slice.t; lt_op: string}
+    | Tok_eq_op of {source: Source.Slice.t; eq_op: string}
+    | Tok_gt_op of {source: Source.Slice.t; gt_op: string}
+    | Tok_bar_op of {source: Source.Slice.t; bar_op: string}
+    | Tok_colon_op of {source: Source.Slice.t; colon_op: string}
+    | Tok_dot_op of {source: Source.Slice.t; dot_op: string}
 
     (* Punctuation. *)
-    | Tok_tilde
-    | Tok_qmark
-    | Tok_minus
-    | Tok_lt
-    | Tok_lt_eq
-    | Tok_eq
-    | Tok_lt_gt
-    | Tok_gt_eq
-    | Tok_gt
-    | Tok_comma
-    | Tok_dot
-    | Tok_dot_dot
-    | Tok_semi
-    | Tok_colon
-    | Tok_colon_colon
-    | Tok_colon_eq
-    | Tok_lparen
-    | Tok_rparen
-    | Tok_lbrack
-    | Tok_rbrack
-    | Tok_lcurly
-    | Tok_rcurly
-    | Tok_bar
-    | Tok_lcapture
-    | Tok_rcapture
-    | Tok_larray
-    | Tok_rarray
-    | Tok_bslash
-    | Tok_tick
-    | Tok_caret
-    | Tok_amp
-    | Tok_xmark
-    | Tok_arrow
-    | Tok_carrow
+    | Tok_tilde of {source: Source.Slice.t}
+    | Tok_qmark of {source: Source.Slice.t}
+    | Tok_minus of {source: Source.Slice.t}
+    | Tok_lt of {source: Source.Slice.t}
+    | Tok_lt_eq of {source: Source.Slice.t}
+    | Tok_eq of {source: Source.Slice.t}
+    | Tok_lt_gt of {source: Source.Slice.t}
+    | Tok_gt_eq of {source: Source.Slice.t}
+    | Tok_gt of {source: Source.Slice.t}
+    | Tok_comma of {source: Source.Slice.t}
+    | Tok_dot of {source: Source.Slice.t}
+    | Tok_dot_dot of {source: Source.Slice.t}
+    | Tok_semi of {source: Source.Slice.t}
+    | Tok_colon of {source: Source.Slice.t}
+    | Tok_colon_colon of {source: Source.Slice.t}
+    | Tok_colon_eq of {source: Source.Slice.t}
+    | Tok_lparen of {source: Source.Slice.t}
+    | Tok_rparen of {source: Source.Slice.t}
+    | Tok_lbrack of {source: Source.Slice.t}
+    | Tok_rbrack of {source: Source.Slice.t}
+    | Tok_lcurly of {source: Source.Slice.t}
+    | Tok_rcurly of {source: Source.Slice.t}
+    | Tok_bar of {source: Source.Slice.t}
+    | Tok_lcapture of {source: Source.Slice.t}
+    | Tok_rcapture of {source: Source.Slice.t}
+    | Tok_larray of {source: Source.Slice.t}
+    | Tok_rarray of {source: Source.Slice.t}
+    | Tok_bslash of {source: Source.Slice.t}
+    | Tok_tick of {source: Source.Slice.t}
+    | Tok_caret of {source: Source.Slice.t}
+    | Tok_amp of {source: Source.Slice.t}
+    | Tok_xmark of {source: Source.Slice.t}
+    | Tok_arrow of {source: Source.Slice.t}
+    | Tok_carrow of {source: Source.Slice.t}
 
-    | Tok_source_directive of source_directive Rendition.t
-    | Tok_line_delim
-    | Tok_indent of unit Rendition.t
-    | Tok_dedent of unit Rendition.t
-    | Tok_whitespace
-    | Tok_hash_comment
-    | Tok_paren_comment of unit Rendition.t
-    | Tok_uscore
-    | Tok_uident of string Rendition.t
-    | Tok_cident of string
-    | Tok_codepoint of codepoint Rendition.t
-    | Tok_rstring of string Rendition.t
-    | Tok_istring of string Rendition.t
-    | Tok_fstring_lditto
-    | Tok_fstring_interpolated of string Rendition.t
-    | Tok_fstring_pct
-    | Tok_fstring_pad of codepoint Rendition.t
-    | Tok_fstring_just of Fmt.just
-    | Tok_fstring_sign of Fmt.sign
-    | Tok_fstring_alt
-    | Tok_fstring_zpad
-    | Tok_fstring_width_star
-    | Tok_fstring_width of uns Rendition.t
-    | Tok_fstring_pmode of Fmt.pmode
-    | Tok_fstring_precision_star
-    | Tok_fstring_precision of uns Rendition.t
-    | Tok_fstring_radix of Radix.t
-    | Tok_fstring_notation of Fmt.notation
-    | Tok_fstring_pretty
-    | Tok_fstring_fmt of fmt Rendition.t
-    | Tok_fstring_sep of string Rendition.t
-    | Tok_fstring_label of string
-    | Tok_fstring_lparen_caret
-    | Tok_fstring_caret_rparen
-    | Tok_fstring_rditto
-    | Tok_r32 of real Rendition.t
-    | Tok_r64 of real Rendition.t
-    | Tok_u8 of u8 Rendition.t
-    | Tok_i8 of i8 Rendition.t
-    | Tok_u16 of u16 Rendition.t
-    | Tok_i16 of i16 Rendition.t
-    | Tok_u32 of u32 Rendition.t
-    | Tok_i32 of i32 Rendition.t
-    | Tok_u64 of u64 Rendition.t
-    | Tok_i64 of i64 Rendition.t
-    | Tok_u128 of u128 Rendition.t
-    | Tok_i128 of i128 Rendition.t
-    | Tok_u256 of u256 Rendition.t
-    | Tok_i256 of i256 Rendition.t
-    | Tok_u512 of u512 Rendition.t
-    | Tok_i512 of i512 Rendition.t
-    | Tok_nat of Nat.t Rendition.t
-    | Tok_zint of Zint.t Rendition.t
-    | Tok_end_of_input
-    | Tok_misaligned
-    | Tok_error of Rendition.Malformation.t list
+    (* Miscellaneous. *)
+    | Tok_source_directive of
+        {source: Source.Slice.t; source_directive: source_directive Rendition.t}
+    | Tok_line_delim of {source: Source.Slice.t}
+    | Tok_indent of {source: Source.Slice.t; indent: unit Rendition.t}
+    | Tok_dedent of {source: Source.Slice.t; dedent: unit Rendition.t}
+    | Tok_whitespace of {source: Source.Slice.t}
+    | Tok_hash_comment of {source: Source.Slice.t}
+    | Tok_paren_comment of {source: Source.Slice.t; paren_comment: unit Rendition.t}
+    | Tok_uscore of {source: Source.Slice.t}
+    | Tok_uident of {source: Source.Slice.t; uident: string Rendition.t}
+    | Tok_cident of {source: Source.Slice.t; cident: string}
+    | Tok_codepoint of {source: Source.Slice.t; codepoint: codepoint Rendition.t}
+    | Tok_rstring of {source: Source.Slice.t; rstring: string Rendition.t}
+    | Tok_istring of {source: Source.Slice.t; istring: string Rendition.t}
+    | Tok_fstring_lditto of {source: Source.Slice.t}
+    | Tok_fstring_interpolated of {source: Source.Slice.t; fstring_interpolated: string Rendition.t}
+    | Tok_fstring_pct of {source: Source.Slice.t}
+    | Tok_fstring_pad of {source: Source.Slice.t; fstring_pad: codepoint Rendition.t}
+    | Tok_fstring_just of {source: Source.Slice.t; fstring_just: Fmt.just}
+    | Tok_fstring_sign of {source: Source.Slice.t; fstring_sign: Fmt.sign}
+    | Tok_fstring_alt of {source: Source.Slice.t}
+    | Tok_fstring_zpad of {source: Source.Slice.t}
+    | Tok_fstring_width_star of {source: Source.Slice.t}
+    | Tok_fstring_width of {source: Source.Slice.t; fstring_width: uns Rendition.t}
+    | Tok_fstring_pmode of {source: Source.Slice.t; fstring_pmode: Fmt.pmode}
+    | Tok_fstring_precision_star of {source: Source.Slice.t}
+    | Tok_fstring_precision of {source: Source.Slice.t; fstring_precision: uns Rendition.t}
+    | Tok_fstring_radix of {source: Source.Slice.t; fstring_radix: Radix.t}
+    | Tok_fstring_notation of {source: Source.Slice.t; fstring_notation: Fmt.notation}
+    | Tok_fstring_pretty of {source: Source.Slice.t}
+    | Tok_fstring_fmt of {source: Source.Slice.t; fstring_fmt: fmt Rendition.t}
+    | Tok_fstring_sep of {source: Source.Slice.t; fstring_sep: string Rendition.t}
+    | Tok_fstring_label of {source: Source.Slice.t; fstring_label: string}
+    | Tok_fstring_lparen_caret of {source: Source.Slice.t}
+    | Tok_fstring_caret_rparen of {source: Source.Slice.t}
+    | Tok_fstring_rditto of {source: Source.Slice.t}
+    | Tok_r32 of {source: Source.Slice.t; r32: real Rendition.t}
+    | Tok_r64 of {source: Source.Slice.t; r64: real Rendition.t}
+    | Tok_u8 of {source: Source.Slice.t; u8: u8 Rendition.t}
+    | Tok_i8 of {source: Source.Slice.t; i8: i8 Rendition.t}
+    | Tok_u16 of {source: Source.Slice.t; u16: u16 Rendition.t}
+    | Tok_i16 of {source: Source.Slice.t; i16: i16 Rendition.t}
+    | Tok_u32 of {source: Source.Slice.t; u32: u32 Rendition.t}
+    | Tok_i32 of {source: Source.Slice.t; i32: i32 Rendition.t}
+    | Tok_u64 of {source: Source.Slice.t; u64: u64 Rendition.t}
+    | Tok_i64 of {source: Source.Slice.t; i64: i64 Rendition.t}
+    | Tok_u128 of {source: Source.Slice.t; u128: u128 Rendition.t}
+    | Tok_i128 of {source: Source.Slice.t; i128: i128 Rendition.t}
+    | Tok_u256 of {source: Source.Slice.t; u256: u256 Rendition.t}
+    | Tok_i256 of {source: Source.Slice.t; i256: i256 Rendition.t}
+    | Tok_u512 of {source: Source.Slice.t; u512: u512 Rendition.t}
+    | Tok_i512 of {source: Source.Slice.t; i512: i512 Rendition.t}
+    | Tok_nat of {source: Source.Slice.t; nat: Nat.t Rendition.t}
+    | Tok_zint of {source: Source.Slice.t; zint: Zint.t Rendition.t}
+    | Tok_end_of_input of {source: Source.Slice.t}
+    | Tok_misaligned of {source: Source.Slice.t}
+    | Tok_error of {source: Source.Slice.t; error: Rendition.Malformation.t list}
 
   let pp t formatter =
     formatter
-    |> Fmt.fmt "<"
+    |> Fmt.fmt "("
     |> (fun formatter ->
       match t with
       (* Keywords. *)
-      | Tok_and -> formatter |> Fmt.fmt "Tok_and"
-      | Tok_also -> formatter |> Fmt.fmt "Tok_also"
-      | Tok_as -> formatter |> Fmt.fmt "Tok_as"
-      | Tok_conceal -> formatter |> Fmt.fmt "Tok_conceal"
-      | Tok_effect -> formatter |> Fmt.fmt "Tok_effect"
-      | Tok_else -> formatter |> Fmt.fmt "Tok_else"
-      | Tok_expose -> formatter |> Fmt.fmt "Tok_expose"
-      | Tok_external -> formatter |> Fmt.fmt "Tok_external"
-      | Tok_false -> formatter |> Fmt.fmt "Tok_false"
-      | Tok_fn -> formatter |> Fmt.fmt "Tok_fn"
-      | Tok_function -> formatter |> Fmt.fmt "Tok_function"
-      | Tok_if -> formatter |> Fmt.fmt "Tok_if"
-      | Tok_import -> formatter |> Fmt.fmt "Tok_import"
-      | Tok_include -> formatter |> Fmt.fmt "Tok_include"
-      | Tok_lazy -> formatter |> Fmt.fmt "Tok_lazy"
-      | Tok_let -> formatter |> Fmt.fmt "Tok_let"
-      | Tok_match -> formatter |> Fmt.fmt "Tok_match"
-      | Tok_mutability -> formatter |> Fmt.fmt "Tok_mutability"
-      | Tok_of -> formatter |> Fmt.fmt "Tok_of"
-      | Tok_open -> formatter |> Fmt.fmt "Tok_open"
-      | Tok_or -> formatter |> Fmt.fmt "Tok_or"
-      | Tok_rec -> formatter |> Fmt.fmt "Tok_rec"
-      | Tok_then -> formatter |> Fmt.fmt "Tok_then"
-      | Tok_true -> formatter |> Fmt.fmt "Tok_true"
-      | Tok_type -> formatter |> Fmt.fmt "Tok_type"
-      | Tok_when -> formatter |> Fmt.fmt "Tok_when"
-      | Tok_with -> formatter |> Fmt.fmt "Tok_with"
+      | Tok_and {source} ->
+        formatter |> Fmt.fmt "Tok_and {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_also {source} ->
+        formatter |> Fmt.fmt "Tok_also {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_as {source} ->
+        formatter |> Fmt.fmt "Tok_as {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_conceal {source} ->
+        formatter |> Fmt.fmt "Tok_conceal {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_effect {source} ->
+        formatter |> Fmt.fmt "Tok_effect {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_else {source} ->
+        formatter |> Fmt.fmt "Tok_else {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_expose {source} ->
+        formatter |> Fmt.fmt "Tok_expose {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_external {source} ->
+        formatter |> Fmt.fmt "Tok_external {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_false {source} ->
+        formatter |> Fmt.fmt "Tok_false {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_fn {source} ->
+        formatter |> Fmt.fmt "Tok_fn {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_function {source} ->
+        formatter |> Fmt.fmt "Tok_function {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_if {source} ->
+        formatter |> Fmt.fmt "Tok_if {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_import {source} ->
+        formatter |> Fmt.fmt "Tok_import {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_include {source} ->
+        formatter |> Fmt.fmt "Tok_include {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lazy {source} ->
+        formatter |> Fmt.fmt "Tok_lazy {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_let {source} ->
+        formatter |> Fmt.fmt "Tok_let {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_match {source} ->
+        formatter |> Fmt.fmt "Tok_match {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_mutability {source} ->
+        formatter |> Fmt.fmt "Tok_mutability {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_of {source} ->
+        formatter |> Fmt.fmt "Tok_of {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_open {source} ->
+        formatter |> Fmt.fmt "Tok_open {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_or {source} ->
+        formatter |> Fmt.fmt "Tok_or {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_rec {source} ->
+        formatter |> Fmt.fmt "Tok_rec {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_then {source} ->
+        formatter |> Fmt.fmt "Tok_then {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_true {source} ->
+        formatter |> Fmt.fmt "Tok_true {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_type {source} ->
+        formatter |> Fmt.fmt "Tok_type {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_when {source} ->
+        formatter |> Fmt.fmt "Tok_when {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_with {source} ->
+        formatter |> Fmt.fmt "Tok_with {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
 
       (* Operators. *)
-      | Tok_tilde_op op -> formatter |> Fmt.fmt "Tok_tilde_op " |> String.pp op
-      | Tok_qmark_op op -> formatter |> Fmt.fmt "Tok_qmark_op " |> String.pp op
-      | Tok_star_star_op op -> formatter |> Fmt.fmt "Tok_star_star_op " |> String.pp op
-      | Tok_star_op op -> formatter |> Fmt.fmt "Tok_star_op " |> String.pp op
-      | Tok_slash_op op -> formatter |> Fmt.fmt "Tok_slash_op " |> String.pp op
-      | Tok_pct_op op -> formatter |> Fmt.fmt "Tok_pct_op " |> String.pp op
-      | Tok_plus_op op -> formatter |> Fmt.fmt "Tok_plus_op " |> String.pp op
-      | Tok_minus_op op -> formatter |> Fmt.fmt "Tok_minus_op " |> String.pp op
-      | Tok_at_op op -> formatter |> Fmt.fmt "Tok_at_op " |> String.pp op
-      | Tok_caret_op op -> formatter |> Fmt.fmt "Tok_caret_op " |> String.pp op
-      | Tok_dollar_op op -> formatter |> Fmt.fmt "Tok_dollar_op " |> String.pp op
-      | Tok_lt_op op -> formatter |> Fmt.fmt "Tok_lt_op " |> String.pp op
-      | Tok_eq_op op -> formatter |> Fmt.fmt "Tok_eq_op " |> String.pp op
-      | Tok_gt_op op -> formatter |> Fmt.fmt "Tok_gt_op " |> String.pp op
-      | Tok_bar_op op -> formatter |> Fmt.fmt "Tok_bar_op " |> String.pp op
-      | Tok_colon_op op -> formatter |> Fmt.fmt "Tok_colon_op " |> String.pp op
-      | Tok_dot_op op -> formatter |> Fmt.fmt "Tok_dot_op " |> String.pp op
+      | Tok_tilde_op {source; tilde_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_tilde_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; tilde_op="
+          |> String.pp tilde_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_qmark_op {source; qmark_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_qmark_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; qmark_op="
+          |> String.pp qmark_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_star_star_op {source; star_star_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_star_star_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; star_star_op="
+          |> String.pp star_star_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_star_op {source; star_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_star_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; star_op="
+          |> String.pp star_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_slash_op {source; slash_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_slash_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; slash_op="
+          |> String.pp slash_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_pct_op {source; pct_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_pct_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; pct_op="
+          |> String.pp pct_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_plus_op {source; plus_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_plus_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; plus_op="
+          |> String.pp plus_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_minus_op {source; minus_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_minus_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; minus_op="
+          |> String.pp minus_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_at_op {source; at_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_at_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; at_op="
+          |> String.pp at_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_caret_op {source; caret_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_caret_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; caret_op="
+          |> String.pp caret_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_dollar_op {source; dollar_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_dollar_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; dollar_op="
+          |> String.pp dollar_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_lt_op {source; lt_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_lt_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; lt_op="
+          |> String.pp lt_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_eq_op {source; eq_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_eq_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; eq_op="
+          |> String.pp eq_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_gt_op {source; gt_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_gt_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; gt_op="
+          |> String.pp gt_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_bar_op {source; bar_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_bar_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; bar_op="
+          |> String.pp bar_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_colon_op {source; colon_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_colon_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; colon_op="
+          |> String.pp colon_op
+          |> Fmt.fmt "}"
+        end
+      | Tok_dot_op {source; dot_op} -> begin
+          formatter
+          |> Fmt.fmt "Tok_dot_op {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; dot_op="
+          |> String.pp dot_op
+          |> Fmt.fmt "}"
+        end
 
       (* Punctuation. *)
-      | Tok_tilde -> formatter |> Fmt.fmt "Tok_tilde"
-      | Tok_qmark -> formatter |> Fmt.fmt "Tok_qmark"
-      | Tok_minus -> formatter |> Fmt.fmt "Tok_minus"
-      | Tok_lt -> formatter |> Fmt.fmt "Tok_lt"
-      | Tok_lt_eq -> formatter |> Fmt.fmt "Tok_lt_eq"
-      | Tok_eq -> formatter |> Fmt.fmt "Tok_eq"
-      | Tok_lt_gt -> formatter |> Fmt.fmt "Tok_lt_gt"
-      | Tok_gt_eq -> formatter |> Fmt.fmt "Tok_gt_eq"
-      | Tok_gt -> formatter |> Fmt.fmt "Tok_gt"
-      | Tok_comma -> formatter |> Fmt.fmt "Tok_comma"
-      | Tok_dot -> formatter |> Fmt.fmt "Tok_dot"
-      | Tok_dot_dot -> formatter |> Fmt.fmt "Tok_dot_dot"
-      | Tok_semi -> formatter |> Fmt.fmt "Tok_semi"
-      | Tok_colon -> formatter |> Fmt.fmt "Tok_colon"
-      | Tok_colon_colon -> formatter |> Fmt.fmt "Tok_colon_colon"
-      | Tok_colon_eq -> formatter |> Fmt.fmt "Tok_colon_eq"
-      | Tok_lparen -> formatter |> Fmt.fmt "Tok_lparen"
-      | Tok_rparen -> formatter |> Fmt.fmt "Tok_rparen"
-      | Tok_lbrack -> formatter |> Fmt.fmt "Tok_lbrack"
-      | Tok_rbrack -> formatter |> Fmt.fmt "Tok_rbrack"
-      | Tok_lcurly -> formatter |> Fmt.fmt "Tok_lcurly"
-      | Tok_rcurly -> formatter |> Fmt.fmt "Tok_rcurly"
-      | Tok_bar -> formatter |> Fmt.fmt "Tok_bar"
-      | Tok_lcapture -> formatter |> Fmt.fmt "Tok_lcapture"
-      | Tok_rcapture -> formatter |> Fmt.fmt "Tok_rcapture"
-      | Tok_larray -> formatter |> Fmt.fmt "Tok_larray"
-      | Tok_rarray -> formatter |> Fmt.fmt "Tok_rarray"
-      | Tok_bslash -> formatter |> Fmt.fmt "Tok_bslash"
-      | Tok_tick -> formatter |> Fmt.fmt "Tok_tick"
-      | Tok_caret -> formatter |> Fmt.fmt "Tok_caret"
-      | Tok_amp -> formatter |> Fmt.fmt "Tok_amp"
-      | Tok_xmark -> formatter |> Fmt.fmt "Tok_xmark"
-      | Tok_arrow -> formatter |> Fmt.fmt "Tok_arrow"
-      | Tok_carrow -> formatter |> Fmt.fmt "Tok_carrow"
-      | Tok_source_directive rendition ->
-        formatter |> Fmt.fmt "Tok_source_directive "
-        |> (Rendition.pp pp_source_directive) rendition
-      | Tok_line_delim -> formatter |> Fmt.fmt "Tok_line_delim"
-      | Tok_indent rendition -> formatter |> Rendition.pp_unit "Tok_indent" rendition
-      | Tok_dedent rendition -> formatter |> Rendition.pp_unit "Tok_dedent" rendition
-      | Tok_whitespace -> formatter |> Fmt.fmt "Tok_whitespace"
-      | Tok_hash_comment -> formatter |> Fmt.fmt "Tok_hash_comment"
-      | Tok_paren_comment rendition -> formatter |> Rendition.pp_unit "Tok_paren_comment" rendition
-      | Tok_uscore -> formatter |> Fmt.fmt "Tok_uscore"
-      | Tok_uident rendition ->
-        formatter |> Fmt.fmt "Tok_uident " |> (Rendition.pp String.pp) rendition
-      | Tok_cident cident -> formatter |> Fmt.fmt "Tok_cident " |> String.pp cident
-      | Tok_codepoint rendition ->
-        formatter |> Fmt.fmt "Tok_codepoint " |> (Rendition.pp Codepoint.pp) rendition
-      | Tok_rstring rendition ->
-        formatter |> Fmt.fmt "Tok_rstring " |> (Rendition.pp String.pp) rendition
-      | Tok_istring rendition ->
-        formatter |> Fmt.fmt "Tok_istring " |> (Rendition.pp String.pp) rendition
-      | Tok_fstring_lditto -> formatter |> Fmt.fmt "Tok_fstring_lditto"
-      | Tok_fstring_interpolated rendition ->
-        formatter |> Fmt.fmt "Tok_fstring_interpolated " |> (Rendition.pp String.pp) rendition
-      | Tok_fstring_pct -> formatter |> Fmt.fmt "Tok_fstring_pct"
-      | Tok_fstring_pad rendition ->
-        formatter |> Fmt.fmt "Tok_fstring_pad " |> (Rendition.pp Codepoint.pp) rendition
-      | Tok_fstring_just just -> formatter |> Fmt.fmt "Tok_fstring_just " |> Fmt.pp_just just
-      | Tok_fstring_sign sign -> formatter |> Fmt.fmt "Tok_fstring_sign " |> Fmt.pp_sign sign
-      | Tok_fstring_alt -> formatter |> Fmt.fmt "Tok_fstring_alt"
-      | Tok_fstring_zpad -> formatter |> Fmt.fmt "Tok_fstring_zpad"
-      | Tok_fstring_width_star -> formatter |> Fmt.fmt "Tok_fstring_width_star"
-      | Tok_fstring_width rendition ->
-        formatter |> Fmt.fmt "Tok_fstring_width " |> (Rendition.pp Uns.pp) rendition
-      | Tok_fstring_pmode pmode -> formatter |> Fmt.fmt "Tok_fstring_pmode " |> Fmt.pp_pmode pmode
-      | Tok_fstring_precision_star -> formatter |> Fmt.fmt "Tok_fstring_precision_star"
-      | Tok_fstring_precision rendition ->
-        formatter |> Fmt.fmt "Tok_fstring_precision " |> (Rendition.pp Uns.pp) rendition
-      | Tok_fstring_radix radix -> formatter |> Fmt.fmt "Tok_fstring_radix " |> Radix.pp radix
-      | Tok_fstring_notation notation ->
-        formatter |> Fmt.fmt "Tok_fstring_notation " |> Fmt.pp_notation notation
-      | Tok_fstring_pretty -> formatter |> Fmt.fmt "Tok_fstring_pretty"
-      | Tok_fstring_fmt rendition ->
-        formatter |> Fmt.fmt "Tok_fstring_fmt " |> (Rendition.pp pp_fmt) rendition
-      | Tok_fstring_sep rendition ->
-        formatter |> Fmt.fmt "Tok_fstring_sep " |> (Rendition.pp String.pp) rendition
-      | Tok_fstring_label label -> formatter |> Fmt.fmt "Tok_fstring_label " |> String.pp label
-      | Tok_fstring_lparen_caret -> formatter |> Fmt.fmt "Tok_fstring_lparen_caret"
-      | Tok_fstring_caret_rparen -> formatter |> Fmt.fmt "Tok_fstring_caret_rparen"
-      | Tok_fstring_rditto -> formatter |> Fmt.fmt "Tok_fstring_rditto"
-      | Tok_r32 rendition ->
-        formatter |> Fmt.fmt "Tok_r32 "
-        |> (Rendition.pp Real.(fmt ~alt:true ~radix:Radix.Hex ~precision:6L
-            ~notation:Fmt.Normalized)) rendition
-      | Tok_r64 rendition ->
-        formatter |> Fmt.fmt "Tok_r64 "
-        |> (Rendition.pp Real.(fmt ~alt:true ~radix:Radix.Hex ~precision:13L
-            ~notation:Fmt.Normalized)) rendition
-      | Tok_u8 rendition ->
-        formatter |> Fmt.fmt "Tok_u8 " |> (Rendition.pp U8.pp) rendition
-      | Tok_i8 rendition ->
-        formatter |> Fmt.fmt "Tok_i8 " |> (Rendition.pp I8.pp) rendition
-      | Tok_u16 rendition ->
-        formatter |> Fmt.fmt "Tok_u16 " |> (Rendition.pp U16.pp) rendition
-      | Tok_i16 rendition ->
-        formatter |> Fmt.fmt "Tok_i16 " |> (Rendition.pp I16.pp) rendition
-      | Tok_u32 rendition ->
-        formatter |> Fmt.fmt "Tok_u32 " |> (Rendition.pp U32.pp) rendition
-      | Tok_i32 rendition ->
-        formatter |> Fmt.fmt "Tok_i32 " |> (Rendition.pp I32.pp) rendition
-      | Tok_u64 rendition ->
-        formatter |> Fmt.fmt "Tok_u64 " |> (Rendition.pp U64.pp) rendition
-      | Tok_i64 rendition ->
-        formatter |> Fmt.fmt "Tok_i64 " |> (Rendition.pp I64.pp) rendition
-      | Tok_u128 rendition ->
-        formatter |> Fmt.fmt "Tok_u128 " |> (Rendition.pp U128.pp) rendition
-      | Tok_i128 rendition ->
-        formatter |> Fmt.fmt "Tok_i128 " |> (Rendition.pp I128.pp) rendition
-      | Tok_u256 rendition ->
-        formatter |> Fmt.fmt "Tok_u256 " |> (Rendition.pp U256.pp) rendition
-      | Tok_i256 rendition ->
-        formatter |> Fmt.fmt "Tok_i256 " |> (Rendition.pp I256.pp) rendition
-      | Tok_u512 rendition ->
-        formatter |> Fmt.fmt "Tok_u512 " |> (Rendition.pp U512.pp) rendition
-      | Tok_i512 rendition ->
-        formatter |> Fmt.fmt "Tok_i512 " |> (Rendition.pp I512.pp) rendition
-      | Tok_nat rendition ->
-        formatter |> Fmt.fmt "Tok_nat " |> (Rendition.pp Nat.pp) rendition
-      | Tok_zint rendition ->
-        formatter |> Fmt.fmt "Tok_zint " |> (Rendition.pp Zint.pp) rendition
-      | Tok_end_of_input -> formatter |> Fmt.fmt "Tok_end_of_input"
-      | Tok_misaligned -> formatter |> Fmt.fmt "Tok_misaligned"
-      | Tok_error mals ->
-        formatter |> Fmt.fmt "Tok_error " |> (List.pp Rendition.Malformation.pp) mals
+      | Tok_tilde {source} ->
+        formatter |> Fmt.fmt "Tok_tilde {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_qmark {source} ->
+        formatter |> Fmt.fmt "Tok_qmark {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_minus {source} ->
+        formatter |> Fmt.fmt "Tok_minus {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lt {source} ->
+        formatter |> Fmt.fmt "Tok_lt {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lt_eq {source} ->
+        formatter |> Fmt.fmt "Tok_lt_eq {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_eq {source} ->
+        formatter |> Fmt.fmt "Tok_eq {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lt_gt {source} ->
+        formatter |> Fmt.fmt "Tok_lt_gt {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_gt_eq {source} ->
+        formatter |> Fmt.fmt "Tok_gt_eq {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_gt {source} ->
+        formatter |> Fmt.fmt "Tok_gt {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_comma {source} ->
+        formatter |> Fmt.fmt "Tok_comma {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_dot {source} ->
+        formatter |> Fmt.fmt "Tok_dot {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_dot_dot {source} ->
+        formatter |> Fmt.fmt "Tok_dot_dot {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_semi {source} ->
+        formatter |> Fmt.fmt "Tok_semi {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_colon {source} ->
+        formatter |> Fmt.fmt "Tok_colon {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_colon_colon {source} ->
+        formatter |> Fmt.fmt "Tok_colon_colon {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_colon_eq {source} ->
+        formatter |> Fmt.fmt "Tok_colon_eq {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lparen {source} ->
+        formatter |> Fmt.fmt "Tok_lparen {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_rparen {source} ->
+        formatter |> Fmt.fmt "Tok_rparen {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lbrack {source} ->
+        formatter |> Fmt.fmt "Tok_lbrack {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_rbrack {source} ->
+        formatter |> Fmt.fmt "Tok_rbrack {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lcurly {source} ->
+        formatter |> Fmt.fmt "Tok_lcurly {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_rcurly {source} ->
+        formatter |> Fmt.fmt "Tok_rcurly {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_bar {source} ->
+        formatter |> Fmt.fmt "Tok_bar {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_lcapture {source} ->
+        formatter |> Fmt.fmt "Tok_lcapture {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_rcapture {source} ->
+        formatter |> Fmt.fmt "Tok_rcapture {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_larray {source} ->
+        formatter |> Fmt.fmt "Tok_larray {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_rarray {source} ->
+        formatter |> Fmt.fmt "Tok_rarray {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_bslash {source} ->
+        formatter |> Fmt.fmt "Tok_bslash {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_tick {source} ->
+        formatter |> Fmt.fmt "Tok_tick {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_caret {source} ->
+        formatter |> Fmt.fmt "Tok_caret {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_amp {source} ->
+        formatter |> Fmt.fmt "Tok_amp {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_xmark {source} ->
+        formatter |> Fmt.fmt "Tok_xmark {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_arrow {source} ->
+        formatter |> Fmt.fmt "Tok_arrow {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_carrow {source} ->
+        formatter |> Fmt.fmt "Tok_carrow {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_source_directive {source; source_directive} -> begin
+          formatter
+          |> Fmt.fmt "Tok_source_directive {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; source_directive="
+          |> Rendition.pp pp_source_directive source_directive
+          |> Fmt.fmt "}"
+        end
+      | Tok_line_delim {source} ->
+        formatter |> Fmt.fmt "Tok_line_delim {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_indent {source; indent} -> begin
+          formatter
+          |> Fmt.fmt "Tok_indent {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; indent="
+          |> Rendition.pp Unit.pp indent
+          |> Fmt.fmt "}"
+        end
+      | Tok_dedent {source; dedent} -> begin
+          formatter
+          |> Fmt.fmt "Tok_dedent {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; dedent="
+          |> Rendition.pp Unit.pp dedent
+          |> Fmt.fmt "}"
+        end
+      | Tok_whitespace {source} ->
+        formatter |> Fmt.fmt "Tok_whitespace {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_hash_comment {source} ->
+        formatter |> Fmt.fmt "Tok_hash_comment {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_paren_comment {source; paren_comment} -> begin
+          formatter
+          |> Fmt.fmt "Tok_paren_comment {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; paren_comment="
+          |> Rendition.pp Unit.pp paren_comment
+          |> Fmt.fmt "}"
+        end
+      | Tok_uscore {source} ->
+        formatter |> Fmt.fmt "Tok_uscore {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_uident {source; uident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_uident {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; uident="
+          |> Rendition.pp String.pp uident
+          |> Fmt.fmt "}"
+        end
+      | Tok_cident {source; cident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_cident {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; cident="
+          |> String.pp cident
+          |> Fmt.fmt "}"
+        end
+      | Tok_codepoint {source; codepoint} -> begin
+          formatter
+          |> Fmt.fmt "Tok_codepoint {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; codepoint="
+          |> Rendition.pp Codepoint.pp codepoint
+          |> Fmt.fmt "}"
+        end
+      | Tok_rstring {source; rstring} -> begin
+          formatter
+          |> Fmt.fmt "Tok_rstring {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; rstring="
+          |> Rendition.pp String.pp rstring
+          |> Fmt.fmt "}"
+        end
+      | Tok_istring {source; istring} -> begin
+          formatter
+          |> Fmt.fmt "Tok_istring {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; istring="
+          |> Rendition.pp String.pp istring
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_lditto {source} ->
+        formatter |> Fmt.fmt "Tok_fstring_lditto {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_fstring_interpolated {source; fstring_interpolated} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_interpolated {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_interpolated="
+          |> Rendition.pp String.pp fstring_interpolated
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_pct {source} ->
+        formatter |> Fmt.fmt "Tok_fstring_pct {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_fstring_pad {source; fstring_pad} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_pad {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_pad="
+          |> Rendition.pp Codepoint.pp fstring_pad
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_just {source; fstring_just} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_just {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_just="
+          |> Fmt.pp_just fstring_just
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_sign {source; fstring_sign} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_sign {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_sign="
+          |> Fmt.pp_sign fstring_sign
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_alt {source} ->
+        formatter |> Fmt.fmt "Tok_fstring_alt {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_fstring_zpad {source} ->
+        formatter |> Fmt.fmt "Tok_fstring_zpad {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_fstring_width_star {source} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_width_star {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_width {source; fstring_width} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_width {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_width="
+          |> Rendition.pp Uns.pp fstring_width
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_pmode {source; fstring_pmode} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_pmode {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_pmode="
+          |> Fmt.pp_pmode fstring_pmode
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_precision_star {source} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_precision_star {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_precision {source; fstring_precision} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_precision {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_precision="
+          |> Rendition.pp Uns.pp fstring_precision
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_radix {source; fstring_radix} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_radix {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_radix="
+          |> Radix.pp fstring_radix
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_notation {source; fstring_notation} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_notation {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_notation="
+          |> Fmt.pp_notation fstring_notation
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_pretty {source} ->
+        formatter |> Fmt.fmt "Tok_fstring_pretty {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_fstring_fmt {source; fstring_fmt} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_fmt="
+          |> Rendition.pp pp_fmt fstring_fmt
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_sep {source; fstring_sep} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_sep {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_sep="
+          |> Rendition.pp String.pp fstring_sep
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_label {source; fstring_label} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_label {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; fstring_label="
+          |> String.pp fstring_label
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_lparen_caret {source} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_lparen_caret {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_caret_rparen {source} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_caret_rparen {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "}"
+        end
+      | Tok_fstring_rditto {source} -> begin
+          formatter
+          |> Fmt.fmt "Tok_fstring_rditto {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "}"
+        end
+      | Tok_r32 {source; r32} -> begin
+          formatter
+          |> Fmt.fmt "Tok_r32 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; r32="
+          |> Rendition.pp Real.(fmt ~alt:true ~radix:Radix.Hex ~precision:6L
+              ~notation:Fmt.Normalized) r32
+          |> Fmt.fmt "}"
+        end
+      | Tok_r64 {source; r64} -> begin
+          formatter
+          |> Fmt.fmt "Tok_r64 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; r64="
+          |> Rendition.pp Real.(fmt ~alt:true ~radix:Radix.Hex ~precision:13L
+              ~notation:Fmt.Normalized) r64
+          |> Fmt.fmt "}"
+        end
+      | Tok_u8 {source; u8} -> begin
+          formatter
+          |> Fmt.fmt "Tok_u8 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; u8="
+          |> Rendition.pp U8.pp u8
+          |> Fmt.fmt "}"
+        end
+      | Tok_i8 {source; i8} -> begin
+          formatter
+          |> Fmt.fmt "Tok_i8 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; i8="
+          |> Rendition.pp I8.pp i8
+          |> Fmt.fmt "}"
+        end
+      | Tok_u16 {source; u16} -> begin
+          formatter
+          |> Fmt.fmt "Tok_u16 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; u16="
+          |> Rendition.pp U16.pp u16
+          |> Fmt.fmt "}"
+        end
+      | Tok_i16 {source; i16} -> begin
+          formatter
+          |> Fmt.fmt "Tok_i16 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; i16="
+          |> Rendition.pp I16.pp i16
+          |> Fmt.fmt "}"
+        end
+      | Tok_u32 {source; u32} -> begin
+          formatter
+          |> Fmt.fmt "Tok_u32 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; u32="
+          |> Rendition.pp U32.pp u32
+          |> Fmt.fmt "}"
+        end
+      | Tok_i32 {source; i32} -> begin
+          formatter
+          |> Fmt.fmt "Tok_i32 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; i32="
+          |> Rendition.pp I32.pp i32
+          |> Fmt.fmt "}"
+        end
+      | Tok_u64 {source; u64} -> begin
+          formatter
+          |> Fmt.fmt "Tok_u64 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; u64="
+          |> Rendition.pp U64.pp u64
+          |> Fmt.fmt "}"
+        end
+      | Tok_i64 {source; i64} -> begin
+          formatter
+          |> Fmt.fmt "Tok_i64 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; i64="
+          |> Rendition.pp I64.pp i64
+          |> Fmt.fmt "}"
+        end
+      | Tok_u128 {source; u128} -> begin
+          formatter
+          |> Fmt.fmt "Tok_u128 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; u128="
+          |> Rendition.pp U128.pp u128
+          |> Fmt.fmt "}"
+        end
+      | Tok_i128 {source; i128} -> begin
+          formatter
+          |> Fmt.fmt "Tok_i128 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; i128="
+          |> Rendition.pp I128.pp i128
+          |> Fmt.fmt "}"
+        end
+      | Tok_u256 {source; u256} -> begin
+          formatter
+          |> Fmt.fmt "Tok_u256 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; u256="
+          |> Rendition.pp U256.pp u256
+          |> Fmt.fmt "}"
+        end
+      | Tok_i256 {source; i256} -> begin
+          formatter
+          |> Fmt.fmt "Tok_i256 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; i256="
+          |> Rendition.pp I256.pp i256
+          |> Fmt.fmt "}"
+        end
+      | Tok_u512 {source; u512} -> begin
+          formatter
+          |> Fmt.fmt "Tok_u512 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; u512="
+          |> Rendition.pp U512.pp u512
+          |> Fmt.fmt "}"
+        end
+      | Tok_i512 {source; i512} -> begin
+          formatter
+          |> Fmt.fmt "Tok_i512 {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; i512="
+          |> Rendition.pp I512.pp i512
+          |> Fmt.fmt "}"
+        end
+      | Tok_nat {source; nat} -> begin
+          formatter
+          |> Fmt.fmt "Tok_nat {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; nat="
+          |> Rendition.pp Nat.pp nat
+          |> Fmt.fmt "}"
+        end
+      | Tok_zint {source; zint} -> begin
+          formatter
+          |> Fmt.fmt "Tok_zint {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; zint="
+          |> Rendition.pp Zint.pp zint
+          |> Fmt.fmt "}"
+        end
+      | Tok_end_of_input {source} ->
+        formatter |> Fmt.fmt "Tok_end_of_input {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_misaligned {source} ->
+        formatter |> Fmt.fmt "Tok_misaligned {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_error {source; error} -> begin
+          formatter
+          |> Fmt.fmt "Tok_error {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; error="
+          |> (List.pp Rendition.Malformation.pp) error
+          |> Fmt.fmt "}"
+        end
     )
-    |> Fmt.fmt ">"
+    |> Fmt.fmt ")"
+
+  let source = function
+    | Tok_and {source}
+    | Tok_also {source}
+    | Tok_as {source}
+    | Tok_conceal {source}
+    | Tok_effect {source}
+    | Tok_else {source}
+    | Tok_expose {source}
+    | Tok_external {source}
+    | Tok_false {source}
+    | Tok_fn {source}
+    | Tok_function {source}
+    | Tok_if {source}
+    | Tok_import {source}
+    | Tok_include {source}
+    | Tok_lazy {source}
+    | Tok_let {source}
+    | Tok_match {source}
+    | Tok_mutability {source}
+    | Tok_of {source}
+    | Tok_open {source}
+    | Tok_or {source}
+    | Tok_rec {source}
+    | Tok_then {source}
+    | Tok_true {source}
+    | Tok_type {source}
+    | Tok_when {source}
+    | Tok_with {source}
+    | Tok_tilde_op {source; _}
+    | Tok_qmark_op {source; _}
+    | Tok_star_star_op {source; _}
+    | Tok_star_op {source; _}
+    | Tok_slash_op {source; _}
+    | Tok_pct_op {source; _}
+    | Tok_plus_op {source; _}
+    | Tok_minus_op {source; _}
+    | Tok_at_op {source; _}
+    | Tok_caret_op {source; _}
+    | Tok_dollar_op {source; _}
+    | Tok_lt_op {source; _}
+    | Tok_eq_op {source; _}
+    | Tok_gt_op {source; _}
+    | Tok_bar_op {source; _}
+    | Tok_colon_op {source; _}
+    | Tok_dot_op {source; _}
+    | Tok_tilde {source}
+    | Tok_qmark {source}
+    | Tok_minus {source}
+    | Tok_lt {source}
+    | Tok_lt_eq {source}
+    | Tok_eq {source}
+    | Tok_lt_gt {source}
+    | Tok_gt_eq {source}
+    | Tok_gt {source}
+    | Tok_comma {source}
+    | Tok_dot {source}
+    | Tok_dot_dot {source}
+    | Tok_semi {source}
+    | Tok_colon {source}
+    | Tok_colon_colon {source}
+    | Tok_colon_eq {source}
+    | Tok_lparen {source}
+    | Tok_rparen {source}
+    | Tok_lbrack {source}
+    | Tok_rbrack {source}
+    | Tok_lcurly {source}
+    | Tok_rcurly {source}
+    | Tok_bar {source}
+    | Tok_lcapture {source}
+    | Tok_rcapture {source}
+    | Tok_larray {source}
+    | Tok_rarray {source}
+    | Tok_bslash {source}
+    | Tok_tick {source}
+    | Tok_caret {source}
+    | Tok_amp {source}
+    | Tok_xmark {source}
+    | Tok_arrow {source}
+    | Tok_carrow {source}
+    | Tok_source_directive {source; _}
+    | Tok_line_delim {source}
+    | Tok_indent {source; _}
+    | Tok_dedent {source; _}
+    | Tok_whitespace {source}
+    | Tok_hash_comment {source}
+    | Tok_paren_comment {source; _}
+    | Tok_uscore {source}
+    | Tok_uident {source; _}
+    | Tok_cident {source; _}
+    | Tok_codepoint {source; _}
+    | Tok_rstring {source; _}
+    | Tok_istring {source; _}
+    | Tok_fstring_lditto {source}
+    | Tok_fstring_interpolated {source; _}
+    | Tok_fstring_pct {source}
+    | Tok_fstring_pad {source; _}
+    | Tok_fstring_just {source; _}
+    | Tok_fstring_sign {source; _}
+    | Tok_fstring_alt {source}
+    | Tok_fstring_zpad {source}
+    | Tok_fstring_width_star {source}
+    | Tok_fstring_width {source; _}
+    | Tok_fstring_pmode {source; _}
+    | Tok_fstring_precision_star {source}
+    | Tok_fstring_precision {source; _}
+    | Tok_fstring_radix {source; _}
+    | Tok_fstring_notation {source; _}
+    | Tok_fstring_pretty {source}
+    | Tok_fstring_fmt {source; _}
+    | Tok_fstring_sep {source; _}
+    | Tok_fstring_label {source; _}
+    | Tok_fstring_lparen_caret {source}
+    | Tok_fstring_caret_rparen {source}
+    | Tok_fstring_rditto {source}
+    | Tok_r32 {source; _}
+    | Tok_r64 {source; _}
+    | Tok_u8 {source; _}
+    | Tok_i8 {source; _}
+    | Tok_u16 {source; _}
+    | Tok_i16 {source; _}
+    | Tok_u32 {source; _}
+    | Tok_i32 {source; _}
+    | Tok_u64 {source; _}
+    | Tok_i64 {source; _}
+    | Tok_u128 {source; _}
+    | Tok_i128 {source; _}
+    | Tok_u256 {source; _}
+    | Tok_i256 {source; _}
+    | Tok_u512 {source; _}
+    | Tok_i512 {source; _}
+    | Tok_nat {source; _}
+    | Tok_zint {source; _}
+    | Tok_end_of_input {source}
+    | Tok_misaligned {source}
+    | Tok_error {source; _}
+      -> source
 
   let malformations = function
     (* Keywords. *)
-    | Tok_and | Tok_also | Tok_as | Tok_conceal | Tok_effect | Tok_else | Tok_expose | Tok_external
-    | Tok_false | Tok_fn | Tok_function | Tok_if | Tok_import | Tok_include | Tok_lazy | Tok_let
-    | Tok_match | Tok_mutability | Tok_of | Tok_open | Tok_or | Tok_rec | Tok_then | Tok_true
-    | Tok_type | Tok_when | Tok_with
+    | Tok_and _ | Tok_also _ | Tok_as _ | Tok_conceal _ | Tok_effect _ | Tok_else _ | Tok_expose _
+    | Tok_external _ | Tok_false _ | Tok_fn _ | Tok_function _ | Tok_if _ | Tok_import _
+    | Tok_include _ | Tok_lazy _ | Tok_let _ | Tok_match _ | Tok_mutability _ | Tok_of _
+    | Tok_open _ | Tok_or _ | Tok_rec _ | Tok_then _ | Tok_true _ | Tok_type _ | Tok_when _
+    | Tok_with _
     (* Operators. *)
     | Tok_tilde_op _ | Tok_qmark_op _ | Tok_star_star_op _ | Tok_star_op _ | Tok_slash_op _
     | Tok_pct_op _ | Tok_plus_op _ | Tok_minus_op _ | Tok_at_op _ | Tok_caret_op _ | Tok_dollar_op _
     | Tok_lt_op _ | Tok_eq_op _ | Tok_gt_op _ | Tok_bar_op _ | Tok_colon_op _ | Tok_dot_op _
     (* Punctuation. *)
-    | Tok_tilde | Tok_qmark | Tok_minus | Tok_lt | Tok_lt_eq | Tok_eq | Tok_lt_gt | Tok_gt_eq
-    | Tok_gt | Tok_comma | Tok_dot | Tok_dot_dot | Tok_semi | Tok_colon | Tok_colon_colon
-    | Tok_colon_eq | Tok_lparen | Tok_rparen | Tok_lbrack | Tok_rbrack | Tok_lcurly | Tok_rcurly
-    | Tok_bar | Tok_lcapture | Tok_rcapture | Tok_larray | Tok_rarray | Tok_bslash | Tok_tick
-    | Tok_caret | Tok_amp | Tok_xmark | Tok_arrow | Tok_carrow
+    | Tok_tilde _ | Tok_qmark _ | Tok_minus _ | Tok_lt _ | Tok_lt_eq _ | Tok_eq _ | Tok_lt_gt _
+    | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _ | Tok_dot_dot _ | Tok_semi _ | Tok_colon _
+    | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _ | Tok_rparen _ | Tok_lbrack _ | Tok_rbrack _
+    | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _ | Tok_larray _
+    | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _ | Tok_xmark _ | Tok_arrow _
+    | Tok_carrow _
     (* Miscellaneous. *)
-    | Tok_source_directive (Constant _)
-    | Tok_line_delim
-    | Tok_indent (Constant _)
-    | Tok_dedent (Constant _)
-    | Tok_whitespace|Tok_hash_comment
-    | Tok_paren_comment (Constant _)
-    | Tok_uscore
-    | Tok_uident (Constant _)
+    | Tok_source_directive {source_directive=(Constant _); _}
+    | Tok_line_delim _
+    | Tok_indent {indent=(Constant _); _}
+    | Tok_dedent {dedent=(Constant _); _}
+    | Tok_whitespace _ | Tok_hash_comment _
+    | Tok_paren_comment {paren_comment=(Constant _); _}
+    | Tok_uscore _
+    | Tok_uident {uident=(Constant _); _}
     | Tok_cident _
-    | Tok_codepoint (Constant _)
-    | Tok_rstring (Constant _)
-    | Tok_istring (Constant _)
-    | Tok_fstring_lditto
-    | Tok_fstring_interpolated (Constant _)
-    | Tok_fstring_pct
-    | Tok_fstring_pad (Constant _)
-    | Tok_fstring_just _ | Tok_fstring_sign _ | Tok_fstring_alt | Tok_fstring_zpad
-    | Tok_fstring_width_star
-    | Tok_fstring_width (Constant _)
-    | Tok_fstring_pmode _ | Tok_fstring_precision_star
-    | Tok_fstring_precision (Constant _)
-    | Tok_fstring_radix _ | Tok_fstring_notation _ | Tok_fstring_pretty
-    | Tok_fstring_fmt (Constant _)
-    | Tok_fstring_sep (Constant _)
-    | Tok_fstring_label _ | Tok_fstring_lparen_caret | Tok_fstring_caret_rparen | Tok_fstring_rditto
-    | Tok_r32 (Constant _)
-    | Tok_r64 (Constant _)
-    | Tok_u8 (Constant _)
-    | Tok_i8 (Constant _)
-    | Tok_u16 (Constant _)
-    | Tok_i16 (Constant _)
-    | Tok_u32 (Constant _)
-    | Tok_i32 (Constant _)
-    | Tok_u64 (Constant _)
-    | Tok_i64 (Constant _)
-    | Tok_u128 (Constant _)
-    | Tok_i128 (Constant _)
-    | Tok_u256 (Constant _)
-    | Tok_i256 (Constant _)
-    | Tok_u512 (Constant _)
-    | Tok_i512 (Constant _)
-    | Tok_nat (Constant _)
-    | Tok_zint (Constant _)
-    | Tok_end_of_input | Tok_misaligned
+    | Tok_codepoint {codepoint=(Constant _); _}
+    | Tok_rstring {rstring=(Constant _); _}
+    | Tok_istring {istring=(Constant _); _}
+    | Tok_fstring_lditto _
+    | Tok_fstring_interpolated {fstring_interpolated=(Constant _); _}
+    | Tok_fstring_pct _
+    | Tok_fstring_pad {fstring_pad=(Constant _); _}
+    | Tok_fstring_just _ | Tok_fstring_sign _ | Tok_fstring_alt _ | Tok_fstring_zpad _
+    | Tok_fstring_width_star _
+    | Tok_fstring_width {fstring_width=(Constant _); _}
+    | Tok_fstring_pmode _ | Tok_fstring_precision_star _
+    | Tok_fstring_precision {fstring_precision=(Constant _); _}
+    | Tok_fstring_radix _ | Tok_fstring_notation _ | Tok_fstring_pretty _
+    | Tok_fstring_fmt {fstring_fmt=(Constant _); _}
+    | Tok_fstring_sep {fstring_sep=(Constant _); _}
+    | Tok_fstring_label _ | Tok_fstring_lparen_caret _ | Tok_fstring_caret_rparen _
+    | Tok_fstring_rditto _
+    | Tok_r32 {r32=(Constant _); _}
+    | Tok_r64 {r64=(Constant _); _}
+    | Tok_u8 {u8=(Constant _); _}
+    | Tok_i8 {i8=(Constant _); _}
+    | Tok_u16 {u16=(Constant _); _}
+    | Tok_i16 {i16=(Constant _); _}
+    | Tok_u32 {u32=(Constant _); _}
+    | Tok_i32 {i32=(Constant _); _}
+    | Tok_u64 {u64=(Constant _); _}
+    | Tok_i64 {i64=(Constant _); _}
+    | Tok_u128 {u128=(Constant _); _}
+    | Tok_i128 {i128=(Constant _); _}
+    | Tok_u256 {u256=(Constant _); _}
+    | Tok_i256 {i256=(Constant _); _}
+    | Tok_u512 {u512=(Constant _); _}
+    | Tok_i512 {i512=(Constant _); _}
+    | Tok_nat {nat=(Constant _); _}
+    | Tok_zint {zint=(Constant _); _}
+    | Tok_end_of_input _ | Tok_misaligned _
       -> []
     (* Malformations. *)
-    | Tok_source_directive (Malformed mals)
-    | Tok_indent (Malformed mals)
-    | Tok_dedent (Malformed mals)
-    | Tok_paren_comment (Malformed mals)
-    | Tok_uident (Malformed mals)
-    | Tok_codepoint (Malformed mals)
-    | Tok_rstring (Malformed mals)
-    | Tok_istring (Malformed mals)
-    | Tok_fstring_interpolated (Malformed mals)
-    | Tok_fstring_pad (Malformed mals)
-    | Tok_fstring_width (Malformed mals)
-    | Tok_fstring_precision (Malformed mals)
-    | Tok_fstring_fmt (Malformed mals)
-    | Tok_fstring_sep (Malformed mals)
-    | Tok_r32 (Malformed mals)
-    | Tok_r64 (Malformed mals)
-    | Tok_u8 (Malformed mals)
-    | Tok_i8 (Malformed mals)
-    | Tok_u16 (Malformed mals)
-    | Tok_i16 (Malformed mals)
-    | Tok_u32 (Malformed mals)
-    | Tok_i32 (Malformed mals)
-    | Tok_u64 (Malformed mals)
-    | Tok_i64 (Malformed mals)
-    | Tok_u128 (Malformed mals)
-    | Tok_i128 (Malformed mals)
-    | Tok_u256 (Malformed mals)
-    | Tok_i256 (Malformed mals)
-    | Tok_u512 (Malformed mals)
-    | Tok_i512 (Malformed mals)
-    | Tok_nat (Malformed mals)
-    | Tok_zint (Malformed mals)
-    | Tok_error mals
+    | Tok_source_directive {source_directive=(Malformed mals); _}
+    | Tok_indent {indent=(Malformed mals); _}
+    | Tok_dedent {dedent=(Malformed mals); _}
+    | Tok_paren_comment {paren_comment=(Malformed mals); _}
+    | Tok_uident {uident=(Malformed mals); _}
+    | Tok_codepoint {codepoint=(Malformed mals); _}
+    | Tok_rstring {rstring=(Malformed mals); _}
+    | Tok_istring {istring=(Malformed mals); _}
+    | Tok_fstring_interpolated {fstring_interpolated=(Malformed mals); _}
+    | Tok_fstring_pad {fstring_pad=(Malformed mals); _}
+    | Tok_fstring_width {fstring_width=(Malformed mals); _}
+    | Tok_fstring_precision {fstring_precision=(Malformed mals); _}
+    | Tok_fstring_fmt {fstring_fmt=(Malformed mals); _}
+    | Tok_fstring_sep {fstring_sep=(Malformed mals); _}
+    | Tok_r32 {r32=(Malformed mals); _}
+    | Tok_r64 {r64=(Malformed mals); _}
+    | Tok_u8 {u8=(Malformed mals); _}
+    | Tok_i8 {i8=(Malformed mals); _}
+    | Tok_u16 {u16=(Malformed mals); _}
+    | Tok_i16 {i16=(Malformed mals); _}
+    | Tok_u32 {u32=(Malformed mals); _}
+    | Tok_i32 {i32=(Malformed mals); _}
+    | Tok_u64 {u64=(Malformed mals); _}
+    | Tok_i64 {i64=(Malformed mals); _}
+    | Tok_u128 {u128=(Malformed mals); _}
+    | Tok_i128 {i128=(Malformed mals); _}
+    | Tok_u256 {u256=(Malformed mals); _}
+    | Tok_i256 {i256=(Malformed mals); _}
+    | Tok_u512 {u512=(Malformed mals); _}
+    | Tok_i512 {i512=(Malformed mals); _}
+    | Tok_nat {nat=(Malformed mals); _}
+    | Tok_zint {zint=(Malformed mals); _}
+    | Tok_error {error=mals; _}
       -> mals
-end
-
-module ConcreteToken = struct
-  type t = {
-    atok: AbstractToken.t;
-    source: Source.Slice.t;
-  }
-
-  let init atok source =
-    {atok; source}
-
-  let ctok_at ~base ~past atok =
-    let source = Source.Slice.of_cursors ~base ~past in
-    init atok source
-
-  let atok t =
-    t.atok
-
-  let source t =
-    t.source
-
-  let pp t formatter =
-    formatter
-    |> Fmt.fmt "{atok=" |> AbstractToken.pp t.atok
-    |> Fmt.fmt "; source=" |> Source.Slice.pp t.source
-    |> Fmt.fmt "}"
 end
 
 (* Upon entry into a node's handler function, the codepoint just acted upon is bracketed by
@@ -803,7 +1373,7 @@ type line_state =
   (* Just after leading whitespace token. Dentation adjustment may be required. *)
   | Line_whitespace
 
-  (* First non-whitspace is a paren comment or bslash-nl continuation starting at specified column;
+  (* First non-whitespace is a paren comment or bslash-nl continuation starting at specified column;
    * no non-whitespace/comment tokens scanned yet, but subsequent whitespace and/or paren comments
    * may have been scanned. Dentation adjustment may be required, but if so, the specified starting
    * column is used rather than that of the first non-whitespace/comment token. *)
@@ -824,7 +1394,7 @@ let pp_line_state line_state formatter =
  * completing specifier scanning the state transition to `Fstring_body`, which is capable of
  * initiating the scan of a subsequent specifier. *)
 type fstring_state =
-  | Fstring_spec_pct_seen of ConcreteToken.t list
+  | Fstring_spec_pct_seen of Token.t list
   | Fstring_spec_pad_seen
   | Fstring_spec_just_seen
   | Fstring_spec_sign_seen
@@ -845,14 +1415,14 @@ type fstring_state =
   | Fstring_spec_fmt_seen
   | Fstring_spec_sep_seen
   | Fstring_expr_value of Source.Cursor.t option (* Cursor is start of captured value expression. *)
-  | Fstring_value_seen of ConcreteToken.t
+  | Fstring_value_seen of Token.t
   | Fstring_body
-  | Fstring_rditto_seen of ConcreteToken.t
+  | Fstring_rditto_seen of Token.t
 
 let pp_fstring_state fstring_state formatter =
   match fstring_state with
-  | Fstring_spec_pct_seen ctoks ->
-    formatter |> Fmt.fmt "Fstring_spec_pct " |> (List.pp ConcreteToken.pp) ctoks
+  | Fstring_spec_pct_seen toks ->
+    formatter |> Fmt.fmt "Fstring_spec_pct " |> (List.pp Token.pp) toks
   | Fstring_spec_pad_seen -> formatter |> Fmt.fmt "Fstring_spec_pad_seen"
   | Fstring_spec_just_seen -> formatter |> Fmt.fmt "Fstring_spec_just_seen"
   | Fstring_spec_sign_seen -> formatter |> Fmt.fmt "Fstring_spec_sign_seen"
@@ -874,9 +1444,9 @@ let pp_fstring_state fstring_state formatter =
   | Fstring_spec_sep_seen -> formatter |> Fmt.fmt "Fstring_spec_sep_seen"
   | Fstring_expr_value cursor_opt ->
     formatter |> Fmt.fmt "Fstring_exp_value " |> (Option.pp Source.Cursor.pp) cursor_opt
-  | Fstring_value_seen ctok -> formatter |> Fmt.fmt "Fstring_spec_pct " |> ConcreteToken.pp ctok
+  | Fstring_value_seen tok -> formatter |> Fmt.fmt "Fstring_spec_pct " |> Token.pp tok
   | Fstring_body -> formatter |> Fmt.fmt "Fstring_body"
-  | Fstring_rditto_seen ctok -> formatter |> Fmt.fmt "Fstring_spec_pct " |> ConcreteToken.pp ctok
+  | Fstring_rditto_seen tok -> formatter |> Fmt.fmt "Fstring_spec_pct " |> Token.pp tok
 
 type t = {
   tok_base: Source.Cursor.t;
@@ -929,10 +1499,13 @@ let in_fstring t =
  * Convenience routines for reporting malformations. *)
 
 let malformation ~base ~past description =
-  AbstractToken.Rendition.Malformation.init ~base ~past ~description
+  Token.Rendition.Malformation.init ~base ~past ~description
+
+let malformation_incl View.{cursor; _} t description =
+  malformation ~base:t.tok_base ~past:cursor description
 
 let malformed malformation =
-  AbstractToken.Rendition.of_mals [malformation]
+  Token.Rendition.of_mals [malformation]
 
 let unexpected_codepoint_source_directive base past =
   malformation ~base ~past "Unexpected codepoint in source directive"
@@ -1005,7 +1578,7 @@ module State = struct
         m: Realer.t;
         point_shift: sint;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1016,7 +1589,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m =
       R {m; point_shift=Sint.zero}
@@ -1065,7 +1638,7 @@ module State = struct
         m: real;
         ds: real; (* (ds * digit) scales digit to its fractional value. *)
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1076,7 +1649,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m =
       R {m; ds=1. /. 10.}
@@ -1102,7 +1675,7 @@ module State = struct
       | R of {
         m: Realer.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1112,7 +1685,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m =
       R {m}
@@ -1130,7 +1703,7 @@ module State = struct
       | R of {
         m: real;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1140,7 +1713,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m =
       R {m}
@@ -1159,7 +1732,7 @@ module State = struct
         m: Realer.t;
         exp_sign: Sign.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1170,7 +1743,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m ~exp_sign =
       R {m; exp_sign}
@@ -1189,7 +1762,7 @@ module State = struct
         m: real;
         exp_sign: Sign.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1200,7 +1773,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m ~exp_sign =
       R {m; exp_sign}
@@ -1220,7 +1793,7 @@ module State = struct
         exp_sign: Sign.t;
         exp: Nat.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1232,7 +1805,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m ~exp_sign ~exp =
       R {m; exp_sign; exp}
@@ -1268,7 +1841,7 @@ module State = struct
         exp_sign: Sign.t;
         exp: Nat.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1280,7 +1853,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~m ~exp_sign ~exp =
       R {m; exp_sign; exp}
@@ -1314,7 +1887,7 @@ module State = struct
       | R of {
         r: Realer.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1324,7 +1897,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~r =
       R {r}
@@ -1342,7 +1915,7 @@ module State = struct
       | R of {
         r: real;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1352,7 +1925,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~r =
       R {r}
@@ -1371,7 +1944,7 @@ module State = struct
         r: Realer.t;
         bitwidth: Nat.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1382,7 +1955,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~r ~bitwidth =
       R {r; bitwidth}
@@ -1405,7 +1978,7 @@ module State = struct
         r: real;
         bitwidth: Nat.t;
       }
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1416,7 +1989,7 @@ module State = struct
         |> Fmt.fmt "}"
       | Malformations mals ->
         formatter
-        |> Fmt.fmt "Malformations " |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+        |> Fmt.fmt "Malformations " |> (List.pp Token.Rendition.Malformation.pp) mals
 
     let init ~r ~bitwidth =
       R {r; bitwidth}
@@ -1544,13 +2117,13 @@ module State = struct
 
   module Src_directive_path = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
     }
 
     let pp {mals; path} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "}"
 
@@ -1567,14 +2140,14 @@ module State = struct
 
   module Src_directive_path_bslash = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       bslash_cursor: Source.Cursor.t;
     }
 
     let pp {mals; path; bslash_cursor} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
       |> Fmt.fmt "}"
@@ -1592,14 +2165,14 @@ module State = struct
 
   module Src_directive_path_bslash_u_lcurly = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       bslash_cursor: Source.Cursor.t;
     }
 
     let pp {mals; path; bslash_cursor} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
       |> Fmt.fmt "}"
@@ -1613,7 +2186,7 @@ module State = struct
 
   module Src_directive_path_bslash_u_lcurly_hex = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       bslash_cursor: Source.Cursor.t;
       hex: Nat.t;
@@ -1621,7 +2194,7 @@ module State = struct
 
     let pp {mals; path; bslash_cursor; hex} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; bslash_cursor=" |> Text.Pos.pp (Source.Cursor.pos bslash_cursor)
       |> Fmt.fmt "; hex=" |> Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true hex
@@ -1648,7 +2221,7 @@ module State = struct
 
   module Src_directive_line = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       line_cursor: Source.Cursor.t;
       line: Nat.t option;
@@ -1656,7 +2229,7 @@ module State = struct
 
     let pp {mals; path; line_cursor; line} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line_cursor=" |> Text.Pos.pp (Source.Cursor.pos line_cursor)
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
@@ -1671,14 +2244,14 @@ module State = struct
 
   module Src_directive_line_colon = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       line: Nat.t option;
     }
 
     let pp {mals; path; line} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "}"
@@ -1692,7 +2265,7 @@ module State = struct
 
   module Src_directive_indent = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       line: Nat.t option;
       indent_cursor: Source.Cursor.t;
@@ -1701,7 +2274,7 @@ module State = struct
 
     let pp {mals; path; line; indent_cursor; indent} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "; indent_cursor=" |> Text.Pos.pp (Source.Cursor.pos indent_cursor)
@@ -1720,14 +2293,14 @@ module State = struct
 
   module Src_directive_indent_0 = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       line: Nat.t option;
     }
 
     let pp {mals; path; line} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "}"
@@ -1741,7 +2314,7 @@ module State = struct
 
   module Src_directive_indent_plus = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       line: Nat.t option;
       indent: Nat.t option;
@@ -1749,7 +2322,7 @@ module State = struct
 
     let pp {mals; path; line; indent} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "; indent=" |> (Option.pp Nat.pp) indent
@@ -1764,7 +2337,7 @@ module State = struct
 
   module Src_directive_omit = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       path: codepoint list option;
       line: Nat.t option;
       indent: Nat.t option;
@@ -1774,7 +2347,7 @@ module State = struct
 
     let pp {mals; path; line; indent; omit_cursor; omit} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; path=" |> (Option.pp (List.pp Codepoint.pp)) path
       |> Fmt.fmt "; line=" |> (Option.pp Nat.pp) line
       |> Fmt.fmt "; indent=" |> (Option.pp Nat.pp) indent
@@ -1846,12 +2419,12 @@ module State = struct
 
   module Codepoint_mal = struct
     type t = {
-      mal: AbstractToken.Rendition.Malformation.t;
+      mal: Token.Rendition.Malformation.t;
     }
 
     let pp {mal} formatter =
       formatter
-      |> Fmt.fmt "{mal=" |> AbstractToken.Rendition.Malformation.pp mal |> Fmt.fmt "}"
+      |> Fmt.fmt "{mal=" |> Token.Rendition.Malformation.pp mal |> Fmt.fmt "}"
 
     let init ~mal =
       {mal}
@@ -1859,13 +2432,13 @@ module State = struct
 
   module Rstring_ltag = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       ltag_base: Source.Cursor.t;
     }
 
     let pp {mals; ltag_base} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; ltag_base=" |> Source.Cursor.pp ltag_base
       |> Fmt.fmt "}"
 
@@ -1878,14 +2451,14 @@ module State = struct
 
   module Rstring_body = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       ltag: Source.Slice.t;
       body_base: Source.Cursor.t;
     }
 
     let pp {mals; ltag; body_base} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; ltag=" |> Source.Slice.pp ltag
       |> Fmt.fmt "; body_base=" |> Source.Cursor.pp body_base
       |> Fmt.fmt "}"
@@ -1899,7 +2472,7 @@ module State = struct
 
   module Rstring_rtag = struct
     type t = {
-      mals: AbstractToken.Rendition.Malformation.t list;
+      mals: Token.Rendition.Malformation.t list;
       ltag: Source.Slice.t;
       body: Source.Slice.t;
       ltag_cursor: Source.Cursor.t;
@@ -1907,7 +2480,7 @@ module State = struct
 
     let pp {mals; ltag; ltag_cursor; body} formatter =
       formatter
-      |> Fmt.fmt "{mals=" |> (List.pp AbstractToken.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
       |> Fmt.fmt "; ltag=" |> Source.Slice.pp ltag
       |> Fmt.fmt "; body=" |> Source.Slice.pp body
       |> Fmt.fmt "; ltag_cursor=" |> Source.Cursor.pp ltag_cursor
@@ -1926,7 +2499,7 @@ module State = struct
   module CodepointAccum = struct
     type t =
       | Codepoints of codepoint list
-      | Malformations of AbstractToken.Rendition.Malformation.t list
+      | Malformations of Token.Rendition.Malformation.t list
 
     let pp t formatter =
       match t with
@@ -1934,7 +2507,7 @@ module State = struct
         formatter |> Fmt.fmt "(Codepoints " |> (List.pp Codepoint.pp) cps |> Fmt.fmt ")"
       | Malformations mals ->
         formatter |> Fmt.fmt "(Malformations "
-        |> (List.pp AbstractToken.Rendition.Malformation.pp) mals |> Fmt.fmt ")"
+        |> (List.pp Token.Rendition.Malformation.pp) mals |> Fmt.fmt ")"
 
     let empty = Codepoints []
 
@@ -1946,14 +2519,13 @@ module State = struct
       | Codepoints _ -> Malformations [mal]
       | Malformations mals -> Malformations (mal :: mals)
 
-    let to_atok_istring = function
-      | Codepoints cps -> AbstractToken.Tok_istring (Constant (String.of_list_rev cps))
-      | Malformations mals -> AbstractToken.Tok_istring (AbstractToken.Rendition.of_mals mals)
+    let to_istring = function
+      | Codepoints cps -> Token.Rendition.Constant (String.of_list_rev cps)
+      | Malformations mals -> Token.Rendition.of_mals mals
 
-    let to_atok_fstring_interpolated = function
-      | Codepoints cps -> AbstractToken.Tok_fstring_interpolated (Constant (String.of_list_rev cps))
-      | Malformations mals ->
-        AbstractToken.Tok_fstring_interpolated (AbstractToken.Rendition.of_mals mals)
+    let to_fstring_interpolated = function
+      | Codepoints cps -> Token.Rendition.Constant (String.of_list_rev cps)
+      | Malformations mals -> Token.Rendition.of_mals mals
   end
 
   module Istring_body = struct
@@ -2430,7 +3002,7 @@ module Dfa = struct
   type transition =
     | Advance of View.t * State.t
     | Retry of State.t
-    | Accept of ConcreteToken.t
+    | Accept of Token.t
 
   type action0 = View.t -> t -> t * transition
   and node0 = {
@@ -2496,22 +3068,31 @@ module Dfa = struct
     let t', transition = action1 state_payload view' t in
     t', transition
 
-  let accept_ctok ctok cursor t =
-    {t with tok_base=cursor}, Accept ctok
+  let accept_tok tok cursor t =
+    {t with tok_base=cursor}, Accept tok
 
-  let accept atok cursor t =
-    accept_ctok (ConcreteToken.ctok_at ~base:t.tok_base ~past:cursor atok) cursor t
+  let accept_tok_incl tok View.{cursor; _} t =
+    accept_tok tok cursor t
 
-  let accept_incl atok View.{cursor; _} t =
-    accept atok cursor t
+  let accept_tok_excl tok View.{pcursor; _} t =
+    accept_tok tok pcursor t
 
-  let accept_excl atok View.{pcursor; _} t =
-    accept atok pcursor t
+  let accept_tok_pexcl tok View.{ppcursor; _} t =
+    accept_tok tok ppcursor t
 
-  let accept_pexcl atok View.{ppcursor; _} t =
-    accept atok ppcursor t
+  let source_at cursor t =
+    Source.Slice.of_cursors ~base:t.tok_base ~past:cursor
 
-  let accept_source_directive atok View.{cursor; _} t =
+  let source_incl View.{cursor; _} t =
+    source_at cursor t
+
+  let source_excl View.{pcursor; _} t =
+    source_at pcursor t
+
+  let source_pexcl {View.ppcursor; _} t =
+    source_at ppcursor t
+
+  let accept_source_directive source_directive View.{cursor; _} t =
     (* Treat the directive as having come from the unbiased source. Rebias the cursors such that
      * they are unbiased. This is different than unbiasing, in that it preserves the cursors' bias
      * chain, which enables recovering source bias when moving leftwards. *)
@@ -2524,13 +3105,13 @@ module Dfa = struct
       end in
       f base cursor
     end in
-    let cursor', level' = match atok with
-      | AbstractToken.Tok_source_directive Constant {path=None; line=None; io=None}
+    let cursor', level' = match source_directive with
+      | Token.Rendition.Constant Token.{path=None; line=None; io=None}
         -> begin
             (* Rebias the source such that it is unbiased. *)
             past, Level.reset t.level
           end
-      | AbstractToken.Tok_source_directive Constant {path; line; io} -> begin
+      | Constant {path; line; io} -> begin
           let source = Source.Cursor.container past in
           let path = match path with
             | None -> Source.path source
@@ -2552,17 +3133,17 @@ module Dfa = struct
           let source' = Source.bias ~path ~line_bias ~col_bias source in
           (Source.Cursor.bias source' past), Level.embed (indent / 4L) t.level
         end
-      | AbstractToken.Tok_source_directive Malformed _ -> past, t.level
-      | _ -> not_reached ()
+      | Malformed _ -> past, t.level
     in
-    {t with tok_base=cursor'; level=level'}, Accept (ConcreteToken.ctok_at ~base ~past atok)
+    let source = Source.Slice.of_cursors ~base ~past in
+    let tok = Token.Tok_source_directive {source; source_directive} in
+    {t with tok_base=cursor'; level=level'}, Accept tok
 
-  let accept_line_break atok cursor t =
-    {t with tok_base=cursor; line_state=Line_begin},
-    Accept (ConcreteToken.ctok_at ~base:t.tok_base ~past:cursor atok)
+  let accept_line_break tok cursor t =
+    {t with tok_base=cursor; line_state=Line_begin}, Accept tok
 
-  let accept_line_break_incl atok View.{cursor; _} t =
-    accept_line_break atok cursor t
+  let accept_line_break_incl tok View.{cursor; _} t =
+    accept_line_break tok cursor t
 
   let fstring_push fstring_state t =
     {t with fstring_states=fstring_state :: t.fstring_states}
@@ -2573,33 +3154,29 @@ module Dfa = struct
   let fstring_trans fstring_state t =
     fstring_push fstring_state (fstring_pop t)
 
-  let accept_fstring_push_ctok fstring_state ctok cursor t =
-    accept_ctok ctok cursor (fstring_push fstring_state t)
+  let accept_fstring_push_tok fstring_state tok cursor t =
+    accept_tok tok cursor (fstring_push fstring_state t)
 
-  let accept_fstring_push_ctok_incl fstring_state ctok View.{cursor; _} t =
-    accept_fstring_push_ctok fstring_state ctok cursor t
+  let accept_fstring_push_tok_incl fstring_state tok View.{cursor; _} t =
+    accept_fstring_push_tok fstring_state tok cursor t
 
-  let accept_fstring_pop_ctok ctok cursor t =
-    accept_ctok ctok cursor (fstring_pop t)
+  let accept_fstring_pop_tok tok cursor t =
+    accept_tok tok cursor (fstring_pop t)
 
-  let accept_fstring_pop atok cursor t =
-    accept_fstring_pop_ctok (ConcreteToken.ctok_at ~base:t.tok_base ~past:cursor atok) cursor t
+  let accept_fstring_trans_tok fstring_state tok cursor t =
+    accept_tok tok cursor (fstring_trans fstring_state t)
 
-  let accept_fstring_trans_ctok fstring_state ctok cursor t =
-    accept_ctok ctok cursor (fstring_trans fstring_state t)
+  let accept_fstring_trans_tok_incl fstring_state tok View.{cursor; _} t =
+    accept_fstring_trans_tok fstring_state tok cursor t
 
-  let accept_fstring_trans_ctok_incl fstring_state ctok View.{cursor; _} t =
-    accept_fstring_trans_ctok fstring_state ctok cursor t
+  let accept_fstring_trans fstring_state tok cursor t =
+    accept_fstring_trans_tok fstring_state tok cursor t
 
-  let accept_fstring_trans fstring_state atok cursor t =
-    accept_fstring_trans_ctok fstring_state (ConcreteToken.ctok_at ~base:t.tok_base ~past:cursor
-        atok) cursor t
+  let accept_fstring_trans_incl trans tok View.{cursor; _} t =
+    accept_fstring_trans trans tok cursor t
 
-  let accept_fstring_trans_incl trans atok View.{cursor; _} t =
-    accept_fstring_trans trans atok cursor t
-
-  let accept_fstring_trans_excl trans atok View.{pcursor; _} t =
-    accept_fstring_trans trans atok pcursor t
+  let accept_fstring_trans_excl trans tok View.{pcursor; _} t =
+    accept_fstring_trans trans tok pcursor t
 
   let retry_fstring_eoi t =
     let rec f t = begin
@@ -2619,18 +3196,19 @@ module Dfa = struct
   let node0_start =
     {
       edges0=map_of_cps_alist [
-        (",", accept_incl Tok_comma);
-        (";", accept_incl Tok_semi);
+        (",", fun view t -> accept_tok_incl (Tok_comma {source=source_incl view t}) view t);
+        (";", fun view t -> accept_tok_incl (Tok_semi {source=source_incl view t}) view t);
         ("(", advance State_lparen);
-        (")", accept_incl Tok_rparen);
+        (")", fun view t -> accept_tok_incl (Tok_rparen {source=source_incl view t}) view t);
         ("[", advance State_lbrack);
-        ("]", accept_incl Tok_rbrack);
-        ("{", accept_incl Tok_lcurly);
-        ("}", accept_incl Tok_rcurly);
-        ("\\", accept_incl Tok_bslash);
-        ("&", accept_incl Tok_amp);
-        ("!", accept_incl Tok_xmark);
-        ("\n", accept_line_break_incl Tok_whitespace);
+        ("]", fun view t -> accept_tok_incl (Tok_rbrack {source=source_incl view t}) view t);
+        ("{", fun view t -> accept_tok_incl (Tok_lcurly {source=source_incl view t}) view t);
+        ("}", fun view t -> accept_tok_incl (Tok_rcurly {source=source_incl view t}) view t);
+        ("\\", fun view t -> accept_tok_incl (Tok_bslash {source=source_incl view t}) view t);
+        ("&", fun view t -> accept_tok_incl (Tok_amp {source=source_incl view t}) view t);
+        ("!", fun view t -> accept_tok_incl (Tok_xmark {source=source_incl view t}) view t);
+        ("\n", fun view t ->
+            accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
         ("~", advance State_tilde);
         ("?", advance State_qmark);
         ("*", advance State_star);
@@ -2662,53 +3240,55 @@ module Dfa = struct
             advance (State_integer_dec (State.Integer_dec.init ~n:digit)) view t
         );
       ];
-      default0=(fun (View.{cursor; _} as view) t ->
-        let mal = malformation ~base:t.tok_base ~past:cursor "Unsupported codepoint" in
-        accept_incl (Tok_error [mal]) view t
+      default0=(fun view t ->
+        let mal = malformation_incl view t "Unsupported codepoint" in
+        accept_tok_incl (Tok_error {source=source_incl view t; error=[mal]}) view t
       );
       eoi0=(fun view t ->
-        let accept_dentation atok View.{cursor; _} t = begin
-          accept atok cursor {t with line_state=Line_body}
-        end in
         match Level.level t.level, t.line_state with
-        | 0L, Line_begin -> accept_dentation Tok_line_delim view t
-        | 0L, _ -> accept_incl Tok_end_of_input view t
-        | _ -> accept_dentation (Tok_dedent (Constant ())) view {t with level=Level.pred t.level}
+        | 0L, Line_begin -> accept_tok_incl (Tok_line_delim {source=source_incl view t}) view t
+        | 0L, _ ->  accept_tok_incl (Tok_end_of_input {source=source_incl view t}) view t
+        | _ -> begin
+            accept_tok_incl (Tok_dedent {
+              source=source_incl view t;
+              dedent=(Constant ())
+            }) view {t with level=Level.pred t.level}
+          end
       );
     }
 
   let node0_lparen = {
     edges0=map_of_cps_alist [
-      ("|", accept_incl Tok_lcapture);
+      ("|", fun view t -> accept_tok_incl (Tok_lcapture {source=source_incl view t}) view t);
       ("*", advance (State_paren_comment_body (State.Paren_comment_body.init ~nesting:1L)));
     ];
-    default0=accept_excl Tok_lparen;
-    eoi0=accept_incl Tok_lparen;
+    default0=(fun view t -> accept_tok_excl (Tok_lparen {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_lparen {source=source_incl view t}) view t);
   }
 
   let node0_lbrack = {
     edges0=map_of_cps_alist [
-      ("|", accept_incl Tok_larray);
+      ("|", fun view t -> accept_tok_incl (Tok_larray {source=source_incl view t}) view t);
       (":", advance State_src_directive_colon);
     ];
-    default0=accept_excl Tok_lbrack;
-    eoi0=accept_incl Tok_lbrack;
+    default0=(fun view t -> accept_tok_excl (Tok_lbrack {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_lbrack {source=source_incl view t}) view t);
   }
 
   let node0_tilde = {
     edges0=map_of_cps_alist [
       (operator_cps, advance State_operator_tilde);
     ];
-    default0=accept_excl Tok_tilde;
-    eoi0=accept_incl Tok_tilde;
+    default0=(fun view t -> accept_tok_excl (Tok_tilde {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_tilde {source=source_incl view t}) view t);
   }
 
   let node0_qmark = {
     edges0=map_of_cps_alist [
       (operator_cps, advance State_operator_qmark);
     ];
-    default0=accept_excl Tok_qmark;
-    eoi0=accept_incl Tok_qmark;
+    default0=(fun view t -> accept_tok_excl (Tok_qmark {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_qmark {source=source_incl view t}) view t);
   }
 
   let node0_star = {
@@ -2717,18 +3297,20 @@ module Dfa = struct
       (Set.diff (cpset_of_cps operator_cps) (cpset_of_cps "*"),
         advance State_operator_star);
     ];
-    default0=accept_excl (Tok_star_op "*");
-    eoi0=accept_incl (Tok_star_op "*");
+    default0=(fun view t ->
+      accept_tok_excl (Tok_star_op {source=source_excl view t; star_op="*"}) view t);
+    eoi0=(fun view t ->
+      accept_tok_incl (Tok_star_op {source=source_incl view t; star_op="*"}) view t);
   }
 
   let node0_bar = {
     edges0=map_of_cps_alist [
-      (")", accept_incl Tok_rcapture);
-      ("]", accept_incl Tok_rarray);
+      (")", fun view t -> accept_tok_incl (Tok_rcapture {source=source_incl view t}) view t);
+      ("]", fun view t -> accept_tok_incl (Tok_rarray {source=source_incl view t}) view t);
       (operator_cps, advance State_operator_bar);
     ];
-    default0=accept_excl Tok_bar;
-    eoi0=accept_incl Tok_bar;
+    default0=(fun view t -> accept_tok_excl (Tok_bar {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_bar {source=source_incl view t}) view t);
   }
 
   let node0_uscore = {
@@ -2738,28 +3320,28 @@ module Dfa = struct
       (ident_uident_cps, advance State_ident_uident);
       (ident_continue_cps, advance State_ident_mal);
     ];
-    default0=accept_excl Tok_uscore;
-    eoi0=accept_incl Tok_uscore;
+    default0=(fun view t -> accept_tok_excl (Tok_uscore {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_uscore {source=source_incl view t}) view t);
   }
 
   let node0_tick = {
     edges0=map_of_cps_alist [
       (String.join [" _"; ident_uident_cps], advance State_tick_lookahead);
-      ("\n", accept_excl Tok_tick);
+      ("\n", fun view t -> accept_tok_excl (Tok_tick {source=source_excl view t}) view t);
     ];
     default0=(fun _view t -> retry State_codepoint_tick t);
-    eoi0=accept_incl Tok_tick;
+    eoi0=(fun view t -> accept_tok_incl (Tok_tick {source=source_incl view t}) view t);
   }
 
   let node0_tick_lookahead = {
     edges0=map_of_cps_alist [
-      ("'", fun View.{ppcursor; cursor; _} t ->
+      ("'", fun (View.{ppcursor; _} as view) t ->
           let cp = Source.Cursor.rget ppcursor in
-          accept (Tok_codepoint (Constant cp)) cursor t
+          accept_tok_incl (Tok_codepoint {source=source_incl view t; codepoint=Constant cp}) view t
       );
     ];
-    default0=accept_pexcl Tok_tick;
-    eoi0=accept_excl Tok_tick;
+    default0=(fun view t -> accept_tok_pexcl (Tok_tick {source=source_pexcl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_tick {source=source_incl view t}) view t);
   }
 
   module Real = struct
@@ -2768,9 +3350,8 @@ module Dfa = struct
       | Subtype_r64
 
     let accept_mals mals cursor t =
-      let open AbstractToken in
-      let malformed = Rendition.of_mals mals in
-      accept (Tok_r64 malformed) cursor t
+      let malformed = Token.Rendition.of_mals mals in
+      accept_tok (Tok_r64 {source=source_at cursor t; r64=malformed}) cursor t
 
     let accept_mals_incl mals View.{cursor; _} t =
       accept_mals mals cursor t
@@ -2779,20 +3360,23 @@ module Dfa = struct
       accept_mals mals pcursor t
 
     let accept_precise subtype ~r cursor t =
-      let open AbstractToken in
-      let atok = match subtype with
-        | Subtype_r32 -> Tok_r32 (
-          match Realer.to_r32_opt r with
-          | Some r32 -> (Constant r32)
-          | None -> malformed (out_of_range_real t.tok_base cursor)
-        )
-        | Subtype_r64 -> Tok_r64 (
-          match Realer.to_r64_opt r with
-          | Some r64 -> (Constant r64)
-          | None -> malformed (out_of_range_real t.tok_base cursor)
-        )
+      let open Token in
+      let source = source_at cursor t in
+      let tok = match subtype with
+        | Subtype_r32 -> Tok_r32 {
+          source;
+          r32=match Realer.to_r32_opt r with
+            | Some r32 -> Constant r32
+            | None -> malformed (out_of_range_real t.tok_base cursor)
+        }
+        | Subtype_r64 -> Tok_r64 {
+          source;
+          r64=match Realer.to_r64_opt r with
+            | Some r64 -> Constant r64
+            | None -> malformed (out_of_range_real t.tok_base cursor)
+        }
       in
-      accept atok cursor t
+      accept_tok tok cursor t
 
     let accept_precise_incl subtype ~r View.{cursor; _} t =
       accept_precise subtype ~r cursor t
@@ -2801,12 +3385,13 @@ module Dfa = struct
       accept_precise subtype ~r pcursor t
 
     let accept_approx subtype ~r cursor t =
-      let open AbstractToken in
-      let atok = match subtype with
-        | Subtype_r32 -> Tok_r32 (Constant r)
-        | Subtype_r64 -> Tok_r64 (Constant r)
+      let open Token in
+      let source = source_at cursor t in
+      let tok = match subtype with
+        | Subtype_r32 -> Tok_r32 {source; r32=Constant r}
+        | Subtype_r64 -> Tok_r64 {source; r64=Constant r}
       in
-      accept atok cursor t
+      accept_tok tok cursor t
 
     let accept_approx_incl subtype ~r View.{cursor; _} t =
       accept_approx subtype ~r cursor t
@@ -3459,26 +4044,26 @@ module Dfa = struct
         | Some limit when Nat.(n <= limit) -> None
         | Some limit -> Some limit
       in
-      let open AbstractToken in
-      let atok = match limit with
+      let source = source_at cursor t in
+      let tok = match limit with
         | Some limit -> begin
             let mal = out_of_range_int radix limit t.tok_base cursor in
-            let malformed = Rendition.of_mals [mal] in
+            let malformed = Token.Rendition.of_mals [mal] in
             match subtype with
-            | Subtype_u8 -> Tok_u8 malformed
-            | Subtype_i8 -> Tok_i8 malformed
-            | Subtype_u16 -> Tok_u16 malformed
-            | Subtype_i16 -> Tok_i16 malformed
-            | Subtype_u32 -> Tok_u32 malformed
-            | Subtype_i32 -> Tok_i32 malformed
-            | Subtype_u64 -> Tok_u64 malformed
-            | Subtype_i64 -> Tok_i64 malformed
-            | Subtype_u128 -> Tok_u128 malformed
-            | Subtype_i128 -> Tok_i128 malformed
-            | Subtype_u256 -> Tok_u256 malformed
-            | Subtype_i256 -> Tok_i256 malformed
-            | Subtype_u512 -> Tok_u512 malformed
-            | Subtype_i512 -> Tok_i512 malformed
+            | Subtype_u8 -> Token.Tok_u8 {source; u8=malformed}
+            | Subtype_i8 -> Tok_i8 {source; i8=malformed}
+            | Subtype_u16 -> Tok_u16 {source; u16=malformed}
+            | Subtype_i16 -> Tok_i16 {source; i16=malformed}
+            | Subtype_u32 -> Tok_u32 {source; u32=malformed}
+            | Subtype_i32 -> Tok_i32 {source; i32=malformed}
+            | Subtype_u64 -> Tok_u64 {source; u64=malformed}
+            | Subtype_i64 -> Tok_i64 {source; i64=malformed}
+            | Subtype_u128 -> Tok_u128 {source; u128=malformed}
+            | Subtype_i128 -> Tok_i128 {source; i128=malformed}
+            | Subtype_u256 -> Tok_u256 {source; u256=malformed}
+            | Subtype_i256 -> Tok_i256 {source; i256=malformed}
+            | Subtype_u512 -> Tok_u512 {source; u512=malformed}
+            | Subtype_i512 -> Tok_i512 {source; i512=malformed}
             | Subtype_nat
             | Subtype_zint -> not_reached ()
           end
@@ -3487,25 +4072,25 @@ module Dfa = struct
              * for signed types. Unsigned types could use `narrow_of_nat_hlt`, but range checking
              * was already done so there's no need to validate again. *)
             match subtype with
-            | Subtype_u8 -> Tok_u8 (Constant (U8.trunc_of_nat n))
-            | Subtype_i8 -> Tok_i8 (Constant (I8.trunc_of_nat n))
-            | Subtype_u16 -> Tok_u16 (Constant (U16.trunc_of_nat n))
-            | Subtype_i16 -> Tok_i16 (Constant (I16.trunc_of_nat n))
-            | Subtype_u32 -> Tok_u32 (Constant (U32.trunc_of_nat n))
-            | Subtype_i32 -> Tok_i32 (Constant (I32.trunc_of_nat n))
-            | Subtype_u64 -> Tok_u64 (Constant (U64.trunc_of_nat n))
-            | Subtype_i64 -> Tok_i64 (Constant (I64.trunc_of_nat n))
-            | Subtype_u128 -> Tok_u128 (Constant (U128.trunc_of_nat n))
-            | Subtype_i128 -> Tok_i128 (Constant (I128.trunc_of_nat n))
-            | Subtype_u256 -> Tok_u256 (Constant (U256.trunc_of_nat n))
-            | Subtype_i256 -> Tok_i256 (Constant (I256.trunc_of_nat n))
-            | Subtype_u512 -> Tok_u512 (Constant (U512.trunc_of_nat n))
-            | Subtype_i512 -> Tok_i512 (Constant (I512.trunc_of_nat n))
-            | Subtype_nat -> Tok_nat (Constant n)
-            | Subtype_zint -> Tok_zint (Constant (Nat.bits_to_zint n))
+            | Subtype_u8 -> Tok_u8 {source; u8=Constant (U8.trunc_of_nat n)}
+            | Subtype_i8 -> Tok_i8 {source; i8=Constant (I8.trunc_of_nat n)}
+            | Subtype_u16 -> Tok_u16 {source; u16=Constant (U16.trunc_of_nat n)}
+            | Subtype_i16 -> Tok_i16 {source; i16=Constant (I16.trunc_of_nat n)}
+            | Subtype_u32 -> Tok_u32 {source; u32=Constant (U32.trunc_of_nat n)}
+            | Subtype_i32 -> Tok_i32 {source; i32=Constant (I32.trunc_of_nat n)}
+            | Subtype_u64 -> Tok_u64 {source; u64=Constant (U64.trunc_of_nat n)}
+            | Subtype_i64 -> Tok_i64 {source; i64=Constant (I64.trunc_of_nat n)}
+            | Subtype_u128 -> Tok_u128 {source; u128=Constant (U128.trunc_of_nat n)}
+            | Subtype_i128 -> Tok_i128 {source; i128=Constant (I128.trunc_of_nat n)}
+            | Subtype_u256 -> Tok_u256 {source; u256=Constant (U256.trunc_of_nat n)}
+            | Subtype_i256 -> Tok_i256 {source; i256=Constant (I256.trunc_of_nat n)}
+            | Subtype_u512 -> Tok_u512 {source; u512=Constant (U512.trunc_of_nat n)}
+            | Subtype_i512 -> Tok_i512 {source; i512=Constant (I512.trunc_of_nat n)}
+            | Subtype_nat -> Tok_nat {source; nat=Constant n}
+            | Subtype_zint -> Tok_zint {source; zint=Constant (Nat.bits_to_zint n)}
           end
       in
-      accept atok cursor t
+      accept_tok tok cursor t
 
     let accept_integer_incl ?subtype n radix View.{cursor; _} t =
       accept_integer ?subtype n radix cursor t
@@ -3540,8 +4125,8 @@ module Dfa = struct
       match subtype_opt with
       | None -> begin
           let mal = unsupported_bitwidth t.tok_base cursor in
-          let malformed = AbstractToken.Rendition.of_mals [mal] in
-          accept (Tok_u64 malformed) cursor t
+          let malformed = Token.Rendition.of_mals [mal] in
+          accept_tok (Tok_u64 {source=source_at cursor t; u64=malformed}) cursor t
         end
       | Some subtype -> accept_integer ~subtype n radix cursor t
 
@@ -3562,7 +4147,7 @@ module Dfa = struct
 
     let accept_mal cursor t =
       let mal = malformed (invalid_numerical t.tok_base cursor) in
-      accept (Tok_u64 mal) cursor t
+      accept_tok (Tok_u64 {source=source_at cursor t; u64=mal}) cursor t
 
     let accept_mal_incl View.{cursor; _} t =
       accept_mal cursor t
@@ -3612,8 +4197,10 @@ module Dfa = struct
             advance (State_real_dec_dot (State.Real_dec_dot.mals ~mals:[mal])) view t
         );
       ];
-      default0=accept_excl (AbstractToken.Tok_r64 (Constant 0.));
-      eoi0=accept_incl (AbstractToken.Tok_r64 (Constant 0.));
+      default0=(fun view t ->
+        accept_tok_excl (Tok_r64 {source=source_excl view t; r64=(Constant 0.)}) view t);
+      eoi0=(fun view t ->
+        accept_tok_incl (Tok_r64 {source=source_incl view t; r64=(Constant 0.)}) view t);
     }
 
     let node0_0box ~base_cps ~state ~state_base_init =
@@ -3868,43 +4455,40 @@ module Dfa = struct
   end
 
   module Ident = struct
-    let keyword_map = Map.of_alist (module String) [
-      ("and", AbstractToken.Tok_and);
-      ("also", Tok_also);
-      ("as", Tok_as);
-      ("conceal", Tok_conceal);
-      ("effect", Tok_effect);
-      ("else", Tok_else);
-      ("expose", Tok_expose);
-      ("external", Tok_external);
-      ("false", Tok_false);
-      ("fn", Tok_fn);
-      ("function", Tok_function);
-      ("if", Tok_if);
-      ("import", Tok_import);
-      ("include", Tok_include);
-      ("lazy", Tok_lazy);
-      ("let", Tok_let);
-      ("match", Tok_match);
-      ("mutability", Tok_mutability);
-      ("of", Tok_of);
-      ("open", Tok_open);
-      ("or", Tok_or);
-      ("rec", Tok_rec);
-      ("then", Tok_then);
-      ("true", Tok_true);
-      ("type", Tok_type);
-      ("when", Tok_when);
-      ("with", Tok_with);
-    ]
-
     let accept_uident cursor t =
       let uident_str = str_of_cursor cursor t in
-      let atok = match Map.get uident_str keyword_map with
-        | Some atok -> atok
-        | None -> Tok_uident (Constant uident_str)
+      let source = source_at cursor t in
+      let tok = match uident_str with
+        | "and" -> Token.Tok_and {source}
+        | "also" -> Token.Tok_also {source}
+        | "as" -> Token.Tok_as {source}
+        | "conceal" -> Token.Tok_conceal {source}
+        | "effect" -> Token.Tok_effect {source}
+        | "else" -> Token.Tok_else {source}
+        | "expose" -> Token.Tok_expose {source}
+        | "external" -> Token.Tok_external {source}
+        | "false" -> Token.Tok_false {source}
+        | "fn" -> Token.Tok_fn {source}
+        | "function" -> Token.Tok_function {source}
+        | "if" -> Token.Tok_if {source}
+        | "import" -> Token.Tok_import {source}
+        | "include" -> Token.Tok_include {source}
+        | "lazy" -> Token.Tok_lazy {source}
+        | "let" -> Token.Tok_let {source}
+        | "match" -> Token.Tok_match {source}
+        | "mutability" -> Token.Tok_mutability {source}
+        | "of" -> Token.Tok_of {source}
+        | "open" -> Token.Tok_open {source}
+        | "or" -> Token.Tok_or {source}
+        | "rec" -> Token.Tok_rec {source}
+        | "then" -> Token.Tok_then {source}
+        | "true" -> Token.Tok_true {source}
+        | "type" -> Token.Tok_type {source}
+        | "when" -> Token.Tok_when {source}
+        | "with" -> Token.Tok_with {source}
+        | _ -> Tok_uident {source; uident=Constant uident_str}
       in
-      accept atok cursor t
+      accept_tok tok cursor t
 
     let accept_uident_incl View.{cursor; _} t =
       accept_uident cursor t
@@ -3914,7 +4498,7 @@ module Dfa = struct
 
     let accept_cident cursor t =
       let cident_str = str_of_cursor cursor t in
-      accept (Tok_cident cident_str) cursor t
+      accept_tok (Tok_cident {source=source_at cursor t; cident=cident_str}) cursor t
 
     let accept_cident_incl View.{cursor; _} t =
       accept_cident cursor t
@@ -3932,7 +4516,7 @@ module Dfa = struct
         |> Fmt.to_string
       in
       let mal = malformed (malformation ~base:t.tok_base ~past:cursor description) in
-      accept (Tok_uident mal) cursor t
+      accept_tok (Tok_uident {source=source_at cursor t; uident=mal}) cursor t
 
     let accept_mal_incl View.{cursor; _} t =
       accept_mal cursor t
@@ -3977,32 +4561,29 @@ module Dfa = struct
   end
 
   module Operator = struct
-    let operator_map = (
-      let open AbstractToken in
-      Map.of_alist (module String) [
-        ("|", Tok_bar);
-        (":", Tok_colon);
-        ("::", Tok_colon_colon);
-        (":=", Tok_colon_eq);
-        (".", Tok_dot);
-        ("..", Tok_dot_dot);
-        ("-", Tok_minus);
-        ("^", Tok_caret);
-        ("<", Tok_lt);
-        ("<=", Tok_lt_eq);
-        ("=", Tok_eq);
-        ("<>", Tok_lt_gt);
-        (">=", Tok_gt_eq);
-        (">", Tok_gt);
-        ("->", Tok_arrow);
-        ("~->", Tok_carrow);
-      ])
-
     let accept_operator f cursor t =
       let op = str_of_cursor cursor t in
-      match Map.get op operator_map with
-      | None -> accept (f op) cursor t
-      | Some atok -> accept atok cursor t
+      let source = source_at cursor t in
+      let tok = match op with
+        | "|" -> Token.Tok_bar {source}
+        | ":" -> Tok_colon {source}
+        | "::" -> Tok_colon_colon {source}
+        | ":=" -> Tok_colon_eq {source}
+        | "." -> Tok_dot {source}
+        | ".." -> Tok_dot_dot {source}
+        | "-" -> Tok_minus {source}
+        | "^" -> Tok_caret {source}
+        | "<" -> Tok_lt {source}
+        | "<=" -> Tok_lt_eq {source}
+        | "=" -> Tok_eq {source}
+        | "<>" -> Tok_lt_gt {source}
+        | ">=" -> Tok_gt_eq {source}
+        | ">" -> Tok_gt {source}
+        | "->" -> Tok_arrow {source}
+        | "~->" -> Tok_carrow {source}
+        | _ -> f source op
+      in
+      accept_tok tok cursor t
 
     let accept_operator_incl f View.{cursor; _} t =
       accept_operator f cursor t
@@ -4012,110 +4593,113 @@ module Dfa = struct
 
     let node0_tilde = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_tilde)];
-      default0=accept_operator_excl (fun s -> Tok_tilde_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_tilde_op s);
+      default0=accept_operator_excl (fun source s -> Tok_tilde_op {source; tilde_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_tilde_op {source; tilde_op=s});
     }
 
     let node0_qmark = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_qmark)];
-      default0=accept_operator_excl (fun s -> Tok_qmark_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_qmark_op s);
+      default0=accept_operator_excl (fun source s -> Tok_qmark_op {source; qmark_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_qmark_op {source; qmark_op=s});
     }
 
     let node0_star_star = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_star_star)];
-      default0=accept_operator_excl (fun s -> Tok_star_star_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_star_star_op s);
+      default0=accept_operator_excl (fun source s -> Tok_star_star_op {source; star_star_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_star_star_op {source; star_star_op=s});
     }
 
     let node0_star = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_star)];
-      default0=accept_operator_excl (fun s -> Tok_star_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_star_op s);
+      default0=accept_operator_excl (fun source s -> Tok_star_op {source; star_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_star_op {source; star_op=s});
     }
 
     let node0_slash = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_slash)];
-      default0=accept_operator_excl (fun s -> Tok_slash_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_slash_op s);
+      default0=accept_operator_excl (fun source s -> Tok_slash_op {source; slash_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_slash_op {source; slash_op=s});
     }
 
     let node0_pct = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_pct)];
-      default0=accept_operator_excl (fun s -> Tok_pct_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_pct_op s);
+      default0=accept_operator_excl (fun source s -> Tok_pct_op {source; pct_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_pct_op {source; pct_op=s});
     }
 
     let node0_plus = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_plus)];
-      default0=accept_operator_excl (fun s -> Tok_plus_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_plus_op s);
+      default0=accept_operator_excl (fun source s -> Tok_plus_op {source; plus_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_plus_op {source; plus_op=s});
     }
 
     let node0_minus = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_minus)];
-      default0=accept_operator_excl (fun s -> Tok_minus_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_minus_op s);
+      default0=accept_operator_excl (fun source s -> Tok_minus_op {source; minus_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_minus_op {source; minus_op=s});
     }
 
     let node0_at = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_at)];
-      default0=accept_operator_excl (fun s -> Tok_at_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_at_op s);
+      default0=accept_operator_excl (fun source s -> Tok_at_op {source; at_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_at_op {source; at_op=s});
     }
 
     let node0_caret = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_caret)];
-      default0=accept_operator_excl (fun s -> Tok_caret_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_caret_op s);
+      default0=accept_operator_excl (fun source s -> Tok_caret_op {source; caret_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_caret_op {source; caret_op=s});
     }
 
     let node0_dollar = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_dollar)];
-      default0=accept_operator_excl (fun s -> Tok_dollar_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_dollar_op s);
+      default0=accept_operator_excl (fun source s -> Tok_dollar_op {source; dollar_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_dollar_op {source; dollar_op=s});
     }
 
     let node0_lt = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_lt)];
-      default0=accept_operator_excl (fun s -> Tok_lt_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_lt_op s);
+      default0=accept_operator_excl (fun source s -> Tok_lt_op {source; lt_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_lt_op {source; lt_op=s});
     }
 
     let node0_eq = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_eq)];
-      default0=accept_operator_excl (fun s -> Tok_eq_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_eq_op s);
+      default0=accept_operator_excl (fun source s -> Tok_eq_op {source; eq_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_eq_op {source; eq_op=s});
     }
 
     let node0_gt = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_gt)];
-      default0=accept_operator_excl (fun s -> Tok_gt_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_gt_op s);
+      default0=accept_operator_excl (fun source s -> Tok_gt_op {source; gt_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_gt_op {source; gt_op=s});
     }
 
     let node0_bar = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_bar)];
-      default0=accept_operator_excl (fun s -> Tok_bar_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_bar_op s);
+      default0=accept_operator_excl (fun source s -> Tok_bar_op {source; bar_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_bar_op {source; bar_op=s});
     }
 
     let node0_colon = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_colon)];
-      default0=accept_operator_excl (fun s -> Tok_colon_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_colon_op s);
+      default0=accept_operator_excl (fun source s -> Tok_colon_op {source; colon_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_colon_op {source; colon_op=s});
     }
 
     let node0_dot = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_dot)];
-      default0=accept_operator_excl (fun s -> Tok_dot_op s);
-      eoi0=accept_operator_incl (fun s -> Tok_dot_op s);
+      default0=accept_operator_excl (fun source s -> Tok_dot_op {source; dot_op=s});
+      eoi0=accept_operator_incl (fun source s -> Tok_dot_op {source; dot_op=s});
     }
   end
 
   module ParenComment = struct
     let eoi1 _state View.{cursor; _} t =
-      accept (Tok_paren_comment (malformed (unterminated_comment t.tok_base cursor))) cursor t
+      accept_tok (Tok_paren_comment {
+        source=source_at cursor t;
+        paren_comment=malformed (unterminated_comment t.tok_base cursor)}
+      ) cursor t
 
     let default1 state view t =
       advance (State_paren_comment_body state) view t
@@ -4147,7 +4731,12 @@ module Dfa = struct
         ("(", fun state view t -> advance (State_paren_comment_lparen state) view t);
         (")", fun {nesting} view t ->
             match nesting with
-            | 1L -> accept_incl (Tok_paren_comment (Constant ())) view t
+            | 1L -> begin
+                accept_tok_incl (Tok_paren_comment {
+                  source=source_incl view t;
+                  paren_comment=Constant ()
+                }) view t
+              end
             | _ ->
               advance (State_paren_comment_body (State.Paren_comment_body.init
                   ~nesting:(pred nesting))) view t
@@ -4175,13 +4764,13 @@ module Dfa = struct
           let io = match indent, omit with
             | None, None -> None
             | Some indent, Some omit ->
-              Some AbstractToken.{indent=(Nat.to_u64_hlt indent); omit=(Nat.to_u64_hlt omit)}
+              Some Token.{indent=(Nat.to_u64_hlt indent); omit=(Nat.to_u64_hlt omit)}
             | Some _, None
             | None, Some _ -> not_reached ()
           in
-          AbstractToken.Tok_source_directive (Constant {path; line; io})
+          Token.Rendition.Constant Token.{path; line; io}
         end
-      | _ :: _ -> AbstractToken.Tok_source_directive (AbstractToken.Rendition.of_mals mals)
+      | _ :: _ -> Token.Rendition.of_mals mals
 
     let node0_colon = {
       edges0=map_of_cps_alist [
@@ -4192,9 +4781,9 @@ module Dfa = struct
             advance (State_src_directive_line (State.Src_directive_line.init ~mals:[] ~path:None
               ~line_cursor:pcursor ~line:(Some digit))) view t);
         ("]", fun view t ->
-            let atok =
+            let tok =
               render_source_directive ~mals:[] ~path:None ~line:None ~indent:None ~omit:None in
-            accept_source_directive atok view t
+            accept_source_directive tok view t
         );
       ];
       default0=(fun ({pcursor; cursor; _} as view) t ->
@@ -4202,9 +4791,12 @@ module Dfa = struct
         advance (State_src_directive_line (State.Src_directive_line.init ~mals:[mal] ~path:None
           ~line_cursor:cursor ~line:None)) view t
       );
-      eoi0=(fun {cursor; _} t ->
+      eoi0=(fun ({cursor; _} as view) t ->
         let mal = unterminated_source_directive t.tok_base cursor in
-        accept (Tok_source_directive (AbstractToken.Rendition.of_mals [mal])) cursor t
+        accept_tok (Tok_source_directive {
+          source=source_incl view t;
+          source_directive=Token.Rendition.of_mals [mal]
+        }) cursor t
       );
     }
 
@@ -4228,7 +4820,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4254,7 +4849,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4272,7 +4870,10 @@ module Dfa = struct
           );
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
@@ -4281,7 +4882,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4303,7 +4907,10 @@ module Dfa = struct
           );
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
@@ -4312,7 +4919,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4343,7 +4953,10 @@ module Dfa = struct
           );
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
@@ -4352,7 +4965,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4362,8 +4978,8 @@ module Dfa = struct
         edges1=map_of_cps_alist [
           (":", fun state view t -> advance (State_src_directive_path_colon state) view t);
           ("]", fun {mals; path} view t ->
-              let atok = render_source_directive ~mals ~path ~line:None ~indent:None ~omit:None in
-              accept_source_directive atok view t
+              let tok = render_source_directive ~mals ~path ~line:None ~indent:None ~omit:None in
+              accept_source_directive tok view t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4372,7 +4988,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4388,7 +5007,10 @@ module Dfa = struct
                   ~line_cursor:pcursor ~line:(Some digit))) view t);
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4397,7 +5019,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4435,8 +5060,8 @@ module Dfa = struct
           );
           ("]", fun ({path; _} as state) view t ->
               let mals, line = validate_line state view in
-              let atok = render_source_directive ~mals ~path ~line ~indent:None ~omit:None in
-              accept_source_directive atok view t
+              let tok = render_source_directive ~mals ~path ~line ~indent:None ~omit:None in
+              accept_source_directive tok view t
           );
         ];
         default1=(fun {mals; path; _} ({pcursor; cursor; _} as view) t ->
@@ -4446,7 +5071,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4464,7 +5092,10 @@ module Dfa = struct
                   ~indent_cursor:pcursor ~indent:digit)) view t);
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4473,7 +5104,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4513,7 +5147,10 @@ module Dfa = struct
           );
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4522,7 +5159,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4537,7 +5177,10 @@ module Dfa = struct
           );
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4546,7 +5189,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4564,7 +5210,10 @@ module Dfa = struct
                   ~indent ~omit_cursor:pcursor ~omit:digit)) view t);
           ("]", fun {mals; _} {pcursor; cursor; _} t ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
-              accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+              accept_tok (Tok_source_directive {
+                source=source_at cursor t;
+                source_directive=Token.Rendition.of_mals (mal :: mals)
+              }) cursor t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4573,7 +5222,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4600,8 +5252,8 @@ module Dfa = struct
                     (mal :: mals), None
                   end
               in
-              let atok = render_source_directive ~mals ~path ~line ~indent ~omit in
-              accept_source_directive atok view t
+              let tok = render_source_directive ~mals ~path ~line ~indent ~omit in
+              accept_source_directive tok view t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4610,7 +5262,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
 
@@ -4620,8 +5275,8 @@ module Dfa = struct
         edges1=map_of_cps_alist [
           ("_", fun state view t -> advance (State_src_directive_omit_0 state) view t);
           ("]", fun {mals; path; line; indent} view t ->
-              let atok = render_source_directive ~mals ~path ~line ~indent ~omit:(Some Nat.k_0) in
-              accept_source_directive atok view t
+              let tok = render_source_directive ~mals ~path ~line ~indent ~omit:(Some Nat.k_0) in
+              accept_source_directive tok view t
           );
         ];
         default1=(fun state ({pcursor; cursor; _} as view) t ->
@@ -4630,7 +5285,10 @@ module Dfa = struct
         );
         eoi1=(fun {mals; _} {cursor; _} t ->
           let mal = unterminated_source_directive t.tok_base cursor in
-          accept (Tok_source_directive (AbstractToken.Rendition.of_mals (mal :: mals))) cursor t
+          accept_tok (Tok_source_directive {
+            source=source_at cursor t;
+            source_directive=Token.Rendition.of_mals (mal :: mals)
+          }) cursor t
         );
       }
   end
@@ -4647,18 +5305,21 @@ module Dfa = struct
       | Level_indent
       | Level_excess_indent
 
-    let tok_indent = AbstractToken.Tok_indent (Constant ())
-    let tok_dedent = AbstractToken.Tok_dedent (Constant ())
+    let tok_missing_indent cursor t =
+      Token.Tok_indent {
+        source=source_at cursor t;
+        indent=malformed (malformation ~base:cursor ~past:cursor "Missing indent")
+      }
 
-    let tok_missing_indent cursor =
-      AbstractToken.Tok_indent (malformed (malformation ~base:cursor ~past:cursor "Missing indent"))
+    let tok_missing_dedent cursor t =
+      Token.Tok_dedent {
+        source=source_at cursor t;
+        dedent=malformed (malformation ~base:cursor ~past:cursor "Missing dedent")
+      }
 
-    let tok_missing_dedent cursor =
-      AbstractToken.Tok_dedent (malformed (malformation ~base:cursor ~past:cursor "Missing dedent"))
-
-    let accept_dentation atok cursor t =
+    let accept_dentation tok cursor t =
       assert Source.Cursor.(t.tok_base = cursor);
-      accept atok cursor t
+      accept_tok tok cursor t
 
     let other ~retry_state cursor t =
       let col = match t.line_state with
@@ -4667,7 +5328,8 @@ module Dfa = struct
         | Line_start_col col -> col
         | Line_body -> not_reached ()
       in
-      (* Compute level an alignement such that the misaligned cases rounded to the nearest level. *)
+      (* Compute level and alignement such that misaligned cases are rounded to the nearest level.
+      *)
       let level, alignment = match col / 4L, col % 4L with
         | floor_level, 0L -> Level.update floor_level t.level, Aligned
         | floor_level, 1L -> Level.update floor_level t.level, Misaligned
@@ -4684,6 +5346,7 @@ module Dfa = struct
         | Eq -> Level_stable
         | Gt -> Level_dedent
       in
+      let source = source_at cursor t in
       (* The following patterns incrementally handle all dentation/alignment cases. Malformed tokens
        * are synthesized in error cases such that the cursor does not advance, but the level is
        * incrementally adjusted to converge. The overall result is that Tok_indent/Tok_dedent
@@ -4693,54 +5356,56 @@ module Dfa = struct
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
         retry retry_state {t with level; block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
-        accept_dentation Tok_line_delim cursor {t with line_state=Line_body}
+        accept_dentation (Tok_line_delim {source}) cursor {t with line_state=Line_body}
 
       (* Continued expression at current level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
-        accept_dentation Tok_misaligned cursor
+        accept_dentation (Tok_misaligned {source}) cursor
           {t with block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
         retry retry_state {t with line_state=Line_body}
 
       (* New expression at higher level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
-        accept_dentation (tok_missing_indent cursor) cursor
+        accept_dentation (tok_missing_indent cursor t) cursor
           {t with level=Level.succ t.level; block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
-        accept_dentation tok_indent cursor {t with level; line_state=Line_body}
+        accept_dentation (Tok_indent {source; indent=Constant ()}) cursor
+          {t with level; line_state=Line_body}
 
       (* New/continued expression at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
         (Aligned|Continued) -> not_reached ()
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
         (Aligned|Continued) ->
-        accept_dentation tok_dedent cursor {t with level=Level.pred t.level}
+        accept_dentation (Tok_dedent {source; dedent=Constant ()}) cursor
+          {t with level=Level.pred t.level}
 
       (* Misaligned at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
         not_reached ()
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
-        accept_dentation (tok_missing_dedent cursor) cursor {t with level=Level.pred t.level}
+        accept_dentation (tok_missing_dedent cursor t) cursor {t with level=Level.pred t.level}
 
       (* Misaligned at current level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
-        accept_dentation Tok_misaligned cursor
+        accept_dentation (Tok_misaligned {source}) cursor
           {t with block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
-        accept_dentation Tok_misaligned cursor {t with line_state=Line_body}
+        accept_dentation (Tok_misaligned {source}) cursor {t with line_state=Line_body}
 
       (* Excess indentation. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_excess_indent,
         (Aligned|Continued|Misaligned) ->
-        accept_dentation (tok_missing_indent cursor) cursor
+        accept_dentation (tok_missing_indent cursor t) cursor
           {t with level=Level.succ t.level; block_state=Block_nonempty}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _),
         Level_excess_indent, (Aligned|Continued|Misaligned) ->
-        accept_dentation (tok_missing_indent cursor) cursor {t with level=Level.succ t.level}
+        accept_dentation (tok_missing_indent cursor t) cursor {t with level=Level.succ t.level}
 
       | _, Line_body, _, _ -> not_reached ()
 
@@ -4752,9 +5417,12 @@ module Dfa = struct
 
     let accept_whitespace cursor t =
       assert Source.Cursor.(t.tok_base < cursor);
+      let source = source_at cursor t in
       match t.line_state with
-      | Line_begin -> accept Tok_whitespace cursor {t with line_state=Line_whitespace}
-      | Line_start_col _ -> accept Tok_whitespace cursor t
+      | Line_begin ->
+        accept_tok (Tok_whitespace {source}) cursor {t with line_state=Line_whitespace}
+      | Line_start_col _ ->
+        accept_tok (Tok_whitespace {source}) cursor t
       | Line_whitespace (* Consecutive whitespace tokens is impossible. *)
       | Line_body -> not_reached ()
 
@@ -4778,19 +5446,21 @@ module Dfa = struct
         ("(", advance State_dentation_lparen);
         ("\n", fun view t ->
             match t.line_state with
-            | Line_begin -> accept_incl Tok_whitespace view t
+            | Line_begin -> accept_tok_incl (Tok_whitespace {source=source_incl view t}) view t
             | Line_whitespace
-            | Line_start_col _ -> accept_line_break_incl Tok_whitespace view t
+            | Line_start_col _ ->
+              accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t
             | Line_body -> not_reached ()
         );
       ];
       default0=other_excl ~retry_state:State_start;
       eoi0=(fun view t ->
         match t.line_state, Level.level t.level with
-        | (Line_begin|Line_whitespace|Line_start_col _), 0L -> accept_incl Tok_end_of_input view t
+        | (Line_begin|Line_whitespace|Line_start_col _), 0L ->
+          accept_tok_incl (Tok_end_of_input {source=source_incl view t}) view t
         | (Line_begin|Line_whitespace|Line_start_col _), t_level ->
-          accept_incl (Tok_dedent (Constant ())) view {t with level=Level.update (pred t_level)
-            t.level}
+          accept_tok_incl (Tok_dedent {source=source_incl view t; dedent=Constant ()}) view
+            {t with level=Level.update (pred t_level) t.level}
         | _ -> not_reached ()
       );
     }
@@ -4817,7 +5487,8 @@ module Dfa = struct
     let node0_space = {
       edges0=map_of_cps_alist [
         (" ", advance State_dentation_space);
-        ("\n", accept_line_break_incl Tok_whitespace);
+        ("\n", fun view t ->
+            accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
       ];
       default0=accept_whitespace_excl;
       eoi0=accept_whitespace_incl;
@@ -4827,25 +5498,31 @@ module Dfa = struct
   let node0_whitespace = {
     edges0=map_of_cps_alist [
       (" ", advance State_whitespace);
-      ("\n", accept_line_break_incl Tok_whitespace);
+      ("\n", fun view t ->
+          accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
     ];
-    default0=accept_excl Tok_whitespace;
-    eoi0=accept_incl Tok_whitespace;
+    default0=(fun view t -> accept_tok_excl (Tok_whitespace {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_whitespace {source=source_incl view t}) view t);
   }
 
   let node0_hash_comment = {
     edges0=map_of_cps_alist [
-      ("\n", accept_line_break_incl Tok_hash_comment);
+      ("\n", fun view t ->
+          accept_line_break_incl (Tok_hash_comment {source=source_incl view t}) view t);
     ];
     default0=advance State_hash_comment;
-    eoi0=accept_line_break_incl Tok_hash_comment;
+    eoi0=(fun view t ->
+      accept_line_break_incl (Tok_hash_comment {source=source_incl view t}) view t);
   }
 
   module Codepoint_ = struct
     let accept_rendition rendition cursor t =
       match in_fstring t with
-      | true -> accept_fstring_trans Fstring_spec_pad_seen (Tok_fstring_pad rendition) cursor t
-      | false -> accept (Tok_codepoint rendition) cursor t
+      | true ->
+        accept_fstring_trans Fstring_spec_pad_seen
+          (Tok_fstring_pad {source=source_at cursor t; fstring_pad=rendition}) cursor t
+      | false ->
+        accept_tok (Tok_codepoint {source=source_at cursor t; codepoint=rendition}) cursor t
 
     let accept_rendition_incl rendition View.{cursor; _} t =
       accept_rendition rendition cursor t
@@ -4855,7 +5532,7 @@ module Dfa = struct
 
     let eoi0 View.{cursor; _} t =
       let mal = unterminated_codepoint t.tok_base cursor in
-      let rendition = AbstractToken.Rendition.of_mals [mal] in
+      let rendition = Token.Rendition.of_mals [mal] in
       accept_rendition rendition cursor t
 
     let eoi1 _state view t =
@@ -4867,7 +5544,7 @@ module Dfa = struct
             advance (State_codepoint_bslash (State.Codepoint_bslash.init ~bslash_cursor)) view t);
         ("'", fun ({cursor; _} as view) t ->
             let mal = empty_codepoint t.tok_base cursor in
-            accept_rendition_incl (AbstractToken.Rendition.of_mals [mal]) view t
+            accept_rendition_incl (Token.Rendition.of_mals [mal]) view t
         );
         ("\t\n\r", fun ({pcursor; cursor; _} as view) t ->
             let mal = invalid_codepoint pcursor cursor in
@@ -4998,9 +5675,9 @@ module Dfa = struct
           match in_fstring t with
           | true -> begin
               let mal = unterminated_codepoint t.tok_base cursor in
-              accept_rendition_pexcl (AbstractToken.Rendition.of_mals [mal]) view t
+              accept_rendition_pexcl (Token.Rendition.of_mals [mal]) view t
             end
-          | false -> accept_pexcl Tok_tick view t);
+          | false -> accept_tok_pexcl (Tok_tick {source=source_pexcl view t}) view t);
         eoi1;
       }
 
@@ -5008,22 +5685,21 @@ module Dfa = struct
       let open State.Codepoint_mal in
       {
         edges1=map_of_cps_alist [
-          ("'", fun {mal} view t ->
-              accept_rendition_incl (AbstractToken.Rendition.of_mals [mal]) view t);
+          ("'", fun {mal} view t -> accept_rendition_incl (Token.Rendition.of_mals [mal]) view t);
         ];
         default1=(fun state view t -> advance (State.State_codepoint_mal state) view t);
         eoi1=(fun {mal} (View.{cursor; _} as view) t ->
           let mal2 = unterminated_codepoint t.tok_base cursor in
-          accept_rendition_incl (AbstractToken.Rendition.of_mals (mal2 :: [mal])) view t
+          accept_rendition_incl (Token.Rendition.of_mals (mal2 :: [mal])) view t
         );
       }
   end
 
   module Rstring = struct
     let accept_mals mals cursor t =
-      let open AbstractToken in
+      let open Token in
       let malformed = Rendition.of_mals mals in
-      accept (Tok_rstring malformed) cursor t
+      accept_tok (Tok_rstring {source=source_at cursor t; rstring=malformed}) cursor t
 
     let accept_mals_incl mals View.{cursor; _} t =
       accept_mals mals cursor t
@@ -5095,8 +5771,11 @@ module Dfa = struct
                   match mals with
                   | _ :: _ -> accept_mals_incl mals view t
                   | [] -> begin
-                      let open AbstractToken in
-                      accept (Tok_rstring (Constant (Source.Slice.to_string body))) cursor t
+                      let open Token in
+                      accept_tok (Tok_rstring {
+                        source=source_incl view t;
+                        rstring=Constant (Source.Slice.to_string body)
+                      }) cursor t
                     end
                 end
           );
@@ -5125,7 +5804,10 @@ module Dfa = struct
    * istring scanning implementation. *)
   module Istring = struct
     let accept_istring accum cursor t =
-      accept (State.CodepointAccum.to_atok_istring accum) cursor t
+      accept_tok (Token.Tok_istring {
+        source=source_at cursor t;
+        istring=State.CodepointAccum.to_istring accum
+      }) cursor t
 
     let accept_istring_incl accum View.{cursor; _} t =
       accept_istring accum cursor t
@@ -5134,7 +5816,11 @@ module Dfa = struct
       let open State.CodepointAccum in
       assert (match accum with Codepoints _ -> false | Malformations _ -> true);
       match in_fstring t with
-      | true -> accept (to_atok_fstring_interpolated accum) cursor t
+      | true ->
+        accept_tok (Token.Tok_fstring_interpolated {
+          source=source_at cursor t;
+          fstring_interpolated=to_fstring_interpolated accum
+        }) cursor t
       | false -> accept_istring accum cursor t
 
     let accept_mal_incl accum View.{cursor; _} t =
@@ -5146,7 +5832,11 @@ module Dfa = struct
       | true -> begin
           match accum with
           | Codepoints [] -> retry_fstring_eoi t
-          | _ -> accept_fstring_pop (to_atok_fstring_interpolated accum) cursor t
+          | _ ->
+            accept_fstring_pop_tok (Token.Tok_fstring_interpolated {
+              source=source_at cursor t;
+              fstring_interpolated=to_fstring_interpolated accum
+            }) cursor t
         end
       | false -> begin
           let mal = unterminated_string cursor cursor in
@@ -5165,48 +5855,54 @@ module Dfa = struct
               match in_fstring t with
               | false -> begin
                   let interpolated_base = Source.Cursor.succ t.tok_base in
-                  let lditto_ctok = ConcreteToken.ctok_at ~base:t.tok_base ~past:interpolated_base
-                      Tok_fstring_lditto in
-                  let pct_ctok = ConcreteToken.ctok_at ~base:pcursor ~past:cursor Tok_fstring_pct in
+                  let lditto_tok =
+                    Token.Tok_fstring_lditto {source=source_at interpolated_base t} in
+                  let pct_tok = Token.Tok_fstring_pct {source=Source.Slice.of_cursors
+                                                           ~base:pcursor ~past:cursor} in
                   let fstring_state = match Source.Cursor.(interpolated_base = pcursor) with
-                    | true -> Fstring_spec_pct_seen [pct_ctok]
+                    | true -> Fstring_spec_pct_seen [pct_tok]
                     | false -> begin
-                        let interpolated_ctok = ConcreteToken.ctok_at ~base:interpolated_base
-                            ~past:pcursor (State.CodepointAccum.to_atok_fstring_interpolated accum)
-                        in
-                        Fstring_spec_pct_seen [interpolated_ctok; pct_ctok]
+                        let interpolated_tok = Token.Tok_fstring_interpolated {
+                          source=Source.Slice.of_cursors ~base:interpolated_base ~past:pcursor;
+                          fstring_interpolated=State.CodepointAccum.to_fstring_interpolated accum
+                        } in
+                        Fstring_spec_pct_seen [interpolated_tok; pct_tok]
                       end
                   in
-                  accept_fstring_push_ctok_incl fstring_state lditto_ctok view t
+                  accept_fstring_push_tok_incl fstring_state lditto_tok view t
                 end
               | true -> begin
-                  let pct_ctok = ConcreteToken.ctok_at ~base:pcursor ~past:cursor Tok_fstring_pct in
-                  let fstring_state, ctok = match Source.Cursor.(t.tok_base = pcursor) with
-                    | true -> Fstring_spec_pct_seen [], pct_ctok
+                  let pct_tok = Token.Tok_fstring_pct {source=Source.Slice.of_cursors ~base:pcursor
+                                                           ~past:cursor} in
+                  let fstring_state, tok = match Source.Cursor.(t.tok_base = pcursor) with
+                    | true -> Fstring_spec_pct_seen [], pct_tok
                     | false -> begin
-                        let interpolated_ctok = ConcreteToken.ctok_at ~base:t.tok_base
-                            ~past:pcursor (State.CodepointAccum.to_atok_fstring_interpolated accum)
-                        in
-                        Fstring_spec_pct_seen [pct_ctok], interpolated_ctok
+                        let interpolated_tok = Token.Tok_fstring_interpolated {
+                          source=source_excl view t;
+                          fstring_interpolated=State.CodepointAccum.to_fstring_interpolated accum
+                        } in
+                        Fstring_spec_pct_seen [pct_tok], interpolated_tok
                       end
                   in
-                  accept_fstring_trans_ctok_incl fstring_state ctok view t
+                  accept_fstring_trans_tok_incl fstring_state tok view t
                 end
           );
           ("\"", fun {accum} (View.{pcursor; cursor; _} as view) t ->
               match in_fstring t with
               | true -> begin
-                  let rditto_ctok = ConcreteToken.ctok_at ~base:pcursor ~past:cursor
-                      Tok_fstring_rditto in
+                  let rditto_tok = Token.Tok_fstring_rditto {
+                    source=Source.Slice.of_cursors ~base:pcursor ~past:cursor} in
                   let fstring_states' = List.tl t.fstring_states in
                   match Source.Cursor.(t.tok_base = pcursor) with
                   | true ->
-                    {t with tok_base=cursor; fstring_states=fstring_states'}, Accept rditto_ctok
+                    {t with tok_base=cursor; fstring_states=fstring_states'}, Accept rditto_tok
                   | false -> begin
-                      let interpolated_ctok = ConcreteToken.ctok_at ~base:t.tok_base
-                          ~past:pcursor (State.CodepointAccum.to_atok_fstring_interpolated accum) in
-                      accept_fstring_trans_ctok_incl (Fstring_rditto_seen rditto_ctok)
-                        interpolated_ctok view t
+                      let interpolated_tok = Token.Tok_fstring_interpolated {
+                        source=source_excl view t;
+                        fstring_interpolated=State.CodepointAccum.to_fstring_interpolated accum
+                      } in
+                      accept_fstring_trans_tok_incl (Fstring_rditto_seen rditto_tok)
+                        interpolated_tok view t
                     end
                 end
               | false -> accept_istring_incl accum view t
@@ -5317,15 +6013,15 @@ module Dfa = struct
   end
 
   module Fstring = struct
-    let accept_mal fstring_state description atok_of_mal cursor t =
+    let accept_mal fstring_state description tok_of_mal cursor t =
       let mal = malformation ~base:t.tok_base ~past:cursor description in
-      accept_fstring_trans fstring_state (atok_of_mal mal) cursor t
+      accept_fstring_trans fstring_state (tok_of_mal mal) cursor t
 
-    let accept_mal_incl fstring_state description atok_of_mal View.{cursor; _} t =
-      accept_mal fstring_state description atok_of_mal cursor t
+    let accept_mal_incl fstring_state description tok_of_mal View.{cursor; _} t =
+      accept_mal fstring_state description tok_of_mal cursor t
 
-    let accept_mal_excl fstring_state description atok_of_mal View.{pcursor; _} t =
-      accept_mal fstring_state description atok_of_mal pcursor t
+    let accept_mal_excl fstring_state description tok_of_mal View.{pcursor; _} t =
+      accept_mal fstring_state description tok_of_mal pcursor t
 
     let eoi0 _view t =
       retry_fstring_eoi t
@@ -5335,22 +6031,48 @@ module Dfa = struct
     ]
 
     let edges0_just = map_of_cps_alist [
-      ("<", accept_fstring_trans_incl Fstring_spec_just_seen (Tok_fstring_just Fmt.Left));
-      ("^", accept_fstring_trans_incl Fstring_spec_just_seen (Tok_fstring_just Fmt.Center));
-      (">", accept_fstring_trans_incl Fstring_spec_just_seen (Tok_fstring_just Fmt.Right));
+      ("<", fun view t ->
+          accept_fstring_trans_tok_incl Fstring_spec_just_seen (Tok_fstring_just {
+            source=source_incl view t;
+            fstring_just=Fmt.Left
+          }) view t);
+      ("^", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_just_seen (Tok_fstring_just {
+            source=source_incl view t;
+            fstring_just=Fmt.Center
+          }) view t);
+      (">", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_just_seen (Tok_fstring_just {
+            source=source_incl view t;
+            fstring_just=Fmt.Right
+          }) view t);
     ]
 
     let edges0_sign = map_of_cps_alist [
-      ("+", accept_fstring_trans_incl Fstring_spec_sign_seen (Tok_fstring_sign Fmt.Explicit));
-      ("_", accept_fstring_trans_incl Fstring_spec_sign_seen (Tok_fstring_sign Fmt.Space));
+      ("+", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_sign_seen (Tok_fstring_sign {
+            source=source_incl view t;
+            fstring_sign=Fmt.Explicit
+          }) view t);
+      ("_", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_sign_seen (Tok_fstring_sign {
+            source=source_incl view t;
+            fstring_sign=Fmt.Space
+          }) view t);
     ]
 
     let edges0_alt = map_of_cps_alist [
-      ("#", accept_fstring_trans_incl Fstring_spec_alt_seen Tok_fstring_alt);
+      ("#", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_alt_seen (Tok_fstring_alt {
+            source=source_incl view t
+          }) view t);
     ]
 
     let edges0_zpad = map_of_cps_alist [
-      ("0", accept_fstring_trans_incl Fstring_spec_zpad_seen Tok_fstring_zpad);
+      ("0", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_zpad_seen (Tok_fstring_zpad {
+            source=source_incl view t
+          }) view t);
     ]
 
     let edges0_width = map_of_cps_alist [
@@ -5358,7 +6080,10 @@ module Dfa = struct
           let digit = nat_of_cp (Source.Cursor.rget pcursor) in
           advance (State_fstring_width (State.Fstring_width.init ~n:digit)) view t
       );
-      ("*", accept_fstring_trans_incl Fstring_spec_width_star_seen Tok_fstring_width_star);
+      ("*", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_width_star_seen (Tok_fstring_width_star {
+            source=source_incl view t
+          }) view t);
     ]
 
     let edges0_precision = map_of_cps_alist [
@@ -5367,43 +6092,88 @@ module Dfa = struct
 
     let edges0_radix = map_of_cps_alist [
       ("b", advance State_fstring_b);
-      ("o", accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix Radix.Oct));
-      ("d", accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix Radix.Dec));
-      ("x", accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix Radix.Hex));
+      ("o", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix {
+            source=source_incl view t;
+            fstring_radix=Radix.Oct
+          }) view t);
+      ("d", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix {
+            source=source_incl view t;
+            fstring_radix=Radix.Dec
+          }) view t);
+      ("x", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix {
+            source=source_incl view t;
+            fstring_radix=Radix.Hex
+          }) view t);
     ]
 
     let edges0_notation = map_of_cps_alist [
-      ("m", accept_fstring_trans_incl Fstring_spec_notation_seen (Tok_fstring_notation
-            Fmt.Normalized));
-      ("a", accept_fstring_trans_incl Fstring_spec_notation_seen (Tok_fstring_notation
-            Fmt.RadixPoint));
+      ("m", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_notation_seen (Tok_fstring_notation {
+            source=source_incl view t;
+            fstring_notation=Fmt.Normalized
+          }) view t);
+      ("a", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_notation_seen (Tok_fstring_notation {
+            source=source_incl view t;
+            fstring_notation=Fmt.RadixPoint
+          }) view t);
       ("c", advance State_fstring_c);
     ]
 
     let edges0_pretty = map_of_cps_alist [
-      ("p", accept_fstring_trans_incl Fstring_spec_pretty_seen Tok_fstring_pretty);
+      ("p", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_pretty_seen (Tok_fstring_pretty {
+            source=source_incl view t
+          }) view t);
     ]
 
     (* Sans [bc], which require lookahead. *)
     let edges0_fmt = map_of_cps_alist [
       ("u", advance State_fstring_fmt_u);
       ("i", advance State_fstring_fmt_i);
-      ("n", accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_n)));
-      ("z", accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_z)));
+      ("n", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_incl view t;
+            fstring_fmt=Constant Fmt_n
+          }) view t);
+      ("z", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_incl view t;
+            fstring_fmt=Constant Fmt_z
+          }) view t);
       ("r", advance State_fstring_fmt_r);
-      ("s", accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_s)));
-      ("f", accept_fstring_trans_incl Fstring_spec_fmt_f_seen (Tok_fstring_fmt (Constant Fmt_f)));
+      ("s", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_incl view t;
+            fstring_fmt=Constant Fmt_s
+          }) view t);
+      ("f", fun view t ->
+          accept_fstring_trans_incl Fstring_spec_fmt_f_seen (Tok_fstring_fmt {
+            source=source_incl view t;
+            fstring_fmt=Constant Fmt_f
+          }) view t);
     ]
 
     (* Sans c, which requires lookahead. *)
     let edges0_fmt_b = Map.insert edges0_fmt
         ~k:(Codepoint.of_char 'b')
-        ~v:(accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_b)))
+        ~v:(fun view t ->
+          accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_incl view t;
+            fstring_fmt=Constant Fmt_b
+          }) view t)
 
     (* No lookahead required. *)
     let edges0_fmt_bc = Map.insert edges0_fmt
         ~k:(Codepoint.of_char 'c')
-        ~v:(accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_c)))
+        ~v:(fun view t ->
+          accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_incl view t;
+            fstring_fmt=Constant Fmt_c
+          }) view t)
 
     let edges0_of_maps maps =
       List.fold maps ~init:(Map.empty (module Codepoint))
@@ -5415,13 +6185,14 @@ module Dfa = struct
         ("Percent must be followed by pad/just/sign/alt/zpad/width/precision/radix/notation/pretty/"
           ^ "fmt parameter")
       in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_pad; edges0_just; edges0_sign; edges0_alt; edges0_zpad;
           edges0_width; edges0_precision; edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
@@ -5431,13 +6202,14 @@ module Dfa = struct
         "Pad parameter must be followed by just/sign/alt/zpad/width/precision/radix/notation/"
         ^ "pretty/fmt parameter"
       in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_just; edges0_sign; edges0_alt; edges0_zpad; edges0_width;
           edges0_precision; edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
@@ -5447,13 +6219,14 @@ module Dfa = struct
         "Justification parameter must be followed by sign/alt/zpad/width/precision/radix/notation/"
         ^ "pretty/fmt parameter"
       in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_sign; edges0_alt; edges0_zpad; edges0_width; edges0_precision;
           edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
@@ -5463,13 +6236,14 @@ module Dfa = struct
         "Sign parameter must be followed by alt/zpad/width/precision/radix/notation/pretty/fmt"
         ^ " parameter"
       in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_alt; edges0_zpad; edges0_width; edges0_precision;
           edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
@@ -5478,13 +6252,14 @@ module Dfa = struct
       let description =
         "Alt parameter must be followed by zpad/width/precision/radix/notation/pretty/fmt parameter"
       in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_zpad; edges0_width; edges0_precision; edges0_radix;
           edges0_notation; edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
@@ -5492,29 +6267,31 @@ module Dfa = struct
       let fstring_state = Fstring_spec_fmt_seen in
       let description =
         "Zpad parameter must be followed by width/precision/radix/notation/pretty/fmt parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_width; edges0_precision; edges0_radix; edges0_notation;
           edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
     let node1_width =
       let open State.Fstring_width in
       let accept_width {n} cursor t = begin
-        let open AbstractToken in
-        let atok = match Nat.to_uns_opt n with
+        let open Token in
+        let source = source_at cursor t in
+        let tok = match Nat.to_uns_opt n with
           | None -> begin
               let mal = out_of_range_int Radix.Dec Uns.(extend_to_nat max_value) t.tok_base
                 cursor in
-              Tok_fstring_width (Rendition.of_mals [mal])
+              Tok_fstring_width {source; fstring_width=Rendition.of_mals [mal]}
             end
-          | Some width -> Tok_fstring_width (Constant width)
+          | Some width -> Tok_fstring_width {source; fstring_width=Constant width}
         in
-        accept_fstring_trans Fstring_spec_width_seen atok cursor t
+        accept_fstring_trans Fstring_spec_width_seen tok cursor t
       end in
       let accept_width_incl state View.{cursor; _} t = begin
         accept_width state cursor t
@@ -5536,53 +6313,76 @@ module Dfa = struct
     let node0_width_star_seen_start =
       let fstring_state = Fstring_spec_width_seen in
       let description = "Parametric width must be of the form `*(^ ... ^)`" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_width (Malformed [mal])
+      let tok_of_mal cursor t mal = begin
+        Token.Tok_fstring_width {source=source_at cursor t; fstring_width=Malformed [mal]}
+      end in
+      let tok_of_mal_incl View.{cursor; _} t mal = begin
+        tok_of_mal cursor t mal
+      end in
+      let tok_of_mal_excl View.{pcursor; _} t mal = begin
+        tok_of_mal pcursor t mal
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
-        eoi0=accept_mal_incl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        eoi0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
       }
 
     let node0_width_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description =
         "Width parameter must be followed by precision/radix/notation/pretty/fmt parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_precision; edges0_radix; edges0_notation;
           edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
     let node0_dot =
       let fstring_state = Fstring_spec_precision_seen in
       let description = "Dot must be followed by precision mode or precision" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_precision (Malformed [mal])
+      let tok_of_mal cursor t mal = begin
+        Token.Tok_fstring_precision {source=source_at cursor t; fstring_precision=Malformed [mal]}
+      end in
+      let tok_of_mal_incl View.{cursor; _} t mal = begin
+        tok_of_mal cursor t mal
+      end in
+      let tok_of_mal_excl View.{pcursor; _} t mal = begin
+        tok_of_mal pcursor t mal
       end in
       {
         edges0=map_of_cpsets_alist [
-          (cpset_of_cps "=",
-            accept_fstring_trans_incl Fstring_spec_pmode_seen (Tok_fstring_pmode Fmt.Fixed));
-          (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "*"),
-            accept_fstring_trans_excl Fstring_spec_pmode_seen (Tok_fstring_pmode Fmt.Limited));
+          (cpset_of_cps "=", fun view t ->
+              accept_fstring_trans_incl Fstring_spec_pmode_seen (Tok_fstring_pmode {
+                source=source_incl view t;
+                fstring_pmode=Fmt.Fixed
+              }) view t);
+          (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "*"), fun view t ->
+              accept_fstring_trans_excl Fstring_spec_pmode_seen (Tok_fstring_pmode {
+                source=source_excl view t;
+                fstring_pmode=Fmt.Limited
+              }) view t);
         ];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
-        eoi0=accept_mal_incl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        eoi0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
       }
 
     let node0_pmode_seen_start =
       let fstring_state = Fstring_spec_precision_seen in
       let description = "Precision mode parameter must be followed by precision parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_precision (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_precision {source=source_excl view t; fstring_precision=Malformed [mal]}
       end in
       {
         edges0=map_of_cps_alist [
@@ -5590,26 +6390,29 @@ module Dfa = struct
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_fstring_precision (State.Fstring_precision.init ~n:digit)) view t
           );
-          ("*",
-            accept_fstring_trans_incl Fstring_spec_precision_star_seen Tok_fstring_precision_star);
+          ("*", fun view t ->
+              accept_fstring_trans_incl Fstring_spec_precision_star_seen (Tok_fstring_precision_star {
+                source=source_incl view t
+              }) view t);
         ];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
     let node1_precision =
       let open State.Fstring_precision in
       let accept_precision {n} cursor t = begin
-        let open AbstractToken in
-        let atok = match Nat.to_uns_opt n with
+        let source = source_at cursor t in
+        let tok = match Nat.to_uns_opt n with
           | None -> begin
               let mal = out_of_range_int Radix.Dec Uns.(extend_to_nat max_value) t.tok_base
                 cursor in
-              Tok_fstring_precision (Rendition.of_mals [mal])
+              Token.Tok_fstring_precision {source; fstring_precision=Token.Rendition.of_mals [mal]}
             end
-          | Some precision -> Tok_fstring_precision (Constant precision)
+          | Some precision -> Tok_fstring_precision {source; fstring_precision=Constant precision}
         in
-        accept_fstring_trans Fstring_spec_precision_seen atok cursor t
+        accept_fstring_trans Fstring_spec_precision_seen tok cursor t
       end in
       let accept_precision_incl state View.{cursor; _} t = begin
         accept_precision state cursor t
@@ -5631,83 +6434,117 @@ module Dfa = struct
     let node0_precision_star_seen_start =
       let fstring_state = Fstring_spec_precision_seen in
       let description = "Parametric precision must be of the form `*(^ ... ^)`" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_precision (Malformed [mal])
+      let tok_of_mal cursor t mal = begin
+        Token.Tok_fstring_precision {source=source_at cursor t; fstring_precision=Malformed [mal]}
+      end in
+      let tok_of_mal_incl View.{cursor; _} t mal = begin
+        tok_of_mal cursor t mal
+      end in
+      let tok_of_mal_excl View.{pcursor; _} t mal = begin
+        tok_of_mal pcursor t mal
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
-        eoi0=accept_mal_incl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        eoi0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
       }
 
     let node0_precision_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description =
         "Precision parameter must be followed by radix/notation/pretty/fmt parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
     let node0_b = {
       edges0=map_of_cpsets_alist [
-        (cpset_of_cps "macpbuinzrcsf",
-          accept_fstring_trans_excl Fstring_spec_radix_seen (Tok_fstring_radix Radix.Bin)
-        );
+        (cpset_of_cps "macpbuinzrcsf", fun view t ->
+            accept_fstring_trans_excl Fstring_spec_radix_seen (Tok_fstring_radix {
+              source=source_excl view t;
+              fstring_radix=Radix.Bin
+            }) view t);
       ];
-      default0=accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_b));
-      eoi0=accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_b));
+      default0=(fun view t ->
+        accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_excl view t;
+          fstring_fmt=Constant Fmt_b
+        }) view t);
+      eoi0=(fun view t ->
+        accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_incl view t;
+          fstring_fmt=Constant Fmt_b
+        }) view t);
     }
 
     let node0_radix_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "Radix parameter must be followed by notation/pretty/fmt parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_notation; edges0_pretty; edges0_fmt_b];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
     let node0_c = {
       edges0=map_of_cpsets_alist [
-        (cpset_of_cps "pbuinzrcsf",
-          accept_fstring_trans_excl Fstring_spec_notation_seen (Tok_fstring_notation Fmt.Compact)
+        (cpset_of_cps "pbuinzrcsf", fun view t ->
+            accept_fstring_trans_excl Fstring_spec_notation_seen (Tok_fstring_notation {
+              source=source_excl view t;
+              fstring_notation=Fmt.Compact
+            })
+              view t
         );
       ];
-      default0=accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_c));
-      eoi0=accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_c));
+      default0=(fun view t ->
+        accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_excl view t;
+          fstring_fmt=Constant Fmt_c
+        }) view t);
+      eoi0=(fun view t ->
+        accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_incl view t;
+          fstring_fmt=Constant Fmt_c
+        }) view t);
     }
 
     let node0_notation_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "Notation parameter must be followed by pretty/fmt parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_pretty; edges0_fmt_bc];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
     let node0_pretty_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "Pretty parameter must be followed by fmt parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_fmt (Malformed [mal])
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_fmt_bc;
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
@@ -5724,14 +6561,22 @@ module Dfa = struct
                 State.Fstring_fmt_u_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view t
         );
       ];
-      default0=accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_u));
-      eoi0=accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_u));
+      default0=(fun view t ->
+        accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_excl view t;
+          fstring_fmt=Constant Fmt_u
+        }) view t);
+      eoi0=(fun view t ->
+        accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_incl view t;
+          fstring_fmt=Constant Fmt_u
+        }) view t);
     }
 
     let node1_fmt_u_bitwidth =
       let open State.Fstring_fmt_u_bitwidth in
       let subtype_of_state {fmt_cursor; invalid; bitwidth} View.{pcursor; _} = begin
-        let open AbstractToken in
+        let open Token in
         match invalid, bitwidth with
         | false, bitwidth when Nat.(bitwidth = of_string "8") -> Rendition.Constant Fmt_u8
         | false, bitwidth when Nat.(bitwidth = of_string "16") -> Rendition.Constant Fmt_u16
@@ -5751,11 +6596,17 @@ module Dfa = struct
         ];
         default1=(fun state view t ->
           let subtype = subtype_of_state state view in
-          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt subtype) view t
+          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_excl view t;
+            fstring_fmt=subtype
+          }) view t
         );
         eoi1=(fun state view t ->
           let subtype = subtype_of_state state view in
-          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt subtype) view t
+          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_excl view t;
+            fstring_fmt=subtype
+          }) view t
         );
       }
 
@@ -5772,14 +6623,22 @@ module Dfa = struct
                 State.Fstring_fmt_i_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view t
         );
       ];
-      default0=accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_i));
-      eoi0=accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_i));
+      default0=(fun view t ->
+        accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_excl view t;
+          fstring_fmt=Constant Fmt_i
+        }) view t);
+      eoi0=(fun view t ->
+        accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_incl view t;
+          fstring_fmt=Constant Fmt_i
+        }) view t);
     }
 
     let node1_fmt_i_bitwidth =
       let open State.Fstring_fmt_i_bitwidth in
       let subtype_of_state {fmt_cursor; invalid; bitwidth} View.{pcursor; _} = begin
-        let open AbstractToken in
+        let open Token in
         match invalid, bitwidth with
         | false, bitwidth when Nat.(bitwidth = of_string "8") -> Rendition.Constant Fmt_i8
         | false, bitwidth when Nat.(bitwidth = of_string "16") -> Rendition.Constant Fmt_i16
@@ -5799,11 +6658,17 @@ module Dfa = struct
         ];
         default1=(fun state view t ->
           let subtype = subtype_of_state state view in
-          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt subtype) view t
+          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_excl view t;
+            fstring_fmt=subtype
+          }) view t
         );
         eoi1=(fun state view t ->
           let subtype = subtype_of_state state view in
-          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt subtype) view t
+          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_excl view t;
+            fstring_fmt=subtype
+          }) view t
         );
       }
 
@@ -5820,14 +6685,22 @@ module Dfa = struct
                 State.Fstring_fmt_r_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view t
         );
       ];
-      default0=accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_r));
-      eoi0=accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt (Constant Fmt_r));
+      default0=(fun view t ->
+        accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_excl view t;
+          fstring_fmt=Constant Fmt_r
+        }) view t);
+      eoi0=(fun view t ->
+        accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+          source=source_incl view t;
+          fstring_fmt=Constant Fmt_r
+        }) view t);
     }
 
     let node1_fmt_r_bitwidth =
       let open State.Fstring_fmt_r_bitwidth in
       let subtype_of_state {fmt_cursor; invalid; bitwidth} View.{pcursor; _} = begin
-        let open AbstractToken in
+        let open Token in
         match invalid, bitwidth with
         | false, bitwidth when Nat.(bitwidth = of_string "32") -> Rendition.Constant Fmt_r32
         | false, bitwidth when Nat.(bitwidth = of_string "64") -> Rendition.Constant Fmt_r64
@@ -5842,33 +6715,47 @@ module Dfa = struct
         ];
         default1=(fun state view t ->
           let subtype = subtype_of_state state view in
-          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt subtype) view t
+          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_excl view t;
+            fstring_fmt=subtype
+          }) view t
         );
         eoi1=(fun state view t ->
           let subtype = subtype_of_state state view in
-          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt subtype) view t
+          accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
+            source=source_excl view t;
+            fstring_fmt=subtype
+          }) view t
         );
       }
 
     let node0_fmt_f_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "`f` fmt parameter must be of the form `f(^ ... ^)`" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_error [mal]
+      let tok_of_mal cursor t mal = begin
+        Token.Tok_error {source=source_at cursor t; error=[mal]}
+      end in
+      let tok_of_mal_incl View.{cursor; _} t mal = begin
+        tok_of_mal cursor t mal
+      end in
+      let tok_of_mal_excl View.{pcursor; _} t mal = begin
+        tok_of_mal pcursor t mal
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
-        eoi0=accept_mal_incl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        eoi0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
       }
 
     let node0_fmt_seen_start =
       let fstring_state = Fstring_spec_sep_seen in
       let description = "Fmt parameter must be followed by separator/value parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_sep (Malformed [mal])
+      let tok_of_mal_incl view t mal = begin
+        Token.Tok_fstring_sep {source=source_incl view t; fstring_sep=Malformed [mal]}
       end in
       {
         edges0=map_of_cps_alist [
@@ -5876,23 +6763,32 @@ module Dfa = struct
           (operator_infix_lead_cps, advance State_fstring_sep_op);
           ("(", advance State_fstring_lparen);
         ];
-        default0=accept_mal_incl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
         eoi0;
       }
 
     let node0_sep_space =
       let fstring_state = Fstring_spec_sep_seen in
       let description = "Separator parameter must contain an infix operator" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_fstring_sep (Malformed [mal])
+      let tok_of_mal cursor t mal = begin
+        Token.Tok_fstring_sep {source=source_at cursor t; fstring_sep=Malformed [mal]}
+      end in
+      let tok_of_mal_incl View.{cursor; _} t mal = begin
+        tok_of_mal cursor t mal
+      end in
+      let tok_of_mal_excl View.{pcursor; _} t mal = begin
+        tok_of_mal pcursor t mal
       end in
       {
         edges0=map_of_cps_alist [
           (" ", advance State_fstring_sep_space);
           (operator_infix_lead_cps, advance State_fstring_sep_op);
         ];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
-        eoi0=accept_mal_incl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        eoi0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
       }
 
     let node0_sep_op = {
@@ -5902,11 +6798,17 @@ module Dfa = struct
       ];
       default0=(fun (View.{pcursor; _} as view) t ->
         let sep = str_of_cursor pcursor t in
-        accept_fstring_trans_excl Fstring_spec_sep_seen (Tok_fstring_sep (Constant sep)) view t
+        accept_fstring_trans_excl Fstring_spec_sep_seen (Tok_fstring_sep {
+          source=source_excl view t;
+          fstring_sep=Constant sep
+        }) view t
       );
       eoi0=(fun (View.{cursor; _} as view) t ->
         let sep = str_of_cursor cursor t in
-        accept_fstring_trans_incl Fstring_spec_sep_seen (Tok_fstring_sep (Constant sep)) view t
+        accept_fstring_trans_incl Fstring_spec_sep_seen (Tok_fstring_sep {
+          source=source_incl view t;
+          fstring_sep=Constant sep
+        }) view t
       );
     }
 
@@ -5917,83 +6819,103 @@ module Dfa = struct
       ];
       default0=(fun (View.{pcursor; _} as view) t ->
         let sep = str_of_cursor pcursor t in
-        accept_fstring_trans_excl Fstring_spec_sep_seen (Tok_fstring_sep (Constant sep)) view t
+        accept_fstring_trans_excl Fstring_spec_sep_seen (Tok_fstring_sep {
+          source=source_excl view t;
+          fstring_sep=Constant sep
+        }) view t
       );
       eoi0=(fun (View.{cursor; _} as view) t ->
         let sep = str_of_cursor cursor t in
-        accept_fstring_trans_incl Fstring_spec_sep_seen (Tok_fstring_sep (Constant sep)) view t
+        accept_fstring_trans_incl Fstring_spec_sep_seen (Tok_fstring_sep {
+          source=source_incl view t;
+          fstring_sep=Constant sep
+        }) view t
       );
     }
 
     let node0_sep_seen_start =
       let fstring_state = Fstring_body in
       let description = "Separator parameter must be followed by value parameter" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_error [mal]
+      let tok_of_mal_excl view t mal = begin
+        Token.Tok_error {source=source_excl view t; error=[mal]}
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=accept_mal_excl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
         eoi0;
       }
 
     let node0_spec_lparen =
       let fstring_state = Fstring_body in
       let description = "Value parameter must be of the form `(^ ... ^)`" in
-      let atok_of_mal mal = begin
-        AbstractToken.Tok_error [mal]
+      let tok_of_mal_incl view t mal = begin
+        Token.Tok_error {source=source_incl view t; error=[mal]}
       end in
       {
         edges0=map_of_cps_alist [
           ("^", fun (View.{cursor; _} as view) t ->
+              let source = source_incl view t in
               match t.fstring_states with
               | Fstring_spec_width_star_seen :: _ ->
-                accept_fstring_trans_incl Fstring_expr_width Tok_fstring_lparen_caret view t
+                accept_fstring_trans_incl Fstring_expr_width (Tok_fstring_lparen_caret {source})
+                  view t
               | Fstring_spec_precision_star_seen :: _ ->
-                accept_fstring_trans_incl Fstring_expr_precision Tok_fstring_lparen_caret view t
+                accept_fstring_trans_incl Fstring_expr_precision (Tok_fstring_lparen_caret {source})
+                  view t
               | Fstring_spec_fmt_f_seen :: _ ->
-                accept_fstring_trans_incl Fstring_expr_fmt Tok_fstring_lparen_caret view t
+                accept_fstring_trans_incl Fstring_expr_fmt (Tok_fstring_lparen_caret {source})
+                  view t
               | Fstring_spec_fmt_seen :: _ ->
-                accept_fstring_trans_incl (Fstring_expr_value None) Tok_fstring_lparen_caret view t
+                accept_fstring_trans_incl (Fstring_expr_value None)
+                  (Tok_fstring_lparen_caret {source}) view t
               | Fstring_spec_sep_seen :: _ ->
                 accept_fstring_trans_incl (Fstring_expr_value (Some cursor))
-                  Tok_fstring_lparen_caret view t
+                  (Tok_fstring_lparen_caret {source}) view t
               | _ :: _
               | [] -> not_reached ()
           );
         ];
-        default0=accept_mal_incl fstring_state description atok_of_mal;
-        eoi0=accept_mal_incl fstring_state description atok_of_mal;
+        default0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        eoi0=(fun view t ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
       }
 
     let node0_caret = {
       edges0=map_of_cps_alist [
         (")", fun (View.{ppcursor; _} as view) t ->
+            let source = source_incl view t in
             match t.fstring_states with
-            | [] -> accept_excl Tok_caret view t
+            | [] -> accept_tok_excl (Tok_caret {source}) view t
             | Fstring_expr_width :: _ ->
-              accept_fstring_trans_incl Fstring_spec_width_seen Tok_fstring_caret_rparen view t
+              accept_fstring_trans_incl Fstring_spec_width_seen (Tok_fstring_caret_rparen {source})
+                view t
             | Fstring_expr_precision :: _ ->
-              accept_fstring_trans_incl Fstring_spec_precision_seen Tok_fstring_caret_rparen view t
+              accept_fstring_trans_incl Fstring_spec_precision_seen
+                (Tok_fstring_caret_rparen {source}) view t
             | Fstring_expr_fmt :: _ ->
-              accept_fstring_trans_incl Fstring_spec_fmt_seen Tok_fstring_caret_rparen view t
+              accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_caret_rparen {source})
+                view t
             | (Fstring_expr_value (Some label_base)) :: _ -> begin
-                let label_source = Source.Slice.of_cursors ~base:label_base ~past:ppcursor in
-                let label_string = Source.Slice.to_string label_source in
-                let label_ctok = ConcreteToken.init (Tok_fstring_label label_string) label_source in
-                accept_fstring_trans_incl (Fstring_value_seen label_ctok) Tok_fstring_caret_rparen
-                  view t
+                let source = Source.Slice.of_cursors ~base:label_base ~past:ppcursor in
+                let label_tok = Token.Tok_fstring_label {
+                  source;
+                  fstring_label=Source.Slice.to_string source
+                } in
+                accept_fstring_trans_incl (Fstring_value_seen label_tok)
+                  (Tok_fstring_caret_rparen {source}) view t
               end
             | (Fstring_expr_value None) :: _ ->
-              accept_fstring_trans_incl Fstring_body Tok_fstring_caret_rparen view t
+              accept_fstring_trans_incl Fstring_body (Tok_fstring_caret_rparen {source}) view t
             | _ :: _ -> not_reached ()
         );
         (operator_cps, advance State_operator_caret);
       ];
-      default0=accept_excl Tok_caret;
-      eoi0=accept_incl Tok_caret;
+      default0=(fun view t -> accept_tok_excl (Tok_caret {source=source_excl view t}) view t);
+      eoi0=(fun view t -> accept_tok_incl (Tok_caret {source=source_incl view t}) view t);
     }
   end
 
@@ -6154,11 +7076,11 @@ module Dfa = struct
           |> Fmt.fmt "\n" |> ignore;
         transition trace state' view t'
       end
-    | t', Accept ctok -> begin
+    | t', Accept tok -> begin
         if trace then
-          File.Fmt.stdout |> Fmt.fmt " -> Accept (" |> ConcreteToken.pp ctok |> Fmt.fmt "), "
+          File.Fmt.stdout |> Fmt.fmt " -> Accept (" |> Token.pp tok |> Fmt.fmt "), "
           |> pp t' |> Fmt.fmt "\n" |> ignore;
-        t', Accept ctok
+        t', Accept tok
       end
 
   let next ?(trace=false) state t =
@@ -6168,7 +7090,7 @@ module Dfa = struct
     match transition trace state (view_of_t t) t with
     | _, Advance _ -> not_reached ()
     | _, Retry _ -> not_reached ()
-    | t', Accept ctok -> t', ctok
+    | t', Accept tok -> t', tok
 end
 
 let next t =
@@ -6178,9 +7100,9 @@ let next t =
   | Some start -> Dfa.next ?trace start t
   | None -> begin
       match List.hd t.fstring_states with
-      | Fstring_spec_pct_seen (ctok :: ctoks') ->
-        Dfa.fstring_trans (Fstring_spec_pct_seen ctoks') t, ctok
-      | Fstring_value_seen ctok -> Dfa.fstring_trans Fstring_body t, ctok
-      | Fstring_rditto_seen ctok -> Dfa.fstring_pop t, ctok
+      | Fstring_spec_pct_seen (tok :: toks') ->
+        Dfa.fstring_trans (Fstring_spec_pct_seen toks') t, tok
+      | Fstring_value_seen tok -> Dfa.fstring_trans Fstring_body t, tok
+      | Fstring_rditto_seen tok -> Dfa.fstring_pop t, tok
       | _ -> not_reached ()
     end
