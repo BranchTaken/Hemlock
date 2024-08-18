@@ -3,61 +3,60 @@ open! Basis
 open! Hmc
 
 let scan_str s =
-  let rec fn t ctoks = begin
-    let t', ctok = Scan.next t in
-    let atok = Scan.ConcreteToken.atok ctok in
-    match atok with
-    | Tok_end_of_input -> List.rev ctoks
-    | _ -> fn t' (ctok :: ctoks)
+  let rec fn t toks = begin
+    let t', tok = Scan.next t in
+    match tok with
+    | Tok_end_of_input _ -> List.rev toks
+    | _ -> fn t' (tok :: toks)
   end in
   let t = Scan.init (Text.of_string_slice (String.C.Slice.of_string s)) in
   fn t []
 
 let contextualize source first last =
-  let ctoks = scan_str source in
-  let first_ctok = List.nth first ctoks in
-  let last_ctok = List.nth last ctoks in
-  let lookahead_ctok_opt = (
+  let toks = scan_str source in
+  let first_tok = List.nth first toks in
+  let last_tok = List.nth last toks in
+  let lookahead_tok_opt = (
     let rec f last lookahead tail =
       match tail with
       | [] -> lookahead
-      | ctok :: tail' -> begin
+      | tok :: tail' -> begin
           let last_line = Text.Pos.line (Source.Cursor.pos (Source.Cursor.unbias (Source.Slice.past
-              (Scan.ConcreteToken.source last)))) in
-          let ctok_line = Text.Pos.line (Source.Cursor.pos (Source.Cursor.unbias
-              (Source.Slice.base (Scan.ConcreteToken.source ctok)))) in
-          match last_line < ctok_line with
-          | true -> Some ctok
-          | false -> f last (Some ctok) tail'
+              (Scan.Token.source last)))) in
+          let tok_line = Text.Pos.line (Source.Cursor.pos (Source.Cursor.unbias
+              (Source.Slice.base (Scan.Token.source tok)))) in
+          match last_line < tok_line with
+          | true -> Some tok
+          | false -> f last (Some tok) tail'
         end
     in
-    let tail = List.drop (succ last) ctoks in
-    f last_ctok None tail
+    let tail = List.drop (succ last) toks in
+    f last_tok None tail
   ) in
-  let lookahead = match lookahead_ctok_opt with
+  let lookahead = match lookahead_tok_opt with
     | None -> None
-    | Some ctok -> Some (Source.Slice.past (Scan.ConcreteToken.source ctok))
+    | Some tok -> Some (Source.Slice.past (Scan.Token.source tok))
   in
   let source_slice = Source.Slice.of_cursors
-      ~base:(Source.Slice.base (Scan.ConcreteToken.source first_ctok))
-      ~past:(Source.Slice.past (Scan.ConcreteToken.source last_ctok)) in
+      ~base:(Source.Slice.base (Scan.Token.source first_tok))
+      ~past:(Source.Slice.past (Scan.Token.source last_tok)) in
   let context_lookahead = Source.Slice.line_context ?lookahead source_slice in
   let context_no_lookahead = Source.Slice.line_context source_slice in
-  let pp_i_tok (i, ctok) formatter = begin
+  let pp_i_tok (i, tok) formatter = begin
     formatter
     |> Fmt.fmt "("
     |> Uns.pp i
     |> Fmt.fmt ", "
-    |> Scan.ConcreteToken.pp ctok
+    |> Scan.Token.pp tok
     |> Fmt.fmt ")"
   end in
   File.Fmt.stdout
   |> Fmt.fmt "---\nsource=" |> String.fmt ~alt:true ~pretty:true source
-  |> Fmt.fmt "\nfirst=" |> Scan.ConcreteToken.pp (List.nth first ctoks)
-  |> Fmt.fmt "\nlast=" |> Scan.ConcreteToken.pp (List.nth last ctoks)
+  |> Fmt.fmt "\nfirst=" |> Scan.Token.pp (List.nth first toks)
+  |> Fmt.fmt "\nlast=" |> Scan.Token.pp (List.nth last toks)
   |> Fmt.fmt "\nlookahead=" |> (Option.pp Source.Cursor.pp) lookahead
-  |> Fmt.fmt "\nctoks="
-  |> (List.fmt ~alt:true pp_i_tok) (List.mapi ctoks ~f:(fun i ctok -> (i, ctok)))
+  |> Fmt.fmt "\ntoks="
+  |> (List.fmt ~alt:true pp_i_tok) (List.mapi toks ~f:(fun i tok -> (i, tok)))
   |> Fmt.fmt "\ncontext_lookahead="
   |> (List.fmt ~alt:true (fun slice formatter ->
     formatter

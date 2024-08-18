@@ -3,49 +3,25 @@
 open Basis
 open! Basis.Rudiments
 
-module AbstractToken: sig
-  type t =
-    | Tok_hocc
-    | Tok_token
-    | Tok_nonterm
-    | Tok_start
-    | Tok_epsilon
-    | Tok_neutral
-    | Tok_left
-    | Tok_right
-    | Tok_prec
-    | Tok_colon_colon_eq
-
-  val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-
-  val malformations: t -> Hmc.Scan.AbstractToken.Rendition.Malformation.t list
-  (** [malformations t] returns a list of malformations associated with [t], or an empty list if
-      there are no malformations. This function can be used on any token variant, even if no
-      malformations are possible. *)
-end
-
-module ConcreteToken : sig
-  type t = {
-    atok: AbstractToken.t;
-    source: Hmc.Source.Slice.t;
-  }
-
-  val atok: t -> AbstractToken.t
-  val source: t -> Hmc.Source.Slice.t
-
-  include FormattableIntf.SMono with type t := t
-end
-
 module Token: sig
   type t =
-    | HmcToken of Hmc.Scan.ConcreteToken.t
-    | HoccToken of ConcreteToken.t
+    | HmcToken of Hmc.Scan.Token.t
+    | Tok_hocc of {source: Hmc.Source.Slice.t}
+    | Tok_token of {source: Hmc.Source.Slice.t}
+    | Tok_nonterm of {source: Hmc.Source.Slice.t}
+    | Tok_start of {source: Hmc.Source.Slice.t}
+    | Tok_epsilon of {source: Hmc.Source.Slice.t}
+    | Tok_neutral of {source: Hmc.Source.Slice.t}
+    | Tok_left of {source: Hmc.Source.Slice.t}
+    | Tok_right of {source: Hmc.Source.Slice.t}
+    | Tok_prec of {source: Hmc.Source.Slice.t}
+    | Tok_colon_colon_eq of {source: Hmc.Source.Slice.t}
 
   val source: t -> Hmc.Source.Slice.t
 
   include FormattableIntf.SMono with type t := t
 
-  val malformations: t -> Hmc.Scan.AbstractToken.Rendition.Malformation.t list
+  val malformations: t -> Hmc.Scan.Token.Rendition.Malformation.t list
   (** [malformations t] returns a list of malformations associated with [t], or an empty list if
       there are no malformations. This function can be used on any token variant, even if no
       malformations are possible. *)

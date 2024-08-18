@@ -23,8 +23,8 @@ let line_context_indentation line_context =
   raw_indentation - (raw_indentation % 4L)
 
 let indentation_of_hocc = function
-  | Scan.Token.HmcToken _ -> not_reached ()
-  | HoccToken {source; _} -> Hmc.Source.Slice.line_context source |> line_context_indentation
+  | Scan.Token.Tok_hocc {source} -> Hmc.Source.Slice.line_context source |> line_context_indentation
+  | _ -> not_reached ()
 
 let macro_of_line line =
   let open String.C in
@@ -476,14 +476,8 @@ let generate_hmi conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
     |> (fun formatter ->
       match prelude with
       | Parse.Matter {token_; _} -> begin
-          let base = match token_ with
-            | HmcToken {source; _} -> Hmc.Source.Slice.base source
-            | HoccToken _ -> not_reached ()
-          in
-          let past = match hocc_ with
-            | HmcToken _ -> not_reached ()
-            | HoccToken {source; _} -> Hmc.Source.Slice.base source
-          in
+          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+          let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
         end
@@ -494,14 +488,8 @@ let generate_hmi conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
-          let base = match hocc_ with
-            | HmcToken _ -> not_reached ()
-            | HoccToken {source; _} -> Hmc.Source.Slice.past source
-          in
-          let past = match eoi with
-            | HmcToken {source; _} -> Hmc.Source.Slice.past source
-            | HoccToken _ -> not_reached ()
-          in
+          let base = Scan.Token.source hocc_ |> Hmc.Source.Slice.past in
+          let past = Scan.Token.source eoi |> Hmc.Source.Slice.past in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter
           |> fmt_source_directive indentation source
@@ -1853,14 +1841,8 @@ let generate_hm conf
     |> (fun formatter ->
       match prelude with
       | Parse.Matter {token_; _} -> begin
-          let base = match token_ with
-            | HmcToken {source; _} -> Hmc.Source.Slice.base source
-            | HoccToken _ -> not_reached ()
-          in
-          let past = match hocc_ with
-            | HmcToken _ -> not_reached ()
-            | HoccToken {source; _} -> Hmc.Source.Slice.base source
-          in
+          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+          let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
         end
@@ -1872,10 +1854,7 @@ let generate_hm conf
       match postlude with
       | Parse.Matter _ -> begin
           let base = Parse.postlude_base_of_hocc hocc_block in
-          let past = match eoi with
-            | HmcToken {source; _} -> Hmc.Source.Slice.past source
-            | HoccToken _ -> not_reached ()
-          in
+          let past = Scan.Token.source eoi |> Hmc.Source.Slice.past in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter
           |> fmt_source_directive indentation source
@@ -2299,14 +2278,8 @@ let generate_mli conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
     |> (fun formatter ->
       match prelude with
       | Parse.Matter {token_; _} -> begin
-          let base = match token_ with
-            | HmcToken {source; _} -> Hmc.Source.Slice.base source
-            | HoccToken _ -> not_reached ()
-          in
-          let past = match hocc_ with
-            | HmcToken _ -> not_reached ()
-            | HoccToken {source; _} -> Hmc.Source.Slice.base source
-          in
+          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+          let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
         end
@@ -2316,14 +2289,8 @@ let generate_mli conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
     |> (fun formatter ->
       match postlude with
       | Parse.Matter _ -> begin
-          let base = match hocc_ with
-            | HmcToken _ -> not_reached ()
-            | HoccToken {source; _} -> Hmc.Source.Slice.past source
-          in
-          let past = match eoi with
-            | HmcToken {source; _} -> Hmc.Source.Slice.past source
-            | HoccToken _ -> not_reached ()
-          in
+          let base = Scan.Token.source hocc_ |> Hmc.Source.Slice.past in
+          let past = Scan.Token.source eoi |> Hmc.Source.Slice.past in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter
           |> fmt_ml_source_directive source
@@ -3712,14 +3679,8 @@ let generate_ml conf
     |> (fun formatter ->
       match prelude with
       | Parse.Matter {token_; _} -> begin
-          let base = match token_ with
-            | HmcToken {source; _} -> Hmc.Source.Slice.base source
-            | HoccToken _ -> not_reached ()
-          in
-          let past = match hocc_ with
-            | HmcToken _ -> not_reached ()
-            | HoccToken {source; _} -> Hmc.Source.Slice.base source
-          in
+          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+          let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
         end
@@ -3730,10 +3691,7 @@ let generate_ml conf
       match postlude with
       | Parse.Matter _ -> begin
           let base = Parse.postlude_base_of_hocc hocc_block in
-          let past = match eoi with
-            | HmcToken {source; _} -> Hmc.Source.Slice.past source
-            | HoccToken _ -> not_reached ()
-          in
+          let past = Scan.Token.source eoi |> Hmc.Source.Slice.past in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter
           |> fmt_ml_source_directive source

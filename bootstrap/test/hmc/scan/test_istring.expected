@@ -1,63 +1,63 @@
 ``""``
-  [1:0..1:2) : <Tok_istring (Constant "")>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:2); istring=(Constant "")})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``"
 "``
-  [1:0..2:1) : <Tok_istring (Constant "\n")>
-  [2:1..2:1) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..2:1); istring=(Constant "\n")})
+  (Tok_end_of_input {source=[2:1..2:1)})
 ``"a \n \t \n \r \" \\ \% nl>\
 <nl \u{41} \u{000_ff_fd}"``
-  [1:0..2:25) : <Tok_istring (Constant "a \n \t \n \r \" \\ \% nl><nl A �")>
-  [2:25..2:25) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..2:25); istring=(Constant "a \n \t \n \r \" \\ \% nl><nl A �")})
+  (Tok_end_of_input {source=[2:25..2:25)})
 ``"ht>	<ht cr><cr"``
-  [1:0..1:20) : <Tok_istring (Malformed ["[1:4..1:8): Invalid codepoint"; "[1:15..1:16): Invalid codepoint"])>
-  [1:20..1:20) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:20); istring=(Malformed ["[1:4..1:8): Invalid codepoint"; "[1:15..1:16): Invalid codepoint"])})
+  (Tok_end_of_input {source=[1:20..1:20)})
 ``"\'"``
-  [1:0..1:4) : <Tok_istring (Malformed ["[1:1..1:3): Illegal backslash escape"])>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:4); istring=(Malformed ["[1:1..1:3): Illegal backslash escape"])})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``"\u{110ffff}"``
-  [1:0..1:13) : <Tok_istring (Malformed ["[1:1..1:12): Invalid Unicode value"])>
-  [1:13..1:13) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:13); istring=(Malformed ["[1:1..1:12): Invalid Unicode value"])})
+  (Tok_end_of_input {source=[1:13..1:13)})
 ``"\u{110000}"``
-  [1:0..1:12) : <Tok_istring (Malformed ["[1:1..1:11): Invalid Unicode value"])>
-  [1:12..1:12) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:12); istring=(Malformed ["[1:1..1:11): Invalid Unicode value"])})
+  (Tok_end_of_input {source=[1:12..1:12)})
 ``"\u{110000}"``
-  [1:0..1:12) : <Tok_istring (Malformed ["[1:1..1:11): Invalid Unicode value"])>
-  [1:12..1:12) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:12); istring=(Malformed ["[1:1..1:11): Invalid Unicode value"])})
+  (Tok_end_of_input {source=[1:12..1:12)})
 ``"\u{d800}"``
-  [1:0..1:10) : <Tok_istring (Malformed ["[1:1..1:9): Invalid Unicode value"])>
-  [1:10..1:10) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:10); istring=(Malformed ["[1:1..1:9): Invalid Unicode value"])})
+  (Tok_end_of_input {source=[1:10..1:10)})
 ``"\u{x"``
-  [1:0..1:6) : <Tok_istring (Malformed ["[1:1..1:4): Invalid \u{...}"])>
-  [1:6..1:6) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:6); istring=(Malformed ["[1:1..1:4): Invalid \u{...}"])})
+  (Tok_end_of_input {source=[1:6..1:6)})
 ``"\u{0"``
-  [1:0..1:6) : <Tok_istring (Malformed ["[1:1..1:6): Invalid \u{...}"])>
-  [1:6..1:6) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:6); istring=(Malformed ["[1:1..1:6): Invalid \u{...}"])})
+  (Tok_end_of_input {source=[1:6..1:6)})
 ``"\u{"``
-  [1:0..1:5) : <Tok_istring (Malformed ["[1:1..1:5): Invalid \u{...}"])>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:5); istring=(Malformed ["[1:1..1:5): Invalid \u{...}"])})
+  (Tok_end_of_input {source=[1:5..1:5)})
 ``"\u0"``
-  [1:0..1:5) : <Tok_istring (Malformed ["[1:1..1:3): Illegal backslash escape"])>
-  [1:5..1:5) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:5); istring=(Malformed ["[1:1..1:3): Illegal backslash escape"])})
+  (Tok_end_of_input {source=[1:5..1:5)})
 ``"\u"``
-  [1:0..1:4) : <Tok_istring (Malformed ["[1:1..1:4): Illegal backslash escape"])>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:4); istring=(Malformed ["[1:1..1:4): Illegal backslash escape"])})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``"\x"``
-  [1:0..1:4) : <Tok_istring (Malformed ["[1:1..1:3): Illegal backslash escape"])>
-  [1:4..1:4) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:4); istring=(Malformed ["[1:1..1:3): Illegal backslash escape"])})
+  (Tok_end_of_input {source=[1:4..1:4)})
 ``"\"``
-  [1:0..1:3) : <Tok_istring (Malformed ["[1:3..1:3): Unterminated string literal"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:3); istring=(Malformed ["[1:3..1:3): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``"\``
-  [1:0..1:2) : <Tok_istring (Malformed ["[1:2..1:2): Unterminated string literal"])>
-  [1:2..1:2) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:2); istring=(Malformed ["[1:2..1:2): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``"""``
-  [1:0..1:2) : <Tok_istring (Constant "")>
-  [1:2..1:3) : <Tok_istring (Malformed ["[1:3..1:3): Unterminated string literal"])>
-  [1:3..1:3) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:2); istring=(Constant "")})
+  (Tok_istring {source=[1:2..1:3); istring=(Malformed ["[1:3..1:3): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``"``
-  [1:0..1:1) : <Tok_istring (Malformed ["[1:1..1:1): Unterminated string literal"])>
-  [1:1..1:1) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:1); istring=(Malformed ["[1:1..1:1): Unterminated string literal"])})
+  (Tok_end_of_input {source=[1:1..1:1)})
 ``"\u\v\w"``
-  [1:0..1:8) : <Tok_istring (Malformed ["[1:1..1:3): Illegal backslash escape"; "[1:3..1:5): Illegal backslash escape"; "[1:5..1:7): Illegal backslash escape"])>
-  [1:8..1:8) : <Tok_end_of_input>
+  (Tok_istring {source=[1:0..1:8); istring=(Malformed ["[1:1..1:3): Illegal backslash escape"; "[1:3..1:5): Illegal backslash escape"; "[1:5..1:7): Illegal backslash escape"])})
+  (Tok_end_of_input {source=[1:8..1:8)})
