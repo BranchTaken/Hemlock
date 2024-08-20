@@ -24,7 +24,7 @@ let synthetic_name_of_start_name start_name =
 let precs_init io hmh =
   let rec fold_precs_tl io precs rels doms precs_tl = begin
     match precs_tl with
-    | Parse.PrecsTlCommaUident {uident=Uident {uident}; precs_tl; _} -> begin
+    | Parse.PrecsTlUident {uident=UIDENT {token=uident}; precs_tl} -> begin
         let name = string_of_token uident in
         let rels = match Set.mem name rels with
           | true -> begin
@@ -56,7 +56,7 @@ let precs_init io hmh =
   end in
   let fold_precs io precs parse_precs = begin
     match parse_precs with
-    | Parse.Precs {uident=Uident {uident}; precs_tl} -> begin
+    | Parse.Precs {uident=UIDENT {token=uident}; precs_tl} -> begin
         let name = string_of_token uident in
         let rels = Set.singleton (module String) name in
         let doms = match Precs.prec_of_name name precs with
@@ -76,15 +76,15 @@ let precs_init io hmh =
   end in
   let fold_prec io precs parse_prec = begin
     match parse_prec with
-    | Parse.Prec {prec_type; uident=Uident {uident}; prec_rels} -> begin
+    | Parse.Prec {prec_type; uident=UIDENT {token=uident}; prec_rels} -> begin
         let name = string_of_token uident in
         let assoc = match prec_type with
-          | PrecTypeNeutral _ -> None
-          | PrecTypeLeft _ -> Some Assoc.Left
-          | PrecTypeRight _ -> Some Assoc.Right
+          | PrecTypeNeutral -> None
+          | PrecTypeLeft -> Some Assoc.Left
+          | PrecTypeRight -> Some Assoc.Right
         in
         let io, doms = match prec_rels with
-          | PrecRelsLtPrecs {precs=parse_precs; _} -> fold_precs io precs parse_precs
+          | PrecRelsPrecs {precs=parse_precs} -> fold_precs io precs parse_precs
           | PrecRelsEpsilon -> io, Ordset.empty (module Prec.Index)
         in
         let precs = match Precs.prec_index_of_name name precs with
@@ -104,7 +104,7 @@ let precs_init io hmh =
   end in
   let fold_stmt io precs stmt = begin
     match stmt with
-    | Parse.StmtPrec {prec_=parse_prec} -> fold_prec io precs parse_prec
+    | Parse.StmtPrec {prec=parse_prec} -> fold_prec io precs parse_prec
     | _ -> io, precs
   end in
   let rec fold_stmts_tl io precs stmts_tl = begin
@@ -127,75 +127,83 @@ let precs_init io hmh =
   in
   io, precs
 
+let rec qualify_symbol_type symbol_type_qualifier symbol_type =
+  match symbol_type_qualifier with
+  | Parse.SymbolTypeQualifier {cident=CIDENT {token=cident}; symbol_type_qualifier_tl; _} -> begin
+      qualify_symbol_type symbol_type_qualifier_tl
+        (SymbolType.qualify (string_of_token cident) symbol_type)
+    end
+  | SymbolTypeQualifierEpsilon -> symbol_type
+
 let tokens_init io precs hmh =
   let fold_token io precs symbols token = begin
     match token with
-    | Parse.Token {cident=Cident {cident}; token_alias; of_type0; prec_ref; _} -> begin
-        let name = string_of_token cident in
-        let qtype = match of_type0 with
-          | OfType0OfType {of_type=OfType {
-            type_module=Cident {cident}; type_type=Uident {uident}; _}} -> begin
-              let module_ = string_of_token cident in
-              let type_ = string_of_token uident in
-              QualifiedType.explicit ~module_ ~type_
-            end
-          | OfType0Epsilon -> QualifiedType.implicit
-        in
-        let prec = match prec_ref with
-          | PrecRefPrecUident {uident=Uident {uident}; _} -> begin
-              let prec_name = string_of_token uident in
-              match Precs.prec_of_name prec_name precs with
-              | None -> begin
-                  let io =
-                    io.err
-                    |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source uident)
-                    |> Fmt.fmt ": Undefined precedence: " |> Fmt.fmt prec_name |> Fmt.fmt "\n"
-                    |> Io.with_err io
-                  in
-                  Io.fatal io
-                end
-              | Some _ as prec -> prec
-            end
-          | PrecRefEpsilon -> None
-        in
-        let () = match Symbols.symbol_index_of_name name symbols with
-          | None -> ()
-          | Some _ -> begin
-              let io =
-                io.err
-                |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source cident)
-                |> Fmt.fmt ": Redefined token: " |> Fmt.fmt name |> Fmt.fmt "\n"
-                |> Io.with_err io
-              in
-              Io.fatal io
-            end
-        in
-        let alias = match token_alias with
-          | TokenAlias {alias=a} -> begin
-              let alias_name = string_of_alias_token a in
-              let () = match Symbols.symbol_index_of_alias alias_name symbols with
-                | None -> ()
-                | Some _ -> begin
+    | Parse.Token {cident=CIDENT {token=cident}; token_alias; symbol_type0; prec_ref; _}
+      -> begin
+          let name = string_of_token cident in
+          let stype = match symbol_type0 with
+            | SymbolType0SymbolType {symbol_type=SymbolType {
+              symbol_type_qualifier; symbol_type=UIDENT {token=type_}; _}} -> begin
+                SymbolType.explicit (string_of_token type_)
+                |> qualify_symbol_type symbol_type_qualifier
+              end
+            | SymbolType0Epsilon -> SymbolType.implicit
+          in
+          let prec = match prec_ref with
+            | PrecRefUident {uident=UIDENT {token=uident}} -> begin
+                let prec_name = string_of_token uident in
+                match Precs.prec_of_name prec_name precs with
+                | None -> begin
                     let io =
                       io.err
-                      |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source a)
-                      |> Fmt.fmt ": Redefined token alias: " |> Fmt.fmt alias_name |> Fmt.fmt "\n"
+                      |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source uident)
+                      |> Fmt.fmt ": Undefined precedence: " |> Fmt.fmt prec_name |> Fmt.fmt "\n"
                       |> Io.with_err io
                     in
                     Io.fatal io
                   end
-              in
-              Some alias_name
-            end
-          | TokenAliasEpsilon -> None
-        in
-        let symbols = Symbols.insert_token ~name ~qtype ~prec ~stmt:(Some token) ~alias symbols in
-        io, symbols
-      end
+                | Some _ as prec -> prec
+              end
+            | PrecRefEpsilon -> None
+          in
+          let () = match Symbols.symbol_index_of_name name symbols with
+            | None -> ()
+            | Some _ -> begin
+                let io =
+                  io.err
+                  |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source cident)
+                  |> Fmt.fmt ": Redefined token: " |> Fmt.fmt name |> Fmt.fmt "\n"
+                  |> Io.with_err io
+                in
+                Io.fatal io
+              end
+          in
+          let alias = match token_alias with
+            | TokenAlias {alias=ISTRING {token=a}} -> begin
+                let alias_name = string_of_alias_token a in
+                let () = match Symbols.symbol_index_of_alias alias_name symbols with
+                  | None -> ()
+                  | Some _ -> begin
+                      let io =
+                        io.err
+                        |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source a)
+                        |> Fmt.fmt ": Redefined token alias: " |> Fmt.fmt alias_name |> Fmt.fmt "\n"
+                        |> Io.with_err io
+                      in
+                      Io.fatal io
+                    end
+                in
+                Some alias_name
+              end
+            | TokenAliasEpsilon -> None
+          in
+          let symbols = Symbols.insert_token ~name ~stype ~prec ~stmt:(Some token) ~alias symbols in
+          io, symbols
+        end
   end in
   let fold_stmt io precs symbols stmt = begin
     match stmt with
-    | Parse.StmtToken {token_} -> fold_token io precs symbols token_
+    | Parse.StmtToken {token} -> fold_token io precs symbols token
     | _ -> io, symbols
   end in
   let rec fold_stmts_tl io precs symbols stmts_tl = begin
@@ -219,7 +227,7 @@ let tokens_init io precs hmh =
   io, symbols
 
 let symbol_infos_init io symbols hmh =
-  let insert_symbol_info name qtype name_token symbols = begin
+  let insert_symbol_info name stype name_token symbols = begin
     match Symbols.info_of_name name symbols with
     | Some _ -> begin
         let io =
@@ -230,31 +238,31 @@ let symbol_infos_init io symbols hmh =
         in
         Io.fatal io
       end
-    | None -> Symbols.insert_nonterm_info ~name ~qtype symbols
+    | None -> Symbols.insert_nonterm_info ~name ~stype symbols
   end in
   let fold_nonterm io symbols nonterm = begin
-    let name, qtype = match nonterm with
-      | Parse.NontermProds {cident=Cident {cident=nonterm_cident}; _} ->
-        string_of_token nonterm_cident, QualifiedType.implicit
-      | NontermReductions {cident=Cident {cident=nonterm_cident}; of_type=OfType {
-        type_module=Cident {cident}; type_type=Uident {uident}; _}; _} -> begin
+    let name, stype = match nonterm with
+      | Parse.NontermProds {cident=CIDENT {token=nonterm_cident}; _} ->
+        string_of_token nonterm_cident, SymbolType.implicit
+      | NontermReductions {cident=CIDENT {token=nonterm_cident}; symbol_type=SymbolType {
+        symbol_type_qualifier; symbol_type=UIDENT {token=type_}; _}; _} -> begin
           let name = string_of_token nonterm_cident in
-          let module_ = string_of_token cident in
-          let type_ = string_of_token uident in
-          name, QualifiedType.explicit ~module_ ~type_
+          let stype = SymbolType.explicit (string_of_token type_)
+                      |> qualify_symbol_type symbol_type_qualifier in
+          name, stype
         end
     in
     match nonterm with
-    | NontermProds {nonterm_type; cident=Cident {cident}; _}
-    | NontermReductions {nonterm_type; cident=Cident {cident}; _} -> begin
-        let symbols = insert_symbol_info name qtype cident symbols in
+    | NontermProds {nonterm_type; cident=CIDENT {token=cident}; _}
+    | NontermReductions {nonterm_type; cident=CIDENT {token=cident}; _} -> begin
+        let symbols = insert_symbol_info name stype cident symbols in
         let io, symbols = match nonterm_type with
-          | NontermTypeNonterm _ -> io, symbols
-          | NontermTypeStart _ -> begin
+          | NontermTypeNonterm -> io, symbols
+          | NontermTypeStart -> begin
               (* Synthesize start symbol wrapper. *)
               let name' = synthetic_name_of_start_name name in
-              let qtype' = QualifiedType.synthetic_wrapper qtype in
-              let symbols = insert_symbol_info name' qtype' cident symbols in
+              let stype' = SymbolType.synthetic_wrapper stype in
+              let symbols = insert_symbol_info name' stype' cident symbols in
               io, symbols
             end
         in
@@ -263,7 +271,7 @@ let symbol_infos_init io symbols hmh =
   end in
   let fold_stmt io symbols stmt = begin
     match stmt with
-    | Parse.StmtNonterm {nonterm_} -> fold_nonterm io symbols nonterm_
+    | Parse.StmtNonterm {nonterm} -> fold_nonterm io symbols nonterm
     | _ -> io, symbols
   end in
   let rec fold_stmts_tl io symbols stmts_tl = begin
@@ -290,9 +298,11 @@ let symbols_init io precs symbols hmh =
   let fold_prod_param io symbols prod_params prod_param = begin
     match prod_param with
     | Parse.ProdParamBinding {prod_param_symbol; _}
-    | Parse.ProdParam {prod_param_symbol} -> begin
-        let io, symbol_name, qtype = match prod_param_symbol with
-          | ProdParamSymbolCident {cident=Cident {cident}} -> begin
+    | ProdParamPattern {prod_param_symbol; _}
+    | ProdParamFields {prod_param_symbol; _}
+    | ProdParam {prod_param_symbol} -> begin
+        let io, symbol_name, stype = match prod_param_symbol with
+          | ProdParamSymbolCident {cident=CIDENT {token=cident}} -> begin
               let symbol_name = string_of_token cident in
               match Symbols.info_of_name symbol_name symbols with
               | None -> begin
@@ -304,7 +314,7 @@ let symbols_init io precs symbols hmh =
                   in
                   Io.fatal io
                 end
-              | Some Symbols.{name; alias; qtype; _} -> begin
+              | Some Symbols.{name; alias; stype; _} -> begin
                   let io = match alias with
                     | Some alias -> begin
                         io.log
@@ -316,10 +326,10 @@ let symbols_init io precs symbols hmh =
                       end
                     | None -> io
                   in
-                  io, name, qtype
+                  io, name, stype
                 end
             end
-          | ProdParamSymbolAlias {alias} -> begin
+          | ProdParamSymbolAlias {alias=ISTRING {token=alias}} -> begin
               let alias_name = string_of_alias_token alias in
               match Symbols.info_of_alias alias_name symbols with
               | None -> begin
@@ -331,47 +341,36 @@ let symbols_init io precs symbols hmh =
                   in
                   Io.fatal io
                 end
-              | Some Symbols.{name; qtype; _} -> io, name, qtype
+              | Some Symbols.{name; stype; _} -> io, name, stype
             end
         in
-        let io, binding = match prod_param with
-          | Parse.ProdParamBinding
-              {ident=IdentUident {uident=Uident {uident=ident}}; colon; prod_param_symbol}
-          | Parse.ProdParamBinding
-              {ident=IdentCident {cident=Cident {cident=ident}}; colon; prod_param_symbol} -> begin
-              let Symbols.{name; qtype; _} = match prod_param_symbol with
-                | ProdParamSymbolCident {cident=Cident {cident}} -> begin
-                    Symbols.info_of_name_hlt (Hmc.Source.Slice.to_string (Scan.Token.source cident))
-                      symbols
-                  end
-                | ProdParamSymbolAlias {alias} ->
-                  Symbols.info_of_alias_hlt (string_of_alias_token alias) symbols
-              in
-              let io = match qtype with
-                | {explicit_opt=None; _} -> begin
-                    let base = Scan.Token.source ident |> Hmc.Source.Slice.base in
-                    let past = Scan.Token.source colon |> Hmc.Source.Slice.past in
-                    let source = Hmc.Source.Slice.of_cursors ~base ~past in
-                    let io =
-                      io.err
-                      |> Fmt.fmt "hocc: At "
-                      |> Hmc.Source.Slice.pp source
-                      |> Fmt.fmt ": Cannot bind to empty symbol variant: "
-                      |> Fmt.fmt (Hmc.Source.Slice.to_string (Scan.Token.source ident))
-                      |> Fmt.fmt ":" |> Fmt.fmt name |> Fmt.fmt "\n"
-                      |> Io.with_err io
-                    in
-                    Io.fatal io
-                  end
-                | {explicit_opt=Some _; _} -> io
-              in
-              io, Some (string_of_token ident)
+        let pattern = match prod_param with
+          | Parse.ProdParamBinding _
+          | ProdParamPattern _
+          | ProdParamFields _ -> begin
+              let pattern_source =
+                Parse.source_of_prod_param_binding_pattern prod_param
+                |> Option.value_hlt in
+              let pattern = pattern_source |> Hmc.Source.Slice.to_string in
+              match SymbolType.is_explicit stype with
+              | false -> begin
+                  let io =
+                    io.err
+                    |> Fmt.fmt "hocc: At "
+                    |> Hmc.Source.Slice.pp pattern_source
+                    |> Fmt.fmt ": Cannot bind to empty symbol variant: "
+                    |> Fmt.fmt (Hmc.Source.Slice.to_string pattern_source)
+                    |> Fmt.fmt ":" |> Fmt.fmt symbol_name |> Fmt.fmt "\n"
+                    |> Io.with_err io
+                  in
+                  Io.fatal io
+                end
+              | true -> Some pattern
             end
-          | Parse.ProdParamBinding {ident=IdentUscore _; _}
-          | Parse.ProdParam _ -> io, None
+          | ProdParam _ -> None
         in
         let param =
-          Callback.Param.init ~binding ~symbol_name ~qtype ~prod_param:(Some prod_param) in
+          Callback.Param.init ~pattern ~symbol_name ~stype ~prod_param:(Some prod_param) in
         io, param :: prod_params
       end
   end in
@@ -382,7 +381,10 @@ let symbols_init io precs symbols hmh =
         let io, prod_params = fold_prod_param io symbols prod_params prod_param in
         fold_prod_params_tl io symbols prod_params prod_params_tl
       end
-    | ProdParamsTlEpsilon -> Callback.Params.init io (Array.of_list_rev prod_params)
+    | ProdParamsTlPrecRef {prec_ref} -> begin
+        let io, rhs = Callback.Params.init io (Array.of_list_rev prod_params) in
+        io, rhs, prec_ref
+      end
   end in
   let fold_prod_pattern io symbols prod_pattern = begin
     match prod_pattern with
@@ -391,31 +393,36 @@ let symbols_init io precs symbols hmh =
           let io, prod_params = fold_prod_param io symbols [] prod_param in
           fold_prod_params_tl io symbols prod_params prod_params_tl
         end
-    | ProdPatternEpsilon _ -> Callback.Params.init io [||]
+    | ProdPatternEpsilon {prec_ref; _} -> begin
+        let io, rhs = Callback.Params.init io [||] in
+        io, rhs, prec_ref
+      end
   end in
-  let fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
-      nonterm_prods_set prod = begin
+  let fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code nonterm_prods_set
+      prod = begin
     match prod with
-    | Parse.Prod {prod_pattern; prec_ref} -> begin
+    | Parse.Prod {prod_pattern} -> begin
         let lhs_index = Symbols.(nonterm_info.index) in
-        let io, rhs = fold_prod_pattern io symbols prod_pattern in
+        let io, rhs, prec_ref = fold_prod_pattern io symbols prod_pattern in
         let io = match code with
           | Some _ -> io
           | None -> begin
               (* Codeless productions have no use for parameter bindings. *)
-              Callback.Params.fold ~init:io ~f:(fun io Callback.Param.{binding; prod_param; _} ->
-                match binding with
-                | Some binding -> begin
-                    let binding_token = match prod_param with
-                      | Some ProdParamBinding {
-                        ident=(IdentUident {uident=Uident {uident=token}}) |
-                              (IdentCident {cident=Cident {cident=token}}); _} -> token
-                      | _ -> not_reached ()
+              Callback.Params.fold ~init:io ~f:(fun io Callback.Param.{pattern; prod_param; _} ->
+                match pattern with
+                | Some pattern -> begin
+                    let binding_pattern_source =
+                      prod_param
+                      |> Option.value_hlt
+                      |> Parse.source_of_prod_param_binding_pattern
+                      |> Option.value_hlt
                     in
                     io.log
                     |> Fmt.fmt "hocc: At "
-                    |> Hmc.Source.Slice.pp (Scan.Token.source binding_token)
-                    |> Fmt.fmt ": Unused parameter binding: " |> Fmt.fmt binding |> Fmt.fmt "\n"
+                    |> Hmc.Source.Slice.pp binding_pattern_source
+                    |> Fmt.fmt ": Unused parameter binding pattern: "
+                    |> Fmt.fmt pattern
+                    |> Fmt.fmt "\n"
                     |> Io.with_log io
                   end
                 | None -> io
@@ -426,7 +433,7 @@ let symbols_init io precs symbols hmh =
           match Symbols.info_of_name_hlt symbol_name symbols with Symbols.{index; _} -> index
         ) rhs in
         let prec = match prec_ref with
-          | PrecRefPrecUident {uident=Uident {uident}; _} -> begin
+          | PrecRefUident {uident=UIDENT {token=uident}} -> begin
               let prec_name = string_of_token uident in
               match Precs.prec_of_name prec_name precs with
               | None -> begin
@@ -455,39 +462,34 @@ let symbols_init io precs symbols hmh =
           | PrecRefEpsilon -> nonterm_prec
         in
         let lhs = nonterm_info in
-        let callback, callbacks = match callback with
-          | Some callback -> callback, callbacks
-          | None -> Callbacks.insert ~lhs ~rhs ~code callbacks
-        in
+        let callback, callbacks = Callbacks.insert ~lhs ~rhs ~code callbacks in
         let prod, prods =
           Prods.insert ~lhs_index ~rhs_indexes ~prec ~stmt:(Some prod) ~callback prods in
         let nonterm_prods_set = Ordset.insert prod nonterm_prods_set in
         io, nonterm_prods_set, prods, callbacks, prod
       end
   end in
-  let rec fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+  let rec fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code
       nonterm_prods_set prods_tl = begin
     match prods_tl with
-    | Parse.ProdsTlBarProd {prod; prods_tl; _} -> begin
+    | Parse.ProdsTlProd {prod; prods_tl} -> begin
         let io, nonterm_prods_set, prods, callbacks, _prod =
-          fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+          fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code
             nonterm_prods_set prod in
-        fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+        fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code
           nonterm_prods_set prods_tl
       end
     | ProdsTlEpsilon -> io, nonterm_prods_set, prods, callbacks
   end in
   let fold_prods io precs symbols prods callbacks ~nonterm_info ~nonterm_prec parse_prods = begin
     match parse_prods with
-    | Parse.ProdsBarProd {prod; prods_tl; _}
-    | ProdsProd {prod; prods_tl} -> begin
+    | Parse.ProdsProd {prod; prods_tl} -> begin
         let code = None in
-        let callback = None in
         let nonterm_prods_set = Ordset.empty (module Prod) in
         let io, nonterm_prods_set, prods, callbacks, _prod =
-          fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+          fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code
             nonterm_prods_set prod in
-        fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code ~callback
+        fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec ~code
           nonterm_prods_set prods_tl
       end
   end in
@@ -495,30 +497,27 @@ let symbols_init io precs symbols hmh =
       reduction = begin
     match reduction with
     | Parse.Reduction {prods=parse_prods; code; _} -> begin
-        (* Map one or more prods to a single reduction callback. *)
+        (* Map one or more prods to copies of a single reduction callback, so that generated stack
+         * pattern matching is per prod. *)
         match parse_prods with
-        | ProdsBarProd {prod=parse_prod; prods_tl; _}
         | ProdsProd {prod=parse_prod; prods_tl} -> begin
             let reduction_prods = Ordset.empty (module Prod) in
-            let io, reduction_prods_merge, prods, callbacks, prod =
+            let io, reduction_prods_merge, prods, callbacks, Prod.({callback={rhs; _}; _}) =
               fold_prod io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
-                ~code:(Some code) ~callback:None reduction_prods parse_prod in
+                ~code:(Some code) reduction_prods parse_prod in
             let reduction_prods = Ordset.union reduction_prods_merge reduction_prods in
             let io, reduction_prods_merge, prods, callbacks =
               fold_prods_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
-                ~code:(Some code) ~callback:(Some prod.callback) reduction_prods prods_tl in
+                ~code:(Some code) reduction_prods prods_tl in
             let reduction_prods = Ordset.union reduction_prods_merge reduction_prods in
-            (* Verify that the prods' parameters are uniform. *)
-            let () = Ordset.iter ~f:(fun prod1 ->
-              let open Cmp in
-              match Callback.Params.cmp Prod.(prod.callback.rhs) Prod.(prod1.callback.rhs) with
-              | Lt
-              | Gt -> begin
-                  let pattern_source = Option.value_hlt (
-                    match prod1.stmt with
-                    | Some (Prod {prod_pattern; _}) -> Parse.source_of_prod_pattern prod_pattern
-                    | None -> not_reached ()
-                  ) in
+            let bindings = Callback.Params.bindings rhs in
+            let () = Ordset.iter ~f:(fun Prod.({callback={rhs=rhs1; _}; _} as prod1) ->
+              let bindings1 = Callback.Params.bindings rhs1 in
+              match Set.equal bindings bindings1 with
+              | false -> begin
+                  let Parse.(Prod {prod_pattern; _}) = Prod.(prod1.stmt) |> Option.value_hlt in
+                  let pattern_source =
+                    Parse.source_of_prod_pattern prod_pattern |> Option.value_hlt in
                   let io =
                     io.err
                     |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp pattern_source
@@ -527,7 +526,7 @@ let symbols_init io precs symbols hmh =
                   in
                   Io.fatal io
                 end
-              | Eq -> ()
+              | true -> ()
             ) reduction_prods in
             let nonterm_prods_set = Ordset.union reduction_prods nonterm_prods_set in
             io, nonterm_prods_set, prods, callbacks
@@ -537,7 +536,7 @@ let symbols_init io precs symbols hmh =
   let rec fold_reductions_tl io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
       nonterm_prods_set reductions_tl = begin
     match reductions_tl with
-    | Parse.ReductionsTlBarReduction {reduction; reductions_tl; _} -> begin
+    | Parse.ReductionsTlReduction {reduction; reductions_tl} -> begin
         let io, nonterm_prods_set, prods, callbacks =
           fold_reduction io precs symbols prods callbacks ~nonterm_info ~nonterm_prec
             nonterm_prods_set reduction in
@@ -560,15 +559,15 @@ let symbols_init io precs symbols hmh =
   end in
   let fold_nonterm io precs symbols prods callbacks nonterm = begin
     let start, name, prec = match nonterm with
-      | Parse.NontermProds {nonterm_type; cident=Cident {cident}; prec_ref; _}
-      | NontermReductions {nonterm_type; cident=Cident {cident}; prec_ref; _} -> begin
+      | Parse.NontermProds {nonterm_type; cident=CIDENT {token=cident}; prec_ref; _}
+      | NontermReductions {nonterm_type; cident=CIDENT {token=cident}; prec_ref; _} -> begin
           let start = match nonterm_type with
-            | NontermTypeNonterm _ -> false
-            | NontermTypeStart _ -> true
+            | NontermTypeNonterm -> false
+            | NontermTypeStart -> true
           in
           let name = string_of_token cident in
           let prec = match prec_ref with
-            | PrecRefPrecUident {uident=Uident {uident}; _} -> begin
+            | PrecRefUident {uident=UIDENT {token=uident}} -> begin
                 let prec_name = string_of_token uident in
                 match Precs.prec_of_name prec_name precs with
                 | None -> begin
@@ -587,7 +586,7 @@ let symbols_init io precs symbols hmh =
           start, name, prec
         end
     in
-    let (Symbols.{index; qtype; _} as nonterm_info) = Symbols.info_of_name_hlt name symbols in
+    let (Symbols.{index; stype; _} as nonterm_info) = Symbols.info_of_name_hlt name symbols in
     let nonterm_prec = prec in
     let io, nonterm_prods, prods, callbacks = match nonterm with
       | NontermProds {prods=parse_prods; _} ->
@@ -607,12 +606,12 @@ let symbols_init io precs symbols hmh =
             index=index';
             name=name';
             alias=None;
-            qtype=QualifiedType.synthetic_wrapper qtype;
+            stype=SymbolType.synthetic_wrapper stype;
           } in
-          let Symbol.{index=pe_index; name=pe_name; qtype=pe_qtype; _} = Symbol.pseudo_end in
+          let Symbol.{index=pe_index; name=pe_name; stype=pe_stype; _} = Symbol.pseudo_end in
           let io, rhs = Callback.Params.init io [|
-            Callback.Param.init ~binding:(Some "start") ~symbol_name:name ~qtype ~prod_param:None;
-            Callback.Param.init ~binding:None ~symbol_name:pe_name ~qtype:pe_qtype
+            Callback.Param.init ~pattern:(Some "start") ~symbol_name:name ~stype ~prod_param:None;
+            Callback.Param.init ~pattern:None ~symbol_name:pe_name ~stype:pe_stype
               ~prod_param:None;
           |] in
           let callback, callbacks = Callbacks.insert ~lhs ~rhs ~code:None callbacks in
@@ -628,7 +627,7 @@ let symbols_init io precs symbols hmh =
   end in
   let fold_stmt io precs symbols prods callbacks stmt = begin
     match stmt with
-    | Parse.StmtNonterm {nonterm_} -> fold_nonterm io precs symbols prods callbacks nonterm_
+    | Parse.StmtNonterm {nonterm} -> fold_nonterm io precs symbols prods callbacks nonterm
     | _ -> io, symbols, prods, callbacks
   end in
   let rec fold_stmts_tl io precs symbols prods callbacks stmts_tl = begin

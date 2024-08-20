@@ -1,41 +1,83 @@
 open Basis
-open Basis.Rudiments
+open! Basis.Rudiments
 
 module T = struct
   module Param = struct
     module U = struct
       type t = {
-        binding: string option;
+        pattern: string option;
         symbol_name: string;
-        qtype: QualifiedType.t;
+        stype: SymbolType.t;
         prod_param: Parse.nonterm_prod_param option;
       }
 
-      let hash_fold {binding; symbol_name; _} state =
+      let hash_fold {pattern; symbol_name; _} state =
         state
-        |> Option.hash_fold String.hash_fold binding
+        |> Option.hash_fold String.hash_fold pattern
         |> String.hash_fold symbol_name
 
-      let cmp {binding=b0; symbol_name=s0; _} {binding=b1; symbol_name=s1; _} =
+      let cmp {pattern=p0; symbol_name=s0; _} {pattern=p1; symbol_name=s1; _} =
         let open Cmp in
-        match Option.cmp String.cmp b0 b1 with
+        match Option.cmp String.cmp p0 p1 with
         | Lt -> Lt
         | Eq -> String.cmp s0 s1
         | Gt -> Gt
 
-      let pp {binding; symbol_name; qtype; prod_param} formatter =
+      let pp {pattern; symbol_name; stype; prod_param} formatter =
         formatter
-        |> Fmt.fmt "{binding=" |> (Option.pp String.pp) binding
+        |> Fmt.fmt "{pattern=" |> (Option.pp String.pp) pattern
         |> Fmt.fmt "; symbol_name=" |> String.pp symbol_name
-        |> Fmt.fmt "; qtype=" |> QualifiedType.pp qtype
+        |> Fmt.fmt "; stype=" |> SymbolType.pp stype
         |> Fmt.fmt "; prod_param=" |> (Option.pp Parse.fmt_prod_param) prod_param
         |> Fmt.fmt "}"
     end
     include U
     include Identifiable.Make(U)
 
-    let init ~binding ~symbol_name ~qtype ~prod_param =
-      {binding; symbol_name; qtype; prod_param}
+    let init ~pattern ~symbol_name ~stype ~prod_param =
+      {pattern; symbol_name; stype; prod_param}
+
+    let fold_bindings ~init ~f {prod_param; _} =
+      let rec fold_binding ~init ~f (Parse.Binding {token}) = begin
+        f init token
+      end and fold_field ~init ~f field = begin
+      match field with
+      | Parse.PatternFieldBinding {binding} -> fold_binding ~init ~f binding
+      | PatternFieldPattern {pattern} -> fold_pattern ~init ~f pattern
+    end and fold_fields ~init ~f fields = begin
+      match fields with
+      | Parse.PatternFieldsOne {field} -> fold_field ~init ~f field
+      | PatternFieldsMulti {field; fields} -> begin
+          let init = fold_field ~init ~f field in
+          fold_fields ~init ~f fields
+        end
+    end and fold_pattern ~init ~f pattern = begin
+      match pattern with
+      | Parse.PatternUscore -> init
+      | PatternBinding {binding} -> fold_binding ~init ~f binding
+      | PatternPattern {pattern} -> fold_pattern ~init ~f pattern
+      | PatternComma {pattern_a; pattern_b} -> begin
+          let init = fold_pattern ~init ~f pattern_a in
+          fold_pattern ~init ~f pattern_b
+        end
+      | PatternFields {fields} -> fold_fields ~init ~f fields
+    end in
+      match prod_param with
+      | Some prod_param -> begin
+          match prod_param with
+          | ProdParamBinding {binding; _} -> fold_binding ~init ~f binding
+          | ProdParamPattern {pattern; _} -> fold_pattern ~init ~f pattern
+          | ProdParamFields {fields; _} -> fold_fields ~init ~f fields
+          | ProdParam _ -> init
+        end
+      | None -> init
+
+    let bindings t =
+      fold_bindings ~init:(Set.empty (module String))
+        ~f:(fun bindings token ->
+          let binding = Scan.Token.source token |> Hmc.Source.Slice.to_string in
+          Set.insert binding bindings
+        ) t
   end
 
   module Params = struct
@@ -53,32 +95,28 @@ module T = struct
         formatter |> (Array.pp Param.pp) t
 
       let init io params =
-        Array.fold ~init:(Set.empty (module String))
-          ~f:(fun bindings Param.{binding; prod_param; _} ->
-            match binding with
-            | None -> bindings
-            | Some binding -> begin
-                match Set.mem binding bindings with
-                | true -> begin
-                    match prod_param with
-                    | Some ProdParamBinding {
-                      ident=((IdentUident {uident=Uident {uident=binding_token}}) |
-                             (IdentCident {cident=Cident {cident=binding_token}})); _} -> begin
-                        let io =
-                          io.err
-                          |> Fmt.fmt "hocc: At "
-                          |> Hmc.Source.Slice.pp (Scan.Token.source binding_token)
-                          |> Fmt.fmt ": Duplicate parameter binding: "
-                          |> Fmt.fmt (Hmc.Source.Slice.to_string (Scan.Token.source binding_token))
-                          |> Fmt.fmt "\n"
-                          |> Io.with_err io
-                        in
-                        Io.fatal io
-                      end
-                    | _ -> not_reached ()
-                  end
-                | false -> Set.insert binding bindings
-              end
+        let merge_binding io token bindings = begin
+          let token_source = Scan.Token.source token in
+          let binding = token_source |> Hmc.Source.Slice.to_string in
+          match Set.mem binding bindings with
+          | true -> begin
+              let io =
+                io.err
+                |> Fmt.fmt "hocc: At "
+                |> Hmc.Source.Slice.pp token_source
+                |> Fmt.fmt ": Duplicate parameter binding: "
+                |> Fmt.fmt binding
+                |> Fmt.fmt "\n"
+                |> Io.with_err io
+              in
+              Io.fatal io
+            end
+          | false -> io, Set.insert binding bindings
+        end in
+        Array.fold ~init:(io, Set.empty (module String))
+          ~f:(fun (io, bindings) param ->
+            Param.fold_bindings ~init:(io, bindings) ~f:(fun (io, bindings) binding ->
+              merge_binding io binding bindings) param
           ) params |> ignore;
         io, params
 
@@ -110,13 +148,18 @@ module T = struct
     let range = Array.range
     let get = Array.get
     let map = Array.map
+
+    let bindings t =
+      Array.fold ~init:(Set.empty (module String)) ~f:(fun bindings param ->
+        Set.union (Param.bindings param) bindings
+      ) t
   end
 
   module Index = Uns
   type t = {
     index: Index.t;
     lhs_name: string;
-    lhs_qtype: QualifiedType.t;
+    lhs_stype: SymbolType.t;
     rhs: Params.t;
     code: Parse.nonterm_code option;
   }
@@ -127,11 +170,11 @@ module T = struct
   let cmp {index=index0; _} {index=index1; _} =
     Index.cmp index0 index1
 
-  let pp {index; lhs_name; lhs_qtype; rhs; code} formatter =
+  let pp {index; lhs_name; lhs_stype; rhs; code} formatter =
     formatter
     |> Fmt.fmt "{index=" |> Index.pp index
     |> Fmt.fmt "; lhs_name=" |> String.pp lhs_name
-    |> Fmt.fmt "; lhs_qtype=" |> QualifiedType.pp lhs_qtype
+    |> Fmt.fmt "; lhs_stype=" |> SymbolType.pp lhs_stype
     |> Fmt.fmt "; rhs=" |> Params.pp rhs
     |> Fmt.fmt "; code=" |> (Option.pp Parse.fmt_code) code
     |> Fmt.fmt "}"
@@ -139,8 +182,8 @@ end
 include T
 include Identifiable.Make(T)
 
-let init ~index ~lhs_name ~lhs_qtype ~rhs ~code =
-  {index; lhs_name; lhs_qtype; rhs; code}
+let init ~index ~lhs_name ~lhs_stype ~rhs ~code =
+  {index; lhs_name; lhs_stype; rhs; code}
 
 let is_epsilon {rhs; _} =
   Params.is_empty rhs

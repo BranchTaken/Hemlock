@@ -15,7 +15,7 @@ module T = struct
   type t = {
     index: Index.t;
     name: string;
-    qtype: QualifiedType.t;
+    stype: SymbolType.t;
     prec: Prec.t option;
     stmt: stmt option;
     alias: string option;
@@ -31,11 +31,11 @@ module T = struct
   let cmp {index=index0; _} {index=index1; _} =
     Index.cmp index0 index1
 
-  let pp {index; name; qtype; prec; stmt; alias; start; prods; first; follow} formatter =
+  let pp {index; name; stype; prec; stmt; alias; start; prods; first; follow} formatter =
     formatter
     |> Fmt.fmt "{index=" |> Index.pp index
     |> Fmt.fmt "; name=" |> String.pp name
-    |> Fmt.fmt "; qtype=" |> QualifiedType.pp qtype
+    |> Fmt.fmt "; stype=" |> SymbolType.pp stype
     |> Fmt.fmt "; prec=" |> (Option.pp Prec.pp) prec
     |> Fmt.fmt "; stmt=" |> (Option.pp pp_stmt) stmt
     |> Fmt.fmt "; alias=" |> (Option.pp String.pp) alias
@@ -57,7 +57,7 @@ end
 include T
 include Identifiable.Make(T)
 
-let init_token ~index ~name ~qtype ~prec ~stmt ~alias =
+let init_token ~index ~name ~stype ~prec ~stmt ~alias =
   let stmt = match stmt with
     | None -> None
     | Some stmt -> Some (Token stmt)
@@ -67,17 +67,17 @@ let init_token ~index ~name ~qtype ~prec ~stmt ~alias =
   (* Tokens are in their own `first` sets. *)
   let first = Ordset.singleton (module Index) index in
   let follow = Ordset.empty (module Index) in
-  {index; name; qtype; prec; stmt; alias; start; prods; first; follow}
+  {index; name; stype; prec; stmt; alias; start; prods; first; follow}
 
 let init_synthetic_token ~index ~name ~alias =
-  init_token ~index ~name ~qtype:QualifiedType.synthetic_implicit ~prec:None ~stmt:None
+  init_token ~index ~name ~stype:SymbolType.synthetic_implicit ~prec:None ~stmt:None
     ~alias:(Some alias)
 
 let epsilon = init_synthetic_token ~index:0L ~name:"EPSILON" ~alias:"ε"
 
 let pseudo_end = init_synthetic_token ~index:1L ~name:"PSEUDO_END" ~alias:"⊥"
 
-let init_nonterm ~index ~name ~qtype ~prec ~stmt ~start ~prods =
+let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
   let stmt = match stmt with
     | None -> None
     | Some stmt -> Some (Nonterm stmt)
@@ -97,7 +97,7 @@ let init_nonterm ~index ~name ~qtype ~prec ~stmt ~start ~prods =
     | Some _ -> Ordset.empty (module Index)
     | None -> Ordset.singleton (module Index) epsilon.index
   in
-  {index; name; qtype; prec; stmt; alias; start; prods; first; follow}
+  {index; name; stype; prec; stmt; alias; start; prods; first; follow}
 
 let is_token {prods; _} =
   Ordset.is_empty prods

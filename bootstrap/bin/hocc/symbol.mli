@@ -16,9 +16,9 @@ type t = {
   name: string;
   (** Symbol name. *)
 
-  qtype: QualifiedType.t;
-  (** Qualified type, e.g. [Implicit] for [token SOME_TOKEN], or [Explicit {module_:Zint; type:t}]
-      for [token INT of Zint.t. *)
+  stype: SymbolType.t;
+  (** Symbol type, e.g. implicit for [token SOME_TOKEN], or explicit "Zint.t" for [token INT of
+      Zint.t. *)
 
   prec: Prec.t option;
   (** Optional precedence. *)
@@ -49,11 +49,11 @@ val epsilon: t
 val pseudo_end: t
 (** [pseudo_end] returns a pseudo-end (⊥) symbol. *)
 
-val init_token: index:Index.t -> name:string -> qtype:QualifiedType.t -> prec:Prec.t option
+val init_token: index:Index.t -> name:string -> stype:SymbolType.t -> prec:Prec.t option
   -> stmt:Parse.nonterm_token option -> alias:string option -> t
 (** Used only by [Symbols.insert_token]. *)
 
-val init_nonterm: index:Index.t -> name:string -> qtype:QualifiedType.t -> prec:Prec.t option
+val init_nonterm: index:Index.t -> name:string -> stype:SymbolType.t -> prec:Prec.t option
   -> stmt:Parse.nonterm_nonterm option -> start:bool -> prods:(Prod.t, Prod.cmper_witness) Ordset.t
   -> t
 (** Used only by [Symbols.insert_nonterm]. *)

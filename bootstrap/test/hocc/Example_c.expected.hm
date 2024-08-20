@@ -1124,78 +1124,78 @@ Parser = {
                 callbacks = [|
                     (* 0 *) function
                       | _
-                      :: tl -> Symbol.Nonterm (MulOp (
+                      :: tl__hocc__ -> Symbol.Nonterm (MulOp (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":10:8+11]STAR[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 1 *) function
                       | _
-                      :: tl -> Symbol.Nonterm (MulOp (
+                      :: tl__hocc__ -> Symbol.Nonterm (MulOp (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":11:8+11]SLASH[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 2 *) function
                       | _
-                      :: tl -> Symbol.Nonterm (AddOp (
+                      :: tl__hocc__ -> Symbol.Nonterm (AddOp (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":17:8+11]PLUS[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 3 *) function
                       | _
-                      :: tl -> Symbol.Nonterm (AddOp (
+                      :: tl__hocc__ -> Symbol.Nonterm (AddOp (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":18:8+11]MINUS[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 4 *) function
                       | {symbol=Symbol.Nonterm (Expr e1); _}
                       :: {symbol=Symbol.Nonterm (MulOp op); _}
                       :: {symbol=Symbol.Nonterm (Expr e0); _}
-                      :: tl -> Symbol.Nonterm (Expr (
+                      :: tl__hocc__ -> Symbol.Nonterm (Expr (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":23:12+0]match op with
               | STAR -> Zint.(e0 * e1)
               | SLASH -> Zint.(e0 / e1)
               | _ -> not_reached ()[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 5 *) function
                       | {symbol=Symbol.Nonterm (Expr e1); _}
                       :: {symbol=Symbol.Nonterm (AddOp op); _}
                       :: {symbol=Symbol.Nonterm (Expr e0); _}
-                      :: tl -> Symbol.Nonterm (Expr (
+                      :: tl__hocc__ -> Symbol.Nonterm (Expr (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":28:12+0]match op with
               | PLUS -> Zint.(e0 + e1)
               | MINUS -> Zint.(e0 - e1)
               | _ -> not_reached ()[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 6 *) function
                       | {symbol=Symbol.Token (INT x); _}
-                      :: tl -> Symbol.Nonterm (Expr (
+                      :: tl__hocc__ -> Symbol.Nonterm (Expr (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":32:8+13]x[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 7 *) function
                       | _
                       :: {symbol=Symbol.Nonterm (Expr e); _}
-                      :: tl -> Symbol.Nonterm (Answer (
+                      :: tl__hocc__ -> Symbol.Nonterm (Answer (
                       # ____________________________________________________________________________
                       [:"./Example_c.hmh":36:8+18]e[:]
                       # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-                      )), tl
+                      )), tl__hocc__
                       | _ -> not_reached ()
                     (* 8 *) fn _stack -> not_reached ()
                   |]

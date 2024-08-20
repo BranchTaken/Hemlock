@@ -1,5 +1,9 @@
 # Matter.
 
+# Various special tokens which are only contextually reserved.
+nonterm epsilon start token neutral left right prec _ ::=
+of : . -> | < = , ; as ( ) (| |) [ ] [| |] { }
+
 include hocc
     neutral p1
     left p2
@@ -49,7 +53,32 @@ include hocc
     nonterm N7 of Unit.t ::=
       | OP n:N1 _:N2 -> foo
 
-    Code = {
-      }
+    nonterm N8 of Unit.t ::=
+      |
+      _:N5
+      x0:N5
+      {x2}:N5
+      X.{x3}:N5
+      {x4; x5}:N6
+      (_):N5
+      (x6):N5
+      X.(x7):N5
+      (X x8):N5
+      (X.(x9)):N5
+      (x10, x11):N5
+      {x12; x13=x14; x15={x16; _}; _;}:N5
+      hocc:N5
+      nonterm:N5
+      epsilon:N5
+      start:N5
+      token:N5
+      neutral:N5
+      left:N5
+      right:N5
+      prec:N5
+      ->
+        # Various special tokens which are only contextually reserved.
+        hocc nonterm epsilon start token neutral left right prec _ ::=
+        of : . -> | < = , ; as ( ) (| |) [ ] [| |] { }
 
 # Matter.

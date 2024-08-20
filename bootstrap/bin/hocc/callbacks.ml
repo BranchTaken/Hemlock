@@ -7,9 +7,9 @@ let empty = Ordmap.empty (module Callback.Index)
 
 let length = Ordmap.length
 
-let insert ~lhs:Symbols.{name; qtype; _} ~rhs ~code t =
+let insert ~lhs:Symbols.{name; stype; _} ~rhs ~code t =
   let index = length t in
-  let callback = Callback.init ~index ~lhs_name:name ~lhs_qtype:qtype ~rhs ~code in
+  let callback = Callback.init ~index ~lhs_name:name ~lhs_stype:stype ~rhs ~code in
   callback, Ordmap.insert_hlt ~k:index ~v:callback t
 
 let fold ~init ~f t =
