@@ -1,0 +1,11 @@
+type t: t = {
+    x: uns
+    y: uns
+  }
+
+hocc
+    token T of t
+    token EOI
+    start S of uns ::=
+      | {x; y}:T EOI -> x + y
+      | {x; y=x}:T EOI -> x + y

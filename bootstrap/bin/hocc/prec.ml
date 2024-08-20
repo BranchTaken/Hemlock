@@ -37,11 +37,12 @@ let src_fmt {name; assoc; stmt; _} formatter =
   |> Fmt.fmt name
   |> (fun formatter ->
     match stmt with
-    | Prec {prec_rels=PrecRelsLtPrecs {precs=Precs {uident=Uident {uident}; precs_tl}; _}; _} ->
+    | Prec {prec_rels=PrecRelsPrecs {precs=Precs {uident=UIDENT {token=uident}; precs_tl}}; _}
+      ->
       begin
         let rec fmt_precs_tl precs_tl formatter = begin
           match precs_tl with
-          | Parse.PrecsTlCommaUident {uident=Uident {uident}; precs_tl; _} -> begin
+          | Parse.PrecsTlUident {uident=UIDENT {token=uident}; precs_tl} -> begin
               formatter
               |> Fmt.fmt ", " |> Fmt.fmt (string_of_token uident)
               |> fmt_precs_tl precs_tl

@@ -8,15 +8,15 @@ open Basis.Rudiments
 (** Reduction callback parameter. *)
 module Param : sig
   type t = {
-    binding: string option;
-    (** Optional binding name for reduction callback code. Generated code must specify a binding for
-        each RHS symbol it needs to access. *)
+    pattern: string option;
+    (** Optional binding pattern for reduction callback code. Generated code must specify a binding
+        for each RHS symbol it needs to access. *)
 
     symbol_name: string;
     (** Symbol name corresponding to a [start]/[nonterm] or [token] declaration. *)
 
-    qtype: QualifiedType.t;
-    (** Qualified type of parameter, e.g. [explicit_opt=Some {module_:"SomeToken"; type_:"t"}]. *)
+    stype: SymbolType.t;
+    (** Symbol type of parameter. *)
 
     prod_param: Parse.nonterm_prod_param option;
     (** Declaration AST. *)
@@ -24,7 +24,7 @@ module Param : sig
 
   include IdentifiableIntf.S with type t := t
 
-  val init: binding:string option -> symbol_name:string -> qtype:QualifiedType.t
+  val init: pattern:string option -> symbol_name:string -> stype:SymbolType.t
     -> prod_param:Parse.nonterm_prod_param option -> t
 end
 
@@ -42,6 +42,9 @@ module Params : sig
   val range: t -> range
   val get: uns -> t -> Param.t
   val map: f:(Param.t -> 'a) -> t -> 'a array
+
+  val bindings: t -> (string, String.cmper_witness) Set.t
+  (** [bindings t] returns the set of binding identifier names it [t]. *)
 end
 
 module Index = Uns
@@ -52,8 +55,8 @@ type t = {
   lhs_name: string;
   (** Name of enclosing nonterm. *)
 
-  lhs_qtype: QualifiedType.t;
-  (** Qualified type of LHS. *)
+  lhs_stype: SymbolType.t;
+  (** Symbol type of LHS. *)
 
   rhs: Params.t;
   (** RHS parameters. *)
@@ -64,7 +67,7 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
-val init: index:Index.t -> lhs_name:string -> lhs_qtype:QualifiedType.t -> rhs:Params.t
+val init: index:Index.t -> lhs_name:string -> lhs_stype:SymbolType.t -> rhs:Params.t
   -> code:Parse.nonterm_code option -> t
 (** Used only by [Callbacks.init]. *)
 

@@ -51,7 +51,7 @@ module Token = struct
       formatter |> Fmt.fmt "Tok_prec {source=" |> Hmc.Source.Slice.pp source |> Fmt.fmt "}"
     | Tok_colon_colon_eq {source} ->
       formatter |> Fmt.fmt "Tok_colon_colon_eq {source=" |> Hmc.Source.Slice.pp source
-        |> Fmt.fmt "}"
+      |> Fmt.fmt "}"
 
   let malformations = function
     | HmcToken tok -> Hmc.Scan.Token.malformations tok

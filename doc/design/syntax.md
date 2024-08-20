@@ -207,6 +207,8 @@ special in that it creates no lexical binding at all.
   type constructors.
 - Uncapitalized identifiers match `[_]*[a-z][A-Za-z0-9_']*`, and are used for value names, parameter
   label names, type names, and record field names.
+- The toolchain reserves identifiers with `__` suffix for internal use; using such identifiers in
+  application code risks undefined behavior.
 
 ### Integer
 

@@ -1,0 +1,3 @@
+hocc: Parsing "./Binding_error_c.hmh"
+hocc: Generating LR(1) specification
+hocc: At ["./Binding_error_c.hmh":11:8.."./Binding_error_c.hmh":11:20): Inconsistent production parametrization

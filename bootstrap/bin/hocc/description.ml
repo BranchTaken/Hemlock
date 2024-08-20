@@ -258,7 +258,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
   |> html "    <ul>\n"
   |> (fun formatter ->
     Symbols.symbols_fold ~init:formatter
-      ~f:(fun formatter (Symbol.{name; alias; qtype; prec; first; follow; _} as symbol) ->
+      ~f:(fun formatter (Symbol.{name; alias; stype; prec; first; follow; _} as symbol) ->
         match Symbol.is_token symbol with
         | false -> formatter
         | true -> begin
@@ -273,10 +273,10 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
               | Some alias -> formatter |> Fmt.fmt " " |> String.pp alias
             )
             |> (fun formatter ->
-              match qtype with
-              | {explicit_opt=None; _} -> formatter
-              | {explicit_opt=Some {module_; type_}; _} ->
-                formatter |> Fmt.fmt " of " |> Fmt.fmt module_ |> Fmt.fmt "." |> Fmt.fmt type_
+              match SymbolType.is_explicit stype with
+              | false -> formatter
+              | true ->
+                formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
             )
             |> (fun formatter ->
               match prec with
@@ -301,7 +301,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
   |> html "    <ul>\n"
   |> (fun formatter ->
     Symbols.symbols_fold ~init:formatter
-      ~f:(fun formatter (Symbol.{name; start; qtype; prods; first; follow; _} as symbol) ->
+      ~f:(fun formatter (Symbol.{name; start; stype; prods; first; follow; _} as symbol) ->
         match Symbol.is_nonterm symbol with
         | false -> formatter
         | true -> begin
@@ -315,10 +315,10 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
             |> Fmt.fmt name
             |> html "</a>"
             |> (fun formatter ->
-              match qtype with
-              | {explicit_opt=None; _} -> formatter
-              | {explicit_opt=Some {module_; type_}; _} ->
-                formatter |> Fmt.fmt " of " |> Fmt.fmt module_ |> Fmt.fmt "." |> Fmt.fmt type_
+              match SymbolType.is_explicit stype with
+              | false -> formatter
+              | true ->
+                formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
             )
             |> Fmt.fmt "\n"
             |> html "            <ul type=none>\n"

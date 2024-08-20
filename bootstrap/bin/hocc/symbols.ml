@@ -5,7 +5,7 @@ type info = {
   index: Symbol.Index.t;
   name: string;
   alias: string option;
-  qtype: QualifiedType.t;
+  stype: SymbolType.t;
 }
 
 type t = {
@@ -21,8 +21,8 @@ let empty =
   let infos, names, aliases, symbols = List.fold
       ~init:(Map.empty (module String), Map.empty (module String), Map.empty (module String),
         Ordmap.empty (module Symbol.Index))
-      ~f:(fun (infos, names, aliases, symbols) (Symbol.{index; name; qtype; alias; _} as token) ->
-        let info = {index; name; alias; qtype} in
+      ~f:(fun (infos, names, aliases, symbols) (Symbol.{index; name; stype; alias; _} as token) ->
+        let info = {index; name; alias; stype} in
         let infos' = Map.insert_hlt ~k:name ~v:info infos in
         let names' = Map.insert_hlt ~k:name ~v:index names in
         let aliases' = Map.insert_hlt ~k:(Option.value_hlt alias) ~v:index aliases in
@@ -46,11 +46,11 @@ let info_of_alias alias ({aliases; tokens; _} as t) =
 let info_of_alias_hlt alias t =
   Option.value_hlt (info_of_alias alias t)
 
-let insert_token ~name ~qtype ~prec ~stmt ~alias
+let insert_token ~name ~stype ~prec ~stmt ~alias
     ({infos; names; aliases; symbols; tokens; _} as t) =
   let index = Map.length infos in
-  let info = {index; name; alias; qtype} in
-  let token = Symbol.init_token ~index ~name ~qtype ~prec ~stmt ~alias in
+  let info = {index; name; alias; stype} in
+  let token = Symbol.init_token ~index ~name ~stype ~prec ~stmt ~alias in
   let infos' = Map.insert_hlt ~k:name ~v:info infos in
   let names' = Map.insert_hlt ~k:name ~v:index names in
   let aliases' = match alias with
@@ -61,15 +61,15 @@ let insert_token ~name ~qtype ~prec ~stmt ~alias
   let tokens' = Ordmap.insert ~k:index ~v:token tokens in
   {t with infos=infos'; names=names'; aliases=aliases'; symbols=symbols'; tokens=tokens'}
 
-let insert_nonterm_info ~name ~qtype ({infos; _} as t) =
+let insert_nonterm_info ~name ~stype ({infos; _} as t) =
   let index = Map.length infos in
-  let info = {index; name; alias=None; qtype} in
+  let info = {index; name; alias=None; stype} in
   let infos' = Map.insert_hlt ~k:name ~v:info infos in
   {t with infos=infos'}
 
 let insert_nonterm ~name ~prec ~stmt ~start ~prods ({names; symbols; nonterms; _} as t) =
-  let {index; qtype; _} = info_of_name_hlt name t in
-  let nonterm = Symbol.init_nonterm ~index ~name ~qtype ~prec ~stmt ~start ~prods in
+  let {index; stype; _} = info_of_name_hlt name t in
+  let nonterm = Symbol.init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods in
   let names' = Map.insert_hlt ~k:name ~v:index names in
   let symbols' = Ordmap.insert ~k:index ~v:nonterm symbols in
   let nonterms' = Ordmap.insert ~k:index ~v:nonterm nonterms in

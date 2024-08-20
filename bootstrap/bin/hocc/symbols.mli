@@ -15,9 +15,9 @@ type info = {
   alias: string option;
   (** Optional token alias. *)
 
-  qtype: QualifiedType.t;
-  (** Qualified type, e.g. [explicit_opt=None] for [token SOME_TOKEN], or [explicit_opt=Some
-      {module_:Zint; type:t}] for [token INT of Zint.t. *)
+  stype: SymbolType.t;
+  (** Symbol type, e.g. implicit for [token SOME_TOKEN], or explicit "Zint.t" for [token INT of
+      Zint.t]. *)
 }
 
 type t
@@ -25,13 +25,13 @@ type t
 val empty: t
 (** [empty] returns an empty set of symbols. *)
 
-val insert_token: name:string -> qtype:QualifiedType.t -> prec:Prec.t option
+val insert_token: name:string -> stype:SymbolType.t -> prec:Prec.t option
   -> stmt:Parse.nonterm_token option -> alias:string option -> t -> t
-(** [insert_token ~name ~qtype ~prec ~stmt ~alias t] creates a token [Symbol.t] with unique index
+(** [insert_token ~name ~stype ~prec ~stmt ~alias t] creates a token [Symbol.t] with unique index
     and returns a new [t] with the symbol inserted. *)
 
-val insert_nonterm_info: name:string -> qtype:QualifiedType.t -> t -> t
-(** [insert_nonterm_info ~name ~qtype t] creates a non-terminal [info] and returns a new [t] with
+val insert_nonterm_info: name:string -> stype:SymbolType.t -> t -> t
+(** [insert_nonterm_info ~name ~stype t] creates a non-terminal [info] and returns a new [t] with
     the info inserted. This is a precursor to a subsequent [insert_nonterm] call. *)
 
 val insert_nonterm: name:string -> prec:Prec.t option -> stmt:Parse.nonterm_nonterm option

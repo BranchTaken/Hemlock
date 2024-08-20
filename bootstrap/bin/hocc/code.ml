@@ -342,31 +342,18 @@ let expand_hmi_tokens symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; qtype; _}->
+      ~f:(fun (formatter, first) {name; alias; stype; _}->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         )
         |> (fun formatter ->
           match alias with
@@ -386,31 +373,18 @@ let expand_hmi_nonterms symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; qtype; _} ->
+      ~f:(fun (formatter, first) {name; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         ),
         false
       ) symbols
@@ -424,8 +398,8 @@ let expand_hmi_nonterms symbols ~indentation formatter =
 let expand_hmi_starts symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-    ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
-      (match start && (not synthetic) with
+    ~f:(fun (formatter, first) {name; stype; start; _} ->
+      (match start && (not (SymbolType.is_synthetic stype)) with
           | false -> formatter, first
           | true -> begin
               formatter
@@ -460,7 +434,8 @@ let expand_hmi_template template_indentation template Spec.{symbols; _} formatte
   ] in
   formatter |> expand ~template_indentation template expanders
 
-let generate_hmi conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
+let generate_hmi conf Parse.(Hmhi {prelude; hocc_=HOCC {token=hocc_}; postlude;
+  eoi=EOI {token=eoi}}) io spec =
   assert (Spec.conflicts spec = 0L);
   let indentation = indentation_of_hocc hocc_ in
   let module_name = module_name conf in
@@ -475,8 +450,8 @@ let generate_hmi conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
     |> Fmt.fmt "[:" |> Fmt.fmt directive_pathstr |> Fmt.fmt ":1]"
     |> (fun formatter ->
       match prelude with
-      | Parse.Matter {token_; _} -> begin
-          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+      | Parse.Matter {token; _} -> begin
+          let base = Scan.Token.source token |> Hmc.Source.Slice.base in
           let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
@@ -1505,31 +1480,18 @@ let expand_hm_token_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; qtype; _} ->
+      ~f:(fun (formatter, first) {name; alias; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         )
         |> (fun formatter ->
           match alias with
@@ -1549,22 +1511,20 @@ let expand_hm_token_index symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_token_indexes formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {index; name; qtype; _} ->
+      ~f:(fun (formatter, first) {index; name; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
           formatter
-          |> indent
-          |> Fmt.fmt "  | "
-          |> Fmt.fmt name
           |> (fun formatter ->
-            match qtype.explicit_opt with
-            | None -> formatter
-            | Some _ -> formatter |> Fmt.fmt " _"
+            match SymbolType.is_explicit stype with
+            | false -> formatter
+            | true -> formatter |> Fmt.fmt " _"
           )
           |> Fmt.fmt " -> "
           |> Uns.pp index
@@ -1588,31 +1548,18 @@ let expand_hm_nonterm_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; qtype; _} ->
+      ~f:(fun (formatter, first) {name; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         ),
         false
       ) symbols
@@ -1685,7 +1632,7 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
                   let formatter, _first =
                     Callback.Params.fold_right ~init:(formatter, true)
                       ~f:(fun (formatter, first)
-                        Callback.Param.{binding; symbol_name; _} ->
+                        Callback.Param.{pattern; symbol_name; _} ->
                         let is_token =
                           Symbols.symbol_of_name symbol_name symbols
                           |> Option.value_hlt
@@ -1702,15 +1649,15 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
                           | false -> "  :: "
                         )
                         |> (fun formatter ->
-                          match binding with
-                          | Some uname -> begin
+                          match pattern with
+                          | Some pattern -> begin
                               formatter
                               |> Fmt.fmt "{symbol=Symbol."
                               |> Fmt.fmt symbol_constructor
                               |> Fmt.fmt " ("
                               |> Fmt.fmt symbol_name
                               |> Fmt.fmt " "
-                              |> Fmt.fmt uname
+                              |> Fmt.fmt pattern
                               |> Fmt.fmt "); _}"
                             end
                           | None -> formatter |> Fmt.fmt "_"
@@ -1723,7 +1670,7 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
                 )
                 |> indent |> Fmt.fmt "  "
                 |> Fmt.fmt (match Callback.is_epsilon callback with false -> ":: " | true -> "")
-                |> Fmt.fmt "tl -> Symbol.Nonterm ("
+                |> Fmt.fmt "tl__hocc__ -> Symbol.Nonterm ("
                 |> Fmt.fmt lhs_name |> Fmt.fmt " (\n"
                 |> indent
                 |> String.fmt ~pad:underline ~just:Fmt.Left ~width:(100L - indentation) "  # "
@@ -1735,7 +1682,7 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
                 |> indent
                 |> String.fmt ~pad:overline ~just:Fmt.Left ~width:(100L - indentation) "  # "
                 |> Fmt.fmt "\n"
-                |> indent |> Fmt.fmt "  )), tl"
+                |> indent |> Fmt.fmt "  )), tl__hocc__"
                 |> (fun formatter ->
                   match Callback.is_epsilon callback with
                   | false ->
@@ -1760,8 +1707,8 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
 let expand_hm_starts symbols states ~indentation formatter =
   let indent = mk_indent indentation in
   let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-    ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
-      match (start && (not synthetic)) with
+    ~f:(fun (formatter, first) {name; stype; start; _} ->
+      match (start && (not (SymbolType.is_synthetic stype))) with
       | false -> formatter, first
       | true -> begin
           let synthetic_name = Spec.synthetic_name_of_start_name name in
@@ -1825,7 +1772,8 @@ let expand_hm_template template_indentation template hocc_block
   formatter |> expand ~template_indentation template expanders
 
 let generate_hm conf
-    Parse.(Hmh {prelude; hocc_=(Hocc {hocc_; _} as hocc_block); postlude; eoi}) io spec =
+    Parse.(Hmh {prelude; hocc_=(Hocc {hocc_=HOCC {token=hocc_}; _} as hocc_block); postlude;
+      eoi=EOI {token=eoi}}) io spec =
   assert (Spec.conflicts spec = 0L);
   let indentation = indentation_of_hocc hocc_ in
   let module_name = module_name conf in
@@ -1840,8 +1788,8 @@ let generate_hm conf
     |> Fmt.fmt "[:" |> Fmt.fmt directive_pathstr |> Fmt.fmt ":1]"
     |> (fun formatter ->
       match prelude with
-      | Parse.Matter {token_; _} -> begin
-          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+      | Parse.Matter {token; _} -> begin
+          let base = Scan.Token.source token |> Hmc.Source.Slice.base in
           let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
@@ -2146,31 +2094,18 @@ let expand_mli_tokens symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; qtype; _}->
+      ~f:(fun (formatter, first) {name; alias; stype; _}->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         )
         |> (fun formatter ->
           match alias with
@@ -2191,31 +2126,18 @@ let expand_mli_nonterms symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; qtype; _} ->
+      ~f:(fun (formatter, first) {name; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         ),
         false
       ) symbols
@@ -2229,8 +2151,8 @@ let expand_mli_nonterms symbols ~indentation formatter =
 let expand_mli_starts symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-    ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
-      (match start && (not synthetic) with
+    ~f:(fun (formatter, first) {name; stype; start; _} ->
+      (match start && (not (SymbolType.is_synthetic stype)) with
           | false -> formatter, first
           | true -> begin
               formatter
@@ -2265,7 +2187,8 @@ let expand_mli_template template_indentation template Spec.{symbols; _} formatte
   ] in
   formatter |> expand ~template_indentation template expanders
 
-let generate_mli conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
+let generate_mli conf Parse.(Hmhi {prelude; hocc_=HOCC {token=hocc_}; postlude;
+  eoi=EOI {token=eoi}}) io spec =
   assert (Spec.conflicts spec = 0L);
   let indentation = indentation_of_hocc hocc_ in
   let module_name = module_name conf in
@@ -2277,8 +2200,8 @@ let generate_mli conf Parse.(Hmhi {prelude; hocc_; postlude; eoi}) io spec =
     |> Fmt.fmt " *)\n"
     |> (fun formatter ->
       match prelude with
-      | Parse.Matter {token_; _} -> begin
-          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+      | Parse.Matter {token; _} -> begin
+          let base = Scan.Token.source token |> Hmc.Source.Slice.base in
           let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
@@ -3345,31 +3268,18 @@ let expand_ml_token_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; qtype; _} ->
+      ~f:(fun (formatter, first) {name; alias; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         )
         |> (fun formatter ->
           match alias with
@@ -3390,7 +3300,7 @@ let expand_ml_token_index symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_token_indexes formatter = begin
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {index; name; qtype; _} ->
+      ~f:(fun (formatter, first) {index; name; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3403,9 +3313,9 @@ let expand_ml_token_index symbols ~indentation formatter =
           |> Fmt.fmt "  | "
           |> Fmt.fmt name
           |> (fun formatter ->
-            match qtype.explicit_opt with
-            | None -> formatter
-            | Some _ -> formatter |> Fmt.fmt " _"
+            match SymbolType.is_explicit stype with
+            | false -> formatter
+            | true -> formatter |> Fmt.fmt " _"
           )
           |> Fmt.fmt " -> "
           |> ml_uns_pp index
@@ -3429,31 +3339,18 @@ let expand_ml_nonterm_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
     let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; qtype; _} ->
+      ~f:(fun (formatter, first) {name; stype; _} ->
         formatter
         |> (fun formatter ->
           match first with
           | true -> formatter
           | false -> formatter |> Fmt.fmt "\n"
         )
+        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
-          match qtype with
-          | {explicit_opt=None; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-            end
-          | {explicit_opt=Some {module_; type_}; _} -> begin
-              formatter
-              |> indent
-              |> Fmt.fmt "  | "
-              |> Fmt.fmt name
-              |> Fmt.fmt " of "
-              |> Fmt.fmt module_
-              |> Fmt.fmt "."
-              |> Fmt.fmt type_
-            end
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
         ),
         false
       ) symbols
@@ -3526,7 +3423,7 @@ let expand_ml_callbacks symbols callbacks ~indentation formatter =
                   let formatter, _first =
                     Callback.Params.fold_right ~init:(formatter, true)
                       ~f:(fun (formatter, first)
-                        Callback.Param.{binding; symbol_name; _} ->
+                        Callback.Param.{pattern; symbol_name; _} ->
                         let is_token =
                           Symbols.symbol_of_name symbol_name symbols
                           |> Option.value_hlt
@@ -3543,15 +3440,15 @@ let expand_ml_callbacks symbols callbacks ~indentation formatter =
                           | false -> "  :: "
                         )
                         |> (fun formatter ->
-                          match binding with
-                          | Some uname -> begin
+                          match pattern with
+                          | Some pattern -> begin
                               formatter
                               |> Fmt.fmt "Elm.{symbol=Symbol."
                               |> Fmt.fmt symbol_constructor
                               |> Fmt.fmt " ("
                               |> Fmt.fmt symbol_name
                               |> Fmt.fmt " "
-                              |> Fmt.fmt uname
+                              |> Fmt.fmt pattern
                               |> Fmt.fmt "); _}"
                             end
                           | None -> formatter |> Fmt.fmt "_"
@@ -3564,7 +3461,7 @@ let expand_ml_callbacks symbols callbacks ~indentation formatter =
                 )
                 |> indent |> Fmt.fmt "  "
                 |> Fmt.fmt (match Callback.is_epsilon callback with false -> ":: " | true -> "")
-                |> Fmt.fmt "tl -> Symbol.Nonterm ("
+                |> Fmt.fmt "tl__hocc__ -> Symbol.Nonterm ("
                 |> Fmt.fmt lhs_name |> Fmt.fmt " (\n"
                 |> indent
                 |> String.fmt ~pad:underline ~just:Fmt.Left ~width:(98L - indentation) "  (*"
@@ -3575,7 +3472,7 @@ let expand_ml_callbacks symbols callbacks ~indentation formatter =
                 |> indent
                 |> String.fmt ~pad:overline ~just:Fmt.Left ~width:(98L - indentation) "  (*"
                 |> Fmt.fmt "*)\n"
-                |> indent |> Fmt.fmt "  )), tl\n"
+                |> indent |> Fmt.fmt "  )), tl__hocc__\n"
                 |> (fun formatter ->
                   match Callback.is_epsilon callback with
                   | false -> formatter |> indent |> Fmt.fmt "  | _ -> not_reached ()\n"
@@ -3600,8 +3497,8 @@ let expand_ml_callbacks symbols callbacks ~indentation formatter =
 let expand_ml_starts symbols states ~indentation formatter =
   let indent = mk_indent indentation in
   let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-    ~f:(fun (formatter, first) {name; qtype={synthetic; _}; start; _} ->
-      match (start && (not synthetic)) with
+    ~f:(fun (formatter, first) {name; stype; start; _} ->
+      match (start && (not (SymbolType.is_synthetic stype))) with
       | false -> formatter, first
       | true -> begin
           let synthetic_name = Spec.synthetic_name_of_start_name name in
@@ -3665,7 +3562,8 @@ let expand_ml_template template_indentation template
   formatter |> expand ~template_indentation template expanders
 
 let generate_ml conf
-    Parse.(Hmh {prelude; hocc_=(Hocc {hocc_; _} as hocc_block); postlude; eoi}) io spec =
+    Parse.(Hmh {prelude; hocc_=(Hocc {hocc_=HOCC {token=hocc_}; _} as hocc_block); postlude;
+      eoi=EOI {token=eoi}}) io spec =
   assert (Spec.conflicts spec = 0L);
   let indentation = indentation_of_hocc hocc_ in
   let module_name = module_name conf in
@@ -3678,8 +3576,8 @@ let generate_ml conf
 
     |> (fun formatter ->
       match prelude with
-      | Parse.Matter {token_; _} -> begin
-          let base = Scan.Token.source token_ |> Hmc.Source.Slice.base in
+      | Parse.Matter {token; _} -> begin
+          let base = Scan.Token.source token |> Hmc.Source.Slice.base in
           let past = Scan.Token.source hocc_ |> Hmc.Source.Slice.base in
           let source = Hmc.Source.Slice.of_cursors ~base ~past in
           formatter |> Fmt.fmt (Hmc.Source.Slice.to_string source)
