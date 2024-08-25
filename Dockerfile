@@ -39,7 +39,9 @@ RUN git reset --hard
 FROM --platform=${HEMLOCK_PLATFORM} latest AS test
 USER hemlock
 WORKDIR /home/hemlock/Hemlock/bootstrap
-CMD find . -type f -regex '.*\mli?' | xargs -- opam exec -- ocp-indent -i \
+CMD find . -type f -regex '.*\mli?' \
+    | grep -v -e '^\./test/hocc/' -e '^\./bin/hocc/Parse\.ml$' \
+    | xargs -- opam exec -- ocp-indent -i \
     && git diff --exit-code \
     && opam exec -- dune build src \
     && opam exec -- dune runtest \
