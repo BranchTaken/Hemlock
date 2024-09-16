@@ -13,11 +13,8 @@
  * source file). The trace output is detailed enough to diagnose nearly any scanner flaw, as well as
  * to aid understanding of how a particular token is scanned.
  *
- * Most language syntax changes require modifying the DFA, but keywords and special operators can be
- * added/removed with low effort.
- *
- * - Keywords are mapped to tokens in `Dfa.Ident.keyword_map`.
- * - Special operators are mapped to tokens in `Dfa.Operator.operator_map`.
+ * Most language syntax changes require modifying the DFA, but keywords and single-codepoint
+ * operators can be added/removed with low effort.
  *
  * Adding/removing a DFA state may require changes in several places:
  *
@@ -124,8 +121,12 @@ module Token = struct
       let cmp t0 t1 =
         Source.Slice.cmp t0.source t1.source
 
-      let init ~base ~past ~description =
-        {source=Source.Slice.of_cursors ~base ~past; description}
+      let of_source ~source ~description =
+        {source; description}
+
+      let of_cursors ~base ~past ~description =
+        let source = Source.Slice.of_cursors ~base ~past in
+        of_source ~source ~description
 
       let source t =
         t.source
@@ -1499,7 +1500,7 @@ let in_fstring t =
  * Convenience routines for reporting malformations. *)
 
 let malformation ~base ~past description =
-  Token.Rendition.Malformation.init ~base ~past ~description
+  Token.Rendition.Malformation.of_cursors ~base ~past ~description
 
 let malformation_incl View.{cursor; _} t description =
   malformation ~base:t.tok_base ~past:cursor description
