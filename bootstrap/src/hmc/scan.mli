@@ -52,7 +52,8 @@ module Token : sig
 
       include FormattableIntf.SMono with type t := t
 
-      val init: base:Source.Cursor.t -> past:Source.Cursor.t -> description:string -> t
+      val of_source: source:Source.Slice.t -> description:string -> t
+      val of_cursors: base:Source.Cursor.t -> past:Source.Cursor.t -> description:string -> t
       val source: t -> Source.Slice.t
       val description: t -> string
     end
