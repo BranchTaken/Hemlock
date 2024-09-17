@@ -680,33 +680,6 @@ let rec scan scanner =
           | Some token -> scanner, scan_token, token, []
           | None -> scan scanner
       end
-      | mal :: [] -> begin
-        (* Try to pass e.g. 42L through as a u64 token to support OCaml syntax. *)
-        let u64_opt = match Hmc.Scan.Token.Rendition.Malformation.description mal with
-          | "Invalid numerical constant" -> begin
-            let source = Scan.Token.source scan_token in
-            Hmc.Source.Slice.to_string source
-              |> String.chop_suffix ~suffix:"L"
-              |> (fun s_opt ->
-                match s_opt with
-                  | None -> None
-                  | Some s -> Stdlib.Int64.of_string_opt s
-              )
-          end
-          | _ -> None
-          in
-        match u64_opt with
-          | Some x -> begin
-            let rendition = Hmc.Scan.Token.Rendition.Constant x in
-            let tok = Hmc.Scan.Token.Tok_u64 {
-                source=Scan.Token.source scan_token;
-                u64=rendition
-              } in
-            let scan_token = Scan.Token.HmcToken tok in
-            scanner, scan_token, Token.OTHER_TOKEN (OTHER_TOKEN {token=scan_token}), []
-          end
-          | None -> scanner, scan_token, Token.OTHER_TOKEN (OTHER_TOKEN {token=scan_token}), [mal]
-      end
       | mals -> scanner, scan_token, Token.OTHER_TOKEN (OTHER_TOKEN {token=scan_token}), mals
 
 let hmhi scanner =
