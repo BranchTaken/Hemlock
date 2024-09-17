@@ -326,6 +326,7 @@ module Token = struct
     | Tok_tick of {source: Source.Slice.t}
     | Tok_caret of {source: Source.Slice.t}
     | Tok_amp of {source: Source.Slice.t}
+    | Tok_amp_amp of {source: Source.Slice.t}
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
@@ -652,6 +653,8 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_caret {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_amp {source} ->
         formatter |> Fmt.fmt "Tok_amp {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_amp_amp {source} ->
+        formatter |> Fmt.fmt "Tok_amp_amp {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_xmark {source} ->
         formatter |> Fmt.fmt "Tok_xmark {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_arrow {source} ->
@@ -1119,6 +1122,7 @@ module Token = struct
     | Tok_tick {source}
     | Tok_caret {source}
     | Tok_amp {source}
+    | Tok_amp_amp {source}
     | Tok_xmark {source}
     | Tok_arrow {source}
     | Tok_carrow {source}
@@ -1197,8 +1201,8 @@ module Token = struct
     | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _ | Tok_dot_dot _ | Tok_semi _ | Tok_colon _
     | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _ | Tok_rparen _ | Tok_lbrack _ | Tok_rbrack _
     | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _ | Tok_larray _
-    | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _ | Tok_xmark _ | Tok_arrow _
-    | Tok_carrow _
+    | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _ | Tok_amp_amp _
+    | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
     (* Miscellaneous. *)
     | Tok_source_directive {source_directive=(Constant _); _}
     | Tok_line_delim _
@@ -2661,6 +2665,7 @@ module State = struct
     | State_start
     | State_lparen
     | State_lbrack
+    | State_amp
     | State_tilde
     | State_qmark
     | State_star
@@ -2801,6 +2806,7 @@ module State = struct
     | State_start -> formatter |> Fmt.fmt "State_start"
     | State_lparen -> formatter |> Fmt.fmt "State_lparen"
     | State_lbrack -> formatter |> Fmt.fmt "State_lbrack"
+    | State_amp -> formatter |> Fmt.fmt "State_amp"
     | State_tilde -> formatter |> Fmt.fmt "State_tilde"
     | State_qmark -> formatter |> Fmt.fmt "State_qmark"
     | State_star -> formatter |> Fmt.fmt "State_star"
@@ -3222,7 +3228,7 @@ module Dfa = struct
         ("{", fun view t -> accept_tok_incl (Tok_lcurly {source=source_incl view t}) view t);
         ("}", fun view t -> accept_tok_incl (Tok_rcurly {source=source_incl view t}) view t);
         ("\\", fun view t -> accept_tok_incl (Tok_bslash {source=source_incl view t}) view t);
-        ("&", fun view t -> accept_tok_incl (Tok_amp {source=source_incl view t}) view t);
+        ("&", advance State_amp);
         ("!", fun view t -> accept_tok_incl (Tok_xmark {source=source_incl view t}) view t);
         ("\n", fun view t ->
             accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
@@ -3290,6 +3296,14 @@ module Dfa = struct
     ];
     default0=(fun view t -> accept_tok_excl (Tok_lbrack {source=source_excl view t}) view t);
     eoi0=(fun view t -> accept_tok_incl (Tok_lbrack {source=source_incl view t}) view t);
+  }
+
+  let node0_amp = {
+    edges0=map_of_cps_alist [
+      ("&", fun view t -> accept_tok_incl (Tok_amp_amp {source=source_incl view t}) view t);
+    ];
+    default0=(fun view t -> accept_tok_excl (Tok_amp {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_amp {source=source_incl view t}) view t);
   }
 
   let node0_tilde = {
@@ -6962,6 +6976,7 @@ module Dfa = struct
     | State.State_start -> act0 trace node0_start view t
     | State_lparen -> act0 trace node0_lparen view t
     | State_lbrack -> act0 trace node0_lbrack view t
+    | State_amp -> act0 trace node0_amp view t
     | State_tilde -> act0 trace node0_tilde view t
     | State_qmark -> act0 trace node0_qmark view t
     | State_star -> act0 trace node0_star view t
