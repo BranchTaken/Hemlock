@@ -203,6 +203,9 @@
   (Tok_whitespace {source=[1:63..1:64)})
   (Tok_zint {source=[1:64..1:69); zint=(Constant 254z)})
   (Tok_end_of_input {source=[1:69..1:69)})
+``0L``
+  (Tok_long {source=[1:0..1:2); long=(Constant 0)})
+  (Tok_end_of_input {source=[1:2..1:2)})
 ``0u``
   (Tok_u64 {source=[1:0..1:2); u64=(Constant 0)})
   (Tok_end_of_input {source=[1:2..1:2)})
@@ -221,6 +224,9 @@
 ``0z``
   (Tok_zint {source=[1:0..1:2); zint=(Constant 0z)})
   (Tok_end_of_input {source=[1:2..1:2)})
+``42L``
+  (Tok_long {source=[1:0..1:3); long=(Constant 42)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``42u``
   (Tok_u64 {source=[1:0..1:3); u64=(Constant 42)})
   (Tok_end_of_input {source=[1:3..1:3)})
@@ -255,6 +261,9 @@
   (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
   (Tok_end_of_input {source=[1:3..1:3)})
 ``0xg``
+  (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
+  (Tok_end_of_input {source=[1:3..1:3)})
+``0L1``
   (Tok_u64 {source=[1:0..1:3); u64=(Malformed ["[1:0..1:3): Invalid numerical constant"])})
   (Tok_end_of_input {source=[1:3..1:3)})
 ``0u7``
@@ -303,6 +312,12 @@
 ``0xabu8``
   (Tok_u8 {source=[1:0..1:6); u8=(Constant 171u8)})
   (Tok_end_of_input {source=[1:6..1:6)})
+``0x15L``
+  (Tok_long {source=[1:0..1:5); long=(Constant 21)})
+  (Tok_end_of_input {source=[1:5..1:5)})
+``15L``
+  (Tok_long {source=[1:0..1:3); long=(Constant 15)})
+  (Tok_end_of_input {source=[1:3..1:3)})
 ``15u``
   (Tok_u64 {source=[1:0..1:3); u64=(Constant 15)})
   (Tok_end_of_input {source=[1:3..1:3)})

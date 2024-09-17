@@ -793,15 +793,12 @@ let rec next t =
           -> malformation ~source "Hemlock-specific formatted string syntax"
         | Tok_r32 {source; _} -> malformation ~source "Hemlock-specific real syntax"
         | Tok_r64 {source; r64} -> Tok_r64 {source; r64}
-
         | Tok_u8 {source; _} | Tok_i8 {source; _} | Tok_u16 {source; _} | Tok_i16 {source; _}
         | Tok_u32 {source; _} | Tok_i32 {source; _} | Tok_u64 {source; _} | Tok_i64 {source; _}
         | Tok_u128 {source; _} | Tok_i128 {source; _} | Tok_u256 {source; _} | Tok_i256 {source; _}
         | Tok_u512 {source; _} | Tok_i512 {source; _} | Tok_nat {source; _} | Tok_zint {source; _}
           -> malformation ~source "Hemlock-specific integer syntax"
-(*
-      | Tok_long {source; long} -> Tok_long {source; long}
-*)
+        | Tok_long {source; long} -> Tok_long {source; long}
         | Tok_end_of_input {source} -> Tok_end_of_input {source}
         | Tok_misaligned _ -> not_reached () (* Handled by outer match. *)
         | Tok_error {source; error} -> Tok_error {source; error}
