@@ -375,6 +375,7 @@ module Token = struct
     | Tok_i16 of {source: Source.Slice.t; i16: i16 Rendition.t}
     | Tok_u32 of {source: Source.Slice.t; u32: u32 Rendition.t}
     | Tok_i32 of {source: Source.Slice.t; i32: i32 Rendition.t}
+    | Tok_long of {source: Source.Slice.t; long: u64 Rendition.t}
     | Tok_u64 of {source: Source.Slice.t; u64: u64 Rendition.t}
     | Tok_i64 of {source: Source.Slice.t; i64: i64 Rendition.t}
     | Tok_u128 of {source: Source.Slice.t; u128: u128 Rendition.t}
@@ -939,6 +940,14 @@ module Token = struct
           |> Rendition.pp I32.pp i32
           |> Fmt.fmt "}"
         end
+      | Tok_long {source; long} -> begin
+          formatter
+          |> Fmt.fmt "Tok_long {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; long="
+          |> Rendition.pp U64.pp long
+          |> Fmt.fmt "}"
+        end
       | Tok_u64 {source; u64} -> begin
           formatter
           |> Fmt.fmt "Tok_u64 {source="
@@ -1156,6 +1165,7 @@ module Token = struct
     | Tok_i16 {source; _}
     | Tok_u32 {source; _}
     | Tok_i32 {source; _}
+    | Tok_long {source; _}
     | Tok_u64 {source; _}
     | Tok_i64 {source; _}
     | Tok_u128 {source; _}
@@ -1224,6 +1234,7 @@ module Token = struct
     | Tok_i16 {i16=(Constant _); _}
     | Tok_u32 {u32=(Constant _); _}
     | Tok_i32 {i32=(Constant _); _}
+    | Tok_long {long=(Constant _); _}
     | Tok_u64 {u64=(Constant _); _}
     | Tok_i64 {i64=(Constant _); _}
     | Tok_u128 {u128=(Constant _); _}
@@ -1259,6 +1270,7 @@ module Token = struct
     | Tok_i16 {i16=(Malformed mals); _}
     | Tok_u32 {u32=(Malformed mals); _}
     | Tok_i32 {i32=(Malformed mals); _}
+    | Tok_long {long=(Malformed mals); _}
     | Tok_u64 {u64=(Malformed mals); _}
     | Tok_i64 {i64=(Malformed mals); _}
     | Tok_u128 {u128=(Malformed mals); _}
@@ -2071,6 +2083,8 @@ module State = struct
       {n; radix}
   end
 
+  module Integer_l = Integer_u
+
   module Integer_i = Integer_u
 
   module Integer_n = Integer_u
@@ -2682,6 +2696,7 @@ module State = struct
     | State_integer_oct_dot of Integer_oct_dot.t
     | State_integer_dec_dot of Integer_dec_dot.t
     | State_integer_hex_dot of Integer_hex_dot.t
+    | State_integer_l of Integer_l.t
     | State_integer_u of Integer_u.t
     | State_integer_i of Integer_i.t
     | State_integer_n of Integer_n.t
@@ -2827,6 +2842,7 @@ module State = struct
       formatter |> Fmt.fmt "State_integer_dec_dot " |> Integer_dec_dot.pp v
     | State_integer_hex_dot v ->
       formatter |> Fmt.fmt "State_integer_hex_dot " |> Integer_hex_dot.pp v
+    | State_integer_l v -> formatter |> Fmt.fmt "State_integer_l " |> Integer_l.pp v
     | State_integer_u v -> formatter |> Fmt.fmt "State_integer_u " |> Integer_u.pp v
     | State_integer_i v -> formatter |> Fmt.fmt "State_integer_i " |> Integer_i.pp v
     | State_integer_n v -> formatter |> Fmt.fmt "State_integer_n " |> Integer_n.pp v
@@ -3994,6 +4010,7 @@ module Dfa = struct
       | Subtype_i16
       | Subtype_u32
       | Subtype_i32
+      | Subtype_long
       | Subtype_u64
       | Subtype_i64
       | Subtype_u128
@@ -4024,6 +4041,7 @@ module Dfa = struct
       | Subtype_i16 -> Some Sint.(widen_to_nat_hlt (abs (I16.(extend_to_sint min_value))))
       | Subtype_u32 -> Some U32.(extend_to_nat max_value)
       | Subtype_i32 -> Some Sint.(widen_to_nat_hlt (abs (I32.(extend_to_sint min_value))))
+      | Subtype_long -> Some U64.(extend_to_nat max_value)
       | Subtype_u64 -> Some U64.(extend_to_nat max_value)
       | Subtype_i64 -> Some (Nat.like_of_zint_hlt (Zint.abs I64.(extend_to_zint min_value)))
       | Subtype_u128 -> Some U128.(extend_to_nat max_value)
@@ -4057,6 +4075,7 @@ module Dfa = struct
             | Subtype_i16 -> Tok_i16 {source; i16=malformed}
             | Subtype_u32 -> Tok_u32 {source; u32=malformed}
             | Subtype_i32 -> Tok_i32 {source; i32=malformed}
+            | Subtype_long -> Tok_long {source; long=malformed}
             | Subtype_u64 -> Tok_u64 {source; u64=malformed}
             | Subtype_i64 -> Tok_i64 {source; i64=malformed}
             | Subtype_u128 -> Tok_u128 {source; u128=malformed}
@@ -4079,6 +4098,7 @@ module Dfa = struct
             | Subtype_i16 -> Tok_i16 {source; i16=Constant (I16.trunc_of_nat n)}
             | Subtype_u32 -> Tok_u32 {source; u32=Constant (U32.trunc_of_nat n)}
             | Subtype_i32 -> Tok_i32 {source; i32=Constant (I32.trunc_of_nat n)}
+            | Subtype_long -> Tok_long {source; long=Constant (U64.trunc_of_nat n)}
             | Subtype_u64 -> Tok_u64 {source; u64=Constant (U64.trunc_of_nat n)}
             | Subtype_i64 -> Tok_i64 {source; i64=Constant (I64.trunc_of_nat n)}
             | Subtype_u128 -> Tok_u128 {source; u128=Constant (U128.trunc_of_nat n)}
@@ -4166,6 +4186,7 @@ module Dfa = struct
         (cpset_of_cps "b", advance State_integer_0b);
         (cpset_of_cps "o", advance State_integer_0o);
         (cpset_of_cps "x", advance State_integer_0x);
+        (cpset_of_cps "L", advance (State_integer_l (State.Integer_l.init ~n:Nat.k_0 ~radix:Dec)));
         (cpset_of_cps "u", advance (State_integer_u (State.Integer_u.init ~n:Nat.k_0 ~radix:Dec)));
         (cpset_of_cps "i", advance (State_integer_i (State.Integer_i.init ~n:Nat.k_0 ~radix:Dec)));
         (cpset_of_cps "n", advance (State_integer_n (State.Integer_n.init ~n:Nat.k_0 ~radix:Dec)));
@@ -4174,7 +4195,7 @@ module Dfa = struct
         (cpset_of_cps ".", advance State_integer_0_dot);
         (cpset_of_cps "e", advance (State_real_e (State.Real_e.init ~m:0.)));
         (Set.diff (cpset_of_cps ident_cps)
-            (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_beinoruxz")),
+            (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_Lbeinoruxz")),
           advance State_integer_mal_ident);
       ];
       default0=accept_zero_excl;
@@ -4236,6 +4257,10 @@ module Dfa = struct
               advance (state_init (state |> accum_digit digit)) view t);
           (cpset_of_cps ".", fun state view t -> advance (state_dot_init state) view t);
           (cpset_of_cps ep_cp, ep_advance);
+          (cpset_of_cps "L", fun state view t ->
+              let n = n_of_state state in
+              advance (State_integer_l (State.Integer_l.init ~n ~radix)) view t
+          );
           (cpset_of_cps "u", fun state view t ->
               let n = n_of_state state in
               advance (State_integer_u (State.Integer_u.init ~n ~radix)) view t
@@ -4254,7 +4279,7 @@ module Dfa = struct
           );
           (cpset_of_cps "r", r_advance);
           (Set.diff (cpset_of_cps ident_cps)
-              (Set.union (cpset_of_cps base_cps) (cpset_of_cps (String.join ["_inruz"; ep_cp]))),
+              (Set.union (cpset_of_cps base_cps) (cpset_of_cps (String.join ["_Linruz"; ep_cp]))),
             fun _state view t -> advance State_integer_mal_ident view t);
         ];
         default1=(fun state view t ->
@@ -4366,6 +4391,18 @@ module Dfa = struct
           let m = realer_of_nat n in
           retry (State_real_hex_dot (State.Real_hex_dot.init ~m)) t
         )
+
+    let node1_l =
+      let open State.Integer_l in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, fun _state view t -> advance State_integer_mal_ident view t);
+        ];
+        default1=(fun {n; radix} view t ->
+          accept_integer_excl ~subtype:Subtype_long n radix view t
+        );
+        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_long n radix view t);
+      }
 
     let node1_u =
       let open State.Integer_u in
@@ -6960,6 +6997,7 @@ module Dfa = struct
     | State_integer_oct_dot v -> act1 trace Integer.node1_oct_dot v view t
     | State_integer_dec_dot v -> act1 trace Integer.node1_dec_dot v view t
     | State_integer_hex_dot v -> act1 trace Integer.node1_hex_dot v view t
+    | State_integer_l v -> act1 trace Integer.node1_l v view t
     | State_integer_u v -> act1 trace Integer.node1_u v view t
     | State_integer_i v -> act1 trace Integer.node1_i v view t
     | State_integer_n v -> act1 trace Integer.node1_n v view t
