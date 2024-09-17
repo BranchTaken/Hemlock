@@ -179,6 +179,7 @@ module Token : sig
     | Tok_tick of {source: Source.Slice.t}
     | Tok_caret of {source: Source.Slice.t}
     | Tok_amp of {source: Source.Slice.t}
+    | Tok_amp_amp of {source: Source.Slice.t}
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
