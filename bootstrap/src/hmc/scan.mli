@@ -228,6 +228,7 @@ module Token : sig
     | Tok_i16 of {source: Source.Slice.t; i16: i16 Rendition.t}
     | Tok_u32 of {source: Source.Slice.t; u32: u32 Rendition.t}
     | Tok_i32 of {source: Source.Slice.t; i32: i32 Rendition.t}
+    | Tok_long of {source: Source.Slice.t; long: u64 Rendition.t}
     | Tok_u64 of {source: Source.Slice.t; u64: u64 Rendition.t}
     | Tok_i64 of {source: Source.Slice.t; i64: i64 Rendition.t}
     | Tok_u128 of {source: Source.Slice.t; u128: u128 Rendition.t}

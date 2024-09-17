@@ -34,6 +34,7 @@ let test () =
   scan_str "0xfeu8 0xfeu16 0xfeu32 0xfe 0xfeu 0xfeu64 0xfeu128 0xfeu256 0xfeu512 0xfen";
   scan_str "0xfei8 0xfei16 0xfei32 0xfei 0xfei64 0xfei128 0xfei256 0xfei512 0xfez";
 
+  scan_str "0L";
   scan_str "0u";
   scan_str "0i";
   scan_str "0u8";
@@ -41,6 +42,7 @@ let test () =
   scan_str "0n";
   scan_str "0z";
 
+  scan_str "42L";
   scan_str "42u";
   scan_str "42i";
   scan_str "42u8";
@@ -57,6 +59,7 @@ let test () =
   scan_str "0o8";
   scan_str "0xg";
 
+  scan_str "0L1";
   scan_str "0u7";
   scan_str "0n1";
   scan_str "0z1";
@@ -78,6 +81,8 @@ let test () =
   scan_str "0o253u8";
   scan_str "0xabu8";
 
+  scan_str "0x15L";
+  scan_str "15L";
   scan_str "15u";
   scan_str "17u64";
   scan_str "0x0123_4567_89ab_cdef";
