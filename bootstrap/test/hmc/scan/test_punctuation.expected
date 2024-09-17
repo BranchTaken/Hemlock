@@ -75,6 +75,12 @@
   (Tok_lcurly {source=[1:0..1:1)})
   (Tok_rcurly {source=[1:1..1:2)})
   (Tok_end_of_input {source=[1:2..1:2)})
+``&&& &&``
+  (Tok_amp_amp {source=[1:0..1:2)})
+  (Tok_amp {source=[1:2..1:3)})
+  (Tok_whitespace {source=[1:3..1:4)})
+  (Tok_amp_amp {source=[1:4..1:6)})
+  (Tok_end_of_input {source=[1:6..1:6)})
 ``\^&\&_&\``
   (Tok_bslash {source=[1:0..1:1)})
   (Tok_caret {source=[1:1..1:2)})

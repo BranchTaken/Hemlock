@@ -723,9 +723,7 @@ let rec next t =
         | Tok_bslash {source} -> Tok_bslash {source}
         | Tok_tick {source} -> Tok_tick {source}
         | Tok_caret {source} -> Tok_caret {source}
-(*
-      | Tok_amp_amp {source} -> Tok_amp_amp {source}
-*)
+        | Tok_amp_amp {source} -> Tok_amp_amp {source}
         | Tok_xmark {source} -> Tok_xmark {source}
         | Tok_arrow {source} -> Tok_arrow {source}
 
