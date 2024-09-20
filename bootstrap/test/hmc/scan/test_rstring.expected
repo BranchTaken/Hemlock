@@ -72,6 +72,12 @@ b```_`
 `_c9_``_xx_`...``...`_`...`__`...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_...`_xx_``_c9_`
   (Tok_rstring {source=[1:0..1:103); rstring=(Constant "...``...`_`...`__`...`__`_0_`_1_`_2_`_3_`_4_`_5_`_6_`_7_`_8_`_9_`_a_`_b_`_c_`_d_`_e_`_f_...")})
   (Tok_end_of_input {source=[1:103..1:103)})
+`_```�```_`
+  (Tok_rstring {source=[1:0..1:5); rstring=(Constant "�")})
+  (Tok_end_of_input {source=[1:5..1:5)})
+`_``__`...`�_`_�...`__``_`
+  (Tok_rstring {source=[1:0..1:20); rstring=(Constant "...`�_`_�...")})
+  (Tok_end_of_input {source=[1:20..1:20)})
 `_`` `aoeu` ``_`
   (Tok_rstring {source=[1:0..1:10); rstring=(Malformed ["[1:1..1:2): Invalid codepoint in raw string tag"])})
   (Tok_end_of_input {source=[1:10..1:10)})

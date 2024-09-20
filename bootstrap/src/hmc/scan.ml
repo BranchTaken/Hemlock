@@ -5832,15 +5832,14 @@ module Dfa = struct
                 end
           );
         ];
-        default1=(fun ({mals; ltag; body; ltag_cursor} as state) (View.{pcursor; _} as view)
-          t ->
+        default1=(fun ({mals; ltag; body; ltag_cursor} as state) (View.{pcursor; _} as view) t ->
           let lcp = Source.Cursor.rget ltag_cursor in
           let rcp = Source.Cursor.rget pcursor in
           match Codepoint.(lcp = rcp) with
           | false -> begin
               let state' =
                 State.Rstring_body.init ~mals ~ltag ~body_base:(Source.Slice.base body) in
-              advance (State_rstring_body state') view t
+              retry (State_rstring_body state') t
             end
           | true -> advance (State_rstring_rtag (State.Rstring_rtag.next state)) view t
         );
