@@ -8,6 +8,7 @@ let test () =
   scan_str "'\\t' '\\n' '\\r' '\\'' '\\\\'";
   scan_str "'\\u{41}'";
   scan_str "'\\u{000_ff_fd}'";
+  scan_str "'�'";
 
   (* Type parameter sigils. *)
   scan_str "'";
