@@ -774,9 +774,7 @@ let rec next t =
             | Malformed _ -> Tok_char {source; char=codepoint}
           end
         | Tok_rstring {source; _} -> malformation ~source "Hemlock-specific raw string syntax"
-(*
-      | Tok_qstring {source; qstring} -> Tok_qstring {source; qstring}
-*)
+        | Tok_qstring {source; qstring} -> Tok_qstring {source; qstring}
         | Tok_istring {source; istring} -> Tok_istring {source; istring}
         | Tok_fstring_lditto {source; _} | Tok_fstring_interpolated {source; _}
         | Tok_fstring_pct {source; _} | Tok_fstring_pad {source; _} | Tok_fstring_just {source; _}

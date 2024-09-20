@@ -345,6 +345,7 @@ module Token = struct
     | Tok_cident of {source: Source.Slice.t; cident: string}
     | Tok_codepoint of {source: Source.Slice.t; codepoint: codepoint Rendition.t}
     | Tok_rstring of {source: Source.Slice.t; rstring: string Rendition.t}
+    | Tok_qstring of {source: Source.Slice.t; qstring: string Rendition.t}
     | Tok_istring of {source: Source.Slice.t; istring: string Rendition.t}
     | Tok_fstring_lditto of {source: Source.Slice.t}
     | Tok_fstring_interpolated of {source: Source.Slice.t; fstring_interpolated: string Rendition.t}
@@ -731,6 +732,14 @@ module Token = struct
           |> Source.Slice.pp source
           |> Fmt.fmt "; rstring="
           |> Rendition.pp String.pp rstring
+          |> Fmt.fmt "}"
+        end
+      | Tok_qstring {source; qstring} -> begin
+          formatter
+          |> Fmt.fmt "Tok_qstring {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; qstring="
+          |> Rendition.pp String.pp qstring
           |> Fmt.fmt "}"
         end
       | Tok_istring {source; istring} -> begin
@@ -1138,6 +1147,7 @@ module Token = struct
     | Tok_cident {source; _}
     | Tok_codepoint {source; _}
     | Tok_rstring {source; _}
+    | Tok_qstring {source; _}
     | Tok_istring {source; _}
     | Tok_fstring_lditto {source}
     | Tok_fstring_interpolated {source; _}
@@ -1215,6 +1225,7 @@ module Token = struct
     | Tok_cident _
     | Tok_codepoint {codepoint=(Constant _); _}
     | Tok_rstring {rstring=(Constant _); _}
+    | Tok_qstring {qstring=(Constant _); _}
     | Tok_istring {istring=(Constant _); _}
     | Tok_fstring_lditto _
     | Tok_fstring_interpolated {fstring_interpolated=(Constant _); _}
@@ -1259,6 +1270,7 @@ module Token = struct
     | Tok_uident {uident=(Malformed mals); _}
     | Tok_codepoint {codepoint=(Malformed mals); _}
     | Tok_rstring {rstring=(Malformed mals); _}
+    | Tok_qstring {qstring=(Malformed mals); _}
     | Tok_istring {istring=(Malformed mals); _}
     | Tok_fstring_interpolated {fstring_interpolated=(Malformed mals); _}
     | Tok_fstring_pad {fstring_pad=(Malformed mals); _}
@@ -2515,6 +2527,44 @@ module State = struct
       {t with mals=mal :: mals}
   end
 
+  module Qstring_body = struct
+    type t = {
+      mals: Token.Rendition.Malformation.t list;
+      body_base: Source.Cursor.t;
+    }
+
+    let pp {mals; body_base} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; body_base=" |> Source.Cursor.pp body_base
+      |> Fmt.fmt "}"
+
+    let init ~mals ~body_base =
+      {mals; body_base}
+
+    let accum_mal ~mal ({mals; _} as t) =
+      {t with mals=mal :: mals}
+  end
+
+  module Qstring_rtag = struct
+    type t = {
+      mals: Token.Rendition.Malformation.t list;
+      body: Source.Slice.t;
+    }
+
+    let pp {mals; body} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; body=" |> Source.Slice.pp body
+      |> Fmt.fmt "}"
+
+    let init ~mals ~body =
+      {mals; body}
+
+    let accum_mal ~mal ({mals; _} as t) =
+      {t with mals=mal :: mals}
+  end
+
   module CodepointAccum = struct
     type t =
       | Codepoints of codepoint list
@@ -2764,6 +2814,9 @@ module State = struct
     | State_rstring_ltag of Rstring_ltag.t
     | State_rstring_body of Rstring_body.t
     | State_rstring_rtag of Rstring_rtag.t
+    | State_qstring_ltag
+    | State_qstring_body of Qstring_body.t
+    | State_qstring_rtag of Qstring_rtag.t
     | State_istring_body of Istring_body.t
     | State_istring_bslash of Istring_bslash.t
     | State_istring_bslash_u of Istring_bslash_u.t
@@ -2935,6 +2988,9 @@ module State = struct
     | State_rstring_ltag v -> formatter |> Fmt.fmt "State_rstring_ltag " |> Rstring_ltag.pp v
     | State_rstring_body v -> formatter |> Fmt.fmt "State_rstring_body " |> Rstring_body.pp v
     | State_rstring_rtag v -> formatter |> Fmt.fmt "State_rstring_rtag " |> Rstring_rtag.pp v
+    | State_qstring_ltag -> formatter |> Fmt.fmt "State_qstring_ltag"
+    | State_qstring_body v -> formatter |> Fmt.fmt "State_qstring_body " |> Qstring_body.pp v
+    | State_qstring_rtag v -> formatter |> Fmt.fmt "State_qstring_rtag " |> Qstring_rtag.pp v
     | State_istring_body v ->
       formatter |> Fmt.fmt "State_istring_body " |> Istring_body.pp v
     | State_istring_bslash v ->
@@ -3225,7 +3281,7 @@ module Dfa = struct
         (")", fun view t -> accept_tok_incl (Tok_rparen {source=source_incl view t}) view t);
         ("[", advance State_lbrack);
         ("]", fun view t -> accept_tok_incl (Tok_rbrack {source=source_incl view t}) view t);
-        ("{", fun view t -> accept_tok_incl (Tok_lcurly {source=source_incl view t}) view t);
+        ("{", advance State_qstring_ltag);
         ("}", fun view t -> accept_tok_incl (Tok_rcurly {source=source_incl view t}) view t);
         ("\\", fun view t -> accept_tok_incl (Tok_bslash {source=source_incl view t}) view t);
         ("&", advance State_amp);
@@ -5851,6 +5907,87 @@ module Dfa = struct
       }
   end
 
+  module Qstring = struct
+    let accept_mals mals cursor t =
+      let open Token in
+      let malformed = Rendition.of_mals mals in
+      accept_tok (Tok_qstring {source=source_at cursor t; qstring=malformed}) cursor t
+
+    let accept_mals_incl mals View.{cursor; _} t =
+      accept_mals mals cursor t
+
+    let node0_ltag =
+      {
+        edges0=map_of_cps_alist [
+          ("|", fun (View.{cursor; _} as view) t ->
+              let state = State.Qstring_body.init ~mals:[] ~body_base:cursor in
+              advance (State_qstring_body state) view t
+          );
+        ];
+        default0=(fun view t -> accept_tok_excl (Tok_lcurly {source=source_excl view t}) view t);
+        eoi0=(fun view t -> accept_tok_incl (Tok_lcurly {source=source_incl view t}) view t);
+      }
+
+    let node1_body =
+      let open State.Qstring_body in
+      {
+        edges1=map_of_cps_alist [
+          ("|", fun {mals; body_base} (View.{pcursor; _} as view) t ->
+              let body = Source.Slice.of_cursors ~base:body_base ~past:pcursor in
+              let state' = State.Qstring_rtag.init ~mals ~body in
+              advance (State_qstring_rtag state') view t
+          );
+          ("�", fun state (View.{pcursor; cursor; _} as view) t ->
+              let state' = match Source.Cursor.rvalid pcursor with
+                | false -> begin
+                    let mal = invalid_utf8 pcursor cursor in
+                    state |> accum_mal ~mal
+                  end
+                | true -> state
+              in
+              advance (State_qstring_body state') view t
+          );
+        ];
+        default1=(fun state view t -> advance (State_qstring_body state) view t);
+        eoi1=(fun state (View.{cursor; _} as view) t ->
+          let mal = unterminated_string t.tok_base cursor in
+          let state' = accum_mal ~mal state in
+          accept_mals_incl state'.mals view t
+        );
+      }
+
+    let node1_rtag =
+      let open State.Qstring_rtag in
+      {
+        edges1=map_of_cps_alist [
+          ("|", fun {mals; body} (View.{pcursor; _} as view) t ->
+              let body = Source.Slice.of_cursors ~base:(Source.Slice.base body) ~past:pcursor in
+              let state' = State.Qstring_rtag.init ~mals ~body in
+              advance (State_qstring_rtag state') view t);
+          ("}", fun {mals; body} (View.{cursor; _} as view) t ->
+              match mals with
+              | _ :: _ -> accept_mals_incl mals view t
+              | [] -> begin
+                  let open Token in
+                  accept_tok (Tok_qstring {
+                    source=source_incl view t;
+                    qstring=Constant (Source.Slice.to_string body)
+                  }) cursor t
+                end
+          );
+        ];
+        default1=(fun {mals; body} _view t ->
+          let state' = State.Qstring_body.init ~mals ~body_base:(Source.Slice.base body) in
+          retry (State_qstring_body state') t
+        );
+        eoi1=(fun state (View.{cursor; _} as view) t ->
+          let mal = unterminated_string t.tok_base cursor in
+          let state' = accum_mal ~mal state in
+          accept_mals_incl state'.mals view t
+        );
+      }
+  end
+
   (* Istring states are also used for fstrings. Source directives, on the other hand, have their own
    * istring scanning implementation. *)
   module Istring = struct
@@ -7077,6 +7214,9 @@ module Dfa = struct
     | State_rstring_ltag v -> act1 trace Rstring.node1_ltag v view t
     | State_rstring_body v -> act1 trace Rstring.node1_body v view t
     | State_rstring_rtag v -> act1 trace Rstring.node1_rtag v view t
+    | State_qstring_ltag -> act0 trace Qstring.node0_ltag view t
+    | State_qstring_body v -> act1 trace Qstring.node1_body v view t
+    | State_qstring_rtag v -> act1 trace Qstring.node1_rtag v view t
     | State_istring_body v -> act1 trace Istring.node1_start v view t
     | State_istring_bslash v -> act1 trace Istring.node1_bslash v view t
     | State_istring_bslash_u v -> act1 trace Istring.node1_bslash_u v view t

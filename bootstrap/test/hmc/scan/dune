@@ -9,6 +9,7 @@
   test_istring
   test_operators
   test_punctuation
+  test_qstring
   test_real
   test_rstring
   test_source_directive
