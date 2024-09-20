@@ -198,6 +198,7 @@ module Token : sig
     | Tok_cident of {source: Source.Slice.t; cident: string}
     | Tok_codepoint of {source: Source.Slice.t; codepoint: codepoint Rendition.t}
     | Tok_rstring of {source: Source.Slice.t; rstring: string Rendition.t}
+    | Tok_qstring of {source: Source.Slice.t; qstring: string Rendition.t}
     | Tok_istring of {source: Source.Slice.t; istring: string Rendition.t}
     | Tok_fstring_lditto of {source: Source.Slice.t}
     | Tok_fstring_interpolated of {source: Source.Slice.t; fstring_interpolated: string Rendition.t}
