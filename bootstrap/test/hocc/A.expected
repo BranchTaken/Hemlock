@@ -1,6 +1,6 @@
 hocc: Parsing "./A.hmh"
 hocc: Generating LR(1) specification
-hocc: 2 precedences, 8 tokens, 5 non-terminals, 8 productions
+hocc: 2 precedences, 8 tokens, 5 non-terminals (1 start), 8 productions
 hocc: LR(1) item set compatibility: lr1
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++^^+^^++++^^+^++^^^
 hocc: Generating 25 LR(1) states
