@@ -751,6 +751,11 @@ let symbols_init io precs symbols hmh =
   let nprecs = Precs.length precs in
   let ntokens = Symbols.tokens_length symbols in
   let nnonterms = Symbols.nonterms_length symbols in
+  let nstarts = Symbols.nonterms_fold ~init:0L ~f:(fun nstarts (Symbol.{start; _} as symbol) ->
+      match start && (not (Symbol.is_synthetic symbol)) with
+      | false -> nstarts
+      | true -> succ nstarts
+    ) symbols in
   let nprods = Prods.length prods in
   let io =
     io.log
@@ -765,12 +770,27 @@ let symbols_init io precs symbols hmh =
     |> Fmt.fmt ", "
     |> Uns.pp nnonterms |> Fmt.fmt " non-terminal"
     |> (fun formatter -> match nnonterms with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+    |> Fmt.fmt " (" |> Uns.pp nstarts
+    |> Fmt.fmt " start"
+    |> (fun formatter -> match nstarts with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+    |> Fmt.fmt ")"
 
     |> Fmt.fmt ", "
     |> Uns.pp nprods |> Fmt.fmt " production"
     |> (fun formatter -> match nprods with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
     |> Fmt.fmt "\n"
     |> Io.with_log io
+  in
+  let io = match nstarts with
+    | 0L -> begin
+        let io =
+          io.err
+          |> Fmt.fmt "hocc: Must specify at least one start symbol\n"
+          |> Io.with_err io
+        in
+        Io.fatal io
+      end
+    | _ -> io
   in
   io, symbols, prods, callbacks
 

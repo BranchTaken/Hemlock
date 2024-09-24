@@ -1,6 +1,6 @@
 hocc: Parsing "./G2.hmh"
 hocc: Generating PGM(1) specification
-hocc: 0 precedences, 10 tokens, 8 non-terminals, 14 productions
+hocc: 0 precedences, 10 tokens, 8 non-terminals (1 start), 14 productions
 hocc: LR(1) item set compatibility: weak
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++^.+++++++..+^.......++^.++++...
 hocc: Generating 27 LR(1) states

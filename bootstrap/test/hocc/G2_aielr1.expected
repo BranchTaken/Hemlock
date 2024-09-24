@@ -1,6 +1,6 @@
 hocc: Parsing "./G2_aielr1.hmh"
 hocc: Generating IELR(1) specification
-hocc: 0 precedences, 10 tokens, 8 non-terminals, 14 productions
+hocc: 0 precedences, 10 tokens, 8 non-terminals (1 start), 14 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite
 hocc: LR(1) item set compatibility: lalr1
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++..+++++++..+........++++++
