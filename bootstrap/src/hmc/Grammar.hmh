@@ -1,0 +1,89 @@
+open Basis
+open! Basis.Rudiments
+
+type token = {source: Source.Slice.t}
+
+type nonterm_sep =
+  | SepSemi of token
+  | SepLineDelim of token
+type nonterm_rec =
+  | Rec
+  | RecNon
+type nonterm_type_param =
+  | TypeParam
+type nonterm_type_params =
+  | TypeParams
+type nonterm_type_args =
+  | TypeArgs
+type nonterm_c_module_def =
+  | CModuleDef
+type nonterm_expr =
+  | ExprUnit
+type nonterm_c_module_item =
+  | CModuleItem
+type nonterm_c_module_items =
+  | CModuleItems
+type nonterm_hm =
+  | Hm
+
+include hocc
+    token AND "and" of token
+    token REC "rec" of token
+    token TYPE "type" of token
+    token TICK "'" of token
+    token CARAT "^" of token
+    token EQ "=" of token
+    token GT ">" of token
+    token LCURLY "{" of token
+    token RCURLY "}" of token
+    token LPAREN "(" of token
+    token RPAREN ")" of token
+    token LINE_DELIM of token
+    token COLON ":" of token
+    token SEMI ";" of token
+    token UIDENT of token
+    token CIDENT of token
+    token EOI of token
+
+    nonterm Sep of nonterm_sep ::=
+      | {source}:";" -> SepSemi {source}
+      | {source}:LINE_DELIM -> SepLineDelim {source}
+
+    nonterm Rec of nonterm_rec ::=
+      | "rec" -> Rec
+      | epsilon -> RecNon
+
+    nonterm TypeParam of nonterm_type_param ::=
+      | "'" UIDENT
+      | "^" UIDENT
+      | ">" UIDENT
+      -> TypeParam
+
+    nonterm TypeParams of nonterm_type_params ::=
+      | TypeParam TypeParams
+      | epsilon
+      -> TypeParams
+
+    nonterm TypeArgs of nonterm_type_args ::=
+      | epsilon
+      -> TypeArgs
+
+    nonterm CModuleDef of nonterm_c_module_def ::=
+      | "type" Rec CIDENT TypeParams ":" CIDENT TypeArgs "=" "{" (* XXX *) "}"
+      | CIDENT
+      -> CModuleDef
+
+    nonterm Expr of nonterm_expr ::=
+      | "(" ")" -> ExprUnit
+
+    nonterm CModuleItem of nonterm_c_module_item ::=
+      | CModuleDef
+      | Expr
+      -> CModuleItem
+
+    nonterm CModuleItems of nonterm_c_module_items ::=
+      | CModuleItem Sep CModuleItems -> CModuleItems
+      | epsilon -> CModuleItems
+
+    start Hm of nonterm_hm ::=
+      | CModuleItems EOI -> Hm
