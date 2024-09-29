@@ -336,7 +336,7 @@ let symbols_init io precs symbols hmh =
                   let io =
                     io.err
                     |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source alias)
-                    |> Fmt.fmt ": Undefined alias: " |> Fmt.fmt alias_name |> Fmt.fmt "\n"
+                    |> Fmt.fmt ": Undefined alias: " |> String.pp alias_name |> Fmt.fmt "\n"
                     |> Io.with_err io
                   in
                   Io.fatal io
