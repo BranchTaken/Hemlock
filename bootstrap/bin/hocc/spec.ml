@@ -24,7 +24,7 @@ let synthetic_name_of_start_name start_name =
 let precs_init io hmh =
   let rec fold_precs_tl io precs rels doms precs_tl = begin
     match precs_tl with
-    | Parse.PrecsTlUident {uident=UIDENT {token=uident}; precs_tl} -> begin
+    | Parse.PrecsTlUident {uident; precs_tl} -> begin
         let name = string_of_token uident in
         let rels = match Set.mem name rels with
           | true -> begin
@@ -56,7 +56,7 @@ let precs_init io hmh =
   end in
   let fold_precs io precs parse_precs = begin
     match parse_precs with
-    | Parse.Precs {uident=UIDENT {token=uident}; precs_tl} -> begin
+    | Parse.Precs {uident; precs_tl} -> begin
         let name = string_of_token uident in
         let rels = Set.singleton (module String) name in
         let doms = match Precs.prec_of_name name precs with
@@ -76,7 +76,7 @@ let precs_init io hmh =
   end in
   let fold_prec io precs parse_prec = begin
     match parse_prec with
-    | Parse.Prec {prec_type; uident=UIDENT {token=uident}; prec_rels} -> begin
+    | Parse.Prec {prec_type; uident; prec_rels} -> begin
         let name = string_of_token uident in
         let assoc = match prec_type with
           | PrecTypeNeutral -> None
@@ -143,14 +143,14 @@ let tokens_init io precs hmh =
           let name = string_of_token cident in
           let stype = match symbol_type0 with
             | SymbolType0SymbolType {symbol_type=SymbolType {
-              symbol_type_qualifier; symbol_type=UIDENT {token=type_}; _}} -> begin
-                SymbolType.explicit (string_of_token type_)
+              symbol_type_qualifier; symbol_type; _}} -> begin
+                SymbolType.explicit (string_of_token symbol_type)
                 |> qualify_symbol_type symbol_type_qualifier
               end
             | SymbolType0Epsilon -> SymbolType.implicit
           in
           let prec = match prec_ref with
-            | PrecRefUident {uident=UIDENT {token=uident}} -> begin
+            | PrecRefUident {uident} -> begin
                 let prec_name = string_of_token uident in
                 match Precs.prec_of_name prec_name precs with
                 | None -> begin
@@ -245,9 +245,9 @@ let symbol_infos_init io symbols hmh =
       | Parse.NontermProds {cident=CIDENT {token=nonterm_cident}; _} ->
         string_of_token nonterm_cident, SymbolType.implicit
       | NontermReductions {cident=CIDENT {token=nonterm_cident}; symbol_type=SymbolType {
-        symbol_type_qualifier; symbol_type=UIDENT {token=type_}; _}; _} -> begin
+        symbol_type_qualifier; symbol_type; _}; _} -> begin
           let name = string_of_token nonterm_cident in
-          let stype = SymbolType.explicit (string_of_token type_)
+          let stype = SymbolType.explicit (string_of_token symbol_type)
                       |> qualify_symbol_type symbol_type_qualifier in
           name, stype
         end
@@ -433,7 +433,7 @@ let symbols_init io precs symbols hmh =
           match Symbols.info_of_name_hlt symbol_name symbols with Symbols.{index; _} -> index
         ) rhs in
         let prec = match prec_ref with
-          | PrecRefUident {uident=UIDENT {token=uident}} -> begin
+          | PrecRefUident {uident} -> begin
               let prec_name = string_of_token uident in
               match Precs.prec_of_name prec_name precs with
               | None -> begin
@@ -567,7 +567,7 @@ let symbols_init io precs symbols hmh =
           in
           let name = string_of_token cident in
           let prec = match prec_ref with
-            | PrecRefUident {uident=UIDENT {token=uident}} -> begin
+            | PrecRefUident {uident} -> begin
                 let prec_name = string_of_token uident in
                 match Precs.prec_of_name prec_name precs with
                 | None -> begin

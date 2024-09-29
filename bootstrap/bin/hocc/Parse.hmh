@@ -131,11 +131,13 @@ type token_other_token =
 type token_eoi =
   | EOI of {token: Scan.Token.t}
 
-type nonterm_precs_tl =
-  | PrecsTlUident of {uident: token_uident; precs_tl: nonterm_precs_tl}
+type nonterm_uident =
+  | Uident of {token: Scan.Token.t}
+  and nonterm_precs_tl =
+  | PrecsTlUident of {uident: Scan.Token.t; precs_tl: nonterm_precs_tl}
   | PrecsTlEpsilon
   and nonterm_precs =
-  | Precs of {uident: token_uident; precs_tl: nonterm_precs_tl}
+  | Precs of {uident: Scan.Token.t; precs_tl: nonterm_precs_tl}
   and nonterm_prec_rels =
   | PrecRelsPrecs of {precs: nonterm_precs}
   | PrecRelsEpsilon
@@ -144,19 +146,18 @@ type nonterm_precs_tl =
   | PrecTypeLeft
   | PrecTypeRight
   and nonterm_prec =
-  | Prec of {prec_type: nonterm_prec_type; uident: token_uident; prec_rels: nonterm_prec_rels}
+  | Prec of {prec_type: nonterm_prec_type; uident: Scan.Token.t; prec_rels: nonterm_prec_rels}
   and nonterm_symbol_type_qualifier =
   | SymbolTypeQualifier of {cident: token_cident;
   symbol_type_qualifier_tl: nonterm_symbol_type_qualifier}
   | SymbolTypeQualifierEpsilon
   and nonterm_symbol_type =
-  | SymbolType of {symbol_type_qualifier: nonterm_symbol_type_qualifier;
-  symbol_type: token_uident}
+  | SymbolType of {symbol_type_qualifier: nonterm_symbol_type_qualifier; symbol_type: Scan.Token.t}
   and nonterm_symbol_type0 =
   | SymbolType0SymbolType of {symbol_type: nonterm_symbol_type}
   | SymbolType0Epsilon
   and nonterm_prec_ref =
-  | PrecRefUident of {uident: token_uident}
+  | PrecRefUident of {uident: Scan.Token.t}
   | PrecRefEpsilon
   and nonterm_token_alias =
   | TokenAlias of {alias: token_istring}
@@ -192,10 +193,8 @@ type nonterm_precs_tl =
   and nonterm_code =
   | CodeDelimited of {delimited: nonterm_delimited; code_tl: nonterm_code_tl}
   | CodeCodeToken of {code_token: nonterm_code_token; code_tl: nonterm_code_tl}
-  and nonterm_binding =
-  | Binding of {token: Scan.Token.t}
   and nonterm_pattern_field =
-  | PatternFieldBinding of {binding: nonterm_binding}
+  | PatternFieldBinding of {binding: nonterm_uident}
   | PatternFieldPattern of {pattern: nonterm_pattern}
   and nonterm_pattern_fields =
   | PatternFieldsOne of {field: nonterm_pattern_field}
@@ -206,7 +205,7 @@ type nonterm_precs_tl =
   | ModulePath
   and nonterm_pattern =
   | PatternUscore
-  | PatternBinding of {binding: nonterm_binding}
+  | PatternBinding of {binding: nonterm_uident}
   | PatternPattern of {pattern: nonterm_pattern}
   | PatternComma of {pattern_a: nonterm_pattern; pattern_b: nonterm_pattern}
   | PatternFields of {fields: nonterm_pattern_fields}
@@ -214,7 +213,7 @@ type nonterm_precs_tl =
   | ProdParamSymbolCident of {cident: token_cident}
   | ProdParamSymbolAlias of {alias: token_istring}
   and nonterm_prod_param =
-  | ProdParamBinding of {binding: nonterm_binding; prod_param_symbol: nonterm_prod_param_symbol}
+  | ProdParamBinding of {binding: nonterm_uident; prod_param_symbol: nonterm_prod_param_symbol}
   | ProdParamPattern of {lparen: token_lparen; pattern: nonterm_pattern; rparen: token_rparen;
   prod_param_symbol: nonterm_prod_param_symbol}
   | ProdParamFields of {lcurly: token_lcurly; fields: nonterm_pattern_fields; rcurly: token_rcurly;
@@ -334,12 +333,25 @@ include hocc
     (* End of input, used to terminate start symbols *)
     token EOI of token_eoi
 
+    nonterm Uident of nonterm_uident ::=
+      | (HOCC {token}):"hocc"
+      | (NONTERM {token}):"nonterm"
+      | (EPSILON {token}):"epsilon"
+      | (START {token}):"start"
+      | (TOKEN {token}):"token"
+      | (NEUTRAL {token}):"neutral"
+      | (LEFT {token}):"left"
+      | (RIGHT {token}):"right"
+      | (PREC {token}):"prec"
+      | (UIDENT {token}):UIDENT
+      -> Uident {token}
+
     nonterm PrecsTl of nonterm_precs_tl ::=
-      | "," uident:UIDENT precs_tl:PrecsTl -> PrecsTlUident {uident; precs_tl}
+      | "," (Uident {token}):Uident precs_tl:PrecsTl -> PrecsTlUident {uident=token; precs_tl}
       | epsilon -> PrecsTlEpsilon
 
     nonterm Precs of nonterm_precs ::=
-      | uident:UIDENT precs_tl:PrecsTl -> Precs {uident; precs_tl}
+      | (Uident {token}):Uident precs_tl:PrecsTl -> Precs {uident=token; precs_tl}
 
     nonterm PrecRels of nonterm_prec_rels ::=
       | "<" precs:Precs -> PrecRelsPrecs {precs}
@@ -351,7 +363,8 @@ include hocc
       | "right" -> PrecTypeRight
 
     nonterm Prec of nonterm_prec ::=
-      | prec_type:PrecType uident:UIDENT prec_rels:PrecRels -> Prec {prec_type; uident; prec_rels}
+      | prec_type:PrecType (Uident {token}):Uident prec_rels:PrecRels ->
+        Prec {prec_type; uident=token; prec_rels}
 
     nonterm SymbolTypeQualifier of nonterm_symbol_type_qualifier ::=
       | cident:CIDENT "." symbol_type_qualifier_tl:SymbolTypeQualifier ->
@@ -359,15 +372,15 @@ include hocc
       | epsilon -> SymbolTypeQualifierEpsilon
 
     nonterm SymbolType of nonterm_symbol_type ::=
-      | "of" symbol_type_qualifier:SymbolTypeQualifier symbol_type:UIDENT ->
-        SymbolType {symbol_type_qualifier; symbol_type}
+      | "of" symbol_type_qualifier:SymbolTypeQualifier (Uident {token}):Uident ->
+        SymbolType {symbol_type_qualifier; symbol_type=token}
 
     nonterm SymbolType0 of nonterm_symbol_type0 ::=
       | symbol_type:SymbolType -> SymbolType0SymbolType {symbol_type}
       | epsilon -> SymbolType0Epsilon
 
     nonterm PrecRef of nonterm_prec_ref ::=
-      | "prec" uident:UIDENT -> PrecRefUident {uident}
+      | "prec" (Uident {token}):Uident -> PrecRefUident {uident=token}
       | epsilon -> PrecRefEpsilon
 
     nonterm TokenAlias of nonterm_token_alias ::=
@@ -403,17 +416,8 @@ include hocc
       | lcurly:"{" codes0:Codes0 rcurly:"}" -> DelimitedModule {lcurly; codes0; rcurly}
 
     nonterm CodeToken of nonterm_code_token ::=
-      | (HOCC {token}):"hocc"
-      | (NONTERM {token}):"nonterm"
-      | (EPSILON {token}):"epsilon"
-      | (START {token}):"start"
-      | (TOKEN {token}):"token"
-      | (NEUTRAL {token}):"neutral"
-      | (LEFT {token}):"left"
-      | (RIGHT {token}):"right"
-      | (PREC {token}):"prec"
       | (OTHER_TOKEN {token}):OTHER_TOKEN
-      | (UIDENT {token}):UIDENT
+      | (Uident {token}):Uident
       | (CIDENT {token}):CIDENT
       | (USCORE {token}):"_"
       | (ISTRING {token}):ISTRING
@@ -439,22 +443,9 @@ include hocc
       | delimited:Delimited code_tl:CodeTl -> CodeDelimited {delimited; code_tl}
       | code_token:CodeToken code_tl:CodeTl -> CodeCodeToken {code_token; code_tl}
 
-    nonterm Binding of nonterm_binding ::=
-      | (HOCC {token}):"hocc"
-      | (NONTERM {token}):"nonterm"
-      | (EPSILON {token}):"epsilon"
-      | (START {token}):"start"
-      | (TOKEN {token}):"token"
-      | (NEUTRAL {token}):"neutral"
-      | (LEFT {token}):"left"
-      | (RIGHT {token}):"right"
-      | (PREC {token}):"prec"
-      | (UIDENT {token}):UIDENT
-      -> Binding {token}
-
     nonterm PatternField of nonterm_pattern_field ::=
-      | binding:Binding -> PatternFieldBinding {binding}
-      | UIDENT "=" pattern:Pattern -> PatternFieldPattern {pattern}
+      | binding:Uident -> PatternFieldBinding {binding}
+      | Uident "=" pattern:Pattern -> PatternFieldPattern {pattern}
 
     nonterm PatternFields of nonterm_pattern_fields prec pSEMI ::=
       | field:PatternField
@@ -476,8 +467,8 @@ include hocc
     nonterm Pattern of nonterm_pattern ::=
       | "_"
       -> PatternUscore
-      | binding:Binding
-      | Pattern "as" binding:Binding prec pAS
+      | binding:Uident
+      | Pattern "as" binding:Uident prec pAS
       -> PatternBinding {binding}
       | "(" pattern:Pattern ")"
       | CIDENT pattern:Pattern prec pCIDENT
@@ -494,7 +485,7 @@ include hocc
       | alias:ISTRING -> ProdParamSymbolAlias {alias}
 
     nonterm ProdParam of nonterm_prod_param ::=
-      | binding:Binding ":" prod_param_symbol:ProdParamSymbol
+      | binding:Uident ":" prod_param_symbol:ProdParamSymbol
       -> ProdParamBinding {binding; prod_param_symbol}
       | lparen:"(" pattern:Pattern rparen:")" ":" prod_param_symbol:ProdParamSymbol
       | ModulePath "." lparen:"(" pattern:Pattern rparen:")" ":" prod_param_symbol:ProdParamSymbol
@@ -985,13 +976,23 @@ let rec pp_token_hocc (HOCC {token}) formatter =
           |> Fmt.fmt ~pad:" " ~just:Fmt.Left ~width:(width + 2L) ""
           |> Fmt.fmt "}"
 
+  and fmt_uident ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) uident formatter =
+    match uident with
+      | Uident {token} ->
+        formatter |> Fmt.fmt "Uident "
+          |> fmt_lcurly ~alt ~width
+          |> Fmt.fmt "token=" |> Scan.Token.pp token
+          |> fmt_rcurly ~alt ~width
+  and pp_uident uident formatter =
+    fmt_uident uident formatter
+
   and fmt_precs_tl ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) precs_tl formatter =
     let width' = width + 4L in
     match precs_tl with
       | PrecsTlUident {uident; precs_tl} ->
         formatter |> Fmt.fmt "PrecsTlUident "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "uident=" |> pp_token_uident uident
+          |> Fmt.fmt "uident=" |> Scan.Token.pp uident
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "precs_tl=" |> fmt_precs_tl ~alt ~width:width' precs_tl
           |> fmt_rcurly ~alt ~width
@@ -1006,7 +1007,7 @@ let rec pp_token_hocc (HOCC {token}) formatter =
       | Precs {uident; precs_tl} ->
         formatter |> Fmt.fmt "Precs "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "uident=" |> pp_token_uident uident
+          |> Fmt.fmt "uident=" |> Scan.Token.pp uident
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "precs_tl=" |> fmt_precs_tl ~alt ~width:width' precs_tl
           |> fmt_rcurly ~alt ~width
@@ -1040,7 +1041,7 @@ let rec pp_token_hocc (HOCC {token}) formatter =
           |> fmt_lcurly ~alt ~width
           |> Fmt.fmt "prec_type=" |> pp_prec_type prec_type
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "uident=" |> pp_token_uident uident
+          |> Fmt.fmt "uident=" |> Scan.Token.pp uident
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "prec_rels=" |> fmt_prec_rels ~alt ~width:width' prec_rels
           |> fmt_rcurly ~alt ~width
@@ -1072,7 +1073,7 @@ let rec pp_token_hocc (HOCC {token}) formatter =
           |> Fmt.fmt "symbol_type_qualifier="
           |> fmt_symbol_type_qualifier ~alt ~width:width' symbol_type_qualifier
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "symbol_type=" |> pp_token_uident symbol_type
+          |> Fmt.fmt "symbol_type=" |> Scan.Token.pp symbol_type
           |> fmt_rcurly ~alt ~width
   and pp_symbol_type symbol_type formatter =
     fmt_symbol_type symbol_type formatter
@@ -1096,7 +1097,7 @@ let rec pp_token_hocc (HOCC {token}) formatter =
       | PrecRefUident {uident} ->
         formatter |> Fmt.fmt "PrecRefUident "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "uident=" |> pp_token_uident uident
+          |> Fmt.fmt "uident=" |> Scan.Token.pp uident
           |> fmt_rcurly ~alt ~width
       | PrecRefEpsilon ->
         formatter |> Fmt.fmt "PrecRefEpsilon"
@@ -1300,23 +1301,13 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and pp_code code formatter =
     fmt_code code formatter
 
-  and fmt_binding ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) binding formatter =
-    match binding with
-      | Binding {token} ->
-        formatter |> Fmt.fmt "Binding "
-          |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "token=" |> Scan.Token.pp token
-          |> fmt_rcurly ~alt ~width
-  and pp_binding binding formatter =
-    fmt_binding binding formatter
-
   and fmt_pattern_field ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) pattern_field formatter =
     let width' = width + 4L in
     match pattern_field with
       | PatternFieldBinding {binding} ->
         formatter |> Fmt.fmt "PatternFieldBinding "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "binding=" |> fmt_binding ~alt ~width:width' binding
+          |> Fmt.fmt "binding=" |> fmt_uident ~alt ~width:width' binding
           |> fmt_rcurly ~alt ~width
       | PatternFieldPattern {pattern} ->
         formatter |> Fmt.fmt "PatternFieldPattern "
@@ -1361,7 +1352,7 @@ let rec pp_token_hocc (HOCC {token}) formatter =
       | PatternBinding {binding} ->
         formatter |> Fmt.fmt "PatternBinding "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "binding=" |> fmt_binding ~alt ~width:width' binding
+          |> Fmt.fmt "binding=" |> fmt_uident ~alt ~width:width' binding
           |> fmt_rcurly ~alt ~width
       | PatternPattern {pattern} ->
         formatter |> Fmt.fmt "PatternPattern "
@@ -1405,7 +1396,7 @@ let rec pp_token_hocc (HOCC {token}) formatter =
       | ProdParamBinding {binding; prod_param_symbol} ->
         formatter |> Fmt.fmt "ProdParamBinding "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "binding=" |> fmt_binding ~alt ~width:width' binding
+          |> Fmt.fmt "binding=" |> fmt_uident ~alt ~width:width' binding
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "prod_param_symbol="
           |> fmt_prod_param_symbol ~alt ~width:width' prod_param_symbol
@@ -1778,12 +1769,12 @@ let source_of_token_rcurly = function
   | RCURLY {token} -> token_source token
 
 let rec source_of_binding = function
-  | Binding {token} -> token_source token
+  | Uident {token} -> token_source token
   and source_of_prod_param_symbol = function
   | ProdParamSymbolCident {cident} -> source_of_token_cident cident
   | ProdParamSymbolAlias {alias} -> source_of_token_istring alias
   and source_of_prec_ref = function
-  | PrecRefUident {uident} -> source_of_token_uident uident
+  | PrecRefUident {uident} -> token_source uident
   | PrecRefEpsilon -> None
   and source_of_prod_param_binding_pattern = function
   | ProdParamBinding {binding; _} -> source_of_binding binding
@@ -1909,14 +1900,14 @@ let indentation_of_code hocc_block code =
  * `hocc` block. *)
 let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
     let rec of_precs_tl = function
-      | PrecsTlUident {uident=UIDENT {token=uident}; precs_tl} ->
+      | PrecsTlUident {uident; precs_tl} ->
         Some (
           of_precs_tl precs_tl
           |> Option.value_or_thunk ~f:(fun () -> uident)
           )
       | PrecsTlEpsilon -> None
       and of_precs = function
-      | Precs {uident=UIDENT {token=uident}; precs_tl} -> begin
+      | Precs {uident; precs_tl} -> begin
         of_precs_tl precs_tl
           |> Option.value_or_thunk ~f:(fun () -> uident)
       end
@@ -1924,12 +1915,12 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
       | PrecRelsPrecs {precs} -> Some (of_precs precs)
       | PrecRelsEpsilon -> None
       and of_symbol_type = function
-      | SymbolType {symbol_type=UIDENT {token}; _} -> token
+      | SymbolType {symbol_type; _} -> symbol_type
       and of_symbol_type0 = function
       | SymbolType0SymbolType {symbol_type} -> Some (of_symbol_type symbol_type)
       | SymbolType0Epsilon -> None
       and of_prec_ref = function
-      | PrecRefUident {uident=UIDENT {token}} -> Some token
+      | PrecRefUident {uident} -> Some uident
       | PrecRefEpsilon -> None
       and of_token_alias = function
       | TokenAlias {alias=ISTRING {token=alias}} -> Some alias
@@ -1988,7 +1979,7 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
       | NontermProds {prods; _} -> of_prods prods
       | NontermReductions {reductions; _} -> of_reductions reductions
       and of_stmt = function
-      | StmtPrec {prec=Prec {uident=UIDENT {token=uident}; prec_rels; _}} -> begin
+      | StmtPrec {prec=Prec {uident; prec_rels; _}} -> begin
         of_prec_rels prec_rels
           |> Option.value_or_thunk ~f:(fun () -> uident)
       end
