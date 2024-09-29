@@ -38,7 +38,7 @@ module T = struct
       {pattern; symbol_name; stype; prod_param}
 
     let fold_bindings ~init ~f {prod_param; _} =
-      let rec fold_binding ~init ~f (Parse.Binding {token}) = begin
+      let rec fold_binding ~init ~f (Parse.Uident {token}) = begin
         f init token
       end and fold_field ~init ~f field = begin
       match field with
