@@ -1,49 +1,391 @@
 open Basis
 open! Basis.Rudiments
 
-type token = {source: Source.Slice.t}
+module Rendition = struct
+    module Malformation = struct
+        type t = {
+            source: Source.Slice.t;
+            description: string;
+          }
+
+        let cmp t0 t1 =
+            Source.Slice.cmp t0.source t1.source
+
+        let of_source ~source ~description =
+            {source; description}
+
+        let of_cursors ~base ~past ~description =
+            let source = Source.Slice.of_cursors ~base ~past in
+            of_source ~source ~description
+
+        let source t =
+            t.source
+
+        let description t =
+            t.description
+
+        let pp t formatter =
+            formatter
+              |> Fmt.fmt "\""
+              |> Source.Slice.pp t.source
+              |> Fmt.fmt ": "
+              |> Fmt.fmt t.description
+              |> Fmt.fmt "\""
+      end
+
+    type 'a t =
+      | Constant of 'a
+      | Malformed of Malformation.t list
+
+    let pp pp_a t formatter =
+        match t with
+          | Constant a ->
+            formatter
+              |> Fmt.fmt "(Constant "
+              |> pp_a a
+              |> Fmt.fmt ")"
+          | Malformed malformations ->
+            formatter
+              |> Fmt.fmt "(Malformed "
+              |> (List.pp Malformation.pp) malformations
+              |> Fmt.fmt ")"
+
+    let of_mals mals =
+        Malformed (List.sort ~cmp:Malformation.cmp mals)
+  end
+
+type indent_omit = {
+    indent: uns;
+    omit: uns;
+  }
+
+let pp_indent_omit {indent; omit} formatter =
+    formatter
+      |> Fmt.fmt "{indent=" |> Uns.pp indent
+      |> Fmt.fmt "; omit=" |> Uns.pp omit
+      |> Fmt.fmt "}"
+
+type source_directive = {
+    path: Path.t option;
+    line: uns option;
+    io: indent_omit option;
+  }
+
+let pp_source_directive {path; line; io} formatter =
+    formatter
+      |> Fmt.fmt "{path=" |> (Option.pp Path.pp) path
+      |> Fmt.fmt "; line=" |> (Option.pp Uns.pp) line
+      |> Fmt.fmt "; io=" |> (Option.pp pp_indent_omit) io
+      |> Fmt.fmt "}"
+
+type fmt =
+  | Fmt_b
+  | Fmt_u
+  | Fmt_u8
+  | Fmt_u16
+  | Fmt_u32
+  | Fmt_u64
+  | Fmt_u128
+  | Fmt_u256
+  | Fmt_u512
+  | Fmt_i
+  | Fmt_i8
+  | Fmt_i16
+  | Fmt_i32
+  | Fmt_i64
+  | Fmt_i128
+  | Fmt_i256
+  | Fmt_i512
+  | Fmt_n
+  | Fmt_z
+  | Fmt_r
+  | Fmt_r32
+  | Fmt_r64
+  | Fmt_c
+  | Fmt_s
+  | Fmt_f
+
+let pp_fmt fmt formatter =
+    formatter |> Fmt.fmt (
+      match fmt with
+      | Fmt_b -> "Fmt_b"
+      | Fmt_u -> "Fmt_u"
+      | Fmt_u8 -> "Fmt_u8"
+      | Fmt_u16 -> "Fmt_u16"
+      | Fmt_u32 -> "Fmt_u32"
+      | Fmt_u64 -> "Fmt_u64"
+      | Fmt_u128 -> "Fmt_u128"
+      | Fmt_u256 -> "Fmt_u256"
+      | Fmt_u512 -> "Fmt_u512"
+      | Fmt_i -> "Fmt_i"
+      | Fmt_i8 -> "Fmt_i8"
+      | Fmt_i16 -> "Fmt_i16"
+      | Fmt_i32 -> "Fmt_i32"
+      | Fmt_i64 -> "Fmt_i64"
+      | Fmt_i128 -> "Fmt_i128"
+      | Fmt_i256 -> "Fmt_i256"
+      | Fmt_i512 -> "Fmt_i512"
+      | Fmt_n -> "Fmt_n"
+      | Fmt_z -> "Fmt_z"
+      | Fmt_r -> "Fmt_r"
+      | Fmt_r32 -> "Fmt_r32"
+      | Fmt_r64 -> "Fmt_r64"
+      | Fmt_c -> "Fmt_c"
+      | Fmt_s -> "Fmt_s"
+      | Fmt_f -> "Fmt_f"
+      )
+
+type token_simple = {source: Source.Slice.t}
+
+type token_tilde_op = {source: Source.Slice.t; tilde_op: string}
+type token_qmark_op = {source: Source.Slice.t; qmark_op: string}
+type token_star_star_op = {source: Source.Slice.t; star_star_op: string}
+type token_star_op = {source: Source.Slice.t; star_op: string}
+type token_slash_op = {source: Source.Slice.t; slash_op: string}
+type token_pct_op = {source: Source.Slice.t; pct_op: string}
+type token_plus_op = {source: Source.Slice.t; plus_op: string}
+type token_minus_op = {source: Source.Slice.t; minus_op: string}
+type token_at_op = {source: Source.Slice.t; at_op: string}
+type token_caret_op = {source: Source.Slice.t; caret_op: string}
+type token_dollar_op = {source: Source.Slice.t; dollar_op: string}
+type token_lt_op = {source: Source.Slice.t; lt_op: string}
+type token_eq_op = {source: Source.Slice.t; eq_op: string}
+type token_gt_op = {source: Source.Slice.t; gt_op: string}
+type token_bar_op = {source: Source.Slice.t; bar_op: string}
+type token_colon_op = {source: Source.Slice.t; colon_op: string}
+type token_dot_op = {source: Source.Slice.t; dot_op: string}
+
+type token_source_directive =
+    {source: Source.Slice.t; source_directive: source_directive Rendition.t}
+type token_line_delim = {source: Source.Slice.t}
+type token_indent = {source: Source.Slice.t; indent: unit Rendition.t}
+type token_dedent = {source: Source.Slice.t; dedent: unit Rendition.t}
+type token_whitespace = {source: Source.Slice.t}
+type token_hash_comment = {source: Source.Slice.t}
+type token_paren_comment = {source: Source.Slice.t; paren_comment: unit Rendition.t}
+type token_uscore = {source: Source.Slice.t}
+type token_uident = {source: Source.Slice.t; uident: string Rendition.t}
+type token_cident = {source: Source.Slice.t; cident: string}
+type token_codepoint = {source: Source.Slice.t; codepoint: codepoint Rendition.t}
+type token_rstring = {source: Source.Slice.t; rstring: string Rendition.t}
+type token_qstring = {source: Source.Slice.t; qstring: string Rendition.t}
+type token_istring = {source: Source.Slice.t; istring: string Rendition.t}
+type token_fstring_lditto = {source: Source.Slice.t}
+type token_fstring_interpolated = {source: Source.Slice.t; fstring_interpolated: string Rendition.t}
+type token_fstring_pct = {source: Source.Slice.t}
+type token_fstring_pad = {source: Source.Slice.t; fstring_pad: codepoint Rendition.t}
+type token_fstring_just = {source: Source.Slice.t; fstring_just: Fmt.just}
+type token_fstring_sign = {source: Source.Slice.t; fstring_sign: Fmt.sign}
+type token_fstring_alt = {source: Source.Slice.t}
+type token_fstring_zpad = {source: Source.Slice.t}
+type token_fstring_width_star = {source: Source.Slice.t}
+type token_fstring_width = {source: Source.Slice.t; fstring_width: uns Rendition.t}
+type token_fstring_pmode = {source: Source.Slice.t; fstring_pmode: Fmt.pmode}
+type token_fstring_precision_star = {source: Source.Slice.t}
+type token_fstring_precision = {source: Source.Slice.t; fstring_precision: uns Rendition.t}
+type token_fstring_radix = {source: Source.Slice.t; fstring_radix: Radix.t}
+type token_fstring_notation = {source: Source.Slice.t; fstring_notation: Fmt.notation}
+type token_fstring_pretty = {source: Source.Slice.t}
+type token_fstring_fmt = {source: Source.Slice.t; fstring_fmt: fmt Rendition.t}
+type token_fstring_sep = {source: Source.Slice.t; fstring_sep: string Rendition.t}
+type token_fstring_label = {source: Source.Slice.t; fstring_label: string}
+type token_fstring_lparen_caret = {source: Source.Slice.t}
+type token_fstring_caret_rparen = {source: Source.Slice.t}
+type token_fstring_rditto = {source: Source.Slice.t}
+type token_r32 = {source: Source.Slice.t; r32: real Rendition.t}
+type token_r64 = {source: Source.Slice.t; r64: real Rendition.t}
+type token_u8 = {source: Source.Slice.t; u8: u8 Rendition.t}
+type token_i8 = {source: Source.Slice.t; i8: i8 Rendition.t}
+type token_u16 = {source: Source.Slice.t; u16: u16 Rendition.t}
+type token_i16 = {source: Source.Slice.t; i16: i16 Rendition.t}
+type token_u32 = {source: Source.Slice.t; u32: u32 Rendition.t}
+type token_i32 = {source: Source.Slice.t; i32: i32 Rendition.t}
+type token_long = {source: Source.Slice.t; long: u64 Rendition.t}
+type token_u64 = {source: Source.Slice.t; u64: u64 Rendition.t}
+type token_i64 = {source: Source.Slice.t; i64: i64 Rendition.t}
+type token_u128 = {source: Source.Slice.t; u128: u128 Rendition.t}
+type token_i128 = {source: Source.Slice.t; i128: i128 Rendition.t}
+type token_u256 = {source: Source.Slice.t; u256: u256 Rendition.t}
+type token_i256 = {source: Source.Slice.t; i256: i256 Rendition.t}
+type token_u512 = {source: Source.Slice.t; u512: u512 Rendition.t}
+type token_i512 = {source: Source.Slice.t; i512: i512 Rendition.t}
+type token_nat = {source: Source.Slice.t; nat: Nat.t Rendition.t}
+type token_zint = {source: Source.Slice.t; zint: Zint.t Rendition.t}
+type token_end_of_input = {source: Source.Slice.t}
+type token_misaligned = {source: Source.Slice.t}
+type token_error = {source: Source.Slice.t; error: Rendition.Malformation.t list}
 
 type nonterm_sep =
-  | SepSemi of token
-  | SepLineDelim of token
-type nonterm_rec =
+  | SepSemi of token_simple
+  | SepLineDelim of token_simple
+  and nonterm_rec =
   | Rec
   | RecNon
-type nonterm_type_param =
+  and nonterm_type_param =
   | TypeParam
-type nonterm_type_params =
+  and nonterm_type_params =
   | TypeParams
-type nonterm_type_args =
+  and nonterm_type_args =
   | TypeArgs
-type nonterm_c_module_def =
+  and nonterm_c_module_def =
   | CModuleDef
-type nonterm_expr =
+  and nonterm_expr =
   | ExprUnit
-type nonterm_c_module_item =
+  and nonterm_c_module_item =
   | CModuleItem
-type nonterm_c_module_items =
+  and nonterm_c_module_items =
   | CModuleItems
-type nonterm_hm =
+  and nonterm_hm =
   | Hm
 
+type xxx =
+  | Xxx
+
 include hocc
-    token AND "and" of token
-    token REC "rec" of token
-    token TYPE "type" of token
-    token TICK "'" of token
-    token CARAT "^" of token
-    token EQ "=" of token
-    token GT ">" of token
-    token LCURLY "{" of token
-    token RCURLY "}" of token
-    token LPAREN "(" of token
-    token RPAREN ")" of token
-    token LINE_DELIM of token
-    token COLON ":" of token
-    token SEMI ";" of token
-    token UIDENT of token
-    token CIDENT of token
-    token EOI of token
+    # Keywords.
+    token AND "and" of token_simple
+    token ALSO "also" of token_simple
+    token AS "as" of token_simple
+    token CONCEAL "conceal" of token_simple
+    token EFFECT "effect" of token_simple
+    token ELSE "else" of token_simple
+    token EXPOSE "expose" of token_simple
+    token EXTERNAL "external" of token_simple
+    token FALSE "false" of token_simple
+    token FN "fn" of token_simple
+    token FUNCTION "function" of token_simple
+    token IF "if" of token_simple
+    token IMPORT "import" of token_simple
+    token INCLUDE "include" of token_simple
+    token LAZY "lazy" of token_simple
+    token LET "let" of token_simple
+    token MATCH "match" of token_simple
+    token MUTABILITY "mutability" of token_simple
+    token OF "of" of token_simple
+    token OPEN "open" of token_simple
+    token OR "or" of token_simple
+    token REC "rec" of token_simple
+    token THEN "then" of token_simple
+    token TRUE "true" of token_simple
+    token TYPE "type" of token_simple
+    token WHEN "when" of token_simple
+    token WITH "with" of token_simple
+
+    # Operators.
+    token TILDE_OP of token_tilde_op
+    token QMARK_OP of token_qmark_op
+    token STAR_STAR_OP of token_star_star_op
+    token STAR_OP of token_star_op
+    token SLASH_OP of token_slash_op
+    token PCT_OP of token_pct_op
+    token PLUS_OP of token_plus_op
+    token MINUS_OP of token_minus_op
+    token AT_OP of token_at_op
+    token CARET_OP of token_caret_op
+    token DOLLAR_OP of token_dollar_op
+    token LT_OP of token_lt_op
+    token EQ_OP of token_eq_op
+    token GT_OP of token_gt_op
+    token BAR_OP of token_bar_op
+    token COLON_OP of token_colon_op
+    token DOT_OP of token_dot_op
+
+    # Punctuation.
+    token TILDE "~" of token_simple
+    token QMARK "?" of token_simple
+    token MINUS "-" of token_simple
+    token LT "<" of token_simple
+    token LT_EQ "<=" of token_simple
+    token EQ "=" of token_simple
+    token LT_GT "<>" of token_simple
+    token GT_EQ ">=" of token_simple
+    token GT ">" of token_simple
+    token COMMA "," of token_simple
+    token DOT "." of token_simple
+    token DOT_DOT ".." of token_simple
+    token SEMI ";" of token_simple
+    token COLON ":" of token_simple
+    token COLON_COLON "::" of token_simple
+    token COLON_EQ ":=" of token_simple
+    token LPAREN "(" of token_simple
+    token RPAREN ")" of token_simple
+    token LBRACK "[" of token_simple
+    token RBRACK "]" of token_simple
+    token LCURLY "{" of token_simple
+    token RCURLY "}" of token_simple
+    token BAR "|" of token_simple
+    token LCAPTURE "(|" of token_simple
+    token RCAPTURE "|)" of token_simple
+    token LARRAY "[|" of token_simple
+    token RARRAY "|]" of token_simple
+    token BSLASH "\\" of token_simple
+    token TICK "'" of token_simple
+    token CARET "^" of token_simple
+    token AMP "&" of token_simple
+    token AMP_AMP "&&" of token_simple
+    token XMARK "!" of token_simple
+    token ARROW "->" of token_simple
+    token CARROW "~->" of token_simple
+
+    # Miscellaneous.
+    token SOURCE_DIRECTIVE of token_source_directive
+    token LINE_DELIM of token_line_delim
+    token INDENT of token_indent
+    token DEDENT of token_dedent
+    token WHITESPACE of token_whitespace
+    token HASH_COMMENT of token_hash_comment
+    token PAREN_COMMENT of token_paren_comment
+    token USCORE "_" of token_uscore
+    token UIDENT of token_uident
+    token CIDENT of token_cident
+    token CODEPOINT of token_codepoint
+    token RSTRING of token_rstring
+    token QSTRING of token_qstring
+    token ISTRING of token_istring
+    token FSTRING_LDITTO of token_fstring_lditto
+    token FSTRING_INTERPOLATED of token_fstring_interpolated
+    token FSTRING_PCT of token_fstring_pct
+    token FSTRING_PAD of token_fstring_pad
+    token FSTRING_JUST of token_fstring_just
+    token FSTRING_SIGN of token_fstring_sign
+    token FSTRING_ALT of token_fstring_alt
+    token FSTRING_ZPAD of token_fstring_zpad
+    token FSTRING_WIDTH_STAR of token_fstring_width_star
+    token FSTRING_WIDTH of token_fstring_width
+    token FSTRING_PMODE of token_fstring_pmode
+    token FSTRING_PRECISION_STAR of token_fstring_precision_star
+    token FSTRING_PRECISION of token_fstring_precision
+    token FSTRING_RADIX of token_fstring_radix
+    token FSTRING_NOTATION of token_fstring_notation
+    token FSTRING_PRETTY of token_fstring_pretty
+    token FSTRING_FMT of token_fstring_fmt
+    token FSTRING_SEP of token_fstring_sep
+    token FSTRING_LABEL of token_fstring_label
+    token FSTRING_LPAREN_CARET of token_fstring_lparen_caret
+    token FSTRING_CARET_RPAREN of token_fstring_caret_rparen
+    token FSTRING_RDITTO of token_fstring_rditto
+    token R32 of token_r32
+    token R64 of token_r64
+    token U8 of token_u8
+    token I8 of token_i8
+    token U16 of token_u16
+    token I16 of token_i16
+    token U32 of token_u32
+    token I32 of token_i32
+    token LONG of token_long
+    token U64 of token_u64
+    token I64 of token_i64
+    token U128 of token_u128
+    token I128 of token_i128
+    token U256 of token_u256
+    token I256 of token_i256
+    token U512 of token_u512
+    token I512 of token_i512
+    token NAT of token_nat
+    token ZINT of token_zint
+    token END_OF_INPUT of token_end_of_input
+    token MISALIGNED of token_misaligned
+    token ERROR of token_error
 
     nonterm Sep of nonterm_sep ::=
       | {source}:";" -> SepSemi {source}
@@ -86,4 +428,4 @@ include hocc
       | epsilon -> CModuleItems
 
     start Hm of nonterm_hm ::=
-      | CModuleItems EOI -> Hm
+      | CModuleItems END_OF_INPUT -> Hm
