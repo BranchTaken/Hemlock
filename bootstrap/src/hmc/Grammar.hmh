@@ -229,12 +229,10 @@ type nonterm_sep =
   | TypeArgs
   and nonterm_c_module_def =
   | CModuleDef
-  and nonterm_expr =
-  | ExprUnit
-  and nonterm_c_module_item =
-  | CModuleItem
-  and nonterm_c_module_items =
-  | CModuleItems
+  and nonterm_c_impl_item =
+  | CImplItem
+  and nonterm_c_impl =
+  | CImpl
   and nonterm_hm =
   | Hm
 
@@ -412,20 +410,122 @@ include hocc
 
     nonterm CModuleDef of nonterm_c_module_def ::=
       | "type" Rec CIDENT TypeParams ":" CIDENT TypeArgs "=" "{" (* XXX *) "}"
-      | CIDENT
       -> CModuleDef
 
-    nonterm Expr of nonterm_expr ::=
-      | "(" ")" -> ExprUnit
+    nonterm InfixOp of xxx ::=
+      | "and"
+      | "or"
+      | TILDE_OP
+      | QMARK_OP
+      | STAR_STAR_OP
+      | STAR_OP
+      | SLASH_OP
+      | PCT_OP
+      | PLUS_OP
+      | MINUS_OP
+      | AT_OP
+      | CARET_OP
+      | DOLLAR_OP
+      | LT_OP
+      | EQ_OP
+      | GT_OP
+      | BAR_OP
+      | COLON_OP
+      | DOT_OP
+      | "~"
+      | "-"
+      | "<"
+      | "<="
+      | "="
+      | "<>"
+      | ">"
+      | ":="
+      | "^"
+      | "&"
+      | "&&"
+      -> Xxx
 
-    nonterm CModuleItem of nonterm_c_module_item ::=
+    nonterm OperatorName of xxx ::=
+      | PrefixSymbol
+      | InfixOp
+      -> Xxx
+
+    nonterm ValueName of xxx ::=
+      | UIDENT
+      | "(" OperatorName ")"
+      -> Xxx
+
+    nonterm ExtendedModulePath of xxx ::=
+      | CIDENT
+      | CIDENT "(" ExtendedModulePath ")"
+      | ExtendedModulePath "." CIDENT
+      | ExtendedModulePath "." CIDENT "(" ExtendedModulePath ")"
+      -> Xxx
+
+    nonterm ModulePath of xxx ::=
+      | ModulePath "." CIDENT
+      | CIDENT
+      -> Xxx
+
+    nonterm ValuePath of xxx ::=
+      | ModulePath "." ValueName
+      | ValueName
+      -> Xxx
+
+    nonterm Constr of xxx ::=
+      | ModulePath "." CIDENT
+      | CIDENT
+      -> Xxx
+
+    nonterm Constant of xxx ::=
+      | "false"
+      | "true"
+      | "(" ")"
+      | "[" "]"
+      | "(|" "|)"
+      | "[|" "|]"
+      | CODEPOINT
+      | RSTRING
+      | ISTRING
+      | R32
+      | R64
+      | U8
+      | I8
+      | U16
+      | I16
+      | U32
+      | I32
+      | U64
+      | I64
+      | U128
+      | I128
+      | U256
+      | I256
+      | U512
+      | I512
+      | NAT
+      | ZINT
+      | Constr
+      -> Xxx
+
+    nonterm Expr of xxx ::=
+      | Constant
+      -> Xxx
+
+    nonterm CIntf of xxx ::=
+      | epsilon -> Xxx
+
+    nonterm CImplItem of nonterm_c_impl_item ::=
       | CModuleDef
       | Expr
-      -> CModuleItem
+      -> CImplItem
 
-    nonterm CModuleItems of nonterm_c_module_items ::=
-      | CModuleItem Sep CModuleItems -> CModuleItems
-      | epsilon -> CModuleItems
+    nonterm CImpl of nonterm_c_impl ::=
+      | CImplItem Sep CImpl -> CImpl
+      | epsilon -> CImpl
+
+    start Hmi of xxx ::=
+      | CIntf END_OF_INPUT -> Xxx
 
     start Hm of nonterm_hm ::=
-      | CModuleItems END_OF_INPUT -> Hm
+      | CImpl END_OF_INPUT -> Hm
