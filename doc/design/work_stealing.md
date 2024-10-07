@@ -42,7 +42,7 @@ The `Array.[map_]reduce[_hlt]` functions also perform recursive binary decomposi
 algorithms require no special implementation considerations to be naturally conducive to parallel
 execution. Practical examples abound; the following are simple illustrative cases.
 
-- Binary operators like `Uns.( + )` are in principle merges, so work stealing can kick in if the
+- Binary operators like `Uns.\+` are in principle merges, so work stealing can kick in if the
   inputs are computed via expensive independent continuations. The same is true of any pure function
   with two or more independent inputs. If there are more than two non-trivial inputs, the compiler
   induces a binary tree structure on the continuations such that at each point where the function
