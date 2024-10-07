@@ -325,7 +325,7 @@ include hocc
     # Punctuation.
     token TILDE "~" of token_simple prec pTilde
     token QMARK "?" of token_simple prec pTilde
-    token MINUS "-" of token_simple # Precedence depends on prefix/infix.
+    token MINUS "-" of token_simple prec pPlusOp
     token LT "<" of token_simple prec pEqOp
     token LT_EQ "<=" of token_simple prec pEqOp
     token EQ "=" of token_simple prec pEqOp
@@ -579,6 +579,7 @@ include hocc
       | "{" Expr "with" Field FieldListTl "}"
       | Expr Arguments prec pExpr_Expr_Arguments
       | PrefixOp Expr prec pExpr_PrefixOp_Expr
+      | "-" Expr prec pTilde
       -> Xxx
 
     nonterm Exprs of xxx prec pComma ::=
