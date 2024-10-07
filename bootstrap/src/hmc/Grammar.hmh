@@ -248,6 +248,7 @@ include hocc
     neutral pArgument_Expr < pExpr_Constant
     neutral pArgument_Cident
     neutral pExpr_PrefixOp_Expr
+    neutral pPrefixOp_Sign
 
     neutral pLgroup < pExpr_Expr_Arguments, pArgument_Expr, pArgument_Cident, pExpr_PrefixOp_Expr
     left pLazy < pLgroup
@@ -258,10 +259,11 @@ include hocc
     right pColonOp < pPlusOp
     right pAtOp < pColonOp
     left pEqOp < pAtOp
-    left pConstant < pEqOp
     right pAnd < pEqOp
     right pOr < pAnd
-    left pComma < pConstant, pColonOp, pExpr_Constr_Expr
+    neutral pInfixOp < pOr, pPrefixOp_Sign
+    left pConstant < pInfixOp
+    left pComma < pOr, pConstant, pColonOp, pExpr_Constr_Expr
     right pColonEq < pComma
     neutral pIf < pColonEq
     right pSemi < pIf
@@ -325,6 +327,7 @@ include hocc
     # Punctuation.
     token TILDE "~" of token_simple prec pTilde
     token QMARK "?" of token_simple prec pTilde
+    token PLUS "+" of token_simple prec pPlusOp
     token MINUS "-" of token_simple prec pPlusOp
     token LT "<" of token_simple prec pEqOp
     token LT_EQ "<=" of token_simple prec pEqOp
@@ -352,7 +355,7 @@ include hocc
     token RARRAY "|]" of token_simple
     token BSLASH "\\" of token_simple
     token TICK "'" of token_simple
-    token CARET "^" of token_simple
+    token CARET "^" of token_simple prec pAtOp
     token AMP "&" of token_simple
     token AMP_AMP "&&" of token_simple
     token XMARK "!" of token_simple prec pTilde
@@ -442,15 +445,17 @@ include hocc
       | "type" Rec CIDENT TypeParams ":" CIDENT TypeArgs "=" "{" (* XXX *) "}"
       -> CModuleDef
 
-    nonterm PrefixOp of xxx prec pTilde ::=
-      | TILDE_OP
-      | QMARK_OP
-      | "~"
-      | "?"
-      | "!"
+    nonterm PrefixOp of xxx ::=
+      | TILDE_OP prec pTilde
+      | QMARK_OP prec pTilde
+      | "~" prec pTilde
+      | "?" prec pTilde
+      | "+" prec pPrefixOp_Sign
+      | "-" prec pPrefixOp_Sign
+      | "!" prec pTilde
       -> Xxx
 
-    nonterm InfixOp of xxx ::=
+    nonterm InfixOp of xxx prec pInfixOp ::=
       | "and"
       | "or"
       | STAR_STAR_OP
@@ -468,7 +473,7 @@ include hocc
       | BAR_OP
       | COLON_OP
       | DOT_OP
-      | "~"
+      | "+"
       | "-"
       | "<"
       | "<="
@@ -477,8 +482,6 @@ include hocc
       | ">"
       | ":="
       | "^"
-      | "&"
-      | "&&"
       -> Xxx
 
     nonterm OperatorName of xxx ::=
@@ -579,7 +582,7 @@ include hocc
       | "{" Expr "with" Field FieldListTl "}"
       | Expr Arguments prec pExpr_Expr_Arguments
       | PrefixOp Expr prec pExpr_PrefixOp_Expr
-      | "-" Expr prec pTilde
+      | Expr InfixOp Expr prec pInfixOp
       -> Xxx
 
     nonterm Exprs of xxx prec pComma ::=
