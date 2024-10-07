@@ -16,14 +16,6 @@ to_uns: t -> uns
 not: t -> t
   [@@doc "`not t` returns the logical negation of `t`."]
 
-[@@@doc "The && and || operators are magically short-circuiting. If we define equivalent operators
-they lose the short-circuiting magic.
-
-```hemlock
-( && ): t -> t -> t
-( || ): t -> t -> t
-```"]
-
 fmt >e: ?pad:codepoint -> ?just:Fmt.just -> ?width:uns -> t -> Fmt.Formatter e >e-> Fmt.Formatter e
   [@@doc "`fmt ~pad ~just ~width s formatter` calls `formatter.fmt` on the result of `to_string ~pad
   ~just ~width s`."]
