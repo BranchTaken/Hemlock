@@ -249,6 +249,7 @@ include hocc
     neutral pArgument_Cident
     neutral pExpr_PrefixOp_Expr
     neutral pPrefixOp_Sign
+    neutral pField_Uident
 
     neutral pLgroup < pExpr_Expr_Arguments, pArgument_Expr, pArgument_Cident, pExpr_PrefixOp_Expr
     left pLazy < pLgroup
@@ -256,7 +257,7 @@ include hocc
     right pStarStarOp < pTilde
     left pStarOp < pStarStarOp
     left pPlusOp < pStarOp
-    right pColonOp < pPlusOp
+    right pColonOp < pPlusOp, pField_Uident
     right pAtOp < pColonOp
     left pEqOp < pAtOp
     right pAnd < pEqOp
@@ -265,7 +266,7 @@ include hocc
     left pConstant < pInfixOp
     left pComma < pOr, pConstant, pColonOp, pExpr_Constr_Expr
     right pColonEq < pComma
-    neutral pIf < pColonEq
+    left pIf < pColonEq
     right pSemi < pIf
     neutral pDotDot < pSemi
     neutral pImport < pDotDot
@@ -490,9 +491,10 @@ include hocc
 
     nonterm ValueName of xxx ::=
       | UIDENT
-      | "(" OperatorName ")"
+      | "\\" OperatorName
       -> Xxx
 
+    # XXX Use curried syntax.
     nonterm ExtendedModulePath of xxx ::=
       | CIDENT
       | CIDENT "(" ExtendedModulePath ")"
@@ -500,19 +502,15 @@ include hocc
       | ExtendedModulePath "." CIDENT "(" ExtendedModulePath ")"
       -> Xxx
 
-    nonterm ModulePath of xxx ::=
-      | ModulePath "." CIDENT
+    # Module path and variant constructor syntax are identical.
+    nonterm ModulePathOrConstr of xxx prec pLazy ::=
+      | ModulePathOrConstr "." CIDENT
       | CIDENT
       -> Xxx
 
     nonterm ValuePath of xxx ::=
-      | ModulePath "." ValueName
+      | ModulePathOrConstr "." ValueName
       | ValueName
-      -> Xxx
-
-    nonterm Constr of xxx prec pLazy ::=
-      | ModulePath "." CIDENT
-      | CIDENT
       -> Xxx
 
     nonterm TypeConstr of xxx ::=
@@ -548,7 +546,7 @@ include hocc
       | I512
       | NAT
       | ZINT
-      | Constr
+      | ModulePathOrConstr
       -> Xxx
 
     nonterm TypeExpr of xxx ::=
@@ -574,7 +572,7 @@ include hocc
       | "(" Expr ":" TypeExpr ")"
       | "(|" Expr ":" TypeExpr "|)"
       | Exprs prec pExpr_Exprs
-      | Constr Expr prec pLazy
+      | ModulePathOrConstr Expr prec pLazy
       | Expr "::" Expr prec pColonOp
       | "[" Expr ExprListTl "]"
       | "[|" Expr ExprListTl "|]"
@@ -583,6 +581,13 @@ include hocc
       | Expr Arguments prec pExpr_Expr_Arguments
       | PrefixOp Expr prec pExpr_PrefixOp_Expr
       | Expr InfixOp Expr prec pInfixOp
+      | Expr "." Field
+      | "if" Expr "then" Expr "else" Expr prec pIf
+#      | Expr ";" Expr
+#      | "match" Expr "with" PatternMatch
+#      | "function" PatternMatch
+#      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
+#      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
       -> Xxx
 
     nonterm Exprs of xxx prec pComma ::=
@@ -598,10 +603,10 @@ include hocc
       -> Xxx
 
     nonterm Field of xxx ::=
-      | UIDENT
-      | UIDENT ":" TypeExpr
-      | UIDENT ":" TypeExpr "=" Expr
-      | UIDENT "=" Expr
+      | UIDENT prec pField_Uident
+      | UIDENT ":" TypeExpr prec pColonOp
+      | UIDENT ":" TypeExpr "=" Expr prec pColonOp
+      | UIDENT "=" Expr prec pEqOp
       -> Xxx
 
     nonterm FieldListTl of xxx ::=
@@ -622,6 +627,10 @@ include hocc
     nonterm Arguments of xxx ::=
       | Arguments Argument
       | Argument
+      -> Xxx
+
+    nonterm PatternMatch of xxx ::=
+      | epsilon (* XXX *)
       -> Xxx
 
     nonterm CIntf of xxx ::=
