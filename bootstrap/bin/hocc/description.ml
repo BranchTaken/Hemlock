@@ -161,13 +161,30 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
       end
   end in
   let pp_contrib contrib formatter = begin
-    assert ((Contrib.length contrib) = 1L);
     assert (not (Contrib.mem_shift contrib));
-    let prod_index = Contrib.reduces contrib |> Ordset.choose_hlt in
-    let prod = Prods.prod_of_prod_index prod_index prods in
-    formatter
-    |> Fmt.fmt "Reduce "
-    |> pp_prod ~do_pp_prec:false prod
+    match Contrib.length contrib with
+    | 1L -> begin
+        let prod_index = Contrib.reduces contrib |> Ordset.choose_hlt in
+        let prod = Prods.prod_of_prod_index prod_index prods in
+        formatter
+        |> Fmt.fmt "Reduce "
+        |> pp_prod ~do_pp_prec:false prod
+       end
+    | _ as ncontribs -> begin
+        formatter
+        |> html "<ul type=none>" |> Fmt.fmt "\n"
+        |> (fun formatter ->
+          Ordset.foldi ~init:formatter ~f:(fun i formatter prod_index ->
+            let prod = Prods.prod_of_prod_index prod_index prods in
+            formatter
+            |> Fmt.fmt "                    " |> html "<li>"
+            |> Fmt.fmt "Reduce "
+            |> pp_prod ~do_pp_prec:false prod
+            |> html "</li>" |> Fmt.fmt (match (succ i) < ncontribs with true -> "\n" | false -> "")
+          ) (Contrib.reduces contrib)
+        )
+        |> html "</ul>"
+      end
   end in
   let io =
     io.log
