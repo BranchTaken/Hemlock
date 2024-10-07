@@ -166,7 +166,7 @@ toks=[
     (9, (Tok_indent {source=["Bar.hm":2:4.."Bar.hm":2:4); indent=(Constant ())}))
     (10, (Tok_u64 {source=["Bar.hm":2:4.."Bar.hm":2:6); u64=(Constant 42)}))
     (11, (Tok_whitespace {source=["Bar.hm":2:6.."Bar.hm":2:7)}))
-    (12, (Tok_plus_op {source=["Bar.hm":2:7.."Bar.hm":2:8); plus_op="+"}))
+    (12, (Tok_plus {source=["Bar.hm":2:7.."Bar.hm":2:8)}))
     (13, (Tok_whitespace {source=["Bar.hm":2:8.."Bar.hm":2:9)}))
     (14, (Tok_u64 {source=["Bar.hm":2:9.."Bar.hm":2:11); u64=(Constant 13)}))
     (15, (Tok_dedent {source=["Bar.hm":2:11.."Bar.hm":2:11); dedent=(Constant ())}))
