@@ -215,10 +215,7 @@ type token_end_of_input = {source: Source.Slice.t}
 type token_misaligned = {source: Source.Slice.t}
 type token_error = {source: Source.Slice.t; error: Rendition.Malformation.t list}
 
-type nonterm_sep =
-  | SepSemi of token_simple
-  | SepLineDelim of token_simple
-  and nonterm_rec =
+type nonterm_rec =
   | Rec
   | RecNon
   and nonterm_type_param =
@@ -240,106 +237,143 @@ type xxx =
   | Xxx
 
 include hocc
+    # Precedences.
+    right pArrow
+    left pBar
+
+    neutral pExpr_Constr_Expr
+    neutral pExpr_Expr_Arguments
+
+    neutral pExpr_Constant
+    neutral pArgument_Expr < pExpr_Constant
+    neutral pArgument_Cident
+    neutral pExpr_PrefixOp_Expr
+
+    neutral pLgroup < pExpr_Expr_Arguments, pArgument_Expr, pArgument_Cident, pExpr_PrefixOp_Expr
+    left pLazy < pLgroup
+    left pTilde < pLazy, pArgument_Expr
+    right pStarStarOp < pTilde
+    left pStarOp < pStarStarOp
+    left pPlusOp < pStarOp
+    right pColonOp < pPlusOp
+    right pAtOp < pColonOp
+    left pEqOp < pAtOp
+    left pConstant < pEqOp
+    right pAnd < pEqOp
+    right pOr < pAnd
+    left pComma < pConstant, pColonOp, pExpr_Constr_Expr
+    right pColonEq < pComma
+    neutral pIf < pColonEq
+    right pSemi < pIf
+    neutral pDotDot < pSemi
+    neutral pImport < pDotDot
+    neutral pOpen < pImport
+    neutral pLet < pOpen
+
+    neutral pExpr_Exprs < pComma
+
     # Keywords.
-    token AND "and" of token_simple
+    token AND "and" of token_simple prec pAnd
     token ALSO "also" of token_simple
     token AS "as" of token_simple
-    token CONCEAL "conceal" of token_simple
+    token CONCEAL "conceal" of token_simple prec pLet
     token EFFECT "effect" of token_simple
     token ELSE "else" of token_simple
-    token EXPOSE "expose" of token_simple
+    token EXPOSE "expose" of token_simple prec pLet
     token EXTERNAL "external" of token_simple
-    token FALSE "false" of token_simple
-    token FN "fn" of token_simple
-    token FUNCTION "function" of token_simple
-    token IF "if" of token_simple
-    token IMPORT "import" of token_simple
+    token FALSE "false" of token_simple prec pConstant
+    token FN "fn" of token_simple prec pLet
+    token FUNCTION "function" of token_simple prec pLet
+    token IF "if" of token_simple prec pIf
+    token IMPORT "import" of token_simple prec pImport
     token INCLUDE "include" of token_simple
     token LAZY "lazy" of token_simple
-    token LET "let" of token_simple
-    token MATCH "match" of token_simple
+    token LET "let" of token_simple prec pLet
+    token MATCH "match" of token_simple prec pLet
     token MUTABILITY "mutability" of token_simple
     token OF "of" of token_simple
-    token OPEN "open" of token_simple
-    token OR "or" of token_simple
+    token OPEN "open" of token_simple prec pOpen
+    token OR "or" of token_simple prec pOr
     token REC "rec" of token_simple
     token THEN "then" of token_simple
-    token TRUE "true" of token_simple
+    token TRUE "true" of token_simple prec pConstant
     token TYPE "type" of token_simple
     token WHEN "when" of token_simple
     token WITH "with" of token_simple
 
     # Operators.
-    token TILDE_OP of token_tilde_op
-    token QMARK_OP of token_qmark_op
-    token STAR_STAR_OP of token_star_star_op
-    token STAR_OP of token_star_op
-    token SLASH_OP of token_slash_op
-    token PCT_OP of token_pct_op
-    token PLUS_OP of token_plus_op
-    token MINUS_OP of token_minus_op
-    token AT_OP of token_at_op
-    token CARET_OP of token_caret_op
-    token DOLLAR_OP of token_dollar_op
-    token LT_OP of token_lt_op
-    token EQ_OP of token_eq_op
-    token GT_OP of token_gt_op
-    token BAR_OP of token_bar_op
-    token COLON_OP of token_colon_op
-    token DOT_OP of token_dot_op
+    # Prefix.
+    token TILDE_OP of token_tilde_op prec pTilde
+    token QMARK_OP of token_qmark_op prec pTilde
+    # Infix.
+    token STAR_STAR_OP of token_star_star_op prec pStarStarOp
+    token STAR_OP of token_star_op prec pStarOp
+    token SLASH_OP of token_slash_op prec pStarOp
+    token PCT_OP of token_pct_op prec pStarOp
+    token PLUS_OP of token_plus_op prec pPlusOp
+    token MINUS_OP of token_minus_op prec pPlusOp
+    token AT_OP of token_at_op prec pAtOp
+    token CARET_OP of token_caret_op prec pAtOp
+    token DOLLAR_OP of token_dollar_op prec pEqOp
+    token LT_OP of token_lt_op prec pEqOp
+    token EQ_OP of token_eq_op prec pEqOp
+    token GT_OP of token_gt_op prec pEqOp
+    token BAR_OP of token_bar_op prec pEqOp
+    token COLON_OP of token_colon_op prec pColonOp
+    token DOT_OP of token_dot_op prec pEqOp
 
     # Punctuation.
-    token TILDE "~" of token_simple
-    token QMARK "?" of token_simple
-    token MINUS "-" of token_simple
-    token LT "<" of token_simple
-    token LT_EQ "<=" of token_simple
-    token EQ "=" of token_simple
-    token LT_GT "<>" of token_simple
-    token GT_EQ ">=" of token_simple
-    token GT ">" of token_simple
-    token COMMA "," of token_simple
-    token DOT "." of token_simple
-    token DOT_DOT ".." of token_simple
-    token SEMI ";" of token_simple
-    token COLON ":" of token_simple
-    token COLON_COLON "::" of token_simple
-    token COLON_EQ ":=" of token_simple
-    token LPAREN "(" of token_simple
+    token TILDE "~" of token_simple prec pTilde
+    token QMARK "?" of token_simple prec pTilde
+    token MINUS "-" of token_simple # Precedence depends on prefix/infix.
+    token LT "<" of token_simple prec pEqOp
+    token LT_EQ "<=" of token_simple prec pEqOp
+    token EQ "=" of token_simple prec pEqOp
+    token LT_GT "<>" of token_simple prec pEqOp
+    token GT_EQ ">=" of token_simple prec pEqOp
+    token GT ">" of token_simple prec pEqOp
+    token COMMA "," of token_simple prec pComma
+    token DOT "." of token_simple prec pEqOp
+    token DOT_DOT ".." of token_simple prec pDotDot
+    token SEMI ";" of token_simple prec pSemi
+    token COLON ":" of token_simple prec pColonOp
+    token COLON_COLON "::" of token_simple prec pColonOp
+    token COLON_EQ ":=" of token_simple prec pColonEq
+    token LPAREN "(" of token_simple prec pLgroup
     token RPAREN ")" of token_simple
-    token LBRACK "[" of token_simple
+    token LBRACK "[" of token_simple prec pLgroup
     token RBRACK "]" of token_simple
-    token LCURLY "{" of token_simple
+    token LCURLY "{" of token_simple prec pLgroup
     token RCURLY "}" of token_simple
-    token BAR "|" of token_simple
-    token LCAPTURE "(|" of token_simple
+    token BAR "|" of token_simple prec pBar
+    token LCAPTURE "(|" of token_simple prec pLgroup
     token RCAPTURE "|)" of token_simple
-    token LARRAY "[|" of token_simple
+    token LARRAY "[|" of token_simple prec pLgroup
     token RARRAY "|]" of token_simple
     token BSLASH "\\" of token_simple
     token TICK "'" of token_simple
     token CARET "^" of token_simple
     token AMP "&" of token_simple
     token AMP_AMP "&&" of token_simple
-    token XMARK "!" of token_simple
-    token ARROW "->" of token_simple
-    token CARROW "~->" of token_simple
+    token XMARK "!" of token_simple prec pTilde
+    token ARROW "->" of token_simple prec pArrow
+    token CARROW "~->" of token_simple prec pArrow
 
     # Miscellaneous.
     token SOURCE_DIRECTIVE of token_source_directive
     token LINE_DELIM of token_line_delim
-    token INDENT of token_indent
+    token INDENT of token_indent prec pLgroup
     token DEDENT of token_dedent
     token WHITESPACE of token_whitespace
     token HASH_COMMENT of token_hash_comment
     token PAREN_COMMENT of token_paren_comment
     token USCORE "_" of token_uscore
     token UIDENT of token_uident
-    token CIDENT of token_cident
-    token CODEPOINT of token_codepoint
-    token RSTRING of token_rstring
-    token QSTRING of token_qstring
-    token ISTRING of token_istring
+    token CIDENT of token_cident prec pConstant
+    token CODEPOINT of token_codepoint prec pConstant
+    token RSTRING of token_rstring prec pConstant
+    token QSTRING of token_qstring # OCaml-specific.
+    token ISTRING of token_istring prec pConstant
     token FSTRING_LDITTO of token_fstring_lditto
     token FSTRING_INTERPOLATED of token_fstring_interpolated
     token FSTRING_PCT of token_fstring_pct
@@ -362,32 +396,28 @@ include hocc
     token FSTRING_LPAREN_CARET of token_fstring_lparen_caret
     token FSTRING_CARET_RPAREN of token_fstring_caret_rparen
     token FSTRING_RDITTO of token_fstring_rditto
-    token R32 of token_r32
-    token R64 of token_r64
-    token U8 of token_u8
-    token I8 of token_i8
-    token U16 of token_u16
-    token I16 of token_i16
-    token U32 of token_u32
-    token I32 of token_i32
-    token LONG of token_long
-    token U64 of token_u64
-    token I64 of token_i64
-    token U128 of token_u128
-    token I128 of token_i128
-    token U256 of token_u256
-    token I256 of token_i256
-    token U512 of token_u512
-    token I512 of token_i512
-    token NAT of token_nat
-    token ZINT of token_zint
+    token R32 of token_r32 prec pConstant
+    token R64 of token_r64 prec pConstant
+    token U8 of token_u8 prec pConstant
+    token I8 of token_i8 prec pConstant
+    token U16 of token_u16 prec pConstant
+    token I16 of token_i16 prec pConstant
+    token U32 of token_u32 prec pConstant
+    token I32 of token_i32 prec pConstant
+    token LONG of token_long prec pConstant
+    token U64 of token_u64 prec pConstant
+    token I64 of token_i64 prec pConstant
+    token U128 of token_u128 prec pConstant
+    token I128 of token_i128 prec pConstant
+    token U256 of token_u256 prec pConstant
+    token I256 of token_i256 prec pConstant
+    token U512 of token_u512 prec pConstant
+    token I512 of token_i512 prec pConstant
+    token NAT of token_nat prec pConstant
+    token ZINT of token_zint prec pConstant
     token END_OF_INPUT of token_end_of_input
     token MISALIGNED of token_misaligned
     token ERROR of token_error
-
-    nonterm Sep of nonterm_sep ::=
-      | {source}:";" -> SepSemi {source}
-      | {source}:LINE_DELIM -> SepLineDelim {source}
 
     nonterm Rec of nonterm_rec ::=
       | "rec" -> Rec
@@ -412,11 +442,17 @@ include hocc
       | "type" Rec CIDENT TypeParams ":" CIDENT TypeArgs "=" "{" (* XXX *) "}"
       -> CModuleDef
 
+    nonterm PrefixOp of xxx prec pTilde ::=
+      | TILDE_OP
+      | QMARK_OP
+      | "~"
+      | "?"
+      | "!"
+      -> Xxx
+
     nonterm InfixOp of xxx ::=
       | "and"
       | "or"
-      | TILDE_OP
-      | QMARK_OP
       | STAR_STAR_OP
       | STAR_OP
       | SLASH_OP
@@ -446,7 +482,6 @@ include hocc
       -> Xxx
 
     nonterm OperatorName of xxx ::=
-      | PrefixSymbol
       | InfixOp
       -> Xxx
 
@@ -472,17 +507,22 @@ include hocc
       | ValueName
       -> Xxx
 
-    nonterm Constr of xxx ::=
+    nonterm Constr of xxx prec pLazy ::=
       | ModulePath "." CIDENT
       | CIDENT
       -> Xxx
 
-    nonterm Constant of xxx ::=
+    nonterm TypeConstr of xxx ::=
+      | ExtendedModulePath "." UIDENT
+      | UIDENT
+      -> Xxx
+
+    nonterm Constant of xxx prec pConstant ::=
       | "false"
       | "true"
       | "(" ")"
-      | "[" "]"
       | "(|" "|)"
+      | "[" "]"
       | "[|" "|]"
       | CODEPOINT
       | RSTRING
@@ -508,8 +548,76 @@ include hocc
       | Constr
       -> Xxx
 
+    nonterm TypeExpr of xxx ::=
+      | "'" UIDENT
+      | "(" TypeExpr ")"
+      | "_"
+      | TypeConstr
+      | TypeExpr TypeConstr
+      | "(" TypeExprs ")" TypeConstr
+      | TypeExpr "as" "'" UIDENT
+      -> Xxx
+
+    nonterm TypeExprs of xxx ::=
+      | TypeExprs "," TypeExpr
+      | TypeExpr "," TypeExpr
+      -> Xxx
+
     nonterm Expr of xxx ::=
-      | Constant
+      | Constant prec pExpr_Constant
+      | "(" Expr ")"
+      | "(|" Expr "|)"
+      | INDENT Expr DEDENT
+      | "(" Expr ":" TypeExpr ")"
+      | "(|" Expr ":" TypeExpr "|)"
+      | Exprs prec pExpr_Exprs
+      | Constr Expr prec pLazy
+      | Expr "::" Expr prec pColonOp
+      | "[" Expr ExprListTl "]"
+      | "[|" Expr ExprListTl "|]"
+      | "{" Field FieldListTl "}"
+      | "{" Expr "with" Field FieldListTl "}"
+      | Expr Arguments prec pExpr_Expr_Arguments
+      | PrefixOp Expr prec pExpr_PrefixOp_Expr
+      -> Xxx
+
+    nonterm Exprs of xxx prec pComma ::=
+      | Exprs "," Expr
+      | Expr "," Expr
+      -> Xxx
+
+    nonterm ExprListTl of xxx ::=
+      | ExprListTl LINE_DELIM Expr
+      | ExprListTl ";" Expr
+      | ExprListTl ";"
+      | epsilon
+      -> Xxx
+
+    nonterm Field of xxx ::=
+      | UIDENT
+      | UIDENT ":" TypeExpr
+      | UIDENT ":" TypeExpr "=" Expr
+      | UIDENT "=" Expr
+      -> Xxx
+
+    nonterm FieldListTl of xxx ::=
+      | FieldListTl LINE_DELIM Field
+      | FieldListTl ";" Field
+      | FieldListTl ";"
+      | epsilon
+      -> Xxx
+
+    nonterm Argument of xxx ::=
+      | Expr prec pArgument_Expr
+      | "~" CIDENT prec pArgument_Cident
+      | "~" CIDENT ":" Expr prec pArgument_Cident
+      | "?" CIDENT prec pArgument_Cident
+      | "?" CIDENT ":" Expr prec pArgument_Cident
+      -> Xxx
+
+    nonterm Arguments of xxx ::=
+      | Arguments Argument
+      | Argument
       -> Xxx
 
     nonterm CIntf of xxx ::=
@@ -521,7 +629,9 @@ include hocc
       -> CImplItem
 
     nonterm CImpl of nonterm_c_impl ::=
-      | CImplItem Sep CImpl -> CImpl
+      | CImplItem LINE_DELIM CImpl
+      | CImplItem ";" CImpl
+      -> CImpl
       | epsilon -> CImpl
 
     start Hmi of xxx ::=
