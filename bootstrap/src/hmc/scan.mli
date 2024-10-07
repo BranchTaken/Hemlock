@@ -150,6 +150,7 @@ module Token : sig
     (* Punctuation. *)
     | Tok_tilde of {source: Source.Slice.t}
     | Tok_qmark of {source: Source.Slice.t}
+    | Tok_plus of {source: Source.Slice.t}
     | Tok_minus of {source: Source.Slice.t}
     | Tok_lt of {source: Source.Slice.t}
     | Tok_lt_eq of {source: Source.Slice.t}

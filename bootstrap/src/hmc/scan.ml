@@ -297,6 +297,7 @@ module Token = struct
     (* Punctuation. *)
     | Tok_tilde of {source: Source.Slice.t}
     | Tok_qmark of {source: Source.Slice.t}
+    | Tok_plus of {source: Source.Slice.t}
     | Tok_minus of {source: Source.Slice.t}
     | Tok_lt of {source: Source.Slice.t}
     | Tok_lt_eq of {source: Source.Slice.t}
@@ -596,6 +597,8 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_tilde {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_qmark {source} ->
         formatter |> Fmt.fmt "Tok_qmark {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_plus {source} ->
+        formatter |> Fmt.fmt "Tok_plus {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_minus {source} ->
         formatter |> Fmt.fmt "Tok_minus {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_lt {source} ->
@@ -1102,6 +1105,7 @@ module Token = struct
     | Tok_dot_op {source; _}
     | Tok_tilde {source}
     | Tok_qmark {source}
+    | Tok_plus {source}
     | Tok_minus {source}
     | Tok_lt {source}
     | Tok_lt_eq {source}
@@ -1207,12 +1211,12 @@ module Token = struct
     | Tok_pct_op _ | Tok_plus_op _ | Tok_minus_op _ | Tok_at_op _ | Tok_caret_op _ | Tok_dollar_op _
     | Tok_lt_op _ | Tok_eq_op _ | Tok_gt_op _ | Tok_bar_op _ | Tok_colon_op _ | Tok_dot_op _
     (* Punctuation. *)
-    | Tok_tilde _ | Tok_qmark _ | Tok_minus _ | Tok_lt _ | Tok_lt_eq _ | Tok_eq _ | Tok_lt_gt _
-    | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _ | Tok_dot_dot _ | Tok_semi _ | Tok_colon _
-    | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _ | Tok_rparen _ | Tok_lbrack _ | Tok_rbrack _
-    | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _ | Tok_larray _
-    | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _ | Tok_amp_amp _
-    | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
+    | Tok_tilde _ | Tok_qmark _ | Tok_plus _ | Tok_minus _ | Tok_lt _ | Tok_lt_eq _ | Tok_eq _
+    | Tok_lt_gt _ | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _ | Tok_dot_dot _ | Tok_semi _
+    | Tok_colon _ | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _ | Tok_rparen _ | Tok_lbrack _
+    | Tok_rbrack _ | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _
+    | Tok_larray _ | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _
+    | Tok_amp_amp _ | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
     (* Miscellaneous. *)
     | Tok_source_directive {source_directive=(Constant _); _}
     | Tok_line_delim _
@@ -4679,6 +4683,7 @@ module Dfa = struct
         | ":=" -> Tok_colon_eq {source}
         | "." -> Tok_dot {source}
         | ".." -> Tok_dot_dot {source}
+        | "+" -> Tok_plus {source}
         | "-" -> Tok_minus {source}
         | "^" -> Tok_caret {source}
         | "<" -> Tok_lt {source}
