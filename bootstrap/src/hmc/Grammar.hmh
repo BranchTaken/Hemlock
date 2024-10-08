@@ -286,7 +286,6 @@ include hocc
     token EXTERNAL "external" of token_simple
     token FALSE "false" of token_simple prec pConstant
     token FN "fn" of token_simple prec pLet
-    token FUNCTION "function" of token_simple prec pLet
     token IF "if" of token_simple prec pIf
     token IMPORT "import" of token_simple prec pImport
     token INCLUDE "include" of token_simple
@@ -585,7 +584,6 @@ include hocc
       | "if" Expr "then" Expr "else" Expr prec pIf
 #      | Expr ";" Expr
 #      | "match" Expr "with" PatternMatch
-#      | "function" PatternMatch
 #      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
 #      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
       -> Xxx

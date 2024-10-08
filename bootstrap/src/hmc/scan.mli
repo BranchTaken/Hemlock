@@ -110,7 +110,6 @@ module Token : sig
     | Tok_external of {source: Source.Slice.t}
     | Tok_false of {source: Source.Slice.t}
     | Tok_fn of {source: Source.Slice.t}
-    | Tok_function of {source: Source.Slice.t}
     | Tok_if of {source: Source.Slice.t}
     | Tok_import of {source: Source.Slice.t}
     | Tok_include of {source: Source.Slice.t}

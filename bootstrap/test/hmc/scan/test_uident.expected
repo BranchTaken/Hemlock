@@ -187,9 +187,6 @@
 ``fn``
   (Tok_fn {source=[1:0..1:2)})
   (Tok_end_of_input {source=[1:2..1:2)})
-``function``
-  (Tok_function {source=[1:0..1:8)})
-  (Tok_end_of_input {source=[1:8..1:8)})
 ``if``
   (Tok_if {source=[1:0..1:2)})
   (Tok_end_of_input {source=[1:2..1:2)})
