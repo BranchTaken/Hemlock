@@ -25,7 +25,6 @@ let test () =
   scan_str "external";
   scan_str "false";
   scan_str "fn";
-  scan_str "function";
   scan_str "if";
   scan_str "import";
   scan_str "include";
