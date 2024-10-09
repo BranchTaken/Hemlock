@@ -4,3 +4,13 @@
  (libraries Basis)
  (synopsis "Hemlock bootstrap compiler library")
  )
+
+; This rule calls an out-of-tree `hocc`, because the in-tree one depends on `Hmc`.
+(rule
+ (deps
+  (glob_files Grammar.hmh*))
+ (targets Grammar.ml)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (system "hocc -v -txt -a ielr1 -ml -s Grammar"))))

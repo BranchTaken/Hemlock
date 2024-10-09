@@ -1,6 +1,6 @@
 hocc: Parsing "./NestedEpsilon.hmh"
 hocc: Generating LR(1) specification
-hocc: 0 precedences, 4 tokens, 6 non-terminals, 7 productions
+hocc: 0 precedences, 4 tokens, 6 non-terminals (1 start), 7 productions
 hocc: LR(1) item set compatibility: lr1
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++++
 hocc: Generating 9 LR(1) states

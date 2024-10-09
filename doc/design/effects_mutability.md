@@ -506,10 +506,10 @@ compatible with the interface. Nonetheless, explicit concealed effects present a
 can require transitively exposing incidental implementation details. Module interfaces should leave
 concealable effects implicit unless functions have legitimate uses in low-level code which requires
 complete knowledge of transitive effects, and even then such interfaces should have few, if any,
-concealed effects. `Uns.( + )` is a prime practical example.
+concealed effects. `Uns.\+` is a prime practical example.
 
 ```hemlock
-( + ): uns ~-> uns ~-> uns
+\+: uns ~-> uns ~-> uns
 ```
 
 ## Partial application
@@ -593,19 +593,19 @@ call chain is inlined, the precise effect typing enables optimal machine code ge
 
 ### Explicit concealed effects
 
-Partial application requires closure allocation. Functions like `Uns.( + )` do not require
+Partial application requires closure allocation. Functions like `Uns.\+` do not require
 allocation, and because addition is critical functionality in low-level code, the API is explicit
 regarding (lack of) concealed effects.
 
 ```hemlock
-( + ): uns ~-> uns ~-> uns
+\+: uns ~-> uns ~-> uns
 ```
 
 However, if `+` is partially applied, the compiler transforms the function to one with an `alloc`
 effect, with signature equivalent to `+*`.
 
 ```hemlock
-( +* ): uns ~alloc-> (uns ~-> uns)
+\+*: uns ~alloc-> (uns ~-> uns)
 ```
 
 As a consequence, partial application is prohibited within functions like `f`, and allowed within
