@@ -239,7 +239,6 @@ type xxx =
 include hocc
     # Precedences.
     right pArrow
-    left pBar
 
     neutral pExpr_Constr_Expr
     neutral pExpr_Expr_Arguments
@@ -248,11 +247,14 @@ include hocc
     neutral pArgument_Expr < pExpr_Constant
     neutral pArgument_Cident
     neutral pExpr_PrefixOp_Expr
+    neutral pPatternMatch
     neutral pPrefixOp_Sign
     neutral pField_Uident
 
-    neutral pLgroup < pExpr_Expr_Arguments, pArgument_Expr, pArgument_Cident, pExpr_PrefixOp_Expr
-    left pLazy < pLgroup
+    neutral pAs
+    neutral pLgroup < pExpr_Expr_Arguments, pArgument_Expr, pArgument_Cident, pExpr_PrefixOp_Expr,
+      pPatternMatch
+    left pLazy < pAs, pLgroup
     left pTilde < pLazy, pArgument_Expr
     right pStarStarOp < pTilde
     left pStarOp < pStarStarOp
@@ -274,11 +276,13 @@ include hocc
     neutral pLet < pOpen
 
     neutral pExpr_Exprs < pComma
+    neutral pPattern_Constr < pAs, pComma, pColonOp, pEqOp
+    neutral pPatternsTl_epsilon < pAs, pComma, pColonOp, pEqOp
 
     # Keywords.
     token AND "and" of token_simple prec pAnd
     token ALSO "also" of token_simple
-    token AS "as" of token_simple
+    token AS "as" of token_simple prec pAs
     token CONCEAL "conceal" of token_simple prec pLet
     token EFFECT "effect" of token_simple
     token ELSE "else" of token_simple
@@ -348,7 +352,7 @@ include hocc
     token RBRACK "]" of token_simple
     token LCURLY "{" of token_simple prec pLgroup
     token RCURLY "}" of token_simple
-    token BAR "|" of token_simple prec pBar
+    token BAR "|" of token_simple prec pEqOp
     token LCAPTURE "(|" of token_simple prec pLgroup
     token RCAPTURE "|)" of token_simple
     token LARRAY "[|" of token_simple prec pLgroup
@@ -583,7 +587,7 @@ include hocc
       | Expr "." Field
       | "if" Expr "then" Expr "else" Expr prec pIf
 #      | Expr ";" Expr
-#      | "match" Expr "with" PatternMatch
+      | "match" Expr "with" PatternMatch
 #      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
 #      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
       -> Xxx
@@ -628,7 +632,63 @@ include hocc
       -> Xxx
 
     nonterm PatternMatch of xxx ::=
-      | epsilon (* XXX *)
+      | "|" Pattern "when" Expr "->" Expr prec pPatternMatch
+      | "|" Pattern "->" Expr prec pPatternMatch
+      | Pattern "when" Expr "->" Expr prec pPatternMatch
+      | Pattern "->" Expr prec pPatternMatch
+      -> Xxx
+
+    nonterm PatternMatchTl of xxx ::=
+      | "|" Pattern "when" Expr "->" Expr PatternMatchTl
+      | "|" Pattern "->" Expr PatternMatchTl
+      | epsilon
+      -> Xxx
+
+    nonterm Pattern of xxx ::=
+      | "_"
+      | Constant
+      | Pattern "as" ValueName
+      | "(" Pattern ")"
+      | "(" Pattern ":" TypeExpr ")"
+      | Pattern "|" Pattern prec pEqOp
+      | ModulePathOrConstr Pattern prec pPattern_Constr
+      | Pattern "," Pattern PatternsTl
+      | "[" Pattern ListPatternTl "]"
+      | Pattern "::" Pattern prec pColonOp
+      | "[|" Pattern ListPatternTl "|]"
+      | RecordPattern
+      | CODEPOINT ".." CODEPOINT
+      | "lazy" Pattern prec pLazy
+      | ModulePathOrConstr "." "(" Pattern ")"
+      | ModulePathOrConstr "." "[" Pattern ListPatternTl "]"
+      | ModulePathOrConstr "." "[|" Pattern ListPatternTl "|]"
+      | ModulePathOrConstr "." RecordPattern
+      -> Xxx
+
+    nonterm PatternsTl of xxx ::=
+      | "," Pattern PatternsTl
+      | epsilon prec pPatternsTl_epsilon
+      -> Xxx
+
+    nonterm RecordPattern of xxx ::=
+      | "{" Field ":" TypeExpr "=" Pattern RecordPatternTl "}"
+      | "{" Field ":" TypeExpr RecordPatternTl "}"
+      | "{" Field "=" Pattern RecordPatternTl "}"
+      | "{" Field RecordPatternTl "}"
+      -> Xxx
+
+    nonterm RecordPatternTl of xxx ::=
+      | ";" Field ":" TypeExpr "=" Pattern RecordPatternTl
+      | ";" "_" ";"
+      | ";" "_"
+      | ";"
+      | epsilon
+      -> Xxx
+
+    nonterm ListPatternTl of xxx ::=
+      | ";" Pattern ListPatternTl
+      | ";"
+      | epsilon
       -> Xxx
 
     nonterm CIntf of xxx ::=
