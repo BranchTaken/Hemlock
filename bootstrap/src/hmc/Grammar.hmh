@@ -277,7 +277,6 @@ include hocc
 
     neutral pExpr_Exprs < pComma
     neutral pPattern_Constr < pAs, pComma, pColonOp, pEqOp
-    neutral pPatternsTl_epsilon < pAs, pComma, pColonOp, pEqOp
 
     # Keywords.
     token AND "and" of token_simple prec pAnd
@@ -652,7 +651,7 @@ include hocc
       | "(" Pattern ":" TypeExpr ")"
       | Pattern "|" Pattern prec pEqOp
       | ModulePathOrConstr Pattern prec pPattern_Constr
-      | Pattern "," Pattern PatternsTl
+      | Pattern "," Pattern prec pComma
       | "[" Pattern ListPatternTl "]"
       | Pattern "::" Pattern prec pColonOp
       | "[|" Pattern ListPatternTl "|]"
@@ -663,11 +662,6 @@ include hocc
       | ModulePathOrConstr "." "[" Pattern ListPatternTl "]"
       | ModulePathOrConstr "." "[|" Pattern ListPatternTl "|]"
       | ModulePathOrConstr "." RecordPattern
-      -> Xxx
-
-    nonterm PatternsTl of xxx ::=
-      | "," Pattern PatternsTl
-      | epsilon prec pPatternsTl_epsilon
       -> Xxx
 
     nonterm RecordPattern of xxx ::=
