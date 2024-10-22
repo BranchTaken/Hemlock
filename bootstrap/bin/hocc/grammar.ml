@@ -6,8 +6,8 @@ let generate_hocc io Spec.{precs; symbols; _} =
   io.hocc
   |> Fmt.fmt "hocc\n"
   |> (fun formatter ->
-    Precs.fold ~init:formatter ~f:(fun formatter prec ->
-      formatter |> Prec.src_fmt prec
+    Precs.fold_prec_sets ~init:formatter ~f:(fun formatter prec_set ->
+      formatter |> PrecSet.src_fmt prec_set
     ) precs
   )
   |> (fun formatter ->

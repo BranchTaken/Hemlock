@@ -139,8 +139,8 @@ type nonterm_uident =
   | PrecTypeNeutral
   | PrecTypeLeft
   | PrecTypeRight
-  and nonterm_prec =
-  | Prec of {prec_type: nonterm_prec_type; uident: Scan.Token.t; prec_rels: nonterm_prec_rels}
+  and nonterm_prec_set =
+  | PrecSet of {prec_type: nonterm_prec_type; prec_set: nonterm_precs; prec_rels: nonterm_prec_rels}
   and nonterm_symbol_type_qualifier =
   | SymbolTypeQualifier of {cident: token_cident;
   symbol_type_qualifier_tl: nonterm_symbol_type_qualifier}
@@ -245,7 +245,7 @@ type nonterm_uident =
   | NontermReductions of {nonterm_type: nonterm_nonterm_type; cident: token_cident;
   symbol_type: nonterm_symbol_type; prec_ref: nonterm_prec_ref; reductions: nonterm_reductions}
   and nonterm_stmt =
-  | StmtPrec of {prec: nonterm_prec}
+  | StmtPrecSet of {prec_set: nonterm_prec_set}
   | StmtToken of {token: nonterm_token}
   | StmtNonterm of {nonterm: nonterm_nonterm}
   and nonterm_stmts_tl =
@@ -329,11 +329,11 @@ include struct
             include Identifiable.Make(T)
           end
 
-        module Prec = struct
+        module PrecSet = struct
             module T = struct
                 type t = {
                     index: uns;
-                    name: string;
+                    names: string array;
                     assoc: Assoc.t option;
                     doms: (uns, Uns.cmper_witness) Ordset.t;
                   }
@@ -347,10 +347,10 @@ include struct
                 let cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                let pp {index; name; assoc; doms} formatter =
+                let pp {index; names; assoc; doms} formatter =
                     formatter
                       |> Fmt.fmt "{index=" |> Uns.pp index
-                      |> Fmt.fmt "; name=" |> String.pp name
+                      |> Fmt.fmt "; names=" |> Array.pp String.pp names
                       |> Fmt.fmt "; assoc=" |> Option.pp Assoc.pp assoc
                       |> Fmt.fmt "; doms=" |> Ordset.pp doms
                       |> Fmt.fmt "}"
@@ -358,19 +358,48 @@ include struct
             include T
             include Identifiable.Make(T)
 
-            let init ~index ~name ~assoc ~doms =
-                {index; name; assoc; doms}
+            let init ~index ~names ~assoc ~doms =
+                {index; names; assoc; doms}
           end
 
-        let precs = [|
-            Prec.init ~index:0L ~name:"pCodeTl" ~assoc:None ~doms:(Ordset.empty (module Uns));
-            Prec.init ~index:1L ~name:"pCIDENT" ~assoc:(Some Right) ~doms:(Ordset.empty (module Uns));
-            Prec.init ~index:2L ~name:"pDOT" ~assoc:(Some Left) ~doms:(Ordset.empty (module Uns));
-            Prec.init ~index:3L ~name:"pBAR" ~assoc:None ~doms:(Ordset.singleton (module Uns) 0L);
-            Prec.init ~index:4L ~name:"pCOMMA" ~assoc:(Some Left) ~doms:(Ordset.singleton (module Uns) 1L);
-            Prec.init ~index:5L ~name:"pSEMI" ~assoc:(Some Right) ~doms:(Ordset.singleton (module Uns) 0L);
-            Prec.init ~index:6L ~name:"pAS" ~assoc:None ~doms:(Ordset.of_list (module Uns) [1L; 4L])
+        let prec_sets = [|
+            PrecSet.init ~index:0L ~names:[|"pCodeTl"|] ~assoc:None ~doms:(Ordset.empty (module Uns));
+            PrecSet.init ~index:1L ~names:[|"pCIDENT"|] ~assoc:(Some Right) ~doms:(Ordset.empty (module Uns));
+            PrecSet.init ~index:2L ~names:[|"pDOT"|] ~assoc:(Some Left) ~doms:(Ordset.empty (module Uns));
+            PrecSet.init ~index:3L ~names:[|"pBAR"|] ~assoc:None ~doms:(Ordset.singleton (module Uns) 0L);
+            PrecSet.init ~index:4L ~names:[|"pCOMMA"|] ~assoc:(Some Left) ~doms:(Ordset.singleton (module Uns) 1L);
+            PrecSet.init ~index:5L ~names:[|"pSEMI"|] ~assoc:(Some Right) ~doms:(Ordset.singleton (module Uns) 0L);
+            PrecSet.init ~index:6L ~names:[|"pAS"|] ~assoc:None ~doms:(Ordset.of_list (module Uns) [1L; 4L])
           |]
+
+        module Prec = struct
+            module T = struct
+                type t = {
+                    name_index: uns;
+                    prec_set_index: uns;
+                  }
+
+                let index {prec_set_index; _} =
+                    prec_set_index
+
+                let hash_fold t state =
+                    state |> Uns.hash_fold (index t)
+
+                let cmp t0 t1 =
+                    Uns.cmp (index t0) (index t1)
+
+                let pp {name_index; prec_set_index} formatter =
+                    formatter
+                      |> Fmt.fmt "{name_index=" |> Uns.pp name_index
+                      |> Fmt.fmt "; prec_set_index=" |> Uns.pp prec_set_index
+                      |> Fmt.fmt "}"
+              end
+            include T
+            include Identifiable.Make(T)
+
+            let init ~name_index ~prec_set_index =
+                {name_index; prec_set_index}
+          end
 
         module Prod = struct
             module T = struct
@@ -441,7 +470,7 @@ include struct
               ~prec:None ~callback:16L;
             Prod.init ~index:17L ~lhs_index:45L ~rhs_indexes:[|9L|]
               ~prec:None ~callback:17L;
-            Prod.init ~index:18L ~lhs_index:46L ~rhs_indexes:[|45L; 41L; 44L|]
+            Prod.init ~index:18L ~lhs_index:46L ~rhs_indexes:[|45L; 43L; 44L|]
               ~prec:None ~callback:18L;
             Prod.init ~index:19L ~lhs_index:47L ~rhs_indexes:[|12L; 18L; 47L|]
               ~prec:None ~callback:19L;
@@ -528,7 +557,7 @@ include struct
             Prod.init ~index:60L ~lhs_index:59L ~rhs_indexes:[|58L; 59L|]
               ~prec:None ~callback:60L;
             Prod.init ~index:61L ~lhs_index:59L ~rhs_indexes:[||]
-              ~prec:(Some (Array.get 0L precs)) ~callback:61L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~callback:61L;
             Prod.init ~index:62L ~lhs_index:60L ~rhs_indexes:[|57L; 59L|]
               ~prec:None ~callback:62L;
             Prod.init ~index:63L ~lhs_index:60L ~rhs_indexes:[|58L; 59L|]
@@ -538,11 +567,11 @@ include struct
             Prod.init ~index:65L ~lhs_index:61L ~rhs_indexes:[|41L; 22L; 65L|]
               ~prec:None ~callback:65L;
             Prod.init ~index:66L ~lhs_index:62L ~rhs_indexes:[|61L|]
-              ~prec:(Some (Array.get 5L precs)) ~callback:66L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~callback:66L;
             Prod.init ~index:67L ~lhs_index:62L ~rhs_indexes:[|61L; 24L; 13L|]
-              ~prec:(Some (Array.get 5L precs)) ~callback:67L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~callback:67L;
             Prod.init ~index:68L ~lhs_index:62L ~rhs_indexes:[|61L; 24L; 62L|]
-              ~prec:(Some (Array.get 5L precs)) ~callback:68L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~callback:68L;
             Prod.init ~index:69L ~lhs_index:63L ~rhs_indexes:[|24L|]
               ~prec:None ~callback:69L;
             Prod.init ~index:70L ~lhs_index:63L ~rhs_indexes:[||]
@@ -550,21 +579,21 @@ include struct
             Prod.init ~index:71L ~lhs_index:64L ~rhs_indexes:[|12L|]
               ~prec:None ~callback:71L;
             Prod.init ~index:72L ~lhs_index:64L ~rhs_indexes:[|64L; 18L; 64L|]
-              ~prec:(Some (Array.get 2L precs)) ~callback:72L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~callback:72L;
             Prod.init ~index:73L ~lhs_index:65L ~rhs_indexes:[|13L|]
               ~prec:None ~callback:73L;
             Prod.init ~index:74L ~lhs_index:65L ~rhs_indexes:[|41L|]
               ~prec:None ~callback:74L;
             Prod.init ~index:75L ~lhs_index:65L ~rhs_indexes:[|65L; 25L; 41L|]
-              ~prec:(Some (Array.get 6L precs)) ~callback:75L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:6L)) ~callback:75L;
             Prod.init ~index:76L ~lhs_index:65L ~rhs_indexes:[|29L; 65L; 30L|]
               ~prec:None ~callback:76L;
             Prod.init ~index:77L ~lhs_index:65L ~rhs_indexes:[|12L; 65L|]
-              ~prec:(Some (Array.get 1L precs)) ~callback:77L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~callback:77L;
             Prod.init ~index:78L ~lhs_index:65L ~rhs_indexes:[|64L; 18L; 29L; 65L; 30L|]
               ~prec:None ~callback:78L;
             Prod.init ~index:79L ~lhs_index:65L ~rhs_indexes:[|65L; 23L; 65L|]
-              ~prec:(Some (Array.get 4L precs)) ~callback:79L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~callback:79L;
             Prod.init ~index:80L ~lhs_index:65L ~rhs_indexes:[|37L; 62L; 63L; 38L|]
               ~prec:None ~callback:80L;
             Prod.init ~index:81L ~lhs_index:65L ~rhs_indexes:[|64L; 18L; 37L; 62L; 63L; 38L|]
@@ -809,7 +838,7 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 11L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:12L ~name:"CIDENT"
-              ~prec:(Some (Array.get 1L precs)) ~alias:None ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:None ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 12L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:13L ~name:"USCORE"
@@ -833,7 +862,7 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 17L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:18L ~name:"DOT"
-              ~prec:(Some (Array.get 2L precs)) ~alias:(Some ".") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~alias:(Some ".") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 18L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:19L ~name:"ARROW"
@@ -841,7 +870,7 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 19L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:20L ~name:"BAR"
-              ~prec:(Some (Array.get 3L precs)) ~alias:(Some "|") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~alias:(Some "|") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 20L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:21L ~name:"LT"
@@ -853,15 +882,15 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 22L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:23L ~name:"COMMA"
-              ~prec:(Some (Array.get 4L precs)) ~alias:(Some ",") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~alias:(Some ",") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 23L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:24L ~name:"SEMI"
-              ~prec:(Some (Array.get 5L precs)) ~alias:(Some ";") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~alias:(Some ";") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 24L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:25L ~name:"AS"
-              ~prec:(Some (Array.get 6L precs)) ~alias:(Some "as") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:6L)) ~alias:(Some "as") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 25L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:26L ~name:"LINE_DELIM"
@@ -945,11 +974,11 @@ include struct
                 Array.get 10L prods;
                 Array.get 11L prods;
               ]) ~first:(Ordset.of_list (module Uns) [0L; 23L])
-              ~follow:(Ordset.of_list (module Uns) [26L; 28L]);
+              ~follow:(Ordset.of_list (module Uns) [21L; 26L; 28L]);
             Symbol.init ~index:43L ~name:"Precs"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.singleton (module Prod) (Array.get 12L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L])
-              ~follow:(Ordset.of_list (module Uns) [26L; 28L]);
+              ~follow:(Ordset.of_list (module Uns) [21L; 26L; 28L]);
             Symbol.init ~index:44L ~name:"PrecRels"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
@@ -965,7 +994,7 @@ include struct
                 Array.get 17L prods;
               ]) ~first:(Ordset.of_list (module Uns) [7L; 8L; 9L])
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L]);
-            Symbol.init ~index:46L ~name:"Prec"
+            Symbol.init ~index:46L ~name:"PrecSet"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.singleton (module Prod) (Array.get 18L prods)) ~first:(Ordset.of_list (module Uns) [7L; 8L; 9L])
               ~follow:(Ordset.of_list (module Uns) [26L; 28L]);
@@ -1086,7 +1115,7 @@ include struct
               ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L])
               ~follow:(Ordset.of_list (module Uns) [24L; 38L]);
             Symbol.init ~index:62L ~name:"PatternFields"
-              ~prec:(Some (Array.get 5L precs)) ~alias:None ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 66L prods;
                 Array.get 67L prods;
@@ -6341,68 +6370,75 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 12L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 26L; 28L]
                               ) in
@@ -6428,6 +6464,7 @@ include struct
               ~gotos:(
                 Map.of_alist (module Uns) [
                     (41L, 80L);
+                    (43L, 81L);
                   ]
               );
             (* 61 *) State.init
@@ -6514,7 +6551,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (12L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
                   ]
               )
               ~gotos:(
@@ -6584,13 +6621,13 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (26L, Action.ShiftPrefix 82L);
+                    (26L, Action.ShiftPrefix 83L);
                     (28L, Action.Reduce 113L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (80L, 83L);
+                    (80L, 84L);
                   ]
               );
             (* 66 *) State.init
@@ -6614,7 +6651,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (28L, Action.ShiftPrefix 84L);
+                    (28L, Action.ShiftPrefix 85L);
                   ]
               )
               ~gotos:(
@@ -6711,7 +6748,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (10L, Action.Reduce 27L);
-                    (14L, Action.ShiftPrefix 85L);
+                    (14L, Action.ShiftPrefix 86L);
                     (16L, Action.Reduce 27L);
                     (26L, Action.Reduce 27L);
                     (28L, Action.Reduce 27L);
@@ -6719,7 +6756,7 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (51L, 86L);
+                    (51L, 87L);
                   ]
               );
             (* 70 *) State.init
@@ -7369,6 +7406,53 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 12L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.Reduce 11L);
+                    (23L, Action.ShiftPrefix 88L);
+                    (26L, Action.Reduce 11L);
+                    (28L, Action.Reduce 11L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 89L);
+                  ]
+              );
+            (* 81 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:81L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 18L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [26L; 28L]
@@ -7398,20 +7482,20 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (21L, Action.ShiftPrefix 87L);
+                    (21L, Action.ShiftPrefix 90L);
                     (26L, Action.Reduce 14L);
                     (28L, Action.Reduce 14L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (44L, 88L);
+                    (44L, 91L);
                   ]
               );
-            (* 81 *) State.init
+            (* 82 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:81L
+                  ~index:82L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7458,21 +7542,21 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (10L, Action.ShiftPrefix 89L);
+                    (10L, Action.ShiftPrefix 92L);
                     (15L, Action.Reduce 25L);
-                    (16L, Action.ShiftPrefix 90L);
+                    (16L, Action.ShiftPrefix 93L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (48L, 91L);
-                    (50L, 92L);
+                    (48L, 94L);
+                    (50L, 95L);
                   ]
               );
-            (* 82 *) State.init
+            (* 83 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:82L
+                  ~index:83L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7590,13 +7674,13 @@ include struct
                     (52L, 62L);
                     (77L, 63L);
                     (78L, 64L);
-                    (79L, 93L);
+                    (79L, 96L);
                   ]
               );
-            (* 83 *) State.init
+            (* 84 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:83L
+                  ~index:84L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7620,10 +7704,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 84 *) State.init
+            (* 85 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:84L
+                  ~index:85L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7684,10 +7768,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 85 *) State.init
+            (* 86 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:85L
+                  ~index:86L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7714,10 +7798,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 86 *) State.init
+            (* 87 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:86L
+                  ~index:87L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7758,21 +7842,159 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (10L, Action.Reduce 23L);
-                    (16L, Action.ShiftPrefix 90L);
+                    (16L, Action.ShiftPrefix 93L);
                     (26L, Action.Reduce 23L);
                     (28L, Action.Reduce 23L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (48L, 94L);
-                    (49L, 95L);
+                    (48L, 97L);
+                    (49L, 98L);
                   ]
               );
-            (* 87 *) State.init
+            (* 88 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:87L
+                  ~index:88L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 23L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 70L);
+                    (3L, Action.ShiftPrefix 71L);
+                    (4L, Action.ShiftPrefix 72L);
+                    (5L, Action.ShiftPrefix 73L);
+                    (6L, Action.ShiftPrefix 74L);
+                    (7L, Action.ShiftPrefix 75L);
+                    (8L, Action.ShiftPrefix 76L);
+                    (9L, Action.ShiftPrefix 77L);
+                    (10L, Action.ShiftPrefix 78L);
+                    (11L, Action.ShiftPrefix 79L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (41L, 99L);
+                  ]
+              );
+            (* 89 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:89L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 12L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.Reduce 12L);
+                    (26L, Action.Reduce 12L);
+                    (28L, Action.Reduce 12L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 90 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:90L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7882,14 +8104,14 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 96L);
-                    (43L, 97L);
+                    (41L, 80L);
+                    (43L, 100L);
                   ]
               );
-            (* 88 *) State.init
+            (* 91 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:88L
+                  ~index:91L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -7914,10 +8136,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 89 *) State.init
+            (* 92 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:89L
+                  ~index:92L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8020,13 +8242,13 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 98L);
+                    (41L, 101L);
                   ]
               );
-            (* 90 *) State.init
+            (* 93 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:90L
+                  ~index:93L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8069,18 +8291,18 @@ include struct
                     (9L, Action.Reduce 20L);
                     (10L, Action.Reduce 20L);
                     (11L, Action.Reduce 20L);
-                    (12L, Action.ShiftPrefix 99L);
+                    (12L, Action.ShiftPrefix 102L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (47L, 100L);
+                    (47L, 103L);
                   ]
               );
-            (* 91 *) State.init
+            (* 94 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:91L
+                  ~index:94L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8113,19 +8335,19 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (10L, Action.ShiftPrefix 89L);
+                    (10L, Action.ShiftPrefix 92L);
                     (15L, Action.Reduce 25L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (50L, 101L);
+                    (50L, 104L);
                   ]
               );
-            (* 92 *) State.init
+            (* 95 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:92L
+                  ~index:95L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8143,16 +8365,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (15L, Action.ShiftPrefix 102L);
+                    (15L, Action.ShiftPrefix 105L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 93 *) State.init
+            (* 96 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:93L
+                  ~index:96L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8185,19 +8407,19 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (26L, Action.ShiftPrefix 82L);
+                    (26L, Action.ShiftPrefix 83L);
                     (28L, Action.Reduce 113L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (80L, 103L);
+                    (80L, 106L);
                   ]
               );
-            (* 94 *) State.init
+            (* 97 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:94L
+                  ~index:97L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8223,10 +8445,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 95 *) State.init
+            (* 98 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:95L
+                  ~index:98L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8259,26 +8481,26 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (10L, Action.ShiftPrefix 89L);
+                    (10L, Action.ShiftPrefix 92L);
                     (26L, Action.Reduce 25L);
                     (28L, Action.Reduce 25L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (50L, 104L);
+                    (50L, 107L);
                   ]
               );
-            (* 96 *) State.init
+            (* 99 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:96L
+                  ~index:99L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 12L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
@@ -8289,14 +8511,14 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
@@ -8305,20 +8527,21 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (23L, Action.ShiftPrefix 105L);
+                    (21L, Action.Reduce 11L);
+                    (23L, Action.ShiftPrefix 88L);
                     (26L, Action.Reduce 11L);
                     (28L, Action.Reduce 11L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 106L);
+                    (42L, 108L);
                   ]
               );
-            (* 97 *) State.init
+            (* 100 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:97L
+                  ~index:100L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8343,10 +8566,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 98 *) State.init
+            (* 101 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:98L
+                  ~index:101L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8374,10 +8597,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 99 *) State.init
+            (* 102 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:99L
+                  ~index:102L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8395,16 +8618,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 107L);
+                    (18L, Action.ShiftPrefix 109L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 100 *) State.init
+            (* 103 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:100L
+                  ~index:103L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8507,13 +8730,13 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 108L);
+                    (41L, 110L);
                   ]
               );
-            (* 101 *) State.init
+            (* 104 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:101L
+                  ~index:104L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8531,16 +8754,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (15L, Action.ShiftPrefix 109L);
+                    (15L, Action.ShiftPrefix 111L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 102 *) State.init
+            (* 105 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:102L
+                  ~index:105L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8750,7 +8973,7 @@ include struct
                 Map.of_alist (module Uns) [
                     (2L, Action.ShiftPrefix 70L);
                     (3L, Action.ShiftPrefix 71L);
-                    (4L, Action.ShiftPrefix 110L);
+                    (4L, Action.ShiftPrefix 112L);
                     (5L, Action.ShiftPrefix 73L);
                     (6L, Action.ShiftPrefix 74L);
                     (7L, Action.ShiftPrefix 75L);
@@ -8758,30 +8981,30 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 111L);
-                    (13L, Action.ShiftPrefix 112L);
-                    (14L, Action.ShiftPrefix 113L);
-                    (20L, Action.ShiftPrefix 114L);
-                    (29L, Action.ShiftPrefix 115L);
-                    (37L, Action.ShiftPrefix 116L);
+                    (12L, Action.ShiftPrefix 113L);
+                    (13L, Action.ShiftPrefix 114L);
+                    (14L, Action.ShiftPrefix 115L);
+                    (20L, Action.ShiftPrefix 116L);
+                    (29L, Action.ShiftPrefix 117L);
+                    (37L, Action.ShiftPrefix 118L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 117L);
-                    (64L, 118L);
-                    (66L, 119L);
-                    (67L, 120L);
-                    (69L, 121L);
-                    (70L, 122L);
-                    (71L, 123L);
-                    (73L, 124L);
+                    (41L, 119L);
+                    (64L, 120L);
+                    (66L, 121L);
+                    (67L, 122L);
+                    (69L, 123L);
+                    (70L, 124L);
+                    (71L, 125L);
+                    (73L, 126L);
                   ]
               );
-            (* 103 *) State.init
+            (* 106 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:103L
+                  ~index:106L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8805,10 +9028,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 104 *) State.init
+            (* 107 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:104L
+                  ~index:107L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -8833,125 +9056,16 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 105 *) State.init
+            (* 108 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:105L
+                  ~index:108L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 70L);
-                    (3L, Action.ShiftPrefix 71L);
-                    (4L, Action.ShiftPrefix 72L);
-                    (5L, Action.ShiftPrefix 73L);
-                    (6L, Action.ShiftPrefix 74L);
-                    (7L, Action.ShiftPrefix 75L);
-                    (8L, Action.ShiftPrefix 76L);
-                    (9L, Action.ShiftPrefix 77L);
-                    (10L, Action.ShiftPrefix 78L);
-                    (11L, Action.ShiftPrefix 79L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (41L, 125L);
-                  ]
-              );
-            (* 106 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:106L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 12L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
+                                Ordset.of_list (module Uns) [21L; 26L; 28L]
                               ) in
                             lr0item, lr1item
                           );
@@ -8963,17 +9077,18 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (26L, Action.Reduce 12L);
-                    (28L, Action.Reduce 12L);
+                    (21L, Action.Reduce 10L);
+                    (26L, Action.Reduce 10L);
+                    (28L, Action.Reduce 10L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 107 *) State.init
+            (* 109 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:107L
+                  ~index:109L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9016,18 +9131,18 @@ include struct
                     (9L, Action.Reduce 20L);
                     (10L, Action.Reduce 20L);
                     (11L, Action.Reduce 20L);
-                    (12L, Action.ShiftPrefix 99L);
+                    (12L, Action.ShiftPrefix 102L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (47L, 126L);
+                    (47L, 127L);
                   ]
               );
-            (* 108 *) State.init
+            (* 110 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:108L
+                  ~index:110L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9054,10 +9169,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 109 *) State.init
+            (* 111 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:109L
+                  ~index:111L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9281,7 +9396,7 @@ include struct
                 Map.of_alist (module Uns) [
                     (2L, Action.ShiftPrefix 70L);
                     (3L, Action.ShiftPrefix 71L);
-                    (4L, Action.ShiftPrefix 110L);
+                    (4L, Action.ShiftPrefix 112L);
                     (5L, Action.ShiftPrefix 73L);
                     (6L, Action.ShiftPrefix 74L);
                     (7L, Action.ShiftPrefix 75L);
@@ -9289,32 +9404,32 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 111L);
-                    (13L, Action.ShiftPrefix 112L);
-                    (14L, Action.ShiftPrefix 113L);
-                    (20L, Action.ShiftPrefix 114L);
-                    (29L, Action.ShiftPrefix 115L);
-                    (37L, Action.ShiftPrefix 116L);
+                    (12L, Action.ShiftPrefix 113L);
+                    (13L, Action.ShiftPrefix 114L);
+                    (14L, Action.ShiftPrefix 115L);
+                    (20L, Action.ShiftPrefix 116L);
+                    (29L, Action.ShiftPrefix 117L);
+                    (37L, Action.ShiftPrefix 118L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 117L);
-                    (64L, 118L);
-                    (66L, 119L);
-                    (67L, 120L);
-                    (69L, 121L);
-                    (70L, 122L);
-                    (71L, 123L);
-                    (73L, 127L);
-                    (74L, 128L);
-                    (76L, 129L);
+                    (41L, 119L);
+                    (64L, 120L);
+                    (66L, 121L);
+                    (67L, 122L);
+                    (69L, 123L);
+                    (70L, 124L);
+                    (71L, 125L);
+                    (73L, 128L);
+                    (74L, 129L);
+                    (76L, 130L);
                   ]
               );
-            (* 110 *) State.init
+            (* 112 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:110L
+                  ~index:112L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9354,7 +9469,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (10L, Action.ShiftPrefix 89L);
+                    (10L, Action.ShiftPrefix 92L);
                     (17L, Action.Reduce 2L);
                     (19L, Action.Reduce 25L);
                     (20L, Action.Reduce 25L);
@@ -9364,13 +9479,13 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (50L, 130L);
+                    (50L, 131L);
                   ]
               );
-            (* 111 *) State.init
+            (* 113 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:111L
+                  ~index:113L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9420,10 +9535,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 112 *) State.init
+            (* 114 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:112L
+                  ~index:114L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9441,16 +9556,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (17L, Action.ShiftPrefix 131L);
+                    (17L, Action.ShiftPrefix 132L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 113 *) State.init
+            (* 115 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:113L
+                  ~index:115L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9492,10 +9607,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 114 *) State.init
+            (* 116 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:114L
+                  ~index:116L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9691,7 +9806,7 @@ include struct
                 Map.of_alist (module Uns) [
                     (2L, Action.ShiftPrefix 70L);
                     (3L, Action.ShiftPrefix 71L);
-                    (4L, Action.ShiftPrefix 110L);
+                    (4L, Action.ShiftPrefix 112L);
                     (5L, Action.ShiftPrefix 73L);
                     (6L, Action.ShiftPrefix 74L);
                     (7L, Action.ShiftPrefix 75L);
@@ -9699,28 +9814,28 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 111L);
-                    (13L, Action.ShiftPrefix 112L);
-                    (14L, Action.ShiftPrefix 113L);
-                    (29L, Action.ShiftPrefix 115L);
-                    (37L, Action.ShiftPrefix 116L);
+                    (12L, Action.ShiftPrefix 113L);
+                    (13L, Action.ShiftPrefix 114L);
+                    (14L, Action.ShiftPrefix 115L);
+                    (29L, Action.ShiftPrefix 117L);
+                    (37L, Action.ShiftPrefix 118L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 117L);
-                    (64L, 118L);
-                    (66L, 119L);
-                    (67L, 120L);
-                    (69L, 121L);
-                    (70L, 122L);
-                    (71L, 132L);
+                    (41L, 119L);
+                    (64L, 120L);
+                    (66L, 121L);
+                    (67L, 122L);
+                    (69L, 123L);
+                    (70L, 124L);
+                    (71L, 133L);
                   ]
               );
-            (* 115 *) State.init
+            (* 117 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:115L
+                  ~index:117L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9896,23 +10011,23 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 133L);
-                    (13L, Action.ShiftPrefix 134L);
-                    (29L, Action.ShiftPrefix 135L);
-                    (37L, Action.ShiftPrefix 136L);
+                    (12L, Action.ShiftPrefix 134L);
+                    (13L, Action.ShiftPrefix 135L);
+                    (29L, Action.ShiftPrefix 136L);
+                    (37L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 137L);
-                    (64L, 138L);
-                    (65L, 139L);
+                    (41L, 138L);
+                    (64L, 139L);
+                    (65L, 140L);
                   ]
               );
-            (* 116 *) State.init
+            (* 118 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:116L
+                  ~index:118L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10050,15 +10165,15 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 140L);
-                    (61L, 141L);
-                    (62L, 142L);
+                    (41L, 141L);
+                    (61L, 142L);
+                    (62L, 143L);
                   ]
               );
-            (* 117 *) State.init
+            (* 119 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:117L
+                  ~index:119L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10076,16 +10191,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (17L, Action.ShiftPrefix 143L);
+                    (17L, Action.ShiftPrefix 144L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 118 *) State.init
+            (* 120 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:118L
+                  ~index:120L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10117,16 +10232,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 144L);
+                    (18L, Action.ShiftPrefix 145L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 119 *) State.init
+            (* 121 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:119L
+                  ~index:121L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10168,10 +10283,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 120 *) State.init
+            (* 122 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:120L
+                  ~index:122L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10373,33 +10488,33 @@ include struct
                     (7L, Action.ShiftPrefix 75L);
                     (8L, Action.ShiftPrefix 76L);
                     (9L, Action.ShiftPrefix 77L);
-                    (10L, Action.ShiftPrefix 145L);
+                    (10L, Action.ShiftPrefix 146L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 111L);
-                    (13L, Action.ShiftPrefix 112L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (12L, Action.ShiftPrefix 113L);
+                    (13L, Action.ShiftPrefix 114L);
+                    (14L, Action.ShiftPrefix 115L);
                     (19L, Action.Reduce 25L);
                     (20L, Action.Reduce 25L);
                     (26L, Action.Reduce 25L);
                     (28L, Action.Reduce 25L);
-                    (29L, Action.ShiftPrefix 115L);
-                    (37L, Action.ShiftPrefix 116L);
+                    (29L, Action.ShiftPrefix 117L);
+                    (37L, Action.ShiftPrefix 118L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 117L);
-                    (50L, 146L);
-                    (64L, 118L);
-                    (66L, 119L);
-                    (67L, 147L);
-                    (68L, 148L);
+                    (41L, 119L);
+                    (50L, 147L);
+                    (64L, 120L);
+                    (66L, 121L);
+                    (67L, 148L);
+                    (68L, 149L);
                   ]
               );
-            (* 121 *) State.init
+            (* 123 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:121L
+                  ~index:123L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10426,10 +10541,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 122 *) State.init
+            (* 124 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:122L
+                  ~index:124L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10456,10 +10571,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 123 *) State.init
+            (* 125 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:123L
+                  ~index:125L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10493,20 +10608,20 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (19L, Action.Reduce 98L);
-                    (20L, Action.ShiftPrefix 149L);
+                    (20L, Action.ShiftPrefix 150L);
                     (26L, Action.Reduce 98L);
                     (28L, Action.Reduce 98L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (72L, 150L);
+                    (72L, 151L);
                   ]
               );
-            (* 124 *) State.init
+            (* 126 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:124L
+                  ~index:126L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10531,56 +10646,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 125 *) State.init
+            (* 127 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:125L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (23L, Action.ShiftPrefix 105L);
-                    (26L, Action.Reduce 11L);
-                    (28L, Action.Reduce 11L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 151L);
-                  ]
-              );
-            (* 126 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:126L
+                  ~index:127L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10613,10 +10682,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 127 *) State.init
+            (* 128 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:127L
+                  ~index:128L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10640,10 +10709,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 128 *) State.init
+            (* 129 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:128L
+                  ~index:129L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10686,10 +10755,10 @@ include struct
                     (75L, 154L);
                   ]
               );
-            (* 129 *) State.init
+            (* 130 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:129L
+                  ~index:130L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10714,10 +10783,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 130 *) State.init
+            (* 131 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:130L
+                  ~index:131L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10744,10 +10813,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 131 *) State.init
+            (* 132 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:131L
+                  ~index:132L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10781,7 +10850,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (12L, Action.ShiftPrefix 155L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (14L, Action.ShiftPrefix 115L);
                   ]
               )
               ~gotos:(
@@ -10789,10 +10858,10 @@ include struct
                     (66L, 156L);
                   ]
               );
-            (* 132 *) State.init
+            (* 133 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:132L
+                  ~index:133L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10826,7 +10895,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (19L, Action.Reduce 98L);
-                    (20L, Action.ShiftPrefix 149L);
+                    (20L, Action.ShiftPrefix 150L);
                     (26L, Action.Reduce 98L);
                     (28L, Action.Reduce 98L);
                   ]
@@ -10836,10 +10905,10 @@ include struct
                     (72L, 157L);
                   ]
               );
-            (* 133 *) State.init
+            (* 134 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:133L
+                  ~index:134L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11022,24 +11091,24 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 133L);
-                    (13L, Action.ShiftPrefix 134L);
+                    (12L, Action.ShiftPrefix 134L);
+                    (13L, Action.ShiftPrefix 135L);
                     (18L, Action.Reduce 71L);
-                    (29L, Action.ShiftPrefix 135L);
-                    (37L, Action.ShiftPrefix 136L);
+                    (29L, Action.ShiftPrefix 136L);
+                    (37L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 137L);
-                    (64L, 138L);
+                    (41L, 138L);
+                    (64L, 139L);
                     (65L, 158L);
                   ]
               );
-            (* 134 *) State.init
+            (* 135 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:134L
+                  ~index:135L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11067,10 +11136,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 135 *) State.init
+            (* 136 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:135L
+                  ~index:136L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11246,23 +11315,23 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 133L);
-                    (13L, Action.ShiftPrefix 134L);
-                    (29L, Action.ShiftPrefix 135L);
-                    (37L, Action.ShiftPrefix 136L);
+                    (12L, Action.ShiftPrefix 134L);
+                    (13L, Action.ShiftPrefix 135L);
+                    (29L, Action.ShiftPrefix 136L);
+                    (37L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 137L);
-                    (64L, 138L);
+                    (41L, 138L);
+                    (64L, 139L);
                     (65L, 159L);
                   ]
               );
-            (* 136 *) State.init
+            (* 137 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:136L
+                  ~index:137L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11400,15 +11469,15 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 140L);
-                    (61L, 141L);
+                    (41L, 141L);
+                    (61L, 142L);
                     (62L, 160L);
                   ]
               );
-            (* 137 *) State.init
+            (* 138 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:137L
+                  ~index:138L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11436,10 +11505,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 138 *) State.init
+            (* 139 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:138L
+                  ~index:139L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11477,10 +11546,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 139 *) State.init
+            (* 140 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:139L
+                  ~index:140L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11520,10 +11589,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 140 *) State.init
+            (* 141 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:140L
+                  ~index:141L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11556,10 +11625,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 141 *) State.init
+            (* 142 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:141L
+                  ~index:142L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11598,10 +11667,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 142 *) State.init
+            (* 143 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:142L
+                  ~index:143L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11643,10 +11712,10 @@ include struct
                     (63L, 168L);
                   ]
               );
-            (* 143 *) State.init
+            (* 144 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:143L
+                  ~index:144L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11680,7 +11749,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (12L, Action.ShiftPrefix 155L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (14L, Action.ShiftPrefix 115L);
                   ]
               )
               ~gotos:(
@@ -11688,10 +11757,10 @@ include struct
                     (66L, 169L);
                   ]
               );
-            (* 144 *) State.init
+            (* 145 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:144L
+                  ~index:145L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11748,10 +11817,10 @@ include struct
                     (64L, 173L);
                   ]
               );
-            (* 145 *) State.init
+            (* 146 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:145L
+                  ~index:146L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11862,13 +11931,13 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 98L);
+                    (41L, 101L);
                   ]
               );
-            (* 146 *) State.init
+            (* 147 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:146L
+                  ~index:147L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11895,10 +11964,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 147 *) State.init
+            (* 148 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:147L
+                  ~index:148L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12100,33 +12169,33 @@ include struct
                     (7L, Action.ShiftPrefix 75L);
                     (8L, Action.ShiftPrefix 76L);
                     (9L, Action.ShiftPrefix 77L);
-                    (10L, Action.ShiftPrefix 145L);
+                    (10L, Action.ShiftPrefix 146L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 111L);
-                    (13L, Action.ShiftPrefix 112L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (12L, Action.ShiftPrefix 113L);
+                    (13L, Action.ShiftPrefix 114L);
+                    (14L, Action.ShiftPrefix 115L);
                     (19L, Action.Reduce 25L);
                     (20L, Action.Reduce 25L);
                     (26L, Action.Reduce 25L);
                     (28L, Action.Reduce 25L);
-                    (29L, Action.ShiftPrefix 115L);
-                    (37L, Action.ShiftPrefix 116L);
+                    (29L, Action.ShiftPrefix 117L);
+                    (37L, Action.ShiftPrefix 118L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 117L);
-                    (50L, 146L);
-                    (64L, 118L);
-                    (66L, 119L);
-                    (67L, 147L);
+                    (41L, 119L);
+                    (50L, 147L);
+                    (64L, 120L);
+                    (66L, 121L);
+                    (67L, 148L);
                     (68L, 174L);
                   ]
               );
-            (* 148 *) State.init
+            (* 149 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:148L
+                  ~index:149L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12153,10 +12222,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 149 *) State.init
+            (* 150 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:149L
+                  ~index:150L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12352,7 +12421,7 @@ include struct
                 Map.of_alist (module Uns) [
                     (2L, Action.ShiftPrefix 70L);
                     (3L, Action.ShiftPrefix 71L);
-                    (4L, Action.ShiftPrefix 110L);
+                    (4L, Action.ShiftPrefix 112L);
                     (5L, Action.ShiftPrefix 73L);
                     (6L, Action.ShiftPrefix 74L);
                     (7L, Action.ShiftPrefix 75L);
@@ -12360,28 +12429,28 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 111L);
-                    (13L, Action.ShiftPrefix 112L);
-                    (14L, Action.ShiftPrefix 113L);
-                    (29L, Action.ShiftPrefix 115L);
-                    (37L, Action.ShiftPrefix 116L);
+                    (12L, Action.ShiftPrefix 113L);
+                    (13L, Action.ShiftPrefix 114L);
+                    (14L, Action.ShiftPrefix 115L);
+                    (29L, Action.ShiftPrefix 117L);
+                    (37L, Action.ShiftPrefix 118L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 117L);
-                    (64L, 118L);
-                    (66L, 119L);
-                    (67L, 120L);
-                    (69L, 121L);
-                    (70L, 122L);
+                    (41L, 119L);
+                    (64L, 120L);
+                    (66L, 121L);
+                    (67L, 122L);
+                    (69L, 123L);
+                    (70L, 124L);
                     (71L, 175L);
                   ]
               );
-            (* 150 *) State.init
+            (* 151 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:150L
+                  ~index:151L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12402,34 +12471,6 @@ include struct
                     (19L, Action.Reduce 100L);
                     (26L, Action.Reduce 100L);
                     (28L, Action.Reduce 100L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 151 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:151L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [26L; 28L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (26L, Action.Reduce 10L);
-                    (28L, Action.Reduce 10L);
                   ]
               )
               ~gotos:(
@@ -12956,7 +12997,7 @@ include struct
                 Map.of_alist (module Uns) [
                     (2L, Action.ShiftPrefix 70L);
                     (3L, Action.ShiftPrefix 71L);
-                    (4L, Action.ShiftPrefix 110L);
+                    (4L, Action.ShiftPrefix 112L);
                     (5L, Action.ShiftPrefix 73L);
                     (6L, Action.ShiftPrefix 74L);
                     (7L, Action.ShiftPrefix 75L);
@@ -12964,24 +13005,24 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 111L);
-                    (13L, Action.ShiftPrefix 112L);
-                    (14L, Action.ShiftPrefix 113L);
-                    (20L, Action.ShiftPrefix 114L);
-                    (29L, Action.ShiftPrefix 115L);
-                    (37L, Action.ShiftPrefix 116L);
+                    (12L, Action.ShiftPrefix 113L);
+                    (13L, Action.ShiftPrefix 114L);
+                    (14L, Action.ShiftPrefix 115L);
+                    (20L, Action.ShiftPrefix 116L);
+                    (29L, Action.ShiftPrefix 117L);
+                    (37L, Action.ShiftPrefix 118L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 117L);
-                    (64L, 118L);
-                    (66L, 119L);
-                    (67L, 120L);
-                    (69L, 121L);
-                    (70L, 122L);
-                    (71L, 123L);
-                    (73L, 127L);
+                    (41L, 119L);
+                    (64L, 120L);
+                    (66L, 121L);
+                    (67L, 122L);
+                    (69L, 123L);
+                    (70L, 124L);
+                    (71L, 125L);
+                    (73L, 128L);
                     (74L, 201L);
                   ]
               );
@@ -13504,16 +13545,16 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 133L);
-                    (13L, Action.ShiftPrefix 134L);
-                    (29L, Action.ShiftPrefix 135L);
-                    (37L, Action.ShiftPrefix 136L);
+                    (12L, Action.ShiftPrefix 134L);
+                    (13L, Action.ShiftPrefix 135L);
+                    (29L, Action.ShiftPrefix 136L);
+                    (37L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 137L);
-                    (64L, 138L);
+                    (41L, 138L);
+                    (64L, 139L);
                     (65L, 206L);
                   ]
               );
@@ -13832,16 +13873,16 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 133L);
-                    (13L, Action.ShiftPrefix 134L);
-                    (29L, Action.ShiftPrefix 135L);
-                    (37L, Action.ShiftPrefix 136L);
+                    (12L, Action.ShiftPrefix 134L);
+                    (13L, Action.ShiftPrefix 135L);
+                    (29L, Action.ShiftPrefix 136L);
+                    (37L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 137L);
-                    (64L, 138L);
+                    (41L, 138L);
+                    (64L, 139L);
                     (65L, 209L);
                   ]
               );
@@ -13994,8 +14035,8 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 140L);
-                    (61L, 141L);
+                    (41L, 141L);
+                    (61L, 142L);
                     (62L, 211L);
                   ]
               );
@@ -14304,16 +14345,16 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 133L);
-                    (13L, Action.ShiftPrefix 134L);
-                    (29L, Action.ShiftPrefix 135L);
-                    (37L, Action.ShiftPrefix 136L);
+                    (12L, Action.ShiftPrefix 134L);
+                    (13L, Action.ShiftPrefix 135L);
+                    (29L, Action.ShiftPrefix 136L);
+                    (37L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 137L);
-                    (64L, 138L);
+                    (41L, 138L);
+                    (64L, 139L);
                     (65L, 213L);
                   ]
               );
@@ -14458,8 +14499,8 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 140L);
-                    (61L, 141L);
+                    (41L, 141L);
+                    (61L, 142L);
                     (62L, 214L);
                   ]
               );
@@ -14564,7 +14605,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (19L, Action.Reduce 98L);
-                    (20L, Action.ShiftPrefix 149L);
+                    (20L, Action.ShiftPrefix 150L);
                     (26L, Action.Reduce 98L);
                     (28L, Action.Reduce 98L);
                   ]
@@ -18464,16 +18505,16 @@ include struct
                     (9L, Action.ShiftPrefix 77L);
                     (10L, Action.ShiftPrefix 78L);
                     (11L, Action.ShiftPrefix 79L);
-                    (12L, Action.ShiftPrefix 133L);
-                    (13L, Action.ShiftPrefix 134L);
-                    (29L, Action.ShiftPrefix 135L);
-                    (37L, Action.ShiftPrefix 136L);
+                    (12L, Action.ShiftPrefix 134L);
+                    (13L, Action.ShiftPrefix 135L);
+                    (29L, Action.ShiftPrefix 136L);
+                    (37L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 137L);
-                    (64L, 138L);
+                    (41L, 138L);
+                    (64L, 139L);
                     (65L, 232L);
                   ]
               );
@@ -18618,8 +18659,8 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (41L, 140L);
-                    (61L, 141L);
+                    (41L, 141L);
+                    (61L, 142L);
                     (62L, 233L);
                   ]
               );
@@ -18736,7 +18777,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (12L, Action.ShiftPrefix 155L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (14L, Action.ShiftPrefix 115L);
                   ]
               )
               ~gotos:(
@@ -20804,7 +20845,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (12L, Action.ShiftPrefix 155L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (14L, Action.ShiftPrefix 115L);
                   ]
               )
               ~gotos:(
@@ -22423,7 +22464,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (12L, Action.ShiftPrefix 155L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (14L, Action.ShiftPrefix 115L);
                   ]
               )
               ~gotos:(
@@ -22645,7 +22686,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (12L, Action.ShiftPrefix 155L);
-                    (14L, Action.ShiftPrefix 113L);
+                    (14L, Action.ShiftPrefix 115L);
                   ]
               )
               ~gotos:(
@@ -22846,7 +22887,7 @@ include struct
               | Precs of nonterm_precs
               | PrecRels of nonterm_prec_rels
               | PrecType of nonterm_prec_type
-              | Prec of nonterm_prec
+              | PrecSet of nonterm_prec_set
               | SymbolTypeQualifier of nonterm_symbol_type_qualifier
               | SymbolType of nonterm_symbol_type
               | SymbolType0 of nonterm_symbol_type0
@@ -22896,7 +22937,7 @@ include struct
               | Precs _ -> 43L
               | PrecRels _ -> 44L
               | PrecType _ -> 45L
-              | Prec _ -> 46L
+              | PrecSet _ -> 46L
               | SymbolTypeQualifier _ -> 47L
               | SymbolType _ -> 48L
               | SymbolType0 _ -> 49L
@@ -23250,12 +23291,12 @@ PrecTypeRight
                 );
                 (* 18 *) (function
                   | Elm.{symbol=Symbol.Nonterm (PrecRels prec_rels); _}
-                  :: Elm.{symbol=Symbol.Nonterm (Uident (Uident {token})); _}
+                  :: Elm.{symbol=Symbol.Nonterm (Precs prec_set); _}
                   :: Elm.{symbol=Symbol.Nonterm (PrecType prec_type); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (Prec (
+                  :: tl__hocc__ -> Symbol.Nonterm (PrecSet (
                   (*______________________________________________________________________________*)
 #367 "./Parse.hmh"
-Prec {prec_type; uident=token; prec_rels}
+PrecSet {prec_type; prec_set; prec_rels}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -24244,11 +24285,11 @@ NontermReductions {nonterm_type; cident; symbol_type; prec_ref; reductions}
                   | _ -> not_reached ()
                 );
                 (* 109 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (Prec prec); _}
+                  | Elm.{symbol=Symbol.Nonterm (PrecSet prec_set); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmt (
                   (*______________________________________________________________________________*)
 #549 "./Parse.hmh"
-StmtPrec {prec}
+StmtPrecSet {prec_set}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -25345,20 +25386,20 @@ let rec pp_token_hocc (HOCC {token}) formatter =
       | PrecTypeLeft -> formatter |> Fmt.fmt "PrecTypeLeft"
       | PrecTypeRight -> formatter |> Fmt.fmt "PrecTypeRight"
 
-  and fmt_prec ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec formatter =
+  and fmt_prec_set ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec_set formatter =
     let width' = width + 4L in
-    match prec with
-      | Prec {prec_type; uident; prec_rels} ->
-        formatter |> Fmt.fmt "Prec "
+    match prec_set with
+      | PrecSet {prec_type; prec_set; prec_rels} ->
+        formatter |> Fmt.fmt "PrecSet "
           |> fmt_lcurly ~alt ~width
           |> Fmt.fmt "prec_type=" |> pp_prec_type prec_type
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "uident=" |> Scan.Token.pp uident
+          |> Fmt.fmt "prec_set=" |> fmt_precs ~alt ~width:width' prec_set
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "prec_rels=" |> fmt_prec_rels ~alt ~width:width' prec_rels
           |> fmt_rcurly ~alt ~width
-  and pp_prec prec formatter =
-    fmt_prec prec formatter
+  and pp_prec_set prec_set formatter =
+    fmt_prec_set prec_set formatter
 
   and fmt_symbol_type_qualifier ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
   symbol_type_qualifier formatter =
@@ -25914,10 +25955,10 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and fmt_stmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) stmt formatter =
     let width' = width + 4L in
     match stmt with
-      | StmtPrec {prec} ->
-        formatter |> Fmt.fmt "StmtPrec "
+      | StmtPrecSet {prec_set} ->
+        formatter |> Fmt.fmt "StmtPrecSet "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "prec=" |> fmt_prec ~alt ~width:width' prec
+          |> Fmt.fmt "prec_set=" |> fmt_prec_set ~alt ~width:width' prec_set
           |> fmt_rcurly ~alt ~width
       | StmtToken {token} ->
         formatter |> Fmt.fmt "StmtToken "
@@ -26291,9 +26332,9 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
       | NontermProds {prods; _} -> of_prods prods
       | NontermReductions {reductions; _} -> of_reductions reductions
       and of_stmt = function
-      | StmtPrec {prec=Prec {uident; prec_rels; _}} -> begin
+      | StmtPrecSet {prec_set=PrecSet {prec_set; prec_rels; _}} -> begin
         of_prec_rels prec_rels
-          |> Option.value_or_thunk ~f:(fun () -> uident)
+          |> Option.value_or_thunk ~f:(fun () -> of_precs prec_set)
       end
       | StmtToken {token=Token {cident=CIDENT {token=cident}; token_alias; symbol_type0;
       prec_ref; _}} -> begin

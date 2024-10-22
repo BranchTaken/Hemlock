@@ -27,21 +27,30 @@ include sig
             include IdentifiableIntf.S with type t := t
           end
 
-        module Prec : sig
+        module PrecSet : sig
             type t = {
-                index: uns; (* Index in `precs` array. *)
-                name: string;
+                index: uns; (* Index in `prec_sets` array. *)
+                names: string array;
                 assoc: Assoc.t option;
-                doms: (uns, Uns.cmper_witness) Ordset.t; (* Indices in `precs` array of dominator
-                                                          * precedences. *)
+                doms: (uns, Uns.cmper_witness) Ordset.t; (* Indices in `prec_sets` array of
+                                                          * dominator precedences. *)
               }
 
             include IdentifiableIntf.S with type t := t
           end
 
-        val precs: Prec.t array
-          (** Array of precedences, where each element's `index` field corresponds to the element's
-              array index. *)
+        val prec_sets: PrecSet.t array
+          (** Array of precedence sets, where each element's `index` field corresponds to the
+              element's array index. *)
+
+        module Prec : sig
+            type t = {
+                name_index: uns; (* Index of precedence name in precedence set. *)
+                prec_set_index: uns; (* Index of precedence set in `prec_sets`. *)
+              }
+
+            include IdentifiableIntf.S with type t := t
+          end
 
         module Prod : sig
             type t = {

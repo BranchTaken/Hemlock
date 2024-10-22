@@ -67,11 +67,11 @@ include struct
             include Identifiable.Make(T)
           end
 
-        module Prec = struct
+        module PrecSet = struct
             module T = struct
                 type t = {
                     index: uns;
-                    name: string;
+                    names: string array;
                     assoc: Assoc.t option;
                     doms: (uns, Uns.cmper_witness) Ordset.t;
                   }
@@ -85,10 +85,10 @@ include struct
                 let cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                let pp {index; name; assoc; doms} formatter =
+                let pp {index; names; assoc; doms} formatter =
                     formatter
                       |> Fmt.fmt "{index=" |> Uns.pp index
-                      |> Fmt.fmt "; name=" |> String.pp name
+                      |> Fmt.fmt "; names=" |> Array.pp String.pp names
                       |> Fmt.fmt "; assoc=" |> Option.pp Assoc.pp assoc
                       |> Fmt.fmt "; doms=" |> Ordset.pp doms
                       |> Fmt.fmt "}"
@@ -96,14 +96,43 @@ include struct
             include T
             include Identifiable.Make(T)
 
-            let init ~index ~name ~assoc ~doms =
-                {index; name; assoc; doms}
+            let init ~index ~names ~assoc ~doms =
+                {index; names; assoc; doms}
           end
 
-        let precs = [|
-            Prec.init ~index:0L ~name:"mul" ~assoc:(Some Left) ~doms:(Ordset.empty (module Uns));
-            Prec.init ~index:1L ~name:"add" ~assoc:(Some Left) ~doms:(Ordset.singleton (module Uns) 0L)
+        let prec_sets = [|
+            PrecSet.init ~index:0L ~names:[|"mul"|] ~assoc:(Some Left) ~doms:(Ordset.empty (module Uns));
+            PrecSet.init ~index:1L ~names:[|"add"|] ~assoc:(Some Left) ~doms:(Ordset.singleton (module Uns) 0L)
           |]
+
+        module Prec = struct
+            module T = struct
+                type t = {
+                    name_index: uns;
+                    prec_set_index: uns;
+                  }
+
+                let index {prec_set_index; _} =
+                    prec_set_index
+
+                let hash_fold t state =
+                    state |> Uns.hash_fold (index t)
+
+                let cmp t0 t1 =
+                    Uns.cmp (index t0) (index t1)
+
+                let pp {name_index; prec_set_index} formatter =
+                    formatter
+                      |> Fmt.fmt "{name_index=" |> Uns.pp name_index
+                      |> Fmt.fmt "; prec_set_index=" |> Uns.pp prec_set_index
+                      |> Fmt.fmt "}"
+              end
+            include T
+            include Identifiable.Make(T)
+
+            let init ~name_index ~prec_set_index =
+                {name_index; prec_set_index}
+          end
 
         module Prod = struct
             module T = struct
@@ -147,9 +176,9 @@ include struct
             Prod.init ~index:3L ~lhs_index:9L ~rhs_indexes:[|5L|]
               ~prec:None ~callback:3L;
             Prod.init ~index:4L ~lhs_index:10L ~rhs_indexes:[|10L; 8L; 10L|]
-              ~prec:(Some (Array.get 0L precs)) ~callback:4L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~callback:4L;
             Prod.init ~index:5L ~lhs_index:10L ~rhs_indexes:[|10L; 9L; 10L|]
-              ~prec:(Some (Array.get 1L precs)) ~callback:5L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~callback:5L;
             Prod.init ~index:6L ~lhs_index:10L ~rhs_indexes:[|6L|]
               ~prec:None ~callback:6L;
             Prod.init ~index:7L ~lhs_index:11L ~rhs_indexes:[|10L; 7L|]
@@ -206,19 +235,19 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 1L)
               ~follow:(Ordset.singleton (module Uns) 0L);
             Symbol.init ~index:2L ~name:"STAR"
-              ~prec:(Some (Array.get 0L precs)) ~alias:(Some "*") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~alias:(Some "*") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 2L)
               ~follow:(Ordset.singleton (module Uns) 6L);
             Symbol.init ~index:3L ~name:"SLASH"
-              ~prec:(Some (Array.get 0L precs)) ~alias:(Some "/") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~alias:(Some "/") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 3L)
               ~follow:(Ordset.singleton (module Uns) 6L);
             Symbol.init ~index:4L ~name:"PLUS"
-              ~prec:(Some (Array.get 1L precs)) ~alias:(Some "+") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:(Some "+") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 4L)
               ~follow:(Ordset.singleton (module Uns) 6L);
             Symbol.init ~index:5L ~name:"MINUS"
-              ~prec:(Some (Array.get 1L precs)) ~alias:(Some "-") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:(Some "-") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 5L)
               ~follow:(Ordset.singleton (module Uns) 6L);
             Symbol.init ~index:6L ~name:"INT"
