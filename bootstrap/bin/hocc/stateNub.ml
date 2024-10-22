@@ -68,7 +68,7 @@ module Actionset = struct
     let assoc_of_action symbols prods symbol_index action = begin
       match prec_of_action symbols prods symbol_index action with
       | None -> None
-      | Some {assoc; _} -> assoc
+      | Some {prec_set={assoc; _}; _} -> assoc
     end in
     match Ordset.length t with
     | 1L -> t
@@ -92,11 +92,12 @@ module Actionset = struct
                       Ordset.empty (module Action), true
                     end
                   | Some max_prec, Some action_prec -> begin
-                      match Uns.(=) max_prec.index action_prec.index with
+                      match Uns.(=) max_prec.prec_set.index action_prec.prec_set.index with
                       | false -> begin
-                          match Ordset.mem max_prec.index action_prec.doms with
+                          match Ordset.mem max_prec.prec_set.index action_prec.prec_set.doms with
                           | false -> begin
-                              match Ordset.mem action_prec.index max_prec.doms with
+                              match Ordset.mem action_prec.prec_set.index max_prec.prec_set.doms
+                              with
                               | false -> begin
                                   (* Disjoint precedence; no conflict resolution possible. *)
                                   Ordset.empty (module Action), true

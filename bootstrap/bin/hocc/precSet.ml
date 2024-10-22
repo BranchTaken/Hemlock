@@ -3,24 +3,28 @@ open! Basis.Rudiments
 
 module Index = Uns
 type t = {
-  name_index: Index.t;
-  prec_set: PrecSet.t;
+  index: Index.t;
+  names: string array;
+  assoc: Assoc.t option;
+  doms: (Index.t, Index.cmper_witness) Ordset.t;
+  stmt: Parse.nonterm_prec_set;
 }
 
-let name {name_index; prec_set={names; _}} =
-  Array.get name_index names
-
-let pp {name_index; prec_set} formatter =
+let pp {index; names; assoc; doms; stmt} formatter =
   formatter
-  |> Fmt.fmt "{name_index=" |> Index.pp name_index
-  |> Fmt.fmt "; prec_set=" |> PrecSet.pp prec_set
+  |> Fmt.fmt "{index=" |> Index.pp index
+  |> Fmt.fmt "; names=" |> Array.pp String.pp names
+  |> Fmt.fmt "; assoc=" |> (Option.pp Assoc.pp) assoc
+  |> Fmt.fmt "; doms=" |> Ordset.pp doms
+  |> Fmt.fmt "; stmt=" |> Parse.fmt_prec_set stmt
+  |> Fmt.fmt "}"
 
-let pp_hr t formatter =
+let pp_hr {names; _} formatter =
   formatter
   |> Fmt.fmt "prec "
-  |> Fmt.fmt (name t)
+  |> Fmt.fmt (String.join ~sep:", " (Array.to_list names))
 
-let src_fmt ({prec_set={assoc; stmt; _}; _} as t) formatter =
+let src_fmt {names; assoc; stmt; _} formatter =
   let string_of_token token = begin
     Hmc.Source.Slice.to_string (Scan.Token.source token)
   end in
@@ -30,7 +34,7 @@ let src_fmt ({prec_set={assoc; stmt; _}; _} as t) formatter =
     | Some Left -> "    left "
     | Some Right -> "    right "
   )
-  |> Fmt.fmt (name t)
+  |> Fmt.fmt (String.join ~sep:", " (Array.to_list names))
   |> (fun formatter ->
     match stmt with
     | PrecSet {prec_rels=PrecRelsPrecs {precs=Precs {uident; precs_tl}}; _} -> begin
@@ -51,14 +55,5 @@ let src_fmt ({prec_set={assoc; stmt; _}; _} as t) formatter =
   )
   |> Fmt.fmt "\n"
 
-let init ~name ~prec_set =
-  let PrecSet.{names; _} = prec_set in
-  let name_index =
-    Array.findi_map ~f:(fun i s ->
-      match String.(name = s) with
-      | true -> Some i
-      | false -> None
-    ) names
-    |> Option.value_hlt
-  in
-  {name_index; prec_set}
+let init ~index ~names ~assoc ~doms ~stmt =
+  {index; names; assoc; doms; stmt}

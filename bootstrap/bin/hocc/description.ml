@@ -42,11 +42,10 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
     )
     |> Fmt.fmt "}"
   end in
-  let pp_prec prec_ind formatter = begin
-    let ref_name = (Precs.prec_of_prec_index prec_ind precs).name in
+  let pp_prec name formatter = begin
     formatter
-    |> Fmt.fmt "prec " |> html "<a href=\"#prec-" |> html ref_name |> html "\">"
-    |> Fmt.fmt ref_name
+    |> Fmt.fmt "prec " |> html "<a href=\"#prec-" |> html name |> html "\">"
+    |> Fmt.fmt name
     |> html "</a>"
   end in
   let pp_prod ?(do_pp_prec=true) Prod.{lhs_index; rhs_indexes; prec; _} formatter = begin
@@ -73,7 +72,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
       match do_pp_prec, prec with
       | false, _
       | _, None -> formatter
-      | true, Some {index=prec_ind; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_ind
+      | true, Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
     )
   end in
   let pp_lr0item lr0item formatter = begin
@@ -122,7 +121,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
       match do_pp_prec, prec with
       | false, _
       | _, None -> formatter
-      | true, Some {index=prec_index; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_index
+      | true, Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
     )
   end in
   let pp_state_index state_index formatter = begin
@@ -137,7 +136,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
       let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
       match symbol.prec with
       | None -> formatter
-      | Some Prec.{index; _} -> formatter |> Fmt.fmt " " |> pp_prec index
+      | Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
     end in
     let pp_reduce_prec Prod.{lhs_index; prec; _} formatter = begin
       match prec with
@@ -169,7 +168,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
         formatter
         |> Fmt.fmt "Reduce "
         |> pp_prod ~do_pp_prec:false prod
-       end
+      end
     | _ as ncontribs -> begin
         formatter
         |> html "<ul type=none>" |> Fmt.fmt "\n"
@@ -233,7 +232,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
   )
   |> html "    <ul>\n"
   |> (fun formatter ->
-    Precs.fold ~init:formatter ~f:(fun formatter Prec.{name; assoc; doms; _} ->
+    Precs.fold_prec_sets ~init:formatter ~f:(fun formatter PrecSet.{names; assoc; doms; _} ->
       formatter
       |> Fmt.fmt "    " |> html "<li>"
       |> Fmt.fmt (match assoc with
@@ -241,27 +240,33 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
         | Some Left -> "left"
         | Some Right -> "right"
       )
-      |> Fmt.fmt " " |> html "<a id=\"prec-" |> html name |> html "\">"
-      |> Fmt.fmt name
-      |> html "</a>"
+      |> (fun formatter ->
+        Array.fold ~init:formatter ~f:(fun formatter name ->
+          formatter
+          |> Fmt.fmt " " |> html "<a id=\"prec-" |> html name |> html "\">"
+          |> Fmt.fmt name
+          |> html "</a>"
+        ) names
+      )
       |> (fun formatter ->
         match Ordset.is_empty doms with
         | true -> formatter
         | false -> begin
             let _, formatter = Ordset.fold ~init:(true, formatter)
               ~f:(fun (first, formatter) prec_ind ->
-                let ref_name = (Precs.prec_of_prec_index prec_ind precs).name in
-                let formatter =
-                  formatter
-                  |> Fmt.fmt (match first with
-                    | true -> " < "
-                    | false -> ", "
-                  )
-                  |> html "<a href=\"#prec-" |> html ref_name |> html "\">"
-                  |> Fmt.fmt ref_name
-                  |> html "</a>"
-                in
-                (false, formatter)
+                Array.fold ~init:(first, formatter) ~f:(fun (first, formatter) name ->
+                  let formatter =
+                    formatter
+                    |> Fmt.fmt (match first with
+                      | true -> " < "
+                      | false -> ", "
+                    )
+                    |> html "<a href=\"#prec-" |> html name |> html "\">"
+                    |> Fmt.fmt name
+                    |> html "</a>"
+                  in
+                  (false, formatter)
+                ) (Precs.prec_set_of_prec_index prec_ind precs).names
               ) doms
             in
             formatter
@@ -298,7 +303,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
             |> (fun formatter ->
               match prec with
               | None -> formatter
-              | Some {index=prec_index; _} -> formatter |> Fmt.fmt " " |> pp_prec prec_index
+              | Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
             )
             |> Fmt.fmt "\n"
             |> html "        <ul type=none>\n"

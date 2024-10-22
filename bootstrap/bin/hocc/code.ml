@@ -124,21 +124,30 @@ let hmi_template = {|{
             include IdentifiableIntf.S with type t := t
           }
 
-        Prec = {
+        PrecSet = {
             type t: t = {
-                index: uns # Index in `precs` array.
-                name: string
+                index: uns # Index in `prec_sets` array.
+                names: array string
                 assoc: option Assoc.t
-                doms: Ordset.t uns Uns.cmper_witness # Indices in `precs` array of dominator
-                                                     # precedences.
+                doms: Ordset.t uns Uns.cmper_witness (* Indices in `prec_sets` array of dominator
+                                                      * precedence sets. *)
               }
 
             include IdentifiableIntf.S with type t := t
           }
 
-        precs: array Prec.t
-          [@@doc "Array of precedences, where each element's `index` field corresponds to the
+        prec_sets: array PrecSet.t
+          [@@doc "Array of precedence sets, where each element's `index` field corresponds to the
           element's array index."]
+
+        Prec = {
+            type t: t = {
+                name_index: uns # Index of precedence name in precedence set.
+                prec_set_index: uns # Index of precedence set in `prec_sets`.
+              }
+
+            include IdentifiableIntf.S with type t := t
+          }
 
         Prod = {
             type t: t = {
@@ -540,11 +549,11 @@ let hm_template = {|{
             include Identifiable.Make(T)
           }
 
-        Prec = {
+        PrecSet = {
             T = {
                 type t: t = {
                     index: uns
-                    name: string
+                    names: array string
                     assoc: option Assoc.t
                     doms: Ordset.t uns Uns.cmper_witness
                   }
@@ -558,11 +567,11 @@ let hm_template = {|{
                 cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                pp {index; name; assoc; doms} formatter =
+                pp {index; names; assoc; doms} formatter =
                     formatter
                       |> Fmt.fmt
                       "{%u=(^index
-                      ^); %s=(^name
+                      ^); %f(^Array.pp String.pp^)=(^names
                       ^); %f(^Option.pp Assoc.pp^)=(^assoc
                       ^); %f(^Ordset.pp^)=(^doms
                       ^)}"
@@ -570,11 +579,41 @@ let hm_template = {|{
             include T
             include Identifiable.Make(T)
 
-            init ~index ~name ~assoc ~doms =
-                {index; name; assoc; doms}
+            init ~index ~names ~assoc ~doms =
+                {index; names; assoc; doms}
           }
 
-        «precs»
+        «prec_sets»
+
+        Prec = {
+            T = {
+                type t: t = {
+                    name_index: uns
+                    prec_set_index: uns
+                  }
+
+                index {prec_set_index; _} =
+                    prec_set_index
+
+                hash_fold t state =
+                    state |> Uns.hash_fold (index t)
+
+                cmp t0 t1 =
+                    Uns.cmp (index t0) (index t1)
+
+                pp {name_index; prec_set_index} =
+                    formatter
+                    |> Fmt.fmt
+                    "{%u=(^name_index
+                    ^); %u=(^prec_set_index
+                    ^)}"
+              }
+            include T
+            include Identifiable.Make(T)
+
+            init ~name_index ~prec_set_index =
+                {name_index; prec_set_index}
+          }
 
         Prod = {
             T = {
@@ -1168,11 +1207,11 @@ let expand_hm_algorithm algorithm ~indentation formatter =
   formatter
   |> indent |> Fmt.fmt "algorithm = Algorithm." |> Conf.pp_algorithm algorithm
 
-let expand_hm_precs precs ~indentation formatter =
-  let fmt_precs ~indentation formatter = begin
+let expand_hm_prec_sets precs ~indentation formatter =
+  let fmt_prec_sets ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first = Precs.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) Prec.{index; name; assoc; doms; _} ->
+    let formatter, _first = Precs.fold_prec_sets ~init:(formatter, true)
+      ~f:(fun (formatter, first) PrecSet.{index; names; assoc; doms; _} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -1182,9 +1221,9 @@ let expand_hm_precs precs ~indentation formatter =
         |> (fun formatter ->
           formatter
           |> indent
-          |> Fmt.fmt "Prec.init"
+          |> Fmt.fmt "PrecSet.init"
           |> Fmt.fmt " ~index:" |> Prod.Index.pp index
-          |> Fmt.fmt " ~name:" |> String.pp name
+          |> Fmt.fmt " ~names:" |> Array.pp String.pp names
           |> Fmt.fmt " ~assoc:"
           |> (fun formatter ->
             match assoc with
@@ -1212,8 +1251,8 @@ let expand_hm_precs precs ~indentation formatter =
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "precs = [|\n"
-  |> fmt_precs ~indentation:(indentation+4L) |> Fmt.fmt "\n"
+  |> indent |> Fmt.fmt "prec_sets = [|\n"
+  |> fmt_prec_sets ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
 let expand_hm_prods prods ~indentation formatter =
@@ -1238,9 +1277,10 @@ let expand_hm_prods prods ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some prec -> begin
+            | Some {name_index; prec_set={index; _}} -> begin
                 formatter
-                |> Fmt.fmt "(Some (Array.get " |> Prec.Index.pp prec.index |> Fmt.fmt " precs))"
+                |> Fmt.fmt "(Some (Prec.init ~name_index:" |> Prec.Index.pp name_index
+                |> Fmt.fmt " ~prec_set_index:" |> PrecSet.Index.pp index |> Fmt.fmt "))"
               end
           )
           |> Fmt.fmt " ~callback:" |> Callback.Index.pp callback.index
@@ -1278,9 +1318,10 @@ let expand_hm_symbols symbols ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some prec -> begin
+            | Some {name_index; prec_set={index; _}} -> begin
                 formatter
-                |> Fmt.fmt "(Some (Array.get " |> Prec.Index.pp prec.index |> Fmt.fmt " precs))"
+                |> Fmt.fmt "(Some (Prec.init ~name_index:" |> Prec.Index.pp name_index
+                |> Fmt.fmt " ~prec_set_index:" |> PrecSet.Index.pp index |> Fmt.fmt "))"
               end
           )
           |> Fmt.fmt " ~alias:"
@@ -1760,7 +1801,7 @@ let expand_hm_template template_indentation template hocc_block
     Spec.{algorithm; precs; symbols; prods; callbacks; states} formatter =
   let expanders = Map.of_alist (module String) [
     ("«algorithm»", expand_hm_algorithm algorithm);
-    ("«precs»", expand_hm_precs precs);
+    ("«prec_sets»", expand_hm_prec_sets precs);
     ("«prods»", expand_hm_prods prods);
     ("«symbols»", expand_hm_symbols symbols);
     ("«states»", expand_hm_states states);
@@ -1876,21 +1917,30 @@ let mli_template = {|sig
             include IdentifiableIntf.S with type t := t
           end
 
-        module Prec : sig
+        module PrecSet : sig
             type t = {
-                index: uns; (* Index in `precs` array. *)
-                name: string;
+                index: uns; (* Index in `prec_sets` array. *)
+                names: string array;
                 assoc: Assoc.t option;
-                doms: (uns, Uns.cmper_witness) Ordset.t; (* Indices in `precs` array of dominator
-                                                          * precedences. *)
+                doms: (uns, Uns.cmper_witness) Ordset.t; (* Indices in `prec_sets` array of
+                                                          * dominator precedences. *)
               }
 
             include IdentifiableIntf.S with type t := t
           end
 
-        val precs: Prec.t array
-          (** Array of precedences, where each element's `index` field corresponds to the element's
-              array index. *)
+        val prec_sets: PrecSet.t array
+          (** Array of precedence sets, where each element's `index` field corresponds to the
+              element's array index. *)
+
+        module Prec : sig
+            type t = {
+                name_index: uns; (* Index of precedence name in precedence set. *)
+                prec_set_index: uns; (* Index of precedence set in `prec_sets`. *)
+              }
+
+            include IdentifiableIntf.S with type t := t
+          end
 
         module Prod : sig
             type t = {
@@ -2289,11 +2339,11 @@ let ml_template = {|struct
             include Identifiable.Make(T)
           end
 
-        module Prec = struct
+        module PrecSet = struct
             module T = struct
                 type t = {
                     index: uns;
-                    name: string;
+                    names: string array;
                     assoc: Assoc.t option;
                     doms: (uns, Uns.cmper_witness) Ordset.t;
                   }
@@ -2307,10 +2357,10 @@ let ml_template = {|struct
                 let cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                let pp {index; name; assoc; doms} formatter =
+                let pp {index; names; assoc; doms} formatter =
                     formatter
                       |> Fmt.fmt "{index=" |> Uns.pp index
-                      |> Fmt.fmt "; name=" |> String.pp name
+                      |> Fmt.fmt "; names=" |> Array.pp String.pp names
                       |> Fmt.fmt "; assoc=" |> Option.pp Assoc.pp assoc
                       |> Fmt.fmt "; doms=" |> Ordset.pp doms
                       |> Fmt.fmt "}"
@@ -2318,11 +2368,40 @@ let ml_template = {|struct
             include T
             include Identifiable.Make(T)
 
-            let init ~index ~name ~assoc ~doms =
-                {index; name; assoc; doms}
+            let init ~index ~names ~assoc ~doms =
+                {index; names; assoc; doms}
           end
 
-        «precs»
+        «prec_sets»
+
+        module Prec = struct
+            module T = struct
+                type t = {
+                    name_index: uns;
+                    prec_set_index: uns;
+                  }
+
+                let index {prec_set_index; _} =
+                    prec_set_index
+
+                let hash_fold t state =
+                    state |> Uns.hash_fold (index t)
+
+                let cmp t0 t1 =
+                    Uns.cmp (index t0) (index t1)
+
+                let pp {name_index; prec_set_index} formatter =
+                    formatter
+                      |> Fmt.fmt "{name_index=" |> Uns.pp name_index
+                      |> Fmt.fmt "; prec_set_index=" |> Uns.pp prec_set_index
+                      |> Fmt.fmt "}"
+              end
+            include T
+            include Identifiable.Make(T)
+
+            let init ~name_index ~prec_set_index =
+                {name_index; prec_set_index}
+          end
 
         module Prod = struct
             module T = struct
@@ -2941,11 +3020,11 @@ let expand_ml_algorithm algorithm ~indentation formatter =
   formatter
   |> indent |> Fmt.fmt "let algorithm = Algorithm." |> Conf.pp_algorithm algorithm
 
-let expand_ml_precs precs ~indentation formatter =
-  let fmt_precs ~indentation formatter = begin
+let expand_ml_prec_sets precs ~indentation formatter =
+  let fmt_prec_sets ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first = Precs.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) Prec.{index; name; assoc; doms; _} ->
+    let formatter, _first = Precs.fold_prec_sets ~init:(formatter, true)
+      ~f:(fun (formatter, first) PrecSet.{index; names; assoc; doms; _} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -2955,9 +3034,9 @@ let expand_ml_precs precs ~indentation formatter =
         |> (fun formatter ->
           formatter
           |> indent
-          |> Fmt.fmt "Prec.init"
+          |> Fmt.fmt "PrecSet.init"
           |> Fmt.fmt " ~index:" |> ml_uns_pp index
-          |> Fmt.fmt " ~name:" |> String.pp name
+          |> Fmt.fmt " ~names:" |> Array.pp String.pp names
           |> Fmt.fmt " ~assoc:"
           |> (fun formatter ->
             match assoc with
@@ -2988,8 +3067,8 @@ let expand_ml_precs precs ~indentation formatter =
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "let precs = [|\n"
-  |> fmt_precs ~indentation:(indentation+4L) |> Fmt.fmt "\n"
+  |> indent |> Fmt.fmt "let prec_sets = [|\n"
+  |> fmt_prec_sets ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
 let expand_ml_prods prods ~indentation formatter =
@@ -3014,9 +3093,10 @@ let expand_ml_prods prods ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some prec -> begin
+            | Some {name_index; prec_set={index; _}} -> begin
                 formatter
-                |> Fmt.fmt "(Some (Array.get " |> ml_uns_pp prec.index |> Fmt.fmt " precs))"
+                |> Fmt.fmt "(Some (Prec.init ~name_index:" |> ml_uns_pp name_index
+                |> Fmt.fmt " ~prec_set_index:" |> ml_uns_pp index |> Fmt.fmt "))"
               end
           )
           |> Fmt.fmt " ~callback:" |> ml_uns_pp callback.index
@@ -3054,9 +3134,10 @@ let expand_ml_symbols symbols ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some prec -> begin
+            | Some {name_index; prec_set={index; _}} -> begin
                 formatter
-                |> Fmt.fmt "(Some (Array.get " |> ml_uns_pp prec.index |> Fmt.fmt " precs))"
+                |> Fmt.fmt "(Some (Prec.init ~name_index:" |> ml_uns_pp name_index
+                |> Fmt.fmt " ~prec_set_index:" |> ml_uns_pp index |> Fmt.fmt "))"
               end
           )
           |> Fmt.fmt " ~alias:"
@@ -3550,7 +3631,7 @@ let expand_ml_template template_indentation template
     Spec.{algorithm; precs; symbols; prods; callbacks; states} formatter =
   let expanders = Map.of_alist (module String) [
     ("«algorithm»", expand_ml_algorithm algorithm);
-    ("«precs»", expand_ml_precs precs);
+    ("«prec_sets»", expand_ml_prec_sets precs);
     ("«prods»", expand_ml_prods prods);
     ("«symbols»", expand_ml_symbols symbols);
     ("«states»", expand_ml_states states);

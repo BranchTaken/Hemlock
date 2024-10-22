@@ -26,21 +26,30 @@ include
             include IdentifiableIntf.S with type t := t
           }
 
-        Prec = {
+        PrecSet = {
             type t: t = {
-                index: uns # Index in `precs` array.
-                name: string
+                index: uns # Index in `prec_sets` array.
+                names: array string
                 assoc: option Assoc.t
-                doms: Ordset.t uns Uns.cmper_witness # Indices in `precs` array of dominator
-                                                     # precedences.
+                doms: Ordset.t uns Uns.cmper_witness (* Indices in `prec_sets` array of dominator
+                                                      * precedence sets. *)
               }
 
             include IdentifiableIntf.S with type t := t
           }
 
-        precs: array Prec.t
-          [@@doc "Array of precedences, where each element's `index` field corresponds to the
+        prec_sets: array PrecSet.t
+          [@@doc "Array of precedence sets, where each element's `index` field corresponds to the
           element's array index."]
+
+        Prec = {
+            type t: t = {
+                name_index: uns # Index of precedence name in precedence set.
+                prec_set_index: uns # Index of precedence set in `prec_sets`.
+              }
+
+            include IdentifiableIntf.S with type t := t
+          }
 
         Prod = {
             type t: t = {

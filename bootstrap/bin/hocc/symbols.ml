@@ -137,7 +137,7 @@ let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter 
       |> (fun formatter ->
         match prec with
         | None -> formatter
-        | Some {name; _} -> formatter |> Fmt.fmt " prec " |> Fmt.fmt name
+        | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
       )
       |> Fmt.fmt "\n"
     end
@@ -151,8 +151,7 @@ let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter 
       |> (fun formatter ->
         match prec with
         | None -> formatter
-        | Some {name; _} ->
-          formatter |> Fmt.fmt " prec " |> Fmt.fmt name
+        | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
       )
       |> Fmt.fmt " ::="
       |> Fmt.fmt (match Ordset.length prods with
@@ -188,7 +187,7 @@ let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter 
             | None, None
             | Some _, Some _ (* Re-normalize; prec was propagated from symbol. *)
               -> formatter
-            | None, Some {name; _} -> formatter |> Fmt.fmt " prec " |> Fmt.fmt name
+            | None, Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
             | Some _, None -> not_reached ()
           )
           |> Fmt.fmt "\n"

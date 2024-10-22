@@ -145,8 +145,8 @@ type nonterm_uident =
   | PrecTypeNeutral
   | PrecTypeLeft
   | PrecTypeRight
-  and nonterm_prec =
-  | Prec of {prec_type: nonterm_prec_type; uident: Scan.Token.t; prec_rels: nonterm_prec_rels}
+  and nonterm_prec_set =
+  | PrecSet of {prec_type: nonterm_prec_type; prec_set: nonterm_precs; prec_rels: nonterm_prec_rels}
   and nonterm_symbol_type_qualifier =
   | SymbolTypeQualifier of {cident: token_cident;
   symbol_type_qualifier_tl: nonterm_symbol_type_qualifier}
@@ -251,7 +251,7 @@ type nonterm_uident =
   | NontermReductions of {nonterm_type: nonterm_nonterm_type; cident: token_cident;
   symbol_type: nonterm_symbol_type; prec_ref: nonterm_prec_ref; reductions: nonterm_reductions}
   and nonterm_stmt =
-  | StmtPrec of {prec: nonterm_prec}
+  | StmtPrecSet of {prec_set: nonterm_prec_set}
   | StmtToken of {token: nonterm_token}
   | StmtNonterm of {nonterm: nonterm_nonterm}
   and nonterm_stmts_tl =
@@ -362,9 +362,9 @@ include hocc
       | "left" -> PrecTypeLeft
       | "right" -> PrecTypeRight
 
-    nonterm Prec of nonterm_prec ::=
-      | prec_type:PrecType (Uident {token}):Uident prec_rels:PrecRels ->
-        Prec {prec_type; uident=token; prec_rels}
+    nonterm PrecSet of nonterm_prec_set ::=
+      | prec_type:PrecType prec_set:Precs prec_rels:PrecRels ->
+        PrecSet {prec_type; prec_set; prec_rels}
 
     nonterm SymbolTypeQualifier of nonterm_symbol_type_qualifier ::=
       | cident:CIDENT "." symbol_type_qualifier_tl:SymbolTypeQualifier ->
@@ -546,7 +546,7 @@ include hocc
         NontermReductions {nonterm_type; cident; symbol_type; prec_ref; reductions}
 
     nonterm Stmt of nonterm_stmt ::=
-      | prec:Prec -> StmtPrec {prec}
+      | prec_set:PrecSet -> StmtPrecSet {prec_set}
       | token:Token -> StmtToken {token}
       | nonterm:Nonterm -> StmtNonterm {nonterm}
 
@@ -1033,20 +1033,20 @@ let rec pp_token_hocc (HOCC {token}) formatter =
       | PrecTypeLeft -> formatter |> Fmt.fmt "PrecTypeLeft"
       | PrecTypeRight -> formatter |> Fmt.fmt "PrecTypeRight"
 
-  and fmt_prec ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec formatter =
+  and fmt_prec_set ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec_set formatter =
     let width' = width + 4L in
-    match prec with
-      | Prec {prec_type; uident; prec_rels} ->
-        formatter |> Fmt.fmt "Prec "
+    match prec_set with
+      | PrecSet {prec_type; prec_set; prec_rels} ->
+        formatter |> Fmt.fmt "PrecSet "
           |> fmt_lcurly ~alt ~width
           |> Fmt.fmt "prec_type=" |> pp_prec_type prec_type
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "uident=" |> Scan.Token.pp uident
+          |> Fmt.fmt "prec_set=" |> fmt_precs ~alt ~width:width' prec_set
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "prec_rels=" |> fmt_prec_rels ~alt ~width:width' prec_rels
           |> fmt_rcurly ~alt ~width
-  and pp_prec prec formatter =
-    fmt_prec prec formatter
+  and pp_prec_set prec_set formatter =
+    fmt_prec_set prec_set formatter
 
   and fmt_symbol_type_qualifier ?(alt=Fmt.alt_default) ?(width=Fmt.width_default)
   symbol_type_qualifier formatter =
@@ -1602,10 +1602,10 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and fmt_stmt ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) stmt formatter =
     let width' = width + 4L in
     match stmt with
-      | StmtPrec {prec} ->
-        formatter |> Fmt.fmt "StmtPrec "
+      | StmtPrecSet {prec_set} ->
+        formatter |> Fmt.fmt "StmtPrecSet "
           |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "prec=" |> fmt_prec ~alt ~width:width' prec
+          |> Fmt.fmt "prec_set=" |> fmt_prec_set ~alt ~width:width' prec_set
           |> fmt_rcurly ~alt ~width
       | StmtToken {token} ->
         formatter |> Fmt.fmt "StmtToken "
@@ -1979,9 +1979,9 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
       | NontermProds {prods; _} -> of_prods prods
       | NontermReductions {reductions; _} -> of_reductions reductions
       and of_stmt = function
-      | StmtPrec {prec=Prec {uident; prec_rels; _}} -> begin
+      | StmtPrecSet {prec_set=PrecSet {prec_set; prec_rels; _}} -> begin
         of_prec_rels prec_rels
-          |> Option.value_or_thunk ~f:(fun () -> uident)
+          |> Option.value_or_thunk ~f:(fun () -> of_precs prec_set)
       end
       | StmtToken {token=Token {cident=CIDENT {token=cident}; token_alias; symbol_type0;
       prec_ref; _}} -> begin
