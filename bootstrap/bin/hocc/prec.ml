@@ -3,28 +3,24 @@ open! Basis.Rudiments
 
 module Index = Uns
 type t = {
-  index: Index.t;
-  name: string;
-  assoc: Assoc.t option;
-  doms: (Index.t, Index.cmper_witness) Ordset.t;
-  stmt: Parse.nonterm_prec;
+  name_index: Index.t;
+  prec_set: PrecSet.t;
 }
 
-let pp {index; name; assoc; doms; stmt} formatter =
-  formatter
-  |> Fmt.fmt "{index=" |> Index.pp index
-  |> Fmt.fmt "; name=" |> String.pp name
-  |> Fmt.fmt "; assoc=" |> (Option.pp Assoc.pp) assoc
-  |> Fmt.fmt "; doms=" |> Ordset.pp doms
-  |> Fmt.fmt "; stmt=" |> Parse.fmt_prec stmt
-  |> Fmt.fmt "}"
+let name {name_index; prec_set={names; _}} =
+  Array.get name_index names
 
-let pp_hr {name; _} formatter =
+let pp {name_index; prec_set} formatter =
+  formatter
+  |> Fmt.fmt "{name_index=" |> Index.pp name_index
+  |> Fmt.fmt "; prec_set=" |> PrecSet.pp prec_set
+
+let pp_hr t formatter =
   formatter
   |> Fmt.fmt "prec "
-  |> Fmt.fmt name
+  |> Fmt.fmt (name t)
 
-let src_fmt {name; assoc; stmt; _} formatter =
+let src_fmt ({prec_set={assoc; stmt; _}; _} as t) formatter =
   let string_of_token token = begin
     Hmc.Source.Slice.to_string (Scan.Token.source token)
   end in
@@ -34,15 +30,13 @@ let src_fmt {name; assoc; stmt; _} formatter =
     | Some Left -> "    left "
     | Some Right -> "    right "
   )
-  |> Fmt.fmt name
+  |> Fmt.fmt (name t)
   |> (fun formatter ->
     match stmt with
-    | Prec {prec_rels=PrecRelsPrecs {precs=Precs {uident=UIDENT {token=uident}; precs_tl}}; _}
-      ->
-      begin
+    | PrecSet {prec_rels=PrecRelsPrecs {precs=Precs {uident; precs_tl}}; _} -> begin
         let rec fmt_precs_tl precs_tl formatter = begin
           match precs_tl with
-          | Parse.PrecsTlUident {uident=UIDENT {token=uident}; precs_tl} -> begin
+          | Parse.PrecsTlUident {uident; precs_tl} -> begin
               formatter
               |> Fmt.fmt ", " |> Fmt.fmt (string_of_token uident)
               |> fmt_precs_tl precs_tl
@@ -53,9 +47,17 @@ let src_fmt {name; assoc; stmt; _} formatter =
         |> Fmt.fmt " < " |> Fmt.fmt (string_of_token uident)
         |> fmt_precs_tl precs_tl
       end
-    | Prec {prec_rels=PrecRelsEpsilon; _} -> formatter
+    | PrecSet {prec_rels=PrecRelsEpsilon; _} -> formatter
   )
   |> Fmt.fmt "\n"
 
-let init ~index ~name ~assoc ~doms ~stmt =
-  {index; name; assoc; doms; stmt}
+let init ~name ~prec_set =
+  let PrecSet.{names; _} = prec_set in
+  let name_index = Array.findi_map ~f:(fun i s ->
+      match String.(name = s) with
+      | true -> Some i
+      | false -> None
+    ) names
+    |> Option.value_hlt
+  in
+  {name_index; prec_set}

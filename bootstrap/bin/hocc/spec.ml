@@ -22,9 +22,9 @@ let synthetic_name_of_start_name start_name =
   start_name ^ "'"
 
 let precs_init io hmh =
-  let rec fold_precs_tl io precs rels doms precs_tl = begin
+  let rec fold_precs_tl_rels io precs rels doms precs_tl = begin
     match precs_tl with
-    | Parse.PrecsTlUident {uident=UIDENT {token=uident}; precs_tl} -> begin
+    | Parse.PrecsTlUident {uident; precs_tl} -> begin
         let name = string_of_token uident in
         let rels = match Set.mem name rels with
           | true -> begin
@@ -38,7 +38,7 @@ let precs_init io hmh =
             end
           | false -> Set.insert name rels
         in
-        let doms = match Precs.prec_of_name name precs with
+        let doms = match Precs.prec_set_of_name name precs with
           | None -> begin
               let io =
                 io.err
@@ -48,18 +48,18 @@ let precs_init io hmh =
               in
               Io.fatal io
             end
-          | Some Prec.{index; doms=rel_doms; _} -> Ordset.insert index doms |> Ordset.union rel_doms
+          | Some {index; doms=rel_doms; _} -> Ordset.insert index doms |> Ordset.union rel_doms
         in
-        fold_precs_tl io precs rels doms precs_tl
+        fold_precs_tl_rels io precs rels doms precs_tl
       end
     | PrecsTlEpsilon -> io, doms
   end in
-  let fold_precs io precs parse_precs = begin
+  let fold_precs_rels io precs parse_precs = begin
     match parse_precs with
-    | Parse.Precs {uident=UIDENT {token=uident}; precs_tl} -> begin
+    | Parse.Precs {uident; precs_tl} -> begin
         let name = string_of_token uident in
         let rels = Set.singleton (module String) name in
-        let doms = match Precs.prec_of_name name precs with
+        let doms = match Precs.prec_set_of_name name precs with
           | None -> begin
               let io =
                 io.err
@@ -69,25 +69,38 @@ let precs_init io hmh =
               in
               Io.fatal io
             end
-          | Some Prec.{index; doms; _} -> Ordset.insert index doms
+          | Some {index; doms; _} -> Ordset.insert index doms
         in
-        fold_precs_tl io precs rels doms precs_tl
+        fold_precs_tl_rels io precs rels doms precs_tl
       end
   end in
-  let fold_prec io precs parse_prec = begin
-    match parse_prec with
-    | Parse.Prec {prec_type; uident=UIDENT {token=uident}; prec_rels} -> begin
+  let rec fold_precs_tl_decl io precs names precs_tl = begin
+    match precs_tl with
+    | Parse.PrecsTlUident {uident; precs_tl} -> begin
         let name = string_of_token uident in
-        let assoc = match prec_type with
-          | PrecTypeNeutral -> None
-          | PrecTypeLeft -> Some Assoc.Left
-          | PrecTypeRight -> Some Assoc.Right
+        let names = match Precs.prec_index_of_name name precs,
+            List.find ~f:(fun s -> String.O.(s = name)) names with
+        | Some _, _
+        | _, Some _ -> begin
+            let io =
+              io.err
+              |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source uident)
+              |> Fmt.fmt ": Redefined precedence: " |> Fmt.fmt name |> Fmt.fmt "\n"
+              |> Io.with_err io
+            in
+            Io.fatal io
+          end
+        | None, None -> name :: names
         in
-        let io, doms = match prec_rels with
-          | PrecRelsPrecs {precs=parse_precs} -> fold_precs io precs parse_precs
-          | PrecRelsEpsilon -> io, Ordset.empty (module Prec.Index)
-        in
-        let precs = match Precs.prec_index_of_name name precs with
+        fold_precs_tl_decl io precs names precs_tl
+      end
+    | PrecsTlEpsilon -> io, Array.of_list_rev names
+  end in
+  let fold_precs_decl io precs parse_precs = begin
+    match parse_precs with
+    | Parse.Precs {uident; precs_tl} -> begin
+        let name = string_of_token uident in
+        let names = match Precs.prec_index_of_name name precs with
           | Some _ -> begin
               let io =
                 io.err
@@ -97,14 +110,31 @@ let precs_init io hmh =
               in
               Io.fatal io
             end
-          | None -> Precs.insert ~name ~assoc ~doms ~stmt:parse_prec precs
+          | None -> [name]
         in
+        fold_precs_tl_decl io precs names precs_tl
+      end
+  end in
+  let fold_prec_set io precs parse_prec_set = begin
+    match parse_prec_set with
+    | Parse.PrecSet {prec_type; prec_set; prec_rels} -> begin
+        let assoc = match prec_type with
+          | PrecTypeNeutral -> None
+          | PrecTypeLeft -> Some Assoc.Left
+          | PrecTypeRight -> Some Assoc.Right
+        in
+        let io, doms = match prec_rels with
+          | PrecRelsPrecs {precs=parse_precs} -> fold_precs_rels io precs parse_precs
+          | PrecRelsEpsilon -> io, Ordset.empty (module PrecSet.Index)
+        in
+        let io, names = fold_precs_decl io precs prec_set in
+        let precs = Precs.insert ~names ~assoc ~doms ~stmt:parse_prec_set precs in
         io, precs
       end
   end in
   let fold_stmt io precs stmt = begin
     match stmt with
-    | Parse.StmtPrec {prec=parse_prec} -> fold_prec io precs parse_prec
+    | Parse.StmtPrecSet {prec_set=parse_prec_set} -> fold_prec_set io precs parse_prec_set
     | _ -> io, precs
   end in
   let rec fold_stmts_tl io precs stmts_tl = begin
@@ -143,14 +173,14 @@ let tokens_init io precs hmh =
           let name = string_of_token cident in
           let stype = match symbol_type0 with
             | SymbolType0SymbolType {symbol_type=SymbolType {
-              symbol_type_qualifier; symbol_type=UIDENT {token=type_}; _}} -> begin
-                SymbolType.explicit (string_of_token type_)
+              symbol_type_qualifier; symbol_type; _}} -> begin
+                SymbolType.explicit (string_of_token symbol_type)
                 |> qualify_symbol_type symbol_type_qualifier
               end
             | SymbolType0Epsilon -> SymbolType.implicit
           in
           let prec = match prec_ref with
-            | PrecRefUident {uident=UIDENT {token=uident}} -> begin
+            | PrecRefUident {uident} -> begin
                 let prec_name = string_of_token uident in
                 match Precs.prec_of_name prec_name precs with
                 | None -> begin
@@ -245,9 +275,9 @@ let symbol_infos_init io symbols hmh =
       | Parse.NontermProds {cident=CIDENT {token=nonterm_cident}; _} ->
         string_of_token nonterm_cident, SymbolType.implicit
       | NontermReductions {cident=CIDENT {token=nonterm_cident}; symbol_type=SymbolType {
-        symbol_type_qualifier; symbol_type=UIDENT {token=type_}; _}; _} -> begin
+        symbol_type_qualifier; symbol_type; _}; _} -> begin
           let name = string_of_token nonterm_cident in
-          let stype = SymbolType.explicit (string_of_token type_)
+          let stype = SymbolType.explicit (string_of_token symbol_type)
                       |> qualify_symbol_type symbol_type_qualifier in
           name, stype
         end
@@ -336,7 +366,7 @@ let symbols_init io precs symbols hmh =
                   let io =
                     io.err
                     |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source alias)
-                    |> Fmt.fmt ": Undefined alias: " |> Fmt.fmt alias_name |> Fmt.fmt "\n"
+                    |> Fmt.fmt ": Undefined alias: " |> String.pp alias_name |> Fmt.fmt "\n"
                     |> Io.with_err io
                   in
                   Io.fatal io
@@ -433,7 +463,7 @@ let symbols_init io precs symbols hmh =
           match Symbols.info_of_name_hlt symbol_name symbols with Symbols.{index; _} -> index
         ) rhs in
         let prec = match prec_ref with
-          | PrecRefUident {uident=UIDENT {token=uident}} -> begin
+          | PrecRefUident {uident} -> begin
               let prec_name = string_of_token uident in
               match Precs.prec_of_name prec_name precs with
               | None -> begin
@@ -567,7 +597,7 @@ let symbols_init io precs symbols hmh =
           in
           let name = string_of_token cident in
           let prec = match prec_ref with
-            | PrecRefUident {uident=UIDENT {token=uident}} -> begin
+            | PrecRefUident {uident} -> begin
                 let prec_name = string_of_token uident in
                 match Precs.prec_of_name prec_name precs with
                 | None -> begin
@@ -751,6 +781,11 @@ let symbols_init io precs symbols hmh =
   let nprecs = Precs.length precs in
   let ntokens = Symbols.tokens_length symbols in
   let nnonterms = Symbols.nonterms_length symbols in
+  let nstarts = Symbols.nonterms_fold ~init:0L ~f:(fun nstarts (Symbol.{start; _} as symbol) ->
+      match start && (not (Symbol.is_synthetic symbol)) with
+      | false -> nstarts
+      | true -> succ nstarts
+    ) symbols in
   let nprods = Prods.length prods in
   let io =
     io.log
@@ -765,12 +800,27 @@ let symbols_init io precs symbols hmh =
     |> Fmt.fmt ", "
     |> Uns.pp nnonterms |> Fmt.fmt " non-terminal"
     |> (fun formatter -> match nnonterms with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+    |> Fmt.fmt " (" |> Uns.pp nstarts
+    |> Fmt.fmt " start"
+    |> (fun formatter -> match nstarts with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+    |> Fmt.fmt ")"
 
     |> Fmt.fmt ", "
     |> Uns.pp nprods |> Fmt.fmt " production"
     |> (fun formatter -> match nprods with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
     |> Fmt.fmt "\n"
     |> Io.with_log io
+  in
+  let io = match nstarts with
+    | 0L -> begin
+        let io =
+          io.err
+          |> Fmt.fmt "hocc: Must specify at least one start symbol\n"
+          |> Io.with_err io
+        in
+        Io.fatal io
+      end
+    | _ -> io
   in
   io, symbols, prods, callbacks
 
@@ -990,7 +1040,7 @@ and log_unused io precs symbols prods states =
   let rec mark_prec ~precs_used prec = begin
     match prec with
     | None -> precs_used
-    | Some prec -> Set.insert Prec.(prec.index) precs_used
+    | Some prec -> Set.insert (Prec.name prec) precs_used
   end
   and mark_symbol ~precs_used ~tokens_used ~nonterms_used
       (Symbol.{index; prec; _} as symbol) = begin
@@ -1036,7 +1086,7 @@ and log_unused io precs symbols prods states =
       ) State.(state.actions)
   end
   and mark_states symbols prods states = begin
-    let precs_used = Set.empty (module Prec.Index) in
+    let precs_used = Set.empty (module String) in
     let tokens_used = Set.singleton (module Symbol.Index) Symbol.epsilon.index in
     let nonterms_used = Set.empty (module Symbol.Index) in
     let prods_used = Set.empty (module Prod.Index) in
@@ -1064,10 +1114,15 @@ and log_unused io precs symbols prods states =
         )
         |> Fmt.fmt ":\n"
         |> (fun formatter ->
-          Precs.fold ~init:formatter ~f:(fun formatter prec ->
-            match Set.mem Prec.(prec.index) precs_used with
-            | true -> formatter
-            | false -> formatter |> Fmt.fmt "hocc:" |> Prec.src_fmt prec
+          Precs.fold_prec_sets ~init:formatter ~f:(fun formatter (PrecSet.{names; _} as prec_set) ->
+            Array.fold ~init:formatter ~f:(fun formatter name ->
+              match Set.mem name precs_used with
+              | true -> formatter
+              | false -> begin
+                  let prec = Prec.init ~name ~prec_set in
+                  formatter |> Fmt.fmt "hocc:" |> Prec.src_fmt prec
+                end
+            ) names
           ) precs
         )
         |> Io.with_log io
@@ -1112,8 +1167,8 @@ and log_unused io precs symbols prods states =
                 |> (fun formatter ->
                   match prec with
                   | None -> formatter
-                  | Some {name; _} ->
-                    formatter |> Fmt.fmt " prec " |> Fmt.fmt name
+                  | Some prec ->
+                    formatter |> Fmt.fmt " " |> Prec.pp_hr prec
                 )
                 |> Fmt.fmt "\n"
               end
@@ -1161,7 +1216,7 @@ and log_unused io precs symbols prods states =
                   |> (fun formatter ->
                     match prec with
                     | None -> formatter
-                    | Some {name; _} -> formatter |> Fmt.fmt " prec " |> Fmt.fmt name
+                    | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
                   )
                   |> Fmt.fmt "\n"
                 end

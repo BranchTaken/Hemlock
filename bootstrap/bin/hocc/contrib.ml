@@ -102,12 +102,12 @@ let resolve symbols prods symbol_index t =
   let assoc_of_shift symbols symbol_index = begin
     match prec_of_shift symbols symbol_index with
     | None -> None
-    | Some {assoc; _} -> assoc
+    | Some {prec_set={assoc; _}; _} -> assoc
   end in
   let assoc_of_reduce prods prod_index = begin
     match prec_of_reduce prods prod_index with
     | None -> None
-    | Some {assoc; _} -> assoc
+    | Some {prec_set={assoc; _}; _} -> assoc
   end in
   match length t with
   | 0L
@@ -133,11 +133,11 @@ let resolve symbols prods symbol_index t =
                   empty, true
                 end
               | Some max_prec, Some reduce_prec -> begin
-                  match Uns.(=) max_prec.index reduce_prec.index with
+                  match Uns.(=) max_prec.prec_set.index reduce_prec.prec_set.index with
                   | false -> begin
-                      match Ordset.mem max_prec.index reduce_prec.doms with
+                      match Ordset.mem max_prec.prec_set.index reduce_prec.prec_set.doms with
                       | false -> begin
-                          match Ordset.mem reduce_prec.index max_prec.doms with
+                          match Ordset.mem reduce_prec.prec_set.index max_prec.prec_set.doms with
                           | false -> begin
                               (* Disjoint precedence; no conflict resolution possible. *)
                               empty, true

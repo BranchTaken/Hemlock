@@ -24,7 +24,7 @@
   (Tok_pct_op {source=[1:2..1:19); pct_op="\%-+*/\%@^$<=>|:.~?"})
   (Tok_end_of_input {source=[1:19..1:19)})
 ``+ +-+*/%@^$<=>|:.~?``
-  (Tok_plus_op {source=[1:0..1:1); plus_op="+"})
+  (Tok_plus {source=[1:0..1:1)})
   (Tok_whitespace {source=[1:1..1:2)})
   (Tok_plus_op {source=[1:2..1:19); plus_op="+-+*/\%@^$<=>|:.~?"})
   (Tok_end_of_input {source=[1:19..1:19)})

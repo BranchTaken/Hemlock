@@ -1,6 +1,6 @@
 hocc: Parsing "./PSEUDO_END_conflict.hmh"
 hocc: Generating LR(1) specification
-hocc: 2 precedences, 7 tokens, 4 non-terminals, 8 productions
+hocc: 2 precedences, 7 tokens, 4 non-terminals (1 start), 8 productions
 hocc: LR(1) item set compatibility: lr1
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++
 hocc: Generating 12 LR(1) states

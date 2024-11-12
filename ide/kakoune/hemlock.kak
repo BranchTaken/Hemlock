@@ -35,7 +35,7 @@ add-highlighter shared/hemlock/code/uident regex \b[_]*[a-z][A-Za-z0-9_']*\b 0:D
 add-highlighter shared/hemlock/code/tab regex \t 0:Error
 add-highlighter shared/hemlock/code/unaligned regex ^(\ \ )*\ (?![\ ]) 0:Error
 add-highlighter shared/hemlock/code/unaligned_continue_keyword regex ^(\ \ \ \ )*(and|also|as|else|external|of|or|then|when|with)\b 0:Error
-add-highlighter shared/hemlock/code/unaligned_continue_punctuation regex ^(\ \ \ \ )*([\x7D\]),!'\\\-+*/%@$<=>\|:.]) 0:Error
+add-highlighter shared/hemlock/code/unaligned_continue_punctuation regex ^(\ \ \ \ )*([\x7D\]),!'\-+*/%@$<=>\|:.]) 0:Error
 add-highlighter shared/hemlock/code/unaligned_continue_caret regex ^(\ \ \ \ )*([\^](?![&A-Za-z_])) 0:Error
 add-highlighter shared/hemlock/code/trailing regex (\ )+$ 0:ExcessWhitespace
 add-highlighter shared/hemlock/code/interior_multispace regex (?<=\S)(\ ){2,}(?=\S) 0:ExcessWhitespace

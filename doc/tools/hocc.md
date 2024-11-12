@@ -351,12 +351,13 @@ Precedences may be defined with any of the following associativities:
   `2 + 3 + 4` is parsed as `2 + (3 + 4)`. All else being equal, prefer left associativity to
   minimize intermediate parser state.
 
-Precedences can be defined via the `neutral`, `left`, and `right` statements, and they may
-optionally be ordered via `<` relationships with previously defined precedences, irrespective of
-associativity. These precedence relationships are used to compute the transitive closure of
-precedence orderings. Precedences with disjoint relationships are incomparable, i.e. they have no
-relative ordering. By default, all tokens and productions have a *lack* of precedence, which is
-equivalent to each such token/production being assigned a unique disjoint `neutral` precedence.
+Sets of equivalent precedences can be defined via the `neutral`, `left`, and `right` statements, and
+precedence sets may optionally be ordered relative to previously defined precedence sets via `<`
+relationships, irrespective of associativity. These precedence relationships are used to compute the
+transitive closure of precedence orderings. Precedences with disjoint relationships are
+incomparable, i.e. they have no relative ordering. By default, all tokens and productions have a
+*lack* of precedence, which is equivalent to each such token/production being assigned a unique
+disjoint `neutral` precedence.
 
 Conflicts may occur for any given input symbol between two or more actions, of which at least one is
 a reduce action. Such an action set induces shift/reduce and/or reduce/reduce conflicts; by
@@ -434,8 +435,8 @@ hocc
     left b < a
     left c < a
     left d < b, c # Transitive: a
-    right e
-    neutral f < d, e # Transitive: a, b, c
+    right e, f
+    neutral g < d, e # Transitive: a, b, c, f
 ```
 
 Precedences are bound to tokens, non-terminals, and productions using the optional `prec` reference
@@ -595,21 +596,30 @@ parser states can be used as persistent reusable snapshots.
             include IdentifiableIntf.S with type t := t
           }
 
-        Prec = {
+        PrecSet = {
             type t: t = {
-                index: uns # Index in `precs` array.
-                name: string
+                index: uns # Index in `prec_sets` array.
+                names: array string
                 assoc: option Assoc.t
-                doms: Ordset.t uns Uns.cmper_witness (* Indices in `precs` array of dominator
-                                                      * precedences. *)
+                doms: Ordset.t uns Uns.cmper_witness (* Indices in `prec_sets` array of dominator
+                                                      * precedence sets. *)
               }
 
             include IdentifiableIntf.S with type t := t
           }
 
-        precs: array Prec.t
-          [@@doc "Array of precedences, where each element's `index` field corresponds to the
+        prec_sets: array PrecSet.t
+          [@@doc "Array of precedence sets, where each element's `index` field corresponds to the
           element's array index."]
+
+        Prec = {
+            type t: t = {
+                name_index: uns # Index of precedence name in precedence set.
+                prec_set_index: uns # Index of precedence set in `prec_sets`.
+              }
+
+            include IdentifiableIntf.S with type t := t
+          }
 
         Prod = {
             type t: t = {
