@@ -273,7 +273,7 @@ include hocc
     neutral pDotDot < pSemi
     neutral pImport < pDotDot
     neutral pOpen < pImport
-    neutral pLet < pOpen
+    neutral pConceal, pExpose, pLet, pMatch < pOpen
 
     neutral pExpr_Exprs < pComma
     neutral pPattern_Constr < pAs, pComma, pColonOp, pEqOp
@@ -282,10 +282,10 @@ include hocc
     token AND "and" of token_simple prec pAnd
     token ALSO "also" of token_simple
     token AS "as" of token_simple prec pAs
-    token CONCEAL "conceal" of token_simple prec pLet
+    token CONCEAL "conceal" of token_simple prec pConceal
     token EFFECT "effect" of token_simple
     token ELSE "else" of token_simple
-    token EXPOSE "expose" of token_simple prec pLet
+    token EXPOSE "expose" of token_simple prec pExpose
     token EXTERNAL "external" of token_simple
     token FALSE "false" of token_simple prec pConstant
     token FN "fn" of token_simple prec pLet
@@ -294,7 +294,7 @@ include hocc
     token INCLUDE "include" of token_simple
     token LAZY "lazy" of token_simple
     token LET "let" of token_simple prec pLet
-    token MATCH "match" of token_simple prec pLet
+    token MATCH "match" of token_simple prec pMatch
     token MUTABILITY "mutability" of token_simple
     token OF "of" of token_simple
     token OPEN "open" of token_simple prec pOpen
