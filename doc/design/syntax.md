@@ -486,7 +486,7 @@ context:
 
   Format specifiers are of the form:
   ```
-  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<radix>][<notation>][<pretty>][<fmt>][<sep>](^...^)
+  %['<pad>'][<just>][<sign>][<alt>][<zpad>][<width>][.=?<precision>][<radix>][<notation>][<pretty>]<fmt>[<sep>](^...^)
   ```
   + `'<pad>'` (`?pad:codepoint`): Pad with specified codepoint (default: `' '`; complete codepoint
     literal syntax supported)
