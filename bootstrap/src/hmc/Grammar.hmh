@@ -360,7 +360,7 @@ include hocc
     token TICK "'" of token_simple
     token CARET "^" of token_simple prec pAtOp
     token AMP "&" of token_simple
-    token AMP_AMP "&&" of token_simple
+    token AMP_AMP "&&" of token_simple # OCaml-specefic.
     token XMARK "!" of token_simple prec pTilde
     token ARROW "->" of token_simple prec pArrow
     token CARROW "~->" of token_simple prec pArrow
@@ -380,7 +380,7 @@ include hocc
     token RSTRING of token_rstring prec pConstant
     token QSTRING of token_qstring # OCaml-specific.
     token ISTRING of token_istring prec pConstant
-    token FSTRING_LDITTO of token_fstring_lditto
+    token FSTRING_LDITTO of token_fstring_lditto prec pLgroup
     token FSTRING_INTERPOLATED of token_fstring_interpolated
     token FSTRING_PCT of token_fstring_pct
     token FSTRING_PAD of token_fstring_pad
@@ -397,6 +397,7 @@ include hocc
     token FSTRING_NOTATION of token_fstring_notation
     token FSTRING_PRETTY of token_fstring_pretty
     token FSTRING_FMT of token_fstring_fmt
+    token FSTRING_FMT_F of token_fstring_fmt
     token FSTRING_SEP of token_fstring_sep
     token FSTRING_LABEL of token_fstring_label
     token FSTRING_LPAREN_CARET of token_fstring_lparen_caret
@@ -410,7 +411,7 @@ include hocc
     token I16 of token_i16 prec pConstant
     token U32 of token_u32 prec pConstant
     token I32 of token_i32 prec pConstant
-    token LONG of token_long prec pConstant
+    token LONG of token_long prec pConstant # OCaml-specific.
     token U64 of token_u64 prec pConstant
     token I64 of token_i64 prec pConstant
     token U128 of token_u128 prec pConstant
@@ -482,6 +483,7 @@ include hocc
       | "<="
       | "="
       | "<>"
+      | ">="
       | ">"
       | ":="
       | "^"
@@ -551,6 +553,92 @@ include hocc
       | ModulePathOrConstr
       -> Xxx
 
+    nonterm FstringPad of xxx ::=
+      | FSTRING_PAD
+      | epsilon
+      -> Xxx
+
+    nonterm FstringJust of xxx ::=
+      | FSTRING_JUST
+      | epsilon
+      -> Xxx
+
+    nonterm FstringSign of xxx ::=
+      | FSTRING_SIGN
+      | epsilon
+      -> Xxx
+
+    nonterm FstringAlt of xxx ::=
+      | FSTRING_ALT
+      | epsilon
+      -> Xxx
+
+    nonterm FstringZpad of xxx ::=
+      | FSTRING_ZPAD
+      | epsilon
+      -> Xxx
+
+    nonterm FstringWidth of xxx ::=
+      | FSTRING_WIDTH_STAR FstringValue
+      | FSTRING_WIDTH
+      | epsilon
+      -> Xxx
+
+    nonterm FstringPrecision of xxx ::=
+      | FSTRING_PMODE FSTRING_PRECISION_STAR FstringValue
+      | FSTRING_PRECISION_STAR FstringValue
+      | FSTRING_PRECISION
+      | epsilon
+      -> Xxx
+
+    nonterm FstringRadix of xxx ::=
+      | FSTRING_RADIX
+      | epsilon
+      -> Xxx
+
+    nonterm FstringNotation of xxx ::=
+      | FSTRING_NOTATION
+      | epsilon
+      -> Xxx
+
+    nonterm FstringPretty of xxx ::=
+      | FSTRING_PRETTY
+      | epsilon
+      -> Xxx
+
+    nonterm FstringFmt of xxx ::=
+      | FSTRING_FMT
+      | FSTRING_FMT_F FstringValue
+      -> Xxx
+
+    nonterm FstringSepValueLabel of xxx ::=
+      | FSTRING_SEP FstringValue FSTRING_LABEL
+      | FstringValue
+      | epsilon
+      -> Xxx
+
+    nonterm FstringValue of xxx ::=
+      | FSTRING_LPAREN_CARET Expr FSTRING_CARET_RPAREN
+      -> Xxx
+
+    nonterm FstringSpecifier of xxx ::=
+      | FSTRING_PCT FstringPad FstringJust FstringSign FstringAlt FstringZpad FstringWidth
+      FstringPrecision FstringRadix FstringNotation FstringPretty FstringFmt FstringSepValueLabel
+      -> Xxx
+
+    nonterm FstringElms of xxx ::=
+      | FSTRING_INTERPOLATED FstringElms
+      | FstringSpecifier FstringElms
+      | epsilon
+      -> Xxx
+
+    (* The scanner never tokenizes e.g. "foo" as an fstring, so there's no need to exclude
+     * degenerate fstrings that are actually tokenized as istrings, adjacent `FSTRING_INTERPOLATED`
+     * tokens, etc. *)
+    nonterm Fstring of xxx ::=
+      | FSTRING_LDITTO FstringElms FSTRING_RDITTO
+      -> Xxx
+
     nonterm TypeExpr of xxx ::=
       | "'" UIDENT
       | "(" TypeExpr ")"
@@ -568,6 +656,7 @@ include hocc
 
     nonterm Expr of xxx ::=
       | Constant prec pExpr_Constant
+      | Fstring
       | "(" Expr ")"
       | "(|" Expr "|)"
       | INDENT Expr DEDENT
