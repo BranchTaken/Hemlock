@@ -13,11 +13,8 @@
  * source file). The trace output is detailed enough to diagnose nearly any scanner flaw, as well as
  * to aid understanding of how a particular token is scanned.
  *
- * Most language syntax changes require modifying the DFA, but keywords and special operators can be
- * added/removed with low effort.
- *
- * - Keywords are mapped to tokens in `Dfa.Ident.keyword_map`.
- * - Special operators are mapped to tokens in `Dfa.Operator.operator_map`.
+ * Most language syntax changes require modifying the DFA, but keywords and single-codepoint
+ * operators can be added/removed with low effort.
  *
  * Adding/removing a DFA state may require changes in several places:
  *
@@ -124,8 +121,12 @@ module Token = struct
       let cmp t0 t1 =
         Source.Slice.cmp t0.source t1.source
 
-      let init ~base ~past ~description =
-        {source=Source.Slice.of_cursors ~base ~past; description}
+      let of_source ~source ~description =
+        {source; description}
+
+      let of_cursors ~base ~past ~description =
+        let source = Source.Slice.of_cursors ~base ~past in
+        of_source ~source ~description
 
       let source t =
         t.source
@@ -256,7 +257,6 @@ module Token = struct
     | Tok_external of {source: Source.Slice.t}
     | Tok_false of {source: Source.Slice.t}
     | Tok_fn of {source: Source.Slice.t}
-    | Tok_function of {source: Source.Slice.t}
     | Tok_if of {source: Source.Slice.t}
     | Tok_import of {source: Source.Slice.t}
     | Tok_include of {source: Source.Slice.t}
@@ -296,6 +296,7 @@ module Token = struct
     (* Punctuation. *)
     | Tok_tilde of {source: Source.Slice.t}
     | Tok_qmark of {source: Source.Slice.t}
+    | Tok_plus of {source: Source.Slice.t}
     | Tok_minus of {source: Source.Slice.t}
     | Tok_lt of {source: Source.Slice.t}
     | Tok_lt_eq of {source: Source.Slice.t}
@@ -325,6 +326,7 @@ module Token = struct
     | Tok_tick of {source: Source.Slice.t}
     | Tok_caret of {source: Source.Slice.t}
     | Tok_amp of {source: Source.Slice.t}
+    | Tok_amp_amp of {source: Source.Slice.t}
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
@@ -343,6 +345,7 @@ module Token = struct
     | Tok_cident of {source: Source.Slice.t; cident: string}
     | Tok_codepoint of {source: Source.Slice.t; codepoint: codepoint Rendition.t}
     | Tok_rstring of {source: Source.Slice.t; rstring: string Rendition.t}
+    | Tok_qstring of {source: Source.Slice.t; qstring: string Rendition.t}
     | Tok_istring of {source: Source.Slice.t; istring: string Rendition.t}
     | Tok_fstring_lditto of {source: Source.Slice.t}
     | Tok_fstring_interpolated of {source: Source.Slice.t; fstring_interpolated: string Rendition.t}
@@ -374,6 +377,7 @@ module Token = struct
     | Tok_i16 of {source: Source.Slice.t; i16: i16 Rendition.t}
     | Tok_u32 of {source: Source.Slice.t; u32: u32 Rendition.t}
     | Tok_i32 of {source: Source.Slice.t; i32: i32 Rendition.t}
+    | Tok_long of {source: Source.Slice.t; long: u64 Rendition.t}
     | Tok_u64 of {source: Source.Slice.t; u64: u64 Rendition.t}
     | Tok_i64 of {source: Source.Slice.t; i64: i64 Rendition.t}
     | Tok_u128 of {source: Source.Slice.t; u128: u128 Rendition.t}
@@ -414,8 +418,6 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_false {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_fn {source} ->
         formatter |> Fmt.fmt "Tok_fn {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
-      | Tok_function {source} ->
-        formatter |> Fmt.fmt "Tok_function {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_if {source} ->
         formatter |> Fmt.fmt "Tok_if {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_import {source} ->
@@ -592,6 +594,8 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_tilde {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_qmark {source} ->
         formatter |> Fmt.fmt "Tok_qmark {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_plus {source} ->
+        formatter |> Fmt.fmt "Tok_plus {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_minus {source} ->
         formatter |> Fmt.fmt "Tok_minus {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_lt {source} ->
@@ -650,6 +654,8 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_caret {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_amp {source} ->
         formatter |> Fmt.fmt "Tok_amp {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
+      | Tok_amp_amp {source} ->
+        formatter |> Fmt.fmt "Tok_amp_amp {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_xmark {source} ->
         formatter |> Fmt.fmt "Tok_xmark {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_arrow {source} ->
@@ -726,6 +732,14 @@ module Token = struct
           |> Source.Slice.pp source
           |> Fmt.fmt "; rstring="
           |> Rendition.pp String.pp rstring
+          |> Fmt.fmt "}"
+        end
+      | Tok_qstring {source; qstring} -> begin
+          formatter
+          |> Fmt.fmt "Tok_qstring {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; qstring="
+          |> Rendition.pp String.pp qstring
           |> Fmt.fmt "}"
         end
       | Tok_istring {source; istring} -> begin
@@ -938,6 +952,14 @@ module Token = struct
           |> Rendition.pp I32.pp i32
           |> Fmt.fmt "}"
         end
+      | Tok_long {source; long} -> begin
+          formatter
+          |> Fmt.fmt "Tok_long {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; long="
+          |> Rendition.pp U64.pp long
+          |> Fmt.fmt "}"
+        end
       | Tok_u64 {source; u64} -> begin
           formatter
           |> Fmt.fmt "Tok_u64 {source="
@@ -1044,7 +1066,6 @@ module Token = struct
     | Tok_external {source}
     | Tok_false {source}
     | Tok_fn {source}
-    | Tok_function {source}
     | Tok_if {source}
     | Tok_import {source}
     | Tok_include {source}
@@ -1080,6 +1101,7 @@ module Token = struct
     | Tok_dot_op {source; _}
     | Tok_tilde {source}
     | Tok_qmark {source}
+    | Tok_plus {source}
     | Tok_minus {source}
     | Tok_lt {source}
     | Tok_lt_eq {source}
@@ -1109,6 +1131,7 @@ module Token = struct
     | Tok_tick {source}
     | Tok_caret {source}
     | Tok_amp {source}
+    | Tok_amp_amp {source}
     | Tok_xmark {source}
     | Tok_arrow {source}
     | Tok_carrow {source}
@@ -1124,6 +1147,7 @@ module Token = struct
     | Tok_cident {source; _}
     | Tok_codepoint {source; _}
     | Tok_rstring {source; _}
+    | Tok_qstring {source; _}
     | Tok_istring {source; _}
     | Tok_fstring_lditto {source}
     | Tok_fstring_interpolated {source; _}
@@ -1155,6 +1179,7 @@ module Token = struct
     | Tok_i16 {source; _}
     | Tok_u32 {source; _}
     | Tok_i32 {source; _}
+    | Tok_long {source; _}
     | Tok_u64 {source; _}
     | Tok_i64 {source; _}
     | Tok_u128 {source; _}
@@ -1173,21 +1198,20 @@ module Token = struct
   let malformations = function
     (* Keywords. *)
     | Tok_and _ | Tok_also _ | Tok_as _ | Tok_conceal _ | Tok_effect _ | Tok_else _ | Tok_expose _
-    | Tok_external _ | Tok_false _ | Tok_fn _ | Tok_function _ | Tok_if _ | Tok_import _
-    | Tok_include _ | Tok_lazy _ | Tok_let _ | Tok_match _ | Tok_mutability _ | Tok_of _
-    | Tok_open _ | Tok_or _ | Tok_rec _ | Tok_then _ | Tok_true _ | Tok_type _ | Tok_when _
-    | Tok_with _
+    | Tok_external _ | Tok_false _ | Tok_fn _ | Tok_if _ | Tok_import _ | Tok_include _ | Tok_lazy _
+    | Tok_let _ | Tok_match _ | Tok_mutability _ | Tok_of _ | Tok_open _ | Tok_or _ | Tok_rec _
+    | Tok_then _ | Tok_true _ | Tok_type _ | Tok_when _ | Tok_with _
     (* Operators. *)
     | Tok_tilde_op _ | Tok_qmark_op _ | Tok_star_star_op _ | Tok_star_op _ | Tok_slash_op _
     | Tok_pct_op _ | Tok_plus_op _ | Tok_minus_op _ | Tok_at_op _ | Tok_caret_op _ | Tok_dollar_op _
     | Tok_lt_op _ | Tok_eq_op _ | Tok_gt_op _ | Tok_bar_op _ | Tok_colon_op _ | Tok_dot_op _
     (* Punctuation. *)
-    | Tok_tilde _ | Tok_qmark _ | Tok_minus _ | Tok_lt _ | Tok_lt_eq _ | Tok_eq _ | Tok_lt_gt _
-    | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _ | Tok_dot_dot _ | Tok_semi _ | Tok_colon _
-    | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _ | Tok_rparen _ | Tok_lbrack _ | Tok_rbrack _
-    | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _ | Tok_larray _
-    | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _ | Tok_xmark _ | Tok_arrow _
-    | Tok_carrow _
+    | Tok_tilde _ | Tok_qmark _ | Tok_plus _ | Tok_minus _ | Tok_lt _ | Tok_lt_eq _ | Tok_eq _
+    | Tok_lt_gt _ | Tok_gt_eq _ | Tok_gt _ | Tok_comma _ | Tok_dot _ | Tok_dot_dot _ | Tok_semi _
+    | Tok_colon _ | Tok_colon_colon _ | Tok_colon_eq _ | Tok_lparen _ | Tok_rparen _ | Tok_lbrack _
+    | Tok_rbrack _ | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _
+    | Tok_larray _ | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _
+    | Tok_amp_amp _ | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
     (* Miscellaneous. *)
     | Tok_source_directive {source_directive=(Constant _); _}
     | Tok_line_delim _
@@ -1200,6 +1224,7 @@ module Token = struct
     | Tok_cident _
     | Tok_codepoint {codepoint=(Constant _); _}
     | Tok_rstring {rstring=(Constant _); _}
+    | Tok_qstring {qstring=(Constant _); _}
     | Tok_istring {istring=(Constant _); _}
     | Tok_fstring_lditto _
     | Tok_fstring_interpolated {fstring_interpolated=(Constant _); _}
@@ -1223,6 +1248,7 @@ module Token = struct
     | Tok_i16 {i16=(Constant _); _}
     | Tok_u32 {u32=(Constant _); _}
     | Tok_i32 {i32=(Constant _); _}
+    | Tok_long {long=(Constant _); _}
     | Tok_u64 {u64=(Constant _); _}
     | Tok_i64 {i64=(Constant _); _}
     | Tok_u128 {u128=(Constant _); _}
@@ -1243,6 +1269,7 @@ module Token = struct
     | Tok_uident {uident=(Malformed mals); _}
     | Tok_codepoint {codepoint=(Malformed mals); _}
     | Tok_rstring {rstring=(Malformed mals); _}
+    | Tok_qstring {qstring=(Malformed mals); _}
     | Tok_istring {istring=(Malformed mals); _}
     | Tok_fstring_interpolated {fstring_interpolated=(Malformed mals); _}
     | Tok_fstring_pad {fstring_pad=(Malformed mals); _}
@@ -1258,6 +1285,7 @@ module Token = struct
     | Tok_i16 {i16=(Malformed mals); _}
     | Tok_u32 {u32=(Malformed mals); _}
     | Tok_i32 {i32=(Malformed mals); _}
+    | Tok_long {long=(Malformed mals); _}
     | Tok_u64 {u64=(Malformed mals); _}
     | Tok_i64 {i64=(Malformed mals); _}
     | Tok_u128 {u128=(Malformed mals); _}
@@ -1499,7 +1527,7 @@ let in_fstring t =
  * Convenience routines for reporting malformations. *)
 
 let malformation ~base ~past description =
-  Token.Rendition.Malformation.init ~base ~past ~description
+  Token.Rendition.Malformation.of_cursors ~base ~past ~description
 
 let malformation_incl View.{cursor; _} t description =
   malformation ~base:t.tok_base ~past:cursor description
@@ -2070,6 +2098,8 @@ module State = struct
       {n; radix}
   end
 
+  module Integer_l = Integer_u
+
   module Integer_i = Integer_u
 
   module Integer_n = Integer_u
@@ -2496,6 +2526,44 @@ module State = struct
       {t with mals=mal :: mals}
   end
 
+  module Qstring_body = struct
+    type t = {
+      mals: Token.Rendition.Malformation.t list;
+      body_base: Source.Cursor.t;
+    }
+
+    let pp {mals; body_base} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; body_base=" |> Source.Cursor.pp body_base
+      |> Fmt.fmt "}"
+
+    let init ~mals ~body_base =
+      {mals; body_base}
+
+    let accum_mal ~mal ({mals; _} as t) =
+      {t with mals=mal :: mals}
+  end
+
+  module Qstring_rtag = struct
+    type t = {
+      mals: Token.Rendition.Malformation.t list;
+      body: Source.Slice.t;
+    }
+
+    let pp {mals; body} formatter =
+      formatter
+      |> Fmt.fmt "{mals=" |> (List.pp Token.Rendition.Malformation.pp) mals
+      |> Fmt.fmt "; body=" |> Source.Slice.pp body
+      |> Fmt.fmt "}"
+
+    let init ~mals ~body =
+      {mals; body}
+
+    let accum_mal ~mal ({mals; _} as t) =
+      {t with mals=mal :: mals}
+  end
+
   module CodepointAccum = struct
     type t =
       | Codepoints of codepoint list
@@ -2646,6 +2714,7 @@ module State = struct
     | State_start
     | State_lparen
     | State_lbrack
+    | State_amp
     | State_tilde
     | State_qmark
     | State_star
@@ -2681,6 +2750,7 @@ module State = struct
     | State_integer_oct_dot of Integer_oct_dot.t
     | State_integer_dec_dot of Integer_dec_dot.t
     | State_integer_hex_dot of Integer_hex_dot.t
+    | State_integer_l of Integer_l.t
     | State_integer_u of Integer_u.t
     | State_integer_i of Integer_i.t
     | State_integer_n of Integer_n.t
@@ -2743,6 +2813,9 @@ module State = struct
     | State_rstring_ltag of Rstring_ltag.t
     | State_rstring_body of Rstring_body.t
     | State_rstring_rtag of Rstring_rtag.t
+    | State_qstring_ltag
+    | State_qstring_body of Qstring_body.t
+    | State_qstring_rtag of Qstring_rtag.t
     | State_istring_body of Istring_body.t
     | State_istring_bslash of Istring_bslash.t
     | State_istring_bslash_u of Istring_bslash_u.t
@@ -2785,6 +2858,7 @@ module State = struct
     | State_start -> formatter |> Fmt.fmt "State_start"
     | State_lparen -> formatter |> Fmt.fmt "State_lparen"
     | State_lbrack -> formatter |> Fmt.fmt "State_lbrack"
+    | State_amp -> formatter |> Fmt.fmt "State_amp"
     | State_tilde -> formatter |> Fmt.fmt "State_tilde"
     | State_qmark -> formatter |> Fmt.fmt "State_qmark"
     | State_star -> formatter |> Fmt.fmt "State_star"
@@ -2826,6 +2900,7 @@ module State = struct
       formatter |> Fmt.fmt "State_integer_dec_dot " |> Integer_dec_dot.pp v
     | State_integer_hex_dot v ->
       formatter |> Fmt.fmt "State_integer_hex_dot " |> Integer_hex_dot.pp v
+    | State_integer_l v -> formatter |> Fmt.fmt "State_integer_l " |> Integer_l.pp v
     | State_integer_u v -> formatter |> Fmt.fmt "State_integer_u " |> Integer_u.pp v
     | State_integer_i v -> formatter |> Fmt.fmt "State_integer_i " |> Integer_i.pp v
     | State_integer_n v -> formatter |> Fmt.fmt "State_integer_n " |> Integer_n.pp v
@@ -2912,6 +2987,9 @@ module State = struct
     | State_rstring_ltag v -> formatter |> Fmt.fmt "State_rstring_ltag " |> Rstring_ltag.pp v
     | State_rstring_body v -> formatter |> Fmt.fmt "State_rstring_body " |> Rstring_body.pp v
     | State_rstring_rtag v -> formatter |> Fmt.fmt "State_rstring_rtag " |> Rstring_rtag.pp v
+    | State_qstring_ltag -> formatter |> Fmt.fmt "State_qstring_ltag"
+    | State_qstring_body v -> formatter |> Fmt.fmt "State_qstring_body " |> Qstring_body.pp v
+    | State_qstring_rtag v -> formatter |> Fmt.fmt "State_qstring_rtag " |> Qstring_rtag.pp v
     | State_istring_body v ->
       formatter |> Fmt.fmt "State_istring_body " |> Istring_body.pp v
     | State_istring_bslash v ->
@@ -3202,10 +3280,10 @@ module Dfa = struct
         (")", fun view t -> accept_tok_incl (Tok_rparen {source=source_incl view t}) view t);
         ("[", advance State_lbrack);
         ("]", fun view t -> accept_tok_incl (Tok_rbrack {source=source_incl view t}) view t);
-        ("{", fun view t -> accept_tok_incl (Tok_lcurly {source=source_incl view t}) view t);
+        ("{", advance State_qstring_ltag);
         ("}", fun view t -> accept_tok_incl (Tok_rcurly {source=source_incl view t}) view t);
         ("\\", fun view t -> accept_tok_incl (Tok_bslash {source=source_incl view t}) view t);
-        ("&", fun view t -> accept_tok_incl (Tok_amp {source=source_incl view t}) view t);
+        ("&", advance State_amp);
         ("!", fun view t -> accept_tok_incl (Tok_xmark {source=source_incl view t}) view t);
         ("\n", fun view t ->
             accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
@@ -3273,6 +3351,14 @@ module Dfa = struct
     ];
     default0=(fun view t -> accept_tok_excl (Tok_lbrack {source=source_excl view t}) view t);
     eoi0=(fun view t -> accept_tok_incl (Tok_lbrack {source=source_incl view t}) view t);
+  }
+
+  let node0_amp = {
+    edges0=map_of_cps_alist [
+      ("&", fun view t -> accept_tok_incl (Tok_amp_amp {source=source_incl view t}) view t);
+    ];
+    default0=(fun view t -> accept_tok_excl (Tok_amp {source=source_excl view t}) view t);
+    eoi0=(fun view t -> accept_tok_incl (Tok_amp {source=source_incl view t}) view t);
   }
 
   let node0_tilde = {
@@ -3993,6 +4079,7 @@ module Dfa = struct
       | Subtype_i16
       | Subtype_u32
       | Subtype_i32
+      | Subtype_long
       | Subtype_u64
       | Subtype_i64
       | Subtype_u128
@@ -4023,6 +4110,7 @@ module Dfa = struct
       | Subtype_i16 -> Some Sint.(widen_to_nat_hlt (abs (I16.(extend_to_sint min_value))))
       | Subtype_u32 -> Some U32.(extend_to_nat max_value)
       | Subtype_i32 -> Some Sint.(widen_to_nat_hlt (abs (I32.(extend_to_sint min_value))))
+      | Subtype_long -> Some U64.(extend_to_nat max_value)
       | Subtype_u64 -> Some U64.(extend_to_nat max_value)
       | Subtype_i64 -> Some (Nat.like_of_zint_hlt (Zint.abs I64.(extend_to_zint min_value)))
       | Subtype_u128 -> Some U128.(extend_to_nat max_value)
@@ -4056,6 +4144,7 @@ module Dfa = struct
             | Subtype_i16 -> Tok_i16 {source; i16=malformed}
             | Subtype_u32 -> Tok_u32 {source; u32=malformed}
             | Subtype_i32 -> Tok_i32 {source; i32=malformed}
+            | Subtype_long -> Tok_long {source; long=malformed}
             | Subtype_u64 -> Tok_u64 {source; u64=malformed}
             | Subtype_i64 -> Tok_i64 {source; i64=malformed}
             | Subtype_u128 -> Tok_u128 {source; u128=malformed}
@@ -4078,6 +4167,7 @@ module Dfa = struct
             | Subtype_i16 -> Tok_i16 {source; i16=Constant (I16.trunc_of_nat n)}
             | Subtype_u32 -> Tok_u32 {source; u32=Constant (U32.trunc_of_nat n)}
             | Subtype_i32 -> Tok_i32 {source; i32=Constant (I32.trunc_of_nat n)}
+            | Subtype_long -> Tok_long {source; long=Constant (U64.trunc_of_nat n)}
             | Subtype_u64 -> Tok_u64 {source; u64=Constant (U64.trunc_of_nat n)}
             | Subtype_i64 -> Tok_i64 {source; i64=Constant (I64.trunc_of_nat n)}
             | Subtype_u128 -> Tok_u128 {source; u128=Constant (U128.trunc_of_nat n)}
@@ -4165,6 +4255,7 @@ module Dfa = struct
         (cpset_of_cps "b", advance State_integer_0b);
         (cpset_of_cps "o", advance State_integer_0o);
         (cpset_of_cps "x", advance State_integer_0x);
+        (cpset_of_cps "L", advance (State_integer_l (State.Integer_l.init ~n:Nat.k_0 ~radix:Dec)));
         (cpset_of_cps "u", advance (State_integer_u (State.Integer_u.init ~n:Nat.k_0 ~radix:Dec)));
         (cpset_of_cps "i", advance (State_integer_i (State.Integer_i.init ~n:Nat.k_0 ~radix:Dec)));
         (cpset_of_cps "n", advance (State_integer_n (State.Integer_n.init ~n:Nat.k_0 ~radix:Dec)));
@@ -4173,7 +4264,7 @@ module Dfa = struct
         (cpset_of_cps ".", advance State_integer_0_dot);
         (cpset_of_cps "e", advance (State_real_e (State.Real_e.init ~m:0.)));
         (Set.diff (cpset_of_cps ident_cps)
-            (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_beinoruxz")),
+            (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_Lbeinoruxz")),
           advance State_integer_mal_ident);
       ];
       default0=accept_zero_excl;
@@ -4235,6 +4326,10 @@ module Dfa = struct
               advance (state_init (state |> accum_digit digit)) view t);
           (cpset_of_cps ".", fun state view t -> advance (state_dot_init state) view t);
           (cpset_of_cps ep_cp, ep_advance);
+          (cpset_of_cps "L", fun state view t ->
+              let n = n_of_state state in
+              advance (State_integer_l (State.Integer_l.init ~n ~radix)) view t
+          );
           (cpset_of_cps "u", fun state view t ->
               let n = n_of_state state in
               advance (State_integer_u (State.Integer_u.init ~n ~radix)) view t
@@ -4253,7 +4348,7 @@ module Dfa = struct
           );
           (cpset_of_cps "r", r_advance);
           (Set.diff (cpset_of_cps ident_cps)
-              (Set.union (cpset_of_cps base_cps) (cpset_of_cps (String.join ["_inruz"; ep_cp]))),
+              (Set.union (cpset_of_cps base_cps) (cpset_of_cps (String.join ["_Linruz"; ep_cp]))),
             fun _state view t -> advance State_integer_mal_ident view t);
         ];
         default1=(fun state view t ->
@@ -4366,6 +4461,18 @@ module Dfa = struct
           retry (State_real_hex_dot (State.Real_hex_dot.init ~m)) t
         )
 
+    let node1_l =
+      let open State.Integer_l in
+      {
+        edges1=map_of_cps_alist [
+          (dec_cps, fun _state view t -> advance State_integer_mal_ident view t);
+        ];
+        default1=(fun {n; radix} view t ->
+          accept_integer_excl ~subtype:Subtype_long n radix view t
+        );
+        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_long n radix view t);
+      }
+
     let node1_u =
       let open State.Integer_u in
       {
@@ -4469,7 +4576,6 @@ module Dfa = struct
         | "external" -> Token.Tok_external {source}
         | "false" -> Token.Tok_false {source}
         | "fn" -> Token.Tok_fn {source}
-        | "function" -> Token.Tok_function {source}
         | "if" -> Token.Tok_if {source}
         | "import" -> Token.Tok_import {source}
         | "include" -> Token.Tok_include {source}
@@ -4571,6 +4677,7 @@ module Dfa = struct
         | ":=" -> Tok_colon_eq {source}
         | "." -> Tok_dot {source}
         | ".." -> Tok_dot_dot {source}
+        | "+" -> Tok_plus {source}
         | "-" -> Tok_minus {source}
         | "^" -> Tok_caret {source}
         | "<" -> Tok_lt {source}
@@ -5780,17 +5887,97 @@ module Dfa = struct
                 end
           );
         ];
-        default1=(fun ({mals; ltag; body; ltag_cursor} as state) (View.{pcursor; _} as view)
-          t ->
+        default1=(fun ({mals; ltag; body; ltag_cursor} as state) (View.{pcursor; _} as view) t ->
           let lcp = Source.Cursor.rget ltag_cursor in
           let rcp = Source.Cursor.rget pcursor in
           match Codepoint.(lcp = rcp) with
           | false -> begin
               let state' =
                 State.Rstring_body.init ~mals ~ltag ~body_base:(Source.Slice.base body) in
-              advance (State_rstring_body state') view t
+              retry (State_rstring_body state') t
             end
           | true -> advance (State_rstring_rtag (State.Rstring_rtag.next state)) view t
+        );
+        eoi1=(fun state (View.{cursor; _} as view) t ->
+          let mal = unterminated_string t.tok_base cursor in
+          let state' = accum_mal ~mal state in
+          accept_mals_incl state'.mals view t
+        );
+      }
+  end
+
+  module Qstring = struct
+    let accept_mals mals cursor t =
+      let open Token in
+      let malformed = Rendition.of_mals mals in
+      accept_tok (Tok_qstring {source=source_at cursor t; qstring=malformed}) cursor t
+
+    let accept_mals_incl mals View.{cursor; _} t =
+      accept_mals mals cursor t
+
+    let node0_ltag =
+      {
+        edges0=map_of_cps_alist [
+          ("|", fun (View.{cursor; _} as view) t ->
+              let state = State.Qstring_body.init ~mals:[] ~body_base:cursor in
+              advance (State_qstring_body state) view t
+          );
+        ];
+        default0=(fun view t -> accept_tok_excl (Tok_lcurly {source=source_excl view t}) view t);
+        eoi0=(fun view t -> accept_tok_incl (Tok_lcurly {source=source_incl view t}) view t);
+      }
+
+    let node1_body =
+      let open State.Qstring_body in
+      {
+        edges1=map_of_cps_alist [
+          ("|", fun {mals; body_base} (View.{pcursor; _} as view) t ->
+              let body = Source.Slice.of_cursors ~base:body_base ~past:pcursor in
+              let state' = State.Qstring_rtag.init ~mals ~body in
+              advance (State_qstring_rtag state') view t
+          );
+          ("�", fun state (View.{pcursor; cursor; _} as view) t ->
+              let state' = match Source.Cursor.rvalid pcursor with
+                | false -> begin
+                    let mal = invalid_utf8 pcursor cursor in
+                    state |> accum_mal ~mal
+                  end
+                | true -> state
+              in
+              advance (State_qstring_body state') view t
+          );
+        ];
+        default1=(fun state view t -> advance (State_qstring_body state) view t);
+        eoi1=(fun state (View.{cursor; _} as view) t ->
+          let mal = unterminated_string t.tok_base cursor in
+          let state' = accum_mal ~mal state in
+          accept_mals_incl state'.mals view t
+        );
+      }
+
+    let node1_rtag =
+      let open State.Qstring_rtag in
+      {
+        edges1=map_of_cps_alist [
+          ("|", fun {mals; body} (View.{pcursor; _} as view) t ->
+              let body = Source.Slice.of_cursors ~base:(Source.Slice.base body) ~past:pcursor in
+              let state' = State.Qstring_rtag.init ~mals ~body in
+              advance (State_qstring_rtag state') view t);
+          ("}", fun {mals; body} (View.{cursor; _} as view) t ->
+              match mals with
+              | _ :: _ -> accept_mals_incl mals view t
+              | [] -> begin
+                  let open Token in
+                  accept_tok (Tok_qstring {
+                    source=source_incl view t;
+                    qstring=Constant (Source.Slice.to_string body)
+                  }) cursor t
+                end
+          );
+        ];
+        default1=(fun {mals; body} _view t ->
+          let state' = State.Qstring_body.init ~mals ~body_base:(Source.Slice.base body) in
+          retry (State_qstring_body state') t
         );
         eoi1=(fun state (View.{cursor; _} as view) t ->
           let mal = unterminated_string t.tok_base cursor in
@@ -6924,6 +7111,7 @@ module Dfa = struct
     | State.State_start -> act0 trace node0_start view t
     | State_lparen -> act0 trace node0_lparen view t
     | State_lbrack -> act0 trace node0_lbrack view t
+    | State_amp -> act0 trace node0_amp view t
     | State_tilde -> act0 trace node0_tilde view t
     | State_qmark -> act0 trace node0_qmark view t
     | State_star -> act0 trace node0_star view t
@@ -6959,6 +7147,7 @@ module Dfa = struct
     | State_integer_oct_dot v -> act1 trace Integer.node1_oct_dot v view t
     | State_integer_dec_dot v -> act1 trace Integer.node1_dec_dot v view t
     | State_integer_hex_dot v -> act1 trace Integer.node1_hex_dot v view t
+    | State_integer_l v -> act1 trace Integer.node1_l v view t
     | State_integer_u v -> act1 trace Integer.node1_u v view t
     | State_integer_i v -> act1 trace Integer.node1_i v view t
     | State_integer_n v -> act1 trace Integer.node1_n v view t
@@ -7024,6 +7213,9 @@ module Dfa = struct
     | State_rstring_ltag v -> act1 trace Rstring.node1_ltag v view t
     | State_rstring_body v -> act1 trace Rstring.node1_body v view t
     | State_rstring_rtag v -> act1 trace Rstring.node1_rtag v view t
+    | State_qstring_ltag -> act0 trace Qstring.node0_ltag view t
+    | State_qstring_body v -> act1 trace Qstring.node1_body v view t
+    | State_qstring_rtag v -> act1 trace Qstring.node1_rtag v view t
     | State_istring_body v -> act1 trace Istring.node1_start v view t
     | State_istring_bslash v -> act1 trace Istring.node1_bslash v view t
     | State_istring_bslash_u v -> act1 trace Istring.node1_bslash_u v view t

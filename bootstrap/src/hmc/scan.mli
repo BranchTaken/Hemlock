@@ -52,7 +52,8 @@ module Token : sig
 
       include FormattableIntf.SMono with type t := t
 
-      val init: base:Source.Cursor.t -> past:Source.Cursor.t -> description:string -> t
+      val of_source: source:Source.Slice.t -> description:string -> t
+      val of_cursors: base:Source.Cursor.t -> past:Source.Cursor.t -> description:string -> t
       val source: t -> Source.Slice.t
       val description: t -> string
     end
@@ -109,7 +110,6 @@ module Token : sig
     | Tok_external of {source: Source.Slice.t}
     | Tok_false of {source: Source.Slice.t}
     | Tok_fn of {source: Source.Slice.t}
-    | Tok_function of {source: Source.Slice.t}
     | Tok_if of {source: Source.Slice.t}
     | Tok_import of {source: Source.Slice.t}
     | Tok_include of {source: Source.Slice.t}
@@ -149,6 +149,7 @@ module Token : sig
     (* Punctuation. *)
     | Tok_tilde of {source: Source.Slice.t}
     | Tok_qmark of {source: Source.Slice.t}
+    | Tok_plus of {source: Source.Slice.t}
     | Tok_minus of {source: Source.Slice.t}
     | Tok_lt of {source: Source.Slice.t}
     | Tok_lt_eq of {source: Source.Slice.t}
@@ -178,6 +179,7 @@ module Token : sig
     | Tok_tick of {source: Source.Slice.t}
     | Tok_caret of {source: Source.Slice.t}
     | Tok_amp of {source: Source.Slice.t}
+    | Tok_amp_amp of {source: Source.Slice.t}
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
@@ -196,6 +198,7 @@ module Token : sig
     | Tok_cident of {source: Source.Slice.t; cident: string}
     | Tok_codepoint of {source: Source.Slice.t; codepoint: codepoint Rendition.t}
     | Tok_rstring of {source: Source.Slice.t; rstring: string Rendition.t}
+    | Tok_qstring of {source: Source.Slice.t; qstring: string Rendition.t}
     | Tok_istring of {source: Source.Slice.t; istring: string Rendition.t}
     | Tok_fstring_lditto of {source: Source.Slice.t}
     | Tok_fstring_interpolated of {source: Source.Slice.t; fstring_interpolated: string Rendition.t}
@@ -227,6 +230,7 @@ module Token : sig
     | Tok_i16 of {source: Source.Slice.t; i16: i16 Rendition.t}
     | Tok_u32 of {source: Source.Slice.t; u32: u32 Rendition.t}
     | Tok_i32 of {source: Source.Slice.t; i32: i32 Rendition.t}
+    | Tok_long of {source: Source.Slice.t; long: u64 Rendition.t}
     | Tok_u64 of {source: Source.Slice.t; u64: u64 Rendition.t}
     | Tok_i64 of {source: Source.Slice.t; i64: i64 Rendition.t}
     | Tok_u128 of {source: Source.Slice.t; u128: u128 Rendition.t}
