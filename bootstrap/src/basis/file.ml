@@ -28,17 +28,17 @@ let bytes_of_slice slice =
     Char.chr (Uns.trunc_to_int (U8.extend_to_uns (Array.get (base + (Int64.of_int i)) container)))
   )
 
-external stdin_inner: unit -> t = "hm_basis_file_stdin_inner"
+external stdin_inner: unit -> t = "hemlock_basis_file_stdin_inner"
 
 let stdin =
   stdin_inner ()
 
-external stdout_inner: unit -> t = "hm_basis_file_stdout_inner"
+external stdout_inner: unit -> t = "hemlock_basis_file_stdout_inner"
 
 let stdout =
   stdout_inner ()
 
-external stderr_inner: unit -> t = "hm_basis_file_stderr_inner"
+external stderr_inner: unit -> t = "hemlock_basis_file_stderr_inner"
 
 let stderr =
   stderr_inner ()
@@ -46,8 +46,8 @@ let stderr =
 let fd t =
   t
 
-external user_data_decref: uns -> unit = "hm_basis_executor_user_data_decref"
-external complete_inner: uns -> sint = "hm_basis_executor_complete_inner"
+external user_data_decref: uns -> unit = "hemlock_basis_executor_user_data_decref"
+external complete_inner: uns -> sint = "hemlock_basis_executor_complete_inner"
 
 let register_user_data_finalizer user_data =
   match user_data = 0L with
@@ -62,7 +62,7 @@ module Open = struct
   type t = uns
 
   external submit_inner: Flag.t -> uns -> Stdlib.Bytes.t -> (sint * t) =
-    "hm_basis_file_open_submit_inner"
+    "hemlock_basis_file_open_submit_inner"
 
   let submit ?(flag=Flag.R_O) ?(mode=0o660L) path =
     let path_bytes = bytes_of_slice (Path.to_bytes path) in
@@ -101,7 +101,7 @@ module Close = struct
   type file = t
   type t = uns
 
-  external submit_inner: file -> (sint * t) = "hm_basis_file_close_submit_inner"
+  external submit_inner: file -> (sint * t) = "hemlock_basis_file_close_submit_inner"
 
   let submit file =
     let value, t = submit_inner file in
@@ -145,7 +145,7 @@ module Read = struct
 
   let default_n = 1024L
 
-  external submit_inner: uns -> file -> (sint * inner) = "hm_basis_file_read_submit_inner"
+  external submit_inner: uns -> file -> (sint * inner) = "hemlock_basis_file_read_submit_inner"
 
   let submit ?n ?buffer file =
     let n, buffer = begin
@@ -174,7 +174,7 @@ module Read = struct
     | Ok t -> t
 
   external complete_inner: Stdlib.Bytes.t -> inner -> sint =
-    "hm_basis_file_read_complete_inner"
+    "hemlock_basis_file_read_complete_inner"
 
   let complete t =
     let base = Bytes.(Cursor.index (Slice.base t.buffer)) in
@@ -215,7 +215,7 @@ module Write = struct
   }
 
   external submit_inner: Stdlib.Bytes.t -> file -> (sint * inner) =
-    "hm_basis_file_write_submit_inner"
+    "hemlock_basis_file_write_submit_inner"
 
   let submit buffer file =
     let bytes = bytes_of_slice buffer in
@@ -285,19 +285,19 @@ let seek_hlt_base inner rel_off t =
       halt (Errno.to_string error)
     end
 
-external seek_inner: sint -> t -> sint = "hm_basis_file_seek_inner"
+external seek_inner: sint -> t -> sint = "hemlock_basis_file_seek_inner"
 
 let seek = seek_base seek_inner
 
 let seek_hlt = seek_hlt_base seek_inner
 
-external seek_hd_inner: sint -> t -> sint = "hm_basis_file_seek_hd_inner"
+external seek_hd_inner: sint -> t -> sint = "hemlock_basis_file_seek_hd_inner"
 
 let seek_hd = seek_base seek_hd_inner
 
 let seek_hd_hlt = seek_hlt_base seek_hd_inner
 
-external seek_tl_inner: sint -> t -> sint = "hm_basis_file_seek_tl_inner"
+external seek_tl_inner: sint -> t -> sint = "hemlock_basis_file_seek_tl_inner"
 
 let seek_tl = seek_base seek_tl_inner
 
@@ -458,7 +458,7 @@ module Fmt = struct
     ()
 end
 
-external setup_inner: unit -> sint = "hm_basis_executor_setup_inner"
+external setup_inner: unit -> sint = "hemlock_basis_executor_setup_inner"
 
 let () = begin
   match setup_inner () = 0L with
@@ -466,7 +466,7 @@ let () = begin
   | true -> ()
 end
 
-external teardown_inner: unit -> unit = "hm_basis_executor_teardown_inner"
+external teardown_inner: unit -> unit = "hemlock_basis_executor_teardown_inner"
 
 let () = Stdlib.at_exit (fun () ->
   let _ = Fmt.teardown () in

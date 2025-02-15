@@ -31,22 +31,22 @@ int flags_of_hemlock_file_flag[] = {
 };
 
 CAMLprim value
-hm_basis_file_stdin_inner(value a_unit) {
+hemlock_basis_file_stdin_inner(value a_unit) {
     return caml_copy_int64(STDIN_FILENO);
 }
 
 CAMLprim value
-hm_basis_file_stdout_inner(value a_unit) {
+hemlock_basis_file_stdout_inner(value a_unit) {
     return caml_copy_int64(STDOUT_FILENO);
 }
 
 CAMLprim value
-hm_basis_file_stderr_inner(value a_unit) {
+hemlock_basis_file_stderr_inner(value a_unit) {
     return caml_copy_int64(STDERR_FILENO);
 }
 
 CAMLprim value
-hm_basis_file_write_inner(value a_bytes, value a_fd) {
+hemlock_basis_file_write_inner(value a_bytes, value a_fd) {
     uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
     size_t n = caml_string_length(a_bytes);
     int fd = Int64_val(a_fd);
@@ -54,39 +54,39 @@ hm_basis_file_write_inner(value a_bytes, value a_fd) {
     assert(n > 0);
     int result = write(fd, bytes, n);
 
-    return hm_basis_executor_finalize_result(result);
+    return hemlock_basis_executor_finalize_result(result);
 }
 
 CAMLprim value
-hm_basis_file_seek_inner(value a_i, value a_fd) {
+hemlock_basis_file_seek_inner(value a_i, value a_fd) {
     size_t i = Int64_val(a_i);
     int fd = Int64_val(a_fd);
 
-    return hm_basis_executor_finalize_result(lseek(fd, i, SEEK_CUR));
+    return hemlock_basis_executor_finalize_result(lseek(fd, i, SEEK_CUR));
 }
 
 CAMLprim value
-hm_basis_file_seek_hd_inner(value a_i, value a_fd) {
+hemlock_basis_file_seek_hd_inner(value a_i, value a_fd) {
     size_t i = Int64_val(a_i);
     int fd = Int64_val(a_fd);
 
-    return hm_basis_executor_finalize_result(lseek(fd, i, SEEK_SET));
+    return hemlock_basis_executor_finalize_result(lseek(fd, i, SEEK_SET));
 }
 
 CAMLprim value
-hm_basis_file_seek_tl_inner(value a_i, value a_fd) {
+hemlock_basis_file_seek_tl_inner(value a_i, value a_fd) {
     size_t i = Int64_val(a_i);
     int fd = Int64_val(a_fd);
 
-    return hm_basis_executor_finalize_result(lseek(fd, i, SEEK_END));
+    return hemlock_basis_executor_finalize_result(lseek(fd, i, SEEK_END));
 }
 
-// hm_basis_file_read_complete_inner: !&Stdlib.Bytes.t -> Basis.File.Read.inner >{os}-> int
+// hemlock_basis_file_read_complete_inner: !&Stdlib.Bytes.t -> Basis.File.Read.inner >{os}-> int
 CAMLprim value
-hm_basis_file_read_complete_inner(value a_bytes, value a_user_data) {
-    hm_user_data_t *user_data = (hm_user_data_t *)Int64_val(a_user_data);
+hemlock_basis_file_read_complete_inner(value a_bytes, value a_user_data) {
+    hemlock_user_data_t *user_data = (hemlock_user_data_t *)Int64_val(a_user_data);
 
-    int64_t res = hm_ioring_user_data_complete(user_data, &hm_executor_get()->ioring);
+    int64_t res = hemlock_ioring_user_data_complete(user_data, &hemlock_executor_get()->ioring);
 
     if (res >= 0) {
         uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
@@ -96,10 +96,10 @@ hm_basis_file_read_complete_inner(value a_bytes, value a_user_data) {
     return caml_copy_int64(res);
 }
 
-// hm_basis_file_open_submit_inner: Basis.File.Flag.t -> uns -> Stdlib.Bytes.t >{os}->
+// hemlock_basis_file_open_submit_inner: Basis.File.Flag.t -> uns -> Stdlib.Bytes.t >{os}->
 //   (int * &File.Open.t)
 CAMLprim value
-hm_basis_file_open_submit_inner(value a_flag, value a_mode, value a_bytes) {
+hemlock_basis_file_open_submit_inner(value a_flag, value a_mode, value a_bytes) {
     size_t flag = Long_val(a_flag);
     size_t mode = Int64_val(a_mode);
     uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
@@ -112,52 +112,59 @@ hm_basis_file_open_submit_inner(value a_flag, value a_mode, value a_bytes) {
     memcpy(pathname, bytes, sizeof(uint8_t) * n);
     pathname[n] = '\0';
 
-    hm_opt_error_t oe = HM_OE_NONE;
+    hemlock_opt_error_t oe = HEMLOCK_OE_NONE;
 
-    hm_user_data_t *user_data = NULL;
-    HM_OE(oe, hm_ioring_open_submit(&user_data, pathname, flags, mode, &hm_executor_get()->ioring));
+    hemlock_user_data_t *user_data = NULL;
+    HEMLOCK_OE(
+        oe, 
+        hemlock_ioring_open_submit(
+            &user_data, pathname, flags, mode, &hemlock_executor_get()->ioring
+        )
+    );
 
 LABEL_OUT:
-    return hm_basis_executor_submit_out(oe, user_data);
+    return hemlock_basis_executor_submit_out(oe, user_data);
 }
 
-// hm_basis_file_close_submit_inner: Basis.File.t >{os}-> (int * &Basis.File.Close.t)
+// hemlock_basis_file_close_submit_inner: Basis.File.t >{os}-> (int * &Basis.File.Close.t)
 CAMLprim value
-hm_basis_file_close_submit_inner(value a_fd) {
+hemlock_basis_file_close_submit_inner(value a_fd) {
     int fd = Int64_val(a_fd);
 
-    hm_opt_error_t oe = HM_OE_NONE;
+    hemlock_opt_error_t oe = HEMLOCK_OE_NONE;
 
-    hm_user_data_t *user_data = NULL;
-    HM_OE(oe, hm_ioring_close_submit(&user_data, fd, &hm_executor_get()->ioring));
+    hemlock_user_data_t *user_data = NULL;
+    HEMLOCK_OE(oe, hemlock_ioring_close_submit(&user_data, fd, &hemlock_executor_get()->ioring));
 
 LABEL_OUT:
-    return hm_basis_executor_submit_out(oe, user_data);
+    return hemlock_basis_executor_submit_out(oe, user_data);
 }
 
-// hm_basis_file_read_submit_inner: uns -> Basis.File.t >{os}-> (int * &Basis.File.Read.inner)
+// hemlock_basis_file_read_submit_inner: uns -> Basis.File.t >{os}-> (int * &Basis.File.Read.inner)
 CAMLprim value
-hm_basis_file_read_submit_inner(value a_n, value a_fd) {
+hemlock_basis_file_read_submit_inner(value a_n, value a_fd) {
     uint64_t n = Int64_val(a_n);
     int fd = Int64_val(a_fd);
 
     uint8_t *buffer = (uint8_t *)malloc(sizeof(uint8_t) * n);
     assert(buffer != NULL);
 
-    hm_opt_error_t oe = HM_OE_NONE;
+    hemlock_opt_error_t oe = HEMLOCK_OE_NONE;
 
-    hm_user_data_t *user_data = NULL;
-    HM_OE(oe, hm_ioring_read_submit(&user_data, fd, buffer, n, &hm_executor_get()->ioring));
+    hemlock_user_data_t *user_data = NULL;
+    HEMLOCK_OE(
+        oe, hemlock_ioring_read_submit(&user_data, fd, buffer, n, &hemlock_executor_get()->ioring)
+    );
 
 LABEL_OUT:
-    return hm_basis_executor_submit_out(oe, user_data);
+    return hemlock_basis_executor_submit_out(oe, user_data);
 }
 
-// hm_basis_file_write_submit_inner: Stdlib.Bytes.t -> Basis.File.t >{os}->
+// hemlock_basis_file_write_submit_inner: Stdlib.Bytes.t -> Basis.File.t >{os}->
 //   (int * &Basis.File.Write.inner)
 CAMLprim value
-hm_basis_file_write_submit_inner(value a_bytes, value a_fd) {
-    hm_opt_error_t oe = HM_OE_NONE;
+hemlock_basis_file_write_submit_inner(value a_bytes, value a_fd) {
+    hemlock_opt_error_t oe = HEMLOCK_OE_NONE;
     uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
     size_t n = caml_string_length(a_bytes);
     int fd = Int64_val(a_fd);
@@ -166,8 +173,10 @@ hm_basis_file_write_submit_inner(value a_bytes, value a_fd) {
     assert(buffer != NULL);
     memcpy(buffer, bytes, n);
 
-    hm_user_data_t *user_data = NULL;
-    HM_OE(oe, hm_ioring_write_submit(&user_data, fd, buffer, n, &hm_executor_get()->ioring));
+    hemlock_user_data_t *user_data = NULL;
+    HEMLOCK_OE(
+        oe, hemlock_ioring_write_submit(&user_data, fd, buffer, n, &hemlock_executor_get()->ioring)
+    );
 
 LABEL_OUT:
     value a_ret = caml_alloc_tuple(2);

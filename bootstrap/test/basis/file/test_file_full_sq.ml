@@ -1,9 +1,9 @@
 open Basis.Rudiments
 open Basis
 
-external nop_submit: unit -> (sint * uns) = "hm_basis_executor_nop_submit_inner"
-external sqring_pp: File.t -> unit = "hm_basis_executor_sqring_pp"
-external user_data_decref: uns -> unit = "hm_basis_executor_user_data_decref"
+external nop_submit: unit -> (sint * uns) = "hemlock_basis_executor_nop_submit_inner"
+external sqring_pp: File.t -> unit = "hemlock_basis_executor_sqring_pp"
+external user_data_decref: uns -> unit = "hemlock_basis_executor_user_data_decref"
 
 let () =
   let submit_nop () = begin
