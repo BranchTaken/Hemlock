@@ -229,9 +229,10 @@ type nonterm_rec =
   and nonterm_c_impl_item =
   | CImplItem
   and nonterm_c_impl =
-  | CImpl
+  | CImplItemCimpl cImplItem cImpl
+  | CImplEpsilon
   and nonterm_hm =
-  | Hm
+  | Hm cImpl
 
 type xxx =
   | Xxx
@@ -663,21 +664,23 @@ include hocc
       | "(" Expr ":" TypeExpr ")"
       | "(|" Expr ":" TypeExpr "|)"
       | Exprs prec pExpr_Exprs
+
       | ModulePathOrConstr Expr prec pLazy
       | Expr "::" Expr prec pColonOp
       | "[" Expr ExprListTl "]"
       | "[|" Expr ExprListTl "|]"
       | "{" Field FieldListTl "}"
       | "{" Expr "with" Field FieldListTl "}"
-      | Expr Arguments prec pExpr_Expr_Arguments
+#      | Expr Arguments prec pExpr_Expr_Arguments # XXX IELR bog (~20X).
+
       | PrefixOp Expr prec pExpr_PrefixOp_Expr
-      | Expr InfixOp Expr prec pInfixOp
+#      | Expr InfixOp Expr prec pInfixOp # XXX IELR bog (~4X).
       | Expr "." Field
       | "if" Expr "then" Expr "else" Expr prec pIf
-#      | Expr ";" Expr
-      | "match" Expr "with" PatternMatch
-#      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
-#      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
+##      | Expr ";" Expr
+#      | "match" Expr "with" PatternMatch # XXX IELR bog (~2X).
+##      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
+##      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
       -> Xxx
 
     nonterm Exprs of xxx prec pComma ::=
@@ -783,13 +786,13 @@ include hocc
       -> CImplItem
 
     nonterm CImpl of nonterm_c_impl ::=
-      | CImplItem LINE_DELIM CImpl
-      | CImplItem ";" CImpl
-      -> CImpl
-      | epsilon -> CImpl
+      | cImplItem:CImplItem LINE_DELIM cImpl:CImpl
+      | cImplItem:CImplItem ";" cImpl:CImpl
+      -> CImplItem cImplItem cImpl
+      | epsilon -> CImplEpsilon
 
     start Hmi of xxx ::=
       | CIntf END_OF_INPUT -> Xxx
 
     start Hm of nonterm_hm ::=
-      | CImpl END_OF_INPUT -> Hm
+      | cImpl:CImpl END_OF_INPUT -> Hm cImpl
