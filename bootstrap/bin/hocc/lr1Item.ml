@@ -50,7 +50,9 @@ include T
 include Identifiable.Make(T)
 
 let init ~lr0item ~follow =
-  assert (not (Ordset.is_empty follow));
+  (* NB: The follow set is always non-empty for well-formed grammars, but nonterms with empty first
+   * sets (one form of unreachable nonterms) can result in empty follow sets. Make no attempt here
+   * to prohibit empty follow sets. *)
   {lr0item; follow}
 
 (* The concatenation of the RHS symbols to the right of the dot and the follow set comprise an
