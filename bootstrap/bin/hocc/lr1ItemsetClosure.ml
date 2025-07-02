@@ -354,16 +354,19 @@ let add_lr1itemset symbols lr1itemset t =
         let lr1itemset' = Lr1Itemset.remove lr1item lr1itemset in
         match Uns.(dot < Array.length rhs_indexes) with
         | false -> begin
-            (* X :: a·Ab *)
+            (* X ::= a· *)
             f symbols lr1itemset' t
           end
         | true -> begin
-            (* X ::= a· *)
             let rhs_symbol_index = Array.get dot rhs_indexes in
             let rhs_symbol = Symbols.symbol_of_symbol_index rhs_symbol_index symbols in
             match Symbol.is_nonterm rhs_symbol with
-            | false -> f symbols lr1itemset' t
+            | false -> begin
+                (* X ::= a·b *)
+                f symbols lr1itemset' t
+              end
             | true -> begin
+                (* X ::= a·Ab *)
                 let lhs = rhs_symbol in
                 let follow' = Lr1Item.first symbols
                     (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot)) ~follow) in
