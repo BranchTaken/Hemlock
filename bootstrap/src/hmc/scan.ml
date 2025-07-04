@@ -331,6 +331,10 @@ module Token = struct
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
 
+    (* Composite. *)
+    | Tok_tilde_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+    | Tok_qmark_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+
     (* Miscellaneous. *)
     | Tok_source_directive of
         {source: Source.Slice.t; source_directive: source_directive Rendition.t}
@@ -586,6 +590,24 @@ module Token = struct
           |> Source.Slice.pp source
           |> Fmt.fmt "; dot_op="
           |> String.pp dot_op
+          |> Fmt.fmt "}"
+        end
+
+      (* Composite. *)
+      | Tok_tilde_uident_colon {source; uident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_tilde_uident_colon {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; uident="
+          |> Rendition.pp String.pp uident
+          |> Fmt.fmt "}"
+        end
+      | Tok_qmark_uident_colon {source; uident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_qmark_uident_colon {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; uident="
+          |> Rendition.pp String.pp uident
           |> Fmt.fmt "}"
         end
 
@@ -1135,6 +1157,8 @@ module Token = struct
     | Tok_xmark {source}
     | Tok_arrow {source}
     | Tok_carrow {source}
+    | Tok_tilde_uident_colon {source; _}
+    | Tok_qmark_uident_colon {source; _}
     | Tok_source_directive {source; _}
     | Tok_line_delim {source}
     | Tok_indent {source; _}
@@ -1212,6 +1236,10 @@ module Token = struct
     | Tok_rbrack _ | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _
     | Tok_larray _ | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _
     | Tok_amp_amp _ | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
+    (* Composite *)
+    | Tok_tilde_uident_colon {uident=(Constant _); _}
+    | Tok_qmark_uident_colon {uident=(Constant _); _}
+      -> []
     (* Miscellaneous. *)
     | Tok_source_directive {source_directive=(Constant _); _}
     | Tok_line_delim _
@@ -1262,6 +1290,8 @@ module Token = struct
     | Tok_end_of_input _ | Tok_misaligned _
       -> []
     (* Malformations. *)
+    | Tok_tilde_uident_colon {uident=(Malformed mals); _}
+    | Tok_qmark_uident_colon {uident=(Malformed mals); _}
     | Tok_source_directive {source_directive=(Malformed mals); _}
     | Tok_indent {indent=(Malformed mals); _}
     | Tok_dedent {dedent=(Malformed mals); _}

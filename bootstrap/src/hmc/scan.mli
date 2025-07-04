@@ -184,6 +184,10 @@ module Token : sig
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
 
+    (* Composite. *)
+    | Tok_tilde_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+    | Tok_qmark_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+
     (* Miscellaneous. *)
     | Tok_source_directive of
         {source: Source.Slice.t; source_directive: source_directive Rendition.t}

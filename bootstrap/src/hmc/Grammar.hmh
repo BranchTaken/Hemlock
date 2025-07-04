@@ -155,6 +155,8 @@ type token_bar_op = {source: Source.Slice.t; bar_op: string}
 type token_colon_op = {source: Source.Slice.t; colon_op: string}
 type token_dot_op = {source: Source.Slice.t; dot_op: string}
 
+type token_label = {source: Source.Slice.t; uident: string Rendition.t}
+
 type token_source_directive =
     {source: Source.Slice.t; source_directive: source_directive Rendition.t}
 type token_line_delim = {source: Source.Slice.t}
@@ -229,7 +231,7 @@ type nonterm_rec =
   and nonterm_c_impl_item =
   | CImplItem
   and nonterm_c_impl =
-  | CImplItemCimpl cImplItem cImpl
+  | CImplItemCimpl cImpl cImplItem
   | CImplEpsilon
   and nonterm_hm =
   | Hm cImpl
@@ -239,45 +241,45 @@ type xxx =
 
 include hocc
     # Precedences.
-    right pArrow
 
-    neutral pExpr_Constr_Expr
-    neutral pExpr_Expr_Arguments
-
-    neutral pExpr_Constant
-    neutral pArgument_Expr < pExpr_Constant
-    neutral pArgument_Cident
-    neutral pExpr_PrefixOp_Expr
     neutral pPatternMatch
-    neutral pPrefixOp_Sign
-    neutral pField_Uident
 
-    neutral pAs
-    neutral pLgroup < pExpr_Expr_Arguments, pArgument_Expr, pArgument_Cident, pExpr_PrefixOp_Expr,
-      pPatternMatch
-    left pLazy < pAs, pLgroup
-    left pTilde < pLazy, pArgument_Expr
-    right pStarStarOp < pTilde
-    left pStarOp < pStarStarOp
-    left pPlusOp < pStarOp
-    right pColonOp < pPlusOp, pField_Uident
-    right pAtOp < pColonOp
-    left pEqOp < pAtOp
+    neutral pConstant, pLgroup
+    neutral pDot < pConstant
+    neutral pLazy < pDot
+    neutral pApplication < pLazy
+    right pPlusPrefix, pMinusPrefix, pTildeOp, pQmarkOp, pXmark, pAmp < pApplication
+    neutral pTickPrefix, pCaretPrefix, pGtPrefix < pPlusPrefix
+    right pStarStarOp < pTickPrefix
+    left pStarOp, pSlashOp, pPctOp < pStarStarOp
+    left pPlusOp, pMinusOp < pStarOp
+    right pColonOp < pPlusOp
+    right pAtOp, pCaretOp < pColonOp
+    left pEqOp, pLtOp, pGtOp, pBarOp, pDollarOp, pDotOp < pAtOp
     right pAnd < pEqOp
     right pOr < pAnd
-    neutral pInfixOp < pOr, pPrefixOp_Sign
-    left pConstant < pInfixOp
-    left pComma < pOr, pConstant, pColonOp, pExpr_Constr_Expr
-    right pColonEq < pComma
-    left pIf < pColonEq
-    right pSemi < pIf
-    neutral pDotDot < pSemi
+    right pArrow < pOr
+    left pComma < pArrow
+    left pBar < pComma
+    neutral pAs < pBar
+    right pColonEq < pAs
+    neutral pElse < pColonEq
+    neutral pThen < pElse
+    neutral pWith < pThen
+    neutral pLet < pWith
+    right pSemi, pLineDelim < pLet
+    neutral pIn < pSemi
+    neutral pDotDot < pIn
     neutral pImport < pDotDot
     neutral pOpen < pImport
-    neutral pConceal, pExpose, pLet, pMatch < pOpen
+    right pConceal, pExpose, pMatch, pIf < pOpen
 
     neutral pExpr_Exprs < pComma
     neutral pPattern_Constr < pAs, pComma, pColonOp, pEqOp
+    neutral pField_Uident < pEqOp
+    neutral pExprListTlEpsilon < pSemi
+    neutral pArgument_Expr < pIf
+    neutral pExpr_Expr_Arguments < pIf
 
     # Keywords.
     token AND "and" of token_simple prec pAnd
@@ -289,7 +291,7 @@ include hocc
     token EXPOSE "expose" of token_simple prec pExpose
     token EXTERNAL "external" of token_simple
     token FALSE "false" of token_simple prec pConstant
-    token FN "fn" of token_simple prec pLet
+    token FN "fn" of token_simple
     token IF "if" of token_simple prec pIf
     token IMPORT "import" of token_simple prec pImport
     token INCLUDE "include" of token_simple
@@ -309,38 +311,38 @@ include hocc
 
     # Operators.
     # Prefix.
-    token TILDE_OP of token_tilde_op prec pTilde
-    token QMARK_OP of token_qmark_op prec pTilde
+    token TILDE_OP of token_tilde_op prec pTildeOp
+    token QMARK_OP of token_qmark_op prec pQmarkOp
     # Infix.
     token STAR_STAR_OP of token_star_star_op prec pStarStarOp
     token STAR_OP of token_star_op prec pStarOp
-    token SLASH_OP of token_slash_op prec pStarOp
-    token PCT_OP of token_pct_op prec pStarOp
+    token SLASH_OP of token_slash_op prec pSlashOp
+    token PCT_OP of token_pct_op prec pPctOp
     token PLUS_OP of token_plus_op prec pPlusOp
-    token MINUS_OP of token_minus_op prec pPlusOp
+    token MINUS_OP of token_minus_op prec pMinusOp
     token AT_OP of token_at_op prec pAtOp
-    token CARET_OP of token_caret_op prec pAtOp
-    token DOLLAR_OP of token_dollar_op prec pEqOp
-    token LT_OP of token_lt_op prec pEqOp
+    token CARET_OP of token_caret_op prec pCaretOp
+    token DOLLAR_OP of token_dollar_op prec pDollarOp
+    token LT_OP of token_lt_op prec pLtOp
     token EQ_OP of token_eq_op prec pEqOp
-    token GT_OP of token_gt_op prec pEqOp
-    token BAR_OP of token_bar_op prec pEqOp
+    token GT_OP of token_gt_op prec pGtOp
+    token BAR_OP of token_bar_op prec pBarOp
     token COLON_OP of token_colon_op prec pColonOp
-    token DOT_OP of token_dot_op prec pEqOp
+    token DOT_OP of token_dot_op prec pDotOp
 
     # Punctuation.
-    token TILDE "~" of token_simple prec pTilde
-    token QMARK "?" of token_simple prec pTilde
+    token TILDE "~" of token_simple prec pTildeOp
+    token QMARK "?" of token_simple prec pQmarkOp
     token PLUS "+" of token_simple prec pPlusOp
-    token MINUS "-" of token_simple prec pPlusOp
-    token LT "<" of token_simple prec pEqOp
-    token LT_EQ "<=" of token_simple prec pEqOp
+    token MINUS "-" of token_simple prec pMinusOp
+    token LT "<" of token_simple prec pLtOp
+    token LT_EQ "<=" of token_simple prec pLtOp
     token EQ "=" of token_simple prec pEqOp
-    token LT_GT "<>" of token_simple prec pEqOp
+    token LT_GT "<>" of token_simple prec pLtOp
     token GT_EQ ">=" of token_simple prec pEqOp
-    token GT ">" of token_simple prec pEqOp
+    token GT ">" of token_simple prec pGtOp
     token COMMA "," of token_simple prec pComma
-    token DOT "." of token_simple prec pEqOp
+    token DOT "." of token_simple prec pDotOp
     token DOT_DOT ".." of token_simple prec pDotDot
     token SEMI ";" of token_simple prec pSemi
     token COLON ":" of token_simple prec pColonOp
@@ -352,23 +354,27 @@ include hocc
     token RBRACK "]" of token_simple
     token LCURLY "{" of token_simple prec pLgroup
     token RCURLY "}" of token_simple
-    token BAR "|" of token_simple prec pEqOp
+    token BAR "|" of token_simple prec pBar
     token LCAPTURE "(|" of token_simple prec pLgroup
     token RCAPTURE "|)" of token_simple
     token LARRAY "[|" of token_simple prec pLgroup
     token RARRAY "|]" of token_simple
     token BSLASH "\\" of token_simple
     token TICK "'" of token_simple
-    token CARET "^" of token_simple prec pAtOp
-    token AMP "&" of token_simple
+    token CARET "^" of token_simple prec pCaretOp
+    token AMP "&" of token_simple prec pAmp
     token AMP_AMP "&&" of token_simple # OCaml-specefic.
-    token XMARK "!" of token_simple prec pTilde
+    token XMARK "!" of token_simple prec pXmark
     token ARROW "->" of token_simple prec pArrow
     token CARROW "~->" of token_simple prec pArrow
 
+    # Composite.
+    token TILDE_UIDENT_COLON of token_label prec pColonOp
+    token QMARK_UIDENT_COLON of token_label prec pColonOp
+
     # Miscellaneous.
     token SOURCE_DIRECTIVE of token_source_directive
-    token LINE_DELIM of token_line_delim
+    token LINE_DELIM of token_line_delim prec pLineDelim
     token INDENT of token_indent prec pLgroup
     token DEDENT of token_dedent
     token WHITESPACE of token_whitespace
@@ -450,19 +456,7 @@ include hocc
       | "type" Rec CIDENT TypeParams ":" CIDENT TypeArgs "=" "{" (* XXX *) "}"
       -> CModuleDef
 
-    nonterm PrefixOp of xxx ::=
-      | TILDE_OP prec pTilde
-      | QMARK_OP prec pTilde
-      | "~" prec pTilde
-      | "?" prec pTilde
-      | "+" prec pPrefixOp_Sign
-      | "-" prec pPrefixOp_Sign
-      | "!" prec pTilde
-      -> Xxx
-
-    nonterm InfixOp of xxx prec pInfixOp ::=
-      | "and"
-      | "or"
+    nonterm OperatorName of xxx ::=
       | STAR_STAR_OP
       | STAR_OP
       | SLASH_OP
@@ -490,10 +484,6 @@ include hocc
       | "^"
       -> Xxx
 
-    nonterm OperatorName of xxx ::=
-      | InfixOp
-      -> Xxx
-
     nonterm ValueName of xxx ::=
       | UIDENT
       | "\\" OperatorName
@@ -508,7 +498,7 @@ include hocc
       -> Xxx
 
     # Module path and variant constructor syntax are identical.
-    nonterm ModulePathOrConstr of xxx prec pLazy ::=
+    nonterm ModulePathOrConstr of xxx ::=
       | ModulePathOrConstr "." CIDENT
       | CIDENT
       -> Xxx
@@ -551,7 +541,6 @@ include hocc
       | I512
       | NAT
       | ZINT
-      | ModulePathOrConstr
       -> Xxx
 
     nonterm FstringPad of xxx ::=
@@ -655,8 +644,48 @@ include hocc
       | TypeExpr "," TypeExpr
       -> Xxx
 
+    nonterm PrefixExpr of xxx ::=
+      | TILDE_OP Expr prec pTildeOp
+      | QMARK_OP Expr prec pQmarkOp
+      | "~" Expr prec pTildeOp
+      | "?" Expr prec pQmarkOp
+      | "+" Expr prec pPlusPrefix
+      | "-" Expr prec pMinusPrefix
+      | "!" Expr prec pXmark
+      -> Xxx
+
+    nonterm InfixExpr of xxx ::=
+      | Expr "and" Expr prec pAnd
+      | Expr "or" Expr prec pOr
+      | Expr STAR_STAR_OP Expr prec pStarStarOp
+      | Expr STAR_OP Expr prec pStarOp
+      | Expr SLASH_OP Expr prec pSlashOp
+      | Expr PCT_OP Expr prec pPctOp
+      | Expr PLUS_OP Expr prec pPlusOp
+      | Expr MINUS_OP Expr prec pMinusOp
+      | Expr AT_OP Expr prec pAtOp
+      | Expr CARET_OP Expr prec pCaretOp
+      | Expr DOLLAR_OP Expr prec pDollarOp
+      | Expr LT_OP Expr prec pLtOp
+      | Expr EQ_OP Expr prec pEqOp
+      | Expr GT_OP Expr prec pGtOp
+      | Expr BAR_OP Expr prec pBarOp
+      | Expr COLON_OP Expr prec pColonOp
+      | Expr DOT_OP Expr prec pDotOp
+      | Expr "+" Expr prec pPlusOp
+      | Expr "-" Expr prec pMinusOp
+      | Expr "<" Expr prec pLtOp
+      | Expr "<=" Expr prec pLtOp
+      | Expr "=" Expr prec pEqOp
+      | Expr "<>" Expr prec pLtOp
+      | Expr ">=" Expr prec pGtOp
+      | Expr ">" Expr prec pGtOp
+      | Expr "^" Expr prec pCaretOp
+      -> Xxx
+
     nonterm Expr of xxx ::=
-      | Constant prec pExpr_Constant
+      | Constant
+      | ModulePathOrConstr prec pApplication
       | Fstring
       | "(" Expr ")"
       | "(|" Expr "|)"
@@ -671,14 +700,14 @@ include hocc
       | "[|" Expr ExprListTl "|]"
       | "{" Field FieldListTl "}"
       | "{" Expr "with" Field FieldListTl "}"
-#      | Expr Arguments prec pExpr_Expr_Arguments # XXX IELR bog (~20X).
+      | Expr Arguments prec pExpr_Expr_Arguments # XXX IELR bog (~10X).
 
-      | PrefixOp Expr prec pExpr_PrefixOp_Expr
-#      | Expr InfixOp Expr prec pInfixOp # XXX IELR bog (~4X).
+      | PrefixExpr
+      | InfixExpr
       | Expr "." Field
       | "if" Expr "then" Expr "else" Expr prec pIf
-##      | Expr ";" Expr
-#      | "match" Expr "with" PatternMatch # XXX IELR bog (~2X).
+      | Expr ";" Expr prec pSemi
+      | "match" Expr "with" PatternMatch # XXX IELR bog (~2X).
 ##      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
 ##      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
       -> Xxx
@@ -689,10 +718,10 @@ include hocc
       -> Xxx
 
     nonterm ExprListTl of xxx ::=
-      | ExprListTl LINE_DELIM Expr
-      | ExprListTl ";" Expr
-      | ExprListTl ";"
-      | epsilon
+      | ExprListTl LINE_DELIM Expr prec pLineDelim
+      | ExprListTl ";" Expr prec pSemi
+      | ";"
+      | epsilon prec pExprListTlEpsilon
       -> Xxx
 
     nonterm Field of xxx ::=
@@ -711,10 +740,10 @@ include hocc
 
     nonterm Argument of xxx ::=
       | Expr prec pArgument_Expr
-      | "~" CIDENT prec pArgument_Cident
-      | "~" CIDENT ":" Expr prec pArgument_Cident
-      | "?" CIDENT prec pArgument_Cident
-      | "?" CIDENT ":" Expr prec pArgument_Cident
+      | "~" UIDENT prec pTildeOp
+      | TILDE_UIDENT_COLON Expr prec pColonOp
+      | "?" UIDENT prec pQmarkOp
+      | QMARK_UIDENT_COLON Expr prec pColonOp
       -> Xxx
 
     nonterm Arguments of xxx ::=
@@ -722,11 +751,11 @@ include hocc
       | Argument
       -> Xxx
 
-    nonterm PatternMatch of xxx ::=
-      | "|" Pattern "when" Expr "->" Expr prec pPatternMatch
-      | "|" Pattern "->" Expr prec pPatternMatch
-      | Pattern "when" Expr "->" Expr prec pPatternMatch
-      | Pattern "->" Expr prec pPatternMatch
+    nonterm PatternMatch of xxx prec pArrow ::=
+      | "|" Pattern "when" Expr "->" Expr# prec pPatternMatch
+      | "|" Pattern "->" Expr# prec pPatternMatch
+      | Pattern "when" Expr "->" Expr# prec pPatternMatch
+      | Pattern "->" Expr# prec pPatternMatch
       -> Xxx
 
     nonterm PatternMatchTl of xxx ::=
@@ -782,13 +811,13 @@ include hocc
 
     nonterm CImplItem of nonterm_c_impl_item ::=
       | CModuleDef
-      | Expr
+      | Expr prec pSemi
       -> CImplItem
 
     nonterm CImpl of nonterm_c_impl ::=
-      | cImplItem:CImplItem LINE_DELIM cImpl:CImpl
-      | cImplItem:CImplItem ";" cImpl:CImpl
-      -> CImplItem cImplItem cImpl
+      | cImpl:CImpl LINE_DELIM cImplItem:CImplItem
+      | cImpl:CImpl ";" cImplItem:CImplItem
+      -> CImplItem cImpl cImplItem
       | epsilon -> CImplEpsilon
 
     start Hmi of xxx ::=
