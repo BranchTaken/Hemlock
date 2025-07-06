@@ -417,7 +417,7 @@ Tree = {
 
     empty = Empty
 
-    is_empty = function
+    is_empty t = match t with
       | Empty -> true
       | Node _ -> false
 
@@ -427,11 +427,11 @@ Tree = {
     leaf value =
         node empty value empty
 
-    lchild = function
+    lchild t = match t with
       | Empty -> empty
       | Node {lchild; value=_; rchild=_} -> lchild
 
-    root_value_opt = function
+    root_value_opt t = match t with
       | Empty -> None
       | Node {lchild=_; value; rchild=_} -> Some value
 
@@ -442,7 +442,7 @@ Tree = {
 
     root_value = root_value_hlt
 
-    rchild = function
+    rchild t = match t with
       | Empty -> empty
       | Node {lchild=_; value=_; rchild} -> rchild
   }
