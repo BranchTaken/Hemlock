@@ -113,15 +113,21 @@ let amend ~conflict_state_index ~symbol_index ~f t =
     attrib_opt'
   ) t
 
-let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
+let insert_impl attrib_equalish_keys (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
   assert (not (Attrib.is_empty attrib));
   amend ~conflict_state_index ~symbol_index ~f:(function
     | None -> Some attrib
     | Some attrib_prev -> begin
-        assert (Attrib.equal_keys attrib attrib_prev);
-        Some (Attrib.union attrib_prev attrib)
+        assert (attrib_equalish_keys attrib attrib_prev);
+        Some (Attrib.union_remerged attrib_prev attrib)
       end
   ) t
+
+let insert attrib t =
+  insert_impl Attrib.equal_keys attrib t
+
+let insert_remerged attrib t =
+  insert_impl Attrib.remergeable_keys attrib t
 
 let union t0 t1 =
   Ordmap.union ~f:(fun _k attrib0 attrib1 ->
@@ -172,7 +178,7 @@ let diff t0 t1 =
 let remerge1 remergeable_index_map t =
   Ordmap.fold ~init:empty
     ~f:(fun remerged_t (_symbol_index, attrib) ->
-      insert (Attrib.remerge1 remergeable_index_map attrib) remerged_t
+      insert_remerged (Attrib.remerge1 remergeable_index_map attrib) remerged_t
     ) t
 
 let remerge remergeable_index_map t0 t1 =
