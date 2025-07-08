@@ -100,12 +100,12 @@ let get_hlt ~conflict_state_index ~symbol_index t =
   let k = K.{conflict_state_index; symbol_index} in
   Ordmap.get_hlt k t
 
-let amend ~conflict_state_index ~symbol_index ~f t =
+let amend_impl attrib_equalish_keys ~conflict_state_index ~symbol_index ~f t =
   let k = K.{conflict_state_index; symbol_index} in
   Ordmap.amend k ~f:(fun attrib_opt ->
     let attrib_opt' = f attrib_opt in
     let () = match attrib_opt, attrib_opt' with
-      | Some attrib, Some attrib' -> assert (Attrib.equal_keys attrib attrib');
+      | Some attrib, Some attrib' -> assert (attrib_equalish_keys attrib attrib');
       | Some _, None
       | None, Some _
       | None, None -> ()
@@ -113,15 +113,24 @@ let amend ~conflict_state_index ~symbol_index ~f t =
     attrib_opt'
   ) t
 
-let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
+let amend ~conflict_state_index ~symbol_index ~f t =
+  amend_impl Attrib.equal_keys ~conflict_state_index ~symbol_index ~f t
+
+let insert_impl attrib_equalish_keys (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
   assert (not (Attrib.is_empty attrib));
-  amend ~conflict_state_index ~symbol_index ~f:(function
+  amend_impl attrib_equalish_keys ~conflict_state_index ~symbol_index ~f:(function
     | None -> Some attrib
     | Some attrib_prev -> begin
-        assert (Attrib.equal_keys attrib attrib_prev);
-        Some (Attrib.union attrib_prev attrib)
+        assert (attrib_equalish_keys attrib attrib_prev);
+        Some (Attrib.union_remerged attrib_prev attrib)
       end
   ) t
+
+let insert attrib t =
+  insert_impl Attrib.equal_keys attrib t
+
+let insert_remerged attrib t =
+  insert_impl Attrib.remergeable_keys attrib t
 
 let union t0 t1 =
   Ordmap.union ~f:(fun _k attrib0 attrib1 ->
@@ -172,7 +181,7 @@ let diff t0 t1 =
 let remerge1 remergeable_index_map t =
   Ordmap.fold ~init:empty
     ~f:(fun remerged_t (_symbol_index, attrib) ->
-      insert (Attrib.remerge1 remergeable_index_map attrib) remerged_t
+      insert_remerged (Attrib.remerge1 remergeable_index_map attrib) remerged_t
     ) t
 
 let remerge remergeable_index_map t0 t1 =
@@ -183,7 +192,7 @@ let reindex index_map t =
     ~f:(fun reindexed_t (_symbol_index, attrib) ->
       match Attrib.reindex index_map attrib with
       | None -> reindexed_t
-      | Some attrib' -> insert attrib' reindexed_t
+      | Some attrib' -> insert_remerged attrib' reindexed_t
     ) t
 
 let fold_until ~init ~f t =
