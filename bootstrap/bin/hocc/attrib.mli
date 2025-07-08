@@ -21,6 +21,11 @@ val equal_keys: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] have equal ([conflict_state_index],
     [symbol_index], [conflict]) keys. *)
 
+val remergeable_keys: t -> t -> bool
+(** [equal t0 t1] returns true iff the contents of [t0] and [t1] have equal ([conflict_state_index],
+    [symbol_index]) keys. This is a weaker condition than [equal_keys], necessary to allow remerging
+    of functionally equivalent states despite potential attrib differences. *)
+
 val equal: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. The keys must be
     equal. *)
@@ -58,6 +63,10 @@ val is_empty: t -> bool
 val union: t -> t -> t
 (** [union t0 t1] returns an attribution with the union of attribution values in [t0] and [t1]. The
     keys must be equal. *)
+
+val union_remerged: t -> t -> t
+(** [union t0 t1] returns an attribution with the union of attribution values in [t0] and [t1]. The
+    keys must be remergeable. *)
 
 val inter: t -> t -> t
 (** [inter t0 t1] returns an attribution with the intersection of attribution values in [t0] and
