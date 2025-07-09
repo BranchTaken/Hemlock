@@ -37,6 +37,9 @@ val algorithm: t -> algorithm
 val resolve: t -> bool
 (** [resolve t] returns true if conflict resolution is enabled. *)
 
+val remerge: t -> bool
+(** [remerge t] returns true if remerging of equivalent split states is enabled. *)
+
 val hemlock: t -> bool
 (** [hemlock t] returns true if a Hemlock-based parser is to be generated. *)
 

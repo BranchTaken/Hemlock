@@ -1455,7 +1455,7 @@ and init_inner algorithm ~resolve io precs symbols prods callbacks =
   let io, states = states_init io ~resolve symbols prods isocores ~gotonub_of_statenub_goto in
   io, isocores, states
 
-and init algorithm ~resolve io hmh =
+and init algorithm ~resolve ~remerge io hmh =
   let io =
     io.log
     |> Fmt.fmt "hocc: Generating "
@@ -1471,7 +1471,10 @@ and init algorithm ~resolve io hmh =
   let io, precs, symbols, prods, callbacks = hmh_extract io hmh in
   let io, isocores, states = init_inner algorithm ~resolve io precs symbols prods callbacks in
   let io, isocores, states = gc_states io isocores states in
-  let io, _isocores, states = remerge_states io symbols isocores states in
+  let io, _isocores, states = match remerge with
+    | true -> remerge_states io symbols isocores states
+    | false -> io, isocores, states
+  in
   let io = log_unused io precs symbols prods states in
   io, {algorithm; precs; symbols; prods; callbacks; states}
 

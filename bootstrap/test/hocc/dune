@@ -883,3 +883,15 @@
 (rule
  (alias runtest)
  (action (diff Gpic.expected Gpic.out)))
+
+(rule
+ (deps
+  (glob_files Gpic.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Gpic_mno.out (run ./hocc_test %{bin:hocc} Gpic -remerge no -v -a ielr1)))))
+(rule
+ (alias runtest)
+ (action (diff Gpic_mno.expected Gpic_mno.out)))
