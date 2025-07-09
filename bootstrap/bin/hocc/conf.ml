@@ -22,6 +22,7 @@ type t = {
   hocc: bool;
   algorithm: algorithm;
   resolve: bool;
+  remerge: bool;
   hemlock: bool;
   ocaml: bool;
   srcdir_opt: Path.t option;
@@ -29,8 +30,8 @@ type t = {
   dstdir_opt: Path.t option;
 }
 
-let pp {verbose; text; html; hocc; algorithm; resolve; hemlock; ocaml; srcdir_opt; module_opt;
-  dstdir_opt} formatter =
+let pp {verbose; text; html; hocc; algorithm; resolve; remerge; hemlock; ocaml; srcdir_opt;
+  module_opt; dstdir_opt} formatter =
   formatter
   |> Fmt.fmt "{verbose=" |> Bool.pp verbose
   |> Fmt.fmt "; text=" |> Bool.pp text
@@ -38,6 +39,7 @@ let pp {verbose; text; html; hocc; algorithm; resolve; hemlock; ocaml; srcdir_op
   |> Fmt.fmt "; hocc=" |> Bool.pp hocc
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
   |> Fmt.fmt "; resolve=" |> Bool.pp resolve
+  |> Fmt.fmt "; remerge=" |> Bool.pp remerge
   |> Fmt.fmt "; hemlock=" |> Bool.pp hemlock
   |> Fmt.fmt "; ocaml=" |> Bool.pp ocaml
   |> Fmt.fmt "; srcdir_opt=" |> (Option.pp Path.pp) srcdir_opt
@@ -52,6 +54,7 @@ let default = {
   hocc=false;
   algorithm=Lr1;
   resolve=true;
+  remerge=true;
   hemlock=false;
   ocaml=false;
   srcdir_opt=None;
@@ -68,39 +71,42 @@ let usage error =
   |> Fmt.fmt {|hocc usage: hocc <parameters>
 
 Parameters:
-            -h[elp] : Print command usage and exit.
-         -v[erbose] : Print progress information during parser generation.
-       -txt | -text : Write a detailed automoton description in plain text
-                      format to "<dstdir>/hocc/<module>.txt".
-              -html : Write a detailed automoton description in internally
-                      hyperlinked HTML format to "<dstdir>/hocc/<module>.html".
-       -hmh | -hocc : Write a complete grammar specification in hocc format to
-                      "<dstdir>/hocc/<module>.hmh", but with all non-terminal
-                      types and reduction code omitted.
- -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an automoton.
-                      Defaults to lr1.
-                      - lr1: Canonical LR(1) automoton.
-                      - ielr1: Compact LR(1) automoton that recognizes valid
-                        inputs identically to lr1 automotons, even in the
-                        presence of precedence-resolved ambiguities.
-                      - pgm1: Compact LR(1) automoton that recognizes valid
-                        inputs identically to lr1 automotons, provided there
-                        were no precedence-resolved ambiguities in the grammar
-                        specification.
-                      - lalr1: LALR(1) automoton.
--r[esolve] (yes|no) : Control whether conflict resolution is enabled. Defaults
-                      to yes.
-     -hm | -hemlock : Generate a Hemlock-based parser implementation and write
-                      it to "<dstdir>/<module>.hm[i]".
-       -ml | -ocaml : Generate an OCaml-based parser implementation and write it
-                      to "<dstdir>/<module>.ml[i]". This is brittle
-                      functionality intended only for Hemlock bootstrapping.
-       -s[rc] <src> : Path and module name of input source, where inputs match
-                      "<src>.hmh[i]" and "<src>" comprises the source directory
-                      and module name, "[<srcdir>/]<module>".
- -d[stdir] <dstdir> : Path to directory in which to place generated output, such
-                      that output file paths match "<dstdir>/[hocc/]<module>.*".
-                      Defaults to "<srcdir>".
+            -h[elp]   : Print command usage and exit.
+         -v[erbose]   : Print progress information during parser generation.
+       -txt | -text   : Write a detailed automoton description in plain text
+                        format to "<dstdir>/hocc/<module>.txt".
+              -html   : Write a detailed automoton description in internally
+                        hyperlinked HTML format to
+                        "<dstdir>/hocc/<module>.html".
+       -hmh | -hocc   : Write a complete grammar specification in hocc format to
+                        "<dstdir>/hocc/<module>.hmh", but with all non-terminal
+                        types and reduction code omitted.
+ -a[lgorithm] <alg>   : Use the specified <alg>orithm for generating an
+                        automoton. Defaults to lr1.
+                        - lr1: Canonical LR(1) automoton.
+                        - ielr1: Compact LR(1) automoton that recognizes valid
+                          inputs identically to lr1 automotons, even in the
+                          presence of precedence-resolved ambiguities.
+                        - pgm1: Compact LR(1) automoton that recognizes valid
+                          inputs identically to lr1 automotons, provided there
+                          were no precedence-resolved ambiguities in the grammar
+                          specification.
+                        - lalr1: LALR(1) automoton.
+-r[esolve] (yes|no)   : Control whether conflict resolution is enabled. Defaults
+                        to yes.
+-[re]m[erge] (yes|no) : Control whether remerging equivalent split states is
+                        enabled. Defaults to yes.
+     -hm | -hemlock   : Generate a Hemlock-based parser implementation and write
+                        it to "<dstdir>/<module>.hm[i]".
+       -ml | -ocaml   : Generate an OCaml-based parser implementation and write
+                        it to "<dstdir>/<module>.ml[i]". This is brittle
+                        functionality intended only for Hemlock bootstrapping.
+       -s[rc] <src>   : Path and module name of input source, where inputs match
+                        "<src>.hmh[i]" and "<src>" comprises the source
+                        directory and module name, "[<srcdir>/]<module>".
+ -d[stdir] <dstdir>   : Path to directory in which to place generated output,
+                        such that output file paths match
+                        "<dstdir>/[hocc/]<module>.*". Defaults to "<srcdir>".
 |}
   |> ignore;
   Stdlib.exit exit_code
@@ -190,6 +196,18 @@ let of_argv argv =
             in
             f {t with resolve} argv (i + 2L)
           end
+        | "-remerge" | "-m" -> begin
+            let remerge = match Bytes.to_string_replace (arg_arg argv i) with
+              | "yes" -> true
+              | "no" -> false
+              | s -> begin
+                  File.Fmt.stderr |> Fmt.fmt "hocc: Invalid remerge parameter: "
+                  |> Fmt.fmt s |> Fmt.fmt "\n" |> ignore;
+                  usage true
+                end
+            in
+            f {t with remerge} argv (i + 2L)
+          end
         | "-hm" | "-hemlock" -> f {t with hemlock=true} argv (succ i)
         | "-ml" | "-ocaml" -> f {t with ocaml=true} argv (succ i)
         | "-src" | "-s" -> begin
@@ -259,6 +277,9 @@ let algorithm {algorithm; _} =
 
 let resolve {resolve; _} =
   resolve
+
+let remerge {remerge; _} =
+  remerge
 
 let hemlock {hemlock; _} =
   hemlock
