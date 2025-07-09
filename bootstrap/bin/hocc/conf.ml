@@ -71,17 +71,17 @@ let usage error =
   |> Fmt.fmt {|hocc usage: hocc <parameters>
 
 Parameters:
-            -h[elp]   : Print command usage and exit.
-         -v[erbose]   : Print progress information during parser generation.
-       -txt | -text   : Write a detailed automoton description in plain text
+              -h[elp] : Print command usage and exit.
+           -v[erbose] : Print progress information during parser generation.
+         -txt | -text : Write a detailed automoton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
-              -html   : Write a detailed automoton description in internally
+                -html : Write a detailed automoton description in internally
                         hyperlinked HTML format to
                         "<dstdir>/hocc/<module>.html".
-       -hmh | -hocc   : Write a complete grammar specification in hocc format to
+         -hmh | -hocc : Write a complete grammar specification in hocc format to
                         "<dstdir>/hocc/<module>.hmh", but with all non-terminal
                         types and reduction code omitted.
- -a[lgorithm] <alg>   : Use the specified <alg>orithm for generating an
+   -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an
                         automoton. Defaults to lr1.
                         - lr1: Canonical LR(1) automoton.
                         - ielr1: Compact LR(1) automoton that recognizes valid
@@ -92,19 +92,19 @@ Parameters:
                           were no precedence-resolved ambiguities in the grammar
                           specification.
                         - lalr1: LALR(1) automoton.
--r[esolve] (yes|no)   : Control whether conflict resolution is enabled. Defaults
+  -r[esolve] (yes|no) : Control whether conflict resolution is enabled. Defaults
                         to yes.
 -[re]m[erge] (yes|no) : Control whether remerging equivalent split states is
                         enabled. Defaults to yes.
-     -hm | -hemlock   : Generate a Hemlock-based parser implementation and write
+       -hm | -hemlock : Generate a Hemlock-based parser implementation and write
                         it to "<dstdir>/<module>.hm[i]".
-       -ml | -ocaml   : Generate an OCaml-based parser implementation and write
+         -ml | -ocaml : Generate an OCaml-based parser implementation and write
                         it to "<dstdir>/<module>.ml[i]". This is brittle
                         functionality intended only for Hemlock bootstrapping.
-       -s[rc] <src>   : Path and module name of input source, where inputs match
+         -s[rc] <src> : Path and module name of input source, where inputs match
                         "<src>.hmh[i]" and "<src>" comprises the source
                         directory and module name, "[<srcdir>/]<module>".
- -d[stdir] <dstdir>   : Path to directory in which to place generated output,
+   -d[stdir] <dstdir> : Path to directory in which to place generated output,
                         such that output file paths match
                         "<dstdir>/[hocc/]<module>.*". Defaults to "<srcdir>".
 |}
