@@ -1,0 +1,1541 @@
+# Transcribed OCaml grammar.
+#
+#   4.14 version dddc6bb25d1d6a5282ec88a50b799c0c43307f1d
+#   December 29, 2025
+#
+# This transcription differs from the original grammar as follows:
+# - `hocc` does not support `%inline` macros, nor a standard library of preprocessing functions, so
+#   this is a transcription of `menhir --only-preprocess` output.
+
+hocc
+    # Mangle precedences as e.g.
+    #   BACKQUOTE -> p_BACKQUOTE
+    #   below_DOT -> p_below_DOT
+    #   prec_unary_minus -> p_prec_unary_minus
+
+    nonassoc p_BACKQUOTE, p_BANG, p_BEGIN, p_CHAR, p_FALSE, p_FLOAT, p_INT, p_LBRACE, p_LBRACELESS,
+      p_LBRACKET, p_LBRACKETBAR, p_LBRACKETPERCENT, p_LIDENT, p_LPAREN, p_NEW, p_OBJECT, p_PREFIXOP,
+      p_QUOTED_STRING_EXPR, p_STRING, p_TRUE, p_UIDENT
+    nonassoc p_DOT, p_DOTOP < p_BACKQUOTE
+    nonassoc p_below_DOT < p_DOT
+    left p_HASHOP < p_below_DOT
+    nonassoc p_HASH < p_HASHOP
+    nonassoc p_below_HASH < p_HASH
+    nonassoc p_prec_constr_appl < p_below_HASH
+    nonassoc p_prec_constant_constructor < p_prec_constr_appl
+    nonassoc p_prec_unary_minus, p_prec_unary_plus < p_prec_constant_constructor
+    right p_INFIXOP4 < p_prec_unary_minus
+    left p_INFIXOP3, p_PERCENT, p_STAR < p_INFIXOP4
+    left p_INFIXOP2, p_MINUS, p_MINUSDOT, p_PLUS, p_PLUSDOT, p_PLUSEQ < p_INFIXOP3
+    right p_COLONCOLON < p_INFIXOP2
+    nonassoc p_LBRACKETAT < p_COLONCOLON
+    nonassoc p_below_LBRACKETAT < p_LBRACKETAT
+    right p_INFIXOP1 < p_below_LBRACKETAT
+    left p_EQUAL, p_GREATER, p_INFIXOP0, p_LESS < p_INFIXOP1
+    nonassoc p_below_EQUAL < p_EQUAL
+    right p_AMPERAMPER, p_AMPERSAND < p_below_EQUAL
+    right p_BARBAR, p_OR < p_AMPERAMPER
+    right p_MINUSGREATER < p_BARBAR
+    left p_COMMA < p_MINUSGREATER
+    nonassoc p_below_COMMA < p_COMMA
+    left p_BAR < p_below_COMMA
+    nonassoc p_AS < p_BAR
+    right p_COLONEQUAL < p_AS
+    nonassoc p_LESSMINUS < p_COLONEQUAL
+    nonassoc p_ELSE < p_LESSMINUS
+    nonassoc p_THEN < p_ELSE
+    nonassoc p_AND < p_THEN
+    nonassoc p_FUNCTION, p_WITH < p_AND
+    nonassoc p_below_WITH < p_FUNCTION
+    nonassoc p_LET < p_below_WITH
+    nonassoc p_SEMI < p_LET
+    nonassoc p_below_SEMI < p_SEMI
+    nonassoc p_IN < p_below_SEMI
+
+    token AMPERAMPER "&&" prec p_AMPERAMPER
+    token AMPERSAND "&" prec p_AMPERSAND
+    token AND "and" prec p_AND
+    token ANDOP
+    token AS "as" prec p_AS
+    token ASSERT "assert"
+    token BACKQUOTE "`" prec p_BACKQUOTE
+    token BANG "!" prec p_BANG
+    token BAR "|" prec p_BAR
+    token BARBAR "||" prec p_BARBAR
+    token BARRBRACKET "|]"
+    token BEGIN "begin" prec p_BEGIN
+    token CHAR prec p_CHAR
+    token CLASS "class"
+    token COLON ":"
+    token COLONCOLON "::" prec p_COLONCOLON
+    token COLONEQUAL ":=" prec p_COLONEQUAL
+    token COLONGREATER ":>"
+    token COMMA "," prec p_COMMA
+    token COMMENT # Unused.
+    token CONSTRAINT "constraint"
+    token DO "do"
+    token DOCSTRING # Unused.
+    token DONE "done"
+    token DOT "." prec p_DOT
+    token DOTDOT ".."
+    token DOTOP prec p_DOTOP
+    token DOWNTO "downto"
+    token ELSE "else" prec p_ELSE
+    token END "end"
+    token EOF
+    token EOL # Unused.
+    token EQUAL "=" prec p_EQUAL
+    token EXCEPTION "exception"
+    token EXTERNAL "external"
+    token FALSE "false" prec p_FALSE
+    token FLOAT prec p_FLOAT
+    token FOR "for"
+    token FUN "fun"
+    token FUNCTION "function" prec p_FUNCTION
+    token FUNCTOR "functor"
+    token GREATER ">" prec p_GREATER
+    token GREATERRBRACE ">}"
+    token GREATERRBRACKET ">]" # Unused.
+    token HASH "#" prec p_HASH
+    token HASHOP prec p_HASHOP
+    token IF "if"
+    token IN "in" prec p_IN
+    token INCLUDE "include"
+    token INFIXOP0 prec p_INFIXOP0
+    token INFIXOP1 prec p_INFIXOP1
+    token INFIXOP2 prec p_INFIXOP2
+    token INFIXOP3 prec p_INFIXOP3
+    token INFIXOP4 prec p_INFIXOP4
+    token INHERIT "inherit"
+    token INITIALIZER "initializer"
+    token INT prec p_INT
+    token LABEL # Composite, e.g. `~label:`
+    token LAZY "lazy"
+    token LBRACE "{" prec p_LBRACE
+    token LBRACELESS "{<" prec p_LBRACELESS
+    token LBRACKET "[" prec p_LBRACKET
+    token LBRACKETAT "[@" prec p_LBRACKETAT
+    token LBRACKETATAT "[@@"
+    token LBRACKETATATAT "[@@@"
+    token LBRACKETBAR "[|" prec p_LBRACKETBAR
+    token LBRACKETGREATER "[>"
+    token LBRACKETLESS "[<"
+    token LBRACKETPERCENT "[\%" prec p_LBRACKETPERCENT
+    token LBRACKETPERCENTPERCENT "[\%\%"
+    token LESS "<" prec p_LESS
+    token LESSMINUS "<-" prec p_LESSMINUS
+    token LET "let" prec p_LET
+    token LETOP
+    token LIDENT prec p_LIDENT
+    token LPAREN "(" prec p_LPAREN
+    token MATCH "match"
+    token METHOD "method"
+    token MINUS "-" prec p_MINUS
+    token MINUSDOT "-." prec p_MINUSDOT
+    token MINUSGREATER "->" prec p_MINUSGREATER
+    token MODULE "module"
+    token MUTABLE "mutable"
+    token NEW "new" prec p_NEW
+    token NONREC "nonrec"
+    token OBJECT "object" prec p_OBJECT
+    token OF "of"
+    token OPEN "open"
+    token OPTLABEL # Composite, e.g. `?label:`
+    token OR "or" prec p_OR
+    token PERCENT "\%" prec p_PERCENT
+    token PLUS "+" prec p_PLUS
+    token PLUSDOT "+." prec p_PLUSDOT
+    token PLUSEQ "+=" prec p_PLUSEQ
+    token PREFIXOP prec p_PREFIXOP
+    token PRIVATE "private"
+    token QUESTION "?"
+    token QUOTE "'"
+    token QUOTED_STRING_EXPR prec p_QUOTED_STRING_EXPR
+    token QUOTED_STRING_ITEM
+    token RBRACE "}"
+    token RBRACKET "]"
+    token REC "rec"
+    token RPAREN ")"
+    token SEMI ";" prec p_SEMI
+    token SEMISEMI ";;"
+    token SIG "sig"
+    token STAR "*" prec p_STAR
+    token STRING prec p_STRING
+    token STRUCT "struct"
+    token THEN "then" prec p_THEN
+    token TILDE "~"
+    token TO "to"
+    token TRUE "true" prec p_TRUE
+    token TRY "try"
+    token TYPE "type"
+    token UIDENT prec p_UIDENT
+    token UNDERSCORE "_"
+    token VAL "val"
+    token VIRTUAL "virtual"
+    token WHEN "when"
+    token WHILE "while"
+    token WITH "with" prec p_WITH
+
+    token ERROR # Used in place of Menhir's built in `error` token.
+
+    # Mangle nonterminals as e.g.
+    #   [start] implementation -> N_implementation
+    #   [nonterm] functor_arg -> N_functor_arg
+
+    nonterm N_option_BAR_ ::=
+      | epsilon
+      | "|" prec p_BAR
+
+    nonterm N_option_SEMI_ ::=
+      | epsilon
+      | ";" prec p_SEMI
+
+    nonterm N_option_preceded_AS_mkrhs_LIDENT___ ::=
+      | epsilon
+      | "as" LIDENT prec p_LIDENT
+
+    nonterm N_option_preceded_COLON_core_type__ ::=
+      | epsilon
+      | ":" N_core_type
+
+    nonterm N_option_preceded_EQUAL_expr__ ::=
+      | epsilon
+      | "=" N_expr prec p_EQUAL
+
+    nonterm N_option_preceded_EQUAL_module_type__ ::=
+      | epsilon
+      | "=" N_module_type prec p_EQUAL
+
+    nonterm N_option_preceded_EQUAL_pattern__ ::=
+      | epsilon
+      | "=" N_pattern prec p_EQUAL
+
+    nonterm N_option_preceded_EQUAL_seq_expr__ ::=
+      | epsilon
+      | "=" N_seq_expr prec p_EQUAL
+
+    nonterm N_option_type_constraint_ ::=
+      | epsilon
+      | N_type_constraint
+
+    nonterm N_list_and_class_declaration_ ::=
+      | epsilon
+      | "and" N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT N_class_fun_binding
+      N_list_post_item_attribute_ N_list_and_class_declaration_ prec p_LIDENT
+
+    nonterm N_list_and_class_description_ ::=
+      | epsilon
+      | "and" N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT ":" N_class_type
+      N_list_post_item_attribute_ N_list_and_class_description_
+
+    nonterm N_list_and_class_type_declaration_ ::=
+      | epsilon
+      | "and" N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT "="
+      N_class_signature N_list_post_item_attribute_ N_list_and_class_type_declaration_ prec p_EQUAL
+
+    nonterm N_list_and_module_binding_ ::=
+      | epsilon
+      | "and" N_list_attribute_ N_module_name N_module_binding_body N_list_post_item_attribute_
+      N_list_and_module_binding_ prec p_AND
+
+    nonterm N_list_and_module_declaration_ ::=
+      | epsilon
+      | "and" N_list_attribute_ N_module_name ":" N_module_type N_list_post_item_attribute_
+      N_list_and_module_declaration_
+
+    nonterm N_list_attribute_ ::=
+      | epsilon
+      | N_attribute N_list_attribute_
+
+    nonterm N_list_generic_and_type_declaration_type_kind__ ::=
+      | epsilon
+      | "and" N_list_attribute_ N_type_parameters LIDENT N_type_kind
+      N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_
+      N_list_generic_and_type_declaration_type_kind__ prec p_LIDENT
+
+    nonterm N_list_generic_and_type_declaration_type_subst_kind__ ::=
+      | epsilon
+      | "and" N_list_attribute_ N_type_parameters LIDENT ":=" N_nonempty_type_kind
+      N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_
+      N_list_generic_and_type_declaration_type_subst_kind__ prec p_COLONEQUAL
+
+    nonterm N_list_post_item_attribute_ ::=
+      | epsilon
+      | N_post_item_attribute N_list_post_item_attribute_
+
+    nonterm N_list_signature_element_ ::=
+      | epsilon
+      | ";;" N_list_signature_element_
+      | N_signature_item N_list_signature_element_
+
+    nonterm N_list_structure_element_ ::=
+      | epsilon
+      | ";;" N_list_structure_element_
+      | ";;" N_seq_expr N_list_post_item_attribute_ N_list_structure_element_
+      | N_structure_item N_list_structure_element_
+
+    nonterm N_list_text_csig_class_sig_field__ ::=
+      | epsilon
+      | N_class_sig_field N_list_text_csig_class_sig_field__
+
+    nonterm N_list_text_cstr_class_field__ ::=
+      | epsilon
+      | N_class_field N_list_text_cstr_class_field__
+
+    nonterm N_list_text_str_structure_item__ ::=
+      | epsilon
+      | N_structure_item N_list_text_str_structure_item__
+
+    nonterm N_list_use_file_element_ ::=
+      | epsilon
+      | ";;" N_list_use_file_element_
+      | ";;" N_seq_expr N_list_post_item_attribute_ N_list_use_file_element_
+      | N_structure_item N_list_use_file_element_
+      | N_toplevel_directive N_list_use_file_element_
+
+    nonterm N_nonempty_list_mkrhs_LIDENT__ prec p_LIDENT ::=
+      | LIDENT
+      | LIDENT N_nonempty_list_mkrhs_LIDENT__
+
+    nonterm N_nonempty_list_raw_string_ prec p_STRING ::=
+      | STRING
+      | STRING N_nonempty_list_raw_string_
+
+    nonterm N_reversed_llist_preceded_CONSTRAINT_constrain__ ::=
+      | epsilon
+      | N_reversed_llist_preceded_CONSTRAINT_constrain__ "constraint" N_core_type "=" N_core_type
+      prec p_EQUAL
+
+    nonterm N_reversed_nonempty_llist_functor_arg_ ::=
+      | N_functor_arg
+      | N_reversed_nonempty_llist_functor_arg_ N_functor_arg
+
+    nonterm N_reversed_nonempty_llist_labeled_simple_expr_ ::=
+      | N_labeled_simple_expr
+      | N_reversed_nonempty_llist_labeled_simple_expr_ N_labeled_simple_expr
+
+    nonterm N_reversed_nonempty_llist_name_tag_ ::=
+      | N_name_tag
+      | N_reversed_nonempty_llist_name_tag_ N_name_tag
+
+    nonterm N_reversed_nonempty_llist_typevar_ ::=
+      | "'" N_ident
+      | N_reversed_nonempty_llist_typevar_ "'" N_ident
+
+    nonterm N_reversed_separated_nonempty_llist_AMPERSAND_core_type_no_attr_ ::=
+      | N_alias_type
+      | N_reversed_separated_nonempty_llist_AMPERSAND_core_type_no_attr_ "&" N_alias_type
+      prec p_AMPERSAND
+
+    nonterm N_reversed_separated_nonempty_llist_AND_with_constraint_ ::=
+      | N_with_constraint
+      | N_reversed_separated_nonempty_llist_AND_with_constraint_ "and" N_with_constraint prec p_AND
+
+    nonterm N_reversed_separated_nonempty_llist_BAR_row_field_ ::=
+      | N_row_field
+      | N_reversed_separated_nonempty_llist_BAR_row_field_ "|" N_row_field prec p_BAR
+
+    nonterm N_reversed_separated_nonempty_llist_COMMA_core_type_ ::=
+      | N_core_type
+      | N_reversed_separated_nonempty_llist_COMMA_core_type_ "," N_core_type prec p_COMMA
+
+    nonterm N_reversed_separated_nonempty_llist_COMMA_type_parameter_ ::=
+      | N_type_parameter
+      | N_reversed_separated_nonempty_llist_COMMA_type_parameter_ "," N_type_parameter prec p_COMMA
+
+    nonterm N_reversed_separated_nonempty_llist_STAR_atomic_type_ ::=
+      | N_atomic_type
+      | N_reversed_separated_nonempty_llist_STAR_atomic_type_ "*" N_atomic_type prec p_STAR
+
+    nonterm N_reversed_separated_nontrivial_llist_COMMA_core_type_ prec p_COMMA ::=
+      | N_reversed_separated_nontrivial_llist_COMMA_core_type_ "," N_core_type
+      | N_core_type "," N_core_type
+
+    nonterm N_reversed_separated_nontrivial_llist_COMMA_expr_ prec p_COMMA ::=
+      | N_reversed_separated_nontrivial_llist_COMMA_expr_ "," N_expr
+      | N_expr "," N_expr
+
+    nonterm N_reversed_separated_nontrivial_llist_STAR_atomic_type_ prec p_STAR ::=
+      | N_reversed_separated_nontrivial_llist_STAR_atomic_type_ "*" N_atomic_type
+      | N_atomic_type "*" N_atomic_type
+
+    nonterm N_separated_or_terminated_nonempty_list_SEMI_expr_ ::=
+      | N_expr
+      | N_expr ";" prec p_SEMI
+      | N_expr ";" N_separated_or_terminated_nonempty_list_SEMI_expr_ prec p_SEMI
+
+    nonterm N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ ::=
+      | LIDENT N_option_preceded_EQUAL_expr__ prec p_LIDENT
+      | LIDENT N_option_preceded_EQUAL_expr__ ";" prec p_SEMI
+      | LIDENT N_option_preceded_EQUAL_expr__ ";"
+      N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ prec p_SEMI
+
+    nonterm N_separated_or_terminated_nonempty_list_SEMI_pattern_ ::=
+      | N_pattern
+      | N_pattern ";" prec p_SEMI
+      | N_pattern ";" N_separated_or_terminated_nonempty_list_SEMI_pattern_ prec p_SEMI
+
+    nonterm N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_ ::=
+      | N_label_longident N_option_type_constraint_ N_option_preceded_EQUAL_expr__
+      | N_label_longident N_option_type_constraint_ N_option_preceded_EQUAL_expr__ ";" prec p_SEMI
+      | N_label_longident N_option_type_constraint_ N_option_preceded_EQUAL_expr__ ";"
+      N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_ prec p_SEMI
+
+    nonterm N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ ::=
+      | N_match_case
+      | "|" N_match_case prec p_BAR
+      | N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ "|" N_match_case prec p_BAR
+
+    nonterm N_reversed_bar_llist_constructor_declaration_ ::=
+      | N_generic_constructor_declaration_epsilon_
+      | N_generic_constructor_declaration_BAR_
+      | N_reversed_bar_llist_constructor_declaration_ N_generic_constructor_declaration_BAR_
+
+    nonterm N_reversed_bar_llist_extension_constructor_ ::=
+      | N_generic_constructor_declaration_epsilon_
+      | N_extension_constructor_rebind_epsilon_
+      | N_generic_constructor_declaration_BAR_
+      | N_extension_constructor_rebind_BAR_
+      | N_reversed_bar_llist_extension_constructor_ N_generic_constructor_declaration_BAR_
+      | N_reversed_bar_llist_extension_constructor_ N_extension_constructor_rebind_BAR_
+
+    nonterm N_reversed_bar_llist_extension_constructor_declaration_ ::=
+      | N_generic_constructor_declaration_epsilon_
+      | N_generic_constructor_declaration_BAR_
+      | N_reversed_bar_llist_extension_constructor_declaration_
+      N_generic_constructor_declaration_BAR_
+
+    nonterm N_listx_SEMI_record_pat_field_UNDERSCORE_ ::=
+      | N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__
+      | N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__ ";"
+      prec p_SEMI
+      | N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__ ";"
+      "_" N_option_SEMI_
+      | N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__ ";"
+      N_listx_SEMI_record_pat_field_UNDERSCORE_ prec p_SEMI
+
+    start N_implementation ::=
+      | N_structure EOF
+
+    start N_interface ::=
+      | N_signature EOF
+
+    start N_toplevel_phrase ::=
+      | N_seq_expr N_list_post_item_attribute_ ";;"
+      | N_list_text_str_structure_item__ ";;"
+      | N_toplevel_directive ";;"
+      | EOF
+
+    start N_use_file ::=
+      | N_list_use_file_element_ EOF
+      | N_seq_expr N_list_post_item_attribute_ N_list_use_file_element_ EOF
+
+    start N_parse_module_type ::=
+      | N_module_type EOF
+
+    start N_parse_module_expr ::=
+      | N_module_expr EOF
+
+    start N_parse_core_type ::=
+      | N_core_type EOF
+
+    start N_parse_expression ::=
+      | N_seq_expr EOF
+
+    start N_parse_pattern ::=
+      | N_pattern EOF
+
+    start N_parse_mty_longident ::=
+      | N_mty_longident EOF
+
+    start N_parse_val_longident ::=
+      | N_val_longident EOF
+
+    start N_parse_constr_longident ::=
+      | N_constr_longident EOF
+
+    start N_parse_mod_ext_longident ::=
+      | N_mod_ext_longident EOF
+
+    start N_parse_mod_longident ::=
+      | N_mod_longident EOF
+
+    start N_parse_any_longident ::=
+      | N_any_longident EOF
+
+    nonterm N_functor_arg ::=
+      | "(" ")"
+      | "(" N_module_name ":" N_module_type ")"
+
+    nonterm N_module_name ::=
+      | UIDENT prec p_UIDENT
+      | "_"
+
+    nonterm N_module_expr ::=
+      | "struct" N_list_attribute_ N_structure "end"
+      | "struct" N_list_attribute_ N_structure ERROR
+      | "functor" N_list_attribute_ N_reversed_nonempty_llist_functor_arg_ "->" N_module_expr
+      prec p_MINUSGREATER
+      | N_paren_module_expr
+      | N_module_expr N_attribute
+      | N_mod_longident
+      | N_module_expr N_paren_module_expr
+      | N_module_expr "(" ")"
+      | N_extension
+
+    nonterm N_paren_module_expr ::=
+      | "(" N_module_expr ":" N_module_type ")"
+      | "(" N_module_expr ":" N_module_type ERROR
+      | "(" N_module_expr ")"
+      | "(" N_module_expr ERROR
+      | "(" "val" N_list_attribute_ N_expr ")"
+      | "(" "val" N_list_attribute_ N_expr ":" N_module_type ")"
+      | "(" "val" N_list_attribute_ N_expr ":" N_module_type ":>" N_module_type ")"
+      | "(" "val" N_list_attribute_ N_expr ":>" N_module_type ")"
+      | "(" "val" N_list_attribute_ N_expr ":" ERROR
+      | "(" "val" N_list_attribute_ N_expr ":>" ERROR
+      | "(" "val" N_list_attribute_ N_expr ERROR
+
+    nonterm N_structure ::=
+      | N_list_structure_element_
+      | N_seq_expr N_list_post_item_attribute_ N_list_structure_element_
+
+    nonterm N_structure_item ::=
+      | N_let_bindings_ext_
+      | N_item_extension N_list_post_item_attribute_
+      | N_floating_attribute
+      | N_primitive_declaration
+      | N_value_description
+      | N_generic_type_declaration_nonrec_flag_type_kind_
+      N_list_generic_and_type_declaration_type_kind__
+      | "type" N_ext N_list_attribute_ N_type_parameters N_type_longident "+=" N_private_flag
+      N_reversed_bar_llist_extension_constructor_ N_list_post_item_attribute_ prec p_PLUSEQ
+      | "type" N_ext N_list_attribute_ "nonrec" N_type_parameters N_type_longident "+="
+      N_private_flag N_reversed_bar_llist_extension_constructor_ N_list_post_item_attribute_
+      prec p_PLUSEQ
+      | N_str_exception_declaration
+      | "module" N_ext N_list_attribute_ N_module_name N_module_binding_body
+      N_list_post_item_attribute_
+      | "module" N_ext N_list_attribute_ "rec" N_module_name N_module_binding_body
+      N_list_post_item_attribute_ N_list_and_module_binding_
+      | N_module_type_declaration
+      | N_open_declaration
+      | "class" N_ext N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT
+      N_class_fun_binding N_list_post_item_attribute_ N_list_and_class_declaration_ prec p_LIDENT
+      | N_class_type_declarations
+      | "include" N_ext N_list_attribute_ N_module_expr N_list_post_item_attribute_
+
+    nonterm N_module_binding_body ::=
+      | "=" N_module_expr prec p_EQUAL
+      | ":" N_module_type "=" N_module_expr prec p_EQUAL
+      | N_functor_arg N_module_binding_body
+
+    nonterm N_module_type_declaration ::=
+      | "module" "type" N_ext N_list_attribute_ N_ident N_option_preceded_EQUAL_module_type__
+      N_list_post_item_attribute_
+
+    nonterm N_open_declaration ::=
+      | "open" N_ext N_list_attribute_ N_module_expr N_list_post_item_attribute_
+      | "open" "!" N_ext N_list_attribute_ N_module_expr N_list_post_item_attribute_ prec p_BANG
+
+    nonterm N_open_description ::=
+      | "open" N_ext N_list_attribute_ N_mod_ext_longident N_list_post_item_attribute_
+      | "open" "!" N_ext N_list_attribute_ N_mod_ext_longident N_list_post_item_attribute_
+      prec p_BANG
+
+    nonterm N_module_type ::=
+      | "sig" N_list_attribute_ N_signature "end"
+      | "sig" N_list_attribute_ N_signature ERROR
+      | "functor" N_list_attribute_ N_reversed_nonempty_llist_functor_arg_ "->" N_module_type
+      prec p_below_WITH
+      | "module" "type" "of" N_list_attribute_ N_module_expr prec p_below_LBRACKETAT
+      | "(" N_module_type ")"
+      | "(" N_module_type ERROR
+      | N_module_type N_attribute
+      | N_mty_longident
+      | N_module_type "->" N_module_type prec p_below_WITH
+      | N_module_type "with" N_reversed_separated_nonempty_llist_AND_with_constraint_ prec p_WITH
+      | N_extension
+
+    nonterm N_signature ::=
+      | N_list_signature_element_
+
+    nonterm N_signature_item ::=
+      | N_item_extension N_list_post_item_attribute_
+      | N_floating_attribute
+      | N_value_description
+      | N_primitive_declaration
+      | N_generic_type_declaration_nonrec_flag_type_kind_
+      N_list_generic_and_type_declaration_type_kind__
+      | N_generic_type_declaration_no_nonrec_flag_type_subst_kind_
+      N_list_generic_and_type_declaration_type_subst_kind__
+      | "type" N_ext N_list_attribute_ N_type_parameters N_type_longident "+=" N_private_flag
+      N_reversed_bar_llist_extension_constructor_declaration_ N_list_post_item_attribute_
+      prec p_PLUSEQ
+      | "type" N_ext N_list_attribute_ "nonrec" N_type_parameters N_type_longident "+="
+      N_private_flag N_reversed_bar_llist_extension_constructor_declaration_
+      N_list_post_item_attribute_ prec p_PLUSEQ
+      | N_sig_exception_declaration
+      | "module" N_ext N_list_attribute_ N_module_name N_module_declaration_body
+      N_list_post_item_attribute_
+      | "module" N_ext N_list_attribute_ N_module_name "=" N_mod_longident
+      N_list_post_item_attribute_ prec p_EQUAL
+      | N_module_subst
+      | "module" N_ext N_list_attribute_ "rec" N_module_name ":" N_module_type
+      N_list_post_item_attribute_ N_list_and_module_declaration_
+      | N_module_type_declaration
+      | N_module_type_subst
+      | N_open_description
+      | "include" N_ext N_list_attribute_ N_module_type N_list_post_item_attribute_
+      | "class" N_ext N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT ":"
+      N_class_type N_list_post_item_attribute_ N_list_and_class_description_
+      | N_class_type_declarations
+
+    nonterm N_module_declaration_body ::=
+      | ":" N_module_type
+      | N_functor_arg N_module_declaration_body
+
+    nonterm N_module_subst ::=
+      | "module" N_ext N_list_attribute_ UIDENT ":=" N_mod_ext_longident N_list_post_item_attribute_
+      prec p_COLONEQUAL
+      | "module" N_ext N_list_attribute_ UIDENT ":=" ERROR
+
+    nonterm N_module_type_subst ::=
+      | "module" "type" N_ext N_list_attribute_ N_ident ":=" N_module_type
+      N_list_post_item_attribute_ prec p_COLONEQUAL
+
+    nonterm N_class_fun_binding ::=
+      | "=" N_class_expr prec p_EQUAL
+      | ":" N_class_type "=" N_class_expr prec p_EQUAL
+      | N_labeled_simple_pattern N_class_fun_binding
+
+    nonterm N_formal_class_parameters ::=
+      | epsilon
+      | "[" N_reversed_separated_nonempty_llist_COMMA_type_parameter_ "]"
+
+    nonterm N_class_expr ::=
+      | N_class_simple_expr
+      | "fun" N_list_attribute_ N_class_fun_def
+      | N_let_bindings_no_ext_ "in" N_class_expr prec p_IN
+      | "let" "open" N_list_attribute_ N_mod_longident "in" N_class_expr prec p_IN
+      | "let" "open" "!" N_list_attribute_ N_mod_longident "in" N_class_expr prec p_IN
+      | N_class_expr N_attribute
+      | N_class_simple_expr N_reversed_nonempty_llist_labeled_simple_expr_
+      | N_extension
+
+    nonterm N_class_simple_expr ::=
+      | "(" N_class_expr ")"
+      | "(" N_class_expr ERROR
+      | N_class_longident
+      | "[" N_reversed_separated_nonempty_llist_COMMA_core_type_ "]" N_class_longident
+      | "object" N_list_attribute_ N_class_self_pattern N_list_text_cstr_class_field__ ERROR
+      | "(" N_class_expr ":" N_class_type ")"
+      | "(" N_class_expr ":" N_class_type ERROR
+      | "object" N_list_attribute_ N_class_self_pattern N_list_text_cstr_class_field__ "end"
+
+    nonterm N_class_fun_def ::=
+      | N_labeled_simple_pattern "->" N_class_expr prec p_MINUSGREATER
+      | N_labeled_simple_pattern N_class_fun_def
+
+    nonterm N_class_self_pattern ::=
+      | "(" N_pattern ")"
+      | "(" N_pattern ":" N_core_type ")"
+      | epsilon
+
+    nonterm N_class_field ::=
+      | "inherit" N_list_attribute_ N_class_expr N_option_preceded_AS_mkrhs_LIDENT___
+      N_list_post_item_attribute_
+      | "inherit" "!" N_list_attribute_ N_class_expr N_option_preceded_AS_mkrhs_LIDENT___
+      N_list_post_item_attribute_ prec p_BANG
+      | "val" N_value N_list_post_item_attribute_
+      | "method" N_method_ N_list_post_item_attribute_
+      | "constraint" N_list_attribute_ N_constrain_field N_list_post_item_attribute_
+      | "initializer" N_list_attribute_ N_seq_expr N_list_post_item_attribute_
+      | N_item_extension N_list_post_item_attribute_
+      | N_floating_attribute
+
+    nonterm N_value ::=
+      | N_list_attribute_ N_virtual_with_mutable_flag LIDENT ":" N_core_type
+      | N_list_attribute_ N_mutable_flag LIDENT "=" N_seq_expr prec p_EQUAL
+      | "!" N_list_attribute_ N_mutable_flag LIDENT "=" N_seq_expr prec p_EQUAL
+      | N_list_attribute_ N_mutable_flag LIDENT N_type_constraint "=" N_seq_expr prec p_EQUAL
+      | "!" N_list_attribute_ N_mutable_flag LIDENT N_type_constraint "=" N_seq_expr prec p_EQUAL
+
+    nonterm N_method_ ::=
+      | N_list_attribute_ N_virtual_with_private_flag LIDENT ":" N_possibly_poly_core_type_
+      | N_list_attribute_ N_private_flag LIDENT N_strict_binding prec p_LIDENT
+      | "!" N_list_attribute_ N_private_flag LIDENT N_strict_binding prec p_LIDENT
+      | N_list_attribute_ N_private_flag LIDENT ":" N_possibly_poly_core_type_ "=" N_seq_expr
+      prec p_EQUAL
+      | "!" N_list_attribute_ N_private_flag LIDENT ":" N_possibly_poly_core_type_ "=" N_seq_expr
+      prec p_EQUAL
+      | N_list_attribute_ N_private_flag LIDENT ":" "type" N_nonempty_list_mkrhs_LIDENT__ "."
+      N_core_type "=" N_seq_expr prec p_EQUAL
+      | "!" N_list_attribute_ N_private_flag LIDENT ":" "type" N_nonempty_list_mkrhs_LIDENT__ "."
+      N_core_type "=" N_seq_expr prec p_EQUAL
+
+    nonterm N_class_type ::=
+      | N_class_signature
+      | N_optlabel N_tuple_type "->" N_class_type prec p_MINUSGREATER
+      | LIDENT ":" N_tuple_type "->" N_class_type prec p_MINUSGREATER
+      | N_tuple_type "->" N_class_type prec p_MINUSGREATER
+
+    nonterm N_class_signature ::=
+      | N_clty_longident
+      | "[" N_reversed_separated_nonempty_llist_COMMA_core_type_ "]" N_clty_longident
+      | N_extension
+      | "object" N_list_attribute_ N_class_self_type N_list_text_csig_class_sig_field__ "end"
+      | "object" N_list_attribute_ N_class_self_type N_list_text_csig_class_sig_field__ ERROR
+      | N_class_signature N_attribute
+      | "let" "open" N_list_attribute_ N_mod_longident "in" N_class_signature prec p_IN
+      | "let" "open" "!" N_list_attribute_ N_mod_longident "in" N_class_signature prec p_IN
+
+    nonterm N_class_self_type ::=
+      | "(" N_core_type ")"
+      | epsilon
+
+    nonterm N_class_sig_field ::=
+      | "inherit" N_list_attribute_ N_class_signature N_list_post_item_attribute_
+      | "val" N_list_attribute_ N_mutable_virtual_flags LIDENT ":" N_core_type
+      N_list_post_item_attribute_
+      | "method" N_list_attribute_ N_private_virtual_flags LIDENT ":" N_possibly_poly_core_type_
+      N_list_post_item_attribute_
+      | "constraint" N_list_attribute_ N_constrain_field N_list_post_item_attribute_
+      | N_item_extension N_list_post_item_attribute_
+      | N_floating_attribute
+
+    nonterm N_constrain_field ::=
+      | N_core_type "=" N_core_type prec p_EQUAL
+
+    nonterm N_class_type_declarations ::=
+      | "class" "type" N_ext N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT "="
+      N_class_signature N_list_post_item_attribute_ N_list_and_class_type_declaration_ prec p_EQUAL
+
+    nonterm N_seq_expr ::=
+      | N_expr prec p_below_SEMI
+      | N_expr ";" prec p_SEMI
+      | N_expr ";" N_seq_expr prec p_SEMI
+      | N_expr ";" "\%" N_attr_id N_seq_expr prec p_PERCENT
+
+    nonterm N_labeled_simple_pattern ::=
+      | "?" "(" N_label_let_pattern N_option_preceded_EQUAL_seq_expr__ ")"
+      | "?" LIDENT prec p_LIDENT
+      | OPTLABEL "(" N_let_pattern N_option_preceded_EQUAL_seq_expr__ ")"
+      | OPTLABEL N_pattern_var
+      | "~" "(" N_label_let_pattern ")"
+      | "~" LIDENT prec p_LIDENT
+      | LABEL N_simple_pattern
+      | N_simple_pattern
+
+    nonterm N_pattern_var ::=
+      | LIDENT prec p_LIDENT
+      | "_"
+
+    nonterm N_label_let_pattern ::=
+      | LIDENT prec p_LIDENT
+      | LIDENT ":" N_core_type
+
+    nonterm N_let_pattern ::=
+      | N_pattern
+      | N_pattern ":" N_core_type
+
+    nonterm N_expr ::=
+      | N_simple_expr prec p_below_HASH
+      | "let" "module" N_ext N_list_attribute_ N_module_name N_module_binding_body "in" N_seq_expr
+      prec p_IN
+      | "let" "exception" N_ext N_list_attribute_ N_constr_ident N_generalized_constructor_arguments
+      N_list_attribute_ "in" N_seq_expr prec p_IN
+      | "let" "open" N_ext N_list_attribute_ N_module_expr "in" N_seq_expr prec p_IN
+      | "let" "open" "!" N_ext N_list_attribute_ N_module_expr "in" N_seq_expr prec p_IN
+      | "function" N_ext N_list_attribute_
+      N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ prec p_FUNCTION
+      | "fun" N_ext N_list_attribute_ N_labeled_simple_pattern N_fun_def
+      | "fun" N_ext N_list_attribute_ "(" "type" N_nonempty_list_mkrhs_LIDENT__ ")" N_fun_def
+      | "match" N_ext N_list_attribute_ N_seq_expr "with"
+      N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ prec p_WITH
+      | "try" N_ext N_list_attribute_ N_seq_expr "with"
+      N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ prec p_WITH
+      | "try" N_ext N_list_attribute_ N_seq_expr "with" ERROR
+      | "if" N_ext N_list_attribute_ N_seq_expr "then" N_expr "else" N_expr prec p_ELSE
+      | "if" N_ext N_list_attribute_ N_seq_expr "then" N_expr prec p_THEN
+      | "while" N_ext N_list_attribute_ N_seq_expr "do" N_seq_expr "done"
+      | "for" N_ext N_list_attribute_ N_pattern "=" N_seq_expr N_direction_flag N_seq_expr "do"
+      N_seq_expr "done"
+      | "assert" N_ext N_list_attribute_ N_simple_expr prec p_below_HASH
+      | "lazy" N_ext N_list_attribute_ N_simple_expr prec p_below_HASH
+      | N_simple_expr N_reversed_nonempty_llist_labeled_simple_expr_
+      | N_reversed_separated_nontrivial_llist_COMMA_expr_ prec p_below_COMMA
+      | N_constr_longident N_simple_expr prec p_below_HASH
+      | N_name_tag N_simple_expr prec p_below_HASH
+      | N_expr INFIXOP0 N_expr prec p_INFIXOP0
+      | N_expr INFIXOP1 N_expr prec p_INFIXOP1
+      | N_expr INFIXOP2 N_expr prec p_INFIXOP2
+      | N_expr INFIXOP3 N_expr prec p_INFIXOP3
+      | N_expr INFIXOP4 N_expr prec p_INFIXOP4
+      | N_expr "+" N_expr prec p_PLUS
+      | N_expr "+." N_expr prec p_PLUSDOT
+      | N_expr "+=" N_expr prec p_PLUSEQ
+      | N_expr "-" N_expr prec p_MINUS
+      | N_expr "-." N_expr prec p_MINUSDOT
+      | N_expr "*" N_expr prec p_STAR
+      | N_expr "\%" N_expr prec p_PERCENT
+      | N_expr "=" N_expr prec p_EQUAL
+      | N_expr "<" N_expr prec p_LESS
+      | N_expr ">" N_expr prec p_GREATER
+      | N_expr "or" N_expr prec p_OR
+      | N_expr "||" N_expr prec p_BARBAR
+      | N_expr "&" N_expr prec p_AMPERSAND
+      | N_expr "&&" N_expr prec p_AMPERAMPER
+      | N_expr ":=" N_expr prec p_COLONEQUAL
+      | N_subtractive N_expr prec p_prec_unary_minus
+      | N_additive N_expr prec p_prec_unary_plus
+      | N_let_bindings_ext_ "in" N_seq_expr prec p_IN
+      | LETOP N_letop_bindings "in" N_seq_expr prec p_IN
+      | N_expr "::" N_expr prec p_COLONCOLON
+      | LIDENT "<-" N_expr prec p_LESSMINUS
+      | N_simple_expr "." N_label_longident "<-" N_expr prec p_LESSMINUS
+      | N_simple_expr "." "(" N_seq_expr ")" "<-" N_expr prec p_LESSMINUS
+      | N_simple_expr "." "{" N_seq_expr "}" "<-" N_expr prec p_LESSMINUS
+      | N_simple_expr "." "[" N_seq_expr "]" "<-" N_expr prec p_LESSMINUS
+      | N_simple_expr DOTOP "(" N_separated_or_terminated_nonempty_list_SEMI_expr_ ")" "<-" N_expr
+      prec p_LESSMINUS
+      | N_simple_expr "." N_mod_longident DOTOP "("
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ ")" "<-" N_expr prec p_LESSMINUS
+      | N_simple_expr DOTOP "{" N_separated_or_terminated_nonempty_list_SEMI_expr_ "}" "<-" N_expr
+      prec p_LESSMINUS
+      | N_simple_expr "." N_mod_longident DOTOP "{"
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ "}" "<-" N_expr prec p_LESSMINUS
+      | N_simple_expr DOTOP "[" N_separated_or_terminated_nonempty_list_SEMI_expr_ "]" "<-" N_expr
+      prec p_LESSMINUS
+      | N_simple_expr "." N_mod_longident DOTOP "["
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ "]" "<-" N_expr prec p_LESSMINUS
+      | N_expr N_attribute
+      | "_"
+
+    nonterm N_simple_expr ::=
+      | "(" N_seq_expr ")"
+      | "(" N_seq_expr ERROR
+      | "(" N_seq_expr N_type_constraint ")"
+      | N_simple_expr "." "(" N_seq_expr ")"
+      | N_simple_expr "." "{" N_seq_expr "}"
+      | N_simple_expr "." "[" N_seq_expr "]"
+      | N_simple_expr DOTOP "(" N_separated_or_terminated_nonempty_list_SEMI_expr_ ")"
+      | N_simple_expr "." N_mod_longident DOTOP "("
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ ")"
+      | N_simple_expr DOTOP "{" N_separated_or_terminated_nonempty_list_SEMI_expr_ "}"
+      | N_simple_expr "." N_mod_longident DOTOP "{"
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ "}"
+      | N_simple_expr DOTOP "[" N_separated_or_terminated_nonempty_list_SEMI_expr_ "]"
+      | N_simple_expr "." N_mod_longident DOTOP "["
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ "]"
+      | N_simple_expr "." "(" N_seq_expr ERROR
+      | N_simple_expr "." "{" N_seq_expr ERROR
+      | N_simple_expr "." "[" N_seq_expr ERROR
+      | N_simple_expr DOTOP "(" N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | N_simple_expr "." N_mod_longident DOTOP "("
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | N_simple_expr DOTOP "{" N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | N_simple_expr "." N_mod_longident DOTOP "{"
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | N_simple_expr DOTOP "[" N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | N_simple_expr "." N_mod_longident DOTOP "["
+      N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | "begin" N_ext N_list_attribute_ N_seq_expr "end"
+      | "begin" N_ext N_list_attribute_ "end"
+      | "begin" N_ext N_list_attribute_ N_seq_expr ERROR
+      | "new" N_ext N_list_attribute_ N_class_longident prec p_NEW
+      | "(" "module" N_ext N_list_attribute_ N_module_expr ")"
+      | "(" "module" N_ext N_list_attribute_ N_module_expr ":" N_module_type ")"
+      | "(" "module" N_ext N_list_attribute_ N_module_expr ":" ERROR
+      | "object" N_ext N_list_attribute_ N_class_self_pattern N_list_text_cstr_class_field__ "end"
+      | "object" N_ext N_list_attribute_ N_class_self_pattern N_list_text_cstr_class_field__ ERROR
+      | N_val_longident
+      | N_constant
+      | N_constr_longident prec p_prec_constant_constructor
+      | N_name_tag prec p_prec_constant_constructor
+      | PREFIXOP N_simple_expr prec p_PREFIXOP
+      | "!" N_simple_expr prec p_BANG
+      | "{<" N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ ">}"
+      | "{<" N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ ERROR
+      | "{<" ">}"
+      | N_simple_expr "." N_label_longident prec p_DOT
+      | N_mod_longident "." "(" N_seq_expr ")"
+      | N_mod_longident "." "{<" N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_
+      ">}"
+      | N_mod_longident "." "{<" N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_
+      ERROR
+      | N_simple_expr "#" LIDENT prec p_LIDENT
+      | N_simple_expr HASHOP N_simple_expr prec p_HASHOP
+      | N_extension
+      | N_mod_longident "." "(" ")"
+      | N_mod_longident "." "(" N_seq_expr ERROR
+      | "{" N_record_expr_content "}"
+      | "{" N_record_expr_content ERROR
+      | N_mod_longident "." "{" N_record_expr_content "}"
+      | N_mod_longident "." "{" N_record_expr_content ERROR
+      | "[|" N_separated_or_terminated_nonempty_list_SEMI_expr_ "|]"
+      | "[|" N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | "[|" "|]"
+      | N_mod_longident "." "[|" N_separated_or_terminated_nonempty_list_SEMI_expr_ "|]"
+      | N_mod_longident "." "[|" "|]"
+      | N_mod_longident "." "[|" N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | "[" N_separated_or_terminated_nonempty_list_SEMI_expr_ "]"
+      | "[" N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | N_mod_longident "." "[" N_separated_or_terminated_nonempty_list_SEMI_expr_ "]"
+      | N_mod_longident "." "[" "]"
+      | N_mod_longident "." "[" N_separated_or_terminated_nonempty_list_SEMI_expr_ ERROR
+      | N_mod_longident "." "(" "module" N_ext N_list_attribute_ N_module_expr ":" N_module_type ")"
+      | N_mod_longident "." "(" "module" N_ext N_list_attribute_ N_module_expr ":" ERROR
+
+    nonterm N_labeled_simple_expr ::=
+      | N_simple_expr prec p_below_HASH
+      | LABEL N_simple_expr prec p_below_HASH
+      | "~" LIDENT prec p_LIDENT
+      | "~" "(" LIDENT N_type_constraint ")"
+      | "?" LIDENT prec p_LIDENT
+      | OPTLABEL N_simple_expr prec p_below_HASH
+
+    nonterm N_let_binding_body_no_punning ::=
+      | N_val_ident N_strict_binding
+      | N_val_ident N_type_constraint "=" N_seq_expr prec p_EQUAL
+      | N_val_ident ":" N_reversed_nonempty_llist_typevar_ "." N_core_type "=" N_seq_expr
+      prec p_EQUAL
+      | N_val_ident ":" "type" N_nonempty_list_mkrhs_LIDENT__ "." N_core_type "=" N_seq_expr
+      prec p_EQUAL
+      | N_pattern_no_exn "=" N_seq_expr prec p_EQUAL
+      | N_simple_pattern_not_ident ":" N_core_type "=" N_seq_expr prec p_EQUAL
+
+    nonterm N_let_binding_body ::=
+      | N_let_binding_body_no_punning
+      | N_val_ident prec p_below_HASH
+
+    nonterm N_let_bindings_ext_ ::=
+      | "let" N_ext N_list_attribute_ N_rec_flag N_let_binding_body N_list_post_item_attribute_
+      prec p_LET
+      | N_let_bindings_ext_ N_and_let_binding
+
+    nonterm N_let_bindings_no_ext_ ::=
+      | "let" N_list_attribute_ N_rec_flag N_let_binding_body N_list_post_item_attribute_ prec p_LET
+      | "let" "\%" N_attr_id N_list_attribute_ N_rec_flag N_let_binding_body
+      N_list_post_item_attribute_ prec p_PERCENT
+      | N_let_bindings_no_ext_ N_and_let_binding
+
+    nonterm N_and_let_binding ::=
+      | "and" N_list_attribute_ N_let_binding_body N_list_post_item_attribute_ prec p_AND
+
+    nonterm N_letop_binding_body ::=
+      | N_val_ident N_strict_binding
+      | N_val_ident
+      | N_simple_pattern ":" N_core_type "=" N_seq_expr prec p_EQUAL
+      | N_pattern_no_exn "=" N_seq_expr prec p_EQUAL
+
+    nonterm N_letop_bindings ::=
+      | N_letop_binding_body
+      | N_letop_bindings ANDOP N_letop_binding_body
+
+    nonterm N_fun_binding ::=
+      | N_strict_binding
+      | N_type_constraint "=" N_seq_expr prec p_EQUAL
+
+    nonterm N_strict_binding ::=
+      | "=" N_seq_expr prec p_EQUAL
+      | N_labeled_simple_pattern N_fun_binding
+      | "(" "type" N_nonempty_list_mkrhs_LIDENT__ ")" N_fun_binding
+
+    nonterm N_match_case ::=
+      | N_pattern "->" N_seq_expr prec p_MINUSGREATER
+      | N_pattern "when" N_seq_expr "->" N_seq_expr prec p_MINUSGREATER
+      | N_pattern "->" "." prec p_DOT
+
+    nonterm N_fun_def ::=
+      | "->" N_seq_expr prec p_MINUSGREATER
+      | ":" N_atomic_type "->" N_seq_expr prec p_MINUSGREATER
+      | N_labeled_simple_pattern N_fun_def
+      | "(" "type" N_nonempty_list_mkrhs_LIDENT__ ")" N_fun_def
+
+    nonterm N_record_expr_content ::=
+      | N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_
+      | N_simple_expr "with" N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_
+      prec p_WITH
+
+    nonterm N_type_constraint ::=
+      | ":" N_core_type
+      | ":" N_core_type ":>" N_core_type
+      | ":>" N_core_type
+      | ":" ERROR
+      | ":>" ERROR
+
+    nonterm N_pattern ::=
+      | N_pattern "::" N_pattern prec p_COLONCOLON
+      | N_pattern N_attribute
+      | N_pattern_gen
+      | N_pattern "as" N_val_ident prec p_AS
+      | N_pattern "as" ERROR
+      | N_pattern_comma_list_pattern_ prec p_below_COMMA
+      | N_pattern "::" ERROR
+      | N_pattern "|" N_pattern prec p_BAR
+      | N_pattern "|" ERROR
+      | "exception" N_ext N_list_attribute_ N_pattern prec p_prec_constr_appl
+
+    nonterm N_pattern_no_exn ::=
+      | N_pattern_no_exn "::" N_pattern prec p_COLONCOLON
+      | N_pattern_no_exn N_attribute
+      | N_pattern_gen
+      | N_pattern_no_exn "as" N_val_ident prec p_AS
+      | N_pattern_no_exn "as" ERROR
+      | N_pattern_comma_list_pattern_no_exn_ prec p_below_COMMA
+      | N_pattern_no_exn "::" ERROR
+      | N_pattern_no_exn "|" N_pattern prec p_BAR
+      | N_pattern_no_exn "|" ERROR
+
+    nonterm N_pattern_gen ::=
+      | N_simple_pattern
+      | N_constr_longident N_pattern prec p_prec_constr_appl
+      | N_constr_longident "(" "type" N_nonempty_list_mkrhs_LIDENT__ ")" N_simple_pattern
+      | N_name_tag N_pattern prec p_prec_constr_appl
+      | "lazy" N_ext N_list_attribute_ N_simple_pattern
+
+    nonterm N_simple_pattern ::=
+      | N_val_ident prec p_below_EQUAL
+      | N_simple_pattern_not_ident
+
+    nonterm N_simple_pattern_not_ident ::=
+      | "(" N_pattern ")"
+      | N_simple_delimited_pattern
+      | "(" "module" N_ext N_list_attribute_ N_module_name ")"
+      | "(" "module" N_ext N_list_attribute_ N_module_name ":" N_module_type ")"
+      | "_"
+      | N_signed_constant
+      | N_signed_constant ".." N_signed_constant
+      | N_constr_longident
+      | N_name_tag
+      | "#" N_type_longident prec p_HASH
+      | N_mod_longident "." N_simple_delimited_pattern prec p_DOT
+      | N_mod_longident "." "[" "]"
+      | N_mod_longident "." "(" ")"
+      | N_mod_longident "." "(" N_pattern ")"
+      | N_mod_longident "." "(" N_pattern ERROR
+      | N_mod_longident "." "(" ERROR
+      | "(" N_pattern ERROR
+      | "(" N_pattern ":" N_core_type ")"
+      | "(" N_pattern ":" N_core_type ERROR
+      | "(" N_pattern ":" ERROR
+      | "(" "module" N_ext N_list_attribute_ N_module_name ":" N_module_type ERROR
+      | N_extension
+
+    nonterm N_simple_delimited_pattern ::=
+      | "{" N_listx_SEMI_record_pat_field_UNDERSCORE_ "}"
+      | "{" N_listx_SEMI_record_pat_field_UNDERSCORE_ ERROR
+      | "[" N_separated_or_terminated_nonempty_list_SEMI_pattern_ "]"
+      | "[" N_separated_or_terminated_nonempty_list_SEMI_pattern_ ERROR
+      | "[|" N_separated_or_terminated_nonempty_list_SEMI_pattern_ "|]"
+      | "[|" "|]"
+      | "[|" N_separated_or_terminated_nonempty_list_SEMI_pattern_ ERROR
+
+    nonterm N_pattern_comma_list_pattern_ ::=
+      | N_pattern_comma_list_pattern_ "," N_pattern prec p_COMMA
+      | N_pattern "," N_pattern prec p_COMMA
+      | N_pattern "," ERROR
+
+    nonterm N_pattern_comma_list_pattern_no_exn_ ::=
+      | N_pattern_comma_list_pattern_no_exn_ "," N_pattern prec p_COMMA
+      | N_pattern_no_exn "," N_pattern prec p_COMMA
+      | N_pattern_no_exn "," ERROR
+
+    nonterm N_value_description ::=
+      | "val" N_ext N_list_attribute_ N_val_ident ":" N_possibly_poly_core_type_
+      N_list_post_item_attribute_
+
+    nonterm N_primitive_declaration ::=
+      | "external" N_ext N_list_attribute_ N_val_ident ":" N_possibly_poly_core_type_ "="
+      N_nonempty_list_raw_string_ N_list_post_item_attribute_ prec p_EQUAL
+
+    nonterm N_generic_type_declaration_no_nonrec_flag_type_subst_kind_ prec p_COLONEQUAL ::=
+      | "type" N_ext N_list_attribute_ N_type_parameters LIDENT ":=" N_nonempty_type_kind
+      N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_
+      | "type" N_ext N_list_attribute_ "nonrec" N_type_parameters LIDENT ":=" N_nonempty_type_kind
+      N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_
+
+    nonterm N_generic_type_declaration_nonrec_flag_type_kind_ prec p_LIDENT ::=
+      | "type" N_ext N_list_attribute_ N_type_parameters LIDENT N_type_kind
+      N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_
+      | "type" N_ext N_list_attribute_ "nonrec" N_type_parameters LIDENT N_type_kind
+      N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_
+
+    nonterm N_nonempty_type_kind ::=
+      | N_core_type
+      | "private" N_core_type
+      | N_constructor_declarations
+      | "private" N_constructor_declarations
+      | N_core_type "=" N_constructor_declarations prec p_EQUAL
+      | N_core_type "=" "private" N_constructor_declarations
+      | ".."
+      | "private" ".."
+      | N_core_type "=" ".."
+      | N_core_type "=" "private" ".."
+      | "{" N_label_declarations "}"
+      | "private" "{" N_label_declarations "}"
+      | N_core_type "=" "{" N_label_declarations "}"
+      | N_core_type "=" "private" "{" N_label_declarations "}"
+
+    nonterm N_type_kind ::=
+      | epsilon
+      | "=" N_nonempty_type_kind prec p_EQUAL
+
+    nonterm N_type_parameters ::=
+      | epsilon
+      | N_type_parameter
+      | "(" N_reversed_separated_nonempty_llist_COMMA_type_parameter_ ")"
+
+    nonterm N_type_parameter ::=
+      | N_type_variance N_type_variable
+
+    nonterm N_type_variable ::=
+      | "'" N_ident
+      | "_"
+
+    nonterm N_type_variance ::=
+      | epsilon
+      | "+" prec p_PLUS
+      | "-" prec p_MINUS
+      | "!" prec p_BANG
+      | "+" "!" prec p_BANG
+      | "!" "+" prec p_PLUS
+      | "-" "!" prec p_BANG
+      | "!" "-" prec p_MINUS
+      | INFIXOP2 prec p_INFIXOP2
+      | PREFIXOP prec p_PREFIXOP
+
+    nonterm N_constructor_declarations ::=
+      | "|" prec p_BAR
+      | N_reversed_bar_llist_constructor_declaration_
+
+    nonterm N_generic_constructor_declaration_BAR_ ::=
+      | "|" N_constr_ident N_generalized_constructor_arguments N_list_attribute_ prec p_BAR
+
+    nonterm N_generic_constructor_declaration_epsilon_ ::=
+      | N_constr_ident N_generalized_constructor_arguments N_list_attribute_
+
+    nonterm N_str_exception_declaration ::=
+      | N_sig_exception_declaration
+      | "exception" N_ext N_list_attribute_ N_constr_ident "=" N_constr_longident N_list_attribute_
+      N_list_post_item_attribute_ prec p_EQUAL
+
+    nonterm N_sig_exception_declaration ::=
+      | "exception" N_ext N_list_attribute_ N_constr_ident N_generalized_constructor_arguments
+      N_list_attribute_ N_list_post_item_attribute_
+
+    nonterm N_generalized_constructor_arguments ::=
+      | epsilon
+      | "of" N_constructor_arguments
+      | ":" N_constructor_arguments "->" N_atomic_type prec p_below_HASH
+      | ":" N_reversed_nonempty_llist_typevar_ "." N_constructor_arguments "->" N_atomic_type
+      prec p_below_HASH
+      | ":" N_atomic_type prec p_below_HASH
+      | ":" N_reversed_nonempty_llist_typevar_ "." N_atomic_type prec p_below_HASH
+
+    nonterm N_constructor_arguments ::=
+      | N_atomic_type prec p_below_HASH
+      | N_reversed_separated_nonempty_llist_STAR_atomic_type_ "*" N_atomic_type prec p_below_HASH
+      | "{" N_label_declarations "}"
+
+    nonterm N_label_declarations ::=
+      | N_label_declaration
+      | N_label_declaration_semi
+      | N_label_declaration_semi N_label_declarations
+
+    nonterm N_label_declaration ::=
+      | N_mutable_flag LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_
+
+    nonterm N_label_declaration_semi ::=
+      | N_mutable_flag LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_ ";"
+      N_list_attribute_ prec p_SEMI
+
+    nonterm N_extension_constructor_rebind_BAR_ ::=
+      | "|" N_constr_ident "=" N_constr_longident N_list_attribute_ prec p_EQUAL
+
+    nonterm N_extension_constructor_rebind_epsilon_ ::=
+      | N_constr_ident "=" N_constr_longident N_list_attribute_ prec p_EQUAL
+
+    nonterm N_with_constraint ::=
+      | "type" N_type_parameters N_label_longident N_with_type_binder N_alias_type
+      N_reversed_llist_preceded_CONSTRAINT_constrain__
+      | "type" N_type_parameters N_label_longident ":=" N_alias_type prec p_COLONEQUAL
+      | "module" N_mod_longident "=" N_mod_ext_longident prec p_EQUAL
+      | "module" N_mod_longident ":=" N_mod_ext_longident prec p_COLONEQUAL
+      | "module" "type" N_mty_longident "=" N_module_type prec p_EQUAL
+      | "module" "type" N_mty_longident ":=" N_module_type prec p_COLONEQUAL
+
+    nonterm N_with_type_binder ::=
+      | "=" prec p_EQUAL
+      | "=" "private"
+
+    nonterm N_possibly_poly_core_type_ ::=
+      | N_core_type
+      | N_reversed_nonempty_llist_typevar_ "." N_core_type prec p_DOT
+
+    nonterm N_possibly_poly_core_type_no_attr_ ::=
+      | N_alias_type
+      | N_reversed_nonempty_llist_typevar_ "." N_alias_type prec p_DOT
+
+    nonterm N_core_type ::=
+      | N_alias_type
+      | N_core_type N_attribute
+
+    nonterm N_alias_type ::=
+      | N_function_type
+      | N_alias_type "as" "'" N_ident
+
+    nonterm N_function_type prec p_MINUSGREATER ::=
+      | N_tuple_type
+      | N_optlabel N_tuple_type "->" N_function_type
+      | LIDENT ":" N_tuple_type "->" N_function_type
+      | N_tuple_type "->" N_function_type
+
+    nonterm N_tuple_type ::=
+      | N_atomic_type prec p_below_HASH
+      | N_reversed_separated_nontrivial_llist_STAR_atomic_type_
+
+    nonterm N_atomic_type ::=
+      | "(" N_core_type ")"
+      | "(" "module" N_ext N_list_attribute_ N_module_type ")"
+      | "'" N_ident
+      | "_"
+      | N_type_longident
+      | N_atomic_type N_type_longident
+      | "(" N_reversed_separated_nontrivial_llist_COMMA_core_type_ ")" N_type_longident
+      | "<" N_meth_list ">" prec p_GREATER
+      | "<" ">" prec p_GREATER
+      | "#" N_clty_longident prec p_HASH
+      | N_atomic_type "#" N_clty_longident prec p_HASH
+      | "(" N_reversed_separated_nontrivial_llist_COMMA_core_type_ ")" "#" N_clty_longident
+      prec p_HASH
+      | "[" N_tag_field "]"
+      | "[" "|" N_reversed_separated_nonempty_llist_BAR_row_field_ "]"
+      | "[" N_row_field "|" N_reversed_separated_nonempty_llist_BAR_row_field_ "]"
+      | "[>" N_option_BAR_ N_reversed_separated_nonempty_llist_BAR_row_field_ "]"
+      | "[>" "]"
+      | "[<" N_option_BAR_ N_reversed_separated_nonempty_llist_BAR_row_field_ "]"
+      | "[<" N_option_BAR_ N_reversed_separated_nonempty_llist_BAR_row_field_ ">"
+      N_reversed_nonempty_llist_name_tag_ "]"
+      | N_extension
+
+    nonterm N_row_field ::=
+      | N_tag_field
+      | N_core_type
+
+    nonterm N_tag_field ::=
+      | N_name_tag "of" N_opt_ampersand
+      N_reversed_separated_nonempty_llist_AMPERSAND_core_type_no_attr_ N_list_attribute_
+      | N_name_tag N_list_attribute_
+
+    nonterm N_opt_ampersand ::=
+      | "&" prec p_AMPERSAND
+      | epsilon
+
+    nonterm N_meth_list ::=
+      | LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_ ";" N_list_attribute_
+      N_meth_list prec p_SEMI
+      | N_atomic_type ";" N_meth_list prec p_SEMI
+      | LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_ ";" N_list_attribute_
+      prec p_SEMI
+      | N_atomic_type ";" prec p_SEMI
+      | LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_
+      | N_atomic_type
+      | ".."
+
+    nonterm N_constant ::=
+      | INT prec p_INT
+      | CHAR prec p_CHAR
+      | STRING prec p_STRING
+      | FLOAT prec p_FLOAT
+
+    nonterm N_signed_constant ::=
+      | N_constant
+      | "-" INT prec p_INT
+      | "-" FLOAT prec p_FLOAT
+      | "+" INT prec p_INT
+      | "+" FLOAT prec p_FLOAT
+
+    nonterm N_ident ::=
+      | UIDENT prec p_UIDENT
+      | LIDENT prec p_LIDENT
+
+    nonterm N_val_extra_ident ::=
+      | "(" N_operator ")"
+      | "(" N_operator ERROR
+      | "(" ERROR
+      | "(" "module" ERROR
+
+    nonterm N_val_ident ::=
+      | LIDENT prec p_LIDENT
+      | N_val_extra_ident
+
+    nonterm N_operator ::=
+      | PREFIXOP prec p_PREFIXOP
+      | LETOP
+      | ANDOP
+      | DOTOP "(" N_index_mod ")"
+      | DOTOP "(" N_index_mod ")" "<-" prec p_LESSMINUS
+      | DOTOP "[" N_index_mod "]"
+      | DOTOP "[" N_index_mod "]" "<-" prec p_LESSMINUS
+      | DOTOP "{" N_index_mod "}"
+      | DOTOP "{" N_index_mod "}" "<-" prec p_LESSMINUS
+      | HASHOP prec p_HASHOP
+      | "!" prec p_BANG
+      | INFIXOP0 prec p_INFIXOP0
+      | INFIXOP1 prec p_INFIXOP1
+      | INFIXOP2 prec p_INFIXOP2
+      | INFIXOP3 prec p_INFIXOP3
+      | INFIXOP4 prec p_INFIXOP4
+      | "+" prec p_PLUS
+      | "+." prec p_PLUSDOT
+      | "+=" prec p_PLUSEQ
+      | "-" prec p_MINUS
+      | "-." prec p_MINUSDOT
+      | "*" prec p_STAR
+      | "\%" prec p_PERCENT
+      | "=" prec p_EQUAL
+      | "<" prec p_LESS
+      | ">" prec p_GREATER
+      | "or" prec p_OR
+      | "||" prec p_BARBAR
+      | "&" prec p_AMPERSAND
+      | "&&" prec p_AMPERAMPER
+      | ":=" prec p_COLONEQUAL
+
+    nonterm N_index_mod ::=
+      | epsilon
+      | ";" ".."
+
+    nonterm N_constr_extra_nonprefix_ident ::=
+      | "[" "]"
+      | "(" ")"
+      | "false" prec p_FALSE
+      | "true" prec p_TRUE
+
+    nonterm N_constr_ident ::=
+      | UIDENT prec p_UIDENT
+      | "(" "::" ")"
+      | N_constr_extra_nonprefix_ident
+
+    nonterm N_constr_longident ::=
+      | N_mod_longident prec p_below_DOT
+      | N_mod_longident "." "(" "::" ")"
+      | "(" "::" ")"
+      | N_constr_extra_nonprefix_ident
+
+    nonterm N_mk_longident_mod_ext_longident_LIDENT_ prec p_LIDENT ::=
+      | LIDENT
+      | N_mod_ext_longident "." LIDENT
+
+    nonterm N_mk_longident_mod_ext_longident_UIDENT_ prec p_UIDENT ::=
+      | UIDENT
+      | N_mod_ext_longident "." UIDENT
+
+    nonterm N_mk_longident_mod_ext_longident___anonymous_41_ ::=
+      | N_ident
+      | "(" "::" ")"
+      | N_val_extra_ident
+      | N_mod_ext_longident "." N_ident
+      | N_mod_ext_longident "." "(" "::" ")"
+      | N_mod_ext_longident "." N_val_extra_ident
+
+    nonterm N_mk_longident_mod_ext_longident_ident_ ::=
+      | N_ident
+      | N_mod_ext_longident "." N_ident prec p_DOT
+
+    nonterm N_mk_longident_mod_longident_LIDENT_ prec p_LIDENT ::=
+      | LIDENT
+      | N_mod_longident "." LIDENT
+
+    nonterm N_mk_longident_mod_longident_UIDENT_ prec p_UIDENT ::=
+      | UIDENT
+      | N_mod_longident "." UIDENT
+
+    nonterm N_mk_longident_mod_longident_val_ident_ ::=
+      | N_val_ident
+      | N_mod_longident "." N_val_ident prec p_DOT
+
+    nonterm N_val_longident ::=
+      | N_mk_longident_mod_longident_val_ident_
+
+    nonterm N_label_longident ::=
+      | N_mk_longident_mod_longident_LIDENT_
+
+    nonterm N_type_longident ::=
+      | N_mk_longident_mod_ext_longident_LIDENT_
+
+    nonterm N_mod_longident ::=
+      | N_mk_longident_mod_longident_UIDENT_
+
+    nonterm N_mod_ext_longident ::=
+      | N_mk_longident_mod_ext_longident_UIDENT_
+      | N_mod_ext_longident "(" N_mod_ext_longident ")"
+      | N_mod_ext_longident "(" ERROR
+
+    nonterm N_mty_longident ::=
+      | N_mk_longident_mod_ext_longident_ident_
+
+    nonterm N_clty_longident ::=
+      | N_mk_longident_mod_ext_longident_LIDENT_
+
+    nonterm N_class_longident ::=
+      | N_mk_longident_mod_longident_LIDENT_
+
+    nonterm N_any_longident ::=
+      | N_mk_longident_mod_ext_longident___anonymous_41_
+      | N_constr_extra_nonprefix_ident
+
+    nonterm N_toplevel_directive ::=
+      | "#" N_ident prec p_HASH
+      | "#" N_ident STRING prec p_STRING
+      | "#" N_ident INT prec p_INT
+      | "#" N_ident N_val_longident prec p_HASH
+      | "#" N_ident N_mod_longident prec p_HASH
+      | "#" N_ident "false" prec p_FALSE
+      | "#" N_ident "true" prec p_TRUE
+
+    nonterm N_name_tag ::=
+      | "`" N_ident prec p_BACKQUOTE
+
+    nonterm N_rec_flag ::=
+      | epsilon
+      | "rec"
+
+    nonterm N_direction_flag ::=
+      | "to"
+      | "downto"
+
+    nonterm N_private_flag ::=
+      | epsilon
+      | "private"
+
+    nonterm N_mutable_flag ::=
+      | epsilon
+      | "mutable"
+
+    nonterm N_virtual_flag ::=
+      | epsilon
+      | "virtual"
+
+    nonterm N_mutable_virtual_flags ::=
+      | epsilon
+      | "mutable"
+      | "virtual"
+      | "mutable" "virtual"
+      | "virtual" "mutable"
+
+    nonterm N_private_virtual_flags ::=
+      | epsilon
+      | "private"
+      | "virtual"
+      | "private" "virtual"
+      | "virtual" "private"
+
+    nonterm N_virtual_with_mutable_flag ::=
+      | "virtual"
+      | "mutable" "virtual"
+      | "virtual" "mutable"
+
+    nonterm N_virtual_with_private_flag ::=
+      | "virtual"
+      | "private" "virtual"
+      | "virtual" "private"
+
+    nonterm N_subtractive ::=
+      | "-" prec p_MINUS
+      | "-." prec p_MINUSDOT
+
+    nonterm N_additive ::=
+      | "+" prec p_PLUS
+      | "+." prec p_PLUSDOT
+
+    nonterm N_optlabel ::=
+      | OPTLABEL
+      | "?" LIDENT ":"
+
+    nonterm N_single_attr_id ::=
+      | LIDENT prec p_LIDENT
+      | UIDENT prec p_UIDENT
+      | "and" prec p_AND
+      | "as" prec p_AS
+      | "assert"
+      | "begin" prec p_BEGIN
+      | "class"
+      | "constraint"
+      | "do"
+      | "done"
+      | "downto"
+      | "else" prec p_ELSE
+      | "end"
+      | "exception"
+      | "external"
+      | "false" prec p_FALSE
+      | "for"
+      | "fun"
+      | "function" prec p_FUNCTION
+      | "functor"
+      | "if"
+      | "in" prec p_IN
+      | "include"
+      | "inherit"
+      | "initializer"
+      | "lazy"
+      | "let" prec p_LET
+      | "match"
+      | "method"
+      | "module"
+      | "mutable"
+      | "new" prec p_NEW
+      | "nonrec"
+      | "object" prec p_OBJECT
+      | "of"
+      | "open"
+      | "or" prec p_OR
+      | "private"
+      | "rec"
+      | "sig"
+      | "struct"
+      | "then" prec p_THEN
+      | "to"
+      | "true" prec p_TRUE
+      | "try"
+      | "type"
+      | "val"
+      | "virtual"
+      | "when"
+      | "while"
+      | "with" prec p_WITH
+
+    nonterm N_attr_id ::=
+      | N_single_attr_id
+      | N_single_attr_id "." N_attr_id prec p_DOT
+
+    nonterm N_attribute ::=
+      | "[@" N_attr_id N_payload "]"
+
+    nonterm N_post_item_attribute ::=
+      | "[@@" N_attr_id N_payload "]"
+
+    nonterm N_floating_attribute ::=
+      | "[@@@" N_attr_id N_payload "]"
+
+    nonterm N_ext ::=
+      | epsilon
+      | "\%" N_attr_id prec p_PERCENT
+
+    nonterm N_extension ::=
+      | "[\%" N_attr_id N_payload "]"
+      | QUOTED_STRING_EXPR prec p_QUOTED_STRING_EXPR
+
+    nonterm N_item_extension ::=
+      | "[\%\%" N_attr_id N_payload "]"
+      | QUOTED_STRING_ITEM
+
+    nonterm N_payload ::=
+      | N_structure
+      | ":" N_signature
+      | ":" N_core_type
+      | "?" N_pattern
+      | "?" N_pattern "when" N_seq_expr
