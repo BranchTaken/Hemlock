@@ -200,32 +200,6 @@ module T = struct
   let pow ~p t =
     t ** p
 
-  let int_pow ~p t =
-    (* Decompose the exponent to limit algorithmic complexity. *)
-    let neg, n = if Sint.(is_negative p) then
-        true, Sint.(-p)
-      else
-        false, p
-    in
-    let rec fn r p n = begin
-      match n with
-      | 0L -> r
-      | _ -> begin
-          let r' = match Uns.bit_and n 1L with
-            | 0L -> r
-            | 1L -> r * p
-            | _ -> not_reached ()
-          in
-          let p' = p * p in
-          let n' = Uns.bit_sr ~shift:1L n in
-          fn r' p' n'
-        end
-    end in
-    let r = fn 1. t (Uns.bits_of_sint n) in
-    match neg with
-    | false -> r
-    | true -> 1. / r
-
   let lngamma_impl t =
     let f, t' = match Cmp.is_lt (cmp t 7.) with
       | true -> begin

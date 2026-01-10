@@ -9,7 +9,7 @@ let test () =
     | (b, x) :: pairs' -> begin
         let xf = of_sint x in
         File.Fmt.stdout
-        |> Fmt.fmt "** pow int_pow "
+        |> Fmt.fmt "** pow "
         |> fmt ~alt:true ~radix:Radix.Hex b
         |> Fmt.fmt " ~p:"
         |> Sint.pp x
@@ -17,8 +17,6 @@ let test () =
         |> fmt ~alt:true ~radix:Radix.Hex (b ** xf)
         |> Fmt.fmt " "
         |> fmt ~alt:true ~radix:Radix.Hex (pow b ~p:xf)
-        |> Fmt.fmt " "
-        |> fmt ~alt:true ~radix:Radix.Hex (int_pow b ~p:x)
         |> Fmt.fmt "\n"
         |> ignore;
         fn pairs'
