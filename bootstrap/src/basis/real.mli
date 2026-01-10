@@ -188,10 +188,6 @@ val log: t -> t
 val pow: p:t -> t -> t
 (** [pow ~p t] returns [t] raised to the [~p] power. Equivalent to [t ** ~p]. *)
 
-val int_pow: p:sint -> t -> t
-(** [int_pow ~p t] returns [t] raised to the [~p] power, where [~p] is an {!type:sint}. [int_pow] is
-    typically faster than the equivalent call to {!pow}. *)
-
 val lngamma: t -> t
 (** [lngamma t] computes the natural log of the {{: https://en.wikipedia.org/wiki/Gamma_function}
     Gamma} function applied to [t], accurate to 10 decimal places. This implementation is based on:
