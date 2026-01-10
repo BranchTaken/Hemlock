@@ -68,6 +68,8 @@ type token_left =
   | LEFT of {token: Scan.Token.t}
 type token_right =
   | RIGHT of {token: Scan.Token.t}
+type token_nonassoc =
+  | NONASSOC of {token: Scan.Token.t}
 type token_prec =
   | PREC of {token: Scan.Token.t}
 type token_uident =
@@ -145,6 +147,7 @@ type nonterm_uident =
   | PrecTypeNeutral
   | PrecTypeLeft
   | PrecTypeRight
+  | PrecTypeNonassoc
   and nonterm_prec_set =
   | PrecSet of {prec_type: nonterm_prec_type; prec_set: nonterm_precs; prec_rels: nonterm_prec_rels}
   and nonterm_symbol_type_qualifier =
@@ -283,6 +286,7 @@ include hocc
     token NEUTRAL "neutral" of token_neutral
     token LEFT "left" of token_left
     token RIGHT "right" of token_right
+    token NONASSOC "nonassoc" of token_nonassoc
     token PREC "prec" of token_prec
 
     (* Identifiers *)
@@ -342,6 +346,7 @@ include hocc
       | (NEUTRAL {token}):"neutral"
       | (LEFT {token}):"left"
       | (RIGHT {token}):"right"
+      | (NONASSOC {token}):"nonassoc"
       | (PREC {token}):"prec"
       | (UIDENT {token}):UIDENT
       -> Uident {token}
@@ -361,6 +366,7 @@ include hocc
       | "neutral" -> PrecTypeNeutral
       | "left" -> PrecTypeLeft
       | "right" -> PrecTypeRight
+      | "nonassoc" -> PrecTypeNonassoc
 
     nonterm PrecSet of nonterm_prec_set ::=
       | prec_type:PrecType prec_set:Precs prec_rels:PrecRels ->
@@ -577,6 +583,7 @@ include hocc
       | (NEUTRAL {token}):"neutral"
       | (LEFT {token}):"left"
       | (RIGHT {token}):"right"
+      | (NONASSOC {token}):"nonassoc"
       | (PREC {token}):"prec"
       | (OTHER_TOKEN {token}):OTHER_TOKEN
       | (UIDENT {token}):UIDENT
@@ -664,6 +671,7 @@ let rec scan scanner =
           | Tok_neutral _ -> Some (Token.NEUTRAL (NEUTRAL {token=scan_token}))
           | Tok_left _ -> Some (Token.LEFT (LEFT {token=scan_token}))
           | Tok_right _ -> Some (Token.RIGHT (RIGHT {token=scan_token}))
+          | Tok_nonassoc _ -> Some (Token.NONASSOC (NONASSOC {token=scan_token}))
           | Tok_prec _ -> Some (Token.PREC (PREC {token=scan_token}))
           | Tok_colon_colon_eq _ -> Some (Token.COLON_COLON_EQ (COLON_COLON_EQ {token=scan_token}))
           in
@@ -762,6 +770,12 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and pp_token_right (RIGHT {token}) formatter =
     formatter
       |> Fmt.fmt "RIGHT {"
+      |> Scan.Token.pp token
+      |> Fmt.fmt "}"
+
+  and pp_token_nonassoc (NONASSOC {token}) formatter =
+    formatter
+      |> Fmt.fmt "NONASSOC {"
       |> Scan.Token.pp token
       |> Fmt.fmt "}"
 
@@ -1032,6 +1046,7 @@ let rec pp_token_hocc (HOCC {token}) formatter =
       | PrecTypeNeutral -> formatter |> Fmt.fmt "PrecTypeNeutral"
       | PrecTypeLeft -> formatter |> Fmt.fmt "PrecTypeLeft"
       | PrecTypeRight -> formatter |> Fmt.fmt "PrecTypeRight"
+      | PrecTypeNonassoc -> formatter |> Fmt.fmt "PrecTypeNonassoc"
 
   and fmt_prec_set ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec_set formatter =
     let width' = width + 4L in

@@ -198,6 +198,7 @@ let resolve symbols prods symbol_index t =
                   | true -> shift
                   | _ -> t
                 end
+              | Some Nonassoc -> empty
             end
         end
     end

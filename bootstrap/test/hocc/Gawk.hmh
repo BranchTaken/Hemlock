@@ -7,8 +7,6 @@
 #
 # This transcription semantically differs from the original in a few subtle ways:
 #
-# - `hocc` does not support "nonassoc" associativity. Using "neutral" in its place causes additional
-#   unresolvable conflicts.
 # - `hocc` does not support midrule actions, which are conceptually inlined non-terminals with
 #   single productions. Explicit `Midrule*` non-terminals simulate this.
 # - There are some odd artifacts in the original that are not faithfully preserved, e.g.:
@@ -90,7 +88,7 @@ hocc
 
     left pConcat < pY
 
-    (*nonassoc*)neutral pRel < pConcat
+    nonassoc pRel < pConcat
     token RELOP prec pRel
     token LT "<" prec pRel
     token GT ">" prec pRel
@@ -98,10 +96,10 @@ hocc
     token APPEND_OP prec pRel
     token TWOWAYIO prec pRel
 
-    (*nonassoc*)neutral pMatch < pRel
+    nonassoc pMatch < pRel
     token MATCHOP prec pMatch
 
-    (*nonassoc*)neutral pComma < pMatch
+    nonassoc pComma < pMatch
     token COMMA "," prec pComma
 
     left pCall < pComma
@@ -109,7 +107,7 @@ hocc
     token LEX_BUILTIN prec pCall
     token LEX_LENGTH prec pCall
 
-    (*nonassoc*)neutral pIn < pCall
+    nonassoc pIn < pCall
     token LEX_IN prec pIn
 
     left pGetline < pIn

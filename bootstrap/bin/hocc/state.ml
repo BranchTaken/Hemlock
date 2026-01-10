@@ -107,7 +107,8 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
               | StateNub.Action.Reduce prod_index -> Action.Reduce prod_index
             ) action_set
           ) action_set in
-        Ordmap.insert ~k:symbol_index ~v:action_set' actions
+        assert (not (Ordset.is_empty action_set'));
+        Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
       )
   in
   let gotos =
