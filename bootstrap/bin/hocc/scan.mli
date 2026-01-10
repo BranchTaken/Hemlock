@@ -14,6 +14,7 @@ module Token: sig
     | Tok_neutral of {source: Hmc.Source.Slice.t}
     | Tok_left of {source: Hmc.Source.Slice.t}
     | Tok_right of {source: Hmc.Source.Slice.t}
+    | Tok_nonassoc of {source: Hmc.Source.Slice.t}
     | Tok_prec of {source: Hmc.Source.Slice.t}
     | Tok_colon_colon_eq of {source: Hmc.Source.Slice.t}
 

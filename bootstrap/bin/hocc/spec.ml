@@ -122,6 +122,7 @@ let precs_init io hmh =
           | PrecTypeNeutral -> None
           | PrecTypeLeft -> Some Assoc.Left
           | PrecTypeRight -> Some Assoc.Right
+          | PrecTypeNonassoc -> Some Assoc.Nonassoc
         in
         let io, doms = match prec_rels with
           | PrecRelsPrecs {precs=parse_precs} -> fold_precs_rels io precs parse_precs

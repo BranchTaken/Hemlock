@@ -29,6 +29,7 @@ let src_fmt ({prec_set={assoc; stmt; _}; _} as t) formatter =
     | None -> "    neutral "
     | Some Left -> "    left "
     | Some Right -> "    right "
+    | Some Nonassoc -> "    nonassoc "
   )
   |> Fmt.fmt (name t)
   |> (fun formatter ->

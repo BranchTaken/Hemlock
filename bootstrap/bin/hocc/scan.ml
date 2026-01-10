@@ -12,6 +12,7 @@ module Token = struct
     | Tok_neutral of {source: Hmc.Source.Slice.t}
     | Tok_left of {source: Hmc.Source.Slice.t}
     | Tok_right of {source: Hmc.Source.Slice.t}
+    | Tok_nonassoc of {source: Hmc.Source.Slice.t}
     | Tok_prec of {source: Hmc.Source.Slice.t}
     | Tok_colon_colon_eq of {source: Hmc.Source.Slice.t}
 
@@ -25,6 +26,7 @@ module Token = struct
     | Tok_neutral {source}
     | Tok_left {source}
     | Tok_right {source}
+    | Tok_nonassoc {source}
     | Tok_prec {source}
     | Tok_colon_colon_eq {source} -> source
 
@@ -47,6 +49,8 @@ module Token = struct
       formatter |> Fmt.fmt "Tok_left {source=" |> Hmc.Source.Slice.pp source |> Fmt.fmt "}"
     | Tok_right {source} ->
       formatter |> Fmt.fmt "Tok_right {source=" |> Hmc.Source.Slice.pp source |> Fmt.fmt "}"
+    | Tok_nonassoc {source} ->
+      formatter |> Fmt.fmt "Tok_nonassoc {source=" |> Hmc.Source.Slice.pp source |> Fmt.fmt "}"
     | Tok_prec {source} ->
       formatter |> Fmt.fmt "Tok_prec {source=" |> Hmc.Source.Slice.pp source |> Fmt.fmt "}"
     | Tok_colon_colon_eq {source} ->
@@ -80,6 +84,7 @@ let rec susp_next scan = lazy begin
         | "neutral" -> Tok_neutral {source}
         | "left" -> Tok_left {source}
         | "right" -> Tok_right {source}
+        | "nonassoc" -> Tok_nonassoc {source}
         | "prec" -> Tok_prec {source}
         | _ -> Token.HmcToken tok
       end

@@ -179,6 +179,7 @@ module Actionset = struct
                     | 1L -> shift_action_set
                     | _ -> t
                   end
+                | Some Nonassoc -> (Ordset.empty (module Action))
               end
           end
       end
@@ -275,7 +276,8 @@ let actions symbols {lr1itemsetclosure; _} =
           ) action_set
         ) action_set
       in
-      Ordmap.insert ~k:symbol_index ~v:action_set' actions
+      assert (not (Ordset.is_empty action_set'));
+      Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
     )
 
 let gotos symbols {lr1itemsetclosure; _} =
@@ -305,8 +307,11 @@ let filtered_kernel_attribs {lr1itemsetclosure=Lr1ItemsetClosure.{kernel; _}; ke
 let resolve symbols prods actions =
   Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index))
     ~f:(fun actions (symbol_index, action_set) ->
-      Ordmap.insert_hlt ~k:symbol_index ~v:(Actionset.resolve symbols prods symbol_index action_set)
-        actions
+      let action_set' = Actionset.resolve symbols prods symbol_index action_set in
+      (* Nonassoc can cause empty action sets; drop them from actions. *)
+      match Ordset.is_empty action_set' with
+      | true -> actions
+      | false -> Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
     ) actions
 
 let compat_lr1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =

@@ -110,7 +110,7 @@ add-highlighter shared/hocc/code/real_r regex \b([0-9][0-9_]*)(r(32|64)?)\b 1:va
 evaluate-commands %sh{
   keywords="and|also|as|conceal|effect|else|expose|external|fn|function|if|import|include|lazy|let"
   keywords="${keywords}|match|mutability|of|open|or|rec|then|type|when|with"
-  keywords="${keywords}|hocc|token|nonterm|start|epsilon|neutral|left|right|prec"
+  keywords="${keywords}|hocc|token|nonterm|start|epsilon|neutral|left|right|nonassoc|prec"
 
   printf %s\\n "declare-option str-list hocc_static_words ${keywords}" | tr '|' ' '
 

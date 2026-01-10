@@ -80,16 +80,16 @@ contextual keywords and one operator:
   + [Tokens](#tokens): `token`
   + [Non-terminals](#non-terminals): `nonterm`, `start`, `::=`
   + [Productions](#productions): `epsilon`
-- [Precedence](#precedence): `neutral`, `left`, `right`, `prec`
+- [Precedence](#precedence): `neutral`, `left`, `right`, `nonassoc`, `prec`
 
 A valid parser specification is encapsulated by a `hocc` statement and describes how to construct a
 parse tree of symbols. `token` statements correspond to terminal symbols, i.e. leaf nodes in the
 parse tree, whereas non-terminal `start`/`nonterm` statements correspond to internal nodes in the
 parse tree. A parse tree always has a non-terminal start symbol at its root. Non-terminals have
 associated production patterns that specify how to construct non-terminal nodes during post-order
-tree construction. Precedences may be declared via the `neutral`/`left`/`right` statements and
-symbols may be assigned those precedences for use during conflict resolution via the `prec`
-reference clause.
+tree construction. Precedences may be declared via the `neutral`/`left`/`right`/`nonassoc`
+statements and symbols may be assigned those precedences for use during conflict resolution via the
+`prec` reference clause.
 
 The `hocc` keyword introduces the `hocc` statement, and it cannot be otherwise used outside the
 `hocc` statement. There are no other syntactic restrictions of note with regard to the keywords and
@@ -352,12 +352,15 @@ Precedences may be defined with any of the following associativities:
 - `right`: Resolve shift/reduce conflicts by shifting. This induces right associativity, e.g.
   `2 + 3 + 4` is parsed as `2 + (3 + 4)`. All else being equal, prefer left associativity to
   minimize intermediate parser state.
+- `nonassoc`: Resolve shift/reduce conflicts by removing all actions to prevent associative grammar
+  constructs. This causes parse errors, e.g. at the second `+` in `2 + 3 + 4`. Avoid using this
+  feature in new grammars; it is provided only to ease transcription of legacy grammars.
 
-Sets of equivalent precedences can be defined via the `neutral`, `left`, and `right` statements, and
-precedence sets may optionally be ordered relative to previously defined precedence sets via `<`
-relationships, irrespective of associativity. These precedence relationships are used to compute the
-transitive closure of precedence orderings. Precedences with disjoint relationships are
-incomparable, i.e. they have no relative ordering. By default, all tokens and productions have a
+Sets of equivalent precedences can be defined via the `neutral`, `left`, `right`, and `nonassoc`
+statements, and precedence sets may optionally be ordered relative to previously defined precedence
+sets via `<` relationships, irrespective of associativity. These precedence relationships are used
+to compute the transitive closure of precedence orderings. Precedences with disjoint relationships
+are incomparable, i.e. they have no relative ordering. By default, all tokens and productions have a
 *lack* of precedence, which is equivalent to each such token/production being assigned a unique
 disjoint `neutral` precedence.
 
@@ -377,10 +380,11 @@ conflict resolution fails.
     action(s) of the same precedence.
   + `right`: A (single) shift action dominates, i.e. a shift action dominates zero or more reduce
     actions of the same precedence.
+  + `nonassoc`: Remove all actions, i.e. cause parse errors for associative grammar constructs.
 
 Associativity suffices for resolving simple shift/reduce conflicts as in e.g. `2 + 3 + 4`, so that
-it is deterministically parsed as `(2 + 3) + 4` (as in the following example specification) or
-`2 + (3 + 4)`.
+it is deterministically parsed as `(2 + 3) + 4` (`left` as in the following example specification),
+`2 + (3 + 4)` (`right`), or a syntax error (`nonassoc`).
 
 ```hocc
 hocc
@@ -1037,7 +1041,7 @@ hocc
       | "<" Precs
       | epsilon
 
-    nonterm PrecType ::= "neutral" | "left" | "right"
+    nonterm PrecType ::= "neutral" | "left" | "right" | "nonassoc"
 
     nonterm Prec ::= PrecType UIDENT PrecRels
 
@@ -1082,7 +1086,8 @@ hocc
       | "{" Codes0 "}"
 
     nonterm CodeToken ::=
-      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right" | "prec"
+      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right"
+      | "nonassoc" | "prec"
       | OTHER_TOKEN
       | UIDENT
       | CIDENT
@@ -1101,7 +1106,8 @@ hocc
       | CodeToken CodeTl
 
     nonterm Binding ::=
-      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right" | "prec"
+      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right"
+      | "nonassoc" | "prec"
       | UIDENT
 
     nonterm PatternField ::=
@@ -1137,7 +1143,8 @@ hocc
       | ISTRING
 
     nonterm Binding ::=
-      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right" | "prec"
+      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right"
+      | "nonassoc" | "prec"
       | UIDENT
 
     nonterm PatternField ::=
@@ -1208,7 +1215,8 @@ hocc
 
     nonterm MatterToken ::=
       | Sep
-      | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right" | "prec"
+      | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right" | "nonassoc"
+      | "prec"
       | OTHER_TOKEN
       | UIDENT
       | CIDENT

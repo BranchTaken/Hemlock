@@ -33,6 +33,7 @@ let src_fmt {names; assoc; stmt; _} formatter =
     | None -> "    neutral "
     | Some Left -> "    left "
     | Some Right -> "    right "
+    | Some Nonassoc -> "    nonassoc "
   )
   |> Fmt.fmt (String.join ~sep:", " (Array.to_list names))
   |> (fun formatter ->

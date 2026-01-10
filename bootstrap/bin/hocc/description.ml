@@ -239,6 +239,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
         | None -> "neutral"
         | Some Left -> "left"
         | Some Right -> "right"
+        | Some Nonassoc -> "nonassoc"
       )
       |> (fun formatter ->
         Array.fold ~init:formatter ~f:(fun formatter name ->
