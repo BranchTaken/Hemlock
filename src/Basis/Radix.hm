@@ -8,7 +8,7 @@ pp t formatter =
           | Dec -> "Dec"
           | Hex -> "Hex"
 
-to_uns = function
+to_uns t = match t with
   | Bin -> 2
   | Oct -> 8
   | Dec -> 10
