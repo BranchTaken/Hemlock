@@ -3,28 +3,28 @@ open Rudiments0
 T = {
     type t: t = bool
 
-    to_uns = function
+    to_uns t = match t with
       | false -> 0
       | true -> 1
 
     hash_fold t state =
-      state
-      |> Uns.hash_fold (to_uns t)
+        state
+          |> Uns.hash_fold (to_uns t)
 
     cmp t0 t1 =
-      let open Cmp
-      match t0, t1 with
-      | false, true -> Lt
-      | false, false
-      | true, true -> Eq
-      | true, false -> Gt
+        let open Cmp
+        match t0, t1 with
+          | false, true -> Lt
+          | false, false
+          | true, true -> Eq
+          | true, false -> Gt
 
-    of_string = function
+    of_string s = match s with
       | "false" -> false
       | "true" -> true
       | _ -> not_reached ()
 
-    to_string = function
+    to_string t = match t with
       | false -> "false"
       | true -> "true"
 
@@ -40,7 +40,7 @@ T = {
 include T
 include Identifiable.Make(T)
 
-of_uns = function
+of_uns u = match u with
   | 0 -> false
   | _ -> true
 
