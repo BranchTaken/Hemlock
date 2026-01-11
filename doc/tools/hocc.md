@@ -331,6 +331,18 @@ hocc
 
 ### Precedence
 
+Precedence identifiers match `[_]*[a-z][A-Za-z0-9_']*` in conformance with Hemlock's uncapitalized
+identifier syntax. By convention the `hocc` documentation restricts precedence identifiers to
+`p[A-Z][A-Za-z0-9]*`.
+
+```hocc
+hocc
+    neutral pSomeNeutral
+    left pSomeLeft
+    right pSomeRight
+    nonassoc pSomeNonassoc
+```
+
 A parser specification may contain conflicts wherein a parser state encodes multiple valid actions
 for one or more inputs. `hocc` refuses to generate parsers which contain unresolved conflicts.
 Parser specifications can often be refactored or expanded to eliminate conflicts, but such revisions
