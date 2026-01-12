@@ -257,7 +257,6 @@ module Token = struct
     | Tok_external of {source: Source.Slice.t}
     | Tok_false of {source: Source.Slice.t}
     | Tok_fn of {source: Source.Slice.t}
-    | Tok_function of {source: Source.Slice.t}
     | Tok_if of {source: Source.Slice.t}
     | Tok_import of {source: Source.Slice.t}
     | Tok_include of {source: Source.Slice.t}
@@ -331,6 +330,10 @@ module Token = struct
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
+
+    (* Composite. *)
+    | Tok_tilde_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+    | Tok_qmark_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
 
     (* Miscellaneous. *)
     | Tok_source_directive of
@@ -419,8 +422,6 @@ module Token = struct
         formatter |> Fmt.fmt "Tok_false {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_fn {source} ->
         formatter |> Fmt.fmt "Tok_fn {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
-      | Tok_function {source} ->
-        formatter |> Fmt.fmt "Tok_function {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_if {source} ->
         formatter |> Fmt.fmt "Tok_if {source=" |> Source.Slice.pp source |> Fmt.fmt "}"
       | Tok_import {source} ->
@@ -589,6 +590,24 @@ module Token = struct
           |> Source.Slice.pp source
           |> Fmt.fmt "; dot_op="
           |> String.pp dot_op
+          |> Fmt.fmt "}"
+        end
+
+      (* Composite. *)
+      | Tok_tilde_uident_colon {source; uident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_tilde_uident_colon {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; uident="
+          |> Rendition.pp String.pp uident
+          |> Fmt.fmt "}"
+        end
+      | Tok_qmark_uident_colon {source; uident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_qmark_uident_colon {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; uident="
+          |> Rendition.pp String.pp uident
           |> Fmt.fmt "}"
         end
 
@@ -1069,7 +1088,6 @@ module Token = struct
     | Tok_external {source}
     | Tok_false {source}
     | Tok_fn {source}
-    | Tok_function {source}
     | Tok_if {source}
     | Tok_import {source}
     | Tok_include {source}
@@ -1139,6 +1157,8 @@ module Token = struct
     | Tok_xmark {source}
     | Tok_arrow {source}
     | Tok_carrow {source}
+    | Tok_tilde_uident_colon {source; _}
+    | Tok_qmark_uident_colon {source; _}
     | Tok_source_directive {source; _}
     | Tok_line_delim {source}
     | Tok_indent {source; _}
@@ -1202,10 +1222,9 @@ module Token = struct
   let malformations = function
     (* Keywords. *)
     | Tok_and _ | Tok_also _ | Tok_as _ | Tok_conceal _ | Tok_effect _ | Tok_else _ | Tok_expose _
-    | Tok_external _ | Tok_false _ | Tok_fn _ | Tok_function _ | Tok_if _ | Tok_import _
-    | Tok_include _ | Tok_lazy _ | Tok_let _ | Tok_match _ | Tok_mutability _ | Tok_of _
-    | Tok_open _ | Tok_or _ | Tok_rec _ | Tok_then _ | Tok_true _ | Tok_type _ | Tok_when _
-    | Tok_with _
+    | Tok_external _ | Tok_false _ | Tok_fn _ | Tok_if _ | Tok_import _ | Tok_include _ | Tok_lazy _
+    | Tok_let _ | Tok_match _ | Tok_mutability _ | Tok_of _ | Tok_open _ | Tok_or _ | Tok_rec _
+    | Tok_then _ | Tok_true _ | Tok_type _ | Tok_when _ | Tok_with _
     (* Operators. *)
     | Tok_tilde_op _ | Tok_qmark_op _ | Tok_star_star_op _ | Tok_star_op _ | Tok_slash_op _
     | Tok_pct_op _ | Tok_plus_op _ | Tok_minus_op _ | Tok_at_op _ | Tok_caret_op _ | Tok_dollar_op _
@@ -1217,6 +1236,10 @@ module Token = struct
     | Tok_rbrack _ | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_lcapture _ | Tok_rcapture _
     | Tok_larray _ | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp _
     | Tok_amp_amp _ | Tok_xmark _ | Tok_arrow _ | Tok_carrow _
+    (* Composite *)
+    | Tok_tilde_uident_colon {uident=(Constant _); _}
+    | Tok_qmark_uident_colon {uident=(Constant _); _}
+      -> []
     (* Miscellaneous. *)
     | Tok_source_directive {source_directive=(Constant _); _}
     | Tok_line_delim _
@@ -1267,6 +1290,8 @@ module Token = struct
     | Tok_end_of_input _ | Tok_misaligned _
       -> []
     (* Malformations. *)
+    | Tok_tilde_uident_colon {uident=(Malformed mals); _}
+    | Tok_qmark_uident_colon {uident=(Malformed mals); _}
     | Tok_source_directive {source_directive=(Malformed mals); _}
     | Tok_indent {indent=(Malformed mals); _}
     | Tok_dedent {dedent=(Malformed mals); _}
@@ -4581,7 +4606,6 @@ module Dfa = struct
         | "external" -> Token.Tok_external {source}
         | "false" -> Token.Tok_false {source}
         | "fn" -> Token.Tok_fn {source}
-        | "function" -> Token.Tok_function {source}
         | "if" -> Token.Tok_if {source}
         | "import" -> Token.Tok_import {source}
         | "include" -> Token.Tok_include {source}

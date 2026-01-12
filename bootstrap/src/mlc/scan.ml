@@ -660,7 +660,6 @@ let rec next t =
         | Tok_external {source} -> Tok_external {source}
         | Tok_false {source} -> Tok_false {source}
         | Tok_fn {source} -> Tok_uident {source; uident=Constant "fn"}
-        | Tok_function {source} -> Tok_function {source}
         | Tok_if {source} -> Tok_if {source}
         | Tok_import {source} -> Tok_import {source}
         | Tok_include {source} -> Tok_include {source}
@@ -753,6 +752,7 @@ let rec next t =
                 | "begin" -> Tok_begin {source}
                 | "end" -> Tok_end {source}
                 | "fun" -> Tok_fun {source}
+                | "function" -> Tok_function {source}
                 | "in" -> Tok_in {source}
                 | "mod" -> Tok_mod {source}
                 | "module" -> Tok_module {source}
