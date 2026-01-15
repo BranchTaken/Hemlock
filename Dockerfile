@@ -14,28 +14,28 @@ RUN apt-get update \
     && apt-get clean \
     && userdel -r ubuntu \
     && groupadd -r -o -g ${HEMLOCK_BOOTSTRAP_GID} hemlock \
-    && useradd -l -m -r -d /home -G sudo \
+    && useradd -l -m -r -d /home/hemlock -G sudo \
         -g ${HEMLOCK_BOOTSTRAP_GID} \
         -s ${HEMLOCK_BOOTSTRAP_SHELL} \
         -u ${HEMLOCK_BOOTSTRAP_UID} \
         hemlock \
     && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers \
-    && chown hemlock:hemlock /home \
-    && sudo -u hemlock mkdir -p /home/Hemlock/bootstrap \
+    && chown hemlock:hemlock /home/hemlock \
+    && sudo -u hemlock mkdir -p /home/hemlock/Hemlock/bootstrap \
     && sudo -u hemlock opam init -a -y --disable-sandboxing --switch=${HEMLOCK_BOOTSTRAP_OPAMSWITCH}
 
 FROM bootstrap_base AS bootstrap_src
 USER hemlock
-WORKDIR /home/Hemlock
+WORKDIR /home/hemlock/Hemlock
 COPY --chown=hemlock:hemlock .git .git
 RUN git reset --hard
 
 FROM bootstrap_base AS bootstrap_lint
 USER hemlock
 RUN opam install -y ocp-indent
-WORKDIR /home/Hemlock
-COPY --from=bootstrap_src /home/Hemlock .
-WORKDIR /home/Hemlock/bootstrap
+WORKDIR /home/hemlock/Hemlock
+COPY --from=bootstrap_src /home/hemlock/Hemlock .
+WORKDIR /home/hemlock/Hemlock/bootstrap
 CMD find . -type f -regex '.*\mli?' \
         | grep -v -e '^\./test/hocc/' -e '^\./bin/hocc/Parse\.ml$' \
         | xargs -- opam exec -- ocp-indent -i \
@@ -43,26 +43,26 @@ CMD find . -type f -regex '.*\mli?' \
 
 FROM bootstrap_base AS bootstrap_deps
 USER hemlock
-WORKDIR /home/Hemlock/bootstrap
-COPY --from=bootstrap_src /home/Hemlock/bootstrap/Hemlock.opam .
+WORKDIR /home/hemlock/Hemlock/bootstrap
+COPY --from=bootstrap_src /home/hemlock/Hemlock/bootstrap/Hemlock.opam .
 RUN opam install -y --deps-only .
 
 FROM bootstrap_base AS bootstrap_build
 USER hemlock
-WORKDIR /home/Hemlock/bootstrap
-COPY --from=bootstrap_deps /home/.opam /home/.opam
-COPY --from=bootstrap_src /home/Hemlock/bootstrap .
+WORKDIR /home/hemlock/Hemlock/bootstrap
+COPY --from=bootstrap_deps /home/hemlock/.opam /home/hemlock/.opam
+COPY --from=bootstrap_src /home/hemlock/Hemlock/bootstrap .
 CMD opam exec -- dune build src --verbose
 
 FROM bootstrap_base AS bootstrap_test
 USER hemlock
-WORKDIR /home/Hemlock/bootstrap
-COPY --from=bootstrap_deps /home/.opam /home/.opam
-COPY --from=bootstrap_src /home/Hemlock/bootstrap .
+WORKDIR /home/hemlock/Hemlock/bootstrap
+COPY --from=bootstrap_deps /home/hemlock/.opam /home/hemlock/.opam
+COPY --from=bootstrap_src /home/hemlock/Hemlock/bootstrap .
 CMD  opam exec -- dune runtest test --verbose
 
 FROM bootstrap_base AS bootstrap
 USER hemlock
-WORKDIR /home/Hemlock/bootstrap
-COPY --from=bootstrap_deps /home/.opam /home/.opam
+WORKDIR /home/hemlock/Hemlock/bootstrap
+COPY --from=bootstrap_deps /home/hemlock/.opam /home/hemlock/.opam
 

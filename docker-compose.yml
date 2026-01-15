@@ -55,5 +55,5 @@ services:
     extends: bootstrap_base
     image: branchtaken/hemlock:bootstrap
     volumes:
-      - .:/home/Hemlock
+      - .:/home/hemlock/Hemlock
 
