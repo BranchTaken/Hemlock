@@ -1,0 +1,97 @@
+name: bootstrap_base
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: true
+        type: string
+jobs:
+  base:
+    name: Build bootstrap_base image
+    runs-on: &runs-on ${{ inputs.runs-on }}
+    steps:
+      - &checkout_code
+        name: checkout code
+        uses: actions/checkout@v6
+      - &setup_docker_buildx
+        name: setup docker buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build branchtaken/hemlock:bootstrap_base
+        uses: docker/build-push-action@v5
+        with:
+          cache-from: &cache-from type=gha,ref=${{ inputs.runs-on }}-${{ github.ref }}
+          cache-to: &cache-to type=gha,mode=max,ref=${{ inputs.runs-on }}-${{ github.ref }}
+          context: &context .
+          load: &load true
+          tags: branchtaken/hemlock:bootstrap_base-${{ inputs.runs-on }}
+          target: bootstrap_base
+  lint:
+    name: Build and run bootstrap_lint image
+    needs: base
+    runs-on: *runs-on
+    steps:
+      - *checkout_code
+      - *setup_docker_buildx
+      - name: Build bootstrap_lint image
+        uses: docker/build-push-action@v5
+        with:
+          cache-from: *cache-from
+          context: *context
+          load: *load
+          tags: branchtaken/hemlock:bootstrap_lint-${{ inputs.runs-on }}
+          target: bootstrap_lint
+      - name: Run bootstrap_lint image
+        run: docker run branchtaken/hemlock:bootstrap_lint-${{ inputs.runs-on }}
+  deps:
+    name: Build bootstrap_deps image
+    needs: base
+    runs-on: *runs-on
+    steps:
+      - *checkout_code
+      - *setup_docker_buildx
+      - name: Build bootstrap_deps image
+        uses: docker/build-push-action@v5
+        with:
+          cache-from: *cache-from
+          cache-to: *cache-to
+          context: *context
+          load: *load
+          tags: branchtaken/hemlock:bootstrap_deps-${{ inputs.runs-on }}
+          target: bootstrap_deps
+  build:
+    name: Build and run bootstrap_build image
+    needs: deps
+    runs-on: *runs-on
+    steps:
+      - *checkout_code
+      - *setup_docker_buildx
+      - name: Build bootstrap_build image
+        uses: docker/build-push-action@v5
+        with:
+          cache-from: *cache-from
+          cache-to: *cache-to
+          context: &context .
+          load: *load
+          tags: branchtaken/hemlock:bootstrap_build-${{ inputs.runs-on }}
+          target: bootstrap_build
+      - name: Run bootstrap_build image
+        run: docker run branchtaken/hemlock:bootstrap_build-${{ inputs.runs-on }}
+  test:
+    name: Build and run bootstrap_test image
+    needs: deps
+    runs-on: *runs-on
+    steps:
+      - *checkout_code
+      - *setup_docker_buildx
+      - name: Build bootstrap_test image
+        uses: docker/build-push-action@v5
+        with:
+          cache-from: *cache-from
+          cache-to: *cache-to
+          context: *context
+          load: *load
+          tags: branchtaken/hemlock:bootstrap_test-${{ inputs.runs-on }}
+          target: bootstrap_test
+      - name: Run bootstrap_test image
+        run: docker run --privileged --security-opt seccomp=unconfined branchtaken/hemlock:bootstrap_test-${{ inputs.runs-on}}
+

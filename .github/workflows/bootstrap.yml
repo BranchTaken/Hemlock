@@ -1,0 +1,14 @@
+name: bootstrap
+
+on: pull_request
+
+jobs:
+  platform:
+    name: platform
+    strategy:
+      matrix:
+        runs-on: [ubuntu-24.04, ubuntu-24.04-arm]
+    uses: ./.github/workflows/bootstrap_base.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+

@@ -1,27 +1,59 @@
 services:
-  base:
+  bootstrap_base:
     build:
       args:
-        - HEMLOCK_BOOTSTRAP_OCAML_VERSION
-        - HEMLOCK_PLATFORM
-        - HEMLOCK_UBUNTU_TAG
-      context: .
-      target: base
-    container_name: branchtaken__hemlock__base
-    image: branchtaken/hemlock:base
+        - HEMLOCK_BOOTSTRAP_GID
+        - HEMLOCK_BOOTSTRAP_OPAMSWITCH
+        - HEMLOCK_BOOTSTRAP_SHELL
+        - HEMLOCK_BOOTSTRAP_UID
+      target: bootstrap_base
+    container_name: branchtaken__hemlock__bootstrap_base
+    image: branchtaken/hemlock:bootstrap_base
     privileged: true
     security_opt:
       - seccomp:unconfined
-  latest:
+
+  bootstrap_src:
     build:
-      target: latest
-    container_name: branchtaken__hemlock__latest
-    extends: base
-    image: branchtaken/hemlock:latest
-  test:
+      target: bootstrap_src
+    container_name: branchtaken__hemlock__bootstrap_src
+    extends: bootstrap_base
+    image: branchtaken/hemlock:bootstrap_src
+
+  bootstrap_lint:
     build:
-      target: test
-    container_name: branchtaken__hemlock__test
-    extends: latest
-    image: branchtaken/hemlock:test
+      target: bootstrap_lint
+    container_name: branchtaken__hemlock__bootstrap_lint
+    extends: bootstrap_base
+    image: branchtaken/hemlock:bootstrap_lint
+
+  bootstrap_deps:
+    build:
+      target: bootstrap_deps
+    container_name: branchtaken__hemlock__bootstrap_deps
+    extends: bootstrap_base
+    image: branchtaken/hemlock:bootstrap_deps
+
+  bootstrap_build:
+    build:
+      target: bootstrap_build
+    container_name: branchtaken__hemlock__bootstrap_build
+    extends: bootstrap_base
+    image: branchtaken/hemlock:bootstrap_build
+
+  bootstrap_test:
+    build:
+      target: bootstrap_test
+    container_name: branchtaken__hemlock__bootstrap_test
+    extends: bootstrap_base
+    image: branchtaken/hemlock:bootstrap_test
+
+  bootstrap:
+    build:
+      target: bootstrap
+    container_name: branchtaken__hemlock__bootstrap
+    extends: bootstrap_base
+    image: branchtaken/hemlock:bootstrap
+    volumes:
+      - .:/home/Hemlock
 

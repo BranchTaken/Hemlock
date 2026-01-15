@@ -1,49 +1,68 @@
-ARG HEMLOCK_PLATFORM=$BUILDPLATFORM
-ARG HEMLOCK_UBUNTU_TAG=rolling
-FROM --platform=${HEMLOCK_PLATFORM} ubuntu:${HEMLOCK_UBUNTU_TAG} AS base
+FROM ubuntu AS bootstrap_base
+ARG HEMLOCK_BOOTSTRAP_GID=1000
+ARG HEMLOCK_BOOTSTRAP_OPAMSWITCH=4.14.0
+ARG HEMLOCK_BOOTSTRAP_SHELL=/bin/bash
+ARG HEMLOCK_BOOTSTRAP_UID=1000
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         ca-certificates \
         git \
         liburing-dev \
         m4 \
         opam \
         sudo \
-    && rm -rf /var/lib/apt/lists/* \
-    && mv /home/ubuntu /home/hemlock \
-    && groupmod -n hemlock ubuntu \
-    && usermod -d /home/hemlock -c Hemlock -l hemlock ubuntu \
-    && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
-ARG HEMLOCK_BOOTSTRAP_OCAML_VERSION=4.14.0
-USER hemlock
-WORKDIR /home/hemlock
-COPY --chown=hemlock:hemlock bootstrap/Hemlock.opam .
-RUN opam init \
-        --bare \
-        --disable-sandboxing \
-        --dot-profile /home/hemlock/.bashrc \
-        --reinit \
-        --shell-setup \
-        --yes \
-    && opam switch create ${HEMLOCK_BOOTSTRAP_OCAML_VERSION} \
-    && opam install -y ocp-indent \
-    && opam install -y --deps-only . \
-    && rm Hemlock.opam
+    && apt-get clean \
+    && userdel -r ubuntu \
+    && groupadd -r -o -g ${HEMLOCK_BOOTSTRAP_GID} hemlock \
+    && useradd -l -m -r -d /home -G sudo \
+        -g ${HEMLOCK_BOOTSTRAP_GID} \
+        -s ${HEMLOCK_BOOTSTRAP_SHELL} \
+        -u ${HEMLOCK_BOOTSTRAP_UID} \
+        hemlock \
+    && echo "hemlock ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers \
+    && chown hemlock:hemlock /home \
+    && sudo -u hemlock mkdir -p /home/Hemlock/bootstrap \
+    && sudo -u hemlock opam init -a -y --disable-sandboxing --switch=${HEMLOCK_BOOTSTRAP_OPAMSWITCH}
 
-FROM --platform=${HEMLOCK_PLATFORM} base AS latest
+FROM bootstrap_base AS bootstrap_src
 USER hemlock
-WORKDIR /home/hemlock/Hemlock
-COPY --chown=hemlock:hemlock /.git/ .git
+WORKDIR /home/Hemlock
+COPY --chown=hemlock:hemlock .git .git
 RUN git reset --hard
 
-FROM --platform=${HEMLOCK_PLATFORM} latest AS test
+FROM bootstrap_base AS bootstrap_lint
 USER hemlock
-WORKDIR /home/hemlock/Hemlock/bootstrap
+RUN opam install -y ocp-indent
+WORKDIR /home/Hemlock
+COPY --from=bootstrap_src /home/Hemlock .
+WORKDIR /home/Hemlock/bootstrap
 CMD find . -type f -regex '.*\mli?' \
-    | grep -v -e '^\./test/hocc/' -e '^\./bin/hocc/Parse\.ml$' \
-    | xargs -- opam exec -- ocp-indent -i \
-    && git diff --exit-code \
-    && opam exec -- dune build src \
-    && opam exec -- dune runtest \
-    && rm -rf _build
+        | grep -v -e '^\./test/hocc/' -e '^\./bin/hocc/Parse\.ml$' \
+        | xargs -- opam exec -- ocp-indent -i \
+    && git diff --exit-code
+
+FROM bootstrap_base AS bootstrap_deps
+USER hemlock
+WORKDIR /home/Hemlock/bootstrap
+COPY --from=bootstrap_src /home/Hemlock/bootstrap/Hemlock.opam .
+RUN opam install -y --deps-only .
+
+FROM bootstrap_base AS bootstrap_build
+USER hemlock
+WORKDIR /home/Hemlock/bootstrap
+COPY --from=bootstrap_deps /home/.opam /home/.opam
+COPY --from=bootstrap_src /home/Hemlock/bootstrap .
+CMD opam exec -- dune build src --verbose
+
+FROM bootstrap_base AS bootstrap_test
+USER hemlock
+WORKDIR /home/Hemlock/bootstrap
+COPY --from=bootstrap_deps /home/.opam /home/.opam
+COPY --from=bootstrap_src /home/Hemlock/bootstrap .
+CMD  opam exec -- dune runtest test --verbose
+
+FROM bootstrap_base AS bootstrap
+USER hemlock
+WORKDIR /home/Hemlock/bootstrap
+COPY --from=bootstrap_deps /home/.opam /home/.opam
 
