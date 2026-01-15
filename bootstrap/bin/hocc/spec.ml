@@ -278,7 +278,7 @@ let symbol_infos_init io symbols hmh =
         symbol_type_qualifier; symbol_type; _}; _} -> begin
           let name = string_of_token nonterm_cident in
           let stype = SymbolType.explicit (string_of_token symbol_type)
-                      |> qualify_symbol_type symbol_type_qualifier in
+            |> qualify_symbol_type symbol_type_qualifier in
           name, stype
         end
     in
