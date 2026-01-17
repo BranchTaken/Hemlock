@@ -83,7 +83,7 @@ val conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> Attribs.t
 
 val conflicts: ?filter_pseudo_end:bool -> t -> uns
 (** [conflicts ~filter_pseudo_end t] returns the number of conflicts in [t]. Pseudo-end (⊥)
-    conflicts are omittid if [filter_pseudo_end] is true (default true). *)
+    conflicts are omitted if [filter_pseudo_end] is true (default true). *)
 
 val sr_conflicts: t -> uns
 (** [sr_conflicts t] returns the number of shift-reduce conflicts in [t]. *)
