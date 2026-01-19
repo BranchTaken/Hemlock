@@ -8,13 +8,13 @@ let test () =
         ~f:(fun accum elm0 elm1 ->
           (accum + elm0 + elm1),
           (String.Fmt.empty |> Fmt.fmt "(" |> Uns.pp elm0 |> Fmt.fmt "," |> Uns.pp elm1
-           |> Fmt.fmt ")" |> Fmt.to_string)
+            |> Fmt.fmt ")" |> Fmt.to_string)
         ) in
     let accum2, sarr2 = foldi2_map uarr0 uarr1 ~init:0L
         ~f:(fun i accum elm0 elm1 ->
           (accum + i + elm0 + elm1),
           (String.Fmt.empty |> Fmt.fmt "[" |> Uns.pp i |> Fmt.fmt "]=(" |> Uns.pp elm0
-           |> Fmt.fmt "," |> Uns.pp elm1 |> Fmt.fmt ")" |> Fmt.to_string)
+            |> Fmt.fmt "," |> Uns.pp elm1 |> Fmt.fmt ")" |> Fmt.to_string)
         ) in
     let _ =
       File.Fmt.stdout
