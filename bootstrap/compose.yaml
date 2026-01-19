@@ -1,0 +1,27 @@
+services:
+
+  latest:
+    build:
+      args:
+        - HEMLOCK_BOOTSTRAP_OPAMSWITCH
+      target: latest
+    image: branchtaken/hemlock/bootstrap:latest
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - .:/bootstrap
+    working_dir: /bootstrap
+
+  ocp_indent:
+    entrypoint: ./script/ocp_indent.sh
+    extends: latest
+
+  build:
+    entrypoint: opam exec -- dune build
+    extends: latest
+
+  runtest:
+    entrypoint: opam exec -- dune runtest
+    extends: latest
+
