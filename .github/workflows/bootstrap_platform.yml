@@ -1,0 +1,66 @@
+name: bootstrap_platform
+
+on:
+  workflow_call:
+    inputs:
+      architecture:
+        required: true
+        type: string
+      runs-on:
+        required: true
+        type: string
+defaults:
+  run:
+    working-directory: ./bootstrap
+env:
+  TERM: xterm-256color
+jobs:
+  ocp_indent:
+    name: Run "ocp_indent"
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          cache-from: type=gha,scope=${{ inputs.architecture }}-ocp_indent
+          cache-to: type=gha,mode=max,scope=${{ inputs.architecture }}-ocp_indent
+          context: ./bootstrap
+          load: true
+          tags: branchtaken/hemlock/bootstrap:latest
+          target: latest
+      - name: Run "ocp_indent"
+        run: docker compose run ocp_indent
+  build:
+    name: Run "build"
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          cache-from: type=gha,scope=${{ inputs.architecture }}-build
+          cache-to: type=gha,mode=max,scope=${{ inputs.architecture }}-build
+          context: ./bootstrap
+          load: true
+          tags: branchtaken/hemlock/bootstrap:latest
+          target: latest
+      - name: Run "build"
+        run: docker compose run build --verbose
+  runtest:
+    name: Run "runtest"
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          cache-from: type=gha,scope=${{ inputs.architecture }}-runtest
+          cache-to: type=gha,mode=max,scope=${{ inputs.architecture }}-runtest
+          context: ./bootstrap
+          load: true
+          tags: branchtaken/hemlock/bootstrap:latest
+          target: latest
+      - name: Run "runtest"
+        run: docker compose run runtest --verbose
+

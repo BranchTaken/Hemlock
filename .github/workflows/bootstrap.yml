@@ -1,0 +1,31 @@
+name: bootstrap
+
+on: pull_request
+
+jobs:
+  platform:
+    name: platform
+    strategy:
+      matrix:
+        # `architecture` isn't strictly needed for the bootstrap_base workflow, but by setting it as
+        # the matrix parameter value (instead of just `runs-on`, which is needed), github
+        # pull-requests display the intent of this job better.
+        #
+        # We get job names like
+        #
+        #   bootstrap / platform (amd64) / Run "runtest" (pull_request)
+        #
+        # instead of job names like
+        #
+        #   bootstrap / platform (unbuntu-24.04) / Run "runtest" (pull_request)
+        architecture: [amd64, arm64]
+        include:
+            - architecture: amd64
+              runs-on: ubuntu-24.04
+            - architecture: arm64
+              runs-on: ubuntu-24.04-arm
+    uses: ./.github/workflows/bootstrap_platform.yml
+    with:
+      architecture: ${{ matrix.architecture }}
+      runs-on: ${{ matrix.runs-on }}
+
