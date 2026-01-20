@@ -1,0 +1,90 @@
+# Do not modify the `compose.yaml` file unless you mean to commit the changes!
+#
+# To modify these settings, copy `compose.yaml` to `compose.override.yaml` in the local directory.
+# `compose.override.yaml` is not tracked by git. You can merge, override, and unset everything from
+# the override file.
+#
+# See `https://docs.docker.com/reference/compose-file/merge/`.
+#
+# If this is the `compose.overrides.yaml` file, modify away. Potentially-useful modifications are
+# suggested below.
+
+services:
+  # To build and run the `dev` container run, the following from this directory.
+  #
+  # ```sh
+  # docker compose build dev
+  # docker compose run dev
+  # ```
+  dev:
+    build:
+      args:
+        # HEMLOCK_EXTRA_APT_PACKAGES: !reset []  # In `compose.override.yaml`, set this to unset.
+        HEMLOCK_EXTRA_APT_PACKAGES: git locales  # In `compose.override.yaml`, set this to override.
+        # In `compose.override.yaml`, override it below, or alternatively in a local `.env` file.
+        HEMLOCK_EXTRA_OPAM_PACKAGES:
+
+        # This service requires that the image user has the same uid:gid as the host user. Magic
+        # uid:gid translation only works between the host user and container root. So, we need to
+        # provide our uid:gid as image build arguments.
+        #
+        # Find them with `id -g` (for gid) and `id -u` (for uid).
+        HEMLOCK_GID: 1000  # In `compose.override.yaml`, set this to overlay.
+        HEMLOCK_UID: 1000  # In `compose.override.yaml`, set this to overlay.
+
+        # The default, working version of OCaml is set by default in the Dockerfile.
+        #
+        # In `compose.override.yaml`, override it below, or alternatively in a local `.env` file.
+        #
+        # ```sh
+        # echo 'HEMLOCK_OPAMSWITCH=4.12.2' >> .env
+        # ```
+        HEMLOCK_OPAMSWITCH:  # In `compose.override.yaml`, set this to overlay.
+      target: dev
+    # cap_add: !reset[]   # In `compose.override.yaml`, set this to unset.
+    # cap_add: !override  # In `compose.override.yaml`, set this to override.
+    cap_add:
+      # Needed for gdb.
+      - SYS_PTRACE
+
+    # environment: !reset []  # In `compose.override.yaml`, set this to unset.
+    # environment: !override  # In `compose.override.yaml`, set this to override.
+    environment:              # In `compose.override.yaml`, set this to overlay.
+
+      # Needed for a prettier terminal.
+      # COLORTERM: unset! null  # In `compose.override.yaml`, set this unset.
+      COLORTERM: truecolor      # In `compose.override.yaml`, set this to overlay.
+      # LANG: unset! null  # In `compose.override.yaml`, set this to unset.
+      LANG: en_US.UTF-8    # In `compose.override.yaml`, set this to overlay.
+      # TERM: unset! null   # In `compose.override.yaml`, set this to unset.
+      TERM: xterm-256color  # In `compose.override.yaml`, set this to overlay.
+
+      # Forwards SSH_AUTH_SOCK from your environment to container environment. Useful for git
+      # ssh-based auth. Must also enable SSH_AUTH_SOCK in `volumes`.
+      #- SSH_AUTH_SOCK
+    image: branchtaken/hemlock:dev
+    privileged: true
+
+    # security_opt: !reset[]   # In `compose.override.yaml`, set this to unset.
+    # security_opt: !override  # In `compose.override.yaml`, set this to override.
+    security_opt:              # In `compose.override.yaml`, this will cause a validation error.
+      # Needed for io_uring.
+      - "seccomp:unconfined"
+
+    # Make bind-mounts use host user uid:gid from inside the container.
+    userns_mode: keep-id
+
+    # volumes: !reset []  # In `compose.override.yaml`, you can set this to unset.
+    # volumes: !override  # In `compose.override.yaml`, you can set this to override.
+    volumes:              # In `compose.override.yaml`, you can set this to overlay.
+      # Bind-mount repository to the `Hemlock` folder in container user's home directory.
+      - .:/home/hemlock/Hemlock
+
+      # Bind-mount a host directory to a container user's directory.
+      #- ..:/home/hemlock
+      #- /home/host_user:/home/hemlock
+
+      # Bind-mount the ssh socket from the host into the container. Useful for git ssh-based auth.
+      # Must also enable SSH_AUTH_SOCK in `environment`.
+      #- ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
+

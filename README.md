@@ -6,7 +6,7 @@ languages](https://en.wikipedia.org/wiki/ML_(programming_language)), a unified p
 effects/mutability/type system, and the shared-nothing message-passing parallelism of
 [Erlang](https://erlang.org/).
 
-## Getting Started
+## Getting Started with Development
 
 Hemlock is a work in progress, and is not yet self hosting (i.e. it is written in OCaml rather than
 Hemlock). As such, Hemlock may interest researchers and programming language developers, but it is
@@ -19,30 +19,20 @@ prerequisites for your preferred method.
 
 #### Docker Prerequisites
 
-Install [docker](https://docs.docker.com/engine/install/).
+Install [docker](https://docs.docker.com/engine/install/) (or
+[podman](https://podman.io/docs/installation#installing-on-linux)).
 
-Install [docker compose](https://docs.docker.com/compose/cli-command/).
+Install [docker compose](https://docs.docker.com/desktop/setup/install/linux/) (or
+[podman compose](https://github.com/containers/podman-compose#installation)).
 
-Build the Hemlock docker image from the root of the Hemlock repo checkout.
-
-```sh
-docker compose build
-```
-
-Run a Hemlock docker container.
+Build and run the Hemlock docker image from the root of the Hemlock repo.
 
 ```sh
-docker compose run
+docker compose build dev
+docker compose run dev
 ```
 
-(Optional) Install
-[binfmt_misc](https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images). This
-enables building and running cross-platform images.
-```sh
-docker run --privileged --rm tonistiigi/binfmt --install all
-HEMLOCK_PLATFORM=linux/arm64 docker compose build
-HEMLOCK_PLATFORM=linux/arm64 docker compose run
-```
+See [compose.yaml](./compose.yaml) for documentation about customizing the dev image.
 
 #### Native Prerequisites
 
@@ -64,6 +54,13 @@ To build the bootstrap `hmc` Hemlock compiler and invoke the test suite, run
 cd bootstrap
 dune build
 dune runtest
+```
+
+or, via the docker services defined in bootstrap, run
+```sh
+cd bootstrap
+docker compose run --build build
+docker compose run --build runtest
 ```
 
 See the [Dune documentation](https://dune.readthedocs.io/en/latest/) for more details on building

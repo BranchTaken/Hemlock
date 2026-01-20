@@ -2,3 +2,4 @@ bootstrap/_build/
 
 bootstrap/**/.merlin
 bootstrap/Hemlock.install
+**/compose.override.yaml
