@@ -48,10 +48,9 @@ val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t-> t -
 (** [remerge symbols index_map t0 t1] creates a merged state comprising remergeable states
     [t0] and [t1]. *)
 
-val reindex: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t
-(** [reindex index_map t] creates a state with all LR(1) item set closure, state nub, and state
-    indexes translated according to [index_map], where keys are the original indexes, and values are
-    the reindexed indexes. *)
+val reindex: StateIndexMap.t -> t -> t
+(** [reindex state_index_map t] creates a state with all LR(1) item set closure, state nub, and
+    state indexes translated according to [state_index_map]. *)
 
 val index: t -> Index.t
 (** [index t] returns the index of the contained unique LR(1) item set closure. *)

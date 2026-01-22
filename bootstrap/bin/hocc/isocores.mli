@@ -59,10 +59,10 @@ val remerge: Symbols.t
     comprising the remergeable state nubs corresponding to [statenub_index0] and [statenub_index1]
     and replaces the lower-indexed state nub with the merged result in a derivative of [t]. *)
 
-val reindex: (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Ordmap.t -> t -> t
-(** [reindex index_map t] creates a derivative of [t] with all LR(1) item set closure and state nub
-    indexes translated according to [index_map], where keys are the original indexes, and values are
-    the reindexed indexes. State nubs without mappings are omitted from the result. *)
+val reindex: StateIndexMap.t -> t -> t
+(** [reindex state_index_map t] creates a derivative of [t] with all LR(1) item set closure and
+    state nub indexes translated according to [state_index_map]. State nubs without mappings are
+    omitted from the result. *)
 
 val isocores_length: t -> uns
 (** [isocores_length t] returns the number of isocore sets in [t]. *)

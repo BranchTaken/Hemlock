@@ -83,9 +83,9 @@ val remerge: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> 
     remergeable attribs [t0] and [t1], translated according to [remergeable_index_map], where keys
     are the original indexes, and values are the reindexed indexes. *)
 
-val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
-(** [reindex index_map t] creates attribs with all state indexes translated according to
-    [index_map], where keys are the original indexes, and values are the reindexed indexes. *)
+val reindex: StateIndexMap.t -> t -> t
+(** [reindex state_index_map t] creates attribs with all state indexes translated according to
+    [state_index_map]. *)
 
 val fold_until: init:'accum -> f:('accum -> Attrib.t -> 'accum * bool) -> t -> 'accum
 (** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial accumulator value,

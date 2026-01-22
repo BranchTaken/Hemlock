@@ -78,7 +78,7 @@ let insert symbols (GotoNub.{isocores_sn_opt; _} as gotonub) ({isocores; statenu
       let statenub =
         StateNub.init symbols ~index:statenub_index ~isocores_sn ~isocore_set_sn gotonub in
       let statenubs_map' = Ordmap.insert_hlt ~k:statenub_index ~v:statenub statenubs_map in
-      let v = { isocore_set=Ordset.singleton (module StateNub.Index) statenub_index; isocores_sn} in
+      let v = {isocore_set=Ordset.singleton (module StateNub.Index) statenub_index; isocores_sn} in
       let isocores' = Map.insert_hlt ~k:core ~v isocores in
       statenub_index, {t with isocores=isocores'; statenubs_map=statenubs_map'}
     end
@@ -146,12 +146,12 @@ let remerge symbols remergeable_index_map statenub_index0 statenub_index1
   let t' = {t with statenubs_map=statenubs_map'} in
   remove_hlt statenub_index_hi t'
 
-let reindex index_map ({statenubs_map; _} as t) =
+let reindex state_index_map ({statenubs_map; _} as t) =
   let isocores', statenubs_map' =
     Ordmap.fold ~init:(Map.empty (module Lr0Itemset), Ordmap.empty (module StateNub.Index))
       ~f:(fun (isocores', statenubs_map') (index, statenub) ->
-        let index' = Ordmap.get_hlt index index_map in
-        let statenub' = StateNub.reindex index_map statenub in
+        let index' = StateIndexMap.reindexed_state_index index state_index_map in
+        let statenub' = StateNub.reindex state_index_map statenub in
         let core = Lr1Itemset.core StateNub.(statenub'.lr1itemsetclosure).kernel in
         let isocores' = Map.amend core ~f:(fun v_opt ->
           match v_opt with

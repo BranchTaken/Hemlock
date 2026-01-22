@@ -423,8 +423,8 @@ let remerge symbols remergeable_index_map {index=i0; kernel=k0; _} ({index=i1; _
   assert Index.(index = min i0 i1);
   match merge symbols k0 {t1 with index} with _, t1' -> t1'
 
-let reindex index_map ({index; _} as t) =
-  {t with index=Ordmap.get_hlt index index_map}
+let reindex state_index_map ({index; _} as t) =
+  {t with index=StateIndexMap.reindexed_state_index index state_index_map}
 
 let init symbols ~index lr1itemset =
   match merge symbols lr1itemset {

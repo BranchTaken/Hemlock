@@ -53,9 +53,11 @@ module Action = struct
   include T
   include Identifiable.Make(T)
 
-  let reindex index_map = function
-    | ShiftPrefix state_index -> ShiftPrefix (Ordmap.get_hlt state_index index_map)
-    | ShiftAccept state_index -> ShiftAccept (Ordmap.get_hlt state_index index_map)
+  let reindex state_index_map = function
+    | ShiftPrefix state_index ->
+      ShiftPrefix (StateIndexMap.reindexed_state_index state_index state_index_map)
+    | ShiftAccept state_index ->
+      ShiftAccept (StateIndexMap.reindexed_state_index state_index state_index_map)
     | Reduce _ as reduce -> reduce
 end
 
@@ -240,17 +242,17 @@ let remerge symbols remergeable_index_map ({statenub=sn0; actions=a0; gotos=g0} 
     ) normalized_g0 normalized_g1 in
   {statenub; actions; gotos}
 
-let reindex index_map {statenub; actions; gotos} =
-  let statenub = StateNub.reindex index_map statenub in
+let reindex state_index_map {statenub; actions; gotos} =
+  let statenub = StateNub.reindex state_index_map statenub in
   let actions = Ordmap.map ~f:(fun (_symbol_index, actions) ->
     Ordset.fold ~init:(Ordset.empty (module Action))
       ~f:(fun reindexed_actions action ->
-        let reindexed_action = Action.reindex index_map action in
+        let reindexed_action = Action.reindex state_index_map action in
         Ordset.insert reindexed_action reindexed_actions
       ) actions
   ) actions in
   let gotos = Ordmap.map ~f:(fun (_symbol_index, statenub_index) ->
-    Ordmap.get_hlt statenub_index index_map
+    StateIndexMap.reindexed_state_index statenub_index state_index_map
   ) gotos in
   {statenub; actions; gotos}
 

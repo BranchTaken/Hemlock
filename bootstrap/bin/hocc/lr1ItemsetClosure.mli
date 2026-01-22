@@ -40,10 +40,9 @@ val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t 
 (** [remerge symbols remergeable_index_map t0 t1] re-merges the kernels of [t0] and [t1] creates the
     closure of the merged kernel. *)
 
-val reindex: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t
-(** [reindex index_map t] creates an LR(1) item set closure with all LR(1) item set closure indexes
-    translated according to [index_map], where keys are the original indexes, and values are the
-    reindexed indexes. *)
+val reindex: StateIndexMap.t -> t -> t
+(** [reindex state_index_map t] creates an LR(1) item set closure with all LR(1) item set closure
+    indexes translated according to [state_index_map]. *)
 
 val merge: Symbols.t -> Lr1Itemset.t -> t -> bool * t
 (** [merge symbols lr1itemset t] merges the kernel represented by [lr1itemset] into [t]'s kernel and
