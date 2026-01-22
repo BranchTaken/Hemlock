@@ -52,10 +52,10 @@ val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t ->
     translated according to [remergeable_index_map], where keys are the original indexes, and values
     are the reindexed indexes. *)
 
-val reindex: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t option
-(** [reindex index_map t] creates an attrib with all state indexes translated according to
-    [index_map], where keys are the original indexes, and values are the reindexed indexes. If no
-    translation exists, returns [None] to indicate that the attrib is obsolete. *)
+val reindex: StateIndexMap.t -> t -> t option
+(** [reindex state_index_map t] creates an attrib with all state indexes translated according to
+    [state_index_map]. If no translation exists, returns [None] to indicate that the attrib is
+    obsolete. *)
 
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no attributions in [t]. *)

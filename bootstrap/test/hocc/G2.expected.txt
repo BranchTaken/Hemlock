@@ -231,7 +231,7 @@ PGM(1) States
             At : ShiftPrefix 25
             Dt : Reduce Yn ::= Ut Xn
             Et : Reduce Yn ::= Ut Xn
-    State 18 [6.1]
+    State 18 [6.0]
         Kernel
             [Yn ::= Ut · Xn, {Dt, Et}]
             [Tn ::= Ut · Xn At, {At, Dt, Et, EOI}]

@@ -187,10 +187,10 @@ let remerge1 remergeable_index_map t =
 let remerge remergeable_index_map t0 t1 =
   remerge1 remergeable_index_map (union t0 t1)
 
-let reindex index_map t =
+let reindex state_index_map t =
   Ordmap.fold ~init:empty
     ~f:(fun reindexed_t (_symbol_index, attrib) ->
-      match Attrib.reindex index_map attrib with
+      match Attrib.reindex state_index_map attrib with
       | None -> reindexed_t
       | Some attrib' -> insert_remerged attrib' reindexed_t
     ) t

@@ -18,4 +18,6 @@ val insert: StateNub.t -> StateNub.t -> t -> t
     prior to calling this function. *)
 
 val index_map: t -> (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Ordmap.t
-(** [index_map t] returns a map of remergeable statenub indexes in canonical form. *)
+(** [index_map t] returns a map of remergeable statenub indexes in canonical form.
+
+     Example: Given remergeable set {1, 2, 3}, the map contains [(2, 1); [3, 1)]. *)
