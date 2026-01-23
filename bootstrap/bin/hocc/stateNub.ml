@@ -231,13 +231,11 @@ let remerge symbols remergeable_index_map
   }
 
 let reindex state_index_map
-    {lr1itemsetclosure={index; _} as lr1itemsetclosure; isocores_sn; isocore_set_sn=_;
-      kernel_attribs; attribs} =
+    ({lr1itemsetclosure={index; _} as lr1itemsetclosure; isocores_sn; isocore_set_sn=_;
+        kernel_attribs=_; attribs=_} as t) =
   let lr1itemsetclosure = Lr1ItemsetClosure.reindex state_index_map lr1itemsetclosure in
   let isocore_set_sn = StateIndexMap.reindexed_isocore_set_sn index state_index_map in
-  let kernel_attribs = KernelAttribs.reindex state_index_map kernel_attribs in
-  let attribs = Attribs.reindex state_index_map attribs in
-  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
+  {t with lr1itemsetclosure; isocores_sn; isocore_set_sn}
 
 let index {lr1itemsetclosure; _} =
   lr1itemsetclosure.index

@@ -47,11 +47,6 @@ let remerge1 remergeable_index_map t =
     Attribs.remerge1 remergeable_index_map attribs
   ) t
 
-let reindex state_index_map t =
-  Ordmap.map ~f:(fun (_lr1item, attribs) ->
-    Attribs.reindex state_index_map attribs
-  ) t
-
 let is_empty = Ordmap.is_empty
 
 let get = Ordmap.get

@@ -100,11 +100,6 @@ module T = struct
     in
     {t with conflict_state_index=conflict_state_index'}
 
-  let reindex state_index_map ({conflict_state_index; _} as t) =
-    match StateIndexMap.reindexed_state_index_opt conflict_state_index state_index_map with
-    | None -> None
-    | Some conflict_state_index' -> Some {t with conflict_state_index=conflict_state_index'}
-
   let is_empty {isucc_lr1itemset; contrib; _} =
     Lr1Itemset.is_empty isucc_lr1itemset &&
     Contrib.is_empty contrib
