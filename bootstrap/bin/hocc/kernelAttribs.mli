@@ -38,10 +38,6 @@ val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t ->
     closure and state nub indexes translated according to [index_map], where keys are the original
     indexes, and values are the reindexed indexes. *)
 
-val reindex: StateIndexMap.t -> t -> t
-(** [reindex state_index_map t] creates kernel attribs with all LR(1) item set closure and state nub
-    indexes translated according to [state_index_map]. *)
-
 val is_empty: t -> bool
 (** [is_empty t] returns true if there are no kernel items in [t]. *)
 

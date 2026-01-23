@@ -972,7 +972,11 @@ Of note:
   + `Actions`: Map of per token actions, with conflicts prefixed by `CONFLICT`
   + `Gotos`: Map of per non-terminal gotos
   + `Conflict contributions`: Per {kernel item, follow symbol, conflict state} IELR(1) conflict
-    contributions that inform isocore (in)compatibility
+    contributions that inform isocore (in)compatibility (NB: conflict state is an LALR(1) state
+    index)
+- Conflict contributions are best interpreted in combination with a corresponding LALR(1) automaton
+  report generated with conflict resolution disabled (e.g. `hocc -txt -algorithm lalr1 -resolve no
+  -src Example`). This enables inspection of the conflicts which compel IELR(1) state splitting.
 
 ## Grammar
 
