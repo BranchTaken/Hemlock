@@ -275,8 +275,6 @@ type nonterm_uident =
   | Hmhi of {prelude: nonterm_matter; hocc_: token_hocc; postlude: nonterm_matter; eoi: token_eoi}
 
 include hocc
-    neutral pCodeTl
-
     (* hocc-specific keywords *)
     token HOCC "hocc" of token_hocc
     token NONTERM "nonterm" of token_nonterm
@@ -305,13 +303,12 @@ include hocc
     left pDOT
     token DOT "." of token_dot prec pDOT
     token ARROW "->" of token_arrow
-    neutral pBAR < pCodeTl
-    token BAR "|" of token_bar prec pBAR
+    token BAR "|" of token_bar
     token LT "<" of token_lt
     token EQ "=" of token_eq
     left pCOMMA < pCIDENT
     token COMMA "," of token_comma prec pCOMMA
-    right pSEMI < pCodeTl
+    right pSEMI
     token SEMI ";" of token_semi prec pSEMI
     neutral pAS < pCOMMA
     token AS "as" of token_as prec pAS
@@ -433,17 +430,15 @@ include hocc
       | (COLON {token}):":"
       | (DOT {token}):"."
       | (ARROW {token}):"->"
-      | (BAR {token}):"|"
       | (LT {token}):"<"
       | (EQ {token}):"="
       | (COMMA {token}):","
-      | (SEMI {token}):";"
       -> CodeToken {token}
 
     nonterm CodeTl of nonterm_code_tl ::=
       | delimited:Delimited code_tl:CodeTl -> CodeTlDelimited {delimited; code_tl}
       | code_token:CodeToken code_tl:CodeTl -> CodeTlCodeToken {code_token; code_tl}
-      | epsilon prec pCodeTl -> CodeTlEpsilon
+      | epsilon -> CodeTlEpsilon
 
     nonterm Code of nonterm_code ::=
       | delimited:Delimited code_tl:CodeTl -> CodeDelimited {delimited; code_tl}

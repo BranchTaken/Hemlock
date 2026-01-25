@@ -366,13 +366,11 @@ include struct
           end
 
         let prec_sets = [|
-            PrecSet.init ~index:0L ~names:[|"pCodeTl"|] ~assoc:None ~doms:(Ordset.empty (module Uns));
-            PrecSet.init ~index:1L ~names:[|"pCIDENT"|] ~assoc:(Some Right) ~doms:(Ordset.empty (module Uns));
-            PrecSet.init ~index:2L ~names:[|"pDOT"|] ~assoc:(Some Left) ~doms:(Ordset.empty (module Uns));
-            PrecSet.init ~index:3L ~names:[|"pBAR"|] ~assoc:None ~doms:(Ordset.singleton (module Uns) 0L);
-            PrecSet.init ~index:4L ~names:[|"pCOMMA"|] ~assoc:(Some Left) ~doms:(Ordset.singleton (module Uns) 1L);
-            PrecSet.init ~index:5L ~names:[|"pSEMI"|] ~assoc:(Some Right) ~doms:(Ordset.singleton (module Uns) 0L);
-            PrecSet.init ~index:6L ~names:[|"pAS"|] ~assoc:None ~doms:(Ordset.of_list (module Uns) [1L; 4L])
+            PrecSet.init ~index:0L ~names:[|"pCIDENT"|] ~assoc:(Some Right) ~doms:(Ordset.empty (module Uns));
+            PrecSet.init ~index:1L ~names:[|"pDOT"|] ~assoc:(Some Left) ~doms:(Ordset.empty (module Uns));
+            PrecSet.init ~index:2L ~names:[|"pCOMMA"|] ~assoc:(Some Left) ~doms:(Ordset.singleton (module Uns) 0L);
+            PrecSet.init ~index:3L ~names:[|"pSEMI"|] ~assoc:(Some Right) ~doms:(Ordset.empty (module Uns));
+            PrecSet.init ~index:4L ~names:[|"pAS"|] ~assoc:None ~doms:(Ordset.of_list (module Uns) [0L; 2L])
           |]
 
         module Prec = struct
@@ -549,214 +547,210 @@ include struct
               ~prec:None ~callback:54L;
             Prod.init ~index:55L ~lhs_index:59L ~rhs_indexes:[|20L|]
               ~prec:None ~callback:55L;
-            Prod.init ~index:56L ~lhs_index:59L ~rhs_indexes:[|21L|]
+            Prod.init ~index:56L ~lhs_index:59L ~rhs_indexes:[|22L|]
               ~prec:None ~callback:56L;
-            Prod.init ~index:57L ~lhs_index:59L ~rhs_indexes:[|22L|]
+            Prod.init ~index:57L ~lhs_index:59L ~rhs_indexes:[|23L|]
               ~prec:None ~callback:57L;
-            Prod.init ~index:58L ~lhs_index:59L ~rhs_indexes:[|23L|]
+            Prod.init ~index:58L ~lhs_index:59L ~rhs_indexes:[|24L|]
               ~prec:None ~callback:58L;
-            Prod.init ~index:59L ~lhs_index:59L ~rhs_indexes:[|24L|]
+            Prod.init ~index:59L ~lhs_index:60L ~rhs_indexes:[|58L; 60L|]
               ~prec:None ~callback:59L;
-            Prod.init ~index:60L ~lhs_index:59L ~rhs_indexes:[|25L|]
+            Prod.init ~index:60L ~lhs_index:60L ~rhs_indexes:[|59L; 60L|]
               ~prec:None ~callback:60L;
-            Prod.init ~index:61L ~lhs_index:60L ~rhs_indexes:[|58L; 60L|]
+            Prod.init ~index:61L ~lhs_index:60L ~rhs_indexes:[||]
               ~prec:None ~callback:61L;
-            Prod.init ~index:62L ~lhs_index:60L ~rhs_indexes:[|59L; 60L|]
+            Prod.init ~index:62L ~lhs_index:61L ~rhs_indexes:[|58L; 60L|]
               ~prec:None ~callback:62L;
-            Prod.init ~index:63L ~lhs_index:60L ~rhs_indexes:[||]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~callback:63L;
-            Prod.init ~index:64L ~lhs_index:61L ~rhs_indexes:[|58L; 60L|]
+            Prod.init ~index:63L ~lhs_index:61L ~rhs_indexes:[|59L; 60L|]
+              ~prec:None ~callback:63L;
+            Prod.init ~index:64L ~lhs_index:62L ~rhs_indexes:[|42L|]
               ~prec:None ~callback:64L;
-            Prod.init ~index:65L ~lhs_index:61L ~rhs_indexes:[|59L; 60L|]
+            Prod.init ~index:65L ~lhs_index:62L ~rhs_indexes:[|42L; 23L; 66L|]
               ~prec:None ~callback:65L;
-            Prod.init ~index:66L ~lhs_index:62L ~rhs_indexes:[|42L|]
-              ~prec:None ~callback:66L;
-            Prod.init ~index:67L ~lhs_index:62L ~rhs_indexes:[|42L; 23L; 66L|]
-              ~prec:None ~callback:67L;
-            Prod.init ~index:68L ~lhs_index:63L ~rhs_indexes:[|62L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~callback:68L;
-            Prod.init ~index:69L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 14L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~callback:69L;
-            Prod.init ~index:70L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 63L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~callback:70L;
-            Prod.init ~index:71L ~lhs_index:64L ~rhs_indexes:[|25L|]
+            Prod.init ~index:66L ~lhs_index:63L ~rhs_indexes:[|62L|]
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:66L;
+            Prod.init ~index:67L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 14L|]
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:67L;
+            Prod.init ~index:68L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 63L|]
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:68L;
+            Prod.init ~index:69L ~lhs_index:64L ~rhs_indexes:[|25L|]
+              ~prec:None ~callback:69L;
+            Prod.init ~index:70L ~lhs_index:64L ~rhs_indexes:[||]
+              ~prec:None ~callback:70L;
+            Prod.init ~index:71L ~lhs_index:65L ~rhs_indexes:[|13L|]
               ~prec:None ~callback:71L;
-            Prod.init ~index:72L ~lhs_index:64L ~rhs_indexes:[||]
-              ~prec:None ~callback:72L;
-            Prod.init ~index:73L ~lhs_index:65L ~rhs_indexes:[|13L|]
+            Prod.init ~index:72L ~lhs_index:65L ~rhs_indexes:[|65L; 19L; 65L|]
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~callback:72L;
+            Prod.init ~index:73L ~lhs_index:66L ~rhs_indexes:[|14L|]
               ~prec:None ~callback:73L;
-            Prod.init ~index:74L ~lhs_index:65L ~rhs_indexes:[|65L; 19L; 65L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~callback:74L;
-            Prod.init ~index:75L ~lhs_index:66L ~rhs_indexes:[|14L|]
-              ~prec:None ~callback:75L;
-            Prod.init ~index:76L ~lhs_index:66L ~rhs_indexes:[|42L|]
+            Prod.init ~index:74L ~lhs_index:66L ~rhs_indexes:[|42L|]
+              ~prec:None ~callback:74L;
+            Prod.init ~index:75L ~lhs_index:66L ~rhs_indexes:[|66L; 26L; 42L|]
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~callback:75L;
+            Prod.init ~index:76L ~lhs_index:66L ~rhs_indexes:[|30L; 66L; 31L|]
               ~prec:None ~callback:76L;
-            Prod.init ~index:77L ~lhs_index:66L ~rhs_indexes:[|66L; 26L; 42L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:6L)) ~callback:77L;
-            Prod.init ~index:78L ~lhs_index:66L ~rhs_indexes:[|30L; 66L; 31L|]
+            Prod.init ~index:77L ~lhs_index:66L ~rhs_indexes:[|13L; 66L|]
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~callback:77L;
+            Prod.init ~index:78L ~lhs_index:66L ~rhs_indexes:[|65L; 19L; 30L; 66L; 31L|]
               ~prec:None ~callback:78L;
-            Prod.init ~index:79L ~lhs_index:66L ~rhs_indexes:[|13L; 66L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~callback:79L;
-            Prod.init ~index:80L ~lhs_index:66L ~rhs_indexes:[|65L; 19L; 30L; 66L; 31L|]
+            Prod.init ~index:79L ~lhs_index:66L ~rhs_indexes:[|66L; 24L; 66L|]
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~callback:79L;
+            Prod.init ~index:80L ~lhs_index:66L ~rhs_indexes:[|38L; 63L; 64L; 39L|]
               ~prec:None ~callback:80L;
-            Prod.init ~index:81L ~lhs_index:66L ~rhs_indexes:[|66L; 24L; 66L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~callback:81L;
-            Prod.init ~index:82L ~lhs_index:66L ~rhs_indexes:[|38L; 63L; 64L; 39L|]
+            Prod.init ~index:81L ~lhs_index:66L ~rhs_indexes:[|65L; 19L; 38L; 63L; 64L; 39L|]
+              ~prec:None ~callback:81L;
+            Prod.init ~index:82L ~lhs_index:67L ~rhs_indexes:[|13L|]
               ~prec:None ~callback:82L;
-            Prod.init ~index:83L ~lhs_index:66L ~rhs_indexes:[|65L; 19L; 38L; 63L; 64L; 39L|]
+            Prod.init ~index:83L ~lhs_index:67L ~rhs_indexes:[|15L|]
               ~prec:None ~callback:83L;
-            Prod.init ~index:84L ~lhs_index:67L ~rhs_indexes:[|13L|]
+            Prod.init ~index:84L ~lhs_index:68L ~rhs_indexes:[|42L; 18L; 67L|]
               ~prec:None ~callback:84L;
-            Prod.init ~index:85L ~lhs_index:67L ~rhs_indexes:[|15L|]
+            Prod.init ~index:85L ~lhs_index:68L ~rhs_indexes:[|30L; 66L; 31L; 18L; 67L|]
               ~prec:None ~callback:85L;
-            Prod.init ~index:86L ~lhs_index:68L ~rhs_indexes:[|42L; 18L; 67L|]
+            Prod.init ~index:86L ~lhs_index:68L ~rhs_indexes:[|65L; 19L; 30L; 66L; 31L; 18L; 67L|]
               ~prec:None ~callback:86L;
-            Prod.init ~index:87L ~lhs_index:68L ~rhs_indexes:[|30L; 66L; 31L; 18L; 67L|]
+            Prod.init ~index:87L ~lhs_index:68L ~rhs_indexes:[|38L; 63L; 64L; 39L; 18L; 67L|]
               ~prec:None ~callback:87L;
-            Prod.init ~index:88L ~lhs_index:68L ~rhs_indexes:[|65L; 19L; 30L; 66L; 31L; 18L; 67L|]
+            Prod.init ~index:88L ~lhs_index:68L ~rhs_indexes:[|65L; 19L; 38L; 63L; 64L; 39L; 18L; 67L|]
               ~prec:None ~callback:88L;
-            Prod.init ~index:89L ~lhs_index:68L ~rhs_indexes:[|38L; 63L; 64L; 39L; 18L; 67L|]
+            Prod.init ~index:89L ~lhs_index:68L ~rhs_indexes:[|14L; 18L; 67L|]
               ~prec:None ~callback:89L;
-            Prod.init ~index:90L ~lhs_index:68L ~rhs_indexes:[|65L; 19L; 38L; 63L; 64L; 39L; 18L; 67L|]
+            Prod.init ~index:90L ~lhs_index:68L ~rhs_indexes:[|67L|]
               ~prec:None ~callback:90L;
-            Prod.init ~index:91L ~lhs_index:68L ~rhs_indexes:[|14L; 18L; 67L|]
+            Prod.init ~index:91L ~lhs_index:69L ~rhs_indexes:[|68L; 69L|]
               ~prec:None ~callback:91L;
-            Prod.init ~index:92L ~lhs_index:68L ~rhs_indexes:[|67L|]
+            Prod.init ~index:92L ~lhs_index:69L ~rhs_indexes:[|51L|]
               ~prec:None ~callback:92L;
-            Prod.init ~index:93L ~lhs_index:69L ~rhs_indexes:[|68L; 69L|]
+            Prod.init ~index:93L ~lhs_index:70L ~rhs_indexes:[|68L; 69L|]
               ~prec:None ~callback:93L;
-            Prod.init ~index:94L ~lhs_index:69L ~rhs_indexes:[|51L|]
+            Prod.init ~index:94L ~lhs_index:71L ~rhs_indexes:[|70L|]
               ~prec:None ~callback:94L;
-            Prod.init ~index:95L ~lhs_index:70L ~rhs_indexes:[|68L; 69L|]
+            Prod.init ~index:95L ~lhs_index:71L ~rhs_indexes:[|4L; 51L|]
               ~prec:None ~callback:95L;
-            Prod.init ~index:96L ~lhs_index:71L ~rhs_indexes:[|70L|]
+            Prod.init ~index:96L ~lhs_index:72L ~rhs_indexes:[|71L|]
               ~prec:None ~callback:96L;
-            Prod.init ~index:97L ~lhs_index:71L ~rhs_indexes:[|4L; 51L|]
+            Prod.init ~index:97L ~lhs_index:73L ~rhs_indexes:[|21L; 72L; 73L|]
               ~prec:None ~callback:97L;
-            Prod.init ~index:98L ~lhs_index:72L ~rhs_indexes:[|71L|]
+            Prod.init ~index:98L ~lhs_index:73L ~rhs_indexes:[||]
               ~prec:None ~callback:98L;
-            Prod.init ~index:99L ~lhs_index:73L ~rhs_indexes:[|21L; 72L; 73L|]
+            Prod.init ~index:99L ~lhs_index:74L ~rhs_indexes:[|21L; 72L; 73L|]
               ~prec:None ~callback:99L;
-            Prod.init ~index:100L ~lhs_index:73L ~rhs_indexes:[||]
+            Prod.init ~index:100L ~lhs_index:74L ~rhs_indexes:[|72L; 73L|]
               ~prec:None ~callback:100L;
-            Prod.init ~index:101L ~lhs_index:74L ~rhs_indexes:[|21L; 72L; 73L|]
+            Prod.init ~index:101L ~lhs_index:75L ~rhs_indexes:[|74L; 20L; 61L|]
               ~prec:None ~callback:101L;
-            Prod.init ~index:102L ~lhs_index:74L ~rhs_indexes:[|72L; 73L|]
+            Prod.init ~index:102L ~lhs_index:76L ~rhs_indexes:[|21L; 75L; 76L|]
               ~prec:None ~callback:102L;
-            Prod.init ~index:103L ~lhs_index:75L ~rhs_indexes:[|74L; 20L; 61L|]
+            Prod.init ~index:103L ~lhs_index:76L ~rhs_indexes:[||]
               ~prec:None ~callback:103L;
-            Prod.init ~index:104L ~lhs_index:76L ~rhs_indexes:[|21L; 75L; 76L|]
+            Prod.init ~index:104L ~lhs_index:77L ~rhs_indexes:[|75L; 76L|]
               ~prec:None ~callback:104L;
-            Prod.init ~index:105L ~lhs_index:76L ~rhs_indexes:[||]
+            Prod.init ~index:105L ~lhs_index:78L ~rhs_indexes:[|3L|]
               ~prec:None ~callback:105L;
-            Prod.init ~index:106L ~lhs_index:77L ~rhs_indexes:[|75L; 76L|]
+            Prod.init ~index:106L ~lhs_index:78L ~rhs_indexes:[|5L|]
               ~prec:None ~callback:106L;
-            Prod.init ~index:107L ~lhs_index:78L ~rhs_indexes:[|3L|]
+            Prod.init ~index:107L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 51L; 16L; 74L|]
               ~prec:None ~callback:107L;
-            Prod.init ~index:108L ~lhs_index:78L ~rhs_indexes:[|5L|]
+            Prod.init ~index:108L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 49L; 51L; 16L; 77L|]
               ~prec:None ~callback:108L;
-            Prod.init ~index:109L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 51L; 16L; 74L|]
+            Prod.init ~index:109L ~lhs_index:80L ~rhs_indexes:[|47L|]
               ~prec:None ~callback:109L;
-            Prod.init ~index:110L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 49L; 51L; 16L; 77L|]
+            Prod.init ~index:110L ~lhs_index:80L ~rhs_indexes:[|53L|]
               ~prec:None ~callback:110L;
-            Prod.init ~index:111L ~lhs_index:80L ~rhs_indexes:[|47L|]
+            Prod.init ~index:111L ~lhs_index:80L ~rhs_indexes:[|79L|]
               ~prec:None ~callback:111L;
-            Prod.init ~index:112L ~lhs_index:80L ~rhs_indexes:[|53L|]
+            Prod.init ~index:112L ~lhs_index:81L ~rhs_indexes:[|27L; 80L; 81L|]
               ~prec:None ~callback:112L;
-            Prod.init ~index:113L ~lhs_index:80L ~rhs_indexes:[|79L|]
+            Prod.init ~index:113L ~lhs_index:81L ~rhs_indexes:[||]
               ~prec:None ~callback:113L;
-            Prod.init ~index:114L ~lhs_index:81L ~rhs_indexes:[|27L; 80L; 81L|]
+            Prod.init ~index:114L ~lhs_index:82L ~rhs_indexes:[|80L; 81L|]
               ~prec:None ~callback:114L;
-            Prod.init ~index:115L ~lhs_index:81L ~rhs_indexes:[||]
+            Prod.init ~index:115L ~lhs_index:83L ~rhs_indexes:[|2L; 28L; 82L; 29L|]
               ~prec:None ~callback:115L;
-            Prod.init ~index:116L ~lhs_index:82L ~rhs_indexes:[|80L; 81L|]
+            Prod.init ~index:116L ~lhs_index:84L ~rhs_indexes:[|54L|]
               ~prec:None ~callback:116L;
-            Prod.init ~index:117L ~lhs_index:83L ~rhs_indexes:[|2L; 28L; 82L; 29L|]
+            Prod.init ~index:117L ~lhs_index:84L ~rhs_indexes:[|3L|]
               ~prec:None ~callback:117L;
-            Prod.init ~index:118L ~lhs_index:84L ~rhs_indexes:[|54L|]
+            Prod.init ~index:118L ~lhs_index:84L ~rhs_indexes:[|4L|]
               ~prec:None ~callback:118L;
-            Prod.init ~index:119L ~lhs_index:84L ~rhs_indexes:[|3L|]
+            Prod.init ~index:119L ~lhs_index:84L ~rhs_indexes:[|5L|]
               ~prec:None ~callback:119L;
-            Prod.init ~index:120L ~lhs_index:84L ~rhs_indexes:[|4L|]
+            Prod.init ~index:120L ~lhs_index:84L ~rhs_indexes:[|6L|]
               ~prec:None ~callback:120L;
-            Prod.init ~index:121L ~lhs_index:84L ~rhs_indexes:[|5L|]
+            Prod.init ~index:121L ~lhs_index:84L ~rhs_indexes:[|7L|]
               ~prec:None ~callback:121L;
-            Prod.init ~index:122L ~lhs_index:84L ~rhs_indexes:[|6L|]
+            Prod.init ~index:122L ~lhs_index:84L ~rhs_indexes:[|8L|]
               ~prec:None ~callback:122L;
-            Prod.init ~index:123L ~lhs_index:84L ~rhs_indexes:[|7L|]
+            Prod.init ~index:123L ~lhs_index:84L ~rhs_indexes:[|9L|]
               ~prec:None ~callback:123L;
-            Prod.init ~index:124L ~lhs_index:84L ~rhs_indexes:[|8L|]
+            Prod.init ~index:124L ~lhs_index:84L ~rhs_indexes:[|10L|]
               ~prec:None ~callback:124L;
-            Prod.init ~index:125L ~lhs_index:84L ~rhs_indexes:[|9L|]
+            Prod.init ~index:125L ~lhs_index:84L ~rhs_indexes:[|11L|]
               ~prec:None ~callback:125L;
-            Prod.init ~index:126L ~lhs_index:84L ~rhs_indexes:[|10L|]
+            Prod.init ~index:126L ~lhs_index:84L ~rhs_indexes:[|40L|]
               ~prec:None ~callback:126L;
-            Prod.init ~index:127L ~lhs_index:84L ~rhs_indexes:[|11L|]
+            Prod.init ~index:127L ~lhs_index:84L ~rhs_indexes:[|12L|]
               ~prec:None ~callback:127L;
-            Prod.init ~index:128L ~lhs_index:84L ~rhs_indexes:[|40L|]
+            Prod.init ~index:128L ~lhs_index:84L ~rhs_indexes:[|13L|]
               ~prec:None ~callback:128L;
-            Prod.init ~index:129L ~lhs_index:84L ~rhs_indexes:[|12L|]
+            Prod.init ~index:129L ~lhs_index:84L ~rhs_indexes:[|14L|]
               ~prec:None ~callback:129L;
-            Prod.init ~index:130L ~lhs_index:84L ~rhs_indexes:[|13L|]
+            Prod.init ~index:130L ~lhs_index:84L ~rhs_indexes:[|15L|]
               ~prec:None ~callback:130L;
-            Prod.init ~index:131L ~lhs_index:84L ~rhs_indexes:[|14L|]
+            Prod.init ~index:131L ~lhs_index:84L ~rhs_indexes:[|16L|]
               ~prec:None ~callback:131L;
-            Prod.init ~index:132L ~lhs_index:84L ~rhs_indexes:[|15L|]
+            Prod.init ~index:132L ~lhs_index:84L ~rhs_indexes:[|26L|]
               ~prec:None ~callback:132L;
-            Prod.init ~index:133L ~lhs_index:84L ~rhs_indexes:[|16L|]
+            Prod.init ~index:133L ~lhs_index:84L ~rhs_indexes:[|17L|]
               ~prec:None ~callback:133L;
-            Prod.init ~index:134L ~lhs_index:84L ~rhs_indexes:[|26L|]
+            Prod.init ~index:134L ~lhs_index:84L ~rhs_indexes:[|18L|]
               ~prec:None ~callback:134L;
-            Prod.init ~index:135L ~lhs_index:84L ~rhs_indexes:[|17L|]
+            Prod.init ~index:135L ~lhs_index:84L ~rhs_indexes:[|19L|]
               ~prec:None ~callback:135L;
-            Prod.init ~index:136L ~lhs_index:84L ~rhs_indexes:[|18L|]
+            Prod.init ~index:136L ~lhs_index:84L ~rhs_indexes:[|20L|]
               ~prec:None ~callback:136L;
-            Prod.init ~index:137L ~lhs_index:84L ~rhs_indexes:[|19L|]
+            Prod.init ~index:137L ~lhs_index:84L ~rhs_indexes:[|22L|]
               ~prec:None ~callback:137L;
-            Prod.init ~index:138L ~lhs_index:84L ~rhs_indexes:[|20L|]
+            Prod.init ~index:138L ~lhs_index:84L ~rhs_indexes:[|23L|]
               ~prec:None ~callback:138L;
-            Prod.init ~index:139L ~lhs_index:84L ~rhs_indexes:[|22L|]
+            Prod.init ~index:139L ~lhs_index:84L ~rhs_indexes:[|24L|]
               ~prec:None ~callback:139L;
-            Prod.init ~index:140L ~lhs_index:84L ~rhs_indexes:[|23L|]
+            Prod.init ~index:140L ~lhs_index:84L ~rhs_indexes:[|28L|]
               ~prec:None ~callback:140L;
-            Prod.init ~index:141L ~lhs_index:84L ~rhs_indexes:[|24L|]
+            Prod.init ~index:141L ~lhs_index:84L ~rhs_indexes:[|29L|]
               ~prec:None ~callback:141L;
-            Prod.init ~index:142L ~lhs_index:84L ~rhs_indexes:[|28L|]
+            Prod.init ~index:142L ~lhs_index:84L ~rhs_indexes:[|30L|]
               ~prec:None ~callback:142L;
-            Prod.init ~index:143L ~lhs_index:84L ~rhs_indexes:[|29L|]
+            Prod.init ~index:143L ~lhs_index:84L ~rhs_indexes:[|31L|]
               ~prec:None ~callback:143L;
-            Prod.init ~index:144L ~lhs_index:84L ~rhs_indexes:[|30L|]
+            Prod.init ~index:144L ~lhs_index:84L ~rhs_indexes:[|32L|]
               ~prec:None ~callback:144L;
-            Prod.init ~index:145L ~lhs_index:84L ~rhs_indexes:[|31L|]
+            Prod.init ~index:145L ~lhs_index:84L ~rhs_indexes:[|33L|]
               ~prec:None ~callback:145L;
-            Prod.init ~index:146L ~lhs_index:84L ~rhs_indexes:[|32L|]
+            Prod.init ~index:146L ~lhs_index:84L ~rhs_indexes:[|34L|]
               ~prec:None ~callback:146L;
-            Prod.init ~index:147L ~lhs_index:84L ~rhs_indexes:[|33L|]
+            Prod.init ~index:147L ~lhs_index:84L ~rhs_indexes:[|35L|]
               ~prec:None ~callback:147L;
-            Prod.init ~index:148L ~lhs_index:84L ~rhs_indexes:[|34L|]
+            Prod.init ~index:148L ~lhs_index:84L ~rhs_indexes:[|36L|]
               ~prec:None ~callback:148L;
-            Prod.init ~index:149L ~lhs_index:84L ~rhs_indexes:[|35L|]
+            Prod.init ~index:149L ~lhs_index:84L ~rhs_indexes:[|37L|]
               ~prec:None ~callback:149L;
-            Prod.init ~index:150L ~lhs_index:84L ~rhs_indexes:[|36L|]
+            Prod.init ~index:150L ~lhs_index:84L ~rhs_indexes:[|38L|]
               ~prec:None ~callback:150L;
-            Prod.init ~index:151L ~lhs_index:84L ~rhs_indexes:[|37L|]
+            Prod.init ~index:151L ~lhs_index:84L ~rhs_indexes:[|39L|]
               ~prec:None ~callback:151L;
-            Prod.init ~index:152L ~lhs_index:84L ~rhs_indexes:[|38L|]
+            Prod.init ~index:152L ~lhs_index:85L ~rhs_indexes:[|84L; 85L|]
               ~prec:None ~callback:152L;
-            Prod.init ~index:153L ~lhs_index:84L ~rhs_indexes:[|39L|]
+            Prod.init ~index:153L ~lhs_index:85L ~rhs_indexes:[||]
               ~prec:None ~callback:153L;
-            Prod.init ~index:154L ~lhs_index:85L ~rhs_indexes:[|84L; 85L|]
+            Prod.init ~index:154L ~lhs_index:86L ~rhs_indexes:[|85L; 83L; 85L; 41L|]
               ~prec:None ~callback:154L;
-            Prod.init ~index:155L ~lhs_index:85L ~rhs_indexes:[||]
+            Prod.init ~index:155L ~lhs_index:87L ~rhs_indexes:[|86L; 1L|]
               ~prec:None ~callback:155L;
-            Prod.init ~index:156L ~lhs_index:86L ~rhs_indexes:[|85L; 83L; 85L; 41L|]
+            Prod.init ~index:156L ~lhs_index:88L ~rhs_indexes:[|85L; 2L; 85L; 41L|]
               ~prec:None ~callback:156L;
-            Prod.init ~index:157L ~lhs_index:87L ~rhs_indexes:[|86L; 1L|]
-              ~prec:None ~callback:157L;
-            Prod.init ~index:158L ~lhs_index:88L ~rhs_indexes:[|85L; 2L; 85L; 41L|]
-              ~prec:None ~callback:158L;
-            Prod.init ~index:159L ~lhs_index:89L ~rhs_indexes:[|88L; 1L|]
-              ~prec:None ~callback:159L
+            Prod.init ~index:157L ~lhs_index:89L ~rhs_indexes:[|88L; 1L|]
+              ~prec:None ~callback:157L
           |]
 
         module Symbol = struct
@@ -851,7 +845,7 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 12L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:13L ~name:"CIDENT"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:None ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~alias:None ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 13L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:14L ~name:"USCORE"
@@ -875,7 +869,7 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 18L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:19L ~name:"DOT"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~alias:(Some ".") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:(Some ".") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 19L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:20L ~name:"ARROW"
@@ -883,7 +877,7 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 20L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:21L ~name:"BAR"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~alias:(Some "|") ~start:false
+              ~prec:None ~alias:(Some "|") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 21L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:22L ~name:"LT"
@@ -895,15 +889,15 @@ include struct
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 23L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:24L ~name:"COMMA"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~alias:(Some ",") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~alias:(Some ",") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 24L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:25L ~name:"SEMI"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~alias:(Some ";") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~alias:(Some ";") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 25L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:26L ~name:"AS"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:6L)) ~alias:(Some "as") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~alias:(Some "as") ~start:false
               ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 26L)
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:27L ~name:"LINE_DELIM"
@@ -1066,14 +1060,14 @@ include struct
               ~follow:(Ordset.of_list (module Uns) [29L; 31L; 33L; 35L; 37L; 39L]);
             Symbol.init ~index:56L ~name:"Codes"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.singleton (module Prod) (Array.get 36L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 36L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
               ~follow:(Ordset.of_list (module Uns) [29L; 31L; 33L; 35L; 37L; 39L]);
             Symbol.init ~index:57L ~name:"Codes0"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 37L prods;
                 Array.get 38L prods;
-              ]) ~first:(Ordset.of_list (module Uns) [0L; 2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
+              ]) ~first:(Ordset.of_list (module Uns) [0L; 2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
               ~follow:(Ordset.of_list (module Uns) [31L; 33L; 35L; 37L; 39L]);
             Symbol.init ~index:58L ~name:"Delimited"
               ~prec:None ~alias:None ~start:false
@@ -1103,57 +1097,57 @@ include struct
                 Array.get 56L prods;
                 Array.get 57L prods;
                 Array.get 58L prods;
-                Array.get 59L prods;
-                Array.get 60L prods;
-              ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 40L])
+              ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 40L])
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]);
             Symbol.init ~index:60L ~name:"CodeTl"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
+                Array.get 59L prods;
+                Array.get 60L prods;
                 Array.get 61L prods;
-                Array.get 62L prods;
-                Array.get 63L prods;
-              ]) ~first:(Ordset.of_list (module Uns) [0L; 2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
+              ]) ~first:(Ordset.of_list (module Uns) [0L; 2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
               ~follow:(Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]);
             Symbol.init ~index:61L ~name:"Code"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 64L prods;
-                Array.get 65L prods;
-              ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
+                Array.get 62L prods;
+                Array.get 63L prods;
+              ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L])
               ~follow:(Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]);
             Symbol.init ~index:62L ~name:"PatternField"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 66L prods;
-                Array.get 67L prods;
+                Array.get 64L prods;
+                Array.get 65L prods;
               ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L])
               ~follow:(Ordset.of_list (module Uns) [25L; 39L]);
             Symbol.init ~index:63L ~name:"PatternFields"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~alias:None ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
+                Array.get 66L prods;
+                Array.get 67L prods;
                 Array.get 68L prods;
-                Array.get 69L prods;
-                Array.get 70L prods;
               ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L])
               ~follow:(Ordset.of_list (module Uns) [25L; 39L]);
             Symbol.init ~index:64L ~name:"SemiSuffix"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 71L prods;
-                Array.get 72L prods;
+                Array.get 69L prods;
+                Array.get 70L prods;
               ]) ~first:(Ordset.of_list (module Uns) [0L; 25L])
               ~follow:(Ordset.singleton (module Uns) 39L);
             Symbol.init ~index:65L ~name:"ModulePath"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 73L prods;
-                Array.get 74L prods;
+                Array.get 71L prods;
+                Array.get 72L prods;
               ]) ~first:(Ordset.singleton (module Uns) 13L)
               ~follow:(Ordset.singleton (module Uns) 19L);
             Symbol.init ~index:66L ~name:"Pattern"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
+                Array.get 73L prods;
+                Array.get 74L prods;
                 Array.get 75L prods;
                 Array.get 76L prods;
                 Array.get 77L prods;
@@ -1161,120 +1155,120 @@ include struct
                 Array.get 79L prods;
                 Array.get 80L prods;
                 Array.get 81L prods;
-                Array.get 82L prods;
-                Array.get 83L prods;
               ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]);
             Symbol.init ~index:67L ~name:"ProdParamSymbol"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 84L prods;
-                Array.get 85L prods;
+                Array.get 82L prods;
+                Array.get 83L prods;
               ]) ~first:(Ordset.of_list (module Uns) [13L; 15L])
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]);
             Symbol.init ~index:68L ~name:"ProdParam"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
+                Array.get 84L prods;
+                Array.get 85L prods;
                 Array.get 86L prods;
                 Array.get 87L prods;
                 Array.get 88L prods;
                 Array.get 89L prods;
                 Array.get 90L prods;
-                Array.get 91L prods;
-                Array.get 92L prods;
               ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]);
             Symbol.init ~index:69L ~name:"ProdParamsTl"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 93L prods;
-                Array.get 94L prods;
+                Array.get 91L prods;
+                Array.get 92L prods;
               ]) ~first:(Ordset.of_list (module Uns) [0L; 2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]);
             Symbol.init ~index:70L ~name:"ProdParams"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.singleton (module Prod) (Array.get 95L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 30L; 38L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 93L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]);
             Symbol.init ~index:71L ~name:"ProdPattern"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 96L prods;
-                Array.get 97L prods;
+                Array.get 94L prods;
+                Array.get 95L prods;
               ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]);
             Symbol.init ~index:72L ~name:"Prod"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.singleton (module Prod) (Array.get 98L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 30L; 38L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 96L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]);
             Symbol.init ~index:73L ~name:"ProdsTl"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 99L prods;
-                Array.get 100L prods;
+                Array.get 97L prods;
+                Array.get 98L prods;
               ]) ~first:(Ordset.of_list (module Uns) [0L; 21L])
               ~follow:(Ordset.of_list (module Uns) [20L; 27L; 29L]);
             Symbol.init ~index:74L ~name:"Prods"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 101L prods;
-                Array.get 102L prods;
+                Array.get 99L prods;
+                Array.get 100L prods;
               ]) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [20L; 27L; 29L]);
             Symbol.init ~index:75L ~name:"Reduction"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.singleton (module Prod) (Array.get 103L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 30L; 38L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 101L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [21L; 27L; 29L]);
             Symbol.init ~index:76L ~name:"ReductionsTl"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 104L prods;
-                Array.get 105L prods;
+                Array.get 102L prods;
+                Array.get 103L prods;
               ]) ~first:(Ordset.of_list (module Uns) [0L; 21L])
               ~follow:(Ordset.of_list (module Uns) [27L; 29L]);
             Symbol.init ~index:77L ~name:"Reductions"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.singleton (module Prod) (Array.get 106L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 30L; 38L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 104L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 30L; 38L])
               ~follow:(Ordset.of_list (module Uns) [27L; 29L]);
             Symbol.init ~index:78L ~name:"NontermType"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 107L prods;
-                Array.get 108L prods;
+                Array.get 105L prods;
+                Array.get 106L prods;
               ]) ~first:(Ordset.of_list (module Uns) [3L; 5L])
               ~follow:(Ordset.singleton (module Uns) 13L);
             Symbol.init ~index:79L ~name:"Nonterm"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 109L prods;
-                Array.get 110L prods;
+                Array.get 107L prods;
+                Array.get 108L prods;
               ]) ~first:(Ordset.of_list (module Uns) [3L; 5L])
               ~follow:(Ordset.of_list (module Uns) [27L; 29L]);
             Symbol.init ~index:80L ~name:"Stmt"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
+                Array.get 109L prods;
+                Array.get 110L prods;
                 Array.get 111L prods;
-                Array.get 112L prods;
-                Array.get 113L prods;
               ]) ~first:(Ordset.of_list (module Uns) [3L; 5L; 6L; 7L; 8L; 9L; 10L])
               ~follow:(Ordset.of_list (module Uns) [27L; 29L]);
             Symbol.init ~index:81L ~name:"StmtsTl"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 114L prods;
-                Array.get 115L prods;
+                Array.get 112L prods;
+                Array.get 113L prods;
               ]) ~first:(Ordset.of_list (module Uns) [0L; 27L])
               ~follow:(Ordset.singleton (module Uns) 29L);
             Symbol.init ~index:82L ~name:"Stmts"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.singleton (module Prod) (Array.get 116L prods)) ~first:(Ordset.of_list (module Uns) [3L; 5L; 6L; 7L; 8L; 9L; 10L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 114L prods)) ~first:(Ordset.of_list (module Uns) [3L; 5L; 6L; 7L; 8L; 9L; 10L])
               ~follow:(Ordset.singleton (module Uns) 29L);
             Symbol.init ~index:83L ~name:"Hocc"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.singleton (module Prod) (Array.get 117L prods)) ~first:(Ordset.singleton (module Uns) 2L)
+              ~prods:(Ordset.singleton (module Prod) (Array.get 115L prods)) ~first:(Ordset.singleton (module Uns) 2L)
               ~follow:(Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:84L ~name:"MatterToken"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
+                Array.get 116L prods;
+                Array.get 117L prods;
                 Array.get 118L prods;
                 Array.get 119L prods;
                 Array.get 120L prods;
@@ -1309,32 +1303,30 @@ include struct
                 Array.get 149L prods;
                 Array.get 150L prods;
                 Array.get 151L prods;
-                Array.get 152L prods;
-                Array.get 153L prods;
               ]) ~first:(Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
               ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]);
             Symbol.init ~index:85L ~name:"Matter"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
-                Array.get 154L prods;
-                Array.get 155L prods;
+                Array.get 152L prods;
+                Array.get 153L prods;
               ]) ~first:(Ordset.of_list (module Uns) [0L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
               ~follow:(Ordset.of_list (module Uns) [2L; 41L]);
             Symbol.init ~index:86L ~name:"Hmh"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 156L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 154L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
               ~follow:(Ordset.singleton (module Uns) 1L);
             Symbol.init ~index:87L ~name:"Hmh'"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 157L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 155L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
               ~follow:(Ordset.singleton (module Uns) 0L);
             Symbol.init ~index:88L ~name:"Hmhi"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 158L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 156L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
               ~follow:(Ordset.singleton (module Uns) 1L);
             Symbol.init ~index:89L ~name:"Hmhi'"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 159L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
+              ~prods:(Ordset.singleton (module Prod) (Array.get 157L prods)) ~first:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L])
               ~follow:(Ordset.singleton (module Uns) 0L)
           |]
 
@@ -1539,7 +1531,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 157L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [0L]
                               ) in
@@ -1565,6 +1557,20 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
                               ) in
@@ -1811,33 +1817,19 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                                Ordset.of_list (module Uns) [2L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                                Ordset.of_list (module Uns) [2L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [1L]
                               ) in
@@ -1848,7 +1840,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 155L);
+                    (2L, Action.Reduce 153L);
                     (3L, Action.ShiftPrefix 2L);
                     (4L, Action.ShiftPrefix 3L);
                     (5L, Action.ShiftPrefix 4L);
@@ -1904,7 +1896,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 159L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 157L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [0L]
                               ) in
@@ -1930,6 +1922,20 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
                               ) in
@@ -2176,33 +2182,19 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                                Ordset.of_list (module Uns) [2L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 158L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [1L]
                               ) in
@@ -2213,7 +2205,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 155L);
+                    (2L, Action.Reduce 153L);
                     (3L, Action.ShiftPrefix 2L);
                     (4L, Action.ShiftPrefix 3L);
                     (5L, Action.ShiftPrefix 4L);
@@ -2266,6 +2258,138 @@ include struct
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
                   ~index:2L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 117L);
+                    (3L, Action.Reduce 117L);
+                    (4L, Action.Reduce 117L);
+                    (5L, Action.Reduce 117L);
+                    (6L, Action.Reduce 117L);
+                    (7L, Action.Reduce 117L);
+                    (8L, Action.Reduce 117L);
+                    (9L, Action.Reduce 117L);
+                    (10L, Action.Reduce 117L);
+                    (11L, Action.Reduce 117L);
+                    (12L, Action.Reduce 117L);
+                    (13L, Action.Reduce 117L);
+                    (14L, Action.Reduce 117L);
+                    (15L, Action.Reduce 117L);
+                    (16L, Action.Reduce 117L);
+                    (17L, Action.Reduce 117L);
+                    (18L, Action.Reduce 117L);
+                    (19L, Action.Reduce 117L);
+                    (20L, Action.Reduce 117L);
+                    (21L, Action.Reduce 117L);
+                    (22L, Action.Reduce 117L);
+                    (23L, Action.Reduce 117L);
+                    (24L, Action.Reduce 117L);
+                    (25L, Action.Reduce 117L);
+                    (26L, Action.Reduce 117L);
+                    (27L, Action.Reduce 117L);
+                    (28L, Action.Reduce 117L);
+                    (29L, Action.Reduce 117L);
+                    (30L, Action.Reduce 117L);
+                    (31L, Action.Reduce 117L);
+                    (32L, Action.Reduce 117L);
+                    (33L, Action.Reduce 117L);
+                    (34L, Action.Reduce 117L);
+                    (35L, Action.Reduce 117L);
+                    (36L, Action.Reduce 117L);
+                    (37L, Action.Reduce 117L);
+                    (38L, Action.Reduce 117L);
+                    (39L, Action.Reduce 117L);
+                    (40L, Action.Reduce 117L);
+                    (41L, Action.Reduce 117L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 3 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:3L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 118L);
+                    (3L, Action.Reduce 118L);
+                    (4L, Action.Reduce 118L);
+                    (5L, Action.Reduce 118L);
+                    (6L, Action.Reduce 118L);
+                    (7L, Action.Reduce 118L);
+                    (8L, Action.Reduce 118L);
+                    (9L, Action.Reduce 118L);
+                    (10L, Action.Reduce 118L);
+                    (11L, Action.Reduce 118L);
+                    (12L, Action.Reduce 118L);
+                    (13L, Action.Reduce 118L);
+                    (14L, Action.Reduce 118L);
+                    (15L, Action.Reduce 118L);
+                    (16L, Action.Reduce 118L);
+                    (17L, Action.Reduce 118L);
+                    (18L, Action.Reduce 118L);
+                    (19L, Action.Reduce 118L);
+                    (20L, Action.Reduce 118L);
+                    (21L, Action.Reduce 118L);
+                    (22L, Action.Reduce 118L);
+                    (23L, Action.Reduce 118L);
+                    (24L, Action.Reduce 118L);
+                    (25L, Action.Reduce 118L);
+                    (26L, Action.Reduce 118L);
+                    (27L, Action.Reduce 118L);
+                    (28L, Action.Reduce 118L);
+                    (29L, Action.Reduce 118L);
+                    (30L, Action.Reduce 118L);
+                    (31L, Action.Reduce 118L);
+                    (32L, Action.Reduce 118L);
+                    (33L, Action.Reduce 118L);
+                    (34L, Action.Reduce 118L);
+                    (35L, Action.Reduce 118L);
+                    (36L, Action.Reduce 118L);
+                    (37L, Action.Reduce 118L);
+                    (38L, Action.Reduce 118L);
+                    (39L, Action.Reduce 118L);
+                    (40L, Action.Reduce 118L);
+                    (41L, Action.Reduce 118L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 4 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:4L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2328,10 +2452,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 3 *) State.init
+            (* 5 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:3L
+                  ~index:5L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2394,10 +2518,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 4 *) State.init
+            (* 6 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:4L
+                  ~index:6L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2460,10 +2584,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 5 *) State.init
+            (* 7 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:5L
+                  ~index:7L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2526,10 +2650,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 6 *) State.init
+            (* 8 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:6L
+                  ~index:8L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2592,10 +2716,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 7 *) State.init
+            (* 9 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:7L
+                  ~index:9L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2658,10 +2782,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 8 *) State.init
+            (* 10 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:8L
+                  ~index:10L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2724,76 +2848,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 9 *) State.init
+            (* 11 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:9L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 126L);
-                    (3L, Action.Reduce 126L);
-                    (4L, Action.Reduce 126L);
-                    (5L, Action.Reduce 126L);
-                    (6L, Action.Reduce 126L);
-                    (7L, Action.Reduce 126L);
-                    (8L, Action.Reduce 126L);
-                    (9L, Action.Reduce 126L);
-                    (10L, Action.Reduce 126L);
-                    (11L, Action.Reduce 126L);
-                    (12L, Action.Reduce 126L);
-                    (13L, Action.Reduce 126L);
-                    (14L, Action.Reduce 126L);
-                    (15L, Action.Reduce 126L);
-                    (16L, Action.Reduce 126L);
-                    (17L, Action.Reduce 126L);
-                    (18L, Action.Reduce 126L);
-                    (19L, Action.Reduce 126L);
-                    (20L, Action.Reduce 126L);
-                    (21L, Action.Reduce 126L);
-                    (22L, Action.Reduce 126L);
-                    (23L, Action.Reduce 126L);
-                    (24L, Action.Reduce 126L);
-                    (25L, Action.Reduce 126L);
-                    (26L, Action.Reduce 126L);
-                    (27L, Action.Reduce 126L);
-                    (28L, Action.Reduce 126L);
-                    (29L, Action.Reduce 126L);
-                    (30L, Action.Reduce 126L);
-                    (31L, Action.Reduce 126L);
-                    (32L, Action.Reduce 126L);
-                    (33L, Action.Reduce 126L);
-                    (34L, Action.Reduce 126L);
-                    (35L, Action.Reduce 126L);
-                    (36L, Action.Reduce 126L);
-                    (37L, Action.Reduce 126L);
-                    (38L, Action.Reduce 126L);
-                    (39L, Action.Reduce 126L);
-                    (40L, Action.Reduce 126L);
-                    (41L, Action.Reduce 126L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 10 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:10L
+                  ~index:11L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2856,10 +2914,76 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 11 *) State.init
+            (* 12 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:11L
+                  ~index:12L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 128L);
+                    (3L, Action.Reduce 128L);
+                    (4L, Action.Reduce 128L);
+                    (5L, Action.Reduce 128L);
+                    (6L, Action.Reduce 128L);
+                    (7L, Action.Reduce 128L);
+                    (8L, Action.Reduce 128L);
+                    (9L, Action.Reduce 128L);
+                    (10L, Action.Reduce 128L);
+                    (11L, Action.Reduce 128L);
+                    (12L, Action.Reduce 128L);
+                    (13L, Action.Reduce 128L);
+                    (14L, Action.Reduce 128L);
+                    (15L, Action.Reduce 128L);
+                    (16L, Action.Reduce 128L);
+                    (17L, Action.Reduce 128L);
+                    (18L, Action.Reduce 128L);
+                    (19L, Action.Reduce 128L);
+                    (20L, Action.Reduce 128L);
+                    (21L, Action.Reduce 128L);
+                    (22L, Action.Reduce 128L);
+                    (23L, Action.Reduce 128L);
+                    (24L, Action.Reduce 128L);
+                    (25L, Action.Reduce 128L);
+                    (26L, Action.Reduce 128L);
+                    (27L, Action.Reduce 128L);
+                    (28L, Action.Reduce 128L);
+                    (29L, Action.Reduce 128L);
+                    (30L, Action.Reduce 128L);
+                    (31L, Action.Reduce 128L);
+                    (32L, Action.Reduce 128L);
+                    (33L, Action.Reduce 128L);
+                    (34L, Action.Reduce 128L);
+                    (35L, Action.Reduce 128L);
+                    (36L, Action.Reduce 128L);
+                    (37L, Action.Reduce 128L);
+                    (38L, Action.Reduce 128L);
+                    (39L, Action.Reduce 128L);
+                    (40L, Action.Reduce 128L);
+                    (41L, Action.Reduce 128L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 13 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:13L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2922,10 +3046,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 12 *) State.init
+            (* 14 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:12L
+                  ~index:14L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -2988,10 +3112,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 13 *) State.init
+            (* 15 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:13L
+                  ~index:15L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -3054,76 +3178,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 14 *) State.init
+            (* 16 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:14L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 132L);
-                    (3L, Action.Reduce 132L);
-                    (4L, Action.Reduce 132L);
-                    (5L, Action.Reduce 132L);
-                    (6L, Action.Reduce 132L);
-                    (7L, Action.Reduce 132L);
-                    (8L, Action.Reduce 132L);
-                    (9L, Action.Reduce 132L);
-                    (10L, Action.Reduce 132L);
-                    (11L, Action.Reduce 132L);
-                    (12L, Action.Reduce 132L);
-                    (13L, Action.Reduce 132L);
-                    (14L, Action.Reduce 132L);
-                    (15L, Action.Reduce 132L);
-                    (16L, Action.Reduce 132L);
-                    (17L, Action.Reduce 132L);
-                    (18L, Action.Reduce 132L);
-                    (19L, Action.Reduce 132L);
-                    (20L, Action.Reduce 132L);
-                    (21L, Action.Reduce 132L);
-                    (22L, Action.Reduce 132L);
-                    (23L, Action.Reduce 132L);
-                    (24L, Action.Reduce 132L);
-                    (25L, Action.Reduce 132L);
-                    (26L, Action.Reduce 132L);
-                    (27L, Action.Reduce 132L);
-                    (28L, Action.Reduce 132L);
-                    (29L, Action.Reduce 132L);
-                    (30L, Action.Reduce 132L);
-                    (31L, Action.Reduce 132L);
-                    (32L, Action.Reduce 132L);
-                    (33L, Action.Reduce 132L);
-                    (34L, Action.Reduce 132L);
-                    (35L, Action.Reduce 132L);
-                    (36L, Action.Reduce 132L);
-                    (37L, Action.Reduce 132L);
-                    (38L, Action.Reduce 132L);
-                    (39L, Action.Reduce 132L);
-                    (40L, Action.Reduce 132L);
-                    (41L, Action.Reduce 132L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 15 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:15L
+                  ~index:16L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -3186,10 +3244,76 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 16 *) State.init
+            (* 17 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:16L
+                  ~index:17L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 134L);
+                    (3L, Action.Reduce 134L);
+                    (4L, Action.Reduce 134L);
+                    (5L, Action.Reduce 134L);
+                    (6L, Action.Reduce 134L);
+                    (7L, Action.Reduce 134L);
+                    (8L, Action.Reduce 134L);
+                    (9L, Action.Reduce 134L);
+                    (10L, Action.Reduce 134L);
+                    (11L, Action.Reduce 134L);
+                    (12L, Action.Reduce 134L);
+                    (13L, Action.Reduce 134L);
+                    (14L, Action.Reduce 134L);
+                    (15L, Action.Reduce 134L);
+                    (16L, Action.Reduce 134L);
+                    (17L, Action.Reduce 134L);
+                    (18L, Action.Reduce 134L);
+                    (19L, Action.Reduce 134L);
+                    (20L, Action.Reduce 134L);
+                    (21L, Action.Reduce 134L);
+                    (22L, Action.Reduce 134L);
+                    (23L, Action.Reduce 134L);
+                    (24L, Action.Reduce 134L);
+                    (25L, Action.Reduce 134L);
+                    (26L, Action.Reduce 134L);
+                    (27L, Action.Reduce 134L);
+                    (28L, Action.Reduce 134L);
+                    (29L, Action.Reduce 134L);
+                    (30L, Action.Reduce 134L);
+                    (31L, Action.Reduce 134L);
+                    (32L, Action.Reduce 134L);
+                    (33L, Action.Reduce 134L);
+                    (34L, Action.Reduce 134L);
+                    (35L, Action.Reduce 134L);
+                    (36L, Action.Reduce 134L);
+                    (37L, Action.Reduce 134L);
+                    (38L, Action.Reduce 134L);
+                    (39L, Action.Reduce 134L);
+                    (40L, Action.Reduce 134L);
+                    (41L, Action.Reduce 134L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 18 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:18L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -3252,10 +3376,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 17 *) State.init
+            (* 19 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:17L
+                  ~index:19L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -3313,138 +3437,6 @@ include struct
                     (39L, Action.Reduce 136L);
                     (40L, Action.Reduce 136L);
                     (41L, Action.Reduce 136L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 18 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:18L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 137L);
-                    (3L, Action.Reduce 137L);
-                    (4L, Action.Reduce 137L);
-                    (5L, Action.Reduce 137L);
-                    (6L, Action.Reduce 137L);
-                    (7L, Action.Reduce 137L);
-                    (8L, Action.Reduce 137L);
-                    (9L, Action.Reduce 137L);
-                    (10L, Action.Reduce 137L);
-                    (11L, Action.Reduce 137L);
-                    (12L, Action.Reduce 137L);
-                    (13L, Action.Reduce 137L);
-                    (14L, Action.Reduce 137L);
-                    (15L, Action.Reduce 137L);
-                    (16L, Action.Reduce 137L);
-                    (17L, Action.Reduce 137L);
-                    (18L, Action.Reduce 137L);
-                    (19L, Action.Reduce 137L);
-                    (20L, Action.Reduce 137L);
-                    (21L, Action.Reduce 137L);
-                    (22L, Action.Reduce 137L);
-                    (23L, Action.Reduce 137L);
-                    (24L, Action.Reduce 137L);
-                    (25L, Action.Reduce 137L);
-                    (26L, Action.Reduce 137L);
-                    (27L, Action.Reduce 137L);
-                    (28L, Action.Reduce 137L);
-                    (29L, Action.Reduce 137L);
-                    (30L, Action.Reduce 137L);
-                    (31L, Action.Reduce 137L);
-                    (32L, Action.Reduce 137L);
-                    (33L, Action.Reduce 137L);
-                    (34L, Action.Reduce 137L);
-                    (35L, Action.Reduce 137L);
-                    (36L, Action.Reduce 137L);
-                    (37L, Action.Reduce 137L);
-                    (38L, Action.Reduce 137L);
-                    (39L, Action.Reduce 137L);
-                    (40L, Action.Reduce 137L);
-                    (41L, Action.Reduce 137L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 19 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:19L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 138L);
-                    (3L, Action.Reduce 138L);
-                    (4L, Action.Reduce 138L);
-                    (5L, Action.Reduce 138L);
-                    (6L, Action.Reduce 138L);
-                    (7L, Action.Reduce 138L);
-                    (8L, Action.Reduce 138L);
-                    (9L, Action.Reduce 138L);
-                    (10L, Action.Reduce 138L);
-                    (11L, Action.Reduce 138L);
-                    (12L, Action.Reduce 138L);
-                    (13L, Action.Reduce 138L);
-                    (14L, Action.Reduce 138L);
-                    (15L, Action.Reduce 138L);
-                    (16L, Action.Reduce 138L);
-                    (17L, Action.Reduce 138L);
-                    (18L, Action.Reduce 138L);
-                    (19L, Action.Reduce 138L);
-                    (20L, Action.Reduce 138L);
-                    (21L, Action.Reduce 138L);
-                    (22L, Action.Reduce 138L);
-                    (23L, Action.Reduce 138L);
-                    (24L, Action.Reduce 138L);
-                    (25L, Action.Reduce 138L);
-                    (26L, Action.Reduce 138L);
-                    (27L, Action.Reduce 138L);
-                    (28L, Action.Reduce 138L);
-                    (29L, Action.Reduce 138L);
-                    (30L, Action.Reduce 138L);
-                    (31L, Action.Reduce 138L);
-                    (32L, Action.Reduce 138L);
-                    (33L, Action.Reduce 138L);
-                    (34L, Action.Reduce 138L);
-                    (35L, Action.Reduce 138L);
-                    (36L, Action.Reduce 138L);
-                    (37L, Action.Reduce 138L);
-                    (38L, Action.Reduce 138L);
-                    (39L, Action.Reduce 138L);
-                    (40L, Action.Reduce 138L);
-                    (41L, Action.Reduce 138L);
                   ]
               )
               ~gotos:(
@@ -3523,6 +3515,138 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 137L);
+                    (3L, Action.Reduce 137L);
+                    (4L, Action.Reduce 137L);
+                    (5L, Action.Reduce 137L);
+                    (6L, Action.Reduce 137L);
+                    (7L, Action.Reduce 137L);
+                    (8L, Action.Reduce 137L);
+                    (9L, Action.Reduce 137L);
+                    (10L, Action.Reduce 137L);
+                    (11L, Action.Reduce 137L);
+                    (12L, Action.Reduce 137L);
+                    (13L, Action.Reduce 137L);
+                    (14L, Action.Reduce 137L);
+                    (15L, Action.Reduce 137L);
+                    (16L, Action.Reduce 137L);
+                    (17L, Action.Reduce 137L);
+                    (18L, Action.Reduce 137L);
+                    (19L, Action.Reduce 137L);
+                    (20L, Action.Reduce 137L);
+                    (21L, Action.Reduce 137L);
+                    (22L, Action.Reduce 137L);
+                    (23L, Action.Reduce 137L);
+                    (24L, Action.Reduce 137L);
+                    (25L, Action.Reduce 137L);
+                    (26L, Action.Reduce 137L);
+                    (27L, Action.Reduce 137L);
+                    (28L, Action.Reduce 137L);
+                    (29L, Action.Reduce 137L);
+                    (30L, Action.Reduce 137L);
+                    (31L, Action.Reduce 137L);
+                    (32L, Action.Reduce 137L);
+                    (33L, Action.Reduce 137L);
+                    (34L, Action.Reduce 137L);
+                    (35L, Action.Reduce 137L);
+                    (36L, Action.Reduce 137L);
+                    (37L, Action.Reduce 137L);
+                    (38L, Action.Reduce 137L);
+                    (39L, Action.Reduce 137L);
+                    (40L, Action.Reduce 137L);
+                    (41L, Action.Reduce 137L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 22 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:22L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 138L);
+                    (3L, Action.Reduce 138L);
+                    (4L, Action.Reduce 138L);
+                    (5L, Action.Reduce 138L);
+                    (6L, Action.Reduce 138L);
+                    (7L, Action.Reduce 138L);
+                    (8L, Action.Reduce 138L);
+                    (9L, Action.Reduce 138L);
+                    (10L, Action.Reduce 138L);
+                    (11L, Action.Reduce 138L);
+                    (12L, Action.Reduce 138L);
+                    (13L, Action.Reduce 138L);
+                    (14L, Action.Reduce 138L);
+                    (15L, Action.Reduce 138L);
+                    (16L, Action.Reduce 138L);
+                    (17L, Action.Reduce 138L);
+                    (18L, Action.Reduce 138L);
+                    (19L, Action.Reduce 138L);
+                    (20L, Action.Reduce 138L);
+                    (21L, Action.Reduce 138L);
+                    (22L, Action.Reduce 138L);
+                    (23L, Action.Reduce 138L);
+                    (24L, Action.Reduce 138L);
+                    (25L, Action.Reduce 138L);
+                    (26L, Action.Reduce 138L);
+                    (27L, Action.Reduce 138L);
+                    (28L, Action.Reduce 138L);
+                    (29L, Action.Reduce 138L);
+                    (30L, Action.Reduce 138L);
+                    (31L, Action.Reduce 138L);
+                    (32L, Action.Reduce 138L);
+                    (33L, Action.Reduce 138L);
+                    (34L, Action.Reduce 138L);
+                    (35L, Action.Reduce 138L);
+                    (36L, Action.Reduce 138L);
+                    (37L, Action.Reduce 138L);
+                    (38L, Action.Reduce 138L);
+                    (39L, Action.Reduce 138L);
+                    (40L, Action.Reduce 138L);
+                    (41L, Action.Reduce 138L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 23 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:23L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
@@ -3577,138 +3701,6 @@ include struct
                     (39L, Action.Reduce 139L);
                     (40L, Action.Reduce 139L);
                     (41L, Action.Reduce 139L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 22 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:22L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 140L);
-                    (3L, Action.Reduce 140L);
-                    (4L, Action.Reduce 140L);
-                    (5L, Action.Reduce 140L);
-                    (6L, Action.Reduce 140L);
-                    (7L, Action.Reduce 140L);
-                    (8L, Action.Reduce 140L);
-                    (9L, Action.Reduce 140L);
-                    (10L, Action.Reduce 140L);
-                    (11L, Action.Reduce 140L);
-                    (12L, Action.Reduce 140L);
-                    (13L, Action.Reduce 140L);
-                    (14L, Action.Reduce 140L);
-                    (15L, Action.Reduce 140L);
-                    (16L, Action.Reduce 140L);
-                    (17L, Action.Reduce 140L);
-                    (18L, Action.Reduce 140L);
-                    (19L, Action.Reduce 140L);
-                    (20L, Action.Reduce 140L);
-                    (21L, Action.Reduce 140L);
-                    (22L, Action.Reduce 140L);
-                    (23L, Action.Reduce 140L);
-                    (24L, Action.Reduce 140L);
-                    (25L, Action.Reduce 140L);
-                    (26L, Action.Reduce 140L);
-                    (27L, Action.Reduce 140L);
-                    (28L, Action.Reduce 140L);
-                    (29L, Action.Reduce 140L);
-                    (30L, Action.Reduce 140L);
-                    (31L, Action.Reduce 140L);
-                    (32L, Action.Reduce 140L);
-                    (33L, Action.Reduce 140L);
-                    (34L, Action.Reduce 140L);
-                    (35L, Action.Reduce 140L);
-                    (36L, Action.Reduce 140L);
-                    (37L, Action.Reduce 140L);
-                    (38L, Action.Reduce 140L);
-                    (39L, Action.Reduce 140L);
-                    (40L, Action.Reduce 140L);
-                    (41L, Action.Reduce 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 23 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:23L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 141L);
-                    (3L, Action.Reduce 141L);
-                    (4L, Action.Reduce 141L);
-                    (5L, Action.Reduce 141L);
-                    (6L, Action.Reduce 141L);
-                    (7L, Action.Reduce 141L);
-                    (8L, Action.Reduce 141L);
-                    (9L, Action.Reduce 141L);
-                    (10L, Action.Reduce 141L);
-                    (11L, Action.Reduce 141L);
-                    (12L, Action.Reduce 141L);
-                    (13L, Action.Reduce 141L);
-                    (14L, Action.Reduce 141L);
-                    (15L, Action.Reduce 141L);
-                    (16L, Action.Reduce 141L);
-                    (17L, Action.Reduce 141L);
-                    (18L, Action.Reduce 141L);
-                    (19L, Action.Reduce 141L);
-                    (20L, Action.Reduce 141L);
-                    (21L, Action.Reduce 141L);
-                    (22L, Action.Reduce 141L);
-                    (23L, Action.Reduce 141L);
-                    (24L, Action.Reduce 141L);
-                    (25L, Action.Reduce 141L);
-                    (26L, Action.Reduce 141L);
-                    (27L, Action.Reduce 141L);
-                    (28L, Action.Reduce 141L);
-                    (29L, Action.Reduce 141L);
-                    (30L, Action.Reduce 141L);
-                    (31L, Action.Reduce 141L);
-                    (32L, Action.Reduce 141L);
-                    (33L, Action.Reduce 141L);
-                    (34L, Action.Reduce 141L);
-                    (35L, Action.Reduce 141L);
-                    (36L, Action.Reduce 141L);
-                    (37L, Action.Reduce 141L);
-                    (38L, Action.Reduce 141L);
-                    (39L, Action.Reduce 141L);
-                    (40L, Action.Reduce 141L);
-                    (41L, Action.Reduce 141L);
                   ]
               )
               ~gotos:(
@@ -3787,7 +3779,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -3801,46 +3793,46 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 134L);
-                    (3L, Action.Reduce 134L);
-                    (4L, Action.Reduce 134L);
-                    (5L, Action.Reduce 134L);
-                    (6L, Action.Reduce 134L);
-                    (7L, Action.Reduce 134L);
-                    (8L, Action.Reduce 134L);
-                    (9L, Action.Reduce 134L);
-                    (10L, Action.Reduce 134L);
-                    (11L, Action.Reduce 134L);
-                    (12L, Action.Reduce 134L);
-                    (13L, Action.Reduce 134L);
-                    (14L, Action.Reduce 134L);
-                    (15L, Action.Reduce 134L);
-                    (16L, Action.Reduce 134L);
-                    (17L, Action.Reduce 134L);
-                    (18L, Action.Reduce 134L);
-                    (19L, Action.Reduce 134L);
-                    (20L, Action.Reduce 134L);
-                    (21L, Action.Reduce 134L);
-                    (22L, Action.Reduce 134L);
-                    (23L, Action.Reduce 134L);
-                    (24L, Action.Reduce 134L);
-                    (25L, Action.Reduce 134L);
-                    (26L, Action.Reduce 134L);
-                    (27L, Action.Reduce 134L);
-                    (28L, Action.Reduce 134L);
-                    (29L, Action.Reduce 134L);
-                    (30L, Action.Reduce 134L);
-                    (31L, Action.Reduce 134L);
-                    (32L, Action.Reduce 134L);
-                    (33L, Action.Reduce 134L);
-                    (34L, Action.Reduce 134L);
-                    (35L, Action.Reduce 134L);
-                    (36L, Action.Reduce 134L);
-                    (37L, Action.Reduce 134L);
-                    (38L, Action.Reduce 134L);
-                    (39L, Action.Reduce 134L);
-                    (40L, Action.Reduce 134L);
-                    (41L, Action.Reduce 134L);
+                    (2L, Action.Reduce 132L);
+                    (3L, Action.Reduce 132L);
+                    (4L, Action.Reduce 132L);
+                    (5L, Action.Reduce 132L);
+                    (6L, Action.Reduce 132L);
+                    (7L, Action.Reduce 132L);
+                    (8L, Action.Reduce 132L);
+                    (9L, Action.Reduce 132L);
+                    (10L, Action.Reduce 132L);
+                    (11L, Action.Reduce 132L);
+                    (12L, Action.Reduce 132L);
+                    (13L, Action.Reduce 132L);
+                    (14L, Action.Reduce 132L);
+                    (15L, Action.Reduce 132L);
+                    (16L, Action.Reduce 132L);
+                    (17L, Action.Reduce 132L);
+                    (18L, Action.Reduce 132L);
+                    (19L, Action.Reduce 132L);
+                    (20L, Action.Reduce 132L);
+                    (21L, Action.Reduce 132L);
+                    (22L, Action.Reduce 132L);
+                    (23L, Action.Reduce 132L);
+                    (24L, Action.Reduce 132L);
+                    (25L, Action.Reduce 132L);
+                    (26L, Action.Reduce 132L);
+                    (27L, Action.Reduce 132L);
+                    (28L, Action.Reduce 132L);
+                    (29L, Action.Reduce 132L);
+                    (30L, Action.Reduce 132L);
+                    (31L, Action.Reduce 132L);
+                    (32L, Action.Reduce 132L);
+                    (33L, Action.Reduce 132L);
+                    (34L, Action.Reduce 132L);
+                    (35L, Action.Reduce 132L);
+                    (36L, Action.Reduce 132L);
+                    (37L, Action.Reduce 132L);
+                    (38L, Action.Reduce 132L);
+                    (39L, Action.Reduce 132L);
+                    (40L, Action.Reduce 132L);
+                    (41L, Action.Reduce 132L);
                   ]
               )
               ~gotos:(
@@ -3919,6 +3911,138 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 140L);
+                    (3L, Action.Reduce 140L);
+                    (4L, Action.Reduce 140L);
+                    (5L, Action.Reduce 140L);
+                    (6L, Action.Reduce 140L);
+                    (7L, Action.Reduce 140L);
+                    (8L, Action.Reduce 140L);
+                    (9L, Action.Reduce 140L);
+                    (10L, Action.Reduce 140L);
+                    (11L, Action.Reduce 140L);
+                    (12L, Action.Reduce 140L);
+                    (13L, Action.Reduce 140L);
+                    (14L, Action.Reduce 140L);
+                    (15L, Action.Reduce 140L);
+                    (16L, Action.Reduce 140L);
+                    (17L, Action.Reduce 140L);
+                    (18L, Action.Reduce 140L);
+                    (19L, Action.Reduce 140L);
+                    (20L, Action.Reduce 140L);
+                    (21L, Action.Reduce 140L);
+                    (22L, Action.Reduce 140L);
+                    (23L, Action.Reduce 140L);
+                    (24L, Action.Reduce 140L);
+                    (25L, Action.Reduce 140L);
+                    (26L, Action.Reduce 140L);
+                    (27L, Action.Reduce 140L);
+                    (28L, Action.Reduce 140L);
+                    (29L, Action.Reduce 140L);
+                    (30L, Action.Reduce 140L);
+                    (31L, Action.Reduce 140L);
+                    (32L, Action.Reduce 140L);
+                    (33L, Action.Reduce 140L);
+                    (34L, Action.Reduce 140L);
+                    (35L, Action.Reduce 140L);
+                    (36L, Action.Reduce 140L);
+                    (37L, Action.Reduce 140L);
+                    (38L, Action.Reduce 140L);
+                    (39L, Action.Reduce 140L);
+                    (40L, Action.Reduce 140L);
+                    (41L, Action.Reduce 140L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 28 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:28L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 141L);
+                    (3L, Action.Reduce 141L);
+                    (4L, Action.Reduce 141L);
+                    (5L, Action.Reduce 141L);
+                    (6L, Action.Reduce 141L);
+                    (7L, Action.Reduce 141L);
+                    (8L, Action.Reduce 141L);
+                    (9L, Action.Reduce 141L);
+                    (10L, Action.Reduce 141L);
+                    (11L, Action.Reduce 141L);
+                    (12L, Action.Reduce 141L);
+                    (13L, Action.Reduce 141L);
+                    (14L, Action.Reduce 141L);
+                    (15L, Action.Reduce 141L);
+                    (16L, Action.Reduce 141L);
+                    (17L, Action.Reduce 141L);
+                    (18L, Action.Reduce 141L);
+                    (19L, Action.Reduce 141L);
+                    (20L, Action.Reduce 141L);
+                    (21L, Action.Reduce 141L);
+                    (22L, Action.Reduce 141L);
+                    (23L, Action.Reduce 141L);
+                    (24L, Action.Reduce 141L);
+                    (25L, Action.Reduce 141L);
+                    (26L, Action.Reduce 141L);
+                    (27L, Action.Reduce 141L);
+                    (28L, Action.Reduce 141L);
+                    (29L, Action.Reduce 141L);
+                    (30L, Action.Reduce 141L);
+                    (31L, Action.Reduce 141L);
+                    (32L, Action.Reduce 141L);
+                    (33L, Action.Reduce 141L);
+                    (34L, Action.Reduce 141L);
+                    (35L, Action.Reduce 141L);
+                    (36L, Action.Reduce 141L);
+                    (37L, Action.Reduce 141L);
+                    (38L, Action.Reduce 141L);
+                    (39L, Action.Reduce 141L);
+                    (40L, Action.Reduce 141L);
+                    (41L, Action.Reduce 141L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 29 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:29L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
@@ -3978,10 +4102,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 28 *) State.init
+            (* 30 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:28L
+                  ~index:30L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4044,10 +4168,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 29 *) State.init
+            (* 31 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:29L
+                  ~index:31L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4110,10 +4234,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 30 *) State.init
+            (* 32 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:30L
+                  ~index:32L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4176,10 +4300,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 31 *) State.init
+            (* 33 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:31L
+                  ~index:33L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4242,10 +4366,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 32 *) State.init
+            (* 34 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:32L
+                  ~index:34L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4308,10 +4432,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 33 *) State.init
+            (* 35 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:33L
+                  ~index:35L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4374,10 +4498,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 34 *) State.init
+            (* 36 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:34L
+                  ~index:36L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4440,10 +4564,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 35 *) State.init
+            (* 37 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:35L
+                  ~index:37L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4506,10 +4630,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 36 *) State.init
+            (* 38 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:36L
+                  ~index:38L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -4572,138 +4696,6 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 37 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:37L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 152L);
-                    (3L, Action.Reduce 152L);
-                    (4L, Action.Reduce 152L);
-                    (5L, Action.Reduce 152L);
-                    (6L, Action.Reduce 152L);
-                    (7L, Action.Reduce 152L);
-                    (8L, Action.Reduce 152L);
-                    (9L, Action.Reduce 152L);
-                    (10L, Action.Reduce 152L);
-                    (11L, Action.Reduce 152L);
-                    (12L, Action.Reduce 152L);
-                    (13L, Action.Reduce 152L);
-                    (14L, Action.Reduce 152L);
-                    (15L, Action.Reduce 152L);
-                    (16L, Action.Reduce 152L);
-                    (17L, Action.Reduce 152L);
-                    (18L, Action.Reduce 152L);
-                    (19L, Action.Reduce 152L);
-                    (20L, Action.Reduce 152L);
-                    (21L, Action.Reduce 152L);
-                    (22L, Action.Reduce 152L);
-                    (23L, Action.Reduce 152L);
-                    (24L, Action.Reduce 152L);
-                    (25L, Action.Reduce 152L);
-                    (26L, Action.Reduce 152L);
-                    (27L, Action.Reduce 152L);
-                    (28L, Action.Reduce 152L);
-                    (29L, Action.Reduce 152L);
-                    (30L, Action.Reduce 152L);
-                    (31L, Action.Reduce 152L);
-                    (32L, Action.Reduce 152L);
-                    (33L, Action.Reduce 152L);
-                    (34L, Action.Reduce 152L);
-                    (35L, Action.Reduce 152L);
-                    (36L, Action.Reduce 152L);
-                    (37L, Action.Reduce 152L);
-                    (38L, Action.Reduce 152L);
-                    (39L, Action.Reduce 152L);
-                    (40L, Action.Reduce 152L);
-                    (41L, Action.Reduce 152L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 38 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:38L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 153L);
-                    (3L, Action.Reduce 153L);
-                    (4L, Action.Reduce 153L);
-                    (5L, Action.Reduce 153L);
-                    (6L, Action.Reduce 153L);
-                    (7L, Action.Reduce 153L);
-                    (8L, Action.Reduce 153L);
-                    (9L, Action.Reduce 153L);
-                    (10L, Action.Reduce 153L);
-                    (11L, Action.Reduce 153L);
-                    (12L, Action.Reduce 153L);
-                    (13L, Action.Reduce 153L);
-                    (14L, Action.Reduce 153L);
-                    (15L, Action.Reduce 153L);
-                    (16L, Action.Reduce 153L);
-                    (17L, Action.Reduce 153L);
-                    (18L, Action.Reduce 153L);
-                    (19L, Action.Reduce 153L);
-                    (20L, Action.Reduce 153L);
-                    (21L, Action.Reduce 153L);
-                    (22L, Action.Reduce 153L);
-                    (23L, Action.Reduce 153L);
-                    (24L, Action.Reduce 153L);
-                    (25L, Action.Reduce 153L);
-                    (26L, Action.Reduce 153L);
-                    (27L, Action.Reduce 153L);
-                    (28L, Action.Reduce 153L);
-                    (29L, Action.Reduce 153L);
-                    (30L, Action.Reduce 153L);
-                    (31L, Action.Reduce 153L);
-                    (32L, Action.Reduce 153L);
-                    (33L, Action.Reduce 153L);
-                    (34L, Action.Reduce 153L);
-                    (35L, Action.Reduce 153L);
-                    (36L, Action.Reduce 153L);
-                    (37L, Action.Reduce 153L);
-                    (38L, Action.Reduce 153L);
-                    (39L, Action.Reduce 153L);
-                    (40L, Action.Reduce 153L);
-                    (41L, Action.Reduce 153L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
             (* 39 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
@@ -4711,7 +4703,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -4725,46 +4717,46 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 128L);
-                    (3L, Action.Reduce 128L);
-                    (4L, Action.Reduce 128L);
-                    (5L, Action.Reduce 128L);
-                    (6L, Action.Reduce 128L);
-                    (7L, Action.Reduce 128L);
-                    (8L, Action.Reduce 128L);
-                    (9L, Action.Reduce 128L);
-                    (10L, Action.Reduce 128L);
-                    (11L, Action.Reduce 128L);
-                    (12L, Action.Reduce 128L);
-                    (13L, Action.Reduce 128L);
-                    (14L, Action.Reduce 128L);
-                    (15L, Action.Reduce 128L);
-                    (16L, Action.Reduce 128L);
-                    (17L, Action.Reduce 128L);
-                    (18L, Action.Reduce 128L);
-                    (19L, Action.Reduce 128L);
-                    (20L, Action.Reduce 128L);
-                    (21L, Action.Reduce 128L);
-                    (22L, Action.Reduce 128L);
-                    (23L, Action.Reduce 128L);
-                    (24L, Action.Reduce 128L);
-                    (25L, Action.Reduce 128L);
-                    (26L, Action.Reduce 128L);
-                    (27L, Action.Reduce 128L);
-                    (28L, Action.Reduce 128L);
-                    (29L, Action.Reduce 128L);
-                    (30L, Action.Reduce 128L);
-                    (31L, Action.Reduce 128L);
-                    (32L, Action.Reduce 128L);
-                    (33L, Action.Reduce 128L);
-                    (34L, Action.Reduce 128L);
-                    (35L, Action.Reduce 128L);
-                    (36L, Action.Reduce 128L);
-                    (37L, Action.Reduce 128L);
-                    (38L, Action.Reduce 128L);
-                    (39L, Action.Reduce 128L);
-                    (40L, Action.Reduce 128L);
-                    (41L, Action.Reduce 128L);
+                    (2L, Action.Reduce 126L);
+                    (3L, Action.Reduce 126L);
+                    (4L, Action.Reduce 126L);
+                    (5L, Action.Reduce 126L);
+                    (6L, Action.Reduce 126L);
+                    (7L, Action.Reduce 126L);
+                    (8L, Action.Reduce 126L);
+                    (9L, Action.Reduce 126L);
+                    (10L, Action.Reduce 126L);
+                    (11L, Action.Reduce 126L);
+                    (12L, Action.Reduce 126L);
+                    (13L, Action.Reduce 126L);
+                    (14L, Action.Reduce 126L);
+                    (15L, Action.Reduce 126L);
+                    (16L, Action.Reduce 126L);
+                    (17L, Action.Reduce 126L);
+                    (18L, Action.Reduce 126L);
+                    (19L, Action.Reduce 126L);
+                    (20L, Action.Reduce 126L);
+                    (21L, Action.Reduce 126L);
+                    (22L, Action.Reduce 126L);
+                    (23L, Action.Reduce 126L);
+                    (24L, Action.Reduce 126L);
+                    (25L, Action.Reduce 126L);
+                    (26L, Action.Reduce 126L);
+                    (27L, Action.Reduce 126L);
+                    (28L, Action.Reduce 126L);
+                    (29L, Action.Reduce 126L);
+                    (30L, Action.Reduce 126L);
+                    (31L, Action.Reduce 126L);
+                    (32L, Action.Reduce 126L);
+                    (33L, Action.Reduce 126L);
+                    (34L, Action.Reduce 126L);
+                    (35L, Action.Reduce 126L);
+                    (36L, Action.Reduce 126L);
+                    (37L, Action.Reduce 126L);
+                    (38L, Action.Reduce 126L);
+                    (39L, Action.Reduce 126L);
+                    (40L, Action.Reduce 126L);
+                    (41L, Action.Reduce 126L);
                   ]
               )
               ~gotos:(
@@ -4777,7 +4769,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -4791,46 +4783,46 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 118L);
-                    (3L, Action.Reduce 118L);
-                    (4L, Action.Reduce 118L);
-                    (5L, Action.Reduce 118L);
-                    (6L, Action.Reduce 118L);
-                    (7L, Action.Reduce 118L);
-                    (8L, Action.Reduce 118L);
-                    (9L, Action.Reduce 118L);
-                    (10L, Action.Reduce 118L);
-                    (11L, Action.Reduce 118L);
-                    (12L, Action.Reduce 118L);
-                    (13L, Action.Reduce 118L);
-                    (14L, Action.Reduce 118L);
-                    (15L, Action.Reduce 118L);
-                    (16L, Action.Reduce 118L);
-                    (17L, Action.Reduce 118L);
-                    (18L, Action.Reduce 118L);
-                    (19L, Action.Reduce 118L);
-                    (20L, Action.Reduce 118L);
-                    (21L, Action.Reduce 118L);
-                    (22L, Action.Reduce 118L);
-                    (23L, Action.Reduce 118L);
-                    (24L, Action.Reduce 118L);
-                    (25L, Action.Reduce 118L);
-                    (26L, Action.Reduce 118L);
-                    (27L, Action.Reduce 118L);
-                    (28L, Action.Reduce 118L);
-                    (29L, Action.Reduce 118L);
-                    (30L, Action.Reduce 118L);
-                    (31L, Action.Reduce 118L);
-                    (32L, Action.Reduce 118L);
-                    (33L, Action.Reduce 118L);
-                    (34L, Action.Reduce 118L);
-                    (35L, Action.Reduce 118L);
-                    (36L, Action.Reduce 118L);
-                    (37L, Action.Reduce 118L);
-                    (38L, Action.Reduce 118L);
-                    (39L, Action.Reduce 118L);
-                    (40L, Action.Reduce 118L);
-                    (41L, Action.Reduce 118L);
+                    (2L, Action.Reduce 116L);
+                    (3L, Action.Reduce 116L);
+                    (4L, Action.Reduce 116L);
+                    (5L, Action.Reduce 116L);
+                    (6L, Action.Reduce 116L);
+                    (7L, Action.Reduce 116L);
+                    (8L, Action.Reduce 116L);
+                    (9L, Action.Reduce 116L);
+                    (10L, Action.Reduce 116L);
+                    (11L, Action.Reduce 116L);
+                    (12L, Action.Reduce 116L);
+                    (13L, Action.Reduce 116L);
+                    (14L, Action.Reduce 116L);
+                    (15L, Action.Reduce 116L);
+                    (16L, Action.Reduce 116L);
+                    (17L, Action.Reduce 116L);
+                    (18L, Action.Reduce 116L);
+                    (19L, Action.Reduce 116L);
+                    (20L, Action.Reduce 116L);
+                    (21L, Action.Reduce 116L);
+                    (22L, Action.Reduce 116L);
+                    (23L, Action.Reduce 116L);
+                    (24L, Action.Reduce 116L);
+                    (25L, Action.Reduce 116L);
+                    (26L, Action.Reduce 116L);
+                    (27L, Action.Reduce 116L);
+                    (28L, Action.Reduce 116L);
+                    (29L, Action.Reduce 116L);
+                    (30L, Action.Reduce 116L);
+                    (31L, Action.Reduce 116L);
+                    (32L, Action.Reduce 116L);
+                    (33L, Action.Reduce 116L);
+                    (34L, Action.Reduce 116L);
+                    (35L, Action.Reduce 116L);
+                    (36L, Action.Reduce 116L);
+                    (37L, Action.Reduce 116L);
+                    (38L, Action.Reduce 116L);
+                    (39L, Action.Reduce 116L);
+                    (40L, Action.Reduce 116L);
+                    (41L, Action.Reduce 116L);
                   ]
               )
               ~gotos:(
@@ -4843,7 +4835,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 41L]
                               ) in
@@ -4869,6 +4861,20 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -5115,26 +5121,12 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 41L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 41L]
                               ) in
@@ -5145,7 +5137,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 155L);
+                    (2L, Action.Reduce 153L);
                     (3L, Action.ShiftPrefix 2L);
                     (4L, Action.ShiftPrefix 3L);
                     (5L, Action.ShiftPrefix 4L);
@@ -5184,7 +5176,7 @@ include struct
                     (38L, Action.ShiftPrefix 37L);
                     (39L, Action.ShiftPrefix 38L);
                     (40L, Action.ShiftPrefix 39L);
-                    (41L, Action.Reduce 155L);
+                    (41L, Action.Reduce 153L);
                   ]
               )
               ~gotos:(
@@ -5201,7 +5193,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [1L]
                               ) in
@@ -5212,7 +5204,7 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -5238,7 +5230,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 157L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [0L]
                               ) in
@@ -5265,7 +5257,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 158L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [1L]
                               ) in
@@ -5292,7 +5284,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 159L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 157L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [0L]
                               ) in
@@ -5319,7 +5311,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 41L]
                               ) in
@@ -5333,8 +5325,8 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 154L);
-                    (41L, Action.Reduce 154L);
+                    (2L, Action.Reduce 152L);
+                    (41L, Action.Reduce 152L);
                   ]
               )
               ~gotos:(
@@ -5347,7 +5339,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -5371,6 +5363,390 @@ include struct
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
                   ~index:48L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [1L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 119L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 120L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 121L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 122L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 123L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 124L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 125L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 127L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 129L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 130L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 131L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 133L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 135L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 136L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 143L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 144L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 145L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 146L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 147L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 148L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 149L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 150L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 151L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (3L, Action.ShiftPrefix 2L);
+                    (4L, Action.ShiftPrefix 3L);
+                    (5L, Action.ShiftPrefix 4L);
+                    (6L, Action.ShiftPrefix 5L);
+                    (7L, Action.ShiftPrefix 6L);
+                    (8L, Action.ShiftPrefix 7L);
+                    (9L, Action.ShiftPrefix 8L);
+                    (10L, Action.ShiftPrefix 9L);
+                    (11L, Action.ShiftPrefix 10L);
+                    (12L, Action.ShiftPrefix 11L);
+                    (13L, Action.ShiftPrefix 12L);
+                    (14L, Action.ShiftPrefix 13L);
+                    (15L, Action.ShiftPrefix 14L);
+                    (16L, Action.ShiftPrefix 15L);
+                    (17L, Action.ShiftPrefix 16L);
+                    (18L, Action.ShiftPrefix 17L);
+                    (19L, Action.ShiftPrefix 18L);
+                    (20L, Action.ShiftPrefix 19L);
+                    (21L, Action.ShiftPrefix 20L);
+                    (22L, Action.ShiftPrefix 21L);
+                    (23L, Action.ShiftPrefix 22L);
+                    (24L, Action.ShiftPrefix 23L);
+                    (25L, Action.ShiftPrefix 24L);
+                    (26L, Action.ShiftPrefix 25L);
+                    (27L, Action.ShiftPrefix 26L);
+                    (28L, Action.ShiftPrefix 27L);
+                    (29L, Action.ShiftPrefix 28L);
+                    (30L, Action.ShiftPrefix 29L);
+                    (31L, Action.ShiftPrefix 30L);
+                    (32L, Action.ShiftPrefix 31L);
+                    (33L, Action.ShiftPrefix 32L);
+                    (34L, Action.ShiftPrefix 33L);
+                    (35L, Action.ShiftPrefix 34L);
+                    (36L, Action.ShiftPrefix 35L);
+                    (37L, Action.ShiftPrefix 36L);
+                    (38L, Action.ShiftPrefix 37L);
+                    (39L, Action.ShiftPrefix 38L);
+                    (40L, Action.ShiftPrefix 39L);
+                    (41L, Action.Reduce 153L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (54L, 40L);
+                    (84L, 41L);
+                    (85L, 53L);
+                  ]
+              );
+            (* 49 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:49L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [0L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (0L, Action.Reduce 155L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 50 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:50L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -5406,6 +5782,20 @@ include struct
                             lr0item, lr1item
                           );
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
@@ -5646,26 +6036,12 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [41L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [41L]
                               ) in
@@ -5714,20 +6090,20 @@ include struct
                     (38L, Action.ShiftPrefix 37L);
                     (39L, Action.ShiftPrefix 38L);
                     (40L, Action.ShiftPrefix 39L);
-                    (41L, Action.Reduce 155L);
+                    (41L, Action.Reduce 153L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
                     (54L, 40L);
                     (84L, 41L);
-                    (85L, 53L);
+                    (85L, 54L);
                   ]
               );
-            (* 49 *) State.init
+            (* 51 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:49L
+                  ~index:51L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -5751,390 +6127,6 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 50 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:50L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 158L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [1L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 119L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 120L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 121L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 122L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 123L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 124L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 125L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 127L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 129L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 130L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 131L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 133L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 135L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 136L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 143L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 144L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 145L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 146L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 147L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 148L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 149L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 150L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 151L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 155L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [41L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (3L, Action.ShiftPrefix 2L);
-                    (4L, Action.ShiftPrefix 3L);
-                    (5L, Action.ShiftPrefix 4L);
-                    (6L, Action.ShiftPrefix 5L);
-                    (7L, Action.ShiftPrefix 6L);
-                    (8L, Action.ShiftPrefix 7L);
-                    (9L, Action.ShiftPrefix 8L);
-                    (10L, Action.ShiftPrefix 9L);
-                    (11L, Action.ShiftPrefix 10L);
-                    (12L, Action.ShiftPrefix 11L);
-                    (13L, Action.ShiftPrefix 12L);
-                    (14L, Action.ShiftPrefix 13L);
-                    (15L, Action.ShiftPrefix 14L);
-                    (16L, Action.ShiftPrefix 15L);
-                    (17L, Action.ShiftPrefix 16L);
-                    (18L, Action.ShiftPrefix 17L);
-                    (19L, Action.ShiftPrefix 18L);
-                    (20L, Action.ShiftPrefix 19L);
-                    (21L, Action.ShiftPrefix 20L);
-                    (22L, Action.ShiftPrefix 21L);
-                    (23L, Action.ShiftPrefix 22L);
-                    (24L, Action.ShiftPrefix 23L);
-                    (25L, Action.ShiftPrefix 24L);
-                    (26L, Action.ShiftPrefix 25L);
-                    (27L, Action.ShiftPrefix 26L);
-                    (28L, Action.ShiftPrefix 27L);
-                    (29L, Action.ShiftPrefix 28L);
-                    (30L, Action.ShiftPrefix 29L);
-                    (31L, Action.ShiftPrefix 30L);
-                    (32L, Action.ShiftPrefix 31L);
-                    (33L, Action.ShiftPrefix 32L);
-                    (34L, Action.ShiftPrefix 33L);
-                    (35L, Action.ShiftPrefix 34L);
-                    (36L, Action.ShiftPrefix 35L);
-                    (37L, Action.ShiftPrefix 36L);
-                    (38L, Action.ShiftPrefix 37L);
-                    (39L, Action.ShiftPrefix 38L);
-                    (40L, Action.ShiftPrefix 39L);
-                    (41L, Action.Reduce 155L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (54L, 40L);
-                    (84L, 41L);
-                    (85L, 54L);
-                  ]
-              );
-            (* 51 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:51L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 159L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [0L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (0L, Action.Reduce 159L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
             (* 52 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
@@ -6142,7 +6134,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -6195,16 +6187,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 105L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [13L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [13L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [27L; 29L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
@@ -6230,21 +6236,7 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 113L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -6282,7 +6274,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [1L]
                               ) in
@@ -6309,7 +6301,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 158L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [1L]
                               ) in
@@ -6336,7 +6328,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 105L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [13L]
                               ) in
@@ -6350,7 +6342,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (13L, Action.Reduce 107L);
+                    (13L, Action.Reduce 105L);
                   ]
               )
               ~gotos:(
@@ -6363,7 +6355,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [13L]
                               ) in
@@ -6377,7 +6369,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (13L, Action.Reduce 108L);
+                    (13L, Action.Reduce 106L);
                   ]
               )
               ~gotos:(
@@ -6690,7 +6682,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 111L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -6704,8 +6696,8 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 111L);
-                    (29L, Action.Reduce 111L);
+                    (27L, Action.Reduce 109L);
+                    (29L, Action.Reduce 109L);
                   ]
               )
               ~gotos:(
@@ -6718,7 +6710,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -6732,8 +6724,8 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 112L);
-                    (29L, Action.Reduce 112L);
+                    (27L, Action.Reduce 110L);
+                    (29L, Action.Reduce 110L);
                   ]
               )
               ~gotos:(
@@ -6746,14 +6738,14 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -6780,7 +6772,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 113L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 111L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -6794,8 +6786,8 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 113L);
-                    (29L, Action.Reduce 113L);
+                    (27L, Action.Reduce 111L);
+                    (29L, Action.Reduce 111L);
                   ]
               )
               ~gotos:(
@@ -6808,7 +6800,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -6819,14 +6811,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 113L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -6838,7 +6830,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (27L, Action.ShiftPrefix 86L);
-                    (29L, Action.Reduce 115L);
+                    (29L, Action.Reduce 113L);
                   ]
               )
               ~gotos:(
@@ -6853,7 +6845,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -6880,6 +6872,33 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [1L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (1L, Action.Reduce 154L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 70 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:70L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [1L]
@@ -6895,33 +6914,6 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (1L, Action.Reduce 156L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 70 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:70L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 158L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [1L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (1L, Action.Reduce 158L);
                   ]
               )
               ~gotos:(
@@ -7790,14 +7782,14 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -7851,7 +7843,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -7904,16 +7896,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 105L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [13L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [13L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [27L; 29L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
@@ -7933,20 +7939,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 111L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 113L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -7983,7 +7975,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -7997,7 +7989,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (29L, Action.Reduce 116L);
+                    (29L, Action.Reduce 114L);
                   ]
               )
               ~gotos:(
@@ -8010,7 +8002,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L; 41L]
                               ) in
@@ -8024,45 +8016,45 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (3L, Action.Reduce 117L);
-                    (4L, Action.Reduce 117L);
-                    (5L, Action.Reduce 117L);
-                    (6L, Action.Reduce 117L);
-                    (7L, Action.Reduce 117L);
-                    (8L, Action.Reduce 117L);
-                    (9L, Action.Reduce 117L);
-                    (10L, Action.Reduce 117L);
-                    (11L, Action.Reduce 117L);
-                    (12L, Action.Reduce 117L);
-                    (13L, Action.Reduce 117L);
-                    (14L, Action.Reduce 117L);
-                    (15L, Action.Reduce 117L);
-                    (16L, Action.Reduce 117L);
-                    (17L, Action.Reduce 117L);
-                    (18L, Action.Reduce 117L);
-                    (19L, Action.Reduce 117L);
-                    (20L, Action.Reduce 117L);
-                    (21L, Action.Reduce 117L);
-                    (22L, Action.Reduce 117L);
-                    (23L, Action.Reduce 117L);
-                    (24L, Action.Reduce 117L);
-                    (25L, Action.Reduce 117L);
-                    (26L, Action.Reduce 117L);
-                    (27L, Action.Reduce 117L);
-                    (28L, Action.Reduce 117L);
-                    (29L, Action.Reduce 117L);
-                    (30L, Action.Reduce 117L);
-                    (31L, Action.Reduce 117L);
-                    (32L, Action.Reduce 117L);
-                    (33L, Action.Reduce 117L);
-                    (34L, Action.Reduce 117L);
-                    (35L, Action.Reduce 117L);
-                    (36L, Action.Reduce 117L);
-                    (37L, Action.Reduce 117L);
-                    (38L, Action.Reduce 117L);
-                    (39L, Action.Reduce 117L);
-                    (40L, Action.Reduce 117L);
-                    (41L, Action.Reduce 117L);
+                    (3L, Action.Reduce 115L);
+                    (4L, Action.Reduce 115L);
+                    (5L, Action.Reduce 115L);
+                    (6L, Action.Reduce 115L);
+                    (7L, Action.Reduce 115L);
+                    (8L, Action.Reduce 115L);
+                    (9L, Action.Reduce 115L);
+                    (10L, Action.Reduce 115L);
+                    (11L, Action.Reduce 115L);
+                    (12L, Action.Reduce 115L);
+                    (13L, Action.Reduce 115L);
+                    (14L, Action.Reduce 115L);
+                    (15L, Action.Reduce 115L);
+                    (16L, Action.Reduce 115L);
+                    (17L, Action.Reduce 115L);
+                    (18L, Action.Reduce 115L);
+                    (19L, Action.Reduce 115L);
+                    (20L, Action.Reduce 115L);
+                    (21L, Action.Reduce 115L);
+                    (22L, Action.Reduce 115L);
+                    (23L, Action.Reduce 115L);
+                    (24L, Action.Reduce 115L);
+                    (25L, Action.Reduce 115L);
+                    (26L, Action.Reduce 115L);
+                    (27L, Action.Reduce 115L);
+                    (28L, Action.Reduce 115L);
+                    (29L, Action.Reduce 115L);
+                    (30L, Action.Reduce 115L);
+                    (31L, Action.Reduce 115L);
+                    (32L, Action.Reduce 115L);
+                    (33L, Action.Reduce 115L);
+                    (34L, Action.Reduce 115L);
+                    (35L, Action.Reduce 115L);
+                    (36L, Action.Reduce 115L);
+                    (37L, Action.Reduce 115L);
+                    (38L, Action.Reduce 115L);
+                    (39L, Action.Reduce 115L);
+                    (40L, Action.Reduce 115L);
+                    (41L, Action.Reduce 115L);
                   ]
               )
               ~gotos:(
@@ -8631,7 +8623,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -8676,7 +8668,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -8703,7 +8695,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -8714,14 +8706,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 113L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -8733,7 +8725,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (27L, Action.ShiftPrefix 86L);
-                    (29L, Action.Reduce 115L);
+                    (29L, Action.Reduce 113L);
                   ]
               )
               ~gotos:(
@@ -9073,7 +9065,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -9100,7 +9092,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -9188,16 +9180,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -9251,16 +9257,16 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 27L; 29L; 30L; 38L]
+                                Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 21L; 27L; 29L; 30L; 38L]
+                                Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
@@ -9279,28 +9285,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -9349,7 +9341,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [29L]
                               ) in
@@ -9363,7 +9355,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (29L, Action.Reduce 114L);
+                    (29L, Action.Reduce 112L);
                   ]
               )
               ~gotos:(
@@ -9518,7 +9510,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:5L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -9606,16 +9598,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -9669,16 +9675,16 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L]
                               ) in
                             lr0item, lr1item
                           );
@@ -9697,42 +9703,28 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L]
+                                Ordset.of_list (module Uns) [20L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L]
+                                Ordset.of_list (module Uns) [20L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -9790,7 +9782,7 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -9839,14 +9831,14 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -9860,27 +9852,27 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 84L);
-                    (3L, Action.Reduce 84L);
-                    (4L, Action.Reduce 84L);
-                    (5L, Action.Reduce 84L);
-                    (6L, Action.Reduce 84L);
-                    (7L, Action.Reduce 84L);
-                    (8L, Action.Reduce 84L);
-                    (9L, Action.Reduce 84L);
-                    (10L, Action.Reduce 84L);
-                    (11L, Action.Reduce 84L);
-                    (12L, Action.Reduce 84L);
-                    (13L, Action.Reduce 84L);
-                    (14L, Action.Reduce 84L);
-                    (15L, Action.Reduce 84L);
-                    (19L, Action.Reduce 73L);
-                    (20L, Action.Reduce 84L);
-                    (21L, Action.Reduce 84L);
-                    (27L, Action.Reduce 84L);
-                    (29L, Action.Reduce 84L);
-                    (30L, Action.Reduce 84L);
-                    (38L, Action.Reduce 84L);
+                    (2L, Action.Reduce 82L);
+                    (3L, Action.Reduce 82L);
+                    (4L, Action.Reduce 82L);
+                    (5L, Action.Reduce 82L);
+                    (6L, Action.Reduce 82L);
+                    (7L, Action.Reduce 82L);
+                    (8L, Action.Reduce 82L);
+                    (9L, Action.Reduce 82L);
+                    (10L, Action.Reduce 82L);
+                    (11L, Action.Reduce 82L);
+                    (12L, Action.Reduce 82L);
+                    (13L, Action.Reduce 82L);
+                    (14L, Action.Reduce 82L);
+                    (15L, Action.Reduce 82L);
+                    (19L, Action.Reduce 71L);
+                    (20L, Action.Reduce 82L);
+                    (21L, Action.Reduce 82L);
+                    (27L, Action.Reduce 82L);
+                    (29L, Action.Reduce 82L);
+                    (30L, Action.Reduce 82L);
+                    (38L, Action.Reduce 82L);
                   ]
               )
               ~gotos:(
@@ -9893,7 +9885,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -9920,7 +9912,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -9934,26 +9926,26 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 85L);
-                    (3L, Action.Reduce 85L);
-                    (4L, Action.Reduce 85L);
-                    (5L, Action.Reduce 85L);
-                    (6L, Action.Reduce 85L);
-                    (7L, Action.Reduce 85L);
-                    (8L, Action.Reduce 85L);
-                    (9L, Action.Reduce 85L);
-                    (10L, Action.Reduce 85L);
-                    (11L, Action.Reduce 85L);
-                    (12L, Action.Reduce 85L);
-                    (13L, Action.Reduce 85L);
-                    (14L, Action.Reduce 85L);
-                    (15L, Action.Reduce 85L);
-                    (20L, Action.Reduce 85L);
-                    (21L, Action.Reduce 85L);
-                    (27L, Action.Reduce 85L);
-                    (29L, Action.Reduce 85L);
-                    (30L, Action.Reduce 85L);
-                    (38L, Action.Reduce 85L);
+                    (2L, Action.Reduce 83L);
+                    (3L, Action.Reduce 83L);
+                    (4L, Action.Reduce 83L);
+                    (5L, Action.Reduce 83L);
+                    (6L, Action.Reduce 83L);
+                    (7L, Action.Reduce 83L);
+                    (8L, Action.Reduce 83L);
+                    (9L, Action.Reduce 83L);
+                    (10L, Action.Reduce 83L);
+                    (11L, Action.Reduce 83L);
+                    (12L, Action.Reduce 83L);
+                    (13L, Action.Reduce 83L);
+                    (14L, Action.Reduce 83L);
+                    (15L, Action.Reduce 83L);
+                    (20L, Action.Reduce 83L);
+                    (21L, Action.Reduce 83L);
+                    (27L, Action.Reduce 83L);
+                    (29L, Action.Reduce 83L);
+                    (30L, Action.Reduce 83L);
+                    (38L, Action.Reduce 83L);
                   ]
               )
               ~gotos:(
@@ -9966,7 +9958,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -10054,16 +10046,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -10117,16 +10123,16 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
@@ -10139,20 +10145,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -10199,7 +10191,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -10287,16 +10279,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
@@ -10349,20 +10355,6 @@ include struct
                               ) in
                             lr0item, lr1item
                           );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
                       ]
                   )
               )
@@ -10399,7 +10391,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -10487,6 +10479,20 @@ include struct
                             lr0item, lr1item
                           );
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
@@ -10502,20 +10508,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
@@ -10553,7 +10545,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -10580,21 +10572,21 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -10621,7 +10613,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -10635,26 +10627,26 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 92L);
-                    (3L, Action.Reduce 92L);
-                    (4L, Action.Reduce 92L);
-                    (5L, Action.Reduce 92L);
-                    (6L, Action.Reduce 92L);
-                    (7L, Action.Reduce 92L);
-                    (8L, Action.Reduce 92L);
-                    (9L, Action.Reduce 92L);
-                    (10L, Action.Reduce 92L);
-                    (11L, Action.Reduce 92L);
-                    (12L, Action.Reduce 92L);
-                    (13L, Action.Reduce 92L);
-                    (14L, Action.Reduce 92L);
-                    (15L, Action.Reduce 92L);
-                    (20L, Action.Reduce 92L);
-                    (21L, Action.Reduce 92L);
-                    (27L, Action.Reduce 92L);
-                    (29L, Action.Reduce 92L);
-                    (30L, Action.Reduce 92L);
-                    (38L, Action.Reduce 92L);
+                    (2L, Action.Reduce 90L);
+                    (3L, Action.Reduce 90L);
+                    (4L, Action.Reduce 90L);
+                    (5L, Action.Reduce 90L);
+                    (6L, Action.Reduce 90L);
+                    (7L, Action.Reduce 90L);
+                    (8L, Action.Reduce 90L);
+                    (9L, Action.Reduce 90L);
+                    (10L, Action.Reduce 90L);
+                    (11L, Action.Reduce 90L);
+                    (12L, Action.Reduce 90L);
+                    (13L, Action.Reduce 90L);
+                    (14L, Action.Reduce 90L);
+                    (15L, Action.Reduce 90L);
+                    (20L, Action.Reduce 90L);
+                    (21L, Action.Reduce 90L);
+                    (27L, Action.Reduce 90L);
+                    (29L, Action.Reduce 90L);
+                    (30L, Action.Reduce 90L);
+                    (38L, Action.Reduce 90L);
                   ]
               )
               ~gotos:(
@@ -10667,7 +10659,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -10769,16 +10761,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -10834,26 +10840,12 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -10903,6 +10895,36 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 94L);
+                    (21L, Action.Reduce 94L);
+                    (27L, Action.Reduce 94L);
+                    (29L, Action.Reduce 94L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 127 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:127L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
@@ -10926,36 +10948,6 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 127 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:127L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 98L);
-                    (21L, Action.Reduce 98L);
-                    (27L, Action.Reduce 98L);
-                    (29L, Action.Reduce 98L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
             (* 128 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
@@ -10963,7 +10955,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -10974,14 +10966,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -10992,10 +10984,10 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 100L);
+                    (20L, Action.Reduce 98L);
                     (21L, Action.ShiftPrefix 153L);
-                    (27L, Action.Reduce 100L);
-                    (29L, Action.Reduce 100L);
+                    (27L, Action.Reduce 98L);
+                    (29L, Action.Reduce 98L);
                   ]
               )
               ~gotos:(
@@ -11010,7 +11002,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:5L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -11024,8 +11016,8 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 109L);
-                    (29L, Action.Reduce 109L);
+                    (27L, Action.Reduce 107L);
+                    (29L, Action.Reduce 107L);
                   ]
               )
               ~gotos:(
@@ -11075,7 +11067,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
@@ -11102,7 +11094,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -11113,14 +11105,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 105L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -11132,8 +11124,8 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (21L, Action.ShiftPrefix 156L);
-                    (27L, Action.Reduce 105L);
-                    (29L, Action.Reduce 105L);
+                    (27L, Action.Reduce 103L);
+                    (29L, Action.Reduce 103L);
                   ]
               )
               ~gotos:(
@@ -11148,7 +11140,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:6L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:6L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -11162,8 +11154,8 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 110L);
-                    (29L, Action.Reduce 110L);
+                    (27L, Action.Reduce 108L);
+                    (29L, Action.Reduce 108L);
                   ]
               )
               ~gotos:(
@@ -11176,7 +11168,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -11190,10 +11182,10 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 97L);
-                    (21L, Action.Reduce 97L);
-                    (27L, Action.Reduce 97L);
-                    (29L, Action.Reduce 97L);
+                    (20L, Action.Reduce 95L);
+                    (21L, Action.Reduce 95L);
+                    (27L, Action.Reduce 95L);
+                    (29L, Action.Reduce 95L);
                   ]
               )
               ~gotos:(
@@ -11206,7 +11198,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -11217,14 +11209,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -11251,7 +11243,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -11262,14 +11254,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -11280,10 +11272,10 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 100L);
+                    (20L, Action.Reduce 98L);
                     (21L, Action.ShiftPrefix 153L);
-                    (27L, Action.Reduce 100L);
-                    (29L, Action.Reduce 100L);
+                    (27L, Action.Reduce 98L);
+                    (29L, Action.Reduce 98L);
                   ]
               )
               ~gotos:(
@@ -11298,14 +11290,14 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -11393,16 +11385,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
                             lr0item, lr1item
                           );
@@ -11450,20 +11456,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -11487,7 +11479,7 @@ include struct
                     (12L, Action.ShiftPrefix 82L);
                     (13L, Action.ShiftPrefix 137L);
                     (14L, Action.ShiftPrefix 138L);
-                    (19L, Action.Reduce 73L);
+                    (19L, Action.Reduce 71L);
                     (30L, Action.ShiftPrefix 139L);
                     (38L, Action.ShiftPrefix 140L);
                   ]
@@ -11506,7 +11498,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -11520,11 +11512,11 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 75L);
-                    (25L, Action.Reduce 75L);
-                    (26L, Action.Reduce 75L);
-                    (31L, Action.Reduce 75L);
-                    (39L, Action.Reduce 75L);
+                    (24L, Action.Reduce 73L);
+                    (25L, Action.Reduce 73L);
+                    (26L, Action.Reduce 73L);
+                    (31L, Action.Reduce 73L);
+                    (39L, Action.Reduce 73L);
                   ]
               )
               ~gotos:(
@@ -11537,7 +11529,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -11625,16 +11617,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
@@ -11682,20 +11688,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
@@ -11737,7 +11729,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -11825,6 +11817,20 @@ include struct
                             lr0item, lr1item
                           );
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
@@ -11840,20 +11846,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
@@ -11891,7 +11883,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -11905,11 +11897,11 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 76L);
-                    (25L, Action.Reduce 76L);
-                    (26L, Action.Reduce 76L);
-                    (31L, Action.Reduce 76L);
-                    (39L, Action.Reduce 76L);
+                    (24L, Action.Reduce 74L);
+                    (25L, Action.Reduce 74L);
+                    (26L, Action.Reduce 74L);
+                    (31L, Action.Reduce 74L);
+                    (39L, Action.Reduce 74L);
                   ]
               )
               ~gotos:(
@@ -11922,21 +11914,21 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -11963,21 +11955,21 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -12006,14 +11998,14 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
@@ -12028,8 +12020,8 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (23L, Action.ShiftPrefix 168L);
-                    (25L, Action.Reduce 66L);
-                    (39L, Action.Reduce 66L);
+                    (25L, Action.Reduce 64L);
+                    (39L, Action.Reduce 64L);
                   ]
               )
               ~gotos:(
@@ -12042,21 +12034,21 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
@@ -12071,7 +12063,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (25L, Action.ShiftPrefix 169L);
-                    (39L, Action.Reduce 68L);
+                    (39L, Action.Reduce 66L);
                   ]
               )
               ~gotos:(
@@ -12084,7 +12076,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -12095,14 +12087,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [39L]
                               ) in
@@ -12114,7 +12106,7 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (25L, Action.ShiftPrefix 170L);
-                    (39L, Action.Reduce 72L);
+                    (39L, Action.Reduce 70L);
                   ]
               )
               ~gotos:(
@@ -12129,7 +12121,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -12140,14 +12132,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -12174,9 +12166,16 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -12187,26 +12186,19 @@ include struct
                               ) in
                             lr0item, lr1item
                           );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
                       ]
                   )
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
@@ -12359,7 +12351,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -12373,10 +12365,10 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 94L);
-                    (21L, Action.Reduce 94L);
-                    (27L, Action.Reduce 94L);
-                    (29L, Action.Reduce 94L);
+                    (20L, Action.Reduce 92L);
+                    (21L, Action.Reduce 92L);
+                    (27L, Action.Reduce 92L);
+                    (29L, Action.Reduce 92L);
                   ]
               )
               ~gotos:(
@@ -12389,7 +12381,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -12491,16 +12483,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -12556,26 +12562,12 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -12625,7 +12617,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -12639,10 +12631,10 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 95L);
-                    (21L, Action.Reduce 95L);
-                    (27L, Action.Reduce 95L);
-                    (29L, Action.Reduce 95L);
+                    (20L, Action.Reduce 93L);
+                    (21L, Action.Reduce 93L);
+                    (27L, Action.Reduce 93L);
+                    (29L, Action.Reduce 93L);
                   ]
               )
               ~gotos:(
@@ -12655,7 +12647,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -12743,16 +12735,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -12806,16 +12812,16 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
@@ -12828,20 +12834,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -12888,7 +12880,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -12902,9 +12894,9 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 102L);
-                    (27L, Action.Reduce 102L);
-                    (29L, Action.Reduce 102L);
+                    (20L, Action.Reduce 100L);
+                    (27L, Action.Reduce 100L);
+                    (29L, Action.Reduce 100L);
                   ]
               )
               ~gotos:(
@@ -12917,7 +12909,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
@@ -12930,243 +12922,229 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
@@ -13196,27 +13174,25 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 201L);
-                    (59L, 202L);
-                    (61L, 203L);
+                    (42L, 198L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 201L);
                   ]
               );
             (* 156 *) State.init
@@ -13226,7 +13202,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -13314,16 +13290,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
@@ -13377,16 +13367,16 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 30L; 38L]
+                                Ordset.of_list (module Uns) [20L; 21L]
                               ) in
                             lr0item, lr1item
                           );
@@ -13405,35 +13395,21 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L]
+                                Ordset.of_list (module Uns) [20L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 21L]
+                                Ordset.of_list (module Uns) [20L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
@@ -13473,7 +13449,7 @@ include struct
                     (71L, 127L);
                     (72L, 128L);
                     (74L, 131L);
-                    (75L, 204L);
+                    (75L, 202L);
                   ]
               );
             (* 157 *) State.init
@@ -13483,7 +13459,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -13497,8 +13473,8 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 106L);
-                    (29L, Action.Reduce 106L);
+                    (27L, Action.Reduce 104L);
+                    (29L, Action.Reduce 104L);
                   ]
               )
               ~gotos:(
@@ -13511,7 +13487,1081 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 82L);
+                    (3L, Action.Reduce 82L);
+                    (4L, Action.Reduce 82L);
+                    (5L, Action.Reduce 82L);
+                    (6L, Action.Reduce 82L);
+                    (7L, Action.Reduce 82L);
+                    (8L, Action.Reduce 82L);
+                    (9L, Action.Reduce 82L);
+                    (10L, Action.Reduce 82L);
+                    (11L, Action.Reduce 82L);
+                    (12L, Action.Reduce 82L);
+                    (13L, Action.Reduce 82L);
+                    (14L, Action.Reduce 82L);
+                    (15L, Action.Reduce 82L);
+                    (20L, Action.Reduce 82L);
+                    (21L, Action.Reduce 82L);
+                    (27L, Action.Reduce 82L);
+                    (29L, Action.Reduce 82L);
+                    (30L, Action.Reduce 82L);
+                    (38L, Action.Reduce 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 159 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:159L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 89L);
+                    (3L, Action.Reduce 89L);
+                    (4L, Action.Reduce 89L);
+                    (5L, Action.Reduce 89L);
+                    (6L, Action.Reduce 89L);
+                    (7L, Action.Reduce 89L);
+                    (8L, Action.Reduce 89L);
+                    (9L, Action.Reduce 89L);
+                    (10L, Action.Reduce 89L);
+                    (11L, Action.Reduce 89L);
+                    (12L, Action.Reduce 89L);
+                    (13L, Action.Reduce 89L);
+                    (14L, Action.Reduce 89L);
+                    (15L, Action.Reduce 89L);
+                    (20L, Action.Reduce 89L);
+                    (21L, Action.Reduce 89L);
+                    (27L, Action.Reduce 89L);
+                    (29L, Action.Reduce 89L);
+                    (30L, Action.Reduce 89L);
+                    (38L, Action.Reduce 89L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 160 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:160L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [20L; 27L; 29L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 99L);
+                    (27L, Action.Reduce 99L);
+                    (29L, Action.Reduce 99L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 161 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:161L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 77L);
+                    (25L, Action.Reduce 77L);
+                    (26L, Action.Reduce 77L);
+                    (31L, Action.Reduce 77L);
+                    (39L, Action.Reduce 77L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 162 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:162L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.ShiftPrefix 165L);
+                    (26L, Action.ShiftPrefix 166L);
+                    (31L, Action.ShiftPrefix 203L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 163 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:163L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.ShiftPrefix 170L);
+                    (39L, Action.Reduce 70L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (64L, 204L);
+                  ]
+              );
+            (* 164 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:164L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (13L, Action.ShiftPrefix 173L);
+                    (30L, Action.ShiftPrefix 205L);
+                    (38L, Action.ShiftPrefix 206L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (65L, 176L);
+                  ]
+              );
+            (* 165 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:165L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 137L);
+                    (14L, Action.ShiftPrefix 138L);
+                    (30L, Action.ShiftPrefix 139L);
+                    (38L, Action.ShiftPrefix 140L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 141L);
+                    (65L, 142L);
+                    (66L, 207L);
+                  ]
+              );
+            (* 166 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:166L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 208L);
+                  ]
+              );
+            (* 167 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:167L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (18L, Action.ShiftPrefix 209L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 168 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:168L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 137L);
+                    (14L, Action.ShiftPrefix 138L);
+                    (30L, Action.ShiftPrefix 139L);
+                    (38L, Action.ShiftPrefix 140L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 141L);
+                    (65L, 142L);
+                    (66L, 210L);
+                  ]
+              );
+            (* 169 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:169L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (14L, Action.ShiftPrefix 211L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 144L);
+                    (62L, 145L);
+                    (63L, 212L);
+                  ]
+              );
+            (* 170 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:170L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (39L, Action.Reduce 69L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 171 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:171L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (39L, Action.ShiftPrefix 213L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 172 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:172L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -13550,990 +14600,16 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 159 *) State.init
+            (* 173 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:159L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 91L);
-                    (3L, Action.Reduce 91L);
-                    (4L, Action.Reduce 91L);
-                    (5L, Action.Reduce 91L);
-                    (6L, Action.Reduce 91L);
-                    (7L, Action.Reduce 91L);
-                    (8L, Action.Reduce 91L);
-                    (9L, Action.Reduce 91L);
-                    (10L, Action.Reduce 91L);
-                    (11L, Action.Reduce 91L);
-                    (12L, Action.Reduce 91L);
-                    (13L, Action.Reduce 91L);
-                    (14L, Action.Reduce 91L);
-                    (15L, Action.Reduce 91L);
-                    (20L, Action.Reduce 91L);
-                    (21L, Action.Reduce 91L);
-                    (27L, Action.Reduce 91L);
-                    (29L, Action.Reduce 91L);
-                    (30L, Action.Reduce 91L);
-                    (38L, Action.Reduce 91L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 160 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:160L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [20L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 101L);
-                    (27L, Action.Reduce 101L);
-                    (29L, Action.Reduce 101L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 161 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:161L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 79L);
-                    (25L, Action.Reduce 79L);
-                    (26L, Action.Reduce 79L);
-                    (31L, Action.Reduce 79L);
-                    (39L, Action.Reduce 79L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 162 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:162L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.ShiftPrefix 165L);
-                    (26L, Action.ShiftPrefix 166L);
-                    (31L, Action.ShiftPrefix 205L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 163 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:163L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.ShiftPrefix 170L);
-                    (39L, Action.Reduce 72L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (64L, 206L);
-                  ]
-              );
-            (* 164 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:164L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 173L);
-                    (30L, Action.ShiftPrefix 207L);
-                    (38L, Action.ShiftPrefix 208L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (65L, 176L);
-                  ]
-              );
-            (* 165 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:165L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 209L);
-                  ]
-              );
-            (* 166 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:166L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 210L);
-                  ]
-              );
-            (* 167 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:167L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 211L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 168 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:168L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 212L);
-                  ]
-              );
-            (* 169 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:169L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [23L; 25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (14L, Action.ShiftPrefix 213L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 144L);
-                    (62L, 145L);
-                    (63L, 214L);
-                  ]
-              );
-            (* 170 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:170L
+                  ~index:173L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [39L]
+                                Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
@@ -14545,43 +14621,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (39L, Action.Reduce 71L);
+                    (19L, Action.Reduce 71L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 171 *) State.init
+            (* 174 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:171L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 215L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 172 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:172L
+                  ~index:174L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -14594,67 +14643,194 @@ include struct
                       ]
                   )
                   ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 86L);
-                    (3L, Action.Reduce 86L);
-                    (4L, Action.Reduce 86L);
-                    (5L, Action.Reduce 86L);
-                    (6L, Action.Reduce 86L);
-                    (7L, Action.Reduce 86L);
-                    (8L, Action.Reduce 86L);
-                    (9L, Action.Reduce 86L);
-                    (10L, Action.Reduce 86L);
-                    (11L, Action.Reduce 86L);
-                    (12L, Action.Reduce 86L);
-                    (13L, Action.Reduce 86L);
-                    (14L, Action.Reduce 86L);
-                    (15L, Action.Reduce 86L);
-                    (20L, Action.Reduce 86L);
-                    (21L, Action.Reduce 86L);
-                    (27L, Action.Reduce 86L);
-                    (29L, Action.Reduce 86L);
-                    (30L, Action.Reduce 86L);
-                    (38L, Action.Reduce 86L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 173 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:173L
-                  ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (19L, Action.Reduce 73L);
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 137L);
+                    (14L, Action.ShiftPrefix 138L);
+                    (30L, Action.ShiftPrefix 139L);
+                    (38L, Action.ShiftPrefix 140L);
                   ]
               )
               ~gotos:(
-                Map.empty (module Uns)
+                Map.of_alist (module Uns) [
+                    (42L, 141L);
+                    (65L, 142L);
+                    (66L, 214L);
+                  ]
               );
-            (* 174 *) State.init
+            (* 175 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:174L
+                  ~index:175L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -14671,206 +14847,6 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [19L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 216L);
-                  ]
-              );
-            (* 175 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:175L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [23L; 25L; 39L]
                               ) in
                             lr0item, lr1item
@@ -14942,6 +14918,20 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [23L; 25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
                               ) in
                             lr0item, lr1item
                           );
@@ -14961,20 +14951,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
@@ -15002,7 +14978,7 @@ include struct
                 Map.of_alist (module Uns) [
                     (42L, 144L);
                     (62L, 145L);
-                    (63L, 217L);
+                    (63L, 215L);
                   ]
               );
             (* 176 *) State.init
@@ -15012,14 +14988,14 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
@@ -15033,7 +15009,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (19L, Action.Reduce 74L);
+                    (19L, Action.Reduce 72L);
                   ]
               )
               ~gotos:(
@@ -15046,7 +15022,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 21L; 27L; 29L]
                               ) in
@@ -15060,10 +15036,10 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 93L);
-                    (21L, Action.Reduce 93L);
-                    (27L, Action.Reduce 93L);
-                    (29L, Action.Reduce 93L);
+                    (20L, Action.Reduce 91L);
+                    (21L, Action.Reduce 91L);
+                    (27L, Action.Reduce 91L);
+                    (29L, Action.Reduce 91L);
                   ]
               )
               ~gotos:(
@@ -15076,7 +15052,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -15087,14 +15063,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -15105,15 +15081,15 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 100L);
+                    (20L, Action.Reduce 98L);
                     (21L, Action.ShiftPrefix 153L);
-                    (27L, Action.Reduce 100L);
-                    (29L, Action.Reduce 100L);
+                    (27L, Action.Reduce 98L);
+                    (29L, Action.Reduce 98L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (73L, 218L);
+                    (73L, 216L);
                   ]
               );
             (* 179 *) State.init
@@ -15838,136 +15814,6 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 59L);
-                    (3L, Action.Reduce 59L);
-                    (4L, Action.Reduce 59L);
-                    (5L, Action.Reduce 59L);
-                    (6L, Action.Reduce 59L);
-                    (7L, Action.Reduce 59L);
-                    (8L, Action.Reduce 59L);
-                    (9L, Action.Reduce 59L);
-                    (10L, Action.Reduce 59L);
-                    (11L, Action.Reduce 59L);
-                    (12L, Action.Reduce 59L);
-                    (13L, Action.Reduce 59L);
-                    (14L, Action.Reduce 59L);
-                    (15L, Action.Reduce 59L);
-                    (16L, Action.Reduce 59L);
-                    (17L, Action.Reduce 59L);
-                    (18L, Action.Reduce 59L);
-                    (19L, Action.Reduce 59L);
-                    (20L, Action.Reduce 59L);
-                    (21L, Action.Reduce 59L);
-                    (22L, Action.Reduce 59L);
-                    (23L, Action.Reduce 59L);
-                    (24L, Action.Reduce 59L);
-                    (25L, Action.Reduce 59L);
-                    (26L, Action.Reduce 59L);
-                    (27L, Action.Reduce 59L);
-                    (28L, Action.Reduce 59L);
-                    (29L, Action.Reduce 59L);
-                    (30L, Action.Reduce 59L);
-                    (31L, Action.Reduce 59L);
-                    (32L, Action.Reduce 59L);
-                    (33L, Action.Reduce 59L);
-                    (34L, Action.Reduce 59L);
-                    (35L, Action.Reduce 59L);
-                    (36L, Action.Reduce 59L);
-                    (37L, Action.Reduce 59L);
-                    (38L, Action.Reduce 59L);
-                    (39L, Action.Reduce 59L);
-                    (40L, Action.Reduce 59L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 191 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:191L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 60L);
-                    (3L, Action.Reduce 60L);
-                    (4L, Action.Reduce 60L);
-                    (5L, Action.Reduce 60L);
-                    (6L, Action.Reduce 60L);
-                    (7L, Action.Reduce 60L);
-                    (8L, Action.Reduce 60L);
-                    (9L, Action.Reduce 60L);
-                    (10L, Action.Reduce 60L);
-                    (11L, Action.Reduce 60L);
-                    (12L, Action.Reduce 60L);
-                    (13L, Action.Reduce 60L);
-                    (14L, Action.Reduce 60L);
-                    (15L, Action.Reduce 60L);
-                    (16L, Action.Reduce 60L);
-                    (17L, Action.Reduce 60L);
-                    (18L, Action.Reduce 60L);
-                    (19L, Action.Reduce 60L);
-                    (20L, Action.Reduce 60L);
-                    (21L, Action.Reduce 60L);
-                    (22L, Action.Reduce 60L);
-                    (23L, Action.Reduce 60L);
-                    (24L, Action.Reduce 60L);
-                    (25L, Action.Reduce 60L);
-                    (26L, Action.Reduce 60L);
-                    (27L, Action.Reduce 60L);
-                    (28L, Action.Reduce 60L);
-                    (29L, Action.Reduce 60L);
-                    (30L, Action.Reduce 60L);
-                    (31L, Action.Reduce 60L);
-                    (32L, Action.Reduce 60L);
-                    (33L, Action.Reduce 60L);
-                    (34L, Action.Reduce 60L);
-                    (35L, Action.Reduce 60L);
-                    (36L, Action.Reduce 60L);
-                    (37L, Action.Reduce 60L);
-                    (38L, Action.Reduce 60L);
-                    (39L, Action.Reduce 60L);
-                    (40L, Action.Reduce 60L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 192 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:192L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
@@ -16026,10 +15872,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 193 *) State.init
+            (* 191 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:193L
+                  ~index:191L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -16268,28 +16114,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 29L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 29L]
                               ) in
@@ -16319,34 +16151,32 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (56L, 219L);
-                    (58L, 220L);
-                    (59L, 221L);
-                    (61L, 222L);
+                    (42L, 198L);
+                    (56L, 217L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 218L);
                   ]
               );
-            (* 194 *) State.init
+            (* 192 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:194L
+                  ~index:192L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -16599,28 +16429,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 31L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 31L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 31L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 31L]
                               ) in
@@ -16650,36 +16466,34 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
                     (31L, Action.Reduce 38L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (56L, 223L);
-                    (57L, 224L);
-                    (58L, 220L);
-                    (59L, 221L);
-                    (61L, 222L);
+                    (42L, 198L);
+                    (56L, 219L);
+                    (57L, 220L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 218L);
                   ]
               );
-            (* 195 *) State.init
+            (* 193 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:195L
+                  ~index:193L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -16932,28 +16746,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 33L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 33L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 33L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 33L]
                               ) in
@@ -16983,36 +16783,34 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (32L, Action.ShiftPrefix 193L);
                     (33L, Action.Reduce 38L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (56L, 223L);
-                    (57L, 225L);
-                    (58L, 220L);
-                    (59L, 221L);
-                    (61L, 222L);
+                    (42L, 198L);
+                    (56L, 219L);
+                    (57L, 221L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 218L);
                   ]
               );
-            (* 196 *) State.init
+            (* 194 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:196L
+                  ~index:194L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -17265,28 +17063,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 34L; 35L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 34L; 35L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 35L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 35L]
                               ) in
@@ -17316,36 +17100,34 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (34L, Action.ShiftPrefix 194L);
                     (35L, Action.Reduce 38L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (56L, 223L);
-                    (57L, 226L);
-                    (58L, 220L);
-                    (59L, 221L);
-                    (61L, 222L);
+                    (42L, 198L);
+                    (56L, 219L);
+                    (57L, 222L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 218L);
                   ]
               );
-            (* 197 *) State.init
+            (* 195 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:197L
+                  ~index:195L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -17598,28 +17380,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 34L; 36L; 37L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 34L; 36L; 37L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 37L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 37L]
                               ) in
@@ -17649,36 +17417,34 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (36L, Action.ShiftPrefix 195L);
                     (37L, Action.Reduce 38L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (56L, 223L);
-                    (57L, 227L);
-                    (58L, 220L);
-                    (59L, 221L);
-                    (61L, 222L);
+                    (42L, 198L);
+                    (56L, 219L);
+                    (57L, 223L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 218L);
                   ]
               );
-            (* 198 *) State.init
+            (* 196 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:198L
+                  ~index:196L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -17931,28 +17697,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 34L; 36L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 30L; 32L; 34L; 36L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 39L]
                               ) in
@@ -17982,36 +17734,34 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (38L, Action.ShiftPrefix 196L);
                     (39L, Action.Reduce 38L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (56L, 223L);
-                    (57L, 228L);
-                    (58L, 220L);
-                    (59L, 221L);
-                    (61L, 222L);
+                    (42L, 198L);
+                    (56L, 219L);
+                    (57L, 224L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 218L);
                   ]
               );
-            (* 199 *) State.init
+            (* 197 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:199L
+                  ~index:197L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -18073,10 +17823,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 200 *) State.init
+            (* 198 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:200L
+                  ~index:198L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -18138,6 +17888,624 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
+            (* 199 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:199L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 179L);
+                    (14L, Action.ShiftPrefix 180L);
+                    (15L, Action.ShiftPrefix 181L);
+                    (16L, Action.ShiftPrefix 182L);
+                    (17L, Action.ShiftPrefix 183L);
+                    (18L, Action.ShiftPrefix 184L);
+                    (19L, Action.ShiftPrefix 185L);
+                    (20L, Action.ShiftPrefix 186L);
+                    (21L, Action.Reduce 61L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (25L, Action.Reduce 61L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (31L, Action.Reduce 61L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (33L, Action.Reduce 61L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (35L, Action.Reduce 61L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (37L, Action.Reduce 61L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (39L, Action.Reduce 61L);
+                    (40L, Action.ShiftPrefix 197L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 198L);
+                    (58L, 225L);
+                    (59L, 226L);
+                    (60L, 227L);
+                  ]
+              );
+            (* 200 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:200L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 179L);
+                    (14L, Action.ShiftPrefix 180L);
+                    (15L, Action.ShiftPrefix 181L);
+                    (16L, Action.ShiftPrefix 182L);
+                    (17L, Action.ShiftPrefix 183L);
+                    (18L, Action.ShiftPrefix 184L);
+                    (19L, Action.ShiftPrefix 185L);
+                    (20L, Action.ShiftPrefix 186L);
+                    (21L, Action.Reduce 61L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (25L, Action.Reduce 61L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (31L, Action.Reduce 61L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (33L, Action.Reduce 61L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (35L, Action.Reduce 61L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (37L, Action.Reduce 61L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (39L, Action.Reduce 61L);
+                    (40L, Action.ShiftPrefix 197L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 198L);
+                    (58L, 225L);
+                    (59L, 226L);
+                    (60L, 228L);
+                  ]
+              );
             (* 201 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
@@ -18145,643 +18513,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 229L);
-                    (59L, 230L);
-                    (60L, 231L);
-                  ]
-              );
-            (* 202 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:202L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 229L);
-                    (59L, 230L);
-                    (60L, 232L);
-                  ]
-              );
-            (* 203 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:203L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 27L; 29L]
                               ) in
@@ -18795,9 +18527,86 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (21L, Action.Reduce 103L);
+                    (21L, Action.Reduce 101L);
+                    (27L, Action.Reduce 101L);
+                    (29L, Action.Reduce 101L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 202 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:202L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [27L; 29L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [27L; 29L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [27L; 29L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.ShiftPrefix 156L);
                     (27L, Action.Reduce 103L);
                     (29L, Action.Reduce 103L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (76L, 229L);
+                  ]
+              );
+            (* 203 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:203L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 76L);
+                    (25L, Action.Reduce 76L);
+                    (26L, Action.Reduce 76L);
+                    (31L, Action.Reduce 76L);
+                    (39L, Action.Reduce 76L);
                   ]
               )
               ~gotos:(
@@ -18810,44 +18619,25 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [27L; 29L]
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                       ]
                   )
                   ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 105L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
+                    Lr1Itemset.empty
                   )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (21L, Action.ShiftPrefix 156L);
-                    (27L, Action.Reduce 105L);
-                    (29L, Action.Reduce 105L);
+                    (39L, Action.ShiftPrefix 230L);
                   ]
               )
               ~gotos:(
-                Map.of_alist (module Uns) [
-                    (76L, 233L);
-                  ]
+                Map.empty (module Uns)
               );
             (* 205 *) State.init
               ~lr1ItemsetClosure:(
@@ -18865,64 +18655,6 @@ include struct
                       ]
                   )
                   ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 78L);
-                    (25L, Action.Reduce 78L);
-                    (26L, Action.Reduce 78L);
-                    (31L, Action.Reduce 78L);
-                    (39L, Action.Reduce 78L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 206 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:206L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 234L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 207 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:207L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
@@ -19002,16 +18734,30 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [19L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
@@ -19064,20 +18810,6 @@ include struct
                               ) in
                             lr0item, lr1item
                           );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 26L; 31L]
-                              ) in
-                            lr0item, lr1item
-                          );
                       ]
                   )
               )
@@ -19104,17 +18836,17 @@ include struct
                 Map.of_alist (module Uns) [
                     (42L, 141L);
                     (65L, 142L);
-                    (66L, 235L);
+                    (66L, 231L);
                   ]
               );
-            (* 208 *) State.init
+            (* 206 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:208L
+                  ~index:206L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -19202,6 +18934,20 @@ include struct
                             lr0item, lr1item
                           );
                         (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
@@ -19217,20 +18963,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
@@ -19258,8 +18990,84 @@ include struct
                 Map.of_alist (module Uns) [
                     (42L, 144L);
                     (62L, 145L);
-                    (63L, 236L);
+                    (63L, 232L);
                   ]
+              );
+            (* 207 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:207L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 79L);
+                    (25L, Action.Reduce 79L);
+                    (26L, Action.Reduce 79L);
+                    (31L, Action.Reduce 79L);
+                    (39L, Action.Reduce 79L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 208 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:208L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 75L);
+                    (25L, Action.Reduce 75L);
+                    (26L, Action.Reduce 75L);
+                    (31L, Action.Reduce 75L);
+                    (39L, Action.Reduce 75L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
               );
             (* 209 *) State.init
               ~lr1ItemsetClosure:(
@@ -19268,83 +19076,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 81L);
-                    (25L, Action.Reduce 81L);
-                    (26L, Action.Reduce 81L);
-                    (31L, Action.Reduce 81L);
-                    (39L, Action.Reduce 81L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 210 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:210L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 77L);
-                    (25L, Action.Reduce 77L);
-                    (26L, Action.Reduce 77L);
-                    (31L, Action.Reduce 77L);
-                    (39L, Action.Reduce 77L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 211 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:211L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -19355,14 +19087,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -19379,31 +19111,31 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (67L, 237L);
+                    (67L, 233L);
                   ]
               );
-            (* 212 *) State.init
+            (* 210 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:212L
+                  ~index:210L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [25L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 39L]
                               ) in
@@ -19418,9 +19150,65 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (24L, Action.ShiftPrefix 165L);
-                    (25L, Action.Reduce 67L);
+                    (25L, Action.Reduce 65L);
                     (26L, Action.ShiftPrefix 166L);
+                    (39L, Action.Reduce 65L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 211 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:211L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.Reduce 67L);
                     (39L, Action.Reduce 67L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 212 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:212L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [25L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.Reduce 68L);
+                    (39L, Action.Reduce 68L);
                   ]
               )
               ~gotos:(
@@ -19433,63 +19221,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.Reduce 69L);
-                    (39L, Action.Reduce 69L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 214 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:214L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [25L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.Reduce 70L);
-                    (39L, Action.Reduce 70L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 215 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:215L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -19503,34 +19235,34 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 238L);
+                    (18L, Action.ShiftPrefix 234L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 216 *) State.init
+            (* 214 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:216L
+                  ~index:214L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -19546,20 +19278,20 @@ include struct
                 Map.of_alist (module Uns) [
                     (24L, Action.ShiftPrefix 165L);
                     (26L, Action.ShiftPrefix 166L);
-                    (31L, Action.ShiftPrefix 239L);
+                    (31L, Action.ShiftPrefix 235L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 217 *) State.init
+            (* 215 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:217L
+                  ~index:215L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -19570,14 +19302,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [39L]
                               ) in
@@ -19589,22 +19321,22 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (25L, Action.ShiftPrefix 170L);
-                    (39L, Action.Reduce 72L);
+                    (39L, Action.Reduce 70L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (64L, 240L);
+                    (64L, 236L);
                   ]
               );
-            (* 218 *) State.init
+            (* 216 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:218L
+                  ~index:216L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [20L; 27L; 29L]
                               ) in
@@ -19618,18 +19350,18 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 99L);
-                    (27L, Action.Reduce 99L);
-                    (29L, Action.Reduce 99L);
+                    (20L, Action.Reduce 97L);
+                    (27L, Action.Reduce 97L);
+                    (29L, Action.Reduce 97L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 219 *) State.init
+            (* 217 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:219L
+                  ~index:217L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -19647,662 +19379,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (29L, Action.ShiftPrefix 241L);
+                    (29L, Action.ShiftPrefix 237L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 220 *) State.init
+            (* 218 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:220L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.Reduce 63L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (31L, Action.Reduce 63L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (33L, Action.Reduce 63L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (35L, Action.Reduce 63L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (37L, Action.Reduce 63L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (39L, Action.Reduce 63L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 242L);
-                    (59L, 243L);
-                    (60L, 231L);
-                  ]
-              );
-            (* 221 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:221L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.Reduce 63L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (31L, Action.Reduce 63L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (33L, Action.Reduce 63L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (35L, Action.Reduce 63L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (37L, Action.Reduce 63L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (39L, Action.Reduce 63L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 242L);
-                    (59L, 243L);
-                    (60L, 232L);
-                  ]
-              );
-            (* 222 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:222L
+                  ~index:218L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -20319,21 +19405,21 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
@@ -20369,14 +19455,14 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (54L, 244L);
-                    (55L, 245L);
+                    (54L, 238L);
+                    (55L, 239L);
                   ]
               );
-            (* 223 *) State.init
+            (* 219 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:223L
+                  ~index:219L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -20404,10 +19490,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 224 *) State.init
+            (* 220 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:224L
+                  ~index:220L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -20425,16 +19511,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (31L, Action.ShiftPrefix 246L);
+                    (31L, Action.ShiftPrefix 240L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 225 *) State.init
+            (* 221 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:225L
+                  ~index:221L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -20452,16 +19538,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (33L, Action.ShiftPrefix 247L);
+                    (33L, Action.ShiftPrefix 241L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 226 *) State.init
+            (* 222 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:226L
+                  ~index:222L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -20479,16 +19565,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (35L, Action.ShiftPrefix 248L);
+                    (35L, Action.ShiftPrefix 242L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 227 *) State.init
+            (* 223 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:227L
+                  ~index:223L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -20506,16 +19592,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (37L, Action.ShiftPrefix 249L);
+                    (37L, Action.ShiftPrefix 243L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 228 *) State.init
+            (* 224 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:228L
+                  ~index:224L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -20533,7 +19619,695 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 250L);
+                    (39L, Action.ShiftPrefix 244L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 225 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:225L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 179L);
+                    (14L, Action.ShiftPrefix 180L);
+                    (15L, Action.ShiftPrefix 181L);
+                    (16L, Action.ShiftPrefix 182L);
+                    (17L, Action.ShiftPrefix 183L);
+                    (18L, Action.ShiftPrefix 184L);
+                    (19L, Action.ShiftPrefix 185L);
+                    (20L, Action.ShiftPrefix 186L);
+                    (21L, Action.Reduce 61L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (25L, Action.Reduce 61L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (31L, Action.Reduce 61L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (33L, Action.Reduce 61L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (35L, Action.Reduce 61L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (37L, Action.Reduce 61L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (39L, Action.Reduce 61L);
+                    (40L, Action.ShiftPrefix 197L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 198L);
+                    (58L, 225L);
+                    (59L, 226L);
+                    (60L, 245L);
+                  ]
+              );
+            (* 226 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:226L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 179L);
+                    (14L, Action.ShiftPrefix 180L);
+                    (15L, Action.ShiftPrefix 181L);
+                    (16L, Action.ShiftPrefix 182L);
+                    (17L, Action.ShiftPrefix 183L);
+                    (18L, Action.ShiftPrefix 184L);
+                    (19L, Action.ShiftPrefix 185L);
+                    (20L, Action.ShiftPrefix 186L);
+                    (21L, Action.Reduce 61L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (25L, Action.Reduce 61L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (31L, Action.Reduce 61L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (33L, Action.Reduce 61L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (35L, Action.Reduce 61L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (37L, Action.Reduce 61L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (39L, Action.Reduce 61L);
+                    (40L, Action.ShiftPrefix 197L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 198L);
+                    (58L, 225L);
+                    (59L, 226L);
+                    (60L, 246L);
+                  ]
+              );
+            (* 227 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:227L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.Reduce 62L);
+                    (25L, Action.Reduce 62L);
+                    (27L, Action.Reduce 62L);
+                    (29L, Action.Reduce 62L);
+                    (31L, Action.Reduce 62L);
+                    (33L, Action.Reduce 62L);
+                    (35L, Action.Reduce 62L);
+                    (37L, Action.Reduce 62L);
+                    (39L, Action.Reduce 62L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 228 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:228L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.Reduce 63L);
+                    (25L, Action.Reduce 63L);
+                    (27L, Action.Reduce 63L);
+                    (29L, Action.Reduce 63L);
+                    (31L, Action.Reduce 63L);
+                    (33L, Action.Reduce 63L);
+                    (35L, Action.Reduce 63L);
+                    (37L, Action.Reduce 63L);
+                    (39L, Action.Reduce 63L);
                   ]
               )
               ~gotos:(
@@ -20546,713 +20320,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 229L);
-                    (59L, 230L);
-                    (60L, 251L);
-                  ]
-              );
-            (* 230 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:230L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 32L; 34L; 36L; 38L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 27L; 29L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 229L);
-                    (59L, 230L);
-                    (60L, 252L);
-                  ]
-              );
-            (* 231 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:231L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (21L, Action.Reduce 64L);
-                    (25L, Action.Reduce 64L);
-                    (27L, Action.Reduce 64L);
-                    (29L, Action.Reduce 64L);
-                    (31L, Action.Reduce 64L);
-                    (33L, Action.Reduce 64L);
-                    (35L, Action.Reduce 64L);
-                    (37L, Action.Reduce 64L);
-                    (39L, Action.Reduce 64L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 232 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:232L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (21L, Action.Reduce 65L);
-                    (25L, Action.Reduce 65L);
-                    (27L, Action.Reduce 65L);
-                    (29L, Action.Reduce 65L);
-                    (31L, Action.Reduce 65L);
-                    (33L, Action.Reduce 65L);
-                    (35L, Action.Reduce 65L);
-                    (37L, Action.Reduce 65L);
-                    (39L, Action.Reduce 65L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 233 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:233L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [27L; 29L]
                               ) in
@@ -21266,21 +20334,21 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 104L);
-                    (29L, Action.Reduce 104L);
+                    (27L, Action.Reduce 102L);
+                    (29L, Action.Reduce 102L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 234 *) State.init
+            (* 230 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:234L
+                  ~index:230L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -21294,38 +20362,38 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 82L);
-                    (25L, Action.Reduce 82L);
-                    (26L, Action.Reduce 82L);
-                    (31L, Action.Reduce 82L);
-                    (39L, Action.Reduce 82L);
+                    (24L, Action.Reduce 80L);
+                    (25L, Action.Reduce 80L);
+                    (26L, Action.Reduce 80L);
+                    (31L, Action.Reduce 80L);
+                    (39L, Action.Reduce 80L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 235 *) State.init
+            (* 231 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:235L
+                  ~index:231L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 26L; 31L]
                               ) in
@@ -21341,20 +20409,20 @@ include struct
                 Map.of_alist (module Uns) [
                     (24L, Action.ShiftPrefix 165L);
                     (26L, Action.ShiftPrefix 166L);
-                    (31L, Action.ShiftPrefix 253L);
+                    (31L, Action.ShiftPrefix 247L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 236 *) State.init
+            (* 232 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:236L
+                  ~index:232L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -21365,14 +20433,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [39L]
                               ) in
@@ -21384,22 +20452,22 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (25L, Action.ShiftPrefix 170L);
-                    (39L, Action.Reduce 72L);
+                    (39L, Action.Reduce 70L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (64L, 254L);
+                    (64L, 248L);
                   ]
               );
-            (* 237 *) State.init
+            (* 233 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:237L
+                  ~index:233L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:5L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -21413,39 +20481,39 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 87L);
-                    (3L, Action.Reduce 87L);
-                    (4L, Action.Reduce 87L);
-                    (5L, Action.Reduce 87L);
-                    (6L, Action.Reduce 87L);
-                    (7L, Action.Reduce 87L);
-                    (8L, Action.Reduce 87L);
-                    (9L, Action.Reduce 87L);
-                    (10L, Action.Reduce 87L);
-                    (11L, Action.Reduce 87L);
-                    (12L, Action.Reduce 87L);
-                    (13L, Action.Reduce 87L);
-                    (14L, Action.Reduce 87L);
-                    (15L, Action.Reduce 87L);
-                    (20L, Action.Reduce 87L);
-                    (21L, Action.Reduce 87L);
-                    (27L, Action.Reduce 87L);
-                    (29L, Action.Reduce 87L);
-                    (30L, Action.Reduce 87L);
-                    (38L, Action.Reduce 87L);
+                    (2L, Action.Reduce 85L);
+                    (3L, Action.Reduce 85L);
+                    (4L, Action.Reduce 85L);
+                    (5L, Action.Reduce 85L);
+                    (6L, Action.Reduce 85L);
+                    (7L, Action.Reduce 85L);
+                    (8L, Action.Reduce 85L);
+                    (9L, Action.Reduce 85L);
+                    (10L, Action.Reduce 85L);
+                    (11L, Action.Reduce 85L);
+                    (12L, Action.Reduce 85L);
+                    (13L, Action.Reduce 85L);
+                    (14L, Action.Reduce 85L);
+                    (15L, Action.Reduce 85L);
+                    (20L, Action.Reduce 85L);
+                    (21L, Action.Reduce 85L);
+                    (27L, Action.Reduce 85L);
+                    (29L, Action.Reduce 85L);
+                    (30L, Action.Reduce 85L);
+                    (38L, Action.Reduce 85L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 238 *) State.init
+            (* 234 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:238L
+                  ~index:234L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:5L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -21456,14 +20524,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -21480,13 +20548,40 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (67L, 255L);
+                    (67L, 249L);
                   ]
               );
-            (* 239 *) State.init
+            (* 235 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:239L
+                  ~index:235L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (18L, Action.ShiftPrefix 250L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 236 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:236L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -21504,43 +20599,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 256L);
+                    (39L, Action.ShiftPrefix 251L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 240 *) State.init
+            (* 237 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:240L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:5L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 257L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 241 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:241L
+                  ~index:237L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -21602,656 +20670,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 242 *) State.init
+            (* 238 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:242L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.Reduce 63L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (31L, Action.Reduce 63L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (33L, Action.Reduce 63L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (35L, Action.Reduce 63L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (37L, Action.Reduce 63L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (39L, Action.Reduce 63L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 242L);
-                    (59L, 243L);
-                    (60L, 251L);
-                  ]
-              );
-            (* 243 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:243L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 63L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.Reduce 63L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (27L, Action.Reduce 63L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (29L, Action.Reduce 63L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (31L, Action.Reduce 63L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (33L, Action.Reduce 63L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (35L, Action.Reduce 63L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (37L, Action.Reduce 63L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (39L, Action.Reduce 63L);
-                    (40L, Action.ShiftPrefix 199L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 242L);
-                    (59L, 243L);
-                    (60L, 252L);
-                  ]
-              );
-            (* 244 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:244L
+                  ~index:238L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -22483,28 +20905,14 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 27L; 28L; 29L; 30L; 31L; 32L; 33L; 34L; 35L; 36L; 37L; 38L; 39L; 40L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
                               ) in
@@ -22534,33 +20942,31 @@ include struct
                     (18L, Action.ShiftPrefix 184L);
                     (19L, Action.ShiftPrefix 185L);
                     (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.ShiftPrefix 187L);
-                    (22L, Action.ShiftPrefix 188L);
-                    (23L, Action.ShiftPrefix 189L);
-                    (24L, Action.ShiftPrefix 190L);
-                    (25L, Action.ShiftPrefix 191L);
-                    (26L, Action.ShiftPrefix 192L);
-                    (28L, Action.ShiftPrefix 193L);
-                    (30L, Action.ShiftPrefix 194L);
-                    (32L, Action.ShiftPrefix 195L);
-                    (34L, Action.ShiftPrefix 196L);
-                    (36L, Action.ShiftPrefix 197L);
-                    (38L, Action.ShiftPrefix 198L);
-                    (40L, Action.ShiftPrefix 199L);
+                    (22L, Action.ShiftPrefix 187L);
+                    (23L, Action.ShiftPrefix 188L);
+                    (24L, Action.ShiftPrefix 189L);
+                    (26L, Action.ShiftPrefix 190L);
+                    (28L, Action.ShiftPrefix 191L);
+                    (30L, Action.ShiftPrefix 192L);
+                    (32L, Action.ShiftPrefix 193L);
+                    (34L, Action.ShiftPrefix 194L);
+                    (36L, Action.ShiftPrefix 195L);
+                    (38L, Action.ShiftPrefix 196L);
+                    (40L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 200L);
-                    (58L, 220L);
-                    (59L, 221L);
-                    (61L, 258L);
+                    (42L, 198L);
+                    (58L, 199L);
+                    (59L, 200L);
+                    (61L, 252L);
                   ]
               );
-            (* 245 *) State.init
+            (* 239 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:245L
+                  ~index:239L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -22589,10 +20995,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 246 *) State.init
+            (* 240 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:246L
+                  ~index:240L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -22654,10 +21060,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 247 *) State.init
+            (* 241 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:247L
+                  ~index:241L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -22719,10 +21125,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 248 *) State.init
+            (* 242 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:248L
+                  ~index:242L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -22784,10 +21190,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 249 *) State.init
+            (* 243 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:249L
+                  ~index:243L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -22849,10 +21255,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 250 *) State.init
+            (* 244 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:250L
+                  ~index:244L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -22914,14 +21320,14 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 251 *) State.init
+            (* 245 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:251L
+                  ~index:245L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
                               ) in
@@ -22935,28 +21341,28 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (21L, Action.Reduce 61L);
-                    (25L, Action.Reduce 61L);
-                    (27L, Action.Reduce 61L);
-                    (29L, Action.Reduce 61L);
-                    (31L, Action.Reduce 61L);
-                    (33L, Action.Reduce 61L);
-                    (35L, Action.Reduce 61L);
-                    (37L, Action.Reduce 61L);
-                    (39L, Action.Reduce 61L);
+                    (21L, Action.Reduce 59L);
+                    (25L, Action.Reduce 59L);
+                    (27L, Action.Reduce 59L);
+                    (29L, Action.Reduce 59L);
+                    (31L, Action.Reduce 59L);
+                    (33L, Action.Reduce 59L);
+                    (35L, Action.Reduce 59L);
+                    (37L, Action.Reduce 59L);
+                    (39L, Action.Reduce 59L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 252 *) State.init
+            (* 246 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:252L
+                  ~index:246L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [21L; 25L; 27L; 29L; 31L; 33L; 35L; 37L; 39L]
                               ) in
@@ -22970,28 +21376,28 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (21L, Action.Reduce 62L);
-                    (25L, Action.Reduce 62L);
-                    (27L, Action.Reduce 62L);
-                    (29L, Action.Reduce 62L);
-                    (31L, Action.Reduce 62L);
-                    (33L, Action.Reduce 62L);
-                    (35L, Action.Reduce 62L);
-                    (37L, Action.Reduce 62L);
-                    (39L, Action.Reduce 62L);
+                    (21L, Action.Reduce 60L);
+                    (25L, Action.Reduce 60L);
+                    (27L, Action.Reduce 60L);
+                    (29L, Action.Reduce 60L);
+                    (31L, Action.Reduce 60L);
+                    (33L, Action.Reduce 60L);
+                    (35L, Action.Reduce 60L);
+                    (37L, Action.Reduce 60L);
+                    (39L, Action.Reduce 60L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 253 *) State.init
+            (* 247 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:253L
+                  ~index:247L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:5L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -23005,24 +21411,24 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 80L);
-                    (25L, Action.Reduce 80L);
-                    (26L, Action.Reduce 80L);
-                    (31L, Action.Reduce 80L);
-                    (39L, Action.Reduce 80L);
+                    (24L, Action.Reduce 78L);
+                    (25L, Action.Reduce 78L);
+                    (26L, Action.Reduce 78L);
+                    (31L, Action.Reduce 78L);
+                    (39L, Action.Reduce 78L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 254 *) State.init
+            (* 248 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:254L
+                  ~index:248L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:5L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -23036,20 +21442,20 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 259L);
+                    (39L, Action.ShiftPrefix 253L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 255 *) State.init
+            (* 249 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:255L
+                  ~index:249L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:6L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:6L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -23063,39 +21469,39 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 89L);
-                    (3L, Action.Reduce 89L);
-                    (4L, Action.Reduce 89L);
-                    (5L, Action.Reduce 89L);
-                    (6L, Action.Reduce 89L);
-                    (7L, Action.Reduce 89L);
-                    (8L, Action.Reduce 89L);
-                    (9L, Action.Reduce 89L);
-                    (10L, Action.Reduce 89L);
-                    (11L, Action.Reduce 89L);
-                    (12L, Action.Reduce 89L);
-                    (13L, Action.Reduce 89L);
-                    (14L, Action.Reduce 89L);
-                    (15L, Action.Reduce 89L);
-                    (20L, Action.Reduce 89L);
-                    (21L, Action.Reduce 89L);
-                    (27L, Action.Reduce 89L);
-                    (29L, Action.Reduce 89L);
-                    (30L, Action.Reduce 89L);
-                    (38L, Action.Reduce 89L);
+                    (2L, Action.Reduce 87L);
+                    (3L, Action.Reduce 87L);
+                    (4L, Action.Reduce 87L);
+                    (5L, Action.Reduce 87L);
+                    (6L, Action.Reduce 87L);
+                    (7L, Action.Reduce 87L);
+                    (8L, Action.Reduce 87L);
+                    (9L, Action.Reduce 87L);
+                    (10L, Action.Reduce 87L);
+                    (11L, Action.Reduce 87L);
+                    (12L, Action.Reduce 87L);
+                    (13L, Action.Reduce 87L);
+                    (14L, Action.Reduce 87L);
+                    (15L, Action.Reduce 87L);
+                    (20L, Action.Reduce 87L);
+                    (21L, Action.Reduce 87L);
+                    (27L, Action.Reduce 87L);
+                    (29L, Action.Reduce 87L);
+                    (30L, Action.Reduce 87L);
+                    (38L, Action.Reduce 87L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 256 *) State.init
+            (* 250 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:256L
+                  ~index:250L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:6L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:6L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -23106,14 +21512,14 @@ include struct
                   ~added:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -23130,17 +21536,17 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (67L, 260L);
+                    (67L, 254L);
                   ]
               );
-            (* 257 *) State.init
+            (* 251 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:257L
+                  ~index:251L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:6L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:6L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -23154,16 +21560,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 261L);
+                    (18L, Action.ShiftPrefix 255L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 258 *) State.init
+            (* 252 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:258L
+                  ~index:252L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -23180,21 +21586,21 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 21L; 22L; 23L; 24L; 25L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 16L; 17L; 18L; 19L; 20L; 22L; 23L; 24L; 26L; 28L; 30L; 32L; 34L; 36L; 38L; 40L]
                               ) in
                             lr0item, lr1item
                           );
@@ -23230,18 +21636,18 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (54L, 244L);
-                    (55L, 262L);
+                    (54L, 238L);
+                    (55L, 256L);
                   ]
               );
-            (* 259 *) State.init
+            (* 253 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:259L
+                  ~index:253L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:6L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:6L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [24L; 25L; 26L; 31L; 39L]
                               ) in
@@ -23255,24 +21661,147 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 83L);
-                    (25L, Action.Reduce 83L);
-                    (26L, Action.Reduce 83L);
-                    (31L, Action.Reduce 83L);
-                    (39L, Action.Reduce 83L);
+                    (24L, Action.Reduce 81L);
+                    (25L, Action.Reduce 81L);
+                    (26L, Action.Reduce 81L);
+                    (31L, Action.Reduce 81L);
+                    (39L, Action.Reduce 81L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 260 *) State.init
+            (* 254 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:260L
+                  ~index:254L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:7L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 86L);
+                    (3L, Action.Reduce 86L);
+                    (4L, Action.Reduce 86L);
+                    (5L, Action.Reduce 86L);
+                    (6L, Action.Reduce 86L);
+                    (7L, Action.Reduce 86L);
+                    (8L, Action.Reduce 86L);
+                    (9L, Action.Reduce 86L);
+                    (10L, Action.Reduce 86L);
+                    (11L, Action.Reduce 86L);
+                    (12L, Action.Reduce 86L);
+                    (13L, Action.Reduce 86L);
+                    (14L, Action.Reduce 86L);
+                    (15L, Action.Reduce 86L);
+                    (20L, Action.Reduce 86L);
+                    (21L, Action.Reduce 86L);
+                    (27L, Action.Reduce 86L);
+                    (29L, Action.Reduce 86L);
+                    (30L, Action.Reduce 86L);
+                    (38L, Action.Reduce 86L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 255 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:255L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:7L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (13L, Action.ShiftPrefix 158L);
+                    (15L, Action.ShiftPrefix 118L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (67L, 257L);
+                  ]
+              );
+            (* 256 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:256L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Ordset.of_list (module Uns) [29L; 31L; 33L; 35L; 37L; 39L]
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+                  ~added:(
+                    Lr1Itemset.empty
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (29L, Action.Reduce 34L);
+                    (31L, Action.Reduce 34L);
+                    (33L, Action.Reduce 34L);
+                    (35L, Action.Reduce 34L);
+                    (37L, Action.Reduce 34L);
+                    (39L, Action.Reduce 34L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 257 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:257L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:8L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
                               ) in
@@ -23306,129 +21835,6 @@ include struct
                     (29L, Action.Reduce 88L);
                     (30L, Action.Reduce 88L);
                     (38L, Action.Reduce 88L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 261 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:261L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:7L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 158L);
-                    (15L, Action.ShiftPrefix 118L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (67L, 263L);
-                  ]
-              );
-            (* 262 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:262L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [29L; 31L; 33L; 35L; 37L; 39L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (29L, Action.Reduce 34L);
-                    (31L, Action.Reduce 34L);
-                    (33L, Action.Reduce 34L);
-                    (35L, Action.Reduce 34L);
-                    (37L, Action.Reduce 34L);
-                    (39L, Action.Reduce 34L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 263 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:263L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:8L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 6L; 7L; 8L; 9L; 10L; 11L; 12L; 13L; 14L; 15L; 20L; 21L; 27L; 29L; 30L; 38L]
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 90L);
-                    (3L, Action.Reduce 90L);
-                    (4L, Action.Reduce 90L);
-                    (5L, Action.Reduce 90L);
-                    (6L, Action.Reduce 90L);
-                    (7L, Action.Reduce 90L);
-                    (8L, Action.Reduce 90L);
-                    (9L, Action.Reduce 90L);
-                    (10L, Action.Reduce 90L);
-                    (11L, Action.Reduce 90L);
-                    (12L, Action.Reduce 90L);
-                    (13L, Action.Reduce 90L);
-                    (14L, Action.Reduce 90L);
-                    (15L, Action.Reduce 90L);
-                    (20L, Action.Reduce 90L);
-                    (21L, Action.Reduce 90L);
-                    (27L, Action.Reduce 90L);
-                    (29L, Action.Reduce 90L);
-                    (30L, Action.Reduce 90L);
-                    (38L, Action.Reduce 90L);
                   ]
               )
               ~gotos:(
@@ -23778,7 +22184,7 @@ include struct
                   | Elm.{symbol=Symbol.Token (HOCC (HOCC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23788,7 +22194,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (NONTERM (NONTERM {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23798,7 +22204,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (EPSILON_ (EPSILON {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23808,7 +22214,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (START (START {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23818,7 +22224,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (TOKEN (TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23828,7 +22234,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (NEUTRAL (NEUTRAL {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23838,7 +22244,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (LEFT (LEFT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23848,7 +22254,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (RIGHT (RIGHT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23858,7 +22264,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (NONASSOC (NONASSOC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23868,7 +22274,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (PREC (PREC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23878,7 +22284,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (UIDENT (UIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#349 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23890,7 +22296,7 @@ Uident {token}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecsTl (
                   (*______________________________________________________________________________*)
-#355 "./Parse.hmh"
+#352 "./Parse.hmh"
 PrecsTlUident {uident=token; precs_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23899,7 +22305,7 @@ PrecsTlUident {uident=token; precs_tl}
                 (* 12 *) (function
                   tl__hocc__ -> Symbol.Nonterm (PrecsTl (
                   (*______________________________________________________________________________*)
-#356 "./Parse.hmh"
+#353 "./Parse.hmh"
 PrecsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23909,7 +22315,7 @@ PrecsTlEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Uident (Uident {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Precs (
                   (*______________________________________________________________________________*)
-#359 "./Parse.hmh"
+#356 "./Parse.hmh"
 Precs {uident=token; precs_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23920,7 +22326,7 @@ Precs {uident=token; precs_tl}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecRels (
                   (*______________________________________________________________________________*)
-#362 "./Parse.hmh"
+#359 "./Parse.hmh"
 PrecRelsPrecs {precs}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23929,7 +22335,7 @@ PrecRelsPrecs {precs}
                 (* 15 *) (function
                   tl__hocc__ -> Symbol.Nonterm (PrecRels (
                   (*______________________________________________________________________________*)
-#363 "./Parse.hmh"
+#360 "./Parse.hmh"
 PrecRelsEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23938,7 +22344,7 @@ PrecRelsEpsilon
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#366 "./Parse.hmh"
+#363 "./Parse.hmh"
 PrecTypeNeutral
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23948,7 +22354,7 @@ PrecTypeNeutral
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#367 "./Parse.hmh"
+#364 "./Parse.hmh"
 PrecTypeLeft
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23958,7 +22364,7 @@ PrecTypeLeft
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#368 "./Parse.hmh"
+#365 "./Parse.hmh"
 PrecTypeRight
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23968,7 +22374,7 @@ PrecTypeRight
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#369 "./Parse.hmh"
+#366 "./Parse.hmh"
 PrecTypeNonassoc
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23980,7 +22386,7 @@ PrecTypeNonassoc
                   :: Elm.{symbol=Symbol.Nonterm (PrecType prec_type); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PrecSet (
                   (*______________________________________________________________________________*)
-#373 "./Parse.hmh"
+#370 "./Parse.hmh"
 PrecSet {prec_type; prec_set; prec_rels}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -23992,7 +22398,7 @@ PrecSet {prec_type; prec_set; prec_rels}
                   :: Elm.{symbol=Symbol.Token (CIDENT cident); _}
                   :: tl__hocc__ -> Symbol.Nonterm (SymbolTypeQualifier (
                   (*______________________________________________________________________________*)
-#377 "./Parse.hmh"
+#374 "./Parse.hmh"
 SymbolTypeQualifier {cident; symbol_type_qualifier_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24001,7 +22407,7 @@ SymbolTypeQualifier {cident; symbol_type_qualifier_tl}
                 (* 22 *) (function
                   tl__hocc__ -> Symbol.Nonterm (SymbolTypeQualifier (
                   (*______________________________________________________________________________*)
-#378 "./Parse.hmh"
+#375 "./Parse.hmh"
 SymbolTypeQualifierEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24012,7 +22418,7 @@ SymbolTypeQualifierEpsilon
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (SymbolType (
                   (*______________________________________________________________________________*)
-#382 "./Parse.hmh"
+#379 "./Parse.hmh"
 SymbolType {symbol_type_qualifier; symbol_type=token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24022,7 +22428,7 @@ SymbolType {symbol_type_qualifier; symbol_type=token}
                   | Elm.{symbol=Symbol.Nonterm (SymbolType symbol_type); _}
                   :: tl__hocc__ -> Symbol.Nonterm (SymbolType0 (
                   (*______________________________________________________________________________*)
-#385 "./Parse.hmh"
+#382 "./Parse.hmh"
 SymbolType0SymbolType {symbol_type}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24031,7 +22437,7 @@ SymbolType0SymbolType {symbol_type}
                 (* 25 *) (function
                   tl__hocc__ -> Symbol.Nonterm (SymbolType0 (
                   (*______________________________________________________________________________*)
-#386 "./Parse.hmh"
+#383 "./Parse.hmh"
 SymbolType0Epsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24041,7 +22447,7 @@ SymbolType0Epsilon
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecRef (
                   (*______________________________________________________________________________*)
-#389 "./Parse.hmh"
+#386 "./Parse.hmh"
 PrecRefUident {uident=token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24050,7 +22456,7 @@ PrecRefUident {uident=token}
                 (* 27 *) (function
                   tl__hocc__ -> Symbol.Nonterm (PrecRef (
                   (*______________________________________________________________________________*)
-#390 "./Parse.hmh"
+#387 "./Parse.hmh"
 PrecRefEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24059,7 +22465,7 @@ PrecRefEpsilon
                   | Elm.{symbol=Symbol.Token (ISTRING alias); _}
                   :: tl__hocc__ -> Symbol.Nonterm (TokenAlias (
                   (*______________________________________________________________________________*)
-#393 "./Parse.hmh"
+#390 "./Parse.hmh"
 TokenAlias {alias}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24068,7 +22474,7 @@ TokenAlias {alias}
                 (* 29 *) (function
                   tl__hocc__ -> Symbol.Nonterm (TokenAlias (
                   (*______________________________________________________________________________*)
-#394 "./Parse.hmh"
+#391 "./Parse.hmh"
 TokenAliasEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24081,7 +22487,7 @@ TokenAliasEpsilon
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Token (
                   (*______________________________________________________________________________*)
-#398 "./Parse.hmh"
+#395 "./Parse.hmh"
 Token {cident; token_alias; symbol_type0; prec_ref}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24091,7 +22497,7 @@ Token {cident; token_alias; symbol_type0; prec_ref}
                   | Elm.{symbol=Symbol.Token (LINE_DELIM line_delim); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Sep (
                   (*______________________________________________________________________________*)
-#401 "./Parse.hmh"
+#398 "./Parse.hmh"
 SepLineDelim {line_delim}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24101,7 +22507,7 @@ SepLineDelim {line_delim}
                   | Elm.{symbol=Symbol.Token (SEMI semi); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Sep (
                   (*______________________________________________________________________________*)
-#402 "./Parse.hmh"
+#399 "./Parse.hmh"
 SepSemi {semi}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24111,7 +22517,7 @@ SepSemi {semi}
                   | Elm.{symbol=Symbol.Token (BAR bar); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Sep (
                   (*______________________________________________________________________________*)
-#403 "./Parse.hmh"
+#400 "./Parse.hmh"
 SepBar {bar}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24123,7 +22529,7 @@ SepBar {bar}
                   :: Elm.{symbol=Symbol.Nonterm (Sep sep); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodesTl (
                   (*______________________________________________________________________________*)
-#406 "./Parse.hmh"
+#403 "./Parse.hmh"
 CodesTlSepCode {sep; code; codes_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24132,7 +22538,7 @@ CodesTlSepCode {sep; code; codes_tl}
                 (* 35 *) (function
                   tl__hocc__ -> Symbol.Nonterm (CodesTl (
                   (*______________________________________________________________________________*)
-#407 "./Parse.hmh"
+#404 "./Parse.hmh"
 CodesTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24142,7 +22548,7 @@ CodesTlEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Code code); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Codes (
                   (*______________________________________________________________________________*)
-#410 "./Parse.hmh"
+#407 "./Parse.hmh"
 Codes {code; codes_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24152,7 +22558,7 @@ Codes {code; codes_tl}
                   | Elm.{symbol=Symbol.Nonterm (Codes codes); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Codes0 (
                   (*______________________________________________________________________________*)
-#413 "./Parse.hmh"
+#410 "./Parse.hmh"
 Codes0Codes {codes}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24161,7 +22567,7 @@ Codes0Codes {codes}
                 (* 38 *) (function
                   tl__hocc__ -> Symbol.Nonterm (Codes0 (
                   (*______________________________________________________________________________*)
-#414 "./Parse.hmh"
+#411 "./Parse.hmh"
 Codes0Epsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24172,7 +22578,7 @@ Codes0Epsilon
                   :: Elm.{symbol=Symbol.Token (INDENT indent); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#417 "./Parse.hmh"
+#414 "./Parse.hmh"
 DelimitedBlock {indent; codes; dedent}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24184,7 +22590,7 @@ DelimitedBlock {indent; codes; dedent}
                   :: Elm.{symbol=Symbol.Token (LPAREN lparen); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#418 "./Parse.hmh"
+#415 "./Parse.hmh"
 DelimitedParen {lparen; codes0; rparen}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24196,7 +22602,7 @@ DelimitedParen {lparen; codes0; rparen}
                   :: Elm.{symbol=Symbol.Token (LCAPTURE lcapture); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#419 "./Parse.hmh"
+#416 "./Parse.hmh"
 DelimitedCapture {lcapture; codes0; rcapture}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24208,7 +22614,7 @@ DelimitedCapture {lcapture; codes0; rcapture}
                   :: Elm.{symbol=Symbol.Token (LBRACK lbrack); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#420 "./Parse.hmh"
+#417 "./Parse.hmh"
 DelimitedList {lbrack; codes0; rbrack}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24220,7 +22626,7 @@ DelimitedList {lbrack; codes0; rbrack}
                   :: Elm.{symbol=Symbol.Token (LARRAY larray); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#421 "./Parse.hmh"
+#418 "./Parse.hmh"
 DelimitedArray {larray; codes0; rarray}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24232,7 +22638,7 @@ DelimitedArray {larray; codes0; rarray}
                   :: Elm.{symbol=Symbol.Token (LCURLY lcurly); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#422 "./Parse.hmh"
+#419 "./Parse.hmh"
 DelimitedModule {lcurly; codes0; rcurly}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24242,7 +22648,7 @@ DelimitedModule {lcurly; codes0; rcurly}
                   | Elm.{symbol=Symbol.Token (OTHER_TOKEN (OTHER_TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24252,7 +22658,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Nonterm (Uident (Uident {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24262,7 +22668,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (CIDENT (CIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24272,7 +22678,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (USCORE (USCORE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24282,7 +22688,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (ISTRING (ISTRING {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24292,7 +22698,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (COLON_COLON_EQ (COLON_COLON_EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24302,7 +22708,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (AS (AS {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24312,7 +22718,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (OF (OF {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24322,7 +22728,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (COLON (COLON {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24332,7 +22738,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (DOT (DOT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -24342,238 +22748,241 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (ARROW (ARROW {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 56 *) (function
-                  | Elm.{symbol=Symbol.Token (BAR (BAR {token})); _}
+                  | Elm.{symbol=Symbol.Token (LT (LT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 57 *) (function
-                  | Elm.{symbol=Symbol.Token (LT (LT {token})); _}
+                  | Elm.{symbol=Symbol.Token (EQ (EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 58 *) (function
-                  | Elm.{symbol=Symbol.Token (EQ (EQ {token})); _}
+                  | Elm.{symbol=Symbol.Token (COMMA (COMMA {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#436 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 59 *) (function
-                  | Elm.{symbol=Symbol.Token (COMMA (COMMA {token})); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
-                  (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
-CodeToken {token}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 60 *) (function
-                  | Elm.{symbol=Symbol.Token (SEMI (SEMI {token})); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
-                  (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
-CodeToken {token}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 61 *) (function
                   | Elm.{symbol=Symbol.Nonterm (CodeTl code_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Delimited delimited); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeTl (
                   (*______________________________________________________________________________*)
-#444 "./Parse.hmh"
+#439 "./Parse.hmh"
 CodeTlDelimited {delimited; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 62 *) (function
+                (* 60 *) (function
                   | Elm.{symbol=Symbol.Nonterm (CodeTl code_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (CodeToken code_token); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeTl (
                   (*______________________________________________________________________________*)
-#445 "./Parse.hmh"
+#440 "./Parse.hmh"
 CodeTlCodeToken {code_token; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 63 *) (function
+                (* 61 *) (function
                   tl__hocc__ -> Symbol.Nonterm (CodeTl (
                   (*______________________________________________________________________________*)
-#446 "./Parse.hmh"
+#441 "./Parse.hmh"
 CodeTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                 );
-                (* 64 *) (function
+                (* 62 *) (function
                   | Elm.{symbol=Symbol.Nonterm (CodeTl code_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Delimited delimited); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Code (
                   (*______________________________________________________________________________*)
-#449 "./Parse.hmh"
+#444 "./Parse.hmh"
 CodeDelimited {delimited; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 65 *) (function
+                (* 63 *) (function
                   | Elm.{symbol=Symbol.Nonterm (CodeTl code_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (CodeToken code_token); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Code (
                   (*______________________________________________________________________________*)
-#450 "./Parse.hmh"
+#445 "./Parse.hmh"
 CodeCodeToken {code_token; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 66 *) (function
+                (* 64 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Uident binding); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PatternField (
                   (*______________________________________________________________________________*)
-#453 "./Parse.hmh"
+#448 "./Parse.hmh"
 PatternFieldBinding {binding}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 67 *) (function
+                (* 65 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
                   :: _
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PatternField (
                   (*______________________________________________________________________________*)
-#454 "./Parse.hmh"
+#449 "./Parse.hmh"
 PatternFieldPattern {pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 68 *) (function
+                (* 66 *) (function
                   | Elm.{symbol=Symbol.Nonterm (PatternField field); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
                   (*______________________________________________________________________________*)
-#459 "./Parse.hmh"
+#454 "./Parse.hmh"
 PatternFieldsOne {field}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 67 *) (function
+                  | _
+                  :: _
+                  :: Elm.{symbol=Symbol.Nonterm (PatternField field); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
+                  (*______________________________________________________________________________*)
+#454 "./Parse.hmh"
+PatternFieldsOne {field}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 68 *) (function
+                  | Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
+                  :: _
+                  :: Elm.{symbol=Symbol.Nonterm (PatternField field); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
+                  (*______________________________________________________________________________*)
+#456 "./Parse.hmh"
+PatternFieldsMulti {field; fields}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 69 *) (function
                   | _
-                  :: _
-                  :: Elm.{symbol=Symbol.Nonterm (PatternField field); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
+                  :: tl__hocc__ -> Symbol.Nonterm (SemiSuffix (
                   (*______________________________________________________________________________*)
-#459 "./Parse.hmh"
-PatternFieldsOne {field}
+#461 "./Parse.hmh"
+SemiSuffix
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 70 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
-                  :: _
-                  :: Elm.{symbol=Symbol.Nonterm (PatternField field); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
+                  tl__hocc__ -> Symbol.Nonterm (SemiSuffix (
                   (*______________________________________________________________________________*)
 #461 "./Parse.hmh"
-PatternFieldsMulti {field; fields}
+SemiSuffix
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
-                  | _ -> not_reached ()
                 );
                 (* 71 *) (function
                   | _
-                  :: tl__hocc__ -> Symbol.Nonterm (SemiSuffix (
+                  :: tl__hocc__ -> Symbol.Nonterm (ModulePath (
                   (*______________________________________________________________________________*)
 #466 "./Parse.hmh"
-SemiSuffix
+ModulePath
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 72 *) (function
-                  tl__hocc__ -> Symbol.Nonterm (SemiSuffix (
+                  | _
+                  :: _
+                  :: _
+                  :: tl__hocc__ -> Symbol.Nonterm (ModulePath (
                   (*______________________________________________________________________________*)
 #466 "./Parse.hmh"
-SemiSuffix
+ModulePath
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
+                  | _ -> not_reached ()
                 );
                 (* 73 *) (function
                   | _
-                  :: tl__hocc__ -> Symbol.Nonterm (ModulePath (
-                  (*______________________________________________________________________________*)
-#471 "./Parse.hmh"
-ModulePath
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 74 *) (function
-                  | _
-                  :: _
-                  :: _
-                  :: tl__hocc__ -> Symbol.Nonterm (ModulePath (
-                  (*______________________________________________________________________________*)
-#471 "./Parse.hmh"
-ModulePath
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 75 *) (function
-                  | _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#475 "./Parse.hmh"
+#470 "./Parse.hmh"
 PatternUscore
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 76 *) (function
+                (* 74 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Uident binding); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#478 "./Parse.hmh"
+#473 "./Parse.hmh"
 PatternBinding {binding}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 77 *) (function
+                (* 75 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Uident binding); _}
                   :: _
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#478 "./Parse.hmh"
+#473 "./Parse.hmh"
 PatternBinding {binding}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 76 *) (function
+                  | _
+                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
+                  :: _
+                  :: tl__hocc__ -> Symbol.Nonterm (Pattern (
+                  (*______________________________________________________________________________*)
+#477 "./Parse.hmh"
+PatternPattern {pattern}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 77 *) (function
+                  | Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
+                  :: _
+                  :: tl__hocc__ -> Symbol.Nonterm (Pattern (
+                  (*______________________________________________________________________________*)
+#477 "./Parse.hmh"
+PatternPattern {pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -24582,95 +22991,98 @@ PatternBinding {binding}
                   | _
                   :: Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
                   :: _
+                  :: _
+                  :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#482 "./Parse.hmh"
+#477 "./Parse.hmh"
 PatternPattern {pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 79 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
+                  | Elm.{symbol=Symbol.Nonterm (Pattern pattern_b); _}
                   :: _
+                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern_a); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#482 "./Parse.hmh"
-PatternPattern {pattern}
+#479 "./Parse.hmh"
+PatternComma {pattern_a; pattern_b}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 80 *) (function
                   | _
-                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
+                  :: _
+                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
+                  :: _
+                  :: tl__hocc__ -> Symbol.Nonterm (Pattern (
+                  (*______________________________________________________________________________*)
+#482 "./Parse.hmh"
+PatternFields {fields}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 81 *) (function
+                  | _
+                  :: _
+                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
                   :: _
                   :: _
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
 #482 "./Parse.hmh"
-PatternPattern {pattern}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 81 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (Pattern pattern_b); _}
-                  :: _
-                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern_a); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (Pattern (
-                  (*______________________________________________________________________________*)
-#484 "./Parse.hmh"
-PatternComma {pattern_a; pattern_b}
+PatternFields {fields}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 82 *) (function
-                  | _
-                  :: _
-                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
-                  :: _
-                  :: tl__hocc__ -> Symbol.Nonterm (Pattern (
-                  (*______________________________________________________________________________*)
-#487 "./Parse.hmh"
-PatternFields {fields}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 83 *) (function
-                  | _
-                  :: _
-                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
-                  :: _
-                  :: _
-                  :: _
-                  :: tl__hocc__ -> Symbol.Nonterm (Pattern (
-                  (*______________________________________________________________________________*)
-#487 "./Parse.hmh"
-PatternFields {fields}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 84 *) (function
                   | Elm.{symbol=Symbol.Token (CIDENT cident); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParamSymbol (
                   (*______________________________________________________________________________*)
-#490 "./Parse.hmh"
+#485 "./Parse.hmh"
 ProdParamSymbolCident {cident}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 85 *) (function
+                (* 83 *) (function
                   | Elm.{symbol=Symbol.Token (ISTRING alias); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParamSymbol (
                   (*______________________________________________________________________________*)
-#491 "./Parse.hmh"
+#486 "./Parse.hmh"
 ProdParamSymbolAlias {alias}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 84 *) (function
+                  | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
+                  :: _
+                  :: Elm.{symbol=Symbol.Nonterm (Uident binding); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
+                  (*______________________________________________________________________________*)
+#490 "./Parse.hmh"
+ProdParamBinding {binding; prod_param_symbol}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 85 *) (function
+                  | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
+                  :: _
+                  :: Elm.{symbol=Symbol.Token (RPAREN rparen); _}
+                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
+                  :: Elm.{symbol=Symbol.Token (LPAREN lparen); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
+                  (*______________________________________________________________________________*)
+#493 "./Parse.hmh"
+ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -24678,11 +23090,15 @@ ProdParamSymbolAlias {alias}
                 (* 86 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
                   :: _
-                  :: Elm.{symbol=Symbol.Nonterm (Uident binding); _}
+                  :: Elm.{symbol=Symbol.Token (RPAREN rparen); _}
+                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
+                  :: Elm.{symbol=Symbol.Token (LPAREN lparen); _}
+                  :: _
+                  :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#495 "./Parse.hmh"
-ProdParamBinding {binding; prod_param_symbol}
+#493 "./Parse.hmh"
+ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -24690,13 +23106,14 @@ ProdParamBinding {binding; prod_param_symbol}
                 (* 87 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
                   :: _
-                  :: Elm.{symbol=Symbol.Token (RPAREN rparen); _}
-                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
-                  :: Elm.{symbol=Symbol.Token (LPAREN lparen); _}
+                  :: Elm.{symbol=Symbol.Token (RCURLY rcurly); _}
+                  :: _
+                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
+                  :: Elm.{symbol=Symbol.Token (LCURLY lcurly); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#498 "./Parse.hmh"
-ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
+#497 "./Parse.hmh"
+ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -24704,15 +23121,16 @@ ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                 (* 88 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
                   :: _
-                  :: Elm.{symbol=Symbol.Token (RPAREN rparen); _}
-                  :: Elm.{symbol=Symbol.Nonterm (Pattern pattern); _}
-                  :: Elm.{symbol=Symbol.Token (LPAREN lparen); _}
+                  :: Elm.{symbol=Symbol.Token (RCURLY rcurly); _}
+                  :: _
+                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
+                  :: Elm.{symbol=Symbol.Token (LCURLY lcurly); _}
                   :: _
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#498 "./Parse.hmh"
-ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
+#497 "./Parse.hmh"
+ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -24720,53 +23138,42 @@ ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                 (* 89 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
                   :: _
-                  :: Elm.{symbol=Symbol.Token (RCURLY rcurly); _}
                   :: _
-                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
-                  :: Elm.{symbol=Symbol.Token (LCURLY lcurly); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#502 "./Parse.hmh"
-ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
+#500 "./Parse.hmh"
+ProdParam {prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 90 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
-                  :: _
-                  :: Elm.{symbol=Symbol.Token (RCURLY rcurly); _}
-                  :: _
-                  :: Elm.{symbol=Symbol.Nonterm (PatternFields fields); _}
-                  :: Elm.{symbol=Symbol.Token (LCURLY lcurly); _}
-                  :: _
-                  :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#502 "./Parse.hmh"
-ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
+#500 "./Parse.hmh"
+ProdParam {prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 91 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
-                  :: _
-                  :: _
-                  :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
+                  | Elm.{symbol=Symbol.Nonterm (ProdParamsTl prod_params_tl); _}
+                  :: Elm.{symbol=Symbol.Nonterm (ProdParam prod_param); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (ProdParamsTl (
                   (*______________________________________________________________________________*)
-#505 "./Parse.hmh"
-ProdParam {prod_param_symbol}
+#504 "./Parse.hmh"
+ProdParamsTlProdParam {prod_param; prod_params_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 92 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
+                  | Elm.{symbol=Symbol.Nonterm (PrecRef prec_ref); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (ProdParamsTl (
                   (*______________________________________________________________________________*)
 #505 "./Parse.hmh"
-ProdParam {prod_param_symbol}
+ProdParamsTlPrecRef {prec_ref}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -24774,173 +23181,152 @@ ProdParam {prod_param_symbol}
                 (* 93 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdParamsTl prod_params_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (ProdParam prod_param); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (ProdParamsTl (
-                  (*______________________________________________________________________________*)
-#509 "./Parse.hmh"
-ProdParamsTlProdParam {prod_param; prod_params_tl}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 94 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (PrecRef prec_ref); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (ProdParamsTl (
-                  (*______________________________________________________________________________*)
-#510 "./Parse.hmh"
-ProdParamsTlPrecRef {prec_ref}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 95 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (ProdParamsTl prod_params_tl); _}
-                  :: Elm.{symbol=Symbol.Nonterm (ProdParam prod_param); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParams (
                   (*______________________________________________________________________________*)
-#514 "./Parse.hmh"
+#509 "./Parse.hmh"
 ProdParamsProdParam {prod_param; prod_params_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 96 *) (function
+                (* 94 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdParams prod_params); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdPattern (
                   (*______________________________________________________________________________*)
-#517 "./Parse.hmh"
+#512 "./Parse.hmh"
 ProdPatternParams {prod_params}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 97 *) (function
+                (* 95 *) (function
                   | Elm.{symbol=Symbol.Nonterm (PrecRef prec_ref); _}
                   :: Elm.{symbol=Symbol.Token (EPSILON_ epsilon); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdPattern (
                   (*______________________________________________________________________________*)
-#518 "./Parse.hmh"
+#513 "./Parse.hmh"
 ProdPatternEpsilon {epsilon; prec_ref}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 98 *) (function
+                (* 96 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdPattern prod_pattern); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Prod (
                   (*______________________________________________________________________________*)
-#521 "./Parse.hmh"
+#516 "./Parse.hmh"
 Prod {prod_pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 99 *) (function
+                (* 97 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdsTl prods_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Prod prod); _}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdsTl (
                   (*______________________________________________________________________________*)
-#524 "./Parse.hmh"
+#519 "./Parse.hmh"
 ProdsTlProd {prod; prods_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 100 *) (function
+                (* 98 *) (function
                   tl__hocc__ -> Symbol.Nonterm (ProdsTl (
                   (*______________________________________________________________________________*)
-#525 "./Parse.hmh"
+#520 "./Parse.hmh"
 ProdsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                 );
-                (* 101 *) (function
+                (* 99 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdsTl prods_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Prod prod); _}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Prods (
                   (*______________________________________________________________________________*)
-#529 "./Parse.hmh"
+#524 "./Parse.hmh"
 ProdsProd {prod; prods_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 102 *) (function
+                (* 100 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ProdsTl prods_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Prod prod); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Prods (
                   (*______________________________________________________________________________*)
-#529 "./Parse.hmh"
+#524 "./Parse.hmh"
 ProdsProd {prod; prods_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 103 *) (function
+                (* 101 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Code code); _}
                   :: _
                   :: Elm.{symbol=Symbol.Nonterm (Prods prods); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Reduction (
                   (*______________________________________________________________________________*)
-#532 "./Parse.hmh"
+#527 "./Parse.hmh"
 Reduction {prods; code}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 104 *) (function
+                (* 102 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ReductionsTl reductions_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Reduction reduction); _}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ReductionsTl (
                   (*______________________________________________________________________________*)
-#536 "./Parse.hmh"
+#531 "./Parse.hmh"
 ReductionsTlReduction {reduction; reductions_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 105 *) (function
+                (* 103 *) (function
                   tl__hocc__ -> Symbol.Nonterm (ReductionsTl (
                   (*______________________________________________________________________________*)
-#537 "./Parse.hmh"
+#532 "./Parse.hmh"
 ReductionsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                 );
-                (* 106 *) (function
+                (* 104 *) (function
                   | Elm.{symbol=Symbol.Nonterm (ReductionsTl reductions_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Reduction reduction); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Reductions (
                   (*______________________________________________________________________________*)
-#541 "./Parse.hmh"
+#536 "./Parse.hmh"
 ReductionsReduction {reduction; reductions_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 107 *) (function
+                (* 105 *) (function
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (NontermType (
                   (*______________________________________________________________________________*)
-#544 "./Parse.hmh"
+#539 "./Parse.hmh"
 NontermTypeNonterm
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 108 *) (function
+                (* 106 *) (function
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (NontermType (
                   (*______________________________________________________________________________*)
-#545 "./Parse.hmh"
+#540 "./Parse.hmh"
 NontermTypeStart
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 109 *) (function
+                (* 107 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Prods prods); _}
                   :: _
                   :: Elm.{symbol=Symbol.Nonterm (PrecRef prec_ref); _}
@@ -24948,13 +23334,13 @@ NontermTypeStart
                   :: Elm.{symbol=Symbol.Nonterm (NontermType nonterm_type); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Nonterm (
                   (*______________________________________________________________________________*)
-#549 "./Parse.hmh"
+#544 "./Parse.hmh"
 NontermProds {nonterm_type; cident; prec_ref; prods}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 110 *) (function
+                (* 108 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Reductions reductions); _}
                   :: _
                   :: Elm.{symbol=Symbol.Nonterm (PrecRef prec_ref); _}
@@ -24963,91 +23349,91 @@ NontermProds {nonterm_type; cident; prec_ref; prods}
                   :: Elm.{symbol=Symbol.Nonterm (NontermType nonterm_type); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Nonterm (
                   (*______________________________________________________________________________*)
-#552 "./Parse.hmh"
+#547 "./Parse.hmh"
 NontermReductions {nonterm_type; cident; symbol_type; prec_ref; reductions}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 111 *) (function
+                (* 109 *) (function
                   | Elm.{symbol=Symbol.Nonterm (PrecSet prec_set); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmt (
                   (*______________________________________________________________________________*)
-#555 "./Parse.hmh"
+#550 "./Parse.hmh"
 StmtPrecSet {prec_set}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 112 *) (function
+                (* 110 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Token token); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmt (
                   (*______________________________________________________________________________*)
-#556 "./Parse.hmh"
+#551 "./Parse.hmh"
 StmtToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 113 *) (function
+                (* 111 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Nonterm nonterm); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmt (
                   (*______________________________________________________________________________*)
-#557 "./Parse.hmh"
+#552 "./Parse.hmh"
 StmtNonterm {nonterm}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 114 *) (function
+                (* 112 *) (function
                   | Elm.{symbol=Symbol.Nonterm (StmtsTl stmts_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Stmt stmt); _}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (StmtsTl (
                   (*______________________________________________________________________________*)
-#560 "./Parse.hmh"
+#555 "./Parse.hmh"
 StmtsTl {stmt; stmts_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 115 *) (function
+                (* 113 *) (function
                   tl__hocc__ -> Symbol.Nonterm (StmtsTl (
                   (*______________________________________________________________________________*)
-#561 "./Parse.hmh"
+#556 "./Parse.hmh"
 StmtsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                 );
-                (* 116 *) (function
+                (* 114 *) (function
                   | Elm.{symbol=Symbol.Nonterm (StmtsTl stmts_tl); _}
                   :: Elm.{symbol=Symbol.Nonterm (Stmt stmt); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmts (
                   (*______________________________________________________________________________*)
-#564 "./Parse.hmh"
+#559 "./Parse.hmh"
 Stmts {stmt; stmts_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 117 *) (function
+                (* 115 *) (function
                   | Elm.{symbol=Symbol.Token (DEDENT dedent); _}
                   :: Elm.{symbol=Symbol.Nonterm (Stmts stmts); _}
                   :: Elm.{symbol=Symbol.Token (INDENT indent); _}
                   :: Elm.{symbol=Symbol.Token (HOCC hocc_); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Hocc (
                   (*______________________________________________________________________________*)
-#567 "./Parse.hmh"
+#562 "./Parse.hmh"
 Hocc {hocc_; indent; stmts; dedent}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 118 *) (function
+                (* 116 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Sep sep); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#572 "./Parse.hmh"
+#567 "./Parse.hmh"
 let token = match sep with
           | SepLineDelim {line_delim=LINE_DELIM {token}}
           | SepSemi {semi=SEMI {token}}
@@ -25059,403 +23445,403 @@ let token = match sep with
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 119 *) (function
+                (* 117 *) (function
                   | Elm.{symbol=Symbol.Token (NONTERM (NONTERM {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
+MatterToken {token}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 118 *) (function
+                  | Elm.{symbol=Symbol.Token (EPSILON_ (EPSILON {token})); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
+                  (*______________________________________________________________________________*)
+#609 "./Parse.hmh"
+MatterToken {token}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 119 *) (function
+                  | Elm.{symbol=Symbol.Token (START (START {token})); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
+                  (*______________________________________________________________________________*)
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 120 *) (function
-                  | Elm.{symbol=Symbol.Token (EPSILON_ (EPSILON {token})); _}
+                  | Elm.{symbol=Symbol.Token (TOKEN (TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 121 *) (function
-                  | Elm.{symbol=Symbol.Token (START (START {token})); _}
+                  | Elm.{symbol=Symbol.Token (NEUTRAL (NEUTRAL {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 122 *) (function
-                  | Elm.{symbol=Symbol.Token (TOKEN (TOKEN {token})); _}
+                  | Elm.{symbol=Symbol.Token (LEFT (LEFT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 123 *) (function
-                  | Elm.{symbol=Symbol.Token (NEUTRAL (NEUTRAL {token})); _}
+                  | Elm.{symbol=Symbol.Token (RIGHT (RIGHT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 124 *) (function
-                  | Elm.{symbol=Symbol.Token (LEFT (LEFT {token})); _}
+                  | Elm.{symbol=Symbol.Token (NONASSOC (NONASSOC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 125 *) (function
-                  | Elm.{symbol=Symbol.Token (RIGHT (RIGHT {token})); _}
+                  | Elm.{symbol=Symbol.Token (PREC (PREC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 126 *) (function
-                  | Elm.{symbol=Symbol.Token (NONASSOC (NONASSOC {token})); _}
+                  | Elm.{symbol=Symbol.Token (OTHER_TOKEN (OTHER_TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 127 *) (function
-                  | Elm.{symbol=Symbol.Token (PREC (PREC {token})); _}
+                  | Elm.{symbol=Symbol.Token (UIDENT (UIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 128 *) (function
-                  | Elm.{symbol=Symbol.Token (OTHER_TOKEN (OTHER_TOKEN {token})); _}
+                  | Elm.{symbol=Symbol.Token (CIDENT (CIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 129 *) (function
-                  | Elm.{symbol=Symbol.Token (UIDENT (UIDENT {token})); _}
+                  | Elm.{symbol=Symbol.Token (USCORE (USCORE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 130 *) (function
-                  | Elm.{symbol=Symbol.Token (CIDENT (CIDENT {token})); _}
+                  | Elm.{symbol=Symbol.Token (ISTRING (ISTRING {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 131 *) (function
-                  | Elm.{symbol=Symbol.Token (USCORE (USCORE {token})); _}
+                  | Elm.{symbol=Symbol.Token (COLON_COLON_EQ (COLON_COLON_EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 132 *) (function
-                  | Elm.{symbol=Symbol.Token (ISTRING (ISTRING {token})); _}
+                  | Elm.{symbol=Symbol.Token (AS (AS {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 133 *) (function
-                  | Elm.{symbol=Symbol.Token (COLON_COLON_EQ (COLON_COLON_EQ {token})); _}
+                  | Elm.{symbol=Symbol.Token (OF (OF {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 134 *) (function
-                  | Elm.{symbol=Symbol.Token (AS (AS {token})); _}
+                  | Elm.{symbol=Symbol.Token (COLON (COLON {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 135 *) (function
-                  | Elm.{symbol=Symbol.Token (OF (OF {token})); _}
+                  | Elm.{symbol=Symbol.Token (DOT (DOT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 136 *) (function
-                  | Elm.{symbol=Symbol.Token (COLON (COLON {token})); _}
+                  | Elm.{symbol=Symbol.Token (ARROW (ARROW {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 137 *) (function
-                  | Elm.{symbol=Symbol.Token (DOT (DOT {token})); _}
+                  | Elm.{symbol=Symbol.Token (LT (LT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 138 *) (function
-                  | Elm.{symbol=Symbol.Token (ARROW (ARROW {token})); _}
+                  | Elm.{symbol=Symbol.Token (EQ (EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 139 *) (function
-                  | Elm.{symbol=Symbol.Token (LT (LT {token})); _}
+                  | Elm.{symbol=Symbol.Token (COMMA (COMMA {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 140 *) (function
-                  | Elm.{symbol=Symbol.Token (EQ (EQ {token})); _}
+                  | Elm.{symbol=Symbol.Token (INDENT (INDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 141 *) (function
-                  | Elm.{symbol=Symbol.Token (COMMA (COMMA {token})); _}
+                  | Elm.{symbol=Symbol.Token (DEDENT (DEDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 142 *) (function
-                  | Elm.{symbol=Symbol.Token (INDENT (INDENT {token})); _}
+                  | Elm.{symbol=Symbol.Token (LPAREN (LPAREN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 143 *) (function
-                  | Elm.{symbol=Symbol.Token (DEDENT (DEDENT {token})); _}
+                  | Elm.{symbol=Symbol.Token (RPAREN (RPAREN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 144 *) (function
-                  | Elm.{symbol=Symbol.Token (LPAREN (LPAREN {token})); _}
+                  | Elm.{symbol=Symbol.Token (LCAPTURE (LCAPTURE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 145 *) (function
-                  | Elm.{symbol=Symbol.Token (RPAREN (RPAREN {token})); _}
+                  | Elm.{symbol=Symbol.Token (RCAPTURE (RCAPTURE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 146 *) (function
-                  | Elm.{symbol=Symbol.Token (LCAPTURE (LCAPTURE {token})); _}
+                  | Elm.{symbol=Symbol.Token (LBRACK (LBRACK {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 147 *) (function
-                  | Elm.{symbol=Symbol.Token (RCAPTURE (RCAPTURE {token})); _}
+                  | Elm.{symbol=Symbol.Token (RBRACK (RBRACK {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 148 *) (function
-                  | Elm.{symbol=Symbol.Token (LBRACK (LBRACK {token})); _}
+                  | Elm.{symbol=Symbol.Token (LARRAY (LARRAY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 149 *) (function
-                  | Elm.{symbol=Symbol.Token (RBRACK (RBRACK {token})); _}
+                  | Elm.{symbol=Symbol.Token (RARRAY (RARRAY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 150 *) (function
-                  | Elm.{symbol=Symbol.Token (LARRAY (LARRAY {token})); _}
+                  | Elm.{symbol=Symbol.Token (LCURLY (LCURLY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 151 *) (function
-                  | Elm.{symbol=Symbol.Token (RARRAY (RARRAY {token})); _}
+                  | Elm.{symbol=Symbol.Token (RCURLY (RCURLY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
+#609 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 152 *) (function
-                  | Elm.{symbol=Symbol.Token (LCURLY (LCURLY {token})); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
-                  (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
-MatterToken {token}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 153 *) (function
-                  | Elm.{symbol=Symbol.Token (RCURLY (RCURLY {token})); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
-                  (*______________________________________________________________________________*)
-#614 "./Parse.hmh"
-MatterToken {token}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 154 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Matter matter); _}
                   :: Elm.{symbol=Symbol.Nonterm (MatterToken (MatterToken {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Matter (
                   (*______________________________________________________________________________*)
-#617 "./Parse.hmh"
+#612 "./Parse.hmh"
 Matter {token; matter}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 155 *) (function
+                (* 153 *) (function
                   tl__hocc__ -> Symbol.Nonterm (Matter (
                   (*______________________________________________________________________________*)
-#618 "./Parse.hmh"
+#613 "./Parse.hmh"
 MatterEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                 );
-                (* 156 *) (function
+                (* 154 *) (function
                   | Elm.{symbol=Symbol.Token (EOI eoi); _}
                   :: Elm.{symbol=Symbol.Nonterm (Matter postlude); _}
                   :: Elm.{symbol=Symbol.Nonterm (Hocc hocc_); _}
                   :: Elm.{symbol=Symbol.Nonterm (Matter prelude); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Hmh (
                   (*______________________________________________________________________________*)
-#621 "./Parse.hmh"
+#616 "./Parse.hmh"
 Hmh {prelude; hocc_; postlude; eoi}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 157 *) (fun _stack -> not_reached ());
-                (* 158 *) (function
+                (* 155 *) (fun _stack -> not_reached ());
+                (* 156 *) (function
                   | Elm.{symbol=Symbol.Token (EOI eoi); _}
                   :: Elm.{symbol=Symbol.Nonterm (Matter postlude); _}
                   :: Elm.{symbol=Symbol.Token (HOCC hocc_); _}
                   :: Elm.{symbol=Symbol.Nonterm (Matter prelude); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Hmhi (
                   (*______________________________________________________________________________*)
-#624 "./Parse.hmh"
+#619 "./Parse.hmh"
 Hmhi {prelude; hocc_; postlude; eoi}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 159 *) (fun _stack -> not_reached ())
+                (* 157 *) (fun _stack -> not_reached ())
               |]
 
             let callback t =
@@ -25662,7 +24048,7 @@ Hmhi {prelude; hocc_; postlude; eoi}
           | Status.Prefix -> t |> feed token |> walk
           | _ -> not_reached ()
   end
-#625 "./Parse.hmh"
+#620 "./Parse.hmh"
 
 let rec scan scanner =
     let scanner, scan_token = Scan.next scanner in
