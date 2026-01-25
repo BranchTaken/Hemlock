@@ -984,12 +984,10 @@ The `hocc` specification language grammar is equivalent to the following specifi
 
 ```hocc
 hocc
-    neutral pCodeTl
     right pCIDENT
     left pDOT
-    neutral pBAR < pCodeTl
     left pCOMMA < pCIDENT
-    right pSEMI < pCodeTl
+    right pSEMI
     neutral pAS < pCOMMA
     token HOCC "hocc"
     token NONTERM "nonterm"
@@ -1010,7 +1008,7 @@ hocc
     token COLON ":"
     token DOT "." prec pDOT
     token ARROW "->"
-    token BAR "|" prec pBAR
+    token BAR "|"
     token LT "<"
     token EQ "="
     token COMMA "," prec pCOMMA
@@ -1100,15 +1098,13 @@ hocc
       | ":"
       | "."
       | "->"
-      | "|"
       | "<"
       | "="
       | ","
-      | ";"
     nonterm CodeTl ::=
       | Delimited CodeTl
       | CodeToken CodeTl
-      | epsilon prec pCodeTl
+      | epsilon
     nonterm Code ::=
       | Delimited CodeTl
       | CodeToken CodeTl
