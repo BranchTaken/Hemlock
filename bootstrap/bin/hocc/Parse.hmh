@@ -469,7 +469,7 @@ include hocc
       | "_"
       -> PatternUscore
       | binding:Uident
-      | Pattern "as" binding:Uident prec pAS
+      | Pattern "as" binding:Uident
       -> PatternBinding {binding}
       | "(" pattern:Pattern ")"
       | CIDENT pattern:Pattern prec pCIDENT

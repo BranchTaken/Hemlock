@@ -586,7 +586,7 @@ include struct
             Prod.init ~index:74L ~lhs_index:66L ~rhs_indexes:[|42L|]
               ~prec:None ~callback:74L;
             Prod.init ~index:75L ~lhs_index:66L ~rhs_indexes:[|66L; 26L; 42L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~callback:75L;
+              ~prec:None ~callback:75L;
             Prod.init ~index:76L ~lhs_index:66L ~rhs_indexes:[|30L; 66L; 31L|]
               ~prec:None ~callback:76L;
             Prod.init ~index:77L ~lhs_index:66L ~rhs_indexes:[|13L; 66L|]
