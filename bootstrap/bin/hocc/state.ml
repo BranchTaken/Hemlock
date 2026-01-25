@@ -290,6 +290,8 @@ let conflicts_alist ~resolve symbols prods {actions; _} =
     match resolve with
     | false -> (symbol_index, conflict) :: symbol_index_conflict
     | true -> begin
+        (* Conflicts which resolve to a shift action can be ignored because state merging cannot
+         * affect resolutions, but all others must be traced. *)
         let resolved = Contrib.resolve symbols prods symbol_index conflict in
         match Contrib.mem_shift resolved && (Uns.(=) (Contrib.length resolved) 1L) with
         | true -> symbol_index_conflict

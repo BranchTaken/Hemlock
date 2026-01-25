@@ -191,7 +191,7 @@ practice be merged without changing the grammar recognized by the state machine.
 
 ## LALR(1)
 
-The LALR(1) algorithm bears mentioning only because it is used in the IELR(1) algorithm as the
+The LALR(1) algorithm bears mentioning primarily because it is used in the IELR(1) algorithm as the
 foundation on which inadequacy attribution metadata are computed. As described in more detail later,
 IELR(1) conceptually patches up all inadequacies of an LALR(1) parser to make it recognize the same
 grammar as the corresponding canonical LR(1) parser. That means starting with an LALR(1) parser,
@@ -202,6 +202,17 @@ have identical follow sets, i.e. isocores are compatible only if they are isoker
 to the other extreme, and treats all isocores as compatible, regardless of follow sets. Given a
 functioning canonical LR(1) parser generator, LALR(1) parser generation is trivial to add; isocore
 compatibility tests always return true.
+
+The well-known **_mysterious new conflicts_** caused by LALR(1) state merging are always
+**_reduce-reduce conflicts_**, but it is also possible for state merging to create **_mysterious
+invasive conflicts_** that are caused by merging **_shift-reduce conflicts_** into states which
+would otherwise have performed a reduce action. Furthermore, it is possible to create **_mysterious
+mutated conflicts_** by merging multiple reduce-reduce conflicts that have distinct resolutions.
+
+The PGM(1) algorithm suffices to avoid mysterious new conflicts. However, input grammars commonly
+rely on precedence/associativity to resolve LR(1) ambiguities. Both LALR(1) and PGM(1) can introduce
+invasive/mutated conflicts, i.e. they can generate parsers that behave differently than the resolved
+LR(1) parser. Such parsers are **_LR(1)-inadequate_**.
 
 ## IELR(1)
 
@@ -235,24 +246,22 @@ following terminology related to state machine digraphs:
 - **_ipred_**: Immediate predecessor, transit source relative to destination
 - **_isucc_**: Immediate successor, transit destination relative to source
 
-States that contain conflicting reduce actions for the same input symbol (**_reduce-reduce
-conflicts_**) are the starting point for tracing backward through every **_lane_**, some or all of
-which may contribute to conflicts. From the perspective of the conflict state, an individual lane is
-a linear (i.e. non-forking but potentially cyclic) predecessor path back to a start state; the lane
-may extend forward past the conflict state either via shift or via goto, but these extensions are
-irrelevant to the conflict unless they participate in a cycle back to the conflict state. Cycles
-pose complications with regard to lane tracing, as do acyclic diamond-pattern fork/join patterns,
-whether sequential or nested. Such topologies can induce an infinitude of lanes, which is why
-analyses based on lane tracing must be able to reach closure while tracing each lane segment only
-once.
+Each state that contains conflicting actions for the same input symbol that are not resolved to a
+shift action (i.e. the conflict remains unresolved or the resolution is a reduce action) is a
+starting point for tracing backward through every **_lane_**, some or all of which may contribute to
+conflicts. From the perspective of the conflict state, an individual lane is a linear (i.e.
+non-forking but potentially cyclic) predecessor path back to a start state; the lane may extend
+forward past the conflict state either via shift or via goto, but these extensions are irrelevant to
+the conflict unless they participate in a cycle back to the conflict state. Cycles pose
+complications with regard to lane tracing, as do acyclic diamond-pattern fork/join patterns, whether
+sequential or nested. Such topologies can induce an infinitude of lanes, which is why analyses based
+on lane tracing must be able to reach closure while tracing each lane segment only once.
 
 Lane tracing matters to inadequacy elimination because each shift and reduce contribution
 (**_contrib_**) is attributed to a transit &mdash; an **_attrib_** (attribution). Removal of an
 inadequacy entails splitting portions of two or more merged lanes such that attribs are fully
-partitioned with respect to each conflict-containing state. Furthermore, although LR(1)-relative
-inadequacies always result in reduce-reduce conflicts, shift actions must also be tracked in
-conflict manifestations in order to determine which state(s) to split. Each attrib is specific to a
-conflict state, symbol, and transit. Thus an attrib comprises a (conflict state, symbol, conflict
+partitioned with respect to each conflict-containing state. Each attrib is specific to a conflict
+state, symbol, and transit. Thus an attrib comprises a (conflict state, symbol, conflict
 manifestation, isucc LR(1) itemset, contrib) tuple.
 
 ### Lane tracing
