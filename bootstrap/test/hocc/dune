@@ -652,7 +652,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -a pgm1 -txt -hmh)))))
+   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -a ielr1 -txt -hmh)))))
 (rule
  (alias runtest)
  (action

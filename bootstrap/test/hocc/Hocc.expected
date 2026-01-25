@@ -1,11 +1,18 @@
 hocc: Parsing "./Hocc.hmh"
-hocc: Generating PGM(1) specification
-hocc: 0 precedences, 39 tokens, 40 non-terminals (2 starts), 75 productions
-hocc: LR(1) item set compatibility: weak
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++++++++.+.++++++++++++++++++++++++++.......+.+........++............+.............+..............+...............+........+++++++++++++++++++++++++++++++.++++++++++.+.+++++++++[11/100]+++++++++++..........+++++++.+.+++++++++++++++
-hocc: Generating 134 LR(1) states
+hocc: Generating IELR(1) specification
+hocc: 5 precedences, 42 tokens, 48 non-terminals (2 starts), 158 productions
+hocc: Generating LALR(1) specification as IELR(1) prerequisite
+hocc: LR(1) item set compatibility: lalr1
+hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++++++++++++++++++++++++++++++++++++++++++........................................+.++++++++++++++++++++++++++++++++++++++++++++++[13/100].++++...........++++++.+.++...........++..+........+++++++++++++++..............+++.+............++...........+++++++...........+++++.++++++++++++++++++++++++++++++...........+++++++++++++++++++++[55/200]++++++++++......+............+++++++....................+..+.....................++.....................................+......................................+.......................................+.............................+.........+++++++++++++++++++++++++++++++++
+hocc: Generating 259 LR(1) states
+hocc: 6 conflicts in 4 states (0 ⊥, 6 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
+hocc: Gathering IELR(1) conflict attributions...
+hocc: LR(1) item set compatibility: ielr1
+hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++++++++++++++++++++++++++++++++++++++++++........................................+.++++++++++++++++++++++++++++++++++++++++++++++[13/100].++++...........++++++.+.++...........++..+........+++++++++++++++..............+++.+............++...........+++++++...........+++++.++++++++++++++++++++++++++++++...........+++++++++++++++++++++[55/200]++++++++++......+............+++++++....................+..+.....................++.....................................+......................................+.......................................+.............................+.........+++++++++++++++++++++++++++++++++
+hocc: Generating 259 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: 0 unreachable states
+hocc: 1 unreachable state
+hocc: Reindexing 258 LR(1) states
 hocc: 0 remergeable states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report
