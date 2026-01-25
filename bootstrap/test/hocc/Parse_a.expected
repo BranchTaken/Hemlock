@@ -41,4 +41,4 @@ hocc:    N6 ::= OP N4
 hocc:    N6 ::= N4 N5
 hocc:    N6 ::= epsilon
 hocc:    N7 ::= OP N1 N2
-hocc:    N8 ::= N5 N5 N5 N5 N6 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5
+hocc:    N8 ::= N5 N5 N5 N5 N6 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5
