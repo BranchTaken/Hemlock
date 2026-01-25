@@ -985,8 +985,12 @@ The `hocc` specification language grammar is equivalent to the following specifi
 ```hocc
 hocc
     neutral pCodeTl
-
-    # hocc-specific keywords
+    right pCIDENT
+    left pDOT
+    neutral pBAR < pCodeTl
+    left pCOMMA < pCIDENT
+    right pSEMI < pCodeTl
+    neutral pAS < pCOMMA
     token HOCC "hocc"
     token NONTERM "nonterm"
     token EPSILON_ "epsilon"
@@ -995,37 +999,24 @@ hocc
     token NEUTRAL "neutral"
     token LEFT "left"
     token RIGHT "right"
+    token NONASSOC "nonassoc"
     token PREC "prec"
-
-    # Identifiers
-    token UIDENT # Uncapitalized
-    right pCIDENT
-    token CIDENT prec pCIDENT # Capitalized
+    token UIDENT
+    token CIDENT prec pCIDENT
     token USCORE "_"
-
-    # Token alias
     token ISTRING
-
-    # Punctuation/separators
     token COLON_COLON_EQ "::="
     token OF "of"
     token COLON ":"
-    left pDOT
     token DOT "." prec pDOT
     token ARROW "->"
-    neutral pBAR < pCodeTl
     token BAR "|" prec pBAR
     token LT "<"
-    left pCOMMA < pCIDENT
     token EQ "="
     token COMMA "," prec pCOMMA
-    right pSEMI < pCodeTl
     token SEMI ";" prec pSEMI
-    neutral pAS < pCOMMA
     token AS "as" prec pAS
     token LINE_DELIM
-
-    # Left-right paired delimiters
     token INDENT
     token DEDENT
     token LPAREN "("
@@ -1038,61 +1029,58 @@ hocc
     token RARRAY "|]"
     token LCURLY "{"
     token RCURLY "}"
-
-    # Miscellaneous Hemlock token in embedded code
     token OTHER_TOKEN
-
-    # End of input, used to terminate start symbols
     token EOI
-
-    nonterm Ident ::= UIDENT | CIDENT | "_"
-
+    nonterm Uident ::=
+      | "hocc"
+      | "nonterm"
+      | "epsilon"
+      | "start"
+      | "token"
+      | "neutral"
+      | "left"
+      | "right"
+      | "nonassoc"
+      | "prec"
+      | UIDENT
     nonterm PrecsTl ::=
-      | "," UIDENT PrecsTl
+      | "," Uident PrecsTl
       | epsilon
-
-    nonterm Precs ::= UIDENT PrecsTl
-
+    nonterm Precs ::= Uident PrecsTl
     nonterm PrecRels ::=
       | "<" Precs
       | epsilon
-
-    nonterm PrecType ::= "neutral" | "left" | "right" | "nonassoc"
-
-    nonterm Prec ::= PrecType UIDENT PrecRels
-
+    nonterm PrecType ::=
+      | "neutral"
+      | "left"
+      | "right"
+      | "nonassoc"
+    nonterm PrecSet ::= PrecType Precs PrecRels
     nonterm SymbolTypeQualifier ::=
       | CIDENT "." SymbolTypeQualifier
       | epsilon
-
-    nonterm SymbolType ::= "of" SymbolTypeQualifier UIDENT
-
+    nonterm SymbolType ::= "of" SymbolTypeQualifier Uident
     nonterm SymbolType0 ::=
       | SymbolType
       | epsilon
-
     nonterm PrecRef ::=
-      | "prec" UIDENT
+      | "prec" Uident
       | epsilon
-
     nonterm TokenAlias ::=
       | ISTRING
       | epsilon
-
     nonterm Token ::= "token" CIDENT TokenAlias SymbolType0 PrecRef
-
-    nonterm Sep ::= LINE_DELIM | ";" | "|"
-
+    nonterm Sep ::=
+      | LINE_DELIM
+      | ";"
+      | "|"
     nonterm CodesTl ::=
       | Sep Code CodesTl
       | epsilon
-
     nonterm Codes ::= Code CodesTl
-
     nonterm Codes0 ::=
       | Codes
       | epsilon
-
     nonterm Delimited ::=
       | INDENT Codes DEDENT
       | "(" Codes0 ")"
@@ -1100,138 +1088,108 @@ hocc
       | "[" Codes0 "]"
       | "[|" Codes0 "|]"
       | "{" Codes0 "}"
-
     nonterm CodeToken ::=
-      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right"
-      | "nonassoc" | "prec"
       | OTHER_TOKEN
-      | UIDENT
+      | Uident
       | CIDENT
       | "_"
       | ISTRING
       | "::="
-      | "of" | ":" | "." | "->" | "|" | "<" | "=" | "," | ";"
-
+      | "as"
+      | "of"
+      | ":"
+      | "."
+      | "->"
+      | "|"
+      | "<"
+      | "="
+      | ","
+      | ";"
     nonterm CodeTl ::=
       | Delimited CodeTl
       | CodeToken CodeTl
       | epsilon prec pCodeTl
-
     nonterm Code ::=
       | Delimited CodeTl
       | CodeToken CodeTl
-
-    nonterm Binding ::=
-      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right"
-      | "nonassoc" | "prec"
-      | UIDENT
-
     nonterm PatternField ::=
-      | Binding
-      | UIDENT "=" Pattern
-
+      | Uident
+      | Uident "=" Pattern
     nonterm PatternFields prec pSEMI ::=
       | PatternField
       | PatternField ";" "_"
       | PatternField ";" PatternFields
-
     nonterm SemiSuffix ::=
       | ";"
       | epsilon
-
     nonterm ModulePath ::=
       | CIDENT
       | ModulePath "." ModulePath prec pDOT
-
     nonterm Pattern ::=
       | "_"
-      | Binding
-      | Pattern "as" Binding prec pAS
+      | Uident
+      | Pattern "as" Uident prec pAS
       | "(" Pattern ")"
       | CIDENT Pattern prec pCIDENT
       | ModulePath "." "(" Pattern ")"
       | Pattern "," Pattern prec pCOMMA
       | "{" PatternFields SemiSuffix "}"
       | ModulePath "." "{" PatternFields SemiSuffix "}"
-
     nonterm ProdParamSymbol ::=
       | CIDENT
       | ISTRING
-
-    nonterm Binding ::=
-      | "hocc" | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right"
-      | "nonassoc" | "prec"
-      | UIDENT
-
-    nonterm PatternField ::=
-      | Binding
-      | UIDENT "=" Pattern
-
-    nonterm PatternFields prec pSEMI ::=
-      | PatternField
-      | PatternField ";" "_"
-      | PatternField ";" PatternFields
-
-    nonterm SemiSuffix ::=
-      | ";"
-      | epsilon
-
-    nonterm ModulePath ::=
-      | CIDENT
-      | ModulePath "." ModulePath prec pDOT
-
-    nonterm Pattern ::=
-      | "_"
-      | Binding
-      | Pattern "as" Binding prec pAS
-      | "(" Pattern ")"
-      | CIDENT Pattern prec pCIDENT
-      | ModulePath "." "(" Pattern ")"
-      | Pattern "," Pattern prec pCOMMA
-      | "{" PatternFields SemiSuffix "}"
-      | ModulePath "." "{" PatternFields SemiSuffix "}"
-
+    nonterm ProdParam ::=
+      | Uident ":" ProdParamSymbol
+      | "(" Pattern ")" ":" ProdParamSymbol
+      | ModulePath "." "(" Pattern ")" ":" ProdParamSymbol
+      | "{" PatternFields SemiSuffix "}" ":" ProdParamSymbol
+      | ModulePath "." "{" PatternFields SemiSuffix "}" ":" ProdParamSymbol
+      | "_" ":" ProdParamSymbol
+      | ProdParamSymbol
+    nonterm ProdParamsTl ::=
+      | ProdParam ProdParamsTl
+      | PrecRef
+    nonterm ProdParams ::= ProdParam ProdParamsTl
+    nonterm ProdPattern ::=
+      | ProdParams
+      | "epsilon" PrecRef
     nonterm Prod ::= ProdPattern
-
     nonterm ProdsTl ::=
       | "|" Prod ProdsTl
       | epsilon
-
     nonterm Prods ::=
       | "|" Prod ProdsTl
       | Prod ProdsTl
-
     nonterm Reduction ::= Prods "->" Code
-
     nonterm ReductionsTl ::=
       | "|" Reduction ReductionsTl
       | epsilon
-
-    nonterm Reductions ::=
-      | Reduction ReductionsTl
-
-    nonterm NontermType ::= "nonterm" | "start"
-
+    nonterm Reductions ::= Reduction ReductionsTl
+    nonterm NontermType ::=
+      | "nonterm"
+      | "start"
     nonterm Nonterm ::=
       | NontermType CIDENT PrecRef "::=" Prods
       | NontermType CIDENT SymbolType PrecRef "::=" Reductions
-
     nonterm Stmt ::=
-      | Prec
+      | PrecSet
       | Token
       | Nonterm
-
     nonterm StmtsTl ::=
       | LINE_DELIM Stmt StmtsTl
       | epsilon
-
     nonterm Stmts ::= Stmt StmtsTl
-
     nonterm Hocc ::= "hocc" INDENT Stmts DEDENT
-
     nonterm MatterToken ::=
       | Sep
-      | "nonterm" | "epsilon" | "start" | "token" | "neutral" | "left" | "right" | "nonassoc"
+      | "nonterm"
+      | "epsilon"
+      | "start"
+      | "token"
+      | "neutral"
+      | "left"
+      | "right"
+      | "nonassoc"
       | "prec"
       | OTHER_TOKEN
       | UIDENT
@@ -1239,21 +1197,30 @@ hocc
       | "_"
       | ISTRING
       | "::="
-      | "as" | "of" | ":" | "." | "->" | "<" | "=" | ","
+      | "as"
+      | "of"
+      | ":"
+      | "."
+      | "->"
+      | "<"
+      | "="
+      | ","
       | INDENT
       | DEDENT
-      | "(" | ")"
-      | "(|" | "|)"
-      | "[" | "]"
-      | "[|" | "|]"
-      | "{" | "}"
-
+      | "("
+      | ")"
+      | "(|"
+      | "|)"
+      | "["
+      | "]"
+      | "[|"
+      | "|]"
+      | "{"
+      | "}"
     nonterm Matter ::=
       | MatterToken Matter
       | epsilon
-
     start Hmh ::= Matter Hocc Matter EOI
-
     start Hmhi ::= Matter "hocc" Matter EOI
 ```
 
