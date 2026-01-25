@@ -75,10 +75,11 @@ include hocc
       neutral:N5
       left:N5
       right:N5
+      nonassoc:N5
       prec:N5
       ->
         # Various special tokens which are only contextually reserved.
-        hocc nonterm epsilon start token neutral left right prec _ ::=
+        hocc nonterm epsilon start token neutral left right nonassoc prec _ ::=
         of : . -> | < = , ; as ( ) (| |) [ ] [| |] { }
 
 # Matter.
