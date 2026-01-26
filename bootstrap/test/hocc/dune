@@ -198,7 +198,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to help_a.out (run %{bin:hocc} -v -verbose -txt -text -hmh -hocc -c -canonical -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -h)))))
+   (with-outputs-to help_a.out (run %{bin:hocc} -v -verbose -txt -text -hmh -hocc -a lr1 -algorithm lr1 -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -h)))))
 (rule
  (alias runtest)
  (action (diff help_a.expected help_a.out)))
@@ -209,7 +209,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to help_b.out (run %{bin:hocc} -v -verbose -txt -text -hmh -hocc -c -canonical -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -no-such-option)))))
+   (with-outputs-to help_b.out (run %{bin:hocc} -v -verbose -txt -text -hmh -hocc -a lr1 -algorithm lr1 -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -no-such-option)))))
 (rule
  (alias runtest)
  (action (diff help_b.expected help_b.out)))
