@@ -2,6 +2,9 @@
 #
 # Usage: hocc_test <hocc> <src> [-algorithm aplr|ielr|pgm|lr|lalr] [-resolve yes|no]
 #        [-remerge yes|no] [-gc yes|no] [<parameter>]*
+#
+# The `-algorithm`/`-resolve`/`-remerge`/`-gc` options mangle output filenames to allow testing
+# multiple configurations for the same input file. Use `-a`/`-r`/`-m`/`-g` to avoid mangling.
 
 hocc="$1"
 src="$2"
