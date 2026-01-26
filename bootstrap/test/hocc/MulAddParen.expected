@@ -1,4 +1,4 @@
-hocc: Parsing "./B.hmh"
+hocc: Parsing "./MulAddParen.hmh"
 hocc: Generating PGM(1) specification
 hocc: 0 precedences, 8 tokens, 5 non-terminals (1 start), 8 productions
 hocc: LR(1) item set compatibility: weak
@@ -10,5 +10,5 @@ hocc: 0 remergeable states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Generating hocc report
-hocc: Writing "./hocc/B.txt"
-hocc: Writing "./hocc/B.hmh"
+hocc: Writing "./hocc/MulAddParen.txt"
+hocc: Writing "./hocc/MulAddParen.hmh"

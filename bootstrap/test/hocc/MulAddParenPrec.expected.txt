@@ -1,5 +1,8 @@
-B grammar
+MulAddParenPrec grammar
 
+Precedences
+    left p1
+    left p2 < p1
 Tokens
     token EPSILON "ε"
         First: {"ε"}
@@ -16,7 +19,7 @@ Tokens
     token LPAREN
         First: {LPAREN}
         Follow: {LPAREN, ID}
-    token RPAREN
+    token RPAREN prec p1
         First: {RPAREN}
         Follow: {PLUS, STAR, RPAREN, EOI}
     token ID
@@ -40,7 +43,7 @@ Non-terminals
         First: {LPAREN, ID}
         Follow: {PLUS, RPAREN, EOI}
         Productions
-            E ::= E PLUS T
+            E ::= E PLUS T prec p2
             E ::= T
     nonterm T
         First: {LPAREN, ID}
@@ -52,20 +55,20 @@ Non-terminals
         First: {LPAREN, ID}
         Follow: {PLUS, STAR, RPAREN, EOI}
         Productions
-            F ::= LPAREN E RPAREN
-            F ::= ID
-PGM(1) States
+            F ::= LPAREN E RPAREN prec p1
+            F ::= ID prec p1
+LR(1) States
     State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
             [S ::= · E EOI, {"⊥"}]
-            [E ::= · E PLUS T, {PLUS, EOI}]
+            [E ::= · E PLUS T, {PLUS, EOI}] prec p2
             [E ::= · T, {PLUS, EOI}]
             [T ::= · T STAR F, {PLUS, STAR, EOI}]
             [T ::= · F, {PLUS, STAR, EOI}]
-            [F ::= · LPAREN E RPAREN, {PLUS, STAR, EOI}]
-            [F ::= · ID, {PLUS, STAR, EOI}]
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, EOI}] prec p1
+            [F ::= · ID, {PLUS, STAR, EOI}] prec p1
         Actions
             LPAREN : ShiftPrefix 1
             ID : ShiftPrefix 2
@@ -76,14 +79,14 @@ PGM(1) States
             F : 6
     State 1 [1.0]
         Kernel
-            [F ::= LPAREN · E RPAREN, {PLUS, STAR, RPAREN, EOI}]
+            [F ::= LPAREN · E RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
         Added
-            [E ::= · E PLUS T, {PLUS, RPAREN}]
+            [E ::= · E PLUS T, {PLUS, RPAREN}] prec p2
             [E ::= · T, {PLUS, RPAREN}]
             [T ::= · T STAR F, {PLUS, STAR, RPAREN}]
             [T ::= · F, {PLUS, STAR, RPAREN}]
-            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN}]
-            [F ::= · ID, {PLUS, STAR, RPAREN}]
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN}] prec p1
+            [F ::= · ID, {PLUS, STAR, RPAREN}] prec p1
         Actions
             LPAREN : ShiftPrefix 1
             ID : ShiftPrefix 2
@@ -93,12 +96,12 @@ PGM(1) States
             F : 6
     State 2 [2.0]
         Kernel
-            [F ::= ID ·, {PLUS, STAR, RPAREN, EOI}]
+            [F ::= ID ·, {PLUS, STAR, RPAREN, EOI}] prec p1
         Actions
-            PLUS : Reduce F ::= ID
-            STAR : Reduce F ::= ID
-            RPAREN : Reduce F ::= ID
-            EOI : Reduce F ::= ID
+            PLUS : Reduce F ::= ID prec p1
+            STAR : Reduce F ::= ID prec p1
+            RPAREN : Reduce F ::= ID prec p1
+            EOI : Reduce F ::= ID prec p1
     State 3 [3.0]
         Kernel
             [S' ::= S · "⊥", {"ε"}]
@@ -107,7 +110,7 @@ PGM(1) States
     State 4 [4.0]
         Kernel
             [S ::= E · EOI, {"⊥"}]
-            [E ::= E · PLUS T, {PLUS, EOI}]
+            [E ::= E · PLUS T, {PLUS, EOI}] prec p2
         Actions
             PLUS : ShiftPrefix 9
             EOI : ShiftAccept 10
@@ -130,11 +133,11 @@ PGM(1) States
             EOI : Reduce T ::= F
     State 7 [7.0]
         Kernel
-            [E ::= E · PLUS T, {PLUS, RPAREN}]
-            [F ::= LPAREN E · RPAREN, {PLUS, STAR, RPAREN, EOI}]
+            [E ::= E · PLUS T, {PLUS, RPAREN}] prec p2
+            [F ::= LPAREN E · RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
         Actions
             PLUS : ShiftPrefix 9
-            RPAREN : ShiftPrefix 12
+            RPAREN : ShiftPrefix 12 prec p1
     State 8 [8.0]
         Kernel
             [S' ::= S "⊥" ·, {"ε"}]
@@ -142,12 +145,12 @@ PGM(1) States
             "ε" : Reduce S' ::= S "⊥"
     State 9 [9.0]
         Kernel
-            [E ::= E PLUS · T, {PLUS, RPAREN, EOI}]
+            [E ::= E PLUS · T, {PLUS, RPAREN, EOI}] prec p2
         Added
             [T ::= · T STAR F, {PLUS, STAR, RPAREN, EOI}]
             [T ::= · F, {PLUS, STAR, RPAREN, EOI}]
-            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN, EOI}]
-            [F ::= · ID, {PLUS, STAR, RPAREN, EOI}]
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
+            [F ::= · ID, {PLUS, STAR, RPAREN, EOI}] prec p1
         Actions
             LPAREN : ShiftPrefix 1
             ID : ShiftPrefix 2
@@ -163,8 +166,8 @@ PGM(1) States
         Kernel
             [T ::= T STAR · F, {PLUS, STAR, RPAREN, EOI}]
         Added
-            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN, EOI}]
-            [F ::= · ID, {PLUS, STAR, RPAREN, EOI}]
+            [F ::= · LPAREN E RPAREN, {PLUS, STAR, RPAREN, EOI}] prec p1
+            [F ::= · ID, {PLUS, STAR, RPAREN, EOI}] prec p1
         Actions
             LPAREN : ShiftPrefix 1
             ID : ShiftPrefix 2
@@ -172,21 +175,21 @@ PGM(1) States
             F : 14
     State 12 [12.0]
         Kernel
-            [F ::= LPAREN E RPAREN ·, {PLUS, STAR, RPAREN, EOI}]
+            [F ::= LPAREN E RPAREN ·, {PLUS, STAR, RPAREN, EOI}] prec p1
         Actions
-            PLUS : Reduce F ::= LPAREN E RPAREN
-            STAR : Reduce F ::= LPAREN E RPAREN
-            RPAREN : Reduce F ::= LPAREN E RPAREN
-            EOI : Reduce F ::= LPAREN E RPAREN
+            PLUS : Reduce F ::= LPAREN E RPAREN prec p1
+            STAR : Reduce F ::= LPAREN E RPAREN prec p1
+            RPAREN : Reduce F ::= LPAREN E RPAREN prec p1
+            EOI : Reduce F ::= LPAREN E RPAREN prec p1
     State 13 [13.0]
         Kernel
-            [E ::= E PLUS T ·, {PLUS, RPAREN, EOI}]
+            [E ::= E PLUS T ·, {PLUS, RPAREN, EOI}] prec p2
             [T ::= T · STAR F, {PLUS, STAR, RPAREN, EOI}]
         Actions
-            PLUS : Reduce E ::= E PLUS T
+            PLUS : Reduce E ::= E PLUS T prec p2
             STAR : ShiftPrefix 11
-            RPAREN : Reduce E ::= E PLUS T
-            EOI : Reduce E ::= E PLUS T
+            RPAREN : Reduce E ::= E PLUS T prec p2
+            EOI : Reduce E ::= E PLUS T prec p2
     State 14 [14.0]
         Kernel
             [T ::= T STAR F ·, {PLUS, STAR, RPAREN, EOI}]

@@ -1,4 +1,4 @@
-hocc: Parsing "./G.hmh"
+hocc: Parsing "./IelrFig5Diamond.hmh"
 hocc: Generating IELR(1) specification
 hocc: 2 precedences, 7 tokens, 8 non-terminals (1 start), 12 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite
@@ -16,5 +16,5 @@ hocc: 0 remergeable states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Generating hocc report
-hocc: Writing "./hocc/G.txt"
-hocc: Writing "./hocc/G.hmh"
+hocc: Writing "./hocc/IelrFig5Diamond.txt"
+hocc: Writing "./hocc/IelrFig5Diamond.hmh"

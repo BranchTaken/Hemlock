@@ -1,255 +1,5 @@
 (rule
  (deps
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to help_a.out (run %{bin:hocc} -v -verbose -txt -text -html -hmh -hocc -c -canonical -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -h)))))
-(rule
- (alias runtest)
- (action (diff help_a.expected help_a.out)))
-
-(rule
- (deps
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to help_b.out (run %{bin:hocc} -v -verbose -txt -text -html -hmh -hocc -c -canonical -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -no-such-option)))))
-(rule
- (alias runtest)
- (action (diff help_b.expected help_b.out)))
-
-(rule
- (deps
-  (glob_files Parse_a.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_a.out (run ./hocc_test %{bin:hocc} Parse_a -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_a.expected Parse_a.out)))
-
-(rule
- (deps
-  (glob_files Parse_b.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_b.out (run ./hocc_test %{bin:hocc} Parse_b -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_b.expected Parse_b.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_malformed.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_malformed.out (run ./hocc_test %{bin:hocc} Parse_error_malformed -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_malformed.expected Parse_error_malformed.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_uident.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_uident.out (run ./hocc_test %{bin:hocc} Parse_error_uident -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_uident.expected Parse_error_uident.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_cident.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_cident.out (run ./hocc_test %{bin:hocc} Parse_error_cident -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_cident.expected Parse_error_cident.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_precs_lt.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_precs_lt.out (run ./hocc_test %{bin:hocc} Parse_error_precs_lt -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_precs_lt.expected Parse_error_precs_lt.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_precs.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_precs.out (run ./hocc_test %{bin:hocc} Parse_error_precs -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_precs.expected Parse_error_precs.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_of_type_dot.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_of_type_dot.out (run ./hocc_test %{bin:hocc} Parse_error_of_type_dot -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_of_type_dot.expected Parse_error_of_type_dot.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_delimited_rparen.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_delimited_rparen.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rparen -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_delimited_rparen.expected Parse_error_delimited_rparen.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_delimited_rcapture.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_delimited_rcapture.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rcapture -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_delimited_rcapture.expected Parse_error_delimited_rcapture.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_delimited_rbrack.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_delimited_rbrack.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rbrack -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_delimited_rbrack.expected Parse_error_delimited_rbrack.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_delimited_rarray.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_delimited_rarray.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rarray -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_delimited_rarray.expected Parse_error_delimited_rarray.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_delimited_rcurly.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_delimited_rcurly.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rcurly -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_delimited_rcurly.expected Parse_error_delimited_rcurly.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_code.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_code.out (run ./hocc_test %{bin:hocc} Parse_error_code -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_code.expected Parse_error_code.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_prod_param_type.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_prod_param_type.out (run ./hocc_test %{bin:hocc} Parse_error_prod_param_type -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_prod_param_type.expected Parse_error_prod_param_type.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_reduction_arrow.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_reduction_arrow.out (run ./hocc_test %{bin:hocc} Parse_error_reduction_arrow -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_reduction_arrow.expected Parse_error_reduction_arrow.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_nonterm_cce.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_nonterm_cce.out (run ./hocc_test %{bin:hocc} Parse_error_nonterm_cce -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_nonterm_cce.expected Parse_error_nonterm_cce.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_hocc.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_hocc.out (run ./hocc_test %{bin:hocc} Parse_error_hocc -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_hocc.expected Parse_error_hocc.out)))
-
-(rule
- (deps
-  (glob_files Parse_error_hmhi.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Parse_error_hmhi.out (run ./hocc_test %{bin:hocc} Parse_error_hmhi -v)))))
-(rule
- (alias runtest)
- (action (diff Parse_error_hmhi.expected Parse_error_hmhi.out)))
-
-(rule
- (deps
   (glob_files Binding_error.hmh*)
   %{bin:hocc})
  (action
@@ -286,71 +36,179 @@
 
 (rule
  (deps
-  (glob_files Unused.hmh*)
+  (glob_files Example.hmh*)
   %{bin:hocc})
- (targets Unused.out.txt Unused.out.hmh)
+ (targets Example.out.txt Example.hmi Example.hm)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Unused.out (run ./hocc_test %{bin:hocc} Unused -v -txt -hmh)))))
+   (with-outputs-to Example.out (run ./hocc_test %{bin:hocc} Example -v -txt -hm)))))
 (rule
  (alias runtest)
  (action
   (progn
-   (diff Unused.expected Unused.out)
-   (diff Unused.expected.txt Unused.out.txt)
-   (diff Unused.expected.hmh Unused.out.hmh))))
+   (diff Example.expected Example.out)
+   (diff Example.expected.txt Example.out.txt)
+   (diff Example.expected.hmi Example.hmi)
+   (diff Example.expected.hm Example.hm))))
 
 (rule
  (deps
-  (glob_files PSEUDO_END_conflict.hmh*)
+  (glob_files Example_b.hmh*)
   %{bin:hocc})
- (targets PSEUDO_END_conflict.out.txt PSEUDO_END_conflict.out.hmh)
+ (targets Example_b.out.txt Example_b.hmi Example_b.hm)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to PSEUDO_END_conflict.out (run ./hocc_test %{bin:hocc} PSEUDO_END_conflict -v -txt -hmh)))))
+   (with-outputs-to Example_b.out (run ./hocc_test %{bin:hocc} Example_b -v -hm)))))
 (rule
  (alias runtest)
  (action
   (progn
-   (diff PSEUDO_END_conflict.expected PSEUDO_END_conflict.out)
-   (diff PSEUDO_END_conflict.expected.txt PSEUDO_END_conflict.out.txt)
-   (diff PSEUDO_END_conflict.expected.hmh PSEUDO_END_conflict.out.hmh))))
+   (diff Example_b.expected Example_b.out)
+   (diff Example_b.expected.hmi Example_b.hmi)
+   (diff Example_b.expected.hm Example_b.hm))))
 
 (rule
  (deps
-  (glob_files Menhir21Longer.hmh*)
+  (glob_files Example_c.hmh*)
   %{bin:hocc})
- (targets Menhir21Longer.out.txt Menhir21Longer.out.hmh)
+ (targets Example_c.out.txt Example_c.hmi Example_c.hm)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Menhir21Longer.out (run ./hocc_test %{bin:hocc} Menhir21Longer -v -a pgm1 -txt -hmh)))))
+   (with-outputs-to Example_c.out (run ./hocc_test %{bin:hocc} Example_c -v -hm)))))
 (rule
  (alias runtest)
  (action
   (progn
-   (diff Menhir21Longer.expected Menhir21Longer.out)
-   (diff Menhir21Longer.expected.txt Menhir21Longer.out.txt)
-   (diff Menhir21Longer.expected.hmh Menhir21Longer.out.hmh))))
+   (diff Example_c.expected Example_c.out)
+   (diff Example_c.expected.hmi Example_c.hmi)
+   (diff Example_c.expected.hm Example_c.hm))))
 
 (rule
  (deps
-  (glob_files Menhir21Shorter.hmh*)
+  (glob_files Example.hmh*)
   %{bin:hocc})
- (targets Menhir21Shorter.out.txt Menhir21Shorter.out.hmh)
+ (targets Example_rno.out.txt)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Menhir21Shorter.out (run ./hocc_test %{bin:hocc} Menhir21Shorter -v -a pgm1 -txt -hmh)))))
+   (with-outputs-to Example_rno.out (run ./hocc_test %{bin:hocc} Example -resolve no -v -txt)))))
 (rule
  (alias runtest)
  (action
   (progn
-   (diff Menhir21Shorter.expected Menhir21Shorter.out)
-   (diff Menhir21Shorter.expected.txt Menhir21Shorter.out.txt)
-   (diff Menhir21Shorter.expected.hmh Menhir21Shorter.out.hmh))))
+   (diff Example_rno.expected Example_rno.out)
+   (diff Example_rno.expected.txt Example_rno.out.txt))))
+
+(rule
+ (deps
+  (glob_files Example_ml.hmh*)
+  %{bin:hocc})
+ (targets Example_ml.out.txt Example_ml.mli Example_ml.ml)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Example_ml.out (run ./hocc_test %{bin:hocc} Example_ml -txt -ml)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Example_ml.expected.txt Example_ml.out.txt)
+   (diff Example_ml.expected.mli Example_ml.mli)
+   (diff Example_ml.expected.ml Example_ml.ml))))
+(tests
+ (names
+  Example_ml)
+ (libraries Basis))
+
+(rule
+ (deps
+  (glob_files Gawk.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Gawk.out (run ./hocc_test %{bin:hocc} Gawk -v -a ielr1)))))
+(rule
+ (alias runtest)
+ (action (diff Gawk.expected Gawk.out)))
+
+(rule
+ (deps
+  (glob_files Gawk.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Gawk_alr1.out (run ./hocc_test %{bin:hocc} Gawk -v -a lr1)))))
+(rule
+ (alias runtest)
+ (action (diff Gawk_alr1.expected Gawk_alr1.out)))
+
+(rule
+ (deps
+  (glob_files Gpic.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Gpic.out (run ./hocc_test %{bin:hocc} Gpic -v -a ielr1)))))
+(rule
+ (alias runtest)
+ (action (diff Gpic.expected Gpic.out)))
+
+(rule
+ (deps
+  (glob_files Gpic.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Gpic_mno.out (run ./hocc_test %{bin:hocc} Gpic -remerge no -v -a ielr1)))))
+(rule
+ (alias runtest)
+ (action (diff Gpic_mno.expected Gpic_mno.out)))
+
+(rule
+ (deps
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to help_a.out (run %{bin:hocc} -v -verbose -txt -text -html -hmh -hocc -c -canonical -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -h)))))
+(rule
+ (alias runtest)
+ (action (diff help_a.expected help_a.out)))
+
+(rule
+ (deps
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to help_b.out (run %{bin:hocc} -v -verbose -txt -text -html -hmh -hocc -c -canonical -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -no-such-option)))))
+(rule
+ (alias runtest)
+ (action (diff help_b.expected help_b.out)))
+
+(rule
+ (deps
+  (glob_files Hocc.hmh*)
+  %{bin:hocc})
+ (targets Hocc.out.txt Hocc.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -a ielr1 -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Hocc.expected Hocc.out)
+   (diff Hocc.expected.txt Hocc.out.txt)
+   (diff Hocc.expected.hmh Hocc.out.hmh))))
 
 (rule
  (deps
@@ -524,6 +382,40 @@
 
 (rule
  (deps
+  (glob_files IelrFig5Diamond.hmh*)
+  %{bin:hocc})
+ (targets IelrFig5Diamond.out.txt IelrFig5Diamond.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to IelrFig5Diamond.out (run ./hocc_test %{bin:hocc} IelrFig5Diamond -v -a ielr1 -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrFig5Diamond.expected IelrFig5Diamond.out)
+   (diff IelrFig5Diamond.expected.txt IelrFig5Diamond.out.txt)
+   (diff IelrFig5Diamond.expected.hmh IelrFig5Diamond.out.hmh))))
+
+(rule
+ (deps
+  (glob_files IelrFig5Diamonds.hmh*)
+  %{bin:hocc})
+ (targets IelrFig5Diamonds.out.txt IelrFig5Diamonds.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to IelrFig5Diamonds.out (run ./hocc_test %{bin:hocc} IelrFig5Diamonds -v -a ielr1 -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrFig5Diamonds.expected IelrFig5Diamonds.out)
+   (diff IelrFig5Diamonds.expected.txt IelrFig5Diamonds.out.txt)
+   (diff IelrFig5Diamonds.expected.hmh IelrFig5Diamonds.out.hmh))))
+
+(rule
+ (deps
   (glob_files IelrFig6.hmh*)
   %{bin:hocc})
  (targets IelrFig6.out.txt IelrFig6.out.hmh)
@@ -538,6 +430,86 @@
    (diff IelrFig6.expected IelrFig6.out)
    (diff IelrFig6.expected.txt IelrFig6.out.txt)
    (diff IelrFig6.expected.hmh IelrFig6.out.hmh))))
+
+(rule
+ (deps
+  (glob_files Lyken.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Lyken.out (run ./hocc_test %{bin:hocc} Lyken -v -a pgm1)))))
+(rule
+ (alias runtest)
+ (action (diff Lyken.expected Lyken.out)))
+
+(rule
+ (deps
+  (glob_files Menhir21Longer.hmh*)
+  %{bin:hocc})
+ (targets Menhir21Longer.out.txt Menhir21Longer.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Menhir21Longer.out (run ./hocc_test %{bin:hocc} Menhir21Longer -v -a pgm1 -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Menhir21Longer.expected Menhir21Longer.out)
+   (diff Menhir21Longer.expected.txt Menhir21Longer.out.txt)
+   (diff Menhir21Longer.expected.hmh Menhir21Longer.out.hmh))))
+
+(rule
+ (deps
+  (glob_files Menhir21Shorter.hmh*)
+  %{bin:hocc})
+ (targets Menhir21Shorter.out.txt Menhir21Shorter.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Menhir21Shorter.out (run ./hocc_test %{bin:hocc} Menhir21Shorter -v -a pgm1 -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Menhir21Shorter.expected Menhir21Shorter.out)
+   (diff Menhir21Shorter.expected.txt Menhir21Shorter.out.txt)
+   (diff Menhir21Shorter.expected.hmh Menhir21Shorter.out.hmh))))
+
+(rule
+ (deps
+  (glob_files MulAddParen.hmh*)
+  %{bin:hocc})
+ (targets MulAddParen.out.txt MulAddParen.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to MulAddParen.out (run ./hocc_test %{bin:hocc} MulAddParen -v -a pgm1 -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff MulAddParen.expected MulAddParen.out)
+   (diff MulAddParen.expected.txt MulAddParen.out.txt)
+   (diff MulAddParen.expected.hmh MulAddParen.out.hmh))))
+
+(rule
+ (deps
+  (glob_files MulAddParenPrec.hmh*)
+  %{bin:hocc})
+ (targets MulAddParenPrec.out.txt MulAddParenPrec.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to MulAddParenPrec.out (run ./hocc_test %{bin:hocc} MulAddParenPrec -v -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff MulAddParenPrec.expected MulAddParenPrec.out)
+   (diff MulAddParenPrec.expected.txt MulAddParenPrec.out.txt)
+   (diff MulAddParenPrec.expected.hmh MulAddParenPrec.out.hmh))))
 
 (rule
  (deps
@@ -557,311 +529,6 @@
 
 (rule
  (deps
-  (glob_files Example.hmh*)
-  %{bin:hocc})
- (targets Example.out.txt Example.hmi Example.hm)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Example.out (run ./hocc_test %{bin:hocc} Example -v -txt -hm)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff Example.expected Example.out)
-   (diff Example.expected.txt Example.out.txt)
-   (diff Example.expected.hmi Example.hmi)
-   (diff Example.expected.hm Example.hm))))
-
-(rule
- (deps
-  (glob_files Example_b.hmh*)
-  %{bin:hocc})
- (targets Example_b.out.txt Example_b.hmi Example_b.hm)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Example_b.out (run ./hocc_test %{bin:hocc} Example_b -v -hm)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff Example_b.expected Example_b.out)
-   (diff Example_b.expected.hmi Example_b.hmi)
-   (diff Example_b.expected.hm Example_b.hm))))
-
-(rule
- (deps
-  (glob_files Example_c.hmh*)
-  %{bin:hocc})
- (targets Example_c.out.txt Example_c.hmi Example_c.hm)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Example_c.out (run ./hocc_test %{bin:hocc} Example_c -v -hm)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff Example_c.expected Example_c.out)
-   (diff Example_c.expected.hmi Example_c.hmi)
-   (diff Example_c.expected.hm Example_c.hm))))
-
-(rule
- (deps
-  (glob_files Example.hmh*)
-  %{bin:hocc})
- (targets Example_rno.out.txt)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Example_rno.out (run ./hocc_test %{bin:hocc} Example -resolve no -v -txt)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff Example_rno.expected Example_rno.out)
-   (diff Example_rno.expected.txt Example_rno.out.txt))))
-
-(rule
- (deps
-  (glob_files Example_ml.hmh*)
-  %{bin:hocc})
- (targets Example_ml.out.txt Example_ml.mli Example_ml.ml)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Example_ml.out (run ./hocc_test %{bin:hocc} Example_ml -txt -ml)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff Example_ml.expected.txt Example_ml.out.txt)
-   (diff Example_ml.expected.mli Example_ml.mli)
-   (diff Example_ml.expected.ml Example_ml.ml))))
-(tests
- (names
-  Example_ml)
- (libraries Basis))
-
-(rule
- (deps
-  (glob_files Hocc.hmh*)
-  %{bin:hocc})
- (targets Hocc.out.txt Hocc.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -a ielr1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff Hocc.expected Hocc.out)
-   (diff Hocc.expected.txt Hocc.out.txt)
-   (diff Hocc.expected.hmh Hocc.out.hmh))))
-
-(rule
- (deps
-  (glob_files A.hmh*)
-  %{bin:hocc})
- (targets A.out.txt A.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to A.out (run ./hocc_test %{bin:hocc} A -v -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff A.expected A.out)
-   (diff A.expected.txt A.out.txt)
-   (diff A.expected.hmh A.out.hmh))))
-
-(rule
- (deps
-  (glob_files B.hmh*)
-  %{bin:hocc})
- (targets B.out.txt B.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to B.out (run ./hocc_test %{bin:hocc} B -v -a pgm1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff B.expected B.out)
-   (diff B.expected.txt B.out.txt)
-   (diff B.expected.hmh B.out.hmh))))
-
-(rule
- (deps
-  (glob_files C.hmh*)
-  %{bin:hocc})
- (targets C.out.txt C.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to C.out (run ./hocc_test %{bin:hocc} C -v -a pgm1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff C.expected C.out)
-   (diff C.expected.txt C.out.txt)
-   (diff C.expected.hmh C.out.hmh))))
-
-(rule
- (deps
-  (glob_files D.hmh*)
-  %{bin:hocc})
- (targets D.out.txt D.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to D.out (run ./hocc_test %{bin:hocc} D -v -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff D.expected D.out)
-   (diff D.expected.txt D.out.txt)
-   (diff D.expected.hmh D.out.hmh))))
-
-(rule
- (deps
-  (glob_files E.hmh*)
-  %{bin:hocc})
- (targets E.out.txt E.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to E.out (run ./hocc_test %{bin:hocc} E -v -a pgm1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff E.expected E.out)
-   (diff E.expected.txt E.out.txt)
-   (diff E.expected.hmh E.out.hmh))))
-
-(rule
- (deps
-  (glob_files F.hmh*)
-  %{bin:hocc})
- (targets F.out.txt F.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to F.out (run ./hocc_test %{bin:hocc} F -v -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff F.expected F.out)
-   (diff F.expected.txt F.out.txt)
-   (diff F.expected.hmh F.out.hmh))))
-
-(rule
- (deps
-  (glob_files G.hmh*)
-  %{bin:hocc})
- (targets G.out.txt G.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to G.out (run ./hocc_test %{bin:hocc} G -v -a ielr1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff G.expected G.out)
-   (diff G.expected.txt G.out.txt)
-   (diff G.expected.hmh G.out.hmh))))
-
-(rule
- (deps
-  (glob_files H.hmh*)
-  %{bin:hocc})
- (targets H.out.txt H.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to H.out (run ./hocc_test %{bin:hocc} H -v -a ielr1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff H.expected H.out)
-   (diff H.expected.txt H.out.txt)
-   (diff H.expected.hmh H.out.hmh))))
-
-(rule
- (deps
-  (glob_files G2.hmh*)
-  %{bin:hocc})
- (targets G2.out.txt G2.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to G2.out (run ./hocc_test %{bin:hocc} G2 -v -a pgm1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff G2.expected G2.out)
-   (diff G2.expected.txt G2.out.txt)
-   (diff G2.expected.hmh G2.out.hmh))))
-
-(rule
- (deps
-  (glob_files G2.hmh*)
-  %{bin:hocc})
- (targets G2_aielr1.out.txt G2_aielr1.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to G2_aielr1.out (run ./hocc_test %{bin:hocc} G2 -algorithm ielr1 -v -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff G2_aielr1.expected G2_aielr1.out)
-   (diff G2_aielr1.expected.txt G2_aielr1.out.txt)
-   (diff G2_aielr1.expected.hmh G2_aielr1.out.hmh))))
-
-(rule
- (deps
-  (glob_files N.hmh*)
-  %{bin:hocc})
- (targets N.out.txt N.out.hmh)
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to N.out (run ./hocc_test %{bin:hocc} N -v -a pgm1 -txt -hmh)))))
-(rule
- (alias runtest)
- (action
-  (progn
-   (diff N.expected N.out)
-   (diff N.expected.txt N.out.txt)
-   (diff N.expected.hmh N.out.hmh))))
-
-(rule
- (deps
-  (glob_files Lyken.hmh*)
-  %{bin:hocc})
- (action
-  (with-accepted-exit-codes
-   (or 0 1)
-   (with-outputs-to Lyken.out (run ./hocc_test %{bin:hocc} Lyken -v -a pgm1)))))
-(rule
- (alias runtest)
- (action (diff Lyken.expected Lyken.out)))
-
-(rule
- (deps
   (glob_files OCaml.hmh*)
   %{bin:hocc})
  (action
@@ -874,48 +541,300 @@
 
 (rule
  (deps
-  (glob_files Gawk.hmh*)
+  (glob_files PagerG2.hmh*)
   %{bin:hocc})
+ (targets PagerG2.out.txt PagerG2.out.hmh)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gawk.out (run ./hocc_test %{bin:hocc} Gawk -v -a ielr1)))))
+   (with-outputs-to PagerG2.out (run ./hocc_test %{bin:hocc} PagerG2 -v -a pgm1 -txt -hmh)))))
 (rule
  (alias runtest)
- (action (diff Gawk.expected Gawk.out)))
+ (action
+  (progn
+   (diff PagerG2.expected PagerG2.out)
+   (diff PagerG2.expected.txt PagerG2.out.txt)
+   (diff PagerG2.expected.hmh PagerG2.out.hmh))))
 
 (rule
  (deps
-  (glob_files Gawk.hmh*)
+  (glob_files PagerG2.hmh*)
   %{bin:hocc})
+ (targets PagerG2_aielr1.out.txt PagerG2_aielr1.out.hmh)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gawk_alr1.out (run ./hocc_test %{bin:hocc} Gawk -v -a lr1)))))
+   (with-outputs-to PagerG2_aielr1.out (run ./hocc_test %{bin:hocc} PagerG2 -algorithm ielr1 -v -txt -hmh)))))
 (rule
  (alias runtest)
- (action (diff Gawk_alr1.expected Gawk_alr1.out)))
+ (action
+  (progn
+   (diff PagerG2_aielr1.expected PagerG2_aielr1.out)
+   (diff PagerG2_aielr1.expected.txt PagerG2_aielr1.out.txt)
+   (diff PagerG2_aielr1.expected.hmh PagerG2_aielr1.out.hmh))))
 
 (rule
  (deps
-  (glob_files Gpic.hmh*)
+  (glob_files PagerG3.hmh*)
   %{bin:hocc})
+ (targets PagerG3.out.txt PagerG3.out.hmh)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gpic.out (run ./hocc_test %{bin:hocc} Gpic -v -a ielr1)))))
+   (with-outputs-to PagerG3.out (run ./hocc_test %{bin:hocc} PagerG3 -v -a pgm1 -txt -hmh)))))
 (rule
  (alias runtest)
- (action (diff Gpic.expected Gpic.out)))
+ (action
+  (progn
+   (diff PagerG3.expected PagerG3.out)
+   (diff PagerG3.expected.txt PagerG3.out.txt)
+   (diff PagerG3.expected.hmh PagerG3.out.hmh))))
 
 (rule
  (deps
-  (glob_files Gpic.hmh*)
+  (glob_files Parse_error_cident.hmh*)
   %{bin:hocc})
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gpic_mno.out (run ./hocc_test %{bin:hocc} Gpic -remerge no -v -a ielr1)))))
+   (with-outputs-to Parse_error_cident.out (run ./hocc_test %{bin:hocc} Parse_error_cident -v)))))
 (rule
  (alias runtest)
- (action (diff Gpic_mno.expected Gpic_mno.out)))
+ (action (diff Parse_error_cident.expected Parse_error_cident.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_code.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_code.out (run ./hocc_test %{bin:hocc} Parse_error_code -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_code.expected Parse_error_code.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_delimited_rarray.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_delimited_rarray.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rarray -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_delimited_rarray.expected Parse_error_delimited_rarray.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_delimited_rbrack.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_delimited_rbrack.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rbrack -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_delimited_rbrack.expected Parse_error_delimited_rbrack.out)))
+(rule
+ (deps
+  (glob_files Parse_error_delimited_rcurly.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_delimited_rcurly.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rcurly -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_delimited_rcurly.expected Parse_error_delimited_rcurly.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_delimited_rcapture.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_delimited_rcapture.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rcapture -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_delimited_rcapture.expected Parse_error_delimited_rcapture.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_delimited_rparen.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_delimited_rparen.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rparen -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_delimited_rparen.expected Parse_error_delimited_rparen.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_hmhi.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_hmhi.out (run ./hocc_test %{bin:hocc} Parse_error_hmhi -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_hmhi.expected Parse_error_hmhi.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_hocc.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_hocc.out (run ./hocc_test %{bin:hocc} Parse_error_hocc -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_hocc.expected Parse_error_hocc.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_malformed.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_malformed.out (run ./hocc_test %{bin:hocc} Parse_error_malformed -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_malformed.expected Parse_error_malformed.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_nonterm_cce.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_nonterm_cce.out (run ./hocc_test %{bin:hocc} Parse_error_nonterm_cce -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_nonterm_cce.expected Parse_error_nonterm_cce.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_of_type_dot.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_of_type_dot.out (run ./hocc_test %{bin:hocc} Parse_error_of_type_dot -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_of_type_dot.expected Parse_error_of_type_dot.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_precs.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_precs.out (run ./hocc_test %{bin:hocc} Parse_error_precs -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_precs.expected Parse_error_precs.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_precs_lt.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_precs_lt.out (run ./hocc_test %{bin:hocc} Parse_error_precs_lt -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_precs_lt.expected Parse_error_precs_lt.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_prod_param_type.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_prod_param_type.out (run ./hocc_test %{bin:hocc} Parse_error_prod_param_type -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_prod_param_type.expected Parse_error_prod_param_type.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_reduction_arrow.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_reduction_arrow.out (run ./hocc_test %{bin:hocc} Parse_error_reduction_arrow -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_reduction_arrow.expected Parse_error_reduction_arrow.out)))
+
+(rule
+ (deps
+  (glob_files Parse_error_uident.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Parse_error_uident.out (run ./hocc_test %{bin:hocc} Parse_error_uident -v)))))
+(rule
+ (alias runtest)
+ (action (diff Parse_error_uident.expected Parse_error_uident.out)))
+
+(rule
+ (deps
+  (glob_files PSEUDO_END_conflict.hmh*)
+  %{bin:hocc})
+ (targets PSEUDO_END_conflict.out.txt PSEUDO_END_conflict.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to PSEUDO_END_conflict.out (run ./hocc_test %{bin:hocc} PSEUDO_END_conflict -v -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff PSEUDO_END_conflict.expected PSEUDO_END_conflict.out)
+   (diff PSEUDO_END_conflict.expected.txt PSEUDO_END_conflict.out.txt)
+   (diff PSEUDO_END_conflict.expected.hmh PSEUDO_END_conflict.out.hmh))))
+
+(rule
+ (deps
+  (glob_files TokenCoverage.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to TokenCoverage.out (run ./hocc_test %{bin:hocc} TokenCoverage -v)))))
+(rule
+ (alias runtest)
+ (action (diff TokenCoverage.expected TokenCoverage.out)))
+
+(rule
+ (deps
+  (glob_files Unused.hmh*)
+  %{bin:hocc})
+ (targets Unused.out.txt Unused.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Unused.out (run ./hocc_test %{bin:hocc} Unused -v -txt -hmh)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Unused.expected Unused.out)
+   (diff Unused.expected.txt Unused.out.txt)
+   (diff Unused.expected.hmh Unused.out.hmh))))
