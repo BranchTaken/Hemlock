@@ -96,6 +96,10 @@ module Token : sig
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
 
+    (* Composite. *)
+    | Tok_tilde_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+    | Tok_qmark_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+
     (* Miscellaneous. *)
     | Tok_whitespace of {source: Source.Slice.t}
     | Tok_paren_comment of {source: Source.Slice.t; paren_comment: unit Rendition.t}
