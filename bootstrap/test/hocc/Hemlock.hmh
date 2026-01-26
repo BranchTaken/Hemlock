@@ -7,16 +7,19 @@ hocc
     neutral pDot < pConstant
     neutral pLazy < pDot
     neutral pApplication < pLazy
-    right pPlusPrefix, pMinusPrefix, pTildeOp, pQmarkOp, pXmark, pAmp < pApplication
-    neutral pTickPrefix, pCaretPrefix, pGtPrefix < pPlusPrefix
-    right pStarStarOp < pTickPrefix
-    left pStarOp, pSlashOp, pPctOp < pStarStarOp
-    left pPlusOp, pMinusOp < pStarOp
-    right pColonOp < pPlusOp
-    right pAtOp, pCaretOp < pColonOp
-    left pEqOp, pLtOp, pGtOp, pBarOp, pDollarOp, pDotOp < pAtOp
-    right pAnd < pEqOp
-    right pOr < pAnd
+    right pPrefixOp0, pPlusPrefix, pMinusPrefix, pTildeOp, pQmarkOp, pXmark, pAmp < pApplication
+    neutral pPrefixOp1, pTickPrefix, pCaretPrefix, pGtPrefix < pPrefixOp0
+
+    # Infix operators.
+    right pInfixOp0, pStarStarOp < pTickPrefix
+    left pInfixOp1, pStarOp, pSlashOp, pPctOp < pInfixOp0
+    left pInfixOp2, pPlusOp, pMinusOp < pInfixOp1
+    right pInfixOp3, pColonOp < pInfixOp2
+    right pInfixOp4, pAtOp, pCaretOp < pInfixOp3
+    left pInfixOp5, pEqOp, pLtOp, pGtOp, pBarOp, pDollarOp, pDotOp < pInfixOp4
+    right pInfixOp6, pAnd < pInfixOp5
+    right pInfixOp7, pOr < pInfixOp6
+
     right pArrow < pOr
     left pComma < pArrow
     left pBar < pComma
@@ -374,45 +377,61 @@ hocc
       | TypeExprs "," TypeExpr
       | TypeExpr "," TypeExpr
 
-    nonterm PrefixExpr ::=
-      | TILDE_OP Expr prec pTildeOp
-      | QMARK_OP Expr prec pQmarkOp
-      | "~" Expr prec pTildeOp
-      | "?" Expr prec pQmarkOp
-      | "+" Expr prec pPlusPrefix
-      | "-" Expr prec pMinusPrefix
-      | "!" Expr prec pXmark
+    nonterm PrefixOp0 prec pPrefixOp0 ::=
+      | TILDE_OP
+      | QMARK_OP
+      | "+"
+      | "-"
+      | "~"
+      | "?"
+      | "!"
 
-    nonterm InfixExpr ::=
-      | Expr "and" Expr prec pAnd
-      | Expr "or" Expr prec pOr
-      | Expr STAR_STAR_OP Expr prec pStarStarOp
-      | Expr STAR_OP Expr prec pStarOp
-      | Expr SLASH_OP Expr prec pSlashOp
-      | Expr PCT_OP Expr prec pPctOp
-      | Expr PLUS_OP Expr prec pPlusOp
-      | Expr MINUS_OP Expr prec pMinusOp
-      | Expr AT_OP Expr prec pAtOp
-      | Expr CARET_OP Expr prec pCaretOp
-      | Expr DOLLAR_OP Expr prec pDollarOp
-      | Expr LT_OP Expr prec pLtOp
-      | Expr EQ_OP Expr prec pEqOp
-      | Expr GT_OP Expr prec pGtOp
-      | Expr BAR_OP Expr prec pBarOp
-      | Expr COLON_OP Expr prec pColonOp
-      | Expr DOT_OP Expr prec pDotOp
-      | Expr "+" Expr prec pPlusOp
-      | Expr "-" Expr prec pMinusOp
-      | Expr "<" Expr prec pLtOp
-      | Expr "<=" Expr prec pLtOp
-      | Expr "=" Expr prec pEqOp
-      | Expr "<>" Expr prec pLtOp
-      | Expr ">=" Expr prec pGtOp
-      | Expr ">" Expr prec pGtOp
-      | Expr "^" Expr prec pCaretOp
+    nonterm InfixOp0 prec pInfixOp0 ::=
+      | STAR_STAR_OP
+
+    nonterm InfixOp1 prec pInfixOp1 ::=
+      | STAR_OP
+      | SLASH_OP
+      | PCT_OP
+
+    nonterm InfixOp2 prec pInfixOp2 ::=
+      | PLUS_OP
+      | MINUS_OP
+      | "+"
+      | "-"
+
+    nonterm InfixOp3 prec pInfixOp3 ::=
+      | COLON_OP
+      | "::"
+
+    nonterm InfixOp4 prec pInfixOp4 ::=
+      | AT_OP
+      | CARET_OP
+      | "^"
+
+    nonterm InfixOp5 prec pInfixOp5 ::=
+      | DOLLAR_OP
+      | BAR_OP
+      | DOT_OP
+      | LT_OP
+      | EQ_OP
+      | GT_OP
+      | "<"
+      | "<="
+      | "="
+      | "<>"
+      | ">="
+      | ">"
+
+    nonterm InfixOp6 prec pInfixOp6 ::=
+      | "and"
+
+    nonterm InfixOp7 prec pInfixOp7 ::=
+      | "or"
 
     nonterm Expr ::=
       | Constant
+##      | "_"
       | ModulePathOrConstr prec pApplication
       | Fstring
       | "(" Expr ")"
@@ -423,21 +442,32 @@ hocc
       | Exprs prec pExpr_Exprs
 
       | ModulePathOrConstr Expr prec pLazy
-      | Expr "::" Expr prec pColonOp
       | "[" Expr ExprListTl "]"
       | "[|" Expr ExprListTl "|]"
       | "{" Field FieldListTl "}"
       | "{" Expr "with" Field FieldListTl "}"
-      | Expr Arguments prec pExpr_Expr_Arguments # XXX IELR bog (~10X).
+      | Expr Arguments prec pExpr_Expr_Arguments
 
-      | PrefixExpr
-      | InfixExpr
+      # Prefix.
+      | InfixOp0 Expr prec pPrefixOp0
+
+      # Infix.
+      | Expr InfixOp0 Expr prec pInfixOp0
+      | Expr InfixOp1 Expr prec pInfixOp1
+      | Expr InfixOp2 Expr prec pInfixOp2
+      | Expr InfixOp3 Expr prec pInfixOp3
+      | Expr InfixOp4 Expr prec pInfixOp4
+      | Expr InfixOp5 Expr prec pInfixOp5
+      | Expr InfixOp6 Expr prec pInfixOp6
+      | Expr InfixOp7 Expr prec pInfixOp7
+
       | Expr "." Field
       | "if" Expr "then" Expr "else" Expr prec pIf
       | Expr ";" Expr prec pSemi
       | "match" Expr "with" PatternMatch # XXX IELR bog (~2X).
 ##      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
 ##      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
+
 
     nonterm Exprs prec pComma ::=
       | Exprs "," Expr
