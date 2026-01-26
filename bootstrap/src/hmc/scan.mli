@@ -110,7 +110,6 @@ module Token : sig
     | Tok_external of {source: Source.Slice.t}
     | Tok_false of {source: Source.Slice.t}
     | Tok_fn of {source: Source.Slice.t}
-    | Tok_function of {source: Source.Slice.t}
     | Tok_if of {source: Source.Slice.t}
     | Tok_import of {source: Source.Slice.t}
     | Tok_include of {source: Source.Slice.t}
@@ -184,6 +183,10 @@ module Token : sig
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
     | Tok_carrow of {source: Source.Slice.t}
+
+    (* Composite. *)
+    | Tok_tilde_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+    | Tok_qmark_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
 
     (* Miscellaneous. *)
     | Tok_source_directive of

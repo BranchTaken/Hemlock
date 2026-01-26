@@ -113,6 +113,10 @@ module Token = struct
     | Tok_xmark of {source: Source.Slice.t}
     | Tok_arrow of {source: Source.Slice.t}
 
+    (* Composite. *)
+    | Tok_tilde_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+    | Tok_qmark_uident_colon of {source: Source.Slice.t; uident: string Rendition.t}
+
     (* Miscellaneous. *)
     | Tok_whitespace of {source: Source.Slice.t}
     | Tok_paren_comment of {source: Source.Slice.t; paren_comment: unit Rendition.t}
@@ -333,6 +337,24 @@ module Token = struct
           |> Source.Slice.pp source
           |> Fmt.fmt "; dot_op="
           |> String.pp dot_op
+          |> Fmt.fmt "}"
+        end
+
+      (* Composite. *)
+      | Tok_tilde_uident_colon {source; uident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_tilde_uident_colon {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; uident="
+          |> Rendition.pp String.pp uident
+          |> Fmt.fmt "}"
+        end
+      | Tok_qmark_uident_colon {source; uident} -> begin
+          formatter
+          |> Fmt.fmt "Tok_qmark_uident_colon {source="
+          |> Source.Slice.pp source
+          |> Fmt.fmt "; uident="
+          |> Rendition.pp String.pp uident
           |> Fmt.fmt "}"
         end
 
@@ -568,6 +590,8 @@ module Token = struct
     | Tok_amp_amp {source}
     | Tok_xmark {source}
     | Tok_arrow {source}
+    | Tok_tilde_uident_colon {source; _}
+    | Tok_qmark_uident_colon {source; _}
     | Tok_whitespace {source}
     | Tok_paren_comment {source; _}
     | Tok_uscore {source}
@@ -600,6 +624,9 @@ module Token = struct
     | Tok_rbrack _ | Tok_lcurly _ | Tok_rcurly _ | Tok_bar _ | Tok_bar_bar _ | Tok_larray _
     | Tok_rarray _ | Tok_bslash _ | Tok_tick _ | Tok_caret _ | Tok_amp_amp _ | Tok_xmark _
     | Tok_arrow _
+    (* Composite *)
+    | Tok_tilde_uident_colon {uident=(Constant _); _}
+    | Tok_qmark_uident_colon {uident=(Constant _); _}
     (* Miscellaneous. *)
     | Tok_whitespace _
     | Tok_paren_comment {paren_comment=(Constant _); _}
@@ -614,6 +641,8 @@ module Token = struct
     | Tok_end_of_input _
       -> []
     (* Malformations. *)
+    | Tok_tilde_uident_colon {uident=(Malformed mals); _}
+    | Tok_qmark_uident_colon {uident=(Malformed mals); _}
     | Tok_paren_comment {paren_comment=(Malformed mals); _}
     | Tok_uident {uident=(Malformed mals); _}
     | Tok_char {char=(Malformed mals); _}
@@ -660,7 +689,6 @@ let rec next t =
         | Tok_external {source} -> Tok_external {source}
         | Tok_false {source} -> Tok_false {source}
         | Tok_fn {source} -> Tok_uident {source; uident=Constant "fn"}
-        | Tok_function {source} -> Tok_function {source}
         | Tok_if {source} -> Tok_if {source}
         | Tok_import {source} -> Tok_import {source}
         | Tok_include {source} -> Tok_include {source}
@@ -733,6 +761,9 @@ let rec next t =
         | Tok_xmark {source} -> Tok_xmark {source}
         | Tok_arrow {source} -> Tok_arrow {source}
 
+        | Tok_tilde_uident_colon {source; uident} -> Tok_tilde_uident_colon {source; uident}
+        | Tok_qmark_uident_colon {source; uident} -> Tok_qmark_uident_colon {source; uident}
+
         | Tok_lcapture {source} | Tok_rcapture {source} | Tok_amp {source} | Tok_carrow {source}
           -> malformation ~source "Hemlock-specific operator"
 
@@ -753,6 +784,7 @@ let rec next t =
                 | "begin" -> Tok_begin {source}
                 | "end" -> Tok_end {source}
                 | "fun" -> Tok_fun {source}
+                | "function" -> Tok_function {source}
                 | "in" -> Tok_in {source}
                 | "mod" -> Tok_mod {source}
                 | "module" -> Tok_module {source}

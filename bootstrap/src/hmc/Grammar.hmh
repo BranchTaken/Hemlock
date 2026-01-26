@@ -1,0 +1,827 @@
+open Basis
+open! Basis.Rudiments
+
+module Rendition = struct
+    module Malformation = struct
+        type t = {
+            source: Source.Slice.t;
+            description: string;
+          }
+
+        let cmp t0 t1 =
+            Source.Slice.cmp t0.source t1.source
+
+        let of_source ~source ~description =
+            {source; description}
+
+        let of_cursors ~base ~past ~description =
+            let source = Source.Slice.of_cursors ~base ~past in
+            of_source ~source ~description
+
+        let source t =
+            t.source
+
+        let description t =
+            t.description
+
+        let pp t formatter =
+            formatter
+              |> Fmt.fmt "\""
+              |> Source.Slice.pp t.source
+              |> Fmt.fmt ": "
+              |> Fmt.fmt t.description
+              |> Fmt.fmt "\""
+      end
+
+    type 'a t =
+      | Constant of 'a
+      | Malformed of Malformation.t list
+
+    let pp pp_a t formatter =
+        match t with
+          | Constant a ->
+            formatter
+              |> Fmt.fmt "(Constant "
+              |> pp_a a
+              |> Fmt.fmt ")"
+          | Malformed malformations ->
+            formatter
+              |> Fmt.fmt "(Malformed "
+              |> (List.pp Malformation.pp) malformations
+              |> Fmt.fmt ")"
+
+    let of_mals mals =
+        Malformed (List.sort ~cmp:Malformation.cmp mals)
+  end
+
+type indent_omit = {
+    indent: uns;
+    omit: uns;
+  }
+
+let pp_indent_omit {indent; omit} formatter =
+    formatter
+      |> Fmt.fmt "{indent=" |> Uns.pp indent
+      |> Fmt.fmt "; omit=" |> Uns.pp omit
+      |> Fmt.fmt "}"
+
+type source_directive = {
+    path: Path.t option;
+    line: uns option;
+    io: indent_omit option;
+  }
+
+let pp_source_directive {path; line; io} formatter =
+    formatter
+      |> Fmt.fmt "{path=" |> (Option.pp Path.pp) path
+      |> Fmt.fmt "; line=" |> (Option.pp Uns.pp) line
+      |> Fmt.fmt "; io=" |> (Option.pp pp_indent_omit) io
+      |> Fmt.fmt "}"
+
+type fmt =
+  | Fmt_b
+  | Fmt_u
+  | Fmt_u8
+  | Fmt_u16
+  | Fmt_u32
+  | Fmt_u64
+  | Fmt_u128
+  | Fmt_u256
+  | Fmt_u512
+  | Fmt_i
+  | Fmt_i8
+  | Fmt_i16
+  | Fmt_i32
+  | Fmt_i64
+  | Fmt_i128
+  | Fmt_i256
+  | Fmt_i512
+  | Fmt_n
+  | Fmt_z
+  | Fmt_r
+  | Fmt_r32
+  | Fmt_r64
+  | Fmt_c
+  | Fmt_s
+  | Fmt_f
+
+let pp_fmt fmt formatter =
+    formatter |> Fmt.fmt (
+      match fmt with
+      | Fmt_b -> "Fmt_b"
+      | Fmt_u -> "Fmt_u"
+      | Fmt_u8 -> "Fmt_u8"
+      | Fmt_u16 -> "Fmt_u16"
+      | Fmt_u32 -> "Fmt_u32"
+      | Fmt_u64 -> "Fmt_u64"
+      | Fmt_u128 -> "Fmt_u128"
+      | Fmt_u256 -> "Fmt_u256"
+      | Fmt_u512 -> "Fmt_u512"
+      | Fmt_i -> "Fmt_i"
+      | Fmt_i8 -> "Fmt_i8"
+      | Fmt_i16 -> "Fmt_i16"
+      | Fmt_i32 -> "Fmt_i32"
+      | Fmt_i64 -> "Fmt_i64"
+      | Fmt_i128 -> "Fmt_i128"
+      | Fmt_i256 -> "Fmt_i256"
+      | Fmt_i512 -> "Fmt_i512"
+      | Fmt_n -> "Fmt_n"
+      | Fmt_z -> "Fmt_z"
+      | Fmt_r -> "Fmt_r"
+      | Fmt_r32 -> "Fmt_r32"
+      | Fmt_r64 -> "Fmt_r64"
+      | Fmt_c -> "Fmt_c"
+      | Fmt_s -> "Fmt_s"
+      | Fmt_f -> "Fmt_f"
+      )
+
+type token_simple = {source: Source.Slice.t}
+
+type token_tilde_op = {source: Source.Slice.t; tilde_op: string}
+type token_qmark_op = {source: Source.Slice.t; qmark_op: string}
+type token_star_star_op = {source: Source.Slice.t; star_star_op: string}
+type token_star_op = {source: Source.Slice.t; star_op: string}
+type token_slash_op = {source: Source.Slice.t; slash_op: string}
+type token_pct_op = {source: Source.Slice.t; pct_op: string}
+type token_plus_op = {source: Source.Slice.t; plus_op: string}
+type token_minus_op = {source: Source.Slice.t; minus_op: string}
+type token_at_op = {source: Source.Slice.t; at_op: string}
+type token_caret_op = {source: Source.Slice.t; caret_op: string}
+type token_dollar_op = {source: Source.Slice.t; dollar_op: string}
+type token_lt_op = {source: Source.Slice.t; lt_op: string}
+type token_eq_op = {source: Source.Slice.t; eq_op: string}
+type token_gt_op = {source: Source.Slice.t; gt_op: string}
+type token_bar_op = {source: Source.Slice.t; bar_op: string}
+type token_colon_op = {source: Source.Slice.t; colon_op: string}
+type token_dot_op = {source: Source.Slice.t; dot_op: string}
+
+type token_label = {source: Source.Slice.t; uident: string Rendition.t}
+
+type token_source_directive =
+    {source: Source.Slice.t; source_directive: source_directive Rendition.t}
+type token_line_delim = {source: Source.Slice.t}
+type token_indent = {source: Source.Slice.t; indent: unit Rendition.t}
+type token_dedent = {source: Source.Slice.t; dedent: unit Rendition.t}
+type token_whitespace = {source: Source.Slice.t}
+type token_hash_comment = {source: Source.Slice.t}
+type token_paren_comment = {source: Source.Slice.t; paren_comment: unit Rendition.t}
+type token_uscore = {source: Source.Slice.t}
+type token_uident = {source: Source.Slice.t; uident: string Rendition.t}
+type token_cident = {source: Source.Slice.t; cident: string}
+type token_codepoint = {source: Source.Slice.t; codepoint: codepoint Rendition.t}
+type token_rstring = {source: Source.Slice.t; rstring: string Rendition.t}
+type token_qstring = {source: Source.Slice.t; qstring: string Rendition.t}
+type token_istring = {source: Source.Slice.t; istring: string Rendition.t}
+type token_fstring_lditto = {source: Source.Slice.t}
+type token_fstring_interpolated = {source: Source.Slice.t; fstring_interpolated: string Rendition.t}
+type token_fstring_pct = {source: Source.Slice.t}
+type token_fstring_pad = {source: Source.Slice.t; fstring_pad: codepoint Rendition.t}
+type token_fstring_just = {source: Source.Slice.t; fstring_just: Fmt.just}
+type token_fstring_sign = {source: Source.Slice.t; fstring_sign: Fmt.sign}
+type token_fstring_alt = {source: Source.Slice.t}
+type token_fstring_zpad = {source: Source.Slice.t}
+type token_fstring_width_star = {source: Source.Slice.t}
+type token_fstring_width = {source: Source.Slice.t; fstring_width: uns Rendition.t}
+type token_fstring_pmode = {source: Source.Slice.t; fstring_pmode: Fmt.pmode}
+type token_fstring_precision_star = {source: Source.Slice.t}
+type token_fstring_precision = {source: Source.Slice.t; fstring_precision: uns Rendition.t}
+type token_fstring_radix = {source: Source.Slice.t; fstring_radix: Radix.t}
+type token_fstring_notation = {source: Source.Slice.t; fstring_notation: Fmt.notation}
+type token_fstring_pretty = {source: Source.Slice.t}
+type token_fstring_fmt = {source: Source.Slice.t; fstring_fmt: fmt Rendition.t}
+type token_fstring_sep = {source: Source.Slice.t; fstring_sep: string Rendition.t}
+type token_fstring_label = {source: Source.Slice.t; fstring_label: string}
+type token_fstring_lparen_caret = {source: Source.Slice.t}
+type token_fstring_caret_rparen = {source: Source.Slice.t}
+type token_fstring_rditto = {source: Source.Slice.t}
+type token_r32 = {source: Source.Slice.t; r32: real Rendition.t}
+type token_r64 = {source: Source.Slice.t; r64: real Rendition.t}
+type token_u8 = {source: Source.Slice.t; u8: u8 Rendition.t}
+type token_i8 = {source: Source.Slice.t; i8: i8 Rendition.t}
+type token_u16 = {source: Source.Slice.t; u16: u16 Rendition.t}
+type token_i16 = {source: Source.Slice.t; i16: i16 Rendition.t}
+type token_u32 = {source: Source.Slice.t; u32: u32 Rendition.t}
+type token_i32 = {source: Source.Slice.t; i32: i32 Rendition.t}
+type token_long = {source: Source.Slice.t; long: u64 Rendition.t}
+type token_u64 = {source: Source.Slice.t; u64: u64 Rendition.t}
+type token_i64 = {source: Source.Slice.t; i64: i64 Rendition.t}
+type token_u128 = {source: Source.Slice.t; u128: u128 Rendition.t}
+type token_i128 = {source: Source.Slice.t; i128: i128 Rendition.t}
+type token_u256 = {source: Source.Slice.t; u256: u256 Rendition.t}
+type token_i256 = {source: Source.Slice.t; i256: i256 Rendition.t}
+type token_u512 = {source: Source.Slice.t; u512: u512 Rendition.t}
+type token_i512 = {source: Source.Slice.t; i512: i512 Rendition.t}
+type token_nat = {source: Source.Slice.t; nat: Nat.t Rendition.t}
+type token_zint = {source: Source.Slice.t; zint: Zint.t Rendition.t}
+type token_end_of_input = {source: Source.Slice.t}
+type token_misaligned = {source: Source.Slice.t}
+type token_error = {source: Source.Slice.t; error: Rendition.Malformation.t list}
+
+type nonterm_rec =
+  | Rec
+  | RecNon
+  and nonterm_type_param =
+  | TypeParam
+  and nonterm_type_params =
+  | TypeParams
+  and nonterm_type_args =
+  | TypeArgs
+  and nonterm_c_module_def =
+  | CModuleDef
+  and nonterm_c_impl_item =
+  | CImplItem
+  and nonterm_c_impl =
+  | CImplCimplItem of nonterm_c_impl * nonterm_c_impl_item
+  | CImplEpsilon
+  and nonterm_hm =
+  | Hm of nonterm_c_impl
+
+type xxx =
+  | Xxx
+
+include hocc
+    # Precedences.
+
+    neutral pPatternMatch
+
+    neutral pConstant, pLgroup
+    neutral pDot < pConstant
+    neutral pLazy < pDot
+    neutral pApplication < pLazy
+    right pPlusPrefix, pMinusPrefix, pTildeOp, pQmarkOp, pXmark, pAmp < pApplication
+    neutral pTickPrefix, pCaretPrefix, pGtPrefix < pPlusPrefix
+    right pStarStarOp < pTickPrefix
+    left pStarOp, pSlashOp, pPctOp < pStarStarOp
+    left pPlusOp, pMinusOp < pStarOp
+    right pColonOp < pPlusOp
+    right pAtOp, pCaretOp < pColonOp
+    left pEqOp, pLtOp, pGtOp, pBarOp, pDollarOp, pDotOp < pAtOp
+    right pAnd < pEqOp
+    right pOr < pAnd
+    right pArrow < pOr
+    left pComma < pArrow
+    left pBar < pComma
+    neutral pAs < pBar
+    right pColonEq < pAs
+    neutral pElse < pColonEq
+    neutral pThen < pElse
+    neutral pWith < pThen
+    neutral pLet < pWith
+    right pSemi, pLineDelim < pLet
+    neutral pIn < pSemi
+    neutral pDotDot < pIn
+    neutral pImport < pDotDot
+    neutral pOpen < pImport
+    right pConceal, pExpose, pMatch, pIf < pOpen
+
+    neutral pExpr_Exprs < pComma
+    neutral pPattern_Constr < pAs, pComma, pColonOp, pEqOp
+    neutral pField_Uident < pEqOp
+    neutral pExprListTlEpsilon < pSemi
+    neutral pArgument_Expr < pIf
+    neutral pExpr_Expr_Arguments < pIf
+
+    # Keywords.
+    token AND "and" of token_simple prec pAnd
+    token ALSO "also" of token_simple
+    token AS "as" of token_simple prec pAs
+    token CONCEAL "conceal" of token_simple prec pConceal
+    token EFFECT "effect" of token_simple
+    token ELSE "else" of token_simple
+    token EXPOSE "expose" of token_simple prec pExpose
+    token EXTERNAL "external" of token_simple
+    token FALSE "false" of token_simple prec pConstant
+    token FN "fn" of token_simple
+    token IF "if" of token_simple prec pIf
+    token IMPORT "import" of token_simple prec pImport
+    token INCLUDE "include" of token_simple
+    token LAZY "lazy" of token_simple
+    token LET "let" of token_simple prec pLet
+    token MATCH "match" of token_simple prec pMatch
+    token MUTABILITY "mutability" of token_simple
+    token OF "of" of token_simple
+    token OPEN "open" of token_simple prec pOpen
+    token OR "or" of token_simple prec pOr
+    token REC "rec" of token_simple
+    token THEN "then" of token_simple
+    token TRUE "true" of token_simple prec pConstant
+    token TYPE "type" of token_simple
+    token WHEN "when" of token_simple
+    token WITH "with" of token_simple
+
+    # Operators.
+    # Prefix.
+    token TILDE_OP of token_tilde_op prec pTildeOp
+    token QMARK_OP of token_qmark_op prec pQmarkOp
+    # Infix.
+    token STAR_STAR_OP of token_star_star_op prec pStarStarOp
+    token STAR_OP of token_star_op prec pStarOp
+    token SLASH_OP of token_slash_op prec pSlashOp
+    token PCT_OP of token_pct_op prec pPctOp
+    token PLUS_OP of token_plus_op prec pPlusOp
+    token MINUS_OP of token_minus_op prec pMinusOp
+    token AT_OP of token_at_op prec pAtOp
+    token CARET_OP of token_caret_op prec pCaretOp
+    token DOLLAR_OP of token_dollar_op prec pDollarOp
+    token LT_OP of token_lt_op prec pLtOp
+    token EQ_OP of token_eq_op prec pEqOp
+    token GT_OP of token_gt_op prec pGtOp
+    token BAR_OP of token_bar_op prec pBarOp
+    token COLON_OP of token_colon_op prec pColonOp
+    token DOT_OP of token_dot_op prec pDotOp
+
+    # Punctuation.
+    token TILDE "~" of token_simple prec pTildeOp
+    token QMARK "?" of token_simple prec pQmarkOp
+    token PLUS "+" of token_simple prec pPlusOp
+    token MINUS "-" of token_simple prec pMinusOp
+    token LT "<" of token_simple prec pLtOp
+    token LT_EQ "<=" of token_simple prec pLtOp
+    token EQ "=" of token_simple prec pEqOp
+    token LT_GT "<>" of token_simple prec pLtOp
+    token GT_EQ ">=" of token_simple prec pEqOp
+    token GT ">" of token_simple prec pGtOp
+    token COMMA "," of token_simple prec pComma
+    token DOT "." of token_simple prec pDotOp
+    token DOT_DOT ".." of token_simple prec pDotDot
+    token SEMI ";" of token_simple prec pSemi
+    token COLON ":" of token_simple prec pColonOp
+    token COLON_COLON "::" of token_simple prec pColonOp
+    token COLON_EQ ":=" of token_simple prec pColonEq
+    token LPAREN "(" of token_simple prec pLgroup
+    token RPAREN ")" of token_simple
+    token LBRACK "[" of token_simple prec pLgroup
+    token RBRACK "]" of token_simple
+    token LCURLY "{" of token_simple prec pLgroup
+    token RCURLY "}" of token_simple
+    token BAR "|" of token_simple prec pBar
+    token LCAPTURE "(|" of token_simple prec pLgroup
+    token RCAPTURE "|)" of token_simple
+    token LARRAY "[|" of token_simple prec pLgroup
+    token RARRAY "|]" of token_simple
+    token BSLASH "\\" of token_simple
+    token TICK "'" of token_simple
+    token CARET "^" of token_simple prec pCaretOp
+    token AMP "&" of token_simple prec pAmp
+    token AMP_AMP "&&" of token_simple # OCaml-specefic.
+    token XMARK "!" of token_simple prec pXmark
+    token ARROW "->" of token_simple prec pArrow
+    token CARROW "~->" of token_simple prec pArrow
+
+    # Composite.
+    token TILDE_UIDENT_COLON of token_label prec pColonOp
+    token QMARK_UIDENT_COLON of token_label prec pColonOp
+
+    # Miscellaneous.
+    token SOURCE_DIRECTIVE of token_source_directive
+    token LINE_DELIM of token_line_delim prec pLineDelim
+    token INDENT of token_indent prec pLgroup
+    token DEDENT of token_dedent
+    token WHITESPACE of token_whitespace
+    token HASH_COMMENT of token_hash_comment
+    token PAREN_COMMENT of token_paren_comment
+    token USCORE "_" of token_uscore
+    token UIDENT of token_uident
+    token CIDENT of token_cident prec pConstant
+    token CODEPOINT of token_codepoint prec pConstant
+    token RSTRING of token_rstring prec pConstant
+    token QSTRING of token_qstring # OCaml-specific.
+    token ISTRING of token_istring prec pConstant
+    token FSTRING_LDITTO of token_fstring_lditto prec pLgroup
+    token FSTRING_INTERPOLATED of token_fstring_interpolated
+    token FSTRING_PCT of token_fstring_pct
+    token FSTRING_PAD of token_fstring_pad
+    token FSTRING_JUST of token_fstring_just
+    token FSTRING_SIGN of token_fstring_sign
+    token FSTRING_ALT of token_fstring_alt
+    token FSTRING_ZPAD of token_fstring_zpad
+    token FSTRING_WIDTH_STAR of token_fstring_width_star
+    token FSTRING_WIDTH of token_fstring_width
+    token FSTRING_PMODE of token_fstring_pmode
+    token FSTRING_PRECISION_STAR of token_fstring_precision_star
+    token FSTRING_PRECISION of token_fstring_precision
+    token FSTRING_RADIX of token_fstring_radix
+    token FSTRING_NOTATION of token_fstring_notation
+    token FSTRING_PRETTY of token_fstring_pretty
+    token FSTRING_FMT of token_fstring_fmt
+    token FSTRING_FMT_F of token_fstring_fmt
+    token FSTRING_SEP of token_fstring_sep
+    token FSTRING_LABEL of token_fstring_label
+    token FSTRING_LPAREN_CARET of token_fstring_lparen_caret
+    token FSTRING_CARET_RPAREN of token_fstring_caret_rparen
+    token FSTRING_RDITTO of token_fstring_rditto
+    token R32 of token_r32 prec pConstant
+    token R64 of token_r64 prec pConstant
+    token U8 of token_u8 prec pConstant
+    token I8 of token_i8 prec pConstant
+    token U16 of token_u16 prec pConstant
+    token I16 of token_i16 prec pConstant
+    token U32 of token_u32 prec pConstant
+    token I32 of token_i32 prec pConstant
+    token LONG of token_long prec pConstant # OCaml-specific.
+    token U64 of token_u64 prec pConstant
+    token I64 of token_i64 prec pConstant
+    token U128 of token_u128 prec pConstant
+    token I128 of token_i128 prec pConstant
+    token U256 of token_u256 prec pConstant
+    token I256 of token_i256 prec pConstant
+    token U512 of token_u512 prec pConstant
+    token I512 of token_i512 prec pConstant
+    token NAT of token_nat prec pConstant
+    token ZINT of token_zint prec pConstant
+    token END_OF_INPUT of token_end_of_input
+    token MISALIGNED of token_misaligned
+    token ERROR of token_error
+
+    nonterm Rec of nonterm_rec ::=
+      | "rec" -> Rec
+      | epsilon -> RecNon
+
+    nonterm TypeParam of nonterm_type_param ::=
+      | "'" UIDENT
+      | "^" UIDENT
+      | ">" UIDENT
+      -> TypeParam
+
+    nonterm TypeParams of nonterm_type_params ::=
+      | TypeParam TypeParams
+      | epsilon
+      -> TypeParams
+
+    nonterm TypeArgs of nonterm_type_args ::=
+      | epsilon
+      -> TypeArgs
+
+    nonterm CModuleDef of nonterm_c_module_def ::=
+      | "type" Rec CIDENT TypeParams ":" CIDENT TypeArgs "=" "{" (* XXX *) "}"
+      -> CModuleDef
+
+    nonterm OperatorName of xxx ::=
+      | STAR_STAR_OP
+      | STAR_OP
+      | SLASH_OP
+      | PCT_OP
+      | PLUS_OP
+      | MINUS_OP
+      | AT_OP
+      | CARET_OP
+      | DOLLAR_OP
+      | LT_OP
+      | EQ_OP
+      | GT_OP
+      | BAR_OP
+      | COLON_OP
+      | DOT_OP
+      | "+"
+      | "-"
+      | "<"
+      | "<="
+      | "="
+      | "<>"
+      | ">="
+      | ">"
+      | ":="
+      | "^"
+      -> Xxx
+
+    nonterm ValueName of xxx ::=
+      | UIDENT
+      | "\\" OperatorName
+      -> Xxx
+
+    # XXX Use curried syntax.
+    nonterm ExtendedModulePath of xxx ::=
+      | CIDENT
+      | CIDENT "(" ExtendedModulePath ")"
+      | ExtendedModulePath "." CIDENT
+      | ExtendedModulePath "." CIDENT "(" ExtendedModulePath ")"
+      -> Xxx
+
+    # Module path and variant constructor syntax are identical.
+    nonterm ModulePathOrConstr of xxx ::=
+      | ModulePathOrConstr "." CIDENT
+      | CIDENT
+      -> Xxx
+
+    nonterm ValuePath of xxx ::=
+      | ModulePathOrConstr "." ValueName
+      | ValueName
+      -> Xxx
+
+    nonterm TypeConstr of xxx ::=
+      | ExtendedModulePath "." UIDENT
+      | UIDENT
+      -> Xxx
+
+    nonterm Constant of xxx prec pConstant ::=
+      | "false"
+      | "true"
+      | "(" ")"
+      | "(|" "|)"
+      | "[" "]"
+      | "[|" "|]"
+      | CODEPOINT
+      | RSTRING
+      | ISTRING
+      | R32
+      | R64
+      | U8
+      | I8
+      | U16
+      | I16
+      | U32
+      | I32
+      | U64
+      | I64
+      | U128
+      | I128
+      | U256
+      | I256
+      | U512
+      | I512
+      | NAT
+      | ZINT
+      -> Xxx
+
+    nonterm FstringPad of xxx ::=
+      | FSTRING_PAD
+      | epsilon
+      -> Xxx
+
+    nonterm FstringJust of xxx ::=
+      | FSTRING_JUST
+      | epsilon
+      -> Xxx
+
+    nonterm FstringSign of xxx ::=
+      | FSTRING_SIGN
+      | epsilon
+      -> Xxx
+
+    nonterm FstringAlt of xxx ::=
+      | FSTRING_ALT
+      | epsilon
+      -> Xxx
+
+    nonterm FstringZpad of xxx ::=
+      | FSTRING_ZPAD
+      | epsilon
+      -> Xxx
+
+    nonterm FstringWidth of xxx ::=
+      | FSTRING_WIDTH_STAR FstringValue
+      | FSTRING_WIDTH
+      | epsilon
+      -> Xxx
+
+    nonterm FstringPrecision of xxx ::=
+      | FSTRING_PMODE FSTRING_PRECISION_STAR FstringValue
+      | FSTRING_PRECISION_STAR FstringValue
+      | FSTRING_PRECISION
+      | epsilon
+      -> Xxx
+
+    nonterm FstringRadix of xxx ::=
+      | FSTRING_RADIX
+      | epsilon
+      -> Xxx
+
+    nonterm FstringNotation of xxx ::=
+      | FSTRING_NOTATION
+      | epsilon
+      -> Xxx
+
+    nonterm FstringPretty of xxx ::=
+      | FSTRING_PRETTY
+      | epsilon
+      -> Xxx
+
+    nonterm FstringFmt of xxx ::=
+      | FSTRING_FMT
+      | FSTRING_FMT_F FstringValue
+      -> Xxx
+
+    nonterm FstringSepValueLabel of xxx ::=
+      | FSTRING_SEP FstringValue FSTRING_LABEL
+      | FstringValue
+      | epsilon
+      -> Xxx
+
+    nonterm FstringValue of xxx ::=
+      | FSTRING_LPAREN_CARET Expr FSTRING_CARET_RPAREN
+      -> Xxx
+
+    nonterm FstringSpecifier of xxx ::=
+      | FSTRING_PCT FstringPad FstringJust FstringSign FstringAlt FstringZpad FstringWidth
+      FstringPrecision FstringRadix FstringNotation FstringPretty FstringFmt FstringSepValueLabel
+      -> Xxx
+
+    nonterm FstringElms of xxx ::=
+      | FSTRING_INTERPOLATED FstringElms
+      | FstringSpecifier FstringElms
+      | epsilon
+      -> Xxx
+
+    (* The scanner never tokenizes e.g. "foo" as an fstring, so there's no need to exclude
+     * degenerate fstrings that are actually tokenized as istrings, adjacent `FSTRING_INTERPOLATED`
+     * tokens, etc. *)
+    nonterm Fstring of xxx ::=
+      | FSTRING_LDITTO FstringElms FSTRING_RDITTO
+      -> Xxx
+
+    nonterm TypeExpr of xxx ::=
+      | "'" UIDENT
+      | "(" TypeExpr ")"
+      | "_"
+      | TypeConstr
+      | TypeExpr TypeConstr
+      | "(" TypeExprs ")" TypeConstr
+      | TypeExpr "as" "'" UIDENT
+      -> Xxx
+
+    nonterm TypeExprs of xxx ::=
+      | TypeExprs "," TypeExpr
+      | TypeExpr "," TypeExpr
+      -> Xxx
+
+    nonterm PrefixExpr of xxx ::=
+      | TILDE_OP Expr prec pTildeOp
+      | QMARK_OP Expr prec pQmarkOp
+      | "~" Expr prec pTildeOp
+      | "?" Expr prec pQmarkOp
+      | "+" Expr prec pPlusPrefix
+      | "-" Expr prec pMinusPrefix
+      | "!" Expr prec pXmark
+      -> Xxx
+
+    nonterm InfixExpr of xxx ::=
+      | Expr "and" Expr prec pAnd
+      | Expr "or" Expr prec pOr
+      | Expr STAR_STAR_OP Expr prec pStarStarOp
+      | Expr STAR_OP Expr prec pStarOp
+      | Expr SLASH_OP Expr prec pSlashOp
+      | Expr PCT_OP Expr prec pPctOp
+      | Expr PLUS_OP Expr prec pPlusOp
+      | Expr MINUS_OP Expr prec pMinusOp
+      | Expr AT_OP Expr prec pAtOp
+      | Expr CARET_OP Expr prec pCaretOp
+      | Expr DOLLAR_OP Expr prec pDollarOp
+      | Expr LT_OP Expr prec pLtOp
+      | Expr EQ_OP Expr prec pEqOp
+      | Expr GT_OP Expr prec pGtOp
+      | Expr BAR_OP Expr prec pBarOp
+      | Expr COLON_OP Expr prec pColonOp
+      | Expr DOT_OP Expr prec pDotOp
+      | Expr "+" Expr prec pPlusOp
+      | Expr "-" Expr prec pMinusOp
+      | Expr "<" Expr prec pLtOp
+      | Expr "<=" Expr prec pLtOp
+      | Expr "=" Expr prec pEqOp
+      | Expr "<>" Expr prec pLtOp
+      | Expr ">=" Expr prec pGtOp
+      | Expr ">" Expr prec pGtOp
+      | Expr "^" Expr prec pCaretOp
+      -> Xxx
+
+    nonterm Expr of xxx ::=
+      | Constant
+      | ModulePathOrConstr prec pApplication
+      | Fstring
+      | "(" Expr ")"
+      | "(|" Expr "|)"
+      | INDENT Expr DEDENT
+      | "(" Expr ":" TypeExpr ")"
+      | "(|" Expr ":" TypeExpr "|)"
+      | Exprs prec pExpr_Exprs
+
+      | ModulePathOrConstr Expr prec pLazy
+      | Expr "::" Expr prec pColonOp
+      | "[" Expr ExprListTl "]"
+      | "[|" Expr ExprListTl "|]"
+      | "{" Field FieldListTl "}"
+      | "{" Expr "with" Field FieldListTl "}"
+      | Expr Arguments prec pExpr_Expr_Arguments # XXX IELR bog (~10X).
+
+      | PrefixExpr
+      | InfixExpr
+      | Expr "." Field
+      | "if" Expr "then" Expr "else" Expr prec pIf
+      | Expr ";" Expr prec pSemi
+      | "match" Expr "with" PatternMatch # XXX IELR bog (~2X).
+##      | "fn" Params "->" Expr # XXX Add effects syntax to arrow.
+##      | "fn" Params ":" TypeExpr "->" Expr # XXX Add effects syntax to arrow.
+      -> Xxx
+
+    nonterm Exprs of xxx prec pComma ::=
+      | Exprs "," Expr
+      | Expr "," Expr
+      -> Xxx
+
+    nonterm ExprListTl of xxx ::=
+      | ExprListTl LINE_DELIM Expr prec pLineDelim
+      | ExprListTl ";" Expr prec pSemi
+      | ";"
+      | epsilon prec pExprListTlEpsilon
+      -> Xxx
+
+    nonterm Field of xxx ::=
+      | UIDENT prec pField_Uident
+      | UIDENT ":" TypeExpr prec pColonOp
+      | UIDENT ":" TypeExpr "=" Expr prec pColonOp
+      | UIDENT "=" Expr prec pEqOp
+      -> Xxx
+
+    nonterm FieldListTl of xxx ::=
+      | FieldListTl LINE_DELIM Field
+      | FieldListTl ";" Field
+      | FieldListTl ";"
+      | epsilon
+      -> Xxx
+
+    nonterm Argument of xxx ::=
+      | Expr prec pArgument_Expr
+      | "~" UIDENT prec pTildeOp
+      | TILDE_UIDENT_COLON Expr prec pColonOp
+      | "?" UIDENT prec pQmarkOp
+      | QMARK_UIDENT_COLON Expr prec pColonOp
+      -> Xxx
+
+    nonterm Arguments of xxx ::=
+      | Arguments Argument
+      | Argument
+      -> Xxx
+
+    nonterm PatternMatch of xxx prec pArrow ::=
+      | "|" Pattern "when" Expr "->" Expr# prec pPatternMatch
+      | "|" Pattern "->" Expr# prec pPatternMatch
+      | Pattern "when" Expr "->" Expr# prec pPatternMatch
+      | Pattern "->" Expr# prec pPatternMatch
+      -> Xxx
+
+    nonterm PatternMatchTl of xxx ::=
+      | "|" Pattern "when" Expr "->" Expr PatternMatchTl
+      | "|" Pattern "->" Expr PatternMatchTl
+      | epsilon
+      -> Xxx
+
+    nonterm Pattern of xxx ::=
+      | "_"
+      | Constant
+      | Pattern "as" ValueName
+      | "(" Pattern ")"
+      | "(" Pattern ":" TypeExpr ")"
+      | Pattern "|" Pattern prec pEqOp
+      | ModulePathOrConstr Pattern prec pPattern_Constr
+      | Pattern "," Pattern prec pComma
+      | "[" Pattern ListPatternTl "]"
+      | Pattern "::" Pattern prec pColonOp
+      | "[|" Pattern ListPatternTl "|]"
+      | RecordPattern
+      | CODEPOINT ".." CODEPOINT
+      | "lazy" Pattern prec pLazy
+      | ModulePathOrConstr "." "(" Pattern ")"
+      | ModulePathOrConstr "." "[" Pattern ListPatternTl "]"
+      | ModulePathOrConstr "." "[|" Pattern ListPatternTl "|]"
+      | ModulePathOrConstr "." RecordPattern
+      -> Xxx
+
+    nonterm RecordPattern of xxx ::=
+      | "{" Field ":" TypeExpr "=" Pattern RecordPatternTl "}"
+      | "{" Field ":" TypeExpr RecordPatternTl "}"
+      | "{" Field "=" Pattern RecordPatternTl "}"
+      | "{" Field RecordPatternTl "}"
+      -> Xxx
+
+    nonterm RecordPatternTl of xxx ::=
+      | ";" Field ":" TypeExpr "=" Pattern RecordPatternTl
+      | ";" "_" ";"
+      | ";" "_"
+      | ";"
+      | epsilon
+      -> Xxx
+
+    nonterm ListPatternTl of xxx ::=
+      | ";" Pattern ListPatternTl
+      | ";"
+      | epsilon
+      -> Xxx
+
+    nonterm CIntf of xxx ::=
+      | epsilon -> Xxx
+
+    nonterm CImplItem of nonterm_c_impl_item ::=
+      | CModuleDef
+      | Expr prec pSemi
+      -> CImplItem
+
+    nonterm CImpl of nonterm_c_impl ::=
+      | cImpl:CImpl LINE_DELIM cImplItem:CImplItem
+      | cImpl:CImpl ";" cImplItem:CImplItem
+      -> CImplCimplItem (cImpl, cImplItem)
+      | epsilon -> CImplEpsilon
+
+    start Hmi of xxx ::=
+      | CIntf END_OF_INPUT -> Xxx
+
+    start Hm of nonterm_hm ::=
+      | cImpl:CImpl END_OF_INPUT -> Hm cImpl
