@@ -214,6 +214,22 @@
  (alias runtest)
  (action (diff help_b.expected help_b.out)))
 
+;(rule
+; (deps
+;  (glob_files Hemlock.hmh*)
+;  %{bin:hocc})
+; (targets Hemlock.out.txt)
+; (action
+;  (with-accepted-exit-codes
+;   (or 0 1)
+;   (with-outputs-to Hemlock.out (run ./hocc_test %{bin:hocc} Hemlock -v -a ielr1 -txt)))))
+;(rule
+; (alias runtest)
+; (action
+;  (progn
+;   (diff Hemlock.expected Hemlock.out)
+;   (diff Hemlock.expected.txt Hemlock.out.txt))))
+
 (rule
  (deps
   (glob_files Hocc.hmh*)
