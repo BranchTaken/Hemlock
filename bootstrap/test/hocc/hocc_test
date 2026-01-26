@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # Usage: hocc_test <hocc> <src> [-algorithm lr1|ielr1|pgm1|lalr1] [-resolve yes|no] [<parameter>]*
+#
+# The `-algorithm` and `-resolve` options mangle output filenames to allow testing multiple
+# configurations for the same input file. Use `-a` or `-r` to avoid mangling.
 
 hocc="$1"
 src="$2"
