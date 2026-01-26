@@ -1,4 +1,0 @@
-hocc
-    neutral p
-    token T
-    start S ::= epsilon

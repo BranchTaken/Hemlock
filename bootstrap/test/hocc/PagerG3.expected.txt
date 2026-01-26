@@ -1,4 +1,4 @@
-N grammar
+PagerG3 grammar
 
 Tokens
     token EPSILON "ε"

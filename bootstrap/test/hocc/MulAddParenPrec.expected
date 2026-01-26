@@ -1,4 +1,4 @@
-hocc: Parsing "./A.hmh"
+hocc: Parsing "./MulAddParenPrec.hmh"
 hocc: Generating LR(1) specification
 hocc: 2 precedences, 8 tokens, 5 non-terminals (1 start), 8 productions
 hocc: LR(1) item set compatibility: lr1
@@ -11,5 +11,5 @@ hocc: Reindexing 15 LR(1) states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Generating hocc report
-hocc: Writing "./hocc/A.txt"
-hocc: Writing "./hocc/A.hmh"
+hocc: Writing "./hocc/MulAddParenPrec.txt"
+hocc: Writing "./hocc/MulAddParenPrec.hmh"

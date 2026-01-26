@@ -1,24 +1,23 @@
-hocc
-    left p1
-    left p2 < p1
+# Simple precedence-free grammar that supports multiplication, addition, and parens.
 
+hocc
     token PLUS
     token STAR
     token LPAREN
-    token RPAREN prec p1
+    token RPAREN
     token ID
     token EOI
 
     start S ::= E EOI
 
     nonterm E ::=
-      | E PLUS T prec p2
+      | E PLUS T
       | T
 
     nonterm T ::=
       | T STAR F
       | F
 
-    nonterm F prec p1 ::=
+    nonterm F ::=
       | LPAREN E RPAREN
       | ID

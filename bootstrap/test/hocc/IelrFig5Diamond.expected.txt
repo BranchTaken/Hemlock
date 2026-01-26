@@ -1,4 +1,4 @@
-G grammar
+IelrFig5Diamond grammar
 
 Precedences
     neutral p1

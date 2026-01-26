@@ -1,5 +1,5 @@
-hocc: Parsing "./Parse_a.hmhi"
-hocc: Parsing "./Parse_a.hmh"
+hocc: Parsing "./TokenCoverage.hmhi"
+hocc: Parsing "./TokenCoverage.hmh"
 hocc: Generating LR(1) specification
 hocc: 8 precedences, 8 tokens, 10 non-terminals (2 starts), 15 productions
 hocc: LR(1) item set compatibility: lr1
