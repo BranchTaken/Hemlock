@@ -3,13 +3,18 @@
 open SeqIntf
 
 (** Functor for definite monomorphic sequences. *)
-module MakeDef (T : IMonoDef) : SMonoDef
+module MakeMonoDef (T : IMonoDef) : SMonoDef
   with type t := T.t
   with type elm := T.elm
 
 (** Functor for indefinite monomorphic sequences. *)
-module MakeIndef (T : IMonoIndef) : SMonoIndef
+module MakeMonoIndef (T : IMonoIndef) : SMonoIndef
   with type t := T.t
+  with type elm := T.elm
+
+(** Functor for coupled folding of monomorphic sequences. *)
+module MakeMonoFold2 (T : IMonoFold2) : SMonoFold2
+  with type t := T.container
   with type elm := T.elm
 
 (** Functor for coupled folding of poly2 sequences. *)

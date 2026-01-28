@@ -44,6 +44,46 @@ module type SMonoIndef = sig
   include IMonoIndef
 end
 
+module type IMonoFold2 = sig
+  type container
+  (** Container type. *)
+
+  include SMonoDef
+
+  val cmp: elm -> elm -> Cmp.t
+
+  val init: container -> t
+  (** [init container] returns an initialized sequence. *)
+end
+
+module type SMonoFold2 = sig
+  type t
+  (** Container type. *)
+
+  type elm
+  (** Element type. *)
+
+  val fold2_until: init:'accum -> f:('accum -> elm option -> elm option -> 'accum * bool) -> t -> t
+    -> 'accum
+  (** [fold2_until ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to right if
+      ordered, or arbitrarily if unordered, and calls [~f accum elm0_opt elm1_opt] once for each
+      element in the union such that if the element is absent from one of the input sets, the
+      corresponding parameter is [None]. Folding terminates early if [~f] returns [(_, true)].
+      O(m+n) time complexity, where m and n are the input set lengths. *)
+
+  val fold2: init:'accum -> f:('accum -> elm option -> elm option -> 'accum) -> t -> t -> 'accum
+  (** [fold2 ~init ~f t0 t1] folds over the union of [t0] and [t1] from left to right if ordered, or
+      arbitrarily if unordered, and calls [~f accum elm0_opt elm1_opt] once for each element in the
+      union such that if the element is absent from one of the input sets, the corresponding
+      parameter is [None]. Θ(m+n) time complexity, where m and n are the input set lengths. *)
+
+  val iter2: f:(elm option -> elm option -> unit) -> t -> t -> unit
+  (** [iter2 ~f t0 t1] iterates over the union of [t0] and [t1] from left to right if ordered, or
+      arbitrarily if unordered, and calls [~f elm0_opt elm1_opt] once for each element in the union,
+      such that if the element is absent from one of the input sets, the corresponding parameter is
+      [None]. Θ(m+n) time complexity, where m and n are the input set lengths. *)
+end
+
 (** Definite sequence functor input interface for polymorphic containers, e.g. {!type:'a array}. *)
 module type IPolyDef = sig
   type 'a t

@@ -1,6 +1,6 @@
 open SeqIntf
 
-module MakeDef (T : IMonoDef) : SMonoDef
+module MakeMonoDef (T : IMonoDef) : SMonoDef
   with type t := T.t
   with type elm := T.elm = struct
   include T
@@ -11,10 +11,70 @@ module MakeDef (T : IMonoDef) : SMonoDef
     | _ -> Some (next t)
 end
 
-module MakeIndef (T : IMonoIndef) : SMonoIndef
+module MakeMonoIndef (T : IMonoIndef) : SMonoIndef
   with type t := T.t
   with type elm := T.elm = struct
   include T
+end
+
+module MakeMonoFold2 (T : IMonoFold2) : SMonoFold2
+  with type t := T.container
+  with type elm := T.elm = struct
+  let fold2_until ~init ~f t0 t1 =
+    let open Cmp in
+    let next seq  = begin
+      match T.next_opt seq with
+      | None -> None, seq
+      | Some (a, seq') -> (Some a), seq'
+    end in
+    let rec fn accum ~f cmp elm0_opt seq0 elm1_opt seq1 = begin
+      let f_elm0_elm1 accum ~f cmp elm0_opt seq0 elm1_opt seq1 = begin
+        let accum', until = f accum elm0_opt elm1_opt in
+        match until with
+        | true -> accum'
+        | false -> begin
+            let elm0_opt', seq0' = next seq0 in
+            let elm1_opt', seq1' = next seq1 in
+            fn accum' ~f cmp elm0_opt' seq0' elm1_opt' seq1'
+          end
+      end in
+      let f_elm0 accum ~f cmp elm0_opt seq0 elm1_opt seq1 = begin
+        let accum', until = f accum elm0_opt None in
+        match until with
+        | true -> accum'
+        | false -> begin
+            let elm0_opt', seq0' = next seq0 in
+            fn accum' ~f cmp elm0_opt' seq0' elm1_opt seq1
+          end
+      end in
+      let f_elm1 accum ~f cmp elm0_opt seq0 elm1_opt seq1 = begin
+        let accum', until = f accum None elm1_opt in
+        match until with
+        | true -> accum'
+        | false -> begin
+            let elm1_opt', seq1' = next seq1 in
+            fn accum' ~f cmp elm0_opt seq0 elm1_opt' seq1'
+          end
+      end in
+      match elm0_opt, elm1_opt with
+      | None, None -> accum
+      | Some _, None
+      | None, Some _ -> f_elm0_elm1 accum ~f cmp elm0_opt seq0 elm1_opt seq1
+      | Some elm0, Some elm1 ->
+        match cmp elm0 elm1 with
+        | Lt -> f_elm0 accum ~f cmp elm0_opt seq0 elm1_opt seq1
+        | Eq -> f_elm0_elm1 accum ~f cmp elm0_opt seq0 elm1_opt seq1
+        | Gt -> f_elm1 accum ~f cmp elm0_opt seq0 elm1_opt seq1
+    end in
+    let elm0_opt, seq0 = next (T.init t0) in
+    let elm1_opt, seq1 = next (T.init t1) in
+    fn init ~f T.cmp elm0_opt seq0 elm1_opt seq1
+
+  let fold2 ~init ~f t0 t1 =
+    fold2_until ~init ~f:(fun accum t0 t1 -> (f accum t0 t1), false) t0 t1
+
+  let iter2 ~f t0 t1 =
+    fold2 ~init:() ~f:(fun _ t0 t1 -> f t0 t1) t0 t1
 end
 
 module MakePoly2Fold2 (T : IPoly2Fold2) : SPoly2Fold2

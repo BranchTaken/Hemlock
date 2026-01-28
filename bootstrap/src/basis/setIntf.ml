@@ -3,7 +3,282 @@ open Rudiments0
 (** Set. Note that O(1) time complexity for various unordered set operations assumes a
     collision-free hash function; beware that a degenerate hash function which collides for all
     inputs results in O(n) time complexity. *)
-module type S = sig
+module type SMono = sig
+
+  (** {1 Types} *)
+
+  type t
+  (** Set type. *)
+
+  type elm
+  (** Element type. *)
+
+  (** {1 Seq} *)
+
+  (** Seq that supports arbitrarily ordered sequential access. *)
+  module Seq : sig
+    type container = t
+    type t
+    type elm
+
+    include SeqIntf.IMonoFold2
+      with type container := container
+      with type t := t
+      with type elm := elm
+  end
+
+  (** {1 Comparators} *)
+
+  val hash_fold: t -> Hash.State.t -> Hash.State.t
+  (** [hash_fold t state] incorporates the hash of [t] into [state] and returns the resulting state.
+      Set members are stably hash-folded into the resulting state via the type's comparator
+      [hash_fold] function. *)
+
+  (** {1 Formatting} *)
+
+  val fmt: ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [fmt ~alt ~width t formatter] formats a syntactically valid list representation of [t]. If
+      [~alt=true], the output is broken across multiple lines with outermost indentation [~width]
+      (elements are indented to [~width + 4]). *)
+
+  val pp: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** [pp t formatter] applies a formatted representation of [t] to the [formatter]. *)
+
+  (** {1 Creation} *)
+
+  val empty: t
+  (** [empty] returns an empty set. *)
+
+  val singleton: elm -> t
+  (** [singleton elm] creates a set that contains [elm]. *)
+
+  val of_list: elm list -> t
+  (** [of_list elms] creates a set that contains [elms]. *)
+
+  (** {1 Length} *)
+
+  val length: t -> uns
+  (** [length t] returns the number of elements in [t]. O(1) time complexity. *)
+
+  val is_empty: t -> bool
+  (** [is_empty t] returns [true] if [t] has no elements; [false] otherwise. O(1) time complexity.
+  *)
+
+  (** {1 Element operations} *)
+
+  val mem: elm -> t -> bool
+  (** [mem a t] returns [true] if [a] is a member of [t]; [false] otherwise. *)
+
+  val choose: t -> elm option
+  (** [choose t] returns an arbitrary member of [t] if the set is non-empty, [None] otherwise. *)
+
+  val choose_hlt: t -> elm
+  (** [choose_hlt t] returns an arbitrary member of [t] if the set is non-empty, halts otherwise. *)
+
+  val insert: elm -> t -> t
+  (** [insert elm t] returns a set that is equivalent to the union of a singleton set containing
+      [elm] with [t]. *)
+
+  val remove: elm -> t -> t
+  (** [remove a t] returns a set that is equivalent to the difference of [t] relative to the
+      singleton set containing [a]. *)
+
+  (** {1 Set operations} *)
+
+  val equal: t -> t -> bool
+  (** [equal t0 t1] returns [true] if [t0] and [t1] contain identical sets of elements, [false]
+      otherwise. O(n) time complexity. *)
+
+  val subset: t -> t -> bool
+  (** [subset t0 t1] returns [true] if all elements in [t1] are also in [t0], [false] otherwise.
+      O(n) time complexity. *)
+
+  val disjoint: t -> t -> bool
+  (** [disjoint t0 t1] returns [true] if [t0] and [t1] contain disjoint sets of elements, [false]
+      otherwise. O(n) time complexity. *)
+
+  val union: t -> t -> t
+  (** [union t0 t1] creates a set that is the union of [t0] and [t1]; that is, a set that contains
+      all elements in [t0] or [t1]. *)
+
+  val inter: t -> t -> t
+  (** [inter t0 t1] creates a set that is the intersection of [t0] and [t1]; that is, a set that
+      contains all elements present in both [t0] and [t1]. *)
+
+  val diff: t -> t -> t
+  (** [diff t0 t1] creates a set that is the difference of t0 relative to t1; that is, a set that
+      contains all elements present in [t0] but not present in [t1]. *)
+
+  (** {1 Folding, mapping, filtering, and reducing} *)
+
+  val fold_until: init:'accum -> f:('accum -> elm -> 'accum * bool) -> t -> 'accum
+  (** [fold_until ~init ~f t] folds [t] from left to right if ordered, or arbitrarily if unordered,
+      using [init] as the initial accumulator value, continuing until [f] returns [accum, true], or
+      until folding is complete if [f] always returns [accum, false]. *)
+
+  val fold: init:'accum -> f:('accum -> elm -> 'accum) -> t -> 'accum
+  (** [fold ~init ~f t] folds [t] from left to right if ordered, or arbitrarily if unordered, using
+      [init] as the initial accumulator value. *)
+
+  val iter: f:(elm -> unit) -> t -> unit
+  (** [iter ~f t] iterates from left to right if ordered, or arbitrarily if unordered, over [t]. *)
+
+  val count: f:(elm -> bool) -> t -> uns
+  (** [count ~f t] iterates over [t] and returns the number of times [f] returns [true]. *)
+
+  val for_any: f:(elm -> bool) -> t -> bool
+  (** [for_any ~f t] iterates from left to right if ordered, or arbitrarily if unordered, over [t]
+      and returns [true] if any invocation of [f] returns [true]. *)
+
+  val for_all: f:(elm -> bool) -> t -> bool
+  (** [for_all ~f t] iterates from left to right if ordered, or arbitrarily if unordered, over [t]
+      and returns [true] if all invocations of [f] return [true]. *)
+
+  val find: f:(elm -> bool) -> t -> elm option
+  (** [find ~f t] iterates from left to right if ordered, or arbitrarily if unordered, over [t] and
+      returns [Some a] for the first element which [f] returns [true], or [None] if [f] always
+      returns [false]. *)
+
+  val find_map: f:(elm -> elm option) -> t -> elm option
+  (** [find_map ~f t] iterates over [t] and returns [Some b] for an element which [f] returns [Some
+      b], or [None] if [f] always returns [None]. *)
+
+  val filter: f:(elm -> bool) -> t -> t
+  (** [filter ~f t] creates a set with contents filtered by [~f]. Only elements for which the filter
+      function returns [true] are incorporated into the result. *)
+
+  val partition_tf: f:(elm -> bool) -> t -> t * t
+  (** [partition_tf ~f t] partitions [t] into two sets for which [~f] returns [true] vs [false]. *)
+
+  val reduce: f:(elm -> elm -> elm) -> t -> elm option
+  (** [reduce ~f t] reduces [t] to a single value, or [None] if the set is empty. The reduction
+      function is assumed to be associative and commutative; thus reduction order is unspecified. *)
+
+  val reduce_hlt: f:(elm -> elm -> elm) -> t -> elm
+  (** [reduce_hlt ~f t] reduces [t] to a single value, or halts if the set is empty. The reduction
+      function is assumed to be associative and commutative; thus reduction order is unspecified. *)
+
+  include SeqIntf.SMonoFold2
+    with type t := t
+    with type elm := elm
+
+  (** {1 Conversion} *)
+
+  val to_list: t -> elm list
+  (** [to_list t] folds [t] from right to left if ordered, or arbitrarily if unordered, as a
+      {!type:elm list}. *)
+
+  include ContainerIntf.SMonoArray
+    with type t := t
+    with type elm := elm
+end
+
+(** Ordered set. *)
+module type SOrdMono = sig
+  include SMono
+
+  (** {1 Creation} *)
+
+  val of_array: elm array -> t
+  (** [of_array elms] creates a set that contains [elms]. *)
+
+  (** {1 Element operations} *)
+
+  val nth_opt: uns -> t -> elm option
+  (** [nth i t] returns the nth set element (0-indexed), or [None] if [i] is out of bounds. *)
+
+  val nth: uns -> t -> elm
+  (** [nth i t] returns the nth set element (0-indexed), or halts if [i] is out of bounds. *)
+
+  val psearch: elm -> t -> (Cmp.t * uns) option
+  (** [psearch a t] searches for [a] in [t], and falls back to the nearest present predecessor of
+      [a] in the case of no match.
+      @return {ul
+        {- No predecessor: [Some (Cmp.Lt, 0)]}
+        {- Leftmost match: [Some (Cmp.Eq, index)]}
+        {- Predecessor: [Some (Cmp.Gt, index)]}
+        {- Empty set: [None]}
+      } *)
+
+  val search: elm -> t -> uns option
+  (** [search a t] returns [(Some index)] if [a] is a member of [t]; [None] otherwise. O(lg n) time
+      complexity if ordered, O(1) time complexity if unordered. *)
+
+  val nsearch: elm -> t -> (Cmp.t * uns) option
+  (** [nsearch a t] searches for [a] in [t], and falls back to the nearest present succesor of [a]
+      in the case of no match.
+      @return {ul
+        {- Successor: [Some (Cmp.Lt, index)]}
+        {- Match: [Some (Cmp.Eq, index)]}
+        {- No successor: [Some (Cmp.Gt, (Uns.pred (length t)))]}
+        {- Empty set: [None]}
+      } *)
+
+  (** {1 Set operations} *)
+
+  val cmp: t -> t -> Cmp.t
+  (** [cmp t0 t1] compares [t0] and [t1]. O(m+n) time complexity, where m and n are the input set
+      lengths. *)
+
+  val split: elm -> t -> t * elm option * t
+  (** [split a t] tripartitions [t] into elements \{<,=,>\} [a], respectively. *)
+
+  (** {1 Folding, mapping, and filtering} *)
+
+  val fold_right_until: init:'accum -> f:('accum -> elm -> 'accum * bool) -> t -> 'accum
+  (** [fold_right_until ~init ~f t] folds [t] from right to left, using [init] as the initial
+      accumulator value, continuing until [f] returns [accum, true], or until folding is complete if
+      [f] always returns [accum, false]. *)
+
+  val foldi_until: init:'accum -> f:(uns -> 'accum -> elm -> 'accum * bool) -> t -> 'accum
+  (** [foldi_until ~init ~f t] folds [t] with index provided to [f] from left to right, using [init]
+      as the initial accumulator value, continuing until [f] returns [accum, true], or until folding
+      is complete if [f] always returns [accum, false]. *)
+
+  val fold_right: init:'accum -> f:('accum -> elm -> 'accum) -> t -> 'accum
+  (** [fold_right ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator
+      value. *)
+
+  val foldi: init:'accum -> f:(uns -> 'accum -> elm -> 'accum) -> t -> 'accum
+  (** [foldi ~init ~f t] folds [t] with index provided to [f] from left to right, using [init] as
+      the initial accumulator value. *)
+
+  val iteri: f:(uns -> elm -> unit) -> t -> unit
+  (** [iter ~f t] iterates with index provided from left to right over [t]. *)
+
+  val findi: f:(uns -> elm -> bool) -> t -> elm option
+  (** [findi ~f t] iterates from left to right over [t] with index provided to [f] and returns [Some
+      a] for an element which [f] returns [true], or [None] if [f] always returns [false]. *)
+
+  val findi_map: f:(uns -> elm -> elm option) -> t -> elm option
+  (** [findi_map ~f t] iterates from left to right over [t] with index provided to [f] and returns
+      [Some b] for an element which [f] returns [Some b], or [None] if [f] always returns [None]. *)
+
+  val filteri: f:(uns -> elm -> bool) -> t -> t
+  (** [filteri ~f t] creates a set with contents filtered by [~f]. Only elements for which the
+      filter function returns [true] are incorporated into the result. *)
+
+  val partitioni_tf: f:(uns -> elm -> bool) -> t -> t * t
+  (** [partitioni_tf ~f t] partitions [t] into two sets for which [~f] returns [true] vs [false]. *)
+
+  val min_elm: cmp:(elm -> elm -> Cmp.t) -> t -> elm option
+  (** [min_elm ~f t] iterates from left to right over [t] and returns [Some a] for the leftmost
+      element which always compares as [Cmp.Lt] or [Cmp.Eq], or [None] if [t] is empty. *)
+
+  val max_elm: cmp:(elm -> elm -> Cmp.t) -> t -> elm option
+  (** [max_elm ~f t] iterates from left to right over [t] and returns [Some a] for the leftmost
+      element which always compares as [Cmp.Eq] or [Cmp.Gt], or [None] if [t] is empty. *)
+
+  (** {1 Conversion} *)
+
+  val to_list_rev: t -> elm list
+  (** [to_list_rev t] folds [t] from left to right as a {!type:elm list}. *)
+end
+
+(** Set. Note that O(1) time complexity for various unordered set operations assumes a
+    collision-free hash function; beware that a degenerate hash function which collides for all
+    inputs results in O(n) time complexity. *)
+module type SPoly = sig
 
   (** {1 Types} *)
 
@@ -188,8 +463,8 @@ module type S = sig
 end
 
 (** Ordered set. *)
-module type SOrd = sig
-  include S
+module type SOrdPoly = sig
+  include SPoly
 
   (** {1 Creation} *)
 
@@ -269,8 +544,8 @@ module type SOrd = sig
       [Some b] for an element which [f] returns [Some b], or [None] if [f] always returns [None]. *)
 
   val filteri: f:(uns -> 'a -> bool) -> ('a, 'cmp) t -> ('a, 'cmp) t
-  (** [filter ~f t] creates a set with contents filtered by [~f]. Only elements for which the filter
-      function returns [true] are incorporated into the result. *)
+  (** [filteri ~f t] creates a set with contents filtered by [~f]. Only elements for which the
+      filter function returns [true] are incorporated into the result. *)
 
   val partitioni_tf: f:(uns -> 'a -> bool) -> ('a, 'cmp) t -> ('a, 'cmp) t * ('a, 'cmp) t
   (** [partitioni_tf ~f t] partitions [t] into two sets for which [~f] returns [true] vs [false]. *)
