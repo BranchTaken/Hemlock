@@ -55,11 +55,11 @@ module type SDerived = sig
   (** [ceil_pow2 t] returns the smallest power of 2 greater than or equal to [t], or halts if [t] is
       less than 1. *)
 
-  val floor_lg: t -> t
+  val floor_lg: t -> uns
   (** [floor_lg t] returns the base 2 logarithm of [t], rounded down to the nearest integer, or
       halts if [t] less than 1. *)
 
-  val ceil_lg: t -> t
+  val ceil_lg: t -> uns
   (** [ceil_lg t] returns the base 2 logarithm of [t], rounded up to the nearest integer, or halts
       if [t] is less than 1. *)
 

@@ -39,7 +39,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
     | Gt -> begin
         let nb = T.bit_length in
         let lz = T.bit_clz t in
-        Some (T.of_uns Int64.(sub (pred nb) lz))
+        Some Int64.(sub (pred nb) lz)
       end
 
   let floor_lg t =
@@ -50,7 +50,7 @@ module MakeDerived (T : IDerived) : SDerived with type t := T.t = struct
   let ceil_lg t =
     match floor_lg_opt t with
     | None -> halt "Invalid input"
-    | Some x -> T.(x + (if is_pow2 t then T.zero else T.one))
+    | Some x -> Int64.(add x (if is_pow2 t then 0L else 1L))
 
   let min t0 t1 =
     if t0 <= t1 then t0 else t1

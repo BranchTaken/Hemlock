@@ -10,9 +10,9 @@ let test () =
         |> Fmt.fmt "floor_lg,ceil_lg "
         |> fmt ~alt:true ~zpad:true ~width:64L ~radix:Radix.Hex ~pretty:true x
         |> Fmt.fmt " -> "
-        |> pp (floor_lg x)
+        |> Uns.pp (floor_lg x)
         |> Fmt.fmt ", "
-        |> pp (ceil_lg x)
+        |> Uns.pp (ceil_lg x)
         |> Fmt.fmt "\n"
         |> ignore;
         test xs'

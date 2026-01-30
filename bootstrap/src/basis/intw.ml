@@ -692,7 +692,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
     | Gt -> begin
         let nb = bit_length t in
         let lz = bit_clz t in
-        Some (of_uns Int64.(pred (sub nb lz)))
+        Some Int64.(pred (sub nb lz))
       end
 
   let floor_lg t =
@@ -703,7 +703,7 @@ module MakeVCommon (T : IVCommon) : SVCommon with type t := T.t = struct
   let ceil_lg t =
     match floor_lg_opt t with
     | None -> halt "Invalid input"
-    | Some x -> (x + (if is_pow2 t then zero else one))
+    | Some x -> Int64.(add x (if is_pow2 t then 0L else 1L))
 
   let min t0 t1 =
     if t0 <= t1 then t0 else t1
