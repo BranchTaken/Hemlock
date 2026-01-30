@@ -1,5 +1,5 @@
-floor_lg,ceil_lg 0x1z -> 0z, 0z
-floor_lg,ceil_lg 0x2z -> 1z, 1z
-floor_lg,ceil_lg 0x3z -> 1z, 2z
-floor_lg,ceil_lg 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000z -> 255z, 255z
-floor_lg,ceil_lg 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffz -> 255z, 256z
+floor_lg,ceil_lg 0x1z -> 0, 0
+floor_lg,ceil_lg 0x2z -> 1, 1
+floor_lg,ceil_lg 0x3z -> 1, 2
+floor_lg,ceil_lg 0x8000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000z -> 255, 255
+floor_lg,ceil_lg 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffz -> 255, 256
