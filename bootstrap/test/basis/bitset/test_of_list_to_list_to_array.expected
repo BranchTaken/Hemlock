@@ -1,0 +1,6 @@
+of_list []; to_list -> []; to_array -> [||]
+of_list [0]; to_list -> [0]; to_array -> [|0|]
+of_list [0; 1]; to_list -> [0; 1]; to_array -> [|0; 1|]
+of_list [0; 1; 2]; to_list -> [0; 1; 2]; to_array -> [|0; 1; 2|]
+of_list [0; 1; 66]; to_list -> [0; 1; 66]; to_array -> [|0; 1; 66|]
+of_list [0; 1; 66; 91]; to_list -> [0; 1; 66; 91]; to_array -> [|0; 1; 66; 91|]

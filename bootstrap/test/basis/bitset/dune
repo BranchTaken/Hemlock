@@ -1,0 +1,28 @@
+(tests
+ (names
+  test_choose_hlt
+  test_diff
+  test_empty_singleton_length
+  test_filter
+  test_filteri
+  test_fold_right_until
+  test_fold_until
+  test_fold2
+  test_fold2_until
+  test_hash_fold
+  test_hash_fold_empty
+  test_inter
+  test_iter2_equal_subset_disjoint
+  test_mem_insert_subset
+  test_of_array
+  test_of_list_duplicate
+  test_of_list_remove
+  test_of_list_to_list_to_array
+  test_partition_tf
+  test_partitioni_tf
+  test_reduce
+  test_search_nth
+  test_stress
+  test_stress2
+  test_union)
+ (libraries Basis))

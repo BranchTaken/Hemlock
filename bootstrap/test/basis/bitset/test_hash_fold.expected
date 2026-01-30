@@ -1,0 +1,4 @@
+hash_fold (of_array [||]) -> 0x5162_2daa_78f8_3583_4610_abe5_6eff_5cb5u128
+hash_fold (of_array [|0|]) -> 0x337d_25f6_5b51_9c76_35a2_ca94_d0a1_72cfu128
+hash_fold (of_array [|0; 1|]) -> 0xa87e_a294_35f7_3903_f84d_452a_f98c_567eu128
+hash_fold (of_array [|0; 2|]) -> 0x566d_3c45_75ad_376a_03d9_51be_275b_55adu128
