@@ -3,7 +3,7 @@ remove_hlt 0
 Map {
     length=1
     root={
-        present_kv=0x1000_0000_0000_0000
+        present_kv=0x20
         present_child=0x0
         elms_kv=[|
             (0, "0")
@@ -26,11 +26,11 @@ remove_hlt 1
 Map {
     length=2
     root={
-        present_kv=0x1000_0000_0000_8000
+        present_kv=0x1020
         present_child=0x0
         elms_kv=[|
-            (1, "1")
             (0, "0")
+            (1, "1")
           |]
         elms_child=[||]
       }
@@ -38,7 +38,7 @@ Map {
 Map {
     length=1
     root={
-        present_kv=0x1000_0000_0000_0000
+        present_kv=0x20
         present_child=0x0
         elms_kv=[|
             (0, "0")
@@ -51,12 +51,12 @@ remove_hlt 2
 Map {
     length=3
     root={
-        present_kv=0x1200_0000_0000_8000
+        present_kv=0x2_0000_1020
         present_child=0x0
         elms_kv=[|
+            (0, "0")
             (1, "1")
             (2, "2")
-            (0, "0")
           |]
         elms_child=[||]
       }
@@ -64,11 +64,11 @@ Map {
 Map {
     length=2
     root={
-        present_kv=0x1000_0000_0000_8000
+        present_kv=0x1020
         present_child=0x0
         elms_kv=[|
-            (1, "1")
             (0, "0")
+            (1, "1")
           |]
         elms_child=[||]
       }

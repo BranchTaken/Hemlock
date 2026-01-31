@@ -165,8 +165,15 @@ module State = struct
             {t with state; rem=u128_zero; nrem=0L}, len
           end
       end in
-      let t', len = fold_rem t in
-      let h1, h2 = u128_to_tup t'.state in
+      (* Append a byte to the hash input before hashing the remainder that indicates whether whether
+       * bytes were folded. This assures that 0-length inputs permute the hash state, and in a way
+       * that is distinct from non-empty inputs. *)
+      let t' = fold_u8 1L ~f:(fun _i ->
+        let did_fold = t.nrem > 0L || t.nfolded > 0L in
+        match did_fold with false -> 0L | true -> 1L
+      ) t in
+      let t'', len = fold_rem t' in
+      let h1, h2 = u128_to_tup t''.state in
 
       let h1 = Int64.(logxor h1 len) in
       let h2 = Int64.(logxor h2 len) in

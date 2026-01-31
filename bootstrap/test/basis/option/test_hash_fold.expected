@@ -1,3 +1,3 @@
-hash_fold None -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
-hash_fold Some (0) -> 0x03ed_688f_024a_5170_df17_bbe2_160e_8fa0u128
-hash_fold Some (1) -> 0x2c31_1233_8879_fc2a_f407_45af_d2ef_7351u128
+hash_fold None -> 0x1536_6f87_b0ad_2078_a696_ac1a_95da_a601u128
+hash_fold Some (0) -> 0xc869_d68a_e5a9_8adc_20e5_2b45_8e1f_e888u128
+hash_fold Some (1) -> 0x5c0e_6ad0_1239_7a4f_4a88_9e67_2e49_6427u128

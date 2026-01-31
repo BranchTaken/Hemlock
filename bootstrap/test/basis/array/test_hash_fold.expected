@@ -1,4 +1,4 @@
-hash_fold [||] -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
-hash_fold [|0|] -> 0x5813_89d3_d926_9f3c_ffb4_92a6_b118_4dfcu128
-hash_fold [|0; 0|] -> 0x322f_9602_7919_2b02_9116_8e4e_6e9c_67b0u128
-hash_fold [|0; 1|] -> 0xa627_52f5_ea2f_d3c0_39a9_536b_6256_1d94u128
+hash_fold [||] -> 0x1536_6f87_b0ad_2078_a696_ac1a_95da_a601u128
+hash_fold [|0|] -> 0x0fa2_8ef8_704d_9806_ea13_99bc_1e5e_83e8u128
+hash_fold [|0; 0|] -> 0x3eed_fa89_f68b_e1ed_6f28_563e_c5db_916au128
+hash_fold [|0; 1|] -> 0xdd64_4e91_eedd_9943_4e23_2ac4_888b_412eu128
