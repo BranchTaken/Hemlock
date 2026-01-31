@@ -209,7 +209,7 @@ module type SOrd = sig
       [a] in the case of no match.
       @return {ul
         {- No predecessor: [Some (Cmp.Lt, 0)]}
-        {- Leftmost match: [Some (Cmp.Eq, index)]}
+        {- Match: [Some (Cmp.Eq, index)]}
         {- Predecessor: [Some (Cmp.Gt, index)]}
         {- Empty set: [None]}
       } *)
