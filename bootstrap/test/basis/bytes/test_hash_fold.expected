@@ -1,6 +1,6 @@
-hash_fold [||] ("") -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
-hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0x3128_f4fd_508b_45ed_9cac_ecd5_d1b9_3d0eu128
-hash_fold [|0x3cu8|] ("<") -> 0xd488_7be1_4394_3141_39e3_a675_b018_bbb3u128
-hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0xfffc_51b3_ca09_5402_2bcf_597e_64b2_a607u128
-hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0xfc24_ad42_f613_537a_e903_d82f_077b_81b7u128
-hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0x9fbc_28bd_d639_1c44_1305_4901_c3c5_ee46u128
+hash_fold [||] ("") -> 0x5162_2daa_78f8_3583_4610_abe5_6eff_5cb5u128
+hash_fold [|0x68u8; 0x65u8; 0x6cu8; 0x6cu8; 0x6fu8|] ("hello") -> 0x5e83_9703_b348_769c_b8ea_181a_11c6_bf22u128
+hash_fold [|0x3cu8|] ("<") -> 0x847e_f792_b633_5beb_33b3_f20f_2d51_cb6cu128
+hash_fold [|0xc2u8; 0xabu8|] ("«") -> 0xb776_3fb9_9983_217a_c91f_ed3a_a12c_0257u128
+hash_fold [|0xe2u8; 0x80u8; 0xa1u8|] ("‡") -> 0xf304_5356_3e0f_3be7_08cc_46f6_e47e_9e4au128
+hash_fold [|0xf0u8; 0x90u8; 0x86u8; 0x97u8|] ("𐆗") -> 0xb9be_61fc_4e3f_530e_b1c5_7163_600a_51beu128

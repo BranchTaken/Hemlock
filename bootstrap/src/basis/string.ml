@@ -9,11 +9,10 @@ module T = struct
   let hash_fold t state =
     state
     |> Hash.State.Gen.init
-    |> Hash.State.Gen.fold_u8 Stdlib.(Int64.of_int (String.length t)) ~f:(fun i ->
+    |> Hash.State.Gen.fold_u8 (blength t) ~f:(fun i ->
       Stdlib.(Int64.of_int (Char.code (String.get t (Int64.to_int i))))
     )
     |> Hash.State.Gen.fini
-    |> Uns.hash_fold (blength t)
 
   let cmp t0 t1 =
     let open Cmp in

@@ -57,7 +57,9 @@ module State : sig
 
     val fini: t -> outer
     (** [fini t] produces a hash state which is a function of the state provided to [init] and the
-        values provided to [fold_*]. *)
+        values provided to [fold_*]. The hash state is permuted to indicate whether any values were
+        provided to [fold_*], thus ensuring that the resulting hash state always permutes the input
+        state. *)
   end
 end
 

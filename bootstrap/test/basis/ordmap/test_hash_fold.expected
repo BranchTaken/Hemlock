@@ -1,5 +1,5 @@
-hash_fold (of_klist []) -> 0xf255_7dfc_c4e8_fe52_28df_63b7_cc57_c3cbu128
-hash_fold (of_klist [0]) -> 0xb978_4708_6e65_ae45_2de4_cfcd_b8a3_131eu128
-hash_fold (of_klist [0; 1]) -> 0xa4c1_0614_74d1_114e_feae_0875_b590_8b45u128
-hash_fold (of_klist [0; 2]) -> 0xe464_a98d_26ee_f2f1_c84a_abbc_10e6_8b6cu128
-hash_fold (of_klist [2; 3]) -> 0x394a_2b8a_046c_9407_633b_5c51_05e2_14d9u128
+hash_fold (of_klist []) -> 0x1536_6f87_b0ad_2078_a696_ac1a_95da_a601u128
+hash_fold (of_klist [0]) -> 0x2976_eb83_c035_e09d_77de_e82f_f302_50afu128
+hash_fold (of_klist [0; 1]) -> 0x15d4_a582_94d5_32ff_7725_4ea6_75a0_c9c8u128
+hash_fold (of_klist [0; 2]) -> 0x7513_1d18_4767_c2cd_0124_29be_62fb_732cu128
+hash_fold (of_klist [2; 3]) -> 0xd81c_cbb3_3d66_855c_a347_c18b_8b99_20c1u128

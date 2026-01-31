@@ -197,7 +197,6 @@ module Slice = struct
     |> Hash.State.Gen.fold_u8 (length t) ~f:(fun i ->
       (Byte.extend_to_uns (Cursor.(rget (seek (Uns.bits_to_sint i) (base t))))))
     |> Hash.State.Gen.fini
-    |> Uns.hash_fold (length t)
 
   let to_bytes slice =
     let bytes = container slice in
