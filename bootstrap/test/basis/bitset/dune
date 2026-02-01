@@ -18,6 +18,7 @@
   test_of_list_duplicate
   test_of_list_remove
   test_of_list_to_list_to_array
+  test_of_nat_to_nat_to_array
   test_partition_tf
   test_partitioni_tf
   test_reduce

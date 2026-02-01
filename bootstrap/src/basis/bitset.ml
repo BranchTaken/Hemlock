@@ -359,6 +359,12 @@ let disjoint t0 t1 =
 let insert elm t =
   Nat.(bit_or (singleton elm) t)
 
+let of_nat nat =
+  nat
+
+let to_nat t =
+  t
+
 let of_list elms =
   match elms with
   | [] -> Nat.zero

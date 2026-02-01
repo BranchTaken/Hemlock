@@ -1,0 +1,6 @@
+of_nat 0x0; to_nat -> 0x0; to_array -> [||]
+of_nat 0x1; to_nat -> 0x1; to_array -> [|0|]
+of_nat 0x3; to_nat -> 0x3; to_array -> [|0; 1|]
+of_nat 0x7; to_nat -> 0x7; to_array -> [|0; 1; 2|]
+of_nat 0x4_0000_0000_0000_0003; to_nat -> 0x4_0000_0000_0000_0003; to_array -> [|0; 1; 66|]
+of_nat 0x800_0002_0000_0000_0000_0003; to_nat -> 0x800_0002_0000_0000_0000_0003; to_array -> [|0; 1; 65; 91|]
