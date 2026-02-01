@@ -94,9 +94,9 @@ module Actionset = struct
                   | Some max_prec, Some action_prec -> begin
                       match Uns.(=) max_prec.prec_set.index action_prec.prec_set.index with
                       | false -> begin
-                          match Ordset.mem max_prec.prec_set.index action_prec.prec_set.doms with
+                          match Bitset.mem max_prec.prec_set.index action_prec.prec_set.doms with
                           | false -> begin
-                              match Ordset.mem action_prec.prec_set.index max_prec.prec_set.doms
+                              match Bitset.mem action_prec.prec_set.index max_prec.prec_set.doms
                               with
                               | false -> begin
                                   (* Disjoint precedence; no conflict resolution possible. *)
@@ -295,7 +295,7 @@ let filtered_kernel_attribs {lr1itemsetclosure=Lr1ItemsetClosure.{kernel; _}; ke
             match Lr1Itemset.get isucc_lr1item kernel with
             | None -> kernel_attribs
             | Some {follow; _} -> begin
-                match Ordset.mem symbol_index follow with
+                match Bitset.mem symbol_index follow with
                 | false -> kernel_attribs
                 | true ->
                   KernelAttribs.insert isucc_lr1item (Attribs.singleton attrib) kernel_attribs

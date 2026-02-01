@@ -125,7 +125,7 @@ let actions symbols t =
         end
       (* X ::= a· *)
       | false -> begin
-          Ordset.fold ~init:actions ~f:(fun actions symbol_index ->
+          Bitset.fold ~init:actions ~f:(fun actions symbol_index ->
             let action = Action.Reduce index in
             actions_insert symbol_index action actions
           ) follow
@@ -173,13 +173,13 @@ let kernel_of_leftmost ~symbol_index ~lhs_index:prod_lhs_index {kernel; added; _
    * Mark which symbols have been recursed on, in order to protect against infinite recursion on
    * e.g. `E ::= · E {t}`, as well as on mutually recursive items. *)
   let rec inner kernel added symbol_index prod_lhs_index marks accum = begin
-    let marks = Ordset.insert prod_lhs_index marks in
+    let marks = Bitset.insert prod_lhs_index marks in
     let accum = Lr1Itemset.fold ~init:accum
         ~f:(fun accum
           (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{rhs_indexes; _}; dot}; follow} as lr1item) ->
           match Uns.( > ) (Array.length rhs_indexes) dot
                 && Symbol.Index.( = ) (Array.get dot rhs_indexes) prod_lhs_index
-                && Ordset.mem symbol_index follow with
+                && Bitset.mem symbol_index follow with
           | false -> accum
           | true -> Lr1Itemset.insert lr1item accum
         ) kernel in
@@ -188,21 +188,21 @@ let kernel_of_leftmost ~symbol_index ~lhs_index:prod_lhs_index {kernel; added; _
     let marks, accum = Lr1Itemset.fold ~init:(marks, accum)
       ~f:(fun (marks, accum)
         (Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; rhs_indexes; _}; _}; follow}) ->
-        match Ordset.mem lhs_index marks with
+        match Bitset.mem lhs_index marks with
         | true -> marks, accum
         | false -> begin
             (* The dot is always at position 0 in added items. *)
             match Uns.( > ) (Array.length rhs_indexes) 0L
                   && Symbol.Index.( = ) (Array.get 0L rhs_indexes) prod_lhs_index
-                  && Ordset.mem symbol_index follow with
+                  && Bitset.mem symbol_index follow with
             | false -> marks, accum
             | true -> inner kernel added symbol_index lhs_index marks accum
           end
       ) added in
     marks, accum
   end in
-  let _marks, accum = inner kernel added symbol_index prod_lhs_index
-      (Ordset.empty (module Symbol.Index)) Lr1Itemset.empty in
+  let _marks, accum = inner kernel added symbol_index prod_lhs_index Bitset.empty
+      Lr1Itemset.empty in
   accum
 
 module LeftmostCache = struct
@@ -247,13 +247,13 @@ module LeftmostCache = struct
   let kernels_of_leftmost prod_lhs_index symbol_indexes lr1itemsetclosure =
     (* Same as outer `kernel_of_leftmost`, except that it processes all symbol indexes in one
      * invocation. Marking is more complicated -- (symbol, symbol_indexes) map rather than symbol
-     * set -- because there is no guaranteed that all symbol indexes will be processed in a single
+     * set -- because there is no guarantee that all symbol indexes will be processed in a single
      * recursion on the LHS. *)
     let rec inner kernel added prod_lhs_index inner_lhs_index symbol_indexes marks accum = begin
       let marks = Ordmap.amend inner_lhs_index ~f:(fun lhs_index_opt ->
         match lhs_index_opt with
         | None -> Some symbol_indexes
-        | Some symbol_indexes_prev -> Some (Ordset.union symbol_indexes symbol_indexes_prev)
+        | Some symbol_indexes_prev -> Some (Bitset.union symbol_indexes symbol_indexes_prev)
       ) marks in
       let accum = Lr1Itemset.fold ~init:accum
           ~f:(fun accum
@@ -262,8 +262,8 @@ module LeftmostCache = struct
                   && Symbol.Index.( = ) (Array.get dot rhs_indexes) inner_lhs_index with
             | false -> accum
             | true -> begin
-                Ordset.fold ~init:accum ~f:(fun accum symbol_index ->
-                  match Ordset.mem symbol_index follow with
+                Bitset.fold ~init:accum ~f:(fun accum symbol_index ->
+                  match Bitset.mem symbol_index follow with
                   | false -> accum
                   | true -> begin
                       let k = K.init ~prod_lhs_index ~symbol_index in
@@ -284,8 +284,8 @@ module LeftmostCache = struct
           let marked, symbol_indexes = match Ordmap.get lhs_index marks with
             | None -> false, symbol_indexes
             | Some marked_symbol_indexes -> begin
-                let symbol_indexes = Ordset.diff symbol_indexes marked_symbol_indexes in
-                Ordset.is_empty symbol_indexes, symbol_indexes
+                let symbol_indexes = Bitset.diff symbol_indexes marked_symbol_indexes in
+                Bitset.is_empty symbol_indexes, symbol_indexes
               end
           in
           match marked with
@@ -296,14 +296,14 @@ module LeftmostCache = struct
                     && Symbol.Index.( = ) (Array.get 0L rhs_indexes) inner_lhs_index with
               | false -> found
               | true -> begin
-                  let symbol_indexes' = Ordset.inter symbol_indexes follow in
-                  match Ordset.is_empty symbol_indexes' with
+                  let symbol_indexes' = Bitset.inter symbol_indexes follow in
+                  match Bitset.is_empty symbol_indexes' with
                   | true -> found
                   | false -> begin
                       Ordmap.amend lhs_index ~f:(fun symbol_indexes_opt ->
                         match symbol_indexes_opt with
                         | None -> Some symbol_indexes'
-                        | Some symbol_indexes -> Some (Ordset.union symbol_indexes' symbol_indexes)
+                        | Some symbol_indexes -> Some (Bitset.union symbol_indexes' symbol_indexes)
                       ) found
                     end
                 end

@@ -4,25 +4,25 @@ open Basis.Rudiments
 module T = struct
   type t = {
     lr0item: Lr0Item.t;
-    follow: (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t;
+    follow: Bitset.t;
   }
 
   let hash_fold {lr0item; follow} state =
     state
     |> Lr0Item.hash_fold lr0item
-    |> Ordset.hash_fold follow
+    |> Bitset.hash_fold follow
 
   let cmp {lr0item=l0; follow=f0} {lr0item=l1; follow=f1} =
     let open Cmp in
     match Lr0Item.cmp l0 l1 with
     | Lt -> Lt
-    | Eq -> Ordset.cmp f0 f1
+    | Eq -> Bitset.cmp f0 f1
     | Gt -> Gt
 
   let pp {lr0item; follow} formatter =
     formatter
     |> Fmt.fmt "{lr0item=" |> Lr0Item.pp lr0item
-    |> Fmt.fmt "; follow=" |> Ordset.pp follow
+    |> Fmt.fmt "; follow=" |> Bitset.pp follow
 
   let pp_hr symbols {lr0item=({prod={prec; _}; _} as lr0item); follow} formatter =
     formatter
@@ -37,7 +37,7 @@ module T = struct
           | _ -> ", "
         )
         |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols)
-      ) (Ordset.to_array follow)
+      ) (Bitset.to_array follow)
     )
     |> Fmt.fmt "}]"
     |> (fun formatter ->
@@ -62,9 +62,9 @@ let init ~lr0item ~follow =
  * contain "ε". *)
 let first symbols {lr0item; follow} =
   let append_symbol_set first merge_epsilon symbol_set = begin
-    let symbol_set_sans_epsilon = Ordset.remove Symbol.epsilon.index symbol_set in
-    let first' = Ordset.union symbol_set_sans_epsilon first in
-    let contains_epsilon = Ordset.mem Symbol.epsilon.index symbol_set in
+    let symbol_set_sans_epsilon = Bitset.remove Symbol.epsilon.index symbol_set in
+    let first' = Bitset.union symbol_set_sans_epsilon first in
+    let contains_epsilon = Bitset.mem Symbol.epsilon.index symbol_set in
     let merge_epsilon' = match contains_epsilon with
       | false -> false
       | true -> merge_epsilon
@@ -75,7 +75,7 @@ let first symbols {lr0item; follow} =
   let rhs_slice = Array.Slice.init ~range:(lr0item.dot =:< Array.length rhs_indexes) rhs_indexes in
   (* Merge-fold RHS symbols' first sets. *)
   let first, merge_epsilon = Array.Slice.fold_until
-      ~init:(Ordset.empty (module Symbol.Index), true)
+      ~init:(Bitset.empty, true)
       ~f:(fun (first, merge_epsilon) symbol_index ->
         let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
         let first', merge_epsilon' = append_symbol_set first merge_epsilon Symbol.(symbol.first) in
@@ -89,7 +89,7 @@ let first symbols {lr0item; follow} =
       let first', merge_epsilon' = append_symbol_set first merge_epsilon follow in
       match merge_epsilon' with
       | false -> first'
-      | true -> Ordset.insert Symbol.epsilon.index first'
+      | true -> Bitset.insert Symbol.epsilon.index first'
     end
 
 let is_kernel_item {lr0item={prod; dot}; _} =
@@ -97,9 +97,9 @@ let is_kernel_item {lr0item={prod; dot}; _} =
 
 let is_accept {lr0item={prod={rhs_indexes; _}; dot}; follow} =
   Uns.(=) dot (Array.length rhs_indexes) &&
-  Uns.(=) (Ordset.length follow) 1L &&
-  Uns.(=) (Ordset.choose_hlt follow) Symbol.(pseudo_end.index)
+  Uns.(=) (Bitset.length follow) 1L &&
+  Uns.(=) (Bitset.choose_hlt follow) Symbol.(pseudo_end.index)
 
 let follow_union symbol_indexes t =
-  let follow = Ordset.union symbol_indexes t.follow in
+  let follow = Bitset.union symbol_indexes t.follow in
   {t with follow}

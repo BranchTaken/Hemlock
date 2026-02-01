@@ -63,7 +63,7 @@ let length {shift; reduce} =
 
 let empty = {
   shift=false;
-  reduce=Ordset.empty (module Prod.Index)
+  reduce=Ordset.empty (module Prod.Index);
 }
 
 let is_empty {shift; reduce} =
@@ -135,9 +135,9 @@ let resolve symbols prods symbol_index t =
               | Some max_prec, Some reduce_prec -> begin
                   match Uns.(=) max_prec.prec_set.index reduce_prec.prec_set.index with
                   | false -> begin
-                      match Ordset.mem max_prec.prec_set.index reduce_prec.prec_set.doms with
+                      match Bitset.mem max_prec.prec_set.index reduce_prec.prec_set.doms with
                       | false -> begin
-                          match Ordset.mem reduce_prec.prec_set.index max_prec.prec_set.doms with
+                          match Bitset.mem reduce_prec.prec_set.index max_prec.prec_set.doms with
                           | false -> begin
                               (* Disjoint precedence; no conflict resolution possible. *)
                               empty, true
