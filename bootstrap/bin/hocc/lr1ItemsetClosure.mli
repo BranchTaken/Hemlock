@@ -62,8 +62,7 @@ val actions: Symbols.t -> t -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_
 val gotos: Symbols.t -> t -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
 (** [gotos symbols t] computes the map of per non-terminal symbol gotos for [t]. *)
 
-val lhs_symbol_indexes: t -> (Symbol.Index.t, (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t,
-  Symbol.Index.cmper_witness) Ordmap.t
+val lhs_symbol_indexes: t -> (Symbol.Index.t, Bitset.t, Symbol.Index.cmper_witness) Ordmap.t
 (** [lhs_symbol_indexes t] returns a map of all LHS symbols in [t] to their corresponding items'
     follow sets. *)
 

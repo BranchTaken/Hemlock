@@ -160,7 +160,7 @@ let attribs lr1itemset t =
                 | true -> Attribs.insert shift_attrib attribs
               end
             | Some {follow; _} -> begin
-                match Ordset.mem symbol_index follow with
+                match Bitset.mem symbol_index follow with
                 | false -> begin
                     match has_shift with
                     | false -> attribs

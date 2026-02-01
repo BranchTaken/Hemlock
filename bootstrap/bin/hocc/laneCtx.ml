@@ -89,8 +89,8 @@ module TraceVal = struct
       ~f:(fun t Lr1Item.{lr0item; follow=follow_unfiltered} ->
         (* Filter the follow set to contain only `symbol_index`, since it is the only relevant
          * symbol in the context of kernel attribs. *)
-        assert (Ordset.mem symbol_index follow_unfiltered);
-        let follow = Ordset.singleton (module Symbol.Index) symbol_index in
+        assert (Bitset.mem symbol_index follow_unfiltered);
+        let follow = Bitset.singleton symbol_index in
         let lr1item = Lr1Item.init ~lr0item ~follow in
         Ordmap.insert_hlt ~k:lr1item ~v:isucc_lr1itemset t
       ) lr1itemset
@@ -190,7 +190,7 @@ let kernel_of_rightmost state prod symbol_index =
       let lr0item = lr1item.lr0item in
       match Prod.(lr0item.prod = prod)
             && Array.length lr0item.prod.rhs_indexes = lr0item.dot
-            && Ordset.mem symbol_index lr1item.follow with
+            && Bitset.mem symbol_index lr1item.follow with
       | false -> accum
       | true -> Lr1Itemset.insert lr1item accum
     ) State.(state.statenub.lr1itemsetclosure.kernel)
@@ -278,7 +278,7 @@ let of_ipred state leftmost_cache {conflict_state; state=isucc; traces=isucc_tra
                    * follow set. *)
                   let lr1item_opt = Lr1Itemset.get
                       (Lr1Item.init ~lr0item
-                          ~follow:(Ordset.singleton (module Symbol.Index) symbol_index))
+                          ~follow:(Bitset.singleton symbol_index))
                       (match dot with
                         | 0L -> State.(state.statenub.lr1itemsetclosure.added)
                         | _ -> State.(state.statenub.lr1itemsetclosure.kernel))

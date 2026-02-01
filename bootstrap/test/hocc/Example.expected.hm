@@ -72,7 +72,7 @@ include [:]{
                     index: uns
                     names: array string
                     assoc: option Assoc.t
-                    doms: Ordset.t uns Uns.cmper_witness
+                    doms: Bitset.t
                   }
 
                 index {index; _} =
@@ -90,7 +90,7 @@ include [:]{
                       "{%u=(^index
                       ^); %f(^Array.pp String.pp^)=(^names
                       ^); %f(^Option.pp Assoc.pp^)=(^assoc
-                      ^); %f(^Ordset.pp^)=(^doms
+                      ^); %f(^Bitset.pp^)=(^doms
                       ^)}"
               }
             include T
@@ -101,8 +101,8 @@ include [:]{
           }
 
         prec_sets = [|
-            PrecSet.init ~index:0 ~names:[|"mul"|] ~assoc:(Some Left) ~doms:(Ordset.empty Uns)
-            PrecSet.init ~index:1 ~names:[|"add"|] ~assoc:(Some Left) ~doms:(Ordset.singleton Uns 0)
+            PrecSet.init ~index:0 ~names:[|"mul"|] ~assoc:(Some Left) ~doms:(Bitset.empty)
+            PrecSet.init ~index:1 ~names:[|"add"|] ~assoc:(Some Left) ~doms:(Bitset.singleton 0)
           |]
 
         Prec = {
@@ -198,8 +198,8 @@ include [:]{
                     alias: option string
                     start: bool
                     prods: Ordset.t Prod.t Prod.cmper_witness
-                    first: Ordset.t uns Uns.cmper_witness
-                    follow: Ordset.t uns Uns.cmper_witness
+                    first: Bitset.t
+                    follow: Bitset.t
                   }
 
                 hash_fold {index; _} state =
@@ -217,8 +217,8 @@ include [:]{
                       ^); %f(^Option.pp String.pp^)=(^alias
                       ^); %b=(^start
                       ^); %f(^Ordset.pp^)=(^prods
-                      ^); %f(^Ordset.pp^)=(^first
-                      ^); %f(^Ordset.pp^)=(^follow
+                      ^); %f(^Bitset.pp^)=(^first
+                      ^); %f(^Bitset.pp^)=(^follow
                       ^)}"
               }
             include T
@@ -231,66 +231,66 @@ include [:]{
         symbols = [|
             Symbol.init ~index:0 ~name:"EPSILON"
               ~prec:None ~alias:(Some "ε") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 0)
-              ~follow:(Ordset.empty Uns)
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 0)
+              ~follow:Bitset.empty
             Symbol.init ~index:1 ~name:"PSEUDO_END"
               ~prec:None ~alias:(Some "⊥") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 1)
-              ~follow:(Ordset.singleton Uns 0)
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 1)
+              ~follow:(Bitset.singleton 0)
             Symbol.init ~index:2 ~name:"STAR"
               ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:0)) ~alias:(Some "*") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 2)
-              ~follow:(Ordset.singleton Uns 6)
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 2)
+              ~follow:(Bitset.singleton 6)
             Symbol.init ~index:3 ~name:"SLASH"
               ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:0)) ~alias:(Some "/") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 3)
-              ~follow:(Ordset.singleton Uns 6)
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 3)
+              ~follow:(Bitset.singleton 6)
             Symbol.init ~index:4 ~name:"PLUS"
               ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:1)) ~alias:(Some "+") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 4)
-              ~follow:(Ordset.singleton Uns 6)
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 4)
+              ~follow:(Bitset.singleton 6)
             Symbol.init ~index:5 ~name:"MINUS"
               ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:1)) ~alias:(Some "-") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 5)
-              ~follow:(Ordset.singleton Uns 6)
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 5)
+              ~follow:(Bitset.singleton 6)
             Symbol.init ~index:6 ~name:"INT"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 6)
-              ~follow:(Ordset.of_list Uns [2; 3; 4; 5; 7])
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 6)
+              ~follow:(Bitset.of_nat 0xbcn)
             Symbol.init ~index:7 ~name:"EOI"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Ordset.singleton Uns 7)
-              ~follow:(Ordset.singleton Uns 1)
+              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 7)
+              ~follow:(Bitset.singleton 1)
             Symbol.init ~index:8 ~name:"MulOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list Prod [
                 Array.get 0 prods
                 Array.get 1 prods
-              ]) ~first:(Ordset.of_list Uns [2; 3])
-              ~follow:(Ordset.singleton Uns 6)
+              ]) ~first:(Bitset.of_nat 0xcn)
+              ~follow:(Bitset.singleton 6)
             Symbol.init ~index:9 ~name:"AddOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list Prod [
                 Array.get 2 prods
                 Array.get 3 prods
-              ]) ~first:(Ordset.of_list Uns [4; 5])
-              ~follow:(Ordset.singleton Uns 6)
+              ]) ~first:(Bitset.of_nat 0x30n)
+              ~follow:(Bitset.singleton 6)
             Symbol.init ~index:10 ~name:"Expr"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list Prod [
                 Array.get 4 prods
                 Array.get 5 prods
                 Array.get 6 prods
-              ]) ~first:(Ordset.singleton Uns 6)
-              ~follow:(Ordset.of_list Uns [2; 3; 4; 5; 7])
+              ]) ~first:(Bitset.singleton 6)
+              ~follow:(Bitset.of_nat 0xbcn)
             Symbol.init ~index:11 ~name:"Answer"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton Prod (Array.get 7 prods)) ~first:(Ordset.singleton Uns 6)
-              ~follow:(Ordset.singleton Uns 1)
+              ~prods:(Ordset.singleton Prod (Array.get 7 prods)) ~first:(Bitset.singleton 6)
+              ~follow:(Bitset.singleton 1)
             Symbol.init ~index:12 ~name:"Answer'"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton Prod (Array.get 8 prods)) ~first:(Ordset.singleton Uns 6)
-              ~follow:(Ordset.singleton Uns 0)
+              ~prods:(Ordset.singleton Prod (Array.get 8 prods)) ~first:(Bitset.singleton 6)
+              ~follow:(Bitset.singleton 0)
           |]
 
         Lr0Item = {
@@ -326,24 +326,24 @@ include [:]{
             T = {
                 type t: t = {
                     lr0item: Lr0Item.t
-                    follow: Ordset.t uns Uns.cmper_witness
+                    follow: Bitset.t
                   }
 
                 hash_fold {lr0item; follow} state =
                     state
                       |> Lr0Item.hash_fold lr0item
-                      |> Ordset.hash_fold follow
+                      |> Bitset.hash_fold follow
 
                 cmp {lr0item=l0; follow=f0} {lr0item=l1; follow=f1} =
                     let open Cmp
                     match Lr0Item.cmp l0 l1 with
                       | Lt -> Lt
-                      | Eq -> Ordset.cmp f0 f1
+                      | Eq -> Bitset.cmp f0 f1
                       | Gt -> Gt
 
                 pp {lr0item; follow} formatter =
                     formatter
-                      |> Fmt.fmt "{%f(^Lr0Item.pp^)=(^lr0item^); %f(^Ordset.pp^)=(^follow^)}"
+                      |> Fmt.fmt "{%f(^Lr0Item.pp^)=(^lr0item^); %f(^Bitset.pp^)=(^follow^)}"
               }
             include T
             include Identifiable.Make(T)
@@ -477,7 +477,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [0]
+                                Bitset.singleton 0
                             lr0item, lr1item
                           )
                       ]
@@ -486,25 +486,25 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [1]
+                                Bitset.singleton 1
                             lr0item, lr1item
                           )
                       ]
@@ -526,7 +526,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                       ]
@@ -551,19 +551,19 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [1]
+                                Bitset.singleton 1
                             lr0item, lr1item
                           )
                       ]
@@ -572,25 +572,25 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                       ]
@@ -616,7 +616,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [0]
+                                Bitset.singleton 0
                             lr0item, lr1item
                           )
                       ]
@@ -637,7 +637,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                       ]
@@ -658,7 +658,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                       ]
@@ -679,7 +679,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                       ]
@@ -700,7 +700,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                       ]
@@ -721,7 +721,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7 prods) ~dot:2
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [1]
+                                Bitset.singleton 1
                             lr0item, lr1item
                           )
                       ]
@@ -742,7 +742,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:2
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                       ]
@@ -751,19 +751,19 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                       ]
@@ -784,7 +784,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:2
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                       ]
@@ -793,19 +793,19 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                       ]
@@ -826,7 +826,7 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8 prods) ~dot:2
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [0]
+                                Bitset.singleton 0
                             lr0item, lr1item
                           )
                       ]
@@ -847,19 +847,19 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:3
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                       ]
@@ -868,25 +868,25 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                       ]
@@ -912,19 +912,19 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:1
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:3
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [2; 3; 4; 5; 7]
+                                Bitset.of_nat 0xbcn
                             lr0item, lr1item
                           )
                       ]
@@ -933,25 +933,25 @@ include [:]{
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
                             let lr1item = Lr1Item.init ~lr0item ~follow:
-                                Ordset.of_list Uns [6]
+                                Bitset.singleton 6
                             lr0item, lr1item
                           )
                       ]

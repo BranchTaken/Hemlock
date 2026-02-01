@@ -34,7 +34,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
     formatter
     |> Fmt.fmt "{"
     |> (fun formatter ->
-      Ordset.foldi ~init:formatter ~f:(fun i formatter symbol_index ->
+      Bitset.foldi ~init:formatter ~f:(fun i formatter symbol_index ->
         formatter
         |> (fun formatter -> match i with 0L -> formatter | _ -> formatter |> Fmt.fmt ", ")
         |> pp_symbol_index symbol_index
@@ -114,7 +114,7 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
           | _ -> ", "
         )
         |> pp_symbol_index symbol_index
-      ) (Ordset.to_array Lr1Item.(lr1item.follow))
+      ) (Bitset.to_array Lr1Item.(lr1item.follow))
     )
     |> Fmt.fmt "}]"
     |> (fun formatter ->
@@ -250,10 +250,10 @@ let generate_description conf io description Spec.{algorithm; precs; symbols; pr
         ) names
       )
       |> (fun formatter ->
-        match Ordset.is_empty doms with
+        match Bitset.is_empty doms with
         | true -> formatter
         | false -> begin
-            let _, formatter = Ordset.fold ~init:(true, formatter)
+            let _, formatter = Bitset.fold ~init:(true, formatter)
               ~f:(fun (first, formatter) prec_ind ->
                 Array.fold ~init:(first, formatter) ~f:(fun (first, formatter) name ->
                   let formatter =

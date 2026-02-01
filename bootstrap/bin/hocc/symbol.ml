@@ -21,8 +21,8 @@ module T = struct
     alias: string option;
     start: bool;
     prods: (Prod.t, Prod.cmper_witness) Ordset.t;
-    first: (Index.t, Index.cmper_witness) Ordset.t;
-    follow: (Index.t, Index.cmper_witness) Ordset.t;
+    first: Bitset.t;
+    follow: Bitset.t;
   }
 
   let hash_fold {index; _} state =
@@ -41,8 +41,8 @@ module T = struct
     |> Fmt.fmt "; alias=" |> (Option.pp String.pp) alias
     |> Fmt.fmt "; start=" |> Bool.pp start
     |> Fmt.fmt "; prods=" |> Ordset.pp prods
-    |> Fmt.fmt "; first=" |> Ordset.pp first
-    |> Fmt.fmt "; follow=" |> Ordset.pp follow
+    |> Fmt.fmt "; first=" |> Bitset.pp first
+    |> Fmt.fmt "; follow=" |> Bitset.pp follow
     |> Fmt.fmt "}"
 
   let pp_hr {name; alias; prods; _} formatter =
@@ -65,8 +65,8 @@ let init_token ~index ~name ~stype ~prec ~stmt ~alias =
   let start = false in
   let prods = Ordset.empty (module Prod) in
   (* Tokens are in their own `first` sets. *)
-  let first = Ordset.singleton (module Index) index in
-  let follow = Ordset.empty (module Index) in
+  let first = Bitset.singleton index in
+  let follow = Bitset.empty in
   {index; name; stype; prec; stmt; alias; start; prods; first; follow}
 
 let init_synthetic_token ~index ~name ~alias =
@@ -89,13 +89,13 @@ let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
     is_epsilon, is_epsilon
   ) prods in
   let first = match has_epsilon_prod with
-    | false -> Ordset.empty (module Index)
-    | true -> Ordset.singleton (module Index) epsilon.index
+    | false -> Bitset.empty
+    | true -> Bitset.singleton epsilon.index
   in
   (* Insert "ε" into the `follow` set for synthetic wrapper symbols. *)
   let follow = match stmt with
-    | Some _ -> Ordset.empty (module Index)
-    | None -> Ordset.singleton (module Index) epsilon.index
+    | Some _ -> Bitset.empty
+    | None -> Bitset.singleton epsilon.index
   in
   {index; name; stype; prec; stmt; alias; start; prods; first; follow}
 
@@ -117,22 +117,22 @@ let name {name; _} =
   name
 
 let first_mem ~other t =
-  Ordset.mem other.index t.first
+  Bitset.mem other.index t.first
 
 let first_has_diff symbol_indexes t =
-  not (Ordset.is_empty (Ordset.diff symbol_indexes t.first))
+  not (Bitset.is_empty (Bitset.diff symbol_indexes t.first))
 
 let first_insert ~other t =
-  let first = Ordset.insert other.index t.first in
+  let first = Bitset.insert other.index t.first in
   {t with first}
 
 let first_union symbol_indexes t =
-  let first = Ordset.union symbol_indexes t.first in
+  let first = Bitset.union symbol_indexes t.first in
   {t with first}
 
 let follow_has_diff symbol_indexes t =
-  not (Ordset.is_empty (Ordset.diff symbol_indexes t.follow))
+  not (Bitset.is_empty (Bitset.diff symbol_indexes t.follow))
 
 let follow_union symbol_indexes t =
-  let follow = Ordset.union symbol_indexes t.follow in
+  let follow = Bitset.union symbol_indexes t.follow in
   {t with follow}
