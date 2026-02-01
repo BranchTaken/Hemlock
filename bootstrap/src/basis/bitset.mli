@@ -7,3 +7,9 @@ open Rudiments0
 type t
 
 include SetIntf.SOrdMono with type t := t with type elm := uns
+
+val of_nat: Nat.t -> t
+(** [of_nat nat] returns a bitset based on the bits in [nat]. *)
+
+val to_nat: t -> Nat.t
+(** [to_nat t] returns the value underlying [t]. *)
