@@ -6,7 +6,7 @@ type t = {
   index: Index.t;
   names: string array;
   assoc: Assoc.t option;
-  doms: (Index.t, Index.cmper_witness) Ordset.t;
+  doms: Bitset.t;
   stmt: Parse.nonterm_prec_set;
 }
 
@@ -15,7 +15,7 @@ let pp {index; names; assoc; doms; stmt} formatter =
   |> Fmt.fmt "{index=" |> Index.pp index
   |> Fmt.fmt "; names=" |> Array.pp String.pp names
   |> Fmt.fmt "; assoc=" |> (Option.pp Assoc.pp) assoc
-  |> Fmt.fmt "; doms=" |> Ordset.pp doms
+  |> Fmt.fmt "; doms=" |> Bitset.pp doms
   |> Fmt.fmt "; stmt=" |> Parse.fmt_prec_set stmt
   |> Fmt.fmt "}"
 

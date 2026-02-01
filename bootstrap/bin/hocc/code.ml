@@ -129,8 +129,7 @@ let hmi_template = {|{
                 index: uns # Index in `prec_sets` array.
                 names: array string
                 assoc: option Assoc.t
-                doms: Ordset.t uns Uns.cmper_witness (* Indices in `prec_sets` array of dominator
-                                                      * precedence sets. *)
+                doms: Bitset.t (* Indices in `prec_sets` array of dominator precedence sets. *)
               }
 
             include IdentifiableIntf.S with type t := t
@@ -173,8 +172,8 @@ let hmi_template = {|{
                 alias: option string
                 start: bool
                 prods: Ordset.t Prod.t Prod.cmper_witness # empty ≡ token
-                first: Ordset.t uns Uns.cmper_witness
-                follow: Ordset.t uns Uns.cmper_witness
+                first: Bitset.t
+                follow: Bitset.t
               }
 
             include IdentifiableIntf.S with type t := t
@@ -196,7 +195,7 @@ let hmi_template = {|{
         Lr1Item = {
             type t: t = {
                 lr0item: Lr0Item.t
-                follow: Ordset.t uns Uns.cmper_witness
+                follow: Bitset.t
               }
 
             include IdentifiableIntf.S with type t := t
@@ -555,7 +554,7 @@ let hm_template = {|{
                     index: uns
                     names: array string
                     assoc: option Assoc.t
-                    doms: Ordset.t uns Uns.cmper_witness
+                    doms: Bitset.t
                   }
 
                 index {index; _} =
@@ -573,7 +572,7 @@ let hm_template = {|{
                       "{%u=(^index
                       ^); %f(^Array.pp String.pp^)=(^names
                       ^); %f(^Option.pp Assoc.pp^)=(^assoc
-                      ^); %f(^Ordset.pp^)=(^doms
+                      ^); %f(^Bitset.pp^)=(^doms
                       ^)}"
               }
             include T
@@ -659,8 +658,8 @@ let hm_template = {|{
                     alias: option string
                     start: bool
                     prods: Ordset.t Prod.t Prod.cmper_witness
-                    first: Ordset.t uns Uns.cmper_witness
-                    follow: Ordset.t uns Uns.cmper_witness
+                    first: Bitset.t
+                    follow: Bitset.t
                   }
 
                 hash_fold {index; _} state =
@@ -678,8 +677,8 @@ let hm_template = {|{
                       ^); %f(^Option.pp String.pp^)=(^alias
                       ^); %b=(^start
                       ^); %f(^Ordset.pp^)=(^prods
-                      ^); %f(^Ordset.pp^)=(^first
-                      ^); %f(^Ordset.pp^)=(^follow
+                      ^); %f(^Bitset.pp^)=(^first
+                      ^); %f(^Bitset.pp^)=(^follow
                       ^)}"
               }
             include T
@@ -724,24 +723,24 @@ let hm_template = {|{
             T = {
                 type t: t = {
                     lr0item: Lr0Item.t
-                    follow: Ordset.t uns Uns.cmper_witness
+                    follow: Bitset.t
                   }
 
                 hash_fold {lr0item; follow} state =
                     state
                       |> Lr0Item.hash_fold lr0item
-                      |> Ordset.hash_fold follow
+                      |> Bitset.hash_fold follow
 
                 cmp {lr0item=l0; follow=f0} {lr0item=l1; follow=f1} =
                     let open Cmp
                     match Lr0Item.cmp l0 l1 with
                       | Lt -> Lt
-                      | Eq -> Ordset.cmp f0 f1
+                      | Eq -> Bitset.cmp f0 f1
                       | Gt -> Gt
 
                 pp {lr0item; follow} formatter =
                     formatter
-                      |> Fmt.fmt "{%f(^Lr0Item.pp^)=(^lr0item^); %f(^Ordset.pp^)=(^follow^)}"
+                      |> Fmt.fmt "{%f(^Lr0Item.pp^)=(^lr0item^); %f(^Bitset.pp^)=(^follow^)}"
               }
             include T
             include Identifiable.Make(T)
@@ -1230,16 +1229,16 @@ let expand_hm_prec_sets precs ~indentation formatter =
             | None -> formatter |> Fmt.fmt "None"
             | Some assoc -> formatter |> Fmt.fmt "(Some " |> Assoc.pp assoc |> Fmt.fmt ")"
           )
-          |> Fmt.fmt " ~doms:(Ordset."
+          |> Fmt.fmt " ~doms:(Bitset."
           |> (fun formatter ->
-            match Ordset.length doms with
-            | 0L -> formatter |> Fmt.fmt "empty Uns"
+            match Bitset.length doms with
+            | 0L -> formatter |> Fmt.fmt "empty"
             | 1L ->
-              formatter |> Fmt.fmt "singleton Uns " |> (Ordset.choose_hlt doms |> Prec.Index.pp)
+              formatter |> Fmt.fmt "singleton " |> (Bitset.choose_hlt doms |> Prec.Index.pp)
             | _ -> begin
                 formatter
-                |> Fmt.fmt "of_list Uns "
-                |> (Ordset.to_list doms |> List.pp Prec.Index.pp)
+                |> Fmt.fmt "of_list "
+                |> (Bitset.to_list doms |> List.pp Prec.Index.pp)
               end
           )
           |> Fmt.fmt ")"
@@ -1352,36 +1351,39 @@ let expand_hm_symbols symbols ~indentation formatter =
               end
           )
           |> Fmt.fmt ")"
-          |> Fmt.fmt " ~first:("
+          |> Fmt.fmt " ~first:"
           |> (fun formatter ->
-            match Ordset.length first with
-            | 0L -> formatter |> Fmt.fmt "Ordset.empty Uns"
+            match Bitset.length first with
+            | 0L -> formatter |> Fmt.fmt "Bitset.empty"
             | 1L -> begin
-                let symbol_index = Ordset.choose_hlt first in
-                formatter |> Fmt.fmt "Ordset.singleton Uns " |> Prod.Index.pp symbol_index
+                let symbol_index = Bitset.choose_hlt first in
+                formatter
+                |> Fmt.fmt "(Bitset.singleton " |> Prod.Index.pp symbol_index |> Fmt.fmt ")"
               end
             | _ -> begin
                 formatter
-                |> Fmt.fmt "Ordset.of_list Uns "
-                |> List.fmt Symbol.Index.pp (Ordset.to_list first)
+                |> Fmt.fmt "(Bitset.of_nat "
+                |> Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (Bitset.to_nat first)
+                |> Fmt.fmt ")"
               end
           )
-          |> Fmt.fmt ")"
-          |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~follow:("
+          |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~follow:"
           |> (fun formatter ->
-            match Ordset.length follow with
-            | 0L -> formatter |> Fmt.fmt "Ordset.empty Uns"
+            match Bitset.length follow with
+            | 0L -> formatter |> Fmt.fmt "Bitset.empty"
             | 1L -> begin
-                let symbol_index = Ordset.choose_hlt follow in
-                formatter |> Fmt.fmt "Ordset.singleton Uns " |> Prod.Index.pp symbol_index
+                let symbol_index = Bitset.choose_hlt follow in
+                formatter
+                |> Fmt.fmt "(Bitset.singleton " |> Prod.Index.pp symbol_index |> Fmt.fmt ")"
               end
             | _ -> begin
                 formatter
-                |> Fmt.fmt "Ordset.of_list Uns "
-                |> List.pp Symbol.Index.pp (Ordset.to_list follow)
+                |> Fmt.fmt "(Bitset.of_nat "
+                |> Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (Bitset.to_nat follow)
+                |> Fmt.fmt ")"
               end
           )
-          |> Fmt.fmt ")"
+          (*XXX \n ?*)
         ),
         false
       ) symbols
@@ -1419,7 +1421,22 @@ let expand_hm_lr1Itemset lr1itemset ~indentation formatter =
                 let indentation = indentation + 4L in
                 let indent = mk_indent indentation in
                 formatter
-                |> indent |> Fmt.fmt "Ordset.of_list Uns " |> Ordset.pp follow |> Fmt.fmt "\n"
+                |> indent
+                |> (fun formatter ->
+                  match Bitset.length follow with
+                  | 0L -> formatter |> Fmt.fmt "Bitset.empty"
+                  | 1L -> begin
+                      let symbol_index = Bitset.choose_hlt follow in
+                      formatter
+                      |> Fmt.fmt "Bitset.singleton " |> Prod.Index.pp symbol_index
+                    end
+                  | _ -> begin
+                      formatter
+                      |> Fmt.fmt "Bitset.of_nat "
+                      |> Nat.fmt ~alt:true ~radix:Radix.Hex ~pretty:true (Bitset.to_nat follow)
+                    end
+                )
+                |> Fmt.fmt "\n"
               )
               |> indent |> Fmt.fmt "lr0item, lr1item\n"
             )
@@ -1922,8 +1939,7 @@ let mli_template = {|sig
                 index: uns; (* Index in `prec_sets` array. *)
                 names: string array;
                 assoc: Assoc.t option;
-                doms: (uns, Uns.cmper_witness) Ordset.t; (* Indices in `prec_sets` array of
-                                                          * dominator precedences. *)
+                doms: Bitset.t; (* Indices in `prec_sets` array of dominator precedences. *)
               }
 
             include IdentifiableIntf.S with type t := t
@@ -1966,8 +1982,8 @@ let mli_template = {|sig
                 alias: string option;
                 start: bool;
                 prods: (Prod.t, Prod.cmper_witness) Ordset.t; (* empty ≡ token *)
-                first: (uns, Uns.cmper_witness) Ordset.t;
-                follow: (uns, Uns.cmper_witness) Ordset.t;
+                first: Bitset.t;
+                follow: Bitset.t;
               }
 
             include IdentifiableIntf.S with type t := t
@@ -1989,7 +2005,7 @@ let mli_template = {|sig
         module Lr1Item : sig
             type t = {
                 lr0item: Lr0Item.t;
-                follow: (uns, Uns.cmper_witness) Ordset.t;
+                follow: Bitset.t;
               }
 
             include IdentifiableIntf.S with type t := t
@@ -2345,7 +2361,7 @@ let ml_template = {|struct
                     index: uns;
                     names: string array;
                     assoc: Assoc.t option;
-                    doms: (uns, Uns.cmper_witness) Ordset.t;
+                    doms: Bitset.t;
                   }
 
                 let index {index; _} =
@@ -2362,7 +2378,7 @@ let ml_template = {|struct
                       |> Fmt.fmt "{index=" |> Uns.pp index
                       |> Fmt.fmt "; names=" |> Array.pp String.pp names
                       |> Fmt.fmt "; assoc=" |> Option.pp Assoc.pp assoc
-                      |> Fmt.fmt "; doms=" |> Ordset.pp doms
+                      |> Fmt.fmt "; doms=" |> Bitset.pp doms
                       |> Fmt.fmt "}"
               end
             include T
@@ -2446,8 +2462,8 @@ let ml_template = {|struct
                     alias: string option;
                     start: bool;
                     prods: (Prod.t, Prod.cmper_witness) Ordset.t;
-                    first: (uns, Uns.cmper_witness) Ordset.t;
-                    follow: (uns, Uns.cmper_witness) Ordset.t;
+                    first: Bitset.t;
+                    follow: Bitset.t;
                   }
 
                 let hash_fold {index; _} state =
@@ -2464,8 +2480,8 @@ let ml_template = {|struct
                       |> Fmt.fmt "; alias=" |> Option.pp String.pp alias
                       |> Fmt.fmt "; start=" |> Bool.pp start
                       |> Fmt.fmt "; prods=" |> Ordset.pp prods
-                      |> Fmt.fmt "; first=" |> Ordset.pp first
-                      |> Fmt.fmt "; follow=" |> Ordset.pp follow
+                      |> Fmt.fmt "; first=" |> Bitset.pp first
+                      |> Fmt.fmt "; follow=" |> Bitset.pp follow
                       |> Fmt.fmt "}"
               end
             include T
@@ -2513,25 +2529,25 @@ let ml_template = {|struct
             module T = struct
                 type t = {
                     lr0item: Lr0Item.t;
-                    follow: (uns, Uns.cmper_witness) Ordset.t;
+                    follow: Bitset.t;
                   }
 
                 let hash_fold {lr0item; follow} state =
                     state
                       |> Lr0Item.hash_fold lr0item
-                      |> Ordset.hash_fold follow
+                      |> Bitset.hash_fold follow
 
                 let cmp {lr0item=l0; follow=f0} {lr0item=l1; follow=f1} =
                     let open Cmp in
                     match Lr0Item.cmp l0 l1 with
                       | Lt -> Lt
-                      | Eq -> Ordset.cmp f0 f1
+                      | Eq -> Bitset.cmp f0 f1
                       | Gt -> Gt
 
                 let pp {lr0item; follow} formatter =
                     formatter
                       |> Fmt.fmt "{lr0item=" |> Lr0Item.pp lr0item
-                      |> Fmt.fmt "; follow=" |> Ordset.pp follow
+                      |> Fmt.fmt "; follow=" |> Bitset.pp follow
                       |> Fmt.fmt "}"
               end
             include T
@@ -3043,19 +3059,19 @@ let expand_ml_prec_sets precs ~indentation formatter =
             | None -> formatter |> Fmt.fmt "None"
             | Some assoc -> formatter |> Fmt.fmt "(Some " |> Assoc.pp assoc |> Fmt.fmt ")"
           )
-          |> Fmt.fmt " ~doms:(Ordset."
+          |> Fmt.fmt " ~doms:(Bitset."
           |> (fun formatter ->
-            match Ordset.length doms with
-            | 0L -> formatter |> Fmt.fmt "empty (module Uns)"
+            match Bitset.length doms with
+            | 0L -> formatter |> Fmt.fmt "empty"
             | 1L -> begin
                 formatter
-                |> Fmt.fmt "singleton (module Uns) "
-                |> (Ordset.choose_hlt doms |> ml_uns_pp)
+                |> Fmt.fmt "singleton "
+                |> (Bitset.choose_hlt doms |> ml_uns_pp)
               end
             | _ -> begin
                 formatter
-                |> Fmt.fmt "of_list (module Uns) "
-                |> (Ordset.to_list doms |> List.pp ml_uns_pp)
+                |> Fmt.fmt "of_list "
+                |> (Bitset.to_list doms |> List.pp ml_uns_pp)
               end
           )
           |> Fmt.fmt ")"
@@ -3168,37 +3184,40 @@ let expand_ml_symbols symbols ~indentation formatter =
               end
           )
           |> Fmt.fmt ")"
-          |> Fmt.fmt " ~first:("
+          |> Fmt.fmt " ~first:"
           |> (fun formatter ->
-            match Ordset.length first with
-            | 0L -> formatter |> Fmt.fmt "Ordset.empty (module Uns)"
+            match Bitset.length first with
+            | 0L -> formatter |> Fmt.fmt "Bitset.empty"
             | 1L -> begin
-                let symbol_index = Ordset.choose_hlt first in
+                let symbol_index = Bitset.choose_hlt first in
                 formatter
-                |> Fmt.fmt "Ordset.singleton (module Uns) " |> ml_uns_pp symbol_index
+                |> Fmt.fmt "(Bitset.singleton " |> ml_uns_pp symbol_index |> Fmt.fmt ")"
               end
             | _ -> begin
                 formatter
-                |> Fmt.fmt "Ordset.of_list (module Uns) "
-                |> List.fmt ml_uns_pp (Ordset.to_list first)
+                |> Fmt.fmt "(Bitset.of_nat (Nat.of_string "
+                |> String.pp (Nat.to_string ~alt:true ~radix:Radix.Hex ~pretty:true
+                    (Bitset.to_nat first))
+                |> Fmt.fmt "))"
               end
           )
-          |> Fmt.fmt ")"
-          |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~follow:("
+          |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~follow:"
           |> (fun formatter ->
-            match Ordset.length follow with
-            | 0L -> formatter |> Fmt.fmt "Ordset.empty (module Uns)"
+            match Bitset.length follow with
+            | 0L -> formatter |> Fmt.fmt "Bitset.empty"
             | 1L -> begin
-                let symbol_index = Ordset.choose_hlt follow in
-                formatter |> Fmt.fmt "Ordset.singleton (module Uns) " |> ml_uns_pp symbol_index
+                let symbol_index = Bitset.choose_hlt follow in
+                formatter
+                |> Fmt.fmt "(Bitset.singleton " |> ml_uns_pp symbol_index |> Fmt.fmt ")"
               end
             | _ -> begin
                 formatter
-                |> Fmt.fmt "Ordset.of_list (module Uns) "
-                |> List.pp ml_uns_pp (Ordset.to_list follow)
+                |> Fmt.fmt "(Bitset.of_nat (Nat.of_string "
+                |> String.pp (Nat.to_string ~alt:true ~radix:Radix.Hex ~pretty:true
+                    (Bitset.to_nat follow))
+                |> Fmt.fmt "))"
               end
           )
-          |> Fmt.fmt ")"
         ),
         false
       ) symbols
@@ -3236,8 +3255,23 @@ let expand_ml_lr1Itemset lr1itemset ~indentation formatter =
                 let indentation = indentation + 4L in
                 let indent = mk_indent indentation in
                 formatter
-                |> indent |> Fmt.fmt "Ordset.of_list (module Uns) "
-                |> (Ordset.to_list follow |> List.pp ml_uns_pp)
+                |> indent
+                |> (fun formatter ->
+                  match Bitset.length follow with
+                  | 0L -> formatter |> Fmt.fmt "Bitset.empty"
+                  | 1L -> begin
+                      let symbol_index = Bitset.choose_hlt follow in
+                      formatter
+                      |> Fmt.fmt "Bitset.singleton " |> ml_uns_pp symbol_index |> Fmt.fmt ""
+                    end
+                  | _ -> begin
+                      formatter
+                      |> Fmt.fmt "Bitset.of_nat (Nat.of_string "
+                      |> String.pp (Nat.to_string ~alt:true ~radix:Radix.Hex ~pretty:true
+                          (Bitset.to_nat follow))
+                      |> Fmt.fmt ")"
+                    end
+                )
                 |> Fmt.fmt "\n"
               )
               |> indent |> Fmt.fmt "  ) in\n"

@@ -53,12 +53,12 @@ let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_in
               let present, lacking, marks = match ka_present, lacking || ka_lacking with
                 | true, true -> true, true, marks
                 | true, false -> begin
-                    let ka_lacking, marks = match Ordset.mem src marks with
+                    let ka_lacking, marks = match Bitset.mem src marks with
                       | true -> false, marks
                       | false -> begin
                           let has_implicit_shift, marks = inner adjs annotations
                               ~conflict_state_index ~symbol_index ~conflict
-                              (Ordset.insert src marks) src in
+                              (Bitset.insert src marks) src in
                           has_implicit_shift, marks
                         end
                     in
@@ -78,7 +78,7 @@ let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_in
   | false -> false
   | true -> begin
       let has_implicit_shift, _marks = inner adjs annotations ~conflict_state_index ~symbol_index
-          ~conflict (Ordset.singleton (module State.Index) dst) dst in
+          ~conflict (Bitset.singleton dst) dst in
       has_implicit_shift
     end
 
@@ -164,8 +164,8 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
           | false -> begin
               Ordmap.amend dst ~f:(fun syms_useful_opt ->
                 let syms_useful' = match syms_useful_opt with
-                  | None -> Ordset.singleton (module Symbol.Index) sym
-                  | Some syms_useful -> Ordset.insert sym syms_useful
+                  | None -> Bitset.singleton sym
+                  | Some syms_useful -> Bitset.insert sym syms_useful
                 in
                 Some syms_useful'
               ) dst_syms_useful
@@ -179,9 +179,9 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
       | Some syms_useful -> begin
           let kernel_attribs' = KernelAttribs.fold ~init:KernelAttribs.empty
               ~f:(fun kernel_attribs' ((Lr1Item.{follow; _} as kernel_item), attribs) ->
-                assert (Ordset.length follow = 1L);
-                let sym = Ordset.choose_hlt follow in
-                match Ordset.mem sym syms_useful with
+                assert (Bitset.length follow = 1L);
+                let sym = Bitset.choose_hlt follow in
+                match Bitset.mem sym syms_useful with
                 | false -> kernel_attribs'
                 | true ->  KernelAttribs.insert kernel_item attribs kernel_attribs'
               ) kernel_attribs in

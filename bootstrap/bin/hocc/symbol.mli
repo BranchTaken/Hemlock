@@ -35,10 +35,10 @@ type t = {
   prods: (Prod.t, Prod.cmper_witness) Ordset.t;
   (** Productions associated with non-terminal. Always empty for tokens. *)
 
-  first: (Index.t, Index.cmper_witness) Ordset.t;
+  first: Bitset.t;
   (** First set, i.e. the set of symbols which can begin a sequence rooted at this symbol. *)
 
-  follow: (Index.t, Index.cmper_witness) Ordset.t;
+  follow: Bitset.t;
   (** Follow set, i.e. the set of symbols which can immediately follow a sequence rooted at this
       symbol. *)
 }
@@ -82,7 +82,7 @@ val name: t -> string
 val first_mem: other:t -> t -> bool
 (** [first_mem ~other t] returns true if [other] is in the first set of [t]. *)
 
-val first_has_diff: (Index.t, Index.cmper_witness) Ordset.t -> t -> bool
+val first_has_diff: Bitset.t -> t -> bool
 (** [first_has_diff symbol_indexes t] returns true if [symbol_indexes] contains symbols not
     contained in the first set of [t]. *)
 
@@ -90,14 +90,14 @@ val first_insert: other:t -> t -> t
 (** [first_insert ~other t] returns a symbol equivalent to [t] with [other] inserted into the first
     set. *)
 
-val first_union: (Index.t, Index.cmper_witness) Ordset.t -> t -> t
+val first_union: Bitset.t -> t -> t
 (** [first_union symbol_indexes t] returns a symbol equivalent to [t] with all symbols in
     [symbol_indexes] inserted into the first set. *)
 
-val follow_has_diff: (Index.t, Index.cmper_witness) Ordset.t -> t -> bool
+val follow_has_diff: Bitset.t -> t -> bool
 (** [follow_has_diff symbol_indexes t] returns true if [symbol_indexes] contains symbols not
     contained in the follow set of [t]. *)
 
-val follow_union: (Index.t, Index.cmper_witness) Ordset.t -> t -> t
+val follow_union: Bitset.t -> t -> t
 (** [follow_union symbol_indexes t] returns a symbol equivalent to [t] with all symbols in
     [symbol_indexes] inserted into the follow set. *)

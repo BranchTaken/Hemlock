@@ -73,7 +73,7 @@ include struct
                     index: uns;
                     names: string array;
                     assoc: Assoc.t option;
-                    doms: (uns, Uns.cmper_witness) Ordset.t;
+                    doms: Bitset.t;
                   }
 
                 let index {index; _} =
@@ -90,7 +90,7 @@ include struct
                       |> Fmt.fmt "{index=" |> Uns.pp index
                       |> Fmt.fmt "; names=" |> Array.pp String.pp names
                       |> Fmt.fmt "; assoc=" |> Option.pp Assoc.pp assoc
-                      |> Fmt.fmt "; doms=" |> Ordset.pp doms
+                      |> Fmt.fmt "; doms=" |> Bitset.pp doms
                       |> Fmt.fmt "}"
               end
             include T
@@ -101,8 +101,8 @@ include struct
           end
 
         let prec_sets = [|
-            PrecSet.init ~index:0L ~names:[|"mul"|] ~assoc:(Some Left) ~doms:(Ordset.empty (module Uns));
-            PrecSet.init ~index:1L ~names:[|"add"|] ~assoc:(Some Left) ~doms:(Ordset.singleton (module Uns) 0L)
+            PrecSet.init ~index:0L ~names:[|"mul"|] ~assoc:(Some Left) ~doms:(Bitset.empty);
+            PrecSet.init ~index:1L ~names:[|"add"|] ~assoc:(Some Left) ~doms:(Bitset.singleton 0L)
           |]
 
         module Prec = struct
@@ -196,8 +196,8 @@ include struct
                     alias: string option;
                     start: bool;
                     prods: (Prod.t, Prod.cmper_witness) Ordset.t;
-                    first: (uns, Uns.cmper_witness) Ordset.t;
-                    follow: (uns, Uns.cmper_witness) Ordset.t;
+                    first: Bitset.t;
+                    follow: Bitset.t;
                   }
 
                 let hash_fold {index; _} state =
@@ -214,8 +214,8 @@ include struct
                       |> Fmt.fmt "; alias=" |> Option.pp String.pp alias
                       |> Fmt.fmt "; start=" |> Bool.pp start
                       |> Fmt.fmt "; prods=" |> Ordset.pp prods
-                      |> Fmt.fmt "; first=" |> Ordset.pp first
-                      |> Fmt.fmt "; follow=" |> Ordset.pp follow
+                      |> Fmt.fmt "; first=" |> Bitset.pp first
+                      |> Fmt.fmt "; follow=" |> Bitset.pp follow
                       |> Fmt.fmt "}"
               end
             include T
@@ -228,66 +228,66 @@ include struct
         let symbols = [|
             Symbol.init ~index:0L ~name:"EPSILON"
               ~prec:None ~alias:(Some "ε") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 0L)
-              ~follow:(Ordset.empty (module Uns));
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 0L)
+              ~follow:Bitset.empty;
             Symbol.init ~index:1L ~name:"PSEUDO_END"
               ~prec:None ~alias:(Some "⊥") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 1L)
-              ~follow:(Ordset.singleton (module Uns) 0L);
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 1L)
+              ~follow:(Bitset.singleton 0L);
             Symbol.init ~index:2L ~name:"STAR"
               ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~alias:(Some "*") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 2L)
-              ~follow:(Ordset.singleton (module Uns) 6L);
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 2L)
+              ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:3L ~name:"SLASH"
               ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~alias:(Some "/") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 3L)
-              ~follow:(Ordset.singleton (module Uns) 6L);
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 3L)
+              ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:4L ~name:"PLUS"
               ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:(Some "+") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 4L)
-              ~follow:(Ordset.singleton (module Uns) 6L);
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 4L)
+              ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:5L ~name:"MINUS"
               ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:(Some "-") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 5L)
-              ~follow:(Ordset.singleton (module Uns) 6L);
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 5L)
+              ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:6L ~name:"INT"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 6L)
-              ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]);
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 6L)
+              ~follow:(Bitset.of_nat (Nat.of_string "0xbcn"));
             Symbol.init ~index:7L ~name:"EOI"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Ordset.singleton (module Uns) 7L)
-              ~follow:(Ordset.singleton (module Uns) 1L);
+              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 7L)
+              ~follow:(Bitset.singleton 1L);
             Symbol.init ~index:8L ~name:"MulOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 0L prods;
                 Array.get 1L prods;
-              ]) ~first:(Ordset.of_list (module Uns) [2L; 3L])
-              ~follow:(Ordset.singleton (module Uns) 6L);
+              ]) ~first:(Bitset.of_nat (Nat.of_string "0xcn"))
+              ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:9L ~name:"AddOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 2L prods;
                 Array.get 3L prods;
-              ]) ~first:(Ordset.of_list (module Uns) [4L; 5L])
-              ~follow:(Ordset.singleton (module Uns) 6L);
+              ]) ~first:(Bitset.of_nat (Nat.of_string "0x30n"))
+              ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:10L ~name:"Expr"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 4L prods;
                 Array.get 5L prods;
                 Array.get 6L prods;
-              ]) ~first:(Ordset.singleton (module Uns) 6L)
-              ~follow:(Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]);
+              ]) ~first:(Bitset.singleton 6L)
+              ~follow:(Bitset.of_nat (Nat.of_string "0xbcn"));
             Symbol.init ~index:11L ~name:"Answer"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 7L prods)) ~first:(Ordset.singleton (module Uns) 6L)
-              ~follow:(Ordset.singleton (module Uns) 1L);
+              ~prods:(Ordset.singleton (module Prod) (Array.get 7L prods)) ~first:(Bitset.singleton 6L)
+              ~follow:(Bitset.singleton 1L);
             Symbol.init ~index:12L ~name:"Answer'"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 8L prods)) ~first:(Ordset.singleton (module Uns) 6L)
-              ~follow:(Ordset.singleton (module Uns) 0L)
+              ~prods:(Ordset.singleton (module Prod) (Array.get 8L prods)) ~first:(Bitset.singleton 6L)
+              ~follow:(Bitset.singleton 0L)
           |]
 
         module Lr0Item = struct
@@ -326,25 +326,25 @@ include struct
             module T = struct
                 type t = {
                     lr0item: Lr0Item.t;
-                    follow: (uns, Uns.cmper_witness) Ordset.t;
+                    follow: Bitset.t;
                   }
 
                 let hash_fold {lr0item; follow} state =
                     state
                       |> Lr0Item.hash_fold lr0item
-                      |> Ordset.hash_fold follow
+                      |> Bitset.hash_fold follow
 
                 let cmp {lr0item=l0; follow=f0} {lr0item=l1; follow=f1} =
                     let open Cmp in
                     match Lr0Item.cmp l0 l1 with
                       | Lt -> Lt
-                      | Eq -> Ordset.cmp f0 f1
+                      | Eq -> Bitset.cmp f0 f1
                       | Gt -> Gt
 
                 let pp {lr0item; follow} formatter =
                     formatter
                       |> Fmt.fmt "{lr0item=" |> Lr0Item.pp lr0item
-                      |> Fmt.fmt "; follow=" |> Ordset.pp follow
+                      |> Fmt.fmt "; follow=" |> Bitset.pp follow
                       |> Fmt.fmt "}"
               end
             include T
@@ -493,7 +493,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [0L]
+                                Bitset.singleton 0L
                               ) in
                             lr0item, lr1item
                           );
@@ -504,28 +504,28 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [1L]
+                                Bitset.singleton 1L
                               ) in
                             lr0item, lr1item
                           );
@@ -552,7 +552,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -583,21 +583,21 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [1L]
+                                Bitset.singleton 1L
                               ) in
                             lr0item, lr1item
                           );
@@ -608,28 +608,28 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
@@ -660,7 +660,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [0L]
+                                Bitset.singleton 0L
                               ) in
                             lr0item, lr1item
                           );
@@ -687,7 +687,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
@@ -714,7 +714,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
@@ -741,7 +741,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
@@ -768,7 +768,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
@@ -795,7 +795,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [1L]
+                                Bitset.singleton 1L
                               ) in
                             lr0item, lr1item
                           );
@@ -822,7 +822,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -833,21 +833,21 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -873,7 +873,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -884,21 +884,21 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -924,7 +924,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [0L]
+                                Bitset.singleton 0L
                               ) in
                             lr0item, lr1item
                           );
@@ -951,21 +951,21 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -976,28 +976,28 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
@@ -1028,21 +1028,21 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [2L; 3L; 4L; 5L; 7L]
+                                Bitset.of_nat (Nat.of_string "0xbcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -1053,28 +1053,28 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Ordset.of_list (module Uns) [6L]
+                                Bitset.singleton 6L
                               ) in
                             lr0item, lr1item
                           );
