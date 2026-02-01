@@ -24,52 +24,145 @@ module T = struct
     | false -> t
     | true -> Nat.(bit_xor (singleton elm) t)
 
+  let first_opt t =
+    match is_empty t with
+    | false -> Some (Nat.bit_ctz t)
+    | true -> None
+
+  let first t =
+    match first_opt t with
+    | Some elm -> elm
+    | None -> halt "No first element"
+
+  let last_opt t =
+    match is_empty t with
+    | false -> Some (Nat.floor_lg t)
+    | true -> None
+
+  let last t =
+    match last_opt t with
+    | Some elm -> elm
+    | None -> halt "No last element"
+
+  let next_ge_opt elm t =
+    let mask = Nat.pred (singleton elm) in
+    let bitset_lt = Nat.bit_and mask t in
+    let bitset_ge = Nat.bit_xor bitset_lt t in
+    match is_empty bitset_ge with
+    | false -> Some (Nat.bit_ctz bitset_ge)
+    | true -> None
+
+  let next_ge elm t =
+    match next_ge_opt elm t with
+    | Some next_ge -> next_ge
+    | None -> halt "No next element"
+
+  let next_gt_opt elm t =
+    next_ge_opt (succ elm) t
+
+  let next_gt elm t =
+    next_ge (succ elm) t
+
+  let prev_le_opt elm t =
+    let mask = Nat.pred (singleton (succ elm)) in
+    let bitset_le = Nat.bit_and mask t in
+    match is_empty bitset_le with
+    | false -> Some (Nat.floor_lg bitset_le)
+    | true -> None
+
+  let prev_le elm t =
+    match prev_le_opt elm t with
+    | Some prev_le -> prev_le
+    | None -> halt "No previous element"
+
+  let prev_lt_opt elm t =
+    prev_le_opt (pred elm) t
+
+  let prev_lt elm t =
+    prev_le (pred elm) t
+
   let fold_until ~init ~f t =
-    let rec fn accum f rem = begin
-      match is_empty rem with
-      | true -> accum
-      | false -> begin
-          let elm = Nat.bit_ctz rem in
+    let rec fn l_opt accum f t = begin
+      let elm_opt = match l_opt with
+        | None -> first_opt t
+        | Some elm -> next_gt_opt elm t
+      in
+      match elm_opt with
+      | None -> accum
+      | Some elm -> begin
           let accum', until = f accum elm in
           match until with
           | true -> accum'
-          | false -> begin
-              let rem' = remove elm rem in
-              fn accum' f rem'
-            end
+          | false -> fn elm_opt accum' f t
         end
     end in
-    fn init f t
+    fn None init f t
 
   let fold_right_until ~init ~f t =
-    let rec fn accum f rem = begin
-      match is_empty rem with
-      | true -> accum
-      | false -> begin
-          let elm = Nat.floor_lg rem in
+    let rec fn r_opt accum f t = begin
+      let elm_opt = match r_opt with
+        | None -> last_opt t
+        | Some elm -> prev_lt_opt elm t
+      in
+      match elm_opt with
+      | None -> accum
+      | Some elm -> begin
           let accum', until = f accum elm in
           match until with
           | true -> accum'
-          | false -> begin
-              let rem' = remove elm rem in
-              fn accum' f rem'
-            end
+          | false -> fn elm_opt accum' f t
         end
     end in
-    fn init f t
+    fn None init f t
 
   let nth_nonempty i t =
     assert (not (is_empty t));
-    let rec fn j elm i t = begin
-      let tz = Nat.bit_ctz t in
-      match j = i with
-      | true -> elm + tz
-      | false -> begin
-          let shift = succ tz in
-          fn (succ j) (elm + shift) i (Nat.bit_sr ~shift t)
+    (* Binary search. The combination of sparse member bits and integer rounding mean that the
+     * search can quiesce at `lo_i + 1 = hi_i`, hence two termination comparisons rather than
+     * terminating only when `lo_i = hi_i`. *)
+    let rec fn lo lo_i hi hi_i pivot i t = begin
+      match lo_i = i, hi_i = i with
+      | true, _ -> lo
+      | false, true -> hi
+      | false, false -> begin
+          let zero_lo_mask = Nat.pred (singleton (succ lo)) in
+          let zero_pivot_mask = Nat.pred (singleton (succ pivot)) in
+          let lo_pivot_mask = Nat.bit_xor zero_lo_mask zero_pivot_mask in
+          let lo_pivot_pop = Nat.(bit_pop (bit_and lo_pivot_mask t)) in
+          match lo_pivot_pop = 0L with
+          | true -> begin
+              (* No members in (lo..pivot]. *)
+              let pivot = (pivot + hi) / 2L in
+              fn lo lo_i hi hi_i pivot i t
+            end
+          | false -> begin
+              (* Find nearest member less than pivot. *)
+              let mid = Nat.(floor_lg (bit_and zero_pivot_mask t)) in
+              let mid_i = lo_i + lo_pivot_pop in
+              match mid_i >= i with
+              | true -> begin
+                  (* i ϵ (lo_i..mid_i] *)
+                  let hi = mid in
+                  let hi_i = mid_i in
+                  let pivot = (lo + hi) / 2L in
+                  fn lo lo_i hi hi_i pivot i t
+                end
+              | false -> begin
+                  (* i ϵ (mid_i..hi_i] *)
+                  let lo = mid in
+                  let lo_i = mid_i in
+                  let pivot = (lo + hi) / 2L in
+                  fn lo lo_i hi hi_i pivot i t
+                end
+            end
         end
     end in
-    fn 0L 0L i t
+    let lo = first t in
+    let lo_i = 0L in
+    let hi = last t in
+    let hi_i = pred (length t) in
+    let pivot = (lo + hi) / 2L in
+    fn lo lo_i hi hi_i pivot i t
 
   let nth i t =
     match length t > i with
@@ -87,6 +180,8 @@ module T = struct
       type t = {
         bitset: container;
         i: uns;
+        l_opt: uns option;
+        r_opt: uns option;
       }
 
       let cmp {i=i0; _} {i=i1; _} =
@@ -96,37 +191,54 @@ module T = struct
     include Cmpable.Make(T)
 
     let hd bitset =
-      {bitset; i=0L}
+      {bitset; i=0L; l_opt=None; r_opt=first_opt bitset}
 
     let tl bitset =
-      {bitset; i=length bitset}
+      {bitset; i=length bitset; l_opt=last_opt bitset; r_opt=None}
 
-    let succ {bitset; i} =
+    let succ {bitset; i; l_opt=_; r_opt} =
       match Uns.( <= ) i (length bitset) with
       | false -> halt "Out of bounds"
-      | true -> {bitset; i=succ i}
+      | true -> begin
+          let r_opt' = match r_opt with
+            | Some r -> next_gt_opt r bitset
+            | None -> None
+          in
+          {bitset; i=succ i; l_opt=r_opt; r_opt=r_opt'}
+        end
 
-    let pred {bitset; i} =
-      match Uns.(i > 0L) with
-      | false -> halt "Out of bounds"
-      | true -> {bitset; i=pred i}
-
-    let lget {bitset; i} =
-      nth (Uns.pred i) bitset
-
-    let rget {bitset; i} =
-      nth i bitset
-
-    let prev {bitset; i} =
+    let pred {bitset; i; l_opt; r_opt=_} =
       match Uns.(i > 0L) with
       | false -> halt "Out of bounds"
       | true -> begin
-          let i' = Uns.pred i in
-          nth i' bitset, {bitset; i=i'}
+          let l_opt' = match l_opt with
+            | Some l -> prev_lt_opt l bitset
+            | None -> None
+          in
+          {bitset; i=pred i; l_opt=l_opt'; r_opt=l_opt}
         end
 
+    let lget {bitset; i=_; l_opt; r_opt} =
+      match l_opt, r_opt with
+      | Some l, _ -> l
+      | _, Some r -> prev_lt r bitset
+      | None, None -> halt "No element left of cursor"
+
+    let rget {bitset; i=_; l_opt; r_opt} =
+      match l_opt, r_opt with
+      | _, Some r -> r
+      | Some l, _ -> next_gt l bitset
+      | None, None -> halt "No element right of cursor"
+
+    let prev t =
+      (* Order operations so as to amortize element search. *)
+      let t' = pred t in
+      rget t', t'
+
     let next t =
-      rget t, succ t
+      (* Order operations so as to amortize element search. *)
+      let t' = succ t in
+      lget t', t'
   end
 end
 include T
@@ -199,26 +311,33 @@ module SeqMonoFold2 = struct
   type container = t
   type nonrec elm = elm
   type t = {
+    bitset: container;
     i: uns;
-    bitset: container
+    elm_opt: uns option;
   }
 
   let init container =
-    {i=0L; bitset=container}
+    {bitset=container; i=0L; elm_opt=None}
 
-  let length {i; bitset} =
+  let length {bitset; i; elm_opt=_} =
     length bitset - i
 
-  let next {i; bitset} =
-    assert (not (is_empty bitset));
-    let elm = nth_nonempty i bitset in
-    elm, {i=succ i; bitset}
+  let next ({bitset; i; elm_opt} as t) =
+    assert (length t > 0L);
+    let elm = match elm_opt with
+      | None -> first bitset
+      | Some elm -> next_gt elm bitset
+    in
+    elm, {bitset; i=succ i; elm_opt=Some elm}
 
-  let next_opt ({i; bitset} as t) =
+  let next_opt ({bitset; i; elm_opt} as t) =
     match length t = 0L with
     | false -> begin
-        let elm = nth_nonempty i bitset in
-        Some (elm, {i=succ i; bitset})
+        let elm = match elm_opt with
+          | None -> first bitset
+          | Some elm -> next_gt elm bitset
+        in
+        Some (elm, {bitset; i=succ i; elm_opt=Some elm})
       end
     | true -> None
 
@@ -306,15 +425,19 @@ let partitioni_tf ~f t =
   ) t
 
 let reduce ~f t =
-  let rec fn i accum = begin
-    match (i = length t) with
-    | true -> accum
-    | false -> fn (succ i) (f accum (nth i t))
+  let rec fn i elm accum t = begin
+    match (i < length t) with
+    | false -> accum
+    | true -> begin
+        let elm' = next_gt elm t in
+        fn (succ i) elm' (f accum elm') t
+      end
   end in
   match is_empty t with
   | true -> None
   | false -> begin
-      Some (fn 1L (nth 0L t))
+      let elm = first t in
+      Some (fn 1L elm elm t)
     end
 
 let reduce_hlt ~f t =
