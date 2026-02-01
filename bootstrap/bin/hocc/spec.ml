@@ -48,7 +48,7 @@ let precs_init io hmh =
               in
               Io.fatal io
             end
-          | Some {index; doms=rel_doms; _} -> Ordset.insert index doms |> Ordset.union rel_doms
+          | Some {index; doms=rel_doms; _} -> Bitset.insert index doms |> Bitset.union rel_doms
         in
         fold_precs_tl_rels io precs rels doms precs_tl
       end
@@ -69,7 +69,7 @@ let precs_init io hmh =
               in
               Io.fatal io
             end
-          | Some {index; doms; _} -> Ordset.insert index doms
+          | Some {index; doms; _} -> Bitset.insert index doms
         in
         fold_precs_tl_rels io precs rels doms precs_tl
       end
@@ -126,7 +126,7 @@ let precs_init io hmh =
         in
         let io, doms = match prec_rels with
           | PrecRelsPrecs {precs=parse_precs} -> fold_precs_rels io precs parse_precs
-          | PrecRelsEpsilon -> io, Ordset.empty (module PrecSet.Index)
+          | PrecRelsEpsilon -> io, Bitset.empty
         in
         let io, names = fold_precs_decl io precs prec_set in
         let precs = Precs.insert ~names ~assoc ~doms ~stmt:parse_prec_set precs in
@@ -706,7 +706,7 @@ let symbols_init io precs symbols hmh =
       let fold_prod symbols symbol prod = begin
         let lr0item = Lr0Item.init ~prod ~dot:0L in
         let lr1item = Lr1Item.init ~lr0item
-            ~follow:(Ordset.singleton (module Symbol.Index) Symbol.(epsilon.index)) in
+            ~follow:(Bitset.singleton Symbol.(epsilon.index)) in
         let rhs_first = Lr1Item.first symbols lr1item in
         (* Merge the RHS's first set into symbol's first set. *)
         match Symbol.first_has_diff rhs_first symbol with
@@ -730,9 +730,9 @@ let symbols_init io precs symbols hmh =
               let b = Symbols.symbol_of_symbol_index b_index symbols in
               let lr0item = Lr0Item.init ~prod ~dot:(succ i) in
               let lr1item = Lr1Item.init ~lr0item
-                  ~follow:(Ordset.singleton (module Symbol.Index) Symbol.(epsilon.index)) in
+                  ~follow:(Bitset.singleton Symbol.(epsilon.index)) in
               let first_beta = Lr1Item.first symbols lr1item in
-              let first_beta_sans_epsilon = Ordset.remove Symbol.epsilon.index first_beta in
+              let first_beta_sans_epsilon = Bitset.remove Symbol.epsilon.index first_beta in
               (* Merge β's first set (sans "ε") into B's follow set. *)
               let symbols', b', merged' =
                 match Symbol.follow_has_diff first_beta_sans_epsilon b with
@@ -744,7 +744,7 @@ let symbols_init io precs symbols hmh =
                   end
               in
               (* If β's first set contains "ε", merge A's follow set into B's follow set. *)
-              let symbols', merged' = match Ordset.mem Symbol.epsilon.index first_beta &&
+              let symbols', merged' = match Bitset.mem Symbol.epsilon.index first_beta &&
                                             Symbol.follow_has_diff Symbol.(symbol.follow) b' with
               | false -> symbols', merged'
               | true -> begin
@@ -1069,7 +1069,6 @@ and log_unused io precs symbols prods states =
   and mark_state symbols prods ~precs_used ~tokens_used ~nonterms_used ~prods_used state = begin
     Ordmap.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
       ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) (symbol_index, actions) ->
-
         let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
         let precs_used, tokens_used, nonterms_used =
           mark_symbol ~precs_used ~tokens_used ~nonterms_used symbol in
@@ -1338,7 +1337,7 @@ and remerge_states io symbols isocores states =
         match Ordset.length isocore_set with
         | 0L -> not_reached ()
         | 1L -> state_indexes
-        | _ -> Ordset.fold ~init:state_indexes ~f:(fun workq index -> index :: workq ) isocore_set
+        | _ -> Ordset.fold ~init:state_indexes ~f:(fun workq index -> index :: workq) isocore_set
       ) isocores
       |> List.fold ~init:(false, remergeables)
         ~f:(fun (progress, remergeables) state_index ->

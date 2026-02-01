@@ -31,8 +31,7 @@ Parser = {
                     index: uns # Index in `prec_sets` array.
                     names: array string
                     assoc: option Assoc.t
-                    doms: Ordset.t uns Uns.cmper_witness (* Indices in `prec_sets` array of dominator
-                                                          * precedence sets. *)
+                    doms: Bitset.t (* Indices in `prec_sets` array of dominator precedence sets. *)
                   }
 
                 include IdentifiableIntf.S with type t := t
@@ -75,8 +74,8 @@ Parser = {
                     alias: option string
                     start: bool
                     prods: Ordset.t Prod.t Prod.cmper_witness # empty ≡ token
-                    first: Ordset.t uns Uns.cmper_witness
-                    follow: Ordset.t uns Uns.cmper_witness
+                    first: Bitset.t
+                    follow: Bitset.t
                   }
 
                 include IdentifiableIntf.S with type t := t
@@ -98,7 +97,7 @@ Parser = {
             Lr1Item = {
                 type t: t = {
                     lr0item: Lr0Item.t
-                    follow: Ordset.t uns Uns.cmper_witness
+                    follow: Bitset.t
                   }
 
                 include IdentifiableIntf.S with type t := t

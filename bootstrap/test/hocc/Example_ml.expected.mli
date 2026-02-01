@@ -32,8 +32,7 @@ include sig
                 index: uns; (* Index in `prec_sets` array. *)
                 names: string array;
                 assoc: Assoc.t option;
-                doms: (uns, Uns.cmper_witness) Ordset.t; (* Indices in `prec_sets` array of
-                                                          * dominator precedences. *)
+                doms: Bitset.t; (* Indices in `prec_sets` array of dominator precedences. *)
               }
 
             include IdentifiableIntf.S with type t := t
@@ -76,8 +75,8 @@ include sig
                 alias: string option;
                 start: bool;
                 prods: (Prod.t, Prod.cmper_witness) Ordset.t; (* empty ≡ token *)
-                first: (uns, Uns.cmper_witness) Ordset.t;
-                follow: (uns, Uns.cmper_witness) Ordset.t;
+                first: Bitset.t;
+                follow: Bitset.t;
               }
 
             include IdentifiableIntf.S with type t := t
@@ -99,7 +98,7 @@ include sig
         module Lr1Item : sig
             type t = {
                 lr0item: Lr0Item.t;
-                follow: (uns, Uns.cmper_witness) Ordset.t;
+                follow: Bitset.t;
               }
 
             include IdentifiableIntf.S with type t := t

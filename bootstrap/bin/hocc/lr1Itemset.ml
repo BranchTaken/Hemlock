@@ -74,7 +74,7 @@ let get Lr1Item.{lr0item; follow} {items; _} =
   | false -> None
   | true -> begin
       let Lr1Item.{follow=t_follow; _} = Ordmap.get_hlt lr0item items in
-      match Ordset.subset t_follow follow with
+      match Bitset.subset t_follow follow with
       | false -> None
       | true -> Ordmap.get lr0item items
     end
@@ -86,7 +86,7 @@ let insert (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
   match Ordmap.get lr0item items with
   | None -> {items=Ordmap.insert ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
   | Some Lr1Item.{follow=t_follow; _} -> begin
-      let lr1item' = Lr1Item.init ~lr0item ~follow:(Ordset.union follow t_follow) in
+      let lr1item' = Lr1Item.init ~lr0item ~follow:(Bitset.union follow t_follow) in
       {t with items=Ordmap.update_hlt ~k:lr0item ~v:lr1item' items}
     end
 
@@ -94,8 +94,8 @@ let insert_hlt (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
   match Ordmap.get lr0item items with
   | None -> {items=Ordmap.insert ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
   | Some Lr1Item.{follow=t_follow; _} -> begin
-      let t_follow' = Ordset.union follow t_follow in
-      match Cmp.is_eq (Ordset.cmp t_follow t_follow') with
+      let t_follow' = Bitset.union follow t_follow in
+      match Cmp.is_eq (Bitset.cmp t_follow t_follow') with
       | true -> halt "Item already present"
       | false -> begin
           let lr1item' = Lr1Item.init ~lr0item ~follow:t_follow' in
@@ -107,8 +107,8 @@ let remove Lr1Item.{lr0item; follow} ({items; core} as t) =
   match Ordmap.get lr0item items with
   | None -> t
   | Some Lr1Item.{follow=t_follow; _} -> begin
-      let follow' = Ordset.diff t_follow follow in
-      match Ordset.is_empty follow' with
+      let follow' = Bitset.diff t_follow follow in
+      match Bitset.is_empty follow' with
       | true -> {items=Ordmap.remove lr0item items; core=Lr0Itemset.remove lr0item core}
       | false -> begin
           let lr1item' = Lr1Item.init ~lr0item ~follow:follow' in
@@ -131,8 +131,8 @@ let inter t0 t1 =
     | Some _, None
     | None, Some _ -> t
     | Some (_, lr1item0), Some (_, lr1item1) -> begin
-        let follow = Ordset.inter Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
-        match Ordset.is_empty follow with
+        let follow = Bitset.inter Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
+        match Bitset.is_empty follow with
         | true -> t
         | false -> begin
             let lr1item = Lr1Item.init ~lr0item:Lr1Item.(lr1item0.lr0item) ~follow in
@@ -148,8 +148,8 @@ let diff t0 t1 =
     | Some (_, lr1item0), None -> insert lr1item0 t
     | None, Some _ -> t
     | Some (_, lr1item0), Some (_, lr1item1) -> begin
-        let follow = Ordset.diff Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
-        match Ordset.is_empty follow with
+        let follow = Bitset.diff Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
+        match Bitset.is_empty follow with
         | true -> t
         | false -> begin
             let lr1item = Lr1Item.init ~lr0item:Lr1Item.(lr1item0.lr0item) ~follow in
@@ -197,8 +197,8 @@ let compat_pgm1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
              * Pager(1977) algorithm, and as refined by Menhir to prevent phantom conflicts
              * accompanying actual conflicts. *)
             match
-              (Ordset.subset (Ordset.union t_follow o_follow') (Ordset.inter o_follow t_follow')),
-              (Ordset.subset (Ordset.union o_follow t_follow') (Ordset.inter t_follow o_follow'))
+              (Bitset.subset (Bitset.union t_follow o_follow') (Bitset.inter o_follow t_follow')),
+              (Bitset.subset (Bitset.union o_follow t_follow') (Bitset.inter t_follow o_follow'))
             with
             | true, true -> compat_weak_follow_inner o_seq' t_seq' o_follow t_follow
             | _ -> false

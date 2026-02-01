@@ -10,9 +10,8 @@ type t
 val empty: t
 (** [empty] returns an empty set of precedences. *)
 
-val insert: names:string array -> assoc:(Assoc.t option)
-  -> doms:(PrecSet.Index.t, PrecSet.Index.cmper_witness) Ordset.t -> stmt:Parse.nonterm_prec_set
-  -> t -> t
+val insert: names:string array -> assoc:(Assoc.t option) -> doms:Bitset.t
+  -> stmt:Parse.nonterm_prec_set -> t -> t
 (** [insert ~names ~assoc ~doms ~stmt t] creates a [PrecSet.t] with unique index and returns a new
     [t] with the precedence set inserted. *)
 
