@@ -5,41 +5,49 @@ open! Basis.Rudiments
 module TraceKey = struct
   module T = struct
     type t = {
+      conflict_state_index: State.Index.t; (* Index of conflict state this lane trace leads to. *)
       symbol_index: Symbol.Index.t; (* Conflicted symbol index. *)
       conflict: Contrib.t; (* Conflict manifestation. *)
       action: State.Action.t; (* Action *)
     }
 
-    let hash_fold {symbol_index; conflict; action} state =
+    let hash_fold {conflict_state_index; symbol_index; conflict; action} state =
       state
+      |> State.Index.hash_fold conflict_state_index
       |> Symbol.Index.hash_fold symbol_index
       |> Contrib.hash_fold conflict
       |> State.Action.hash_fold action
 
-    let cmp {symbol_index=s0; conflict=x0; action=action0}
-      {symbol_index=s1; conflict=x1; action=action1} =
+    let cmp {conflict_state_index=csi0; symbol_index=s0; conflict=x0; action=action0}
+      {conflict_state_index=csi1; symbol_index=s1; conflict=x1; action=action1} =
       let open Cmp in
-      match Symbol.Index.cmp s0 s1 with
+      match State.Index.cmp csi0 csi1 with
       | Lt -> Lt
       | Eq -> begin
-          match Contrib.cmp x0 x1 with
+          match Symbol.Index.cmp s0 s1 with
           | Lt -> Lt
-          | Eq -> State.Action.cmp action0 action1
+          | Eq -> begin
+              match Contrib.cmp x0 x1 with
+              | Lt -> Lt
+              | Eq -> State.Action.cmp action0 action1
+              | Gt -> Gt
+            end
           | Gt -> Gt
         end
       | Gt -> Gt
 
-    let pp_hr symbols prods {symbol_index; conflict; action} formatter =
+    let pp_hr symbols prods {conflict_state_index; symbol_index; conflict; action} formatter =
       formatter
-      |> Fmt.fmt "{symbol="
-      |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols)
+      |> Fmt.fmt "{conflict_state_index=" |> State.Index.pp conflict_state_index
+      |> Fmt.fmt "; symbol=" |> Symbol.pp_hr (Symbols.symbol_of_symbol_index symbol_index symbols)
       |> Fmt.fmt "; conflict=" |> Contrib.pp_hr symbols prods conflict
       |> Fmt.fmt "; action=" |> State.Action.pp_hr symbols prods action
       |> Fmt.fmt "}"
 
-    let pp {symbol_index; conflict; action} formatter =
+    let pp {conflict_state_index; symbol_index; conflict; action} formatter =
       formatter
-      |> Fmt.fmt "{symbol_index=" |> Symbol.Index.pp symbol_index
+      |> Fmt.fmt "{conflict_state_index=" |> State.Index.pp conflict_state_index
+      |> Fmt.fmt "; symbol_index=" |> Symbol.Index.pp symbol_index
       |> Fmt.fmt "; conflict=" |> Contrib.pp conflict
       |> Fmt.fmt "; action=" |> State.Action.pp action
       |> Fmt.fmt "}"
@@ -47,8 +55,8 @@ module TraceKey = struct
   include T
   include Identifiable.Make(T)
 
-  let init ~symbol_index ~conflict ~action =
-    {symbol_index; conflict; action}
+  let init ~conflict_state_index ~symbol_index ~conflict ~action =
+    {conflict_state_index; symbol_index; conflict; action}
 end
 
 module TraceVal = struct
@@ -109,9 +117,6 @@ module TraceVal = struct
 end
 
 type t = {
-  (* Conflict state this lane context leads to. *)
-  conflict_state: State.t;
-
   (* State this lane context immediately leads to. *)
   isucc: State.t;
 
@@ -121,29 +126,22 @@ type t = {
   (* Interstitial lane traces. Note that each trace key may correspond to multiple lanes, because
    * multiple kernel items in the conflict state can induce the same added ε production. *)
   traces: (TraceKey.t, TraceVal.t, TraceKey.cmper_witness) Ordmap.t;
-
-  (* Memoized map of conflict attributions attributable to the lane(s) incompassing state->isucc
-   * transit. *)
-  kernel_attribs: KernelAttribs.t;
 }
 
-let pp {conflict_state; isucc; state; traces; kernel_attribs} formatter =
+let pp {isucc; state; traces} formatter =
   formatter
-  |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
-  |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
+  |> Fmt.fmt "{isucc index=" |> Uns.pp (State.index isucc)
   |> Fmt.fmt "; state index=" |> Uns.pp (State.index state)
   |> Fmt.fmt "; traces count="
   |> Uns.pp (Ordmap.fold ~init:0L ~f:(fun accum (_, traceval) ->
     accum + (TraceVal.length traceval)) traces
   )
-  |> Fmt.fmt "; kernel_attribs=" |> KernelAttribs.pp kernel_attribs
   |> Fmt.fmt "}"
 
 let fmt_hr symbols prods ?(alt=false) ?(width=0L)
-  {conflict_state; isucc; state; traces; kernel_attribs} formatter =
+  {isucc; state; traces} formatter =
   formatter
-  |> Fmt.fmt "{conflict_state index=" |> Uns.pp (State.index conflict_state)
-  |> Fmt.fmt "; isucc index=" |> Uns.pp (State.index isucc)
+  |> Fmt.fmt "{isucc index=" |> Uns.pp (State.index isucc)
   |> Fmt.fmt "; state index=" |> Uns.pp (State.index state)
   |> Fmt.fmt "; traces="
   |> List.fmt ~alt ~width:(width + 4L) (fun (tracekey, traceval) formatter ->
@@ -152,12 +150,7 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L)
     |> Fmt.fmt "; traceval=" |> TraceVal.fmt_hr symbols ~alt ~width:(width + 4L) traceval
     |> Fmt.fmt "}"
   ) (Ordmap.to_alist traces)
-  |> Fmt.fmt "; kernel_attribs="
-  |> KernelAttribs.fmt_hr symbols prods ~alt:true ~width:(width+4L) kernel_attribs
   |> Fmt.fmt "}"
-
-let conflict_state {conflict_state; _} =
-  conflict_state
 
 let isucc {isucc; _} =
   isucc
@@ -205,13 +198,10 @@ let kernel_of_prod_index prods state symbol_index prod_index leftmost_cache =
   let prod = Prods.prod_of_prod_index prod_index prods in
   kernel_of_prod state symbol_index prod leftmost_cache
 
-let kernel_attribs {kernel_attribs; _} =
-  kernel_attribs
-
-let compute_kernel_attribs conflict_state traces =
-  let conflict_state_index = State.index conflict_state in
+let kernel_attribs {traces; _} =
   Ordmap.fold ~init:KernelAttribs.empty
-    ~f:(fun kernel_attribs (TraceKey.{symbol_index; conflict; action}, kernel_isuccs) ->
+    ~f:(fun kernel_attribs
+      (TraceKey.{conflict_state_index; symbol_index; conflict; action}, kernel_isuccs) ->
       let contrib = match action with
         | State.Action.ShiftPrefix _
         | ShiftAccept _ -> not_reached ()
@@ -228,10 +218,10 @@ let compute_kernel_attribs conflict_state traces =
 let of_conflict_state ~resolve symbols prods leftmost_cache conflict_state =
   let traces, leftmost_cache = Attribs.fold
       ~init:(Ordmap.empty (module TraceKey), leftmost_cache)
-      ~f:(fun (traces, leftmost_cache) {symbol_index; conflict; contrib; _} ->
+      ~f:(fun (traces, leftmost_cache) {conflict_state_index; symbol_index; conflict; contrib; _} ->
         Ordset.fold ~init:(traces, leftmost_cache) ~f:(fun (traces, leftmost_cache) prod_index ->
           let action = State.Action.Reduce prod_index in
-          let tracekey = TraceKey.init ~symbol_index ~conflict ~action in
+          let tracekey = TraceKey.init ~conflict_state_index ~symbol_index ~conflict ~action in
           let lr1itemset, leftmost_cache =
             kernel_of_prod_index prods conflict_state symbol_index prod_index leftmost_cache in
           let traceval =
@@ -245,20 +235,17 @@ let of_conflict_state ~resolve symbols prods leftmost_cache conflict_state =
         ) (Contrib.reduces contrib)
       ) (State.conflict_attribs ~resolve symbols prods conflict_state) in
   assert (not (Ordmap.is_empty traces));
-  let kernel_attribs = compute_kernel_attribs conflict_state traces in
   let t = {
-    conflict_state;
     isucc=conflict_state;
     state=conflict_state;
     traces;
-    kernel_attribs;
   } in
   t, leftmost_cache
 
-let of_ipred state leftmost_cache {conflict_state; state=isucc; traces=isucc_traces; _} =
+let traces_of_ipred_state state leftmost_cache {traces=isucc_traces; _} =
   (* Create traces incrementally derived from those in `isucc_traces`. Some traces may terminate at
    * the isucc state; others may continue or even lead to forks. *)
-  let traces, leftmost_cache = Ordmap.fold ~init:(Ordmap.empty (module TraceKey), leftmost_cache)
+  Ordmap.fold ~init:(Ordmap.empty (module TraceKey), leftmost_cache)
     ~f:(fun (traces, leftmost_cache)
       (TraceKey.{symbol_index; action; _} as tracekey, isucc_traceval) ->
       match action with
@@ -321,13 +308,18 @@ let of_ipred state leftmost_cache {conflict_state; state=isucc; traces=isucc_tra
             ) isucc_traceval
         end
     ) isucc_traces
-  in
-  let kernel_attribs = compute_kernel_attribs conflict_state traces in
+
+
+let of_ipred_state state leftmost_cache ({state=isucc; _} as t) =
+  let traces, leftmost_cache = traces_of_ipred_state state leftmost_cache t in
   let t = {
-    conflict_state;
     isucc;
     state;
     traces;
-    kernel_attribs
   } in
   t, leftmost_cache
+
+let of_ipred_lanectx ({state; traces=traces0; _} as ipred_lanectx) leftmost_cache t =
+  let traces1, leftmost_cache = traces_of_ipred_state state leftmost_cache t in
+  let traces = Ordmap.union ~f:(fun _k v0 v1 -> TraceVal.union v0 v1) traces0 traces1 in
+  {ipred_lanectx with traces}, leftmost_cache

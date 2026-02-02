@@ -7,6 +7,7 @@ hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++..+++++++
 hocc: Generating 24 LR(1) states
 hocc: 1 conflict in 1 state (0 ⊥, 0 shift-reduce, 1 reduce-reduce) (conflict resolution disabled)
 hocc: Gathering IELR(1) conflict attributions.
+hocc: Filtering useless IELR(1) conflict attributions
 hocc: LR(1) item set compatibility: ielr1
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++^.+++++++..+........++^.++++.
 hocc: Generating 26 LR(1) states

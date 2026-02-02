@@ -4151,6 +4151,9 @@ IELR(1) States
             [ProdParam ::= ModulePath · "." "{" PatternFields SemiSuffix "}" ":" ProdParamSymbol, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
             "." : ShiftPrefix 148 prec pDOT
+        Conflict contributions
+            [ModulePath ::= ModulePath · "." ModulePath, {"."}]
+                176 : Reduce ModulePath ::= ModulePath "." ModulePath
     State 124 [124.0]
         Kernel
             [ProdParam ::= ProdParamSymbol ·, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
@@ -4508,6 +4511,8 @@ IELR(1) States
         Actions
             "." : ShiftPrefix 164 prec pDOT
         Conflict contributions
+            [ModulePath ::= ModulePath · "." ModulePath, {"."}]
+                176 : Reduce ModulePath ::= ModulePath "." ModulePath
             [Pattern ::= ModulePath · "." "(" Pattern ")", {","}]
                 161 : Reduce Pattern ::= CIDENT Pattern
                 207 : Reduce Pattern ::= Pattern "," Pattern
@@ -4582,6 +4587,9 @@ IELR(1) States
             "{" : ShiftPrefix 175
         Gotos
             ModulePath : 176
+        Conflict contributions
+            [ModulePath ::= ModulePath "." · ModulePath, {"."}]
+                176 : Reduce ModulePath ::= ModulePath "." ModulePath
     State 149 [149.0]
         Kernel
             [Uident ::= "prec" ·, {":"}]
@@ -5008,6 +5016,8 @@ IELR(1) States
         Gotos
             ModulePath : 176
         Conflict contributions
+            [ModulePath ::= ModulePath "." · ModulePath, {"."}]
+                176 : Reduce ModulePath ::= ModulePath "." ModulePath
             [Pattern ::= ModulePath "." · "(" Pattern ")", {","}]
                 161 : Reduce Pattern ::= CIDENT Pattern
                 207 : Reduce Pattern ::= Pattern "," Pattern
@@ -5312,6 +5322,11 @@ IELR(1) States
             [ModulePath ::= ModulePath "." ModulePath ·, {"."}] prec pDOT
         Actions
             "." : Reduce ModulePath ::= ModulePath "." ModulePath prec pDOT
+        Conflict contributions
+            [ModulePath ::= ModulePath · "." ModulePath, {"."}]
+                176 : Reduce ModulePath ::= ModulePath "." ModulePath
+            [ModulePath ::= ModulePath "." ModulePath ·, {"."}]
+                176 : Reduce ModulePath ::= ModulePath "." ModulePath
     State 177 [177.0]
         Kernel
             [ProdParamsTl ::= ProdParam ProdParamsTl ·, {"->", "|", LINE_DELIM, DEDENT}]

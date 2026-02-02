@@ -140,10 +140,12 @@ end
 include T
 include Identifiable.Make(T)
 
-let resolutions ~resolve symbols prods {conflict=x0; contrib=c0; symbol_index; _}
-  {conflict=x1; contrib=c1; symbol_index=symbol_index1; _} =
+let resolutions ~resolve symbols prods
+    {conflict_state_index=csi0; symbol_index; conflict=x0; contrib=c0; _}
+    {conflict_state_index=csi1; symbol_index=symbol_index1; conflict=x1; contrib=c1; _} =
+  assert StateIndex.(csi0 = csi1);
+  assert Symbol.Index.(symbol_index = symbol_index1);
   assert (Contrib.equal x0 x1);
-  assert Uns.(symbol_index = symbol_index1);
   (* Merge shift into contribs if present in the conflict manifestation, since all lanes are
    * implicated in shift actions. *)
   let c0, c1 = match Contrib.mem_shift x0 with

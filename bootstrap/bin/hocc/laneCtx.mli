@@ -1,18 +1,18 @@
-(** Lane context for tracing conflict attributions backward from a conflict state. Although a lane
-    extends backward from a conflict state to a start state, lane contexts are only computed as far
-    backward as necessary to attribute all conflict contributions. A conflicting reduce action is
-    associated with one or more conflict-inducing kernel items, and is typically attributed to one
-    or more states that terminate lane context traces to the conflict state. Conflict attributions
-    are attributed on a per symbol basis, even though it is common for one lane to correspond to
-    multiple conflicts. It is also possible for multiple items (and therefore distinct lanes) to
-    contribute to the same conflict.
+(** Lane context for tracing conflict attributions backward from one or more conflict states.
+    Although a lane extends backward from a conflict state to a start state, lane contexts are only
+    computed as far backward as necessary to attribute all conflict contributions. A conflicting
+    reduce action is associated with one or more conflict-inducing kernel items, and is typically
+    attributed to one or more states that terminate lane context traces to a common conflict state.
+    Conflict attributions are attributed on a per symbol basis, even though it is common for one
+    lane to correspond to multiple conflicts. It is also possible for multiple items (and therefore
+    distinct lanes) to contribute to the same conflict.
 
     For each state during lane tracing a distinct lane context is created to represent the state's
-    role in the lane(s) being traced. For the conflict state the context contains a (symbol,
-    conflict, action, lr1item) tuple for each kernel item which can lead to the conflicting action
-    on the symbol. This may be due to a simple reduction of a kernel item, e.g. `A ::= t B C · {u}`.
-    The more complicated case is due to reduction of an added ε production corresponding to one or
-    more kernel items with dot positions that are not at the rightmost position, as shown in the
+    role in the lane(s) being traced. Each context contains a (conflict state, symbol, conflict,
+    action, lr1item) tuple for each kernel item which can lead to the conflicting action on the
+    symbol. This may be due to a simple reduction of a kernel item, e.g. `A ::= t B C · {u}`. The
+    more complicated case is due to reduction of an added ε production corresponding to one or more
+    kernel items with dot positions that are not at the rightmost position, as shown in the
     following example.
 
     - Contributing state
@@ -42,9 +42,6 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
     If [~alt=true], the output is broken across multiple lines with outermost indentation [~width]
     (elements are indented to [~width + 4]). *)
 
-val conflict_state: t -> State.t
-(** [conflict_state t] returns the conflict state that [t] leads to. *)
-
 val isucc: t -> State.t
 (** [isucc t] returns the state [t] immediately leads to. *)
 
@@ -61,13 +58,18 @@ val traces_length: t -> uns
 val of_conflict_state: resolve:bool -> Symbols.t -> Prods.t -> Lr1ItemsetClosure.LeftmostCache.t
   -> State.t -> t * Lr1ItemsetClosure.LeftmostCache.t
 (** [of_conflict_state ~resolve symbols prods leftmost_cache conflict_state] creates a lane context
-    for the conflict state. *)
+    for [conflict_state]. *)
 
-val of_ipred: State.t -> Lr1ItemsetClosure.LeftmostCache.t -> t
+val of_ipred_state: State.t -> Lr1ItemsetClosure.LeftmostCache.t -> t
   -> t * Lr1ItemsetClosure.LeftmostCache.t
-(** [of_ipred ipred leftmost_cache t] creates a lane context for the [ipred] state, where [t] is the
-    lane context for the [ipred] state's immediate successor (isucc) state in the lane. *)
+(** [of_ipred_state ipred_state leftmost_cache t] creates a lane context for [ipred_state], where
+    [t] is the lane context for [ipred_state]'s immediate successor (isucc) state in the lane. *)
+
+val of_ipred_lanectx: t -> Lr1ItemsetClosure.LeftmostCache.t -> t
+  -> t * Lr1ItemsetClosure.LeftmostCache.t
+(** [of_ipred_lanectx ipred_lanectx leftmost_cache t] merges with existing [ipred_lanectx], where
+    [t] is the lane context for [ipred_lanectx]'s immediate successor (isucc) state in the lane. *)
 
 val kernel_attribs: t -> KernelAttribs.t
 (** [kernel_attribs t] returns a map of conflict attributions attributable to the lane(s)
-    encompassing [t]. *)
+    encompassing [t]'s transit. *)
