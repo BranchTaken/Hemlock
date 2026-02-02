@@ -228,49 +228,63 @@ include struct
         let symbols = [|
             Symbol.init ~index:0L ~name:"EPSILON"
               ~prec:None ~alias:(Some "ε") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 0L)
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 0L)
               ~follow:Bitset.empty;
             Symbol.init ~index:1L ~name:"PSEUDO_END"
               ~prec:None ~alias:(Some "⊥") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 1L)
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 1L)
               ~follow:(Bitset.singleton 0L);
             Symbol.init ~index:2L ~name:"STAR"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~alias:(Some "*") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 2L)
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L))
+              ~alias:(Some "*") ~start:false
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 2L)
               ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:3L ~name:"SLASH"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~alias:(Some "/") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 3L)
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L))
+              ~alias:(Some "/") ~start:false
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 3L)
               ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:4L ~name:"PLUS"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:(Some "+") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 4L)
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L))
+              ~alias:(Some "+") ~start:false
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 4L)
               ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:5L ~name:"MINUS"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~alias:(Some "-") ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 5L)
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L))
+              ~alias:(Some "-") ~start:false
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 5L)
               ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:6L ~name:"INT"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 6L)
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 6L)
               ~follow:(Bitset.of_nat (Nat.of_string "0xbcn"));
             Symbol.init ~index:7L ~name:"EOI"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty (module Prod)) ~first:(Bitset.singleton 7L)
+              ~prods:(Ordset.empty (module Prod))
+              ~first:(Bitset.singleton 7L)
               ~follow:(Bitset.singleton 1L);
             Symbol.init ~index:8L ~name:"MulOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 0L prods;
                 Array.get 1L prods;
-              ]) ~first:(Bitset.of_nat (Nat.of_string "0xcn"))
+              ])
+              ~first:(Bitset.of_nat (Nat.of_string "0xcn"))
               ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:9L ~name:"AddOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 2L prods;
                 Array.get 3L prods;
-              ]) ~first:(Bitset.of_nat (Nat.of_string "0x30n"))
+              ])
+              ~first:(Bitset.of_nat (Nat.of_string "0x30n"))
               ~follow:(Bitset.singleton 6L);
             Symbol.init ~index:10L ~name:"Expr"
               ~prec:None ~alias:None ~start:false
@@ -278,15 +292,18 @@ include struct
                 Array.get 4L prods;
                 Array.get 5L prods;
                 Array.get 6L prods;
-              ]) ~first:(Bitset.singleton 6L)
+              ])
+              ~first:(Bitset.singleton 6L)
               ~follow:(Bitset.of_nat (Nat.of_string "0xbcn"));
             Symbol.init ~index:11L ~name:"Answer"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 7L prods)) ~first:(Bitset.singleton 6L)
+              ~prods:(Ordset.singleton (module Prod) (Array.get 7L prods))
+              ~first:(Bitset.singleton 6L)
               ~follow:(Bitset.singleton 1L);
             Symbol.init ~index:12L ~name:"Answer'"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton (module Prod) (Array.get 8L prods)) ~first:(Bitset.singleton 6L)
+              ~prods:(Ordset.singleton (module Prod) (Array.get 8L prods))
+              ~first:(Bitset.singleton 6L)
               ~follow:(Bitset.singleton 0L)
           |]
 
