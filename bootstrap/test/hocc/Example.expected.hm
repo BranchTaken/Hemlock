@@ -12,7 +12,7 @@ include [:]{
                   | Pgm1
                   | Lalr1
 
-                index = function
+                index t = match t with
                   | Lr1 -> 0
                   | Ielr1 -> 1
                   | Pgm1 -> 2
@@ -24,7 +24,7 @@ include [:]{
                 cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                to_string = function
+                to_string t = match t with
                   | Lr1 -> "Lr1"
                   | Ielr1 -> "Ielr1"
                   | Pgm1 -> "Pgm1"
@@ -45,7 +45,7 @@ include [:]{
                   | Left
                   | Right
 
-                index = function
+                index t = match t with
                   | Left -> 0
                   | Right -> 1
 
@@ -55,7 +55,7 @@ include [:]{
                 cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                to_string = function
+                to_string t = match t with
                   | Left -> "Left"
                   | Right -> "Right"
 
@@ -123,10 +123,10 @@ include [:]{
 
                 pp {name_index; prec_set_index} =
                     formatter
-                    |> Fmt.fmt
-                    "{%u=(^name_index
-                    ^); %u=(^prec_set_index
-                    ^)}"
+                      |> Fmt.fmt
+                      "{%u=(^name_index
+                      ^); %u=(^prec_set_index
+                      ^)}"
               }
             include T
             include Identifiable.Make(T)
@@ -231,49 +231,63 @@ include [:]{
         symbols = [|
             Symbol.init ~index:0 ~name:"EPSILON"
               ~prec:None ~alias:(Some "ε") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 0)
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 0)
               ~follow:Bitset.empty
             Symbol.init ~index:1 ~name:"PSEUDO_END"
               ~prec:None ~alias:(Some "⊥") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 1)
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 1)
               ~follow:(Bitset.singleton 0)
             Symbol.init ~index:2 ~name:"STAR"
-              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:0)) ~alias:(Some "*") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 2)
+              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:0))
+              ~alias:(Some "*") ~start:false
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 2)
               ~follow:(Bitset.singleton 6)
             Symbol.init ~index:3 ~name:"SLASH"
-              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:0)) ~alias:(Some "/") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 3)
+              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:0))
+              ~alias:(Some "/") ~start:false
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 3)
               ~follow:(Bitset.singleton 6)
             Symbol.init ~index:4 ~name:"PLUS"
-              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:1)) ~alias:(Some "+") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 4)
+              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:1))
+              ~alias:(Some "+") ~start:false
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 4)
               ~follow:(Bitset.singleton 6)
             Symbol.init ~index:5 ~name:"MINUS"
-              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:1)) ~alias:(Some "-") ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 5)
+              ~prec:(Some (Prec.init ~name_index:0 ~prec_set_index:1))
+              ~alias:(Some "-") ~start:false
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 5)
               ~follow:(Bitset.singleton 6)
             Symbol.init ~index:6 ~name:"INT"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 6)
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 6)
               ~follow:(Bitset.of_nat 0xbcn)
             Symbol.init ~index:7 ~name:"EOI"
               ~prec:None ~alias:None ~start:false
-              ~prods:(Ordset.empty Prod) ~first:(Bitset.singleton 7)
+              ~prods:(Ordset.empty Prod)
+              ~first:(Bitset.singleton 7)
               ~follow:(Bitset.singleton 1)
             Symbol.init ~index:8 ~name:"MulOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list Prod [
                 Array.get 0 prods
                 Array.get 1 prods
-              ]) ~first:(Bitset.of_nat 0xcn)
+              ])
+              ~first:(Bitset.of_nat 0xcn)
               ~follow:(Bitset.singleton 6)
             Symbol.init ~index:9 ~name:"AddOp"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list Prod [
                 Array.get 2 prods
                 Array.get 3 prods
-              ]) ~first:(Bitset.of_nat 0x30n)
+              ])
+              ~first:(Bitset.of_nat 0x30n)
               ~follow:(Bitset.singleton 6)
             Symbol.init ~index:10 ~name:"Expr"
               ~prec:None ~alias:None ~start:false
@@ -281,15 +295,18 @@ include [:]{
                 Array.get 4 prods
                 Array.get 5 prods
                 Array.get 6 prods
-              ]) ~first:(Bitset.singleton 6)
+              ])
+              ~first:(Bitset.singleton 6)
               ~follow:(Bitset.of_nat 0xbcn)
             Symbol.init ~index:11 ~name:"Answer"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton Prod (Array.get 7 prods)) ~first:(Bitset.singleton 6)
+              ~prods:(Ordset.singleton Prod (Array.get 7 prods))
+              ~first:(Bitset.singleton 6)
               ~follow:(Bitset.singleton 1)
             Symbol.init ~index:12 ~name:"Answer'"
               ~prec:None ~alias:None ~start:true
-              ~prods:(Ordset.singleton Prod (Array.get 8 prods)) ~first:(Bitset.singleton 6)
+              ~prods:(Ordset.singleton Prod (Array.get 8 prods))
+              ~first:(Bitset.singleton 6)
               ~follow:(Bitset.singleton 0)
           |]
 
@@ -404,12 +421,12 @@ include [:]{
                   | ShiftAccept of uns
                   | Reduce of uns
 
-                constructor_index = function
+                constructor_index t = match t with
                   | ShiftPrefix _ -> 0
                   | ShiftAccept _ -> 1
                   | Reduce _ -> 2
 
-                arg_index = function
+                arg_index t = match t with
                   | ShiftPrefix arg_index
                   | ShiftAccept arg_index
                   | Reduce arg_index -> arg_index
@@ -426,7 +443,7 @@ include [:]{
                       | Eq -> Uns.cmp (arg_index t0) (arg_index t1)
                       | Gt -> Gt
 
-                to_string = function
+                to_string t = match t with
                   | ShiftPrefix state_index -> "ShiftPrefix %u(^state_index^)"
                   | ShiftAccept state_index -> "ShiftAccept %u(^state_index^)"
                   | Reduce prod_index -> "Reduce %u(^prod_index^)"
@@ -983,7 +1000,7 @@ include [:]{
               | INT of Zint.t
               | EOI
 
-            index = function
+            index t = match t with
               | EPSILON -> 0
               | PSEUDO_END -> 1
               | STAR -> 2
@@ -1019,7 +1036,7 @@ include [:]{
               | Answer of Zint.t
               | Answer' of Zint.t
 
-            index = function
+            index t = match t with
               | MulOp _ -> 8
               | AddOp _ -> 9
               | Expr _ -> 10
@@ -1049,7 +1066,7 @@ include [:]{
               | Token of Token.t
               | Nonterm of Nonterm.t
 
-            index = function
+            index t = match t with
               | Token token -> Token.index token
               | Nonterm nonterm -> Nonterm.index nonterm
 
@@ -1059,7 +1076,7 @@ include [:]{
             cmp t0 t1 =
                 Uns.cmp (index t0) (index t1)
 
-            spec = function
+            spec t = match t with
               | Token token -> Token.spec token
               | Nonterm nonterm -> Nonterm.spec nonterm
 
@@ -1151,7 +1168,7 @@ include [:]{
             include Identifiable.Make(T)
 
             callbacks = [|
-                (* 0 *) function
+                (* 0 *) fn stk -> match stk with
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (MulOp (
                   # ________________________________________________________________________________
@@ -1159,7 +1176,7 @@ include [:]{
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
-                (* 1 *) function
+                (* 1 *) fn stk -> match stk with
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (MulOp (
                   # ________________________________________________________________________________
@@ -1167,7 +1184,7 @@ include [:]{
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
-                (* 2 *) function
+                (* 2 *) fn stk -> match stk with
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (AddOp (
                   # ________________________________________________________________________________
@@ -1175,7 +1192,7 @@ include [:]{
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
-                (* 3 *) function
+                (* 3 *) fn stk -> match stk with
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (AddOp (
                   # ________________________________________________________________________________
@@ -1183,7 +1200,7 @@ include [:]{
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
-                (* 4 *) function
+                (* 4 *) fn stk -> match stk with
                   | {symbol=Symbol.Nonterm (Expr e1); _}
                   :: {symbol=Symbol.Nonterm (MulOp op); _}
                   :: {symbol=Symbol.Nonterm (Expr e0); _}
@@ -1196,7 +1213,7 @@ include [:]{
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
-                (* 5 *) function
+                (* 5 *) fn stk -> match stk with
                   | {symbol=Symbol.Nonterm (Expr e1); _}
                   :: {symbol=Symbol.Nonterm (AddOp op); _}
                   :: {symbol=Symbol.Nonterm (Expr e0); _}
@@ -1209,7 +1226,7 @@ include [:]{
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
-                (* 6 *) function
+                (* 6 *) fn stk -> match stk with
                   | {symbol=Symbol.Token (INT x); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Expr (
                   # ________________________________________________________________________________
@@ -1217,7 +1234,7 @@ include [:]{
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
-                (* 7 *) function
+                (* 7 *) fn stk -> match stk with
                   | _
                   :: {symbol=Symbol.Nonterm (Expr e); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Answer (
@@ -1265,7 +1282,7 @@ include [:]{
               | Accept of Nonterm.t
               | Reject of Token.t
 
-            let constructor_index = function
+            let constructor_index t = match t with
               | ShiftPrefix _ -> 0
               | ShiftAccept _ -> 1
               | Reduce _ -> 2
@@ -1351,7 +1368,7 @@ include [:]{
           }
       }
 
-    feed token = function
+    feed token t = match t with
       | {stack={state; _} :: _; status=Prefix} as t ->
         let token_index = Token.index token
         let Spec.State.{actions; _} = Array.get state Spec.states

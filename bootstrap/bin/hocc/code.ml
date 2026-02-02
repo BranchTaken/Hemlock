@@ -494,7 +494,7 @@ let hm_template = {|{
                   | Pgm1
                   | Lalr1
 
-                index = function
+                index t = match t with
                   | Lr1 -> 0
                   | Ielr1 -> 1
                   | Pgm1 -> 2
@@ -506,7 +506,7 @@ let hm_template = {|{
                 cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                to_string = function
+                to_string t = match t with
                   | Lr1 -> "Lr1"
                   | Ielr1 -> "Ielr1"
                   | Pgm1 -> "Pgm1"
@@ -527,7 +527,7 @@ let hm_template = {|{
                   | Left
                   | Right
 
-                index = function
+                index t = match t with
                   | Left -> 0
                   | Right -> 1
 
@@ -537,7 +537,7 @@ let hm_template = {|{
                 cmp t0 t1 =
                     Uns.cmp (index t0) (index t1)
 
-                to_string = function
+                to_string t = match t with
                   | Left -> "Left"
                   | Right -> "Right"
 
@@ -602,10 +602,10 @@ let hm_template = {|{
 
                 pp {name_index; prec_set_index} =
                     formatter
-                    |> Fmt.fmt
-                    "{%u=(^name_index
-                    ^); %u=(^prec_set_index
-                    ^)}"
+                      |> Fmt.fmt
+                      "{%u=(^name_index
+                      ^); %u=(^prec_set_index
+                      ^)}"
               }
             include T
             include Identifiable.Make(T)
@@ -801,12 +801,12 @@ let hm_template = {|{
                   | ShiftAccept of uns
                   | Reduce of uns
 
-                constructor_index = function
+                constructor_index t = match t with
                   | ShiftPrefix _ -> 0
                   | ShiftAccept _ -> 1
                   | Reduce _ -> 2
 
-                arg_index = function
+                arg_index t = match t with
                   | ShiftPrefix arg_index
                   | ShiftAccept arg_index
                   | Reduce arg_index -> arg_index
@@ -823,7 +823,7 @@ let hm_template = {|{
                       | Eq -> Uns.cmp (arg_index t0) (arg_index t1)
                       | Gt -> Gt
 
-                to_string = function
+                to_string t = match t with
                   | ShiftPrefix state_index -> "ShiftPrefix %u(^state_index^)"
                   | ShiftAccept state_index -> "ShiftAccept %u(^state_index^)"
                   | Reduce prod_index -> "Reduce %u(^prod_index^)"
@@ -915,7 +915,7 @@ let hm_template = {|{
               | Token of Token.t
               | Nonterm of Nonterm.t
 
-            index = function
+            index t = match t with
               | Token token -> Token.index token
               | Nonterm nonterm -> Nonterm.index nonterm
 
@@ -925,7 +925,7 @@ let hm_template = {|{
             cmp t0 t1 =
                 Uns.cmp (index t0) (index t1)
 
-            spec = function
+            spec t = match t with
               | Token token -> Token.spec token
               | Nonterm nonterm -> Nonterm.spec nonterm
 
@@ -1054,7 +1054,7 @@ let hm_template = {|{
               | Accept of Nonterm.t
               | Reject of Token.t
 
-            let constructor_index = function
+            let constructor_index t = match t with
               | ShiftPrefix _ -> 0
               | ShiftAccept _ -> 1
               | Reduce _ -> 2
@@ -1132,7 +1132,7 @@ let hm_template = {|{
         «starts»
       }
 
-    feed token = function
+    feed token t = match t with
       | {stack={state; _} :: _; status=Prefix} as t ->
         let token_index = Token.index token
         let Spec.State.{actions; _} = Array.get state Spec.states
@@ -1321,6 +1321,7 @@ let expand_hm_symbols symbols ~indentation formatter =
                 formatter
                 |> Fmt.fmt "(Some (Prec.init ~name_index:" |> Prec.Index.pp name_index
                 |> Fmt.fmt " ~prec_set_index:" |> PrecSet.Index.pp index |> Fmt.fmt "))"
+                |> Fmt.fmt "\n" |> indent |> Fmt.fmt " "
               end
           )
           |> Fmt.fmt " ~alias:"
@@ -1351,7 +1352,7 @@ let expand_hm_symbols symbols ~indentation formatter =
               end
           )
           |> Fmt.fmt ")"
-          |> Fmt.fmt " ~first:"
+          |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~first:"
           |> (fun formatter ->
             match Bitset.length first with
             | 0L -> formatter |> Fmt.fmt "Bitset.empty"
@@ -1593,7 +1594,7 @@ let expand_hm_token_index symbols ~indentation formatter =
     formatter
   end in
   formatter
-  |> indent |> Fmt.fmt "index = function\n"
+  |> indent |> Fmt.fmt "index t = match t with\n"
   |> fmt_token_indexes
 
 let expand_hm_tokens symbols ~indentation formatter =
@@ -1653,7 +1654,7 @@ let expand_hm_nonterm_index symbols ~indentation formatter =
     formatter
   end in
   formatter
-  |> indent |> Fmt.fmt "index = function\n"
+  |> indent |> Fmt.fmt "index t = match t with\n"
   |> fmt_nonterm_indexes
 
 let expand_hm_nonterms symbols ~indentation formatter =
@@ -1685,7 +1686,7 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
                 let code = Option.value_hlt code in
                 let source = Parse.source_of_code code in
                 formatter
-                |> Fmt.fmt "function\n"
+                |> Fmt.fmt "fn stk -> match stk with\n"
                 |> (fun formatter ->
                   let formatter, _first =
                     Callback.Params.fold_right ~init:(formatter, true)
@@ -3154,6 +3155,7 @@ let expand_ml_symbols symbols ~indentation formatter =
                 formatter
                 |> Fmt.fmt "(Some (Prec.init ~name_index:" |> ml_uns_pp name_index
                 |> Fmt.fmt " ~prec_set_index:" |> ml_uns_pp index |> Fmt.fmt "))"
+                |> Fmt.fmt "\n" |> indent |> Fmt.fmt " "
               end
           )
           |> Fmt.fmt " ~alias:"
@@ -3184,7 +3186,7 @@ let expand_ml_symbols symbols ~indentation formatter =
               end
           )
           |> Fmt.fmt ")"
-          |> Fmt.fmt " ~first:"
+          |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~first:"
           |> (fun formatter ->
             match Bitset.length first with
             | 0L -> formatter |> Fmt.fmt "Bitset.empty"
