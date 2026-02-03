@@ -844,7 +844,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
    * closure for each synthetic start symbol. *)
   let init symbols ~compat = begin
     let isocores, workq = Symbols.nonterms_fold
-        ~init:(Isocores.init ~compat, Workq.empty)
+        ~init:(Isocores.init ~compat, Workq.empty (module Lr1ItemsetClosure.Index))
         ~f:(fun ((isocores, workq) as accum) symbol ->
           match Symbol.is_synthetic symbol with
           | false -> accum

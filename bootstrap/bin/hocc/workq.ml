@@ -1,17 +1,25 @@
 open Basis
 open! Basis.Rudiments
 
-type t = {
-  deq: Lr1ItemsetClosure.Index.t Deq.t;
-  set: (Lr1ItemsetClosure.Index.t, Lr1ItemsetClosure.Index.cmper_witness) Set.t;
+type ('a, 'cmp) t = {
+  cmper: ('a, 'cmp) Cmper.t;
+  deq: 'a Deq.t;
+  set: ('a, 'cmp) Set.t;
 }
 
-let pp {deq; _} =
-  Deq.pp Lr1ItemsetClosure.Index.pp deq
+type ('a, 'cmp) cmper = (module Cmper.SMono with type t = 'a and type cmper_witness = 'cmp)
 
-let empty = {
+(* Extract cmper from first-class module compatible with Cmper.SMono. *)
+let m_cmper (type k cmp) ((module M) : (k, cmp) cmper) =
+  M.cmper
+
+let pp {cmper; deq; _} =
+  Deq.pp cmper.pp deq
+
+let empty m = {
+  cmper=m_cmper m;
   deq=Deq.empty;
-  set=Set.empty (module Lr1ItemsetClosure.Index);
+  set=Set.empty m;
 }
 
 let length {set; _} =
@@ -20,27 +28,29 @@ let length {set; _} =
 let is_empty {set; _} =
   Set.is_empty set
 
-let push lr1itemsetclosure_index {deq; set} =
-  assert (not (Set.mem lr1itemsetclosure_index set));
+let push elm {cmper; deq; set} =
+  assert (not (Set.mem elm set));
   {
-    deq=Deq.push lr1itemsetclosure_index deq;
-    set=Set.insert lr1itemsetclosure_index set;
+    cmper;
+    deq=Deq.push elm deq;
+    set=Set.insert elm set;
   }
 
-let push_back lr1itemsetclosure_index {deq; set} =
-  assert (not (Set.mem lr1itemsetclosure_index set));
+let push_back elm {cmper; deq; set} =
+  assert (not (Set.mem elm set));
   {
-    deq=Deq.push_back lr1itemsetclosure_index deq;
-    set=Set.insert lr1itemsetclosure_index set;
+    cmper;
+    deq=Deq.push_back elm deq;
+    set=Set.insert elm set;
   }
 
-let pop {deq; set} =
-  let lr1itemsetclosure_index, deq' = Deq.pop deq in
-  let set' = Set.remove lr1itemsetclosure_index set in
-  lr1itemsetclosure_index, {deq=deq'; set=set'}
+let pop {cmper; deq; set} =
+  let elm, deq' = Deq.pop deq in
+  let set' = Set.remove elm set in
+  elm, {cmper; deq=deq'; set=set'}
 
-let mem lr1itemsetclosure_index {set; _} =
-  Set.mem lr1itemsetclosure_index set
+let mem elm {set; _} =
+  Set.mem elm set
 
 let set {set; _} =
   set
