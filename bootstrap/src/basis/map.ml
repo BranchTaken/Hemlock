@@ -78,7 +78,7 @@ let cmper_m (type k cmp) t : (k, cmp) cmper =
     let cmper = t.cmper
   end)
 
-(* Extract cmper from first-class module compatible with Cmper.SMono . *)
+(* Extract cmper from first-class module compatible with Cmper.SMono. *)
 let m_cmper (type k cmp) ((module M) : (k, cmp) cmper) =
   M.cmper
 
