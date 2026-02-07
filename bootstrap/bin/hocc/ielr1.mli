@@ -1,4 +1,4 @@
-(** IELR(1)-specific functionality. Although this module drives IELR(1) automoton generation, the
+(** IELR(1)-specific functionality. Although this module drives IELR(1) automaton generation, the
     implementation is in large part distributed across other modules, especially:
 
     - {!module:Adjs} implements state adjacency computation and lookup.
@@ -10,7 +10,7 @@
     - {!module:KernelAttribs} maps kernel items to {!type:Attribs.t} maps.
     - {!module:StateNub} and {!module:Attrib} implement isocore compatibility testing.
     - {!module:GotoNub} and {!module:StateNub} dynamically carry kernel attribs and memoized attribs
-      through automoton generation.
+      through automaton generation.
 *)
 
 open! Basis

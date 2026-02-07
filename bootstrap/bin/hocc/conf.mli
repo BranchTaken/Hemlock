@@ -23,16 +23,16 @@ val verbose: t -> bool
 (** [verbose t] returns true if verbosity is enabled. *)
 
 val text: t -> bool
-(** [text t] returns true if a plain-text automoton description is to be generated. *)
+(** [text t] returns true if a plain-text automaton description is to be generated. *)
 
 val html: t -> bool
-(** [html t] returns true if an html automoton description is to be generated. *)
+(** [html t] returns true if an html automaton description is to be generated. *)
 
 val hocc: t -> bool
 (** [hocc t] returns true if a hocc-format grammar specification is to be generated. *)
 
 val algorithm: t -> algorithm
-(** [algorithm t] returns the algorithm to be used when generating the automoton. *)
+(** [algorithm t] returns the algorithm to be used when generating the automaton. *)
 
 val resolve: t -> bool
 (** [resolve t] returns true if conflict resolution is enabled. *)

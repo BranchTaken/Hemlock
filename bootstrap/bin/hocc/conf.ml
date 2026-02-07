@@ -73,25 +73,25 @@ let usage error =
 Parameters:
               -h[elp] : Print command usage and exit.
            -v[erbose] : Print progress information during parser generation.
-         -txt | -text : Write a detailed automoton description in plain text
+         -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
-                -html : Write a detailed automoton description in internally
+                -html : Write a detailed automaton description in internally
                         hyperlinked HTML format to
                         "<dstdir>/hocc/<module>.html".
          -hmh | -hocc : Write a complete grammar specification in hocc format to
                         "<dstdir>/hocc/<module>.hmh", but with all non-terminal
                         types and reduction code omitted.
    -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an
-                        automoton. Defaults to lr1.
-                        - lr1: Canonical LR(1) automoton.
-                        - ielr1: Compact LR(1) automoton that recognizes valid
-                          inputs identically to lr1 automotons, even in the
+                        automaton. Defaults to lr1.
+                        - lr1: Canonical LR(1) automaton.
+                        - ielr1: Compact LR(1) automaton that recognizes valid
+                          inputs identically to lr1 automatons, even in the
                           presence of precedence-resolved ambiguities.
-                        - pgm1: Compact LR(1) automoton that recognizes valid
-                          inputs identically to lr1 automotons, provided there
+                        - pgm1: Compact LR(1) automaton that recognizes valid
+                          inputs identically to lr1 automatons, provided there
                           were no precedence-resolved ambiguities in the grammar
                           specification.
-                        - lalr1: LALR(1) automoton.
+                        - lalr1: LALR(1) automaton.
   -r[esolve] (yes|no) : Control whether conflict resolution is enabled. Defaults
                         to yes.
 -[re]m[erge] (yes|no) : Control whether remerging equivalent split states is
