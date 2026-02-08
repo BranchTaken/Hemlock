@@ -1384,7 +1384,6 @@ let expand_hm_symbols symbols ~indentation formatter =
                 |> Fmt.fmt ")"
               end
           )
-          (*XXX \n ?*)
         ),
         false
       ) symbols
