@@ -51,6 +51,9 @@ val state: t -> State.t
 val transit: t -> Transit.t
 (** [transit t] returns a transit with source [state t] and destination [isucc t]. *)
 
+val is_empty: t -> bool
+(** [is_empty t] returns true iff [t] contains no traces. *)
+
 val traces_length: t -> uns
 (** [traces_length t] returns the number of lane traces in [t]. If [t] contains no traces, its
     predecessors will contain no traces nor conflict attributions. *)
@@ -65,10 +68,11 @@ val of_ipred_state: State.t -> Lr1ItemsetClosure.LeftmostCache.t -> t
 (** [of_ipred_state ipred_state leftmost_cache t] creates a lane context for [ipred_state], where
     [t] is the lane context for [ipred_state]'s immediate successor (isucc) state in the lane. *)
 
-val of_ipred_lanectx: t -> Lr1ItemsetClosure.LeftmostCache.t -> t
-  -> t * Lr1ItemsetClosure.LeftmostCache.t
-(** [of_ipred_lanectx ipred_lanectx leftmost_cache t] merges with existing [ipred_lanectx], where
-    [t] is the lane context for [ipred_lanectx]'s immediate successor (isucc) state in the lane. *)
+val union: t -> t -> t
+(** [union t0 t1] returns a lane context containing the union of traces in [t0] and [t1]. *)
+
+val diff: t -> t -> t
+(** [diff t0 t1] returns a lane context containing traces present in [t0] but absent in [t1]. *)
 
 val kernel_attribs: t -> KernelAttribs.t
 (** [kernel_attribs t] returns a map of conflict attributions attributable to the lane(s)

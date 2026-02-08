@@ -92,6 +92,10 @@ module TraceVal = struct
 
   let length = Ordmap.length
 
+  let is_empty = Ordmap.is_empty
+
+  let empty = Ordmap.empty (module Lr1Item)
+
   let init symbol_index ~lr1itemset ~isucc_lr1itemset =
     Lr1Itemset.fold ~init:(Ordmap.empty (module Lr1Item))
       ~f:(fun t Lr1Item.{lr0item; follow=follow_unfiltered} ->
@@ -112,6 +116,25 @@ module TraceVal = struct
     Ordmap.union ~f:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
       Lr1Itemset.union isucc_lr1itemset0 isucc_lr1itemset1
     ) t0 t1
+
+  let diff t0 t1 =
+    match is_empty t0, is_empty t1 with
+    | true, _ -> empty
+    | _, true -> t0
+    | false, false -> begin
+        Ordmap.fold2 ~init:empty ~f:(fun t isucc_lr1itemset0_opt isucc_lr1itemset1_opt ->
+          match isucc_lr1itemset0_opt, isucc_lr1itemset1_opt with
+          | Some (lr1item, lr1itemset0), None -> Ordmap.insert ~k:lr1item ~v:lr1itemset0 t
+          | None, Some _ -> t
+          | Some (lr1item, lr1itemset0), Some (_lr1item, lr1itemset1) -> begin
+              let lr1itemset = Lr1Itemset.diff lr1itemset0 lr1itemset1 in
+              match Lr1Itemset.is_empty lr1itemset with
+              | true -> t
+              | false -> Ordmap.insert ~k:lr1item ~v:lr1itemset t
+            end
+          | None, None -> not_reached ()
+        ) t0 t1
+      end
 
   let fold = Ordmap.fold
 end
@@ -160,6 +183,9 @@ let state {state; _} =
 
 let transit {state; isucc; _} =
   Transit.init ~src:(State.index state) ~dst:(State.index isucc)
+
+let is_empty {traces; _} =
+  Ordmap.is_empty traces
 
 let traces_length {traces; _} =
   Ordmap.length traces
@@ -319,7 +345,27 @@ let of_ipred_state state leftmost_cache ({state=isucc; _} as t) =
   } in
   t, leftmost_cache
 
-let of_ipred_lanectx ({state; traces=traces0; _} as ipred_lanectx) leftmost_cache t =
-  let traces1, leftmost_cache = traces_of_ipred_state state leftmost_cache t in
-  let traces = Ordmap.union ~f:(fun _k v0 v1 -> TraceVal.union v0 v1) traces0 traces1 in
-  {ipred_lanectx with traces}, leftmost_cache
+let union {traces=traces0; _} ({traces=traces1; _} as t1) =
+  {t1 with traces=Ordmap.union ~f:(fun _k v0 v1 -> TraceVal.union v0 v1) traces0 traces1}
+
+let diff {traces=traces0; _} ({traces=traces1; _} as t1) =
+  let traces = match Ordmap.is_empty traces0, Ordmap.is_empty traces1 with
+    | true, _ -> Ordmap.empty (module TraceKey)
+    | _, true -> traces0
+    | false, false -> begin
+        Ordmap.fold2 ~init:(Ordmap.empty (module TraceKey))
+          ~f:(fun traces traceval0_opt traceval1_opt ->
+            match traceval0_opt, traceval1_opt with
+            | Some (tracekey, traceval0), None -> Ordmap.insert ~k:tracekey ~v:traceval0 traces
+            | None, Some _ -> traces
+            | Some (tracekey, traceval0), Some (_tracekey, traceval1) -> begin
+                let traceval = TraceVal.diff traceval0 traceval1 in
+                match TraceVal.is_empty traceval with
+                | true -> traces
+                | false -> Ordmap.insert ~k:tracekey ~v:traceval traces
+              end
+            | None, None -> not_reached ()
+          ) traces0 traces1
+      end
+  in
+  {t1 with traces}
