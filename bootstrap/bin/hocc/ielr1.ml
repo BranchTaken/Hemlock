@@ -1,89 +1,102 @@
 open Basis
 open! Basis.Rudiments
 
-(* Closing on all conflict states' annotations in one shot is perhaps more elegant, but it can be
- * slower because the lane contexts can accrue traces that are quickly closed on and then cost extra
- * processing every time a lane context is incrementally merged with. Results should be identical
- * regardless of approach. *)
-let close_annotations_oneshot = true
-
 (* Enqueue conflict state's ipred transits in preparation for annotation closure. *)
-let enq_ipred_lanectxs lalr1_states adjs leftmost_cache lanectxs workq conflict_state_lanectx =
+let enq_ipred_lanectxs lalr1_states adjs leftmost_cache lanectxs_pending workq
+    conflict_state_lanectx =
   let conflict_state = LaneCtx.state conflict_state_lanectx in
   let conflict_state_index = State.index conflict_state in
-  Array.fold ~init:(leftmost_cache, lanectxs, workq)
-    ~f:(fun (leftmost_cache, lanectxs, workq) ipred_state_index ->
+  Array.fold ~init:(leftmost_cache, lanectxs_pending, workq)
+    ~f:(fun (leftmost_cache, lanectxs_pending, workq) ipred_state_index ->
       let ipred_transit = Transit.init ~src:ipred_state_index ~dst:conflict_state_index in
       let ipred_state = Array.get ipred_state_index lalr1_states in
       let ipred_lanectx, leftmost_cache =
         LaneCtx.of_ipred_state ipred_state leftmost_cache conflict_state_lanectx in
-      let lanectxs = Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx lanectxs in
+      let lanectxs_pending = Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx lanectxs_pending in
       let workq = Workq.push_back ipred_transit workq in
-      leftmost_cache, lanectxs, workq
+      leftmost_cache, lanectxs_pending, workq
     ) (Adjs.ipreds_of_state (LaneCtx.state conflict_state_lanectx) adjs)
 
-let rec close_annotations lalr1_states adjs leftmost_cache lanectxs workq annotations =
+let rec close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq =
+  (* Filter already-traced lanes, if any. *)
+  let filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx = begin
+    match ipred_lanectx_closed_opt with
+    | None -> ipred_lanectx
+    | Some ipred_lanectx_closed -> LaneCtx.diff ipred_lanectx ipred_lanectx_closed
+  end in
   match Workq.is_empty workq with
-  | true -> leftmost_cache, annotations
+  | true -> leftmost_cache, lanectxs_closed
   | false -> begin
       let transit, workq = Workq.pop workq in
-      let lanectx = Map.get_hlt transit lanectxs in
+      let lanectx = Map.get_hlt transit lanectxs_pending in
+      let lanectxs_pending = Map.remove_hlt transit lanectxs_pending in
       let state = LaneCtx.state lanectx in
       let state_index = State.index state in
-      let kernel_attribs = LaneCtx.kernel_attribs lanectx in
-      (* Load any existing kernel attribs, whether to other conflict states, or as a result
-       * of iterating on a lane cycle. *)
-      let kernel_attribs_existing =
-        Ordmap.get transit annotations
-        |> Option.value ~default:KernelAttribs.empty
-      in
       (* Enqueue ipred lane contexts if new transit attribs are inserted... *)
-      let leftmost_cache, workq, lanectxs, annotations =
-        match KernelAttribs.merge kernel_attribs kernel_attribs_existing with
-        | false, _ -> leftmost_cache, workq, lanectxs, annotations
-        | true, kernel_attribs_merged -> begin
-            let annotations = Ordmap.upsert ~k:transit ~v:kernel_attribs_merged annotations in
-            (* ... and if lanes may extend to predecessors. *)
-            match LaneCtx.traces_length lanectx with
-            | 0L -> leftmost_cache, workq, lanectxs, annotations
-            | _ -> begin
-                (* Enqueue ipred lane contexts. *)
-                let leftmost_cache, workq, lanectxs =
-                  Array.fold ~init:(leftmost_cache, workq, lanectxs)
-                    ~f:(fun (leftmost_cache, workq, lanectxs) ipred_state_index ->
-                      let ipred_transit = Transit.init ~src:ipred_state_index ~dst:state_index in
-                      let leftmost_cache, lanectxs, workq =
-                        match Map.get ipred_transit lanectxs with
-                        | None -> begin
-                            let ipred_state = Array.get ipred_state_index lalr1_states in
-                            let ipred_lanectx, leftmost_cache =
-                              LaneCtx.of_ipred_state ipred_state leftmost_cache lanectx in
-                            let lanectxs =
-                              Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx lanectxs in
-                            let workq = Workq.push ipred_transit workq in
-                            leftmost_cache, lanectxs, workq
-                          end
-                        | Some ipred_lanectx_existing -> begin
-                            let ipred_lanectx, leftmost_cache =
-                              LaneCtx.of_ipred_lanectx ipred_lanectx_existing leftmost_cache
-                                lanectx in
-                            let lanectxs =
-                              Map.update_hlt ~k:ipred_transit ~v:ipred_lanectx lanectxs in
-                            let workq = match Workq.mem ipred_transit workq with
-                              | true -> workq
-                              | false -> Workq.push_back ipred_transit workq
-                            in
-                            leftmost_cache, lanectxs, workq
-                          end
-                      in
-                      leftmost_cache, workq, lanectxs
-                    ) (Adjs.ipreds_of_state state adjs)
-                in
-                leftmost_cache, workq, lanectxs, annotations
-              end
+      let leftmost_cache, workq, lanectxs_closed, lanectxs_pending =
+        match LaneCtx.is_empty lanectx with
+        | true -> leftmost_cache, workq, lanectxs_closed, lanectxs_pending
+        | false -> begin
+            let lanectxs_closed = Map.amend transit ~f:(fun lanectx_closed_opt ->
+              match lanectx_closed_opt with
+              | None -> Some lanectx
+              | Some lanectx_closed -> Some (LaneCtx.union lanectx lanectx_closed)
+            ) lanectxs_closed in
+            let leftmost_cache, workq, lanectxs_closed, lanectxs_pending =
+              Array.fold ~init:(leftmost_cache, workq, lanectxs_closed, lanectxs_pending)
+                ~f:(fun (leftmost_cache, workq, lanectxs_closed, lanectxs_pending)
+                  ipred_state_index ->
+                  let ipred_transit = Transit.init ~src:ipred_state_index ~dst:state_index in
+                  let ipred_lanectx_closed_opt = Map.get ipred_transit lanectxs_closed in
+                  let ipred_state = Array.get ipred_state_index lalr1_states in
+                  let ipred_lanectx, leftmost_cache =
+                    LaneCtx.of_ipred_state ipred_state leftmost_cache lanectx in
+                  let leftmost_cache, lanectxs_closed, lanectxs_pending, workq =
+                    match Map.get ipred_transit lanectxs_pending with
+                    | None -> begin
+                        let ipred_lanectx =
+                          filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx in
+                        (* ... and if previously untraced lanes may extend to predecessors. *)
+                        let lanectxs_pending, workq = match LaneCtx.is_empty ipred_lanectx with
+                          | true -> lanectxs_pending, workq
+                          | false -> begin
+                              let lanectxs_pending =
+                                Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx
+                                  lanectxs_pending in
+                              let workq = Workq.push ipred_transit workq in
+                              lanectxs_pending, workq
+                            end
+                        in
+                        leftmost_cache, lanectxs_closed, lanectxs_pending, workq
+                      end
+                    | Some ipred_lanectx_existing -> begin
+                        let ipred_lanectx = LaneCtx.union ipred_lanectx_existing ipred_lanectx in
+                        let ipred_lanectx =
+                          filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx in
+                        (* ... and if previously untraced lanes may extend to predecessors. *)
+                        let lanectxs_pending, workq = match LaneCtx.is_empty ipred_lanectx with
+                          | true -> lanectxs_pending, workq
+                          | false -> begin
+                              let lanectxs_pending =
+                                Map.update_hlt ~k:ipred_transit ~v:ipred_lanectx
+                                  lanectxs_pending in
+                              let workq = match Workq.mem ipred_transit workq with
+                                | true -> workq
+                                | false -> Workq.push_back ipred_transit workq
+                              in
+                              lanectxs_pending, workq
+                            end
+                        in
+                        leftmost_cache, lanectxs_closed, lanectxs_pending, workq
+                      end
+                  in
+                  leftmost_cache, workq, lanectxs_closed, lanectxs_pending
+                ) (Adjs.ipreds_of_state state adjs)
+            in
+            leftmost_cache, workq, lanectxs_closed, lanectxs_pending
           end
       in
-      close_annotations lalr1_states adjs leftmost_cache lanectxs workq annotations
+      close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq
     end
 
 let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_index ~conflict dst =
@@ -291,44 +304,40 @@ let annotations_init ~resolve io symbols prods lalr1_states =
     |> Io.with_log io
   in
   let leftmost_cache = Lr1ItemsetClosure.LeftmostCache.empty in
-  let annotations = (Ordmap.empty (module Transit)) in
-  let lanectxs = Map.empty (module Transit) in
+  let lanectxs_closed = Map.empty (module Transit) in
+  let lanectxs_pending = Map.empty (module Transit) in
   let workq = Workq.empty (module Transit) in
-  let io, leftmost_cache, annotations, lanectxs, workq =
-    Array.fold ~init:(io, leftmost_cache, annotations, lanectxs, workq)
-      ~f:(fun (io, leftmost_cache, annotations, lanectxs, workq) conflict_state ->
+  let leftmost_cache, lanectxs_closed, lanectxs_pending, workq =
+    Array.fold ~init:(leftmost_cache, lanectxs_closed, lanectxs_pending, workq)
+      ~f:(fun (leftmost_cache, lanectxs_closed, lanectxs_pending, workq) conflict_state ->
         match State.has_conflict_attribs ~resolve symbols prods conflict_state with
-        | false -> io, leftmost_cache, annotations, lanectxs, workq
+        | false -> leftmost_cache, lanectxs_closed, lanectxs_pending, workq
         | true -> begin
-            let io =
-              io.log
-              |> Fmt.fmt "."
-              |> Io.with_log io
-            in
             let conflict_lanectx, leftmost_cache =
               LaneCtx.of_conflict_state ~resolve symbols prods leftmost_cache conflict_state in
-            let leftmost_cache, lanectxs, workq =
-              enq_ipred_lanectxs lalr1_states adjs leftmost_cache lanectxs workq conflict_lanectx
+            let leftmost_cache, lanectxs_pending, workq =
+              enq_ipred_lanectxs lalr1_states adjs leftmost_cache lanectxs_pending workq
+                conflict_lanectx
             in
-            let leftmost_cache, annotations = match close_annotations_oneshot with
-              | true -> leftmost_cache, annotations
-              | false ->
-                close_annotations lalr1_states adjs leftmost_cache lanectxs workq annotations
-            in
-            io, leftmost_cache, annotations, lanectxs, workq
+            leftmost_cache, lanectxs_closed, lanectxs_pending, workq
           end
       ) lalr1_states
   in
-  let _leftmost_cache, annotations = match close_annotations_oneshot with
-    | false -> leftmost_cache, annotations
-    | true -> close_annotations lalr1_states adjs leftmost_cache lanectxs workq annotations
-  in
+  let _leftmost_cache, lanectxs_closed =
+    close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq in
   let io =
     io.log
     |> Fmt.fmt "\n"
     |> Fmt.fmt "hocc: Filtering useless IELR(1) conflict attributions"
     |> Io.with_log io
   in
+  let annotations = Map.fold ~init:(Ordmap.empty (module Transit))
+    ~f:(fun annotations (transit, lanectx) ->
+      let kernel_attribs = LaneCtx.kernel_attribs lanectx in
+      match KernelAttribs.is_empty kernel_attribs with
+      | true -> annotations
+      | false -> Ordmap.insert_hlt ~k:transit ~v:kernel_attribs annotations
+    ) lanectxs_closed in
   let annotations = filter_useless_annotations ~resolve symbols prods adjs annotations in
   let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
   io, annotations

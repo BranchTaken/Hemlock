@@ -69,9 +69,9 @@ let merge t0 t1 =
    * equals `t1`. The conceptually simpler approach of computing the union via `union` and checking
    * equality of before/after kernel attribs is a lot more expensive for the no-op (equal) case. *)
   Ordmap.fold ~init:(false, t1)
-    ~f:(fun (strict_superset, t) (lr1item, attribs) ->
+    ~f:(fun (strict_superset, t) (lr1item, attribs0) ->
       match Ordmap.get lr1item t1 with
-      | None -> true, insert lr1item attribs t
+      | None -> true, insert lr1item attribs0 t
       | Some attribs1 -> begin
           Attribs.fold ~init:(strict_superset, t)
             ~f:(fun (strict_superset, t)
@@ -84,7 +84,7 @@ let merge t0 t1 =
                   | true -> strict_superset, t
                   | false -> true, insert lr1item (Attribs.singleton attrib) t
                 end
-            ) attribs
+            ) attribs0
         end
     ) t0
 
