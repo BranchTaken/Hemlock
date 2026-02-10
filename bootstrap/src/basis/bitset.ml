@@ -45,11 +45,9 @@ module T = struct
     | None -> halt "No last element"
 
   let next_ge_opt elm t =
-    let mask = Nat.pred (singleton elm) in
-    let bitset_lt = Nat.bit_and mask t in
-    let bitset_ge = Nat.bit_xor bitset_lt t in
-    match is_empty bitset_ge with
-    | false -> Some (Nat.bit_ctz bitset_ge)
+    let bitset_sr_ge = Nat.bit_sr ~shift:elm t in
+    match is_empty bitset_sr_ge with
+    | false -> Some ((Nat.bit_ctz bitset_sr_ge) + elm)
     | true -> None
 
   let next_ge elm t =
