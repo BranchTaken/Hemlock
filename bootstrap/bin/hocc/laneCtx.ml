@@ -117,6 +117,18 @@ module TraceVal = struct
       Lr1Itemset.union isucc_lr1itemset0 isucc_lr1itemset1
     ) t0 t1
 
+  let merge t0 t1 =
+    Ordmap.fold ~init:(false, t1)
+      ~f:(fun (strict_superset, t) (lr1item, lr1itemset0) ->
+        match Ordmap.get lr1item t1 with
+        | None -> true, Ordmap.insert_hlt ~k:lr1item ~v:lr1itemset0 t
+        | Some lr1itemset1 -> begin
+            let lr1itemset_strict_superset, lr1itemset = Lr1Itemset.merge lr1itemset0 lr1itemset1 in
+            let t = Ordmap.update_hlt ~k:lr1item ~v:lr1itemset t in
+            strict_superset || lr1itemset_strict_superset, t
+          end
+      ) t0
+
   let diff t0 t1 =
     match is_empty t0, is_empty t1 with
     | true, _ -> empty
@@ -347,6 +359,19 @@ let of_ipred_state state leftmost_cache ({state=isucc; _} as t) =
 
 let union {traces=traces0; _} ({traces=traces1; _} as t1) =
   {t1 with traces=Ordmap.union ~f:(fun _k v0 v1 -> TraceVal.union v0 v1) traces0 traces1}
+
+let merge {traces=traces0; _} ({traces=traces1; _} as t1) =
+  let strict_superset, traces = Ordmap.fold ~init:(false, traces1)
+    ~f:(fun (strict_superset, t) (tracekey, traceval0) ->
+      match Ordmap.get tracekey traces1 with
+      | None -> true, Ordmap.insert_hlt ~k:tracekey ~v:traceval0 t
+      | Some traceval1 -> begin
+          let traceval_strict_superset, traceval = TraceVal.merge traceval0 traceval1 in
+          let t = Ordmap.update_hlt ~k:tracekey ~v:traceval t in
+          strict_superset || traceval_strict_superset, t
+        end
+    ) traces0 in
+  strict_superset, {t1 with traces}
 
 let diff {traces=traces0; _} ({traces=traces1; _} as t1) =
   let traces = match Ordmap.is_empty traces0, Ordmap.is_empty traces1 with
