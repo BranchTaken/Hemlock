@@ -103,6 +103,15 @@ let insert_hlt (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
         end
     end
 
+let merge1 (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
+  match Ordmap.get lr0item items with
+  | None -> true, {items=Ordmap.insert ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
+  | Some Lr1Item.{follow=t_follow; _} -> begin
+      let strict_superset = not (Bitset.is_empty (Bitset.diff follow t_follow)) in
+      let lr1item' = Lr1Item.init ~lr0item ~follow:(Bitset.union follow t_follow) in
+      strict_superset, {t with items=Ordmap.update_hlt ~k:lr0item ~v:lr1item' items}
+    end
+
 let remove Lr1Item.{lr0item; follow} ({items; core} as t) =
   match Ordmap.get lr0item items with
   | None -> t
@@ -124,6 +133,12 @@ let fold ~init ~f {items; _} =
 
 let union t0 t1 =
   fold ~init:t1 ~f:(fun t lr1item -> insert lr1item t) t0
+
+let merge t0 t1 =
+  fold ~init:(false, t1) ~f:(fun (strict_superset, t) lr1item ->
+    let lr1item_strict_superset, t = merge1 lr1item t in
+    strict_superset || lr1item_strict_superset, t
+  ) t0
 
 let inter t0 t1 =
   Ordmap.fold2 ~init:empty ~f:(fun t lr1item_opt0 lr1item_opt1 ->

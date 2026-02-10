@@ -64,6 +64,7 @@ let union t0 t1 =
     Attribs.union attribs0 attribs1
   ) t0 t1
 
+(* Not used. *)
 let merge t0 t1 =
   (* Manually compute the union of `t0` and `t1` such that `strict_superset` is false if the union
    * equals `t1`. The conceptually simpler approach of computing the union via `union` and checking

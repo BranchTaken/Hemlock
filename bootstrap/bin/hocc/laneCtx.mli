@@ -71,6 +71,10 @@ val of_ipred_state: State.t -> Lr1ItemsetClosure.LeftmostCache.t -> t
 val union: t -> t -> t
 (** [union t0 t1] returns a lane context containing the union of traces in [t0] and [t1]. *)
 
+val merge: t -> t -> bool * t
+(** [merge t0 t1] computes the union of [t0] and [t1], and returns the result along with a boolean
+    indicating whether the union is a strict superset of [t1]. *)
+
 val diff: t -> t -> t
 (** [diff t0 t1] returns a lane context containing traces present in [t0] but absent in [t1]. *)
 

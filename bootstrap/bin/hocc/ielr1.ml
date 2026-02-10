@@ -37,63 +37,74 @@ let rec close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs
         match LaneCtx.is_empty lanectx with
         | true -> leftmost_cache, workq, lanectxs_closed, lanectxs_pending
         | false -> begin
-            let lanectxs_closed = Map.amend transit ~f:(fun lanectx_closed_opt ->
-              match lanectx_closed_opt with
-              | None -> Some lanectx
-              | Some lanectx_closed -> Some (LaneCtx.union lanectx lanectx_closed)
-            ) lanectxs_closed in
-            let leftmost_cache, workq, lanectxs_closed, lanectxs_pending =
-              Array.fold ~init:(leftmost_cache, workq, lanectxs_closed, lanectxs_pending)
-                ~f:(fun (leftmost_cache, workq, lanectxs_closed, lanectxs_pending)
-                  ipred_state_index ->
-                  let ipred_transit = Transit.init ~src:ipred_state_index ~dst:state_index in
-                  let ipred_lanectx_closed_opt = Map.get ipred_transit lanectxs_closed in
-                  let ipred_state = Array.get ipred_state_index lalr1_states in
-                  let ipred_lanectx, leftmost_cache =
-                    LaneCtx.of_ipred_state ipred_state leftmost_cache lanectx in
-                  let leftmost_cache, lanectxs_closed, lanectxs_pending, workq =
-                    match Map.get ipred_transit lanectxs_pending with
-                    | None -> begin
-                        let ipred_lanectx =
-                          filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx in
-                        (* ... and if previously untraced lanes may extend to predecessors. *)
-                        let lanectxs_pending, workq = match LaneCtx.is_empty ipred_lanectx with
-                          | true -> lanectxs_pending, workq
-                          | false -> begin
-                              let lanectxs_pending =
-                                Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx
-                                  lanectxs_pending in
-                              let workq = Workq.push ipred_transit workq in
-                              lanectxs_pending, workq
-                            end
-                        in
-                        leftmost_cache, lanectxs_closed, lanectxs_pending, workq
-                      end
-                    | Some ipred_lanectx_existing -> begin
-                        let ipred_lanectx = LaneCtx.union ipred_lanectx_existing ipred_lanectx in
-                        let ipred_lanectx =
-                          filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx in
-                        (* ... and if previously untraced lanes may extend to predecessors. *)
-                        let lanectxs_pending, workq = match LaneCtx.is_empty ipred_lanectx with
-                          | true -> lanectxs_pending, workq
-                          | false -> begin
-                              let lanectxs_pending =
-                                Map.update_hlt ~k:ipred_transit ~v:ipred_lanectx
-                                  lanectxs_pending in
-                              let workq = match Workq.mem ipred_transit workq with
-                                | true -> workq
-                                | false -> Workq.push_back ipred_transit workq
-                              in
-                              lanectxs_pending, workq
-                            end
-                        in
-                        leftmost_cache, lanectxs_closed, lanectxs_pending, workq
-                      end
+            let did_merge, lanectxs_closed = match Map.get transit lanectxs_closed with
+              | None -> true, Map.insert_hlt ~k:transit ~v:lanectx lanectxs_closed
+              | Some lanectx_closed -> begin
+                  let did_merge, lanectx_closed = LaneCtx.merge lanectx lanectx_closed in
+                  let lanectxs_closed = match did_merge with
+                    | false -> lanectxs_closed
+                    | true -> Map.update_hlt ~k:transit ~v:lanectx_closed lanectxs_closed
                   in
-                  leftmost_cache, workq, lanectxs_closed, lanectxs_pending
-                ) (Adjs.ipreds_of_state state adjs)
+                  did_merge, lanectxs_closed
+                end
             in
-            leftmost_cache, workq, lanectxs_closed, lanectxs_pending
+            (* ... and if lanes are merged into `lanectxs_closed` ... *)
+            match did_merge with
+            | false -> leftmost_cache, workq, lanectxs_closed, lanectxs_pending
+            | true -> begin
+                let leftmost_cache, workq, lanectxs_closed, lanectxs_pending =
+                  Array.fold ~init:(leftmost_cache, workq, lanectxs_closed, lanectxs_pending)
+                    ~f:(fun (leftmost_cache, workq, lanectxs_closed, lanectxs_pending)
+                      ipred_state_index ->
+                      let ipred_transit = Transit.init ~src:ipred_state_index ~dst:state_index in
+                      let ipred_lanectx_closed_opt = Map.get ipred_transit lanectxs_closed in
+                      let ipred_state = Array.get ipred_state_index lalr1_states in
+                      let ipred_lanectx, leftmost_cache =
+                        LaneCtx.of_ipred_state ipred_state leftmost_cache lanectx in
+                      let leftmost_cache, lanectxs_closed, lanectxs_pending, workq =
+                        match Map.get ipred_transit lanectxs_pending with
+                        | None -> begin
+                            let ipred_lanectx =
+                              filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx in
+                            (* ... and if previously untraced lanes may extend to predecessors. *)
+                            let lanectxs_pending, workq = match LaneCtx.is_empty ipred_lanectx with
+                              | true -> lanectxs_pending, workq
+                              | false -> begin
+                                  let lanectxs_pending =
+                                    Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx
+                                      lanectxs_pending in
+                                  let workq = Workq.push ipred_transit workq in
+                                  lanectxs_pending, workq
+                                end
+                            in
+                            leftmost_cache, lanectxs_closed, lanectxs_pending, workq
+                          end
+                        | Some ipred_lanectx_existing -> begin
+                            let ipred_lanectx = ipred_lanectx
+                              |> LaneCtx.union ipred_lanectx_existing
+                              |> filter_traced_ipred_lanectx ipred_lanectx_closed_opt in
+                            (* ... and if previously untraced lanes may extend to predecessors. *)
+                            let lanectxs_pending, workq = match LaneCtx.is_empty ipred_lanectx with
+                              | true -> lanectxs_pending, workq
+                              | false -> begin
+                                  let lanectxs_pending =
+                                    Map.update_hlt ~k:ipred_transit ~v:ipred_lanectx
+                                      lanectxs_pending in
+                                  let workq = match Workq.mem ipred_transit workq with
+                                    | true -> workq
+                                    | false -> Workq.push_back ipred_transit workq
+                                  in
+                                  lanectxs_pending, workq
+                                end
+                            in
+                            leftmost_cache, lanectxs_closed, lanectxs_pending, workq
+                          end
+                      in
+                      leftmost_cache, workq, lanectxs_closed, lanectxs_pending
+                    ) (Adjs.ipreds_of_state state adjs)
+                in
+                leftmost_cache, workq, lanectxs_closed, lanectxs_pending
+              end
           end
       in
       close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq
