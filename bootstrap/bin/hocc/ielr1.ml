@@ -73,7 +73,7 @@ let rec close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs
                                   let lanectxs_pending =
                                     Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx
                                       lanectxs_pending in
-                                  let workq = Workq.push ipred_transit workq in
+                                  let workq = Workq.push_back ipred_transit workq in
                                   lanectxs_pending, workq
                                 end
                             in
