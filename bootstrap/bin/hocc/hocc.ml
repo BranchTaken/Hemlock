@@ -48,10 +48,6 @@ let _ =
     | false -> io
     | true -> Description.generate_txt conf io spec
   in
-  let io = match Conf.html conf with
-    | false -> io
-    | true -> Description.generate_html conf io spec
-  in
   let io = match Conf.hocc conf with
     | false -> io
     | true -> Grammar.generate_hocc io spec

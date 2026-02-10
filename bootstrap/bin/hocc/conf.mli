@@ -25,9 +25,6 @@ val verbose: t -> bool
 val text: t -> bool
 (** [text t] returns true if a plain-text automaton description is to be generated. *)
 
-val html: t -> bool
-(** [html t] returns true if an html automaton description is to be generated. *)
-
 val hocc: t -> bool
 (** [hocc t] returns true if a hocc-format grammar specification is to be generated. *)
 

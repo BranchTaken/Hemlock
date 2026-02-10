@@ -14,7 +14,6 @@ type t = {
   hmh: Text.t;
   log: (module Fmt.Formatter);
   txt: (module Fmt.Formatter);
-  html: (module Fmt.Formatter);
   hocc: (module Fmt.Formatter);
   hmi: (module Fmt.Formatter);
   hm: (module Fmt.Formatter);
@@ -40,9 +39,6 @@ val with_log: t -> (module Fmt.Formatter) -> t
 
 val with_txt: t -> (module Fmt.Formatter) -> t
 (** [with_txt t txt] is equivalent to [{t with txt}]. *)
-
-val with_html: t -> (module Fmt.Formatter) -> t
-(** [with_html t html] is equivalent to [{t with html}]. *)
 
 val with_hocc: t -> (module Fmt.Formatter) -> t
 (** [with_hocc t hocc] is equivalent to [{t with hocc}]. *)

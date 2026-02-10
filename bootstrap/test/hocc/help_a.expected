@@ -6,9 +6,6 @@ Parameters:
            -v[erbose] : Print progress information during parser generation.
          -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
-                -html : Write a detailed automaton description in internally
-                        hyperlinked HTML format to
-                        "<dstdir>/hocc/<module>.html".
          -hmh | -hocc : Write a complete grammar specification in hocc format to
                         "<dstdir>/hocc/<module>.hmh", but with all non-terminal
                         types and reduction code omitted.
