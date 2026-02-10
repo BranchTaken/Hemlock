@@ -26,7 +26,7 @@ hm_basis_errno_to_string_inner(value a_n, value a_bytes, value a_error) {
     uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
     int error = error_of_value(a_error);
 
-    strncpy(bytes, strerror(error), n);
+    strncpy((char *)bytes, strerror(error), n);
 
     return Val_unit;
 }
