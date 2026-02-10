@@ -37,7 +37,6 @@ hemlock_entropy_nbits(value a_nbits) {
     size_t nuint64s = (nbytes_in + 7) / 8;
     uint64_t entropy[nuint64s];
     size_t nbits_out = hemlock_getentropy((uint8_t *)entropy, nbits_in);
-    uint64_t error = (nbits_out < nbits_in);
 
     if (nbits_out == 0) {
         const char *result = {NULL};

@@ -86,9 +86,16 @@ is_neg(const hm_word_t *a, size_t anw) {
     return (anw > 0 && (a[anw-1] & 0x8000000000000000LU) != 0);
 }
 
+static bool
+is_ineg(const hm_iword_t *a, size_t anw) {
+    return (anw > 0 && (a[anw-1] & 0x8000000000000000L) != 0);
+}
+
 static void
 init_u(hm_word_t u, hm_word_t *r, size_t rnw) {
-    r[0] = u;
+    if (rnw > 0) {
+        r[0] = u;
+    }
     for (size_t i = 1; i < rnw; i++) {
         r[i] = 0LU;
     }
@@ -104,6 +111,7 @@ init_one(hm_word_t *r, size_t rnw) {
     init_u(1LU, r, rnw);
 }
 
+#if 0
 static void
 init_i(hm_word_t x, hm_word_t *r, size_t rnw) {
     if ((x & 0x8000000000000000LU) == 0) {
@@ -115,9 +123,10 @@ init_i(hm_word_t x, hm_word_t *r, size_t rnw) {
         r[i] = 0xffffffffffffffffLU;
     }
 }
+#endif
 
 static void
-pad_i(const hm_iword_t *a, size_t anw, hm_iword_t *r, size_t rnw) {
+upad_i(const hm_word_t *a, size_t anw, hm_word_t *r, size_t rnw) {
     assert(anw <= rnw);
 
     for (size_t i = 0; i < anw; i++) {
@@ -127,6 +136,11 @@ pad_i(const hm_iword_t *a, size_t anw, hm_iword_t *r, size_t rnw) {
     for (size_t i = anw; i < rnw; i++) {
         r[i] = pad;
     }
+}
+
+static void
+ipad_i(const hm_iword_t *a, size_t anw, hm_iword_t *r, size_t rnw) {
+    upad_i((hm_word_t *)a, anw, (hm_word_t *)r, rnw);
 }
 
 static void
@@ -200,7 +214,7 @@ neg_helper(const hm_word_t *a, size_t anw, hm_word_t *r, size_t rnw) {
     assert(!is_neg(a, anw) || anw <= rnw);
     hm_word_t a_padded[rnw];
     if (anw <= rnw) {
-        pad_i(a, anw, a_padded, rnw);
+        upad_i(a, anw, a_padded, rnw);
     } else {
         for (size_t i = 0; i < rnw; i++) {
             a_padded[i] = a[i];
@@ -331,14 +345,14 @@ uarray_of_cbs(bool signed_, value a_a, hm_word_t *r, size_t rnw) {
 
 static void
 iarray_of_cbs(value a_a, hm_iword_t *r, size_t rnw) {
-    return uarray_of_cbs(true, a_a, r, rnw);
+    return uarray_of_cbs(true, a_a, (hm_word_t *)r, rnw);
 }
 
 static int
 icmp(const hm_iword_t *a, size_t anw, const hm_iword_t *b, size_t bnw) {
     if (anw == bnw) {
-        bool a_neg = is_neg(a, anw);
-        bool b_neg = is_neg(b, bnw);
+        bool a_neg = is_ineg(a, anw);
+        bool b_neg = is_ineg(b, bnw);
         int sign_rel = (int)b_neg - (int)a_neg;
         if (sign_rel != 0) return sign_rel;
         // a and b have the same sign. Unsigned comparison does the right thing under these
@@ -352,12 +366,12 @@ icmp(const hm_iword_t *a, size_t anw, const hm_iword_t *b, size_t bnw) {
         return 0;
     } else if (anw < bnw) {
         hm_iword_t a_padded[bnw];
-        pad_i(a, anw, a_padded, bnw);
+        ipad_i(a, anw, a_padded, bnw);
         return icmp(a_padded, bnw, b, bnw);
     } else {
         assert(anw > bnw);
         hm_iword_t b_padded[anw];
-        pad_i(b, bnw, b_padded, anw);
+        ipad_i(b, bnw, b_padded, anw);
         return icmp(a, anw, b_padded, anw);
     }
 }
