@@ -7,7 +7,6 @@ type t = {
   hmh: Text.t;
   log: (module Fmt.Formatter);
   txt: (module Fmt.Formatter);
-  html: (module Fmt.Formatter);
   hocc: (module Fmt.Formatter);
   hmi: (module Fmt.Formatter);
   hm: (module Fmt.Formatter);
@@ -70,11 +69,6 @@ let init_txt conf =
   | false -> File.Fmt.sink
   | true -> String.Fmt.empty
 
-let init_html conf =
-  match Conf.html conf with
-  | false -> File.Fmt.sink
-  | true -> String.Fmt.empty
-
 let init_hocc conf =
   match Conf.hocc conf with
   | false -> File.Fmt.sink
@@ -108,14 +102,13 @@ let init conf =
   let hmh = init_hmh conf ~err in
   let log = init_log conf in
   let txt = init_txt conf in
-  let html = init_html conf in
   let hocc = init_hocc conf in
   let hmi = init_hmi conf hmhi in
   let hm = init_hm conf in
   let mli = init_mli conf hmhi in
   let ml = init_ml conf in
 
-  {err; hmhi; hmh; log; txt; html; hocc; hmi; hm; mli; ml}
+  {err; hmhi; hmh; log; txt; hocc; hmi; hm; mli; ml}
 
 let open_outfile_as_formatter ~is_report ~err path =
   let _ = match is_report with
@@ -141,9 +134,8 @@ let fini_formatter ?(is_report=false) conf conflicts ~err ~log formatter suffix 
     end
   | false -> log, formatter
 
-let fini conf conflicts ({err; log; txt; html; hocc; hmi; hm; mli; ml; _} as t) =
+let fini conf conflicts ({err; log; txt; hocc; hmi; hm; mli; ml; _} as t) =
   let log, txt = fini_formatter ~is_report:true conf conflicts ~err ~log txt ".txt" in
-  let log, html = fini_formatter ~is_report:true conf conflicts ~err ~log html ".html" in
   let log, hocc = fini_formatter ~is_report:true conf conflicts ~err ~log hocc ".hmh" in
 
   let log, hmi = fini_formatter conf conflicts ~err ~log hmi ".hmi" in
@@ -151,7 +143,7 @@ let fini conf conflicts ({err; log; txt; html; hocc; hmi; hm; mli; ml; _} as t) 
   let log, mli = fini_formatter conf conflicts ~err ~log mli ".mli" in
   let log, ml = fini_formatter conf conflicts ~err ~log ml ".ml" in
   let log = Fmt.flush log in
-  {t with log; txt; html; hocc; hmi; hm; mli; ml}
+  {t with log; txt; hocc; hmi; hm; mli; ml}
 
 let fatal {err; _} =
   let _err = Fmt.flush err in
@@ -166,9 +158,6 @@ let with_log t log =
 
 let with_txt t txt =
   {t with txt}
-
-let with_html t html =
-  {t with html}
 
 let with_hocc t hocc =
   {t with hocc}

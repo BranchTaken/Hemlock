@@ -51,5 +51,4 @@ mv_report() {
     fi
 }
 mv_report txt
-mv_report html
 mv_report hmh

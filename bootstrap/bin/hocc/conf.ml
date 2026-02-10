@@ -18,7 +18,6 @@ let pp_algorithm algorithm formatter =
 type t = {
   verbose: bool;
   text: bool;
-  html: bool;
   hocc: bool;
   algorithm: algorithm;
   resolve: bool;
@@ -30,12 +29,11 @@ type t = {
   dstdir_opt: Path.t option;
 }
 
-let pp {verbose; text; html; hocc; algorithm; resolve; remerge; hemlock; ocaml; srcdir_opt;
-  module_opt; dstdir_opt} formatter =
+let pp {verbose; text; hocc; algorithm; resolve; remerge; hemlock; ocaml; srcdir_opt; module_opt;
+  dstdir_opt} formatter =
   formatter
   |> Fmt.fmt "{verbose=" |> Bool.pp verbose
   |> Fmt.fmt "; text=" |> Bool.pp text
-  |> Fmt.fmt "; html=" |> Bool.pp html
   |> Fmt.fmt "; hocc=" |> Bool.pp hocc
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
   |> Fmt.fmt "; resolve=" |> Bool.pp resolve
@@ -50,7 +48,6 @@ let pp {verbose; text; html; hocc; algorithm; resolve; remerge; hemlock; ocaml; 
 let default = {
   verbose=false;
   text=false;
-  html=false;
   hocc=false;
   algorithm=Lr1;
   resolve=true;
@@ -75,9 +72,6 @@ Parameters:
            -v[erbose] : Print progress information during parser generation.
          -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
-                -html : Write a detailed automaton description in internally
-                        hyperlinked HTML format to
-                        "<dstdir>/hocc/<module>.html".
          -hmh | -hocc : Write a complete grammar specification in hocc format to
                         "<dstdir>/hocc/<module>.hmh", but with all non-terminal
                         types and reduction code omitted.
@@ -168,7 +162,6 @@ let of_argv argv =
         | "-help" | "-h" -> usage false
         | "-verbose" | "-v" -> f {t with verbose=true} argv (succ i)
         | "-txt" | "-text" -> f {t with text=true} argv (succ i)
-        | "-html" -> f {t with html=true} argv (succ i)
         | "-hmh" | "-hocc" -> f {t with hocc=true} argv (succ i)
         | "-algorithm" | "-a" -> begin
             let algorithm = match Bytes.to_string_replace (arg_arg argv i) with
@@ -265,9 +258,6 @@ let verbose {verbose; _} =
 
 let text {text; _} =
   text
-
-let html {html; _} =
-  html
 
 let hocc {hocc; _} =
   hocc
