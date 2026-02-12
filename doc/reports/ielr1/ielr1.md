@@ -102,12 +102,12 @@ isocores.
 Parser generators have long supported grammar disambiguation via precedence and associativity. For
 example `mul` has higher precedence than `add`, both of which are left-associative. `hocc` differs
 from most parser generators in that precedences comprise an explicit optionally-disjoint directed
-acyclic graph, rather than a mostly implicit single linear precedence order. Furthermore, although
+acyclic graph, rather than a mostly implicit single linear precedence order. Furthermore, since
 `hocc` supports neutral associativity (`%precedence` in
-[`bison`](https://www.gnu.org/software/bison/manual/bison.html#Precedence-Decl)), it intentionally
-omits support for non-associativity (`%nonassoc` in
-[YACC](https://en.wikipedia.org/wiki/Yacc)-family parser generators). These deviations from the
-status quo avoid masking grammar flaws and increase specification precision.
+[`bison`](https://www.gnu.org/software/bison/manual/bison.html#Precedence-Decl)), non-associativity
+is of limited practical use (`%nonassoc` in [YACC](https://en.wikipedia.org/wiki/Yacc)-family parser
+generators). These deviations from the status quo avoid masking grammar flaws and increase
+specification precision.
 
 ### Work queue processing
 
