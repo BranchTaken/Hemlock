@@ -45,9 +45,13 @@ module T = struct
     | None -> halt "No last element"
 
   let next_ge_opt elm t =
-    let bitset_sr_ge = Nat.bit_sr ~shift:elm t in
-    match is_empty bitset_sr_ge with
-    | false -> Some ((Nat.bit_ctz bitset_sr_ge) + elm)
+    match elm >= Nat.bit_length t with
+    | false -> begin
+        let bitset_sr_ge = Nat.bit_sr ~shift:elm t in
+        match is_empty bitset_sr_ge with
+        | false -> Some ((Nat.bit_ctz bitset_sr_ge) + elm)
+        | true -> None
+      end
     | true -> None
 
   let next_ge elm t =
