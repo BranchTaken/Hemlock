@@ -5,6 +5,7 @@
   test_empty_singleton_length
   test_filter
   test_filteri
+  test_fold
   test_fold_right_until
   test_fold_until
   test_fold2
