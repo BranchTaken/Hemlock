@@ -307,7 +307,7 @@ hocc
     nonterm Vn ::= epsilon
 ```
 
-As analyzed by `hocc` in LALR(1)/IELR(1) mode, this results in the following state subgraph
+As analyzed by `hocc` in LALR(1)/IELR(1) mode, this results in the following state subgraphs
 (inconsequential states omitted for brevity):
 
 ```
@@ -479,24 +479,25 @@ inadequacies. Following are lightly edited excerpts from [LALR(1)](G2_lalr1.txt)
 As mentioned earlier, lanes may contain cycles (conceptually an infinite set of lanes with [0..∞]
 cycle transits), and lanes may fork/join (combinatorial explosion of lanes), which means that lanes
 cannot be iteratively annotated. The tractable approach is to simultaneously trace all lanes passing
-through each relevant transit by recursing backward through transits until no new annotation is
-added. Think of each recursive call as traversing a transit from a state to its ipred, such that
-each application of the recursive function is on behalf of a state in the context of the transit
-just recursed on, i.e. a lane context (**_lanectx_**).
+through each relevant transit by traversing backward through transits until no new annotation is
+added. Each iteration of the annotation closure function traverses a transit from a state to its
+ipred, such that data from one or more previously traversed successor transits are propagated
+backward through one or more lanes, i.e. per transit lane context (**_lanectx_**) backward
+propagation.
 
-Each lanectx comprises a map of zero or more lane **_traces_**, where each map key is a (symbol,
-conflict manifestation, action) tuple, and map values are in turn M:N maps that associate transit
-source/destination LR(1) items. Note that a trace key/value pair may represent multiple lanes,
-because multiple conflict state kernel items can induce the same added ε production. Furthermore,
-note that a lanectx generates annotations only if it contains traces, and since traces are
-transitively based on those of successors, it is possible for tracing to terminate before reaching a
-start state, as for the G2 grammar above.
+Each lanectx comprises a map of zero or more lane **_traces_**, where each map key is a (conflict
+state, symbol, conflict manifestation, action) tuple, and map values are in turn M:N maps that
+associate transit source/destination LR(1) items. Note that a trace key/value pair may represent
+multiple lanes, because multiple conflict state kernel items can induce the same added ε production.
+Furthermore, note that a lanectx generates annotations only if it contains traces, and since traces
+are transitively based on those of successors, it is possible for tracing to terminate before
+reaching a start state, as for the G2 grammar above.
 
 Lane tracing starts at each conflict-containing state, with traces for all reduce actions implicated
-in conflicts. At each recursion depth, a lanectx is computed based on the caller's lanectx. The
-basic idea at each recursion is to move the dot in each traced LR(1) item one position to the left;
-in the case where the dot is already at position 0 (i.e. the item is in the added set), attempt to
-trace into generating kernel items.
+in conflicts. At each annotation closure iteration, a lanectx is computed based on a successor
+lanectx. The basic idea at each iteration is to move the dot in each traced LR(1) item one position
+to the left; in the case where the dot is already at position 0 (i.e. the item is in the added set),
+attempt to trace into generating kernel items.
 
 The critical section for IELR(1) lies in repeatedly computing the **_leftmost transitive closure_**
 of a state's kernel items given a LHS symbol and a lookahead symbol. This computation recurses
@@ -642,11 +643,11 @@ type t = {
       is [Some p] regardless of whether precedence is specified for just this prod versus all of the
       nonterm (LHS symbol) prods. *)
 
-  stmt: Parse.prod option;
+  stmt: Parse.nonterm_prod option;
   (** Declaration AST. *)
 
-  reduction: Reduction.t;
-  (** Reduction code. *)
+  callback: Callback.t;
+  (** Reduction callback code. *)
 }
 ```
 
