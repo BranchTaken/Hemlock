@@ -120,6 +120,7 @@ let hmi_template = {|{
             type t: t =
               | Left
               | Right
+              | Nonassoc
 
             include IdentifiableIntf.S with type t := t
           }
@@ -526,10 +527,12 @@ let hm_template = {|{
                 type t: t =
                   | Left
                   | Right
+                  | Nonassoc
 
                 index t = match t with
                   | Left -> 0
                   | Right -> 1
+                  | Nonassoc -> 2
 
                 hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -540,6 +543,7 @@ let hm_template = {|{
                 to_string t = match t with
                   | Left -> "Left"
                   | Right -> "Right"
+                  | Nonassoc -> "Nonassoc"
 
                 pp t formatter =
                     formatter |> Fmt.fmt (to_string t)
@@ -1930,6 +1934,7 @@ let mli_template = {|sig
             type t =
               | Left
               | Right
+              | Nonassoc
 
             include IdentifiableIntf.S with type t := t
           end
@@ -2333,10 +2338,12 @@ let ml_template = {|struct
                 type t =
                   | Left
                   | Right
+                  | Nonassoc
 
                 let index = function
                   | Left -> 0L
                   | Right -> 1L
+                  | Nonassoc -> 2L
 
                 let hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -2347,6 +2354,7 @@ let ml_template = {|struct
                 let to_string = function
                   | Left -> "Left"
                   | Right -> "Right"
+                  | Nonassoc -> "Nonassoc"
 
                 let pp t formatter =
                     formatter |> Fmt.fmt (to_string t)

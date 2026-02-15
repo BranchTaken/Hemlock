@@ -45,10 +45,12 @@ Parser = {
                     type t: t =
                       | Left
                       | Right
+                      | Nonassoc
 
                     index t = match t with
                       | Left -> 0
                       | Right -> 1
+                      | Nonassoc -> 2
 
                     hash_fold t state =
                         state |> Uns.hash_fold (index t)
@@ -59,6 +61,7 @@ Parser = {
                     to_string t = match t with
                       | Left -> "Left"
                       | Right -> "Right"
+                      | Nonassoc -> "Nonassoc"
 
                     pp t formatter =
                         formatter |> Fmt.fmt (to_string t)
