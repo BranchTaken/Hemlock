@@ -178,7 +178,7 @@ Expressions:
 | `:=`                                            | right         |
 | `if`                                            | —             |
 | `let`                                           | -             |
-| `;`                                             | right         |
+| `;`, line delimiter                             | right         |
 | `..`                                            | —             |
 | `import`                                        | —             |
 | `open`                                          | —             |

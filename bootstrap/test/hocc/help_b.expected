@@ -1,4 +1,4 @@
-hocc: Invalid command line parameter: "-c"
+hocc: Invalid command line parameter: "-no-such-option"
 hocc usage: hocc <parameters>
 
 Parameters:
