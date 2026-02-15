@@ -608,6 +608,7 @@ parser states can be used as persistent reusable snapshots.
             type t: t =
               | Left
               | Right
+              | Nonassoc
 
             include IdentifiableIntf.S with type t := t
           }

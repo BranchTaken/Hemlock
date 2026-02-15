@@ -45,10 +45,12 @@ include struct
                 type t =
                   | Left
                   | Right
+                  | Nonassoc
 
                 let index = function
                   | Left -> 0L
                   | Right -> 1L
+                  | Nonassoc -> 2L
 
                 let hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -59,6 +61,7 @@ include struct
                 let to_string = function
                   | Left -> "Left"
                   | Right -> "Right"
+                  | Nonassoc -> "Nonassoc"
 
                 let pp t formatter =
                     formatter |> Fmt.fmt (to_string t)
