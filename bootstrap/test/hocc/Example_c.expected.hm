@@ -230,6 +230,9 @@ Parser = {
 
                 init ~index ~name ~prec ~alias ~start ~prods ~first ~follow =
                     {index; name; prec; alias; start; prods; first; follow}
+
+                let is_nonterm {prods; _} =
+                    not (Ordset.is_empty prods)
               }
 
             symbols = [|
@@ -371,6 +374,43 @@ Parser = {
 
                 init ~lr0item ~follow =
                     {lr0item; follow}
+
+                (* The concatenation of the RHS symbols to the right of the dot and the follow set
+                 * comprise an ordered sequence of symbols to be expected. Merge-fold the symbols' first
+                 * sets (excluding "ε"), until a preceding symbol's first set does not contain "ε".
+                 * Similarly, if all symbols contain "ε", merge the follow set (excluding "ε"). Merge
+                 * "ε" if all symbols' first sets and the follow set contain "ε". *)
+                let first symbols {lr0item; follow} =
+                    let epsilon = Array.get 0L symbols
+                    assert String.(Symbol.(epsilon.name) = "EPSILON")
+                    let append_symbol_set first merge_epsilon symbol_set =
+                        let symbol_set_sans_epsilon = Bitset.remove epsilon.index symbol_set
+                        let first' = Bitset.union symbol_set_sans_epsilon first
+                        let contains_epsilon = Bitset.mem epsilon.index symbol_set
+                        let merge_epsilon' = match contains_epsilon with
+                          | false -> false
+                          | true -> merge_epsilon
+                        first', merge_epsilon'
+                    let rhs_indexes = lr0item.prod.rhs_indexes
+                    let rhs_slice = Array.Slice.init ~range:(lr0item.dot =:< Array.length rhs_indexes)
+                      rhs_indexes
+                    (* Merge-fold RHS symbols' first sets. *)
+                    let first, merge_epsilon = Array.Slice.fold_until
+                      ~init:(Bitset.empty, true)
+                      ~f:(fn (first, merge_epsilon) symbol_index ->
+                        let symbol = Array.get symbol_index symbols
+                        let first', merge_epsilon' = append_symbol_set first merge_epsilon symbol.first
+                        (first', merge_epsilon'), not merge_epsilon'
+                      ) rhs_slice
+                    (* Append the follow set only if all RHS symbols to the right of the dot contain
+                     * "ε". *)
+                    match merge_epsilon with
+                      | false -> first
+                      | true ->
+                        let first', merge_epsilon' = append_symbol_set first merge_epsilon follow
+                        match merge_epsilon' with
+                          | false -> first'
+                          | true -> Bitset.insert epsilon.index first'
               }
 
             Lr1Itemset = {
@@ -387,6 +427,20 @@ Parser = {
                 empty = Ordmap.empty Lr0Item
 
                 init = Ordmap.of_alist Lr0Item
+
+                let mem Lr1Item.{lr0item; follow} t =
+                    match Ordmap.get lr0item t with
+                      | None -> false
+                      | Some Lr1Item.{follow=t_follow; _} -> Bitset.subset t_follow follow
+
+                let insert (Lr1Item.{lr0item; follow} as lr1item) t =
+                    Ordmap.amend lr0item ~f:(fn lr1item_opt ->
+                        match lr1item_opt with
+                          | None -> Some lr1item
+                          | Some Lr1Item.{follow=t_follow; _} ->
+                            let follow = Bitset.union follow t_follow
+                            Some (Lr1Item.init ~lr0item ~follow)
+                      ) t
               }
 
             Lr1ItemsetClosure = {
@@ -394,7 +448,6 @@ Parser = {
                     type t: t = {
                         index: uns
                         kernel: Lr1Itemset.t
-                        added: Lr1Itemset.t
                       }
 
                     hash_fold {index; _} state =
@@ -403,19 +456,60 @@ Parser = {
                     cmp {index=i0; _} {index=i1; _} =
                         Uns.cmp i0 i1
 
-                    pp {index; kernel; added} formatter =
+                    pp {index; kernel} formatter =
                         formatter
                           |> Fmt.fmt
                           "{%u=(^index
                           ^); %f(^Lr1Itemset.pp^)=(^kernel
-                          ^); %f(^Lr1Itemset.pp^)=(^added
                           ^)}"
                   }
                 include T
                 include Identifiable.Make(T)
 
-                init ~index ~kernel ~added =
-                    {index; kernel; added}
+                init ~index ~kernel =
+                    {index; kernel}
+
+                added_impl symbols {kernel; _} =
+                    let rec f symbols lr1itemset added =
+                        match Ordmap.choose lr1itemset with
+                          | None -> added
+                          | Some (_lr0item, Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}
+                          as lr0item; follow}) ->
+                            let lr1itemset' = Ordmap.remove lr0item lr1itemset
+                            match Uns.(dot < Array.length rhs_indexes) with
+                              | false ->
+                                (* X ::= a· *)
+                                f symbols lr1itemset' added
+                              | true ->
+                                let rhs_symbol_index = Array.get dot rhs_indexes
+                                let rhs_symbol = Array.get rhs_symbol_index symbols
+                                match Symbol.is_nonterm rhs_symbol with
+                                  | false ->
+                                    (* X ::= a·b *)
+                                    f symbols lr1itemset' added
+                                  | true ->
+                                    (* X ::= a·Ab *)
+                                    let lhs = rhs_symbol
+                                    let follow' = Lr1Item.first symbols
+                                      (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot))
+                                      ~follow)
+                                    let lr1itemset', added' = Ordset.fold ~init:(lr1itemset', added)
+                                      ~f:(fn (lr1itemset, added) prod ->
+                                        let lr0item = Lr0Item.init ~prod ~dot:0
+                                        let lr1item = Lr1Item.init ~lr0item ~follow:follow'
+                                        match Lr1Itemset.mem lr1item added with
+                                          | true -> lr1itemset, added
+                                          | false ->
+                                            let lr1itemset' = Lr1Itemset.insert lr1item lr1itemset
+                                            let added' = Lr1Itemset.insert lr1item added
+                                            lr1itemset', added'
+                                      ) lhs.prods
+                                    f symbols lr1itemset' added'
+                    f symbols kernel Lr1Itemset.empty
+
+                let added t =
+                    lazy (added_impl symbols t)
+                      |> Lazy.force
               }
 
             Action = {
@@ -502,33 +596,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.init [
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 7 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 1
-                                lr0item, lr1item
-                              )
-                          ]
                   ~actions:
                     Map.of_alist Uns [
                         6, Action.ShiftPrefix 1
@@ -551,8 +618,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         2, Action.Reduce 6
@@ -588,33 +653,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.init [
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                          ]
                   ~actions:
                     Map.of_alist Uns [
                         2, Action.ShiftPrefix 4
@@ -641,8 +679,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         1, Action.ShiftPrefix 11
@@ -662,8 +698,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         6, Action.Reduce 0
@@ -683,8 +717,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         6, Action.Reduce 1
@@ -704,8 +736,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         6, Action.Reduce 2
@@ -725,8 +755,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         6, Action.Reduce 3
@@ -746,8 +774,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         1, Action.Reduce 7
@@ -762,27 +788,6 @@ Parser = {
                         Lr1Itemset.init [
                             (
                                 let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:2
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                          ]
-                      ~added:
-                        Lr1Itemset.init [
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
                                 let lr1item = Lr1Item.init ~lr0item ~follow:
                                     Bitset.of_nat 0xbcn
                                 lr0item, lr1item
@@ -809,27 +814,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.init [
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 4 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 6 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                          ]
                   ~actions:
                     Map.of_alist Uns [
                         6, Action.ShiftPrefix 1
@@ -851,8 +835,6 @@ Parser = {
                                 lr0item, lr1item
                               )
                           ]
-                      ~added:
-                        Lr1Itemset.empty
                   ~actions:
                     Map.of_alist Uns [
                         0, Action.Reduce 8
@@ -881,33 +863,6 @@ Parser = {
                                 let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:1
                                 let lr1item = Lr1Item.init ~lr0item ~follow:
                                     Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                          ]
-                      ~added:
-                        Lr1Itemset.init [
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
                                 lr0item, lr1item
                               )
                           ]
@@ -946,33 +901,6 @@ Parser = {
                                 let lr0item = Lr0Item.init ~prod:(Array.get 5 prods) ~dot:3
                                 let lr1item = Lr1Item.init ~lr0item ~follow:
                                     Bitset.of_nat 0xbcn
-                                lr0item, lr1item
-                              )
-                          ]
-                      ~added:
-                        Lr1Itemset.init [
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 0 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 1 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 2 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
-                                lr0item, lr1item
-                              )
-                            (
-                                let lr0item = Lr0Item.init ~prod:(Array.get 3 prods) ~dot:0
-                                let lr1item = Lr1Item.init ~lr0item ~follow:
-                                    Bitset.singleton 6
                                 lr0item, lr1item
                               )
                           ]

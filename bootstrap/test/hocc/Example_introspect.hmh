@@ -62,8 +62,8 @@ let introspect () =
       |> Fmt.fmt "\n"
       |> Fmt.fmt "added: "
       |> Array.fmt ~alt:true pp_index_added (Array.map
-      ~f:(fun Spec.State.{lr1ItemsetClosure; _} ->
-        let Spec.Lr1ItemsetClosure.{index; added; _} = lr1ItemsetClosure in
+      ~f:(fun Spec.State.{lr1ItemsetClosure={index; _} as lr1ItemsetClosure; _} ->
+        let added = Spec.Lr1ItemsetClosure.added lr1ItemsetClosure in
         (index, added)
       ) Spec.states)
       |> Fmt.fmt "\n"

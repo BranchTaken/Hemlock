@@ -113,10 +113,12 @@ include sig
             type t = {
                 index: uns; (* Index of corresponding `State.t` in `states` array. *)
                 kernel: Lr1Itemset.t;
-                added: Lr1Itemset.t;
               }
 
             include IdentifiableIntf.S with type t := t
+
+            val added: t -> Lr1Itemset.t
+              (** `added t` computes the added set corresponding to the kernel of `t`. *)
           end
 
         module Action : sig

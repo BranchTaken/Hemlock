@@ -212,10 +212,12 @@ let hmi_template = {|{
             type t: t = {
                 index: uns # Index of corresponding `State.t` in `states` array.
                 kernel: Lr1Itemset.t
-                added: Lr1Itemset.t
               }
 
             include IdentifiableIntf.S with type t := t
+
+            added: t -> Lr1Itemset.t
+              [@@doc "`added t` computes the added set corresponding to the kernel of `t`."]
           }
 
         Action = {
@@ -690,6 +692,9 @@ let hm_template = {|{
 
             init ~index ~name ~prec ~alias ~start ~prods ~first ~follow =
                 {index; name; prec; alias; start; prods; first; follow}
+
+            let is_nonterm {prods; _} =
+                not (Ordset.is_empty prods)
           }
 
         «symbols»
@@ -751,6 +756,43 @@ let hm_template = {|{
 
             init ~lr0item ~follow =
                 {lr0item; follow}
+
+            (* The concatenation of the RHS symbols to the right of the dot and the follow set
+             * comprise an ordered sequence of symbols to be expected. Merge-fold the symbols' first
+             * sets (excluding "ε"), until a preceding symbol's first set does not contain "ε".
+             * Similarly, if all symbols contain "ε", merge the follow set (excluding "ε"). Merge
+             * "ε" if all symbols' first sets and the follow set contain "ε". *)
+            let first symbols {lr0item; follow} =
+                let epsilon = Array.get 0L symbols
+                assert String.(Symbol.(epsilon.name) = "EPSILON")
+                let append_symbol_set first merge_epsilon symbol_set =
+                    let symbol_set_sans_epsilon = Bitset.remove epsilon.index symbol_set
+                    let first' = Bitset.union symbol_set_sans_epsilon first
+                    let contains_epsilon = Bitset.mem epsilon.index symbol_set
+                    let merge_epsilon' = match contains_epsilon with
+                      | false -> false
+                      | true -> merge_epsilon
+                    first', merge_epsilon'
+                let rhs_indexes = lr0item.prod.rhs_indexes
+                let rhs_slice = Array.Slice.init ~range:(lr0item.dot =:< Array.length rhs_indexes)
+                  rhs_indexes
+                (* Merge-fold RHS symbols' first sets. *)
+                let first, merge_epsilon = Array.Slice.fold_until
+                  ~init:(Bitset.empty, true)
+                  ~f:(fn (first, merge_epsilon) symbol_index ->
+                    let symbol = Array.get symbol_index symbols
+                    let first', merge_epsilon' = append_symbol_set first merge_epsilon symbol.first
+                    (first', merge_epsilon'), not merge_epsilon'
+                  ) rhs_slice
+                (* Append the follow set only if all RHS symbols to the right of the dot contain
+                 * "ε". *)
+                match merge_epsilon with
+                  | false -> first
+                  | true ->
+                    let first', merge_epsilon' = append_symbol_set first merge_epsilon follow
+                    match merge_epsilon' with
+                      | false -> first'
+                      | true -> Bitset.insert epsilon.index first'
           }
 
         Lr1Itemset = {
@@ -767,6 +809,20 @@ let hm_template = {|{
             empty = Ordmap.empty Lr0Item
 
             init = Ordmap.of_alist Lr0Item
+
+            let mem Lr1Item.{lr0item; follow} t =
+                match Ordmap.get lr0item t with
+                  | None -> false
+                  | Some Lr1Item.{follow=t_follow; _} -> Bitset.subset t_follow follow
+
+            let insert (Lr1Item.{lr0item; follow} as lr1item) t =
+                Ordmap.amend lr0item ~f:(fn lr1item_opt ->
+                    match lr1item_opt with
+                      | None -> Some lr1item
+                      | Some Lr1Item.{follow=t_follow; _} ->
+                        let follow = Bitset.union follow t_follow
+                        Some (Lr1Item.init ~lr0item ~follow)
+                  ) t
           }
 
         Lr1ItemsetClosure = {
@@ -774,7 +830,6 @@ let hm_template = {|{
                 type t: t = {
                     index: uns
                     kernel: Lr1Itemset.t
-                    added: Lr1Itemset.t
                   }
 
                 hash_fold {index; _} state =
@@ -783,19 +838,60 @@ let hm_template = {|{
                 cmp {index=i0; _} {index=i1; _} =
                     Uns.cmp i0 i1
 
-                pp {index; kernel; added} formatter =
+                pp {index; kernel} formatter =
                     formatter
                       |> Fmt.fmt
                       "{%u=(^index
                       ^); %f(^Lr1Itemset.pp^)=(^kernel
-                      ^); %f(^Lr1Itemset.pp^)=(^added
                       ^)}"
               }
             include T
             include Identifiable.Make(T)
 
-            init ~index ~kernel ~added =
-                {index; kernel; added}
+            init ~index ~kernel =
+                {index; kernel}
+
+            added_impl symbols {kernel; _} =
+                let rec f symbols lr1itemset added =
+                    match Ordmap.choose lr1itemset with
+                      | None -> added
+                      | Some (_lr0item, Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}
+                      as lr0item; follow}) ->
+                        let lr1itemset' = Ordmap.remove lr0item lr1itemset
+                        match Uns.(dot < Array.length rhs_indexes) with
+                          | false ->
+                            (* X ::= a· *)
+                            f symbols lr1itemset' added
+                          | true ->
+                            let rhs_symbol_index = Array.get dot rhs_indexes
+                            let rhs_symbol = Array.get rhs_symbol_index symbols
+                            match Symbol.is_nonterm rhs_symbol with
+                              | false ->
+                                (* X ::= a·b *)
+                                f symbols lr1itemset' added
+                              | true ->
+                                (* X ::= a·Ab *)
+                                let lhs = rhs_symbol
+                                let follow' = Lr1Item.first symbols
+                                  (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot))
+                                  ~follow)
+                                let lr1itemset', added' = Ordset.fold ~init:(lr1itemset', added)
+                                  ~f:(fn (lr1itemset, added) prod ->
+                                    let lr0item = Lr0Item.init ~prod ~dot:0
+                                    let lr1item = Lr1Item.init ~lr0item ~follow:follow'
+                                    match Lr1Itemset.mem lr1item added with
+                                      | true -> lr1itemset, added
+                                      | false ->
+                                        let lr1itemset' = Lr1Itemset.insert lr1item lr1itemset
+                                        let added' = Lr1Itemset.insert lr1item added
+                                        lr1itemset', added'
+                                  ) lhs.prods
+                                f symbols lr1itemset' added'
+                f symbols kernel Lr1Itemset.empty
+
+            let added t =
+                lazy (added_impl symbols t)
+                  |> Lazy.force
           }
 
         Action = {
@@ -1456,7 +1552,7 @@ let expand_hm_states states ~indentation formatter =
     let indent = mk_indent indentation in
     let formatter, _first = Array.fold ~init:(formatter, true)
       ~f:(fun (formatter, first)
-        State.{statenub={lr1itemsetclosure={index; kernel; added}; _}; actions; gotos} ->
+        State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -1477,8 +1573,6 @@ let expand_hm_states states ~indentation formatter =
             |> Lr1ItemsetClosure.Index.pp index |> Fmt.fmt "\n"
             |> indent |> Fmt.fmt "  ~kernel:\n"
             |> expand_hm_lr1Itemset kernel ~indentation:(indentation+4L)
-            |> indent |> Fmt.fmt "  ~added:\n"
-            |> expand_hm_lr1Itemset added ~indentation:(indentation+4L)
           )
           |> indent |> Fmt.fmt "  ~actions:\n"
           |> (fun formatter ->
@@ -2026,10 +2120,12 @@ let mli_template = {|sig
             type t = {
                 index: uns; (* Index of corresponding `State.t` in `states` array. *)
                 kernel: Lr1Itemset.t;
-                added: Lr1Itemset.t;
               }
 
             include IdentifiableIntf.S with type t := t
+
+            val added: t -> Lr1Itemset.t
+              (** `added t` computes the added set corresponding to the kernel of `t`. *)
           end
 
         module Action : sig
@@ -2497,6 +2593,9 @@ let ml_template = {|struct
 
             let init ~index ~name ~prec ~alias ~start ~prods ~first ~follow =
                 {index; name; prec; alias; start; prods; first; follow}
+
+            let is_nonterm {prods; _} =
+                not (Ordset.is_empty prods)
           end
 
         «symbols»
@@ -2563,6 +2662,48 @@ let ml_template = {|struct
 
             let init ~lr0item ~follow =
                 {lr0item; follow}
+
+            (* The concatenation of the RHS symbols to the right of the dot and the follow set
+             * comprise an ordered sequence of symbols to be expected. Merge-fold the symbols' first
+             * sets (excluding "ε"), until a preceding symbol's first set does not contain "ε".
+             * Similarly, if all symbols contain "ε", merge the follow set (excluding "ε"). Merge
+             * "ε" if all symbols' first sets and the follow set contain "ε". *)
+            let first symbols {lr0item; follow} =
+                let epsilon = Array.get 0L symbols in
+                assert String.(Symbol.(epsilon.name) = "EPSILON");
+                let append_symbol_set first merge_epsilon symbol_set = begin
+                    let symbol_set_sans_epsilon = Bitset.remove epsilon.index symbol_set in
+                    let first' = Bitset.union symbol_set_sans_epsilon first in
+                    let contains_epsilon = Bitset.mem epsilon.index symbol_set in
+                    let merge_epsilon' = match contains_epsilon with
+                      | false -> false
+                      | true -> merge_epsilon
+                    in
+                    first', merge_epsilon'
+                  end in
+                let rhs_indexes = lr0item.prod.rhs_indexes in
+                let rhs_slice = Array.Slice.init ~range:(lr0item.dot =:< Array.length rhs_indexes)
+                  rhs_indexes in
+                (* Merge-fold RHS symbols' first sets. *)
+                let first, merge_epsilon = Array.Slice.fold_until
+                  ~init:(Bitset.empty, true)
+                  ~f:(fun (first, merge_epsilon) symbol_index ->
+                    let symbol = Array.get symbol_index symbols in
+                    let first', merge_epsilon' = append_symbol_set first merge_epsilon
+                      symbol.first in
+                    (first', merge_epsilon'), not merge_epsilon'
+                  ) rhs_slice
+                in
+                (* Append the follow set only if all RHS symbols to the right of the dot contain
+                 * "ε". *)
+                match merge_epsilon with
+                  | false -> first
+                  | true -> begin
+                    let first', merge_epsilon' = append_symbol_set first merge_epsilon follow in
+                    match merge_epsilon' with
+                      | false -> first'
+                      | true -> Bitset.insert epsilon.index first'
+                    end
           end
 
         module Lr1Itemset = struct
@@ -2583,6 +2724,21 @@ let ml_template = {|struct
             let empty = Ordmap.empty (module Lr0Item)
 
             let init = Ordmap.of_alist (module Lr0Item)
+
+            let mem Lr1Item.{lr0item; follow} t =
+                match Ordmap.get lr0item t with
+                  | None -> false
+                  | Some Lr1Item.{follow=t_follow; _} -> Bitset.subset t_follow follow
+
+            let insert (Lr1Item.{lr0item; follow} as lr1item) t =
+                Ordmap.amend lr0item ~f:(fun lr1item_opt ->
+                    match lr1item_opt with
+                      | None -> Some lr1item
+                      | Some Lr1Item.{follow=t_follow; _} -> begin
+                        let follow = Bitset.union follow t_follow in
+                        Some (Lr1Item.init ~lr0item ~follow)
+                    end
+                  ) t
           end
 
         module Lr1ItemsetClosure = struct
@@ -2590,7 +2746,6 @@ let ml_template = {|struct
                 type t = {
                     index: uns;
                     kernel: Lr1Itemset.t;
-                    added: Lr1Itemset.t;
                   }
 
                 let hash_fold {index; _} state =
@@ -2599,18 +2754,66 @@ let ml_template = {|struct
                 let cmp {index=i0; _} {index=i1; _} =
                     Uns.cmp i0 i1
 
-                let pp {index; kernel; added} formatter =
+                let pp {index; kernel} formatter =
                     formatter
                       |> Fmt.fmt "{index=" |> Uns.pp index
                       |> Fmt.fmt "; kernel=" |> Lr1Itemset.pp kernel
-                      |> Fmt.fmt "; added=" |> Lr1Itemset.pp added
                       |> Fmt.fmt "}"
               end
             include T
             include Identifiable.Make(T)
 
-            let init ~index ~kernel ~added =
-                {index; kernel; added}
+            let init ~index ~kernel =
+                {index; kernel}
+
+            let added_impl symbols {kernel; _} =
+                let rec f symbols lr1itemset added = begin
+                    match Ordmap.choose lr1itemset with
+                      | None -> added
+                      | Some (_lr0item, Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}
+                      as lr0item; follow}) -> begin
+                        let lr1itemset' = Ordmap.remove lr0item lr1itemset in
+                        match Uns.(dot < Array.length rhs_indexes) with
+                          | false -> begin
+                            (* X ::= a· *)
+                            f symbols lr1itemset' added
+                          end
+                          | true -> begin
+                            let rhs_symbol_index = Array.get dot rhs_indexes in
+                            let rhs_symbol = Array.get rhs_symbol_index symbols in
+                            match Symbol.is_nonterm rhs_symbol with
+                              | false -> begin
+                                (* X ::= a·b *)
+                                f symbols lr1itemset' added
+                              end
+                              | true -> begin
+                                (* X ::= a·Ab *)
+                                let lhs = rhs_symbol in
+                                let follow' = Lr1Item.first symbols
+                                  (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot))
+                                  ~follow) in
+                                let lr1itemset', added' = Ordset.fold ~init:(lr1itemset', added)
+                                  ~f:(fun (lr1itemset, added) prod ->
+                                    let lr0item = Lr0Item.init ~prod ~dot:0L in
+                                    let lr1item = Lr1Item.init ~lr0item ~follow:follow' in
+                                    match Lr1Itemset.mem lr1item added with
+                                      | true -> lr1itemset, added
+                                      | false -> begin
+                                        let lr1itemset' = Lr1Itemset.insert lr1item lr1itemset in
+                                        let added' = Lr1Itemset.insert lr1item added in
+                                        lr1itemset', added'
+                                      end
+                                  ) lhs.prods in
+                                f symbols lr1itemset' added'
+                              end
+                          end
+                      end
+                  end in
+                f symbols kernel Lr1Itemset.empty
+
+            let added t =
+                lazy (added_impl symbols t)
+                  |> Lazy.force
           end
 
         module Action = struct
@@ -3298,7 +3501,7 @@ let expand_ml_states states ~indentation formatter =
     let indent = mk_indent indentation in
     let formatter, _first = Array.fold ~init:(formatter, true)
       ~f:(fun (formatter, first)
-        State.{statenub={lr1itemsetclosure={index; kernel; added}; _}; actions; gotos} ->
+        State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3319,9 +3522,6 @@ let expand_ml_states states ~indentation formatter =
             |> ml_uns_pp index |> Fmt.fmt "\n"
             |> indent |> Fmt.fmt "  ~kernel:(\n"
             |> expand_ml_lr1Itemset kernel ~indentation:(indentation+4L)
-            |> indent |> Fmt.fmt "  )\n"
-            |> indent |> Fmt.fmt "  ~added:(\n"
-            |> expand_ml_lr1Itemset added ~indentation:(indentation+4L)
             |> indent |> Fmt.fmt "  )\n"
           )
           |> indent |> Fmt.fmt "  )\n"
