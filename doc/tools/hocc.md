@@ -701,10 +701,12 @@ parser states can be used as persistent reusable snapshots.
             type t: t = {
                 index: uns # Index of corresponding `State.t` in `states` array.
                 kernel: Lr1Itemset.t
-                added: Lr1Itemset.t
               }
 
             include IdentifiableIntf.S with type t := t
+
+            added: t -> Lr1Itemset.t
+              [@@doc "`added t` computes the added set corresponding to the kernel of `t`."]
           }
 
         Action = {

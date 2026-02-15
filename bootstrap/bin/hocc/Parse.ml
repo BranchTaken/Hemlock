@@ -310,10 +310,12 @@ include struct
                 type t =
                   | Left
                   | Right
+                  | Nonassoc
 
                 let index = function
                   | Left -> 0L
                   | Right -> 1L
+                  | Nonassoc -> 2L
 
                 let hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -324,6 +326,7 @@ include struct
                 let to_string = function
                   | Left -> "Left"
                   | Right -> "Right"
+                  | Nonassoc -> "Nonassoc"
 
                 let pp t formatter =
                     formatter |> Fmt.fmt (to_string t)
@@ -789,6 +792,9 @@ include struct
 
             let init ~index ~name ~prec ~alias ~start ~prods ~first ~follow =
                 {index; name; prec; alias; start; prods; first; follow}
+
+            let is_nonterm {prods; _} =
+                not (Ordset.is_empty prods)
           end
 
         let symbols = [|
@@ -1488,6 +1494,48 @@ include struct
 
             let init ~lr0item ~follow =
                 {lr0item; follow}
+
+            (* The concatenation of the RHS symbols to the right of the dot and the follow set
+             * comprise an ordered sequence of symbols to be expected. Merge-fold the symbols' first
+             * sets (excluding "ε"), until a preceding symbol's first set does not contain "ε".
+             * Similarly, if all symbols contain "ε", merge the follow set (excluding "ε"). Merge
+             * "ε" if all symbols' first sets and the follow set contain "ε". *)
+            let first symbols {lr0item; follow} =
+                let epsilon = Array.get 0L symbols in
+                assert String.(Symbol.(epsilon.name) = "EPSILON");
+                let append_symbol_set first merge_epsilon symbol_set = begin
+                    let symbol_set_sans_epsilon = Bitset.remove epsilon.index symbol_set in
+                    let first' = Bitset.union symbol_set_sans_epsilon first in
+                    let contains_epsilon = Bitset.mem epsilon.index symbol_set in
+                    let merge_epsilon' = match contains_epsilon with
+                      | false -> false
+                      | true -> merge_epsilon
+                    in
+                    first', merge_epsilon'
+                  end in
+                let rhs_indexes = lr0item.prod.rhs_indexes in
+                let rhs_slice = Array.Slice.init ~range:(lr0item.dot =:< Array.length rhs_indexes)
+                  rhs_indexes in
+                (* Merge-fold RHS symbols' first sets. *)
+                let first, merge_epsilon = Array.Slice.fold_until
+                  ~init:(Bitset.empty, true)
+                  ~f:(fun (first, merge_epsilon) symbol_index ->
+                    let symbol = Array.get symbol_index symbols in
+                    let first', merge_epsilon' = append_symbol_set first merge_epsilon
+                      symbol.first in
+                    (first', merge_epsilon'), not merge_epsilon'
+                  ) rhs_slice
+                in
+                (* Append the follow set only if all RHS symbols to the right of the dot contain
+                 * "ε". *)
+                match merge_epsilon with
+                  | false -> first
+                  | true -> begin
+                    let first', merge_epsilon' = append_symbol_set first merge_epsilon follow in
+                    match merge_epsilon' with
+                      | false -> first'
+                      | true -> Bitset.insert epsilon.index first'
+                    end
           end
 
         module Lr1Itemset = struct
@@ -1508,6 +1556,21 @@ include struct
             let empty = Ordmap.empty (module Lr0Item)
 
             let init = Ordmap.of_alist (module Lr0Item)
+
+            let mem Lr1Item.{lr0item; follow} t =
+                match Ordmap.get lr0item t with
+                  | None -> false
+                  | Some Lr1Item.{follow=t_follow; _} -> Bitset.subset t_follow follow
+
+            let insert (Lr1Item.{lr0item; follow} as lr1item) t =
+                Ordmap.amend lr0item ~f:(fun lr1item_opt ->
+                    match lr1item_opt with
+                      | None -> Some lr1item
+                      | Some Lr1Item.{follow=t_follow; _} -> begin
+                        let follow = Bitset.union follow t_follow in
+                        Some (Lr1Item.init ~lr0item ~follow)
+                    end
+                  ) t
           end
 
         module Lr1ItemsetClosure = struct
@@ -1515,7 +1578,6 @@ include struct
                 type t = {
                     index: uns;
                     kernel: Lr1Itemset.t;
-                    added: Lr1Itemset.t;
                   }
 
                 let hash_fold {index; _} state =
@@ -1524,18 +1586,66 @@ include struct
                 let cmp {index=i0; _} {index=i1; _} =
                     Uns.cmp i0 i1
 
-                let pp {index; kernel; added} formatter =
+                let pp {index; kernel} formatter =
                     formatter
                       |> Fmt.fmt "{index=" |> Uns.pp index
                       |> Fmt.fmt "; kernel=" |> Lr1Itemset.pp kernel
-                      |> Fmt.fmt "; added=" |> Lr1Itemset.pp added
                       |> Fmt.fmt "}"
               end
             include T
             include Identifiable.Make(T)
 
-            let init ~index ~kernel ~added =
-                {index; kernel; added}
+            let init ~index ~kernel =
+                {index; kernel}
+
+            let added_impl symbols {kernel; _} =
+                let rec f symbols lr1itemset added = begin
+                    match Ordmap.choose lr1itemset with
+                      | None -> added
+                      | Some (_lr0item, Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}
+                      as lr0item; follow}) -> begin
+                        let lr1itemset' = Ordmap.remove lr0item lr1itemset in
+                        match Uns.(dot < Array.length rhs_indexes) with
+                          | false -> begin
+                            (* X ::= a· *)
+                            f symbols lr1itemset' added
+                          end
+                          | true -> begin
+                            let rhs_symbol_index = Array.get dot rhs_indexes in
+                            let rhs_symbol = Array.get rhs_symbol_index symbols in
+                            match Symbol.is_nonterm rhs_symbol with
+                              | false -> begin
+                                (* X ::= a·b *)
+                                f symbols lr1itemset' added
+                              end
+                              | true -> begin
+                                (* X ::= a·Ab *)
+                                let lhs = rhs_symbol in
+                                let follow' = Lr1Item.first symbols
+                                  (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot))
+                                  ~follow) in
+                                let lr1itemset', added' = Ordset.fold ~init:(lr1itemset', added)
+                                  ~f:(fun (lr1itemset, added) prod ->
+                                    let lr0item = Lr0Item.init ~prod ~dot:0L in
+                                    let lr1item = Lr1Item.init ~lr0item ~follow:follow' in
+                                    match Lr1Itemset.mem lr1item added with
+                                      | true -> lr1itemset, added
+                                      | false -> begin
+                                        let lr1itemset' = Lr1Itemset.insert lr1item lr1itemset in
+                                        let added' = Lr1Itemset.insert lr1item added in
+                                        lr1itemset', added'
+                                      end
+                                  ) lhs.prods in
+                                f symbols lr1itemset' added'
+                              end
+                          end
+                      end
+                  end in
+                f symbols kernel Lr1Itemset.empty
+
+            let added t =
+                lazy (added_impl symbols t)
+                  |> Lazy.force
           end
 
         module Action = struct
@@ -1635,304 +1745,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 119L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 120L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 121L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 122L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 123L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 124L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 125L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 127L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 129L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 130L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 131L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 133L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 135L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 136L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 143L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 144L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 145L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 146L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 147L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 148L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 149L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 150L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 151L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 2L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 2L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 1L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -1995,304 +1807,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 157L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.singleton 0L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 119L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 120L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 121L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 122L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 123L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 124L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 125L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 127L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 129L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 130L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 131L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 133L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 135L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 136L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 143L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 144L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 145L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 146L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 147L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 148L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 149L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 150L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 151L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 2L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 2L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 1L
                               ) in
                             lr0item, lr1item
                           );
@@ -2365,9 +1879,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -2430,9 +1941,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -2497,9 +2005,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -2562,9 +2067,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -2629,9 +2131,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -2694,9 +2193,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -2761,9 +2257,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -2826,9 +2319,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -2893,9 +2383,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -2958,9 +2445,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3025,9 +2509,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -3090,9 +2571,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3157,9 +2635,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -3222,9 +2697,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3289,9 +2761,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -3354,9 +2823,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3421,9 +2887,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -3486,9 +2949,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3553,9 +3013,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -3618,9 +3075,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3685,9 +3139,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -3750,9 +3201,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3817,9 +3265,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -3882,9 +3327,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -3949,9 +3391,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4014,9 +3453,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -4081,9 +3517,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4146,9 +3579,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -4213,9 +3643,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4278,9 +3705,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -4345,9 +3769,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4410,9 +3831,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -4477,9 +3895,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4542,9 +3957,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -4609,9 +4021,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4674,9 +4083,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -4741,9 +4147,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4806,9 +4209,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -4873,9 +4273,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -4932,297 +4329,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x200_0000_0004n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 119L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 120L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 121L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 122L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 123L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 124L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 125L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 127L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 129L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 130L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 131L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 133L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 135L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 136L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 143L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 144L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 145L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 146L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 147L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 148L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 149L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 150L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 151L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x200_0000_0004n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x200_0000_0004n")
                               ) in
@@ -5297,17 +4403,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -5334,9 +4429,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -5360,9 +4452,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -5388,9 +4477,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -5414,9 +4500,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -5443,9 +4526,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -5465,297 +4545,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 154L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.singleton 1L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 119L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 120L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 121L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 122L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 123L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 124L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 125L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 127L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 129L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 130L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 131L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 133L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 135L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 136L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 143L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 144L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 145L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 146L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 147L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 148L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 149L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 150L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 151L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 41L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 41L
                               ) in
                             lr0item, lr1item
                           );
@@ -5827,9 +4616,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -5849,297 +4635,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 156L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.singleton 1L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 116L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 117L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 118L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 119L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 120L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 121L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 122L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 123L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 124L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 125L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 126L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 127L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 128L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 129L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 130L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 131L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 132L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 133L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 134L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 135L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 136L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 137L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 138L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 139L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 140L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 141L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 142L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 143L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 144L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 145L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 146L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 147L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 148L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 149L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 150L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 151L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 152L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 41L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 153L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 41L
                               ) in
                             lr0item, lr1item
                           );
@@ -6211,9 +4706,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6233,108 +4725,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 115L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x3ff_ffff_fff8n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 16L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 17L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 18L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 19L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 20L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 30L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 105L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 13L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 13L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 111L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 29L
                               ) in
                             lr0item, lr1item
                           );
@@ -6378,9 +4768,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6404,9 +4791,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -6432,9 +4816,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6458,9 +4839,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -6486,9 +4864,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6512,9 +4887,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -6550,9 +4922,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6586,9 +4955,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -6624,9 +4990,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6656,94 +5019,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 20L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 13L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2840_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -6786,9 +5061,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6813,9 +5085,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -6849,9 +5118,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6876,9 +5142,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6897,24 +5160,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 114L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 29L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 29L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 113L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.singleton 29L
                               ) in
@@ -6949,9 +5194,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -6975,9 +5217,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -7003,9 +5242,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7025,24 +5261,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 30L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 28L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2802_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 29L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2802_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -7077,9 +5295,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -7143,9 +5358,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7207,9 +5419,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -7273,9 +5482,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7337,9 +5543,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -7403,9 +5606,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7467,9 +5667,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -7533,9 +5730,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7597,9 +5791,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -7663,9 +5854,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7727,9 +5915,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -7793,24 +5978,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2840_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 12L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2840_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7833,24 +6000,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 20L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 14L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 15L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -7893,31 +6042,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 23L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 16L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 27L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 16L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -7942,101 +6066,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.singleton 29L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 16L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 17L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 18L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 19L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 20L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 30L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 105L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 13L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 106L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 13L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 109L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 110L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 111L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -8079,9 +6108,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8105,9 +6131,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -8171,9 +6194,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8196,31 +6216,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 30L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 23L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 24L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 25L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -8251,87 +6246,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2840_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2940_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -8373,9 +6287,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8395,94 +6306,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 14L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2900_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 13L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -8527,9 +6350,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8548,87 +6368,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2831_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2831_0000n")
                               ) in
@@ -8672,24 +6411,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 21L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 22L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8727,24 +6448,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 16L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 27L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 16L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8772,9 +6475,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8792,24 +6492,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 29L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 112L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 29L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 113L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.singleton 29L
                               ) in
@@ -8844,9 +6526,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8866,24 +6545,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 30L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 27L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -8912,24 +6573,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2840_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2840_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 12L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2840_0000n")
                               ) in
@@ -8966,9 +6609,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -8993,9 +6633,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -9025,9 +6662,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -9045,87 +6679,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 23L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2801_0800n")
                               ) in
@@ -9169,9 +6722,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -9189,206 +6739,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6820_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -9445,9 +6795,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -9471,9 +6818,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -9500,9 +6844,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -9522,24 +6863,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 21L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 21L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 22L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x1ffcn")
                               ) in
@@ -9584,9 +6907,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -9607,220 +6927,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:5L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 20L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 20L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -9886,24 +6992,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 27L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -9941,9 +7029,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -9989,9 +7074,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -10015,9 +7097,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -10057,192 +7136,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -10295,164 +7188,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -10490,122 +7225,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -10649,9 +7268,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -10690,9 +7306,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -10716,9 +7329,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -10756,192 +7366,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 27L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2830_0000n")
                               ) in
@@ -10999,9 +7423,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11029,9 +7450,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11052,24 +7470,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2810_0000n")
                               ) in
@@ -11106,9 +7506,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11133,9 +7530,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -11171,9 +7565,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11191,24 +7582,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -11244,9 +7617,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11271,9 +7641,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -11302,24 +7669,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11340,24 +7689,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2810_0000n")
                               ) in
@@ -11394,164 +7725,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
                               ) in
@@ -11602,9 +7775,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11628,164 +7798,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11833,122 +7845,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -11986,9 +7882,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -12032,9 +7925,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -12073,9 +7963,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -12108,9 +7995,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -12152,9 +8036,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -12180,24 +8061,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -12218,24 +8081,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
                               ) in
@@ -12284,24 +8129,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -12330,87 +8157,6 @@ include struct
                           );
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2830_0000n")
                               ) in
@@ -12455,9 +8201,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -12478,192 +8221,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 27L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2830_0000n")
                               ) in
@@ -12721,9 +8278,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -12746,192 +8300,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -12984,9 +8352,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -13006,241 +8371,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7dff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2820_0000n")
                               ) in
@@ -13306,213 +8436,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_4030_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x30_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 20L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 20L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -13563,9 +8486,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -13590,9 +8510,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -13637,9 +8554,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -13683,9 +8597,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -13725,9 +8636,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -13771,9 +8679,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -13795,24 +8700,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
                               ) in
                             lr0item, lr1item
                           );
@@ -13859,24 +8746,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -13898,164 +8767,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
                               ) in
@@ -14105,87 +8816,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -14222,9 +8852,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -14244,164 +8871,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -14456,122 +8925,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -14611,9 +8964,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -14638,9 +8988,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -14664,9 +9011,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -14711,9 +9055,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -14733,164 +9074,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -14933,122 +9116,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -15099,9 +9166,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15126,9 +9190,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15149,24 +9210,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 98L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2810_0000n")
                               ) in
@@ -15202,9 +9245,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -15268,9 +9308,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15332,9 +9369,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -15398,9 +9432,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15462,9 +9493,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -15528,9 +9556,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15592,9 +9617,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -15658,9 +9680,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15722,9 +9741,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -15788,9 +9804,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15852,9 +9865,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -15918,9 +9928,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -15983,248 +9990,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 36L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 29L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_7fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -16279,262 +10044,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 36L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 31L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 37L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 31L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 38L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 31L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_dfff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8a20_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -16601,262 +10110,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 36L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 33L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 37L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 33L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 38L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 33L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x157_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2_0a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2_0a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -16913,262 +10166,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 36L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 35L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 37L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 35L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 38L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 35L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x15d_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8_0a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8_0a20_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -17235,262 +10232,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 36L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 37L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 37L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 37L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 38L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 37L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x175_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x20_0a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x20_0a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -17547,262 +10288,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 36L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 37L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 38L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1d5_5fff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0a20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0a20_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -17869,9 +10354,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -17934,9 +10416,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -17992,248 +10471,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
                               ) in
@@ -18308,248 +10545,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -18617,9 +10612,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -18639,24 +10631,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 103L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -18692,9 +10666,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -18723,9 +10694,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -18745,164 +10713,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -18945,122 +10755,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:3L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0280_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -19118,9 +10812,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19149,9 +10840,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19173,24 +10861,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
                               ) in
@@ -19239,9 +10909,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19269,9 +10936,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19297,9 +10961,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19324,9 +10985,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -19366,9 +11024,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19390,24 +11045,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
                               ) in
                             lr0item, lr1item
                           );
@@ -19440,9 +11077,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19469,9 +11103,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19489,45 +11120,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 36L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 35L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
                               ) in
@@ -19570,9 +11162,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19601,9 +11190,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19627,9 +11213,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -19655,9 +11238,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19681,9 +11261,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -19709,9 +11286,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -19729,248 +11303,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
                               ) in
@@ -20045,248 +11377,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 61L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -20354,9 +11444,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -20388,9 +11475,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -20424,9 +11508,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -20451,9 +11532,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -20497,9 +11575,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -20521,24 +11596,6 @@ include struct
                             let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:4L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 70L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
                               ) in
                             lr0item, lr1item
                           );
@@ -20570,9 +11627,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -20617,24 +11671,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -20662,9 +11698,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -20689,9 +11722,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -20715,9 +11745,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -20781,241 +11808,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 0L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 1L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 3L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 4L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 5L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 6L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 7L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 8L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 10L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 40L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 41L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 42L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 43L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 44L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 45L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 46L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 47L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 48L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 49L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 50L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 51L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 52L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 53L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 54L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 55L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 56L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 57L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 58L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21074,9 +11866,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21105,9 +11894,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -21171,9 +11957,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21235,9 +12018,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -21301,9 +12081,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21365,9 +12142,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -21431,9 +12205,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21465,9 +12236,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -21501,9 +12269,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21532,9 +12297,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21558,9 +12320,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -21605,24 +12364,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21650,9 +12391,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21670,45 +12408,6 @@ include struct
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 31L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 32L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 33L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 35L prods) ~dot:0L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
                               ) in
@@ -21751,9 +12450,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.empty
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21781,9 +12477,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -21828,24 +12521,6 @@ include struct
                           );
                       ]
                   )
-                  ~added:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:0L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
               )
               ~actions:(
                 Map.of_alist (module Uns) [
@@ -21872,9 +12547,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
@@ -21904,9 +12576,6 @@ include struct
                             lr0item, lr1item
                           );
                       ]
-                  )
-                  ~added:(
-                    Lr1Itemset.empty
                   )
               )
               ~actions:(
