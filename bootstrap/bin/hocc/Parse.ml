@@ -1578,6 +1578,7 @@ include struct
                 type t = {
                     index: uns;
                     kernel: Lr1Itemset.t;
+                    added: Lr1Itemset.t lazy_t;
                   }
 
                 let hash_fold {index; _} state =
@@ -1586,7 +1587,7 @@ include struct
                 let cmp {index=i0; _} {index=i1; _} =
                     Uns.cmp i0 i1
 
-                let pp {index; kernel} formatter =
+                let pp {index; kernel; _} formatter =
                     formatter
                       |> Fmt.fmt "{index=" |> Uns.pp index
                       |> Fmt.fmt "; kernel=" |> Lr1Itemset.pp kernel
@@ -1595,10 +1596,7 @@ include struct
             include T
             include Identifiable.Make(T)
 
-            let init ~index ~kernel =
-                {index; kernel}
-
-            let added_impl symbols {kernel; _} =
+            let added_impl symbols kernel =
                 let rec f symbols lr1itemset added = begin
                     match Ordmap.choose lr1itemset with
                       | None -> added
@@ -1643,9 +1641,11 @@ include struct
                   end in
                 f symbols kernel Lr1Itemset.empty
 
-            let added t =
-                lazy (added_impl symbols t)
-                  |> Lazy.force
+            let added {added; _} =
+                Lazy.force added
+
+            let init ~index ~kernel =
+                {index; kernel; added=lazy (added_impl symbols kernel)}
           end
 
         module Action = struct
