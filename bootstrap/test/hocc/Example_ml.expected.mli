@@ -115,6 +115,7 @@ include sig
             type t = {
                 index: uns; (* Index of corresponding `State.t` in `states` array. *)
                 kernel: Lr1Itemset.t;
+                added: Lr1Itemset.t lazy_t;
               }
 
             include IdentifiableIntf.S with type t := t

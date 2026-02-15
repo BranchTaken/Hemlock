@@ -114,6 +114,7 @@ include [:]{
             type t: t = {
                 index: uns # Index of corresponding `State.t` in `states` array.
                 kernel: Lr1Itemset.t
+                added: lazy_t Lr1Itemset.t
               }
 
             include IdentifiableIntf.S with type t := t

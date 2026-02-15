@@ -447,6 +447,7 @@ include [:]{
                 type t: t = {
                     index: uns
                     kernel: Lr1Itemset.t
+                    added: lazy_t Lr1Itemset.t
                   }
 
                 hash_fold {index; _} state =
@@ -465,10 +466,7 @@ include [:]{
             include T
             include Identifiable.Make(T)
 
-            init ~index ~kernel =
-                {index; kernel}
-
-            added_impl symbols {kernel; _} =
+            added_impl symbols kernel =
                 let rec f symbols lr1itemset added =
                     match Ordmap.choose lr1itemset with
                       | None -> added
@@ -506,9 +504,11 @@ include [:]{
                                 f symbols lr1itemset' added'
                 f symbols kernel Lr1Itemset.empty
 
-            let added t =
-                lazy (added_impl symbols t)
-                  |> Lazy.force
+            let added {added; _} =
+                Lazy.force added
+
+            init ~index ~kernel =
+                {index; kernel; added=lazy (added_impl symbols kernel)}
           }
 
         Action = {
