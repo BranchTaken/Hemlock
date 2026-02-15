@@ -1,0 +1,75 @@
+open Basis
+open! Basis.Rudiments
+
+include hocc
+    left mul
+    token STAR "*" prec mul
+    token SLASH "/" prec mul
+    nonterm MulOp of Token.t ::=
+      | "*" -> STAR
+      | "/" -> SLASH
+
+    left add < mul
+    token PLUS "+" prec add
+    token MINUS "-" prec add
+    nonterm AddOp of Token.t ::=
+      | "+" -> PLUS
+      | "-" -> MINUS
+
+    token INT of Zint.t
+    nonterm Expr of Zint.t ::=
+      | e0:Expr op:MulOp e1:Expr prec mul ->
+        match op with
+          | STAR -> Zint.(e0 * e1)
+          | SLASH -> Zint.(e0 / e1)
+          | _ -> not_reached ()
+      | e0:Expr op:AddOp e1:Expr prec add ->
+        match op with
+          | PLUS -> Zint.(e0 + e1)
+          | MINUS -> Zint.(e0 - e1)
+          | _ -> not_reached ()
+      | x:INT -> x
+
+    token EOI
+    start Answer of Zint.t ::=
+      | e:Expr EOI -> e
+
+let introspect () =
+    let pp_index_added (index, added) formatter = begin
+        formatter
+          |> Fmt.fmt "("
+          |> Uns.pp index
+          |> Fmt.fmt ", "
+          |> Spec.Lr1Itemset.pp added
+          |> Fmt.fmt ")"
+      end in
+    File.Fmt.stdout
+      |> Fmt.fmt "Example_introspect grammar\n"
+      |> Fmt.fmt "\n"
+      |> Fmt.fmt "Algorithm: " |> Spec.Algorithm.pp Spec.algorithm
+      |> Fmt.fmt "\n"
+      |> Fmt.fmt "Precedences: "
+      |> Array.fmt ~alt:true Spec.PrecSet.pp Spec.prec_sets
+      |> Fmt.fmt "\n"
+      |> Fmt.fmt "Productions: "
+      |> Array.fmt ~alt:true Spec.Prod.pp Spec.prods
+      |> Fmt.fmt "\n"
+      |> Fmt.fmt "Symbols: "
+      |> Array.fmt ~alt:true Spec.Symbol.pp Spec.symbols
+      |> Fmt.fmt "\n"
+      |> Fmt.fmt "States: "
+      |> Array.fmt ~alt:true Spec.State.pp Spec.states
+      |> Fmt.fmt "\n"
+      |> Fmt.fmt "added: "
+      |> Array.fmt ~alt:true pp_index_added (Array.map
+      ~f:(fun Spec.State.{lr1ItemsetClosure; _} ->
+        let Spec.Lr1ItemsetClosure.{index; added; _} = lr1ItemsetClosure in
+        (index, added)
+      ) Spec.states)
+      |> Fmt.fmt "\n"
+      |> ignore
+
+let main () =
+    introspect ()
+
+let _ = main ()

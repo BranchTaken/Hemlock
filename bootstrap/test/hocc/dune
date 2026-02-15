@@ -125,6 +125,27 @@
 
 (rule
  (deps
+  (glob_files Example_introspect.hmh*)
+  %{bin:hocc})
+ (targets Example_introspect.out.txt Example_introspect.mli Example_introspect.ml)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Example_introspect.out (run ./hocc_test %{bin:hocc} Example_introspect -txt -ml)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Example_introspect.expected.txt Example_introspect.out.txt)
+   (diff Example_introspect.expected.mli Example_introspect.mli)
+   (diff Example_introspect.expected.ml Example_introspect.ml))))
+(tests
+ (names
+  Example_introspect)
+ (libraries Basis))
+
+(rule
+ (deps
   (glob_files Gawk.hmh*)
   %{bin:hocc})
  (action
