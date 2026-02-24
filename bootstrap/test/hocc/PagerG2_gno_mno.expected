@@ -1,0 +1,10 @@
+hocc: Parsing "./PagerG2_gno_mno.hmh"
+hocc: Generating PGM(1) specification
+hocc: 0 precedences, 10 tokens, 8 non-terminals (1 start), 14 productions
+hocc: LR(1) item set compatibility: weak
+hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++^.+++++++..+^.......++^.++++...
+hocc: Generating 27 LR(1) states
+hocc: 0 unresolvable conflicts in 0 states
+hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Generating text report
+hocc: Writing "./hocc/PagerG2_gno_mno.txt"

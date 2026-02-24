@@ -45,6 +45,8 @@ Parameters:
     automatons, provided there were no precedence-resolved ambiguities in the grammar specification.
   + `lalr1`: LALR(1) automaton [^deremer1969].
 - `-r[esolve] (yes|no)`: Control whether conflict resolution is enabled. Defaults to `yes`.
+- `-g[c] (yes|no)`: Control whether unreachable state garbage collection is enabled. Defaults to
+  `yes`.
 - `-[re]m[erge] (yes|no)`: Control whether remerging equivalent split states is enabled. Defaults to
   `yes`.
 - `-hm` | `-hemlock`: Generate a Hemlock-based parser implementation and write it to

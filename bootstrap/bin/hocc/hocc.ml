@@ -42,7 +42,7 @@ let _ =
   let io = Io.init conf in
   let io, hmhi_opt = parse_hmhi io in
   let io, hmh = parse_hmh io in
-  let io, spec = Spec.init (Conf.algorithm conf) ~resolve:(Conf.resolve conf)
+  let io, spec = Spec.init (Conf.algorithm conf) ~resolve:(Conf.resolve conf) ~gc:(Conf.gc conf)
     ~remerge:(Conf.remerge conf) io hmh in
   let io = match Conf.text conf with
     | false -> io

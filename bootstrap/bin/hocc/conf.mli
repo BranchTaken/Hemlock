@@ -34,6 +34,9 @@ val algorithm: t -> algorithm
 val resolve: t -> bool
 (** [resolve t] returns true if conflict resolution is enabled. *)
 
+val gc: t -> bool
+(** [gc t] returns true if unreachable state garbage collection is enabled. *)
+
 val remerge: t -> bool
 (** [remerge t] returns true if remerging of equivalent split states is enabled. *)
 
