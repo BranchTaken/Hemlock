@@ -21,6 +21,7 @@ type t = {
   hocc: bool;
   algorithm: algorithm;
   resolve: bool;
+  gc: bool;
   remerge: bool;
   hemlock: bool;
   ocaml: bool;
@@ -29,14 +30,15 @@ type t = {
   dstdir_opt: Path.t option;
 }
 
-let pp {verbose; text; hocc; algorithm; resolve; remerge; hemlock; ocaml; srcdir_opt; module_opt;
-  dstdir_opt} formatter =
+let pp {verbose; text; hocc; algorithm; resolve; gc; remerge; hemlock; ocaml; srcdir_opt;
+  module_opt; dstdir_opt} formatter =
   formatter
   |> Fmt.fmt "{verbose=" |> Bool.pp verbose
   |> Fmt.fmt "; text=" |> Bool.pp text
   |> Fmt.fmt "; hocc=" |> Bool.pp hocc
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
   |> Fmt.fmt "; resolve=" |> Bool.pp resolve
+  |> Fmt.fmt "; gc=" |> Bool.pp gc
   |> Fmt.fmt "; remerge=" |> Bool.pp remerge
   |> Fmt.fmt "; hemlock=" |> Bool.pp hemlock
   |> Fmt.fmt "; ocaml=" |> Bool.pp ocaml
@@ -50,6 +52,7 @@ let default = {
   text=false;
   hocc=false;
   algorithm=Lr1;
+  gc=true;
   resolve=true;
   remerge=true;
   hemlock=false;
@@ -88,6 +91,8 @@ Parameters:
                         - lalr1: LALR(1) automaton.
   -r[esolve] (yes|no) : Control whether conflict resolution is enabled. Defaults
                         to yes.
+  -g[c] (yes|no)      : Control whether unreachable state garbage collection is
+                        enabled. Defaults to yes.
 -[re]m[erge] (yes|no) : Control whether remerging equivalent split states is
                         enabled. Defaults to yes.
        -hm | -hemlock : Generate a Hemlock-based parser implementation and write
@@ -189,6 +194,18 @@ let of_argv argv =
             in
             f {t with resolve} argv (i + 2L)
           end
+        | "-gc" | "-g" -> begin
+            let gc = match Bytes.to_string_replace (arg_arg argv i) with
+              | "yes" -> true
+              | "no" -> false
+              | s -> begin
+                  File.Fmt.stderr |> Fmt.fmt "hocc: Invalid gc parameter: "
+                  |> Fmt.fmt s |> Fmt.fmt "\n" |> ignore;
+                  usage true
+                end
+            in
+            f {t with gc} argv (i + 2L)
+          end
         | "-remerge" | "-m" -> begin
             let remerge = match Bytes.to_string_replace (arg_arg argv i) with
               | "yes" -> true
@@ -267,6 +284,9 @@ let algorithm {algorithm; _} =
 
 let resolve {resolve; _} =
   resolve
+
+let gc {gc; _} =
+  gc
 
 let remerge {remerge; _} =
   remerge

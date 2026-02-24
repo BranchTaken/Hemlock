@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Usage: hocc_test <hocc> <src> [-algorithm lr1|ielr1|pgm1|lalr1] [-resolve yes|no] [<parameter>]*
+# Usage: hocc_test <hocc> <src> [-algorithm lr1|ielr1|pgm1|lalr1] [-resolve yes|no] [-gc yes|no]
+#        [-remerge yes|no] [<parameter>]*
 
 hocc="$1"
 src="$2"
@@ -28,6 +29,26 @@ case "$1" in
         resolve="yes"
 esac
 
+case "$1" in
+    '-gc')
+        gc="$2"
+        mangled_src="${mangled_src}_g${gc}"
+        shift 2
+        ;;
+    *)
+        gc="yes"
+esac
+
+case "$1" in
+    '-remerge')
+        remerge="$2"
+        mangled_src="${mangled_src}_m${remerge}"
+        shift 2
+        ;;
+    *)
+        remerge="yes"
+esac
+
 if [ "x${mangled_src}" != "x${src}" ] ; then
     # Mangle the source path so that generated files from parallel test runs don't clobber each
     # other.
@@ -35,7 +56,7 @@ if [ "x${mangled_src}" != "x${src}" ] ; then
     src="${mangled_src}"
 fi
 
-"${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" $@
+"${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" -m "${remerge}" $@
 
 # Usage: mv_report <suffix>
 #

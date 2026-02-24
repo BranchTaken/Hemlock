@@ -1,4 +1,4 @@
-hocc: Parsing "./Gpic.hmh"
+hocc: Parsing "./Gpic_mno.hmh"
 hocc: Generating IELR(1) specification
 hocc: 25 precedences, 140 tokens, 46 non-terminals (1 start), 248 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite

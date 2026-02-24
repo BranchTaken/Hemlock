@@ -581,6 +581,22 @@
  (deps
   (glob_files PagerG2.hmh*)
   %{bin:hocc})
+ (targets PagerG2_gno_mno.out.txt PagerG2_gno_mno.out.hmh)
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to PagerG2_gno_mno.out (run ./hocc_test %{bin:hocc} PagerG2 -gc no -remerge no -v -a pgm1 -txt)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff PagerG2_gno_mno.expected PagerG2_gno_mno.out)
+   (diff PagerG2_gno_mno.expected.txt PagerG2_gno_mno.out.txt))))
+
+(rule
+ (deps
+  (glob_files PagerG2.hmh*)
+  %{bin:hocc})
  (targets PagerG2_aielr1.out.txt PagerG2_aielr1.out.hmh)
  (action
   (with-accepted-exit-codes
