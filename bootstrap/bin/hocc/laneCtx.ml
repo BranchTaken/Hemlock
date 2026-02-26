@@ -347,7 +347,6 @@ let traces_of_ipred_state state leftmost_cache {traces=isucc_traces; _} =
         end
     ) isucc_traces
 
-
 let of_ipred_state state leftmost_cache ({state=isucc; _} as t) =
   let traces, leftmost_cache = traces_of_ipred_state state leftmost_cache t in
   let t = {
