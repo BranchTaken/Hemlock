@@ -940,6 +940,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
         in
         let io, lalr1_isocores, lalr1_states =
           init_inner Conf.Lalr1 ~resolve:false io precs symbols prods callbacks in
+        let io = log_conflicts io ~resolve:false lalr1_states in
         Ielr1.gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr1_isocores lalr1_states
       end
     | _ -> begin
@@ -979,253 +980,7 @@ and states_init io ~resolve symbols prods isocores ~gotonub_of_statenub_goto =
       ) isocores
     |> Ordset.to_array
   in
-  let conflicts, conflict_states =
-    Array.fold ~init:(0L, 0L) ~f:(fun (conflicts, conflict_states) state ->
-      match State.conflicts ~filter_pseudo_end:false state with
-      | 0L -> conflicts, conflict_states
-      | x -> conflicts + x, succ conflict_states
-    ) states
-  in
-  let io =
-    io.log
-    |> Fmt.fmt "hocc: " |> Uns.pp conflicts
-    |> (fun formatter ->
-      match resolve with
-      | false -> formatter
-      | true -> formatter |> Fmt.fmt " unresolvable"
-    )
-    |> Fmt.fmt " conflict"
-    |> (fun formatter -> match conflicts with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-    |> Fmt.fmt " in " |> Uns.pp conflict_states
-    |> Fmt.fmt " state"
-    |> (fun formatter -> match conflict_states with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-    |> (fun formatter -> match conflicts = 0L with
-      | true -> formatter
-      | false -> begin
-          let pseudo_end_conflicts =
-            match Array.reduce ~f:Uns.(+)
-              (Array.map ~f:(fun state -> Bool.to_uns (State.has_pseudo_end_conflict state)) states)
-            with
-            | None -> 0L
-            | Some conflicts -> conflicts
-          in
-          let sr_conflicts =
-            match Array.reduce ~f:Uns.(+)
-              (Array.map ~f:(fun state -> State.sr_conflicts state) states) with
-            | None -> 0L
-            | Some conflicts -> conflicts
-          in
-          let rr_conflicts =
-            match Array.reduce ~f:Uns.(+)
-              (Array.map ~f:(fun state -> State.rr_conflicts state) states) with
-            | None -> 0L
-            | Some conflicts -> conflicts
-          in
-          formatter
-          |> Fmt.fmt " (" |> Uns.pp pseudo_end_conflicts |> Fmt.fmt " ⊥, "
-          |> Uns.pp sr_conflicts |> Fmt.fmt " shift-reduce, "
-          |> Uns.pp rr_conflicts |> Fmt.fmt " reduce-reduce)"
-          |> (fun formatter ->
-            match resolve with
-            | true -> formatter
-            | false -> formatter |> Fmt.fmt " (conflict resolution disabled)"
-          )
-        end
-    )
-    |> Fmt.fmt "\n"
-    |> Io.with_log io
-  in
   io, states
-
-and log_unused io precs symbols prods states =
-  let rec mark_prec ~precs_used prec = begin
-    match prec with
-    | None -> precs_used
-    | Some prec -> Set.insert (Prec.name prec) precs_used
-  end
-  and mark_symbol ~precs_used ~tokens_used ~nonterms_used
-      (Symbol.{index; prec; _} as symbol) = begin
-    let precs_used = mark_prec ~precs_used prec in
-    let tokens_used, nonterms_used = match Symbol.is_token symbol with
-      | true -> Set.insert index tokens_used, nonterms_used
-      | false -> tokens_used, Set.insert index nonterms_used
-    in
-    precs_used, tokens_used, nonterms_used
-  end
-  and mark_prod symbols ~precs_used ~tokens_used ~nonterms_used ~prods_used prod = begin
-    let precs_used = mark_prec ~precs_used Prod.(prod.prec) in
-    let precs_used, tokens_used, nonterms_used = mark_symbol ~precs_used ~tokens_used ~nonterms_used
-        (Symbols.symbol_of_symbol_index Prod.(prod.lhs_index) symbols) in
-    let precs_used, tokens_used, nonterms_used = Array.fold
-        ~init:(precs_used, tokens_used, nonterms_used)
-        ~f:(fun (precs_used, tokens_used, nonterms_used) rhs_index ->
-          mark_symbol ~precs_used ~tokens_used ~nonterms_used
-            (Symbols.symbol_of_symbol_index rhs_index symbols)
-        ) prod.rhs_indexes
-    in
-    let prods_used = Set.insert Prod.(prod.index) prods_used in
-    precs_used, tokens_used, nonterms_used, prods_used
-  end
-  and mark_state symbols prods ~precs_used ~tokens_used ~nonterms_used ~prods_used state = begin
-    Ordmap.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
-      ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) (symbol_index, actions) ->
-        let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
-        let precs_used, tokens_used, nonterms_used =
-          mark_symbol ~precs_used ~tokens_used ~nonterms_used symbol in
-        Ordset.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
-          ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) action ->
-            let open State.Action in
-            match action with
-            | ShiftPrefix _
-            | ShiftAccept _ -> precs_used, tokens_used, nonterms_used, prods_used
-            | Reduce prod_index -> begin
-                let prod = Prods.prod_of_prod_index prod_index prods in
-                mark_prod symbols ~precs_used ~tokens_used ~nonterms_used ~prods_used prod
-              end
-          ) actions
-      ) State.(state.actions)
-  end
-  and mark_states symbols prods states = begin
-    let precs_used = Set.empty (module String) in
-    let tokens_used = Set.singleton (module Symbol.Index) Symbol.epsilon.index in
-    let nonterms_used = Set.empty (module Symbol.Index) in
-    let prods_used = Set.empty (module Prod.Index) in
-    Array.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
-      ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) state ->
-        mark_state symbols prods ~precs_used ~tokens_used ~nonterms_used ~prods_used state
-      ) states
-  end in
-  let io =
-    io.log |> Fmt.fmt "hocc: Searching for unused precedences/tokens/non-terminals/productions\n"
-    |> Io.with_log io
-  in
-  let precs_used, tokens_used, nonterms_used, prods_used = mark_states symbols prods states in
-  let precs_nunused = (Precs.length precs) - (Set.length precs_used) in
-  let tokens_nunused = (Symbols.tokens_length symbols) - (Set.length tokens_used) in
-  let nonterms_nunused = (Symbols.nonterms_length symbols) - (Set.length nonterms_used) in
-  let prods_nunused = (Prods.length prods) - (Set.length prods_used) in
-  let io = match precs_nunused with
-    | 0L -> io
-    | _ -> begin
-        io.log
-        |> Fmt.fmt "hocc: " |> Uns.pp precs_nunused |> Fmt.fmt " unused precedence"
-        |> (fun formatter ->
-          match precs_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
-        )
-        |> Fmt.fmt ":\n"
-        |> (fun formatter ->
-          Precs.fold_prec_sets ~init:formatter ~f:(fun formatter (PrecSet.{names; _} as prec_set) ->
-            Array.fold ~init:formatter ~f:(fun formatter name ->
-              match Set.mem name precs_used with
-              | true -> formatter
-              | false -> begin
-                  let prec = Prec.init ~name ~prec_set in
-                  formatter |> Fmt.fmt "hocc:" |> Prec.src_fmt prec
-                end
-            ) names
-          ) precs
-        )
-        |> Io.with_log io
-      end
-  in
-  let io = match tokens_nunused with
-    | 0L -> io
-    | _ -> begin
-        io.log
-        |> Fmt.fmt "hocc: " |> Uns.pp tokens_nunused |> Fmt.fmt " unused token"
-        |> (fun formatter ->
-          match tokens_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
-        )
-        |> Fmt.fmt ":\n"
-        |> (fun formatter ->
-          Symbols.tokens_fold ~init:formatter ~f:(fun formatter token ->
-            match Set.mem Symbol.(token.index) tokens_used with
-            | true -> formatter
-            | false -> formatter |> Fmt.fmt "hocc:" |> Symbols.src_fmt token symbols
-          ) symbols
-        )
-        |> Io.with_log io
-      end
-  in
-  let io = match nonterms_nunused with
-    | 0L -> io
-    | _ -> begin
-        io.log
-        |> Fmt.fmt "hocc: " |> Uns.pp nonterms_nunused |> Fmt.fmt " unused non-terminal"
-        |> (fun formatter ->
-          match nonterms_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
-        )
-        |> Fmt.fmt ":\n"
-        |> (fun formatter ->
-          Symbols.nonterms_fold ~init:formatter ~f:(fun formatter Symbol.{index; name; prec; _} ->
-            match Set.mem index nonterms_used with
-            | true -> formatter
-            | false -> begin
-                formatter
-                |> Fmt.fmt "hocc:    nonterm "
-                |> Fmt.fmt name
-                |> (fun formatter ->
-                  match prec with
-                  | None -> formatter
-                  | Some prec ->
-                    formatter |> Fmt.fmt " " |> Prec.pp_hr prec
-                )
-                |> Fmt.fmt "\n"
-              end
-          ) symbols
-        )
-        |> Io.with_log io
-      end
-  in
-  let io = match prods_nunused with
-    | 0L -> io
-    | _ -> begin
-        io.log
-        |> Fmt.fmt "hocc: " |> Uns.pp prods_nunused |> Fmt.fmt " unused production"
-        |> (fun formatter ->
-          match prods_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
-        )
-        |> Fmt.fmt ":\n"
-        |> (fun formatter ->
-          Prods.fold ~init:formatter
-            ~f:(fun formatter Prod.{index; lhs_index; rhs_indexes; prec; _} ->
-              match Set.mem index prods_used with
-              | true -> formatter
-              | false -> begin
-                  let lhs_symbol = Symbols.symbol_of_symbol_index lhs_index symbols in
-                  formatter
-                  |> Fmt.fmt "hocc:    "
-                  |> Fmt.fmt lhs_symbol.name
-                  |> Fmt.fmt " ::="
-                  |> (fun formatter ->
-                    match Array.length rhs_indexes with
-                    | 0L -> formatter |> Fmt.fmt " epsilon"
-                    | _ -> begin
-                        Array.fold ~init:formatter ~f:(fun formatter rhs_index ->
-                          let rhs_symbol = Symbols.symbol_of_symbol_index rhs_index symbols in
-                          formatter
-                          |> Fmt.fmt " "
-                          |> (fun formatter ->
-                            match rhs_symbol.alias with
-                            | None -> formatter |> Fmt.fmt rhs_symbol.name
-                            | Some alias -> formatter |> String.pp alias
-                          )
-                        ) rhs_indexes
-                      end
-                  )
-                  |> (fun formatter ->
-                    match prec with
-                    | None -> formatter
-                    | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
-                  )
-                  |> Fmt.fmt "\n"
-                end
-            ) prods
-        )
-        |> Io.with_log io
-      end
-  in
-  io
 
 and hmh_extract io hmh =
   let io, precs = precs_init io hmh in
@@ -1443,6 +1198,255 @@ and remerge_states io symbols isocores states =
       io, reindexed_isocores, reindexed_states
     end
 
+and log_conflicts io ~resolve states =
+  let conflicts, conflict_states =
+    Array.fold ~init:(0L, 0L) ~f:(fun (conflicts, conflict_states) state ->
+      match State.conflicts ~filter_pseudo_end:false state with
+      | 0L -> conflicts, conflict_states
+      | x -> conflicts + x, succ conflict_states
+    ) states
+  in
+  let io =
+    io.log
+    |> Fmt.fmt "hocc: " |> Uns.pp conflicts
+    |> (fun formatter ->
+      match resolve with
+      | false -> formatter
+      | true -> formatter |> Fmt.fmt " unresolvable"
+    )
+    |> Fmt.fmt " conflict"
+    |> (fun formatter -> match conflicts with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+    |> Fmt.fmt " in " |> Uns.pp conflict_states
+    |> Fmt.fmt " state"
+    |> (fun formatter -> match conflict_states with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+    |> (fun formatter -> match conflicts = 0L with
+      | true -> formatter
+      | false -> begin
+          let pseudo_end_conflicts =
+            match Array.reduce ~f:Uns.(+)
+              (Array.map ~f:(fun state -> Bool.to_uns (State.has_pseudo_end_conflict state)) states)
+            with
+            | None -> 0L
+            | Some conflicts -> conflicts
+          in
+          let sr_conflicts =
+            match Array.reduce ~f:Uns.(+)
+              (Array.map ~f:(fun state -> State.sr_conflicts state) states) with
+            | None -> 0L
+            | Some conflicts -> conflicts
+          in
+          let rr_conflicts =
+            match Array.reduce ~f:Uns.(+)
+              (Array.map ~f:(fun state -> State.rr_conflicts state) states) with
+            | None -> 0L
+            | Some conflicts -> conflicts
+          in
+          formatter
+          |> Fmt.fmt " (" |> Uns.pp pseudo_end_conflicts |> Fmt.fmt " ⊥, "
+          |> Uns.pp sr_conflicts |> Fmt.fmt " shift-reduce, "
+          |> Uns.pp rr_conflicts |> Fmt.fmt " reduce-reduce)"
+          |> (fun formatter ->
+            match resolve with
+            | true -> formatter
+            | false -> formatter |> Fmt.fmt " (conflict resolution disabled)"
+          )
+        end
+    )
+    |> Fmt.fmt "\n"
+    |> Io.with_log io
+  in
+  io
+
+and log_unused io precs symbols prods states =
+  let rec mark_prec ~precs_used prec = begin
+    match prec with
+    | None -> precs_used
+    | Some prec -> Set.insert (Prec.name prec) precs_used
+  end
+  and mark_symbol ~precs_used ~tokens_used ~nonterms_used
+      (Symbol.{index; prec; _} as symbol) = begin
+    let precs_used = mark_prec ~precs_used prec in
+    let tokens_used, nonterms_used = match Symbol.is_token symbol with
+      | true -> Set.insert index tokens_used, nonterms_used
+      | false -> tokens_used, Set.insert index nonterms_used
+    in
+    precs_used, tokens_used, nonterms_used
+  end
+  and mark_prod symbols ~precs_used ~tokens_used ~nonterms_used ~prods_used prod = begin
+    let precs_used = mark_prec ~precs_used Prod.(prod.prec) in
+    let precs_used, tokens_used, nonterms_used = mark_symbol ~precs_used ~tokens_used ~nonterms_used
+        (Symbols.symbol_of_symbol_index Prod.(prod.lhs_index) symbols) in
+    let precs_used, tokens_used, nonterms_used = Array.fold
+        ~init:(precs_used, tokens_used, nonterms_used)
+        ~f:(fun (precs_used, tokens_used, nonterms_used) rhs_index ->
+          mark_symbol ~precs_used ~tokens_used ~nonterms_used
+            (Symbols.symbol_of_symbol_index rhs_index symbols)
+        ) prod.rhs_indexes
+    in
+    let prods_used = Set.insert Prod.(prod.index) prods_used in
+    precs_used, tokens_used, nonterms_used, prods_used
+  end
+  and mark_state symbols prods ~precs_used ~tokens_used ~nonterms_used ~prods_used state = begin
+    Ordmap.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
+      ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) (symbol_index, actions) ->
+        let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
+        let precs_used, tokens_used, nonterms_used =
+          mark_symbol ~precs_used ~tokens_used ~nonterms_used symbol in
+        Ordset.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
+          ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) action ->
+            let open State.Action in
+            match action with
+            | ShiftPrefix _
+            | ShiftAccept _ -> precs_used, tokens_used, nonterms_used, prods_used
+            | Reduce prod_index -> begin
+                let prod = Prods.prod_of_prod_index prod_index prods in
+                mark_prod symbols ~precs_used ~tokens_used ~nonterms_used ~prods_used prod
+              end
+          ) actions
+      ) State.(state.actions)
+  end
+  and mark_states symbols prods states = begin
+    let precs_used = Set.empty (module String) in
+    let tokens_used = Set.singleton (module Symbol.Index) Symbol.epsilon.index in
+    let nonterms_used = Set.empty (module Symbol.Index) in
+    let prods_used = Set.empty (module Prod.Index) in
+    Array.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
+      ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) state ->
+        mark_state symbols prods ~precs_used ~tokens_used ~nonterms_used ~prods_used state
+      ) states
+  end in
+  let io =
+    io.log |> Fmt.fmt "hocc: Searching for unused precedences/tokens/non-terminals/productions\n"
+    |> Io.with_log io
+  in
+  let precs_used, tokens_used, nonterms_used, prods_used = mark_states symbols prods states in
+  let precs_nunused = (Precs.length precs) - (Set.length precs_used) in
+  let tokens_nunused = (Symbols.tokens_length symbols) - (Set.length tokens_used) in
+  let nonterms_nunused = (Symbols.nonterms_length symbols) - (Set.length nonterms_used) in
+  let prods_nunused = (Prods.length prods) - (Set.length prods_used) in
+  let io = match precs_nunused with
+    | 0L -> io
+    | _ -> begin
+        io.log
+        |> Fmt.fmt "hocc: " |> Uns.pp precs_nunused |> Fmt.fmt " unused precedence"
+        |> (fun formatter ->
+          match precs_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+        )
+        |> Fmt.fmt ":\n"
+        |> (fun formatter ->
+          Precs.fold_prec_sets ~init:formatter ~f:(fun formatter (PrecSet.{names; _} as prec_set) ->
+            Array.fold ~init:formatter ~f:(fun formatter name ->
+              match Set.mem name precs_used with
+              | true -> formatter
+              | false -> begin
+                  let prec = Prec.init ~name ~prec_set in
+                  formatter |> Fmt.fmt "hocc:" |> Prec.src_fmt prec
+                end
+            ) names
+          ) precs
+        )
+        |> Io.with_log io
+      end
+  in
+  let io = match tokens_nunused with
+    | 0L -> io
+    | _ -> begin
+        io.log
+        |> Fmt.fmt "hocc: " |> Uns.pp tokens_nunused |> Fmt.fmt " unused token"
+        |> (fun formatter ->
+          match tokens_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+        )
+        |> Fmt.fmt ":\n"
+        |> (fun formatter ->
+          Symbols.tokens_fold ~init:formatter ~f:(fun formatter token ->
+            match Set.mem Symbol.(token.index) tokens_used with
+            | true -> formatter
+            | false -> formatter |> Fmt.fmt "hocc:" |> Symbols.src_fmt token symbols
+          ) symbols
+        )
+        |> Io.with_log io
+      end
+  in
+  let io = match nonterms_nunused with
+    | 0L -> io
+    | _ -> begin
+        io.log
+        |> Fmt.fmt "hocc: " |> Uns.pp nonterms_nunused |> Fmt.fmt " unused non-terminal"
+        |> (fun formatter ->
+          match nonterms_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+        )
+        |> Fmt.fmt ":\n"
+        |> (fun formatter ->
+          Symbols.nonterms_fold ~init:formatter ~f:(fun formatter Symbol.{index; name; prec; _} ->
+            match Set.mem index nonterms_used with
+            | true -> formatter
+            | false -> begin
+                formatter
+                |> Fmt.fmt "hocc:    nonterm "
+                |> Fmt.fmt name
+                |> (fun formatter ->
+                  match prec with
+                  | None -> formatter
+                  | Some prec ->
+                    formatter |> Fmt.fmt " " |> Prec.pp_hr prec
+                )
+                |> Fmt.fmt "\n"
+              end
+          ) symbols
+        )
+        |> Io.with_log io
+      end
+  in
+  let io = match prods_nunused with
+    | 0L -> io
+    | _ -> begin
+        io.log
+        |> Fmt.fmt "hocc: " |> Uns.pp prods_nunused |> Fmt.fmt " unused production"
+        |> (fun formatter ->
+          match prods_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+        )
+        |> Fmt.fmt ":\n"
+        |> (fun formatter ->
+          Prods.fold ~init:formatter
+            ~f:(fun formatter Prod.{index; lhs_index; rhs_indexes; prec; _} ->
+              match Set.mem index prods_used with
+              | true -> formatter
+              | false -> begin
+                  let lhs_symbol = Symbols.symbol_of_symbol_index lhs_index symbols in
+                  formatter
+                  |> Fmt.fmt "hocc:    "
+                  |> Fmt.fmt lhs_symbol.name
+                  |> Fmt.fmt " ::="
+                  |> (fun formatter ->
+                    match Array.length rhs_indexes with
+                    | 0L -> formatter |> Fmt.fmt " epsilon"
+                    | _ -> begin
+                        Array.fold ~init:formatter ~f:(fun formatter rhs_index ->
+                          let rhs_symbol = Symbols.symbol_of_symbol_index rhs_index symbols in
+                          formatter
+                          |> Fmt.fmt " "
+                          |> (fun formatter ->
+                            match rhs_symbol.alias with
+                            | None -> formatter |> Fmt.fmt rhs_symbol.name
+                            | Some alias -> formatter |> String.pp alias
+                          )
+                        ) rhs_indexes
+                      end
+                  )
+                  |> (fun formatter ->
+                    match prec with
+                    | None -> formatter
+                    | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
+                  )
+                  |> Fmt.fmt "\n"
+                end
+            ) prods
+        )
+        |> Io.with_log io
+      end
+  in
+  io
+
 and init_inner algorithm ~resolve io precs symbols prods callbacks =
   let io, isocores, gotonub_of_statenub_goto =
     isocores_init algorithm ~resolve io precs symbols prods callbacks in
@@ -1472,6 +1476,7 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     | true -> remerge_states io symbols isocores states
     | false -> io, isocores, states
   in
+  let io = log_conflicts io ~resolve states in
   let io = log_unused io precs symbols prods states in
   io, {algorithm; precs; symbols; prods; callbacks; states}
 
