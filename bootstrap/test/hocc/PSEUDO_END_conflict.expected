@@ -4,9 +4,9 @@ hocc: 2 precedences, 7 tokens, 4 non-terminals (1 start), 8 productions
 hocc: LR(1) item set compatibility: lr1
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++
 hocc: Generating 12 LR(1) states
-hocc: 4 unresolvable conflicts in 4 states (4 ⊥, 0 shift-reduce, 0 reduce-reduce)
 hocc: 0 unreachable states
 hocc: 0 remergeable states
+hocc: 4 unresolvable conflicts in 4 states (4 ⊥, 0 shift-reduce, 0 reduce-reduce)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Generating hocc report
