@@ -17,6 +17,11 @@ val init: State.t array -> t
 (** [init states] returns a bidirectional adjacency lookup table with one logical entry for each
     state transition encoded in [states]. *)
 
+val preds_of_state_index: ?d:uns -> State.Index.t -> t
+  -> (State.Index.t, State.Index.cmper_witness) Ordset.t
+(** [preds_of_state_index ~d state_index t] returns an array of [d]-distance predecessor state
+    indices of the state corresponding to [state_index]. [d] defaults to 1. *)
+
 val ipreds_of_state_index: State.Index.t -> t -> State.Index.t array
 (** [ipreds_of_state_index state_index t] returns an array of immediate predecessor state indices of
     the state corresponding to [state_index]. *)
