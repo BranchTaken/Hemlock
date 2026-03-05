@@ -2,24 +2,28 @@ open Basis
 open! Basis.Rudiments
 
 type t = {
-  (* The index of each element in ipreds/isuccs corresponds to a state index, and the array at each
-   * index contains the corresponding ipreds'/isuccs' state indices. *)
-  ipreds: State.Index.t array array;
-  isuccs: State.Index.t array array;
+  (* The index of each element in {ipred,isucc}_{sets,arrays} corresponds to a state index, and the
+   * set/array at each index contains the corresponding ipreds'/isuccs' state indices. *)
+  ipred_sets: (State.Index.t, State.Index.cmper_witness) Ordset.t array;
+(*
+  isucc_sets: (State.Index.t, State.Index.cmper_witness) Ordset.t array;
+*)
+  ipred_arrays: State.Index.t array array;
+  isucc_arrays: State.Index.t array array;
 }
 
-let pp {ipreds; isuccs} formatter =
+let pp {ipred_arrays; isucc_arrays; _} formatter =
   let ipreds_states = Ordmap.of_alist (module StateIndex)
-    (Array.to_list (Array.mapi ipreds ~f:(fun i elm -> i, elm))) in
+    (Array.to_list (Array.mapi ipred_arrays ~f:(fun i elm -> i, elm))) in
   let isuccs_states = Ordmap.of_alist (module StateIndex)
-    (Array.to_list (Array.mapi isuccs ~f:(fun i elm -> i, elm))) in
+    (Array.to_list (Array.mapi isucc_arrays ~f:(fun i elm -> i, elm))) in
   formatter
-  |> Fmt.fmt "{ipreds=" |> Ordmap.fmt ~alt:true (Array.pp StateIndex.pp) ipreds_states
-  |> Fmt.fmt "; isuccs=" |> Ordmap.fmt ~alt:true (Array.pp StateIndex.pp) isuccs_states
+  |> Fmt.fmt "{ipred_arrays=" |> Ordmap.fmt ~alt:true (Array.pp StateIndex.pp) ipreds_states
+  |> Fmt.fmt "; isucc_arrays=" |> Ordmap.fmt ~alt:true (Array.pp StateIndex.pp) isuccs_states
   |> Fmt.fmt "}"
 
-let length {ipreds; _} =
-  Array.length ipreds
+let length {ipred_arrays; _} =
+  Array.length ipred_arrays
 
 let ipreds_of_state_index_impl state_index ipreds =
   Array.get state_index ipreds
@@ -56,8 +60,8 @@ let init_ipreds states =
   (* Convert the map to an array, which is sufficient for all lookup needs. *)
   Array.init (0L =:< Array.length states) ~f:(fun state_index ->
     match Map.get state_index ipreds_map with
-    | None -> [||]
-    | Some ipreds_set -> Ordset.to_array ipreds_set
+    | None -> Ordset.empty (module State.Index)
+    | Some ipreds_set -> ipreds_set
   )
 
 let init_isuccs ipreds =
@@ -65,7 +69,7 @@ let init_isuccs ipreds =
     Range.Uns.fold (0L =:< Array.length ipreds) ~init:(Map.empty (module State.Index))
       ~f:(fun isuccs_map state_index ->
         let ipred_indexes = ipreds_of_state_index_impl state_index ipreds in
-        Array.fold ~init:isuccs_map ~f:(fun isuccs_map ipred_index ->
+        Ordset.fold ~init:isuccs_map ~f:(fun isuccs_map ipred_index ->
           Map.amend ipred_index ~f:(function
             | None -> Some (Ordset.singleton (module State.Index) state_index)
             | Some isuccs_set -> Some (Ordset.insert state_index isuccs_set)
@@ -74,24 +78,39 @@ let init_isuccs ipreds =
       ) in
   Array.init (0L =:< Array.length ipreds) ~f:(fun state_index ->
     match Map.get state_index isuccs_map with
-    | None -> [||]
-    | Some state_index_set -> Ordset.to_array state_index_set
+    | None -> Ordset.empty (module State.Index)
+    | Some state_index_set -> state_index_set
   )
 
 let init states =
-  let ipreds = init_ipreds states in
-  let isuccs = init_isuccs ipreds in
-  assert Uns.(Array.(length ipreds) = (Array.length isuccs));
-  {ipreds; isuccs}
+  let ipred_sets = init_ipreds states in
+  let isucc_sets = init_isuccs ipred_sets in
+  let ipred_arrays = Array.map ~f:(fun set -> Ordset.to_array set) ipred_sets in
+  let isucc_arrays = Array.map ~f:(fun set -> Ordset.to_array set) isucc_sets in
+  assert Uns.(Array.(length ipred_arrays) = (Array.length isucc_arrays));
+  {ipred_sets; (*isucc_sets;*) ipred_arrays; isucc_arrays}
 
-let ipreds_of_state_index state_index {ipreds; _} =
-  ipreds_of_state_index_impl state_index ipreds
+let rec preds_of_state_index ?(d=1L) state_index ({ipred_sets; ipred_arrays; _} as t) =
+  match d with
+  | 0L -> not_reached ()
+  | 1L -> ipreds_of_state_index_impl state_index ipred_sets
+  | _ -> begin
+      ipreds_of_state_index_impl state_index ipred_arrays
+      |> Array.map ~f:(fun ipred_state_index ->
+        preds_of_state_index ~d:(pred d) ipred_state_index t
+      )
+      |> Array.reduce ~f:Ordset.union
+      |> Option.value ~default:(Ordset.empty (module State.Index))
+    end
+
+let ipreds_of_state_index state_index {ipred_arrays; _} =
+  ipreds_of_state_index_impl state_index ipred_arrays
 
 let ipreds_of_state state t =
   ipreds_of_state_index (State.index state) t
 
-let isuccs_of_state_index state_index {isuccs; _} =
-  Array.get state_index isuccs
+let isuccs_of_state_index state_index {isucc_arrays; _} =
+  Array.get state_index isucc_arrays
 
 let isuccs_of_state state t =
   isuccs_of_state_index (State.index state) t

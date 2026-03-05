@@ -251,8 +251,8 @@ let reindex state_index_map {statenub; actions; gotos} =
         Ordset.insert reindexed_action reindexed_actions
       ) actions
   ) actions in
-  let gotos = Ordmap.map ~f:(fun (_symbol_index, statenub_index) ->
-    StateIndexMap.reindexed_state_index statenub_index state_index_map
+  let gotos = Ordmap.filter_map ~f:(fun (_symbol_index, statenub_index) ->
+    StateIndexMap.reindexed_state_index_opt statenub_index state_index_map
   ) gotos in
   {statenub; actions; gotos}
 
