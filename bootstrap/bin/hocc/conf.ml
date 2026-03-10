@@ -2,17 +2,19 @@ open! Basis
 include Basis.Rudiments
 
 type algorithm =
-  | Lr1
-  | Ielr1
-  | Pgm1
-  | Lalr1
+  | Aplr
+  | Ielr
+  | Pgm
+  | Lr
+  | Lalr
 
 let pp_algorithm algorithm formatter =
   formatter |> Fmt.fmt (match algorithm with
-    | Lr1 -> "Lr1"
-    | Ielr1 -> "Ielr1"
-    | Pgm1 -> "Pgm1"
-    | Lalr1 -> "Lalr1"
+    | Aplr -> "Aplr"
+    | Ielr -> "Ielr"
+    | Pgm -> "Pgm"
+    | Lr -> "Lr"
+    | Lalr -> "Lalr"
   )
 
 type t = {
@@ -22,7 +24,7 @@ type t = {
   algorithm: algorithm;
   resolve: bool;
   gc: bool;
-  remerge: bool;
+  remerge_opt: bool option;
   hemlock: bool;
   ocaml: bool;
   srcdir_opt: Path.t option;
@@ -30,7 +32,7 @@ type t = {
   dstdir_opt: Path.t option;
 }
 
-let pp {verbose; text; hocc; algorithm; resolve; gc; remerge; hemlock; ocaml; srcdir_opt;
+let pp {verbose; text; hocc; algorithm; resolve; gc; remerge_opt; hemlock; ocaml; srcdir_opt;
   module_opt; dstdir_opt} formatter =
   formatter
   |> Fmt.fmt "{verbose=" |> Bool.pp verbose
@@ -39,7 +41,7 @@ let pp {verbose; text; hocc; algorithm; resolve; gc; remerge; hemlock; ocaml; sr
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
   |> Fmt.fmt "; resolve=" |> Bool.pp resolve
   |> Fmt.fmt "; gc=" |> Bool.pp gc
-  |> Fmt.fmt "; remerge=" |> Bool.pp remerge
+  |> Fmt.fmt "; remerge_opt=" |> Option.pp Bool.pp remerge_opt
   |> Fmt.fmt "; hemlock=" |> Bool.pp hemlock
   |> Fmt.fmt "; ocaml=" |> Bool.pp ocaml
   |> Fmt.fmt "; srcdir_opt=" |> (Option.pp Path.pp) srcdir_opt
@@ -51,16 +53,27 @@ let default = {
   verbose=false;
   text=false;
   hocc=false;
-  algorithm=Lr1;
+  algorithm=Aplr;
   gc=true;
   resolve=true;
-  remerge=true;
+  remerge_opt=None;
   hemlock=false;
   ocaml=false;
   srcdir_opt=None;
   module_opt=None;
   dstdir_opt=None;
 }
+
+let remerge algorithm remerge_opt =
+  match algorithm, remerge_opt with
+  | _, Some remerge -> remerge
+  | Aplr, None
+    -> true
+  | Ielr, None
+  | Pgm, None
+  | Lr, None
+  | Lalr, None
+    -> false
 
 let usage error =
   let exit_code, formatter = match error with
@@ -76,30 +89,23 @@ Parameters:
          -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
          -hmh | -hocc : Write a complete grammar specification in hocc format to
-                        "<dstdir>/hocc/<module>.hmh", but with all non-terminal
-                        types and reduction code omitted.
+                        "<dstdir>/hocc/<module>.hmh".
    -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an
-                        automaton. Defaults to lr1.
-                        - lr1: Canonical LR(1) automaton.
-                        - ielr1: Compact LR(1) automaton that recognizes valid
-                          inputs identically to lr1 automatons, even in the
-                          presence of precedence-resolved ambiguities.
-                        - pgm1: Compact LR(1) automaton that recognizes valid
-                          inputs identically to lr1 automatons, provided there
-                          were no precedence-resolved ambiguities in the grammar
-                          specification.
-                        - lalr1: LALR(1) automaton.
-  -r[esolve] (yes|no) : Control whether conflict resolution is enabled. Defaults
-                        to yes.
-  -g[c] (yes|no)      : Control whether unreachable state garbage collection is
-                        enabled. Defaults to yes.
--[re]m[erge] (yes|no) : Control whether remerging equivalent split states is
-                        enabled. Defaults to yes.
+                        automaton. Defaults to aplr.
+                        - aplr: Adequacy Preservation LR(1)
+                        - ielr: Inadequacy Elimination LR(1)
+                        - pgm: Practical General Method LR(1)
+                        - lr: Canonical LR(1)
+                        - lalr: Look-Ahead LR(1)
+  -r[esolve] (yes|no) : Control conflict resolution enablement. Defaults to yes.
+  -g[c] (yes|no)      : Control unreachable state garbage collection enablement.
+                        Defaults to yes.
+-[re]m[erge] (yes|no) : Control compatible state subgraph remerging enablement.
+                        Defaults to yes for aplr algorithm, no otherwise.
        -hm | -hemlock : Generate a Hemlock-based parser implementation and write
                         it to "<dstdir>/<module>.hm[i]".
          -ml | -ocaml : Generate an OCaml-based parser implementation and write
-                        it to "<dstdir>/<module>.ml[i]". This is brittle
-                        functionality intended only for Hemlock bootstrapping.
+                        it to "<dstdir>/<module>.ml[i]".
          -s[rc] <src> : Path and module name of input source, where inputs match
                         "<src>.hmh[i]" and "<src>" comprises the source
                         directory and module name, "[<srcdir>/]<module>".
@@ -170,10 +176,11 @@ let of_argv argv =
         | "-hmh" | "-hocc" -> f {t with hocc=true} argv (succ i)
         | "-algorithm" | "-a" -> begin
             let algorithm = match Bytes.to_string_replace (arg_arg argv i) with
-              | "lr1" -> Lr1
-              | "ielr1" -> Ielr1
-              | "pgm1" -> Pgm1
-              | "lalr1" -> Lalr1
+              | "aplr" -> Aplr
+              | "ielr" -> Ielr
+              | "pgm" -> Pgm
+              | "lr" -> Lr
+              | "lalr" -> Lalr
               | s -> begin
                   File.Fmt.stderr |> Fmt.fmt "hocc: Invalid algorithm: " |> Fmt.fmt s
                   |> Fmt.fmt "\n" |> ignore;
@@ -216,7 +223,7 @@ let of_argv argv =
                   usage true
                 end
             in
-            f {t with remerge} argv (i + 2L)
+            f {t with remerge_opt=Some remerge} argv (i + 2L)
           end
         | "-hm" | "-hemlock" -> f {t with hemlock=true} argv (succ i)
         | "-ml" | "-ocaml" -> f {t with ocaml=true} argv (succ i)
@@ -288,8 +295,8 @@ let resolve {resolve; _} =
 let gc {gc; _} =
   gc
 
-let remerge {remerge; _} =
-  remerge
+let remerge {algorithm; remerge_opt; _} =
+  remerge algorithm remerge_opt
 
 let hemlock {hemlock; _} =
   hemlock

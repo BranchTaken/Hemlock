@@ -97,22 +97,22 @@ val resolve: Symbols.t -> Prods.t
 (** [resolve ~symbols ~prods actions] resolves conflicts in [actions] to the maximum degree possible
     given precedences. *)
 
-val compat_lr1: GotoNub.t -> t -> bool
-(** [compat_lr1 gotonub t] determines whether [gotonub] and the kernel of [t] are identical, which
-    is the basis of the canonical LR(1) algorithm. *)
+val compat_lr: GotoNub.t -> t -> bool
+(** [compat_lr gotonub t] determines whether [gotonub] and the kernel of [t] are identical, which is
+    the basis of the canonical LR(1) algorithm. *)
 
-val compat_ielr1: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
-(** [compat_ielr1 ~resolve symbols prods gotonub t] determines whether [gotonub] and [t] are
+val compat_ielr: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
+(** [compat_ielr ~resolve symbols prods gotonub t] determines whether [gotonub] and [t] are
     split-stable (i.e. irrelevant to compatibility testing) and make compatible conflict
     attributions (if any) in the context of each {state,symbol} conflict. If [resolve] is true,
     conflicts which will be successfully resolved during state generation are treated as compatible
     to avoid pointless state duplication. This function is the basis of the IELR(1) algorithm. *)
 
-val compat_pgm1: GotoNub.t -> t -> bool
-(** [compat_pgm1 gotonub t] determines whether [gotonub] and [t] are weakly compatible, as defined
-    by the Pager(1977) algorithm, and as refined by Menhir to prevent phantom conflicts accompanying
-    actual conflicts. This function is the basis of the PGM(1) algorithm. *)
+val compat_pgm: GotoNub.t -> t -> bool
+(** [compat_pgm gotonub t] determines whether [gotonub] and [t] are weakly compatible, as defined by
+    the Pager(1977) algorithm, and as refined by Menhir to prevent phantom conflicts accompanying
+    actual conflicts. This function is the basis of the PGM LR(1) algorithm. *)
 
-val compat_lalr1: GotoNub.t -> t -> bool
-(** [compat_lalr1 gotonub t] determines whether [gotonub] has the same LR(0) kernel as that of the
+val compat_lalr: GotoNub.t -> t -> bool
+(** [compat_lalr gotonub t] determines whether [gotonub] has the same LR(0) kernel as that of the
     LR(1) kernel of [t], which is the basis of the LALR(1) algorithm. *)

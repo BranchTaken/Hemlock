@@ -157,58 +157,10 @@ let normalize_actions remergeable_state_map t0 t1 actions =
     normalize_action_set remergeable_state_map t0 t1 action_set
   ) actions
 
-let remergeable_actions remergeable_state_map ({actions=a0; _} as t0) ({actions=a1; _} as t1) =
-  let reduces_only action_set = begin
-    let open Action in
-    Ordset.for_all
-      ~f:(fun action ->
-        match action with
-        | ShiftPrefix _
-        | ShiftAccept _
-          -> false
-        | Reduce _
-          -> true
-      ) action_set
-  end in
-  let normalized_a0 = normalize_actions remergeable_state_map t0 t1 a0 in
-  let normalized_a1 = normalize_actions remergeable_state_map t0 t1 a1 in
-  Ordmap.for_all ~f:(fun (symbol_index, action_set0) ->
-    match Ordmap.get symbol_index normalized_a1 with
-    | None -> reduces_only action_set0
-    | Some action_set1 -> Ordset.equal action_set0 action_set1
-  ) normalized_a0
-  &&
-  Ordmap.for_all ~f:(fun (symbol_index, action_set1) ->
-    match Ordmap.get symbol_index normalized_a0 with
-    | None -> reduces_only action_set1
-    | Some action_set0 -> Ordset.equal action_set0 action_set1
-  ) normalized_a1
-
 let normalize_gotos remergeable_state_map t0 t1 gotos =
   Ordmap.map ~f:(fun (_symbol_index, index) ->
     normalize_index remergeable_state_map t0 t1 index
   ) gotos
-
-let remergeable_gotos remergeable_state_map ({gotos=g0; _} as t0) ({gotos=g1; _} as t1) =
-  let normalized_g0 = normalize_gotos remergeable_state_map t0 t1 g0 in
-  let normalized_g1 = normalize_gotos remergeable_state_map t0 t1 g1 in
-  Ordmap.for_all ~f:(fun (symbol_index, index) ->
-    match Ordmap.get symbol_index normalized_g1 with
-    | None -> true
-    | Some index' -> Index.(index = index')
-  ) normalized_g0
-  &&
-  Ordmap.for_all ~f:(fun (symbol_index, index) ->
-    match Ordmap.get symbol_index normalized_g0 with
-    | None -> true
-    | Some index' -> Index.(index = index')
-  ) normalized_g1
-
-let remergeable remergeable_state_map ({statenub=sn0; _} as t0) ({statenub=sn1; _} as t1) =
-  let core0 = Lr1Itemset.core StateNub.(sn0.lr1itemsetclosure).kernel in
-  let core1 = Lr1Itemset.core StateNub.(sn1.lr1itemsetclosure).kernel in
-  assert Lr0Itemset.(core0 = core1);
-  remergeable_actions remergeable_state_map t0 t1 && remergeable_gotos remergeable_state_map t0 t1
 
 let remerge symbols remergeable_index_map ({statenub=sn0; actions=a0; gotos=g0} as t0)
   ({statenub=sn1; actions=a1; gotos=g1} as t1) =

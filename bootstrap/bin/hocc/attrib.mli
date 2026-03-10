@@ -70,12 +70,12 @@ val inter: t -> t -> t
 val diff: t -> t -> t
 (** [diff t0 t1] returns an attrib containing the contents of [t0] that are not in [t1]. *)
 
-val equal_ielr1: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
-(** [equal_ielr1 ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make equal
+val equal_ielr: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
+(** [equal_ielr ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make equal
     contributions. *)
 
-val compat_ielr1: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
-(** [compat_ielr1 ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make compatible
+val compat_ielr: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
+(** [compat_ielr ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make compatible
     contributions. If [resolve] is true, allow conflicts that cannot lead to inadequacy (i.e.
     shift-reduce conflicts cannot lead to inadequacy if the conflict manifestation contains a shift
     action and a single reduce action). *)

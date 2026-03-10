@@ -10,8 +10,7 @@ type v = {
 
 type t = (StateIndex.t, v, StateIndex.cmper_witness) Map.t
 
-let init ~remaining_state_indexes:remaining_state_indexes ~remergeable_index_map
-    ~isocores_sn_of_state_index =
+let init ~remaining_state_indexes ~remergeable_index_map ~isocores_sn_of_state_index =
   let isocore_set_sizes = Map.empty (module Uns) in
   let t = Map.empty (module StateIndex) in
   let _, t = Ordset.fold ~init:(isocore_set_sizes, t) ~f:(fun (isocore_set_sizes, t) state_index ->

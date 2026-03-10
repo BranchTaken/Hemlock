@@ -184,6 +184,6 @@ let fold ~init ~f {statenubs_map; _} =
   ) statenubs_map
 
 let fold_isocore_sets ~init ~f {isocores; _} =
-  Map.fold ~init ~f:(fun accum (_k, {isocore_set; _}) ->
-    f accum isocore_set
-  ) isocores
+  Map.fold ~init:[] ~f:(fun accum (_k, v) -> v :: accum ) isocores
+  |> List.sort ~cmp:(fun {isocores_sn=isn0; _} {isocores_sn=isn1; _} -> Uns.cmp isn0 isn1)
+  |> List.fold ~init ~f:(fun accum {isocore_set; _} -> f accum isocore_set)

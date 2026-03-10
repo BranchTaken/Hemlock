@@ -80,7 +80,7 @@ Non-terminals
         Follow: {"in", "and"}
         Productions
             RecursiveClause ::= NAME "=" Term
-PGM(1) States
+PGM LR(1) States
     State 0 [0.0]
         Kernel
             [Commandline' ::= · Commandline "⊥", {"ε"}]

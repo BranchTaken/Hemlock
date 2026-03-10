@@ -54,7 +54,7 @@ Non-terminals
         Productions
             F ::= LPAREN E RPAREN
             F ::= ID
-PGM(1) States
+PGM LR(1) States
     State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]

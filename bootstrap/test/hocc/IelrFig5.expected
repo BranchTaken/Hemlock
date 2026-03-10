@@ -2,18 +2,17 @@ hocc: Parsing "./IelrFig5.hmh"
 hocc: Generating IELR(1) specification
 hocc: 2 precedences, 5 tokens, 7 non-terminals (1 start), 10 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite
-hocc: LR(1) item set compatibility: lalr1
+hocc: LR(1) item set compatibility: lalr
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++.+++++++.+.+++++
 hocc: Generating 19 LR(1) states
 hocc: 1 conflict in 1 state (0 ⊥, 1 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
 hocc: Gathering IELR(1) conflict attributions
 hocc: Filtering useless IELR(1) conflict attributions
-hocc: LR(1) item set compatibility: ielr1
+hocc: LR(1) item set compatibility: ielr
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++^+++++++^.+.++.^+++..
 hocc: Generating 22 LR(1) states
 hocc: Tracing automaton.............
 hocc: 0 unreachable states
-hocc: 0 remergeable states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report

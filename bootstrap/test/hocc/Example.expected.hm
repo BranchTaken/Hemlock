@@ -7,16 +7,18 @@ include [:]{
         Algorithm = {
             T = {
                 type t: t =
-                  | Lr1
-                  | Ielr1
-                  | Pgm1
-                  | Lalr1
+                  | Aplr
+                  | Ielr
+                  | Pgm
+                  | Lr
+                  | Lalr
 
                 index t = match t with
-                  | Lr1 -> 0
-                  | Ielr1 -> 1
-                  | Pgm1 -> 2
-                  | Lalr1 -> 3
+                  | Aplr -> 0
+                  | Ielr -> 1
+                  | Pgm -> 2
+                  | Lr -> 3
+                  | Lalr -> 4
 
                 hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -25,10 +27,11 @@ include [:]{
                     Uns.cmp (index t0) (index t1)
 
                 to_string t = match t with
-                  | Lr1 -> "Lr1"
-                  | Ielr1 -> "Ielr1"
-                  | Pgm1 -> "Pgm1"
-                  | Lalr1 -> "Lalr1"
+                  | Aplr -> "Aplr"
+                  | Ielr -> "Ielr"
+                  | Pgm -> "Pgm"
+                  | Lr -> "Lr"
+                  | Lalr -> "Lalr"
 
                 pp t formatter =
                     formatter |> Fmt.fmt (to_string t)
@@ -37,7 +40,7 @@ include [:]{
             include Identifiable.Make(T)
           }
 
-        algorithm = Algorithm.Lr1
+        algorithm = Algorithm.Aplr
 
         Assoc = {
             T = {

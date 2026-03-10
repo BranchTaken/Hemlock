@@ -10,12 +10,12 @@ carries on a long tradition, to wit:
 
 Both programs interpret high-level human-written parser descriptions and produce output unfit for
 human consumption. However `hocc` has several distinguishing features relative to `yacc`, aside from
-interoperating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather than
+integrating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather than
 [C](https://en.wikipedia.org/wiki/The_C_Programming_Language).
 
 - `hocc` generates LR(1) rather than [LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) parsers,
-  optionally using a behavior-preserving compaction algorithms that reduces the state machine size
-  relative to the canonical LR(1) algorithm [^knuth1965].
+  optionally using behavior-preserving algorithms that reduce the state machine size relative to the
+  canonical LR(1) algorithm [^knuth1965].
 - `hocc`'s precedence facilities are more precise and easier to use without inadvertently masking
   grammar ambiguities. Whereas `yacc` supports only a single linear precedence ordering, `hocc`
   supports arbitrarily many directed acyclic precedence graphs. Given this more powerful conflict
@@ -36,18 +36,24 @@ Parameters:
 - `-hmh` | `-hocc`: Write a complete grammar specification in `hocc` format to
   `<dstdir>/hocc/<module>.hmh`, but with all non-terminal types and reduction code omitted.
 - `-a[lgorithm] <alg>`: Use the specified `<alg>`orithm for generating an automaton. Defaults to
-  `lr1`.
-  + `lr1`: Canonical LR(1) automaton [^knuth1965].
-  + `ielr1`: Inadequacy Elimination LR(1) compact automaton [^denny2010] that recognizes valid
-    inputs identically to `lr1` automatons.
-  + `pgm1`: LR(1) compact automaton [^pager1977] that recognizes valid inputs identically to `lr1`
-    automatons, provided there were no precedence-resolved ambiguities in the grammar specification.
-  + `lalr1`: LALR(1) automaton [^deremer1969].
-- `-r[esolve] (yes|no)`: Control whether conflict resolution is enabled. Defaults to `yes`.
-- `-g[c] (yes|no)`: Control whether unreachable state garbage collection is enabled. Defaults to
-  `yes`.
-- `-[re]m[erge] (yes|no)`: Control whether remerging equivalent split states is enabled. Defaults to
-  `yes`.
+  `aplr`.
+  + `aplr`: Adequacy Preservation LR(1) compact automaton that recognizes valid inputs identically
+    to `lr` automatons. APLR(1) generates an LR(1) automaton and then remerges compatible state
+    subgraphs such that LR(1)-relative adequacy is preserved.
+  + `ielr`: Inadequacy Elimination LR(1) compact automaton [^denny2010] that recognizes valid inputs
+    identically to `lr` automatons. IELR(1) analyzes an LALR(1) automaton and then uses resulting
+    metadata to generate an automaton with LR(1)-relative inadequacies eliminated via state
+    splitting.
+  + `pgm`: Practical General Method LR(1) compact automaton [^pager1977] that recognizes valid
+    inputs identically to `lr` automatons, provided there are no precedence-resolved ambiguities in
+    the grammar specification. PGM avoids LR(1)-relative inadequacy via preventative state splitting
+    during automaton creation.
+  + `lr`: Canonical LR(1) automaton [^knuth1965].
+  + `lalr`: LALR(1) automaton [^deremer1969].
+- `-r[esolve] (yes|no)`: Control conflict resolution enablement. Defaults to `yes`.
+- `-g[c] (yes|no)`: Control unreachable state garbage collection enablement. Defaults to `yes`.
+- `-[re]m[erge] (yes|no)`: Control compatible state subgraph remerging enablement. Defaults to `yes`
+  for `aplr` algorithm, `no` otherwise.
 - `-hm` | `-hemlock`: Generate a Hemlock-based parser implementation and write it to
   `<dstdir>/<module>.hm[i]`.
 - `-ml` | `-ocaml`: Generate an OCaml-based parser implementation and write it to
@@ -593,10 +599,11 @@ parser states can be used as persistent reusable snapshots.
     Spec = {
         Algorithm = {
             type t: t =
-              | Lr1 [@doc "LR(1) algorithm."]
-              | Ielr1 [@doc "IELR(1) algorithm."]
-              | Pgm1 [@doc "PGM(1) algorithm."]
-              | Lalr1 [@doc "LALR(1) algorithm."]
+              | Aplr [@doc "APLR(1) algorithm."]
+              | Ielr [@doc "IELR(1) algorithm."]
+              | Pgm [@doc "PGM LR(1) algorithm."]
+              | Lr [@doc "LR(1) algorithm."]
+              | Lalr [@doc "LALR(1) algorithm."]
 
             include IdentifiableIntf.S with type t := t
           }
@@ -975,9 +982,11 @@ Of note:
   + `Conflict contributions`: Per {kernel item, follow symbol, conflict state} IELR(1) conflict
     contributions that inform isocore (in)compatibility (NB: conflict state is an LALR(1) state
     index)
-- Conflict contributions are best interpreted in combination with a corresponding LALR(1) automaton
-  report generated with conflict resolution disabled (e.g. `hocc -txt -algorithm lalr1 -resolve no
-  -src Example`). This enables inspection of the conflicts which compel IELR(1) state splitting.
+- Conflict contributions are best interpreted for an IELR(1) automaton generated with remerging
+  disabled (e.g. `hocc -txt -algorithm ielr -src Example`) in combination with a corresponding
+  LALR(1) automaton report generated with conflict resolution disabled (e.g. `hocc -txt -algorithm
+  lalr -resolve no -src Example`). This enables inspection of the conflicts which compel IELR(1)
+  state splitting.
 
 ## Grammar
 

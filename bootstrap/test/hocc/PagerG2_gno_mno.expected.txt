@@ -78,7 +78,7 @@ Non-terminals
         Follow: {Dt, Et}
         Productions
             Vn ::= epsilon
-PGM(1) States
+PGM LR(1) States
     State 0 [0.0]
         Kernel
             [Sn' ::= · Sn "⊥", {"ε"}]

@@ -2,14 +2,14 @@ open Basis
 open! Basis.Rudiments
 
 (* Enqueue conflict state's ipred transits in preparation for annotation closure. *)
-let enq_ipred_lanectxs lalr1_states adjs leftmost_cache lanectxs_pending workq
+let enq_ipred_lanectxs lalr_states adjs leftmost_cache lanectxs_pending workq
     conflict_state_lanectx =
   let conflict_state = LaneCtx.state conflict_state_lanectx in
   let conflict_state_index = State.index conflict_state in
   Array.fold ~init:(leftmost_cache, lanectxs_pending, workq)
     ~f:(fun (leftmost_cache, lanectxs_pending, workq) ipred_state_index ->
       let ipred_transit = Transit.init ~src:ipred_state_index ~dst:conflict_state_index in
-      let ipred_state = Array.get ipred_state_index lalr1_states in
+      let ipred_state = Array.get ipred_state_index lalr_states in
       let ipred_lanectx, leftmost_cache =
         LaneCtx.of_ipred_state ipred_state leftmost_cache conflict_state_lanectx in
       let lanectxs_pending = Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx lanectxs_pending in
@@ -17,7 +17,7 @@ let enq_ipred_lanectxs lalr1_states adjs leftmost_cache lanectxs_pending workq
       leftmost_cache, lanectxs_pending, workq
     ) (Adjs.ipreds_of_state (LaneCtx.state conflict_state_lanectx) adjs)
 
-let rec close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq =
+let rec close_lanectxs lalr_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq =
   (* Filter already-traced lanes, if any. *)
   let filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx = begin
     match ipred_lanectx_closed_opt with
@@ -58,7 +58,7 @@ let rec close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs
                       ipred_state_index ->
                       let ipred_transit = Transit.init ~src:ipred_state_index ~dst:state_index in
                       let ipred_lanectx_closed_opt = Map.get ipred_transit lanectxs_closed in
-                      let ipred_state = Array.get ipred_state_index lalr1_states in
+                      let ipred_state = Array.get ipred_state_index lalr_states in
                       let ipred_lanectx, leftmost_cache =
                         LaneCtx.of_ipred_state ipred_state leftmost_cache lanectx in
                       let leftmost_cache, lanectxs_closed, lanectxs_pending, workq =
@@ -107,7 +107,7 @@ let rec close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs
               end
           end
       in
-      close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq
+      close_lanectxs lalr_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq
     end
 
 let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_index ~conflict dst =
@@ -171,7 +171,7 @@ let attribset_compat ~resolve symbols prods attribset =
           inner ~resolve symbols prods attrib0' attribset_seq_base' attribset_seq_base'
       end
     | Some (attrib1, attribset_seq_cur') -> begin
-        match Attrib.compat_ielr1 ~resolve symbols prods attrib0 attrib1 with
+        match Attrib.compat_ielr ~resolve symbols prods attrib0 attrib1 with
         | false -> false
         | true -> inner ~resolve symbols prods attrib1 attribset_seq_base attribset_seq_cur'
       end
@@ -306,8 +306,8 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
         end
     ) annotations_all
 
-let annotations_init ~resolve io symbols prods lalr1_states =
-  let adjs = Adjs.init lalr1_states in
+let annotations_init ~resolve io symbols prods lalr_states =
+  let adjs = Adjs.init lalr_states in
   (* Gather transit attribs for all conflict states. *)
   let io =
     io.log
@@ -327,15 +327,15 @@ let annotations_init ~resolve io symbols prods lalr1_states =
             let conflict_lanectx, leftmost_cache =
               LaneCtx.of_conflict_state ~resolve symbols prods leftmost_cache conflict_state in
             let leftmost_cache, lanectxs_pending, workq =
-              enq_ipred_lanectxs lalr1_states adjs leftmost_cache lanectxs_pending workq
+              enq_ipred_lanectxs lalr_states adjs leftmost_cache lanectxs_pending workq
                 conflict_lanectx
             in
             leftmost_cache, lanectxs_closed, lanectxs_pending, workq
           end
-      ) lalr1_states
+      ) lalr_states
   in
   let _leftmost_cache, lanectxs_closed =
-    close_lanectxs lalr1_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq in
+    close_lanectxs lalr_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq in
   let io =
     io.log
     |> Fmt.fmt "\n"
@@ -355,17 +355,17 @@ let annotations_init ~resolve io symbols prods lalr1_states =
 
 (* Create lookup function for attribs that closes on the prerequisite LALR(1) inadequacy analysis.
 *)
-let gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr1_isocores lalr1_states =
-  let io, annotations = annotations_init ~resolve io symbols prods lalr1_states in
+let gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr_isocores lalr_states =
+  let io, annotations = annotations_init ~resolve io symbols prods lalr_states in
   let transit_of_statenub_goto statenub goto = begin
     let statenub_core = (Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure.kernel)) in
     let goto_core = Lr1Itemset.core goto in
-    let src = Isocores.get_core_hlt statenub_core lalr1_isocores in
-    let dst = Isocores.get_core_hlt goto_core lalr1_isocores in
+    let src = Isocores.get_core_hlt statenub_core lalr_isocores in
+    let dst = Isocores.get_core_hlt goto_core lalr_isocores in
     Transit.init ~src ~dst
   end in
   let isocores_sn_of_transit Transit.{dst; _} =
-    Isocores.statenub dst lalr1_isocores
+    Isocores.statenub dst lalr_isocores
     |> StateNub.isocores_sn
   in
   let gotonub_of_statenub_goto statenub goto = begin

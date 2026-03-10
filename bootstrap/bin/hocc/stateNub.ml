@@ -314,10 +314,10 @@ let resolve symbols prods actions =
       | false -> Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
     ) actions
 
-let compat_lr1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
-  Lr1Itemset.compat_lr1 goto kernel
+let compat_lr GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
+  Lr1Itemset.compat_lr goto kernel
 
-let compat_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
+let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
   Attribs.fold2_until ~init:true
     ~f:(fun _compat attrib_opt0 attrib_opt1 ->
       let o_attrib, t_attrib = match attrib_opt0, attrib_opt1 with
@@ -328,12 +328,12 @@ let compat_ielr1 ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=
           Attrib.empty ~conflict_state_index ~symbol_index ~conflict, t_attrib
         | None, None -> not_reached ()
       in
-      let compat = Attrib.compat_ielr1 ~resolve symbols prods o_attrib t_attrib in
+      let compat = Attrib.compat_ielr ~resolve symbols prods o_attrib t_attrib in
       compat, not compat
     ) o_attribs t_attribs
 
-let compat_pgm1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
-  Lr1Itemset.compat_pgm1 goto kernel
+let compat_pgm GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
+  Lr1Itemset.compat_pgm goto kernel
 
-let compat_lalr1 GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
-  Lr1Itemset.compat_lalr1 goto kernel
+let compat_lalr GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
+  Lr1Itemset.compat_lalr goto kernel

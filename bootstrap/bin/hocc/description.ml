@@ -170,10 +170,11 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
   in
   let nprecs = Precs.length precs in
   let states_algorithm = match Conf.algorithm conf with
-    | Lr1 -> "LR(1)"
-    | Ielr1 -> "IELR(1)"
-    | Pgm1 -> "PGM(1)"
-    | Lalr1 -> "LALR(1)"
+    | Aplr -> "APLR(1)"
+    | Ielr -> "IELR(1)"
+    | Pgm -> "PGM LR(1)"
+    | Lr -> "LR(1)"
+    | Lalr -> "LALR(1)"
   in
   io.txt
   |> Fmt.fmt (Path.Segment.to_string_hlt (Conf.module_ conf))
@@ -324,9 +325,10 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
         |> Fmt.fmt state_index_string
         |> (fun formatter ->
           match algorithm with
-          | Lr1
-          | Ielr1
-          | Pgm1 -> begin
+          | Aplr
+          | Ielr
+          | Pgm
+          | Lr -> begin
               formatter
               |> Fmt.fmt " ["
               |> Uns.pp (StateNub.isocores_sn statenub)
@@ -334,7 +336,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
               |> Uns.pp (StateNub.isocore_set_sn statenub)
               |> Fmt.fmt "]"
             end
-          | Lalr1 -> formatter
+          | Lalr -> formatter
         )
         |> Fmt.fmt "\n"
         |> Fmt.fmt "        Kernel\n"

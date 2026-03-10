@@ -13,7 +13,7 @@ val init: remaining_state_indexes:(StateIndex.t, StateIndex.cmper_witness) Ordse
 (** [init ~remaining_state_indexes ~remergeable_index_map ~isocores_sn_of_state_index] constructs a
     contiguously numbered mapping of state indices and isocore set sequence numbers, including only
     remaining states and their remergeable aliases (if any). [isocores_sn_of_state_index] returns
-    the corresponding state's sequence number within its containing isocore set. *)
+    the corresponding state's containing isocore set sequence number. *)
 
 val reindexed_state_index: StateIndex.t -> t -> StateIndex.t
 (** [reindexed_state_index state_index t] returns the reindexed state index for the original
