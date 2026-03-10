@@ -1,6 +1,6 @@
 Example_introspect grammar
 
-Algorithm: Lr1
+Algorithm: Aplr
 Precedences: [|
     {index=0; names=[|"mul"|]; assoc=Some (Left); doms=[]}
     {index=1; names=[|"add"|]; assoc=Some (Left); doms=[0]}

@@ -7,10 +7,11 @@ include [:]{
     Spec = {
         Algorithm = {
             type t: t =
-              | Lr1 [@doc "LR(1) algorithm."]
-              | Ielr1 [@doc "IELR(1) algorithm."]
-              | Pgm1 [@doc "PGM(1) algorithm."]
-              | Lalr1 [@doc "LALR(1) algorithm."]
+              | Aplr [@doc "APLR(1) algorithm."]
+              | Ielr [@doc "IELR(1) algorithm."]
+              | Pgm [@doc "PGM LR(1) algorithm."]
+              | Lr [@doc "LR(1) algorithm."]
+              | Lalr [@doc "LALR(1) algorithm."]
 
             include IdentifiableIntf.S with type t := t
           }

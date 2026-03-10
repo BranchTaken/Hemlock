@@ -50,7 +50,7 @@ Non-terminals
         Follow: {"+", "in"}
         Productions
             Name ::= NAME
-PGM(1) States
+PGM LR(1) States
     State 0 [0.0]
         Kernel
             [Commandline' ::= · Commandline "⊥", {"ε"}]

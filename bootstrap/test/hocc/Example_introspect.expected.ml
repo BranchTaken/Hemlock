@@ -7,16 +7,18 @@ include struct
         module Algorithm = struct
             module T = struct
                 type t =
-                  | Lr1
-                  | Ielr1
-                  | Pgm1
-                  | Lalr1
+                  | Aplr
+                  | Ielr
+                  | Pgm
+                  | Lr
+                  | Lalr
 
                 let index = function
-                  | Lr1 -> 0L
-                  | Ielr1 -> 1L
-                  | Pgm1 -> 2L
-                  | Lalr1 -> 3L
+                  | Aplr -> 0L
+                  | Ielr -> 1L
+                  | Pgm -> 2L
+                  | Lr -> 3L
+                  | Lalr -> 4L
 
                 let hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -25,10 +27,11 @@ include struct
                     Uns.cmp (index t0) (index t1)
 
                 let to_string = function
-                  | Lr1 -> "Lr1"
-                  | Ielr1 -> "Ielr1"
-                  | Pgm1 -> "Pgm1"
-                  | Lalr1 -> "Lalr1"
+                  | Aplr -> "Aplr"
+                  | Ielr -> "Ielr"
+                  | Pgm -> "Pgm"
+                  | Lr -> "Lr"
+                  | Lalr -> "Lalr"
 
                 let pp t formatter =
                     formatter |> Fmt.fmt (to_string t)
@@ -37,7 +40,7 @@ include struct
             include Identifiable.Make(T)
           end
 
-        let algorithm = Algorithm.Lr1
+        let algorithm = Algorithm.Aplr
 
         module Assoc = struct
             module T = struct

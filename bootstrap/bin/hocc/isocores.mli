@@ -81,4 +81,5 @@ val fold: init:'accum -> f:('accum -> StateNub.t -> 'accum) -> t -> 'accum
 val fold_isocore_sets: init:'accum
   -> f:('accum -> (StateNub.Index.t, StateNub.Index.cmper_witness) Ordset.t -> 'accum) -> t
   -> 'accum
-(** [fold_isocore_sets ~init ~f t] iteratively applies [f] to the isocore sets in [t]. *)
+(** [fold_isocore_sets ~init ~f t] iteratively applies [f] to the isocore sets in [t], in increasing
+    isocore sequence number order. *)

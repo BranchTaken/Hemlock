@@ -6,10 +6,11 @@ include sig
     module Spec : sig
         module Algorithm : sig
             type t =
-              | Lr1 (** LR(1) algorithm. *)
-              | Ielr1 (** IELR(1) algorithm. *)
-              | Pgm1 (** PGM(1) algorithm. *)
-              | Lalr1 (** LALR(1) algorithm. *)
+              | Aplr (** APLR(1) algorithm. *)
+              | Ielr (** IELR(1) algorithm. *)
+              | Pgm (** PGM LR(1) algorithm. *)
+              | Lr (** LR(1) algorithm. *)
+              | Lalr (** LALR(1) algorithm. *)
 
             include IdentifiableIntf.S with type t := t
           end

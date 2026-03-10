@@ -1,4 +1,4 @@
-PagerG2_aielr1 grammar
+PagerG2_aielr grammar
 
 Tokens
     token EPSILON "ε"

@@ -1,13 +1,11 @@
 hocc: Parsing "./PagerG3.hmh"
-hocc: Generating PGM(1) specification
+hocc: Generating PGM LR(1) specification
 hocc: 0 precedences, 11 tokens, 4 non-terminals (1 start), 7 productions
 hocc: LR(1) item set compatibility: weak
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++^++++++^++++..
 hocc: Generating 19 LR(1) states
 hocc: Tracing automaton.........
 hocc: 0 unreachable states
-hocc: 2 remergeable states
-hocc: Reindexing 17 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report

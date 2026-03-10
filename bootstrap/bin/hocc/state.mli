@@ -38,12 +38,6 @@ val init: resolve:bool -> Symbols.t -> Prods.t -> Isocores.t
 (** [init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub] creates a state based
     on [statenub]. *)
 
-val remergeable: (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t -> bool
-(** [remergeable remergeable_state_map t0 t1] returns true if [t0] and [t1] have identical actions
-    and gotos, thus making them remergeable despite any kernel differences. The keys
-    [remergeable_state_map] are indices of states already known to be remergeable, and the values
-    are the indices for the states they will be remerged with. *)
-
 val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t-> t -> t -> t
 (** [remerge symbols index_map t0 t1] creates a merged state comprising remergeable states
     [t0] and [t1]. *)

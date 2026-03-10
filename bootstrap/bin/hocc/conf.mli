@@ -3,10 +3,11 @@
 open Basis
 
 type algorithm =
-  | Lr1 (** LR(1) algorithm. *)
-  | Ielr1 (** IELR(1) algorithm. *)
-  | Pgm1 (** PGM(1) algorithm. *)
-  | Lalr1 (** LALR(1) algorithm. *)
+  | Aplr (** APLR(1) algorithm. *)
+  | Ielr (** IELR(1) algorithm. *)
+  | Pgm (** PGM algorithm. *)
+  | Lr (** LR(1) algorithm. *)
+  | Lalr (** LALR(1) algorithm. *)
 
 val pp_algorithm: algorithm -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** [pp_algorithm algorithm] formats [algorithm]. *)

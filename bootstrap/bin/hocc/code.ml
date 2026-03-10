@@ -105,10 +105,11 @@ let hmi_template = {|{
     Spec = {
         Algorithm = {
             type t: t =
-              | Lr1 [@doc "LR(1) algorithm."]
-              | Ielr1 [@doc "IELR(1) algorithm."]
-              | Pgm1 [@doc "PGM(1) algorithm."]
-              | Lalr1 [@doc "LALR(1) algorithm."]
+              | Aplr [@doc "APLR(1) algorithm."]
+              | Ielr [@doc "IELR(1) algorithm."]
+              | Pgm [@doc "PGM LR(1) algorithm."]
+              | Lr [@doc "LR(1) algorithm."]
+              | Lalr [@doc "LALR(1) algorithm."]
 
             include IdentifiableIntf.S with type t := t
           }
@@ -493,16 +494,18 @@ let hm_template = {|{
         Algorithm = {
             T = {
                 type t: t =
-                  | Lr1
-                  | Ielr1
-                  | Pgm1
-                  | Lalr1
+                  | Aplr
+                  | Ielr
+                  | Pgm
+                  | Lr
+                  | Lalr
 
                 index t = match t with
-                  | Lr1 -> 0
-                  | Ielr1 -> 1
-                  | Pgm1 -> 2
-                  | Lalr1 -> 3
+                  | Aplr -> 0
+                  | Ielr -> 1
+                  | Pgm -> 2
+                  | Lr -> 3
+                  | Lalr -> 4
 
                 hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -511,10 +514,11 @@ let hm_template = {|{
                     Uns.cmp (index t0) (index t1)
 
                 to_string t = match t with
-                  | Lr1 -> "Lr1"
-                  | Ielr1 -> "Ielr1"
-                  | Pgm1 -> "Pgm1"
-                  | Lalr1 -> "Lalr1"
+                  | Aplr -> "Aplr"
+                  | Ielr -> "Ielr"
+                  | Pgm -> "Pgm"
+                  | Lr -> "Lr"
+                  | Lalr -> "Lalr"
 
                 pp t formatter =
                     formatter |> Fmt.fmt (to_string t)
@@ -2014,10 +2018,11 @@ let mli_template = {|sig
     module Spec : sig
         module Algorithm : sig
             type t =
-              | Lr1 (** LR(1) algorithm. *)
-              | Ielr1 (** IELR(1) algorithm. *)
-              | Pgm1 (** PGM(1) algorithm. *)
-              | Lalr1 (** LALR(1) algorithm. *)
+              | Aplr (** APLR(1) algorithm. *)
+              | Ielr (** IELR(1) algorithm. *)
+              | Pgm (** PGM LR(1) algorithm. *)
+              | Lr (** LR(1) algorithm. *)
+              | Lalr (** LALR(1) algorithm. *)
 
             include IdentifiableIntf.S with type t := t
           end
@@ -2399,16 +2404,18 @@ let ml_template = {|struct
         module Algorithm = struct
             module T = struct
                 type t =
-                  | Lr1
-                  | Ielr1
-                  | Pgm1
-                  | Lalr1
+                  | Aplr
+                  | Ielr
+                  | Pgm
+                  | Lr
+                  | Lalr
 
                 let index = function
-                  | Lr1 -> 0L
-                  | Ielr1 -> 1L
-                  | Pgm1 -> 2L
-                  | Lalr1 -> 3L
+                  | Aplr -> 0L
+                  | Ielr -> 1L
+                  | Pgm -> 2L
+                  | Lr -> 3L
+                  | Lalr -> 4L
 
                 let hash_fold t state =
                     state |> Uns.hash_fold (index t)
@@ -2417,10 +2424,11 @@ let ml_template = {|struct
                     Uns.cmp (index t0) (index t1)
 
                 let to_string = function
-                  | Lr1 -> "Lr1"
-                  | Ielr1 -> "Ielr1"
-                  | Pgm1 -> "Pgm1"
-                  | Lalr1 -> "Lalr1"
+                  | Aplr -> "Aplr"
+                  | Ielr -> "Ielr"
+                  | Pgm -> "Pgm"
+                  | Lr -> "Lr"
+                  | Lalr -> "Lalr"
 
                 let pp t formatter =
                     formatter |> Fmt.fmt (to_string t)

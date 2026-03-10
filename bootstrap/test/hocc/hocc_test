@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Usage: hocc_test <hocc> <src> [-algorithm lr1|ielr1|pgm1|lalr1] [-resolve yes|no] [-gc yes|no]
+# Usage: hocc_test <hocc> <src> [-algorithm aplr|ielr|pgm|lr|lalr] [-resolve yes|no] [-gc yes|no]
 #        [-remerge yes|no] [<parameter>]*
 
 hocc="$1"
@@ -16,7 +16,7 @@ case "$1" in
         shift 2
         ;;
     *)
-        algorithm="lr1"
+        algorithm="aplr"
 esac
 
 case "$1" in
@@ -46,7 +46,7 @@ case "$1" in
         shift 2
         ;;
     *)
-        remerge="yes"
+        remerge=""
 esac
 
 if [ "x${mangled_src}" != "x${src}" ] ; then
@@ -56,7 +56,13 @@ if [ "x${mangled_src}" != "x${src}" ] ; then
     src="${mangled_src}"
 fi
 
-"${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" -m "${remerge}" $@
+case "${remerge}" in
+    '')
+        "${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" $@
+        ;;
+    *)
+        "${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" -m "${remerge}" $@
+esac
 
 # Usage: mv_report <suffix>
 #

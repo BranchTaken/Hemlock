@@ -58,7 +58,7 @@ Non-terminals
         Follow: {C, D}
         Productions
             Z ::= T U W
-PGM(1) States
+PGM LR(1) States
     State 0 [0.0]
         Kernel
             [X' ::= · X "⊥", {"ε"}]
@@ -92,80 +92,93 @@ PGM(1) States
             [Y ::= · T U V, {E}]
             [Z ::= · T U W, {D}]
         Actions
-            T : ShiftPrefix 4
+            T : ShiftPrefix 7
         Gotos
-            Y : 7
-            Z : 8
+            Y : 8
+            Z : 9
     State 3 [3.0]
         Kernel
             [X' ::= X · "⊥", {"ε"}]
         Actions
-            "⊥" : ShiftPrefix 9
+            "⊥" : ShiftPrefix 10
     State 4 [4.0]
         Kernel
-            [Y ::= T · U V, {D, E}]
-            [Z ::= T · U W, {C, D}]
+            [Y ::= T · U V, {D}]
+            [Z ::= T · U W, {C}]
         Actions
-            U : ShiftPrefix 10
+            U : ShiftPrefix 11
     State 5 [5.0]
         Kernel
             [X ::= A Y · D, {"⊥"}]
         Actions
-            D : ShiftAccept 11
+            D : ShiftAccept 12
     State 6 [6.0]
         Kernel
             [X ::= A Z · C, {"⊥"}]
         Actions
-            C : ShiftAccept 12
-    State 7 [7.0]
+            C : ShiftAccept 13
+    State 7 [4.1]
+        Kernel
+            [Y ::= T · U V, {E}]
+            [Z ::= T · U W, {D}]
+        Actions
+            U : ShiftPrefix 14
+    State 8 [7.0]
         Kernel
             [X ::= B Y · E, {"⊥"}]
         Actions
-            E : ShiftAccept 13
-    State 8 [8.0]
+            E : ShiftAccept 15
+    State 9 [8.0]
         Kernel
             [X ::= B Z · D, {"⊥"}]
         Actions
-            D : ShiftAccept 14
-    State 9 [9.0]
+            D : ShiftAccept 16
+    State 10 [9.0]
         Kernel
             [X' ::= X "⊥" ·, {"ε"}]
         Actions
             "ε" : Reduce X' ::= X "⊥"
-    State 10 [10.0]
+    State 11 [10.0]
         Kernel
-            [Y ::= T U · V, {D, E}]
-            [Z ::= T U · W, {C, D}]
+            [Y ::= T U · V, {D}]
+            [Z ::= T U · W, {C}]
         Actions
-            V : ShiftPrefix 15
-            W : ShiftPrefix 16
-    State 11 [11.0]
+            V : ShiftPrefix 17
+            W : ShiftPrefix 18
+    State 12 [11.0]
         Kernel
             [X ::= A Y D ·, {"⊥"}]
         Actions
             "⊥" : Reduce X ::= A Y D
-    State 12 [12.0]
+    State 13 [12.0]
         Kernel
             [X ::= A Z C ·, {"⊥"}]
         Actions
             "⊥" : Reduce X ::= A Z C
-    State 13 [13.0]
+    State 14 [10.1]
+        Kernel
+            [Y ::= T U · V, {E}]
+            [Z ::= T U · W, {D}]
+        Actions
+            V : ShiftPrefix 17
+            W : ShiftPrefix 18
+    State 15 [13.0]
         Kernel
             [X ::= B Y E ·, {"⊥"}]
         Actions
             "⊥" : Reduce X ::= B Y E
-    State 14 [14.0]
+    State 16 [14.0]
         Kernel
             [X ::= B Z D ·, {"⊥"}]
         Actions
             "⊥" : Reduce X ::= B Z D
-    State 15 [15.0]
+    State 17 [15.0]
         Kernel
             [Y ::= T U V ·, {D, E}]
         Actions
             D : Reduce Y ::= T U V
             E : Reduce Y ::= T U V
-    State 16 [16.0]
+    State 18 [16.0]
         Kernel
             [Z ::= T U W ·, {C, D}]
         Actions

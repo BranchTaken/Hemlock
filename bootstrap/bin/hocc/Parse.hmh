@@ -1,9 +1,9 @@
 (* To bootstrap the `hocc` parser, run one of the following commands:
  *
  * - Compilable (trivial update):
- *   dune exec -- hocc -v -a ielr1 -ml -s Parse
+ *   dune exec -- hocc -v -ml -s Parse
  * - Not compilable (use external `hocc`):
- *   hocc -v -a ielr1 -ml -s Parse
+ *   hocc -v -ml -s Parse
  *)
 open Basis
 open! Basis.Rudiments

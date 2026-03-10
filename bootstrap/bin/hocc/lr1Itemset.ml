@@ -197,11 +197,11 @@ let is_accept t =
     match Lr1Item.is_accept lr1item with is_accept -> is_accept, not is_accept
   ) t
 
-let compat_lr1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
+let compat_lr ({core=c0; _} as t0) ({core=c1; _} as t1) =
   assert Lr0Itemset.(c0 = c1);
   t0 = t1
 
-let compat_pgm1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
+let compat_pgm ({core=c0; _} as t0) ({core=c1; _} as t1) =
   let rec f o_seq t_seq = begin
     let rec compat_weak_follow_inner o_seq t_seq o_follow t_follow = begin
       match Seq.next_opt o_seq, Seq.next_opt t_seq with
@@ -237,6 +237,6 @@ let compat_pgm1 ({core=c0; _} as t0) ({core=c1; _} as t1) =
       f o_seq t_seq
     end
 
-let compat_lalr1 {core=c0; _} {core=c1; _} =
+let compat_lalr {core=c0; _} {core=c1; _} =
   assert Lr0Itemset.(c0 = c1);
   true

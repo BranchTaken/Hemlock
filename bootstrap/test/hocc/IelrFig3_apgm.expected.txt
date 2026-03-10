@@ -1,4 +1,4 @@
-IelrFig3_apgm1 grammar
+IelrFig3_apgm grammar
 
 Precedences
     neutral p1
@@ -48,7 +48,7 @@ Non-terminals
         Follow: {Ta}
         Productions
             C ::= Ta Ta prec p3
-PGM(1) States
+PGM LR(1) States
     State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]

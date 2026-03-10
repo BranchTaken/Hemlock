@@ -163,11 +163,11 @@ let resolutions ~resolve symbols prods
   in
   r0, r1
 
-let equal_ielr1 ~resolve symbols prods t0 t1 =
+let equal_ielr ~resolve symbols prods t0 t1 =
   let r0, r1 = resolutions ~resolve symbols prods t0 t1 in
   Contrib.equal r0 r1
 
-let compat_ielr1 ~resolve symbols prods t0 t1 =
+let compat_ielr ~resolve symbols prods t0 t1 =
   let r0, r1 = resolutions ~resolve symbols prods t0 t1 in
   (* Determine compatibility. *)
   match Contrib.length r0, Contrib.length r1 with

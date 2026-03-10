@@ -1,5 +1,5 @@
 hocc: Parsing "./PagerG2_gno_mno.hmh"
-hocc: Generating PGM(1) specification
+hocc: Generating PGM LR(1) specification
 hocc: 0 precedences, 10 tokens, 8 non-terminals (1 start), 14 productions
 hocc: LR(1) item set compatibility: weak
 hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++^.+++++++..+^.......++^.++++...
