@@ -10,12 +10,12 @@ carries on a long tradition, to wit:
 
 Both programs interpret high-level human-written parser descriptions and produce output unfit for
 human consumption. However `hocc` has several distinguishing features relative to `yacc`, aside from
-interoperating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather than
+integrating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather than
 [C](https://en.wikipedia.org/wiki/The_C_Programming_Language).
 
 - `hocc` generates LR(1) rather than [LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) parsers,
-  optionally using a behavior-preserving compaction algorithms that reduces the state machine size
-  relative to the canonical LR(1) algorithm [^knuth1965].
+  optionally using behavior-preserving algorithms that reduce the state machine size relative to the
+  canonical LR(1) algorithm [^knuth1965].
 - `hocc`'s precedence facilities are more precise and easier to use without inadvertently masking
   grammar ambiguities. Whereas `yacc` supports only a single linear precedence ordering, `hocc`
   supports arbitrarily many directed acyclic precedence graphs. Given this more powerful conflict
