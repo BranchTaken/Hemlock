@@ -16,43 +16,43 @@ type t = {
 let init_state_pred_gotos prods states =
   let adjs = Adjs.init states in
   Map.empty (module State.Index)
-  |> (fun state_pred_gotos -> Array.fold ~init:state_pred_gotos ~f:(fun state_pred_gotos
+  |> fun state_pred_gotos -> Array.fold ~init:state_pred_gotos ~f:(fun state_pred_gotos
     State.{statenub={lr1itemsetclosure={index=state_index; _}; _}; actions; _} ->
     let pred_gotos = Map.empty (module State.Index)
-      |> (fun pred_gotos -> Ordmap.fold ~init:pred_gotos
-          ~f:(fun pred_gotos (_symbol_index, action_set) ->
-            Ordset.fold ~init:pred_gotos ~f:(fun pred_gotos action ->
-              let open State.Action in
-              match action with
-              | ShiftPrefix _isucc_state_index
-              | ShiftAccept _isucc_state_index -> pred_gotos
-              | Reduce prod_index -> begin
-                  let Prod.{lhs_index; rhs_indexes; _} =
-                    Prods.prod_of_prod_index prod_index prods in
-                  let rhs_length = Array.length rhs_indexes in
-                  let pred_state_indexes = (match rhs_length with
-                    | 0L -> Ordset.singleton (module State.Index) state_index
-                    | _ -> Adjs.preds_of_state_index ~d:rhs_length state_index adjs
-                  ) in
-                  Ordset.fold ~init:pred_gotos ~f:(fun pred_gotos pred_state_index ->
-                    let State.{gotos; _} = Array.get pred_state_index states in
-                    match Ordmap.get lhs_index gotos with
-                    | None -> pred_gotos
-                    | Some goto_state_index -> begin
-                        Map.amend pred_state_index ~f:(fun gotos_opt ->
-                          let gotos = match gotos_opt with
-                            | None -> Ordset.singleton (module State.Index) goto_state_index
-                            | Some gotos -> Ordset.insert goto_state_index gotos
-                          in
-                          Some gotos
-                        ) pred_gotos
-                      end
-                  ) pred_state_indexes
-                end
-            ) action_set
-          ) actions) in
+      |> fun pred_gotos -> Ordmap.fold ~init:pred_gotos
+        ~f:(fun pred_gotos (_symbol_index, action_set) ->
+          Ordset.fold ~init:pred_gotos ~f:(fun pred_gotos action ->
+            let open State.Action in
+            match action with
+            | ShiftPrefix _isucc_state_index
+            | ShiftAccept _isucc_state_index -> pred_gotos
+            | Reduce prod_index -> begin
+                let Prod.{lhs_index; rhs_indexes; _} =
+                  Prods.prod_of_prod_index prod_index prods in
+                let rhs_length = Array.length rhs_indexes in
+                let pred_state_indexes = (match rhs_length with
+                  | 0L -> Ordset.singleton (module State.Index) state_index
+                  | _ -> Adjs.preds_of_state_index ~d:rhs_length state_index adjs
+                ) in
+                Ordset.fold ~init:pred_gotos ~f:(fun pred_gotos pred_state_index ->
+                  let State.{gotos; _} = Array.get pred_state_index states in
+                  match Ordmap.get lhs_index gotos with
+                  | None -> pred_gotos
+                  | Some goto_state_index -> begin
+                      Map.amend pred_state_index ~f:(fun gotos_opt ->
+                        let gotos = match gotos_opt with
+                          | None -> Ordset.singleton (module State.Index) goto_state_index
+                          | Some gotos -> Ordset.insert goto_state_index gotos
+                        in
+                        Some gotos
+                      ) pred_gotos
+                    end
+                ) pred_state_indexes
+              end
+          ) action_set
+        ) actions in
     Map.insert_hlt ~k:state_index ~v:pred_gotos state_pred_gotos
-  ) states)
+  ) states
 
 let init prods states =
   let state_pred_gotos = init_state_pred_gotos prods states in
