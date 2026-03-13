@@ -968,7 +968,6 @@ and states_init io ~resolve symbols prods isocores ~gotonub_of_statenub_goto =
     io.log
     |> Fmt.fmt "hocc: Generating " |> Uns.pp nstates |> Fmt.fmt " LR(1) state"
     |> (fun formatter -> match nstates with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-    |> Fmt.fmt "\n"
     |> Io.with_log io
   in
   let states =
@@ -979,6 +978,11 @@ and states_init io ~resolve symbols prods isocores ~gotonub_of_statenub_goto =
         Ordset.insert state states
       ) isocores
     |> Ordset.to_array
+  in
+  let io =
+    io.log
+    |> Fmt.fmt "\n"
+    |> Io.with_log io
   in
   io, states
 
@@ -1028,7 +1032,6 @@ and gc_states io prods isocores states =
         io.log
         |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nreachable |> Fmt.fmt " LR(1) state"
         |> (fun formatter -> match nreachable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-        |> Fmt.fmt "\n"
         |> Io.with_log io
       in
       (* Create a map of pre-GC state indexes to post-GC state indexes. *)
@@ -1056,53 +1059,210 @@ and gc_states io prods isocores states =
             end
         ) states
         |> Ordset.to_array in
+      let io =
+        io.log
+        |> Fmt.fmt "\n"
+        |> Io.with_log io
+      in
       io, reindexed_isocores, reindexed_states
     end
 
 and remerge_states io symbols isocores states =
-  let rec work io isocores states remergeables = begin
-    let progress, remergeables =
-      (* Initialize the work list with indices of all states in non-singleton isocore sets. *)
-      Isocores.fold_isocore_sets ~init:[] ~f:(fun state_indexes isocore_set ->
-        match Ordset.length isocore_set with
-        | 0L -> not_reached ()
-        | 1L -> state_indexes
-        | _ -> Ordset.fold ~init:state_indexes ~f:(fun workq index -> index :: workq) isocore_set
-      ) isocores
-      |> List.fold ~init:(false, remergeables)
-        ~f:(fun (progress, remergeables) state_index ->
-          let State.{statenub; _} as state = Array.get state_index states in
-          assert Uns.(State.index state = state_index);
-          let core = Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure).kernel in
-          let isocore_set = Isocores.get_isocore_set_hlt core isocores in
-          Ordset.fold ~init:(progress, remergeables)
-            ~f:(fun (progress, remergeables) iso_index ->
-              (* Eliminate redundant/self pairs via `<=`. *)
-              match State.Index.(iso_index <= state_index) with
-              | true -> progress, remergeables
-              | false -> begin
-                  let iso_state = Array.get iso_index states in
-                  let index_map = Remergeables.index_map remergeables in
-                  match State.remergeable index_map iso_state state with
-                  | false -> progress, remergeables
+  let rec remergeable_states states remergeables state0 state1 = begin
+    let remergeable_action_set_shifts states remergeables action_set0 action_set1 = begin
+      (* Check whether the sets have equivalent shift actions (or no shift actions). This
+       * implementation takes advantage of action comparison order putting shift actions before
+       * reduce actions, i.e. if there is a shift action, it is the first set element. *)
+      let open State.Action in
+      match Ordset.nth 0L action_set0, Ordset.nth 0L action_set1 with
+      | ShiftPrefix index0, ShiftPrefix index1
+      | ShiftAccept index0, ShiftAccept index1 -> begin
+          match State.Index.(index0 = index1) with
+          | true -> remergeables, true
+          | false -> begin
+              let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
+              let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
+              match Remergeables.rel statenub0 statenub1 remergeables with
+              | Unknown -> begin
+                  let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
+                  remergeable_states states remergeables state0 state1
+                end
+              | Distinct -> remergeables, false
+              | Mergeable -> remergeables, true
+            end
+        end
+      | Reduce _, Reduce _ -> remergeables, true (* Handled in `remergeable_action_set_reduces`. *)
+      | _ -> remergeables, false (* Shift in one set but not the other. *)
+    end in
+    let remergeable_action_set_reduces action_set0 action_set1 = begin
+      (* Check whether the sets have equivalent reduce actions. Shift actions are handled above,
+       * since they only show up together in fold2 if they shift to the same state index. *)
+      let open State.Action in
+      Ordset.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
+        match kv0_opt, kv1_opt with
+        | Some _, Some _ (* fold2 guarantees equality. *)
+        | Some (ShiftPrefix _|ShiftAccept _), None (* Handled in `remergeable_action_set_shifts`. *)
+        | None, Some (ShiftPrefix _|ShiftAccept _)
+          -> true, false
+        | Some (Reduce _), None (* Reduce in one set but not the other. *)
+        | None, Some (Reduce _)
+          -> false, true
+        | None, None -> not_reached ()
+      ) action_set0 action_set1
+    end in
+    let remergeable_action_sets states remergeables action_set0 action_set1 = begin
+      let remergeables, remergeable =
+        remergeable_action_set_shifts states remergeables action_set0 action_set1 in
+      match remergeable with
+      | false -> remergeables, false
+      | true -> remergeables, remergeable_action_set_reduces action_set0 action_set1
+    end in
+    let remergeable_actions states remergeables State.{statenub=statenub0; actions=a0; _}
+      State.{actions=a1; _} = begin
+      let reduces_only action_set = begin
+        let open State.Action in
+        Ordset.for_all
+          ~f:(fun action ->
+            match action with
+            | ShiftPrefix _
+            | ShiftAccept _
+              -> false
+            | Reduce _
+              -> true
+          ) action_set
+      end in
+      Ordmap.fold2_until ~init:(remergeables, true)
+        ~f:(fun (remergeables, _remergeable) kv0_opt kv1_opt ->
+          let remergeables, remergeable = match kv0_opt, kv1_opt with
+            | Some (_, action_set0), Some (_, action_set1)
+              -> remergeable_action_sets states remergeables action_set0 action_set1
+            | Some (symbol_index, action_set), None
+            | None, Some (symbol_index, action_set)
+              -> begin
+                  (* All states in the mergeable set must either have an empty action set or
+                   * identical nonempty action set. *)
+                  match reduces_only action_set with
+                  | false -> remergeables, false
                   | true -> begin
-                      let iso_statenub = iso_state.statenub in
-                      let statenub = state.statenub in
-                      match Remergeables.mem iso_statenub remergeables &&
-                            Remergeables.mem statenub remergeables with
-                      | true -> progress, remergeables
-                      | false -> true, Remergeables.insert iso_statenub statenub remergeables
+                      let mergeable_set = Remergeables.mergeable_set statenub0 remergeables in
+                      let remergeable = Ordset.fold_until ~init:true
+                          ~f:(fun _remergeable statenub ->
+                            let index = StateNub.index statenub in
+                            let State.{actions; _} = Array.get index states in
+                            match Ordmap.get symbol_index actions with
+                            | None -> true, false
+                            | Some mergeable_action_set -> begin
+                                let remergeable = Ordset.equal action_set mergeable_action_set in
+                                remergeable, (not remergeable)
+                              end
+                          ) mergeable_set in
+                      remergeables, remergeable
                     end
                 end
-            ) isocore_set
-        )
-    in
-    (* Iterate until there is no remergability progress. *)
-    match progress with
-    | false -> io, remergeables
-    | true -> work io isocores states remergeables
+            | None, None
+              -> not_reached ()
+          in
+          (remergeables, remergeable), (not remergeable)
+        ) a0 a1
+    end in
+    let remergeable_gotos states remergeables State.{gotos=g0; _} State.{gotos=g1; _} = begin
+      Ordmap.fold2_until ~init:(remergeables, true)
+        ~f:(fun (remergeables, _remergeable) kv0_opt kv1_opt ->
+          match kv0_opt, kv1_opt with
+          | Some (_, index0), Some (_, index1) -> begin
+              let remergeables, remergeable = match State.Index.(index0 = index1) with
+                | true -> remergeables, true
+                | false -> begin
+                    let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
+                    let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
+                    match Remergeables.rel statenub0 statenub1 remergeables with
+                    | Unknown -> begin
+                        let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
+                        remergeable_states states remergeables state0 state1
+                      end
+                    | Distinct -> remergeables, false
+                    | Mergeable -> remergeables, true
+                  end
+              in
+              (remergeables, remergeable), (not remergeable)
+            end
+          | Some _, None
+          | None, Some _ -> (remergeables, true), false
+          | None, None -> not_reached ()
+        ) g0 g1
+    end in
+    let remergeables, remergeable = remergeable_actions states remergeables state0 state1 in
+    match remergeable with
+    | false -> remergeables, false
+    | true -> remergeable_gotos states remergeables state0 state1
   end in
-  let io, remergeables = work io isocores states Remergeables.empty in
+  let io =
+    io.log
+    |> Fmt.fmt "hocc: Searching for remergeable state subgraphs"
+    |> Io.with_log io
+  in
+  let remergeables = Remergeables.empty in
+  let io, remergeables =
+    (* Initialize the work list with indices of all states in non-singleton isocore sets. *)
+    Isocores.fold_isocore_sets ~init:[] ~f:(fun state_indexes isocore_set ->
+      match Ordset.length isocore_set with
+      | 0L -> not_reached ()
+      | 1L -> state_indexes
+      | _ -> Ordset.fold ~init:state_indexes ~f:(fun workq index -> index :: workq) isocore_set
+    ) isocores
+    (* Reverse the work list so that remerging tends to follow the same order as splits occurred. *)
+    |> List.rev
+    |> List.fold ~init:(io, remergeables)
+      ~f:(fun (io, remergeables) index0 ->
+        let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
+        let StateNub.{isocore_set_sn=issn0; _} = statenub0 in
+        let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
+        let isocore_set = Isocores.get_isocore_set_hlt core isocores in
+        Ordset.fold_until ~init:(io, remergeables)
+          ~f:(fun (io, remergeables) index1 ->
+            let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
+            let StateNub.{isocore_set_sn=issn1; _} = statenub1 in
+            (* Eliminate redundant/self pairs via `>`. Furthermore, use issn for comparison rather
+             * than state index so that the order of merge attempts follows the same order as splits
+             * occurred. For example, given a set {0,1,2,3,4}, the order of compatibility tests
+             * during splitting was:
+             *
+             *   (1,0)
+             *   (2,0), (2,1)
+             *   (3,0), (3,1), (3,2)
+             *   (4,0), (4,1), (4,2), (4,3) *)
+            match issn0 > issn1 with
+            | false -> (io, remergeables), true
+            | true -> begin
+                let io, remergeables = match Remergeables.rel statenub0 statenub1 remergeables with
+                  | Distinct
+                  | Mergeable -> io, remergeables
+                  | Unknown -> begin
+                      let remergeables = Remergeables.root statenub0 statenub1 remergeables in
+                      let remergeables, remergeable =
+                        remergeable_states states remergeables state0 state1 in
+                      match remergeable with
+                      | false -> io, Remergeables.distinct remergeables
+                      | true -> begin
+                          let io =
+                            io.log
+                            |> Fmt.fmt "+" |> Uns.pp (Remergeables.subgraph_size remergeables)
+                            |> Io.with_log io
+                          in
+                          io, Remergeables.mergeable remergeables
+                        end
+                    end
+                in
+                (io, remergeables), false
+              end
+          ) isocore_set
+      )
+  in
+  let io =
+    io.log
+    |> Fmt.fmt "\n"
+    |> Io.with_log io
+  in
   let remergeable_index_map = Remergeables.index_map remergeables in
   let nremergeable = Ordmap.length remergeable_index_map in
   let io =
@@ -1129,7 +1289,6 @@ and remerge_states io symbols isocores states =
         io.log
         |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nremaining |> Fmt.fmt " LR(1) state"
         |> (fun formatter -> match nremaining with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-        |> Fmt.fmt "\n"
         |> Io.with_log io
       in
       (* Create a map that reindexes the remaining states. *)
@@ -1170,6 +1329,11 @@ and remerge_states io symbols isocores states =
             end
         ) remerged_states
         |> Ordset.to_array in
+      let io =
+        io.log
+        |> Fmt.fmt "\n"
+        |> Io.with_log io
+      in
       io, reindexed_isocores, reindexed_states
     end
 
@@ -1291,7 +1455,7 @@ and log_unused io precs symbols prods states =
       ) states
   end in
   let io =
-    io.log |> Fmt.fmt "hocc: Searching for unused precedences/tokens/non-terminals/productions\n"
+    io.log |> Fmt.fmt "hocc: Searching for unused precedences/tokens/non-terminals/productions"
     |> Io.with_log io
   in
   let precs_used, tokens_used, nonterms_used, prods_used = mark_states symbols prods states in
@@ -1299,6 +1463,10 @@ and log_unused io precs symbols prods states =
   let tokens_nunused = (Symbols.tokens_length symbols) - (Set.length tokens_used) in
   let nonterms_nunused = (Symbols.nonterms_length symbols) - (Set.length nonterms_used) in
   let prods_nunused = (Prods.length prods) - (Set.length prods_used) in
+  let io =
+    io.log |> Fmt.fmt "\n"
+    |> Io.with_log io
+  in
   let io = match precs_nunused with
     | 0L -> io
     | _ -> begin

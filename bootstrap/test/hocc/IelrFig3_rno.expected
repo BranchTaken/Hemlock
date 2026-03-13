@@ -13,6 +13,7 @@ hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++.++++++++++
 hocc: Generating 19 LR(1) states
 hocc: Tracing automaton........
 hocc: 0 unreachable states
+hocc: Searching for remergeable state subgraphs
 hocc: 0 remergeable states
 hocc: 1 conflict in 1 state (0 ⊥, 0 shift-reduce, 1 reduce-reduce) (conflict resolution disabled)
 hocc: Searching for unused precedences/tokens/non-terminals/productions

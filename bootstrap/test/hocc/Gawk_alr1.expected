@@ -7,7 +7,8 @@ hocc: Generating 2_467 LR(1) states
 hocc: Tracing automaton........................
 hocc: 108 unreachable states
 hocc: Reindexing 2_359 LR(1) states
-hocc: 1_261 remergeable states
-hocc: Reindexing 1_098 LR(1) states
-hocc: 251 unresolvable conflicts in 175 states (37 ⊥, 214 shift-reduce, 0 reduce-reduce)
+hocc: Searching for remergeable state subgraphs+1+1+1+1+1+1+1+1+1+1+1+1+2+2+2+2+2+2+2+2+2+2+2+1+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+4+8+8+8+8+8+8+8+37+37+37+37+35+37+37+37+37+35+37+37+35+37+35+37+35+37+35+37+37+37+74+35+37+37+37+74+6+6+6+6+6+6+6+4+4+1+1+5+4+4+10+10+10+10+10+10+10+1+1+1+1+1+1+1+1+1+1+1+1+1+1+29+29+29+29+29+29+29+1+1+1+1+1+1+1+1+1+2+2+2+1+1+3+1+1+1+1+1+1+2+2+2+2+2+2+2+2+2+2+180+4+7+9+2+2+2+3+2+2+9+1+2+4+2+1+1+2+1+1+1+1+1+2+3+2+2+1+1+1+2+3+1+1+19+1+1+1+1+1
+hocc: 1_992 remergeable states
+hocc: Reindexing 367 LR(1) states
+hocc: 103 unresolvable conflicts in 65 states (37 ⊥, 66 shift-reduce, 0 reduce-reduce)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
