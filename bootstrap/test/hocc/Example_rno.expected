@@ -7,6 +7,7 @@ hocc: Generating 14 LR(1) states
 hocc: Tracing automaton......
 hocc: 0 unreachable states
 hocc: State subgraph remerging disabled due to unresolvable conflicts
+hocc: Explicitly enable remerging (-remerge yes) to override
 hocc: 8 conflicts in 2 states (0 ⊥, 8 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report

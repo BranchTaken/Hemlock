@@ -17,6 +17,10 @@ let pp_algorithm algorithm formatter =
     | Lalr -> "Lalr"
   )
 
+type remerge =
+  | Default of bool (** Default; no remerge parameter specified. *)
+  | Explicit of bool (** Explicit remerge parameter specified. *)
+
 type t = {
   verbose: bool;
   text: bool;
@@ -66,14 +70,14 @@ let default = {
 
 let remerge algorithm remerge_opt =
   match algorithm, remerge_opt with
-  | _, Some remerge -> remerge
+  | _, Some remerge -> Explicit remerge
   | Aplr, None
-    -> true
+    -> Default true
   | Ielr, None
   | Pgm, None
   | Lr, None
   | Lalr, None
-    -> false
+    -> Default false
 
 let usage error =
   let exit_code, formatter = match error with

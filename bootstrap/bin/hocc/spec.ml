@@ -1623,25 +1623,30 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     | false -> io, isocores, states
   in
   let io, _isocores, states = match remerge with
-    | true -> begin
+    | Conf.Default true
+    | Explicit true -> begin
         let conflicts =
           states
           |> Array.map ~f:(fun state -> State.conflicts ~filter_pseudo_end:true state)
           |> Array.reduce ~f:Uns.( + )
           |> Option.value ~default:0L
         in
-        match conflicts with
-        | 0L -> remerge_states io symbols isocores states
-        | _ -> begin
+        match remerge, conflicts with
+        | Default true, 0L
+        | Explicit true, _
+          -> remerge_states io symbols isocores states
+        | _, _ -> begin
             let io =
               io.log
               |> Fmt.fmt "hocc: State subgraph remerging disabled due to unresolvable conflicts\n"
+              |> Fmt.fmt "hocc: Explicitly enable remerging (-remerge yes) to override\n"
               |> Io.with_log io
             in
             io, isocores, states
           end
       end
-    | false -> io, isocores, states
+    | Default false
+    | Explicit false -> io, isocores, states
   in
   let io = log_conflicts io ~resolve states in
   let io = log_unused io precs symbols prods states in
