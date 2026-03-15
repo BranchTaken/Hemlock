@@ -9,6 +9,10 @@ type algorithm =
   | Lr (** LR(1) algorithm. *)
   | Lalr (** LALR(1) algorithm. *)
 
+type remerge =
+  | Default of bool (** Default; no remerge parameter specified. *)
+  | Explicit of bool (** Explicit remerge parameter specified. *)
+
 val pp_algorithm: algorithm -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** [pp_algorithm algorithm] formats [algorithm]. *)
 
@@ -38,8 +42,9 @@ val resolve: t -> bool
 val gc: t -> bool
 (** [gc t] returns true if unreachable state garbage collection is enabled. *)
 
-val remerge: t -> bool
-(** [remerge t] returns true if remerging of equivalent split states is enabled. *)
+val remerge: t -> remerge
+(** [remerge t] returns a [Default]/[Explicit] remerging parameter, true if remerging of equivalent
+    split states is enabled. *)
 
 val hemlock: t -> bool
 (** [hemlock t] returns true if a Hemlock-based parser is to be generated. *)
