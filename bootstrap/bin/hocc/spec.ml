@@ -1235,7 +1235,7 @@ and remerge_states io symbols isocores states =
             match issn0 > issn1 with
             | false -> (io, remergeables), true
             | true -> begin
-                let remergeables = match Remergeables.rel statenub0 statenub1 remergeables with
+                let io, remergeables = match Remergeables.rel statenub0 statenub1 remergeables with
                   | Distinct
                   | Mergeable -> io, remergeables
                   | Unknown -> begin
@@ -1262,7 +1262,7 @@ and remerge_states io symbols isocores states =
                         end
                     end
                 in
-                remergeables, false
+                (io, remergeables), false
               end
           ) isocore_set
       )
