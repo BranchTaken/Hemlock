@@ -1086,7 +1086,10 @@ and remerge_states io symbols isocores states =
               match Remergeables.rel statenub0 statenub1 remergeables with
               | Unknown -> begin
                   let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
-                  remergeable_states states remergeables state0 state1
+                  let remergeables, remergeable =
+                    remergeable_states states remergeables state0 state1 in
+                  let remergeables = Remergeables.unwind remergeables in
+                  remergeables, remergeable
                 end
               | Distinct -> remergeables, false
               | Mergeable -> remergeables, true
@@ -1179,7 +1182,10 @@ and remerge_states io symbols isocores states =
                     match Remergeables.rel statenub0 statenub1 remergeables with
                     | Unknown -> begin
                         let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
-                        remergeable_states states remergeables state0 state1
+                        let remergeables, remergeable =
+                          remergeable_states states remergeables state0 state1 in
+                        let remergeables = Remergeables.unwind remergeables in
+                        remergeables, remergeable
                       end
                     | Distinct -> remergeables, false
                     | Mergeable -> remergeables, true

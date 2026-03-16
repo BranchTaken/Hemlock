@@ -32,9 +32,9 @@ type t = {
   (* Core-keyed map of `Mergeable`/`Distinct` relationships, with pending relationships integrated
    * via `root`/`expand`. `distinct` rolls `cores_map` back to `snapshot`. *)
   cores_map: cores_map;
-  (* Roots of subgraph remergeability exploration, set by `root` and cleared by
-   * `distinct`/`mergeable`. *)
-  roots: (StateNub.t * StateNub.t) option;
+  (* Spines of subgraph remergeability exploration, set by `root`, extended by `expand`, shortened
+   * by `unwind`, and cleared by `distinct`/`remergeable`. *)
+  spines: (StateNub.t * StateNub.t) list;
   (* Number of states in each of the two subgraphs currently being considered for remergeability. *)
   subgraph_size: uns;
   (* Snapshot of `cores_map`, updated by `mergeable`. *)
@@ -84,7 +84,7 @@ let fmt ?(alt=false) ?(width=0L) {cores_map; _} formatter =
 let empty =
   {
     cores_map=Map.empty (module Lr0Itemset);
-    roots=None;
+    spines=[];
     subgraph_size=0L;
     snapshot=Map.empty (module Lr0Itemset);
   }
@@ -134,7 +134,7 @@ let subgraph_size {subgraph_size; _} =
 
 let insert (StateNub.{isocores_sn=isn0; isocore_set_sn=issn0; _} as statenub0)
   (StateNub.{isocores_sn=isn1; isocore_set_sn=issn1; _} as statenub1)
-  ({cores_map; subgraph_size; _} as t) =
+  ({cores_map; spines; subgraph_size; _} as t) =
   assert (isn0 = isn1);
   assert (issn0 <> issn1);
   let mergeable_pair = Bitset.of_array [|issn0; issn1|] in
@@ -181,58 +181,62 @@ let insert (StateNub.{isocores_sn=isn0; isocore_set_sn=issn0; _} as statenub0)
         Map.update_hlt ~k:core ~v:core_rels cores_map
       end
   in
-  {t with cores_map; subgraph_size=succ subgraph_size}
+  {t with cores_map; subgraph_size=succ subgraph_size; spines=(statenub0, statenub1)::spines}
 
 let root (StateNub.{isocores_sn=isn0; _} as statenub0) (StateNub.{isocores_sn=isn1; _} as statenub1)
-  ({roots; _} as t) =
+  ({spines; _} as t) =
   assert (isn0 = isn1);
-  assert (Option.is_none roots);
-  let t = insert statenub0 statenub1 t in
-  {t with roots=Some (statenub0, statenub1)}
+  assert (List.is_empty spines);
+  insert statenub0 statenub1 t
+
+let unwind ({spines; _} as t) =
+  let spines = match spines with
+    | [] -> not_reached ()
+    | _ :: tl -> tl
+  in
+  {t with spines}
 
 let expand = insert
 
-let distinct ({roots; snapshot; _} as t) =
-  assert (Option.is_some roots);
-  let (StateNub.{isocore_set_sn=issn0; _} as statenub0), StateNub.{isocore_set_sn=issn1; _} =
-    match roots with
-    | None -> not_reached ()
-    | Some roots -> roots
+let distinct ({spines; snapshot; _} as t) =
+  let cores_map = List.fold ~init:snapshot
+      ~f:(fun cores_map ((StateNub.{isocore_set_sn=issn0; _} as statenub0),
+        StateNub.{isocore_set_sn=issn1; _}) ->
+        let distinct_pair = Bitset.of_array [|issn0; issn1|] in
+        let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
+        match Map.get core cores_map with
+        | None -> begin
+            let core_rels = {
+              mergeable_sets=[];
+              issn2set=Map.empty (module Uns);
+              distinct=Map.of_alist (module Uns) [
+                (issn0, distinct_pair);
+                (issn1, distinct_pair);
+              ];
+              issn2statenub=Map.empty (module Uns);
+            } in
+            Map.insert_hlt ~k:core ~v:core_rels cores_map
+          end
+        | Some ({distinct; _} as core_rels) -> begin
+            let amend_distinct distinct_set_opt = begin
+              match distinct_set_opt with
+              | None -> Some distinct_pair
+              | Some distinct_set -> Some (Bitset.union distinct_pair distinct_set)
+            end in
+            let distinct =
+              distinct
+              |> Map.amend issn0 ~f:amend_distinct
+              |> Map.amend issn1 ~f:amend_distinct
+            in
+            let core_rels = {core_rels with distinct} in
+            Map.update_hlt ~k:core ~v:core_rels cores_map
+          end
+      ) spines
   in
-  let distinct_pair = Bitset.of_array [|issn0; issn1|] in
-  let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
-  let cores_map = match Map.get core snapshot with
-    | None -> begin
-        let core_rels = {
-          mergeable_sets=[];
-          issn2set=Map.empty (module Uns);
-          distinct=Map.of_alist (module Uns) [
-            (issn0, distinct_pair);
-            (issn1, distinct_pair);
-          ];
-          issn2statenub=Map.empty (module Uns);
-        } in
-        Map.insert_hlt ~k:core ~v:core_rels snapshot
-      end
-    | Some ({distinct; _} as core_rels) -> begin
-        let amend_distinct distinct_set_opt = begin
-          match distinct_set_opt with
-          | None -> Some distinct_pair
-          | Some distinct_set -> Some (Bitset.union distinct_pair distinct_set)
-        end in
-        let distinct =
-          distinct
-          |> Map.amend issn0 ~f:amend_distinct
-          |> Map.amend issn1 ~f:amend_distinct
-        in
-        let core_rels = {core_rels with distinct} in
-        Map.update_hlt ~k:core ~v:core_rels snapshot
-      end
-  in
-  {t with cores_map; roots=None; subgraph_size=0L}
+  {t with cores_map; spines=[]; subgraph_size=0L}
 
 let mergeable ({cores_map; _} as t) =
-  {t with roots=None; subgraph_size=0L; snapshot=cores_map}
+  {t with spines=[]; subgraph_size=0L; snapshot=cores_map}
 
 (* Return a map of state nub indexes, where keys are to be remerged into values. For each
  * remergeable set, mappings exist for all but the lowest-numbered state nub, and all the mappings
