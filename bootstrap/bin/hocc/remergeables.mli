@@ -36,11 +36,15 @@ val root: StateNub.t -> StateNub.t -> t -> t
 
 val expand: StateNub.t -> StateNub.t -> t -> t
 (** [expand statenub0 statenub1] expands the subgraphs being explored by tentatively recording a
-    [Remergeable] relationship between [statenub0] and [statenub1]. *)
+    [Remergeable] relationship between [statenub0] and [statenub1], as well as extending the spines
+    to incorporate [statenub0] and [statenub1]. *)
+
+val unwind: t -> t
+(** [unwind t] shortens the spines by one state nub each. *)
 
 val distinct: t -> t
 (** [distinct t] concludes subgraph exploration with a determination that the subgraphs are
-    distinct. The roots' relationship transitions to [Distinct] and all other tentative
+    distinct. The spines' relationships transition to [Distinct] and all other tentative
     relationships revert to [Unknown]. *)
 
 val mergeable: t -> t
