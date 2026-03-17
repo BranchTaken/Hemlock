@@ -82,8 +82,10 @@ and remergeable_actions states remergeables State.{statenub=statenub0; actions=a
               match reduces_only action_set with
               | false -> remergeables, false
               | true -> begin
-                  let mergeable_set = Remergeables.mergeable_set statenub0 remergeables in
-                  let remergeable = Ordset.fold_until ~init:true
+                  let remergeable =
+                    remergeables
+                    |> Remergeables.mergeable_set statenub0
+                    |> Ordset.fold_until ~init:true
                       ~f:(fun _remergeable statenub ->
                         let index = StateNub.index statenub in
                         let State.{actions; _} = Array.get index states in
@@ -93,7 +95,8 @@ and remergeable_actions states remergeables State.{statenub=statenub0; actions=a
                             let remergeable = Ordset.equal action_set mergeable_action_set in
                             remergeable, (not remergeable)
                           end
-                      ) mergeable_set in
+                      )
+                  in
                   remergeables, remergeable
                 end
             end
@@ -130,8 +133,40 @@ and remergeable_gotos states remergeables State.{gotos=g0; _} State.{gotos=g1; _
           in
           (remergeables, remergeable), (not remergeable)
         end
-      | Some _, None
-      | None, Some _ -> (remergeables, true), false (* XXX *)
+      | Some (symbol_index, index0), None
+      | None, Some (symbol_index, index0) -> begin
+          (* All states in the mergeable set must either lack a goto or be remergeable with the
+           * other gotos. Testing against one other goto suffices due to transitivity. *)
+          let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
+          let remergeables, remergeable =
+            remergeables
+            |> Remergeables.mergeable_set statenub0
+            |> Ordset.fold_until ~init:(remergeables, true)
+              ~f:(fun (remergeables, _remergeable) statenub ->
+                let index1 = StateNub.index statenub in
+                let State.{gotos; _} = Array.get index1 states in
+                match Ordmap.get symbol_index gotos with
+                | None -> (remergeables, true), false
+                | Some index1 -> begin
+                    let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
+                    match Remergeables.rel statenub0 statenub1 remergeables with
+                    | Unknown -> begin
+                        let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
+                        let remergeables, remergeable =
+                          remergeable_states states remergeables state0 state1 in
+                        let remergeables = match remergeable with
+                          | false -> remergeables
+                          | true -> Remergeables.unwind remergeables
+                        in
+                        (remergeables, remergeable), (not remergeable)
+                      end
+                    | Distinct -> (remergeables, false), true
+                    | Mergeable -> (remergeables, true), true
+                  end
+              )
+          in
+          (remergeables, remergeable), (not remergeable)
+        end
       | None, None -> not_reached ()
     ) g0 g1
 
