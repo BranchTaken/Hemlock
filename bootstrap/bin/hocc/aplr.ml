@@ -1,7 +1,21 @@
 open Basis
 open! Basis.Rudiments
 
-let rec remergeable_action_set_shifts states remergeables action_set0 action_set1 =
+(* Pairwise state nubs comprising the (reversed) path from frontiers to roots. Spines are tracked in
+ * case a `Distinct` pair is discovered, in which case the spines are passed to
+ * `Remergeables.distinct`. *)
+type spines = (StateNub.t * StateNub.t) list
+
+type remergeable =
+  | NotRemergeable of spines (* Spines' state nubs are pairwise distinct. *)
+  | Remergeable
+
+let bool_of_remergeable remergeable =
+  match remergeable with
+  | NotRemergeable _ -> false
+  | Remergeable -> true
+
+let remergeable_action_set_shifts states remergeables frontiers spines action_set0 action_set1 =
   (* Check whether the sets have equivalent shift actions (or no shift actions). This implementation
    * takes advantage of action comparison order putting shift actions before reduce actions, i.e. if
    * there is a shift action, it is the first set element. *)
@@ -10,53 +24,49 @@ let rec remergeable_action_set_shifts states remergeables action_set0 action_set
   | ShiftPrefix index0, ShiftPrefix index1
   | ShiftAccept index0, ShiftAccept index1 -> begin
       match State.Index.(index0 = index1) with
-      | true -> remergeables, true
+      | true -> remergeables, frontiers, Remergeable
       | false -> begin
-          let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
-          let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
+          let State.{statenub=statenub0; _} = Array.get index0 states in
+          let State.{statenub=statenub1; _} = Array.get index1 states in
+          let spines = (statenub0, statenub1) :: spines in
           match Remergeables.rel statenub0 statenub1 remergeables with
           | Unknown -> begin
-              let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
-              let remergeables, remergeable =
-                remergeable_states states remergeables state0 state1 in
-              let remergeables = match remergeable with
-                | false -> remergeables
-                | true -> Remergeables.unwind remergeables
-              in
-              remergeables, remergeable
+              let frontiers = spines :: frontiers in
+              remergeables, frontiers, Remergeable
             end
-          | Distinct -> remergeables, false
-          | Mergeable -> remergeables, true
+          | Distinct -> remergeables, frontiers, NotRemergeable spines
+          | Mergeable -> remergeables, frontiers, Remergeable
         end
     end
-  | Reduce _, Reduce _ -> remergeables, true (* Handled in `remergeable_action_set_reduces`. *)
-  | _ -> remergeables, false (* Shift in one set but not the other. *)
+  | Reduce _, Reduce _ ->
+    remergeables, frontiers, Remergeable (* Handled in `remergeable_action_set_reduces`. *)
+  | _ -> remergeables, frontiers, NotRemergeable spines (* Shift in one set but not the other. *)
 
-and remergeable_action_set_reduces action_set0 action_set1 =
+let remergeable_action_set_reduces spines action_set0 action_set1 =
   (* Check whether the sets have equivalent reduce actions. Shift actions are handled above, since
    * they only show up together in fold2 if they shift to the same state index. *)
   let open State.Action in
-  Ordset.fold2_until ~init:true ~f:(fun _remergeable kv0_opt kv1_opt ->
+  Ordset.fold2_until ~init:Remergeable ~f:(fun _remergeable kv0_opt kv1_opt ->
     match kv0_opt, kv1_opt with
     | Some _, Some _ (* fold2 guarantees equality. *)
     | Some (ShiftPrefix _|ShiftAccept _), None (* Handled in `remergeable_action_set_shifts`. *)
     | None, Some (ShiftPrefix _|ShiftAccept _)
-      -> true, false
+      -> Remergeable, false
     | Some (Reduce _), None (* Reduce in one set but not the other. *)
     | None, Some (Reduce _)
-      -> false, true
+      -> NotRemergeable spines, true
     | None, None -> not_reached ()
   ) action_set0 action_set1
 
-and remergeable_action_sets states remergeables action_set0 action_set1 =
-  let remergeables, remergeable =
-    remergeable_action_set_shifts states remergeables action_set0 action_set1 in
+let remergeable_action_sets states remergeables frontiers spines action_set0 action_set1 =
+  let remergeables, frontiers, remergeable =
+    remergeable_action_set_shifts states remergeables frontiers spines action_set0 action_set1 in
   match remergeable with
-  | false -> remergeables, false
-  | true -> remergeables, remergeable_action_set_reduces action_set0 action_set1
+  | NotRemergeable _ -> remergeables, frontiers, remergeable
+  | Remergeable ->
+    remergeables, frontiers, remergeable_action_set_reduces spines action_set0 action_set1
 
-and remergeable_actions states remergeables State.{statenub=statenub0; actions=a0; _}
-  State.{actions=a1; _} =
+let remergeable_actions states remergeables frontiers spines =
   let reduces_only action_set = begin
     let open State.Action in
     Ordset.for_all
@@ -69,112 +79,160 @@ and remergeable_actions states remergeables State.{statenub=statenub0; actions=a
           -> true
       ) action_set
   end in
-  Ordmap.fold2_until ~init:(remergeables, true)
-    ~f:(fun (remergeables, _remergeable) kv0_opt kv1_opt ->
-      let remergeables, remergeable = match kv0_opt, kv1_opt with
+  let statenub0, statenub1 = match spines with
+    | [] -> not_reached ()
+    | statenub_pair :: _ -> statenub_pair
+  in
+  let index0 = StateNub.index statenub0 in
+  let index1 = StateNub.index statenub1 in
+  let State.{actions=a0; _} = Array.get index0 states in
+  let State.{actions=a1; _} = Array.get index1 states in
+  Ordmap.fold2_until ~init:(remergeables, frontiers, Remergeable)
+    ~f:(fun (remergeables, frontiers, _remergeable) kv0_opt kv1_opt ->
+      let remergeables, frontiers, remergeable = match kv0_opt, kv1_opt with
         | Some (_, action_set0), Some (_, action_set1)
-          -> remergeable_action_sets states remergeables action_set0 action_set1
+          -> remergeable_action_sets states remergeables frontiers spines action_set0 action_set1
         | Some (symbol_index, action_set), None
         | None, Some (symbol_index, action_set)
           -> begin
               (* All states in the mergeable set must either have an empty action set or identical
                * nonempty action set. *)
               match reduces_only action_set with
-              | false -> remergeables, false
+              | false -> remergeables, frontiers, NotRemergeable spines
               | true -> begin
                   let remergeable =
                     remergeables
                     |> Remergeables.mergeable_set statenub0
-                    |> Ordset.fold_until ~init:true
+                    |> Ordset.fold_until ~init:Remergeable
                       ~f:(fun _remergeable statenub ->
                         let index = StateNub.index statenub in
                         let State.{actions; _} = Array.get index states in
                         match Ordmap.get symbol_index actions with
-                        | None -> true, false
+                        | None -> Remergeable, false
                         | Some mergeable_action_set -> begin
-                            let remergeable = Ordset.equal action_set mergeable_action_set in
-                            remergeable, (not remergeable)
+                            match Ordset.equal action_set mergeable_action_set with
+                            | false -> NotRemergeable spines, true
+                            | true -> Remergeable, false
                           end
                       )
                   in
-                  remergeables, remergeable
+                  remergeables, frontiers, remergeable
                 end
             end
         | None, None
           -> not_reached ()
       in
-      (remergeables, remergeable), (not remergeable)
+      (remergeables, frontiers, remergeable), (not (bool_of_remergeable remergeable))
     ) a0 a1
 
-and remergeable_gotos states remergeables State.{gotos=g0; _} State.{gotos=g1; _} =
-  Ordmap.fold2_until ~init:(remergeables, true)
-    ~f:(fun (remergeables, _remergeable) kv0_opt kv1_opt ->
+let remergeable_gotos states remergeables frontiers spines =
+  let statenub0, statenub1 = match spines with
+    | [] -> not_reached ()
+    | statenub_pair :: _ -> statenub_pair
+  in
+  let index0 = StateNub.index statenub0 in
+  let index1 = StateNub.index statenub1 in
+  let State.{gotos=g0; _} = Array.get index0 states in
+  let State.{gotos=g1; _} = Array.get index1 states in
+  Ordmap.fold2_until ~init:(remergeables, frontiers, Remergeable)
+    ~f:(fun (remergeables, frontiers, _remergeable) kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some (_, index0), Some (_, index1) -> begin
-          let remergeables, remergeable = match State.Index.(index0 = index1) with
-            | true -> remergeables, true
+          let remergeables, frontiers, remergeable = match State.Index.(index0 = index1) with
+            | true -> remergeables, frontiers, Remergeable
             | false -> begin
-                let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
-                let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
+                let State.{statenub=statenub0; _} = Array.get index0 states in
+                let State.{statenub=statenub1; _} = Array.get index1 states in
+                let spines = (statenub0, statenub1) :: spines in
                 match Remergeables.rel statenub0 statenub1 remergeables with
                 | Unknown -> begin
-                    let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
-                    let remergeables, remergeable =
-                      remergeable_states states remergeables state0 state1 in
-                    let remergeables = match remergeable with
-                      | false -> remergeables
-                      | true -> Remergeables.unwind remergeables
-                    in
-                    remergeables, remergeable
+                    let frontiers = spines :: frontiers in
+                    remergeables, frontiers, Remergeable
                   end
-                | Distinct -> remergeables, false
-                | Mergeable -> remergeables, true
+                | Distinct -> remergeables, frontiers, NotRemergeable spines
+                | Mergeable -> remergeables, frontiers, Remergeable
               end
           in
-          (remergeables, remergeable), (not remergeable)
+          (remergeables, frontiers, remergeable), (not (bool_of_remergeable remergeable))
         end
       | Some (symbol_index, index0), None
       | None, Some (symbol_index, index0) -> begin
           (* All states in the mergeable set must either lack a goto or be remergeable with the
            * other gotos. Testing against one other goto suffices due to transitivity. *)
-          let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
-          let remergeables, remergeable =
+          let State.{statenub=statenub0; _} = Array.get index0 states in
+          let remergeables, frontiers, remergeable =
             remergeables
             |> Remergeables.mergeable_set statenub0
-            |> Ordset.fold_until ~init:(remergeables, true)
-              ~f:(fun (remergeables, _remergeable) statenub ->
-                let index1 = StateNub.index statenub in
-                let State.{gotos; _} = Array.get index1 states in
+            |> Ordset.fold_until ~init:(remergeables, frontiers, Remergeable)
+              ~f:(fun (remergeables, frontiers, _remergeable) statenub ->
+                let index = StateNub.index statenub in
+                let State.{gotos; _} = Array.get index states in
                 match Ordmap.get symbol_index gotos with
-                | None -> (remergeables, true), false
+                | None -> (remergeables, frontiers, Remergeable), false
                 | Some index1 -> begin
-                    let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
-                    match Remergeables.rel statenub0 statenub1 remergeables with
-                    | Unknown -> begin
-                        let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
-                        let remergeables, remergeable =
-                          remergeable_states states remergeables state0 state1 in
-                        let remergeables = match remergeable with
-                          | false -> remergeables
-                          | true -> Remergeables.unwind remergeables
-                        in
-                        (remergeables, remergeable), (not remergeable)
-                      end
-                    | Distinct -> (remergeables, false), true
-                    | Mergeable -> (remergeables, true), true
+                    let State.{statenub=statenub1; _} = Array.get index1 states in
+                    let spines = (statenub0, statenub1) :: spines in
+                    let remergeables, frontiers, remergeable =
+                      match Remergeables.rel statenub0 statenub1 remergeables with
+                      | Unknown -> begin
+                          let frontiers = spines :: frontiers in
+                          remergeables, frontiers, Remergeable
+                        end
+                      | Distinct -> remergeables, frontiers, NotRemergeable spines
+                      | Mergeable -> remergeables, frontiers, Remergeable
+                    in
+                    (remergeables, frontiers, remergeable), true
                   end
               )
           in
-          (remergeables, remergeable), (not remergeable)
+          (remergeables, frontiers, remergeable), (not (bool_of_remergeable remergeable))
         end
       | None, None -> not_reached ()
     ) g0 g1
 
-and remergeable_states states remergeables state0 state1 =
-  let remergeables, remergeable = remergeable_actions states remergeables state0 state1 in
-  match remergeable with
-  | false -> remergeables, false
-  | true -> remergeable_gotos states remergeables state0 state1
+let remergeable_spines states remergeables frontiers spines =
+  let statenub0, statenub1 = match spines with
+    | [] -> not_reached ()
+    | statenub_pair :: _ -> statenub_pair
+  in
+  match Remergeables.rel statenub0 statenub1 remergeables with
+  | Unknown -> begin
+      let remergeables = Remergeables.expand statenub0 statenub1 remergeables in
+      let remergeables, frontiers, remergeable =
+        remergeable_actions states remergeables frontiers spines in
+      match remergeable with
+      | NotRemergeable _ -> remergeables, frontiers, remergeable
+      | Remergeable -> remergeable_gotos states remergeables frontiers spines
+    end
+  | Distinct -> not_reached ()
+  | Mergeable -> remergeables, frontiers, Remergeable
+
+let remergeable_statenubs states remergeables statenub0 statenub1 =
+  (* Perform breadth-first search (BFS) by ratcheting frontiers, i.e. explore `frontiers_current`,
+   * then promote `frontiers_next` to `frontiers_current`, until a distinction is discovered or all
+   * frontiers are explored.
+   *
+   * BFS is a better choice than depth-first search (DFS) because it is less susceptible to
+   * squandering time exploring long paths in a heavily interconnected automaton when there is often
+   * a distinction to be found along a much shorter path. *)
+  let rec inner states remergeables ~frontiers_next ~frontiers_current = begin
+    match frontiers_current with
+    | [] -> begin
+        match frontiers_next with
+        | [] -> remergeables, Remergeable
+        | _ :: _ -> inner states remergeables ~frontiers_next:[] ~frontiers_current:frontiers_next
+      end
+    | spines :: frontiers_current -> begin
+        let remergeables, frontiers_next, remergeable =
+          remergeable_spines states remergeables frontiers_next spines in
+        match remergeable with
+        | NotRemergeable _ -> remergeables, remergeable
+        | Remergeable -> inner states remergeables ~frontiers_next ~frontiers_current
+      end
+  end in
+  let spines = (statenub0, statenub1) :: [] in
+  let frontiers_current = [spines] in
+  inner states remergeables ~frontiers_next:[] ~frontiers_current
 
 let remergeable_search io isocores states =
   let io =
@@ -195,13 +253,13 @@ let remergeable_search io isocores states =
     |> List.rev
     |> List.fold ~init:(io, remergeables)
       ~f:(fun (io, remergeables) index0 ->
-        let State.{statenub=statenub0; _} as state0 = Array.get index0 states in
+        let State.{statenub=statenub0; _} = Array.get index0 states in
         let StateNub.{isocore_set_sn=issn0; _} = statenub0 in
         let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
         let isocore_set = Isocores.get_isocore_set_hlt core isocores in
         Ordset.fold_until ~init:(io, remergeables)
           ~f:(fun (io, remergeables) index1 ->
-            let State.{statenub=statenub1; _} as state1 = Array.get index1 states in
+            let State.{statenub=statenub1; _} = Array.get index1 states in
             let StateNub.{isocore_set_sn=issn1; _} = statenub1 in
             (* Eliminate redundant/self pairs via `>`. Furthermore, use issn for comparison rather
              * than state index so that the order of merge attempts follows the same order as splits
@@ -219,19 +277,18 @@ let remergeable_search io isocores states =
                   | Distinct
                   | Mergeable -> io, remergeables
                   | Unknown -> begin
-                      let remergeables = Remergeables.root statenub0 statenub1 remergeables in
                       let remergeables, remergeable =
-                        remergeable_states states remergeables state0 state1 in
+                        remergeable_statenubs states remergeables statenub0 statenub1 in
                       match remergeable with
-                      | false -> begin
+                      | NotRemergeable spines -> begin
                           let io =
                             io.log
                             |> Fmt.fmt "."
                             |> Io.with_log io
                           in
-                          io, Remergeables.distinct remergeables
+                          io, Remergeables.distinct spines remergeables
                         end
-                      | true -> begin
+                      | Remergeable -> begin
                           let io =
                             io.log
                             |> Fmt.fmt "+"
