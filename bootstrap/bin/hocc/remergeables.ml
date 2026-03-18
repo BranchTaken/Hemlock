@@ -32,9 +32,6 @@ type t = {
   (* Core-keyed map of `Mergeable`/`Distinct` relationships, with pending relationships integrated
    * via `root`/`expand`. `distinct` rolls `cores_map` back to `snapshot`. *)
   cores_map: cores_map;
-  (* Spines of subgraph remergeability exploration, set by `root`, extended by `expand`, shortened
-   * by `unwind`, and cleared by `distinct`/`remergeable`. *)
-  spines: (StateNub.t * StateNub.t) list;
   (* Number of states in each of the two subgraphs currently being considered for remergeability. *)
   subgraph_size: uns;
   (* Snapshot of `cores_map`, updated by `mergeable`. *)
@@ -84,7 +81,6 @@ let fmt ?(alt=false) ?(width=0L) {cores_map; _} formatter =
 let empty =
   {
     cores_map=Map.empty (module Lr0Itemset);
-    spines=[];
     subgraph_size=0L;
     snapshot=Map.empty (module Lr0Itemset);
   }
@@ -134,7 +130,7 @@ let subgraph_size {subgraph_size; _} =
 
 let insert (StateNub.{isocores_sn=isn0; isocore_set_sn=issn0; _} as statenub0)
   (StateNub.{isocores_sn=isn1; isocore_set_sn=issn1; _} as statenub1)
-  ({cores_map; spines; subgraph_size; _} as t) =
+  ({cores_map; subgraph_size; _} as t) =
   assert (isn0 = isn1);
   assert (issn0 <> issn1);
   let mergeable_pair = Bitset.of_array [|issn0; issn1|] in
@@ -181,24 +177,11 @@ let insert (StateNub.{isocores_sn=isn0; isocore_set_sn=issn0; _} as statenub0)
         Map.update_hlt ~k:core ~v:core_rels cores_map
       end
   in
-  {t with cores_map; subgraph_size=succ subgraph_size; spines=(statenub0, statenub1)::spines}
-
-let root (StateNub.{isocores_sn=isn0; _} as statenub0) (StateNub.{isocores_sn=isn1; _} as statenub1)
-  ({spines; _} as t) =
-  assert (isn0 = isn1);
-  assert (List.is_empty spines);
-  insert statenub0 statenub1 t
-
-let unwind ({spines; _} as t) =
-  let spines = match spines with
-    | [] -> not_reached ()
-    | _ :: tl -> tl
-  in
-  {t with spines}
+  {t with cores_map; subgraph_size=succ subgraph_size}
 
 let expand = insert
 
-let distinct ({spines; snapshot; _} as t) =
+let distinct spines ({snapshot; _} as t) =
   let cores_map = List.fold ~init:snapshot
       ~f:(fun cores_map ((StateNub.{isocore_set_sn=issn0; _} as statenub0),
         StateNub.{isocore_set_sn=issn1; _}) ->
@@ -233,10 +216,10 @@ let distinct ({spines; snapshot; _} as t) =
           end
       ) spines
   in
-  {t with cores_map; spines=[]; subgraph_size=0L}
+  {t with cores_map; subgraph_size=0L}
 
 let mergeable ({cores_map; _} as t) =
-  {t with spines=[]; subgraph_size=0L; snapshot=cores_map}
+  {t with subgraph_size=0L; snapshot=cores_map}
 
 (* Return a map of state nub indexes, where keys are to be remerged into values. For each
  * remergeable set, mappings exist for all but the lowest-numbered state nub, and all the mappings

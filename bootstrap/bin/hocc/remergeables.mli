@@ -29,22 +29,14 @@ val subgraph_size: t -> uns
 (** [subgraph_size t] returns the number of states in each of the two subgraphs currently being
     considered for remergeability. *)
 
-val root: StateNub.t -> StateNub.t -> t -> t
-(** [root statenub0 statenub1] roots two subgraphs at [statenub0] and [statenub1] by tentatively
-    recording a [Remergeable] relationship between the roots in preparation for determining whether
-    the subgraphs can be remerged. *)
-
 val expand: StateNub.t -> StateNub.t -> t -> t
 (** [expand statenub0 statenub1] expands the subgraphs being explored by tentatively recording a
-    [Remergeable] relationship between [statenub0] and [statenub1], as well as extending the spines
-    to incorporate [statenub0] and [statenub1]. *)
+    [Remergeable] relationship between [statenub0] and [statenub1]. *)
 
-val unwind: t -> t
-(** [unwind t] shortens the spines by one state nub each. *)
-
-val distinct: t -> t
-(** [distinct t] concludes subgraph exploration with a determination that the subgraphs are
-    distinct. The spines' relationships transition to [Distinct] and all other tentative
+val distinct: (StateNub.t * StateNub.t) list -> t -> t
+(** [distinct spines t] concludes subgraph exploration with a determination that the subgraphs are
+    distinct, and therefore the spines (i.e. paths from exploration roots to distinct state pair)
+    are distinct. The spines' relationships transition to [Distinct] and all other tentative
     relationships revert to [Unknown]. *)
 
 val mergeable: t -> t
