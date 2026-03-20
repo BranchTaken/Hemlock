@@ -151,10 +151,10 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gawk.out (run ./hocc_test %{bin:hocc} Gawk -v -a ielr -m yes)))))
+   (with-outputs-to Gawk_aaplr.out (run ./hocc_test %{bin:hocc} Gawk -algorithm aplr -v)))))
 (rule
  (alias runtest)
- (action (diff Gawk.expected Gawk.out)))
+ (action (diff Gawk_aaplr.expected Gawk_aaplr.out)))
 
 (rule
  (deps
@@ -163,10 +163,10 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gawk_aaplr.out (run ./hocc_test %{bin:hocc} Gawk -v -a aplr)))))
+   (with-outputs-to Gawk_aielr_myes.out (run ./hocc_test %{bin:hocc} Gawk -algorithm ielr -remerge yes -v)))))
 (rule
  (alias runtest)
- (action (diff Gawk_aaplr.expected Gawk_aaplr.out)))
+ (action (diff Gawk_aielr_myes.expected Gawk_aielr_myes.out)))
 
 (rule
  (deps
@@ -175,10 +175,10 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gpic.out (run ./hocc_test %{bin:hocc} Gpic -v -a ielr -m yes)))))
+   (with-outputs-to Gpic_aaplr.out (run ./hocc_test %{bin:hocc} Gpic -algorithm aplr -v)))))
 (rule
  (alias runtest)
- (action (diff Gpic.expected Gpic.out)))
+ (action (diff Gpic_aaplr.expected Gpic_aaplr.out)))
 
 (rule
  (deps
@@ -187,10 +187,22 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Gpic_mno.out (run ./hocc_test %{bin:hocc} Gpic -remerge no -v -a ielr)))))
+   (with-outputs-to Gpic_aielr.out (run ./hocc_test %{bin:hocc} Gpic -algorithm ielr -v)))))
 (rule
  (alias runtest)
- (action (diff Gpic_mno.expected Gpic_mno.out)))
+ (action (diff Gpic_aielr.expected Gpic_aielr.out)))
+
+(rule
+ (deps
+  (glob_files Gpic.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes
+   (or 0 1)
+   (with-outputs-to Gpic_aielr_myes.out (run ./hocc_test %{bin:hocc} Gpic -algorithm ielr -remerge yes -v)))))
+(rule
+ (alias runtest)
+ (action (diff Gpic_aielr_myes.expected Gpic_aielr_myes.out)))
 
 (rule
  (deps
@@ -222,7 +234,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -a ielr -txt -hmh)))))
+   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -307,7 +319,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to IelrFig3_apgm.out (run ./hocc_test %{bin:hocc} IelrFig3 -algorithm pgm -v -txt -hmh)))))
+   (with-outputs-to IelrFig3_apgm.out (run ./hocc_test %{bin:hocc} IelrFig3 -algorithm pgm -v -r yes -txt -hmh)))))
 (rule
  (alias runtest)
  (action
@@ -459,7 +471,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to Lyken.out (run ./hocc_test %{bin:hocc} Lyken -v -a pgm)))))
+   (with-outputs-to Lyken.out (run ./hocc_test %{bin:hocc} Lyken -v -a pgm -r yes)))))
 (rule
  (alias runtest)
  (action (diff Lyken.expected Lyken.out)))
@@ -555,7 +567,7 @@
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to OCaml.out (run ./hocc_test %{bin:hocc} OCaml -v -a lalr)))))
+   (with-outputs-to OCaml.out (run ./hocc_test %{bin:hocc} OCaml -v -a lalr -r yes)))))
 (rule
  (alias runtest)
  (action (diff OCaml.expected OCaml.out)))
@@ -581,17 +593,17 @@
  (deps
   (glob_files PagerG2.hmh*)
   %{bin:hocc})
- (targets PagerG2_gno_mno.out.txt PagerG2_gno_mno.out.hmh)
+ (targets PagerG2_gno.out.txt PagerG2_gno.out.hmh)
  (action
   (with-accepted-exit-codes
    (or 0 1)
-   (with-outputs-to PagerG2_gno_mno.out (run ./hocc_test %{bin:hocc} PagerG2 -gc no -remerge no -v -a pgm -txt)))))
+   (with-outputs-to PagerG2_gno.out (run ./hocc_test %{bin:hocc} PagerG2 -gc no -v -a pgm -txt)))))
 (rule
  (alias runtest)
  (action
   (progn
-   (diff PagerG2_gno_mno.expected PagerG2_gno_mno.out)
-   (diff PagerG2_gno_mno.expected.txt PagerG2_gno_mno.out.txt))))
+   (diff PagerG2_gno.expected PagerG2_gno.out)
+   (diff PagerG2_gno.expected.txt PagerG2_gno.out.txt))))
 
 (rule
  (deps

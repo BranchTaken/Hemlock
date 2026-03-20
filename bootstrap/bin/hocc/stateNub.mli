@@ -97,16 +97,16 @@ val resolve: Symbols.t -> Prods.t
 (** [resolve ~symbols ~prods actions] resolves conflicts in [actions] to the maximum degree possible
     given precedences. *)
 
-val compat_lr: GotoNub.t -> t -> bool
-(** [compat_lr gotonub t] determines whether [gotonub] and the kernel of [t] are identical, which is
-    the basis of the canonical LR(1) algorithm. *)
-
 val compat_ielr: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
 (** [compat_ielr ~resolve symbols prods gotonub t] determines whether [gotonub] and [t] are
     split-stable (i.e. irrelevant to compatibility testing) and make compatible conflict
     attributions (if any) in the context of each {state,symbol} conflict. If [resolve] is true,
     conflicts which will be successfully resolved during state generation are treated as compatible
     to avoid pointless state duplication. This function is the basis of the IELR(1) algorithm. *)
+
+val compat_lr: GotoNub.t -> t -> bool
+(** [compat_lr gotonub t] determines whether [gotonub] and the kernel of [t] are identical, which is
+    the basis of the canonical LR(1) algorithm. *)
 
 val compat_pgm: GotoNub.t -> t -> bool
 (** [compat_pgm gotonub t] determines whether [gotonub] and [t] are weakly compatible, as defined by

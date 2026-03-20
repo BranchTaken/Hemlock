@@ -5,8 +5,8 @@ open Basis
 type algorithm =
   | Aplr (** APLR(1) algorithm. *)
   | Ielr (** IELR(1) algorithm. *)
-  | Pgm (** PGM algorithm. *)
   | Lr (** LR(1) algorithm. *)
+  | Pgm (** PGM LR(1) algorithm. *)
   | Lalr (** LALR(1) algorithm. *)
 
 type remerge =

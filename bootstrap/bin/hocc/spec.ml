@@ -829,8 +829,8 @@ let compat_init algorithm ~resolve io symbols prods =
   let io, compat_string, compat = match algorithm with
     | Conf.Aplr -> io, "lr", StateNub.compat_lr
     | Conf.Ielr -> io, "ielr", StateNub.compat_ielr ~resolve symbols prods
-    | Conf.Pgm -> io, "weak", StateNub.compat_pgm
     | Conf.Lr -> io, "lr", StateNub.compat_lr
+    | Conf.Pgm -> io, "weak", StateNub.compat_pgm
     | Conf.Lalr -> io, "lalr", StateNub.compat_lalr
   in
   let io =
@@ -1334,8 +1334,8 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     |> Fmt.fmt (match algorithm with
       | Conf.Aplr -> "APLR(1)"
       | Conf.Ielr -> "IELR(1)"
-      | Conf.Pgm -> "PGM LR(1)"
       | Conf.Lr -> "LR(1)"
+      | Conf.Pgm -> "PGM LR(1)"
       | Conf.Lalr -> "LALR(1)"
     )
     |> Fmt.fmt " specification\n"

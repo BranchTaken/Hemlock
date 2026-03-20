@@ -1,4 +1,4 @@
-PagerG2_gno_mno grammar
+PagerG2_gno grammar
 
 Tokens
     token EPSILON "ε"

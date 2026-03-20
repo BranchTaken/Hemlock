@@ -1,4 +1,4 @@
-hocc: Parsing "./Gpic.hmh"
+hocc: Parsing "./Gpic_aielr.hmh"
 hocc: Generating IELR(1) specification
 hocc: 25 precedences, 140 tokens, 46 non-terminals (1 start), 248 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite
@@ -14,10 +14,7 @@ hocc: Generating 448 LR(1) states
 hocc: Tracing automaton.............
 hocc: 11 unreachable states
 hocc: Reindexing 437 LR(1) states
-hocc: Searching for remergeable state subgraphs+1.+1+1+1+1..+4..
-hocc: 9 remergeable states
-hocc: Reindexing 428 LR(1) states
-hocc: 239 unresolvable conflicts in 239 states (239 ⊥, 0 shift-reduce, 0 reduce-reduce)
+hocc: 240 unresolvable conflicts in 240 states (240 ⊥, 0 shift-reduce, 0 reduce-reduce)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: 1 unused production:
 hocc:    Path ::= ORDINAL LAST Object_type Relative_path prec pTrig

@@ -484,7 +484,7 @@ Non-terminals
         Follow: {"ε"}
         Productions
             Hmhi' ::= Hmhi "⊥"
-IELR(1) States
+APLR(1) States
     State 0 [0.0]
         Kernel
             [Hmh' ::= · Hmh "⊥", {"ε"}]
@@ -4151,9 +4151,6 @@ IELR(1) States
             [ProdParam ::= ModulePath · "." "{" PatternFields SemiSuffix "}" ":" ProdParamSymbol, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
             "." : ShiftPrefix 148 prec pDOT
-        Conflict contributions
-            [ModulePath ::= ModulePath · "." ModulePath, {"."}]
-                176 : Reduce ModulePath ::= ModulePath "." ModulePath
     State 124 [124.0]
         Kernel
             [ProdParam ::= ProdParamSymbol ·, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
@@ -4389,13 +4386,6 @@ IELR(1) States
             Uident : 141
             ModulePath : 142
             Pattern : 161
-        Conflict contributions
-            [Pattern ::= CIDENT · Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= CIDENT · Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 138 [138.0]
         Kernel
             [Pattern ::= "_" ·, {",", ";", "as", ")", "}"}]
@@ -4451,13 +4441,6 @@ IELR(1) States
             Uident : 141
             ModulePath : 142
             Pattern : 162
-        Conflict contributions
-            [Pattern ::= "(" · Pattern ")", {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= "(" · Pattern ")", {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 140 [140.0]
         Kernel
             [Pattern ::= "{" · PatternFields SemiSuffix "}", {",", ";", "as", ")", "}"}]
@@ -4510,15 +4493,6 @@ IELR(1) States
             [Pattern ::= ModulePath · "." "{" PatternFields SemiSuffix "}", {",", ";", "as", ")", "}"}]
         Actions
             "." : ShiftPrefix 164 prec pDOT
-        Conflict contributions
-            [ModulePath ::= ModulePath · "." ModulePath, {"."}]
-                176 : Reduce ModulePath ::= ModulePath "." ModulePath
-            [Pattern ::= ModulePath · "." "(" Pattern ")", {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= ModulePath · "." "(" Pattern ")", {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 143 [143.0]
         Kernel
             [Pattern ::= Pattern · "as" Uident, {",", "as", ")"}]
@@ -4528,13 +4502,6 @@ IELR(1) States
             "," : ShiftPrefix 165 prec pCOMMA
             "as" : ShiftPrefix 166 prec pAS
             ")" : ShiftPrefix 167
-        Conflict contributions
-            [Pattern ::= Pattern · "," Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern · "," Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 144 [144.0]
         Kernel
             [PatternField ::= Uident ·, {";", "}"}]
@@ -4587,9 +4554,6 @@ IELR(1) States
             "{" : ShiftPrefix 175
         Gotos
             ModulePath : 176
-        Conflict contributions
-            [ModulePath ::= ModulePath "." · ModulePath, {"."}]
-                176 : Reduce ModulePath ::= ModulePath "." ModulePath
     State 149 [149.0]
         Kernel
             [Uident ::= "prec" ·, {":"}]
@@ -4963,17 +4927,6 @@ IELR(1) States
             "as" : Reduce Pattern ::= CIDENT Pattern prec pCIDENT
             ")" : Reduce Pattern ::= CIDENT Pattern prec pCIDENT
             "}" : Reduce Pattern ::= CIDENT Pattern prec pCIDENT
-        Conflict contributions
-            [Pattern ::= CIDENT Pattern ·, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-            [Pattern ::= CIDENT Pattern ·, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-            [Pattern ::= Pattern · "," Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern · "," Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 162 [162.0]
         Kernel
             [Pattern ::= Pattern · "as" Uident, {",", "as", ")"}]
@@ -4983,13 +4936,6 @@ IELR(1) States
             "," : ShiftPrefix 165 prec pCOMMA
             "as" : ShiftPrefix 166 prec pAS
             ")" : ShiftPrefix 203
-        Conflict contributions
-            [Pattern ::= Pattern · "," Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern · "," Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 163 [163.0]
         Kernel
             [Pattern ::= "{" PatternFields · SemiSuffix "}", {",", ";", "as", ")", "}"}]
@@ -5015,15 +4961,6 @@ IELR(1) States
             "{" : ShiftPrefix 206
         Gotos
             ModulePath : 176
-        Conflict contributions
-            [ModulePath ::= ModulePath "." · ModulePath, {"."}]
-                176 : Reduce ModulePath ::= ModulePath "." ModulePath
-            [Pattern ::= ModulePath "." · "(" Pattern ")", {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= ModulePath "." · "(" Pattern ")", {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 165 [165.0]
         Kernel
             [Pattern ::= Pattern "," · Pattern, {",", ";", "as", ")", "}"}] prec pCOMMA
@@ -5070,13 +5007,6 @@ IELR(1) States
             Uident : 141
             ModulePath : 142
             Pattern : 207
-        Conflict contributions
-            [Pattern ::= Pattern "," · Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern "," · Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 166 [166.0]
         Kernel
             [Pattern ::= Pattern "as" · Uident, {",", ";", "as", ")", "}"}]
@@ -5322,11 +5252,6 @@ IELR(1) States
             [ModulePath ::= ModulePath "." ModulePath ·, {"."}] prec pDOT
         Actions
             "." : Reduce ModulePath ::= ModulePath "." ModulePath prec pDOT
-        Conflict contributions
-            [ModulePath ::= ModulePath · "." ModulePath, {"."}]
-                176 : Reduce ModulePath ::= ModulePath "." ModulePath
-            [ModulePath ::= ModulePath "." ModulePath ·, {"."}]
-                176 : Reduce ModulePath ::= ModulePath "." ModulePath
     State 177 [177.0]
         Kernel
             [ProdParamsTl ::= ProdParam ProdParamsTl ·, {"->", "|", LINE_DELIM, DEDENT}]
@@ -6665,13 +6590,6 @@ IELR(1) States
             Uident : 141
             ModulePath : 142
             Pattern : 231
-        Conflict contributions
-            [Pattern ::= ModulePath "." "(" · Pattern ")", {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= ModulePath "." "(" · Pattern ")", {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 206 [206.0]
         Kernel
             [Pattern ::= ModulePath "." "{" · PatternFields SemiSuffix "}", {",", ";", "as", ")", "}"}]
@@ -6719,17 +6637,6 @@ IELR(1) States
             "as" : Reduce Pattern ::= Pattern "," Pattern prec pCOMMA
             ")" : Reduce Pattern ::= Pattern "," Pattern prec pCOMMA
             "}" : Reduce Pattern ::= Pattern "," Pattern prec pCOMMA
-        Conflict contributions
-            [Pattern ::= Pattern · "," Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern · "," Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern "," Pattern ·, {","}]
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern "," Pattern ·, {"as"}]
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 208 [208.0]
         Kernel
             [Pattern ::= Pattern "as" Uident ·, {",", ";", "as", ")", "}"}]
@@ -6760,13 +6667,6 @@ IELR(1) States
             ";" : Reduce PatternField ::= Uident "=" Pattern
             "as" : ShiftPrefix 166 prec pAS
             "}" : Reduce PatternField ::= Uident "=" Pattern
-        Conflict contributions
-            [Pattern ::= Pattern · "," Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern · "," Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 211 [211.0]
         Kernel
             [PatternFields ::= PatternField ";" "_" ·, {";", "}"}] prec pSEMI
@@ -6793,13 +6693,6 @@ IELR(1) States
             "," : ShiftPrefix 165 prec pCOMMA
             "as" : ShiftPrefix 166 prec pAS
             ")" : ShiftPrefix 235
-        Conflict contributions
-            [Pattern ::= Pattern · "," Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern · "," Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 215 [215.0]
         Kernel
             [ProdParam ::= ModulePath "." "{" PatternFields · SemiSuffix "}" ":" ProdParamSymbol, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
@@ -7095,13 +6988,6 @@ IELR(1) States
             "," : ShiftPrefix 165 prec pCOMMA
             "as" : ShiftPrefix 166 prec pAS
             ")" : ShiftPrefix 247
-        Conflict contributions
-            [Pattern ::= Pattern · "," Pattern, {","}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
-            [Pattern ::= Pattern · "," Pattern, {"as"}]
-                161 : Reduce Pattern ::= CIDENT Pattern
-                207 : Reduce Pattern ::= Pattern "," Pattern
     State 232 [233.0]
         Kernel
             [Pattern ::= ModulePath "." "{" PatternFields · SemiSuffix "}", {",", ";", "as", ")", "}"}]

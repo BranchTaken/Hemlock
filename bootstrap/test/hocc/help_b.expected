@@ -12,10 +12,11 @@ Parameters:
                         automaton. Defaults to aplr.
                         - aplr: Adequacy Preservation LR(1)
                         - ielr: Inadequacy Elimination LR(1)
-                        - pgm: Practical General Method LR(1)
                         - lr: Canonical LR(1)
+                        - pgm: Practical General Method LR(1)
                         - lalr: Look-Ahead LR(1)
-  -r[esolve] (yes|no) : Control conflict resolution enablement. Defaults to yes.
+  -r[esolve] (yes|no) : Control conflict resolution enablement. Defaults to yes
+                        for aplr/ielr/lr algorithms, no for pgm/lalr algorithms.
   -g[c] (yes|no)      : Control unreachable state garbage collection enablement.
                         Defaults to yes.
 -[re]m[erge] (yes|no) : Control compatible state subgraph remerging enablement.

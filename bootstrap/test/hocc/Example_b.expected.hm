@@ -10,15 +10,15 @@ include
                 type t: t =
                   | Aplr
                   | Ielr
-                  | Pgm
                   | Lr
+                  | Pgm
                   | Lalr
 
                 index t = match t with
                   | Aplr -> 0
                   | Ielr -> 1
-                  | Pgm -> 2
-                  | Lr -> 3
+                  | Lr -> 2
+                  | Pgm -> 3
                   | Lalr -> 4
 
                 hash_fold t state =
@@ -30,8 +30,8 @@ include
                 to_string t = match t with
                   | Aplr -> "Aplr"
                   | Ielr -> "Ielr"
-                  | Pgm -> "Pgm"
                   | Lr -> "Lr"
+                  | Pgm -> "Pgm"
                   | Lalr -> "Lalr"
 
                 pp t formatter =

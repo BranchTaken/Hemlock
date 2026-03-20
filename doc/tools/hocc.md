@@ -44,13 +44,14 @@ Parameters:
     identically to `lr` automatons. IELR(1) analyzes an LALR(1) automaton and then uses resulting
     metadata to generate an automaton with LR(1)-relative inadequacies eliminated via state
     splitting.
+  + `lr`: Canonical LR(1) automaton [^knuth1965].
   + `pgm`: Practical General Method LR(1) compact automaton [^pager1977] that recognizes valid
     inputs identically to `lr` automatons, provided there are no precedence-resolved ambiguities in
     the grammar specification. PGM avoids LR(1)-relative inadequacy via preventative state splitting
     during automaton creation.
-  + `lr`: Canonical LR(1) automaton [^knuth1965].
   + `lalr`: LALR(1) automaton [^deremer1969].
-- `-r[esolve] (yes|no)`: Control conflict resolution enablement. Defaults to `yes`.
+- `-r[esolve] (yes|no)`: Control conflict resolution enablement. Defaults to `yes` for
+  `aplr`/`ielr`/`lr` algorithms, `no` for `pgm`/`lalr` algorithms.
 - `-g[c] (yes|no)`: Control unreachable state garbage collection enablement. Defaults to `yes`.
 - `-[re]m[erge] (yes|no)`: Control compatible state subgraph remerging enablement. Defaults to `yes`
   for `aplr` algorithm, `no` otherwise.
@@ -601,8 +602,8 @@ parser states can be used as persistent reusable snapshots.
             type t: t =
               | Aplr [@doc "APLR(1) algorithm."]
               | Ielr [@doc "IELR(1) algorithm."]
-              | Pgm [@doc "PGM LR(1) algorithm."]
               | Lr [@doc "LR(1) algorithm."]
+              | Pgm [@doc "PGM LR(1) algorithm."]
               | Lalr [@doc "LALR(1) algorithm."]
 
             include IdentifiableIntf.S with type t := t

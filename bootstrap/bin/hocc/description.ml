@@ -172,8 +172,8 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
   let states_algorithm = match Conf.algorithm conf with
     | Aplr -> "APLR(1)"
     | Ielr -> "IELR(1)"
-    | Pgm -> "PGM LR(1)"
     | Lr -> "LR(1)"
+    | Pgm -> "PGM LR(1)"
     | Lalr -> "LALR(1)"
   in
   io.txt
@@ -327,8 +327,8 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
           match algorithm with
           | Aplr
           | Ielr
-          | Pgm
-          | Lr -> begin
+          | Lr
+          | Pgm -> begin
               formatter
               |> Fmt.fmt " ["
               |> Uns.pp (StateNub.isocores_sn statenub)

@@ -9,8 +9,8 @@ include [:]{
             type t: t =
               | Aplr [@doc "APLR(1) algorithm."]
               | Ielr [@doc "IELR(1) algorithm."]
-              | Pgm [@doc "PGM LR(1) algorithm."]
               | Lr [@doc "LR(1) algorithm."]
+              | Pgm [@doc "PGM LR(1) algorithm."]
               | Lalr [@doc "LALR(1) algorithm."]
 
             include IdentifiableIntf.S with type t := t
