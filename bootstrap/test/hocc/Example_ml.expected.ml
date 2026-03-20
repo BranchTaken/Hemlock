@@ -10,15 +10,15 @@ include struct
                 type t =
                   | Aplr
                   | Ielr
-                  | Pgm
                   | Lr
+                  | Pgm
                   | Lalr
 
                 let index = function
                   | Aplr -> 0L
                   | Ielr -> 1L
-                  | Pgm -> 2L
-                  | Lr -> 3L
+                  | Lr -> 2L
+                  | Pgm -> 3L
                   | Lalr -> 4L
 
                 let hash_fold t state =
@@ -30,8 +30,8 @@ include struct
                 let to_string = function
                   | Aplr -> "Aplr"
                   | Ielr -> "Ielr"
-                  | Pgm -> "Pgm"
                   | Lr -> "Lr"
+                  | Pgm -> "Pgm"
                   | Lalr -> "Lalr"
 
                 let pp t formatter =

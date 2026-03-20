@@ -8,8 +8,8 @@ include sig
             type t =
               | Aplr (** APLR(1) algorithm. *)
               | Ielr (** IELR(1) algorithm. *)
-              | Pgm (** PGM LR(1) algorithm. *)
               | Lr (** LR(1) algorithm. *)
+              | Pgm (** PGM LR(1) algorithm. *)
               | Lalr (** LALR(1) algorithm. *)
 
             include IdentifiableIntf.S with type t := t

@@ -26,7 +26,7 @@ case "$1" in
         shift 2
         ;;
     *)
-        resolve="yes"
+        resolve=""
 esac
 
 case "$1" in
@@ -56,12 +56,24 @@ if [ "x${mangled_src}" != "x${src}" ] ; then
     src="${mangled_src}"
 fi
 
-case "${remerge}" in
+case "${resolve}" in
     '')
-        "${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" $@
+        case "${remerge}" in
+            '')
+                "${hocc}" -s "${src}" -a "${algorithm}" -g "${gc}" $@
+                ;;
+            *)
+                "${hocc}" -s "${src}" -a "${algorithm}" -g "${gc}" -m "${remerge}" $@
+        esac
         ;;
     *)
-        "${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" -m "${remerge}" $@
+        case "${remerge}" in
+            '')
+                "${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" $@
+                ;;
+            *)
+                "${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" -m "${remerge}" $@
+        esac
 esac
 
 # Usage: mv_report <suffix>

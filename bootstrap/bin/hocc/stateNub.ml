@@ -314,9 +314,6 @@ let resolve symbols prods actions =
       | false -> Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
     ) actions
 
-let compat_lr GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
-  Lr1Itemset.compat_lr goto kernel
-
 let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
   Attribs.fold2_until ~init:true
     ~f:(fun _compat attrib_opt0 attrib_opt1 ->
@@ -331,6 +328,9 @@ let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t
       let compat = Attrib.compat_ielr ~resolve symbols prods o_attrib t_attrib in
       compat, not compat
     ) o_attribs t_attribs
+
+let compat_lr GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
+  Lr1Itemset.compat_lr goto kernel
 
 let compat_pgm GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
   Lr1Itemset.compat_pgm goto kernel

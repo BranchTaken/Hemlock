@@ -4,16 +4,16 @@ include Basis.Rudiments
 type algorithm =
   | Aplr
   | Ielr
-  | Pgm
   | Lr
+  | Pgm
   | Lalr
 
 let pp_algorithm algorithm formatter =
   formatter |> Fmt.fmt (match algorithm with
     | Aplr -> "Aplr"
     | Ielr -> "Ielr"
-    | Pgm -> "Pgm"
     | Lr -> "Lr"
+    | Pgm -> "Pgm"
     | Lalr -> "Lalr"
   )
 
@@ -26,7 +26,7 @@ type t = {
   text: bool;
   hocc: bool;
   algorithm: algorithm;
-  resolve: bool;
+  resolve_opt: bool option;
   gc: bool;
   remerge_opt: bool option;
   hemlock: bool;
@@ -36,14 +36,14 @@ type t = {
   dstdir_opt: Path.t option;
 }
 
-let pp {verbose; text; hocc; algorithm; resolve; gc; remerge_opt; hemlock; ocaml; srcdir_opt;
+let pp {verbose; text; hocc; algorithm; resolve_opt; gc; remerge_opt; hemlock; ocaml; srcdir_opt;
   module_opt; dstdir_opt} formatter =
   formatter
   |> Fmt.fmt "{verbose=" |> Bool.pp verbose
   |> Fmt.fmt "; text=" |> Bool.pp text
   |> Fmt.fmt "; hocc=" |> Bool.pp hocc
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
-  |> Fmt.fmt "; resolve=" |> Bool.pp resolve
+  |> Fmt.fmt "; resolve_opt=" |> Option.pp Bool.pp resolve_opt
   |> Fmt.fmt "; gc=" |> Bool.pp gc
   |> Fmt.fmt "; remerge_opt=" |> Option.pp Bool.pp remerge_opt
   |> Fmt.fmt "; hemlock=" |> Bool.pp hemlock
@@ -58,8 +58,8 @@ let default = {
   text=false;
   hocc=false;
   algorithm=Aplr;
+  resolve_opt=None;
   gc=true;
-  resolve=true;
   remerge_opt=None;
   hemlock=false;
   ocaml=false;
@@ -68,14 +68,20 @@ let default = {
   dstdir_opt=None;
 }
 
+let resolve algorithm resolve_opt =
+  match algorithm, resolve_opt with
+  | _, Some resolve -> resolve
+  | (Aplr|Ielr|Lr), None -> true
+  | (Pgm|Lalr), None -> false
+
 let remerge algorithm remerge_opt =
   match algorithm, remerge_opt with
   | _, Some remerge -> Explicit remerge
   | Aplr, None
     -> Default true
   | Ielr, None
-  | Pgm, None
   | Lr, None
+  | Pgm, None
   | Lalr, None
     -> Default false
 
@@ -98,10 +104,11 @@ Parameters:
                         automaton. Defaults to aplr.
                         - aplr: Adequacy Preservation LR(1)
                         - ielr: Inadequacy Elimination LR(1)
-                        - pgm: Practical General Method LR(1)
                         - lr: Canonical LR(1)
+                        - pgm: Practical General Method LR(1)
                         - lalr: Look-Ahead LR(1)
-  -r[esolve] (yes|no) : Control conflict resolution enablement. Defaults to yes.
+  -r[esolve] (yes|no) : Control conflict resolution enablement. Defaults to yes
+                        for aplr/ielr/lr algorithms, no for pgm/lalr algorithms.
   -g[c] (yes|no)      : Control unreachable state garbage collection enablement.
                         Defaults to yes.
 -[re]m[erge] (yes|no) : Control compatible state subgraph remerging enablement.
@@ -182,8 +189,8 @@ let of_argv argv =
             let algorithm = match Bytes.to_string_replace (arg_arg argv i) with
               | "aplr" -> Aplr
               | "ielr" -> Ielr
-              | "pgm" -> Pgm
               | "lr" -> Lr
+              | "pgm" -> Pgm
               | "lalr" -> Lalr
               | s -> begin
                   File.Fmt.stderr |> Fmt.fmt "hocc: Invalid algorithm: " |> Fmt.fmt s
@@ -194,16 +201,16 @@ let of_argv argv =
             f {t with algorithm} argv (i + 2L)
           end
         | "-resolve" | "-r" -> begin
-            let resolve = match Bytes.to_string_replace (arg_arg argv i) with
-              | "yes" -> true
-              | "no" -> false
+            let resolve_opt = match Bytes.to_string_replace (arg_arg argv i) with
+              | "yes" -> Some true
+              | "no" -> Some false
               | s -> begin
                   File.Fmt.stderr |> Fmt.fmt "hocc: Invalid resolve parameter: "
                   |> Fmt.fmt s |> Fmt.fmt "\n" |> ignore;
                   usage true
                 end
             in
-            f {t with resolve} argv (i + 2L)
+            f {t with resolve_opt} argv (i + 2L)
           end
         | "-gc" | "-g" -> begin
             let gc = match Bytes.to_string_replace (arg_arg argv i) with
@@ -293,8 +300,8 @@ let hocc {hocc; _} =
 let algorithm {algorithm; _} =
   algorithm
 
-let resolve {resolve; _} =
-  resolve
+let resolve {algorithm; resolve_opt; _} =
+  resolve algorithm resolve_opt
 
 let gc {gc; _} =
   gc

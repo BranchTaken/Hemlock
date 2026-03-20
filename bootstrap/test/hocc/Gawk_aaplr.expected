@@ -1,4 +1,4 @@
-hocc: Parsing "./Gawk.hmh"
+hocc: Parsing "./Gawk_aaplr.hmh"
 hocc: Generating APLR(1) specification
 hocc: 19 precedences, 60 tokens, 46 non-terminals (1 start), 164 productions
 hocc: LR(1) item set compatibility: lr

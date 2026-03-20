@@ -107,8 +107,8 @@ let hmi_template = {|{
             type t: t =
               | Aplr [@doc "APLR(1) algorithm."]
               | Ielr [@doc "IELR(1) algorithm."]
-              | Pgm [@doc "PGM LR(1) algorithm."]
               | Lr [@doc "LR(1) algorithm."]
+              | Pgm [@doc "PGM LR(1) algorithm."]
               | Lalr [@doc "LALR(1) algorithm."]
 
             include IdentifiableIntf.S with type t := t
@@ -496,15 +496,15 @@ let hm_template = {|{
                 type t: t =
                   | Aplr
                   | Ielr
-                  | Pgm
                   | Lr
+                  | Pgm
                   | Lalr
 
                 index t = match t with
                   | Aplr -> 0
                   | Ielr -> 1
-                  | Pgm -> 2
-                  | Lr -> 3
+                  | Lr -> 2
+                  | Pgm -> 3
                   | Lalr -> 4
 
                 hash_fold t state =
@@ -516,8 +516,8 @@ let hm_template = {|{
                 to_string t = match t with
                   | Aplr -> "Aplr"
                   | Ielr -> "Ielr"
-                  | Pgm -> "Pgm"
                   | Lr -> "Lr"
+                  | Pgm -> "Pgm"
                   | Lalr -> "Lalr"
 
                 pp t formatter =
@@ -2020,8 +2020,8 @@ let mli_template = {|sig
             type t =
               | Aplr (** APLR(1) algorithm. *)
               | Ielr (** IELR(1) algorithm. *)
-              | Pgm (** PGM LR(1) algorithm. *)
               | Lr (** LR(1) algorithm. *)
+              | Pgm (** PGM LR(1) algorithm. *)
               | Lalr (** LALR(1) algorithm. *)
 
             include IdentifiableIntf.S with type t := t
@@ -2406,15 +2406,15 @@ let ml_template = {|struct
                 type t =
                   | Aplr
                   | Ielr
-                  | Pgm
                   | Lr
+                  | Pgm
                   | Lalr
 
                 let index = function
                   | Aplr -> 0L
                   | Ielr -> 1L
-                  | Pgm -> 2L
-                  | Lr -> 3L
+                  | Lr -> 2L
+                  | Pgm -> 3L
                   | Lalr -> 4L
 
                 let hash_fold t state =
@@ -2426,8 +2426,8 @@ let ml_template = {|struct
                 let to_string = function
                   | Aplr -> "Aplr"
                   | Ielr -> "Ielr"
-                  | Pgm -> "Pgm"
                   | Lr -> "Lr"
+                  | Pgm -> "Pgm"
                   | Lalr -> "Lalr"
 
                 let pp t formatter =
