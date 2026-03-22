@@ -4,8 +4,8 @@ open! Basis.Rudiments
 type t = {
   (* The index of each element in {ipred,isucc}_{sets,arrays} corresponds to a state index, and the
    * set/array at each index contains the corresponding ipreds'/isuccs' state indices. *)
-  ipred_sets: (State.Index.t, State.Index.cmper_witness) Ordset.t array;
 (*
+  ipred_sets: (State.Index.t, State.Index.cmper_witness) Ordset.t array;
   isucc_sets: (State.Index.t, State.Index.cmper_witness) Ordset.t array;
 *)
   ipred_arrays: State.Index.t array array;
@@ -88,20 +88,7 @@ let init states =
   let ipred_arrays = Array.map ~f:(fun set -> Ordset.to_array set) ipred_sets in
   let isucc_arrays = Array.map ~f:(fun set -> Ordset.to_array set) isucc_sets in
   assert Uns.(Array.(length ipred_arrays) = (Array.length isucc_arrays));
-  {ipred_sets; (*isucc_sets;*) ipred_arrays; isucc_arrays}
-
-let rec preds_of_state_index ?(d=1L) state_index ({ipred_sets; ipred_arrays; _} as t) =
-  match d with
-  | 0L -> not_reached ()
-  | 1L -> ipreds_of_state_index_impl state_index ipred_sets
-  | _ -> begin
-      ipreds_of_state_index_impl state_index ipred_arrays
-      |> Array.map ~f:(fun ipred_state_index ->
-        preds_of_state_index ~d:(pred d) ipred_state_index t
-      )
-      |> Array.reduce ~f:Ordset.union
-      |> Option.value ~default:(Ordset.empty (module State.Index))
-    end
+  {(*ipred_sets; isucc_sets; *)ipred_arrays; isucc_arrays}
 
 let ipreds_of_state_index state_index {ipred_arrays; _} =
   ipreds_of_state_index_impl state_index ipred_arrays

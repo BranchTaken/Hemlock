@@ -52,9 +52,9 @@ Parameters:
   + `lalr`: LALR(1) automaton [^deremer1969].
 - `-r[esolve] (yes|no)`: Control conflict resolution enablement. Defaults to `yes` for
   `aplr`/`ielr`/`lr` algorithms, `no` for `pgm`/`lalr` algorithms.
-- `-g[c] (yes|no)`: Control unreachable state garbage collection enablement. Defaults to `yes`.
 - `-[re]m[erge] (yes|no)`: Control compatible state subgraph remerging enablement. Defaults to `yes`
   for `aplr` algorithm, `no` otherwise.
+- `-g[c] (yes|no)`: Control unreachable state garbage collection enablement. Defaults to `yes`.
 - `-hm` | `-hemlock`: Generate a Hemlock-based parser implementation and write it to
   `<dstdir>/<module>.hm[i]`.
 - `-ml` | `-ocaml`: Generate an OCaml-based parser implementation and write it to

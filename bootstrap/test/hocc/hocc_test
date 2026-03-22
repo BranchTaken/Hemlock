@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Usage: hocc_test <hocc> <src> [-algorithm aplr|ielr|pgm|lr|lalr] [-resolve yes|no] [-gc yes|no]
-#        [-remerge yes|no] [<parameter>]*
+# Usage: hocc_test <hocc> <src> [-algorithm aplr|ielr|pgm|lr|lalr] [-resolve yes|no]
+#        [-remerge yes|no] [-gc yes|no] [<parameter>]*
 
 hocc="$1"
 src="$2"
@@ -30,16 +30,6 @@ case "$1" in
 esac
 
 case "$1" in
-    '-gc')
-        gc="$2"
-        mangled_src="${mangled_src}_g${gc}"
-        shift 2
-        ;;
-    *)
-        gc="yes"
-esac
-
-case "$1" in
     '-remerge')
         remerge="$2"
         mangled_src="${mangled_src}_m${remerge}"
@@ -47,6 +37,16 @@ case "$1" in
         ;;
     *)
         remerge=""
+esac
+
+case "$1" in
+    '-gc')
+        gc="$2"
+        mangled_src="${mangled_src}_g${gc}"
+        shift 2
+        ;;
+    *)
+        gc="yes"
 esac
 
 if [ "x${mangled_src}" != "x${src}" ] ; then
