@@ -39,63 +39,72 @@ let reach_union _state_index reach0 reach1 =
   | Follows actions0, Follows actions1 ->
     Follows (Ordset.union actions0 actions1)
 
-let rec reachable_preds_of_state_index ~d ~traced state_index adjs =
+(* `cache` contains `d=1` result in element 0, `d=2` result in element 1, etc. *)
+let rec reachable_preds_of_state_index ~traced state_index adjs d cache =
   match d with
-  | 0L -> not_reached ()
-  | 1L -> begin
-      Adjs.ipreds_of_state_index state_index adjs
-      |> Array.fold ~init:(Ordset.empty (module State.Index))
-        ~f:(fun reachable_preds state_index ->
-          match Ordmap.mem state_index traced with
-          | false -> reachable_preds
-          | true -> Ordset.insert state_index reachable_preds
-        )
-    end
+  | 0L -> Ordset.singleton (module State.Index) state_index, cache
   | _ -> begin
-      Adjs.ipreds_of_state_index state_index adjs
-      |> Array.filter ~f:(fun state_index ->
-        Ordmap.mem state_index traced
-      )
-      |> Array.map ~f:(fun ipred_state_index ->
-        reachable_preds_of_state_index ~d:(pred d) ~traced ipred_state_index adjs
-      )
-      |> Array.reduce ~f:Ordset.union
-      |> Option.value ~default:(Ordset.empty (module State.Index))
+      match d <= (Array.length cache) with
+      | true -> Array.get (pred d) cache, cache
+      | false -> begin
+          match d with
+          | 0L -> not_reached ()
+          | 1L -> begin
+              let reachable_preds =
+                Adjs.ipreds_of_state_index state_index adjs
+                |> Array.fold ~init:(Ordset.empty (module State.Index))
+                  ~f:(fun reachable_preds state_index ->
+                    match Ordmap.mem state_index traced with
+                    | false -> reachable_preds
+                    | true -> Ordset.insert state_index reachable_preds
+                  ) in
+              let cache = [|reachable_preds|] in
+              reachable_preds, cache
+            end
+          | _ -> begin
+              let reachable_preds_prev, cache =
+                reachable_preds_of_state_index ~traced state_index adjs (pred d) cache in
+              let reachable_preds = Ordset.fold ~init:(Ordset.empty (module State.Index))
+                ~f:(fun reachable_preds pred_state_index ->
+                  Adjs.ipreds_of_state_index pred_state_index adjs
+                  |> Array.filter ~f:(fun state_index ->
+                    Ordmap.mem state_index traced
+                  )
+                  |> Ordset.of_array (module State.Index)
+                  |> Ordset.union reachable_preds
+                ) reachable_preds_prev in
+              let cache = Array.init (0L =:< d) ~f:(fun i ->
+                match i < (Array.length cache) with
+                | true -> Array.get i cache
+                | false -> reachable_preds
+              ) in
+              reachable_preds, cache
+            end
+        end
     end
 
 (* Compute a pred->lookahead->gotos map based on backward traversal through traced states. *)
 let pred_lookahead_gotos ~traced state_index {prods; states; adjs; _} =
   let pred_lookahead_gotos = Map.empty (module State.Index) in
   (* Cache reachable_preds for each distance; computing it is really expensive. *)
-  let d_reachable_preds = Map.empty (module Uns) in
+  let reachable_preds_cache = [||] in
   let State.{actions; _} = Array.get state_index states in
-  let pred_lookahead_gotos, _d_reachable_preds =
-    Ordmap.fold ~init:(pred_lookahead_gotos, d_reachable_preds)
-      ~f:(fun (pred_lookahead_gotos, d_reachable_preds) (symbol_index, action_set) ->
-        Ordset.fold ~init:(pred_lookahead_gotos, d_reachable_preds)
-          ~f:(fun (pred_lookahead_gotos, d_reachable_preds) action ->
+  let pred_lookahead_gotos, _reachable_preds_cache =
+    Ordmap.fold ~init:(pred_lookahead_gotos, reachable_preds_cache)
+      ~f:(fun (pred_lookahead_gotos, reachable_preds_cache) (symbol_index, action_set) ->
+        Ordset.fold ~init:(pred_lookahead_gotos, reachable_preds_cache)
+          ~f:(fun (pred_lookahead_gotos, reachable_preds_cache) action ->
             let open State.Action in
             match action with
             | ShiftPrefix _isucc_state_index
-            | ShiftAccept _isucc_state_index -> pred_lookahead_gotos, d_reachable_preds
+            | ShiftAccept _isucc_state_index -> pred_lookahead_gotos, reachable_preds_cache
             | Reduce prod_index -> begin
                 let Prod.{lhs_index; rhs_indexes; _} =
                   Prods.prod_of_prod_index prod_index prods in
                 let rhs_length = Array.length rhs_indexes in
-                let pred_state_indexes, d_reachable_preds = (match rhs_length with
-                  | 0L -> Ordset.singleton (module State.Index) state_index, d_reachable_preds
-                  | _ -> begin
-                      match Map.get rhs_length d_reachable_preds with
-                      | Some reachable_preds -> reachable_preds, d_reachable_preds
-                      | None -> begin
-                          let reachable_preds =
-                            reachable_preds_of_state_index ~d:rhs_length ~traced state_index adjs in
-                          let d_reachable_preds =
-                            Map.insert_hlt ~k:rhs_length ~v:reachable_preds d_reachable_preds in
-                          reachable_preds, d_reachable_preds
-                        end
-                    end
-                ) in
+                let pred_state_indexes, reachable_preds_cache =
+                  reachable_preds_of_state_index ~traced state_index adjs rhs_length
+                    reachable_preds_cache in
                 let pred_lookahead_gotos =
                   Ordset.fold ~init:pred_lookahead_gotos
                     ~f:(fun pred_lookahead_gotos pred_state_index ->
@@ -119,7 +128,7 @@ let pred_lookahead_gotos ~traced state_index {prods; states; adjs; _} =
                           ) pred_lookahead_gotos
                         end
                     ) pred_state_indexes in
-                pred_lookahead_gotos, d_reachable_preds
+                pred_lookahead_gotos, reachable_preds_cache
               end
           ) action_set
       ) actions
