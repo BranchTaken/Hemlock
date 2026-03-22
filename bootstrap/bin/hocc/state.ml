@@ -194,14 +194,25 @@ let remerge symbols remergeable_index_map ({statenub=sn0; actions=a0; gotos=g0} 
     ) normalized_g0 normalized_g1 in
   {statenub; actions; gotos}
 
-let reindex state_index_map {statenub; actions; gotos} =
-  let statenub = StateNub.reindex state_index_map statenub in
-  let actions = Ordmap.map ~f:(fun (_symbol_index, actions) ->
-    Ordset.fold ~init:(Ordset.empty (module Action))
-      ~f:(fun reindexed_actions action ->
-        let reindexed_action = Action.reindex state_index_map action in
-        Ordset.insert reindexed_action reindexed_actions
+let reindex state_index_map reachable_action_symbols_opt {statenub; actions; gotos} =
+  let reachable_action_symbols = match reachable_action_symbols_opt with
+    | None -> Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
+      ~f:(fun reachable_action_symbols (symbol_index, _actions) ->
+        Ordset.insert symbol_index reachable_action_symbols
       ) actions
+    | Some reachable_action_symbols -> reachable_action_symbols
+  in
+  let statenub = StateNub.reindex state_index_map statenub in
+  let actions = Ordmap.filter_map ~f:(fun (symbol_index, actions) ->
+    match Ordset.mem symbol_index reachable_action_symbols with
+    | false -> None
+    | true -> begin
+        Some (Ordset.fold ~init:(Ordset.empty (module Action))
+          ~f:(fun reindexed_actions action ->
+            let reindexed_action = Action.reindex state_index_map action in
+            Ordset.insert reindexed_action reindexed_actions
+          ) actions )
+      end
   ) actions in
   let gotos = Ordmap.filter_map ~f:(fun (_symbol_index, statenub_index) ->
     StateIndexMap.reindexed_state_index_opt statenub_index state_index_map

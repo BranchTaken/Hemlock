@@ -1001,7 +1001,7 @@ and gc_states io prods isocores states =
     |> Io.with_log io
   in
   let trace = Trace.init prods states in
-  let io, reachable_state_indexes = Trace.reachable_state_indexes io trace in
+  let io, reachable = Trace.reachable io trace in
   let io =
     io.log
     |> Fmt.fmt "\n"
@@ -1010,11 +1010,11 @@ and gc_states io prods isocores states =
   let unreachable_state_indexes = Array.fold ~init:(Ordset.empty (module State.Index))
     ~f:(fun unreachable state ->
       let index = State.index state in
-      match Ordset.mem index reachable_state_indexes with
+      match Ordmap.mem index reachable with
       | true -> unreachable
       | false -> Ordset.insert index unreachable
     ) states in
-  let nreachable = Ordset.length reachable_state_indexes in
+  let nreachable = Ordmap.length reachable in
   let nunreachable = Ordset.length unreachable_state_indexes in
   assert (Uns.(nreachable + nunreachable = Array.length states));
   let io =
@@ -1035,8 +1035,12 @@ and gc_states io prods isocores states =
         |> (fun formatter -> match nreachable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
         |> Io.with_log io
       in
+      let remaining_state_indexes = Ordmap.fold ~init:(Ordset.empty (module State.Index))
+        ~f:(fun remaining_state_indexes (state_index, _reach) ->
+          Ordset.insert state_index remaining_state_indexes
+        ) reachable in
       (* Create a map of pre-GC state indexes to post-GC state indexes. *)
-      let state_index_map = StateIndexMap.init ~remaining_state_indexes:reachable_state_indexes
+      let state_index_map = StateIndexMap.init ~remaining_state_indexes
           ~remergeable_index_map:(Ordmap.empty (module StateIndex))
           ~isocores_sn_of_state_index:(fun state_index ->
             let State.{statenub={isocores_sn; _}; _} = Array.get state_index states in
@@ -1052,10 +1056,14 @@ and gc_states io prods isocores states =
       let reindexed_states =
         Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
           let state_index = State.index state in
-          match Ordset.mem state_index reachable_state_indexes with
-          | false -> reindexed_states
-          | true -> begin
-              let reindexed_state = State.reindex state_index_map state in
+          match Ordmap.get state_index reachable with
+          | None -> reindexed_states
+          | Some reach -> begin
+              let follows = match reach with
+                | Shift -> None
+                | Follows follows -> Some follows
+              in
+              let reindexed_state = State.reindex state_index_map follows state in
               Ordset.insert reindexed_state reindexed_states
             end
         ) states
