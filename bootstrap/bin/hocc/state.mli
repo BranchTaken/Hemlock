@@ -42,9 +42,11 @@ val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t-> t -
 (** [remerge symbols index_map t0 t1] creates a merged state comprising remergeable states
     [t0] and [t1]. *)
 
-val reindex: StateIndexMap.t -> t -> t
-(** [reindex state_index_map t] creates a state with all LR(1) item set closure, state nub, and
-    state indexes translated according to [state_index_map]. *)
+val reindex: StateIndexMap.t ->  (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t option -> t
+  -> t
+(** [reindex state_index_map reachable_action_symbols_opt t] creates a state with all LR(1) item set
+    closure, state nub, and state indexes translated according to [state_index_map], and reachable
+    actions specified by [reachable_action_symbols_opt] if there are any unreachable actions. *)
 
 val index: t -> Index.t
 (** [index t] returns the index of the contained unique LR(1) item set closure. *)

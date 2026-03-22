@@ -372,7 +372,7 @@ let remerge_states io symbols isocores states =
         Ordset.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state_index ->
           let reindexed_state =
             Array.get state_index remerged_states
-            |> State.reindex state_index_map in
+            |> State.reindex state_index_map None in
           Ordset.insert reindexed_state reindexed_states
         ) remaining_state_indexes
         |> Ordset.to_array in
