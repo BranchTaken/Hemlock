@@ -3,8 +3,7 @@
   (glob_files Binding_error.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Binding_error.out (run ./hocc_test %{bin:hocc} Binding_error -v)))))
 (rule
  (alias runtest)
@@ -15,8 +14,7 @@
   (glob_files Binding_error_b.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Binding_error_b.out (run ./hocc_test %{bin:hocc} Binding_error_b -v)))))
 (rule
  (alias runtest)
@@ -27,8 +25,7 @@
   (glob_files Binding_error_c.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Binding_error_c.out (run ./hocc_test %{bin:hocc} Binding_error_c -v)))))
 (rule
  (alias runtest)
@@ -36,12 +33,24 @@
 
 (rule
  (deps
+  (glob_files Conflict.hmh*)
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes 1
+   (with-outputs-to Conflict.out (run ./hocc_test %{bin:hocc} Conflict -v -hm)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff Conflict.expected Conflict.out))))
+
+(rule
+ (deps
   (glob_files Example.hmh*)
   %{bin:hocc})
  (targets Example.out.txt Example.hmi Example.hm)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Example.out (run ./hocc_test %{bin:hocc} Example -v -txt -hm)))))
 (rule
  (alias runtest)
@@ -58,8 +67,7 @@
   %{bin:hocc})
  (targets Example_b.out.txt Example_b.hmi Example_b.hm)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Example_b.out (run ./hocc_test %{bin:hocc} Example_b -v -hm)))))
 (rule
  (alias runtest)
@@ -75,8 +83,7 @@
   %{bin:hocc})
  (targets Example_c.out.txt Example_c.hmi Example_c.hm)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Example_c.out (run ./hocc_test %{bin:hocc} Example_c -v -hm)))))
 (rule
  (alias runtest)
@@ -92,8 +99,7 @@
   %{bin:hocc})
  (targets Example_rno.out.txt)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Example_rno.out (run ./hocc_test %{bin:hocc} Example -resolve no -v -txt)))))
 (rule
  (alias runtest)
@@ -108,8 +114,7 @@
   %{bin:hocc})
  (targets Example_ml.out.txt Example_ml.mli Example_ml.ml)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Example_ml.out (run ./hocc_test %{bin:hocc} Example_ml -txt -ml)))))
 (rule
  (alias runtest)
@@ -129,8 +134,7 @@
   %{bin:hocc})
  (targets Example_introspect.out.txt Example_introspect.mli Example_introspect.ml)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Example_introspect.out (run ./hocc_test %{bin:hocc} Example_introspect -txt -ml)))))
 (rule
  (alias runtest)
@@ -149,8 +153,7 @@
   (glob_files Gawk.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Gawk_aaplr.out (run ./hocc_test %{bin:hocc} Gawk -algorithm aplr -v)))))
 (rule
  (alias runtest)
@@ -161,8 +164,7 @@
   (glob_files Gawk.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Gawk_aielr_myes.out (run ./hocc_test %{bin:hocc} Gawk -algorithm ielr -remerge yes -v)))))
 (rule
  (alias runtest)
@@ -173,8 +175,7 @@
   (glob_files Gpic.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Gpic_aaplr.out (run ./hocc_test %{bin:hocc} Gpic -algorithm aplr -v)))))
 (rule
  (alias runtest)
@@ -185,8 +186,7 @@
   (glob_files Gpic.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Gpic_aielr.out (run ./hocc_test %{bin:hocc} Gpic -algorithm ielr -v)))))
 (rule
  (alias runtest)
@@ -197,8 +197,7 @@
   (glob_files Gpic.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Gpic_aielr_myes.out (run ./hocc_test %{bin:hocc} Gpic -algorithm ielr -remerge yes -v)))))
 (rule
  (alias runtest)
@@ -208,8 +207,7 @@
  (deps
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to help_a.out (run %{bin:hocc} -v -verbose -txt -text -hmh -hocc -a aplr -algorithm aplr -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -h)))))
 (rule
  (alias runtest)
@@ -219,8 +217,7 @@
  (deps
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to help_b.out (run %{bin:hocc} -v -verbose -txt -text -hmh -hocc -a aplr -algorithm aplr -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -no-such-option)))))
 (rule
  (alias runtest)
@@ -232,8 +229,7 @@
   %{bin:hocc})
  (targets Hocc.out.txt Hocc.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -txt -hmh)))))
 (rule
  (alias runtest)
@@ -249,8 +245,7 @@
   %{bin:hocc})
  (targets IelrFig1_rno.out.txt IelrFig1_rno.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig1_rno.out (run ./hocc_test %{bin:hocc} IelrFig1 -resolve no -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -266,8 +261,7 @@
   %{bin:hocc})
  (targets IelrFig1.out.txt IelrFig1.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig1.out (run ./hocc_test %{bin:hocc} IelrFig1 -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -283,8 +277,7 @@
   %{bin:hocc})
  (targets IelrFig2_rno.out.txt IelrFig2_rno.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig2_rno.out (run ./hocc_test %{bin:hocc} IelrFig2 -resolve no -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -300,8 +293,7 @@
   %{bin:hocc})
  (targets IelrFig2.out.txt IelrFig2.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig2.out (run ./hocc_test %{bin:hocc} IelrFig2 -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -317,8 +309,7 @@
   %{bin:hocc})
  (targets IelrFig3_apgm.out.txt IelrFig3_apgm.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig3_apgm.out (run ./hocc_test %{bin:hocc} IelrFig3 -algorithm pgm -v -r yes -txt -hmh)))))
 (rule
  (alias runtest)
@@ -334,8 +325,7 @@
   %{bin:hocc})
  (targets IelrFig3_rno.out.txt IelrFig3_rno.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig3_rno.out (run ./hocc_test %{bin:hocc} IelrFig3 -resolve no -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -351,8 +341,7 @@
   %{bin:hocc})
  (targets IelrFig3.out.txt IelrFig3.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig3.out (run ./hocc_test %{bin:hocc} IelrFig3 -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -368,8 +357,7 @@
   %{bin:hocc})
  (targets IelrFig4_rno.out.txt IelrFig4_rno.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig4_rno.out (run ./hocc_test %{bin:hocc} IelrFig4 -resolve no -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -385,8 +373,7 @@
   %{bin:hocc})
  (targets IelrFig5_rno.out.txt IelrFig5_rno.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig5_rno.out (run ./hocc_test %{bin:hocc} IelrFig5 -resolve no -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -402,8 +389,7 @@
   %{bin:hocc})
  (targets IelrFig5.out.txt IelrFig5.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig5.out (run ./hocc_test %{bin:hocc} IelrFig5 -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -419,8 +405,7 @@
   %{bin:hocc})
  (targets IelrFig5Diamond.out.txt IelrFig5Diamond.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig5Diamond.out (run ./hocc_test %{bin:hocc} IelrFig5Diamond -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -436,8 +421,7 @@
   %{bin:hocc})
  (targets IelrFig5Diamonds.out.txt IelrFig5Diamonds.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig5Diamonds.out (run ./hocc_test %{bin:hocc} IelrFig5Diamonds -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -453,8 +437,7 @@
   %{bin:hocc})
  (targets IelrFig6.out.txt IelrFig6.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to IelrFig6.out (run ./hocc_test %{bin:hocc} IelrFig6 -v -a ielr -txt -hmh)))))
 (rule
  (alias runtest)
@@ -469,8 +452,7 @@
   (glob_files Lyken.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Lyken.out (run ./hocc_test %{bin:hocc} Lyken -v -a pgm -r yes)))))
 (rule
  (alias runtest)
@@ -482,8 +464,7 @@
   %{bin:hocc})
  (targets Menhir21Longer.out.txt Menhir21Longer.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Menhir21Longer.out (run ./hocc_test %{bin:hocc} Menhir21Longer -v -a pgm -txt -hmh)))))
 (rule
  (alias runtest)
@@ -499,8 +480,7 @@
   %{bin:hocc})
  (targets Menhir21Shorter.out.txt Menhir21Shorter.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Menhir21Shorter.out (run ./hocc_test %{bin:hocc} Menhir21Shorter -v -a pgm -txt -hmh)))))
 (rule
  (alias runtest)
@@ -516,8 +496,7 @@
   %{bin:hocc})
  (targets MulAddParen.out.txt MulAddParen.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to MulAddParen.out (run ./hocc_test %{bin:hocc} MulAddParen -v -a pgm -txt -hmh)))))
 (rule
  (alias runtest)
@@ -533,8 +512,7 @@
   %{bin:hocc})
  (targets MulAddParenPrec.out.txt MulAddParenPrec.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to MulAddParenPrec.out (run ./hocc_test %{bin:hocc} MulAddParenPrec -v -txt -hmh)))))
 (rule
  (alias runtest)
@@ -550,8 +528,7 @@
   %{bin:hocc})
  (targets NestedEpsilon.out.txt)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to NestedEpsilon.out (run ./hocc_test %{bin:hocc} NestedEpsilon -v -txt)))))
 (rule
  (alias runtest)
@@ -565,8 +542,7 @@
   (glob_files OCaml.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to OCaml.out (run ./hocc_test %{bin:hocc} OCaml -v -a lalr -r yes -g no)))))
 (rule
  (alias runtest)
@@ -578,8 +554,7 @@
   %{bin:hocc})
  (targets PagerG2.out.txt PagerG2.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to PagerG2.out (run ./hocc_test %{bin:hocc} PagerG2 -v -a pgm -txt -hmh)))))
 (rule
  (alias runtest)
@@ -595,8 +570,7 @@
   %{bin:hocc})
  (targets PagerG2_gno.out.txt PagerG2_gno.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to PagerG2_gno.out (run ./hocc_test %{bin:hocc} PagerG2 -gc no -v -a pgm -txt)))))
 (rule
  (alias runtest)
@@ -611,8 +585,7 @@
   %{bin:hocc})
  (targets PagerG2_aielr.out.txt PagerG2_aielr.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to PagerG2_aielr.out (run ./hocc_test %{bin:hocc} PagerG2 -algorithm ielr -v -txt -hmh)))))
 (rule
  (alias runtest)
@@ -628,8 +601,7 @@
   %{bin:hocc})
  (targets PagerG3.out.txt PagerG3.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to PagerG3.out (run ./hocc_test %{bin:hocc} PagerG3 -v -a pgm -txt -hmh)))))
 (rule
  (alias runtest)
@@ -644,8 +616,7 @@
   (glob_files Parse_error_cident.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_cident.out (run ./hocc_test %{bin:hocc} Parse_error_cident -v)))))
 (rule
  (alias runtest)
@@ -656,8 +627,7 @@
   (glob_files Parse_error_code.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_code.out (run ./hocc_test %{bin:hocc} Parse_error_code -v)))))
 (rule
  (alias runtest)
@@ -668,8 +638,7 @@
   (glob_files Parse_error_delimited_rarray.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_delimited_rarray.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rarray -v)))))
 (rule
  (alias runtest)
@@ -680,8 +649,7 @@
   (glob_files Parse_error_delimited_rbrack.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_delimited_rbrack.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rbrack -v)))))
 (rule
  (alias runtest)
@@ -691,8 +659,7 @@
   (glob_files Parse_error_delimited_rcurly.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_delimited_rcurly.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rcurly -v)))))
 (rule
  (alias runtest)
@@ -703,8 +670,7 @@
   (glob_files Parse_error_delimited_rcapture.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_delimited_rcapture.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rcapture -v)))))
 (rule
  (alias runtest)
@@ -715,8 +681,7 @@
   (glob_files Parse_error_delimited_rparen.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_delimited_rparen.out (run ./hocc_test %{bin:hocc} Parse_error_delimited_rparen -v)))))
 (rule
  (alias runtest)
@@ -727,8 +692,7 @@
   (glob_files Parse_error_hmhi.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_hmhi.out (run ./hocc_test %{bin:hocc} Parse_error_hmhi -v)))))
 (rule
  (alias runtest)
@@ -739,8 +703,7 @@
   (glob_files Parse_error_hocc.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_hocc.out (run ./hocc_test %{bin:hocc} Parse_error_hocc -v)))))
 (rule
  (alias runtest)
@@ -751,8 +714,7 @@
   (glob_files Parse_error_malformed.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_malformed.out (run ./hocc_test %{bin:hocc} Parse_error_malformed -v)))))
 (rule
  (alias runtest)
@@ -763,8 +725,7 @@
   (glob_files Parse_error_nonterm_cce.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_nonterm_cce.out (run ./hocc_test %{bin:hocc} Parse_error_nonterm_cce -v)))))
 (rule
  (alias runtest)
@@ -775,8 +736,7 @@
   (glob_files Parse_error_of_type_dot.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_of_type_dot.out (run ./hocc_test %{bin:hocc} Parse_error_of_type_dot -v)))))
 (rule
  (alias runtest)
@@ -787,8 +747,7 @@
   (glob_files Parse_error_precs.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_precs.out (run ./hocc_test %{bin:hocc} Parse_error_precs -v)))))
 (rule
  (alias runtest)
@@ -799,8 +758,7 @@
   (glob_files Parse_error_precs_lt.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_precs_lt.out (run ./hocc_test %{bin:hocc} Parse_error_precs_lt -v)))))
 (rule
  (alias runtest)
@@ -811,8 +769,7 @@
   (glob_files Parse_error_prod_param_type.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_prod_param_type.out (run ./hocc_test %{bin:hocc} Parse_error_prod_param_type -v)))))
 (rule
  (alias runtest)
@@ -823,8 +780,7 @@
   (glob_files Parse_error_reduction_arrow.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_reduction_arrow.out (run ./hocc_test %{bin:hocc} Parse_error_reduction_arrow -v)))))
 (rule
  (alias runtest)
@@ -835,8 +791,7 @@
   (glob_files Parse_error_uident.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 1
    (with-outputs-to Parse_error_uident.out (run ./hocc_test %{bin:hocc} Parse_error_uident -v)))))
 (rule
  (alias runtest)
@@ -848,8 +803,7 @@
   %{bin:hocc})
  (targets PSEUDO_END_conflict.out.txt PSEUDO_END_conflict.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to PSEUDO_END_conflict.out (run ./hocc_test %{bin:hocc} PSEUDO_END_conflict -v -txt -hmh)))))
 (rule
  (alias runtest)
@@ -864,8 +818,7 @@
   (glob_files TokenCoverage.hmh*)
   %{bin:hocc})
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to TokenCoverage.out (run ./hocc_test %{bin:hocc} TokenCoverage -v)))))
 (rule
  (alias runtest)
@@ -877,8 +830,7 @@
   %{bin:hocc})
  (targets Unused.out.txt Unused.out.hmh)
  (action
-  (with-accepted-exit-codes
-   (or 0 1)
+  (with-accepted-exit-codes 0
    (with-outputs-to Unused.out (run ./hocc_test %{bin:hocc} Unused -v -txt -hmh)))))
 (rule
  (alias runtest)
