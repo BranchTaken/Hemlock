@@ -994,88 +994,6 @@ and hmh_extract io hmh =
   let io, symbols, prods, callbacks = symbols_init io precs symbols hmh in
   io, precs, symbols, prods, callbacks
 
-and gc_states io prods isocores states =
-  let io =
-    io.log
-    |> Fmt.fmt "hocc: Tracing automaton"
-    |> Io.with_log io
-  in
-  let trace = Trace.init prods states in
-  let io, reachable = Trace.reachable io trace in
-  let io =
-    io.log
-    |> Fmt.fmt "\n"
-    |> Io.with_log io
-  in
-  let unreachable_state_indexes = Array.fold ~init:(Ordset.empty (module State.Index))
-    ~f:(fun unreachable state ->
-      let index = State.index state in
-      match Ordmap.mem index reachable with
-      | true -> unreachable
-      | false -> Ordset.insert index unreachable
-    ) states in
-  let nreachable = Ordmap.length reachable in
-  let nunreachable = Ordset.length unreachable_state_indexes in
-  assert (Uns.(nreachable + nunreachable = Array.length states));
-  let io =
-    io.log
-    |> Fmt.fmt "hocc: " |> Uns.pp nunreachable |> Fmt.fmt " unreachable state"
-    |> (fun formatter ->
-      match nunreachable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
-    )
-    |> Fmt.fmt "\n"
-    |> Io.with_log io
-  in
-  match nunreachable with
-  | 0L -> io, isocores, states
-  | _ -> begin
-      let io =
-        io.log
-        |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nreachable |> Fmt.fmt " LR(1) state"
-        |> (fun formatter -> match nreachable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-        |> Io.with_log io
-      in
-      let remaining_state_indexes = Ordmap.fold ~init:(Ordset.empty (module State.Index))
-        ~f:(fun remaining_state_indexes (state_index, _reach) ->
-          Ordset.insert state_index remaining_state_indexes
-        ) reachable in
-      (* Create a map of pre-GC state indexes to post-GC state indexes. *)
-      let state_index_map = StateIndexMap.init ~remaining_state_indexes
-          ~remergeable_index_map:(Ordmap.empty (module StateIndex))
-          ~isocores_sn_of_state_index:(fun state_index ->
-            let State.{statenub={isocores_sn; _}; _} = Array.get state_index states in
-            isocores_sn
-          ) in
-      (* Create a new set of reindexed isocores. *)
-      let reindexed_isocores =
-        Ordset.fold ~init:isocores ~f:(fun remaining_isocores index ->
-          Isocores.remove_hlt index remaining_isocores
-        ) unreachable_state_indexes
-        |> Isocores.reindex state_index_map in
-      (* Create a new set of reindexed states. *)
-      let reindexed_states =
-        Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
-          let state_index = State.index state in
-          match Ordmap.get state_index reachable with
-          | None -> reindexed_states
-          | Some reach -> begin
-              let follows = match reach with
-                | Shift -> None
-                | Follows follows -> Some follows
-              in
-              let reindexed_state = State.reindex state_index_map follows state in
-              Ordset.insert reindexed_state reindexed_states
-            end
-        ) states
-        |> Ordset.to_array in
-      let io =
-        io.log
-        |> Fmt.fmt "\n"
-        |> Io.with_log io
-      in
-      io, reindexed_isocores, reindexed_states
-    end
-
 and log_conflicts io ~resolve states =
   let conflicts, conflict_states =
     Array.fold ~init:(0L, 0L) ~f:(fun (conflicts, conflict_states) state ->
@@ -1378,7 +1296,7 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     | Explicit false -> io, isocores, states
   in
   let io, _isocores, states = match gc with
-    | true -> gc_states io prods isocores states
+    | true -> Trace.gc_states io prods isocores states
     | false -> io, isocores, states
   in
   let io = log_conflicts io ~resolve states in
