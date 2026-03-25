@@ -10,7 +10,7 @@
  *   inadvertently keep other actions live, which could transitively keep states live that are
  *   unreachable during parsing.
  * - In order for a goto to be reachable, its containing state must be reachable, and there must
- *   exist a reachable path from that state to a successor that contains a corresponding reduce
+ *   exist a reachable lane from that state to a successor that contains a corresponding reduce
  *   action. This implementation filters out states that do not meet these requirements, but no
  *   mechanism is implemented for recognizing which states to re-trace when a goto becomes
  *   reachable. The solution is to repeatedly scan all traced states until no new frontier edges are
@@ -22,12 +22,9 @@
 open Basis
 open! Basis.Rudiments
 
-type t = {
-  prods: Prods.t;
-  states: State.t array;
-  adjs: Adjs.t;
-}
-
+(* Shift can lead to all actions, whereas each reduce-goto can lead to precisely the one action
+ * corresponding to the lookahead symbol. This type records `Shift` if a shift ipred edge is
+ * present, the union of follow sets from reduce-goto ipred edges otherwise. *)
 type reach =
   | Shift
   | Follows of (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t
@@ -40,7 +37,7 @@ let reach_union _state_index reach0 reach1 =
     Follows (Ordset.union actions0 actions1)
 
 (* `cache` contains `d=1` result in element 0, `d=2` result in element 1, etc. *)
-let rec reachable_preds_of_state_index ~traced state_index adjs d cache =
+let rec reachable_preds_of_state_index adjs ~traced state_index d cache =
   match d with
   | 0L -> Ordset.singleton (module State.Index) state_index, cache
   | _ -> begin
@@ -63,7 +60,7 @@ let rec reachable_preds_of_state_index ~traced state_index adjs d cache =
             end
           | _ -> begin
               let reachable_preds_prev, cache =
-                reachable_preds_of_state_index ~traced state_index adjs (pred d) cache in
+                reachable_preds_of_state_index adjs ~traced state_index (pred d) cache in
               let reachable_preds = Ordset.fold ~init:(Ordset.empty (module State.Index))
                 ~f:(fun reachable_preds pred_state_index ->
                   Adjs.ipreds_of_state_index pred_state_index adjs
@@ -84,7 +81,7 @@ let rec reachable_preds_of_state_index ~traced state_index adjs d cache =
     end
 
 (* Compute a pred->lookahead->gotos map based on backward traversal through traced states. *)
-let pred_lookahead_gotos ~traced state_index {prods; states; adjs; _} =
+let pred_lookahead_gotos prods states adjs ~traced state_index =
   let pred_lookahead_gotos = Map.empty (module State.Index) in
   (* Cache reachable_preds for each distance; computing it is really expensive. *)
   let reachable_preds_cache = [||] in
@@ -103,7 +100,7 @@ let pred_lookahead_gotos ~traced state_index {prods; states; adjs; _} =
                   Prods.prod_of_prod_index prod_index prods in
                 let rhs_length = Array.length rhs_indexes in
                 let pred_state_indexes, reachable_preds_cache =
-                  reachable_preds_of_state_index ~traced state_index adjs rhs_length
+                  reachable_preds_of_state_index adjs ~traced state_index rhs_length
                     reachable_preds_cache in
                 let pred_lookahead_gotos =
                   Ordset.fold ~init:pred_lookahead_gotos
@@ -135,12 +132,9 @@ let pred_lookahead_gotos ~traced state_index {prods; states; adjs; _} =
   in
   pred_lookahead_gotos
 
-let init prods states =
-  let adjs = Adjs.init states in
-  {prods; states; adjs}
-
-let reached_actions state_index reach {states; _} =
-  (Array.get state_index states).actions
+let reached_actions states state_index reach =
+  let State.{actions; _} = Array.get state_index states in
+  actions
   |> fun actions -> (match reach with
     | Shift -> actions
     | Follows reached_actions -> begin
@@ -151,9 +145,9 @@ let reached_actions state_index reach {states; _} =
       end
   )
 
-let trace_actions ~traced ~frontier t =
+let trace_actions states ~traced ~frontier =
   Ordmap.fold ~init:(Ordmap.empty (module State.Index)) ~f:(fun frontier (state_index, reach) ->
-    let reached_actions = reached_actions state_index reach t in
+    let reached_actions = reached_actions states state_index reach in
     Ordmap.fold ~init:frontier ~f:(fun frontier (_symbol_index, action_set) ->
       Ordset.fold ~init:frontier ~f:(fun frontier action ->
         let open State.Action in
@@ -172,9 +166,9 @@ let trace_actions ~traced ~frontier t =
     ) reached_actions
   ) frontier
 
-let trace_gotos ~traced ~frontier t =
+let trace_gotos prods states adjs ~traced ~frontier =
   Ordmap.fold ~init:(Ordmap.empty (module State.Index)) ~f:(fun frontier (state_index, reach) ->
-    let reached_actions = reached_actions state_index reach t in
+    let reached_actions = reached_actions states state_index reach in
     let reached_lookaheads = Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
       ~f:(fun reached_lookaheads (symbol_index, action_set) ->
         Ordset.fold ~init:reached_lookaheads ~f:(fun reached_lookaheads action ->
@@ -186,7 +180,7 @@ let trace_gotos ~traced ~frontier t =
         ) action_set
       ) reached_actions in
     (* Merge into frontier. *)
-    pred_lookahead_gotos ~traced state_index t
+    pred_lookahead_gotos prods states adjs ~traced state_index
     |> Map.fold ~init:frontier ~f:(fun frontier (_pred_state_index, lookahead_gotos) ->
       Map.fold ~init:frontier ~f:(fun frontier (lookahead, gotos) ->
         match Ordset.mem lookahead reached_lookaheads with
@@ -215,9 +209,9 @@ let trace_gotos ~traced ~frontier t =
     )
   ) (Ordmap.union ~f:reach_union traced frontier)
 
-let rec trace io ~traced ~frontier t =
+let rec trace io prods states adjs ~traced ~frontier =
   let traced = Ordmap.union ~f:reach_union frontier traced in
-  let frontier = trace_actions ~traced ~frontier t in
+  let frontier = trace_actions states ~traced ~frontier in
   match Ordmap.is_empty frontier with
   | false -> begin
       let io =
@@ -225,7 +219,7 @@ let rec trace io ~traced ~frontier t =
         |> Fmt.fmt "."
         |> Io.with_log io
       in
-      trace io ~traced ~frontier t
+      trace io prods states adjs ~traced ~frontier
     end
   | true -> begin
       let io =
@@ -233,17 +227,101 @@ let rec trace io ~traced ~frontier t =
         |> Fmt.fmt "+"
         |> Io.with_log io
       in
-      let frontier = trace_gotos ~traced ~frontier t in
+      let frontier = trace_gotos prods states adjs ~traced ~frontier in
       match Ordmap.is_empty frontier with
       | true -> io, traced
-      | false -> trace io ~traced ~frontier t
+      | false -> trace io prods states adjs ~traced ~frontier
     end
 
-let reachable io ({states; _} as t) =
+(* Trace the automaton in `t` from its roots (start states) and return the set of reachable states
+ * and their corresponding reachable actions. *)
+let reachable io prods states adjs =
   (* Gather the start states as roots. *)
   let frontier = Array.fold ~init:(Ordmap.empty (module State.Index)) ~f:(fun frontier state ->
     match State.is_start state with
     | false -> frontier
     | true -> Ordmap.insert ~k:(State.index state) ~v:Shift frontier
   ) states in
-  trace io t ~traced:(Ordmap.empty (module State.Index)) ~frontier
+  trace io prods states adjs ~traced:(Ordmap.empty (module State.Index)) ~frontier
+
+let gc_states io prods isocores states =
+  let io =
+    io.log
+    |> Fmt.fmt "hocc: Tracing automaton"
+    |> Io.with_log io
+  in
+  let adjs = Adjs.init states in
+  let io, reachable = reachable io prods states adjs in
+  let io =
+    io.log
+    |> Fmt.fmt "\n"
+    |> Io.with_log io
+  in
+  let unreachable_state_indexes = Array.fold ~init:(Ordset.empty (module State.Index))
+    ~f:(fun unreachable state ->
+      let index = State.index state in
+      match Ordmap.mem index reachable with
+      | true -> unreachable
+      | false -> Ordset.insert index unreachable
+    ) states in
+  let nreachable = Ordmap.length reachable in
+  let nunreachable = Ordset.length unreachable_state_indexes in
+  assert (Uns.(nreachable + nunreachable = Array.length states));
+  let io =
+    io.log
+    |> Fmt.fmt "hocc: " |> Uns.pp nunreachable |> Fmt.fmt " unreachable state"
+    |> (fun formatter ->
+      match nunreachable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+    )
+    |> Fmt.fmt "\n"
+    |> Io.with_log io
+  in
+  match nunreachable with
+  | 0L -> io, isocores, states
+  | _ -> begin
+      let io =
+        io.log
+        |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nreachable |> Fmt.fmt " LR(1) state"
+        |> (fun formatter -> match nreachable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+        |> Io.with_log io
+      in
+      let remaining_state_indexes = Ordmap.fold ~init:(Ordset.empty (module State.Index))
+        ~f:(fun remaining_state_indexes (state_index, _reach) ->
+          Ordset.insert state_index remaining_state_indexes
+        ) reachable in
+      (* Create a map of pre-GC state indexes to post-GC state indexes. *)
+      let state_index_map = StateIndexMap.init ~remaining_state_indexes
+          ~remergeable_index_map:(Ordmap.empty (module StateIndex))
+          ~isocores_sn_of_state_index:(fun state_index ->
+            let State.{statenub={isocores_sn; _}; _} = Array.get state_index states in
+            isocores_sn
+          ) in
+      (* Create a new set of reindexed isocores. *)
+      let reindexed_isocores =
+        Ordset.fold ~init:isocores ~f:(fun remaining_isocores index ->
+          Isocores.remove_hlt index remaining_isocores
+        ) unreachable_state_indexes
+        |> Isocores.reindex state_index_map in
+      (* Create a new set of reindexed states. *)
+      let reindexed_states =
+        Array.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state ->
+          let state_index = State.index state in
+          match Ordmap.get state_index reachable with
+          | None -> reindexed_states
+          | Some reach -> begin
+              let follows = match reach with
+                | Shift -> None
+                | Follows follows -> Some follows
+              in
+              let reindexed_state = State.reindex state_index_map follows state in
+              Ordset.insert reindexed_state reindexed_states
+            end
+        ) states
+        |> Ordset.to_array in
+      let io =
+        io.log
+        |> Fmt.fmt "\n"
+        |> Io.with_log io
+      in
+      io, reindexed_isocores, reindexed_states
+    end
