@@ -1,0 +1,5 @@
+hocc
+    token EOI
+    start S ::=
+      | EOI
+      | EOI

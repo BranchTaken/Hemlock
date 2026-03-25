@@ -54,8 +54,9 @@ let _ =
   in
   let nconflicts = Spec.conflicts spec in
   let conflicts = nconflicts <> 0L in
-  let io = match Conf.hemlock conf with
-    | false -> io
+  let exit_code = 0 in
+  let io, exit_code = match Conf.hemlock conf with
+    | false -> io, exit_code
     | true -> begin
         match conflicts with
         | false -> begin
@@ -63,19 +64,23 @@ let _ =
               | None -> io
               | Some hmhi -> Code.generate_hmi conf hmhi io spec
             in
-            Code.generate_hm conf hmh io spec
+            let io = Code.generate_hm conf hmh io spec in
+            io, exit_code
           end
         | true -> begin
-            io.err
-            |> Fmt.fmt "hocc: Hemlock code not generated due to conflict"
-            |> Fmt.fmt (match nconflicts with 1L -> "" | _ -> "s")
-            |> Fmt.fmt "\n"
-            |> Io.with_err io
+            let io =
+              io.err
+              |> Fmt.fmt "hocc: Hemlock code not generated due to conflict"
+              |> Fmt.fmt (match nconflicts with 1L -> "" | _ -> "s")
+              |> Fmt.fmt "\n"
+              |> Io.with_err io
+            in
+            io, 1
           end
       end
   in
-  let io = match Conf.ocaml conf with
-    | false -> io
+  let io, exit_code = match Conf.ocaml conf with
+    | false -> io, exit_code
     | true -> begin
         match conflicts with
         | false -> begin
@@ -83,16 +88,20 @@ let _ =
               | None -> io
               | Some hmhi -> Code.generate_mli conf hmhi io spec
             in
-            Code.generate_ml conf hmh io spec
+            let io = Code.generate_ml conf hmh io spec in
+            io, exit_code
           end
         | true -> begin
-            io.err
-            |> Fmt.fmt "hocc: OCaml code not generated due to conflict"
-            |> Fmt.fmt (match nconflicts with 1L -> "" | _ -> "s")
-            |> Fmt.fmt "\n"
-            |> Io.with_err io
+            let io =
+              io.err
+              |> Fmt.fmt "hocc: OCaml code not generated due to conflict"
+              |> Fmt.fmt (match nconflicts with 1L -> "" | _ -> "s")
+              |> Fmt.fmt "\n"
+              |> Io.with_err io
+            in
+            io, 1
           end
       end
   in
   let _io = Io.fini conf conflicts io in
-  ()
+  Stdlib.exit exit_code

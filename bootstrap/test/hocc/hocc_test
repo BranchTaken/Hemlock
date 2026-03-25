@@ -78,6 +78,7 @@ case "${resolve}" in
                 "${hocc}" -s "${src}" -a "${algorithm}" -r "${resolve}" -g "${gc}" -m "${remerge}" $@
         esac
 esac
+exit_code=$?
 
 # Usage: mv_report <suffix>
 #
@@ -94,3 +95,5 @@ mv_report() {
 }
 mv_report txt
 mv_report hmh
+
+exit ${exit_code}
