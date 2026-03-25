@@ -30,6 +30,7 @@ integrating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather than
 Parameters:
 
 - `-h[elp]`: Print command usage and exit.
+- `-V` | `-version`: Print version and exit.
 - `-v[erbose]`: Print progress information during parser generation.
 - `-txt` | `-text`: Write a detailed automaton description in plain text format to
   `<dstdir>/hocc/<module>.txt`.
