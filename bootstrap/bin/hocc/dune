@@ -2,6 +2,13 @@
  (names hocc)
  (libraries Basis Hmc))
 
+(rule
+  (deps (source_tree .))
+  (target Version.ml)
+  (action
+   (with-accepted-exit-codes 0
+    (with-outputs-to Version.ml (run ./hocc_version)))))
+
 (install
  (section bin)
   (files (hocc.exe as hocc)))

@@ -95,6 +95,7 @@ let usage error =
 
 Parameters:
               -h[elp] : Print command usage and exit.
+        -V | -version : Print version and exit.
            -v[erbose] : Print progress information during parser generation.
          -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
@@ -126,6 +127,14 @@ Parameters:
 |}
   |> ignore;
   Stdlib.exit exit_code
+
+let version () =
+  File.Fmt.stdout
+  |> Fmt.fmt "Hocc "
+  |> String.fmt Version.version
+  |> Fmt.fmt "\n"
+  |> ignore;
+  Stdlib.exit 0
 
 let is_segment_cident segment =
   let rec cont cursor past = begin
@@ -181,11 +190,12 @@ let of_argv argv =
         let arg_bytes = Array.get i argv in
         let arg_string = Bytes.to_string_replace arg_bytes in
         match arg_string with
-        | "-help" | "-h" -> usage false
-        | "-verbose" | "-v" -> f {t with verbose=true} argv (succ i)
+        | "-h" | "-help" -> usage false
+        | "-V" | "-version" -> version ()
+        | "-v" | "-verbose" -> f {t with verbose=true} argv (succ i)
         | "-txt" | "-text" -> f {t with text=true} argv (succ i)
         | "-hmh" | "-hocc" -> f {t with hocc=true} argv (succ i)
-        | "-algorithm" | "-a" -> begin
+        | "-a" | "-algorithm" -> begin
             let algorithm = match Bytes.to_string_replace (arg_arg argv i) with
               | "aplr" -> Aplr
               | "ielr" -> Ielr
@@ -200,7 +210,7 @@ let of_argv argv =
             in
             f {t with algorithm} argv (i + 2L)
           end
-        | "-resolve" | "-r" -> begin
+        | "-r" | "-resolve" -> begin
             let resolve_opt = match Bytes.to_string_replace (arg_arg argv i) with
               | "yes" -> Some true
               | "no" -> Some false
@@ -212,7 +222,7 @@ let of_argv argv =
             in
             f {t with resolve_opt} argv (i + 2L)
           end
-        | "-remerge" | "-m" -> begin
+        | "-m" | "-remerge" -> begin
             let remerge = match Bytes.to_string_replace (arg_arg argv i) with
               | "yes" -> true
               | "no" -> false
@@ -224,7 +234,7 @@ let of_argv argv =
             in
             f {t with remerge_opt=Some remerge} argv (i + 2L)
           end
-        | "-gc" | "-g" -> begin
+        | "-g" | "-gc" -> begin
             let gc = match Bytes.to_string_replace (arg_arg argv i) with
               | "yes" -> true
               | "no" -> false
@@ -238,7 +248,7 @@ let of_argv argv =
           end
         | "-hm" | "-hemlock" -> f {t with hemlock=true} argv (succ i)
         | "-ml" | "-ocaml" -> f {t with ocaml=true} argv (succ i)
-        | "-src" | "-s" -> begin
+        | "-s" | "-src" -> begin
             let path = Path.of_bytes (Bytes.Slice.init (arg_arg argv i)) in
             let dirname, basename_opt = Path.split path in
             let srcdir_opt = match Path.is_empty dirname with
@@ -266,7 +276,7 @@ let of_argv argv =
             in
             f {t with srcdir_opt; module_opt} argv (i + 2L)
           end
-        | "-dstdir" | "-d" -> begin
+        | "-d" | "-dstdir" -> begin
             let dstdir = Path.of_bytes (Bytes.Slice.init (arg_arg argv i)) in
             f {t with dstdir_opt=Some dstdir} argv (i + 2L)
           end

@@ -839,3 +839,19 @@
    (diff Unused.expected Unused.out)
    (diff Unused.expected.txt Unused.out.txt)
    (diff Unused.expected.hmh Unused.out.hmh))))
+
+(rule
+ (alias runtest)
+ (deps
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes 0
+   (with-outputs-to V.out (run %{bin:hocc} -V)))))
+
+(rule
+ (alias runtest)
+ (deps
+  %{bin:hocc})
+ (action
+  (with-accepted-exit-codes 0
+   (with-outputs-to version.out (run %{bin:hocc} -version)))))
