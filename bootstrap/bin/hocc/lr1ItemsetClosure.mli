@@ -33,7 +33,7 @@ type t = {
   kernel: Lr1Itemset.t;
   (** Kernel items, i.e. items which are in the set prior to closure. *)
 
-  added: Lr1Itemset.t;
+  added: Lr1Itemset.t lazy_t;
   (** Added items, i.e. items which are added during closure. *)
 }
 
@@ -42,6 +42,9 @@ include IdentifiableIntf.S with type t := t
 val init: Symbols.t -> index:Index.t -> Lr1Itemset.t -> t
 (** [init symbols ~index lr1itemset] creates the closure of the kernel represented by [lr1itemset],
     with index set to [index]. *)
+
+val added: t -> Lr1Itemset.t
+(** [added t] returns added items, i.e. items which are added during closure. *)
 
 val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t -> t
 (** [remerge symbols remergeable_index_map t0 t1] re-merges the kernels of [t0] and [t1] creates the

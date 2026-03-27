@@ -190,7 +190,7 @@ module T = struct
   type t = {
     index: Index.t;
     kernel: Lr1Itemset.t;
-    added: Lr1Itemset.t;
+    added: Lr1Itemset.t lazy_t;
   }
 
   let hash_fold {index; _} state =
@@ -203,22 +203,22 @@ module T = struct
     formatter
     |> Fmt.fmt "{index=" |> Index.pp index
     |> Fmt.fmt "; kernel=" |> Lr1Itemset.pp kernel
-    |> Fmt.fmt "; added=" |> Lr1Itemset.pp added
+    |> Fmt.fmt "; added=" |> Lr1Itemset.pp (Lazy.force added)
     |> Fmt.fmt "}"
 end
 include T
 include Identifiable.Make(T)
-(* Update closure to incorporate `lr1itemset`. *)
-let add_lr1itemset symbols lr1itemset t =
-  let rec f symbols lr1itemset t = begin
+
+let added_impl symbols kernel =
+  let rec f symbols lr1itemset added = begin
     match Lr1Itemset.choose lr1itemset with
-    | None -> t
+    | None -> added
     | Some (Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}; follow} as lr1item) -> begin
         let lr1itemset' = Lr1Itemset.remove lr1item lr1itemset in
         match Uns.(dot < Array.length rhs_indexes) with
         | false -> begin
             (* X ::= a· *)
-            f symbols lr1itemset' t
+            f symbols lr1itemset' added
           end
         | true -> begin
             let rhs_symbol_index = Array.get dot rhs_indexes in
@@ -226,33 +226,34 @@ let add_lr1itemset symbols lr1itemset t =
             match Symbol.is_nonterm rhs_symbol with
             | false -> begin
                 (* X ::= a·b *)
-                f symbols lr1itemset' t
+                f symbols lr1itemset' added
               end
             | true -> begin
                 (* X ::= a·Ab *)
                 let lhs = rhs_symbol in
                 let follow' = Lr1Item.first symbols
                     (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot)) ~follow) in
-                let lr1itemset', t' = Ordset.fold ~init:(lr1itemset', t)
-                  ~f:(fun (lr1itemset, t) prod ->
+                let lr1itemset', added' = Ordset.fold ~init:(lr1itemset', added)
+                  ~f:(fun (lr1itemset, added) prod ->
                     let lr0item = Lr0Item.init ~prod ~dot:0L in
                     let lr1item = Lr1Item.init ~lr0item ~follow:follow' in
-                    match Lr1Itemset.mem lr1item t.added with
-                    | true -> lr1itemset, t
+                    match Lr1Itemset.mem lr1item added with
+                    | true -> lr1itemset, added
                     | false -> begin
                         let lr1itemset' = Lr1Itemset.insert lr1item lr1itemset in
-                        let added' = Lr1Itemset.insert_hlt lr1item t.added in
-                        lr1itemset', {t with added=added'}
+                        let added' = Lr1Itemset.insert_hlt lr1item added in
+                        lr1itemset', added'
                       end
                   ) lhs.prods in
-                f symbols lr1itemset' t'
+                f symbols lr1itemset' added'
               end
           end
       end
   end in
-  f symbols lr1itemset t
+  f symbols kernel Lr1Itemset.empty
 
-(* Merge the kernel represented by `lr1itemset` into `t`'s kernel, then update the closure. *)
+(* Merge the kernel represented by `lr1itemset` into `t`'s kernel, then update the lazy closure
+ * computation. *)
 let merge symbols lr1itemset t =
   let lr1itemset', kernel' = Lr1Itemset.fold
       ~init:(Lr1Itemset.empty, t.kernel)
@@ -270,7 +271,7 @@ let merge symbols lr1itemset t =
   match Lr1Itemset.is_empty lr1itemset' with
   | true -> false, t
   | false -> begin
-      let t' = add_lr1itemset symbols lr1itemset' {t with kernel=kernel'} in
+      let t' = {t with kernel=kernel'; added=lazy (added_impl symbols kernel')} in
       true, t'
     end
 
@@ -293,8 +294,11 @@ let init symbols ~index lr1itemset =
   match merge symbols lr1itemset {
     index;
     kernel=Lr1Itemset.empty;
-    added=Lr1Itemset.empty;
+    added=lazy (added_impl symbols Lr1Itemset.empty);
   } with _, t -> t
+
+let added {added; _} =
+  Lazy.force added
 
 let fold_until ~init ~f {kernel; added; _} =
   let accum, until = Lr1Itemset.fold_until ~init:(init, false) ~f:(fun (accum, _) lr1item ->
@@ -303,10 +307,10 @@ let fold_until ~init ~f {kernel; added; _} =
   ) kernel in
   match until with
   | true -> accum
-  | false -> Lr1Itemset.fold_until ~init:accum ~f added
+  | false -> Lr1Itemset.fold_until ~init:accum ~f (Lazy.force added)
 
 let fold ~init ~f {kernel; added; _} =
-  Lr1Itemset.fold ~init:(Lr1Itemset.fold ~init ~f kernel) ~f added
+  Lr1Itemset.fold ~init:(Lr1Itemset.fold ~init ~f kernel) ~f (Lazy.force added)
 
 let next t =
   fold ~init:(Ordset.empty (module Symbol.Index))
@@ -434,8 +438,8 @@ let kernel_of_leftmost ~symbol_index ~lhs_index:prod_lhs_index {kernel; added; _
       ) added in
     marks, accum
   end in
-  let _marks, accum = inner kernel added symbol_index prod_lhs_index Bitset.empty
-      Lr1Itemset.empty in
+  let _marks, accum = inner kernel (Lazy.force added) symbol_index prod_lhs_index Bitset.empty
+    Lr1Itemset.empty in
   accum
 
 module LeftmostCache = struct
@@ -552,8 +556,8 @@ module LeftmostCache = struct
     let {kernel; added; _} = lr1itemsetclosure in
     let marks = Ordmap.empty (module Symbol.Index) in
     let accum = Ordmap.empty (module K) in
-    let _marks, accum = inner kernel added prod_lhs_index prod_lhs_index symbol_indexes marks
-        accum in
+    let _marks, accum = inner kernel (Lazy.force added) prod_lhs_index prod_lhs_index symbol_indexes
+      marks accum in
     accum
 
   (* Return a map of all LHS symbols in `t` to their corresponding items' follow sets. *)
@@ -569,7 +573,7 @@ module LeftmostCache = struct
         ~f:(fun lhs_symbol_indexes
           Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _}; _}; follow} ->
           Ordmap.insert ~k:lhs_index ~v:follow lhs_symbol_indexes
-        ) added
+        ) (Lazy.force added)
     in
     accum
 

@@ -305,7 +305,7 @@ let traces_of_ipred_state state leftmost_cache {traces=isucc_traces; _} =
                       (Lr1Item.init ~lr0item
                           ~follow:(Bitset.singleton symbol_index))
                       (match dot with
-                        | 0L -> State.(state.statenub.lr1itemsetclosure.added)
+                        | 0L -> State.(Lr1ItemsetClosure.added state.statenub.lr1itemsetclosure)
                         | _ -> State.(state.statenub.lr1itemsetclosure.kernel))
                   in
                   match lr1item_opt with

@@ -349,7 +349,8 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
           ) statenub.lr1itemsetclosure.kernel
         )
         |> (fun formatter ->
-          match Lr1Itemset.is_empty statenub.lr1itemsetclosure.added with
+          let added = Lr1ItemsetClosure.added statenub.lr1itemsetclosure in
+          match Lr1Itemset.is_empty added with
           | true -> formatter
           | false -> begin
               formatter
@@ -359,7 +360,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
                   formatter |> Fmt.fmt "            "
                   |> pp_lr1item lr1itemset
                   |> Fmt.fmt "\n"
-                ) statenub.lr1itemsetclosure.added
+                ) added
               )
             end
         )
