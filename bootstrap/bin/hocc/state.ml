@@ -86,27 +86,28 @@ end
 include T
 include Identifiable.Make(T)
 
-let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
+let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto
+    (StateNub.{lr1itemsetclosure; _} as statenub) =
   let actions =
-    StateNub.actions symbols statenub
-    |> (fun statenub -> match resolve with
-      | false -> statenub
-      | true -> statenub |> StateNub.resolve symbols prods
+    Lr1ItemsetClosure.actions symbols lr1itemsetclosure
+    |> (fun actions -> match resolve with
+      | false -> actions
+      | true -> actions |> Lr1ItemsetClosure.resolve symbols prods
     )
     |> Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index))
       ~f:(fun actions (symbol_index, action_set) ->
         let action_set' = Ordset.fold ~init:(Ordset.empty (module Action))
           ~f:(fun action_set action ->
             Ordset.insert (match action with
-              | StateNub.Action.ShiftPrefix goto -> begin
+              | Lr1ItemsetClosure.Action.ShiftPrefix goto -> begin
                   let gotonub = gotonub_of_statenub_goto statenub goto in
                   Action.ShiftPrefix (Isocores.get_hlt gotonub isocores)
                 end
-              | StateNub.Action.ShiftAccept goto -> begin
+              | Lr1ItemsetClosure.Action.ShiftAccept goto -> begin
                   let gotonub = gotonub_of_statenub_goto statenub goto in
                   Action.ShiftAccept (Isocores.get_hlt gotonub isocores)
                 end
-              | StateNub.Action.Reduce prod_index -> Action.Reduce prod_index
+              | Lr1ItemsetClosure.Action.Reduce prod_index -> Action.Reduce prod_index
             ) action_set
           ) action_set in
         assert (not (Ordset.is_empty action_set'));
@@ -114,7 +115,7 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub =
       )
   in
   let gotos =
-    StateNub.gotos symbols statenub
+    Lr1ItemsetClosure.gotos symbols lr1itemsetclosure
     |> Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index)) ~f:(fun gotos (nonterm_index, goto) ->
       let gotonub = gotonub_of_statenub_goto statenub goto in
       Ordmap.insert_hlt ~k:nonterm_index ~v:(Isocores.get_hlt gotonub isocores) gotos

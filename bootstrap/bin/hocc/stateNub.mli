@@ -7,26 +7,6 @@ open! Basis.Rudiments
 (* Isomorphic with `State.Index`. *)
 module Index = Uns
 
-module Action : sig
-  type t =
-    | ShiftPrefix of Lr1Itemset.t (** Shift, transition to an intermediate state. *)
-    | ShiftAccept of Lr1Itemset.t (** Shift, transition to a successful parse state. *)
-    | Reduce of Prod.Index.t (** Reduce. *)
-
-  include IdentifiableIntf.S with type t := t
-
-  val pp_hr: Symbols.t -> Prods.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** Formatter which outputs action in human-readable form. *)
-end
-
-module Actionset: sig
-  type t = (Action.t, Action.cmper_witness) Ordset.t
-
-  val resolve: Symbols.t -> Prods.t -> Symbol.Index.t -> t -> t
-  (** [resolve symbols prods symbol_index t] attempts to resolve conflicts, if any. Unresolvable
-      conflicts are left intact. *)
-end
-
 type t = {
   lr1itemsetclosure: Lr1ItemsetClosure.t;
   (** LR(1) item set closure. *)
@@ -74,28 +54,9 @@ val merge: Symbols.t -> GotoNub.t -> t -> bool * t
     creates the closure of the merged kernel, as well as merging conflict attributions from
     [gotonub]. The boolean result indicates whether items were merged into the kernel. *)
 
-val next: t -> (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t
-(** [next t] returns the set of symbol indexes that may appear next, i.e. the symbol indexes
-    corresponding to the symbols for which [goto] returns a non-empty set. *)
-
-val goto: Symbol.t -> t -> Lr1Itemset.t
-(** [goto symbol t] computes the kernel of the goto set reachable from [t], given [symbol]. *)
-
-val actions: Symbols.t -> t -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
-(** [actions symbols t] computes the map of per symbol actions for [t]. *)
-
-val gotos: Symbols.t -> t -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
-(** [gotos symbols t] computes the map of per non-terminal symbol gotos for [t]. *)
-
 val filtered_kernel_attribs: t -> KernelAttribs.t
 (** [filtered_kernel_attribs t] returns the kernel attribs in [t], filtered to contain only attribs
     which are relevant to the kernel follow sets. *)
-
-val resolve: Symbols.t -> Prods.t
-  -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
-  -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
-(** [resolve ~symbols ~prods actions] resolves conflicts in [actions] to the maximum degree possible
-    given precedences. *)
 
 val compat_ielr: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
 (** [compat_ielr ~resolve symbols prods gotonub t] determines whether [gotonub] and [t] are

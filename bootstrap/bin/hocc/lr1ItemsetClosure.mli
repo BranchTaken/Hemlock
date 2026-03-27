@@ -13,10 +13,17 @@ module Action : sig
     | Reduce of Prod.Index.t (** Reduce. *)
 
   include IdentifiableIntf.S with type t := t
+
+  val pp_hr: Symbols.t -> Prods.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+  (** Formatter which outputs action in human-readable form. *)
 end
 
 module Actionset: sig
   type t = (Action.t, Action.cmper_witness) Ordset.t
+
+  val resolve: Symbols.t -> Prods.t -> Symbol.Index.t -> t -> t
+  (** [resolve symbols prods symbol_index t] attempts to resolve conflicts, if any. Unresolvable
+      conflicts are left intact. *)
 end
 
 type t = {
@@ -62,9 +69,18 @@ val actions: Symbols.t -> t -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_
 val gotos: Symbols.t -> t -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
 (** [gotos symbols t] computes the map of per non-terminal symbol gotos for [t]. *)
 
-val lhs_symbol_indexes: t -> (Symbol.Index.t, Bitset.t, Symbol.Index.cmper_witness) Ordmap.t
-(** [lhs_symbol_indexes t] returns a map of all LHS symbols in [t] to their corresponding items'
-    follow sets. *)
+val resolve: Symbols.t -> Prods.t
+  -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
+  -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
+(** [resolve ~symbols ~prods actions] resolves conflicts in [actions] to the maximum degree possible
+    given precedences. *)
+
+val fold_until: init:'accum -> f:('accum -> Lr1Item.t -> 'accum * bool) -> t -> 'accum
+(** [fold_until ~init ~f t] folds over all kernel and added items in [t], continuing until [f]
+    returns [(accum, true)], or until folding is complete. *)
+
+val fold: init:'accum -> f:('accum -> Lr1Item.t -> 'accum) -> t -> 'accum
+(** [fold ~init ~f t] folds over all kernel and added items in [t]. *)
 
 val kernel_of_leftmost: symbol_index:Symbol.Index.t -> lhs_index:Symbol.Index.t -> t -> Lr1Itemset.t
 (** [kernel_of_leftmost ~symbol_index ~lhs_index] returns the transitive closure of the kernel items
@@ -82,10 +98,3 @@ module LeftmostCache : sig
         the kernel items with [lhs_index] just past the dot and [symbol_index] in the follow set, as
         well as an updated [t] with the result memoized. *)
 end
-
-val fold_until: init:'accum -> f:('accum -> Lr1Item.t -> 'accum * bool) -> t -> 'accum
-(** [fold_until ~init ~f t] folds over all kernel and added items in [t], continuing until [f]
-    returns [(accum, true)], or until folding is complete. *)
-
-val fold: init:'accum -> f:('accum -> Lr1Item.t -> 'accum) -> t -> 'accum
-(** [fold ~init ~f t] folds over all kernel and added items in [t]. *)
