@@ -36,6 +36,17 @@ module Action = struct
       | ShiftPrefix lr1itemset -> formatter |> Fmt.fmt "ShiftPrefix " |> Lr1Itemset.pp lr1itemset
       | ShiftAccept lr1itemset -> formatter |> Fmt.fmt "ShiftAccept " |> Lr1Itemset.pp lr1itemset
       | Reduce prod_index -> formatter |> Fmt.fmt "Reduce " |> Prod.Index.pp prod_index
+
+    let pp_hr symbols prods t formatter =
+      match t with
+      | ShiftPrefix goto -> formatter |> Fmt.fmt "ShiftPrefix " |> Lr1Itemset.fmt_hr symbols goto
+      | ShiftAccept goto -> formatter |> Fmt.fmt "ShiftAccept " |> Lr1Itemset.fmt_hr symbols goto
+      | Reduce prod_index -> begin
+          let prod = Prods.prod_of_prod_index prod_index prods in
+          formatter
+          |> Fmt.fmt "Reduce "
+          |> Symbols.pp_prod_hr prod symbols
+        end
   end
   include T
   include Identifiable.Make(T)
@@ -43,6 +54,135 @@ end
 
 module Actionset = struct
   type t = (Action.t, Action.cmper_witness) Ordset.t
+
+  let resolve symbols prods symbol_index t =
+    let prec_of_action symbols prods symbol_index action = begin
+      let open Action in
+      match action with
+      | ShiftPrefix _
+      | ShiftAccept _ ->
+        (match Symbols.symbol_of_symbol_index symbol_index symbols with Symbol.{prec; _} -> prec)
+      | Reduce prod_index ->
+        (match Prods.prod_of_prod_index prod_index prods with Prod.{prec; _} -> prec)
+    end in
+    let assoc_of_action symbols prods symbol_index action = begin
+      match prec_of_action symbols prods symbol_index action with
+      | None -> None
+      | Some {prec_set={assoc; _}; _} -> assoc
+    end in
+    match Ordset.length t with
+    | 1L -> t
+    | _ -> begin
+        (* Compute the subset of actions with maximal precedence, if any. Disjoint precedences are
+         * incomparable, i.e. there is no maximal precedence in the presence of disjoint
+         * precedences. *)
+        let max_prec_action_set =
+          Ordset.fold_until ~init:(Ordset.empty (module Action))
+            ~f:(fun max_prec_action_set action ->
+              match Ordset.is_empty max_prec_action_set with
+              | true -> Ordset.singleton (module Action) action, false
+              | false -> begin
+                  let max_prec = prec_of_action symbols prods symbol_index
+                      (Ordset.choose_hlt max_prec_action_set) in
+                  let action_prec = prec_of_action symbols prods symbol_index action in
+                  match max_prec, action_prec with
+                  | None, _
+                  | _, None -> begin
+                      (* Disjoint lack of precedence(s). *)
+                      Ordset.empty (module Action), true
+                    end
+                  | Some max_prec, Some action_prec -> begin
+                      match Uns.(=) max_prec.prec_set.index action_prec.prec_set.index with
+                      | false -> begin
+                          match Bitset.mem max_prec.prec_set.index action_prec.prec_set.doms with
+                          | false -> begin
+                              match Bitset.mem action_prec.prec_set.index max_prec.prec_set.doms
+                              with
+                              | false -> begin
+                                  (* Disjoint precedence; no conflict resolution possible. *)
+                                  Ordset.empty (module Action), true
+                                end
+                              | true -> begin
+                                  (* Action's precedence exceeds current maximal precedence. Replace
+                                   * dominated set with the singleton set containing action. *)
+                                  Ordset.singleton (module Action) action, false
+                                end
+                            end
+                          | true -> begin
+                              (* Current maximal precedence dominates action's precedence. *)
+                              max_prec_action_set, false
+                            end
+                        end
+                      | true -> begin
+                          (* Precedence equal to current maximal precedence. *)
+                          Ordset.insert action max_prec_action_set, false
+                        end
+                    end
+                end
+            ) t
+        in
+        match Ordset.length max_prec_action_set with
+        | 0L -> t
+        | 1L -> max_prec_action_set
+        | _ -> begin
+            (* Determine whether the subset of actions with maximal precedence has homogeneous
+             * associativity. *)
+            let assoc = assoc_of_action symbols prods symbol_index
+                (Ordset.choose_hlt max_prec_action_set) in
+            let homogeneous = Ordset.fold_until ~init:true ~f:(fun _ action ->
+              let action_assoc = assoc_of_action symbols prods symbol_index action in
+              match Cmp.is_eq (Option.cmp Assoc.cmp assoc action_assoc) with
+              | false -> false, true
+              | true -> true, false
+            ) max_prec_action_set in
+            match homogeneous with
+            | false -> t
+            | true -> begin
+                match assoc with
+                | None -> begin
+                    (* Resolve a singleton. *)
+                    match Ordset.length max_prec_action_set with
+                    | 1L -> max_prec_action_set
+                    | _ -> t
+                  end
+                | Some Left -> begin
+                    (* Resolve a single reduce action. *)
+                    let reduce_action_set = Ordset.fold_until
+                        ~init:(Ordset.empty (module Action))
+                        ~f:(fun reduce_action_set action ->
+                          let open Action in
+                          match action with
+                          | ShiftPrefix _
+                          | ShiftAccept _ -> reduce_action_set, false
+                          | Reduce _ -> begin
+                              match Ordset.is_empty reduce_action_set with
+                              | false -> Ordset.empty (module Action), true
+                              | true -> Ordset.singleton (module Action) action, false
+                            end
+                        ) max_prec_action_set in
+                    match Ordset.length reduce_action_set with
+                    | 1L -> reduce_action_set
+                    | _ -> t
+                  end
+                | Some Right -> begin
+                    (* Resolve a (single) shift action. *)
+                    let shift_action_set = Ordset.fold_until
+                        ~init:(Ordset.empty (module Action))
+                        ~f:(fun shift_action_set action ->
+                          let open Action in
+                          match action with
+                          | ShiftPrefix _
+                          | ShiftAccept _ -> Ordset.singleton (module Action) action, true
+                          | Reduce _ -> shift_action_set, false
+                        ) max_prec_action_set in
+                    match Ordset.length shift_action_set with
+                    | 1L -> shift_action_set
+                    | _ -> t
+                  end
+                | Some Nonassoc -> (Ordset.empty (module Action))
+              end
+          end
+      end
 end
 
 module T = struct
@@ -68,6 +208,93 @@ module T = struct
 end
 include T
 include Identifiable.Make(T)
+(* Update closure to incorporate `lr1itemset`. *)
+let add_lr1itemset symbols lr1itemset t =
+  let rec f symbols lr1itemset t = begin
+    match Lr1Itemset.choose lr1itemset with
+    | None -> t
+    | Some (Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}; follow} as lr1item) -> begin
+        let lr1itemset' = Lr1Itemset.remove lr1item lr1itemset in
+        match Uns.(dot < Array.length rhs_indexes) with
+        | false -> begin
+            (* X ::= a· *)
+            f symbols lr1itemset' t
+          end
+        | true -> begin
+            let rhs_symbol_index = Array.get dot rhs_indexes in
+            let rhs_symbol = Symbols.symbol_of_symbol_index rhs_symbol_index symbols in
+            match Symbol.is_nonterm rhs_symbol with
+            | false -> begin
+                (* X ::= a·b *)
+                f symbols lr1itemset' t
+              end
+            | true -> begin
+                (* X ::= a·Ab *)
+                let lhs = rhs_symbol in
+                let follow' = Lr1Item.first symbols
+                    (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot)) ~follow) in
+                let lr1itemset', t' = Ordset.fold ~init:(lr1itemset', t)
+                  ~f:(fun (lr1itemset, t) prod ->
+                    let lr0item = Lr0Item.init ~prod ~dot:0L in
+                    let lr1item = Lr1Item.init ~lr0item ~follow:follow' in
+                    match Lr1Itemset.mem lr1item t.added with
+                    | true -> lr1itemset, t
+                    | false -> begin
+                        let lr1itemset' = Lr1Itemset.insert lr1item lr1itemset in
+                        let added' = Lr1Itemset.insert_hlt lr1item t.added in
+                        lr1itemset', {t with added=added'}
+                      end
+                  ) lhs.prods in
+                f symbols lr1itemset' t'
+              end
+          end
+      end
+  end in
+  f symbols lr1itemset t
+
+(* Merge the kernel represented by `lr1itemset` into `t`'s kernel, then update the closure. *)
+let merge symbols lr1itemset t =
+  let lr1itemset', kernel' = Lr1Itemset.fold
+      ~init:(Lr1Itemset.empty, t.kernel)
+      ~f:(fun (lr1itemset, kernel) lr1item ->
+        assert (Lr1Item.is_kernel_item lr1item);
+        match Lr1Itemset.mem lr1item kernel with
+        | true -> lr1itemset, kernel
+        | false -> begin
+            let lr1itemset' = Lr1Itemset.insert_hlt lr1item lr1itemset in
+            let kernel' = Lr1Itemset.insert_hlt lr1item kernel in
+            lr1itemset', kernel'
+          end
+      ) lr1itemset in
+  assert (Bool.(=) (Lr1Itemset.is_empty lr1itemset') (Lr1Itemset.(=) t.kernel kernel'));
+  match Lr1Itemset.is_empty lr1itemset' with
+  | true -> false, t
+  | false -> begin
+      let t' = add_lr1itemset symbols lr1itemset' {t with kernel=kernel'} in
+      true, t'
+    end
+
+let remerge symbols remergeable_index_map {index=i0; kernel=k0; _} ({index=i1; _} as t1) =
+  let index = match Ordmap.get i0 remergeable_index_map, Ordmap.get i1 remergeable_index_map with
+    | Some index, None
+    | None, Some index
+      -> index
+    | Some _, Some _
+    | None, None
+      -> not_reached ()
+  in
+  assert Index.(index = min i0 i1);
+  match merge symbols k0 {t1 with index} with _, t1' -> t1'
+
+let reindex state_index_map ({index; _} as t) =
+  {t with index=StateIndexMap.reindexed_state_index index state_index_map}
+
+let init symbols ~index lr1itemset =
+  match merge symbols lr1itemset {
+    index;
+    kernel=Lr1Itemset.empty;
+    added=Lr1Itemset.empty;
+  } with _, t -> t
 
 let fold_until ~init ~f {kernel; added; _} =
   let accum, until = Lr1Itemset.fold_until ~init:(init, false) ~f:(fun (accum, _) lr1item ->
@@ -80,6 +307,17 @@ let fold_until ~init ~f {kernel; added; _} =
 
 let fold ~init ~f {kernel; added; _} =
   Lr1Itemset.fold ~init:(Lr1Itemset.fold ~init ~f kernel) ~f added
+
+let next t =
+  fold ~init:(Ordset.empty (module Symbol.Index))
+    ~f:(fun symbol_indexes Lr1Item.{lr0item={prod={rhs_indexes; _}; dot}; _} ->
+      match Uns.(dot < Array.length rhs_indexes) with
+      | false -> symbol_indexes
+      | true -> begin
+          let symbol_index = Array.get dot rhs_indexes in
+          Ordset.insert symbol_index symbol_indexes
+        end
+    ) t
 
 let goto symbol t =
   fold ~init:Lr1Itemset.empty
@@ -140,20 +378,15 @@ let gotos symbols t =
     | false -> Ordmap.insert_hlt ~k:nonterm.index ~v:goto gotos
   ) symbols
 
-let lhs_symbol_indexes {kernel; added; _} =
-  let accum = Lr1Itemset.fold ~init:(Ordmap.empty (module Symbol.Index))
-    ~f:(fun accum Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _} as prod; _}; follow} ->
-      match Prod.is_synthetic prod with
-      | true -> accum
-      | false -> Ordmap.insert ~k:lhs_index ~v:follow accum
-    ) kernel
-  in
-  let accum = Lr1Itemset.fold ~init:accum
-      ~f:(fun lhs_symbol_indexes Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _}; _}; follow} ->
-        Ordmap.insert ~k:lhs_index ~v:follow lhs_symbol_indexes
-      ) added
-  in
-  accum
+let resolve symbols prods actions =
+  Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index))
+    ~f:(fun actions (symbol_index, action_set) ->
+      let action_set' = Actionset.resolve symbols prods symbol_index action_set in
+      (* Nonassoc can cause empty action sets; drop them from actions. *)
+      match Ordset.is_empty action_set' with
+      | true -> actions
+      | false -> Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
+    ) actions
 
 let kernel_of_leftmost ~symbol_index ~lhs_index:prod_lhs_index {kernel; added; _} =
   (* Accumulate kernel items with the LHS of prod just past the dot and symbol_index in the follow
@@ -323,6 +556,23 @@ module LeftmostCache = struct
         accum in
     accum
 
+  (* Return a map of all LHS symbols in `t` to their corresponding items' follow sets. *)
+  let lhs_symbol_indexes {kernel; added; _} =
+    let accum = Lr1Itemset.fold ~init:(Ordmap.empty (module Symbol.Index))
+      ~f:(fun accum Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _} as prod; _}; follow} ->
+        match Prod.is_synthetic prod with
+        | true -> accum
+        | false -> Ordmap.insert ~k:lhs_index ~v:follow accum
+      ) kernel
+    in
+    let accum = Lr1Itemset.fold ~init:accum
+        ~f:(fun lhs_symbol_indexes
+          Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _}; _}; follow} ->
+          Ordmap.insert ~k:lhs_index ~v:follow lhs_symbol_indexes
+        ) added
+    in
+    accum
+
   let kernel_of_leftmost ~symbol_index ~lhs_index:prod_lhs_index
       ({index=state_index; _} as lr1itemsetclosure) t =
     let state_kernel_cache, t' = match Ordmap.get state_index t with
@@ -344,102 +594,3 @@ module LeftmostCache = struct
     in
     kernel, t'
 end
-
-(* Update closure to incorporate `lr1itemset`. *)
-let add_lr1itemset symbols lr1itemset t =
-  let rec f symbols lr1itemset t = begin
-    match Lr1Itemset.choose lr1itemset with
-    | None -> t
-    | Some (Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}; follow} as lr1item) -> begin
-        let lr1itemset' = Lr1Itemset.remove lr1item lr1itemset in
-        match Uns.(dot < Array.length rhs_indexes) with
-        | false -> begin
-            (* X ::= a· *)
-            f symbols lr1itemset' t
-          end
-        | true -> begin
-            let rhs_symbol_index = Array.get dot rhs_indexes in
-            let rhs_symbol = Symbols.symbol_of_symbol_index rhs_symbol_index symbols in
-            match Symbol.is_nonterm rhs_symbol with
-            | false -> begin
-                (* X ::= a·b *)
-                f symbols lr1itemset' t
-              end
-            | true -> begin
-                (* X ::= a·Ab *)
-                let lhs = rhs_symbol in
-                let follow' = Lr1Item.first symbols
-                    (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot)) ~follow) in
-                let lr1itemset', t' = Ordset.fold ~init:(lr1itemset', t)
-                  ~f:(fun (lr1itemset, t) prod ->
-                    let lr0item = Lr0Item.init ~prod ~dot:0L in
-                    let lr1item = Lr1Item.init ~lr0item ~follow:follow' in
-                    match Lr1Itemset.mem lr1item t.added with
-                    | true -> lr1itemset, t
-                    | false -> begin
-                        let lr1itemset' = Lr1Itemset.insert lr1item lr1itemset in
-                        let added' = Lr1Itemset.insert_hlt lr1item t.added in
-                        lr1itemset', {t with added=added'}
-                      end
-                  ) lhs.prods in
-                f symbols lr1itemset' t'
-              end
-          end
-      end
-  end in
-  f symbols lr1itemset t
-
-(* Merge the kernel represented by `lr1itemset` into `t`'s kernel, then update the closure. *)
-let merge symbols lr1itemset t =
-  let lr1itemset', kernel' = Lr1Itemset.fold
-      ~init:(Lr1Itemset.empty, t.kernel)
-      ~f:(fun (lr1itemset, kernel) lr1item ->
-        assert (Lr1Item.is_kernel_item lr1item);
-        match Lr1Itemset.mem lr1item kernel with
-        | true -> lr1itemset, kernel
-        | false -> begin
-            let lr1itemset' = Lr1Itemset.insert_hlt lr1item lr1itemset in
-            let kernel' = Lr1Itemset.insert_hlt lr1item kernel in
-            lr1itemset', kernel'
-          end
-      ) lr1itemset in
-  assert (Bool.(=) (Lr1Itemset.is_empty lr1itemset') (Lr1Itemset.(=) t.kernel kernel'));
-  match Lr1Itemset.is_empty lr1itemset' with
-  | true -> false, t
-  | false -> begin
-      let t' = add_lr1itemset symbols lr1itemset' {t with kernel=kernel'} in
-      true, t'
-    end
-
-let remerge symbols remergeable_index_map {index=i0; kernel=k0; _} ({index=i1; _} as t1) =
-  let index = match Ordmap.get i0 remergeable_index_map, Ordmap.get i1 remergeable_index_map with
-    | Some index, None
-    | None, Some index
-      -> index
-    | Some _, Some _
-    | None, None
-      -> not_reached ()
-  in
-  assert Index.(index = min i0 i1);
-  match merge symbols k0 {t1 with index} with _, t1' -> t1'
-
-let reindex state_index_map ({index; _} as t) =
-  {t with index=StateIndexMap.reindexed_state_index index state_index_map}
-
-let init symbols ~index lr1itemset =
-  match merge symbols lr1itemset {
-    index;
-    kernel=Lr1Itemset.empty;
-    added=Lr1Itemset.empty;
-  } with _, t -> t
-
-let next t =
-  fold ~init:(Ordset.empty (module Symbol.Index))
-    ~f:(fun symbol_indexes Lr1Item.{lr0item={prod={rhs_indexes; _}; dot}; _} ->
-      match Uns.(dot < Array.length rhs_indexes) with
-      | false -> symbol_indexes
-      | true -> begin
-          let symbol_index = Array.get dot rhs_indexes in
-          Ordset.insert symbol_index symbol_indexes
-        end
-    ) t

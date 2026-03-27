@@ -872,12 +872,12 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
     | true -> io, isocores
     | false -> begin
         let index, workq' = Workq.pop workq in
-        let statenub = Isocores.statenub index isocores in
+        let StateNub.{lr1itemsetclosure; _} as statenub = Isocores.statenub index isocores in
         let io, isocores', workq', reported_isocores_length = Ordset.fold
             ~init:(io, isocores, workq', reported_isocores_length)
             ~f:(fun (io, isocores, workq, reported_isocores_length) symbol_index ->
               let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
-              let goto = StateNub.goto symbol statenub in
+              let goto = Lr1ItemsetClosure.goto symbol lr1itemsetclosure in
               let gotonub = gotonub_of_statenub_goto statenub goto in
               let io, isocores, workq = match Isocores.get gotonub isocores with
                 | None -> begin
@@ -925,7 +925,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
                   end
               in
               io, isocores, workq, reported_isocores_length
-            ) (StateNub.next statenub)
+            ) (Lr1ItemsetClosure.next lr1itemsetclosure)
         in
         close_gotonubs io symbols prods ~gotonub_of_statenub_goto isocores' ~workq:workq'
           ~reported_isocores_length
