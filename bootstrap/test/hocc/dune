@@ -449,6 +449,66 @@
 
 (rule
  (deps
+  (glob_files IelrRemergeable.hmh*)
+  %{bin:hocc})
+ (targets IelrRemergeable_aaplr.out.txt)
+ (action
+  (with-accepted-exit-codes 0
+   (with-outputs-to IelrRemergeable_aaplr.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm aplr -v -txt)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrRemergeable_aaplr.expected IelrRemergeable_aaplr.out)
+   (diff IelrRemergeable_aaplr.expected.txt IelrRemergeable_aaplr.out.txt))))
+
+(rule
+ (deps
+  (glob_files IelrRemergeable.hmh*)
+  %{bin:hocc})
+ (targets IelrRemergeable_aielr_gno.out.txt)
+ (action
+  (with-accepted-exit-codes 0
+   (with-outputs-to IelrRemergeable_aielr_gno.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm ielr -gc no -v -txt)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrRemergeable_aielr_gno.expected IelrRemergeable_aielr_gno.out)
+   (diff IelrRemergeable_aielr_gno.expected.txt IelrRemergeable_aielr_gno.out.txt))))
+
+(rule
+ (deps
+  (glob_files IelrRemergeable.hmh*)
+  %{bin:hocc})
+ (targets IelrRemergeable_aielr_myes.out.txt)
+ (action
+  (with-accepted-exit-codes 0
+   (with-outputs-to IelrRemergeable_aielr_myes.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm ielr -remerge yes -v -txt)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrRemergeable_aielr_myes.expected IelrRemergeable_aielr_myes.out)
+   (diff IelrRemergeable_aielr_myes.expected.txt IelrRemergeable_aielr_myes.out.txt))))
+
+(rule
+ (deps
+  (glob_files IelrRemergeable.hmh*)
+  %{bin:hocc})
+ (targets IelrRemergeable_alalr_rno.out.txt)
+ (action
+  (with-accepted-exit-codes 0
+   (with-outputs-to IelrRemergeable_alalr_rno.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm lalr -resolve no -v -txt)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrRemergeable_alalr_rno.expected IelrRemergeable_alalr_rno.out)
+   (diff IelrRemergeable_alalr_rno.expected.txt IelrRemergeable_alalr_rno.out.txt))))
+
+(rule
+ (deps
   (glob_files Lyken.hmh*)
   %{bin:hocc})
  (action
