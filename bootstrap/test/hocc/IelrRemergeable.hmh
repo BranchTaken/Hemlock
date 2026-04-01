@@ -1,0 +1,42 @@
+# Minimized test case extracted from the `Gpic` test that exercises the need to split remergeable
+# states. Left associativity causes reduces to dominate shifts, which means that incorrectly merged
+# lanes can prevent shifts present in a full LR(1) automaton. This test induces state splitting to
+# preserve paths via which shift actions can occur. But the splitting doesn't propagate all the way
+# to the LALR(1) conflict states, thus making the splits remergeable.
+
+hocc
+    left p0
+    left p1 < p0
+    left p2 < p1
+    left p3 < p2
+    left p4 < p3
+    left p5 < p4
+    token RPAREN ")"
+    token PLUS "+" prec p0
+    token MINUS "-" prec p0
+    token MAX "max" prec p1
+    token MIN "min" prec p2
+    token LT "<" prec p3
+    token GT ">" prec p3
+    token COMMA "," prec p4
+    token VAR "var" prec p5
+    token LPAREN "(" prec p5
+    token EOI
+    start S ::=
+      | Pos EOI
+    nonterm Pos ::=
+      | EPair
+      | Pos "+" EPair
+      | Pos "-" EPair
+      | "(" Pos "," Pos ")"
+      | E "min" Pos "max" Pos prec p1
+      | E "<" Pos "," Pos ">"
+    nonterm EPair ::=
+      | E "," E prec p4
+      | "(" EPair ")"
+    nonterm E ::=
+      | "var"
+      | E "+" E prec p0
+      | "(" E ")"
+      | E "<" E prec p3
+      | E ">" E prec p3

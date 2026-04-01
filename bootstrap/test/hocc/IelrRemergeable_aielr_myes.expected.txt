@@ -1,0 +1,1019 @@
+IelrRemergeable_aielr_myes grammar
+
+Precedences
+    left p0
+    left p1 < p0
+    left p2 < p0, p1
+    left p3 < p0, p1, p2
+    left p4 < p0, p1, p2, p3
+    left p5 < p0, p1, p2, p3, p4
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token RPAREN ")"
+        First: {")"}
+        Follow: {")", "+", "-", "max", "min", "<", ">", ",", EOI}
+    token PLUS "+" prec p0
+        First: {"+"}
+        Follow: {"var", "("}
+    token MINUS "-" prec p0
+        First: {"-"}
+        Follow: {"var", "("}
+    token MAX "max" prec p1
+        First: {"max"}
+        Follow: {"var", "("}
+    token MIN "min" prec p2
+        First: {"min"}
+        Follow: {"var", "("}
+    token LT "<" prec p3
+        First: {"<"}
+        Follow: {"var", "("}
+    token GT ">" prec p3
+        First: {">"}
+        Follow: {")", "+", "-", "max", ">", ",", "var", "(", EOI}
+    token COMMA "," prec p4
+        First: {","}
+        Follow: {"var", "("}
+    token VAR "var" prec p5
+        First: {"var"}
+        Follow: {")", "+", "-", "max", "min", "<", ">", ",", EOI}
+    token LPAREN "(" prec p5
+        First: {"("}
+        Follow: {"var", "("}
+    token EOI
+        First: {EOI}
+        Follow: {"⊥"}
+Non-terminals
+    start S
+        First: {"var", "("}
+        Follow: {"⊥"}
+        Productions
+            S ::= Pos EOI
+    start S'
+        First: {"var", "("}
+        Follow: {"ε"}
+        Productions
+            S' ::= S "⊥"
+    nonterm Pos
+        First: {"var", "("}
+        Follow: {")", "+", "-", "max", ">", ",", EOI}
+        Productions
+            Pos ::= EPair
+            Pos ::= Pos "+" EPair
+            Pos ::= Pos "-" EPair
+            Pos ::= "(" Pos "," Pos ")"
+            Pos ::= E "min" Pos "max" Pos prec p1
+            Pos ::= E "<" Pos "," Pos ">"
+    nonterm EPair
+        First: {"var", "("}
+        Follow: {")", "+", "-", "max", ">", ",", EOI}
+        Productions
+            EPair ::= E "," E prec p4
+            EPair ::= "(" EPair ")"
+    nonterm E
+        First: {"var", "("}
+        Follow: {")", "+", "-", "max", "min", "<", ">", ",", EOI}
+        Productions
+            E ::= "var"
+            E ::= E "+" E prec p0
+            E ::= "(" E ")"
+            E ::= E "<" E prec p3
+            E ::= E ">" E prec p3
+IELR(1) States
+    State 0 [0.0]
+        Kernel
+            [S' ::= · S "⊥", {"ε"}]
+        Added
+            [S ::= · Pos EOI, {"⊥"}]
+            [Pos ::= · EPair, {"+", "-", EOI}]
+            [Pos ::= · Pos "+" EPair, {"+", "-", EOI}]
+            [Pos ::= · Pos "-" EPair, {"+", "-", EOI}]
+            [Pos ::= · "(" Pos "," Pos ")", {"+", "-", EOI}]
+            [Pos ::= · E "min" Pos "max" Pos, {"+", "-", EOI}] prec p1
+            [Pos ::= · E "<" Pos "," Pos ">", {"+", "-", EOI}]
+            [EPair ::= · E "," E, {"+", "-", EOI}] prec p4
+            [EPair ::= · "(" EPair ")", {"+", "-", EOI}]
+            [E ::= · "var", {"+", "min", "<", ">", ","}]
+            [E ::= · E "+" E, {"+", "min", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {"+", "min", "<", ">", ","}]
+            [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 2 prec p5
+        Gotos
+            S : 3
+            Pos : 4
+            EPair : 5
+            E : 6
+    State 1 [1.0]
+        Kernel
+            [E ::= "var" ·, {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+        Actions
+            ")" : Reduce E ::= "var"
+            "+" : Reduce E ::= "var"
+            "-" : Reduce E ::= "var"
+            "max" : Reduce E ::= "var"
+            "min" : Reduce E ::= "var"
+            "<" : Reduce E ::= "var"
+            ">" : Reduce E ::= "var"
+            "," : Reduce E ::= "var"
+            EOI : Reduce E ::= "var"
+    State 2 [2.0]
+        Kernel
+            [Pos ::= "(" · Pos "," Pos ")", {")", "+", "-", "max", ">", ",", EOI}]
+            [EPair ::= "(" · EPair ")", {")", "+", "-", "max", ">", ",", EOI}]
+            [E ::= "(" · E ")", {")", "+", "min", "<", ">", ","}]
+        Added
+            [Pos ::= · EPair, {"+", "-", ","}]
+            [Pos ::= · Pos "+" EPair, {"+", "-", ","}]
+            [Pos ::= · Pos "-" EPair, {"+", "-", ","}]
+            [Pos ::= · "(" Pos "," Pos ")", {"+", "-", ","}]
+            [Pos ::= · E "min" Pos "max" Pos, {"+", "-", ","}] prec p1
+            [Pos ::= · E "<" Pos "," Pos ">", {"+", "-", ","}]
+            [EPair ::= · E "," E, {")", "+", "-", ","}] prec p4
+            [EPair ::= · "(" EPair ")", {")", "+", "-", ","}]
+            [E ::= · "var", {")", "+", "min", "<", ">", ","}]
+            [E ::= · E "+" E, {")", "+", "min", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {")", "+", "min", "<", ">", ","}]
+            [E ::= · E "<" E, {")", "+", "min", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {")", "+", "min", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 2 prec p5
+        Gotos
+            Pos : 7
+            EPair : 8
+            E : 9
+        Conflict contributions
+            [E ::= "(" · E ")", {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 3 [3.0]
+        Kernel
+            [S' ::= S · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 10
+    State 4 [4.0]
+        Kernel
+            [S ::= Pos · EOI, {"⊥"}]
+            [Pos ::= Pos · "+" EPair, {"+", "-", EOI}]
+            [Pos ::= Pos · "-" EPair, {"+", "-", EOI}]
+        Actions
+            "+" : ShiftPrefix 11 prec p0
+            "-" : ShiftPrefix 12 prec p0
+            EOI : ShiftAccept 13
+    State 5 [5.0]
+        Kernel
+            [Pos ::= EPair ·, {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : Reduce Pos ::= EPair
+            "+" : Reduce Pos ::= EPair
+            "-" : Reduce Pos ::= EPair
+            "max" : Reduce Pos ::= EPair
+            ">" : Reduce Pos ::= EPair
+            "," : Reduce Pos ::= EPair
+            EOI : Reduce Pos ::= EPair
+    State 6 [6.0]
+        Kernel
+            [Pos ::= E · "min" Pos "max" Pos, {")", "+", "-", "max", ">", ",", EOI}] prec p1
+            [Pos ::= E · "<" Pos "," Pos ">", {")", "+", "-", "max", ">", ",", EOI}]
+            [EPair ::= E · "," E, {")", "+", "-", "max", ">", ",", EOI}] prec p4
+            [E ::= E · "+" E, {"+", "min", "<", ">", ","}] prec p0
+            [E ::= E · "<" E, {"+", "min", "<", ">", ","}] prec p3
+            [E ::= E · ">" E, {"+", "min", "<", ">", ","}] prec p3
+        Actions
+            "+" : ShiftPrefix 14 prec p0
+            "min" : ShiftPrefix 15 prec p2
+            "<" : ShiftPrefix 16 prec p3
+            ">" : ShiftPrefix 17 prec p3
+            "," : ShiftPrefix 18 prec p4
+        Conflict contributions
+            [Pos ::= E · "min" Pos "max" Pos, {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [Pos ::= E · "<" Pos "," Pos ">", {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [EPair ::= E · "," E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 7 [7.0]
+        Kernel
+            [Pos ::= Pos · "+" EPair, {"+", "-", ","}]
+            [Pos ::= Pos · "-" EPair, {"+", "-", ","}]
+            [Pos ::= "(" Pos · "," Pos ")", {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            "+" : ShiftPrefix 11 prec p0
+            "-" : ShiftPrefix 12 prec p0
+            "," : ShiftPrefix 19 prec p4
+    State 8 [8.0]
+        Kernel
+            [Pos ::= EPair ·, {"+", "-", ","}]
+            [EPair ::= "(" EPair · ")", {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : ShiftPrefix 20
+            "+" : Reduce Pos ::= EPair
+            "-" : Reduce Pos ::= EPair
+            "," : Reduce Pos ::= EPair
+    State 9 [9.0]
+        Kernel
+            [Pos ::= E · "min" Pos "max" Pos, {"+", "-", ","}] prec p1
+            [Pos ::= E · "<" Pos "," Pos ">", {"+", "-", ","}]
+            [EPair ::= E · "," E, {")", "+", "-", ","}] prec p4
+            [E ::= E · "+" E, {")", "+", "min", "<", ">", ","}] prec p0
+            [E ::= "(" E · ")", {")", "+", "min", "<", ">", ","}]
+            [E ::= E · "<" E, {")", "+", "min", "<", ">", ","}] prec p3
+            [E ::= E · ">" E, {")", "+", "min", "<", ">", ","}] prec p3
+        Actions
+            ")" : ShiftPrefix 21
+            "+" : ShiftPrefix 14 prec p0
+            "min" : ShiftPrefix 15 prec p2
+            "<" : ShiftPrefix 16 prec p3
+            ">" : ShiftPrefix 17 prec p3
+            "," : ShiftPrefix 18 prec p4
+        Conflict contributions
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 10 [10.0]
+        Kernel
+            [S' ::= S "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce S' ::= S "⊥"
+    State 11 [11.0]
+        Kernel
+            [Pos ::= Pos "+" · EPair, {")", "+", "-", "max", ">", ",", EOI}]
+        Added
+            [EPair ::= · E "," E, {")", "+", "-", "max", ">", ",", EOI}] prec p4
+            [EPair ::= · "(" EPair ")", {")", "+", "-", "max", ">", ",", EOI}]
+            [E ::= · "var", {"+", "<", ">", ","}]
+            [E ::= · E "+" E, {"+", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {"+", "<", ">", ","}]
+            [E ::= · E "<" E, {"+", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {"+", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 22 prec p5
+        Gotos
+            EPair : 23
+            E : 24
+        Conflict contributions
+            [Pos ::= Pos "+" · EPair, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+    State 12 [12.0]
+        Kernel
+            [Pos ::= Pos "-" · EPair, {")", "+", "-", "max", ">", ",", EOI}]
+        Added
+            [EPair ::= · E "," E, {")", "+", "-", "max", ">", ",", EOI}] prec p4
+            [EPair ::= · "(" EPair ")", {")", "+", "-", "max", ">", ",", EOI}]
+            [E ::= · "var", {"+", "<", ">", ","}]
+            [E ::= · E "+" E, {"+", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {"+", "<", ">", ","}]
+            [E ::= · E "<" E, {"+", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {"+", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 22 prec p5
+        Gotos
+            EPair : 25
+            E : 24
+        Conflict contributions
+            [Pos ::= Pos "-" · EPair, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+    State 13 [13.0]
+        Kernel
+            [S ::= Pos EOI ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce S ::= Pos EOI
+    State 14 [14.0]
+        Kernel
+            [E ::= E "+" · E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+        Added
+            [E ::= · "var", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= · "(" E ")", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= · E ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 26 prec p5
+        Gotos
+            E : 27
+        Conflict contributions
+            [E ::= E "+" · E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E "+" · E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 15 [15.0]
+        Kernel
+            [Pos ::= E "min" · Pos "max" Pos, {")", "+", "-", "max", ">", ",", EOI}] prec p1
+        Added
+            [Pos ::= · EPair, {"+", "-", "max"}]
+            [Pos ::= · Pos "+" EPair, {"+", "-", "max"}]
+            [Pos ::= · Pos "-" EPair, {"+", "-", "max"}]
+            [Pos ::= · "(" Pos "," Pos ")", {"+", "-", "max"}]
+            [Pos ::= · E "min" Pos "max" Pos, {"+", "-", "max"}] prec p1
+            [Pos ::= · E "<" Pos "," Pos ">", {"+", "-", "max"}]
+            [EPair ::= · E "," E, {"+", "-", "max"}] prec p4
+            [EPair ::= · "(" EPair ")", {"+", "-", "max"}]
+            [E ::= · "var", {"+", "min", "<", ">", ","}]
+            [E ::= · E "+" E, {"+", "min", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {"+", "min", "<", ">", ","}]
+            [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 2 prec p5
+        Gotos
+            Pos : 28
+            EPair : 5
+            E : 6
+        Conflict contributions
+            [Pos ::= E "min" · Pos "max" Pos, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+    State 16 [16.0]
+        Kernel
+            [Pos ::= E "<" · Pos "," Pos ">", {")", "+", "-", "max", ">", ",", EOI}]
+            [E ::= E "<" · E, {")", "+", "min", "<", ">", ","}] prec p3
+        Added
+            [Pos ::= · EPair, {"+", "-", ","}]
+            [Pos ::= · Pos "+" EPair, {"+", "-", ","}]
+            [Pos ::= · Pos "-" EPair, {"+", "-", ","}]
+            [Pos ::= · "(" Pos "," Pos ")", {"+", "-", ","}]
+            [Pos ::= · E "min" Pos "max" Pos, {"+", "-", ","}] prec p1
+            [Pos ::= · E "<" Pos "," Pos ">", {"+", "-", ","}]
+            [EPair ::= · E "," E, {"+", "-", ","}] prec p4
+            [EPair ::= · "(" EPair ")", {"+", "-", ","}]
+            [E ::= · "var", {")", "+", "min", "<", ">", ","}]
+            [E ::= · E "+" E, {")", "+", "min", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {")", "+", "min", "<", ">", ","}]
+            [E ::= · E "<" E, {")", "+", "min", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {")", "+", "min", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 2 prec p5
+        Gotos
+            Pos : 29
+            EPair : 5
+            E : 30
+        Conflict contributions
+            [Pos ::= E "<" · Pos "," Pos ">", {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E "<" · E, {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 17 [17.0]
+        Kernel
+            [E ::= E ">" · E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Added
+            [E ::= · "var", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= · "(" E ")", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= · E ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 26 prec p5
+        Gotos
+            E : 31
+        Conflict contributions
+            [E ::= E ">" · E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E ">" · E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 18 [18.0]
+        Kernel
+            [EPair ::= E "," · E, {")", "+", "-", "max", ">", ",", EOI}] prec p4
+        Added
+            [E ::= · "var", {")", "+", "-", "max", "<", ">", ",", EOI}]
+            [E ::= · E "+" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p0
+            [E ::= · "(" E ")", {")", "+", "-", "max", "<", ">", ",", EOI}]
+            [E ::= · E "<" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
+            [E ::= · E ">" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 26 prec p5
+        Gotos
+            E : 32
+        Conflict contributions
+            [EPair ::= E "," · E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [EPair ::= E "," · E, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+    State 19 [19.0]
+        Kernel
+            [Pos ::= "(" Pos "," · Pos ")", {")", "+", "-", "max", ">", ",", EOI}]
+        Added
+            [Pos ::= · EPair, {")", "+", "-"}]
+            [Pos ::= · Pos "+" EPair, {")", "+", "-"}]
+            [Pos ::= · Pos "-" EPair, {")", "+", "-"}]
+            [Pos ::= · "(" Pos "," Pos ")", {")", "+", "-"}]
+            [Pos ::= · E "min" Pos "max" Pos, {")", "+", "-"}] prec p1
+            [Pos ::= · E "<" Pos "," Pos ">", {")", "+", "-"}]
+            [EPair ::= · E "," E, {")", "+", "-"}] prec p4
+            [EPair ::= · "(" EPair ")", {")", "+", "-"}]
+            [E ::= · "var", {"+", "min", "<", ">", ","}]
+            [E ::= · E "+" E, {"+", "min", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {"+", "min", "<", ">", ","}]
+            [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 2 prec p5
+        Gotos
+            Pos : 33
+            EPair : 5
+            E : 6
+    State 20 [20.0]
+        Kernel
+            [EPair ::= "(" EPair ")" ·, {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : Reduce EPair ::= "(" EPair ")"
+            "+" : Reduce EPair ::= "(" EPair ")"
+            "-" : Reduce EPair ::= "(" EPair ")"
+            "max" : Reduce EPair ::= "(" EPair ")"
+            ">" : Reduce EPair ::= "(" EPair ")"
+            "," : Reduce EPair ::= "(" EPair ")"
+            EOI : Reduce EPair ::= "(" EPair ")"
+    State 21 [21.0]
+        Kernel
+            [E ::= "(" E ")" ·, {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+        Actions
+            ")" : Reduce E ::= "(" E ")"
+            "+" : Reduce E ::= "(" E ")"
+            "-" : Reduce E ::= "(" E ")"
+            "max" : Reduce E ::= "(" E ")"
+            "min" : Reduce E ::= "(" E ")"
+            "<" : Reduce E ::= "(" E ")"
+            ">" : Reduce E ::= "(" E ")"
+            "," : Reduce E ::= "(" E ")"
+            EOI : Reduce E ::= "(" E ")"
+    State 22 [22.0]
+        Kernel
+            [EPair ::= "(" · EPair ")", {")", "+", "-", "max", ">", ",", EOI}]
+            [E ::= "(" · E ")", {")", "+", "<", ">", ","}]
+        Added
+            [EPair ::= · E "," E, {")"}] prec p4
+            [EPair ::= · "(" EPair ")", {")"}]
+            [E ::= · "var", {")", "+", "<", ">", ","}]
+            [E ::= · E "+" E, {")", "+", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {")", "+", "<", ">", ","}]
+            [E ::= · E "<" E, {")", "+", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {")", "+", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 22 prec p5
+        Gotos
+            EPair : 34
+            E : 35
+        Conflict contributions
+            [E ::= "(" · E ")", {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 23 [23.0]
+        Kernel
+            [Pos ::= Pos "+" EPair ·, {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : Reduce Pos ::= Pos "+" EPair
+            "+" : Reduce Pos ::= Pos "+" EPair
+            "-" : Reduce Pos ::= Pos "+" EPair
+            "max" : Reduce Pos ::= Pos "+" EPair
+            ">" : Reduce Pos ::= Pos "+" EPair
+            "," : Reduce Pos ::= Pos "+" EPair
+            EOI : Reduce Pos ::= Pos "+" EPair
+    State 24 [24.0]
+        Kernel
+            [EPair ::= E · "," E, {")", "+", "-", "max", ">", ",", EOI}] prec p4
+            [E ::= E · "+" E, {"+", "<", ">", ","}] prec p0
+            [E ::= E · "<" E, {"+", "<", ">", ","}] prec p3
+            [E ::= E · ">" E, {"+", "<", ">", ","}] prec p3
+        Actions
+            "+" : ShiftPrefix 14 prec p0
+            "<" : ShiftPrefix 36 prec p3
+            ">" : ShiftPrefix 17 prec p3
+            "," : ShiftPrefix 18 prec p4
+        Conflict contributions
+            [EPair ::= E · "," E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 25 [25.0]
+        Kernel
+            [Pos ::= Pos "-" EPair ·, {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : Reduce Pos ::= Pos "-" EPair
+            "+" : Reduce Pos ::= Pos "-" EPair
+            "-" : Reduce Pos ::= Pos "-" EPair
+            "max" : Reduce Pos ::= Pos "-" EPair
+            ">" : Reduce Pos ::= Pos "-" EPair
+            "," : Reduce Pos ::= Pos "-" EPair
+            EOI : Reduce Pos ::= Pos "-" EPair
+    State 26 [26.0]
+        Kernel
+            [E ::= "(" · E ")", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+        Added
+            [E ::= · "var", {")", "+", "<", ">"}]
+            [E ::= · E "+" E, {")", "+", "<", ">"}] prec p0
+            [E ::= · "(" E ")", {")", "+", "<", ">"}]
+            [E ::= · E "<" E, {")", "+", "<", ">"}] prec p3
+            [E ::= · E ">" E, {")", "+", "<", ">"}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 26 prec p5
+        Gotos
+            E : 37
+        Conflict contributions
+            [E ::= "(" · E ")", {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= "(" · E ")", {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 27 [27.0]
+        Kernel
+            [E ::= E · "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= E "+" E ·, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= E · "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= E · ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Actions
+            ")" : Reduce E ::= E "+" E prec p0
+            "+" : Reduce E ::= E "+" E prec p0
+            "-" : Reduce E ::= E "+" E prec p0
+            "max" : Reduce E ::= E "+" E prec p0
+            "min" : Reduce E ::= E "+" E prec p0
+            "<" : Reduce E ::= E "+" E prec p0
+            ">" : Reduce E ::= E "+" E prec p0
+            "," : Reduce E ::= E "+" E prec p0
+            EOI : Reduce E ::= E "+" E prec p0
+        Conflict contributions
+            [E ::= E · "+" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E "+" E ·, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E "+" E ·, {">"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "<" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 28 [28.0]
+        Kernel
+            [Pos ::= Pos · "+" EPair, {"+", "-", "max"}]
+            [Pos ::= Pos · "-" EPair, {"+", "-", "max"}]
+            [Pos ::= E "min" Pos · "max" Pos, {")", "+", "-", "max", ">", ",", EOI}] prec p1
+        Actions
+            "+" : ShiftPrefix 11 prec p0
+            "-" : ShiftPrefix 12 prec p0
+            "max" : ShiftPrefix 38 prec p1
+        Conflict contributions
+            [Pos ::= E "min" Pos · "max" Pos, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+    State 29 [29.0]
+        Kernel
+            [Pos ::= Pos · "+" EPair, {"+", "-", ","}]
+            [Pos ::= Pos · "-" EPair, {"+", "-", ","}]
+            [Pos ::= E "<" Pos · "," Pos ">", {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            "+" : ShiftPrefix 11 prec p0
+            "-" : ShiftPrefix 12 prec p0
+            "," : ShiftPrefix 39 prec p4
+        Conflict contributions
+            [Pos ::= E "<" Pos · "," Pos ">", {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+    State 30 [30.0]
+        Kernel
+            [Pos ::= E · "min" Pos "max" Pos, {"+", "-", ","}] prec p1
+            [Pos ::= E · "<" Pos "," Pos ">", {"+", "-", ","}]
+            [EPair ::= E · "," E, {"+", "-", ","}] prec p4
+            [E ::= E · "+" E, {")", "+", "min", "<", ">", ","}] prec p0
+            [E ::= E · "<" E, {")", "+", "min", "<", ">", ","}] prec p3
+            [E ::= E "<" E ·, {")", "+", "min", "<", ">", ","}] prec p3
+            [E ::= E · ">" E, {")", "+", "min", "<", ">", ","}] prec p3
+        Actions
+            ")" : Reduce E ::= E "<" E prec p3
+            "+" : ShiftPrefix 14 prec p0
+            "min" : ShiftPrefix 15 prec p2
+            "<" : Reduce E ::= E "<" E prec p3
+            ">" : Reduce E ::= E "<" E prec p3
+            "," : Reduce E ::= E "<" E prec p3
+        Conflict contributions
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E "<" E ·, {">"}]
+                30 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 31 [31.0]
+        Kernel
+            [E ::= E · "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= E · "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= E · ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= E ">" E ·, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Actions
+            ")" : Reduce E ::= E ">" E prec p3
+            "+" : ShiftPrefix 14 prec p0
+            "-" : Reduce E ::= E ">" E prec p3
+            "max" : Reduce E ::= E ">" E prec p3
+            "min" : Reduce E ::= E ">" E prec p3
+            "<" : Reduce E ::= E ">" E prec p3
+            ">" : Reduce E ::= E ">" E prec p3
+            "," : Reduce E ::= E ">" E prec p3
+            EOI : Reduce E ::= E ">" E prec p3
+        Conflict contributions
+            [E ::= E · "+" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E ">" E ·, {">"}]
+                31 : Reduce E ::= E ">" E
+    State 32 [32.0]
+        Kernel
+            [EPair ::= E "," E ·, {")", "+", "-", "max", ">", ",", EOI}] prec p4
+            [E ::= E · "+" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p0
+            [E ::= E · "<" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
+            [E ::= E · ">" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
+        Actions
+            ")" : Reduce EPair ::= E "," E prec p4
+            "+" : ShiftPrefix 14 prec p0
+            "-" : Reduce EPair ::= E "," E prec p4
+            "max" : Reduce EPair ::= E "," E prec p4
+            "<" : ShiftPrefix 36 prec p3
+            ">" : ShiftPrefix 17 prec p3
+            "," : Reduce EPair ::= E "," E prec p4
+            EOI : Reduce EPair ::= E "," E prec p4
+        Conflict contributions
+            [E ::= E · "+" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 33 [33.0]
+        Kernel
+            [Pos ::= Pos · "+" EPair, {")", "+", "-"}]
+            [Pos ::= Pos · "-" EPair, {")", "+", "-"}]
+            [Pos ::= "(" Pos "," Pos · ")", {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : ShiftPrefix 40
+            "+" : ShiftPrefix 11 prec p0
+            "-" : ShiftPrefix 12 prec p0
+    State 34 [34.0]
+        Kernel
+            [EPair ::= "(" EPair · ")", {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : ShiftPrefix 20
+    State 35 [35.0]
+        Kernel
+            [EPair ::= E · "," E, {")"}] prec p4
+            [E ::= E · "+" E, {")", "+", "<", ">", ","}] prec p0
+            [E ::= "(" E · ")", {")", "+", "<", ">", ","}]
+            [E ::= E · "<" E, {")", "+", "<", ">", ","}] prec p3
+            [E ::= E · ">" E, {")", "+", "<", ">", ","}] prec p3
+        Actions
+            ")" : ShiftPrefix 21
+            "+" : ShiftPrefix 14 prec p0
+            "<" : ShiftPrefix 36 prec p3
+            ">" : ShiftPrefix 17 prec p3
+            "," : ShiftPrefix 18 prec p4
+        Conflict contributions
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 36 [36.0]
+        Kernel
+            [E ::= E "<" · E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Added
+            [E ::= · "var", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= · "(" E ")", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= · E ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 26 prec p5
+        Gotos
+            E : 41
+        Conflict contributions
+            [E ::= E "<" · E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E "<" · E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 37 [37.0]
+        Kernel
+            [E ::= E · "+" E, {")", "+", "<", ">"}] prec p0
+            [E ::= "(" E · ")", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= E · "<" E, {")", "+", "<", ">"}] prec p3
+            [E ::= E · ">" E, {")", "+", "<", ">"}] prec p3
+        Actions
+            ")" : ShiftPrefix 21
+            "+" : ShiftPrefix 14 prec p0
+            "<" : ShiftPrefix 36 prec p3
+            ">" : ShiftPrefix 17 prec p3
+        Conflict contributions
+            [E ::= E · "+" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 38 [38.0]
+        Kernel
+            [Pos ::= E "min" Pos "max" · Pos, {")", "+", "-", "max", ">", ",", EOI}] prec p1
+        Added
+            [Pos ::= · EPair, {")", "+", "-", "max", ">", ",", EOI}]
+            [Pos ::= · Pos "+" EPair, {")", "+", "-", "max", ">", ",", EOI}]
+            [Pos ::= · Pos "-" EPair, {")", "+", "-", "max", ">", ",", EOI}]
+            [Pos ::= · "(" Pos "," Pos ")", {")", "+", "-", "max", ">", ",", EOI}]
+            [Pos ::= · E "min" Pos "max" Pos, {")", "+", "-", "max", ">", ",", EOI}] prec p1
+            [Pos ::= · E "<" Pos "," Pos ">", {")", "+", "-", "max", ">", ",", EOI}]
+            [EPair ::= · E "," E, {")", "+", "-", "max", ">", ",", EOI}] prec p4
+            [EPair ::= · "(" EPair ")", {")", "+", "-", "max", ">", ",", EOI}]
+            [E ::= · "var", {"+", "min", "<", ">", ","}]
+            [E ::= · E "+" E, {"+", "min", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {"+", "min", "<", ">", ","}]
+            [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 2 prec p5
+        Gotos
+            Pos : 42
+            EPair : 5
+            E : 6
+        Conflict contributions
+            [Pos ::= E "min" Pos "max" · Pos, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+    State 39 [39.0]
+        Kernel
+            [Pos ::= E "<" Pos "," · Pos ">", {")", "+", "-", "max", ">", ",", EOI}]
+        Added
+            [Pos ::= · EPair, {"+", "-", ">"}]
+            [Pos ::= · Pos "+" EPair, {"+", "-", ">"}]
+            [Pos ::= · Pos "-" EPair, {"+", "-", ">"}]
+            [Pos ::= · "(" Pos "," Pos ")", {"+", "-", ">"}]
+            [Pos ::= · E "min" Pos "max" Pos, {"+", "-", ">"}] prec p1
+            [Pos ::= · E "<" Pos "," Pos ">", {"+", "-", ">"}]
+            [EPair ::= · E "," E, {"+", "-", ">"}] prec p4
+            [EPair ::= · "(" EPair ")", {"+", "-", ">"}]
+            [E ::= · "var", {"+", "min", "<", ">", ","}]
+            [E ::= · E "+" E, {"+", "min", "<", ">", ","}] prec p0
+            [E ::= · "(" E ")", {"+", "min", "<", ">", ","}]
+            [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
+            [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
+        Actions
+            "var" : ShiftPrefix 1 prec p5
+            "(" : ShiftPrefix 2 prec p5
+        Gotos
+            Pos : 43
+            EPair : 5
+            E : 6
+        Conflict contributions
+            [Pos ::= E "<" Pos "," · Pos ">", {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                30 : Reduce E ::= E "<" E
+                31 : Reduce E ::= E ">" E
+    State 40 [40.0]
+        Kernel
+            [Pos ::= "(" Pos "," Pos ")" ·, {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : Reduce Pos ::= "(" Pos "," Pos ")"
+            "+" : Reduce Pos ::= "(" Pos "," Pos ")"
+            "-" : Reduce Pos ::= "(" Pos "," Pos ")"
+            "max" : Reduce Pos ::= "(" Pos "," Pos ")"
+            ">" : Reduce Pos ::= "(" Pos "," Pos ")"
+            "," : Reduce Pos ::= "(" Pos "," Pos ")"
+            EOI : Reduce Pos ::= "(" Pos "," Pos ")"
+    State 41 [41.0]
+        Kernel
+            [E ::= E · "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= E · "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= E "<" E ·, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= E · ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+        Actions
+            ")" : Reduce E ::= E "<" E prec p3
+            "+" : ShiftPrefix 14 prec p0
+            "-" : Reduce E ::= E "<" E prec p3
+            "max" : Reduce E ::= E "<" E prec p3
+            "min" : Reduce E ::= E "<" E prec p3
+            "<" : Reduce E ::= E "<" E prec p3
+            ">" : Reduce E ::= E "<" E prec p3
+            "," : Reduce E ::= E "<" E prec p3
+            EOI : Reduce E ::= E "<" E prec p3
+        Conflict contributions
+            [E ::= E · "+" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "+" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E · "<" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · "<" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [E ::= E "<" E ·, {">"}]
+                41 : Reduce E ::= E "<" E
+            [E ::= E · ">" E, {"+"}]
+                27 : Reduce E ::= E "+" E
+            [E ::= E · ">" E, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 42 [42.0]
+        Kernel
+            [Pos ::= Pos · "+" EPair, {")", "+", "-", "max", ">", ",", EOI}]
+            [Pos ::= Pos · "-" EPair, {")", "+", "-", "max", ">", ",", EOI}]
+            [Pos ::= E "min" Pos "max" Pos ·, {")", "+", "-", "max", ">", ",", EOI}] prec p1
+        Actions
+            ")" : Reduce Pos ::= E "min" Pos "max" Pos prec p1
+            "+" : ShiftPrefix 11 prec p0
+            "-" : ShiftPrefix 12 prec p0
+            "max" : Reduce Pos ::= E "min" Pos "max" Pos prec p1
+            ">" : Reduce Pos ::= E "min" Pos "max" Pos prec p1
+            "," : Reduce Pos ::= E "min" Pos "max" Pos prec p1
+            EOI : Reduce Pos ::= E "min" Pos "max" Pos prec p1
+        Conflict contributions
+            [Pos ::= Pos · "+" EPair, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+            [Pos ::= Pos · "-" EPair, {">"}]
+                18 : Reduce E ::= E "<" E
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+    State 43 [43.0]
+        Kernel
+            [Pos ::= Pos · "+" EPair, {"+", "-", ">"}]
+            [Pos ::= Pos · "-" EPair, {"+", "-", ">"}]
+            [Pos ::= E "<" Pos "," Pos · ">", {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            "+" : ShiftPrefix 11 prec p0
+            "-" : ShiftPrefix 12 prec p0
+            ">" : ShiftPrefix 44 prec p3
+        Conflict contributions
+            [Pos ::= Pos · "+" EPair, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+            [Pos ::= Pos · "-" EPair, {">"}]
+                27 : Reduce E ::= E "+" E
+                31 : Reduce E ::= E ">" E
+                41 : Reduce E ::= E "<" E
+    State 44 [44.0]
+        Kernel
+            [Pos ::= E "<" Pos "," Pos ">" ·, {")", "+", "-", "max", ">", ",", EOI}]
+        Actions
+            ")" : Reduce Pos ::= E "<" Pos "," Pos ">"
+            "+" : Reduce Pos ::= E "<" Pos "," Pos ">"
+            "-" : Reduce Pos ::= E "<" Pos "," Pos ">"
+            "max" : Reduce Pos ::= E "<" Pos "," Pos ">"
+            ">" : Reduce Pos ::= E "<" Pos "," Pos ">"
+            "," : Reduce Pos ::= E "<" Pos "," Pos ">"
+            EOI : Reduce Pos ::= E "<" Pos "," Pos ">"
