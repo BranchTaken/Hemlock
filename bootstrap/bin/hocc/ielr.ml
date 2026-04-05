@@ -110,53 +110,116 @@ let rec close_lanectxs lalr_states adjs leftmost_cache lanectxs_closed lanectxs_
       close_lanectxs lalr_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq
     end
 
-let has_implicit_shift_attribs adjs annotations ~conflict_state_index ~symbol_index ~conflict dst =
+(* {destination state, conflict state, symbol} key, used by `has_implicit_shift_attribs` and
+ * `filter_useless_annotations`. *)
+module DstCsSym = struct
+  module T = struct
+    type t = {
+      dst: State.Index.t;
+      conflict_state_index: State.Index.t;
+      symbol_index: Symbol.Index.t;
+    }
+
+    let hash_fold {dst; conflict_state_index; symbol_index} state =
+      state
+      |> State.Index.hash_fold dst
+      |> State.Index.hash_fold conflict_state_index
+      |> Symbol.Index.hash_fold symbol_index
+
+    let cmp {dst=d0; conflict_state_index=csi0; symbol_index=si0}
+      {dst=d1; conflict_state_index=csi1; symbol_index=si1} =
+      let open Cmp in
+      match State.Index.cmp d0 d1 with
+      | Lt -> Lt
+      | Eq -> begin
+          match Symbol.Index.cmp si0 si1 with
+          | Lt -> Lt
+          | Eq -> State.Index.cmp csi0 csi1
+          | Gt -> Gt
+        end
+      | Gt -> Gt
+
+    let pp {dst; conflict_state_index; symbol_index} formatter =
+      formatter
+      |> Fmt.fmt "{dst=" |> State.Index.pp dst
+      |> Fmt.fmt "; conflict_state_index=" |> State.Index.pp conflict_state_index
+      |> Fmt.fmt "; symbol_index=" |> Symbol.Index.pp symbol_index
+      |> Fmt.fmt "}"
+  end
+  include T
+  include Identifiable.Make(T)
+
+  let init ~dst ~conflict_state_index ~symbol_index =
+    {dst; conflict_state_index; symbol_index}
+end
+
+let has_implicit_shift_attribs adjs annotations implicits ~dst ~conflict_state_index ~symbol_index
+    ~conflict =
   (* dst has implicit shift-only attribs if the conflict contains shift, and at least one
    * (transitive) in-transit lacks an attrib on symbol_index. *)
-  let rec inner adjs annotations ~conflict_state_index ~symbol_index dst present lacking
-      marks = begin
-    (* There must be at least one explicit attrib for an implicit shift attrib to matter. *)
-    let present, lacking, marks = Array.fold_until ~init:(present, lacking, marks)
-      ~f:(fun (present, lacking, marks) src ->
+  let rec inner adjs annotations ~dst ~conflict_state_index ~symbol_index implicits marks = begin
+    let ipreds = Adjs.ipreds_of_state_index dst adjs in
+    let present, lacking = Array.fold_until ~init:(false, false)
+      ~f:(fun (present, lacking) src ->
         let transit = Transit.init ~src ~dst in
-        let present, lacking, marks = match Ordmap.get transit annotations with
-          | None -> present, true, marks
+        let present, lacking = match Ordmap.get transit annotations with
+          | None -> present, true
           | Some kernel_attribs -> begin
-              let ka_present, ka_lacking = KernelAttribs.fold_until ~init:(false, false)
-                ~f:(fun (ka_present, ka_lacking) (_kernel_item, attribs) ->
-                  let ka_present, ka_lacking =
-                    match Attribs.get ~conflict_state_index ~symbol_index attribs with
-                    | None -> ka_present, true
-                    | Some _attrib -> true, ka_lacking
-                  in
-                  (ka_present, ka_lacking), ka_present && ka_lacking
-                ) kernel_attribs in
-              let present, lacking, marks = match ka_present, lacking || ka_lacking with
-                | true, true -> true, true, marks
-                | true, false -> begin
-                    match Set.mem src marks with
-                    | true -> true, false, marks
+              let ka_present = KernelAttribs.fold_until ~init:false
+                  ~f:(fun _ka_present (_kernel_item, attribs) ->
+                    let ka_present =
+                      Attribs.get ~conflict_state_index ~symbol_index attribs
+                      |> Option.is_some
+                    in
+                    ka_present, ka_present
+                  ) kernel_attribs in
+              let present = present || ka_present in
+              let lacking = lacking || (not ka_present) in
+              present, lacking
+            end in
+        (present, lacking), present && lacking
+      ) ipreds in
+    (* There must be at least one explicit attrib present for an implicit shift attrib to
+     * matter. *)
+    let marks, has_implicit_shift = match present, lacking with
+      | false, _ -> marks, false
+      | true, true -> marks, true
+      | true, false -> begin
+          let marks, has_implicit_shift = Array.fold_until ~init:(marks, false)
+            ~f:(fun (marks, _has_implicit_shift) dst ->
+              let marks, has_implicit_shift =
+                match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) implicits
+                with
+                | Some has_implicit_shift -> marks, has_implicit_shift
+                | None -> begin
+                    match Set.mem dst marks with
+                    | true -> marks, false
                     | false -> begin
-                        inner adjs annotations ~conflict_state_index ~symbol_index src true false
-                          (Set.insert src marks)
+                        inner adjs annotations ~dst ~conflict_state_index ~symbol_index implicits
+                          (Set.insert dst marks)
                       end
                   end
-                | false, true -> present, true, marks
-                | false, false -> not_reached ()
               in
-              present, lacking, marks
-            end in
-        (present, lacking, marks), present && lacking
-      ) (Adjs.ipreds_of_state_index dst adjs) in
-    present, lacking, marks
+              (marks, has_implicit_shift), has_implicit_shift
+            ) ipreds in
+          marks, has_implicit_shift
+        end
+    in
+    marks, has_implicit_shift
   end in
   match Contrib.mem_shift conflict with
-  | false -> false
+  | false -> implicits, false
   | true -> begin
-      let present, lacking, _marks = inner adjs annotations ~conflict_state_index ~symbol_index dst
-          false false (Set.singleton (module State.Index) dst) in
-      let has_implicit_shift = present && lacking in
-      has_implicit_shift
+      match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) implicits with
+      | Some has_implicit_shift -> implicits, has_implicit_shift
+      | None -> begin
+          let _marks, has_implicit_shift = inner adjs annotations ~dst ~conflict_state_index
+              ~symbol_index implicits (Set.singleton (module State.Index) dst)
+          in
+          let implicits = Map.insert_hlt ~k:(DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
+            ~v:has_implicit_shift implicits in
+          implicits, has_implicit_shift
+        end
     end
 
 let attribset_compat ~resolve symbols prods attribset =
@@ -184,126 +247,75 @@ let attribset_compat ~resolve symbols prods attribset =
     end
 
 let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
-  (* Create a {destination state}->{conflict state}->{symbol}->{attrib set} map and use it to
+  (* Create a {destination state, conflict state, symbol}->{attrib set} map and use it to
    * distinguish useful vs useless annotations. *)
-  let dst_cs_sym_attribsets_shiftless = Ordmap.fold ~init:(Ordmap.empty (module State.Index))
+  let dst_cs_sym_attribsets_shiftless = Ordmap.fold ~init:(Map.empty (module DstCsSym))
     ~f:(fun dst_cs_sym_attribsets (Transit.{dst; _}, kernel_attribs) ->
-      Ordmap.amend dst ~f:(fun cs_sym_attribsets_opt ->
-        let cs_sym_attribsets = Option.value cs_sym_attribsets_opt
-            ~default:(Ordmap.empty (module State.Index)) in
-        let cs_sym_attribsets = KernelAttribs.fold ~init:cs_sym_attribsets
-            ~f:(fun cs_sym_attribsets (_kernel_item, attribs) ->
-              Attribs.fold ~init:cs_sym_attribsets
-                ~f:(fun cs_sym_attribsets
-                  Attrib.{conflict_state_index=cs; symbol_index=sym; conflict; contrib; _} ->
-                  let attrib = Attrib.init ~conflict_state_index:cs ~symbol_index:sym ~conflict
-                      ~isucc_lr1itemset:Lr1Itemset.empty ~contrib in
-                  Ordmap.amend cs ~f:(fun sym_attribset_opt ->
-                    let sym_attribset = match sym_attribset_opt with
-                      | None -> begin
-                          let attribset = Ordset.singleton (module Attrib) attrib in
-                          Ordmap.singleton (module State.Index) ~k:sym ~v:attribset
-                        end
-                      | Some sym_attribset -> begin
-                          Ordmap.amend sym ~f:(fun attribset_opt ->
-                            let attribset = match attribset_opt with
-                              | None -> Ordset.singleton (module Attrib) attrib
-                              | Some attribset -> Ordset.insert attrib attribset
-                            in
-                            Some attribset
-                          ) sym_attribset
-                        end
-                    in
-                    Some sym_attribset
-                  ) cs_sym_attribsets
-                ) attribs
-            ) kernel_attribs in
-        Some cs_sym_attribsets
-      ) dst_cs_sym_attribsets
+      KernelAttribs.fold ~init:dst_cs_sym_attribsets
+        ~f:(fun dst_cs_sym_attribsets (_kernel_item, attribs) ->
+          Attribs.fold ~init:dst_cs_sym_attribsets
+            ~f:(fun dst_cs_sym_attribsets
+              Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
+              let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
+                  ~isucc_lr1itemset:Lr1Itemset.empty ~contrib in
+              Map.amend (DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
+                ~f:(fun attribset_opt ->
+                  let attribset = match attribset_opt with
+                    | None -> Ordset.singleton (module Attrib) attrib
+                    | Some attribset -> Ordset.insert attrib attribset
+                  in
+                  Some attribset
+                ) dst_cs_sym_attribsets
+            ) attribs
+        ) kernel_attribs
     ) annotations_all in
   (* Integrate any implicit shift attribs. *)
-  let dst_cs_sym_attribsets = Ordmap.fold ~init:dst_cs_sym_attribsets_shiftless
-      ~f:(fun dst_cs_sym_attribsets (dst, cs_sym_attribsets) ->
-        let cs_sym_attribsets, integrated_cs_sym_attribsets =
-          Ordmap.fold ~init:(cs_sym_attribsets, false)
-            ~f:(fun (cs_sym_attribsets, integrated_cs_sym_attribsets) (cs, sym_attribsets) ->
-              let sym_attribsets, integrated_sym_attribsets =
-                Ordmap.fold ~init:(sym_attribsets, false)
-                  ~f:(fun (sym_attribsets, integrated_sym_attribsets) (sym, attribset) ->
-                    let Attrib.{conflict_state_index; symbol_index; conflict; _} =
-                      Ordset.choose_hlt attribset in
-                    assert State.Index.(conflict_state_index = cs);
-                    assert Symbol.Index.(symbol_index = sym);
-                    let attribset, integrated_attribset =
-                      match has_implicit_shift_attribs adjs annotations_all ~conflict_state_index
-                          ~symbol_index ~conflict dst with
-                      | false -> attribset, false
-                      | true -> begin
-                          let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
-                              ~isucc_lr1itemset:Lr1Itemset.empty ~contrib:Contrib.shift in
-                          let attribset = Ordset.insert attrib attribset in
-                          attribset, true
-                        end
-                    in
-                    match integrated_attribset with
-                    | false -> sym_attribsets, integrated_sym_attribsets
-                    | true -> Ordmap.update_hlt ~k:sym ~v:attribset sym_attribsets, true
-                  ) sym_attribsets in
-              match integrated_sym_attribsets with
-              | false -> cs_sym_attribsets, integrated_cs_sym_attribsets
-              | true -> Ordmap.update_hlt ~k:cs ~v:sym_attribsets cs_sym_attribsets, true
-            ) cs_sym_attribsets in
-        match integrated_cs_sym_attribsets with
-        | false -> dst_cs_sym_attribsets
-        | true -> Ordmap.update_hlt ~k:dst ~v:cs_sym_attribsets dst_cs_sym_attribsets
+  let dst_cs_sym_attribsets, _implicits =
+    Map.fold ~init:(dst_cs_sym_attribsets_shiftless, Map.empty (module DstCsSym))
+      ~f:(fun (dst_cs_sym_attribsets, implicits)
+        (DstCsSym.{dst; conflict_state_index=cs; symbol_index=sym} as dst_cs_sym, attribset) ->
+        let Attrib.{conflict_state_index; symbol_index; conflict; _} =
+          Ordset.choose_hlt attribset in
+        assert State.Index.(conflict_state_index = cs);
+        assert Symbol.Index.(symbol_index = sym);
+        match has_implicit_shift_attribs adjs annotations_all implicits ~dst ~conflict_state_index
+            ~symbol_index ~conflict with
+        | implicits, false -> dst_cs_sym_attribsets, implicits
+        | implicits, true -> begin
+            let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
+                ~isucc_lr1itemset:Lr1Itemset.empty ~contrib:Contrib.shift in
+            let attribset = Ordset.insert attrib attribset in
+            Map.update_hlt ~k:dst_cs_sym ~v:attribset dst_cs_sym_attribsets, implicits
+          end
       ) dst_cs_sym_attribsets_shiftless in
   (* Per conflict state annotations regarding symbols for which any attribs are incompatible are
    * useful; all other annotations are useless. *)
-  let dst_cs_syms_useful = Ordmap.fold ~init:(Ordmap.empty (module State.Index))
-    ~f:(fun dst_cs_syms_useful (dst, cs_sym_attribsets) ->
-      let cs_syms_useful = Ordmap.fold ~init:(Ordmap.empty (module State.Index))
-        ~f:(fun cs_syms_useful (cs, sym_attribsets) ->
-          let syms_useful = Ordmap.fold ~init:Bitset.empty
-              ~f:(fun syms_useful (sym, attribset) ->
-                match attribset_compat ~resolve symbols prods attribset with
-                | true -> syms_useful
-                | false -> Bitset.insert sym syms_useful
-              ) sym_attribsets in
-          match Bitset.is_empty syms_useful with
-          | true -> cs_syms_useful
-          | false -> Ordmap.insert_hlt ~k:cs ~v:syms_useful cs_syms_useful
-        ) cs_sym_attribsets in
-      match Ordmap.is_empty cs_syms_useful with
-      | true -> dst_cs_syms_useful
-      | false -> Ordmap.insert_hlt ~k:dst ~v:cs_syms_useful dst_cs_syms_useful
+  let dst_cs_sym_useful = Map.fold ~init:(Set.empty (module DstCsSym))
+    ~f:(fun dst_cs_sym_useful (dst_cs_sym, attribset) ->
+      match attribset_compat ~resolve symbols prods attribset with
+      | true -> dst_cs_sym_useful
+      | false -> Set.insert dst_cs_sym dst_cs_sym_useful
     ) dst_cs_sym_attribsets in
   (* Finally, filter useless annotations. *)
   Ordmap.fold ~init:(Ordmap.empty (module Transit))
     ~f:(fun annotations_useful ((Transit.{dst; _} as transit), kernel_attribs) ->
-      match Ordmap.get dst dst_cs_syms_useful with
-      | None -> annotations_useful
-      | Some cs_syms_useful -> begin
-          let kernel_attribs = KernelAttribs.fold ~init:KernelAttribs.empty
-              ~f:(fun kernel_attribs (kernel_item, attribs) ->
-                let attribs = Attribs.fold ~init:Attribs.empty
-                    ~f:(fun attribs
-                      (Attrib.{conflict_state_index=cs; symbol_index=sym; _} as attrib) ->
-                      match Ordmap.get cs cs_syms_useful with
-                      | None -> attribs
-                      | Some syms_useful -> begin
-                          match Bitset.mem sym syms_useful with
-                          | false -> attribs
-                          | true -> Attribs.insert attrib attribs
-                        end
-                    ) attribs in
-                match Attribs.is_empty attribs with
-                | true -> kernel_attribs
-                | false -> KernelAttribs.insert kernel_item attribs kernel_attribs
-              ) kernel_attribs in
-          match KernelAttribs.is_empty kernel_attribs with
-          | true -> annotations_useful
-          | false -> Ordmap.insert ~k:transit ~v:kernel_attribs annotations_useful
-        end
+      let kernel_attribs = KernelAttribs.fold ~init:KernelAttribs.empty
+          ~f:(fun kernel_attribs (kernel_item, attribs) ->
+            let attribs = Attribs.fold ~init:Attribs.empty
+                ~f:(fun attribs
+                  (Attrib.{conflict_state_index; symbol_index; _} as attrib) ->
+                  let dst_cs_sym = DstCsSym.init ~dst ~conflict_state_index ~symbol_index in
+                  match Set.mem dst_cs_sym dst_cs_sym_useful with
+                  | false -> attribs
+                  | true -> Attribs.insert attrib attribs
+                ) attribs in
+            match Attribs.is_empty attribs with
+            | true -> kernel_attribs
+            | false -> KernelAttribs.insert kernel_item attribs kernel_attribs
+          ) kernel_attribs in
+      match KernelAttribs.is_empty kernel_attribs with
+      | true -> annotations_useful
+      | false -> Ordmap.insert ~k:transit ~v:kernel_attribs annotations_useful
     ) annotations_all
 
 let annotations_init ~resolve io symbols prods lalr_states =
