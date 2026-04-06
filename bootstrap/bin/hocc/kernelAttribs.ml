@@ -148,11 +148,8 @@ let attribs lr1itemset t =
             attrib) ->
           assert Contrib.(inter conflict contrib = contrib);
           let has_shift = Contrib.mem_shift conflict in
-          let shift_attrib = match Contrib.mem_shift conflict with
-            | true -> Attrib.init ~conflict_state_index ~symbol_index ~conflict
-                ~isucc_lr1itemset ~contrib:Contrib.shift
-            |   false -> Attrib.empty ~conflict_state_index ~symbol_index ~conflict
-          in
+          let shift_attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
+              ~isucc_lr1itemset ~contrib:Contrib.shift in
           Lr1Itemset.fold ~init:attribs ~f:(fun attribs isucc_lr1item ->
             match Lr1Itemset.get isucc_lr1item lr1itemset with
             | None -> begin
