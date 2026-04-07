@@ -39,8 +39,8 @@ val init: resolve:bool -> Symbols.t -> Prods.t -> Isocores.t
     on [statenub]. *)
 
 val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t-> t -> t -> t
-(** [remerge symbols index_map t0 t1] creates a merged state comprising remergeable states
-    [t0] and [t1]. *)
+(** [remerge symbols index_map t0 t1] re-merges state [t0] into [t1], where [t0] has a higher index
+    than [t1]. *)
 
 val reindex: StateIndexMap.t ->  (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t option -> t
   -> t

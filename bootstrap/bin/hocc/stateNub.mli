@@ -42,8 +42,8 @@ val isocore_set_sn: t -> uns
 *)
 
 val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t -> t
-(** [remerge symbols remergeable_index_map t0 t1] creates a merged state nub comprising remergeable
-    state nubs [t0] and [t1]. *)
+(** [remerge symbols remergeable_index_map t0 t1] re-merges state nub [t0] into [t1], where [t0] has
+    a higher index than [t1]. *)
 
 val reindex: StateIndexMap.t -> t -> t
 (** [reindex state_index_map t] creates a state nub with all LR(1) item set closure indexes, state

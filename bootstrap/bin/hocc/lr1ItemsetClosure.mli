@@ -47,8 +47,8 @@ val added: t -> Lr1Itemset.t
 (** [added t] returns added items, i.e. items which are added during closure. *)
 
 val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t -> t
-(** [remerge symbols remergeable_index_map t0 t1] re-merges the kernels of [t0] and [t1] creates the
-    closure of the merged kernel. *)
+(** [remerge symbols remergeable_index_map t0 t1] re-merges the kernel of [t0] into [t1], where [t0]
+    has a higher index than [t1], and creates the closure of the merged kernel. *)
 
 val reindex: StateIndexMap.t -> t -> t
 (** [reindex state_index_map t] creates an LR(1) item set closure with all LR(1) item set closure
