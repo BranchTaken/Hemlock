@@ -276,16 +276,9 @@ let merge symbols lr1itemset t =
     end
 
 let remerge symbols remergeable_index_map {index=i0; kernel=k0; _} ({index=i1; _} as t1) =
-  let index = match Ordmap.get i0 remergeable_index_map, Ordmap.get i1 remergeable_index_map with
-    | Some index, None
-    | None, Some index
-      -> index
-    | Some _, Some _
-    | None, None
-      -> not_reached ()
-  in
-  assert Index.(index = min i0 i1);
-  match merge symbols k0 {t1 with index} with _, t1' -> t1'
+  assert StateIndex.((Ordmap.get_hlt i0 remergeable_index_map) = i1);
+  assert StateIndex.(i0 > i1);
+  match merge symbols k0 t1 with _, t1' -> t1'
 
 let reindex state_index_map ({index; _} as t) =
   {t with index=StateIndexMap.reindexed_state_index index state_index_map}
