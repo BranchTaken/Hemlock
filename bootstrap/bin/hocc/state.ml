@@ -123,76 +123,35 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto
   in
   {statenub; actions; gotos}
 
-let normalize_index remergeable_state_map
-    {statenub={lr1itemsetclosure={index=t0_index; _}; _}; _}
-    {statenub={lr1itemsetclosure={index=t1_index; _}; _}; _} index =
-  (* Normalize indexes that will be remerged. *)
-  let remerged_index =
-    Ordmap.get index remergeable_state_map
-    |> Option.value ~default:index
-  in
-  (* Speculatively normalize self-referential indexes, so that transitions to self will be
-   * considered equal. *)
-  let self_index, other_index = match Index.cmp t0_index t1_index with
-    | Lt
-    | Eq -> t0_index, t1_index
-    | Gt -> t1_index, t0_index
-  in
-  match Index.(remerged_index = other_index) with
-  | false -> remerged_index
-  | true -> self_index
+let normalize_state_index remergeable_index_map state_index =
+  Ordmap.get state_index remergeable_index_map
+  |> Option.value ~default:state_index
 
-let normalize_action_set remergeable_state_map t0 t1 action_set =
+let normalize_action_set remergeable_index_map action_set =
   Ordset.fold ~init:(Ordset.empty (module Action)) ~f:(fun action_set' action ->
     let open Action in
     let action' = match action with
-      | ShiftPrefix index -> ShiftPrefix (normalize_index remergeable_state_map t0 t1 index)
-      | ShiftAccept index -> ShiftAccept (normalize_index remergeable_state_map t0 t1 index)
+      | ShiftPrefix index -> ShiftPrefix (normalize_state_index remergeable_index_map index)
+      | ShiftAccept index -> ShiftAccept (normalize_state_index remergeable_index_map index)
       | Reduce _ as reduce -> reduce
     in
     Ordset.insert action' action_set'
   ) action_set
 
-let normalize_actions remergeable_state_map t0 t1 actions =
-  Ordmap.map ~f:(fun (_symbol_index, action_set) ->
-    normalize_action_set remergeable_state_map t0 t1 action_set
-  ) actions
-
-let normalize_gotos remergeable_state_map t0 t1 gotos =
-  Ordmap.map ~f:(fun (_symbol_index, index) ->
-    normalize_index remergeable_state_map t0 t1 index
-  ) gotos
-
-let remerge symbols remergeable_index_map ({statenub=sn0; actions=a0; gotos=g0} as t0)
-  ({statenub=sn1; actions=a1; gotos=g1} as t1) =
+let remerge symbols remergeable_index_map {statenub=sn0; actions=a0; gotos=g0}
+  {statenub=sn1; actions=a1; gotos=g1} =
   let statenub = StateNub.remerge symbols remergeable_index_map sn0 sn1 in
-  let normalized_a0 = normalize_actions remergeable_index_map t0 t1 a0 in
-  let normalized_a1 = normalize_actions remergeable_index_map t0 t1 a1 in
-  let actions = Ordmap.fold2 ~init:(Ordmap.empty (module Symbol.Index))
-    ~f:(fun actions action_opt0 action_opt1 ->
-      let symbol_index, action_set = match action_opt0, action_opt1 with
-        | Some (symbol_index, action_set), None
-        | None, Some (symbol_index, action_set)
-          -> symbol_index, action_set
-        | Some (symbol_index, action_set0), Some (_, action_set1)
-          -> symbol_index, Ordset.union action_set0 action_set1
-        | None, None -> not_reached ()
-      in
-      Ordmap.insert ~k:symbol_index ~v:action_set actions
-    ) normalized_a0 normalized_a1 in
-  let normalized_g0 = normalize_gotos remergeable_index_map t0 t1 g0 in
-  let normalized_g1 = normalize_gotos remergeable_index_map t0 t1 g1 in
-  let gotos = Ordmap.fold2 ~init:(Ordmap.empty (module Symbol.Index))
-    ~f:(fun gotos goto_opt0 goto_opt1 ->
-      let symbol_index, goto = match goto_opt0, goto_opt1 with
-        | Some (symbol_index, goto), None
-        | None, Some (symbol_index, goto)
-        | Some (symbol_index, goto), Some _
-          -> symbol_index, goto
-        | None, None -> not_reached ()
-      in
-      Ordmap.insert ~k:symbol_index ~v:goto gotos
-    ) normalized_g0 normalized_g1 in
+  let actions = Ordmap.fold ~init:a1 ~f:(fun actions (symbol_index, action_set0) ->
+    let action_set0 = normalize_action_set remergeable_index_map action_set0 in
+    Ordmap.amend symbol_index ~f:(fun actions_opt ->
+      match actions_opt with
+      | None -> Some action_set0
+      | Some action_set1 -> Some (Ordset.union action_set0 action_set1)
+    ) actions
+  ) a0 in
+  let gotos = Ordmap.fold ~init:g1 ~f:(fun gotos (symbol_index, goto) ->
+    Ordmap.insert ~k:symbol_index ~v:(normalize_state_index remergeable_index_map goto) gotos
+  ) g0 in
   {statenub; actions; gotos}
 
 let reindex state_index_map reachable_action_symbols_opt {statenub; actions; gotos} =
