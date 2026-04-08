@@ -315,18 +315,25 @@ let remerge_states io symbols isocores states =
   let io, remergeables = remergeable_search io isocores states in
   let remergeable_index_map = Remergeables.index_map remergeables in
   let nremergeable = Ordmap.length remergeable_index_map in
-  let io =
-    io.log
-    |> Fmt.fmt "hocc: " |> Uns.pp nremergeable |> Fmt.fmt " remergeable state"
-    |> (fun formatter ->
-      match nremergeable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
-    )
-    |> Fmt.fmt "\n"
-    |> Io.with_log io
-  in
   match nremergeable with
-  | 0L -> io, isocores, states
+  | 0L -> begin
+      let io =
+        io.log
+        |> Fmt.fmt "hocc: 0 remergeable states\n"
+        |> Io.with_log io
+      in
+      io, isocores, states
+    end
   | _ -> begin
+      let io =
+        io.log
+        |> Fmt.fmt "hocc: Remerging " |> Uns.pp nremergeable |> Fmt.fmt " LR(1) state"
+        |> (fun formatter ->
+          match nremergeable with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+        )
+        |> Fmt.fmt "\n"
+        |> Io.with_log io
+      in
       let remaining_state_indexes = Range.Uns.fold (0L =:< Array.length states)
         ~init:(Ordset.empty (module State.Index))
         ~f:(fun reachable_state_indexes i ->
@@ -335,12 +342,6 @@ let remerge_states io symbols isocores states =
           | false -> Ordset.insert i reachable_state_indexes
         ) in
       let nremaining = Ordset.length remaining_state_indexes in
-      let io =
-        io.log
-        |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nremaining |> Fmt.fmt " LR(1) state"
-        |> (fun formatter -> match nremaining with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-        |> Io.with_log io
-      in
       (* Create a map that reindexes the remaining states. *)
       let state_index_map = StateIndexMap.init ~remaining_state_indexes ~remergeable_index_map
           ~isocores_sn_of_state_index:(fun state_index ->
@@ -367,6 +368,12 @@ let remerge_states io symbols isocores states =
             let remerged_states = Array.set index1 state1' remerged_states in
             remerged_states
           ) remergeable_index_map in
+      let io =
+        io.log
+        |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nremaining |> Fmt.fmt " LR(1) state"
+        |> (fun formatter -> match nremaining with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+        |> Io.with_log io
+      in
       (* Create a new set of reindexed states. *)
       let reindexed_states =
         Ordset.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state_index ->
