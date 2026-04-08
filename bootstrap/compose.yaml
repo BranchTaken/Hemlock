@@ -10,8 +10,8 @@ services:
     security_opt:
       - seccomp:unconfined
     volumes:
-      - .:/bootstrap
-    working_dir: /bootstrap
+      - ..:/Hemlock
+    working_dir: /Hemlock/bootstrap
 
   ocp_indent:
     entrypoint: ./script/ocp_indent.sh
