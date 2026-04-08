@@ -97,6 +97,55 @@ let of_path ?flag ?mode path =
 let of_path_hlt ?flag ?mode path =
   Open.(submit_hlt ?flag ?mode path |> complete_hlt)
 
+let random_cps length =
+  (* 128 random bits (2**128) suffices for 21 digits of base-62 encoding. *)
+  let ncps = Uns.clamp ~min:6L ~max:21L length in
+  let entropy = Entropy.get () in
+  let base62_cps = [|
+    'A'; 'B'; 'C'; 'D'; 'E'; 'F'; 'G'; 'H'; 'I'; 'J'; 'K'; 'L'; 'M'; 'N'; 'O'; 'P'; 'Q'; 'R'; 'S';
+    'T'; 'U'; 'V'; 'W'; 'X'; 'Y'; 'Z';
+    'a'; 'b'; 'c'; 'd'; 'e'; 'f'; 'g'; 'h'; 'i'; 'j'; 'k'; 'l'; 'm'; 'n'; 'o'; 'p'; 'q'; 'r'; 's';
+    't'; 'u'; 'v'; 'w'; 'x'; 'y'; 'z';
+    '0'; '1'; '2'; '3'; '4'; '5'; '6'; '7'; '8'; '9'
+  |]
+    |> Array.map ~f:Codepoint.of_char
+  in
+  assert (Array.length base62_cps = 62L);
+  let base62 = U128.of_uns (Array.length base62_cps) in
+  let _rem, suffix_cps = Range.Uns.fold ~init:(entropy, []) ~f:(fun (entropy, cps) _i ->
+    let cp = Array.get U128.(entropy % base62 |> to_u64) base62_cps in
+    let entropy = U128.(entropy / base62) in
+    entropy, cp :: cps
+  ) Range.Uns.(0L =:< ncps) in
+  String.of_list suffix_cps
+
+let rec tempfile ?flag ?mode ?(suffix_length=6L) path =
+  let open Flag in
+  let flag = match flag with
+    | Some W_C -> W_C
+    | Some RW_C -> RW_C
+    | None -> W_C
+    | _ -> halt "Invalid flag"
+  in
+  let dirname, basename_opt = Path.split path in
+  match basename_opt with
+  | None -> Error Errno.ENOENT
+  | Some basename -> begin
+      let suffix =
+        Path.of_string ("." ^ random_cps suffix_length) |> Path.basename |> Option.value_hlt in
+      let basename_suffix = Path.Segment.join [basename; suffix] in
+      let path_suffix = Path.join [dirname; Path.of_segment basename_suffix] in
+      match of_path ~flag ?mode path_suffix with
+      | Error Errno.EEXIST -> tempfile ~flag ?mode path
+      | Error _ as result -> result
+      | Ok t -> Ok (path_suffix, t)
+    end
+
+let tempfile_hlt ?flag ?mode ?(suffix_length=6L) path =
+  match tempfile ?flag ?mode ~suffix_length path with
+  | Error error -> halt (Errno.to_string error)
+  | Ok (path, t) -> path, t
+
 module Close = struct
   type file = t
   type t = uns

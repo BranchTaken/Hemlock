@@ -57,13 +57,28 @@ end
 
 val of_path: ?flag:Flag.t -> ?mode:uns -> Path.t -> (t, Errno.t) result
 (** [of_path ~flag ~mode path] opens or creates the file at [path] with [flag] (default Flag.R_O)
-    Unix file permissions and [mode] (default 0o660) Unix file permissions and and returns the
+    Unix file access and [mode] (default 0o660) Unix file permissions and returns the
     resulting [t] or an [Errno.t] if the file could not be opened. *)
 
 val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Path.t -> t
 (** [of_path_hlt ~flag ~mode path] opens or creates the file at [path] with [flag] (default
-    Flag.R_O) Unix file permissions and [mode] (default 0o660) Unix file permissions and and returns
-    the resulting [t] or halts if the file could not be opened. *)
+    Flag.R_O) Unix file access and [mode] (default 0o660) Unix file permissions and returns the
+    resulting [t] or halts if the file could not be opened. *)
+
+val tempfile: ?flag:Flag.t -> ?mode:uns -> ?suffix_length:uns -> Path.t
+  -> (Path.t * t, Errno.t) result
+(** [tempfile ~mode ~suffix_length path] creates a temporary file at [path.XXXXXX] ([XXXXXX] is
+    [suffix_length] (default 6, clamped to [6..21]) random base-62 codepoints (\[A-Za-z0-9\]) with
+    [flag] ([W_C] or [RW_C]; default [Flag.W_C]) Unix file access and [mode] (default 0o660) Unix
+    file permissions and returns the resulting path and [t] or an [Errno.t] if the file could not be
+    opened. *)
+
+val tempfile_hlt: ?flag:Flag.t -> ?mode:uns -> ?suffix_length:uns -> Path.t -> Path.t * t
+(** [tempfile ~mode ~suffix_length path] creates a temporary file at [path.XXXXXX] ([XXXXXX] is
+    [suffix_length] (default 6, clamped to [6..21]) random base-62 codepoints (\[A-Za-z0-9\]) with
+    [flag] ([W_C] or [RW_C]; default [Flag.W_C]) Unix file access and [mode] (default 0o660) Unix
+    file permissions and returns the resulting path and [t] or halts if the file could not be
+    opened. *)
 
 module Close: sig
   type file = t
