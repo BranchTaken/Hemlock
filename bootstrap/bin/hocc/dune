@@ -7,7 +7,7 @@
   (target Version.ml)
   (action
    (with-accepted-exit-codes 0
-    (with-outputs-to Version.ml (run ./hocc_version)))))
+    (with-stdout-to Version.ml (run ./hocc_version)))))
 
 (install
  (section bin)
