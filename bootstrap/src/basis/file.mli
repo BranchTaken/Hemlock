@@ -1,20 +1,54 @@
 open Rudiments
 
+(** open(2) flags. Prefer the convenience flags (no [O_] prefix) for typical use cases. *)
 module Flag: sig
   type t =
-    | R_O   (** Open existing file for read or fail if it does not exist. *)
-    | W     (** Create new or truncate existing file and open for write. *)
-    | W_A   (** Create new or append to existing file and open for write. *)
-    | W_AO  (** Append to existing file and open for write, failing if it does not exist. *)
-    | W_C   (** Create new file and open for write, failing if file exists *)
-    | W_O   (** Truncate existing file and open for write, failing if file does not exist. *)
-    | RW    (** Create new or truncate existing file and open for read and write. *)
-    | RW_A  (** Create new or append to existing file and open for read and write. *)
-    | RW_AO (** Append to existing file and open for read and write, failing if file does not exist.
-            *)
-    | RW_C  (** Create new file and open for read and write, failing if file exists. *)
-    | RW_O  (** Truncate existing file and open for read and write, failing if file does not exist.
-            *)
+    | R_O
+    (** Open existing file for read or fail if it does not exist ([[O_RDONLY]]). *)
+    | W
+    (** Create new or truncate existing file and open for write ([[O_WRONLY; O_CREAT; O_TRUNC]]). *)
+    | W_A
+    (** Create new or append to existing file and open for write ([[O_WRONLY; O_APPEND; O_CREAT]]).
+    *)
+    | W_AO
+    (** Append to existing file and open for write, failing if it does not exist ([[O_WRONLY;
+        O_APPEND]]). *)
+    | W_C
+    (** Create new file and open for write, failing if file exists ([[O_WRONLY; O_CREAT; O_EXCL]]).
+    *)
+    | W_O
+    (** Truncate existing file and open for write, failing if file does not exist ([[O_WRONLY;
+        O_TRUNC]]). *)
+    | RW
+    (** Create new or truncate existing file and open for read and write ([[O_RDWR; O_CREAT;
+        O_TRUNC]]). *)
+    | RW_A
+    (** Create new or append to existing file and open for read and write ([[O_RDWR; O_APPEND;
+        O_CREAT]]). *)
+    | RW_AO
+    (** Append to existing file and open for read and write, failing if file does not exist
+        ([[O_RDWR; O_APPEND]]). *)
+    | RW_C
+    (** Create new file and open for read and write, failing if file exists ([[O_RDWR; O_CREAT;
+        O_EXCL]]). *)
+    | RW_O
+    (** Truncate existing file and open for read and write, failing if file does not exist
+        ([[O_RDWR; O_TRUNC]]). *)
+    | O_RDONLY (** Read-only. *)
+    | O_WRONLY (** Write-only. *)
+    | O_RDWR (** Read-write. Distinct from [[O_RDONLY; O_WRONLY]], which is invalid. *)
+    | O_APPEND (** Append. *)
+    | O_CLOEXEC (** Close-on-exec. *)
+    | O_CREAT (** Create. *)
+    | O_DIRECT (** Direct (bypass virtual memory buffer cache). *)
+    | O_DIRECTORY (** Require path to refer to a directory. *)
+    | O_EXCL (** Require file to be created as side effect; fail otherwise. *)
+    | O_NOATIME (** Do not update file access time. *)
+    | O_NOCTTY (** Prevent terminal device from becoming process's controlling terminal. *)
+    | O_NOFOLLOW (** Do not follow symlink in basename of path. *)
+    | O_PATH (** Limit valid operations on file to path queries. *)
+    | O_TMPFILE (** Create unnamed temporary file. *)
+    | O_TRUNC (** Truncate to length 0. *)
 end
 
 type t
@@ -34,16 +68,16 @@ module Open: sig
   type t
   (* An internally immutable token backed by an external I/O open completion data structure. *)
 
-  val submit: ?flag:Flag.t -> ?mode:uns -> Path.t -> (t, Errno.t) result
-  (** [submit ~flag ~mode path] submits an open operation for a file at [path] with [flag] (default
-      Flag.R_O) Unix file permissions and [mode] (default 0o660) Unix file permissions. This
-      operation does not block. Returns a [t] to the open submission or an [Errno.t] if the open
-      could not be submitted. *)
+  val submit: ?flags:Flag.t list -> ?mode:uns -> Path.t -> (t, Errno.t) result
+  (** [submit ~flags ~mode path] submits an open operation for a file at [path] with [flags]
+      (default [[Flag.R_O]]) Unix file permissions and [mode] (default 0o660) Unix file permissions.
+      This operation does not block. Returns a [t] to the open submission or an [Errno.t] if the
+      open could not be submitted. *)
 
-  val submit_hlt: ?flag:Flag.t -> ?mode:uns -> Path.t -> t
-  (** [submit ~flag ~mode path] submits an open operation for a file at [path] with [flag] (default
-      Flag.R_O) Unix file permissions and [mode] (default 0o660) Unix file permissions. This
-      operation does not block. Returns a [t] to the open submission or halts if the open could
+  val submit_hlt: ?flags:Flag.t list -> ?mode:uns -> Path.t -> t
+  (** [submit ~flags ~mode path] submits an open operation for a file at [path] with [flags]
+      (default [[Flag.R_O]]) Unix file permissions and [mode] (default 0o660) Unix file permissions.
+      This operation does not block. Returns a [t] to the open submission or halts if the open could
       not be submitted. *)
 
   val complete: t -> (file, Errno.t) result
@@ -55,30 +89,15 @@ module Open: sig
       could not be opened. *)
 end
 
-val of_path: ?flag:Flag.t -> ?mode:uns -> Path.t -> (t, Errno.t) result
-(** [of_path ~flag ~mode path] opens or creates the file at [path] with [flag] (default Flag.R_O)
-    Unix file access and [mode] (default 0o660) Unix file permissions and returns the
+val of_path: ?flags:Flag.t list -> ?mode:uns -> Path.t -> (t, Errno.t) result
+(** [of_path ~flags ~mode path] opens or creates the file at [path] with [flags] (default
+    [[Flag.R_O]]) Unix file access and [mode] (default 0o660) Unix file permissions and returns the
     resulting [t] or an [Errno.t] if the file could not be opened. *)
 
-val of_path_hlt: ?flag:Flag.t -> ?mode:uns -> Path.t -> t
-(** [of_path_hlt ~flag ~mode path] opens or creates the file at [path] with [flag] (default
-    Flag.R_O) Unix file access and [mode] (default 0o660) Unix file permissions and returns the
+val of_path_hlt: ?flags:Flag.t list -> ?mode:uns -> Path.t -> t
+(** [of_path_hlt ~flags ~mode path] opens or creates the file at [path] with [flags] (default
+    [[Flag.R_O]]) Unix file access and [mode] (default 0o660) Unix file permissions and returns the
     resulting [t] or halts if the file could not be opened. *)
-
-val tempfile: ?flag:Flag.t -> ?mode:uns -> ?suffix_length:uns -> Path.t
-  -> (Path.t * t, Errno.t) result
-(** [tempfile ~mode ~suffix_length path] creates a temporary file at [path.XXXXXX] ([XXXXXX] is
-    [suffix_length] (default 6, clamped to [6..21]) random base-62 codepoints (\[A-Za-z0-9\]) with
-    [flag] ([W_C] or [RW_C]; default [Flag.W_C]) Unix file access and [mode] (default 0o660) Unix
-    file permissions and returns the resulting path and [t] or an [Errno.t] if the file could not be
-    opened. *)
-
-val tempfile_hlt: ?flag:Flag.t -> ?mode:uns -> ?suffix_length:uns -> Path.t -> Path.t * t
-(** [tempfile ~mode ~suffix_length path] creates a temporary file at [path.XXXXXX] ([XXXXXX] is
-    [suffix_length] (default 6, clamped to [6..21]) random base-62 codepoints (\[A-Za-z0-9\]) with
-    [flag] ([W_C] or [RW_C]; default [Flag.W_C]) Unix file access and [mode] (default 0o660) Unix
-    file permissions and returns the resulting path and [t] or halts if the file could not be
-    opened. *)
 
 module Close: sig
   type file = t

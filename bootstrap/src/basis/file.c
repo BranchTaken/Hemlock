@@ -1,3 +1,4 @@
+#define _GNU_SOURCE // For O_DIRECT, O_NOATIME, O_PATH, O_TMPFILE.
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -24,11 +25,39 @@ int flags_of_hemlock_file_flag[] = {
     /* W_C   */ O_WRONLY | O_CREAT | O_EXCL,
     /* W_O   */ O_WRONLY | O_TRUNC,
     /* RW    */ O_RDWR | O_CREAT | O_TRUNC,
-    /* RW_A  */ O_RDWR | O_APPEND| O_CREAT,
+    /* RW_A  */ O_RDWR | O_APPEND | O_CREAT,
     /* RW_AO */ O_RDWR | O_APPEND,
     /* RW_C  */ O_RDWR | O_CREAT | O_EXCL,
     /* RW_O  */ O_RDWR | O_TRUNC,
+    O_RDONLY,
+    O_WRONLY,
+    O_RDWR,
+    O_APPEND,
+    O_CLOEXEC,
+    O_CREAT,
+    O_DIRECT,
+    O_DIRECTORY,
+    O_EXCL,
+    O_NOATIME,
+    O_NOCTTY,
+    O_NOFOLLOW,
+    O_PATH,
+    O_TMPFILE,
+    O_TRUNC
 };
+
+static int
+flags_of_hemlock_file_flag_list(value a_list) {
+    int flags;
+    CAMLparam1(a_list);
+    CAMLlocal1(elm);
+
+    for (flags = 0, elm = a_list; elm != Val_int(0); elm = Field(elm, 1)) {
+        flags |= flags_of_hemlock_file_flag[Long_val(Field(elm, 0))];
+    }
+
+    CAMLreturn(flags);
+}
 
 CAMLprim value
 hemlock_basis_file_stdin_inner(value a_unit) {
@@ -96,16 +125,14 @@ hemlock_basis_file_read_complete_inner(value a_bytes, value a_user_data) {
     return caml_copy_int64(res);
 }
 
-// hemlock_basis_file_open_submit_inner: Basis.File.Flag.t -> uns -> Stdlib.Bytes.t >{os}->
+// hemlock_basis_file_open_submit_inner: Basis.File.Flag.t list -> uns -> Stdlib.Bytes.t >{os}->
 //   (int * &File.Open.t)
 CAMLprim value
-hemlock_basis_file_open_submit_inner(value a_flag, value a_mode, value a_bytes) {
-    size_t flag = Long_val(a_flag);
+hemlock_basis_file_open_submit_inner(value a_flags, value a_mode, value a_bytes) {
+    int flags = flags_of_hemlock_file_flag_list(a_flags);
     size_t mode = Int64_val(a_mode);
     uint8_t *bytes = (uint8_t *)Bytes_val(a_bytes);
     size_t n = caml_string_length(a_bytes);
-
-    int flags = flags_of_hemlock_file_flag[flag];
 
     uint8_t *pathname = (uint8_t *)malloc(sizeof(uint8_t) * (n + 1));
     assert(pathname != NULL);
@@ -116,7 +143,7 @@ hemlock_basis_file_open_submit_inner(value a_flag, value a_mode, value a_bytes) 
 
     hemlock_user_data_t *user_data = NULL;
     HEMLOCK_OE(
-        oe, 
+        oe,
         hemlock_ioring_open_submit(
             &user_data, pathname, flags, mode, &hemlock_executor_get()->ioring
         )

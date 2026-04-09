@@ -115,7 +115,7 @@ let open_outfile_as_formatter ~is_report ~err path =
     | false -> ()
     | true -> Os.mkdirat (Path.dirname path) |> ignore
   in
-  match File.of_path ~flag:File.Flag.W path with
+  match File.of_path ~flags:[File.Flag.W] path with
   | Ok f -> File.Fmt.of_t f
   | Error error -> open_error ~err path error
 
