@@ -110,7 +110,7 @@ let rec close_lanectxs lalr_states adjs leftmost_cache lanectxs_closed lanectxs_
       close_lanectxs lalr_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq
     end
 
-(* {destination state, conflict state, symbol} key, used by `has_implicit_shift_attribs` and
+(* {destination state, conflict state, symbol} key, used by `has_isolated_shift_attribs` and
  * `filter_useless_annotations`. *)
 module DstCsSym = struct
   module T = struct
@@ -153,11 +153,11 @@ module DstCsSym = struct
     {dst; conflict_state_index; symbol_index}
 end
 
-let has_implicit_shift_attribs adjs annotations implicits ~dst ~conflict_state_index ~symbol_index
+let has_isolated_shift_attribs adjs annotations isolateds ~dst ~conflict_state_index ~symbol_index
     ~conflict =
-  (* dst has implicit shift-only attribs if the conflict contains shift, and at least one
-   * (transitive) in-transit lacks an attrib on symbol_index. *)
-  let rec inner adjs annotations ~dst ~conflict_state_index ~symbol_index implicits marks = begin
+  (* dst has isolated (shift-only) attribs if the conflict contains shift, and at least one
+   * [transitive] in-transit lacks an attrib on symbol_index. *)
+  let rec inner adjs annotations ~dst ~conflict_state_index ~symbol_index isolateds marks = begin
     let ipreds = Adjs.ipreds_of_state_index dst adjs in
     let present, lacking = Array.fold_until ~init:(false, false)
       ~f:(fun (present, lacking) src ->
@@ -179,46 +179,45 @@ let has_implicit_shift_attribs adjs annotations implicits ~dst ~conflict_state_i
             end in
         (present, lacking), present && lacking
       ) ipreds in
-    (* There must be at least one explicit attrib present for an implicit shift attrib to
-     * matter. *)
-    let marks, has_implicit_shift = match present, lacking with
+    (* There must be at least one explicit attrib present for an isolated shift attrib to matter. *)
+    let marks, has_isolated_shift = match present, lacking with
       | false, _ -> marks, false
       | true, true -> marks, true
       | true, false -> begin
-          let marks, has_implicit_shift = Array.fold_until ~init:(marks, false)
-            ~f:(fun (marks, _has_implicit_shift) dst ->
-              let marks, has_implicit_shift =
-                match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) implicits
+          let marks, has_isolated_shift = Array.fold_until ~init:(marks, false)
+            ~f:(fun (marks, _has_isolated_shift) dst ->
+              let marks, has_isolated_shift =
+                match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) isolateds
                 with
-                | Some has_implicit_shift -> marks, has_implicit_shift
+                | Some has_isolated_shift -> marks, has_isolated_shift
                 | None -> begin
                     match Set.mem dst marks with
                     | true -> marks, false
                     | false -> begin
-                        inner adjs annotations ~dst ~conflict_state_index ~symbol_index implicits
+                        inner adjs annotations ~dst ~conflict_state_index ~symbol_index isolateds
                           (Set.insert dst marks)
                       end
                   end
               in
-              (marks, has_implicit_shift), has_implicit_shift
+              (marks, has_isolated_shift), has_isolated_shift
             ) ipreds in
-          marks, has_implicit_shift
+          marks, has_isolated_shift
         end
     in
-    marks, has_implicit_shift
+    marks, has_isolated_shift
   end in
   match Contrib.mem_shift conflict with
-  | false -> implicits, false
+  | false -> isolateds, false
   | true -> begin
-      match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) implicits with
-      | Some has_implicit_shift -> implicits, has_implicit_shift
+      match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) isolateds with
+      | Some has_isolated_shift -> isolateds, has_isolated_shift
       | None -> begin
-          let _marks, has_implicit_shift = inner adjs annotations ~dst ~conflict_state_index
-              ~symbol_index implicits (Set.singleton (module State.Index) dst)
+          let _marks, has_isolated_shift = inner adjs annotations ~dst ~conflict_state_index
+              ~symbol_index isolateds (Set.singleton (module State.Index) dst)
           in
-          let implicits = Map.insert_hlt ~k:(DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
-            ~v:has_implicit_shift implicits in
-          implicits, has_implicit_shift
+          let isolateds = Map.insert_hlt ~k:(DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
+            ~v:has_isolated_shift isolateds in
+          isolateds, has_isolated_shift
         end
     end
 
@@ -269,23 +268,23 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
             ) attribs
         ) kernel_attribs
     ) annotations_all in
-  (* Integrate any implicit shift attribs. *)
-  let dst_cs_sym_attribsets, _implicits =
+  (* Integrate any isolated shift attribs. *)
+  let dst_cs_sym_attribsets, _isolateds =
     Map.fold ~init:(dst_cs_sym_attribsets_shiftless, Map.empty (module DstCsSym))
-      ~f:(fun (dst_cs_sym_attribsets, implicits)
+      ~f:(fun (dst_cs_sym_attribsets, isolateds)
         (DstCsSym.{dst; conflict_state_index=cs; symbol_index=sym} as dst_cs_sym, attribset) ->
         let Attrib.{conflict_state_index; symbol_index; conflict; _} =
           Ordset.choose_hlt attribset in
         assert State.Index.(conflict_state_index = cs);
         assert Symbol.Index.(symbol_index = sym);
-        match has_implicit_shift_attribs adjs annotations_all implicits ~dst ~conflict_state_index
+        match has_isolated_shift_attribs adjs annotations_all isolateds ~dst ~conflict_state_index
             ~symbol_index ~conflict with
-        | implicits, false -> dst_cs_sym_attribsets, implicits
-        | implicits, true -> begin
+        | isolateds, false -> dst_cs_sym_attribsets, isolateds
+        | isolateds, true -> begin
             let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
                 ~isucc_lr1itemset:Lr1Itemset.empty ~contrib:Contrib.shift in
             let attribset = Ordset.insert attrib attribset in
-            Map.update_hlt ~k:dst_cs_sym ~v:attribset dst_cs_sym_attribsets, implicits
+            Map.update_hlt ~k:dst_cs_sym ~v:attribset dst_cs_sym_attribsets, isolateds
           end
       ) dst_cs_sym_attribsets_shiftless in
   (* Per conflict state annotations regarding symbols for which any attribs are incompatible are
