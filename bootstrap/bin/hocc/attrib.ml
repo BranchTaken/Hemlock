@@ -140,54 +140,30 @@ end
 include T
 include Identifiable.Make(T)
 
-let resolutions ~resolve symbols prods
-    {conflict_state_index=csi0; symbol_index; conflict=x0; contrib=c0; _}
-    {conflict_state_index=csi1; symbol_index=symbol_index1; conflict=x1; contrib=c1; _} =
-  assert StateIndex.(csi0 = csi1);
-  assert Symbol.Index.(symbol_index = symbol_index1);
-  assert (Contrib.equal x0 x1);
+let contrib {conflict; contrib; _} =
   (* Merge shift into contribs if present in the conflict manifestation, since all lanes are
    * implicated in shift actions. *)
-  let c0, c1 = match Contrib.mem_shift x0 with
-    | false -> c0, c1
-    | true -> Contrib.(union shift c0), Contrib.(union shift c1)
-  in
-  (* Compute the resolutions (if enabled) of what the merged lane would receive from each input
-   * lane. *)
-  let r0, r1 = match resolve with
-    | false -> c0, c1
-    | true -> begin
-        (Contrib.resolve symbols prods symbol_index c0),
-        (Contrib.resolve symbols prods symbol_index c1)
-      end
-  in
-  r0, r1
+  match Contrib.mem_shift conflict with
+  | false -> contrib
+  | true -> Contrib.(union shift contrib)
 
-let compat_ielr ~resolve symbols prods t0 t1 =
-  let r0, r1 = resolutions ~resolve symbols prods t0 t1 in
-  (* Determine compatibility. *)
-  match Contrib.length r0, Contrib.length r1 with
-  | 0L, 0L -> begin
-      (* By construction, at least one lane must be implicated in the conflict. *)
-      not_reached ()
-    end
-  | 0L, _
-  | _, 0L -> begin
-      (* One of the lanes contributes nothing to the conflict, nor is there a shift action to be
-       * implicated in. Unimplicated lanes are oblivious to merging. *)
-      true
-    end
-  | 1L, 1L -> begin
-      (* Resolution must be equal for lanes to be compatible. *)
-      Contrib.equal r0 r1
-    end
-  | 1L, _
-  | _, 1L -> begin
-      (* One lane resolves, one doesn't. Different outcomes require splitting. *)
-      false
-    end
-  | _, _ -> begin
-      (* Both lanes result in conflict. The details of the conflicts don't matter, since merging
-       * cannot cause resolution to succeed. *)
-      true
+let compat_ielr ~resolve symbols prods ({symbol_index; _} as t0) t1 =
+  (* Attribs that contribute nothing to the conflict are oblivious to merging. Otherwise resolution
+   * must be equal for attribs to be compatible. *)
+  let c0 = contrib t0 in
+  match Contrib.is_empty c0 with
+  | true -> true
+  | false -> begin
+      let c1 = contrib t1 in
+      match Contrib.is_empty c1 with
+      | true -> true
+      | false -> begin
+          match resolve with
+          | false -> Contrib.equal c0 c1
+          | true -> begin
+              let r0 = Contrib.resolve symbols prods symbol_index c0 in
+              let r1 = Contrib.resolve symbols prods symbol_index c1 in
+              Contrib.equal r0 r1
+            end
+        end
     end
