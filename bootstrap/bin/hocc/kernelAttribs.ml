@@ -140,39 +140,18 @@ let fold2_until = Ordmap.fold2_until
 let fold2 = Ordmap.fold2
 
 let attribs lr1itemset t =
-  fold ~init:Attribs.empty
-    ~f:(fun attribs (_src_lr1item, src_lr1item_attribs) ->
-      Attribs.fold ~init:attribs
-        ~f:(fun attribs
-          (Attrib.{conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} as
-            attrib) ->
-          assert Contrib.(inter conflict contrib = contrib);
-          let has_shift = Contrib.mem_shift conflict in
-          let shift_attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
-              ~isucc_lr1itemset ~contrib:Contrib.shift in
-          Lr1Itemset.fold ~init:attribs ~f:(fun attribs isucc_lr1item ->
-            match Lr1Itemset.get isucc_lr1item lr1itemset with
-            | None -> begin
-                match has_shift with
-                | false -> attribs
-                | true -> Attribs.insert shift_attrib attribs
-              end
-            | Some {follow; _} -> begin
-                match Bitset.mem symbol_index follow with
-                | false -> begin
-                    match has_shift with
-                    | false -> attribs
-                    | true -> Attribs.insert shift_attrib attribs
-                  end
-                | true -> begin
-                    match has_shift with
-                    | false -> Attribs.insert attrib attribs
-                    | true -> begin
-                        let attrib' = Attrib.union shift_attrib attrib in
-                        Attribs.insert attrib' attribs
-                      end
-                  end
-              end
-          ) isucc_lr1itemset
-        ) src_lr1item_attribs
-    ) t
+  fold ~init:Attribs.empty ~f:(fun attribs (_src_lr1item, src_lr1item_attribs) ->
+    Attribs.fold ~init:attribs ~f:(fun attribs
+      (Attrib.{symbol_index; conflict; isucc_lr1itemset; contrib; _} as attrib) ->
+      assert Contrib.(inter conflict contrib = contrib);
+      Lr1Itemset.fold ~init:attribs ~f:(fun attribs isucc_lr1item ->
+        match Lr1Itemset.get isucc_lr1item lr1itemset with
+        | None -> attribs
+        | Some {follow; _} -> begin
+            match Bitset.mem symbol_index follow with
+            | false -> attribs
+            | true -> Attribs.insert attrib attribs
+          end
+      ) isucc_lr1itemset
+    ) src_lr1item_attribs
+  ) t
