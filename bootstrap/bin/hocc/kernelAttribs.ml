@@ -144,14 +144,20 @@ let attribs lr1itemset t =
     Attribs.fold ~init:attribs ~f:(fun attribs
       (Attrib.{symbol_index; conflict; isucc_lr1itemset; contrib; _} as attrib) ->
       assert Contrib.(inter conflict contrib = contrib);
-      Lr1Itemset.fold ~init:attribs ~f:(fun attribs isucc_lr1item ->
-        match Lr1Itemset.get isucc_lr1item lr1itemset with
-        | None -> attribs
-        | Some {follow; _} -> begin
-            match Bitset.mem symbol_index follow with
-            | false -> attribs
-            | true -> Attribs.insert attrib attribs
-          end
-      ) isucc_lr1itemset
+      let attrib = lazy begin
+        (* Filter `isucc_lr1itemset`. *)
+        let isucc_lr1itemset = Lr1Itemset.inter lr1itemset isucc_lr1itemset in
+        {attrib with isucc_lr1itemset}
+      end in
+      Lr1Itemset.fold ~init:attribs
+        ~f:(fun attribs isucc_lr1item ->
+          match Lr1Itemset.get isucc_lr1item lr1itemset with
+          | None -> attribs
+          | Some {follow; _} -> begin
+              match Bitset.mem symbol_index follow with
+              | false -> attribs
+              | true -> Attribs.insert (Lazy.force attrib) attribs
+            end
+        ) isucc_lr1itemset
     ) src_lr1item_attribs
   ) t
