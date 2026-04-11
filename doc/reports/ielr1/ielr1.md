@@ -442,38 +442,38 @@ inadequacies. Following are lightly edited excerpts from [LALR(1)](G2_lalr1.txt)
 
                                     IELR(1)
 
- _____________State_5₀_______________     ____________State_5₁_______________
-| Kernel                             |   | Kernel                           |
-|     [Yn ::= Tt · Wn, {Dt}]         |   |     [Yn ::= Tt · Wn, {Et}]       |
-|     [Zn ::= Tt · Ut, {Ct}]         |   |     [Zn ::= Tt · Ut, {Dt}]       |
-| Added                              |   | Added                            |
-|     [Wn ::= · Ut Vn, {Dt}]         |   |     [Wn ::= · Ut Vn, {Et}]       |
-| Actions                            |   | Actions                          |
-|     Ut : ShiftPrefix 15₀           |   |     Ut : ShiftPrefix 15₁         |
-| Gotos                              |   | Gotos                            |
-|     Wn : 16₀                       |   |     Wn : 16₀                     |
-| Conflict contributions             |   | Conflict contributions           |
-|     [Yn ::= Tt · Wn, {Dt}]         |   |     [Zn ::= Tt · Ut, {Dt}]       |
-|         15 : Reduce Vn ::= epsilon |   |         15 : Reduce Zn ::= Tt Ut |
-|____________________________________|   |__________________________________|
-                 |                                       |
-                 |                                       |
-                 v                                       v
- ____________State_15₀_______________     ____________State_15₁_____________
-| Kernel                             |   | Kernel                           |
-|     [Zn ::= Tt Ut ·, {Ct}]         |   |     [Zn ::= Tt Ut ·, {Dt}]       |
-|     [Wn ::= Ut · Vn, {Dt}]         |   |     [Wn ::= Ut · Vn, {Et}]       |
-| Added                              |   | Added                            |
-|     [Vn ::= ·, {Dt}]               |   |     [Vn ::= ·, {Et}]             |
-| Actions                            |   | Actions                          |
-|     Ct : Reduce Zn ::= Tt Ut       |   |     Dt : Reduce Zn ::= Tt Ut     |
-|     Dt : Reduce Vn ::= epsilon     |   |     Et : Reduce Vn ::= epsilon   |
-| Gotos                              |   | Gotos                            |
-|     Vn : 22₀                       |   |     Vn : 22₀                     |
-| Conflict contributions             |   | Conflict contributions           |
-|     [Wn ::= Ut · Vn, {Dt}]         |   |     [Zn ::= Tt Ut ·, {Dt}]       |
-|         15 : Reduce Vn ::= epsilon |   |         15 : Reduce Zn ::= Tt Ut |
-|____________________________________|   |__________________________________|
+ ________________State_5₀_________________     ________________State_5₁_______________
+| Kernel                                  |   | Kernel                                |
+|     [Yn ::= Tt · Wn, {Dt}]              |   |     [Yn ::= Tt · Wn, {Et}]            |
+|     [Zn ::= Tt · Ut, {Ct}]              |   |     [Zn ::= Tt · Ut, {Dt}]            |
+| Added                                   |   | Added                                 |
+|     [Wn ::= · Ut Vn, {Dt}]              |   |     [Wn ::= · Ut Vn, {Et}]            |
+| Actions                                 |   | Actions                               |
+|     Ut : ShiftPrefix 15₀                |   |     Ut : ShiftPrefix 15₁              |
+| Gotos                                   |   | Gotos                                 |
+|     Wn : 16₀                            |   |     Wn : 16₀                          |
+| Conflict contributions                  |   | Conflict contributions                |
+|     Yn ::= Tt · Wn                      |   |     Zn ::= Tt · Ut                    |
+|         15 : Dt : Reduce Vn ::= epsilon |   |         15 : Dt : Reduce Zn ::= Tt Ut |
+|_________________________________________|   |_______________________________________|
+                    |                                             |
+                    |                                             |
+                    v                                             v
+ ________________State_15₀________________     ________________State_15₁______________
+| Kernel                                  |   | Kernel                                |
+|     [Zn ::= Tt Ut ·, {Ct}]              |   |     [Zn ::= Tt Ut ·, {Dt}]            |
+|     [Wn ::= Ut · Vn, {Dt}]              |   |     [Wn ::= Ut · Vn, {Et}]            |
+| Added                                   |   | Added                                 |
+|     [Vn ::= ·, {Dt}]                    |   |     [Vn ::= ·, {Et}]                  |
+| Actions                                 |   | Actions                               |
+|     Ct : Reduce Zn ::= Tt Ut            |   |     Dt : Reduce Zn ::= Tt Ut          |
+|     Dt : Reduce Vn ::= epsilon          |   |     Et : Reduce Vn ::= epsilon        |
+| Gotos                                   |   | Gotos                                 |
+|     Vn : 22₀                            |   |     Vn : 22₀                          |
+| Conflict contributions                  |   | Conflict contributions                |
+|     [Wn ::= Ut · Vn, {Dt}]              |   |     [Zn ::= Tt Ut ·, {Dt}]            |
+|         15 : Dt : Reduce Vn ::= epsilon |   |         15 : Dt : Reduce Zn ::= Tt Ut |
+|_________________________________________|   |_______________________________________|
 ```
 
 As mentioned earlier, lanes may contain cycles (conceptually an infinite set of lanes with [0..∞]
@@ -526,21 +526,22 @@ they propagate? This is perhaps the most confusing part of IELR(1) implementatio
 through the state graph is disjoint &mdash; each attrib flows through a single transit, i.e. from an
 ipred to a state nub. In other words, the attribs that accumulate in a state nub matter to isocore
 compatibility testing, but they do not flow to isuccs. Attribs are introduced afresh for each
-transit by initializing each goto nub with the transit's kernel attribs attached. Given a goto nub
-that is incompatible with existing state nubs (if any), the goto nub is converted to a state nub.
-If, on the other hand, the goto nub is compatible with an existing state nub, the goto nub is merged
-into the state nub, including its kernel attribs.
+transit by initializing each goto nub with a goto-kernel-filtered subset of the transit's kernel
+attribs attached. Given a goto nub that is incompatible with existing state nubs (if any), the goto
+nub is converted to a state nub. If, on the other hand, the goto nub is compatible with an existing
+state nub, the goto nub is merged into the state nub, including its kernel attribs.
 
 ## Remerging
 
-Redundant states can arise during IELR(1) state machine closure because `hocc` makes no effort to
-exclude to-be-orphaned states from consideration during isocore compatibility testing. Instead it
-implements a limited form of state remerging that iteratively merges states with isomorphic isucc
-graphs. Specifically, two isocoric states are remergeable if for all paired out transits one of the
-following holds:
+Redundant states can arise during IELR(1) state machine closure because `hocc` splits lanes that may
+lead to differing conflict resolutions, even though some split lanes may reconverge. These
+redundancies can be removed via a limited form of state remerging that iteratively merges states
+with isomorphic isucc graphs. Specifically, two isocoric states are remergeable if for all action
+lookaheads one of the following holds:
 
-- The out transits are identical.
-- The out transits are self-cyclic.
+- The actions are identical.
+- The actions are self-cyclic shifts.
+- One state reduces, and the other state takes no action.
 
 Iterative application of state remerging in practice works backward through the state graph, because
 remerging isocoric states' successors may enable subsequent remerging.
@@ -572,16 +573,17 @@ utility.
 
 The `hocc` implementation of IELR(1) is dramatically slower than that of `bison`. The following wall
 clock times for the `Gpic` grammar are representative. Both `hocc` and `bison` are configured to
-emit no reports nor generated code, and the reported numbers are the best of three runs on an AMD
-EPYC 7742 CPU running Ubuntu Linux 24.04, using OCaml 5.2.0 with flambda enabled for `hocc` versus
-the vendor-supplied `bison` 3.8.2.
+emit no reports nor generated code (`hocc` has remerging and unreachable state garbage collection
+disabled), and the reported numbers are the best of three runs on an AMD EPYC 7742 CPU running
+Ubuntu Linux 24.04, using OCaml 5.4.0 with flambda enabled for `hocc`
+main-0-g7c301cdc5d719962c833d5f7df9af052d5406fa7 versus the vendor-supplied `bison` 3.8.2.
 
-| Algorithm | hocc   | bison   |
-|:----------|-------:|--------:|
-| LALR(1)   |  0.929 |   0.017 |
-| PGM(1)    |  1.487 | &mdash; |
-| IELR(1)   | 13.623 |   0.029 |
-| LR(1)     | 10.011 |   1.527 |
+| Algorithm | hocc  | bison   |
+|:----------|------:|--------:|
+| LALR(1)   | 0.989 |   0.017 |
+| PGM(1)    | 1.066 | &mdash; |
+| IELR(1)   | 7.416 |   0.029 |
+| LR(1)     | 4.098 |   1.527 |
 
 `bison` is a [C](https://en.wikipedia.org/wiki/C_(programming_language)) application that relies on
 flat and linearly allocated mutable global data structures, whereas `hocc` is an
@@ -603,13 +605,12 @@ namely useless annotation filtering and leftmost transitive closure memoization.
 anecdotal evidence based on processing the `Lyken` grammar (an abandoned research language) suggests
 that these refinements can matter for antagonistic inputs. The `Lyken` grammar was developed using
 an [implementation of the PGM(1) algorithm](https://github.com/MagicStack/parsing), and it relied
-heavily on per conflict precedence relationships to converge on a specification which ended up with
-no LR(1)-relative inadequacies. But the IELR(1) annotations required to determine this are copious,
-and the lanes are heavily intertwined. Absent either refinement, IELR(1) processing requires nearly
-30 GiB of RAM and approximately 16 hours of wall time. Useless annotation filtering reduces this to
-13 GiB and 14 hours. Leftmost transitive closure memoization has no significant impact on memory
-usage, and further reduces wall time to approximately 1 hour. Performance impacts for less tortuous
-grammars range from neutral to modest speedup, e.g. ~1.25X for `Gpic`.
+heavily on per conflict precedence relationships. The IELR(1) annotations are copious, and the lanes
+are heavily intertwined. Absent either refinement, IELR(1) processing requires nearly 47 GiB of RAM
+and approximately 34 hours of wall time. Useless annotation filtering reduces this to 7 GiB and 28
+hours. Leftmost transitive closure memoization causes a minor memory usage increase, and further
+reduces wall time to less than half an hour. Performance impacts for less tortuous grammars range
+from neutral to modest speedup, e.g. ~1.25X for `Gpic`.
 
 ## Conclusion
 
