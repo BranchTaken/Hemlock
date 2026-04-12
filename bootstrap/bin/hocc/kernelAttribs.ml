@@ -2,7 +2,7 @@ open Basis
 open! Basis.Rudiments
 
 module T = struct
-  type t = (Lr1Item.t, Attribs.t, Lr1Item.cmper_witness) Ordmap.t
+  type t = (Lr0Item.t, Attribs.t, Lr0Item.cmper_witness) Ordmap.t
 
   let hash_fold = Ordmap.hash_fold Attribs.hash_fold
 
@@ -11,9 +11,9 @@ module T = struct
   let pp = Ordmap.pp Attribs.pp
 
   let fmt_hr symbols prods ?(alt=false) ?(width=0L) t formatter =
-    List.fmt ~alt ~width (fun (lr1item, attribs) formatter ->
+    List.fmt ~alt ~width (fun (lr0item, attribs) formatter ->
       formatter
-      |> Lr1Item.pp_hr symbols lr1item
+      |> Lr0Item.pp_hr symbols lr0item
       |> Fmt.fmt " = "
       |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) attribs
     ) (Ordmap.to_alist t) formatter
@@ -28,8 +28,8 @@ let equal t0 t1 =
 
 module Seq = struct
   type container = t
-  type elm = Lr1Item.t * Attribs.t
-  type t = (Lr1Item.t, Attribs.t, Lr1Item.cmper_witness) Ordmap.Seq.t
+  type elm = Lr0Item.t * Attribs.t
+  type t = (Lr0Item.t, Attribs.t, Lr0Item.cmper_witness) Ordmap.Seq.t
 
   let init = Ordmap.Seq.init
   let length = Ordmap.Seq.length
@@ -37,13 +37,13 @@ module Seq = struct
   let next_opt = Ordmap.Seq.next_opt
 end
 
-let empty = Ordmap.empty (module Lr1Item)
+let empty = Ordmap.empty (module Lr0Item)
 
-let singleton item attribs =
-  Ordmap.singleton (module Lr1Item) ~k:item ~v:attribs
+let singleton lr0item attribs =
+  Ordmap.singleton (module Lr0Item) ~k:lr0item ~v:attribs
 
 let remerge1 remergeable_index_map t =
-  Ordmap.map ~f:(fun (_lr1item, attribs) ->
+  Ordmap.map ~f:(fun (_lr0item, attribs) ->
     Attribs.remerge1 remergeable_index_map attribs
   ) t
 
@@ -53,14 +53,14 @@ let get = Ordmap.get
 
 let amend = Ordmap.amend
 
-let insert item attribs t =
-  Ordmap.amend item ~f:(function
+let insert lr0item attribs t =
+  Ordmap.amend lr0item ~f:(function
     | None -> Some attribs
     | Some attribs_prev -> Some (Attribs.union attribs attribs_prev)
   ) t
 
 let union t0 t1 =
-  Ordmap.union ~f:(fun _item attribs0 attribs1 ->
+  Ordmap.union ~f:(fun _lr0item attribs0 attribs1 ->
     Attribs.union attribs0 attribs1
   ) t0 t1
 
@@ -70,20 +70,20 @@ let merge t0 t1 =
    * equals `t1`. The conceptually simpler approach of computing the union via `union` and checking
    * equality of before/after kernel attribs is a lot more expensive for the no-op (equal) case. *)
   Ordmap.fold ~init:(false, t1)
-    ~f:(fun (strict_superset, t) (lr1item, attribs0) ->
-      match Ordmap.get lr1item t1 with
-      | None -> true, insert lr1item attribs0 t
+    ~f:(fun (strict_superset, t) (lr0item, attribs0) ->
+      match Ordmap.get lr0item t1 with
+      | None -> true, insert lr0item attribs0 t
       | Some attribs1 -> begin
           Attribs.fold ~init:(strict_superset, t)
             ~f:(fun (strict_superset, t)
               (Attrib.{conflict_state_index; symbol_index; _} as attrib0) ->
               match Attribs.get ~conflict_state_index ~symbol_index attribs1 with
-              | None -> true, insert lr1item (Attribs.singleton attrib0) t
+              | None -> true, insert lr0item (Attribs.singleton attrib0) t
               | Some attrib1 -> begin
                   let attrib = Attrib.diff attrib0 attrib1 in
                   match Attrib.is_empty attrib with
                   | true -> strict_superset, t
-                  | false -> true, insert lr1item (Attribs.singleton attrib) t
+                  | false -> true, insert lr0item (Attribs.singleton attrib) t
                 end
             ) attribs0
         end
@@ -95,15 +95,15 @@ let inter t0 t1 =
   | true, _
   | _, true -> empty
   | false, false -> begin
-      Ordmap.fold2 ~init:empty ~f:(fun t lr1item_attribs0_opt lr1item_attribs1_opt ->
-        match lr1item_attribs0_opt, lr1item_attribs1_opt with
+      Ordmap.fold2 ~init:empty ~f:(fun t lr0item_attribs0_opt lr0item_attribs1_opt ->
+        match lr0item_attribs0_opt, lr0item_attribs1_opt with
         | Some _, None
         | None, Some _ -> t
-        | Some (lr1item, attribs0), Some (_lr1item, attribs1) -> begin
+        | Some (lr0item, attribs0), Some (_lr0item, attribs1) -> begin
             let attribs = Attribs.inter attribs0 attribs1 in
             match Attribs.is_empty attribs with
             | true -> t
-            | false -> Ordmap.insert_hlt ~k:lr1item ~v:attribs t
+            | false -> Ordmap.insert_hlt ~k:lr0item ~v:attribs t
           end
         | None, None -> not_reached ()
       ) t0 t1
@@ -115,15 +115,15 @@ let diff t0 t1 =
   | true, _ -> empty
   | _, true -> t0
   | false, false -> begin
-      Ordmap.fold2 ~init:empty ~f:(fun t lr1item_attribs0_opt lr1item_attribs1_opt ->
-        match lr1item_attribs0_opt, lr1item_attribs1_opt with
-        | Some (lr1item, attribs), None -> Ordmap.insert_hlt ~k:lr1item ~v:attribs t
+      Ordmap.fold2 ~init:empty ~f:(fun t lr0item_attribs0_opt lr0item_attribs1_opt ->
+        match lr0item_attribs0_opt, lr0item_attribs1_opt with
+        | Some (lr0item, attribs), None -> Ordmap.insert_hlt ~k:lr0item ~v:attribs t
         | None, Some _ -> t
-        | Some (lr1item, attribs0), Some (_lr1item, attribs1) -> begin
+        | Some (lr0item, attribs0), Some (_lr0item, attribs1) -> begin
             let attribs = Attribs.diff attribs0 attribs1 in
             match Attribs.is_empty attribs with
             | true -> t
-            | false -> Ordmap.insert_hlt ~k:lr1item ~v:attribs t
+            | false -> Ordmap.insert_hlt ~k:lr0item ~v:attribs t
           end
         | None, None -> not_reached ()
       ) t0 t1
@@ -139,23 +139,26 @@ let fold2_until = Ordmap.fold2_until
 
 let fold2 = Ordmap.fold2
 
-let attribs lr1itemset t =
+let goto_attribs kernel t =
   fold ~init:(empty, Attribs.empty)
-    ~f:(fun (kernel_attribs, attribs) (_src_lr1item, src_lr1item_attribs) ->
+    ~f:(fun (kernel_attribs, attribs) (_src_lr0item, src_attribs) ->
       Attribs.fold ~init:(kernel_attribs, attribs)
-        ~f:(fun (kernel_attribs, attribs) (Attrib.{symbol_index; isucc_lr1itemset; _} as attrib) ->
-          let isucc_lr1itemset = Lr1Itemset.inter lr1itemset isucc_lr1itemset in
-          Lr1Itemset.fold ~init:(kernel_attribs, attribs)
-            ~f:(fun (kernel_attribs, attribs) ({follow; _} as isucc_lr1item) ->
-              match Bitset.mem symbol_index follow with
-              | false -> kernel_attribs, attribs
-              | true -> begin
-                  let attrib = {attrib with isucc_lr1itemset=Lr1Itemset.singleton isucc_lr1item} in
-                  let kernel_attribs =
-                    insert isucc_lr1item (Attribs.singleton attrib) kernel_attribs in
-                  let attribs = Attribs.insert attrib attribs in
-                  kernel_attribs, attribs
-                end
-            ) isucc_lr1itemset
-        ) src_lr1item_attribs
+        ~f:(fun (kernel_attribs, attribs) (Attrib.{isucc_lr1itemset; _} as attrib) ->
+          let isucc_lr1itemset = Lr1Itemset.inter kernel isucc_lr1itemset in
+          let kernel_attribs, attribs = match Lr1Itemset.is_empty isucc_lr1itemset with
+            | true -> kernel_attribs, attribs
+            | false -> begin
+                let kernel_attribs = Lr1Itemset.fold ~init:kernel_attribs
+                    ~f:(fun kernel_attribs ({lr0item; _} as isucc_lr1item) ->
+                      let attrib =
+                        {attrib with isucc_lr1itemset=Lr1Itemset.singleton isucc_lr1item} in
+                      insert lr0item (Attribs.singleton attrib) kernel_attribs
+                    ) isucc_lr1itemset
+                in
+                let attribs = Attribs.insert {attrib with isucc_lr1itemset} attribs in
+                kernel_attribs, attribs
+              end
+          in
+          kernel_attribs, attribs
+        ) src_attribs
     ) t

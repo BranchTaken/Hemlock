@@ -166,7 +166,7 @@ let has_isolated_shift_attribs adjs annotations isolateds ~dst ~conflict_state_i
           | None -> present, true
           | Some kernel_attribs -> begin
               let ka_present = KernelAttribs.fold_until ~init:false
-                  ~f:(fun _ka_present (_kernel_item, attribs) ->
+                  ~f:(fun _ka_present (_kernel_lr0item, attribs) ->
                     let ka_present =
                       Attribs.get ~conflict_state_index ~symbol_index attribs
                       |> Option.is_some
@@ -251,7 +251,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
   let dst_cs_sym_attribsets_shiftless = Ordmap.fold ~init:(Map.empty (module DstCsSym))
     ~f:(fun dst_cs_sym_attribsets (Transit.{dst; _}, kernel_attribs) ->
       KernelAttribs.fold ~init:dst_cs_sym_attribsets
-        ~f:(fun dst_cs_sym_attribsets (_kernel_item, attribs) ->
+        ~f:(fun dst_cs_sym_attribsets (_kernel_lr0item, attribs) ->
           Attribs.fold ~init:dst_cs_sym_attribsets
             ~f:(fun dst_cs_sym_attribsets
               Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
@@ -299,7 +299,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
   Ordmap.fold ~init:(Ordmap.empty (module Transit))
     ~f:(fun annotations_useful ((Transit.{dst; _} as transit), kernel_attribs) ->
       let kernel_attribs = KernelAttribs.fold ~init:KernelAttribs.empty
-          ~f:(fun kernel_attribs (kernel_item, attribs) ->
+          ~f:(fun kernel_attribs (kernel_lr0item, attribs) ->
             let attribs = Attribs.fold ~init:Attribs.empty
                 ~f:(fun attribs
                   (Attrib.{conflict_state_index; symbol_index; _} as attrib) ->
@@ -310,7 +310,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
                 ) attribs in
             match Attribs.is_empty attribs with
             | true -> kernel_attribs
-            | false -> KernelAttribs.insert kernel_item attribs kernel_attribs
+            | false -> KernelAttribs.insert kernel_lr0item attribs kernel_attribs
           ) kernel_attribs in
       match KernelAttribs.is_empty kernel_attribs with
       | true -> annotations_useful

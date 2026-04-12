@@ -245,12 +245,13 @@ let kernel_attribs {traces; _} =
         | ShiftAccept _ -> not_reached ()
         | Reduce prod_index -> Contrib.init_reduce prod_index
       in
-      TraceVal.fold ~init:kernel_attribs ~f:(fun kernel_attribs (lr1item, isucc_lr1itemset) ->
-        let attrib =
-          Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
-        let trace_attribs = Attribs.singleton attrib in
-        KernelAttribs.insert lr1item trace_attribs kernel_attribs
-      ) kernel_isuccs
+      TraceVal.fold ~init:kernel_attribs
+        ~f:(fun kernel_attribs (Lr1Item.{lr0item; _}, isucc_lr1itemset) ->
+          let attrib =
+            Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib in
+          let trace_attribs = Attribs.singleton attrib in
+          KernelAttribs.insert lr0item trace_attribs kernel_attribs
+        ) kernel_isuccs
     ) traces
 
 let of_conflict_state ~resolve symbols prods leftmost_cache conflict_state =

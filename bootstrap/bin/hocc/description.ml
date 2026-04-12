@@ -79,7 +79,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
       )
     )
   end in
-  let pp_lr1item ?(do_pp_prec=true) lr1item formatter = begin
+  let pp_lr1item lr1item formatter = begin
     let Lr1Item.{lr0item; _} = lr1item in
     let Lr0Item.{prod; _} = lr0item in
     let Prod.{prec; _} = prod in
@@ -99,10 +99,9 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
     )
     |> Fmt.fmt "}]"
     |> (fun formatter ->
-      match do_pp_prec, prec with
-      | false, _
-      | _, None -> formatter
-      | true, Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
+      match prec with
+      | None -> formatter
+      | Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
     )
   end in
   let pp_state_index state_index formatter = begin
@@ -424,16 +423,18 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
               formatter
               |> Fmt.fmt "        Conflict contributions\n"
               |> (fun formatter ->
-                KernelAttribs.fold ~init:formatter ~f:(fun formatter (kernel_item, attribs) ->
+                KernelAttribs.fold ~init:formatter ~f:(fun formatter (kernel_lr0item, attribs) ->
                   formatter
-                  |> Fmt.fmt "            " |> pp_lr1item ~do_pp_prec:false kernel_item
+                  |> Fmt.fmt "            " |> pp_lr0item kernel_lr0item
                   |> Fmt.fmt "\n"
                   |> (fun formatter ->
                     Attribs.fold ~init:formatter
-                      ~f:(fun formatter Attrib.{conflict_state_index; contrib; _} ->
+                      ~f:(fun formatter Attrib.{conflict_state_index; symbol_index; contrib; _} ->
                         formatter
                         |> Fmt.fmt "                "
                         |> pp_state_index conflict_state_index
+                        |> Fmt.fmt " : "
+                        |> pp_symbol_index symbol_index
                         |> Fmt.fmt " : "
                         |> pp_contrib contrib
                         |> Fmt.fmt "\n"
