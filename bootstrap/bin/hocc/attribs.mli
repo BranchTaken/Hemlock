@@ -50,16 +50,6 @@ val get_hlt: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t ->
 (** [get_hlt ~conflict_state_index ~symbol_index t] returns the attrib for the specified
     [conflict_state_index] and [symbol_index] if present in [t], halts otherwise. *)
 
-val amend: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t
-  -> f:(Attrib.t option -> Attrib.t option) -> t -> t
-(** [amend ~conflict_state_index ~symbol_index ~f t] returns an incremental derivative of [t] that
-    is equivalent to [t] in all attributions except possibly for {[conflict_state_index],
-    [symbol_index]}, as determined by the result of [~f attrib_opt], where [attrib_opt = Some
-    attrib] indicates [symbol_index] is associated with [attrib] in [t], and [attrib_opt = None]
-    indicates [symbol_index] is not attributed in [t]. The result contains a mapping from
-    [symbol_index] to [attrib'] if [~f attrib_opt] returns [Some attrib']; the result contains no
-    attribution for [symbol_index] if [~f attrib_opt] returns [None]. *)
-
 val insert: Attrib.t -> t -> t
 (** [insert attrib t] inserts the conflict contribution [attrib] to state
     [attrib.conflict_state_index] on [attrib.symbol_index]. *)

@@ -36,11 +36,6 @@ val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.
     If [~alt=true], the output is broken across multiple lines with outermost indentation [~width]
     (elements are indented to [~width + 4]). *)
 
-val empty: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
-  -> t
-(** [empty ~conflict_state_index ~symbol_index ~conflict] returns an empty attribution, i.e. with no
-    itemsets nor conflict contributions. *)
-
 val init: conflict_state_index:StateIndex.t -> symbol_index:Symbol.Index.t -> conflict:Contrib.t
   -> isucc_lr1itemset:Lr1Itemset.t -> contrib:Contrib.t -> t
 (** [init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib] returns an
