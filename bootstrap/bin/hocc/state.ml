@@ -86,36 +86,198 @@ end
 include T
 include Identifiable.Make(T)
 
+let actions symbols isocores ~gotonub_of_statenub_goto
+    (StateNub.{lr1itemsetclosure; _} as statenub) =
+  let actions_insert symbol_index action actions = begin
+    Ordmap.amend symbol_index ~f:(fun action_set_opt ->
+      let action_set' = match action_set_opt with
+        | None -> Ordset.singleton (module Action) action
+        | Some action_set -> Ordset.insert action action_set
+      in
+      Some action_set'
+    ) actions
+  end in
+  let token_gotos = Lr1ItemsetClosure.token_gotos symbols lr1itemsetclosure in
+  Lr1ItemsetClosure.fold ~init:(Ordmap.empty (module Symbol.Index))
+    ~f:(fun actions {lr0item={prod={index; rhs_indexes; _}; dot}; follow} ->
+      match Uns.(<) dot (Array.length rhs_indexes) with
+      (* X :: a·Ab *)
+      | true -> begin
+          let symbol_index = Array.get dot rhs_indexes in
+          let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
+          match Symbol.is_token symbol with
+          | false -> actions
+          | true -> begin
+
+              let goto = Ordmap.get_hlt symbol_index token_gotos in
+              let gotonub = gotonub_of_statenub_goto statenub goto in
+              let goto_state_index = Isocores.get_hlt gotonub isocores in
+              let action = match Lr1Itemset.is_accept goto with
+                | false -> Action.ShiftPrefix goto_state_index
+                | true -> Action.ShiftAccept goto_state_index
+              in
+              actions_insert symbol_index action actions
+            end
+        end
+      (* X ::= a· *)
+      | false -> begin
+          Bitset.fold ~init:actions ~f:(fun actions symbol_index ->
+            let action = Action.Reduce index in
+            actions_insert symbol_index action actions
+          ) follow
+        end
+    ) lr1itemsetclosure
+
+let resolve_symbol symbols prods symbol_index t =
+  let prec_of_action symbols prods symbol_index action = begin
+    let open Action in
+    match action with
+    | ShiftPrefix _
+    | ShiftAccept _ ->
+      (match Symbols.symbol_of_symbol_index symbol_index symbols with Symbol.{prec; _} -> prec)
+    | Reduce prod_index ->
+      (match Prods.prod_of_prod_index prod_index prods with Prod.{prec; _} -> prec)
+  end in
+  let assoc_of_action symbols prods symbol_index action = begin
+    match prec_of_action symbols prods symbol_index action with
+    | None -> None
+    | Some {prec_set={assoc; _}; _} -> assoc
+  end in
+  match Ordset.length t with
+  | 1L -> t
+  | _ -> begin
+      (* Compute the subset of actions with maximal precedence, if any. Disjoint precedences are
+       * incomparable, i.e. there is no maximal precedence in the presence of disjoint
+       * precedences. *)
+      let max_prec_action_set =
+        Ordset.fold_until ~init:(Ordset.empty (module Action))
+          ~f:(fun max_prec_action_set action ->
+            match Ordset.is_empty max_prec_action_set with
+            | true -> Ordset.singleton (module Action) action, false
+            | false -> begin
+                let max_prec = prec_of_action symbols prods symbol_index
+                    (Ordset.choose_hlt max_prec_action_set) in
+                let action_prec = prec_of_action symbols prods symbol_index action in
+                match max_prec, action_prec with
+                | None, _
+                | _, None -> begin
+                    (* Disjoint lack of precedence(s). *)
+                    Ordset.empty (module Action), true
+                  end
+                | Some max_prec, Some action_prec -> begin
+                    match Uns.(=) max_prec.prec_set.index action_prec.prec_set.index with
+                    | false -> begin
+                        match Bitset.mem max_prec.prec_set.index action_prec.prec_set.doms with
+                        | false -> begin
+                            match Bitset.mem action_prec.prec_set.index max_prec.prec_set.doms
+                            with
+                            | false -> begin
+                                (* Disjoint precedence; no conflict resolution possible. *)
+                                Ordset.empty (module Action), true
+                              end
+                            | true -> begin
+                                (* Action's precedence exceeds current maximal precedence. Replace
+                                 * dominated set with the singleton set containing action. *)
+                                Ordset.singleton (module Action) action, false
+                              end
+                          end
+                        | true -> begin
+                            (* Current maximal precedence dominates action's precedence. *)
+                            max_prec_action_set, false
+                          end
+                      end
+                    | true -> begin
+                        (* Precedence equal to current maximal precedence. *)
+                        Ordset.insert action max_prec_action_set, false
+                      end
+                  end
+              end
+          ) t
+      in
+      match Ordset.length max_prec_action_set with
+      | 0L -> t
+      | 1L -> max_prec_action_set
+      | _ -> begin
+          (* Determine whether the subset of actions with maximal precedence has homogeneous
+           * associativity. *)
+          let assoc = assoc_of_action symbols prods symbol_index
+              (Ordset.choose_hlt max_prec_action_set) in
+          let homogeneous = Ordset.fold_until ~init:true ~f:(fun _ action ->
+            let action_assoc = assoc_of_action symbols prods symbol_index action in
+            match Cmp.is_eq (Option.cmp Assoc.cmp assoc action_assoc) with
+            | false -> false, true
+            | true -> true, false
+          ) max_prec_action_set in
+          match homogeneous with
+          | false -> t
+          | true -> begin
+              match assoc with
+              | None -> begin
+                  (* Resolve a singleton. *)
+                  match Ordset.length max_prec_action_set with
+                  | 1L -> max_prec_action_set
+                  | _ -> t
+                end
+              | Some Left -> begin
+                  (* Resolve a single reduce action. *)
+                  let reduce_action_set = Ordset.fold_until
+                      ~init:(Ordset.empty (module Action))
+                      ~f:(fun reduce_action_set action ->
+                        let open Action in
+                        match action with
+                        | ShiftPrefix _
+                        | ShiftAccept _ -> reduce_action_set, false
+                        | Reduce _ -> begin
+                            match Ordset.is_empty reduce_action_set with
+                            | false -> Ordset.empty (module Action), true
+                            | true -> Ordset.singleton (module Action) action, false
+                          end
+                      ) max_prec_action_set in
+                  match Ordset.length reduce_action_set with
+                  | 1L -> reduce_action_set
+                  | _ -> t
+                end
+              | Some Right -> begin
+                  (* Resolve a (single) shift action. *)
+                  let shift_action_set = Ordset.fold_until
+                      ~init:(Ordset.empty (module Action))
+                      ~f:(fun shift_action_set action ->
+                        let open Action in
+                        match action with
+                        | ShiftPrefix _
+                        | ShiftAccept _ -> Ordset.singleton (module Action) action, true
+                        | Reduce _ -> shift_action_set, false
+                      ) max_prec_action_set in
+                  match Ordset.length shift_action_set with
+                  | 1L -> shift_action_set
+                  | _ -> t
+                end
+              | Some Nonassoc -> (Ordset.empty (module Action))
+            end
+        end
+    end
+
+let resolve_actions symbols prods actions =
+  Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index))
+    ~f:(fun actions (symbol_index, action_set) ->
+      let action_set' = resolve_symbol symbols prods symbol_index action_set in
+      (* Nonassoc can cause empty action sets; drop them from actions. *)
+      match Ordset.is_empty action_set' with
+      | true -> actions
+      | false -> Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
+    ) actions
+
 let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto
     (StateNub.{lr1itemsetclosure; _} as statenub) =
   let actions =
-    Lr1ItemsetClosure.actions symbols lr1itemsetclosure
+    actions symbols isocores ~gotonub_of_statenub_goto statenub
     |> (fun actions -> match resolve with
       | false -> actions
-      | true -> actions |> Lr1ItemsetClosure.resolve symbols prods
+      | true -> actions |> resolve_actions symbols prods
     )
-    |> Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index))
-      ~f:(fun actions (symbol_index, action_set) ->
-        let action_set' = Ordset.fold ~init:(Ordset.empty (module Action))
-          ~f:(fun action_set action ->
-            Ordset.insert (match action with
-              | Lr1ItemsetClosure.Action.ShiftPrefix goto -> begin
-                  let gotonub = gotonub_of_statenub_goto statenub goto in
-                  Action.ShiftPrefix (Isocores.get_hlt gotonub isocores)
-                end
-              | Lr1ItemsetClosure.Action.ShiftAccept goto -> begin
-                  let gotonub = gotonub_of_statenub_goto statenub goto in
-                  Action.ShiftAccept (Isocores.get_hlt gotonub isocores)
-                end
-              | Lr1ItemsetClosure.Action.Reduce prod_index -> Action.Reduce prod_index
-            ) action_set
-          ) action_set in
-        assert (not (Ordset.is_empty action_set'));
-        Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
-      )
   in
   let gotos =
-    Lr1ItemsetClosure.gotos symbols lr1itemsetclosure
+    Lr1ItemsetClosure.nonterm_gotos symbols lr1itemsetclosure
     |> Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index)) ~f:(fun gotos (nonterm_index, goto) ->
       let gotonub = gotonub_of_statenub_goto statenub goto in
       Ordmap.insert_hlt ~k:nonterm_index ~v:(Isocores.get_hlt gotonub isocores) gotos
@@ -140,7 +302,7 @@ let normalize_action_set remergeable_index_map action_set =
 
 let remerge symbols remergeable_index_map {statenub=sn0; actions=a0; gotos=g0}
   {statenub=sn1; actions=a1; gotos=g1} =
-  let statenub = StateNub.remerge symbols remergeable_index_map sn0 sn1 in
+  let statenub = StateNub.remerge symbols sn0 sn1 in
   let actions = Ordmap.fold ~init:a1 ~f:(fun actions (symbol_index, action_set0) ->
     let action_set0 = normalize_action_set remergeable_index_map action_set0 in
     Ordmap.amend symbol_index ~f:(fun actions_opt ->

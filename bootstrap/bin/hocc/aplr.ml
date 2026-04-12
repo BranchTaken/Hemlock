@@ -353,9 +353,7 @@ let remerge_states io symbols isocores states =
         Ordmap.fold ~init:isocores
           ~f:(fun remerged_isocores (index0, index1) ->
             assert State.Index.(index0 > index1);
-            let remerged_isocores =
-              Isocores.remerge symbols remergeable_index_map index0 index1 remerged_isocores in
-            remerged_isocores
+            Isocores.remerge symbols index0 index1 remerged_isocores
           ) remergeable_index_map
         |> Isocores.reindex state_index_map in
       (* Remerge states. *)

@@ -52,12 +52,10 @@ val merge: Symbols.t -> GotoNub.t -> StateNub.Index.t -> t -> bool * t
 val remove_hlt: StateNub.Index.t -> t -> t
 (** [remove_hlt statenub_index t] removes the state nub with given [statenub_index]. *)
 
-val remerge: Symbols.t
-  -> (StateNub.Index.t, StateNub.Index.t, StateNub.Index.cmper_witness) Ordmap.t -> StateNub.Index.t
-  -> StateNub.Index.t -> t -> t
-(** [remerge symbols index_map statenub_index0 statenub_index1 t] creates a merged state nub
-    comprising the remergeable state nubs corresponding to [statenub_index0] and [statenub_index1]
-    and replaces the lower-indexed state nub with the merged result in a derivative of [t]. *)
+val remerge: Symbols.t -> StateNub.Index.t -> StateNub.Index.t -> t -> t
+(** [remerge symbols statenub_index0 statenub_index1 t] creates a merged state nub comprising the
+    remergeable state nubs corresponding to [statenub_index0] and [statenub_index1] and replaces the
+    lower-indexed state nub with the merged result in a derivative of [t]. *)
 
 val reindex: StateIndexMap.t -> t -> t
 (** [reindex state_index_map t] creates a derivative of [t] with all LR(1) item set closure and
