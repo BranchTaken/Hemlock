@@ -240,7 +240,7 @@ let reachable io prods states adjs =
   let frontier = Array.fold ~init:(Ordmap.empty (module State.Index)) ~f:(fun frontier state ->
     match State.is_start state with
     | false -> frontier
-    | true -> Ordmap.insert ~k:(State.index state) ~v:Shift frontier
+    | true -> Ordmap.insert_hlt ~k:(State.index state) ~v:Shift frontier
   ) states in
   trace io prods states adjs ~traced:(Ordmap.empty (module State.Index)) ~frontier
 

@@ -314,7 +314,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
           ) kernel_attribs in
       match KernelAttribs.is_empty kernel_attribs with
       | true -> annotations_useful
-      | false -> Ordmap.insert ~k:transit ~v:kernel_attribs annotations_useful
+      | false -> Ordmap.insert_hlt ~k:transit ~v:kernel_attribs annotations_useful
     ) annotations_all
 
 let annotations_init ~resolve io symbols prods lalr_states =

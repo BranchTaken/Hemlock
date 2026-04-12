@@ -84,7 +84,8 @@ let mem lr1item t =
 
 let insert (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
   match Ordmap.get lr0item items with
-  | None -> {items=Ordmap.insert ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
+  | None ->
+    {items=Ordmap.insert_hlt ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
   | Some Lr1Item.{follow=t_follow; _} -> begin
       let lr1item' = Lr1Item.init ~lr0item ~follow:(Bitset.union follow t_follow) in
       {t with items=Ordmap.update_hlt ~k:lr0item ~v:lr1item' items}
@@ -92,7 +93,8 @@ let insert (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
 
 let insert_hlt (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
   match Ordmap.get lr0item items with
-  | None -> {items=Ordmap.insert ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
+  | None ->
+    {items=Ordmap.insert_hlt ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
   | Some Lr1Item.{follow=t_follow; _} -> begin
       let t_follow' = Bitset.union follow t_follow in
       match Cmp.is_eq (Bitset.cmp t_follow t_follow') with
@@ -105,7 +107,8 @@ let insert_hlt (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
 
 let merge1 (Lr1Item.{lr0item; follow} as lr1item) ({items; core} as t) =
   match Ordmap.get lr0item items with
-  | None -> true, {items=Ordmap.insert ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
+  | None ->
+    true, {items=Ordmap.insert_hlt ~k:lr0item ~v:lr1item items; core=Lr0Itemset.insert lr0item core}
   | Some Lr1Item.{follow=t_follow; _} -> begin
       let strict_superset = not (Bitset.is_empty (Bitset.diff follow t_follow)) in
       let lr1item' = Lr1Item.init ~lr0item ~follow:(Bitset.union follow t_follow) in

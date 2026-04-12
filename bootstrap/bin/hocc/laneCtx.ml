@@ -136,13 +136,13 @@ module TraceVal = struct
     | false, false -> begin
         Ordmap.fold2 ~init:empty ~f:(fun t isucc_lr1itemset0_opt isucc_lr1itemset1_opt ->
           match isucc_lr1itemset0_opt, isucc_lr1itemset1_opt with
-          | Some (lr1item, lr1itemset0), None -> Ordmap.insert ~k:lr1item ~v:lr1itemset0 t
+          | Some (lr1item, lr1itemset0), None -> Ordmap.insert_hlt ~k:lr1item ~v:lr1itemset0 t
           | None, Some _ -> t
           | Some (lr1item, lr1itemset0), Some (_lr1item, lr1itemset1) -> begin
               let lr1itemset = Lr1Itemset.diff lr1itemset0 lr1itemset1 in
               match Lr1Itemset.is_empty lr1itemset with
               | true -> t
-              | false -> Ordmap.insert ~k:lr1item ~v:lr1itemset t
+              | false -> Ordmap.insert_hlt ~k:lr1item ~v:lr1itemset t
             end
           | None, None -> not_reached ()
         ) t0 t1
@@ -380,13 +380,13 @@ let diff {traces=traces0; _} ({traces=traces1; _} as t1) =
         Ordmap.fold2 ~init:(Ordmap.empty (module TraceKey))
           ~f:(fun traces traceval0_opt traceval1_opt ->
             match traceval0_opt, traceval1_opt with
-            | Some (tracekey, traceval0), None -> Ordmap.insert ~k:tracekey ~v:traceval0 traces
+            | Some (tracekey, traceval0), None -> Ordmap.insert_hlt ~k:tracekey ~v:traceval0 traces
             | None, Some _ -> traces
             | Some (tracekey, traceval0), Some (_tracekey, traceval1) -> begin
                 let traceval = TraceVal.diff traceval0 traceval1 in
                 match TraceVal.is_empty traceval with
                 | true -> traces
-                | false -> Ordmap.insert ~k:tracekey ~v:traceval traces
+                | false -> Ordmap.insert_hlt ~k:tracekey ~v:traceval traces
               end
             | None, None -> not_reached ()
           ) traces0 traces1
