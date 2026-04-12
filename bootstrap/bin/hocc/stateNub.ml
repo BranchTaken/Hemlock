@@ -33,12 +33,12 @@ let init symbols ~index ~isocores_sn ~isocore_set_sn GotoNub.{goto; kernel_attri
   let lr1itemsetclosure = Lr1ItemsetClosure.init symbols ~index goto in
   {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
-let remerge symbols remergeable_index_map
+let remerge symbols
     {lr1itemsetclosure=c0; isocores_sn=is0; isocore_set_sn=iss0; kernel_attribs=ka0; attribs=a0}
     {lr1itemsetclosure=c1; isocores_sn=is1; isocore_set_sn=iss1; kernel_attribs=ka1; attribs=a1} =
   assert Uns.(is0 = is1);
   {
-    lr1itemsetclosure=Lr1ItemsetClosure.remerge symbols remergeable_index_map c0 c1;
+    lr1itemsetclosure=Lr1ItemsetClosure.remerge symbols c0 c1;
     isocores_sn=is0;
     isocore_set_sn=Uns.min iss0 iss1;
     kernel_attribs=KernelAttribs.union ka0 ka1;

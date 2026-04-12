@@ -6,26 +6,6 @@ open! Basis.Rudiments
 (* Isomorphic with `State.Index`. *)
 module Index = Uns
 
-module Action : sig
-  type t =
-    | ShiftPrefix of Lr1Itemset.t (** Shift, transition to an intermediate state. *)
-    | ShiftAccept of Lr1Itemset.t (** Shift, transition to a successful parse state. *)
-    | Reduce of Prod.Index.t (** Reduce. *)
-
-  include IdentifiableIntf.S with type t := t
-
-  val pp_hr: Symbols.t -> Prods.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-  (** Formatter which outputs action in human-readable form. *)
-end
-
-module Actionset: sig
-  type t = (Action.t, Action.cmper_witness) Ordset.t
-
-  val resolve: Symbols.t -> Prods.t -> Symbol.Index.t -> t -> t
-  (** [resolve symbols prods symbol_index t] attempts to resolve conflicts, if any. Unresolvable
-      conflicts are left intact. *)
-end
-
 type t = {
   index: Index.t;
   (** Unique LR(1) item set closure index. *)
@@ -46,9 +26,9 @@ val init: Symbols.t -> index:Index.t -> Lr1Itemset.t -> t
 val added: t -> Lr1Itemset.t
 (** [added t] returns added items, i.e. items which are added during closure. *)
 
-val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t -> t -> t -> t
-(** [remerge symbols remergeable_index_map t0 t1] re-merges the kernel of [t0] into [t1], where [t0]
-    has a higher index than [t1], and creates the closure of the merged kernel. *)
+val remerge: Symbols.t -> t -> t -> t
+(** [remerge symbols t0 t1] re-merges the kernel of [t0] into [t1], where [t0] has a higher index
+    than [t1], and creates the closure of the merged kernel. *)
 
 val reindex: StateIndexMap.t -> t -> t
 (** [reindex state_index_map t] creates an LR(1) item set closure with all LR(1) item set closure
@@ -59,24 +39,18 @@ val merge: Symbols.t -> Lr1Itemset.t -> t -> bool * t
     creates the closure of the merged kernel. The boolean result indicates whether items were merged
     into the kernel. *)
 
-val next: t -> (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t
-(** [next t] returns the set of symbol indexes that may appear next, i.e. the symbol indexes
-    corresponding to the symbols for which [goto] returns a non-empty set. *)
+val fold_next: Symbols.t -> init:'accum -> f:('accum -> (Symbol.Index.t * Lr1Itemset.t) -> 'accum)
+  -> t -> 'accum
+(** [fold_next symbols ~init ~f t] folds over the set of symbol indexes that may appear next, along
+    with their goto sets. *)
 
-val goto: Symbol.t -> t -> Lr1Itemset.t
-(** [goto symbol t] computes the kernel of the goto set reachable from [t], given [symbol]. *)
+val token_gotos: Symbols.t -> t
+  -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
+(** [token_gotos symbols t] computes the map of per terminal symbol gotos for [t]. *)
 
-val actions: Symbols.t -> t -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
-(** [actions symbols t] computes the map of per symbol actions for [t]. *)
-
-val gotos: Symbols.t -> t -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
-(** [gotos symbols t] computes the map of per non-terminal symbol gotos for [t]. *)
-
-val resolve: Symbols.t -> Prods.t
-  -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
-  -> (Symbol.Index.t, Actionset.t, Symbol.Index.cmper_witness) Ordmap.t
-(** [resolve ~symbols ~prods actions] resolves conflicts in [actions] to the maximum degree possible
-    given precedences. *)
+val nonterm_gotos: Symbols.t -> t
+  -> (Symbol.Index.t, Lr1Itemset.t, Symbol.Index.cmper_witness) Ordmap.t
+(** [nonterm_gotos symbols t] computes the map of per non-terminal symbol gotos for [t]. *)
 
 val fold_until: init:'accum -> f:('accum -> Lr1Item.t -> 'accum * bool) -> t -> 'accum
 (** [fold_until ~init ~f t] folds over all kernel and added items in [t], continuing until [f]
