@@ -62,34 +62,14 @@ let isocores_sn {isocores_sn; _} =
 let isocore_set_sn {isocore_set_sn; _} =
   isocore_set_sn
 
-let merge symbols GotoNub.{goto; kernel_attribs=gotonub_ka; _}
-  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs=statenub_ka; attribs} =
-  let merged, (Lr1ItemsetClosure.{kernel=lr1itemset; _} as lr1itemsetclosure) =
-    Lr1ItemsetClosure.merge symbols goto lr1itemsetclosure in
-  let kernel_attribs = KernelAttribs.union gotonub_ka statenub_ka in
-  let attribs = match merged with
-    | false -> attribs (* No-op merge means no change in attribs. *)
-    | true -> Attribs.union (KernelAttribs.attribs lr1itemset kernel_attribs) attribs
+let merge symbols GotoNub.{goto; kernel_attribs=gotonub_ka; attribs=gotonub_a; _}
+  {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs=statenub_ka; attribs=statenub_a} =
+  let merged, lr1itemsetclosure = Lr1ItemsetClosure.merge symbols goto lr1itemsetclosure in
+  let kernel_attribs, attribs = match merged with
+    | false -> statenub_ka, statenub_a (* No-op merge means no change in attribs. *)
+    | true -> KernelAttribs.union gotonub_ka statenub_ka, Attribs.union gotonub_a statenub_a
   in
   merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
-
-let filtered_kernel_attribs {lr1itemsetclosure=Lr1ItemsetClosure.{kernel; _}; kernel_attribs; _} =
-  KernelAttribs.fold ~init:KernelAttribs.empty
-    ~f:(fun kernel_attribs (_src_lr1item, src_lr1item_attribs) ->
-      Attribs.fold ~init:kernel_attribs
-        ~f:(fun kernel_attribs (Attrib.{symbol_index; isucc_lr1itemset; _} as attrib) ->
-          Lr1Itemset.fold ~init:kernel_attribs ~f:(fun kernel_attribs isucc_lr1item ->
-            match Lr1Itemset.get isucc_lr1item kernel with
-            | None -> kernel_attribs
-            | Some {follow; _} -> begin
-                match Bitset.mem symbol_index follow with
-                | false -> kernel_attribs
-                | true ->
-                  KernelAttribs.insert isucc_lr1item (Attribs.singleton attrib) kernel_attribs
-              end
-          ) isucc_lr1itemset
-        ) src_lr1item_attribs
-    ) kernel_attribs
 
 let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
   Attribs.fold2_until ~init:true

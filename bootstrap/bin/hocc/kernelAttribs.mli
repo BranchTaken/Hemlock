@@ -70,8 +70,10 @@ val diff: t -> t -> t
 (** [diff t0 t1] returns the set of per kernel conflict contributions present in [t0] but not
     present in [t1]. *)
 
-val attribs: Lr1Itemset.t -> t -> Attribs.t
-(** [attribs lr1itemset t] computes the attribs made by [lr1itemset] in the context of [t]. *)
+val attribs: Lr1Itemset.t -> t -> t * Attribs.t
+(** [attribs lr1itemset t] computes the attribs made by [lr1itemset] in the context of [t] and
+    returns the filtered kernel attribs as well as flattened filtered attribs (i.e. union of
+    filtered kernel attribs). *)
 
 val fold_until: init:'accum -> f:('accum -> Lr1Item.t * Attribs.t -> 'accum * bool) -> t
   -> 'accum

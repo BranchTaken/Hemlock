@@ -27,7 +27,8 @@ include T
 include Identifiable.Make(T)
 
 let init ~isocores_sn_opt ~goto ~kernel_attribs =
-  {goto; isocores_sn_opt; kernel_attribs; attribs=KernelAttribs.attribs goto kernel_attribs}
+  let kernel_attribs, attribs = KernelAttribs.attribs goto kernel_attribs in
+  {goto; isocores_sn_opt; kernel_attribs; attribs}
 
 let core {goto; _} =
   Lr1Itemset.core goto

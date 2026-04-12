@@ -140,15 +140,22 @@ let fold2_until = Ordmap.fold2_until
 let fold2 = Ordmap.fold2
 
 let attribs lr1itemset t =
-  fold ~init:Attribs.empty ~f:(fun attribs (_src_lr1item, src_lr1item_attribs) ->
-    Attribs.fold ~init:attribs ~f:(fun attribs
-      (Attrib.{symbol_index; conflict; isucc_lr1itemset; contrib; _} as attrib) ->
-      assert Contrib.(inter conflict contrib = contrib);
-      let isucc_lr1itemset = Lr1Itemset.inter lr1itemset isucc_lr1itemset in
-      Lr1Itemset.fold ~init:attribs ~f:(fun attribs ({follow; _} as lr1item) ->
-        match Bitset.mem symbol_index follow with
-        | false -> attribs
-        | true -> Attribs.insert {attrib with isucc_lr1itemset=Lr1Itemset.singleton lr1item} attribs
-      ) isucc_lr1itemset
-    ) src_lr1item_attribs
-  ) t
+  fold ~init:(empty, Attribs.empty)
+    ~f:(fun (kernel_attribs, attribs) (_src_lr1item, src_lr1item_attribs) ->
+      Attribs.fold ~init:(kernel_attribs, attribs)
+        ~f:(fun (kernel_attribs, attribs) (Attrib.{symbol_index; isucc_lr1itemset; _} as attrib) ->
+          let isucc_lr1itemset = Lr1Itemset.inter lr1itemset isucc_lr1itemset in
+          Lr1Itemset.fold ~init:(kernel_attribs, attribs)
+            ~f:(fun (kernel_attribs, attribs) ({follow; _} as isucc_lr1item) ->
+              match Bitset.mem symbol_index follow with
+              | false -> kernel_attribs, attribs
+              | true -> begin
+                  let attrib = {attrib with isucc_lr1itemset=Lr1Itemset.singleton isucc_lr1item} in
+                  let kernel_attribs =
+                    insert isucc_lr1item (Attribs.singleton attrib) kernel_attribs in
+                  let attribs = Attribs.insert attrib attribs in
+                  kernel_attribs, attribs
+                end
+            ) isucc_lr1itemset
+        ) src_lr1item_attribs
+    ) t
