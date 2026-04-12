@@ -86,10 +86,6 @@ module T = struct
     |> Contrib.pp_hr symbols prods contrib
     |> Fmt.fmt "}"
 
-  let empty ~conflict_state_index ~symbol_index ~conflict =
-    {conflict_state_index; symbol_index; conflict; isucc_lr1itemset=Lr1Itemset.empty;
-      contrib=Contrib.empty}
-
   let init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib}
 
@@ -105,11 +101,10 @@ module T = struct
     Contrib.is_empty contrib
 
   let union_impl equalish_keys
-      ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
+      ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
       ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
     assert (equalish_keys t0 t1);
-    init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset:(Lr1Itemset.union is0 is1)
-      ~contrib:(Contrib.union c0 c1)
+    {t0 with isucc_lr1itemset=(Lr1Itemset.union is0 is1); contrib=(Contrib.union c0 c1)}
 
   let union t0 t1 =
     union_impl equal_keys t0 t1
@@ -118,24 +113,16 @@ module T = struct
     union_impl remergeable_keys t0 t1
 
   let inter
-      ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
+      ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
       ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
     assert (equal_keys t0 t1);
-    init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset:(Lr1Itemset.inter is0 is1)
-      ~contrib:(Contrib.inter c0 c1)
+    {t0 with isucc_lr1itemset=(Lr1Itemset.inter is0 is1); contrib=(Contrib.inter c0 c1)}
 
   let diff
-      ({conflict_state_index; symbol_index; conflict; isucc_lr1itemset=is0; contrib=c0} as t0)
+      ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
       ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
     assert (equal_keys t0 t1);
-    assert (Bool.( = ) (Lr1Itemset.is_empty is0) (Lr1Itemset.is_empty is1));
-    let isucc_lr1itemset' = Lr1Itemset.diff is0 is1 in
-    let contrib' = Contrib.diff c0 c1 in
-    match Lr1Itemset.is_empty isucc_lr1itemset', Contrib.is_empty contrib' with
-    | false, false -> {t0 with isucc_lr1itemset=isucc_lr1itemset'; contrib=contrib'}
-    | false, true -> {t0 with isucc_lr1itemset=isucc_lr1itemset'}
-    | true, false -> {t0 with contrib=Contrib.diff c0 c1}
-    | true, true -> empty ~conflict_state_index ~symbol_index ~conflict
+    {t0 with isucc_lr1itemset=Lr1Itemset.diff is0 is1; contrib=Contrib.diff c0 c1}
 end
 include T
 include Identifiable.Make(T)

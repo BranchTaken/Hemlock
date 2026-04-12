@@ -29,6 +29,9 @@ module K = struct
   end
   include T
   include Identifiable.Make(T)
+
+  let init ~conflict_state_index ~symbol_index =
+    {conflict_state_index; symbol_index}
 end
 
 module T = struct
@@ -77,54 +80,39 @@ module Seq = struct
   let length = Ordmap.Seq.length
   let next seq =
     match Ordmap.Seq.next seq with
-    | (_symbol_index, attrib), seq' -> attrib, seq'
+    | (_k, attrib), seq' -> attrib, seq'
   let next_opt seq =
     match Ordmap.Seq.next_opt seq with
     | None -> None
-    | Some ((_symbol_index, attrib), seq') -> Some (attrib, seq')
+    | Some ((_k, attrib), seq') -> Some (attrib, seq')
 end
 
 let empty = Ordmap.empty (module K)
 
 let singleton (Attrib.{conflict_state_index; symbol_index; _} as attrib) =
-  let k = K.{conflict_state_index; symbol_index} in
+  let k = K.init ~conflict_state_index ~symbol_index in
   Ordmap.singleton (module K) ~k ~v:attrib
 
 let is_empty = Ordmap.is_empty
 
 let get ~conflict_state_index ~symbol_index t =
-  let k = K.{conflict_state_index; symbol_index} in
+  let k = K.init ~conflict_state_index ~symbol_index in
   Ordmap.get k t
 
 let get_hlt ~conflict_state_index ~symbol_index t =
-  let k = K.{conflict_state_index; symbol_index} in
+  let k = K.init ~conflict_state_index ~symbol_index in
   Ordmap.get_hlt k t
-
-let amend_impl attrib_equalish_keys ~conflict_state_index ~symbol_index ~f t =
-  let k = K.{conflict_state_index; symbol_index} in
-  Ordmap.amend k ~f:(fun attrib_opt ->
-    let attrib_opt' = f attrib_opt in
-    let () = match attrib_opt, attrib_opt' with
-      | Some attrib, Some attrib' -> assert (attrib_equalish_keys attrib attrib');
-      | Some _, None
-      | None, Some _
-      | None, None -> ()
-    in
-    attrib_opt'
-  ) t
-
-let amend ~conflict_state_index ~symbol_index ~f t =
-  amend_impl Attrib.equal_keys ~conflict_state_index ~symbol_index ~f t
 
 let insert_impl attrib_equalish_keys (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
   assert (not (Attrib.is_empty attrib));
-  amend_impl attrib_equalish_keys ~conflict_state_index ~symbol_index ~f:(function
-    | None -> Some attrib
-    | Some attrib_prev -> begin
-        assert (attrib_equalish_keys attrib attrib_prev);
-        Some (Attrib.union_remerged attrib_prev attrib)
-      end
-  ) t
+  let k = K.init ~conflict_state_index ~symbol_index in
+  match Ordmap.get k t with
+  | None -> Ordmap.insert_hlt ~k ~v:attrib t
+  | Some attrib_prev -> begin
+      assert (attrib_equalish_keys attrib attrib_prev);
+      let attrib = Attrib.union_remerged attrib_prev attrib in
+      Ordmap.update_hlt ~k ~v:attrib t
+    end
 
 let insert attrib t =
   insert_impl Attrib.equal_keys attrib t
@@ -134,7 +122,6 @@ let insert_remerged attrib t =
 
 let union t0 t1 =
   Ordmap.union ~f:(fun _k attrib0 attrib1 ->
-    assert (Attrib.equal_keys attrib0 attrib1);
     Attrib.union attrib0 attrib1
   ) t0 t1
 
@@ -180,7 +167,7 @@ let diff t0 t1 =
 
 let remerge1 remergeable_index_map t =
   Ordmap.fold ~init:empty
-    ~f:(fun remerged_t (_symbol_index, attrib) ->
+    ~f:(fun remerged_t (_k, attrib) ->
       insert_remerged (Attrib.remerge1 remergeable_index_map attrib) remerged_t
     ) t
 
@@ -188,36 +175,36 @@ let remerge remergeable_index_map t0 t1 =
   remerge1 remergeable_index_map (union t0 t1)
 
 let fold_until ~init ~f t =
-  Ordmap.fold_until ~init ~f:(fun accum (_symbol_index, attrib) -> f accum attrib) t
+  Ordmap.fold_until ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t
 
 let fold ~init ~f t =
-  Ordmap.fold ~init ~f:(fun accum (_symbol_index, attrib) -> f accum attrib) t
+  Ordmap.fold ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t
 
 let for_any ~f t =
-  Ordmap.for_any ~f:(fun (_symbol_index, attrib) -> f attrib) t
+  Ordmap.for_any ~f:(fun (_k, attrib) -> f attrib) t
 
 let fold2_until ~init ~f t0 t1 =
-  Ordmap.fold2_until ~init ~f:(fun accum k_kv_opt0 k_kv_opt1 ->
-    let kv_opt0 = match k_kv_opt0 with
+  Ordmap.fold2_until ~init ~f:(fun accum kv_opt0 kv_opt1 ->
+    let v_opt0 = match kv_opt0 with
       | None -> None
       | Some (_k, attrib) -> Some attrib
     in
-    let kv_opt1 = match k_kv_opt1 with
+    let v_opt1 = match kv_opt1 with
       | None -> None
       | Some (_k, attrib) -> Some attrib
     in
-    f accum kv_opt0 kv_opt1
+    f accum v_opt0 v_opt1
   ) t0 t1
 
 let fold2 ~init ~f t0 t1 =
-  Ordmap.fold2 ~init ~f:(fun accum k_kv_opt0 k_kv_opt1 ->
-    let kv_opt0 = match k_kv_opt0 with
+  Ordmap.fold2 ~init ~f:(fun accum kv_opt0 kv_opt1 ->
+    let v_opt0 = match kv_opt0 with
       | None -> None
       | Some (_k, attrib) -> Some attrib
     in
-    let kv_opt1 = match k_kv_opt1 with
+    let v_opt1 = match kv_opt1 with
       | None -> None
       | Some (_k, attrib) -> Some attrib
     in
-    f accum kv_opt0 kv_opt1
+    f accum v_opt0 v_opt1
   ) t0 t1

@@ -72,14 +72,17 @@ let merge symbols GotoNub.{goto; kernel_attribs=gotonub_ka; attribs=gotonub_a; _
   merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
 let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
+  let attrib_implicit Attrib.{conflict_state_index; symbol_index; conflict; isucc_lr1itemset; _}
+    = begin
+      Attrib.init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset
+        ~contrib:Contrib.empty
+    end in
   Attribs.fold2_until ~init:true
     ~f:(fun _compat attrib_opt0 attrib_opt1 ->
       let o_attrib, t_attrib = match attrib_opt0, attrib_opt1 with
         | Some o_attrib, Some t_attrib -> o_attrib, t_attrib
-        | Some (Attrib.{conflict_state_index; symbol_index; conflict; _} as o_attrib), None ->
-          o_attrib, Attrib.empty ~conflict_state_index ~symbol_index ~conflict
-        | None, Some (Attrib.{conflict_state_index; symbol_index; conflict; _} as t_attrib) ->
-          Attrib.empty ~conflict_state_index ~symbol_index ~conflict, t_attrib
+        | Some o_attrib, None -> o_attrib, attrib_implicit o_attrib
+        | None, Some t_attrib -> attrib_implicit t_attrib, t_attrib
         | None, None -> not_reached ()
       in
       let compat = Attrib.compat_ielr ~resolve symbols prods o_attrib t_attrib in
