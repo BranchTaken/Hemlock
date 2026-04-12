@@ -108,10 +108,10 @@ IELR(1) States
         Actions
             Ta : ShiftPrefix 12
         Conflict contributions
-            [A ::= Ta · Ta, {Ta}]
-                12 : Reduce A ::= Ta Ta
-            [B ::= Ta · Ta, {Tb}]
-                12 : Reduce B ::= Ta Ta
+            A ::= Ta · Ta
+                12 : Ta : Reduce A ::= Ta Ta
+            B ::= Ta · Ta
+                12 : Tb : Reduce B ::= Ta Ta
     State 5 [5.0]
         Kernel
             [S ::= Ta A · Ta, {"⊥"}]
@@ -135,12 +135,12 @@ IELR(1) States
         Actions
             Ta : ShiftPrefix 16
         Conflict contributions
-            [A ::= Ta · Ta, {Tb}]
-                12 : Reduce A ::= Ta Ta
-            [B ::= Ta · Ta, {Ta}]
-                12 : Reduce B ::= Ta Ta
-            [C ::= Ta · Ta, {Ta}]
-                12 : Reduce C ::= Ta Ta
+            A ::= Ta · Ta
+                12 : Tb : Reduce A ::= Ta Ta
+            B ::= Ta · Ta
+                12 : Ta : Reduce B ::= Ta Ta
+            C ::= Ta · Ta
+                12 : Ta : Reduce C ::= Ta Ta
     State 9 [8.0]
         Kernel
             [S ::= Tb A · Tb, {"⊥"}]
@@ -166,10 +166,10 @@ IELR(1) States
             Tb : Reduce B ::= Ta Ta prec p1
             Tc : Reduce C ::= Ta Ta prec p2
         Conflict contributions
-            [A ::= Ta Ta ·, {Ta}]
-                12 : Reduce A ::= Ta Ta
-            [B ::= Ta Ta ·, {Tb}]
-                12 : Reduce B ::= Ta Ta
+            A ::= Ta Ta ·
+                12 : Ta : Reduce A ::= Ta Ta
+            B ::= Ta Ta ·
+                12 : Tb : Reduce B ::= Ta Ta
     State 13 [13.0]
         Kernel
             [S ::= Ta A Ta ·, {"⊥"}]
@@ -194,12 +194,12 @@ IELR(1) States
             Ta : Reduce B ::= Ta Ta prec p1
             Tb : Reduce A ::= Ta Ta
         Conflict contributions
-            [A ::= Ta Ta ·, {Tb}]
-                12 : Reduce A ::= Ta Ta
-            [B ::= Ta Ta ·, {Ta}]
-                12 : Reduce B ::= Ta Ta
-            [C ::= Ta Ta ·, {Ta}]
-                12 : Reduce C ::= Ta Ta
+            A ::= Ta Ta ·
+                12 : Tb : Reduce A ::= Ta Ta
+            B ::= Ta Ta ·
+                12 : Ta : Reduce B ::= Ta Ta
+            C ::= Ta Ta ·
+                12 : Ta : Reduce C ::= Ta Ta
     State 17 [16.0]
         Kernel
             [S ::= Tb A Tb ·, {"⊥"}]

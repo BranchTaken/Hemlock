@@ -133,8 +133,8 @@ IELR(1) States
         Gotos
             Z : 13
         Conflict contributions
-            [Y ::= Ty0 · Z, {Ta}]
-                24 : Reduce E ::= epsilon
+            Y ::= Ty0 · Z
+                24 : Ta : Reduce E ::= epsilon
     State 5 [5.0]
         Kernel
             [Y ::= Ty1 · Z, {Ta}]
@@ -147,8 +147,8 @@ IELR(1) States
         Gotos
             Z : 14
         Conflict contributions
-            [Y ::= Ty1 · Z, {Ta}]
-                24 : Reduce E ::= epsilon
+            Y ::= Ty1 · Z
+                24 : Ta : Reduce E ::= epsilon
     State 6 [6.0]
         Kernel
             [S ::= Ta Y · Ta, {"⊥"}]
@@ -196,8 +196,8 @@ IELR(1) States
         Gotos
             A : 20
         Conflict contributions
-            [Z ::= Tz0 · A B, {Ta}]
-                24 : Reduce E ::= epsilon
+            Z ::= Tz0 · A B
+                24 : Ta : Reduce E ::= epsilon
     State 12 [10.0]
         Kernel
             [Z ::= Tz1 · A B, {Ta}]
@@ -208,8 +208,8 @@ IELR(1) States
         Gotos
             A : 21
         Conflict contributions
-            [Z ::= Tz1 · A B, {Ta}]
-                24 : Reduce E ::= epsilon
+            Z ::= Tz1 · A B
+                24 : Ta : Reduce E ::= epsilon
     State 13 [11.0]
         Kernel
             [Y ::= Ty0 Z ·, {Ta, Tb}]
@@ -262,8 +262,8 @@ IELR(1) States
             C : 24
             D : 25
         Conflict contributions
-            [A ::= Ta · C D E, {Ta}]
-                24 : Reduce E ::= epsilon
+            A ::= Ta · C D E
+                24 : Ta : Reduce E ::= epsilon
     State 20 [16.0]
         Kernel
             [Z ::= Tz0 A · B, {Ta, Tb}]
@@ -316,8 +316,8 @@ IELR(1) States
         Gotos
             D : 30
         Conflict contributions
-            [A ::= Ta C · D E, {Ta}]
-                24 : Reduce E ::= epsilon
+            A ::= Ta C · D E
+                24 : Ta : Reduce E ::= epsilon
     State 25 [20.0]
         Kernel
             [C ::= D ·, {Ta}]
@@ -362,8 +362,8 @@ IELR(1) States
         Gotos
             E : 33
         Conflict contributions
-            [A ::= Ta C D · E, {Ta}]
-                24 : Reduce E ::= epsilon
+            A ::= Ta C D · E
+                24 : Ta : Reduce E ::= epsilon
     State 31 [24.1]
         Kernel
             [A ::= Ta C D · E, {Tb, Tc}]
