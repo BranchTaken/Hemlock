@@ -103,7 +103,7 @@ let inter t0 t1 =
             let attribs = Attribs.inter attribs0 attribs1 in
             match Attribs.is_empty attribs with
             | true -> t
-            | false -> Ordmap.insert ~k:lr1item ~v:attribs t
+            | false -> Ordmap.insert_hlt ~k:lr1item ~v:attribs t
           end
         | None, None -> not_reached ()
       ) t0 t1
@@ -117,13 +117,13 @@ let diff t0 t1 =
   | false, false -> begin
       Ordmap.fold2 ~init:empty ~f:(fun t lr1item_attribs0_opt lr1item_attribs1_opt ->
         match lr1item_attribs0_opt, lr1item_attribs1_opt with
-        | Some (lr1item, attribs), None -> Ordmap.insert ~k:lr1item ~v:attribs t
+        | Some (lr1item, attribs), None -> Ordmap.insert_hlt ~k:lr1item ~v:attribs t
         | None, Some _ -> t
         | Some (lr1item, attribs0), Some (_lr1item, attribs1) -> begin
             let attribs = Attribs.diff attribs0 attribs1 in
             match Attribs.is_empty attribs with
             | true -> t
-            | false -> Ordmap.insert ~k:lr1item ~v:attribs t
+            | false -> Ordmap.insert_hlt ~k:lr1item ~v:attribs t
           end
         | None, None -> not_reached ()
       ) t0 t1

@@ -559,13 +559,23 @@ module LeftmostCache = struct
       ~f:(fun accum Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _} as prod; _}; follow} ->
         match Prod.is_synthetic prod with
         | true -> accum
-        | false -> Ordmap.insert ~k:lhs_index ~v:follow accum
+        | false -> begin
+            Ordmap.amend lhs_index ~f:(fun follow_opt ->
+              match follow_opt with
+              | None -> Some follow
+              | Some follow_existing -> Some (Bitset.union follow follow_existing)
+            ) accum
+          end
       ) kernel
     in
     let accum = Lr1Itemset.fold ~init:accum
         ~f:(fun lhs_symbol_indexes
           Lr1Item.{lr0item=Lr0Item.{prod=Prod.{lhs_index; _}; _}; follow} ->
-          Ordmap.insert ~k:lhs_index ~v:follow lhs_symbol_indexes
+          Ordmap.amend lhs_index ~f:(fun follow_opt ->
+            match follow_opt with
+            | None -> Some follow
+            | Some follow_existing -> Some (Bitset.union follow follow_existing)
+          ) lhs_symbol_indexes
         ) (Lazy.force added)
     in
     accum
@@ -580,7 +590,7 @@ module LeftmostCache = struct
               |> Ordmap.union ~f:(fun _k kernel0 kernel1 ->
                 Lr1Itemset.union kernel0 kernel1) state_kernel_cache
             ) (lhs_symbol_indexes lr1itemsetclosure) in
-          state_kernel_cache, Ordmap.insert ~k:state_index ~v:state_kernel_cache t
+          state_kernel_cache, Ordmap.insert_hlt ~k:state_index ~v:state_kernel_cache t
         end
       | Some state_kernel_cache -> state_kernel_cache, t
     in

@@ -26,7 +26,7 @@ let empty =
         let infos' = Map.insert_hlt ~k:name ~v:info infos in
         let names' = Map.insert_hlt ~k:name ~v:index names in
         let aliases' = Map.insert_hlt ~k:(Option.value_hlt alias) ~v:index aliases in
-        let symbols' = Ordmap.insert ~k:index ~v:token symbols in
+        let symbols' = Ordmap.insert_hlt ~k:index ~v:token symbols in
         (infos', names', aliases', symbols')
       ) [Symbol.epsilon; Symbol.pseudo_end]
   in
@@ -57,8 +57,8 @@ let insert_token ~name ~stype ~prec ~stmt ~alias
     | None -> aliases
     | Some alias -> Map.insert_hlt ~k:alias ~v:index aliases
   in
-  let symbols' = Ordmap.insert ~k:index ~v:token symbols in
-  let tokens' = Ordmap.insert ~k:index ~v:token tokens in
+  let symbols' = Ordmap.insert_hlt ~k:index ~v:token symbols in
+  let tokens' = Ordmap.insert_hlt ~k:index ~v:token tokens in
   {t with infos=infos'; names=names'; aliases=aliases'; symbols=symbols'; tokens=tokens'}
 
 let insert_nonterm_info ~name ~stype ({infos; _} as t) =
@@ -71,8 +71,8 @@ let insert_nonterm ~name ~prec ~stmt ~start ~prods ({names; symbols; nonterms; _
   let {index; stype; _} = info_of_name_hlt name t in
   let nonterm = Symbol.init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods in
   let names' = Map.insert_hlt ~k:name ~v:index names in
-  let symbols' = Ordmap.insert ~k:index ~v:nonterm symbols in
-  let nonterms' = Ordmap.insert ~k:index ~v:nonterm nonterms in
+  let symbols' = Ordmap.insert_hlt ~k:index ~v:nonterm symbols in
+  let nonterms' = Ordmap.insert_hlt ~k:index ~v:nonterm nonterms in
   {t with names=names'; symbols=symbols'; nonterms=nonterms'}
 
 let update_symbol (Symbol.{index; _} as symbol) ({symbols; tokens; nonterms; _} as t) =
